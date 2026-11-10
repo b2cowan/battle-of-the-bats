@@ -193,6 +193,9 @@
    controls fighting for one tap), a 44px row, right-aligned and quiet. */
 .wsCard[data-paused='true'] { border-style: dashed; border-color: var(--home-line-strong); box-shadow: none; }
 .wsCard[data-paused='true']:hover { border-color: var(--home-amber); transform: none; box-shadow: none; }
+.wsCard[data-plain='true'] { grid-template-columns: auto minmax(0, 1fr); cursor: default; }
+.wsCard[data-plain='true']:hover { border-color: var(--home-line-strong); }
+.wsPausedNote { font-family: var(--font-sans, system-ui, sans-serif); font-size: 0.78rem; line-height: 1.4; color: var(--home-dim); }
 .wsMetaPaused { color: var(--home-amber); text-transform: uppercase; letter-spacing: 0.04em; }
 .pausedItem { display: flex; flex-direction: column; }
 .hideRow { display: flex; justify-content: flex-end; }

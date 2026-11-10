@@ -468,7 +468,7 @@ const familiesHelp: HelpPageContent = {
       group: 'Working the book',
       heading: 'Duplicates: are these the same parent or child?',
       summary: 'Reviewing suspected duplicate parents and children, choosing which record survives, and dismissing for good.',
-      keywords: ['duplicates', 'possible duplicates', 'merge', 'not the same person', 'keep this record', 'which record survives', 'two records', 'same parent', 'same child', 'join', 'join as one child', 'not the same child', 'children queue', 'two records for one child', 'birth date missing', 'remove the extra entry'],
+      keywords: ['duplicates', 'possible duplicates', 'merge', 'not the same person', 'keep this record', 'which record survives', 'two records', 'same parent', 'same child', 'join', 'join as one child', 'not the same child', 'children queue', 'two records for one child', 'birth date missing', 'remove the extra entry', 'connected in the app', 'family app', 'connected parents'],
       searchText: 'duplicates tab merge families combine records duplicate review queue remembered surname first name initial phone same child birth date team season email changed keep this record survivor keeper three records one card cannot be undone parents children switch join as one child question window not the same child never comes back same name same birth date same parent different parent email birth date missing on one side one team in one season cannot join waits remove the extra entry split records undo a join',
       content: (
         <>
@@ -526,7 +526,7 @@ const familiesHelp: HelpPageContent = {
               </p>
               <ul>
                 <li><strong>Keep this record</strong> sits on each side. The record you keep decides the child&rsquo;s name and birth date; it starts on the record with the most seasons. The card says what joining will keep.</li>
-                <li><strong>Join as one child</strong> asks first, in a small window. Every season keeps its own entry, money and papers, and the child&rsquo;s page then shows all the seasons. A join can be undone from the child&rsquo;s page with <strong>Split records</strong>.</li>
+                <li><strong>Join as one child</strong> asks first, in a small window. Every season keeps its own entry, money and papers, and the child&rsquo;s page then shows all the seasons. A join can be undone from the child&rsquo;s page with <strong>Split records</strong>. Once FieldLogicHQ has switched the family app on, the window also names the parents connected in the app to each record, and says that after the join each is connected to the one child and sees every team it&rsquo;s on.</li>
                 <li><strong>Not the same child</strong> is remembered, so the card never comes back.</li>
               </ul>
               <HelpNote variant="info" title="Two records on one team in one season">

@@ -23,5 +23,8 @@ tr.explainRow > td {
   color: var(--text-secondary);
 }
 
+/* The link column never wraps; spare width is shared evenly across the columns (the table's own layout). */
+.doorCell { white-space: nowrap; width: auto; }
+
 .priceCell { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.35rem; flex-wrap: wrap; }
 .notes { display: grid; gap: 0.25rem; }

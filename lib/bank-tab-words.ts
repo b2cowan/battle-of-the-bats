@@ -246,8 +246,10 @@ export const BANK_WORDS = {
 
   // ── the account line and the saved checks (asks 4 and 6, tab 5) ───────────────────────────
   accountPill: 'Account',
-  throughResult: (date: string, result: string) => `checked through ${date} · ${result}`,
+  // The Account pill's sub-line under each account's name, so it opens a sentence (the Record money picker's rows).
+  throughResult: (date: string, result: string) => `Checked through ${date} · ${result}`,
   notChecked: 'not checked yet',
+  notCheckedLine: 'Not checked yet',
   // The top line (tab 2, ask 4): "Checked through {date}", and an amber "Off by $X" chip beside it when the latest is off.
   checkedThroughLead: 'Checked through',
   notCheckedLead: 'Not checked yet',
@@ -268,6 +270,11 @@ export const BANK_WORDS = {
   inviteNote: 'Type what the bank shows to see if you’re in step.',
   // Row 20 (S2): a quiet link at the end of the Bank view's head line, both portals, opening the bank help article.
   helpLink: 'How the bank check works',
+  // Several accounts are ONE line (owner 2026-11-09): "Bank: oldest check Nov 5, 2026 ›" · "Bank: 1 of 3 not checked yet ›",
+  // and the chip counts when more than one check is off ("2 off"). One account keeps the wording above.
+  overviewOldest: 'oldest check',
+  overviewSomeNotChecked: (some: number, total: number) => `${some} of ${total} not checked yet`,
+  offCount: (n: number) => `${n} off`,
   booksNowSay: (amount: string) => `Books now say ${amount}`,
   // Row 13 (A1b): the list drops "statement"; "Balance checks", not a bare "Checks" (it would read as cheques: A2's reason).
   listTitle: 'Balance checks',
@@ -283,6 +290,7 @@ export const BANK_WORDS = {
   openStart: (date: string) => `Open the starting balance for ${date}`,
   // The top line's chip is a door: its name keeps what it says (a label replaces a button's own text).
   openOffCheck: (amount: string, date: string) => `Off by ${amount}. Open the check for ${date}`,
+  openOffChecks: (n: number) => `${n} checks are off. Open the Bank tab`,
 
   // ── a saved check, opened (ask 5, tab 5): a form window, 640 (the band) ──────────────────────────────
   savedEyebrow: (account: string) => `${account} · saved check`,

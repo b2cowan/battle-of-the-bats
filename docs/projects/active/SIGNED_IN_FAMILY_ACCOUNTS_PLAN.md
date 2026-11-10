@@ -192,7 +192,15 @@ Also drawn: one address per sign-up (not per child); the same address as the fir
 
 **Stage 3b — a stop button on the second parent’s emails (BUILT 2026-11-06).** The `/legal` review found the gap (a stranger’s address typed by someone else, with no way off but writing to the club); plan [SIGNED_IN_FAMILY_STAGE3B_SECOND_PARENT_STOP_PLAN.md](SIGNED_IN_FAMILY_STAGE3B_SECOND_PARENT_STOP_PLAN.md), owner calls O1–O5 ruled as recommended. Every second-parent copy carries a quiet “Stop these emails” link from one footer builder; the link opens a confirm page (a GET writes nothing, one POST stops), the stop clears the address from every sign-up of that club and refuses it afterwards (family form and both registrar windows), the registrar sees “Stopped by the address owner, {date}” and cannot undo it, nobody is emailed, and the first parent’s mail is untouched. Session 1 committed `80c9bc430`; Session 2 committed 2026-11-06; mig 448 dev only (prod owed before the promote); walk §472 owed. Open flags for the owner (reply path with no club contact email, exact-address match, a millisecond race, a mixed address, two footnotes on the pay-link copy) are in `docs/agents/legal/CASL_SECOND_PARENT_EMAIL.md`.
 
-### Stage 4 — The invitation at team placement; "Your sign-up" inside the app · unblocked (drawn 2026-11-08; rulings owed)
+### Stage 4 — The invitation at team placement; "Your sign-up" inside the app · 4a BUILT 2026-11-08 (drawn + all 15 asks ruled 2026-11-08)
+
+**Stage 4a status (2026-11-08):** all four build sessions done. Session 1 (migration 453, reach, rules) committed `7823c406c`; Session 2 (accept
+page, emails, migration 454) `5ca68c786`; Session 3 (family pages, calendar, club and coach screens) `db96afd5a`; Session 4 (closeout:
+`/simplify`, `/review`, UAT specs, `/legal`, `/marketing`, `/docs`, the 4b plan rewrite, walk §498) in the build prompt's Progress block.
+Migrations 453 and 454 are on DEV only (`MANUAL_PROD_STEPS`). The guardian tier stays OFF everywhere shared. **Owed before real families:**
+the published FieldLogicHQ privacy page, the consent record naming exactly the children shown (R2), and the consent words' 0.2 clauses
+(`GUARDIAN_CONSENT_STAGE4.md` closeout). **4b** (In / Out / Maybe, the coach's headcount) is not built: the plan was rewritten to the app
+channel (`COACH_AVAILABILITY_RSVP_PLAN.md`) and needs its own drawing session for the coach's side.
 
 1. **Placing a child on a team invites the guardian(s)** — the placement email is the invitation; never a separate
    "create an account" email. Accepting signs the parent in (new or existing account) and links them to the child.

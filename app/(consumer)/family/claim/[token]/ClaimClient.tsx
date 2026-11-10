@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import warm from '@/components/consumer/warmTheme.module.css';
 import styles from '../../family.module.css';
@@ -31,6 +31,13 @@ const W = FAMILY_INVITATION_WORDS.accept;
 
 type Step = 'email' | 'new' | 'existing';
 
+/** A reload keeps the old scroll position, and the page it reloads into (joined, no longer works, signed out) is a short card:
+ *  the parent landed on empty space below it. Opt this entry out of restoration, then reload — it starts at the top. */
+function reloadFromTop(): void {
+  try { window.history.scrollRestoration = 'manual'; } catch { /* a browser without it keeps its default */ }
+  window.location.reload();
+}
+
 export default function ClaimClient({ token, state, maskedEmail, from, kids, viewer, club, homePath, signedInNeedsTerms = false }: {
   token: string;
   state: InvitationState;
@@ -43,6 +50,8 @@ export default function ClaimClient({ token, state, maskedEmail, from, kids, vie
   /** A signed-in viewer who has not agreed to the current Terms yet: the third box shows (step 6.3, §20 (5h)). */
   signedInNeedsTerms?: boolean;
 }) {
+  // However the page was reached (a reload, Back, a link), the invitation starts at the top of the card.
+  useEffect(() => { window.scrollTo(0, 0); }, []);
   const shell = (inner: React.ReactNode) => (
     <div className={warm.warm}>
       <div className={styles.page}>
@@ -75,7 +84,7 @@ export default function ClaimClient({ token, state, maskedEmail, from, kids, vie
         <p className={styles.notice}>{W.another.body(maskedEmail, viewer.maskedEmail, from)}</p>
       </div>
       <div className={styles.acceptActions}>
-        <button type="button" className={styles.chipGhost} onClick={async () => { await signOut(); window.location.reload(); }}>
+        <button type="button" className={styles.chipGhost} onClick={async () => { await signOut(); reloadFromTop(); }}>
           {W.another.signOut}
         </button>
       </div>
@@ -164,7 +173,7 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
     if (data.error === 'password_short') return setError(W.passwordTooShort);
     if (data.error === 'email_mismatch') return setError(W.emailNoMatch(maskedEmail));
     if (data.error === 'account_exists') { setStep('existing'); setPassword(''); return setError(W.accountExists); }
-    if (status === 404 || data.error === 'another_email') { window.location.reload(); return; }
+    if (status === 404 || data.error === 'another_email') { reloadFromTop(); return; }
     setError(W.failed);
   }
 

@@ -523,7 +523,7 @@ ahead of the owner's rulings.
   (own route, after the morning counts). Also found: the "added" email sends every role to the Overview; the added email does not
   escape the club name. **Next:** the owner's answers in the Session A summary, then Session A.
 - 2026-11-07 — **13b Session A BUILT** (the homes; Session B, the arrival, not started). `/simplify`, `/review` (high) and
-  `/marketing` done; the commit hash goes here when committed. **Owner rulings carried:** the band is for the owner and a club admin on a
+  `/marketing` done; committed `ebb2ca47c` 2026-11-07. **Owner rulings carried:** the band is for the owner and a club admin on a
   Club plan; "players", never "families"; it reads from its **own route, asked only after "This morning" has rendered**; "Needs someone"
   carries all three lines (no head coach, house league players owing, forms missing); the PLAYERS ghost tile is not built; the league
   admin's and the registrar's "This morning" sits on the **season page**, not the Overview; the header "Setup · n of 5" chip (F-O1-8) is
@@ -546,7 +546,8 @@ ahead of the owner's rulings.
   club" adds all-years team dues to live-season house league and opens only the teams half; "5 players owe" counts a child once per live
   season; a member whose browser never held the install mark is spared the banner once. **Walk A: §485** (43 steps on the dev copies
   `navj-club-s13ba` and `navj-club-s13ba-fresh`; fixtures in `.probe/stage13b-a/`). No migration, no column; no `NAV_STANDARD` change.
-  **Next:** the owner walks §485, then Session B.
+  **Walked 2026-11-07: §485 passed 43 of 43.** The five open owner questions above were not answered in the paste-back, so they stay
+  open. **Next:** Session B (the arrival).
 - 2026-11-07 — **13b Session B BUILT** (the arrival). `/simplify`, `/review` (high), `/marketing`, `/legal` and `/docs` done;
   committed `7d88d591d` 2026-11-07. **Owner rulings in the summary:** the coach accept-path fix goes in this build; the owner and an admin also see the
   other roles' Help paths, folded; every non-board path ends with "What your role can open". **B1** no default role: the invite's
@@ -566,7 +567,7 @@ ahead of the owner's rulings.
   "The first steps of the people you invite"; no own path → all folded as before; the note under the guides no longer claims
   a role filter (platform admin's hub shows no note). Help: the invite recipe in the org guide split into four sub-topics (no
   default role, what each email says, where each role lands). Guard: `tests/unit/club-stage13b-arrival-guard.test.ts`.
-  **Walk B: §489** (37 steps; dev copies `navj-club-s13bb` and `navj-club-s13bb-fresh`; fixtures `.probe/stage13b-b/`; sends
+  **Walk B: §489 PASSED 37/37 2026-11-08 (copies removed); the four owner calls were not answered in the paste-back and stay open** (37 steps; dev copies `navj-club-s13bb` and `navj-club-s13bb-fresh`; fixtures `.probe/stage13b-b/`; sends
   real email to `fieldlogichq+s13bb-*@gmail.com`). No migration, no column; no `NAV_STANDARD` change.
 - 2026-11-08 — **13c drawing round PUBLISHED** (the club's time in one place): https://claude.ai/artifact/1zgUwZhAAFEr4yZ1UNYQCJ
   (source [CLUB_TIER_STAGE13C_DRAWINGS.html](CLUB_TIER_STAGE13C_DRAWINGS.html); prompt
@@ -678,7 +679,7 @@ ahead of the owner's rulings.
   each brief; an admin with narrowed program capabilities still gets the club-wide count (numbers and days only); the
   Calendar reads bookings twice when a date off is in range. **Next:** commit on the owner's yes, then Session C (sequence
   against Header Phase 3, which is mid-build on the Calendar page in the shared tree).
-- 2026-11-09 — **13c Session C BUILT** (the schedule page is the path, C4 + C5 + C6); commit owed. Header Phase 3's diff read first
+- 2026-11-09 — **13c Session C BUILT** (the schedule page is the path, C4 + C5 + C6); committed `40e86b8dd` 2026-11-09. Header Phase 3's diff read first
   (it moved only the schedule's name and chip into the bar; nothing where the permit door or the Bill tile go); Header Phase 4 had
   already committed (`e3c825ece`); 11b re-confirmed complete (scheduler plan ~1491). **Built:** (C1) the top line "From the permit
   {name} ›" (the permit the schedule was STARTED from, `fromPermit` on the view: its name only), through the Permits place's own
@@ -717,8 +718,17 @@ ahead of the owner's rulings.
   ruling owed; (b) the `?outside=1` read builds its Calendar reader without a tournament scope (only house league's bookings are
   described through it, and only counts and kinds come back; the permits route's count refuses a scoped admin); (c) Session A's
   Permits layout opts out of the billing rail but is not on `org-billing-access-guard`'s list (the build is red on it today —
-  the decision point that test names). **Next:** commit on the owner's yes; then the end-of-13c walk (one walk, next free ledger
-  §) and the staging layout sweep.
+  the decision point that test names). **Next:** the end-of-13c walk, then the staging layout sweep.
+- 2026-11-09 — **The end-of-13c walk PUBLISHED:** Owner QA Ledger §502, https://claude.ai/artifact/W2UT85UgJgRZa5pbT1mDZG
+  ([CLUB_TIER_STAGE13C_WALK.html](CLUB_TIER_STAGE13C_WALK.html)), one purpose (a date pulled off a permit reaches everyone who must
+  act, and the path from permit to Send is walkable), 14 parts / 53 steps, all six club people (owner, admin, an admin without
+  Accounting, league admin, registrar, treasurer), desk and phone, on a fresh Harbourtown copy `navj-club-13c`
+  (`.probe/nav-journeys/seed.mjs` with `NAVJ_BASE=http://localhost:3000`, then `.probe/nav-journeys/fx-13c.mjs`: the December
+  permit with Dec 5 and Dec 12 off, the sent schedule built from it, 6 practices, 2 games, 1 postponed, admin2). Every count in the
+  walk read back from the copy first (`fx-13c-check.mjs`, `-slots.mjs`, `-weeks.mjs`): 8 bookings by role and door; the schedule's 5
+  slots a day; the dome's 25 of 65 / 175 of 450 exactly as drawn; this week empty (Next Tue, Nov 17). Three calls in it (the View
+  menu at three views, Slots sums, "See them"'s landing). Header Phase 4's walk §501 had passed (15/15), so nothing waited on it.
+  Teardown on "13c walk done". **Next:** the owner walks §502; then the staging layout sweep.
 
 ## 11. The external review, cross-checked (2026-11-07)
 

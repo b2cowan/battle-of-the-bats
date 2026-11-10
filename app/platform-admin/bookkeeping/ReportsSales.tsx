@@ -17,7 +17,7 @@ import { csvCell } from '@/lib/bookkeeping-expenses';
 import { downloadCSVBlob } from '@/lib/export';
 import { saleCents } from '@/lib/console-money-sales';
 import {
-  invoiceBuyer, monthLabel, SALES_EVENT_LABELS, SALES_KIND_LABELS, SALES_WORDS, salesCsvRows, salesMoney, takenOff,
+  invoiceBuyer, monthLabel, SALES_EVENT_LABELS, SALES_KIND_LABELS, SALES_WORDS, salesCsvRows, salesMoney,
   type SalesEvent, type SalesFigures, type SalesMonth, type SalesReport,
 } from '@/lib/sales-by-month';
 import type { SalesReportRead } from '@/lib/sales-by-month-read';
@@ -44,8 +44,8 @@ const dash = (cents: number) => (cents ? salesMoney(cents) : '—');
 /** The figure columns, in the drawing's order: a month row, the period's total and (the first five) a kind row all use them. */
 const COLUMNS: { label: string; cell: (f: SalesFigures) => ReactNode }[] = [
   { label: 'Invoiced', cell: f => dash(f.invoiced) },
-  { label: 'Voided', cell: f => takenOff(f.voided) },
-  { label: 'Credit notes', cell: f => takenOff(f.creditNotes) },
+  { label: 'Voided', cell: f => dash(f.voided) },
+  { label: 'Credit notes', cell: f => dash(f.creditNotes) },
   { label: 'Net sales', cell: f => salesMoney(f.net) },
   { label: 'GST/HST', cell: f => dash(f.gstHst) },
   { label: 'Collected', cell: f => dash(f.collected) },

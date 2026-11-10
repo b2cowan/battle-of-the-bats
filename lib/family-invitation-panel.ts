@@ -37,9 +37,39 @@ export const INVITE_PANEL_SLOT = '<!--fl-invite-panel-->';
 export interface SlotFill { who: string; panel: string }
 export const EMPTY_FILL: SlotFill = { who: '', panel: '' };
 
-/** Both slots filled (each with '' when this address gets nothing there). */
+/**
+ * THE MONEY LINK'S TWO SHAPES. The placement and moved emails carry the family's "Your sign-up" link only while money is owed
+ * (see signupButton in lib/email.ts). Beside the invitation panel's own big button, a second big button leaves a first-time parent
+ * not knowing which to press (owner 2026-11-09), so the email is built with BOTH shapes between these markers and the fill keeps
+ * one: the line when the panel holds a button, the button when the panel is empty or only a plain "Open it" line.
+ */
+export const MONEY_OPEN = '<!--fl-money-->';
+export const MONEY_LINE = '<!--fl-money-line-->';
+export const MONEY_END = '<!--fl-money-end-->';
+
+/** The money link, drawn as the button (no invitation panel with a button) or as a line under the panel. */
+export function moneyBlock(button: string, line: string): string {
+  return `${MONEY_OPEN}${button}${MONEY_LINE}${line}${MONEY_END}`;
+}
+
+/** The marker that says a panel carries a big button. Both invitation panels do; the "already connected" line does not. */
+const PANEL_HAS_BUTTON = 'data-fl-panel-button';
+
+export function panelHasButton(panel: string): boolean {
+  return panel.includes(PANEL_HAS_BUTTON);
+}
+
+/** Both slots filled (each with '' when this address gets nothing there), and the money block settled to one shape. */
 export function fillInvitationSlots(html: string, fill: SlotFill): string {
-  return html.replace(INVITE_WHO_SLOT, () => fill.who).replace(INVITE_PANEL_SLOT, () => fill.panel);
+  const filled = html.replace(INVITE_WHO_SLOT, () => fill.who).replace(INVITE_PANEL_SLOT, () => fill.panel);
+  const asLine = panelHasButton(fill.panel);
+  const start = filled.indexOf(MONEY_OPEN);
+  if (start < 0) return filled;
+  const mid = filled.indexOf(MONEY_LINE, start);
+  const end = filled.indexOf(MONEY_END, mid);
+  if (mid < 0 || end < 0) return filled;
+  const keep = asLine ? filled.slice(mid + MONEY_LINE.length, end) : filled.slice(start + MONEY_OPEN.length, mid);
+  return filled.slice(0, start) + keep + filled.slice(end + MONEY_END.length);
 }
 
 // ── The panel ────────────────────────────────────────────────────────────────────────────────
@@ -58,7 +88,7 @@ export function invitationPanelHtml(p: {
   const finePrint = p.who === 'first'
     ? W.mail.firstFinePrint(p.email, names, p.sender.clubName, p.sender.contact ?? '', teams)
     : W.mail.secondFinePrint(p.email, names, SECOND_PARENT_WORDS.stop.button);
-  return `<div style="${WARM_EMAIL_STYLE.panel}">
+  return `<div style="${WARM_EMAIL_STYLE.panel}" ${PANEL_HAS_BUTTON}="1">
       <p style="${WARM_EMAIL_STYLE.panelLabel}">${escText(W.mail.panelTitle(names, teams))}</p>
       ${p.who === 'first' ? `<p style="${WARM_EMAIL_STYLE.paragraph}">${escText(W.mail.panelBody)}</p>` : ''}
       ${warmEmailButton(escText(W.mail.panelButton(names, teams)), escText(p.url))}

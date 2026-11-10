@@ -304,6 +304,45 @@ export function checkedThrough(checks: readonly ClubSavedCheck[], asOf?: string)
   return { id: last.id, date: last.date, result: f.result, offByCents: f.offByCents };
 }
 
+/** One account as the Overview's bank line reads it (`bankMarks`). */
+export interface OverviewAccount { id: string; name: string; checkedThrough: CheckedThrough | null }
+
+/**
+ * The Overview's bank line, decided (owner 2026-11-09, "the bank line is ONE line": the one-line-per-account stack grew
+ * the heading row by a line for every account and pushed the money tiles down). The club is only checked as far as its
+ * least-recently-checked account, so the line says that, and the Bank tab (which lists every account) holds the rest:
+ *   · `none`   — no account: the writer's first-check door, a reader sees nothing (the caller's `canMove` decides);
+ *   · `one`    — one account: its name and its date, exactly the wording the line always had;
+ *   · `never`  — several accounts and some never checked: "{k} of {n} not checked yet" (wins over a date: an account with
+ *                no check at all is the weakest);
+ *   · `oldest` — several accounts, all checked: the OLDEST latest-check date.
+ * `door` is the account the line opens the Bank tab on (the first never-checked, or the oldest; the only one). `off` is the
+ * chip: one off check names its amount and opens that check; several count and open the Bank tab. Ties on a date keep the
+ * Bank tab's order. Never a figure but the chip's, and no year (it reads today).
+ */
+export type OverviewBankLine = {
+  line:
+    | { kind: 'none' }
+    | { kind: 'one'; account: OverviewAccount }
+    | { kind: 'never'; notChecked: number; total: number; door: string }
+    | { kind: 'oldest'; date: string; door: string };
+  off: { count: 0 } | { count: 1; accountId: string; checkId: string; offByCents: number; date: string } | { count: number; accountId: null };
+};
+
+export function bankOverviewLine(accounts: readonly OverviewAccount[]): OverviewBankLine {
+  const offs = accounts.filter(a => a.checkedThrough?.result === 'off');
+  const off: OverviewBankLine['off'] = offs.length === 0 ? { count: 0 }
+    : offs.length === 1
+      ? { count: 1, accountId: offs[0].id, checkId: offs[0].checkedThrough!.id, offByCents: offs[0].checkedThrough!.offByCents, date: offs[0].checkedThrough!.date }
+      : { count: offs.length, accountId: null };
+  if (accounts.length === 0) return { line: { kind: 'none' }, off };
+  if (accounts.length === 1) return { line: { kind: 'one', account: accounts[0] }, off };
+  const never = accounts.filter(a => !a.checkedThrough);
+  if (never.length > 0) return { line: { kind: 'never', notChecked: never.length, total: accounts.length, door: never[0].id }, off };
+  const oldest = accounts.reduce((o, a) => (a.checkedThrough!.date < o.checkedThrough!.date ? a : o));
+  return { line: { kind: 'oldest', date: oldest.checkedThrough!.date, door: oldest.id }, off };
+}
+
 /** A bank row of the fiscal-year close's "Still open" (BC5a, owner 2026-11-06 "Close row"): `unchecked` — no check on or
  *  before the year end, or the latest is before the year's last month; `off` — the latest by the year end is off. */
 export type BankCloseRow =

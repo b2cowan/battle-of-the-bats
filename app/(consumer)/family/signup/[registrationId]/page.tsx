@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
-import { familySignupFor, readFamilyHome } from '@/lib/family-home';
+import { familySignupFor } from '@/lib/family-home';
 import { getOrgForGate } from '@/lib/family-access';
 import { openSignupLink } from '@/lib/league-signup-link';
 import { buildSignupStatus } from '@/lib/league-signup-status';
@@ -54,11 +54,11 @@ export default async function FamilySignupPage({ params }: { params: Promise<{ r
   if (!link.ok) notFound();
 
   const gate = await getOrgForGate(mine.row.orgId);
-  const [org, season, siteContent, home] = await Promise.all([
+  const home = mine.home;
+  const [org, season, siteContent] = await Promise.all([
     gate ? getOrganizationBySlug(gate.slug) : Promise.resolve(null),
     getLeagueSeasonById(link.seasonId, mine.row.orgId),
     getClubSiteContent(mine.row.orgId),
-    readFamilyHome(user.id),
   ]);
   if (!org || !season) notFound();
   const contactEmail = siteContent?.contactEmail ?? null;

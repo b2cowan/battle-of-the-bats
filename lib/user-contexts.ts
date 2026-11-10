@@ -70,6 +70,9 @@ export type UserAccessContext = {
   /** A coaches_premium card whose club's PLAN no longer carries the Coaches Portal: the card still shows (a coach must be
    *  able to learn why), says so, and can be hidden by the person it belongs to. Never set on a working card. */
   paused?: 'plan';
+  /** Filled in by Home's route only (one small read per paused card, never on sign-in or the menu): who to ask, and
+   *  whether the viewer IS the club's owner (the one person the portal's wall gives an action — "See plans"). */
+  pausedFor?: { ownerName: string | null; viewerIsOwner: boolean };
 };
 
 export type TournamentRegistrationSummary = {

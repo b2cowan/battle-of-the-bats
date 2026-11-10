@@ -489,6 +489,40 @@ existing dev tokens until Part 9 notes the drop.
   - **At commit:** `docs/agents/db/DATA_DICTIONARY.md` also holds ANOTHER session's bank hunk (~:9249, `statement_end_date`):
     stage only this session's two hunks (`family_links.calendar_token_hash` ~:6004, `family_calendar_feeds` ~:6070). Every other
     file in the scope was checked: only this session's hunks.
+- **Session 4 (2026-11-08): Part 9 BUILT; commit owed (the owner says when).** Scope was the whole of Stage 4a.
+  - **/simplify (Session 3's files):** `lib/family-home.ts` reads clubs in parallel, one club-name lookup (`clubNameOf`), one "absent club"
+    fallback; `familySignupFor` now returns the home it read so the in-app sign-up page reads it once.
+  - **/review (helper, adversarial, claims 1–11 all held).** Fixed: Manage's "invited" list ignored an invitation's expiry (now an expired one is
+    not "invited"); "Stop this calendar" now also ends an older per-link calendar token; the club's Remove a parent answers 409, not 500, for a
+    made-up id. **Recorded, not changed:** (1) three OLD routes predate Stage 4 and do not check the tier (the team payload GET, the recap page, the
+    per-link calendar branch); with the tier off they still serve a pre-existing verified link; prod has none, so left; (2) an account holding two
+    live links to one child (two different invited emails) would Leave only one; fails safe, rare; (3) `buildFamilyHome` reads every team's
+    schedule for the Leave and sign-up pages (latency, not a timeout); the sign-ups read one at a time.
+  - **Tests/checks:** UAT specs updated (`family-guardian-tier-boundary`: every Stage 4a route 404 with the tier off, no account made, the removed
+    parent-typed door stays gone, no-connection account gets no menu row; `family-access-boundary`: the calendar mint is now `/api/family/calendar`,
+    the per-link mint is gone). The 274 tests in the Part 9.1 suites pass (the one failure in `team-move-coverage` is `platform_charge_tax_looks`,
+    another session's table). `npx tsc --noEmit` clean at 8 GB. Guards (a)–(g) already exist in `family-home`, `family-invitation-rules`,
+    `family-invitation-mail` and `league-second-parent` tests.
+  - **/legal:** one wording fix (draft (d) said "ends your calendar link" and "about any sign-up"; both untrue as built; now "your calendar
+    link stops showing its games" and "about a sign-up someone else added it to"; words module + test + draft). Draft status, `LEGAL_INDEX`, the
+    CASL memo updated. **Before real families:** the published privacy page and URL; R2 (record = the children shown); a consent 0.2 bump adding
+    "sees if you leave" and "the other connected parent sees your name". **Also for the owner:** the Stage 3b stop page's own sentences overshoot the
+    same way for an address that is also a first parent (O2) and should be reworded.
+  - **/marketing:** read inline; three small changes ("Removed from the app {date}"; "is on its way" without "to it" in two places); every other new
+    line already fits the voice; /legal's verbatim lines untouched.
+  - **/docs:** registrar help (new sub-topic "The family app on a registration", Publish's contact-and-address line, the join window naming
+    parents), rep coach help (new "Inviting a guardian from a player's page"; the old "connects without a second approval" lines corrected;
+    the rep Families card's "Waiting" approvals removed). Worded "once FieldLogicHQ has switched the family app on". **Not written:** parent-facing
+    help (no parent help module or hub exists; owner decides where it lives). **Spotted:** the rep "Families connected" help section looks stale
+    beyond the Waiting count. Other sessions' hunks sit in `house-league.tsx` and `org.tsx`: stage only this session's.
+  - **9.6:** `COACH_AVAILABILITY_RSVP_PLAN.md` and its PM brief rewritten to the app channel (no emailed link, one write door, child-keyed answer,
+    coach side marked undrawn).
+  - **9.7 the walk:** ledger **§498**, https://claude.ai/artifact/LfJvgydvcScZPYZQr68UXd (copy in `SIGNED_IN_FAMILY_STAGE4A_WALK.html`).
+    `GUARDIAN_TIER_ENABLED` is `false` in the owner's `.env.local`; the owner must set it true (never Amplify), restart the dev server, and set the
+    club's contact email and new mailing address first.
+  - **Open for the owner:** R1 (a parent's own re-send keeps a Send again's reconnect), R2, R3 (two siblings at the guardian cap together); the
+    privacy page; commit approval. **Later:** drop `family_links.calendar_token_hash` and the per-link feed branch; carry `family_invite_stops`
+    in the next `move_team_into_club`; the old routes' tier checks if the tier ever goes on with legacy links present.
 - **Session 4 starts here (handed over by Session 3).** Paste: `execute Session 4 (Part 9) of @docs/projects/active/SIGNED_IN_FAMILY_STAGE4_BUILD_PROMPT.md`.
   - **Scope = Part 9 over the WHOLE of Stage 4a** (Sessions 1–3: `7823c406c`, `5ca68c786`, `db96afd5a`); Sessions 1–2 already had
     their /simplify, /review and /legal passes, so the code passes (steps 1–2) look hardest at Session 3's files (its Progress bullet

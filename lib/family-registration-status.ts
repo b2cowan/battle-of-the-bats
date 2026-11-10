@@ -8,6 +8,7 @@ import { endFamilyLink } from './family-invitation';
 import { resendPlacementInvitation } from './house-league-placement-mail';
 import { ageOn } from './family-invitation-rules';
 import { todayEastern } from './free-time';
+import { isUuid } from './utils';
 import type { FamilyAddressStatus, FamilyAppFacts } from './types';
 
 /**
@@ -121,6 +122,7 @@ export async function sendFamilyInvitationAgain(params: {
 
 /** Remove a parent from the child's team (ruling 7: the club removes). Only a verified connection to THIS registration's child. */
 export async function removeFamilyParent(params: { orgId: string; registrationId: string; linkId: string }): Promise<boolean> {
+  if (!isUuid(params.linkId)) return false; // a made-up id is "nobody to remove" (409), not a database error
   const { data, error } = await supabaseAdmin.from('league_registrations')
     .select('child_id').eq('id', params.registrationId).eq('org_id', params.orgId).maybeSingle();
   if (error) throw error;

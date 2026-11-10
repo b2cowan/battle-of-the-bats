@@ -173,7 +173,38 @@ door (cell + Season's End, decided server-side by `CoachTeamSeasonGate`; no new 
 | E15 | A person whose only program is tournaments (round 2 /design) | The house-league exception: Tournaments leads their sidebar as a row | B no exception; C keep Tournaments in Programs for everyone |
 
 Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.logo_url` (uploaded or a made stock logo),
-`tournaments.logo_url` (overrides the org's), a team's crest in `rep_teams.pdf_settings.logoDataUrl`. Nothing new to store.
+`tournaments.logo_url` (overrides the org's), a team's crest in `rep_teams.pdf_settings.logoDataUrl`. ~~Nothing new to
+store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
+
+**⚖ Phase 2 gate ruling — the event's logo (owner, 2026-11-10).**
+- **The cell uses the event's EXISTING logo.** That is the one its Public site page uploads (`tournaments.logo_url`).
+  There is no second upload and no new logo field.
+- **The source chain is E10 as ruled:** the event's own logo, else the organization's, else initials.
+  - This deliberately does NOT copy the public page's plan rule. `resolveTournamentLook` falls back to the
+    organization's logo only when the plan carries the public site, and shows no logo without advanced branding.
+  - So a tournament-only organization that uploaded a logo sees it in its sidebar even where its public page does not
+    use it.
+- **The event's logo remembers its shape at upload,** as the organization's did in Part B (B4/B5, mig 458).
+  - This adds a nullable `tournaments.logo_aspect`, measured in the tournament-logo upload route, cleared with the logo.
+  - It is copied on clone, and a one-time pass measures the logos already uploaded.
+  - The admin event seed carries the logo and its shape, so the cell is right on the server's first paint.
+- **Cost:** a migration, applied on dev now and on prod at the promote, before the code.
+  - Until the one-time pass runs, an event's own logo of unknown shape shows initials (B4).
+  - The organization's fallback already has a stored shape, so it costs nothing.
+- **Rejected:**
+  - Measuring on load: it gives initials and then a swap on first paint, which is a regression of Phase 0.
+  - Dropping the shape rule for events: a wide wordmark would be unreadable at 24 px, and it reverses B5.
+
+**⚖ Phase 2 gate ruling — one set of words for an event's state (owner, 2026-11-10; E12 (2)).**
+- The sidebar list, the cell's chip and the strip all use the **phase** words from `PHASE_LABEL`: Draft · Open ·
+  Game day · Completed · Archived.
+- The list's `STATUS_WORD` "Active" leaves the list.
+- **The lifecycle controls keep "Active"**, because there it names the action. Those are Event settings' status, the
+  Tournaments page's bands and the Activate / Reopen buttons. They are deliberately not part of this ruling.
+
+**⚖ Phase 2 gate rulings — the rest (owner, 2026-11-10).**
+- The states the drawings do not show are drawn as a new tab and given a `/design` pass before any code.
+- This session builds **Part A only** (the sidebar). Part B goes to a fresh session.
 
 ## 5. Build phases (if ruled) — by dependency and rework risk
 
@@ -245,8 +276,8 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
     - **The foot, one order** (admin rail, club and tournament; the Premium coach rail): Plan & billing (the owner, bill
       pill) · hairline (only with something on both sides) · the other portals (admin: Club inside a club's tournament
       · Tournaments in the club once it hosts one · Coaches Portal; coach: Club — was "Admin" — · Tournaments you run) ·
-      Collapse sidebar. The admin foot is **pinned** outside the scrolling list (`railFoot`): a 1366 × 768 laptop
-      scrolls the rows, never the doors. The coach rail keeps its structure (Phase 4 rebuilds it).
+      Collapse sidebar. The admin foot was built **pinned** outside the scrolling list (`railFoot`); **owner 2026-11-09
+      reversed that on seeing it: the whole nav scrolls, the foot is its last rows, a spacer rests it at the bottom on a tall screen.** The coach rail keeps its structure (Phase 4 rebuilds it).
     - **Help** left every sidebar for the desktop account menu (under What's new, HelpCircle 15, new tab; opt-in
       `helpHref`, passed only by the admin strip and the Premium coach strip — never a wall, the free portal or the
       phone sheet). The phone keeps Help at the More sheet's foot; the demo sandboxes (no account menu) keep it at the
@@ -260,6 +291,7 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
     - **The strip word** "Club" / "Events" (`ADMIN_STRIP_WORD`, `adminStripWord`, beside `WORKSPACE_KIND_LABEL`),
       from the address and the plan, so the server paints it; "Admin Area" stays everywhere else.
     - NAV_STANDARD N2, N4, N6, N7, N10 rewritten; help articles (org, coaches, tournaments) via `/docs`.
+    - **Walk §504 PASSED 31/31 2026-11-09** (computer 14/14, phone 7/7, three other people 7/7, the two demos 3/3); no findings; the one call (foot "Tournaments" vs strip word "EVENTS") ticked through, words stay as built. Next: Part B.
   - **Measured 2026-11-09** (dev server, saved sign-ins refreshed first; `.probe/nav-phase1/`: `measure.mjs` →
     `measure.json` / `measure-run1.json`, `phone.mjs`, `coachfoot.mjs`, `sandbox.mjs`, screenshots beside them):
     - **The strip word** is right on the server's paint (JavaScript off) and never changes after load: club Overview,
@@ -318,7 +350,7 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
       when the size is unknown or the file fails to load; B5 initials for a logo taller than 1 : 2 too (extends E10); B6
       one tile frame — white, thin outline — for logo and initials (the club's olive initials tile goes). Build in a fresh
       session from `ADMIN_NAV_BUILD_PHASE1_PARTB_PROMPT.md` (its hand-off block).
-    - **Part B BUILT 2026-11-10**, committed `eb30602fb` 2026-11-10 (walk §507 owed). The club cell: the name 14px bold on 16px leading, two lines,
+    - **Part B BUILT 2026-11-10**, committed `eb30602fb` 2026-11-10 (walk §507 PASSED 25/25 2026-11-10). The club cell: the name 14px bold on 16px leading, two lines,
       the whole name as the native tooltip only while cut and never folded; the one `SidebarLogoTile` (24px open, 40px folded,
       white ground and thin outline for logo and initials, fixed white in the dark theme, initials when the stored shape is
       outside 1 : 2 … 2 : 1, unknown, or the file fails to load). The shape is stored with the logo (`organizations.logo_aspect`,

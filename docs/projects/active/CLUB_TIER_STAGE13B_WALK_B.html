@@ -75,10 +75,10 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     <h1>The arrival: invite each role, read the email, land on the role’s home</h1>
     <p class="sub">Written 2026-11-07, after Session B was built, simplified, reviewed (high), word-checked and legal-checked. One purpose: a person the club invites is never given a role by accident, is told in the email what the role opens and what FieldLogicHQ is, and lands where their work starts, by either door. Help then opens on their own first steps. <strong>This walk sends real emails</strong>, to plus-addresses of the company inbox.</p>
   </header>
-  <section class="card"><h2>What this walk is for</h2><p>(1) <strong>No default role</strong>: the invite’s Role field starts empty, Send stays off until a role is chosen, and the role’s sentence shows once one is. The setup checklist’s first step opens Members with the invite already open. (2) <strong>The emails</strong>: the new-account invitation and the “You’ve been added” email both say what the role opens and one line on what FieldLogicHQ is, with the role’s screen name. (3) <strong>Both arrival paths end on the role’s home</strong>: accepting an invitation, and the “added” email’s Sign in button. (4) <strong>Help by role</strong>: “New to FieldLogicHQ?” opens on the reader’s own first steps.</p></section>
+  <section class="card"><h2>What this walk is for</h2><p>(1) <strong>No default role</strong>: the invite’s Role field starts empty, Send stays off until a role is chosen, and the role’s sentence shows once one is. The setup checklist’s first step opens Members on the list, with “What each role can open” to read before inviting (owner, 2026-11-08). (2) <strong>The emails</strong>: the new-account invitation and the “You’ve been added” email both say what the role opens and one line on what FieldLogicHQ is, with the role’s screen name. (3) <strong>Both arrival paths end on the role’s home</strong>: accepting an invitation, and the “added” email’s Sign in button. (4) <strong>Help by role</strong>: “New to FieldLogicHQ?” opens on the reader’s own first steps.</p></section>
   <section class="card"><h2>It passes when</h2><ul>
     <li><strong>1</strong> The Role field starts on “Choose a role”, Send invite is off until a role is picked, and each role shows its own one-line sentence; the Staff kit’s door still opens on Volunteer.</li>
-    <li><strong>2</strong> On a club with no board yet, setup step 1 opens Members with the invite open and no role chosen; once the step is done, its button just opens Members.</li>
+    <li><strong>2</strong> On a club with no board yet, setup step 1 opens Members with NO window open (the roles table is there to read); Invite then opens the window with the Role field empty.</li>
     <li><strong>3–4</strong> Each of the six invitations arrives naming the club, Morgan Ellis, the role by its screen name, what the role opens and what FieldLogicHQ is; the volunteer’s carries its job instead of a second sentence.</li>
     <li><strong>5</strong> Accepting lands each person on their role’s home: admin and staff on the Overview, the treasurer in Accounting, the league admin and the registrar in House league, the volunteer on Check-in.</li>
     <li><strong>6</strong> Adding someone who already has an account sends “You’ve been added” (with “You’ll …”), and its Sign in button lands a treasurer in Accounting.</li>
@@ -147,13 +147,13 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   { who: OWNER, do: "Close the window. Open <strong>Tournaments</strong> › Harbourtown Invitational 2026 › <strong>Staff kit</strong>, and press <strong>Invite a volunteer</strong>.",
     see: "Members opens with the invite window already open and the Role field already on <strong>Volunteer</strong> (that door still chooses for you). Close it without sending." }
  ]},
- { id: "2", title: "Setup step 1 opens the invite", steps: [
+ { id: "2", title: "Setup step 1 opens Members", steps: [
   { who: FRESH, do: "Sign in (private window). You land on <strong>Set up your club</strong>. Press the button on step 1, <strong>Staff your board</strong>.",
-    see: "Members opens with the <strong>invite window already open</strong>, the Role field on <strong>Choose a role</strong> and Send invite off. Close it without sending." },
+    see: "Members opens on the list with <strong>no window open</strong> — the board (just you) and the <strong>What each role can open</strong> table below it. Now press <strong>Invite</strong>: the window opens with the Role field on <strong>Choose a role</strong> and Send invite off. Close it without sending." },
   { who: FRESH, do: "Reload the Members page with the window closed.",
-    see: "Known, not changed: the window opens again, because the address still asks for it (the Staff kit’s door does the same). Note it only if it bothers you." },
+    see: "Members shows the list with no window open (nothing in the address asks for one)." },
   { who: OWNER, do: "In Morgan’s window, open the setup checklist (Overview › Continue setup). Step 1 is done (Dana Kowalski and Avery Chen joined). Press its outline button <strong>Members</strong>.",
-    see: "Members opens <strong>without</strong> the invite window: a finished step does not pop the invite." }
+    see: "Members opens <strong>without</strong> the invite window, the same as when the step was open." }
  ]},
  { id: "3", title: "Send the six invitations", steps: [
   { who: OWNER, do: "On Members, invite <code>fieldlogichq+s13bb-admin@gmail.com</code> as <strong>Admin</strong>.",

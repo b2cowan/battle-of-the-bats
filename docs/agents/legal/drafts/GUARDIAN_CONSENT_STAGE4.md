@@ -3,13 +3,13 @@
 | | |
 |---|---|
 | **Version** | 0.1 |
-| **Status** | draft — not owner-approved, not reviewed by a lawyer, not rendered by the product |
+| **Status** | draft — not owner-approved, not reviewed by a lawyer; rendered by the product (switched off) as the words it ships with (Stage 4a built 2026-11-08) |
 | **Effective date** | — (not published) |
 | **Last reviewed** | 2026-11-08 |
 | **Backlog** | L5 (children's consent wording), L6 (CASL line) |
 | **Replaces** | the placeholder in `lib/family-guardian-consent.ts` once the owner approves and the build adopts it |
 
-**Change log:** 0.1 (2026-11-08, later) the parked Terms line in (a) written, after Terms v0.2's O7 and O5 (every account holder is 18 or
+**Change log:** 0.1 (2026-11-08, Stage 4a Session 4) (d) corrected to what the build does; (a), (b), (c), (e) unchanged; closeout read below. 0.1 (2026-11-08, later) the parked Terms line in (a) written, after Terms v0.2's O7 and O5 (every account holder is 18 or
 older and accepts one set of Terms); "no child holds a login" still reads true beside O5. 0.1 (2026-11-08) first draft for the Stage 4 drawings (`docs/projects/active/SIGNED_IN_FAMILY_STAGE4_DRAWINGS.html`,
 tabs 1, 2, 3, 5). Braces are filled by the product: {child} first name, {club} the club's name, {coach}, {email}, {contact} the
 club's contact email, {first parent} full name of the parent who added the address.
@@ -46,6 +46,37 @@ club's contact email, {first parent} full name of the parent who added the addre
    "your sign-up" shows a stranger who holds the link: confirm it carries no date of birth or medical notes before the tier is on.
    The real parent can still reset the password (that proves control of the address), and the club can remove the connection.
    No policy sentence is needed for it; do not promise "only the parent can open this account".
+
+**Closeout read, Stage 4a Session 4 (Parts 6–8, the whole stage), 2026-11-08** — every rendered sentence read against this draft and its six
+conditions. Words (b) and (e) ship verbatim. **One word fix:** (d) is corrected (see its note). Answers:
+1. **(d) fixed.** "Ends your calendar link" and "about any sign-up" were untrue as built: the parent's one calendar address stays (it just stops
+   showing the child), and the same address can be the first parent on another child's sign-up, whose emails continue. The shipped line now
+   says what happens. (a) is unchanged, so `GUARDIAN_CONSENT_VERSION` stays v0.1. **Also for the owner:** the Stage 3b stop page's own
+   sentences ("will stop sending them", "won't send sign-up emails to {email} again") overshoot the same way for an address that is also a
+   first parent; after owner ruling O2 they should read "copies of sign-ups someone else added it to". Not changed here (3b words, its tests).
+2. **(b) names the club, not "the club": better, keep.**
+3. **"Left the app" and "Removed" statuses on the record window: fine.** The club already sees "joined"; "left" and "removed" are the same
+   fact class. Gap, not a blocker: the accept page tells a parent the club "can see that you joined, and can remove you" but not that it sees
+   a leave. Recommend adding "and sees if you leave" to that line the next time the words move (it changes the stored text, so it is a
+   version bump to 0.2: do it with the privacy-page work below, not now).
+4. **"Email me an invitation" on the emailed sign-up page: fine.** It sends only to the first address on the sign-up and answers the same
+   either way. It is a requested message to an address already on the sign-up, not a new CASL exposure.
+5. **The removed-by-the-club line that stays until reconnected: fine.** It takes no side, names the contact, and nobody is emailed.
+6. **A sibling connected later (Session 1 open item 2): acceptable, the record is honest.** The stored text does not pretend the parent saw
+   the box for that child: it says the child was connected when placed, under the earlier acceptance (date and invitation). The parent is told
+   the same day by the "{team} is in your app" line in the placement email, and can Leave. Owner ruling 3 chose this. Do not change the stored
+   text to look like a fresh consent. **Before real families:** consider whether the attestation "I'm the parent of Leo, Ava and Maya" should
+   be asked again for a later sibling; the information shown is a team schedule the club already tied to that address, so the risk is low.
+7. **Not told to a parent (new finding):** the other connected parent sees their name once they join (Manage, ruling 7). Neither the accept
+   page nor (b) says so. Recommend one clause ("{child}'s other parent, if connected, can see your name"), with the 0.2 bump above.
+8. **R2 (the record names the children connected at Join, not the ones the page showed): still open, built-to-first before real families.**
+9. **FieldLogicHQ privacy page: still the blocker** (answer 3 of the Session 2 read). Fine for the owner's dev walk; the accept page's
+   "Draft wording — not final." line stays until it is published.
+10. **Coach-team invitation without a mailing address, and the second-parent fine print without (c)'s first sentence: confirmed acceptable**
+    on the conditions in answers 1 and 2 of the Session 2 read.
+11. **Blockers before the tier goes on for real families:** the published privacy page and its URL; R2; the 0.2 clauses in 3 and 7. **Fine for
+    the dev walk:** everything else. The privacy policy draft needs no new promise from this build beyond the follow-through list below,
+    plus: ended connections and consent records are kept (no retention period chosen).
 
 **Home rule:** when the build renders these words, the product copy (`lib/family-guardian-consent.ts` and the email builders) is the
 single source and this file is replaced by a pointer in `LEGAL_INDEX.md`.
@@ -129,10 +160,12 @@ Terms §20 sign-in screen comes first.
 
 ## (d) Stop confirm — second parent who has joined
 
-> You've joined {child}'s team in the app. Stopping removes you from it and ends your calendar link. {club} won't email this address
-> about any sign-up, and can't add it again.
+> You've joined {child}'s team in the app. Stopping removes you from it, and your calendar link stops showing its games. {club} won't
+> email this address about a sign-up someone else added it to, and can't add it again.
 
-(Shown only when the address joined through the second-parent invitation. The Stage 3b sentence above it stays.)
+(Shown only when the address joined through the second-parent invitation. The Stage 3b sentence above it stays. **Changed in 0.2, see
+the change log:** 0.1 said "ends your calendar link" and "about any sign-up"; as built the parent's one calendar address stays, and
+the same address may be the first parent on another child's sign-up, whose emails continue.)
 
 ## (e) Leave confirm
 

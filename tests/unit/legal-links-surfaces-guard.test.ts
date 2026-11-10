@@ -69,11 +69,9 @@ describe('the other surfaces follow the switch', () => {
     assert.match(code, /'legal',/); // the footer's marketing surface
   });
 
-  it('the account menu draws its legal line only from the provider, in the popover and the sheet', () => {
+  it('the account menu carries no legal link — the account page has them (owner 2026-11-09)', () => {
     const code = readCode('components/shared/AccountMenu.tsx');
-    assert.match(code, /useLegalLinks\(\)/);
-    assert.match(code, /if \(!legal\) return null/);
-    assert.equal((code.match(/legalLine\((?:true|false)\)/g) ?? []).length, 2);
+    assert.equal(/useLegalLinks|legal-words|legalLine|legalHref|termsHref|privacyHref/.test(code), false);
   });
 
   it('the account menu draws its separator above Sign out only when a row sits above it', () => {

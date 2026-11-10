@@ -310,8 +310,6 @@ export function buildSalesReport(input: SalesReportInput): SalesReport {
 const dollars = (cents: number) => (Math.abs(cents) / 100).toFixed(2);
 /** "$1,239.00"; below zero "minus $12.00" (negative money is in words: the return's formatter). */
 export const salesMoney = formatMoney;
-/** A figure taken off ("−$39.00"), or a dash for nothing. */
-export const takenOff = (cents: number) => (cents ? `−${formatCad(cents)}` : '—');
 
 export const SALES_WORDS = {
   mode: { live: 'Live sales', test: 'Test sales' },

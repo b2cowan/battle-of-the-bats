@@ -152,7 +152,8 @@ Drawings https://claude.ai/artifact/C56VdDqASJ4x53EoFWZjyk (source `HOUSE_LEAGUE
 - **9c·11** The family's status page **names the coach**. The club's "Coaches on team pages" setting keeps governing public
   pages.
 - **9c·12** Moving a child after publishing **asks first, then emails the family the new team**; both coaches' pages change at
-  once.
+  once. **Superseded 2026-11-10 by TC·1** (`HOUSE_LEAGUE_TEAM_CHANGE_EMAILS_PLAN.md`): moves now save at once and email nobody;
+  families are told together from one banner. The coaches' pages still change at once.
 
 ## 0g · Owner rulings 2026-10-26, the 9d-1 drawings (all twelve as recommended, by paste-back)
 
@@ -468,6 +469,16 @@ its first gate is the words' acceptance).
 walk **§451** written 2026-11-04 (§450 is the 9f-2 walk's): https://claude.ai/artifact/XBVRrJDBkK7uksrfX6CyS1 (source
 `HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_WALK.html`, fixture `.probe/season-page-walk/fixture.mjs`, three throwaway clubs, all public
 pages). **Walk §451 PASSED 20/20 2026-11-04** (A 2/2 · B 3/3 · C 5/5 · D 3/3 · E 4/4 · F 3/3). **The three open owner calls were closed 2026-11-04, all left as built.** Committed `aa6d1e72c` 2026-11-04. ⚠ That commit left two files unparseable on dev (a split doc comment in lib/house-league-season.ts and a bracket in the help article); fixed in `d9140209f` 2026-11-04 (Amplify jobs 370–372 had failed).
+
+## 0l · Team changes after publishing: one banner, one email per family (drawn and RULED 2026-11-10)
+
+Raised by the owner during the Family App walk (three siblings placed one by one meant three emails). Drawings
+https://claude.ai/artifact/DSwtAPGb9fJsoEZTTmAD5h (source `HOUSE_LEAGUE_TELL_FAMILIES_DRAWINGS.html`; `/design` pass applied).
+Rulings **TC·1 to TC·8**, the plan of record `HOUSE_LEAGUE_TEAM_CHANGE_EMAILS_PLAN.md`: moves save at once and email nobody
+(**supersedes 9c·12**); a banner holds the families not yet told; Review and email is one window with one email per family;
+Don't email is explicit, confirmed once, recorded, and counts children as told their current team; the email names only changed
+children; an amber "Not told" chip marks each; phone and confirmation pill as drawn. Words provisional until a `/marketing`
+pass. Build prompt `HOUSE_LEAGUE_TEAM_CHANGE_EMAILS_BUILD_PROMPT.md` written 2026-11-10; nothing built.
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 

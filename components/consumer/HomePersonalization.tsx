@@ -358,13 +358,11 @@ function WaitingWorkspaceCard({ door }: { door: StartDoor }) {
 function WorkspaceCard({ ctx }: { ctx: UserAccessContext }) {
   const Icon = KIND_ICON[ctx.kind];
   const accent = KIND_ACCENT[ctx.kind];
-  return (
-    <Link
-      href={ctx.destination}
-      className={styles.wsCard}
-      data-paused={ctx.paused ? 'true' : undefined}
-      onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'workspace', context: ctx.kind })}
-    >
+  // A paused card is a plain card, not a door: the page it opened held only "your teams are kept" and who to ask, and both
+  // are on the card now. The club's OWNER keeps the link — their wall carries a real action ("See plans").
+  const plain = !!ctx.paused && !ctx.pausedFor?.viewerIsOwner;
+  const body = (
+    <>
       <span className={styles.wsIcon} data-accent={accent} aria-hidden>
         <Icon size={19} strokeWidth={1.8} />
       </span>
@@ -378,7 +376,26 @@ function WorkspaceCard({ ctx }: { ctx: UserAccessContext }) {
           <span>{ctx.subtitle}</span>
           {ctx.detail && <span className={ctx.paused ? styles.wsMetaPaused : undefined}>{ctx.detail}</span>}
         </span>
+        {plain && (
+          <span className={styles.wsPausedNote}>
+            Your teams and records are kept.{' '}
+            {ctx.pausedFor?.ownerName ? `Ask ${ctx.pausedFor.ownerName} about the plan.` : 'Ask your club’s owner about the plan.'}
+          </span>
+        )}
       </span>
+    </>
+  );
+  if (plain) {
+    return <div className={styles.wsCard} data-paused="true" data-plain="true">{body}</div>;
+  }
+  return (
+    <Link
+      href={ctx.destination}
+      className={styles.wsCard}
+      data-paused={ctx.paused ? 'true' : undefined}
+      onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'workspace', context: ctx.kind })}
+    >
+      {body}
       <ChevronRight size={16} strokeWidth={2.2} className={styles.wsChevron} aria-hidden />
     </Link>
   );

@@ -60,7 +60,7 @@ describe('Part 6 — the /legal words, verbatim (draft b, d, e)', () => {
   });
   it('(d) the stop page, for an address that joined as the second parent', () => {
     assert.equal(W.stopJoined(['Aarav'], 'Riverdale Minor Ball League'),
-      'You’ve joined Aarav’s team in the app. Stopping removes you from it and ends your calendar link. Riverdale Minor Ball League won’t email this address about any sign-up, and can’t add it again.');
+      'You’ve joined Aarav’s team in the app. Stopping removes you from it, and your calendar link stops showing its games. Riverdale Minor Ball League won’t email this address about a sign-up someone else added it to, and can’t add it again.');
   });
   it('the drawn lines: joined note, connected line, removed line, the in-app foot', () => {
     assert.equal(W.team.joinedTitle(['Aarav']), 'You’ve joined Aarav’s team');

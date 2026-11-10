@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  bankCloseRow, checkView, checkedThrough, lineMatches, pickerSearch, readCents, readDay, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, STATUS_OF,
+  bankCloseRow, bankOverviewLine, checkView, checkedThrough, lineMatches, pickerSearch, readCents, readDay, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, STATUS_OF,
   startItemPlan, waitingIdsOf, type SaveFacts,
 } from '../../lib/bank-club-rules.ts';
 import { beforeStartLines, beforeStartWindow, type ClubSavedCheck, type EntryRow, type OnItsWay } from '../../lib/bank-club-map.ts';
@@ -161,6 +161,44 @@ describe('what the list shows', () => {
     assert.deepEqual(checkedThrough(checks, '2026-06-30'), { id: 'jun', date: '2026-06-30', result: 'matches', offByCents: 0 });
     assert.deepEqual(checkedThrough(checks, '2026-08-31')?.id, 'jun');
     assert.equal(checkedThrough(checks)?.id, 'sep');
+  });
+});
+
+describe('the Overview’s bank line is ONE line (owner 2026-11-09, drawings option A)', () => {
+  const ok = (date: string) => ({ id: `ck-${date}`, date, result: 'matches' as const, offByCents: 0 });
+  const offCheck = (date: string, offByCents: number) => ({ id: `ck-${date}`, date, result: 'off' as const, offByCents });
+  const acct = (id: string, checkedThrough: ReturnType<typeof ok> | ReturnType<typeof offCheck> | null) => ({ id, name: `Account ${id}`, checkedThrough });
+
+  it('no account: none, and nothing is off', () => {
+    assert.deepEqual(bankOverviewLine([]), { line: { kind: 'none' }, off: { count: 0 } });
+  });
+  it('one account keeps its own wording and door, checked or not', () => {
+    const a = acct('a', ok('2026-10-31'));
+    assert.deepEqual(bankOverviewLine([a]).line, { kind: 'one', account: a });
+    const n = acct('n', null);
+    assert.deepEqual(bankOverviewLine([n]).line, { kind: 'one', account: n });
+  });
+  it('several accounts, all checked: the OLDEST latest-check date, and the door is that account', () => {
+    const r = bankOverviewLine([acct('a', ok('2026-11-05')), acct('b', ok('2026-11-06')), acct('c', ok('2026-11-03'))]);
+    assert.deepEqual(r.line, { kind: 'oldest', date: '2026-11-03', door: 'c' });
+  });
+  it('a tie on the date keeps the Bank tab’s order', () => {
+    const r = bankOverviewLine([acct('a', ok('2026-11-05')), acct('b', ok('2026-11-05'))]);
+    assert.deepEqual(r.line, { kind: 'oldest', date: '2026-11-05', door: 'a' });
+  });
+  it('an account never checked wins over any date: "k of n not checked yet", door = the first of them', () => {
+    const r = bankOverviewLine([acct('a', ok('2026-11-05')), acct('b', null), acct('c', null)]);
+    assert.deepEqual(r.line, { kind: 'never', notChecked: 2, total: 3, door: 'b' });
+  });
+  it('the chip: one off check names its amount and opens that check; several count and open the Bank tab', () => {
+    const one = bankOverviewLine([acct('a', offCheck('2026-10-31', 1_240)), acct('b', ok('2026-11-06'))]);
+    assert.deepEqual(one.off, { count: 1, accountId: 'a', checkId: 'ck-2026-10-31', offByCents: 1_240, date: '2026-10-31' });
+    const many = bankOverviewLine([acct('a', offCheck('2026-10-31', 1_240)), acct('b', offCheck('2026-11-06', 300))]);
+    assert.deepEqual(many.off, { count: 2, accountId: null });
+  });
+  it('an off check does not change the sentence, only adds the chip', () => {
+    const r = bankOverviewLine([acct('a', offCheck('2026-10-31', 1_240)), acct('b', ok('2026-11-06'))]);
+    assert.deepEqual(r.line, { kind: 'oldest', date: '2026-10-31', door: 'a' });
   });
 });
 

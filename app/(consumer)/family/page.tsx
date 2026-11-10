@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import warm from '@/components/consumer/warmTheme.module.css';
 import styles from './family.module.css';
+import accountForm from '@/components/auth/AccountForm.module.css';
 import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 import { readFamilyHome } from '@/lib/family-home';
 import { familyFeedUrl } from '@/lib/family-calendar';
@@ -40,11 +41,11 @@ export default async function FamilyHomePage({ searchParams }: { searchParams: P
     return (
       <div className={warm.warm}>
         <div className={styles.page}>
-          <div className={styles.card}>
+          <div className={`${styles.card} ${styles.quietCard}`}>
             <h1 className={styles.joinTitle}>{W.family.signInTitle}</h1>
             <p className={styles.joinLede}>{W.family.signInBody}</p>
             <div className={styles.actions}>
-              <Link href={`/auth/login?next=${encodeURIComponent('/family')}`} className={styles.chip}>{W.family.signIn}</Link>
+              <Link href={`/auth/login?next=${encodeURIComponent('/family')}`} className={`${accountForm.primary} ${styles.quietButton}`}>{W.family.signIn}</Link>
             </div>
           </div>
         </div>
@@ -115,7 +116,7 @@ export default async function FamilyHomePage({ searchParams }: { searchParams: P
         {home.signups.map(s => <SignupRow key={s.registrationId} row={s} />)}
 
         {home.children.length === 0 && home.removed.length === 0 && (
-          <div className={styles.card}>
+          <div className={`${styles.card} ${styles.quietCard}`}>
             <h2 className={styles.joinTitle}>{W.family.emptyTitle}</h2>
             <p className={styles.joinLede}>{W.family.emptyBody}</p>
           </div>

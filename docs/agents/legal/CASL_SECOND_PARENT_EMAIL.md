@@ -6,6 +6,12 @@ sign-in invitation to the same address); any change to what the second parent's 
 **Depends on facts:** `LEGAL_FACTS.md` § Consent and email mechanics (no express opt-in at signup; unsubscribe at three
 levels); the build prompt `docs/projects/active/SIGNED_IN_FAMILY_STAGE3_BUILD_PROMPT.md` (Progress block, owner questions 1–6)
 
+**Stage 4a shipped 2026-11-08 (switched off) — re-read against the build, nothing in the finding changed.** The second parent's copy now
+carries an invitation panel and a sender line with the club's mailing address (O3), and the Stop link also ends a second-parent connection
+(mig 453). The invitation is to see the child's own team, promotes nothing (condition 6), and goes only to an address on the child's sign-up,
+so on this memo's reading it adds no new CEM exposure. A stopped address can still be a first parent (O2); the Stage 3b stop page's sentences
+overshoot for that case (see the Stage 4 consent draft's closeout read, answer 1). Re-verify again with Bill C-36 or a Québec customer.
+
 ## Question(s) this answers
 A house-league parent can type a second parent's email on the sign-up. The club's system then emails that address copies of
 the sign-up confirmation, status, pay link, team, schedule and "Email families" messages. The address is typed by someone else

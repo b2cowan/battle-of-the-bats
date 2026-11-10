@@ -1,0 +1,476 @@
+<title>Team Change Emails</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: a document on a cool slate ground (the house layout): sticky tab row, a View row on the tab that compares,
+   one section at a time. Product specimens sit inside the product's own warm skin so they read as specimens. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --ok: #2E6B3A; --ok-soft: #E2F0E4; --warn: #8A5A00;
+  --warn-soft: #F7ECD4; --bad: #A2321F; --bad-soft: #F6E0DA;
+  --doc-sans: 'Inter', system-ui, sans-serif; --doc-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1280px; margin: 0 auto; }
+header.doc { padding-block: 22px 10px; }
+header.doc h1 { font: 700 30px/1.1 var(--doc-display); letter-spacing: .01em; margin: 0 0 6px; text-wrap: balance; }
+header.doc p { margin: 0; color: var(--muted); max-width: 78ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); overflow-x: auto; white-space: nowrap; }
+nav.tabs button { font: 600 14px var(--doc-sans); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 13px 12px 11px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+nav.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+section.panel { display: none; } section.panel.on { display: block; }
+h2 { font: 700 24px/1.15 var(--doc-display); margin: 18px 0 6px; letter-spacing: .01em; text-wrap: balance; }
+h3 { font: 650 16px/1.3 var(--doc-sans); margin: 22px 0 6px; }
+p, li { max-width: 82ch; } .muted { color: var(--muted); }
+.lede { font-size: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card h3 { margin-top: 0; }
+.tag { display: inline-block; font: 600 11px/1 var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; vertical-align: 2px; }
+.t-new { background: var(--accent-soft); color: var(--accent); } .t-chg { background: var(--warn-soft); color: var(--warn); } .t-same { background: var(--line); color: var(--muted); }
+.tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+table.cmp { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13.5px; }
+table.cmp th { font: 700 12px var(--doc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+table.cmp td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.cmp td:first-child { font-weight: 650; width: 230px; }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); }
+.spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.stack { display: flex; flex-direction: column; gap: 22px; width: max-content; }
+.row2 { display: flex; gap: 22px; align-items: flex-start; width: max-content; }
+.lbl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.lbl.after { color: var(--accent); }
+.mk { min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 2px solid transparent; background: var(--mark); color: var(--mark-ink); font: 700 11px/18px var(--doc-mono); text-align: center; cursor: pointer; display: inline-block; vertical-align: 1px; margin-right: 4px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; } .ask p { margin: 4px 0; }
+.rec { font-weight: 650; color: var(--accent); }
+.build { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; }
+body.only-diff .same { opacity: .22; filter: grayscale(1); }
+@media (prefers-reduced-motion: no-preference) { .ask { transition: outline-color .3s; } }
+
+/* ───────── PRODUCT SPECIMEN (the warm skin as shipped; fixed colours in both document themes) ───────── */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #776D5D; --line: rgba(70,55,30,.12);
+  --line2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --amber-soft: #F4E7CF; --red: #B23A26; --red-soft: #F9E3DE; --tint: #ECEADF;
+  position: relative; background: var(--paper); color: var(--ink); font: 400 14px/1.4 'Inter', sans-serif;
+  border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.12); flex: none; padding: 16px; }
+.fr * { box-sizing: border-box; }
+.fr.w860 { width: 860px; } .fr.w560 { width: 560px; } .fr.w440 { width: 440px; } .fr.w390 { width: 390px; padding: 12px; }
+.fr svg { flex: none; display: block; }
+.fr .btn { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 6px; font: 600 14px 'Inter'; background: var(--white); color: var(--ink); border: 1px solid var(--line2); white-space: nowrap; cursor: pointer; }
+.fr .btn.lime { background: var(--lime); border-color: transparent; }
+.fr .btn.quiet { border-color: transparent; background: none; color: var(--ink2); text-decoration: underline; text-underline-offset: 3px; padding: 0 6px; font-weight: 600; }
+.fr .btn[disabled] { opacity: .45; cursor: default; }
+.fr .panelbox { background: var(--white); border: 1px solid var(--line2); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.fr .dhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fr .dhead h4 { margin: 0; font: 700 18px 'Inter'; }
+.fr .pill { display: inline-flex; align-items: center; min-height: 28px; padding: 0 12px; border-radius: 999px; font: 600 13px 'Inter'; color: #3F5A1B; background: rgba(87,101,30,.08); border: 1px solid rgba(87,101,30,.28); }
+.fr .sp { flex: 1; }
+/* The shipped Callout (RepKit): white card, hairline, 3px coloured left edge, a tone icon; the action sits level at the right. */
+.fr .co { --tone: #835006; display: flex; gap: 10px; align-items: center; padding: 12px 16px; border-radius: 8px; background: var(--white); border: 1px solid var(--line); border-left: 3px solid var(--tone); }
+.fr .co::before { content: ""; flex: none; width: 18px; height: 18px; background: var(--tone); align-self: flex-start; margin-top: 2px;
+  -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+.fr .co .tx { flex: 1; min-width: 0; font-size: 14px; }
+.fr .co .tx small { display: block; font-size: 12.5px; color: var(--ink2); margin-top: 2px; font-weight: 400; }
+.fr .co.warn { --tone: #C98A12; --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3'/%3E%3Cpath d='M12 9v4'/%3E%3Cpath d='M12 17h.01'/%3E%3C/svg%3E"); }
+.fr .co.info { --tone: #3A6FB0; --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4'/%3E%3Cpath d='M12 8h.01'/%3E%3C/svg%3E"); }
+.fr .co .acts { display: flex; gap: 8px; align-items: center; flex: none; }
+.fr .quietline { margin: 0; font-size: 12.5px; color: var(--ink3); max-width: none; }
+.fr .teams { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.fr .tc { border: 1px solid var(--line2); border-radius: 10px; padding: 12px 0 4px; background: var(--white); }
+.fr .tc .th { padding: 0 12px 8px; display: flex; flex-direction: column; gap: 1px; }
+.fr .tc .th b { font: 700 14px 'Inter'; display: flex; align-items: center; gap: 7px; }
+.fr .tc .th .dotc { width: 10px; height: 10px; border-radius: 50%; }
+.fr .tc .th small { font-size: 12.5px; color: var(--ink2); }
+.fr .kid { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-top: 1px solid var(--line); font-size: 14px; }
+.fr .kid .age { margin-left: auto; color: var(--ink3); font: 400 12px 'IBM Plex Mono'; }
+.fr .nt { margin-left: auto; font: 600 10px 'IBM Plex Mono'; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid rgba(131,80,6,.3); color: var(--amber); background: var(--amber-soft); white-space: nowrap; }
+.fr .nt + .age { margin-left: 10px; }
+.fr .scrim { position: absolute; inset: 0; background: rgba(36,30,21,.38); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.fr .dlg { background: var(--white); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.28); width: 100%; max-width: 416px; overflow: hidden; }
+.fr .dlg .dh { padding: 16px 18px 4px; font: 700 17px/1.25 'Inter'; }
+.fr .dlg .dh small { display: block; font: 400 13px 'Inter'; color: var(--ink2); margin-top: 3px; }
+.fr .dlg .db { padding: 10px 18px 14px; }
+.fr .dlg .db p { margin: 0 0 8px; font-size: 14px; color: var(--ink2); max-width: none; }
+.fr .dlg .df { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line2); background: #FBF9F4; }
+.fr .dlg .df .l { margin-right: auto; font-size: 13px; color: var(--ink2); }
+.fr .fam { border: 1px solid var(--line2); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; background: var(--white); }
+.fr .fam .fh { display: flex; align-items: center; gap: 8px; }
+.fr .fam .fh b { font: 700 14px 'Inter'; }
+.fr .fam .fh small { font: 400 11.5px 'IBM Plex Mono'; color: var(--ink3); }
+.fr .fam .ln { display: flex; align-items: center; gap: 8px; font-size: 14px; flex-wrap: wrap; }
+.fr .chip { font: 600 10px 'IBM Plex Mono'; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.fr .chip.new { color: var(--olive); background: var(--olive-soft); border-color: rgba(87,101,30,.3); }
+.fr .chip.mv { color: var(--amber); background: var(--amber-soft); border-color: rgba(131,80,6,.3); }
+.fr .chip.off { color: var(--ink3); background: #EFEBE2; border-color: var(--line2); }
+.fr .fam.off { background: #F4F0E8; }
+.fr .fam.off .ln, .fr .fam.off .fh b { color: var(--ink3); text-decoration: line-through; text-decoration-color: rgba(36,30,21,.3); }
+.fr .fam .offnote { font-size: 13px; color: var(--ink2); display: none; }
+.fr .fam.off .offnote { display: block; }
+.fr .nothing { font-size: 13px; color: var(--ink2); padding: 8px 12px; border: 1px dashed var(--line2); border-radius: 10px; }
+.fr .hrow { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.fr .hrow small { grid-column: 1 / -1; color: var(--ink2); font-size: 12.5px; }
+/* The shipped confirmation (NoticePill / save pill): white pill, hairline, soft shadow, a green tick, quiet grey words; pinned bottom-right on the real screen. */
+.fr .toast { display: inline-flex; align-items: center; gap: 6px; background: var(--white); color: var(--ink3); font: 600 12.5px 'Inter'; min-height: 36px; padding: 6px 13px; border-radius: 999px; border: 1px solid var(--line2); box-shadow: 0 2px 8px rgba(70,55,30,.14); }
+.fr .toast::before { content: ""; width: 14px; height: 14px; background: #2E7D4F;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat; }
+.fr .mail { background: var(--white); border: 1px solid var(--line2); border-radius: 10px; overflow: hidden; }
+.fr .mail .mh { padding: 10px 16px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink2); }
+.fr .mail .mh b { color: var(--ink); }
+.fr .mail .mb { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; font-size: 14.5px; }
+.fr .mail .mb p { margin: 0; max-width: none; }
+.fr .mail .ml { border: 1px solid var(--line2); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.fr .mail .ml small { color: var(--ink2); font-size: 13px; }
+.fr .mail .mbtn { align-self: flex-start; }
+.fr .sheet { margin: 12px -12px -12px; background: var(--white); border-radius: 14px 14px 8px 8px; border-top: 1px solid var(--line2); box-shadow: 0 -8px 24px rgba(0,0,0,.14); padding: 8px 14px 14px; }
+.fr .sheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--line2); margin: 0 auto 10px; }
+.fr .mk { position: static; }
+.fr .tap { min-height: 44px; }
+.fr .stackbtns { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.fr .stackbtns .btn { height: 44px; justify-content: center; }
+.fr .phacts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.fr .phacts .btn { min-height: 44px; flex: 1 1 auto; justify-content: center; }
+</style>
+
+<div class="wrap">
+<header class="doc">
+  <h1>Team Change Emails</h1>
+  <p>House league, after a division is published. Moves save at once and nobody is emailed. One banner keeps the list of families not yet told; you email them together or choose not to. Drawn from the shipped Teams screen, the banner pattern it already uses for &ldquo;Send the 2 again&rdquo;, and its dialog.</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" aria-selected="true" data-tab="t1">1 · The banner</button>
+  <button role="tab" aria-selected="false" data-tab="t2">2 · Review and email</button>
+  <button role="tab" aria-selected="false" data-tab="t3">3 · Don&rsquo;t email</button>
+  <button role="tab" aria-selected="false" data-tab="t4">4 · Whole screen</button>
+  <button role="tab" aria-selected="false" data-tab="t5">5 · The email</button>
+  <button role="tab" aria-selected="false" data-tab="t6">6 · Phone</button>
+  <button role="tab" aria-selected="false" data-tab="t7">7 · Asks</button>
+</nav>
+
+<div class="viewrow" id="viewrow" hidden>
+  <span>View</span>
+  <span class="seg" role="group" aria-label="View">
+    <button type="button" id="vAll" aria-pressed="true">Everything</button>
+    <button type="button" id="vDiff" aria-pressed="false">Show only what differs</button>
+  </span>
+  <span>Dimmed areas are identical before and after.</span>
+</div>
+
+<!-- ═════════ 1 · THE BANNER ═════════ -->
+<section class="panel on" id="t1">
+  <h2>One banner holds the families not yet told</h2>
+  <p class="lede">After a move the board does nothing loud. A banner under the published notice counts the families who haven&rsquo;t been told and offers two plain choices. It stays until you pick one, so it cannot be forgotten and nothing is lost if you reload.</p>
+
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="1">1</button>The banner, three families</b><span>Same Callout the screen already uses (amber, with actions on the right). Shows only to people who can run the division.</span></div>
+    <div class="stage"><div class="stack">
+      <div class="fr w860">
+        <div class="co warn" role="status">
+          <div class="tx"><b>3 families haven&rsquo;t been told about team changes.</b><small>Their status pages and the family app already show the new teams.</small></div>
+          <div class="acts"><button class="btn" type="button">Don&rsquo;t email</button><button class="btn lime" type="button">Review and email</button></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>Other states</b><span>One family; right after sending; right after choosing not to; nothing waiting (no banner at all).</span></div>
+    <div class="stage"><div class="stack">
+      <div class="fr w860">
+        <div class="lbl" style="font-family:'IBM Plex Mono',monospace">One family</div>
+        <div class="co warn"><div class="tx"><b>1 family hasn&rsquo;t been told about a team change.</b><small>Their status page and the family app already show the new team.</small></div><div class="acts"><button class="btn" type="button">Don&rsquo;t email</button><button class="btn lime" type="button">Review and email</button></div></div>
+      </div>
+      <div class="fr w860">
+        <div class="lbl" style="font-family:'IBM Plex Mono',monospace">After Send: the banner leaves and the screen&rsquo;s own confirmation pill appears at the bottom right for a few seconds (no second callout beside the published notice)</div>
+        <span class="toast">Emailed 3 families at 10:42 a.m.</span>
+      </div>
+      <div class="fr w860">
+        <div class="lbl" style="font-family:'IBM Plex Mono',monospace">After Don&rsquo;t email: the same pill</div>
+        <span class="toast">Not emailing 3 families. Saved in Email families.</span>
+      </div>
+      <div class="fr w860">
+        <div class="lbl" style="font-family:'IBM Plex Mono',monospace">If a send fails: the shipped banner, unchanged</div>
+        <div class="co warn"><div class="tx"><b>2 of 3 emails couldn&rsquo;t be sent. Their status pages show the team.</b></div><div class="acts"><button class="btn" type="button">Send the 2 again</button></div></div>
+      </div>
+    </div></div>
+  </div>
+  <p class="build">Build notes: the shipped Callout with its action slot (the same one that carries &ldquo;Send the {n} again&rdquo;); buttons are the kit&rsquo;s outline and lime. Words are drafts for the copy pass.</p>
+</section>
+
+<!-- ═════════ 2 · REVIEW AND EMAIL ═════════ -->
+<section class="panel" id="t2">
+  <h2>One window, one email per family</h2>
+  <p class="lede">Review and email opens a window that lists every family and exactly what they will be told. This one works: press &ldquo;Don&rsquo;t email this family&rdquo; on a row and watch the count change.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="2">2</button>Review window</b><span>Replaces the one-player &ldquo;Move and email&rdquo; and &ldquo;Place and email&rdquo; windows. Built on the kit&rsquo;s dialog.</span></div>
+    <div class="stage"><div class="fr w560" style="padding:20px">
+      <div class="dlg" style="max-width:none">
+        <div class="dh">Email 3 families about team changes?<small>Each family gets one email with what changed for their children.</small></div>
+        <div class="db" id="famList">
+          <div class="fam" data-fam>
+            <div class="fh"><b>Cowan family</b><small>b2cowan+kids@gmail.com</small><span class="sp"></span><button class="btn quiet" type="button" data-toggle>Don&rsquo;t email this family</button></div>
+            <div class="ln">Ava <span class="chip new">New</span> Jays</div>
+            <div class="ln">Zane <span class="chip new">New</span> Jays</div>
+            <div class="ln">Maya <span class="chip new">New</span> Cardinals</div>
+            <div class="offnote">Not emailed. Their status page still shows the teams.</div>
+          </div>
+          <div class="fam" data-fam>
+            <div class="fh"><b>Reyes family</b><small>ana.reyes@example.com</small><span class="sp"></span><button class="btn quiet" type="button" data-toggle>Don&rsquo;t email this family</button></div>
+            <div class="ln">Lucia <span class="chip new">New</span> Jays</div>
+            <div class="ln">Mateo <span class="chip mv">Moved</span> Hawks &rarr; Jays</div>
+            <div class="offnote">Not emailed. Their status page still shows the teams.</div>
+          </div>
+          <div class="fam" data-fam>
+            <div class="fh"><b>Okafor family</b><small>c.okafor@example.com</small><span class="sp"></span><button class="btn quiet" type="button" data-toggle>Don&rsquo;t email this family</button></div>
+            <div class="ln">Tobi <span class="chip mv">Moved</span> Cardinals &rarr; Jays</div>
+            <div class="offnote">Not emailed. Their status page still shows the team.</div>
+          </div>
+          <div class="nothing">Nothing to send to the Patel family: Priya moved and came back to Hawks, the team they were last told.</div>
+          <p class="quietline" style="margin-top:8px"><a href="#t5" data-goto="t5" style="color:var(--olive);font-weight:600">See an example email</a></p>
+        </div>
+        <div class="df"><span class="l" id="famCount">One email per family &middot; 3 emails</span><button class="btn" type="button">Cancel</button><button class="btn lime" type="button" id="famSend">Send to 3 families</button></div>
+      </div>
+    </div></div>
+    <p class="build">Build notes: KitDialog (kind question), footer-start count as the held-move window has today. A family row that is switched off is dimmed with its lines struck through and the line &ldquo;Not emailed&rdquo; added; the button then reads &ldquo;Email this family&rdquo;. A family whose net change is nothing is not a row; it is one quiet line so you can see why they are missing. A moved child shows where they were last told, not where they were a minute ago.</p>
+  </div>
+</section>
+
+<!-- ═════════ 3 · DON'T EMAIL ═════════ -->
+<section class="panel" id="t3">
+  <h2>Choosing not to email is one confirmed click, and it is on the record</h2>
+  <p class="lede">The in-front-of-the-parents case. The banner&rsquo;s Don&rsquo;t email asks once, then clears. The choice is saved in the season&rsquo;s Email families history, and Send again on any child&rsquo;s registration record still emails later.</p>
+  <div class="cols">
+    <div class="spec"><div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="3">3</button>Confirm</b></div>
+      <div class="stage"><div class="fr w440" style="padding:20px">
+        <div class="dlg" style="max-width:none">
+          <div class="dh">Don&rsquo;t email 3 families?</div>
+          <div class="db"><p>Their status pages and the family app already show the new teams. Nobody is emailed about these changes.</p><p>This is saved in Email families. You can still email any family later from their registration with Send again.</p></div>
+          <div class="df"><span class="l"></span><button class="btn" type="button">Cancel</button><button class="btn lime" type="button">Don&rsquo;t email</button></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="spec"><div class="cap"><b><span class="tag t-new">New</span> The record, on Email families</b><span>One row for each of the two outcomes.</span></div>
+      <div class="stage"><div class="fr w440">
+        <div class="hrow"><b>Team changes</b><span>Nov 9 · 10:42 a.m.</span><small>3 families emailed · by RC</small></div>
+        <div class="hrow"><b>Team changes</b><span>Nov 9 · 10:15 a.m.</span><small>Not emailed (3 families) · by RC</small></div>
+        <div class="hrow"><b>Publish: Division A</b><span>Nov 2 · 9:00 a.m.</span><small>24 families emailed</small></div>
+      </div></div>
+    </div>
+  </div>
+  <p class="build">Build notes: the history row uses the same notice list Publish already writes to. After a skip, each child counts as &ldquo;told&rdquo; the team they are on now, so a later move says &ldquo;moved from Cardinals&rdquo; (ruled).</p>
+</section>
+
+<!-- ═════════ 4 · WHOLE SCREEN ═════════ -->
+<section class="panel" id="t4">
+  <h2>The whole Teams screen, before and after</h2>
+  <p class="lede">What the board is for stays where it is. The held-move window goes; one banner and a small amber &ldquo;Not told&rdquo; chip per untold child arrive. Same six moves in both frames.</p>
+
+  <div class="spec">
+    <div class="cap"><b>Before</b><span>Maya is dragged to Cardinals and a window asks. Three siblings means three windows and three emails.</span></div>
+    <div class="stage"><div class="fr w860" style="padding-bottom:20px">
+      <div class="lbl before" style="font-family:'IBM Plex Mono',monospace">Before · today</div>
+      <div class="panelbox">
+        <div class="dhead"><h4>Division A</h4><span class="pill">Published Nov 2</span></div>
+        <div class="co info same"><div class="tx"><b>Published Nov 2. 24 families emailed.</b></div></div>
+        <p class="quietline"><span class="tag t-chg">Changes</span> Moving a player now emails their family. There is no unpublish: families already have the email.</p>
+        <div class="teams same">
+          <div class="tc"><div class="th"><b><i class="dotc" style="background:#2C6E49"></i>Jays</b><small>Coach Dana Whitfield</small></div><div class="kid">Noah Brandt<span class="age">U9</span></div><div class="kid">Sam Ito<span class="age">U9</span></div></div>
+          <div class="tc"><div class="th"><b><i class="dotc" style="background:#B23A26"></i>Cardinals</b><small>Coach Pat Moore</small></div><div class="kid">Lena Cho<span class="age">U9</span></div><div class="kid">Tobi Okafor<span class="age">U9</span></div></div>
+          <div class="tc"><div class="th"><b><i class="dotc" style="background:#3A5E9A"></i>Hawks</b><small>Coach Sue Alvarez</small></div><div class="kid">Priya Patel<span class="age">U9</span></div><div class="kid">Ellis Park<span class="age">U9</span></div></div>
+        </div>
+      </div>
+      <div class="scrim"><div class="dlg">
+        <div class="dh">Put Maya Cowan on Cardinals?</div>
+        <div class="db"><p>The Cowan family gets an email with Maya&rsquo;s team and coach.</p></div>
+        <div class="df"><span class="l">1 email</span><button class="btn" type="button">Cancel</button><button class="btn lime" type="button">Place and email</button></div>
+      </div></div>
+    </div></div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b><button class="mk" data-ask="4">4</button> After</b><span>Six children moved by drag, no windows. The banner counts the three families; amber chips show which children are untold.</span></div>
+    <div class="stage"><div class="fr w860" style="padding-bottom:20px">
+      <div class="lbl after" style="font-family:'IBM Plex Mono',monospace">After · proposed</div>
+      <div class="panelbox">
+        <div class="dhead same"><h4>Division A</h4><span class="pill">Published Nov 2</span></div>
+        <div class="co info same"><div class="tx"><b>Published Nov 2. 24 families emailed.</b></div></div>
+        <div class="co warn"><div class="tx"><b><button class="mk" data-ask="1">1</button>3 families haven&rsquo;t been told about team changes.</b><small>Their status pages and the family app already show the new teams.</small></div><div class="acts"><button class="btn" type="button">Don&rsquo;t email</button><button class="btn lime" type="button">Review and email</button></div></div>
+        <p class="quietline"><span class="tag t-new">New</span> Moving a player doesn&rsquo;t email anyone. You choose when families are told. There is no unpublish.</p>
+        <div class="teams">
+          <div class="tc"><div class="th"><b><i class="dotc" style="background:#2C6E49"></i>Jays</b><small>Coach Dana Whitfield</small></div><div class="kid same">Noah Brandt<span class="age">U9</span></div><div class="kid same">Sam Ito<span class="age">U9</span></div><div class="kid">Ava Cowan<span class="nt">Not told</span><span class="age">U9</span></div><div class="kid">Zane Cowan<span class="nt">Not told</span><span class="age">U9</span></div><div class="kid">Lucia Reyes<span class="nt">Not told</span><span class="age">U9</span></div><div class="kid">Mateo Reyes<span class="nt">Not told</span><span class="age">U9</span></div><div class="kid">Tobi Okafor<span class="nt">Not told</span><span class="age">U9</span></div></div>
+          <div class="tc"><div class="th"><b><i class="dotc" style="background:#B23A26"></i>Cardinals</b><small>Coach Pat Moore</small></div><div class="kid same">Lena Cho<span class="age">U9</span></div><div class="kid"><span><button class="mk" data-ask="4">4</button>Maya Cowan</span><span class="nt">Not told</span><span class="age">U9</span></div></div>
+          <div class="tc same"><div class="th"><b><i class="dotc" style="background:#3A5E9A"></i>Hawks</b><small>Coach Sue Alvarez</small></div><div class="kid">Priya Patel<span class="age">U9</span></div><div class="kid">Ellis Park<span class="age">U9</span></div></div>
+        </div>
+        <p class="quietline">A &ldquo;Not told&rdquo; chip means their family hasn&rsquo;t been told that team yet. Priya has none: she came back to Hawks.</p>
+      </div>
+    </div></div>
+  </div>
+  <p class="build">Build notes: the board, drag and drop and the Move to&hellip; menu are untouched. The dot is a quiet marker on the existing player row; no new column. The banner sits where the shipped &ldquo;Send the {n} again&rdquo; banner sits, directly under the published notice.</p>
+</section>
+
+<!-- ═════════ 5 · THE EMAIL ═════════ -->
+<section class="panel" id="t5">
+  <h2>One email per family, about what changed</h2>
+  <p class="lede">Today&rsquo;s &ldquo;moved&rdquo; email names one child, so a family with two children gets two. The new email names every child who changed and says whether each is new or moved.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="5">5</button>The Reyes family&rsquo;s email</b><span>One child placed for the first time, one moved. Wording is a draft for the copy pass.</span></div>
+    <div class="stage"><div class="fr w560" style="padding:20px">
+      <div class="mail">
+        <div class="mh">Subject: <b>Team changes for Lucia and Mateo · Spring 2027</b></div>
+        <div class="mb">
+          <p>Hi Ana,</p>
+          <p>Here is what changed for your children in Division A.</p>
+          <div class="ml"><b>Lucia: Jays</b><small>New team · Coach Dana Whitfield</small></div>
+          <div class="ml"><b>Mateo: Jays</b><small>Moved from Hawks · Coach Dana Whitfield</small></div>
+          <p>Their status page always shows their current teams.</p>
+          <span class="btn lime mbtn">Your sign-up</span>
+          <p class="quietline">The button shows only while a sign-up has an amount owing, as in the Publish email.</p>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h3>Who gets what</h3>
+  <div class="tablewrap"><table class="cmp">
+    <thead><tr><th>What you did</th><th>What the family is told</th></tr></thead>
+    <tbody>
+      <tr><td>Placed a child accepted late</td><td>&ldquo;New team&rdquo; line, with the coach.</td></tr>
+      <tr><td>Moved a child once</td><td>&ldquo;Moved from {team}&rdquo; line, with the new coach.</td></tr>
+      <tr><td>Moved a child Cardinals &rarr; Jays &rarr; Hawks</td><td>&ldquo;Moved from Cardinals&rdquo;, the last team they were told. The Jays step never appears.</td></tr>
+      <tr><td>Moved a child and moved them back</td><td>Nothing. The family isn&rsquo;t in the list.</td></tr>
+      <tr><td>Changed three siblings</td><td>One email naming all three.</td></tr>
+      <tr><td>Took a child off a team</td><td>Nothing, as today. They return to Not on a team until you place them.</td></tr>
+      <tr><td>Family has a second parent</td><td>The second parent&rsquo;s copy goes out as it does with every family email today.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ═════════ 6 · PHONE ═════════ -->
+<section class="panel" id="t6">
+  <h2>On a phone</h2>
+  <p class="lede">Drawn at 390 px wide inside a fixed frame. Open this page on the actual phone before ruling; a laptop at any zoom answers the wrong question. Both buttons are at least 44 px tall.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="6">6</button>Banner, then the review form</b><span>The banner&rsquo;s buttons go under its words, as the shipped Callout does. The review window is a form, so it fills the phone with &larr; at the top and the foot kept on one row, as every form window does.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w390">
+        <div class="lbl" style="font-family:'IBM Plex Mono',monospace">Banner</div>
+        <div class="dhead" style="margin-bottom:10px"><h4>Division A</h4><span class="pill">Published</span></div>
+        <div class="co warn">
+          <div class="tx"><b>3 families haven&rsquo;t been told about team changes.</b><small>Their status pages and the family app already show the new teams.</small>
+            <div class="phacts"><button class="btn" type="button">Don&rsquo;t email</button><button class="btn lime" type="button">Review and email</button></div></div>
+        </div>
+        <div class="tc" style="margin-top:10px;border:1px solid var(--line2);border-radius:10px;background:#fff;padding:12px 0 4px"><div class="th" style="padding:0 12px 8px"><b style="font:700 14px Inter">Jays</b></div><div class="kid">Ava Cowan<span class="nt">Not told</span><span class="age">U9</span></div><div class="kid">Zane Cowan<span class="nt">Not told</span><span class="age">U9</span></div></div>
+      </div>
+      <div class="fr w390" style="padding:0;overflow:hidden">
+        <div class="lbl" style="font-family:'IBM Plex Mono',monospace;padding:10px 12px 0">Review and email: a form fills the phone</div>
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 12px 8px;border-bottom:1px solid var(--line2);background:#fff;margin-top:6px">
+          <span style="width:44px;height:44px;display:grid;place-items:center;margin-left:-10px;font-size:20px">&larr;</span>
+          <div><div style="font:700 16px/1.25 Inter">Email 3 families?</div><div style="font-size:12.5px;color:var(--ink2)">Each family gets one email with what changed.</div></div>
+        </div>
+        <div style="padding:12px;background:var(--paper)">
+          <div class="fam"><div class="fh"><b>Cowan family</b></div><div class="ln">Ava <span class="chip new">New</span> Jays</div><div class="ln">Zane <span class="chip new">New</span> Jays</div><div class="ln">Maya <span class="chip new">New</span> Cardinals</div><button class="btn quiet tap" type="button" style="align-self:flex-start">Don&rsquo;t email this family</button></div>
+          <div class="fam"><div class="fh"><b>Reyes family</b></div><div class="ln">Lucia <span class="chip new">New</span> Jays</div><div class="ln">Mateo <span class="chip mv">Moved</span> Hawks &rarr; Jays</div><button class="btn quiet tap" type="button" style="align-self:flex-start">Don&rsquo;t email this family</button></div>
+          <div class="nothing">More families scroll here. The foot stays put.</div>
+        </div>
+        <div class="df" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line2);background:#FBF9F4">
+          <span class="l" style="margin-right:auto;font-size:13px;color:var(--ink2)">3 emails</span><button class="btn tap" type="button">Cancel</button><button class="btn lime tap" type="button">Send to 3 families</button>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ═════════ 7 · ASKS ═════════ -->
+<section class="panel" id="t7">
+  <h2>Asks</h2>
+  <p class="lede">Each has a recommendation. Anything you don&rsquo;t answer goes in as recommended.</p>
+  <div class="ask" id="ask1"><h3><span class="mk" style="cursor:default">1</span>The banner stays until you act, and only people who run the division see it</h3>
+    <p class="rec">Recommended: yes.</p><p>No timer, no auto-send, no prompt when you leave the page. The banner is there when you come back. People who can view the division but not run it see nothing. The division picker also gets the small amber count it already supports for divisions that are waiting on something, so you can see an untold division from the list.</p></div>
+  <div class="ask" id="ask2"><h3><span class="mk" style="cursor:default">2</span>Per family: Don&rsquo;t email this family, inside the review window</h3>
+    <p class="rec">Recommended: yes.</p><p>For the family in front of you. A family you switch off stays out of this send and counts as told.</p></div>
+  <div class="ask" id="ask3"><h3><span class="mk" style="cursor:default">3</span>Don&rsquo;t email: one confirm, saved to Email families, treated as told</h3>
+    <p class="rec">Recommended: yes.</p><p>After a skip, each child counts as told the team they are on now. A later move then says &ldquo;moved from Cardinals&rdquo;, which is true. Send again on a registration still emails them any time.</p></div>
+  <div class="ask" id="ask4"><h3><span class="mk" style="cursor:default">4</span>A small amber &ldquo;Not told&rdquo; chip on each untold child</h3>
+    <p class="rec">Recommended: yes, a chip with words, only on children, never on team cards.</p><p>It answers &ldquo;who does the banner mean?&rdquo; without opening the window. I drew it as a chip, not a dot: the design log says a plain dot carries no information and removed one for that reason. Tell me if you would rather the board stay completely unmarked.</p></div>
+  <div class="ask" id="ask5"><h3><span class="mk" style="cursor:default">5</span>The email names only the children who changed</h3>
+    <p class="rec">Recommended: changed children only.</p><p>A parent with three children whose one child moved sees one line. The alternative lists every child every time, which repeats what they already know and hides what changed.</p></div>
+  <div class="ask" id="ask6"><h3><span class="mk" style="cursor:default">6</span>Phone: banner buttons under the words, review as a full-screen form</h3>
+    <p class="rec">Recommended: yes, exactly as the shipped Callout and form windows behave.</p><p>Same button order as desktop (outline, then lime). Every button is at least 44 px tall. The per-family Don&rsquo;t email button is a text button, so it gets its own 44 px row inside each family.</p></div>
+  <div class="ask"><h3>Also changing, no decision needed</h3>
+    <p>The old line &ldquo;Moving a player now emails their family&rdquo; is replaced. The one-player Move and email and Place and email windows are removed. Taking a player off a team still emails nobody. The Place and email help text, the help article and the family-app walk are rewritten after the build.</p></div>
+</section>
+</div>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('nav.tabs button');
+  var panels = document.querySelectorAll('section.panel');
+  var viewrow = document.getElementById('viewrow');
+  function show(id) {
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === id ? 'true' : 'false'); });
+    panels.forEach(function (p) { p.classList.toggle('on', p.id === id); });
+    viewrow.hidden = id !== 't4';
+    if (id !== 't4') document.body.classList.remove('only-diff');
+    else document.body.classList.toggle('only-diff', document.getElementById('vDiff').getAttribute('aria-pressed') === 'true');
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); }); });
+  var vAll = document.getElementById('vAll'), vDiff = document.getElementById('vDiff');
+  function setView(diff) {
+    vAll.setAttribute('aria-pressed', diff ? 'false' : 'true');
+    vDiff.setAttribute('aria-pressed', diff ? 'true' : 'false');
+    document.body.classList.toggle('only-diff', diff);
+  }
+  vAll.addEventListener('click', function () { setView(false); });
+  vDiff.addEventListener('click', function () { setView(true); });
+  document.querySelectorAll('.mk[data-ask]').forEach(function (m) {
+    m.addEventListener('click', function () {
+      show('t7');
+      var a = document.getElementById('ask' + m.dataset.ask);
+      if (a) { a.scrollIntoView({ block: 'center' }); a.classList.add('flash'); setTimeout(function () { a.classList.remove('flash'); }, 1400); }
+    });
+  });
+  document.querySelectorAll('[data-goto]').forEach(function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); show(a.dataset.goto); });
+  });
+  var list = document.getElementById('famList'), count = document.getElementById('famCount'), send = document.getElementById('famSend');
+  function recount() {
+    var all = list.querySelectorAll('[data-fam]');
+    var n = 0; all.forEach(function (f) { if (!f.classList.contains('off')) n++; });
+    // When nothing can go, the button is ABSENT (not greyed) and the foot says why (design rulings 2026-10-12).
+    count.textContent = n === 0 ? 'Every family is switched off. Nothing will be sent.' : 'One email per family · ' + n + (n === 1 ? ' email' : ' emails');
+    count.style.color = n === 0 ? '#835006' : '';
+    send.hidden = n === 0;
+    send.textContent = 'Send to ' + n + (n === 1 ? ' family' : ' families');
+  }
+  list.querySelectorAll('[data-toggle]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var fam = btn.closest('[data-fam]');
+      var off = fam.classList.toggle('off');
+      btn.textContent = off ? 'Email this family' : 'Don’t email this family';
+      recount();
+    });
+  });
+})();
+</script>

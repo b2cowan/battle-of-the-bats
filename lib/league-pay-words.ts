@@ -133,6 +133,9 @@ export const SIGNUP_LINK_WORDS = {
     bodyMany: (season: string) => `You asked for the links to your sign-ups in ${season}. There is one for each sign-up.`,
     forChildren: (children: string) => `For ${children}`,
     button: 'Your sign-up',
+    // The placement and moved emails, when the app invitation holds their one big button: the money link drops to a line.
+    owedLine: 'There’s still a payment due on your sign-up.',
+    owedLink: 'See what’s owed',
     notYou: 'Didn’t ask for this? You can ignore it. Your link has not changed.',
     reference: (ref: string) => `Reference ${ref}. Quote it if you contact the club.`,
     because: 'someone asked for this link on the club’s site',

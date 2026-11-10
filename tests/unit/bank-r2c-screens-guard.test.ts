@@ -467,15 +467,28 @@ describe('12. BC5a: the Overview line and the fiscal-year close row (ask 4, R0 t
     assert.match(marks, /checkedThrough: checkedThrough\(a\.checks\)/);
     assert.doesNotMatch(marks, /year|asOf|lastDay/i);
   });
-  it('one line per account, each a door to the Bank tab on it; the off chip a door to that check; never a figure', () => {
-    assert.match(line, /marks\.accounts\.map\(a =>/);
-    assert.match(line, /<Link href=\{bankTabHref\(accountingBase, a\.id\)\} className=\{s\.overviewDoor\}>/);
-    assert.match(line, /t\?\.result === 'off' && \(\s*<Link href=\{bankTabHref\(accountingBase, a\.id, t\.id\)\} className=\{s\.chipDoor\}/);
-    assert.match(line, /<RepChip tone="warn">\{W\.offBy\(cents\(t\.offByCents\)\)\}<\/RepChip>/);
+  it('ONE line whatever the number of accounts (owner 2026-11-09): the pure rule decides, the line is a door, the chip a door; never a figure', () => {
+    // Never a list of accounts again: that stack grew the heading row a line per account and pushed the tiles down.
+    assert.doesNotMatch(line, /marks\.accounts\.map\(|accounts\.map\(/);
+    assert.match(line, /bankOverviewLine\(marks\?\.accounts \?\? \[\]\)/);
+    assert.match(line, /<Link href=\{href\} className=\{s\.overviewDoor\}>/);
+    assert.match(line, /<Link href=\{door\(off\.accountId, off\.checkId\)\} className=\{s\.chipDoor\}/);
+    assert.match(line, /<RepChip tone="warn">\{W\.offBy\(cents\(off\.offByCents\)\)\}<\/RepChip>/);
+    assert.match(line, /<RepChip tone="warn">\{W\.offCount\(off\.count\)\}<\/RepChip>/);
     assert.doesNotMatch(line, /bankCents|booksCents|shouldBe/);
   });
   it('no account: a writer’s door to the first check; a reader sees no line', () => {
-    assert.match(line, /marks\.accounts\.length === 0\s*\? \(marks\.canMove \? \[/);
+    assert.match(line, /if \(line\.kind === 'none'\) \{[^}]*if \(marks\?\.canMove\) \{ words = [^]*?invite = true; \}/);
+  });
+  it('S2 (A3): until the first check the line INVITES — one door, both lines — for a writer; the count and the checked lines are as they were', () => {
+    // The two not-checked states a person can act on: one account never checked, and no account yet (a writer).
+    assert.match(line, /invite = !t && !!marks\?\.canMove;/);
+    assert.match(line, /<Link href=\{href\} className=\{`\$\{s\.overviewDoor\} \$\{s\.overviewInvite\}`\}>\s*<span className=\{s\.inviteMain\}>\{W\.inviteLead\}<ChevronRight size=\{14\} aria-hidden \/><\/span>\s*<span className=\{s\.inviteNote\}>\{W\.inviteNote\}<\/span>\s*<\/Link>/);
+    // "1 of 3 not checked yet" keeps its count (an invitation would hide it): the 'never' branch never sets `invite`.
+    const never = line.slice(line.indexOf("line.kind === 'never'"), line.indexOf('} else {', line.indexOf("line.kind === 'never'")));
+    assert.doesNotMatch(never, /invite/);
+    assert.equal(BANK_WORDS.inviteLead, 'Check your bank balance');
+    assert.equal(BANK_WORDS.inviteNote, 'Type what the bank shows to see if you’re in step.');
   });
   it('the Bank tab opens on the door’s account and check; `check` is read once and dropped, `account` STAYS in the address (S2, A16)', () => {
     const tab = readCode(`${DIR}/BankTab.tsx`);

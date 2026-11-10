@@ -499,7 +499,7 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
 > renderings). Record pages put their name and back link in the strip on desktop; their buttons sit at the top right
 > of the page (A8). Nothing in Phase 3 adds a desktop small line.
 
-> **Built 2026-11-09** (one session, after round 5 was ruled the same night). Committed `4959122d2` 2026-11-09; owner walk §499 owed.
+> **Built 2026-11-09** (one session, after round 5 was ruled the same night). Committed `4959122d2` 2026-11-09; owner walk §499 PASSED 28/28 2026-11-09 (F1 and F2 kept as built).
 
 - [x] **The mechanism** (`lib/admin-kit-nav.ts`): `clubPlaceAt` names Phase 3's screens. A NAMED SCREEN (`namedScreen`: a
       title, no tabs) for Calendar, Schedules, Notifications, House league's Seasons (`facts: ['House league']`), the Public
@@ -597,7 +597,7 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
 
 ### Phase 4 — Words, help, demos, verify
 
-**As built 2026-11-09 (swept, fixed, closing walk §501 published; owner walk and commit owed).** NO screen changed.
+**As built 2026-11-09 (swept, fixed, closing walk §501 PASSED 15/15 2026-11-09; the help-text edits committed `e3c825ece` 2026-11-09).** NO screen changed.
 `/docs` sweep (helper-found, each cited line opened): FIXED `org.tsx` "places-and-tabs" (a team's account is NOT a
 tab-less record page — it stays inside Accounting's Teams tab; the example is now a child's page / a team's past season, the
 back arrow "in the header", View site "a globe on a phone", searchText matched) and `tournaments.tsx` (Preview site article:
@@ -618,7 +618,23 @@ help sentences changed, no screen. No `/review` (no code changed).
 - [x] (skipped, no screen changed) `npm run check:layout --changed` on the touched screens (dev server); the whole-product layout sweep runs as
       the release step on staging (`/release` §1d-5), not on the dev server
 - [ ] /design pass on the built screens against the drawings; /review
-- [x] PUBLISHED (§501, https://claude.ai/artifact/AuvY9SdtZ6bjhtrNhRVFsV; owner result owed) Owner walk as a checkable Artifact (QA ledger §), phone + desktop, one purpose: the bar on every screen type
+- [x] PASSED 15/15 2026-11-09 (§501, https://claude.ai/artifact/AuvY9SdtZ6bjhtrNhRVFsV; A9 cancelled-club page not walked, no such club on hand) Owner walk as a checkable Artifact (QA ledger §), phone + desktop, one purpose: the bar on every screen type
+
+### After this project — queued by the owner 2026-11-08 (walk §495)
+
+- [ ] **Navigation evaluation across all three areas (separate project, starts when Phase 4 closes).** Owner: the
+      desktop strip + sidebar-club-cell model should reach the tournament and coaches areas "in the right places" so
+      the product feels like one app. Evaluate the top and side navigations of the tournament admin and the coaches
+      portal against the new model and carry over only what fits. ⚠ This is the reason the Architectural Decision
+      "the coaches portal is untouched" (below) is scoped to THIS project only; the evaluation may reverse it.
+      The tournament admin already takes the Phase 1/2D shape (it lives in the same bar and strip); the real gap is
+      the coaches portal. Start from the 2026-09-21 one-line phone masthead ruling and the 2026-08-25 "phone title
+      band stays" ruling as reference, not authority.
+- [ ] **Owner ask (walk §495 C1): the collapsed sidebar's club tile shows the org's own logo when one is uploaded**
+      (today: the club's initials). Nothing is decided: first confirm which logo the org has (the public site's) and
+      whether the admin needs its own upload, then draw it. Belongs in the evaluation above or its own small unit.
+      **Owner 2026-11-09: folded into the evaluation as a drawing-and-ask only** (prompt
+      `ADMIN_NAV_EVALUATION_PLAN_PROMPT.md`); any upload/storage it needs is planned as its own later build phase.
 
 ## Architectural Decisions
 

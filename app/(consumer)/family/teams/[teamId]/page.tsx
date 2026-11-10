@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import warm from '@/components/consumer/warmTheme.module.css';
 import styles from '../../family.module.css';
+import accountForm from '@/components/auth/AccountForm.module.css';
 import FamilyTeamClient from './FamilyTeamClient';
 import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 import { getOrgForGate, getVerifiedLinkForUserTeam } from '@/lib/family-access';
@@ -51,11 +52,11 @@ function Shell({ children }: { children: React.ReactNode }) {
 function Quiet({ title, body, action }: { title: string; body: string; action: { href: string; label: string } }) {
   return (
     <Shell>
-      <div className={styles.card}>
+      <div className={`${styles.card} ${styles.quietCard}`}>
         <h1 className={styles.joinTitle}>{title}</h1>
         <p className={styles.joinLede}>{body}</p>
         <div className={styles.actions}>
-          <Link href={action.href} className={styles.chip}>{action.label}</Link>
+          <Link href={action.href} className={`${accountForm.primary} ${styles.quietButton}`}>{action.label}</Link>
         </div>
       </div>
     </Shell>

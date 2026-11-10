@@ -63,7 +63,7 @@ const LAYERS: Record<string, { file: string; selector?: string; inline?: true }>
   newRoom: { file: 'components/chat/NewRoomDialog.module.css', selector: '.backdrop' },
   // The shared windows the admin shell renders (the census, 2026-10-18).
   chatManage: { file: 'components/chat/ChatManagePanel.module.css', selector: '.backdrop' },
-  feedback: { file: 'components/feedback/FeedbackWidget.tsx', inline: true },
+  // (Send feedback left this list: it is a KitDialog now — `kitForm` above is its layer.)
   earlyAccess: { file: 'components/EarlyAccessModalTrigger.module.css', selector: '.overlay' },
   planPanel: { file: 'components/billing/PlanArticlePanel.module.css', selector: '.backdrop' },
   helpDrawer: { file: 'components/help/help.module.css', selector: '.helpDrawerBackdrop' },

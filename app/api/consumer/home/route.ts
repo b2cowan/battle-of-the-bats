@@ -13,7 +13,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { withObservability } from '@/lib/observability';
-import { getUserAccessContexts, getLapsedWorkspacesForUser, getHiddenWorkspaces, filterWorkspaceContexts } from '@/lib/user-contexts';
+import { getUserAccessContexts, getLapsedWorkspacesForUser, getHiddenWorkspaces, filterWorkspaceContexts, type UserAccessContext } from '@/lib/user-contexts';
+import { orgOwnerDisplayName } from '@/lib/member-names';
 import { getFollowedTeamsForUser, getFollowedTournamentsForUser, getFollowedOrgsForUser } from '@/lib/fan-follows';
 import { getFollowFeed } from '@/lib/follow-feed';
 import { rollupFollowFeedByTournament, mergeWholeEventIntoRollup, type ConsumerHomePayload } from '@/lib/home-following';
@@ -112,7 +113,16 @@ export const GET = withObservability(async () => {
     getOrgFollowRollups(orgInputs),
   ]);
   const following = mergeWholeEventIntoRollup(teamRollup, wholeEventCards);
-  const workspaces = filterWorkspaceContexts(contexts);
+  // A paused card (the club's plan no longer carries the Coaches Portal) is a plain card, not a door: it names who to ask.
+  // The one exception is the club's OWNER, whose portal wall offers "See plans" — so theirs stays a link. The owner's name
+  // is one small read per paused card, and only here, never on sign-in or the Workspaces menu.
+  const ownedOrgIds = new Set(contexts.filter(c => c.kind === 'organization' && c.role === 'owner' && c.orgId).map(c => c.orgId!));
+  const workspaces = await Promise.all(filterWorkspaceContexts(contexts).map(async (c): Promise<UserAccessContext> => {
+    if (!c.paused || !c.orgId) return c;
+    const viewerIsOwner = ownedOrgIds.has(c.orgId);
+    const ownerName = viewerIsOwner ? null : await orgOwnerDisplayName(c.orgId).catch(() => null);
+    return { ...c, pausedFor: { ownerName, viewerIsOwner } };
+  }));
 
   // Account-First Sign-up (A4, revised 2026-10-19): an account that came from a start sign-up keeps a workspace waiting
   // for its name until that team, league or organization is made — beside any other workspace (owner: "otherwise they

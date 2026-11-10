@@ -1,4 +1,4 @@
-**Written 2026-11-09. S2 committed `0147063c5` 2026-11-09 (own hunks only; the club Overview invitation line — BankOverviewLine.tsx, the .overviewInvite styles, two club pins in bank-r2c-screens-guard — still sits uncommitted in the working copy and rides with the other session's one-line club Overview commit); walk Owner QA Ledger §503 owed; record in the plan §4; next S3.**
+**Written 2026-11-09. S2 committed `0147063c5` 2026-11-09 (own hunks only; the club Overview invitation line — BankOverviewLine.tsx, the .overviewInvite styles, two club pins in bank-r2c-screens-guard — still sits uncommitted in the working copy and rides with the other session's one-line club Overview commit); walk Owner QA Ledger §503 PASSED 23/23 2026-11-09; record in the plan §4; next S3.**
 
 # Bank check through a volunteer's eyes — S2 (the door) — build prompt, one session
 

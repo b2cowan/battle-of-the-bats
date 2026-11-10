@@ -1,0 +1,480 @@
+<title>Family App Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column of cards; each step is Do / See so nothing is left to guess. Same house look as before. */
+:root{
+  --bg:#f6f6f2; --panel:#ffffff; --fg:#1d2320; --muted:#5d665f; --line:#d9dcd3;
+  --accent:#1f5f4a; --accent-fg:#ffffff; --pass:#1f7a4d; --issue:#b3261e; --call:#9a6700;
+  --chip:#eceee6; --mark:#fff3c4; --seebg:#eef5f0;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-data: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --panel:#1b221f; --fg:#e6ebe7; --muted:#9aa59d; --line:#2e3833;
+  --accent:#6fcfa6; --accent-fg:#0d1612; --pass:#58c98d; --issue:#ff8a80; --call:#e5b94c;
+  --chip:#232c28; --mark:#4a4220; --seebg:#1f2b25; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --panel:#1b221f; --fg:#e6ebe7; --muted:#9aa59d; --line:#2e3833;
+  --accent:#6fcfa6; --accent-fg:#0d1612; --pass:#58c98d; --issue:#ff8a80; --call:#e5b94c;
+  --chip:#232c28; --mark:#4a4220; --seebg:#1f2b25; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);line-height:1.5;
+  padding-block:20px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;text-wrap:balance}
+h2{font-size:1.1rem;margin:0;text-wrap:balance}
+p{margin:0}
+code,.mono{font-family:var(--font-data);font-size:.85em;background:var(--chip);padding:1px 5px;border-radius:4px;word-break:break-word}
+.lede{color:var(--muted);max-width:68ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.signin{border-left:4px solid var(--accent)}
+dl.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;min-width:0;word-break:break-word}
+@media (max-width:520px){dl.kv{grid-template-columns:1fr}dl.kv dt{margin-top:6px}}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.bar progress{flex:1;min-width:120px;height:10px;accent-color:var(--accent)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:8px;padding:6px 12px}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+ol.steps>li{display:flex;gap:10px;align-items:flex-start;padding-top:14px;border-top:1px solid var(--line)}
+ol.steps>li:first-child{padding-top:0;border-top:0}
+ol.steps>li>input[type=checkbox]{margin-top:4px;width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.step{min-width:0;display:flex;flex-direction:column;gap:6px;flex:1}
+.step>label{font-weight:600}
+li.done .step>label{color:var(--muted)}
+.row{display:grid;grid-template-columns:3.4rem 1fr;gap:8px;min-width:0}
+.row>b{font-size:.72em;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.row>div{min-width:0}
+.row.see>div{background:var(--seebg);border-radius:6px;padding:6px 10px}
+.row ol,.row ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
+.row p+p{margin-top:4px}
+.where{color:var(--muted);font-size:.9em}
+.who{display:inline-block;font-size:.72em;font-weight:600;padding:1px 8px;border-radius:99px;background:var(--chip);color:var(--muted);margin-left:6px;vertical-align:1px}
+.verdict{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.verdict button[aria-pressed="true"].v-pass{background:var(--pass);color:#fff;border-color:var(--pass)}
+.verdict button[aria-pressed="true"].v-issue{background:var(--issue);color:#fff;border-color:var(--issue)}
+.verdict button[aria-pressed="true"].v-call{background:var(--call);color:#fff;border-color:var(--call)}
+textarea{width:100%;min-height:54px;font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px;box-sizing:border-box}
+.call{background:var(--mark);padding:12px 14px;border-radius:8px}
+.note{background:var(--mark);border-radius:8px;padding:8px 10px}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--chip);padding:10px;border-radius:8px;margin:0;font-family:var(--font-data);font-size:.85em;max-height:340px;overflow:auto}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92em}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.8em;text-transform:uppercase;letter-spacing:.05em}
+</style>
+
+<main>
+<header class="card" style="gap:6px">
+  <h1>Family app walk · Stage 4a</h1>
+  <p class="lede">A parent gets an invitation in the placement email, joins once, and sees every child's team. Every step below says where to click (Do) and what you should see (See). Allow about two hours: part 0 builds the test families, and the rest uses them in order.</p>
+</header>
+
+<section class="card signin" aria-label="Before you start">
+  <h2>Before you start</h2>
+  <dl class="kv">
+    <dt>App</dt><dd><code>http://localhost:3000</code> with the dev server running. If you have not restarted it today: stop it, delete <code>.next</code>, run <code>npm run dev</code>, wait for Ready.</dd>
+    <dt>The club</dt><dd>Organization <strong>Dev League Org</strong> (address <code>/dev-league-org/admin</code>). The season is <strong>Dev House League 2026</strong>, with two divisions: <strong>Division A</strong> (teams Cardinals, Jays, Orioles) and <strong>Division B</strong> (Tigers, Cubs, Braves). Both divisions were already published on Oct 26, so there is no Publish button to press anywhere in this walk. You get the placement email by placing a child on a team or by pressing Send again (parts 1 and 7 explain).</dd>
+    <dt>Club admin login</dt><dd>One of the club's owner or admin logins: <code>owner@dev.local</code> (most recently used), <code>league-owner@dev.local</code> or <code>league-clubadmin@dev.local</code>. Use the password you normally use for dev logins. This is your <strong>main window</strong> and you stay signed in there all walk.</dd>
+    <dt>Parent inbox</dt><dd>Your own Gmail with "+" addresses, which all land in your one inbox. This walk assumes your address is <code>b2cowan@gmail.com</code>; if it is not, swap in yours everywhere you see <code>b2cowan+…</code>. Each email's "To" line tells you which family it is for.
+      <ul style="margin:6px 0 0;padding-left:1.2em">
+        <li><code>b2cowan+mum@gmail.com</code> the first parent</li>
+        <li><code>b2cowan+dad@gmail.com</code> the second parent</li>
+        <li><code>b2cowan+kids@gmail.com</code> the family with three or four children</li>
+        <li><code>b2cowan+owes@gmail.com</code> the family that owes money</li>
+        <li><code>b2cowan+adult@gmail.com</code> the family of a player aged 18 or older</li>
+        <li><code>b2cowan+rep@gmail.com</code> the rep-club guardian (part 9)</li>
+      </ul></dd>
+    <dt>Parent window</dt><dd>A <strong>private window</strong> for whoever you are pretending to be. All private windows of one browser share their sign-in, so only one parent can be signed in at a time there. <strong>Sign out before you switch to the next parent</strong> (account menu, the person icon labelled Account). To be two people at once, open the second one in a different browser.</dd>
+    <dt>Rep coach login</dt><dd><code>uat-club-coach-15aaa@uat-rep-club.local</code>, password <code>UAT_REP_CLUB_COACH_PASSWORD</code> in your <code>.env.local</code>. The coach is head coach of "15U AAA" in UAT Rep Club.</dd>
+  </dl>
+  <p class="where">Every test child below has the surname <strong>Walkthru</strong>, so you can find and clean them up afterwards.</p>
+</section>
+
+<div class="bar" role="status">
+  <progress id="prog" value="0" max="1"></progress>
+  <span id="progText" class="mono">0 of 0</span>
+  <button class="primary" id="summaryBtn" type="button">Build summary</button>
+</div>
+
+<section class="card" id="p0" data-part="0">
+  <h2>0 · Get ready (about 10 minutes)</h2>
+  <p class="where">Nothing in this part is emailed. Do it once, in your main window. The test children are already added (step 0c).</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s0a"><div class="step"><label for="s0a">The family-app switch is on</label>
+      <div class="row"><b>Do</b><div>Open <code>.env.local</code> and check the line <code>GUARDIAN_TIER_ENABLED</code>. Confirm <code>RESEND_API_KEY</code>, <code>UNSUBSCRIBE_SECRET</code> and <code>CALENDAR_LINK_SECRET</code> are also set.</div></div>
+      <div class="row see"><b>See</b><div>The switch already reads <code>true</code> (the earlier draft of this walk said it was false; that was out of date). Leave it. If it says false, set it to true and restart the dev server. Part 10 turns it off again at the end.</div></div></div></li>
+    <li><input type="checkbox" id="s0b"><div class="step"><label for="s0b">Give the club a contact email and a mailing address <span class="who">Main window</span></label>
+      <div class="row"><b>Do</b><div><ol>
+        <li>Sign in as the club admin and open Dev League Org.</li>
+        <li>Left menu: <strong>Public site</strong>, then click the <strong>About us</strong> row.</li>
+        <li>In "Families' questions go to" type <code>b2cowan@gmail.com</code>.</li>
+        <li>In "Mailing address" type <code>100 Test Street, Toronto ON M5V 1A1</code>. Save.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>The Mailing address box is there (it only appears because the switch is on). Both boxes were empty before: until they are filled, the app will not send any family invitation.</div></div></div></li>
+    <li><input type="checkbox" id="s0c"><div class="step"><label for="s0c">Check the test children (already added for you, none placed yet) <span class="who">Main window</span></label>
+      <div class="row"><b>Do</b><div><ol>
+        <li>The nine children in the table below were added to the dev club for you on Nov 9 (same as pressing Add registration for each). Nobody is on a team and none has a second parent.</li>
+        <li>Left menu: <strong>House league</strong>, open <strong>Dev House League 2026</strong>, tab <strong>Registrations</strong>, Active list. Search "Walkthru" and check all nine are there.</li>
+        <li>Each later part tells you exactly when to place a child on a team.</li></ol>
+        <div class="tablewrap" style="margin-top:8px"><table>
+          <thead><tr><th>Child</th><th>Email (first parent)</th><th>Division</th><th>Placed in</th><th>Used for</th></tr></thead>
+          <tbody>
+          <tr><td>Leo Walkthru</td><td><code>+mum</code></td><td>Division A</td><td>Jays (part 1)</td><td>The basic invitation; second parent in part 4</td></tr>
+          <tr><td>Sam Walkthru</td><td><code>+owes</code></td><td>Division A</td><td>Cardinals (part 1)</td><td>Money owed; expired link</td></tr>
+          <tr><td>Jordan Walkthru, age 19</td><td><code>+adult</code></td><td>Division A</td><td>Orioles (part 1)</td><td>No invitation for 18 or older</td></tr>
+          <tr><td>Ava Walkthru</td><td><code>+kids</code></td><td>Division A</td><td>Jays (part 3)</td><td>Three siblings, two teams</td></tr>
+          <tr><td>Zane Walkthru</td><td><code>+kids</code></td><td>Division A</td><td>Jays (part 3)</td><td>Same</td></tr>
+          <tr><td>Maya Walkthru</td><td><code>+kids</code></td><td>Division A</td><td>Cardinals (part 3)</td><td>Same; Leave in part 5</td></tr>
+          <tr><td>Kit Walkthru</td><td><code>+kids</code></td><td>Division A</td><td>Orioles (part 3d)</td><td>Placed late; moved later</td></tr>
+          <tr><td>Ruby Walkthru</td><td><code>+dad</code></td><td>Division A</td><td>Orioles (part 4)</td><td>A parent who already has an account</td></tr>
+          <tr><td>Nina Walkthru</td><td><code>+dad</code></td><td>Division A</td><td>Never placed</td><td>A child with no team yet (part 6)</td></tr>
+          </tbody></table></div></div></div>
+      <div class="row see"><b>See</b><div>Nine rows under Active, all "Walkthru". Open Sam's record: the $150 season fee should show as owed (the data check says all nine are unpaid). Division A's capacity was raised from 12 to 20 so all nine fit; you can set it back to 12 when you finish. Adding a child sends no email to the family (only a notification to club admins), so your inbox stays quiet until you place someone.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p0"></div><textarea id="n0" aria-label="Notes for part 0" data-notes="p0" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p1" data-part="1">
+  <h2>1 · The placement email</h2>
+  <p class="where">Placing a child on a team in a division that is already published emails their family straight away, and with the family app on, that email carries the invitation.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s1a"><div class="step"><label for="s1a">Place Leo on Jays <span class="who">Main window</span></label>
+      <div class="row"><b>Do</b><div><ol>
+        <li>House league → Dev House League 2026 → tab <strong>Teams &amp; draft</strong>.</li>
+        <li>In the Division picker choose <strong>Division A</strong>.</li>
+        <li>Find Leo in the <strong>Not on a team</strong> pool. Press the <strong>…</strong> on his row, then <strong>Move to…</strong>, then <strong>Jays</strong>.</li>
+        <li>The window asks "Put Leo on Jays?". Press <strong>Place and email</strong>.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>Leo is on the Jays card. An email goes to <code>b2cowan+mum</code> within a minute.</div></div></div></li>
+    <li><input type="checkbox" id="s1b"><div class="step"><label for="s1b">Read the email <span class="who">Your inbox</span></label>
+      <div class="row"><b>Do</b><div>Open the email sent to <code>b2cowan+mum@gmail.com</code>, subject "The teams are set — Dev House League 2026".</div></div>
+      <div class="row see"><b>See</b><div>The usual team details for Leo on Jays, then an invitation panel with a button <strong>Join Leo's team</strong> and fine print starting "This invitation is for …", saying it works for 30 days and to tell Dev League Org at b2cowan@gmail.com. There is no plan, price or offer anywhere in the panel.</div></div></div></li>
+    <li><input type="checkbox" id="s1c"><div class="step"><label for="s1c">A sign-up with money owed <span class="who">Main + inbox</span></label>
+      <div class="row"><b>Do</b><div>Place Sam on Cardinals the same way (Division A, Sam's <strong>…</strong>, Move to…, Cardinals, Place and email). Open the email sent to <code>b2cowan+owes</code>.</div></div>
+      <div class="row see"><b>See</b><div>A "Your sign-up" button stays in the body of the email, and the invitation panel's own button sits below it.</div></div></div></li>
+    <li><input type="checkbox" id="s1d"><div class="step"><label for="s1d">A player aged 18 or older <span class="who">Main + inbox</span></label>
+      <div class="row"><b>Do</b><div>Place Jordan (19) on Orioles. Open the email sent to <code>b2cowan+adult</code>.</div></div>
+      <div class="row see"><b>See</b><div>The usual placement email with no invitation panel at all. If Add registration refused a 19-year-old in this division, press Needs a call and say so in the notes.</div></div></div></li>
+    <li><input type="checkbox" id="s1e"><div class="step"><label for="s1e">The address is not in the link <span class="who">Your inbox</span></label>
+      <div class="row"><b>Do</b><div>In Leo's email, hover over (do not click) the Join Leo's team button and read the link at the bottom of the browser.</div></div>
+      <div class="row see"><b>See</b><div>A web address ending in <code>/family/claim/</code> and a long random code. Your <code>b2cowan+mum</code> address does not appear in it.</div></div></div></li>
+    <li><input type="checkbox" id="s1f"><div class="step"><label for="s1f">Send again refuses when the club has no mailing address <span class="who">Main window</span></label>
+      <div class="row"><b>Do</b><div><ol>
+        <li>Public site → About us: clear the Mailing address and save.</li>
+        <li>House league → Dev House League 2026 → Registrations → open Leo's record. On the Email row press <strong>Send again</strong>.</li>
+        <li>Put the mailing address back (<code>100 Test Street, Toronto ON M5V 1A1</code>) and save.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>"Nothing was sent. That address can't be invited to this child right now." No email arrives. After you restore the address, nothing else changes.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p1"></div><textarea id="n1" aria-label="Notes for part 1" data-notes="p1" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p2" data-part="2">
+  <h2>2 · The accept page, state by state</h2>
+  <p class="where">Use your private window for everything except the Send again step. Leo's email (to +mum) is the main one. Sam's (to +owes) is used for the refusal and expiry states.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s2a"><div class="step"><label for="s2a">New account: the address check <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Signed out, click <strong>Join Leo's team</strong> in Leo's email. First type a wrong address, <code>b2cowan+wrong@gmail.com</code>.</div></div>
+      <div class="row see"><b>See</b><div>The page asks "Type the email this invitation was sent to" and shows the right address half hidden. The wrong address is refused without revealing the real one. You are not signed in and the page shows no team details yet.</div></div></div></li>
+    <li><input type="checkbox" id="s2b"><div class="step"><label for="s2b">Choose a password, then the words <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Type <code>b2cowan+mum@gmail.com</code>. On the next screen choose a password (8 or more characters) and note it down. Continue.</div></div>
+      <div class="row see"><b>See</b><div>A "Before you join" screen with the consent words, two boxes that are not ticked, and the line "Draft wording — not final." The Join button cannot be pressed until both boxes are ticked.</div></div></div></li>
+    <li><input type="checkbox" id="s2c"><div class="step"><label for="s2c">Join <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Tick both boxes and press Join.</div></div>
+      <div class="row see"><b>See</b><div>You land on the family page with "You've joined Leo's team". No confirmation email arrives and you were never asked to confirm anything.</div></div></div></li>
+    <li><input type="checkbox" id="s2d"><div class="step"><label for="s2d">Already joined <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Click the same <strong>Join Leo's team</strong> button in Leo's email again.</div></div>
+      <div class="row see"><b>See</b><div>"You've already joined" with an Open button.</div></div></div></li>
+    <li><input type="checkbox" id="s2e"><div class="step"><label for="s2e">Signed in as a different person <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Sign out. Sign in as the rep coach (login in "Before you start"). Then click <strong>Join Sam's team</strong> in the email sent to <code>b2cowan+owes</code>.</div></div>
+      <div class="row see"><b>See</b><div>The page refuses, names the half-hidden address the invitation was for, and offers Sign out. It does not join anyone. Sign out when done.</div></div></div></li>
+    <li><input type="checkbox" id="s2f"><div class="step"><label for="s2f">Expired: a newer invitation replaces the old one <span class="who">Main + private</span></label>
+      <div class="row"><b>Do</b><div><ol>
+        <li>Main window: House league → Dev House League 2026 → Registrations → open Sam's record. On the Email row it says "Invited {today}". Press <strong>Send again</strong>.</li>
+        <li>A second email arrives for <code>+owes</code>. In the private window, click the button in the FIRST (older) Sam email.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>Main window: "Sent to b2cowan+owes@gmail.com." Private window: "This invitation has expired" with an "Email me a new invitation" button. Press it: a third email arrives.</div></div></div></li>
+    <li><input type="checkbox" id="s2g"><div class="step"><label for="s2g">Finish Sam's join (needed for part 6) <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Use the newest Sam email: address <code>b2cowan+owes@gmail.com</code>, a new password (note it down), both boxes, Join.</div></div>
+      <div class="row see"><b>See</b><div>"You've joined Sam's team". Sign out.</div></div></div></li>
+    <li><input type="checkbox" id="s2h"><div class="step"><label for="s2h">A link that no longer works <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Copy any invitation link, then change the last five characters of the long code and open it.</div></div>
+      <div class="row see"><b>See</b><div>A page saying the link no longer works, naming the club contact (b2cowan@gmail.com) and not saying why. There is no sign-in button.</div></div></div></li>
+    <li><input type="checkbox" id="s2i"><div class="step"><label for="s2i">Two states are checked later</label>
+      <div class="row"><b>Do</b><div>Nothing here. "Existing account" (the email step leads to "Your password" with "Forgot your password") and "signed in already as the invited address" (skips straight to the words) are both walked in part 4, step 4f.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p2"></div><textarea id="n2" aria-label="Notes for part 2" data-notes="p2" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p3" data-part="3">
+  <h2>3 · Three siblings, two teams, one acceptance</h2>
+  <p class="where">The <code>+kids</code> family: Ava, Zane and Maya now, Kit later.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s3a"><div class="step"><label for="s3a">Place the three <span class="who">Main window</span></label>
+      <div class="row"><b>Do</b><div>Teams &amp; draft, Division A. Place <strong>Ava</strong> and <strong>Zane</strong> on <strong>Jays</strong>, and <strong>Maya</strong> on <strong>Cardinals</strong> (each: … → Move to… → team → Place and email).</div></div>
+      <div class="row see"><b>See</b><div>Three emails arrive for <code>+kids</code>. Ignore them; the next step sends one email that covers all three and replaces these.</div></div></div></li>
+    <li><input type="checkbox" id="s3b"><div class="step"><label for="s3b">One email, one button <span class="who">Main + inbox</span></label>
+      <div class="row"><b>Do</b><div>Registrations → open Ava's record → Email row → <strong>Send again</strong>. Open the new email.</div></div>
+      <div class="row see"><b>See</b><div>"Sent to b2cowan+kids@gmail.com." One email with one button that names both teams. Open the button in the private window (signed out): the consent text says you are the parent or legal guardian of Ava, Zane and Maya.</div></div></div></li>
+    <li><input type="checkbox" id="s3c"><div class="step"><label for="s3c">Join once, see everyone <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Join (new password, note it down). Then open the account menu (person icon, Account).</div></div>
+      <div class="row see"><b>See</b><div>The "Your family" page lists both teams: Jays with Ava and Zane, and Cardinals with Maya. The account menu has a "Your family" row. Then sign out, sign in as the rep coach and open the same menu: that account (no connected child) does not have the row. Sign out.</div></div></div></li>
+    <li><input type="checkbox" id="s3d"><div class="step"><label for="s3d">Place one more sibling later <span class="who">Main + private</span></label>
+      <div class="row"><b>Do</b><div>Main window: Teams &amp; draft, Division A, place <strong>Kit</strong> on <strong>Orioles</strong> (Place and email). Private window: sign in as <code>+kids</code> and open Your family.</div></div>
+      <div class="row see"><b>See</b><div>The email to +kids says "Orioles is in your app" and has no new invitation to accept. Kit shows up on the Orioles team with no new Join step.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p3"></div><textarea id="n3" aria-label="Notes for part 3" data-notes="p3" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p4" data-part="4">
+  <h2>4 · The second parent, Stop, and the signed-in states</h2>
+  <p class="where">The second parent is <code>+dad</code> on Leo's sign-up. Mum (<code>+mum</code>) already joined Leo in part 2.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s4a"><div class="step"><label for="s4a">Add the second parent and email them <span class="who">Main window</span></label>
+      <div class="row"><b>Do</b><div><ol>
+        <li>Registrations → open Leo's record. On the <strong>Second parent</strong> row press <strong>Add</strong>.</li>
+        <li>Type <code>b2cowan+dad@gmail.com</code> in "Second parent's email" and press Save.</li>
+        <li>On the Second parent row press <strong>Send again</strong>.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>After Save the hint says nothing is emailed when you change it, and nothing arrives. After Send again, an email arrives for <code>+dad</code> that says who added you, has the same panel with "ignore it" right under the button, a "Stop these emails" link in the footer, and "Sent by Dev League Org, 100 Test Street, Toronto ON M5V 1A1, b2cowan@gmail.com".</div></div></div></li>
+    <li><input type="checkbox" id="s4b"><div class="step"><label for="s4b">Mum sees the invited second parent <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Sign in as <code>+mum</code> (before dad joins). Open the Jays team page, then Manage → (the "Connected to Leo" page).</div></div>
+      <div class="row see"><b>See</b><div>Both adults are listed. Dad shows by email address because he has not joined yet.</div></div></div></li>
+    <li><input type="checkbox" id="s4c"><div class="step"><label for="s4c">Dad joins <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Sign out. Open the button in Dad's email, address <code>+dad</code>, new password (note it down), both boxes, Join. Then sign out and sign in as mum again and reopen Manage.</div></div>
+      <div class="row see"><b>See</b><div>Dad shows by name on Manage now.</div></div></div></li>
+    <li><input type="checkbox" id="s4d"><div class="step"><label for="s4d">Dad leaves <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Sign in as dad. Open Leo's team → Manage → <strong>Leave Leo's team</strong>.</div></div>
+      <div class="row see"><b>See</b><div>The words say the club may still email you and name the "Stop these emails" link. Neither parent has a control to remove the other.</div></div></div></li>
+    <li><input type="checkbox" id="s4e"><div class="step"><label for="s4e">Come back, then press Stop <span class="who">Main + private</span></label>
+      <div class="row"><b>Do</b><div>Main window: Leo's record → Second parent row → <strong>Send again</strong>. Dad joins again from the new email. Then click <strong>Stop these emails</strong> in the footer of any email dad has received.</div></div>
+      <div class="row see"><b>See</b><div>A page that first says you have joined and what stopping does (it removes you, the calendar stops showing the team's games, and you stop getting copies of sign-ups someone else added you to), then one press to confirm. After it, sign in as mum: mum's own connection to Leo is untouched. Dad's is gone.</div></div></div></li>
+    <li><input type="checkbox" id="s4f"><div class="step"><label for="s4f">An address that already has an account <span class="who">Main + private</span></label>
+      <div class="row"><b>Do</b><div><ol>
+        <li>Main window: place <strong>Ruby</strong> on <strong>Orioles</strong> (Division A). Her first parent is <code>+dad</code>, who already has an account.</li>
+        <li>Private window, signed out: open the button in Ruby's email, type <code>b2cowan+dad@gmail.com</code>.</li>
+        <li>Then sign in as dad in that window and open the same email button again. Do not press Join; Ruby stays un-joined for part 6.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>Signed out: the next step is "Your password" with a "Forgot your password" link (no "Choose a password"). Signed in as dad: it skips straight to the consent words.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p4"></div><textarea id="n4" aria-label="Notes for part 4" data-notes="p4" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p5" data-part="5">
+  <h2>5 · The family pages</h2>
+  <ol class="steps">
+    <li><input type="checkbox" id="s5a"><div class="step"><label for="s5a">One team opens straight to it <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Sign in as <code>+mum</code>. Go to <code>http://localhost:3000/family</code>.</div></div>
+      <div class="row see"><b>See</b><div>Mum has one team, so the page opens the Jays team page directly. It shows Your player, Schedule, Up next, a Your sign-up row, a Your calendar row, a privacy line with "How your information is used" (plain text, no link yet; see call 2), and "Connected to Leo".</div></div></div></li>
+    <li><input type="checkbox" id="s5b"><div class="step"><label for="s5b">What a family never sees</label>
+      <div class="row"><b>Do</b><div>On mum's Jays page, look at the whole page.</div></div>
+      <div class="row see"><b>See</b><div>Only Leo. Ava and Zane are on Jays too, but there is no roster and no other child or family anywhere. There is no "From the coach" card on this house-league team. (A rep team keeps that card; that is not testable here.)</div></div></div></li>
+    <li><input type="checkbox" id="s5c"><div class="step"><label for="s5c">A child with no team <span class="who">Main + private</span></label>
+      <div class="row"><b>Do</b><div>Main window: Teams &amp; draft → Division A → Kit's <strong>…</strong> → Move to… → <strong>Not on a team</strong> → the window "Take Kit off their team?" → <strong>Take off the team</strong>. Then in the private window, signed in as <code>+kids</code>, open Your family.</div></div>
+      <div class="row see"><b>See</b><div>Nobody is emailed. Kit's line reads "Not on a team right now. The club will email you when teams are set." Now place Kit on Orioles again (Place and email): Kit is back with no new invitation.</div></div></div></li>
+    <li><input type="checkbox" id="s5d"><div class="step"><label for="s5d">Leave, then a new placement <span class="who">Private + main</span></label>
+      <div class="row"><b>Do</b><div>Private window, signed in as <code>+kids</code>: open Cardinals → Manage → <strong>Leave Maya's team</strong>. Then in the main window take Maya off Cardinals and place her on Cardinals again (Place and email).</div></div>
+      <div class="row see"><b>See</b><div>Leave asks once, with the leave words, and then Cardinals is gone from the family page. After the club places Maya again, an email arrives but no invitation appears, and Maya does not come back to the page. Only the club's Send again brings her back (part 7).</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p5"></div><textarea id="n5" aria-label="Notes for part 5" data-notes="p5" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p6" data-part="6">
+  <h2>6 · Your sign-up, in the app and by email</h2>
+  <ol class="steps">
+    <li><input type="checkbox" id="s6a"><div class="step"><label for="s6a">The in-app sign-up page <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Signed in as <code>+mum</code>, on the Jays team page press the <strong>Your sign-up</strong> row.</div></div>
+      <div class="row see"><b>See</b><div>The same page the emailed link opens, with a back link to the team and a line at the foot: "You're seeing this because you're signed in as Leo's parent."</div></div></div></li>
+    <li><input type="checkbox" id="s6b"><div class="step"><label for="s6b">Pay from the app <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Sign out, sign in as <code>+owes</code> (the password from step 2g). Open Cardinals → Your sign-up → pay. Use Stripe's test card <code>4242 4242 4242 4242</code>, any future date, any 3 digits.</div></div>
+      <div class="row see"><b>See</b><div>Note where Stripe sends you afterwards. Known: it may return you to the emailed page's address rather than the app. If there is no pay button at all, write that in the notes.</div></div></div></li>
+    <li><input type="checkbox" id="s6c"><div class="step"><label for="s6c">The way back from the emailed link <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Sign out. In Ruby's placement email (to <code>+dad</code>) press <strong>Your sign-up</strong>. Then press "Not yet? Email me an invitation".</div></div>
+      <div class="row see"><b>See</b><div>The page shows "Joined Ruby's team? Sign in to see it" and "Not yet? Email me an invitation". After the second, the same sentence appears whatever happens, and an email goes to the first address on the sign-up only (+dad).</div></div></div></li>
+    <li><input type="checkbox" id="s6d"><div class="step"><label for="s6d">A child with no team has no way-back block</label>
+      <div class="row"><b>Do</b><div>Nina is the child you never placed. Adding her sent no family email, so there is no emailed link to open for her. Check whether any email about Nina reached the <code>+dad</code> inbox; if one has a "Your sign-up" link, open it.</div></div>
+      <div class="row see"><b>See</b><div>The sign-up page has no "Sign in to see it" / "Email me an invitation" block. If no email exists (expected), press Needs a call: the app has no way to show that page for a child who is not on a team yet, so this check needs the club to send a sign-up link some other way.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p6"></div><textarea id="n6" aria-label="Notes for part 6" data-notes="p6" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p7" data-part="7">
+  <h2>7 · The club: record window and join window</h2>
+  <p class="where">Main window. Open a record with House league → Dev House League 2026 → Registrations → click the child's name. In the window, the Details section has the Email and Second parent rows, and "What you can do" lists actions.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s7a"><div class="step"><label for="s7a">One status per address</label>
+      <div class="row"><b>Do</b><div>Open these records: Leo, Sam, Ruby, Maya, Jordan and Nina.</div></div>
+      <div class="row see"><b>See</b><div>
+        <ul><li>Leo: Email "In the app since {today}". Second parent: the Stopped line ("Stopped by the address owner, {today}").</li>
+        <li>Sam: Email "In the app since {today}".</li>
+        <li>Ruby: Email "Invited {today}".</li>
+        <li>Maya: Email "Left the app {today}".</li>
+        <li>Jordan (19): no family status at all. Nina (not on a team): no Send again.</li></ul></div></div></div></li>
+    <li><input type="checkbox" id="s7b"><div class="step"><label for="s7b">Send again after leaving <span class="who">Main + inbox</span></label>
+      <div class="row"><b>Do</b><div>On Maya's record press <strong>Send again</strong> next to "Left the app".</div></div>
+      <div class="row see"><b>See</b><div>"Sent to b2cowan+kids@gmail.com." One email to that address only, with a fresh invitation. The link in the older +kids email now says it expired. Joining from the new one brings Maya back to the family page.</div></div></div></li>
+    <li><input type="checkbox" id="s7c"><div class="step"><label for="s7c">Remove a parent <span class="who">Main + private</span></label>
+      <div class="row"><b>Do</b><div><ol>
+        <li>Leo's record → "What you can do" → <strong>Remove a parent from Leo's team</strong>. The window asks "Remove a parent from Leo's team?" Press <strong>Remove</strong>.</li>
+        <li>Private window, sign in as <code>+mum</code> and open <code>/family</code>.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>Mum is not emailed. Leo's record now says "Removed from the app {today}"; the sign-up and who gets emails are unchanged. Mum's page says "You're no longer connected to Leo. If you think that's wrong, contact Dev League Org at b2cowan@gmail.com." Pressing Send again on Leo's record is the only way back; do that and rejoin if you want mum back.</div></div></div></li>
+    <li><input type="checkbox" id="s7d"><div class="step"><label for="s7d">Who is allowed <span class="who">Another login</span></label>
+      <div class="row"><b>Do</b><div>In a different browser, sign in as <code>league-registrar@dev.local</code> and try Send again and Remove a parent. Then try the same as <code>league-treasurer@dev.local</code>. Open Families as each.</div></div>
+      <div class="row see"><b>See</b><div>The registrar can use both. A login without the right to change registrations cannot (the controls are missing or refused). The Families book looks the same as before. If neither login behaves this way, say what you saw.</div></div></div></li>
+    <li><input type="checkbox" id="s7e"><div class="step"><label for="s7e">Duplicate children: the Join window <span class="where">(best effort)</span></label>
+      <div class="row"><b>Do</b><div>Left menu: <strong>Families</strong> → tab <strong>Duplicates</strong> → the switch "Which duplicates" → <strong>Children</strong>. If a pair is listed, press <strong>Join as one child</strong>. To make a pair, first Add registration a second "Leo Walkthru" (same birth date as the first) with <code>+dad</code> as the first parent, Division B.</div></div>
+      <div class="row see"><b>See</b><div>The window "Join Leo's records?" names the connected parents on each record before you confirm ("Connected in the app: …"). After Join, one child shows every team. If the app never proposes the pair, press Needs a call: it may only propose children that share a fact the app trusts.</div></div></div></li>
+    <li><input type="checkbox" id="s7f"><div class="step"><label for="s7f">House-league coach's view <span class="where">(optional)</span></label>
+      <div class="row"><b>Do</b><div>No Dev House League team has a coach today, so there is nothing to look at. Skip this step unless you assign <code>j9-coach@dev.local</code> as a team's coach first.</div></div>
+      <div class="row see"><b>See</b><div>The coach's team page still lists both parents' emails as before and nothing new.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p7"></div><textarea id="n7" aria-label="Notes for part 7" data-notes="p7" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p8" data-part="8">
+  <h2>8 · The calendar</h2>
+  <p class="where">Needs at least one game or practice for the family's teams (House league → Dev House League 2026 → Schedule). If a feed is empty, add one first or you cannot check the titles.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s8a"><div class="step"><label for="s8a">Make the link <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Sign in as <code>+kids</code>. Open a team → the <strong>Your calendar</strong> row → <strong>Make my link</strong>. Subscribe in a calendar app, or open the address.</div></div>
+      <div class="row see"><b>See</b><div>One address, with Copy and "Stop this calendar".</div></div></div></li>
+    <li><input type="checkbox" id="s8b"><div class="step"><label for="s8b">What the feed shows</label>
+      <div class="row"><b>Do</b><div>Look at the events.</div></div>
+      <div class="row see"><b>See</b><div>Events are titled by team ("Jays practice"), never by a child's name, and the teams of every child on this account (Jays, Cardinals, Orioles) are in the one feed.</div></div></div></li>
+    <li><input type="checkbox" id="s8c"><div class="step"><label for="s8c">Move a child <span class="who">Main + calendar</span></label>
+      <div class="row"><b>Do</b><div>Main window: Teams &amp; draft → Kit's <strong>…</strong> → Move to… → <strong>Jays</strong> → <strong>Move and email</strong> (this emails the family). Refresh the calendar.</div></div>
+      <div class="row see"><b>See</b><div>The feed shows Kit's new team (Jays) and no longer shows Orioles for Kit. An email "Kit's new team — Dev House League 2026" arrives.</div></div></div></li>
+    <li><input type="checkbox" id="s8d"><div class="step"><label for="s8d">Stop the calendar <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Press <strong>Stop this calendar</strong> and confirm. Reload your calendar app. Then press Make my link again.</div></div>
+      <div class="row see"><b>See</b><div>It asks once, the feed goes empty, and the new link is a different address.</div></div></div></li>
+    <li><input type="checkbox" id="s8e"><div class="step"><label for="s8e">Past game, no score</label>
+      <div class="row"><b>Do</b><div>If a house-league team has a game in the past, open its team page.</div></div>
+      <div class="row see"><b>See</b><div>No score is shown at this stage. That is expected.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p8"></div><textarea id="n8" aria-label="Notes for part 8" data-notes="p8" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p9" data-part="9">
+  <h2>9 · The rep coach (UAT Rep Club)</h2>
+  <p class="where">UAT Rep Club is a separate club from Dev League Org. It has a contact email but no mailing address, so invitations will not send until you add one in step 9a.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s9a"><div class="step"><label for="s9a">Give UAT Rep Club a mailing address <span class="who">Main window</span></label>
+      <div class="row"><b>Do</b><div>Sign in as a UAT Rep Club admin (for example <code>uat-club-admin@uat-rep-club.local</code>). Public site → About us. Mailing address: <code>200 Rep Road, Toronto ON M5V 2B2</code>. Save.</div></div>
+      <div class="row see"><b>See</b><div>Saved. Only an owner or admin can edit this page.</div></div></div></li>
+    <li><input type="checkbox" id="s9b"><div class="step"><label for="s9b">Invite a guardian <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div><ol>
+        <li>Sign in as the rep coach and open <code>http://localhost:3000/uat-rep-club/coaches</code>. Pick the team <strong>15U AAA</strong>.</li>
+        <li>Roster (bottom bar or sidebar) → click a player, for example <strong>Owen B</strong>.</li>
+        <li>Open the collapsed <strong>Guardians</strong> section → <strong>Invite a guardian</strong>.</li>
+        <li>Replace the prefilled address with <code>b2cowan+rep@gmail.com</code> and press <strong>Send invitation</strong>.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>The card says "We'll email them an invitation. It works for 30 days." After sending, the row reads "b2cowan+rep@gmail.com · invite sent — waiting for them to accept" with a Cancel invite button. Separately, add a new player (Roster → Add Player, first name only) and confirm no email goes out.</div></div></div></li>
+    <li><input type="checkbox" id="s9c"><div class="step"><label for="s9c">The invitation email <span class="who">Your inbox</span></label>
+      <div class="row"><b>Do</b><div>Open the email sent to <code>+rep</code>.</div></div>
+      <div class="row see"><b>See</b><div>The sender reads "{coach's name} via UAT Rep Club" (only if the coach account has a name; otherwise just the club name), with the mailing address and contact, the fine print "If you aren't Owen's parent or guardian, ignore it", and a footer link "Don't send me invitations".</div></div></div></li>
+    <li><input type="checkbox" id="s9d"><div class="step"><label for="s9d">A different signed-in email is refused <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Signed in as the rep coach (or any other account) in the private window, click the invitation's button.</div></div>
+      <div class="row see"><b>See</b><div>It refuses and names the coach (not the club). There is no approval queue and no copy-a-link box on the card, and the invited row offers Cancel invite.</div></div></div></li>
+    <li><input type="checkbox" id="s9e"><div class="step"><label for="s9e">Don't send me invitations <span class="who">Private + coach</span></label>
+      <div class="row"><b>Do</b><div>Click "Don't send me invitations" in the email. On the page "Stop invitations?" first only look at it, and check the invitation still works. Then press the button <strong>Don't send me invitations</strong>. Back as the coach, press Send invitation to the same address again.</div></div>
+      <div class="row see"><b>See</b><div>Opening the link changed nothing by itself. After the one press, the coach's next Send invitation to <code>+rep</code> is refused in plain words.</div></div></div></li>
+    <li><input type="checkbox" id="s9f"><div class="step"><label for="s9f">A player aged 18 or older <span class="where">(if the form allows it)</span></label>
+      <div class="row"><b>Do</b><div>Rep players have no birth date on file, so add one: Roster → Add Player with a birth date that makes the player 19, then try Invite a guardian.</div></div>
+      <div class="row see"><b>See</b><div>"This player is 18 or older, so there's no parent invitation for them." If the Add Player form has no birth date field, press Needs a call.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p9"></div><textarea id="n9" aria-label="Notes for part 9" data-notes="p9" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p10" data-part="10">
+  <h2>10 · Switch it off again</h2>
+  <p class="where">Only when you have finished the walk. The switch was already on when this walk was written.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s10a"><div class="step"><label for="s10a">Turn the switch off</label>
+      <div class="row"><b>Do</b><div>In <code>.env.local</code> set <code>GUARDIAN_TIER_ENABLED=false</code> and restart the dev server.</div></div></div></li>
+    <li><input type="checkbox" id="s10b"><div class="step"><label for="s10b">Check the off state <span class="who">Main + private</span></label>
+      <div class="row"><b>Do</b><div>Send Leo's family a fresh placement by taking a child off a team and placing them again. Open a registration record, a rep player's Guardians section, the account menu, <code>/family</code>, and an old invitation link.</div></div>
+      <div class="row see"><b>See</b><div>The placement email has no panel, the record window shows no family status, the coach card reads as it did before, the account menu has no "Your family" row, and <code>/family</code> and the invitation link answer "not found".</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p10"></div><textarea id="n10" aria-label="Notes for part 10" data-notes="p10" placeholder="Notes"></textarea>
+</section>
+
+<section class="card call">
+  <h2>Calls for you (no tick needed)</h2>
+  <p><strong>1.</strong> A parent's own "Email me a new invitation" keeps a Send again's way back for a parent who left or was removed. Keep, or make it need the club's Send again each time?</p>
+  <p><strong>2.</strong> There is no published FieldLogicHQ privacy page yet. "How your information is used" shows as plain text. Fine for this walk; it has to exist before real families.</p>
+  <p><strong>3.</strong> The consent record names the children connected at Join, not the ones the page showed if a division publishes between load and press. Build the safer version before real families?</p>
+  <p><strong>4.</strong> If two siblings hit the two-guardian limit together, the join can say joined with nothing connected. Worth a clearer message?</p>
+  <p><strong>5.</strong> Not walkable today: the "Publish teams" button itself and its refusal when the club has no mailing address. Both Dev House League 2026 divisions are already published and there is no unpublish. Walking it needs a fresh season with a drafted, unpublished division. Build one for the next walk?</p>
+  <p><strong>6.</strong> There is no screen to change an existing sign-up's first-parent email, so this walk adds new test children instead. Is that acceptable, or should a club admin be able to edit it?</p>
+</section>
+
+<section class="card">
+  <h2>Paste-back</h2>
+  <p class="where">Press Build summary at the top, then copy this and paste it into the chat.</p>
+  <pre id="out">Nothing yet.</pre>
+  <button type="button" id="copyBtn">Copy</button>
+</section>
+</main>
+
+<script>
+(function(){
+  var KEY = "family-app-walk-4a-v2";
+  var state = { checks:{}, verdicts:{}, notes:{} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = JSON.parse(raw); } catch (e) {}
+  state.checks = state.checks || {}; state.verdicts = state.verdicts || {}; state.notes = state.notes || {};
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('ol.steps input[type=checkbox]'));
+  function refresh(){
+    var n = boxes.filter(function(b){ return b.checked; }).length;
+    var p = document.getElementById('prog'); p.max = boxes.length; p.value = n;
+    document.getElementById('progText').textContent = n + " of " + boxes.length;
+    boxes.forEach(function(b){ b.closest('li').classList.toggle('done', b.checked); });
+  }
+  boxes.forEach(function(b){
+    b.checked = !!state.checks[b.id];
+    b.addEventListener('change', function(){ state.checks[b.id] = b.checked; save(); refresh(); });
+  });
+
+  var labels = [["pass","Pass"],["issue","Issue"],["call","Needs a call"]];
+  Array.prototype.slice.call(document.querySelectorAll('.verdict')).forEach(function(box){
+    var part = box.getAttribute('data-for');
+    labels.forEach(function(pair){
+      var btn = document.createElement('button'); btn.type = 'button';
+      btn.className = 'v-' + pair[0]; btn.textContent = pair[1];
+      btn.setAttribute('aria-pressed', state.verdicts[part] === pair[0] ? 'true' : 'false');
+      btn.addEventListener('click', function(){
+        state.verdicts[part] = state.verdicts[part] === pair[0] ? "" : pair[0]; save();
+        Array.prototype.slice.call(box.querySelectorAll('button')).forEach(function(x){
+          x.setAttribute('aria-pressed', x.className === 'v-' + state.verdicts[part] ? 'true' : 'false');
+        });
+      });
+      box.appendChild(btn);
+    });
+  });
+  Array.prototype.slice.call(document.querySelectorAll('textarea[data-notes]')).forEach(function(t){
+    var part = t.getAttribute('data-notes'); t.value = state.notes[part] || "";
+    t.addEventListener('input', function(){ state.notes[part] = t.value; save(); });
+  });
+
+  function summary(){
+    var lines = ["Family app walk (Stage 4a, v2): " + boxes.filter(function(b){return b.checked;}).length + " of " + boxes.length + " steps ticked"];
+    Array.prototype.slice.call(document.querySelectorAll('section[data-part]')).forEach(function(s){
+      var part = s.id, h = s.querySelector('h2').textContent;
+      var sb = Array.prototype.slice.call(s.querySelectorAll('input[type=checkbox]'));
+      var done = sb.filter(function(b){return b.checked;}).length;
+      var missed = sb.filter(function(b){return !b.checked;}).map(function(b){return b.id;});
+      var v = state.verdicts[part] || "no verdict";
+      lines.push("", h + " | " + v + " | " + done + "/" + sb.length + (missed.length ? " | not ticked: " + missed.join(", ") : ""));
+      if (state.notes[part]) lines.push("  notes: " + state.notes[part]);
+    });
+    return lines.join("\n");
+  }
+  document.getElementById('summaryBtn').addEventListener('click', function(){
+    document.getElementById('out').textContent = summary();
+    document.getElementById('out').scrollIntoView({behavior:'smooth', block:'center'});
+  });
+  document.getElementById('copyBtn').addEventListener('click', function(){
+    var text = document.getElementById('out').textContent;
+    var done = function(){ document.getElementById('copyBtn').textContent = "Copied"; };
+    try { navigator.clipboard.writeText(text).then(done, function(){ selectOut(); }); } catch (e) { selectOut(); }
+  });
+  function selectOut(){ var r = document.createRange(); r.selectNodeContents(document.getElementById('out'));
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  refresh();
+})();
+</script>

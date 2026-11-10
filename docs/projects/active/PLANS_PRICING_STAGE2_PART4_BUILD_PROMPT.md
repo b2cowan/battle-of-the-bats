@@ -20,7 +20,7 @@
 5. **Fees billed back to clubs** stay on Health › Online payments; on Sales they are the "fees" kind in a month's window.
 6. **No "This month" card.** Today's Past due and Trials ending rows open the dated lists.
 7. **Export for the accountant** = the Bookkeeping accountant package gains `sales.csv` and `credit-notes.csv` (with GST/HST Stage 4b
-   Session D: ONE file per thing, written once).
+   Session D: ONE file per thing, written once). **Superseded in part 2026-11-08: one invoice file, not two (see 4e).**
 8. **F1 fixed in Part 4:** Business numbers leaves comped clubs out of the monthly figure and says how many it left out.
 9. **F2 fixed in Part 4:** Trials ending counts today to 14 days ahead; a trial whose date has passed shows on Renewals as
    "Trial ended, still marked trial" (amber) and is not counted in Trials ending.
@@ -146,7 +146,8 @@ first, and check `git status` that no other session holds them modified.
 
 ### 4e · The accountant package
 
-- `app/api/platform-admin/bookkeeping/package/route.ts` [V] gains `sales.csv` (one row per bill: issued, kind, buyer = club name
+- **Owner ruling 2026-11-08 (the package's invoice file):** the accountant package carries **ONE invoice file**: one row per invoice and one per credit note, with both the sales figures and the GST/HST figures (Canadian dollars, rate). Not `sales.csv` + `credit-notes.csv` beside a `gst-hst-sales.csv`. Whichever of Plans & pricing Part 4 Session 2 (4e) or GST/HST 4b Session D builds first writes it and names it; the other reuses it and adds nothing that repeats it. `package-scope.txt` must describe that one file honestly; Session D's draft "Sales are included only as the GST/HST record of each invoice and credit note" no longer fits it (main-session reading, not separately ruled: Part 4's "sales and credit notes are" holds; the owner may reword).
+- (Drafted before the ruling; read as the ONE invoice file's columns, notes as their own rows.) `app/api/platform-admin/bookkeeping/package/route.ts` [V] gains `sales.csv` (one row per bill: issued, kind, buyer = club name
   or "Coach", invoice number, province taxed, before tax, tax, total, status, currency, CAD, Bank of Canada rate; **no address or
   postal code**) and `credit-notes.csv` (one row per note, its bill, its month). The package's period applies.
 - `package-scope.txt` (`:61` [V]) becomes: "Stripe's fees to us, payouts and bank reconciliation are not in this package; sales and

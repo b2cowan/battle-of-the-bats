@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import warm from '@/components/consumer/warmTheme.module.css';
 import styles from '../../../family.module.css';
+import accountForm from '@/components/auth/AccountForm.module.css';
 import PlayerRecapView from '@/components/family/PlayerRecapView';
 import { resolveFamilyRecapAvailability } from '@/lib/family-recap';
 import { getVerifiedLinkForUserTeam } from '@/lib/family-access';
@@ -33,7 +34,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className={warm.warm}>
       <div className={styles.page}>
-        <div className={styles.card}>{children}</div>
+        <div className={`${styles.card} ${styles.quietCard}`}>{children}</div>
       </div>
     </div>
   );
@@ -56,7 +57,7 @@ export default async function FamilyRecapPage({ params }: { params: Promise<{ te
         <div className={styles.actions}>
           <Link
             href={`/auth/login?next=${encodeURIComponent(`/family/teams/${teamId}/recap`)}`}
-            className={styles.chip}
+            className={`${accountForm.primary} ${styles.quietButton}`}
           >
             Sign in
           </Link>
@@ -81,7 +82,7 @@ export default async function FamilyRecapPage({ params }: { params: Promise<{ te
           closes the season — we’ll have it here then.
         </p>
         <div className={styles.actions}>
-          <Link href={`/family/teams/${teamId}`} className={styles.chip}>Back to the team</Link>
+          <Link href={`/family/teams/${teamId}`} className={`${accountForm.primary} ${styles.quietButton}`}>Back to the team</Link>
         </div>
       </Shell>
     );
@@ -105,7 +106,7 @@ export default async function FamilyRecapPage({ params }: { params: Promise<{ te
           parent or guardian — ask the coach if that should be you.
         </p>
         <div className={styles.actions}>
-          <Link href="/following" className={styles.chip}>Back to Following</Link>
+          <Link href="/following" className={`${accountForm.primary} ${styles.quietButton}`}>Back to Following</Link>
         </div>
       </Shell>
     );

@@ -211,7 +211,7 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   // "Add ledger" is on the Book pill. One account: its name in the line, and the door to add one.
   const accountLine = accounts.length > 1 ? (
     <SingleSelectDropdown lead shrink label={W.accountPill} value={view.account.id} onChange={pickAccount}
-      options={accounts.map(a => ({ id: a.id, label: a.name, detail: throughWords(a.checkedThrough) }))}
+      options={accounts.map(a => ({ id: a.id, label: a.name, sub: throughWords(a.checkedThrough) }))}
       foot={canMove ? (
         <button type="button" className={`${pill.multiSelectOption} ${pill.multiSelectPick}`} onClick={() => setWin({ kind: 'addAccount' })}>
           <Plus size={14} aria-hidden /> {W.addAccount}

@@ -20,6 +20,12 @@ binding — weight them accordingly, and say so when citing one.
 **Rationale:** the owner wanted three distinct names so the strip says which portal you are in. "Coaches" alone read as unfinished; "Coach" pairs with the other one-word labels. "Tournament" does not fit: measured with the shipped type, wordmark + word = 246px against the 240px cell (Club 194, Events 210, Coach 205). "Events" is already the tournament admin's word for a tournament ("Event settings"), and its plural covers the org-wide tournament screens. Accepted cost: the strip says "Events" while the foot door says "Tournaments".
 **Applies to:** the admin and Premium Coaches Portal top strips (replaces round 4 D4's single "Admin" short form, 2026-11-08), and the sidebar-foot portal doors. Only this word is ruled; the rest of the navigation evaluation (asks E1–E15, `docs/projects/active/ADMIN_NAV_EVALUATION_PLAN.md`) is still open.
 
+### 2026-11-09 — TERMS ACCEPTANCE (GST/HST 6.3): THE BOX SITS ABOVE THE MAIN BUTTON; THE SIGN-IN SCREEN WEARS OUR MARK; THE PURCHASE WINDOW OPENS OVER WHATEVER IS THERE (owner, all ten asks of the 6.3 drawings as recommended — https://claude.ai/artifact/FmTh8vmm39qY4N9Z6TAj7c: "looks good, i agree with your recommendations")
+
+**Decision:** (1) The Terms tick row sits after the last field, straight above the main button, on every account door; the sentence at the host's body size, links underlined. (2) A sign-up card's button stays on and explains on press; the sign-in screen and the purchase window stay off until ticked (§20). (3) The sign-in screen shows FieldLogicHQ's lockup in the portal's own colours, never the club's crest. (4) The window's title is "Before you continue". (5) It is the house question window, opened over whatever is there (a window stays underneath). (6) The paid-plan line is read before the button: a window's body end, above the button on a column, under the billing table after the tax line. (7) Sign out in the screen's foot row with "Signed in as {email}". (8) The cancel door ships with the "updated" screen. (9) No legal foot line on the screen. (10) The follow nudge's box at 13.6 px in a 44 px row.
+**Rationale:** agree before acting; an off button on a five-field card does not say what is missing; the agreement is with FieldLogicHQ, not the club; one window that opens over anything serves every paid button, in a window or not.
+**Applies to:** every account door, the sign-in screen, every paid button, the purchase window (GST_HST_STAGE6_3_BUILD_PROMPT.md Chunks B and C).
+
 ### 2026-11-09 — FIELDLOGICHQ'S LEGAL PAGES READ AS A DOCUMENT ON THE MARKETING FRAME; THE LINKS TO THEM ARE A QUIET LINE, EXCEPT ON THE ACCOUNT PAGE, WHERE THEY ARE ROWS (owner, GST/HST Stage 6 step 6.2 drawing round, all seven asks as recommended: *"i agree with your recommendations, go ahead"*; drawings https://claude.ai/artifact/MWPQ7ZMos5js7gBCdrkjxr v3)
 
 **Decision (as ruled, 1A–7A):** the Terms of Service and Privacy Policy pages wear the marketing frame (bar + footer), the
@@ -70,6 +76,20 @@ held about 151px of a 1440 × 760 window pinned (93px after). A breadcrumb was r
 place side by side in the strip) read as one anyway, and option C (club under the wordmark) loses the club when the
 sidebar collapses. Supersedes the desktop half of 2026-11-07 ruling 1 / A4 (club on the small line).
 **Applies to:** the club and tournament admin, desktop. Plan: `docs/projects/active/ADMIN_HEADER_BAR_PLAN.md` (round 4, Phase 2D).
+
+### 2026-11-07 — OWNER REPORTS: TWO DATED LISTS UNDER CUSTOMERS › RENEWALS, SALES BY MONTH IN BOOKKEEPING; NO "REPORTS" PAGE, NO "THIS MONTH" CARD (owner, all ten asks as recommended, paste-back on https://claude.ai/artifact/PqUgoHqg57j1SGSo2YypjP)
+
+**Decision (as ruled):** (1) Customers › Renewals, read only, for Super admin, Billing and Support: a two-view switch (Coming up,
+Unpaid bills), a joined band whose counting tiles filter, one table per view, Export (Excel first) at the far right. (2) Bookkeeping
+› Reports gains a third View, Sales: a joined band (net sales before tax, GST/HST, collected with tax, written off), one row per
+month, and a callout reconciling it to line 101 of the GST/HST return. (3) The round-1 "This month" card on Health › Stripe is not
+built; Today's Past due and Trials ending rows open the dated lists. (4) Every price cell says what it is: "a month"/"a year" only
+when the cycle is on file, else the chip "cycle not on file"; "no price on file" as a chip, never the list price in its place.
+(5) A trial past its date is one amber row, "Trial ended, still marked trial". (6) The words never say lost revenue for an unpaid
+bill. (7) No eye on either page (nothing on them changes anything).
+**Rationale:** the five listed reports were two audiences (the staff who follow up club billing; the owner's books) and two of them
+were one dated list; a card that repeats Today's counts is noise; a figure that reconciles to the return is trusted.
+**Applies to:** the support console's Customers group, Bookkeeping › Reports, Today's Customers queues. Plan: `docs/projects/active/PLANS_PRICING_STAGE2_PART4_BUILD_PROMPT.md`.
 
 ### 2026-11-07 — THE ADMIN'S PINNED BAR NAMES WHERE YOU ARE; A PLACE'S TABS PIN INSIDE IT; IT NEVER SHRINKS (owner, option 4 from drawings round 1; then A2–A10 *"proceed with your recommendations"* after round 3)
 

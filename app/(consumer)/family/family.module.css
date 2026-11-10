@@ -55,6 +55,24 @@
   color: var(--home-ink);
 }
 
+/* A short one-message card (sign in, "not available", an empty list): title, line and button all centre
+   together. Without this the title sat left, the line was a centred block of left-aligned text, and the
+   button floated centred — three alignments in one card. The button is the shared lime primary
+   (components/auth/AccountForm.module.css), the same one the invitation page wears. */
+.quietCard {
+  text-align: center;
+}
+
+.quietCard .joinTitle {
+  margin-top: 0.2rem;
+}
+
+.quietCard .actions .quietButton {
+  width: auto;
+  min-width: 10rem;
+  padding-inline: 1.75rem;
+}
+
 .joinLede {
   color: var(--home-dim);
   font-size: 0.92rem;

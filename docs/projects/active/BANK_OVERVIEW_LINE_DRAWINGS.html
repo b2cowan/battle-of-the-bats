@@ -1,0 +1,326 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Overview Bank Line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the club Accounting Overview in the
+   Warm theme. Sticky numbered tabs, one option per tab, an Everything / Show only what differs switch (it hides the
+   chrome and the cards that are identical in every frame). Desktop frames are 1440 wide and scroll sideways inside
+   their own box on a narrow window; phone frames are 390 and never reflow. The specimens stay Warm in a dark viewer. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --flag:#A8361F; --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --flag:#F0907A; --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --flag:#F0907A; --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.doc{max-width:1480px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:20px 0 6px}
+.doc p,.doc li{max-width:88ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:92ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{flex:none;font:600 14px/1 var(--f-doc);min-height:40px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+section.pane[hidden]{display:none}
+.viewrow{display:flex;align-items:center;gap:10px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .a h4{color:var(--ask)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.read p{margin:0;font-size:14px}
+.rules{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:12px 0;overflow-x:auto}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:24px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.askm{color:var(--ask)} .mk.bad{color:var(--flag)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+.pair{display:flex;gap:22px;align-items:flex-start;margin:10px 0;overflow-x:auto;padding-bottom:8px}
+.pair>div{flex:none}
+.fx{overflow-x:auto;max-width:100%;padding-bottom:6px}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden}
+.w1440{width:1440px} .w1200{width:1200px} .w390{width:390px}
+.samebar{display:none;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin:2px 0;font:600 12px/1.4 var(--f-mono);color:var(--muted);text-align:center;background:var(--surface)}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+body[data-view="diff"] .ak .shell{grid-template-columns:minmax(0,1fr)}
+body[data-view="diff"] .fold{display:none}
+.ask{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:10px 0;max-width:92ch}
+.ask h3{margin:0 0 6px;font-size:16px}
+.ask ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.ask .rec{color:var(--fix);font-weight:600}
+#dlg{position:fixed;inset:0;z-index:50;background:rgba(10,14,18,.55);display:grid;place-items:center;padding:16px}
+#dlg[hidden]{display:none}
+#dlg .box{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:18px 20px;max-width:56ch;box-shadow:var(--shadow)}
+#dlg .box p{margin:0 0 14px}
+#dlg button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer}
+
+/* ===== the product, Warm theme (club admin kit) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);--fill:rgba(70,55,30,.08);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--olive-line:rgba(87,101,30,.40);--lime:#D9F99D;
+  --in:#34662A;--amber:#835006;--amber-ink:#6B4105;--amber-soft:rgba(131,80,6,.08);--amber-line:rgba(131,80,6,.32);--red:#B03A22;
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left;color-scheme:light}
+.ak *{box-sizing:border-box}
+.ak .shell{display:grid;grid-template-columns:240px minmax(0,1fr)}
+.ak .top{display:flex;align-items:center;gap:14px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .top .env{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);border-left:1px solid var(--line2);padding-left:14px}
+.ak .top .sp{flex:1}
+.ak .sb{background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .org{font:700 15px/1.2 'Inter';padding:4px 10px 10px}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:12px 10px 5px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:9px 10px;border-radius:7px;display:flex;align-items:center;justify-content:space-between}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .main{padding:0 32px;min-width:0}
+.ak .pg{max-width:1200px;margin:0 auto;padding:24px 0 20px;display:flex;flex-direction:column;gap:14px}
+.ak h1{font:700 20px/1.1 'Inter';margin:0}
+.ak .hub{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;margin:0 0 6px}
+.ak .hub span{font:600 14px/1 'Inter';min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 13.6px;color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.ak .hub span.on{color:var(--olive);border-bottom-color:var(--olive)}
+.ak .hub i{width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block}
+.ak .tb{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .tb .sp{flex:1}
+.ak .lead{display:inline-flex;align-items:center;gap:6px;padding:4.5px 10px;border:1px solid var(--olive-line);background:var(--olive-soft);border-radius:999px;font:12px/1.4 'Inter';white-space:nowrap}
+.ak .lead i{font-style:normal;color:var(--olive)} .ak .lead b{font-weight:600} .ak .lead::after{content:"▾";color:var(--dim);font-size:10px}
+.ak .b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 14.4px;border-radius:6px;font:650 14px/1.25 'Inter';white-space:nowrap;border:1px solid var(--line2);background:var(--card);color:var(--soft)}
+.ak .pay{font-size:12px;color:var(--dim);margin:0}
+.ak .pay b{color:var(--ink);font-weight:600}
+/* the bank line (what is being decided) */
+.ak .oh{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:1rem}
+.ak .rt{font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:0 0 7px}
+.ak .om{display:flex;flex-direction:column;align-items:flex-end;gap:.15rem;margin:0 0 .45rem auto;min-width:0}
+.ak .omk{display:inline-flex;align-items:center;gap:.25rem .5rem;font-size:12px;line-height:1.45;color:var(--dim)}
+.ak .omk b{color:var(--ink);font-weight:600}
+.ak .omk svg{color:#8a837a;flex:none}
+.ak .chip{display:inline-flex;align-items:center;padding:1px 8px;border-radius:999px;border:1px solid var(--amber-line);background:var(--amber-soft);color:var(--amber-ink);font:600 11.5px/1.5 'Inter'}
+.ak .notes{margin:8px 0 0;font-size:12px;color:var(--dim);display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}
+.ak .notes b{color:var(--ink);font-weight:600}
+.ak .band{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;grid-template-columns:repeat(3,1fr)}
+.ak .tile{background:var(--card);padding:13.6px 16px;display:flex;flex-direction:column;gap:3.5px;min-width:0}
+.ak .bl{font:700 11px/1.2 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+.ak .bf{font:700 24px/1.1 'Inter';letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.ak .bf.warn{color:var(--amber-ink)}
+.ak .bc{font-size:12px;line-height:1.45;color:var(--dim)}
+/* the card below (identical in every frame) */
+.ak .cardx{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-top:14px}
+.ak .cardx h2{font:700 16px/1.2 'Inter';margin:0 0 10px}
+.ak table.rg{width:100%;border-collapse:collapse;font-size:12.5px}
+.ak table.rg th{font:700 12px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);text-align:left;padding:6px 9px;border-bottom:1px solid var(--line2)}
+.ak table.rg td{padding:7px 9px;border-bottom:1px solid var(--line)}
+.ak table.rg th.r,.ak table.rg td.r{text-align:right;font-variant-numeric:tabular-nums}
+.ak .red{color:var(--red)}
+.ak .fold{position:absolute;left:0;right:0;border-top:2px dashed #C0392B;z-index:5;pointer-events:none}
+.ak .fold span{position:absolute;right:8px;top:2px;background:#C0392B;color:#fff;font:600 11px/1 'IBM Plex Mono',monospace;padding:4px 6px;border-radius:4px}
+.ak .strip{padding:14px 24px 16px}
+/* phone */
+.ak.p390{width:390px}
+.ak.p390 .ptop{display:flex;align-items:center;gap:12px;height:52px;padding:0 16px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak.p390 .ptop .sp{flex:1}
+.ak.p390 .pbody{padding:14px 16px 12px;display:flex;flex-direction:column;gap:10px}
+.ak.p390 .hub span{min-height:44px;padding:0 12px}
+.ak.p390 .oh{display:block}
+.ak.p390 .rt{margin:4px 0 2px}
+.ak.p390 .om{margin:0;align-items:stretch;gap:0;width:100%}
+.ak.p390 .omk{min-height:44px;gap:.5rem;flex-wrap:nowrap;font-size:13px}
+.ak.p390 .omk .tx{flex:1;min-width:0}
+.ak.p390 .band{grid-template-columns:1fr 1fr}
+.ak.p390 .tile{padding:12px 14px}
+.ak.p390 .tile.span{grid-column:1/-1}
+.ak.p390 .bf{font-size:20px}
+.ak.p390 .pnote{margin-top:2px}
+</style>
+
+<div class="doc">
+  <div class="eyebrow">Club Accounting · Overview · bank line</div>
+  <h1>The bank line on the Overview</h1>
+  <p class="lede">Today the Overview shows one “Bank: … checked through …” line for every bank account, stacked above the three money tiles. A club with three accounts gets three lines, and the tiles move down. These drawings show the same screen with the line done three other ways, so you can see what each one does to the figures the page exists for.</p>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="viewrow" id="viewrow"><span class="lab">View</span>
+    <div class="sw"><button type="button" id="v-all" aria-pressed="true">Everything</button><button type="button" id="v-diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div id="panes"></div>
+</div>
+<div id="dlg" hidden role="dialog" aria-modal="true" aria-label="Note"><div class="box"><p id="dlgtxt"></p><button type="button" id="dlgx">Close</button></div></div>
+
+<script>
+/* ---------- data: the real UAT Rep Club accounts (from the owner's screenshot) and two invented, labelled cases ---------- */
+var CV='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+var S={
+  one:  {label:'1 account', a:[{n:'Club chequing',d:'Oct 31, 2026',t:31}]},
+  two:  {label:'2 accounts, both checked', a:[{n:'Club chequing',d:'Oct 31, 2026',t:31},{n:'Gaming account',d:'Nov 6, 2026',t:37}]},
+  three:{label:'3 accounts, one never checked (UAT Rep Club today)', a:[{n:'Walk chequing',d:'Nov 5, 2026',t:36},{n:'Gaming account',d:'Nov 6, 2026',t:37},{n:'S1b walk chequing',d:null}]},
+  ok3:  {label:'3 accounts, all checked recently', a:[{n:'Walk chequing',d:'Nov 5, 2026',t:36},{n:'Gaming account',d:'Nov 6, 2026',t:37},{n:'S1b walk chequing',d:'Nov 3, 2026',t:34}]},
+  off2: {label:'2 accounts, one check was off', a:[{n:'Club chequing',d:'Oct 31, 2026',t:31,off:'$12.40'},{n:'Gaming account',d:'Nov 6, 2026',t:37}]},
+  late3:{label:'3 accounts, one check is overdue', a:[{n:'Walk chequing',d:'Sep 28, 2026',t:-3,late:true},{n:'Gaming account',d:'Nov 6, 2026',t:37},{n:'S1b walk chequing',d:'Nov 3, 2026',t:34}]}
+};
+function nev(s){return s.a.filter(function(x){return !x.d}).length}
+function offs(s){return s.a.filter(function(x){return x.off})}
+function oldest(s){var c=s.a.filter(function(x){return x.d}).sort(function(p,q){return p.t-q.t});return c[0]}
+function needs(s){return nev(s)>0||offs(s).length>0||s.a.some(function(x){return x.late})}
+function chipHtml(s){var o=offs(s);if(!o.length)return '';return '<span class="chip">'+(o.length===1?'Off by '+o[0].off:o.length+' off')+'</span>'}
+/* the three line formats */
+function lineToday(a){return '<span class="omk"><span>Bank: <b>'+a.n+'</b> '+(a.d?'checked through <b>'+a.d+'</b>':'· not checked yet')+'</span>'+CV+(a.off?'<span class="chip">Off by '+a.off+'</span>':'')+'</span>'}
+function lineSummary(s){
+  if(s.a.length===1){return lineToday(s.a[0])}
+  var nv=nev(s),txt;
+  if(nv>0){txt='Bank: <b>'+nv+' of '+s.a.length+'</b> not checked yet'}else{txt='Bank: oldest check <b>'+oldest(s).d+'</b>'}
+  return '<span class="omk"><span>'+txt+'</span>'+CV+chipHtml(s)+'</span>'}
+function noteB(s){
+  if(s.a.length===1){return '<p class="notes">'+lineToday(s.a[0]).replace('class="omk"','class="omk" style="gap:.25rem"')+'</p>'}
+  var parts=s.a.map(function(a){return '<span class="omk">'+a.n+' <b>'+(a.d?a.d.replace(', 2026',''):'not checked yet')+'</b>'+(a.off?'<span class="chip">Off by '+a.off+'</span>':'')+'</span>'});
+  return '<p class="notes"><span>Bank checks</span>'+parts.join('<span>·</span>')+CV+'</p>'}
+function same(html,label){return '<div class="same">'+html+'</div><div class="samebar">'+label+'</div>'}
+
+/* ---------- pieces ---------- */
+function band(phone){
+  var t=[['Cash on hand','$6,094.50','', phone?'6 books · a $640.00 cheque not cleared':'the club’s 6 books · a $640.00 cheque not yet cleared'],
+         ['Owed by the teams','$34,044.00','', phone?'$15,801.00 overdue':'$15,801.00 overdue · $450.00 sent, waiting for you'],
+         ['Waiting on you','$2,238.50','warn','9 requests · 5 holding up a payout']];
+  return '<div class="band" role="group" aria-label="Where the club stands today">'+t.map(function(x,i){
+    return '<div class="tile'+(phone&&i===2?' span':'')+'"><span class="bl">'+x[0]+'</span><span class="bf '+x[2]+'">'+x[1]+'</span><span class="bc">'+x[3]+'</span></div>'}).join('')+'</div>'}
+function region(v,s,phone){
+  var head='<p class="rt">Where the club stands · today, Nov 9</p>',lines='',note='';
+  if(v==='today'){lines=s.a.map(lineToday).join('')}
+  else if(v==='A'){lines=lineSummary(s)}
+  else if(v==='B'){if(phone){note='<div class="om pnote">'+lineSummary(s)+'</div>'}else{note=noteB(s)}}
+  else if(v==='D'){if(needs(s)){lines=lineSummary(s)}}
+  var oh='<div class="oh">'+head+(lines?'<div class="om">'+lines+'</div>':'')+'</div>';
+  return oh+band(phone)+note}
+function hubTabs(dot){
+  var names=['Overview','Budget','Teams','Ledger','Bank','Allocations','Payment requests','Budget vs. Actual','Payouts'];
+  return '<div class="hub">'+names.map(function(n,i){return '<span'+(i===0?' class="on"':'')+'>'+n+(dot&&n==='Bank'?'<i title="needs a check"></i>':'')+'</span>'}).join('')+'</div>'}
+function chromeTop(dot){
+  return '<div class="tb"><h1>Accounting</h1></div>'+hubTabs(dot)+
+  '<div class="tb"><span class="lead"><i>Fiscal year</i> <b>2026–27</b> ●</span><span class="sp"></span><span class="b">Export</span></div>'+
+  '<p class="pay"><b>Taking payments</b> · Online payments go to the club’s bank account.</p>'}
+function below(){
+  return '<div class="cardx"><h2>From 2025–26, still open</h2><table class="rg"><thead><tr><th>Team</th><th>What</th><th>State</th><th class="r">Amount</th></tr></thead><tbody>'+
+  '<tr><td>13U AAA</td><td>Permit share 2025–26 · installment 2 of 2</td><td class="red">Overdue since Jul 15</td><td class="r">$600.00</td></tr>'+
+  '<tr><td>14U AA</td><td>Permit share 2025–26 · installment 2 of 2</td><td class="red">Overdue since Jul 15</td><td class="r">$600.00</td></tr>'+
+  '<tr><td>15U AAA</td><td>Request · Provincials hotel deposit</td><td class="red">holding up a payout</td><td class="r">$260.00</td></tr></tbody></table></div>'+
+  '<div class="cardx"><h2>2026–27 against the budget</h2><table class="rg"><thead><tr><th></th><th class="r">Planned</th><th class="r">So far</th></tr></thead><tbody><tr><td>Revenue</td><td class="r">$120,000.00</td><td class="r">$41,310.00</td></tr></tbody></table></div>'}
+function desk(v,s,dot){
+  var side='<div class="sb same"><div class="org">UAT Rep Club</div><div class="it">Overview</div><div class="it">Permits</div><div class="grp">Club</div><div class="it on">Accounting <span>9</span></div><div class="it">Organization</div></div>';
+  return '<div class="fx"><div class="fr w1440"><div class="ak">'+
+    same('<div class="top">FieldLogicHQ <span class="env">Admin</span><span class="sp"></span><span class="b" style="min-height:30px">View site</span></div>','Header bar — identical in every frame')+
+    '<div class="shell">'+side+'<div class="main"><div class="pg">'+
+      (dot?'<div>'+chromeTop(true)+'</div>':same(chromeTop(false),'Sidebar, page title, tabs, year pill and Export — identical in every frame'))+
+      '<div>'+region(v,s,false)+'</div>'+
+      same(below(),'The “still open” and budget cards — identical in every frame')+
+    '</div></div></div>'+
+    '<div class="fold" style="top:670px"><span>bottom of a laptop screen (about 670px of page)</span></div>'+
+  '</div></div></div>'}
+function strip(v,s,extra){
+  return '<div class="cap"><b>'+s.label+'</b><span>'+(extra||'')+'</span></div><div class="fx"><div class="fr w1200"><div class="ak"><div class="strip">'+region(v,s,false)+'</div></div></div></div>'}
+function phone(v,s,title){
+  return '<div><div class="cap"><b>'+title+'</b></div><div class="fr w390"><div class="ak p390">'+
+    same('<div class="ptop"><span>☰</span><span>Accounting</span><span class="sp"></span><span class="b" style="min-height:30px;padding:0 10px">9+</span></div>','Header — identical')+
+    '<div class="pbody">'+
+      same(hubTabs(false)+'<div class="tb"><span class="lead"><i>Fiscal year</i> <b>2026–27</b> ●</span><span class="sp"></span><span class="b" style="min-height:44px">Export</span></div>','Header, tabs, year pill — identical')+
+      '<div>'+region(v,s,true)+'</div>'+
+      same('<div class="cardx" style="margin-top:6px"><h2>From 2025–26, still open</h2><table class="rg"><tbody><tr><td>13U AAA</td><td class="red">Overdue</td><td class="r">$600.00</td></tr></tbody></table></div>','Cards below — identical')+
+    '</div><div class="fold" style="top:660px"><span>bottom of a phone screen (about 660px)</span></div></div></div></div>'}
+function mk(k,label,note){return '<button type="button" class="mk '+k+'" data-note="'+note+'">'+label+'</button>'}
+function read(w,g,a){return '<div class="read"><div class="w"><h4>What it does well</h4><ul>'+w.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div><div class="g"><h4>What it costs</h4><ul>'+g.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div><div class="a"><h4>Needs your ruling</h4><ul>'+a.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div></div>'}
+
+/* ---------- the panes ---------- */
+var P={};
+P.today={t:'1 · Today',h:'<h2>Today: one line per account</h2>'+
+ '<p class="lede">This is what is built. Each account gets its own line in the heading row, right of “Where the club stands”. With one account it is a single quiet line. With three, the heading row is three lines tall and the tiles start about 40px lower on a desk. On a phone each line is a 44px tap row, so three accounts put about 130px between the heading and the figures.</p>'+
+ strip('today',S.one,'adds 0px')+strip('today',S.two,'adds about 20px')+strip('today',S.three,'adds about 40px on a desk, about 130px on a phone')+
+ '<div class="cap">'+mk('bad','PROBLEM · tiles pushed down','With three accounts the heading row grows by about two lines. The red dashed line below marks the bottom of a laptop screen: the tiles are still on screen here, but everything under them (the still-open card) moves down by the same amount.')+mk('unc','UNCHANGED · the tiles','The three tiles, their captions and their figures are not touched by any option.')+'<span>Whole screen, 3 accounts</span></div>'+desk('today',S.three)};
+
+P.A={t:'2 · A · One summary line',h:'<h2>A · One summary line, always the same height</h2>'+
+ '<p class="lede">The heading row keeps one line however many accounts the club has. The line says the club’s honest status: it is only checked as far as its least-recently-checked account. A date, a count, or an amber chip tells you which, and one click opens the Bank tab, which already lists every account.</p>'+
+ '<div class="rules"><table class="t"><thead><tr><th>When</th><th>The line reads</th></tr></thead><tbody>'+
+ '<tr><td>One account</td><td>Exactly today’s wording: “Bank: Club chequing checked through Oct 31, 2026 ›”</td></tr>'+
+ '<tr><td>Several accounts, all checked</td><td>“Bank: oldest check Nov 5, 2026 ›”</td></tr>'+
+ '<tr><td>Any account never checked</td><td>“Bank: 1 of 3 not checked yet ›” (wins over the date)</td></tr>'+
+ '<tr><td>Any check was off</td><td>An amber chip beside the line: “Off by $12.40” for one, “2 off” for several. It opens the Bank tab on that check.</td></tr>'+
+ '<tr><td>No account yet</td><td>As today: a writer sees “Bank: not checked yet ›”, a reader sees nothing.</td></tr></tbody></table></div>'+
+ '<div class="cap">'+mk('new','NEW · summary line','One line replaces the stack. The words “oldest check” and “1 of 3 not checked yet” are new; the one-account wording is unchanged.')+mk('res','RESTYLED · chip','The Off by chip is the same amber chip as today. With several accounts off it counts them instead of naming one amount.')+'</div>'+
+ strip('A',S.one,'adds 0px · same as today')+strip('A',S.two,'adds 0px')+strip('A',S.three,'adds 0px')+strip('A',S.off2,'adds 0px')+
+ '<div class="cap"><span>Whole screen, 3 accounts</span></div>'+desk('A',S.three)+
+ read(['The tiles never move: the heading row is one line at any account count.','Nothing is lost: today’s one-account wording stays, and the Bank tab holds the detail.','“Oldest check” is the true statement for the whole club, so it cannot read as reassurance while one account lags.'],
+      ['You cannot see which account is oldest without a click.','Two new phrases to word and add to the help article and search words.'],
+      ['“Oldest check Nov 5, 2026” or keep “checked through” when there are several accounts (ask 2).'])};
+
+P.B={t:'3 · B · Note under the tiles',h:'<h2>B · One quiet sentence under the tiles</h2>'+
+ '<p class="lede">The heading row goes back to just the heading. The accounts are listed in a single sentence below the money band, which is where the band’s one allowed note sits. The figures stay first; the bank status is read after them. This page does not use that note today.</p>'+
+ '<div class="cap">'+mk('new','NEW · note under the band','A single wrapping sentence beneath the money band. Each account name is its own door to the Bank tab on that account. The Off by chip sits beside the account that is off.')+mk('res','RESTYLED · phone','A phone cannot fit a sentence of three accounts, so it reads the same one-line summary as option A, under the tiles instead of above them.')+'</div>'+
+ strip('B',S.one,'under the band · same wording as today')+strip('B',S.two,'under the band')+strip('B',S.three,'under the band · wraps to a second line with longer names')+strip('B',S.off2,'under the band')+
+ '<div class="cap"><span>Whole screen, 3 accounts</span></div>'+desk('B',S.three)+
+ read(['Every account is named with its date, so nothing needs a click to read.','Nothing sits between the heading and the figures.'],
+      ['It still grows with the number of accounts: a fourth account wraps the sentence to two lines.','On a phone it turns into option A’s summary, so it only changes the desk.','The bank status moves below the figures; a treasurer who looked at it first now looks further down.'],
+      ['Whether a status read after the figures is early enough, or the line should be above them.'])};
+
+P.D={t:'4 · D · Silent unless needed',h:'<h2>D · Nothing, until something needs the treasurer</h2>'+
+ '<p class="lede">When every account has a recent check, the Overview shows no bank line at all: the quietest the page can be. The line appears, in option A’s wording, only when a check was off, an account has never been checked, or a check has gone overdue. An amber dot on the Bank tab (option E) can come with it, so the tab strip points the same way.</p>'+
+ '<div class="cap">'+mk('new','NEW · appears only when needed','Same wording as option A, but only drawn when a trigger is met. Triggers: a check was off, an account has never been checked, or the latest check is older than the overdue limit.')+mk('new','NEW · dot on the Bank tab','Option E. A small amber dot on the Bank tab, the way the Accounting nav carries its “9”. It appears with the line and goes with it.')+mk('askm','NEEDS A RULING · overdue','The code has no “overdue” rule for a check today (it only has the fiscal-year close question). The drawing uses 35 days as a placeholder.')+'</div>'+
+ strip('D',S.one,'a check exists · nothing shown')+strip('D',S.ok3,'all recent · nothing shown')+strip('D',S.three,'never checked · line appears')+strip('D',S.off2,'a check was off · chip appears')+strip('D',S.late3,'35 days is the placeholder limit · line appears')+
+ '<div class="cap"><span>Whole screen, 3 accounts, all checked recently</span></div>'+desk('D',S.ok3)+
+ '<div class="cap"><span>Whole screen, same club with one account never checked: the line and the Bank tab dot appear</span></div>'+desk('D',S.three,true)+
+ read(['The quietest option: a healthy club sees no bank line, so a line that appears means something.','The tiles never move.','The first-time nudge survives: “1 of 3 not checked yet” shows from day one.'],
+      ['It needs a new rule for “overdue”, and nothing else in the product defines one.','Once the first check exists, nothing reminds the treasurer until the limit passes.','The status you could always glance at is now sometimes absent.'],
+      ['What counts as overdue: 35 days, not since the last month-end, or no rule (ask 3).','Whether to add the dot on the Bank tab (option E).'])};
+
+P.phone={t:'5 · Phone',h:'<h2>On a phone</h2>'+
+ '<p class="lede">The drawn screens are 390 wide with a marker at the bottom of a phone screen. Open this page on your phone to judge the size: the 44px rows are drawn at true size.</p>'+
+ '<div class="cap">'+mk('bad','PROBLEM · three tap rows','Today each account is a 44px row, so three accounts stack 132px between the heading and the tiles. The third tile moves down toward the fold.')+mk('new','NEW · one row','Option A: one 44px row. Option B: the same row, under the tiles. Option D: no row until needed.')+'</div>'+
+ '<div class="pair">'+phone('today',S.three,'Today')+phone('A',S.three,'A · summary line')+phone('B',S.three,'B · under the tiles')+phone('D',S.ok3,'D · silent (all recent)')+'</div>'};
+
+P.asks={t:'6 · Asks',h:'<h2>What I need from you</h2>'+
+ '<div class="ask"><h3>1 · Which option?</h3><ul><li class="rec">A · One summary line (recommended). No new rule, same height at any account count, nothing lost.</li><li>B · A note under the tiles.</li><li>D · Silent unless needed, with or without the Bank tab dot.</li><li>A now, and D or the dot later once “overdue” is ruled.</li></ul></div>'+
+ '<div class="ask"><h3>2 · The words when there are several accounts</h3><ul><li class="rec">“Bank: oldest check Nov 5, 2026 ›” (recommended).</li><li>Keep “checked through” and show the oldest date: shorter, but it reads as if every account is checked that far.</li></ul></div>'+
+ '<div class="ask"><h3>3 · If D or the dot: what is overdue?</h3><ul><li>35 days since the latest check.</li><li>No check since the last month-end.</li><li>No rule. Show the line only for “off” or “never checked”.</li></ul></div>'+
+ '<div class="ask"><h3>4 · When several accounts are off</h3><ul><li class="rec">“2 off” chip that opens the Bank tab (recommended).</li><li>Show only the largest “Off by” amount.</li></ul></div>'+
+ '<div class="ask"><h3>5 · Phone</h3><ul><li class="rec">One 44px row (recommended, same as A on desk).</li><li>Keep it off the phone Overview: the Bank tab is one tap away.</li></ul></div>'+
+ '<p class="muted">Nothing is built from these drawings until you rule. The Overview reads today on every fiscal year the pill shows (the band beside it does too), and none of the options change that.</p>'};
+
+/* ---------- wiring ---------- */
+var order=['today','A','B','D','phone','asks'],ids={today:'today',A:'option-a',B:'option-b',D:'option-d',phone:'phone',asks:'asks'};
+var tabs=document.getElementById('tabs'),panes=document.getElementById('panes');
+order.forEach(function(k){
+  var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.id='tab-'+ids[k];b.textContent=P[k].t;b.setAttribute('aria-selected','false');b.addEventListener('click',function(){show(k)});tabs.appendChild(b);
+  var s=document.createElement('section');s.className='pane';s.id='pane-'+ids[k];s.hidden=true;s.setAttribute('role','tabpanel');s.innerHTML=P[k].h;panes.appendChild(s)});
+function show(k){order.forEach(function(j){
+  document.getElementById('pane-'+ids[j]).hidden=(j!==k);
+  document.getElementById('tab-'+ids[j]).setAttribute('aria-selected',j===k?'true':'false')});
+  try{history.replaceState(null,'','#'+ids[k])}catch(e){}
+  document.getElementById('viewrow').hidden=(k==='asks'||k==='phone')}
+function fromHash(){var h=(location.hash||'').slice(1),k=order.filter(function(j){return ids[j]===h})[0];show(k||'today')}
+window.addEventListener('hashchange',fromHash);fromHash();
+function setView(v){document.body.setAttribute('data-view',v);document.getElementById('v-all').setAttribute('aria-pressed',v==='all'?'true':'false');document.getElementById('v-diff').setAttribute('aria-pressed',v==='diff'?'true':'false')}
+document.getElementById('v-all').addEventListener('click',function(){setView('all')});
+document.getElementById('v-diff').addEventListener('click',function(){setView('diff')});
+var dlg=document.getElementById('dlg');
+document.addEventListener('click',function(e){var m=e.target.closest&&e.target.closest('.mk');if(m){document.getElementById('dlgtxt').textContent=m.getAttribute('data-note');dlg.hidden=false;document.getElementById('dlgx').focus()}});
+document.getElementById('dlgx').addEventListener('click',function(){dlg.hidden=true});
+dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.hidden=true});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')dlg.hidden=true});
+</script>

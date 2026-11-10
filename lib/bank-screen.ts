@@ -28,9 +28,10 @@ export const nameOf = (l: { label?: string | null }): string => l.label?.trim() 
 
 /** An account's latest check (ask 4), as both portals read it. */
 export type ThroughMark = { date: string; result: 'matches' | 'off'; offByCents: number } | null;
-/** Ask 4: "{date} · Matches" / "{date} · Off by $X" — an account's latest check, as the pill and the line say it. */
+/** Ask 4: "Checked through {date} · Matches" / "… · Off by $X" — an account's latest check, the sub-line under its name
+ *  in the Account pill. */
 export const throughWords = (t: ThroughMark): string =>
-  t ? W.throughResult(dayYear(t.date), t.result === 'matches' ? W.matches : W.offBy(cents(t.offByCents))) : W.notChecked;
+  t ? W.throughResult(dayYear(t.date), t.result === 'matches' ? W.matches : W.offBy(cents(t.offByCents))) : W.notCheckedLine;
 
 /**
  * The joined band's three tiles (drawing tab 2; the shipped band, house rule): The bank says · Should be in the bank ·

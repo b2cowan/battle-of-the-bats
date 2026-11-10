@@ -7,7 +7,7 @@ import { methodInBrackets } from './house-league-money-words';
 import { LEAGUE_PAY_WORDS, SIGNUP_LINK_WORDS } from './league-pay-words';
 import { SECOND_PARENT_WORDS } from './league-second-parent';
 import { TC_MAIL } from './house-league-team-changes-words';
-import { INVITE_PANEL_SLOT, INVITE_WHO_SLOT } from './family-invitation-panel';
+import { INVITE_PANEL_SLOT, INVITE_WHO_SLOT, moneyBlock } from './family-invitation-panel';
 import { formatStoredDate } from './timezone';
 import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
 import {
@@ -912,6 +912,18 @@ function signupButton(url: string | null | undefined): string {
   return url ? warmEmailButton(SIGNUP_LINK_WORDS.mail.button, escapeEmailHtml(url)) : '';
 }
 
+/**
+ * The money link in the placement and moved emails, which can also carry the app invitation's big button. Built in both
+ * shapes; the slot fill keeps the button (no invitation button) or the line under the panel (see MONEY_OPEN). It sits AFTER
+ * the panel slot: the team is the news, the app is the next step, the money is the reminder.
+ */
+function signupBlock(url: string | null | undefined): string {
+  if (!url) return '';
+  const M = SIGNUP_LINK_WORDS.mail;
+  const line = `<p style="margin:0 0 1rem;color:${WARM_EMAIL.ink};">${M.owedLine} <a href="${escapeEmailHtml(url)}" style="${WARM_EMAIL_STYLE.textLink}">${M.owedLink}</a></p>`;
+  return moneyBlock(signupButton(url), line);
+}
+
 /** The reference, to quote to the club (drawing tab 5). It opens nothing: the email's one link is `signupButton`. */
 function refBlock(reference: string): string {
   return `<p style="margin:0.75rem 0 0;color:${WARM_EMAIL.secondary};font-size:0.9rem;">${SIGNUP_LINK_WORDS.mail.reference(`<strong style="${DATA_FACE}">${escapeEmailHtml(reference)}</strong>`)}</p>`;
@@ -1312,7 +1324,7 @@ export function leagueTeamChangesHtml(input: {
     <p>${escapeEmailHtml(TC_MAIL.lead(input.divisionName))}</p>
     ${blocks}
     <p>${TC_MAIL.close}</p>
-    ${signupButton(input.signupUrl)}${slot(INVITE_PANEL_SLOT)}
+    ${slot(INVITE_PANEL_SLOT)}${input.invitationSlots ? signupBlock(input.signupUrl) : signupButton(input.signupUrl)}
     ${teamsContactLine(input.clubName, input.contactEmail)}
   `, input.face, `your family is registered for ${input.seasonName}`);
 }
@@ -1352,7 +1364,7 @@ export function leagueTeamsPlacedHtml(input: {
     <p>The ${p.divisionName} teams for ${p.seasonName} are set.</p>
     <ul style="margin:0.5rem 0 1rem;padding-left:1.2rem;color:${WARM_EMAIL.ink};">${rows}</ul>
     ${next}
-    ${signupButton(input.signupUrl)}${slot(INVITE_PANEL_SLOT)}
+    ${slot(INVITE_PANEL_SLOT)}${input.invitationSlots ? signupBlock(input.signupUrl) : signupButton(input.signupUrl)}
     ${teamsContactLine(input.clubName, input.contactEmail)}
   `, input.face, `your family is registered for ${input.seasonName}`);
 }
@@ -1393,7 +1405,7 @@ export function leagueTeamMovedHtml(input: {
     <p>${p.childName} has moved from ${p.fromTeam} to ${p.toTeam} in ${p.divisionName}.</p>
     <p>${coach}</p>
     ${practices}
-    ${signupButton(input.signupUrl)}${slot(INVITE_PANEL_SLOT)}
+    ${slot(INVITE_PANEL_SLOT)}${input.invitationSlots ? signupBlock(input.signupUrl) : signupButton(input.signupUrl)}
     ${teamsContactLine(input.clubName, input.contactEmail)}
   `, input.face, `${first} is registered for ${input.seasonName}`);
 }

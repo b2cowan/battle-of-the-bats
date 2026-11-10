@@ -62,6 +62,7 @@ const OUTSIDER_EMAIL = `${MARK}-outsider@dev.local`;
 const PASSWORD = 'devpass123';
 const ORG_SLUG = 'dev-club-org';
 const GUESSED_TOKEN = 'ZZZZthisTokenWasNeverMintedBBBBBBBBBBBBBBBB';
+const GUESSED_UUID = '00000000-0000-4000-8000-000000000000';
 
 let orgId = '';
 let coachUserId = '';
@@ -271,6 +272,29 @@ test.describe('guardian tier switch', () => {
       .select('id').eq('guardian_email', OUTSIDER_EMAIL);
     expect(consents ?? []).toHaveLength(0);
   });
+
+  // Stage 4a (2026-11-08): every route the signed-in family app added answers 404 while the switch is off, whoever asks and
+  // before any read or write. "Tier off = nothing changes for anyone."
+  test('every Stage 4a family route answers 404', async ({ page }) => {
+    await signIn(page, OUTSIDER_EMAIL);
+    expect((await apiGet(page, '/api/family/me')).status).toBe(404);
+    for (const url of [
+      '/api/family/calendar',
+      '/api/family/signup-invitation',
+      `/api/family/children/${GUESSED_UUID}/leave`,
+      `/api/family/claim/${GUESSED_TOKEN}/email`,
+      `/api/family/claim/${GUESSED_TOKEN}/resend`,
+    ]) {
+      expect((await apiPost(page, url, {})).status, url).toBe(404);
+    }
+    // The accept route also refuses a "create the account" body: no account is made while the switch is off.
+    const created = await apiPost(page, `/api/family/claim/${GUESSED_TOKEN}`, {
+      mode: 'new', email: `${MARK}-never@dev.local`, password: 'devpass123',
+    });
+    expect(created.status).toBe(404);
+    const { data: users } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+    expect((users?.users ?? []).some(u => u.email === `${MARK}-never@dev.local`)).toBe(false);
+  });
 });
 
 // ── 2. The tier boundary — true whether the switch is on or off ──────────────
@@ -293,14 +317,21 @@ test.describe('boundary — an account with no guardian link reaches no child da
     expect(serialized).not.toContain(MARK);
   });
 
-  test('an unconnected account cannot invite a co-guardian', async ({ page }) => {
+  test('a parent cannot invite another adult: that door was removed in Stage 4a', async ({ page }) => {
     await signIn(page, OUTSIDER_EMAIL);
     const res = await apiPost(page, `/api/family/teams/${teamId}/co-guardian`, {
       email: 'other-parent@dev.local',
     });
-    // 404 whether the tier is off (route disabled) or on (no link, no player) — either way an
-    // unconnected account can never attach an adult to a child.
+    // "An invitation goes only to an address on the child's sign-up" (or the one the rep coach typed): the
+    // parent-typed route no longer exists, so it answers 404 whether the tier is on or off.
     expect(res.status).toBe(404);
+  });
+
+  test('an account with no connected child gets no "Your family" row and cannot leave a child', async ({ page }) => {
+    await signIn(page, OUTSIDER_EMAIL);
+    // True switch on or off: no live link, so the menu row is never offered and a leave finds nothing to end.
+    expect((await apiGet(page, '/api/family/me')).status).toBe(404);
+    expect((await apiPost(page, `/api/family/children/${GUESSED_UUID}/leave`, {})).status).toBe(404);
   });
 
   test('an unconnected account cannot reach the coach-side guardian routes', async ({ page }) => {
@@ -322,10 +353,9 @@ test.describe('boundary — an account with no guardian link reaches no child da
     }
   });
 
-  test('the database refuses a guardian row with no player', async () => {
-    // Mig 290 restored mig 215's strict form. The only producer of a player-less request was
-    // the ask-via-link path, which went with the family link; if this ever passes, the CHECK
-    // has been loosened again and something can once more write a child-less guardian.
+  test('the database refuses a guardian row with no child', async () => {
+    // Mig 453 (Stage 4a) made `player_id` and `rep_team_id` nullable, because a house-league child has neither; the strict form
+    // is now "a guardian row names a CHILD". If this ever passes, something can once more write a child-less guardian.
     const { error } = await admin.from('family_links').insert({
       org_id: orgId, rep_team_id: teamId, role: 'guardian',
       player_id: null, invited_email: `${MARK}-pending@dev.local`,

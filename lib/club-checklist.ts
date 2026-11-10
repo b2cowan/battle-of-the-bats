@@ -111,9 +111,9 @@ export async function computeClubChecklist(org: Org): Promise<ClubChecklist> {
     {
       key: 'board',
       done: board.length > 0,
-      // While open: Members with the invite open and no role chosen (Stage 13b B1; the step names two roles, so neither is
-      // preset). Once done, the step's outline button is just the board's page (/review: it must not pop the invite).
-      href: board.length > 0 ? `${base}/org/members` : `${base}/org/members?invite=open`,
+      // Members, with NOTHING open (owner, 2026-11-08): a first-time owner is about to choose roles, and the page's own
+      // "What each role can open" table is what they read first — an invite window already open hid it behind a form.
+      href: `${base}/org/members`,
       detail: { joined: boardNames, count: board.length },
     },
     {

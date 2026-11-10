@@ -51,7 +51,7 @@ import { useFeeAlert } from './useFeeAlert';
 
 const badge = (n: number): string => (n > 9 ? '9+' : String(n));
 
-/** One More-sheet section: its heading (none for a club group of one row) and its rows. */
+/** One More-sheet section: its heading and its rows. */
 type SheetGroup = { key: string; heading: string | null; places: KitLink[] };
 
 type Tab = { key: string; href: string; icon: ElementType; label: string; active: boolean; count?: number; chat?: boolean };
@@ -137,7 +137,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   // ⚠ Declared before the tabs below read it: a later `const` is a crash on every club render (the design pass caught it).
   const programCount = (key: string) => briefPlaceCount(brief, key);
   // ⚖ The sheet's groups (N7, 13i B5): the sidebar's places under the sidebar's names, less what the bar and the tiles show.
-  // Organization is ONE row (its pages are its tabs); a one-row group draws no heading (the owner's Tournaments).
+  // Organization is ONE row (its pages are its tabs); every group with a row wears its heading, a one-row group too.
   const sheetGroups: SheetGroup[] = clubSheetGroups(placeGroups, club).map(g => ({ ...g, heading: placeGroupHeading(g) }));
 
   const tabs: Tab[] = tournamentBar
@@ -206,8 +206,8 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
     active: tournamentBar ? underHref(t.href) : doorActive(t),
     count: tournamentBar ? worklist[t.key] ?? 0 : programCount(t.key),
   });
-  // Doors only, as the rail: an owner's area is not listed for anyone else (owner, 2026-10-01). A null heading: a club group
-  // of one row, which draws none (N2, 13i).
+  // Doors only, as the rail: an owner's area is not listed for anyone else (owner, 2026-10-01). A null heading: a group
+  // with no rows, which the sheet does not list at all.
   const group = ({ key, heading, places }: SheetGroup) => (
     <div key={key} className={styles.dropSection}>
       {heading && <div className={styles.dropSectionLabel}>{heading}</div>}

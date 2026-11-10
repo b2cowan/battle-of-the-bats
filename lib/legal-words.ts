@@ -37,9 +37,7 @@ export const legalToBeFilled = (fact: string): string => `[${fact} — to be fil
 export const LEGAL_EFFECTIVE_BLANK_FACT = 'date';
 
 /**
- * (4e) Full forms wherever a link has room; the short forms only in the account menu's small line under Sign out, written
- * `Terms · Privacy` (each short link carries its full title as its accessible name — note 1 on item 4).
+ * (4e) Full forms wherever a link has room. The account menu carries NO legal link (owner 2026-11-09: the links go only where
+ * they are needed; the account page has them) — so there are no short forms.
  * (4f) The account page's two rows use the full titles (`LEGAL_TITLES`): no chooser, no combined label.
  */
-export const LEGAL_SHORT_LABELS: Record<LegalDocKey, string> = { terms: 'Terms', privacy: 'Privacy' };
-export const LEGAL_SHORT_SEPARATOR = ' · ';

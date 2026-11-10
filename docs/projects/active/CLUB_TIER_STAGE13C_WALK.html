@@ -1,0 +1,344 @@
+<title>Stage 13c Permit Path Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier Stage 13c · The club’s time in one place · §502</span>
+    <h1>A pulled date reaches everyone who must act, and the path from permit to Send is walkable</h1>
+    <p class="sub">Written 2026-11-09, after Stage 13c Session A (committed <code>27e958f1a</code>), Session B (committed <code>13e5f6085</code>) and Session C (committed <code>40e86b8dd</code>). One purpose: when two Saturdays come off a permit, the people who must act find out, each sees only the doors they can open, and the schedule built from that permit leads from the permit to the fix to the bill.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>The club’s December permit for Kinsmen Park lost <strong>Sat, Dec 5 and Sat, Dec 12</strong> after a schedule had already handed that time out. Eight bookings now sit outside the permit: <strong>6 rep practices</strong> (14U AA, 15U AA and 13U AAA, both Saturdays) and <strong>2 house-league games</strong> on Dec 5 (Hawks vs Owls, Reds vs Blues). A third game, Reds vs Blues at 10:00 a.m., is <strong>postponed</strong>, so it holds no time and never counts. Nothing in this stage moves, blocks or emails anyone. It tells people.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1–3</strong> The owner, at a desk, on the permit: Permits is a place with its count; the old address still lands there; the permit lists the 8 by day with a door to each fix; the form counts as a date is picked.</li>
+    <li><strong>4–5</strong> The Overview’s “Outside the permit” card, and the Calendar’s marked days and empty weeks.</li>
+    <li><strong>6–8</strong> The schedule’s page: the top line opens the permit, Needs attention names the pulled dates, the Bill tile opens Fair shares and the bill (Open for an admin without the club’s money), and the View menu no longer holds Fair shares.</li>
+    <li><strong>9</strong> The league admin (Schedule health, their doors, their sentence), then <strong>10</strong> the registrar and the treasurer.</li>
+    <li><strong>11</strong> The phone. <strong>12</strong> “Take Dec 5 and Dec 12 off” into Regenerate. <strong>13</strong> New schedule’s Slots column.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk (not defects of this walk)</h2><ul>
+    <li><strong>No “was $200.00” on the bill.</strong> The drawing showed the bill rising with a “was” figure. The product keeps no earlier bill to quote: a sent bill never moves when a date comes off, and a draft’s bill is worked out fresh. So neither the Bill tile nor the Needs attention row says “was”.</li>
+    <li><strong>The schedule’s Fair shares read “Short”</strong> for its teams. The test schedule gives each team one Saturday hour, far below an even share, so that figure is the test data, not 13c.</li>
+    <li><strong>The house-league rows say “House league · U11 Pinto”</strong> without the drawing’s “· draft” (nothing in the product marks a game a draft).</li>
+    <li><strong>The registrar gets “Open 2026 Fall House League’s schedule”</strong> on the permit (the drawing showed it for the league admin only), because the registrar can open that page. The registrar gets <strong>no Schedule health lines</strong>: those are for whoever runs the season.</li>
+    <li><strong>The league admin’s sentence without “in Schedules”</strong> shows when there is no house-league time to give. In this club the schedule already gave house league time, so part 9 reaches the other sentence (“no time left to give”) through U7 Tee-ball; the “hasn’t given any time yet” one is the same change.</li>
+    <li><strong>Pressing Send is out of bounds.</strong> Part 12 stops at the unsent change: Send the changes emails the coaches.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd><code>http://localhost:3000</code>, already running Session C (no restart was needed: no page or file was added).</dd>
+    <dt>The club</dt><dd>A fresh copy of <strong>Harbourtown Minor Ball</strong>, <code>navj-club-13c</code>, made for this walk. Its permit <strong>Saturday diamonds, December 2026</strong> (Town of Milton, Kinsmen Park, every facility, Saturdays 9:00 a.m.–3:00 p.m., Nov 28 – Dec 19, $800.00) has Dec 5 and Dec 12 off, “a city event”. The sent schedule <strong>Saturdays at Kinsmen, December 2026</strong> was started from it before the dates were pulled.</dd>
+    <dt>Sign in</dt><dd><code>http://localhost:3000/login</code> · password <code>devpass123</code> for every account. Use a private window per person (or sign out between).</dd>
+    <dt>Accounts</dt><dd><code>navj-club-13c-owner@dev.local</code> (Morgan Ellis, owner) · <code>navj-club-13c-admin@dev.local</code> (Dana Kowalski, admin with Accounting) · <code>navj-club-13c-admin2@dev.local</code> (Sam Okafor, admin <strong>without</strong> Accounting) · <code>navj-club-13c-leagueadmin@dev.local</code> (Jules Moreau, league admin) · <code>navj-club-13c-registrar@dev.local</code> (Riley Okonkwo, registrar) · <code>navj-club-13c-treasurer@dev.local</code> (Avery Chen, treasurer)</dd>
+    <dt>Widths</dt><dd>“Desk” = a full browser window. “Phone” = the browser’s device view at <strong>390 px</strong>.</dd>
+    <dt>Order</dt><dd>Walk the parts in order: part 12 changes the schedule (the Needs attention row goes), so everything that reads it comes first.</dd>
+    <dt>Keep private</dt><dd>Dev-only accounts; the page carries the password, so do not share the link.</dd>
+    <dt>When done</dt><dd>Part Z: tell Claude “13c walk done” and it removes the copy.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The View menu with three views (8).</strong> Fair shares left the menu, so a draft (and any schedule over more than one weekday) now has three views: Grid, By team, By group. The standing rule says a switch for up to three and the pill for four or more. This sent schedule has four (Overview too), so you see the pill. Keep the pill everywhere, or switch to the three-way switch where there are three? (Recommended: follow the rule.)</li>
+    <li><strong>Slots that add up (13).</strong> Each team’s figure is what it could get on its own at one a day; the total is what all teams can use together, and it always matches the hint beside the setting. Here they agree (7 × 25 = 175). When teams want the same slots, the team figures can add up to more than the total. Is that acceptable?</li>
+    <li><strong>“See them ›” in the schedule’s row (6)</strong> opens the house-league season’s schedule, where Schedule health lists the games. Is that the right place to land?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "club-stage13c-permit-path-walk-v1";
+  var TITLE = "Stage 13c walk §502 · A pulled date reaches everyone who must act (2026-11-09)";
+  var C = "<code>http://localhost:3000/navj-club-13c/admin</code>";
+  var OWNER = "Owner · navj-club-13c-owner@dev.local";
+  var ADMIN = "Admin · navj-club-13c-admin@dev.local";
+  var ADMIN2 = "Admin without Accounting · navj-club-13c-admin2@dev.local";
+  var LA = "League admin · navj-club-13c-leagueadmin@dev.local";
+  var REG = "Registrar · navj-club-13c-registrar@dev.local";
+  var TRE = "Treasurer · navj-club-13c-treasurer@dev.local";
+  var P = "<strong>Saturday diamonds, December 2026</strong>";
+  var S = "<strong>Saturdays at Kinsmen, December 2026</strong>";
+  var PARTS = [
+ { id: "1", title: "The owner: Permits is a place", steps: [
+  { who: OWNER + " · desk", do: "Sign in and open the Overview (" + C + "). Look at the sidebar.",
+    see: "<strong>Permits</strong> between Calendar and Schedules, with a document-and-check icon and an amber <strong>8</strong> at the row’s end." },
+  { who: OWNER, do: "Press <strong>Permits</strong>.",
+    see: "The header names Permits; no tab row. The toolbar holds the Fiscal year pill, Export and <strong>+ Add permit</strong>. " + P + " is in a band (In use now or Starts later) with a warn mark and <strong>2 dates off · 8 bookings on them</strong>. The other permits (Fall diamonds, the Winter dome, Summer fields 2027) carry no flag." },
+  { who: OWNER, do: "Open <strong>Organization › Venue library</strong>, then type <code>…/navj-club-13c/admin/org/venues?view=permits</code> in the address bar.",
+    see: "Venue library lists the venues with no Venues | Permits switch. The old address lands on <strong>Permits</strong>." }
+ ]},
+ { id: "2", title: "The owner: the permit lists what its dates off took", steps: [
+  { who: OWNER, do: "On Permits, open " + P + ".",
+    see: "At the top, with an amber rule: <strong>8 bookings are outside this permit now: Dec 5 and Dec 12 are dates off.</strong> and “They stay booked until someone moves them.”" },
+  { who: OWNER, do: "Read the two day groups.",
+    see: "<strong>Sat, Dec 5 · Kinsmen Park</strong>: Hawks vs Owls · Diamond A (Game), Reds vs Blues · Diamond B (Game), 14U AA · Diamond A, 15U AA · Diamond B, 13U AAA · Diamond A (Practice each). <strong>Sat, Dec 12 · Kinsmen Park</strong>: the same three practices. The <strong>postponed</strong> 10:00 a.m. Reds vs Blues is <strong>not</strong> listed. Each row opens its booking." },
+  { who: OWNER, do: "Read the doors under the list, and the line about the schedule.",
+    see: "<strong>Fix the 6 practices in Saturdays at Kinsmen, December 2026 ›</strong>, <strong>Open 2026 Fall House League’s schedule ›</strong> and <strong>See Sat, Dec 5 on the Calendar ›</strong>. The fine print: “Only what this permit’s own dates off took. The list goes when nothing is left on those days.” The schedule the permit started is a door: " + S + " › hands this time out, so the permit stays." },
+  { who: OWNER, do: "Press <strong>Fix the 6 practices…</strong>, then come back.",
+    see: "It opens " + S + "’s page." }
+ ]},
+ { id: "3", title: "The owner: the form counts as a date is picked", steps: [
+  { who: OWNER, do: "On the permit, edit it and add a date off: <strong>Sat, Dec 19</strong>. Watch under the new date.",
+    see: "A moment of “Checking what’s booked…”, then <strong>Booked that day: 3 practices. They stay booked until moved.</strong> The placeholder for the reason reads “e.g. a city event”." },
+  { who: OWNER, do: "Change that date to <strong>Wed, Dec 9</strong>.",
+    see: "<strong>Nothing booked that day.</strong>" },
+  { who: OWNER, do: "Remove the extra date off, so only Dec 5 and Dec 12 remain. Close the form.",
+    see: "The “Saved” toast each time. The notice still reads 8 bookings and Dec 5 and Dec 12." }
+ ]},
+ { id: "4", title: "The owner and admin: This morning’s card", steps: [
+  { who: OWNER, do: "Open the Overview. Read <strong>This morning</strong>.",
+    see: "A card <strong>Outside the permit</strong> with the door arrow, <strong>8</strong>, and “bookings on Sat, Dec 5 and Sat, Dec 12 · Kinsmen Park”. “Still to do” has no permit item." },
+  { who: OWNER, do: "Press the card.",
+    see: "It opens " + P + " with its notice (one permit, so the permit itself, not the list)." },
+  { who: ADMIN + " · desk", do: "Sign in. Look at the Overview and the sidebar.",
+    see: "The same card with 8, and Permits in the sidebar with the amber 8." }
+ ]},
+ { id: "5", title: "The owner: the Calendar marks the days and names what’s next", steps: [
+  { who: OWNER, do: "From the permit, press <strong>See Sat, Dec 5 on the Calendar ›</strong>.",
+    see: "The Calendar on the week of Dec 5. Its day header carries a chip <strong>Outside the permit</strong> and <strong>See the permit ›</strong>. A small warn mark beside each booking still standing that day (the two games and three practices). The postponed game has no mark." },
+  { who: OWNER, do: "Open one of the marked practices.",
+    see: "Its window says it is outside the permit: Sat, Dec 5 is a date off." },
+  { who: OWNER, do: "Switch the Calendar to <strong>List</strong>, then <strong>Month</strong>.",
+    see: "Dec 5 and Dec 12 are marked the same way in both." },
+  { who: OWNER, do: "Go to this week (the week of Nov 9).",
+    see: "<strong>Nothing is booked this week.</strong> Next: <strong>Tue, Nov 17</strong> (14U AA), with <strong>Go to that week ›</strong>, which jumps there. The List view says the same Next." },
+  { who: OWNER, do: "Step forward to the week of <strong>Dec 21</strong>.",
+    see: "<strong>Nothing in the next six weeks.</strong>" }
+ ]},
+ { id: "6", title: "The owner: the schedule’s page starts at its permit", steps: [
+  { who: OWNER, do: "Open <strong>Schedules › Saturdays at Kinsmen, December 2026</strong>. Read the line under the header.",
+    see: "It begins <strong>From the permit Saturday diamonds, December 2026 ›</strong> · Kinsmen Park · … · sent {date} by {name}. No path line or stepper." },
+  { who: OWNER, do: "Press the permit’s name in that line, then come back.",
+    see: "It opens " + P + " on Permits, with its notice." },
+  { who: OWNER, do: "Read <strong>Needs attention</strong>.",
+    see: "<strong>1 item</strong>: chip <strong>Outside the permit</strong>, “<strong>Sat, Dec 5 and Sat, Dec 12 are dates off on the permit</strong>”, then “6 practices on this schedule sit on those days: 14U AA, 15U AA and 13U AAA, both Saturdays. The teams still have them.” and “2 house-league games on Dec 5 are for the league admins to move. <strong>See them ›</strong>”. A lime <strong>Take Dec 5 and Dec 12 off</strong> button. No “was” bill line." },
+  { who: OWNER, do: "Press <strong>See them ›</strong>, then come back.",
+    see: "It opens 2026 Fall House League’s schedule.", call: "Call: is the season’s schedule the right place for “See them”?" }
+ ]},
+ { id: "7", title: "The owner: the warnings and Different on a date", steps: [
+  { who: OWNER, do: "The schedule opens on <strong>Overview</strong>. Read the warning lines above the two panels.",
+    see: "The first line: <strong>Outside the permit: Sat, Dec 5 and Sat, Dec 12 are dates off</strong> on Saturday diamonds, December 2026. The older clash lines follow it." },
+  { who: OWNER, do: "Read <strong>Different on a date</strong>.",
+    see: "First, <strong>Sat, Dec 5 · every facility</strong> “Outside the permit · 5 slots still on it” and <strong>Sat, Dec 12 · every facility</strong> “Outside the permit · 5 slots still on it” (three practices and house league’s two slots each day), then the older differences. The count includes the two." },
+  { who: OWNER, do: "Press the Sat, Dec 5 · every facility row.",
+    see: "The Grid on Dec 5, every facility shown. The same warning line heads the Grid." }
+ ]},
+ { id: "8", title: "The Bill tile and the View menu", steps: [
+  { who: OWNER, do: "Look at the band of four figures above the workspace.",
+    see: "Handed out · <strong>The bill →</strong> (a dollar figure, with the door arrow) · Short · Clashes. No “was” under the bill." },
+  { who: OWNER, do: "Press <strong>The bill</strong>.",
+    see: "A window <strong>Fair shares and the bill</strong>: Fair shares by team (each team’s slots, hours and bill) with <strong>Bill the teams ›</strong> at its title’s right." },
+  { who: OWNER, do: "Press <strong>Bill the teams ›</strong>, look, then close without saving.",
+    see: "Bill the teams opens filled in from the permit, as before." },
+  { who: OWNER, do: "Open the <strong>View</strong> menu in the toolbar.",
+    see: "<strong>Overview · Grid · By team · By group</strong>. No Fair shares.", call: "Call: on a draft this menu would hold three views. Keep the pill, or a switch for three?" },
+  { who: ADMIN2 + " · desk", do: "Sign in, open the same schedule, look at the band and press its second figure.",
+    see: "The tile reads <strong>Open →</strong> (no money). It opens <strong>Fair shares</strong>: the team table with no bill column and no Bill the teams door. Needs attention shows the same row and button." }
+ ]},
+ { id: "9", title: "The league admin", steps: [
+  { who: LA + " · desk", do: "Sign in. Look at the Overview and the sidebar.",
+    see: "No “Outside the permit” card. <strong>Permits</strong> is in the sidebar (Overview, Calendar, Permits, House league, Organization) with <strong>no count</strong>." },
+  { who: LA, do: "Open Permits › " + P + ".",
+    see: "The same 8 rows. Doors: <strong>Open 2026 Fall House League’s schedule ›</strong> and <strong>See Sat, Dec 5 on the Calendar ›</strong> only. No “Fix the 6 practices”. The two games open; the practices don’t." },
+  { who: LA, do: "Press <strong>Open 2026 Fall House League’s schedule ›</strong>. Read <strong>Schedule health</strong>.",
+    see: "A line per game: “Hawks vs Owls, Sat, Dec 5, 11:00 a.m. · Diamond A: the club’s permit no longer holds Kinsmen Park that day.” and the same for Reds vs Blues, 12:00 p.m. · Diamond B, each with <strong>Give it a new date</strong>. Not the postponed game." },
+  { who: LA, do: "Press <strong>Give it a new date</strong> on Hawks vs Owls, look, then cancel.",
+    see: "The game’s own new-date form (no new editor). Nothing saved." },
+  { who: LA, do: "On the season’s schedule, start <strong>Generate games</strong> for <strong>U7 Tee-ball</strong>.",
+    see: "“House league has no time left to give. An owner or an admin gives house league its time.” with no “in Schedules”. No Ask for time button and no names." }
+ ]},
+ { id: "10", title: "The registrar and the treasurer", steps: [
+  { who: REG + " · desk", do: "Sign in. Look at the Overview and the sidebar, then open Permits › " + P + ".",
+    see: "No card, Permits without a count. The notice’s doors: <strong>Open 2026 Fall House League’s schedule ›</strong> and <strong>See Sat, Dec 5 on the Calendar ›</strong>." },
+  { who: REG, do: "Open the Calendar on Dec 5 (from the door).",
+    see: "The day chip and the marks beside the two games (the registrar’s Calendar shows house league)." },
+  { who: TRE + " · desk", do: "Sign in. Look at the sidebar, then open Permits.",
+    see: "Overview, Permits, then Club: Accounting, Organization. Permits has no count, no Add permit and no pencil on the rows. " + P + "’s row still shows its flag." },
+  { who: TRE, do: "Open " + P + ".",
+    see: "The same 8, with the games named by their season (“2026 Fall House League · Diamond A”, Game) and the practices by team. <strong>No doors</strong>, on the rows or under the list." }
+ ]},
+ { id: "11", title: "The owner on a phone (390 px)", steps: [
+  { who: OWNER + " · phone", do: "Open the Overview, then the bottom bar’s <strong>More</strong>.",
+    see: "This morning shows the Outside the permit card. More lists <strong>Permits</strong> at the top with the amber 8." },
+  { who: OWNER + " · phone", do: "Open Permits › " + P + ".",
+    see: "Full screen: the same heading and line; the rows fold under <strong>All 8 bookings ▾</strong>; the doors are full-width rows; then the Use band." },
+  { who: OWNER + " · phone", do: "Open the schedule.",
+    see: "The top line’s permit door works. Needs attention shows the Outside the permit row with <strong>no button</strong> (Regenerate is a computer’s). No band and no Fair shares, as before." },
+  { who: OWNER + " · phone", do: "Open the Calendar on this week.",
+    see: "Under the days, a row <strong>Next: Tue, Nov 17</strong> (14U AA) › that jumps to that week." }
+ ]},
+ { id: "12", title: "The owner: Take Dec 5 and Dec 12 off, into Regenerate", steps: [
+  { who: OWNER + " · desk", do: "On the schedule, press <strong>Take Dec 5 and Dec 12 off</strong>.",
+    see: "Regenerate opens straight on its drafts, as “Regenerate the unlocked slots…” does. Nothing is saved yet." },
+  { who: OWNER, do: "Pick a draft and keep it. Answer the question.",
+    see: "The question is today’s Regenerate question (“It has been sent: the change waits on its page until you send the changes.”). After it, the notice “… regenerated”." },
+  { who: OWNER, do: "Read Needs attention. Open <strong>Tools › Settings…</strong> and look at Dates off, then cancel.",
+    see: "The Outside the permit row is gone. An <strong>Unsent change</strong> row lists the changes, with <strong>Send the changes</strong> in lime. Settings’ Dates off hold <strong>Dec 5 and Dec 12</strong>. <strong>Do not press Send the changes.</strong>" },
+  { who: OWNER, do: "Open Permits › " + P + " and the Overview.",
+    see: "Still <strong>8</strong>: the teams keep their practices until the changes are sent, so the permit and the card keep saying so." }
+ ]},
+ { id: "13", title: "The owner: New schedule’s Slots column", steps: [
+  { who: OWNER + " · desk", do: "Schedules › <strong>New schedule</strong> › <strong>Start blank</strong>. Pick the permit <strong>Winter dome 2026–27</strong>.",
+    see: "The time fills in (Lakeshore Dome, 6 fields, Sundays). Seven teams are ticked (not House league). Practices per team, per day: <strong>1 practice</strong>." },
+  { who: OWNER, do: "Read the <strong>Slots</strong> column and the line beside the setting.",
+    see: "14U AA and 9U AA <strong>25 of 65</strong>, the other five <strong>25 of 64</strong>; Senior <strong>75 of 193</strong>, Junior <strong>100 of 257</strong>; the closing row <strong>7 teams · 175 of 450</strong>. The hint: “At 1 a day, 7 teams can use 175 of the 450 slots.”", call: "Call: team figures can add to more than the total when teams compete; acceptable?" },
+  { who: OWNER, do: "Set Practices per team, per day to <strong>No daily limit</strong>.",
+    see: "The column goes back to the plain shares (65, 64, …) and the total to 450." },
+  { who: OWNER, do: "Set it back to <strong>1 practice</strong> and press <strong>Generate drafts</strong>.",
+    see: "Above the drafts, an amber line: “7 teams short: … of 450 slots handed out. The rules allow 1 practice a team a day, and Lakeshore Dome has 18 places a Sunday for 7 teams.” with <strong>Change the rules ›</strong>." },
+  { who: OWNER, do: "Press <strong>Change the rules ›</strong>, then <strong>Cancel</strong> the window.",
+    see: "Back on the settings with the per-day setting in focus. Cancel saves nothing." }
+ ]},
+ { id: "Z", title: "Put back", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“13c walk done”</strong> with the build summary. It removes the copy (<code>navj-club-13c</code>) and its accounts.",
+    see: "Claude reports the copy gone." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

@@ -1,6 +1,6 @@
 # GST/HST · Stage 4b Session D: the accountant package, wording, records (build prompt for ONE session, Sonnet)
 
-> Written 2026-11-08, after the Session C owner walk §488 was closed by the owner (27 of 32; F1-F4 ruled). Recommended model: Sonnet (files and wording; the engine and the freeze are built).
+> Written 2026-11-08, after the Session C owner walk §488 was closed by the owner (27 of 32; F1-F4 ruled). Refreshed 2026-11-08 after Session C and Plans & pricing Part 4 Session 2 were both committed. Recommended model: Sonnet (files and wording; the engine and the freeze are built).
 > Parent prompt (read its **Rulings**, **Design calls**, and the **Progress** records for A, B and C before anything else): [GST_HST_STAGE4B_BUILD_PROMPT.md](GST_HST_STAGE4B_BUILD_PROMPT.md); the Session D scope is its section "Session D" (line ~85). PM brief: [GST_HST_STAGE4B_PM_BRIEF.md](GST_HST_STAGE4B_PM_BRIEF.md) (update it, do not write a second one).
 > Tax rules: `docs/agents/accounting/GST_HST_RETURN_LINES.md`. Record every fact you rely on as [V] (opened this session) or [H] (handed over). A helper's summary is a lead, not evidence.
 > Hard rule: this changes what we hand an accountant for the CRA. `/accounting` runs **before hand-off**; apply what it finds or record it as an owner question.
@@ -38,17 +38,17 @@ session's.
 The accountant package (the Bookkeeping export the owner hands to an accountant, in-year and the yearly in-Canada copy) gains the GST/HST files:
 
 - `gst-hst-worksheet.csv`: lines 101-109 for the chosen period, the same figures as the Reports view, including "Not available" with its reason (never a zero).
-- `gst-hst-sales.csv`: each invoice and credit note with its Canadian-dollar figures and rate.
+- **No `gst-hst-sales.csv`.** Owner ruling 2026-11-08: the package carries ONE invoice file, and it is already built (see the section above). Reuse it; add nothing that repeats it.
 - `gst-hst-credits.csv`: each expense's credit and its state (counted, held, released, carried to a later return).
 - `gst-hst-as-filed.csv`: **a filed period only**: the figures as filed and the sources as filed (the Session C freeze), with the filing number, revision, filed-on date and reason. (Session C ruled F2: a filed period has no Copy lines / Worksheet CSV in its toolbar; the as-filed CSV belongs here, in the package.)
-- Reword `package-scope.txt`: "Bank statements, processor fees, payouts and bank reconciliation are not in this package. Sales are included only as the GST/HST record of each invoice and credit note."
-- **Privacy default:** a buyer appears as the invoice number plus the buyer kind and the **club name**; an **individual coach appears by invoice number only**. (`/legal` glance only if the owner wants names.)
+- `package-scope.txt` is already reworded by Part 4 Session 2 (see above). Add only one line per new file here; do not reword the sentences that are there.
+- **Privacy:** the invoice file already shows a club by name and an individual as "Coach" (/legal Recommendation 3). The new files carry no buyer names beyond what the engine's items already hold; check the credits file shows no supplier contact details beyond supplier name and GST/HST number.
 
 Not in this session: any change to the return screen, the freeze, the engine, the Overview, the Money tab, or any club or coach screen. Platform-admin only, so `/docs` is skipped unless a Bookkeeping help article exists (check).
 
-## Coordination with Plans & Pricing Stage 2 Part 4 Session 2 (it overlaps this session; do not run both at once)
+## Coordination
 
-[PLANS_PRICING_STAGE2_PART4_BUILD_PROMPT.md](PLANS_PRICING_STAGE2_PART4_BUILD_PROMPT.md) "Session 2" (Parts 4d, 4e) edits the same files as this session (the package route and `package-scope.txt`, `lib/export/catalog.ts`, `BookkeepingClient.tsx`, `ReportsGstReturn.tsx`, `lib/gst-return-worksheet-read.ts`) and plans its own `sales.csv` and `credit-notes.csv` for the same package. **Whichever lands first writes the sales files; the other reuses them.** Before writing, run `git status` and read that prompt's current text: if its Session 2 is built or holds those files modified, stop and tell the owner rather than writing a second `gst-hst-sales.csv`. Its `package-scope.txt` wording differs from this prompt's; the owner picks one.
+Plans & Pricing Part 4 Session 2 is committed (`5fe7ad3c7`), so there is nothing to wait for. Before editing a shared file (the package route, `lib/export/catalog.ts`, `BookkeepingClient.tsx`, `ReportsGstReturn.tsx`, `lib/gst-return-worksheet-read.ts`), run `git status` and read its `git diff`: another session may hold it modified.
 
 ## Say this first (disagree by default)
 
@@ -60,15 +60,15 @@ Not in this session: any change to the return screen, the freeze, the engine, th
 
 1. The PM UX summary in the conversation first (blocking, per AGENCY_RULES), written for a product manager.
 2. Step 1 above.
-3. The four files, the reworded scope note, both package paths (in-year and the yearly in-Canada copy), wording in `lib/gst-return-worksheet-text.ts`, **one spelling everywhere** (the clock is "8:00 a.m."; "fiscal year" is club-side only; `npm run check:spelling`).
-4. Tests: each file's header row and one fixture row; the as-filed file only for a filed period and absent otherwise; the coach privacy default; a "Not available" line stays blank-with-reason, never 0; the existing package tests still pass.
+3. The three files, one scope-note line each, both package paths (in-year and the yearly in-Canada copy), wording in `lib/gst-return-worksheet-text.ts`, **one spelling everywhere** (the clock is "8:00 a.m."; "fiscal year" is club-side only; `npm run check:spelling`).
+4. Tests: each file's header row and one fixture row; the as-filed file only for a filed period and absent otherwise; a "Not available" line stays blank-with-reason, never 0; the existing package tests still pass.
 5. **`/accounting`** review of the package and the final wording **before hand-off**; apply or record as an owner question. Open owner/accounting questions are in the parent prompt ("Open owner / accounting questions"); do not close them here.
 6. **`/review`** after the build; offer `/simplify` if the CSV writers duplicate logic.
 7. **Records:** a Progress entry in the parent prompt (with the commit hash after the owner says commit), the Bookkeeping ladder row, the plan's Stage 4 line, one TODO line (stage only your hunk: other sessions have uncommitted TODO edits), the PM brief, and an owner walk (a checkable Artifact, one purpose per walk, paste-back; write the walk's file list so the owner can open the real files, and include the re-walk of D3 and C5 if step 1 asked for it).
 
 ## Still owed (carry, do not attempt unless free)
 
-- Session C's code is **uncommitted** in the shared working tree (the filings route, `lib/gst-return-filing.ts`, `GstReturnFilingQuestion.tsx`, migration 007 and its runner, tests). Do not stage them; the owner commits Session C on their word. If this session needs to read them, read them as they are.
+- Session C is **committed** (`27c03ff78`, record `dac172936`). A fix to it from Step 1 is its own commit with its own message, not folded into Session D's.
 - **Production apply of migration 007 is owed with the code**: record it with the promote, do not run it from here.
 - The layout check never ran for the return view (Bookkeeping is not on `scripts/layout-screens.mjs`); the captions are unconfirmed against the CRA return screen; the portal-tag census fails on `lib/console-money-sales-tax-wait.ts` (the workspace-flip owner's entry). None is this session's.
 - If `npm run typecheck` fails inside `.next/dev/types`, that is a half-written dev-server file hiding every real check: typecheck with that folder excluded and say so.

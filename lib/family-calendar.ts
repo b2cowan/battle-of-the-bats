@@ -74,11 +74,15 @@ export async function makeFamilyFeed(userId: string, origin: string): Promise<Ma
   return { ok: true, url: coachFeedUrl(origin, token, DOMAIN) };
 }
 
-/** Stop this calendar: ends the live address at once. */
+/** Stop this calendar: ends the live address at once. Also ends any older per-link address this account minted before one
+ *  address per parent (dev only; `family_links.calendar_token_hash` retires later), so "Stop" really stops. */
 export async function stopFamilyFeed(userId: string): Promise<void> {
   const { error } = await supabaseAdmin.from('family_calendar_feeds')
     .update({ stopped_at: new Date().toISOString() }).eq('user_id', userId).is('stopped_at', null);
   if (error) throw error;
+  const { error: oldError } = await supabaseAdmin.from('family_links')
+    .update({ calendar_token_hash: null }).eq('user_id', userId).not('calendar_token_hash', 'is', null);
+  if (oldError) throw oldError;
 }
 
 /** Is this the shape of a parent's address (rather than an older per-link token)? */

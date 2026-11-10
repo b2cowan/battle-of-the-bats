@@ -92,7 +92,7 @@ export const FAMILY_HOME_WORDS = {
     emailMe: 'Email me an invitation',
     sending: 'Sending…',
     /** One answer whatever happened (an address that can't join learns nothing). */
-    sent: 'If that address can still join, an invitation is on its way to it. It works for 30 days.',
+    sent: 'If that address can still join, an invitation is on its way. It works for 30 days.',
     failed: 'That didn’t go through. Try again in a moment.',
     tooMany: 'Too many tries. Wait a few minutes, then try again.',
   },
@@ -152,7 +152,7 @@ export const FAMILY_HOME_WORDS = {
     /** Not drawn (the drawing's four states are joined / invited / not invited / stopped): an address that left or was removed,
      *  whose way back is the club's Send again. /marketing re-reads in the closeout. */
     left: (date: string) => `Left the app ${date}`,
-    removed: (date: string) => `Removed ${date}`,
+    removed: (date: string) => `Removed from the app ${date}`,
     sendAgain: 'Send again',
     sending: 'Sending…',
     sent: (email: string) => `Sent to ${email}.`,
@@ -180,5 +180,5 @@ export const FAMILY_HOME_WORDS = {
 
   /** Part 8.4: /legal draft (d), verbatim, on the second-parent stop page — only when the address joined as the second parent. */
   stopJoined: (children: readonly string[], club: string) =>
-    `You’ve joined ${possessive(nameList(children))} team in the app. Stopping removes you from it and ends your calendar link. ${club} won’t email this address about any sign-up, and can’t add it again.`,
+    `You’ve joined ${possessive(nameList(children))} team in the app. Stopping removes you from it, and your calendar link stops showing its games. ${club} won’t email this address about a sign-up someone else added it to, and can’t add it again.`,
 } as const;

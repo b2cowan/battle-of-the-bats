@@ -145,6 +145,18 @@ describe('the hide route and its storage', () => {
     assert.match(sql, /REVOKE ALL ON TABLE public\.user_hidden_workspaces FROM anon, authenticated/);
     assert.doesNotMatch(sql, /CREATE POLICY/);
   });
+  it('a paused card is a plain card, not a door — except for the club\'s owner, whose wall offers "See plans"', () => {
+    const home = readFileSync('components/consumer/HomePersonalization.tsx', 'utf8');
+    assert.match(home, /const plain = !!ctx\.paused && !ctx\.pausedFor\?\.viewerIsOwner;/);
+    assert.match(home, /if \(plain\) \{\s*return <div className=\{styles\.wsCard\} data-paused="true" data-plain="true">/, 'no link, no arrow');
+    assert.match(home, /Your teams and records are kept\./);
+    assert.match(home, /Ask \$\{ctx\.pausedFor\.ownerName\} about the plan\./);
+    const route = readFileSync('app/api/consumer/home/route.ts', 'utf8');
+    assert.match(route, /const viewerIsOwner = ownedOrgIds\.has\(c\.orgId\);/);
+    assert.match(route, /viewerIsOwner \? null : await orgOwnerDisplayName\(c\.orgId\)/, 'the owner is never told to ask themselves');
+    // The owner's name is read for Home only — never inside the library that sign-in and the menu share.
+    assert.doesNotMatch(readFileSync('lib/user-contexts.ts', 'utf8'), /orgOwnerDisplayName/);
+  });
   it('Home puts Hide under a paused or lapsed card as a sibling of its link, never inside it', () => {
     const home = readFileSync('components/consumer/HomePersonalization.tsx', 'utf8');
     assert.match(home, /<HideRow name=\{ws\.title\}/);

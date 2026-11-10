@@ -1,27 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePublicPathname } from '@/lib/use-public-pathname';
-import { X, Bug, Lightbulb, MessageSquare, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { getLastRequestId } from '@/lib/observability/client-request-id';
-import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
 import { FEEDBACK_CATEGORIES, categoryFromRoute, type FeedbackType } from '@/lib/feedback-shared';
+import { coachWarmAttr } from '@/lib/coach-warm-preview';
+import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
+import KitDialog, { DialogCancel, DialogReason } from '@/components/shared/KitDialog';
+import ChoicePair from '@/components/shared/ChoicePair';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import styles from './FeedbackWidget.module.css';
 
-const TYPES: { value: FeedbackType; label: string; Icon: typeof Bug }[] = [
-  { value: 'bug', label: 'Bug', Icon: Bug },
-  { value: 'feature', label: 'Feature', Icon: Lightbulb },
-  { value: 'feedback', label: 'Feedback', Icon: MessageSquare },
+const TYPES: { value: FeedbackType; label: string }[] = [
+  { value: 'bug', label: 'Bug' },
+  { value: 'feature', label: 'Feature' },
+  { value: 'feedback', label: 'Feedback' },
 ];
 
 const MAX_TITLE = 150;
 const MAX_BODY = 4000;
 
 /**
- * The in-app feedback form (Phase 3). Reuses the global modal-overlay/modal shell for a consistent
- * look across every mount surface. Auto-captures route, app_version, and the last requestId into
- * context (role + org are resolved server-side from the session — never trusted from the client).
+ * The in-app feedback form, in the product's ONE window (`KitDialog` kind="form" — the same window the club admin's
+ * and the coaches portal's forms wear; One Window, owner 2026-10-18). It used to be the global dark `.modal` with the
+ * old terminal type; it moved when the window did.
+ *
+ * ⚠ PORTALLED, AND THE THEME GOES WITH IT. Every mount is a phone bar or an account menu, and a fixed layer inside the
+ * bar's backdrop-filter would be trapped by it, so the window renders on <body> — a sibling of every shell, where no
+ * theme marker reaches it. The warm / dark palette lives on the shell's marker (`[data-coach-warm-enabled]`, which
+ * follows the person's Warm / Dark setting), so the window carries the marker itself: `PortalKitRoot` adds the admin's
+ * pair inside the admin, and the coach marker covers everywhere else (the coaches portal, the family app, the public
+ * pages). Fields wear tokens, never white-on-dark, or the warm card would show white text on white.
+ *
+ * Auto-captures route, app_version, and the last requestId into context (role + org are resolved server-side from the
+ * session — never trusted from the client).
  */
 export default function FeedbackWidget({
   open,
@@ -33,6 +47,7 @@ export default function FeedbackWidget({
   helpSection?: string;
 }) {
   const pathname = usePublicPathname();
+  const typeLabelId = useId();
   const [type, setType] = useState<FeedbackType>('bug');
   const [category, setCategory] = useState<string>(() => categoryFromRoute(pathname));
   const [title, setTitle] = useState('');
@@ -40,9 +55,6 @@ export default function FeedbackWidget({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
-  // A window over the page: in the coaches portals the phone bar steps aside and the page behind stops scrolling, as
-  // under every other window there (lib/coaches-overlay.tsx). A no-op wherever that signal is not mounted.
-  useOverlayOpenIfAvailable(open);
 
   if (!open || typeof document === 'undefined') return null;
 
@@ -99,59 +111,56 @@ export default function FeedbackWidget({
     }
   }
 
-  // Portal to <body> so the fixed-position overlay is never trapped by an ancestor that establishes
-  // a containing block (e.g. the admin bottom-nav's backdrop-filter), which would clip it.
-  return createPortal(
-    <div className="modal-overlay" onClick={close} style={{ zIndex: 1100 }}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
-        <div className="modal-header">
-          <div className="flex items-center gap-2">
-            <MessageSquare size={16} className="text-primary" />
-            <h3 style={{ margin: 0 }}>{done ? 'Thank you' : 'Send feedback'}</h3>
-          </div>
-          <button className="btn btn-ghost btn-data" onClick={close} aria-label="Close">
-            <X size={14} />
-          </button>
-        </div>
+  // Words typed and not yet sent: × / Esc / Back / Cancel ask in the foot first. Once sent, nothing is left to lose.
+  const typed = !done && (title.trim() !== '' || body.trim() !== '');
 
-        {done ? (
-          <div className={styles.success}>
-            <CheckCircle size={30} className="text-success" />
-            <p>Thanks — we&apos;ve got it. Our team reviews every submission.</p>
-            <button className="btn btn-lime btn-data" onClick={close}>Done</button>
-          </div>
-        ) : (
-          <>
-            <div className={styles.form}>
-              <div className={styles.pills} role="group" aria-label="Feedback type">
-                {TYPES.map(({ value, label, Icon }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    className={`${styles.pill} ${type === value ? styles.pillActive : ''}`}
-                    onClick={() => setType(value)}
-                    aria-pressed={type === value}
-                  >
-                    <Icon size={13} aria-hidden /> {label}
-                  </button>
-                ))}
+  return createPortal(
+    <PortalKitRoot>
+      <div style={{ display: 'contents' }} {...coachWarmAttr}>
+        <KitDialog
+          kind="form"
+          title={done ? 'Thank you' : 'Send feedback'}
+          onClose={close}
+          busy={busy}
+          dirty={typed}
+          discardAsk="Close without sending? What you typed won’t be kept."
+          footer={done ? (
+            <button type="button" className="btn btn-lime" onClick={close}>Done</button>
+          ) : (
+            <>
+              <DialogCancel>Cancel</DialogCancel>
+              <button type="button" className="btn btn-lime" onClick={() => void submit()} disabled={busy || !body.trim()}>
+                {busy ? 'Sending…' : 'Send'}
+              </button>
+            </>
+          )}
+        >
+          {done ? (
+            <div className={styles.success}>
+              <CheckCircle size={30} className={styles.successIcon} aria-hidden />
+              <p>Thanks — we&apos;ve got it. Our team reviews every submission.</p>
+            </div>
+          ) : (
+            <div>
+              <div className={ck.field}>
+                <span className={ck.label} id={typeLabelId}>Type</span>
+                <ChoicePair labelledBy={typeLabelId} value={type} options={TYPES} onChange={setType} disabled={busy} />
               </div>
 
-              <label className={styles.field}>
-                <span className={styles.label}>Category</span>
-                <select className={styles.select} value={category} onChange={e => setCategory(e.target.value)}>
+              <label className={ck.field} htmlFor="feedback-category">
+                <span className={ck.label}>Category</span>
+                <select id="feedback-category" className={ck.select} value={category} onChange={e => setCategory(e.target.value)}>
                   {FEEDBACK_CATEGORIES.map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
               </label>
 
-              <label className={styles.field}>
-                <span className={styles.label}>
-                  Title <span className={styles.optional}>(optional)</span>
-                </span>
+              <label className={ck.field} htmlFor="feedback-title">
+                <span className={ck.label}>Title</span>
                 <input
-                  className={styles.input}
+                  id="feedback-title"
+                  className={ck.input}
                   value={title}
                   maxLength={MAX_TITLE}
                   onChange={e => setTitle(e.target.value)}
@@ -159,31 +168,27 @@ export default function FeedbackWidget({
                 />
               </label>
 
-              <label className={styles.field}>
-                <span className={styles.label}>Description</span>
+              <label className={ck.field} htmlFor="feedback-body">
+                <span className={ck.label}>Description<span className={ck.required} aria-hidden>*</span></span>
                 <textarea
-                  className={styles.textarea}
+                  id="feedback-body"
+                  className={ck.textarea}
                   value={body}
                   maxLength={MAX_BODY}
                   rows={5}
-                  onChange={e => setBody(e.target.value)}
+                  aria-required
+                  data-autofocus=""
+                  onChange={e => { setBody(e.target.value); setError(''); }}
                   placeholder={type === 'bug' ? 'What happened? What did you expect?' : 'Tell us more…'}
                 />
               </label>
 
-              {error && <p className={styles.error}>{error}</p>}
+              <DialogReason className={styles.error}>{error}</DialogReason>
             </div>
-
-            <div className="modal-footer">
-              <button className="btn btn-ghost btn-data" onClick={close} disabled={busy}>Cancel</button>
-              <button className="btn btn-lime btn-data" onClick={submit} disabled={busy || !body.trim()}>
-                {busy ? 'Sending…' : 'Send'}
-              </button>
-            </div>
-          </>
-        )}
+          )}
+        </KitDialog>
       </div>
-    </div>,
+    </PortalKitRoot>,
     document.body,
   );
 }

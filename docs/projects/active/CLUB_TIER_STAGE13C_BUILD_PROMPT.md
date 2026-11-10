@@ -84,12 +84,17 @@ across programs is its own plan, not 13c), **Ask 13 A** (the permit lists what s
 6. **Header Phase 3 rewrites the same two pages** (`ADMIN_HEADER_BAR_PLAN.md:460-468` [V]: Calendar and Schedules name themselves in the
    bar, and the heading's actions move to the toolbar). 13c Session C edits the Schedules page's toolbar (the View menu) and its top
    line. **Do not run Session C beside a Phase 3 build** in the shared tree. Either order works; whichever lands second re-reads the
-   other's diff first.
+   other's diff first. **Settled 2026-11-09:** Phase 3 is committed (`4959122d2`, record `3cb3bbc81`), so Session C lands second and
+   reads that diff first. Header Phase 4 (help words, demo anchors, checks, no new screen) may run beside Session C; see "Running
+   beside Header Phase 4" under Session C.
 7. **The week view is shared.** `WeekView` (`ClubCalendarViews.tsx` [H]) is also used by the house-league season schedule page. Put the
    empty week's "Next:" line on the **Calendar page**, not in `WeekView`, so the season page is unchanged.
 8. **11b of the scheduler plan** reads "DRAWN, NOT BUILT" at `CLUB_PERMITS_AND_SCHEDULER_PLAN.md:1470` [V]. The house-league time
    window it led to exists (`HouseLeagueTimeWindow.tsx`, which shows the C6 sentence [H]), so the status line looks stale. Confirm before
    Session C. If an 11b session is still unbuilt and touches the schedule page or Fair shares, sequence against it the same way as item 6.
+   **Checked 2026-11-09:** the same plan's later log (`CLUB_PERMITS_AND_SCHEDULER_PLAN.md` ~1485-1492 [V]) reads "11b is complete pending
+   its walks and prod migs". Line 1470 is a stale status line, so there is no unbuilt 11b session to sequence against. Session C re-reads
+   ~1485-1492 at its start to confirm nothing has reopened it since.
 
 ### Decisions for the owner (put them in the summary, build around them, wait for the answer before building the piece they touch)
 
@@ -229,7 +234,39 @@ The card's gate matrix (owner, admin see it; the others do not; N = 0 → absent
 
 Screens touched: one schedule's page (`app/[orgSlug]/admin/schedules/[scheduleId]/page.tsx`), the band (`FairShares.tsx`), the bill window,
 the New schedule / Settings window's "Who, and how much", the house-league time window and generate-games window. Precondition: Session A
-committed (the permit page the top line opens). Sequence against Header Phase 3 (disagreement 6).
+committed (the permit page the top line opens), and Session B committed (`13e5f6085`, the shared count and the Schedule health line).
+Sequence against Header Phase 3 (disagreement 6): Phase 3 is committed, so start here.
+
+### Before any code: read what Header Phase 3 changed on these pages
+
+Phase 3 (`4959122d2`) rewrote the top of the pages this session edits: the page names itself in the bar, and the heading's actions moved
+to the toolbar. Run `git show 4959122d2 -- 'app/[orgSlug]/admin/schedules/' 'app/[orgSlug]/admin/house-league/'` and read the hunks on
+one schedule's page, the Schedules list, and house league's club-schedule page **before** the summary. Line numbers in C1–C3 below
+(`page ~541-565`, `~628-630`) were taken before Phase 3 and have moved; find each spot by what it does, not by its number. Build C1's top
+line and C3's View menu into the toolbar and heading as Phase 3 left them. If Phase 3 put something where the drawing puts the permit door
+or the Bill tile, that goes in the summary as a disagreement, not a silent choice.
+
+### Running beside Header Phase 4
+
+Header Phase 4 (`ADMIN_HEADER_BAR_PLAN.md`, its build prompt) builds no screen: help words and keywords across `lib/help-content/*.tsx`,
+demo anchors, spelling and checks, `check:layout --changed` on the screens Phase 3 touched, a /design pass, and an owner walk of the bar on
+every screen type. It may run in the shared tree at the same time as this session. Where they meet:
+
+- **The help files.** Phase 4 has uncommitted edits in six help files, including `org.tsx` and `house-league.tsx`, the two this session's
+  help rewrites (the `club-schedules*` articles, `house-league-time-t-given`). The likeliest collision is `club-schedules-t-page`, whose
+  sentence about the page's header Phase 4 may be rewording. **Do the help last.** Immediately before editing, run `git diff --
+  lib/help-content/org.tsx lib/help-content/house-league.tsx` and read the other session's hunks on those articles. Write around them,
+  never over them. Commit only this session's hunks (the temp-index partial commit Session B used), and never revert or re-stage a hunk
+  that isn't yours.
+- **The layout check.** Never run `check:layout` while Phase 4 is running its own on the same dev server. Two runs at once is the memory
+  rule's warning case (a sweep aborts, or the server dies), and both write `scripts/.layout-baseline.json`. Before starting, check for a
+  running sweep (a `node` process on `scripts/check-layout`), wait for it to finish, then run this session's one-screen checks. Stage only
+  this session's baseline entries and `scripts/layout-screens.mjs` lines.
+- **Phase 4's owner walk.** That walk opens a schedule's page, the screen this session changes (the new top line, Fair shares leaving the
+  View menu). Say in the hand-off that Phase 4's walk should run after this session commits, or skip a schedule's page, so the walker
+  doesn't watch the screen change mid-walk. Don't edit Phase 4's walk or its records.
+- **Before every commit:** re-check the branch is `dev` and stage explicit pathspecs only. `git show --stat HEAD` after: only this
+  session's files.
 
 ### C1 · The top line opens the permit (C4)
 

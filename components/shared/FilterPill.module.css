@@ -163,6 +163,15 @@
   content: ""; position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%);
   width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime);
 }
+/* An option with a `sub` sentence under its name — the Record money picker's row (`.convWhatOpt`): the name bold in
+   primary ink, the sub-line a size down in tertiary ink, a hairline between rows. Every name is bold here, so the
+   chosen row is told by its dot alone (a shape, the rule above), which sits on the NAME's line, not the pair's middle. */
+.multiSelectPickSubbed { align-items: flex-start; padding-top: 0.5rem; padding-bottom: 0.5rem; border-radius: 0; }
+.multiSelectPickSubbed + .multiSelectPickSubbed { border-top: 1px solid var(--border-2); }
+.multiSelectPickSubbed.multiSelectPickOn::before { top: calc(0.5rem + 0.75em); }
+.multiSelectPickText { display: flex; flex-direction: column; min-width: 0; }
+.multiSelectPickName { font-weight: 600; color: var(--text-primary); }
+.multiSelectPickSub { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); margin-top: 0.05rem; }
 
 /* ── The Date pill (the register strip's FOURTH pill — owner-approved mockup, 2026-08-19) ──
    Extensions of the multiSelect family above: same pill face, but the panel is a single-select

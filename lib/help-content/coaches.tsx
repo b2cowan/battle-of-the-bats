@@ -6097,10 +6097,11 @@ const coachesHelp: HelpPageContent = {
         'season recap', 'player season recap', 'family season recap', 'recap', 'preview recap',
         'what parents see', 'what the family sees', 'end of season recap', 'keepsake',
         'keepsake card', 'save keepsake', 'player card', 'share card', 'publish recap',
-        'release recap', 'when do families get the recap', 'family link', 'follow the team', 'where did family access go'],
-      searchText: 'families family access parents guardians what a family sees season recap preview what the parent sees attendance worked on focus areas each test line first to latest result change in words how many results working on it got there parked stays off awards playing time typical range nothing invented absent not empty never called an improvement never compares players closing the season releases recaps no publish button keepsake card first name and jersey saved to their phone no public link guardian parent tier not switched on yet premium coaches portal schedule visibility moved to team settings sharing staff only families public link who can see games practices public page shows games and tournaments never practices calendar subscription ics feed family gets alerts when a game moves family link removed no longer a team link followers removed where did the family access card go roster page',
+        'release recap', 'when do families get the recap', 'family link', 'follow the team', 'where did family access go',
+        'family app', 'send invitation', 'cancel invite', 'dont send me invitations', 'invitation works 30 days', 'invited guardian', 'invite expired', 'approve a guardian', 'copy invite link', 'guardians section', 'two guardians per player'],
+      searchText: 'families family access parents guardians what a family sees season recap preview what the parent sees attendance worked on focus areas each test line first to latest result change in words how many results working on it got there parked stays off awards playing time typical range nothing invented absent not empty never called an improvement never compares players closing the season releases recaps no publish button invite a guardian send invitation emails the invitation works 30 days invited row cancel invite don’t send me invitations the app refuses that address a different signed-in email is refused no approval queue no invite link to copy nothing happens when you add a player to the roster player 18 or older gets no invitation two guardians per player club team needs the club’s contact email and mailing address keepsake card first name and jersey saved to their phone no public link guardian parent tier not switched on yet premium coaches portal schedule visibility moved to team settings sharing staff only families public link who can see games practices public page shows games and tournaments never practices calendar subscription ics feed family gets alerts when a game moves family link removed no longer a team link followers removed where did the family access card go roster page',
       content: (
-        <p>What a player&rsquo;s family reads — the schedule and results during the season, and their child&rsquo;s <strong>season recap</strong> once it closes, which you can <strong>preview today</strong> from any player&rsquo;s page — and where the <strong>Schedule visibility</strong> setting now lives (<strong>Team settings → Sharing</strong>). Connecting a parent or guardian isn&rsquo;t open yet; the old <em>Team family access</em> card and its shareable link were removed.</p>
+        <p>What a player&rsquo;s family reads — the schedule and results during the season, and their child&rsquo;s <strong>season recap</strong> once it closes, which you can <strong>preview today</strong> from any player&rsquo;s page — and where the <strong>Schedule visibility</strong> setting now lives (<strong>Team settings → Sharing</strong>). Inviting a parent or guardian to a player happens from that player&rsquo;s page once FieldLogicHQ switches the family app on; the old <em>Team family access</em> card and its shareable link were removed.</p>
       ),
       subtopics: [
         {
@@ -6115,6 +6116,27 @@ const coachesHelp: HelpPageContent = {
               <HelpNote variant="tip" title="Closing your season is what hands recaps to families">
                 <p>There&rsquo;s no separate publish step. That&rsquo;s why the preview lives here during the season: it&rsquo;s while the season is open that you can still record a last result or hand out an award. Preview needs player-notes access.</p>
               </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-family-guardians',
+          title: 'Inviting a guardian from a player’s page',
+          content: (
+            <>
+              <p>Once FieldLogicHQ has switched the family app on, each player&rsquo;s page has a <strong>Guardians</strong> section where you invite a parent or guardian to see that player&rsquo;s team in the app. Until then the section isn&rsquo;t there.</p>
+              <HelpSteps>
+                <li>Open the player from your <strong>Roster</strong>, then open <strong>Guardians</strong>.</li>
+                <li>Press <strong>Invite a guardian</strong>. The guardian email already on the roster is filled in; change it if the parent uses another address.</li>
+                <li>Press <strong>Send invitation</strong>. It emails the invitation, which works for 30 days.</li>
+              </HelpSteps>
+              <HelpDefs>
+                <HelpDef term="After you send">The row reads <em>invite sent — waiting for them to accept</em>, with <strong>Cancel invite</strong> beside it. Once they accept, they show as connected, with <strong>Remove</strong>.</HelpDef>
+                <HelpDef term="Nothing goes out by itself">Adding a player to the roster sends nothing. An invitation goes only when you press Send invitation.</HelpDef>
+                <HelpDef term="A parent can say no">Every invitation has a <strong>Don&rsquo;t send me invitations</strong> link. After it&rsquo;s pressed, the app refuses that address in plain words and nothing is sent. Nobody tells you who pressed it.</HelpDef>
+                <HelpDef term="A different email is refused">A parent who signs in with another email than the one you invited is told to sign out and use the invited address, or to ask you to send it to the address they use. There is no approval queue for you to answer and no invite link to copy.</HelpDef>
+                <HelpDef term="Limits">Two guardians per player, so a second household fits; remove one to invite another. A player who is 18 or older gets no parent invitation. On a club&rsquo;s team, invitations also need the club&rsquo;s contact email and mailing address on its public site (<strong>About us</strong>); ask a club admin to add them.</HelpDef>
+              </HelpDefs>
             </>
           ),
         },
@@ -6203,12 +6225,12 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-family-guardian-tier',
           question: 'A parent asked to connect to their own child — can they?',
-          answerText: 'Not yet on your account. Connecting a parent or guardian to a specific player is built but not switched on yet. There is no link a parent can use to ask in the meantime. When it opens you will see a guardians card on each player page: you invite a parent at the email address already on that player, and because you chose that address, someone signing in with it connects without needing a second approval from you. Up to two per player so a second household fits.',
+          answerText: 'Not yet on your account. The family app is built but not switched on yet, and there is no link a parent can use to ask in the meantime. When it opens you will see a Guardians section on each player page: Invite a guardian, then Send invitation, which emails the invitation for 30 days. Because you chose the address, there is no approval step for you; a parent who signs in with a different email is refused. Up to two guardians per player, and no invitation for a player 18 or older.',
           keywords: ['parent', 'guardian', 'my child', 'connect to player', 'season recap', 'not available', 'guardians card', 'when will guardians', 'two guardians'],
           answer: (
             <>
-              <p>Not yet. Connecting a parent or guardian to a <em>specific player</em> is built, but it isn&apos;t switched on yet. There&apos;s no link a parent can use to ask in the meantime.</p>
-              <p><strong>What it will look like when it opens:</strong> a <strong>guardians card</strong> on each player&apos;s page. You invite a parent at the email address already on that player — and because you chose that address, someone signing in with it connects without needing a second approval from you. Up to two per player, so a second household fits.</p>
+              <p>Not yet. The family app is built, but it isn&apos;t switched on yet. There&apos;s no link a parent can use to ask in the meantime.</p>
+              <p><strong>What it will look like when it opens:</strong> a <strong>Guardians</strong> section on each player&apos;s page. Press <strong>Invite a guardian</strong>, then <strong>Send invitation</strong>, and the parent is emailed an invitation that works for 30 days. A parent who signs in with a different email is refused, so there&apos;s nothing for you to approve. Up to two guardians per player; a player who is 18 or older gets no invitation. See <em>Inviting a guardian from a player&apos;s page</em>.</p>
             </>
           ),
         },

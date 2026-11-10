@@ -71,9 +71,11 @@ export default function SingleSelectDropdown({
    *  its own (Needs you), as the Teams division picker's closed box leaves out the current division's count (the
    *  waiting-count ruling, 2026-10-01). `faceLabel` is the words the PILL's face shows for the chosen option when they differ from the row's (the club's Born in
    *  pill: the row reads "Any year", the face "Born in: any year"). `group` puts the option under a heading in the panel
-   *  (below). All opt-in; no
+   *  (below). `sub` is a SENTENCE under the option's name, in the Record money picker's form (bold name, a quiet line
+   *  beneath, a hairline between rows) — the club Bank's Account pill, each account's latest check (owner 2026-11-07).
+   *  A sub-line is words, `detail` a figure: a sentence squeezed to the row's end read as a stray column. All opt-in; no
    *  portal strip passes one. */
-  options: readonly { id: string; label: string; detail?: string; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; faceLabel?: string; group?: string }[];
+  options: readonly { id: string; label: string; detail?: string; sub?: string; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; faceLabel?: string; group?: string }[];
   value: string;
   onChange: (next: string) => void;
   /**
@@ -199,16 +201,19 @@ export default function SingleSelectDropdown({
     <button
       key={o.id}
       type="button"
-      className={`${styles.multiSelectOption} ${styles.multiSelectPick} ${o.id === value ? styles.multiSelectPickOn : ''}`}
+      className={`${styles.multiSelectOption} ${styles.multiSelectPick} ${o.id === value ? styles.multiSelectPickOn : ''}${o.sub != null ? ` ${styles.multiSelectPickSubbed}` : ''}`}
       aria-pressed={o.id === value}
       onClick={inSheet ? () => pickFromSheet(o.id) : ev => {
         onChange(o.id);
         (ev.currentTarget.closest('details') as HTMLDetailsElement | null)?.removeAttribute('open');
       }}
     >
-      {o.label}
-      {o.mark}
-      {o.rowMark}
+      {o.sub != null ? (
+        <span className={styles.multiSelectPickText}>
+          <span className={styles.multiSelectPickName}>{o.label}{o.mark}{o.rowMark}</span>
+          <span className={styles.multiSelectPickSub}>{o.sub}</span>
+        </span>
+      ) : <>{o.label}{o.mark}{o.rowMark}</>}
       {o.detail != null && <span className={styles.multiSelectCount}>{o.detail}</span>}
     </button>
   );

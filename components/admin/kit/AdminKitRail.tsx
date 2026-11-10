@@ -177,13 +177,13 @@ export default function AdminKitRail() {
           <TournamentRail labelled={!tournamentOnly} />
         ) : (
           <>
-            {/* ⚖ The club's places, in their groups (13i Ask 5 = A). A heading is drawn over two or more rows; over a lone
-                row its space stays with no word (N2) — so a registrar's House league and Organization still sit apart. */}
+            {/* ⚖ The club's places, in their groups (13i Ask 5 = A). Every group with a row wears its heading, over one row
+                or many; a group with no rows draws nothing (owner, 2026-11-09). */}
             {placeGroups.map(group => {
               const heading = placeGroupHeading(group);
               return (
                 <Fragment key={group.key}>
-                  <div className={styles.label} aria-hidden={heading ? undefined : true}>{heading ?? '\u00a0'}</div>
+                  {heading && <div className={styles.label}>{heading}</div>}
                   {group.places.map(placeRow)}
                 </Fragment>
               );
@@ -206,15 +206,16 @@ export default function AdminKitRail() {
           </>
         )}
 
-      </nav>
 
-      {/* ⚖ ONE SIDEBAR FOOT (N4, rewritten by navigation Phase 1, E4 + E16, owner 2026-11-09), PINNED under the scrolling
-          rows: Plan & billing (the owner, with its bill pill), a hairline, the doors to the other portals this person holds
+      {/* ⚖ ONE SIDEBAR FOOT (N4, rewritten by navigation Phase 1, E4 + E16, owner 2026-11-09), the LAST ROWS OF THE ONE
+          SCROLLING LIST (owner 2026-11-09: the whole nav scrolls, the foot is not pinned — a spacer rests it at the bottom
+          when the screen is tall): Plan & billing (the owner, with its bill pill), a hairline, the doors to the other portals this person holds
           (Club inside a tournament · Tournaments in the club once it hosts one · Coaches Portal), then Collapse sidebar.
           Help is the desktop account menu's (beside What's new) — except in the demo sandbox, which hides the account menu,
           so its sidebar keeps Help where Plan & billing would be (a sandbox has no billing door). On Plan & billing's page
           its row is the one lit row (`litClubPlace`). Send feedback and Sign out live in the account menu only (2026-09-01).
           No live-site door (Ask 9, Stage 13a): the header's "View site" pill is on every screen. */}
+      <div className={styles.spacer} />
       <div className={styles.railFoot}>
         <div className={styles.foot}>
           {billingLink && <Link href={billingLink.href} className={`${styles.item} ${styles.footItem}${isKitLinkActive(pathname, billingLink) ? ` ${styles.itemActive}` : ''}`} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
@@ -237,6 +238,7 @@ export default function AdminKitRail() {
         {/* ⚖ The last row (Ask 2). */}
         <CollapseSidebarRow className={`${styles.item} ${styles.footItem}`} />
       </div>
+      </nav>
       <SidebarStripTip scopeRef={railRef} />
     </aside>
     </>

@@ -225,6 +225,42 @@ body.only-diff tr.same-row { display: none; }
 .am-theme { padding: 6px 10px 8px; } .am-theme small { display: block; font: 400 11px Inter; color: var(--ink3); margin-bottom: 5px; }
 .am-theme .vsw { display: flex; } .am-theme .vsw span { flex: 1; justify-content: center; height: 28px; }
 .am-sep { height: 1px; background: var(--line); margin: 5px 4px; } .am-legal { font: 400 11px Inter; color: var(--ink3); padding: 8px 10px 4px; }
+/* Tab 13 · Part B — drawn from the SHIPPED parts, not the round-1 specimens: the club cell (45px, 20px each side, an 8px
+   gap, 14px bold), the strip's back link and its 22px rule, the phone bar's 44px arrow and its full-height rule. */
+.pbc { height: 45px; display: flex; align-items: center; gap: 8px; padding: 0 20px; border-bottom: 1px solid var(--line); background: var(--white); position: relative; min-width: 0; }
+.pbc.hov { background: var(--olive-soft); }
+.pbc b { font: 700 14px/16px 'Inter'; color: var(--ink); min-width: 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.pbc b.one { display: block; white-space: nowrap; text-overflow: ellipsis; line-height: 17.5px; }
+.pbc.col { padding: 0; justify-content: center; }
+.ptile { flex: none; display: grid; place-items: center; overflow: hidden; }
+.ptile.s24 { width: 24px; height: 24px; border-radius: 6px; }
+.ptile.s40 { width: 40px; height: 40px; border-radius: 8px; }
+.ptile.ini { background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--line2); color: var(--ink); }
+.ptile.ini.s24 { font: 700 10px/1 'Inter'; }
+.ptile.ini.s40 { font: 700 11px/1 'IBM Plex Mono'; letter-spacing: .02em; }
+.ptile.ini.olive { background: var(--olive-soft); box-shadow: none; color: var(--olive); }
+.ptile.foc { outline: 2px solid var(--olive); outline-offset: 2px; }
+.pbc.foc { outline: 2px solid var(--olive); outline-offset: -2px; }
+.pbk.foc { outline: 2px solid var(--olive); outline-offset: 2px; }
+.ptile.img { background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--line2); }
+.ptile.img svg { width: 82%; height: 82%; }
+.pband { position: absolute; top: 0; right: 0; height: 45px; background: var(--white); border-bottom: 1px solid var(--line); display: flex; align-items: flex-end; padding-left: 18px; }
+.ostip { position: absolute; z-index: 9; background: #FFFFFF; color: #222222; border: 1px solid #9A9A9A; box-shadow: 0 2px 6px rgba(0,0,0,.18); font: 400 12px/1.3 system-ui, sans-serif; padding: 3px 6px; white-space: nowrap; }
+.pmeet { position: absolute; height: 0; border-top: 1.5px dashed #B5470F; pointer-events: none; z-index: 6; }
+.pmeet span { position: absolute; right: 0; top: -15px; font: 600 9px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 3px; white-space: nowrap; }
+.pstrip { position: absolute; top: 0; left: 0; right: 0; height: 48px; background: var(--white); border-bottom: 1px solid var(--line2); display: flex; align-items: center; }
+.pstrip .pl { display: flex; align-items: center; gap: 10px; padding-left: 24px; min-width: 0; }
+.pstrip .pl b { font: 700 16px 'Inter'; white-space: nowrap; }
+.pbk { display: inline-flex; align-items: center; gap: 5px; flex: none; color: var(--ink2); font: 600 14px/1 'Inter'; padding: 6.4px 8px; margin-left: -8px; border-radius: 6px; white-space: nowrap; }
+.pbk.hov { color: var(--ink); background: var(--olive-soft); }
+.pbk.hovw { color: var(--ink); background: #FFFFFF; }
+.pbk.sq { width: 44px; height: 44px; padding: 0; justify-content: center; margin-block: -4px; }
+.pbr { flex: none; width: 1px; height: 22px; background: var(--line2); }
+.pbr.st { height: auto; align-self: stretch; margin: 2.4px 0; background: var(--line); }
+.ppbar { position: absolute; top: 0; left: 0; right: 0; background: var(--white); border-bottom: 1px solid var(--line2); padding: 7px 16px; }
+.ppbar .r { display: flex; align-items: center; gap: 12px; min-height: 36px; }
+.ppbar .r b { font: 700 16px/19px 'Inter'; }
+.ppbar .r small { display: block; font: 400 11px/14px 'IBM Plex Mono'; color: var(--ink3); }
 /* "Show only what differs": unchanged parts fade */
 body.only-diff .fr .same { opacity: .16; }
 body.only-diff .fr .grid { opacity: .15; }
@@ -801,6 +837,101 @@ S.todayCoach = frame(1000, 300,
   '<div class="mast" style="left:220px"><div><b>' + TEAM + '</b><small>' + CLUB + ' · 2026 Season · 3-2-1</small></div><div class="nx"><i>NEXT</i>Sun 9:30 a.m. practice</div></div>' +
   '<div class="pg" style="top:104px;left:220px;padding-top:32px"><div class="ph"><span class="it">' + I('users', 18) + '</span><h4>Roster</h4><span class="act"><span class="btn lime">' + I('plus', 14) + 'Add Player</span></span></div></div>');
 
+/* ── Tab 13 · Part B: the club's name on two lines, the one tile, the back link (drawn from the shipped parts) ── */
+LOGO.stock = '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#2F6B4F"/><circle cx="20" cy="20" r="9.5" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M14.2 13.8c2.6 2.2 2.6 10.2 0 12.4M25.8 13.8c-2.6 2.2-2.6 10.2 0 12.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>';
+LOGO.tall = '<svg viewBox="0 0 40 40"><path d="M14 2h12v30l-6 6-6-6z" fill="#1F4E79"/><text x="20" y="22" font-family="Arial Black, Arial, sans-serif" font-size="7" font-weight="900" fill="#F2C14E" text-anchor="middle">LM</text></svg>';
+/* ONE tile (B6 A): the logo or the initials in the same frame — white, a thin outline, 6px / 8px corners. `olive` = the
+   club's initials as shipped today (and tab 10's). `foc` = keyboard focus (the shipped strip tile's ring, 2px out). */
+function ptile(kind, size, ini, o) {
+  o = o || {};
+  var cls = 'ptile s' + size + (kind ? ' img' : o.olive ? ' ini olive' : ' ini') + (o.foc ? ' foc' : '');
+  return '<span class="' + cls + '">' + (kind ? LOGO[kind] : ini) + '</span>';
+}
+function pcell(name, tile, o) { o = o || {}; return '<div class="pbc' + (o.hov ? ' hov' : '') + (o.foc ? ' foc' : '') + '" style="width:240px">' + tile + '<b' + (o.one ? ' class="one"' : '') + '>' + name + '</b>' + (o.marks || '') + '</div>'; }
+function pcellFrame(cellHtml, h, extra, w) {
+  return frame(w || 500, h || 46, '<div class="side" style="top:0;bottom:auto;height:46px;width:241px">' + cellHtml + '</div><div class="pband" style="left:241px"></div>' + (extra || ''));
+}
+function pcolFrame(tile, extra, w) {
+  return frame(w || 150, 46, '<div class="side" style="top:0;bottom:auto;height:46px;width:65px"><div class="pbc col" style="width:64px">' + tile + '</div></div><div class="pband" style="left:65px"></div>' + (extra || ''));
+}
+var OLIVE = { olive: 1 };
+var PNAMES = [
+  ['One line', 'a short name', 'Riverdale Minor Ball', 'RM'],
+  ['Two lines', 'today it is cut short with “…”', CLUB, 'LM'],
+  ['Too long for two', 'cut at the end of the second line; the whole name on hover (B3)', 'Lakeshore Minor Baseball Association of Greater Etobicoke', 'LM']
+];
+S.pbCells = '<div class="lgrid" style="grid-template-columns:170px repeat(2, max-content)"><span></span><span class="h">Today</span><span class="h">Proposed</span>' +
+  PNAMES.map(function (r, i) {
+    var today = pcellFrame(pcell(r[2], ptile(null, 24, r[3], OLIVE), { one: 1 }));
+    var prop = i === 2
+      ? pcellFrame(pcell(r[2], ptile(null, 24, r[3]), { hov: 1 }), 84, '<div class="ostip" style="left:96px;top:52px">' + r[2] + '</div>' + mk('B3', 452, 50))
+      : pcellFrame(pcell(r[2], ptile(null, 24, r[3])));
+    return '<span class="rl">' + r[0] + '<small>' + r[1] + '</small></span>' + today + prop;
+  }).join('') + '</div>';
+var PKINDS = [
+  ['Uploaded logo', 'a round crest, about 1 : 1', 'crest'],
+  ['Made stock logo', 'white art on a disc of the club’s colour (the file is square)', 'stock'],
+  ['Very light', 'white art on cream; the thin outline keeps its edge', 'light'],
+  ['Wide wordmark', '4 : 1, wider than 2 : 1, so the initials', null],
+  ['Tall pennant', '1 : 3, taller than 1 : 2, so the initials (B5)', null],
+  ['No logo', 'the initials', null],
+  ['Size not known, or the file fails to load', 'the initials (B4)', null]
+];
+S.pbTiles = '<div class="lgrid" style="grid-template-columns:220px repeat(2, max-content)"><span></span><span class="h">Open</span><span class="h">Collapsed</span>' +
+  '<span class="rl">Today<small>every club: the initials on the olive tint; collapsed, the same 24px tile alone</small></span>' +
+  pcellFrame(pcell(CLUB, ptile(null, 24, 'LM', OLIVE)), 0, '', 320) + pcolFrame(ptile(null, 24, 'LM', OLIVE)) +
+  PKINDS.map(function (r) {
+    return '<span class="rl">' + r[0] + '<small>' + r[1] + '</small></span>' +
+      pcellFrame(pcell(CLUB, ptile(r[2], 24, 'LM')), 0, '', 320) + pcolFrame(ptile(r[2], 40, 'LM'));
+  }).join('') + '</div>';
+/* the tall pennant as the ruled 2 : 1 rule alone would show it (B5 B) */
+S.pbTallB = '<div class="pair"><div><div class="lbl">B5 B · only wider than 2 : 1 falls back</div>' + pcellFrame(pcell(CLUB, '<span class="ptile s24 img">' + LOGO.tall + '</span>'), 0, '', 320) + '</div><div><div class="lbl">&nbsp;</div>' + pcolFrame('<span class="ptile s40 img">' + LOGO.tall + '</span>') + '</div></div>';
+/* B6: the initials' face */
+S.pbFaces = '<div class="pair"><div><div class="lbl after">B6 A · one frame (white, a thin outline)</div>' + pcellFrame(pcell(CLUB, ptile(null, 24, 'LM')), 0, '', 320) + '</div><div><div class="lbl after">&nbsp;</div>' + pcolFrame(ptile(null, 40, 'LM')) + '</div>' +
+  '<div><div class="lbl">B6 B · the olive tint, as today and tab 10</div>' + pcellFrame(pcell(CLUB, ptile(null, 24, 'LM', OLIVE)), 0, '', 320) + '</div><div><div class="lbl">&nbsp;</div>' + pcolFrame(ptile(null, 40, 'LM', OLIVE)) + '</div></div>';
+/* states the build needs: keyboard focus open and collapsed, the collapsed name bubble */
+S.pbStates = '<div class="pair">' +
+  '<div><div class="lbl">Keyboard focus · open</div>' + pcellFrame(pcell(CLUB, ptile('crest', 24), { foc: 1 }), 0, '', 320) + '</div>' +
+  '<div><div class="lbl">Keyboard focus · collapsed</div>' + pcolFrame(ptile('crest', 40, '', { foc: 1 })) + '</div>' +
+  '<div><div class="lbl">Pointer over it · collapsed</div>' + frame(330, 60, '<div class="side" style="top:0;bottom:auto;height:46px;width:65px"><div class="pbc col hov" style="width:64px">' + ptile('crest', 40) + '</div></div><div class="pband" style="left:65px"></div><div class="tip" style="left:75px;top:11px">' + CLUB + '</div>') + '</div></div>';
+/* the collapsed sidebar's head, whole: today, proposed at 45px, tab 10's 58px, inside a club's tournament */
+function pcolSide(tile, cellH, o) {
+  o = o || {};
+  var rows = o.event
+    ? '<div style="display:grid;place-items:center;margin:2px 0 6px"><span class="ptile s40 ini" style="font-weight:700">LF</span></div><div class="hair" style="align-self:stretch"></div><div class="ico40">' + I('gauge', 18) + '</div><div class="ico40">' + I('users', 18) + '</div><div class="ico40">' + I('cal', 18) + '</div>'
+    : '<div class="ico40 lit">' + I('grid', 18) + '</div><div class="hair" style="align-self:stretch"></div><div class="ico40">' + I('trophy', 18) + '</div><div class="ico40">' + I('users', 18) + '</div><div class="ico40">' + I('dollar', 18) + '</div>';
+  return frame(210, 260, '<div class="side" style="top:0;width:65px"><div class="pbc col" style="width:64px;height:' + cellH + 'px">' + tile + '</div><div class="rows" style="padding-top:10px;align-items:center">' + rows + '</div></div>' +
+    '<div class="pband" style="left:65px"></div>' + (cellH !== 45 ? '<div class="pmeet" style="left:65px;right:0;top:44px"><span>the tab band’s rule</span></div><div class="pmeet" style="left:0;width:65px;top:' + (cellH - 1) + 'px"></div>' : '') + (o.marks || ''));
+}
+S.pbColToday = pcolSide(ptile(null, 24, 'LM', OLIVE), 45);
+S.pbCol45 = pcolSide(ptile('crest', 40), 45, { marks: mk('B1', 120, 12) });
+S.pbCol58 = pcolSide(ptile('crest', 40), 58);
+S.pbColEvent = pcolSide(ptile('crest', 40), 45, { event: 1 });
+/* the back link: the desktop strip (a rep team's page) and the phone bar, at rest and under the pointer */
+function pstripBack(cls) {
+  return frame(470, 48, '<div class="strip pstrip"><div class="lcell" style="width:240px"><span class="wm"><i></i><span>FieldLogic<em>HQ</em></span></span><span class="pword">Club</span></div>' +
+    '<div class="pl"><span class="pbk' + (cls ? ' ' + cls : '') + '">' + I('left', 15) + 'Teams</span><span class="pbr"></span><b>' + TEAM + '</b></div></div>');
+}
+function pphoneBack(cls, rule, marks) {
+  return frame(390, 51, '<div class="ppbar"><div class="r"><span class="pbk sq' + (cls ? ' ' + cls : '') + '">' + I('left', 18) + '</span><span class="pbr' + (rule ? ' ' + rule : '') + '"></span><div><b>' + TEAM + '</b><small>Rep teams</small></div></div></div>', marks);
+}
+S.pbBack = '<div class="lgrid" style="grid-template-columns:150px repeat(3, max-content)"><span></span><span class="h">At rest</span><span class="h">Pointer over it, or pressed</span><span class="h">Keyboard focus</span>' +
+  '<span class="rl">Desktop strip<small>today, and the proposed for both</small></span>' + pstripBack('') + pstripBack('hov') + pstripBack('foc') +
+  '<span class="rl">Phone bar · today<small>the arrow alone; a fainter line the bar’s full height; pressed, white on a white bar</small></span>' + pphoneBack('', 'st') + pphoneBack('hovw', 'st') + pphoneBack('foc', 'st') +
+  '<span class="rl">Phone bar · proposed<small>the strip’s line and tint</small></span>' + pphoneBack('', '') + pphoneBack('hov', '', mk('B2', 360, 14)) + pphoneBack('foc', '') +
+  '</div>';
+var PB_ASKS = [
+  ['B1', 'How tall is the collapsed cell?', 'The 40px tile goes in the club cell. Tab 10 drew that cell 58px tall when collapsed, so its line misses the tab band’s by 13px.', ['<span class="rec">45px, as open: the two lines meet, and the tile has 2px of room above and below (recommended; the room at the sides is 12px, so it reads snug, not cramped, at true size).</span>', '58px, as tab 10 drew: more room, and the two lines sit 13px apart while the sidebar is collapsed.', 'A 36px tile in the 45px cell (4px of room), and the event’s and team’s tiles shrink to match in Phases 2 and 4 (E10 ruled 40px).']],
+  ['B2', 'Which back link survives?', 'The desktop strip and the phone bar show the same link two ways. Pressed, the bar’s link turns white, and its bar is white, so a press shows nothing.', ['<span class="rec">The strip’s, in both: the olive tint under a pointer or while pressed (never left on after a tap), and a short 22px divider line in the stronger shade (recommended; tab 7 drew it this way).</span>', 'The bar’s, in both: no visible tint, and a fainter divider line the bar’s full height.']],
+  ['B3', 'The whole name on hover, open sidebar', 'The collapsed sidebar already shows every name in its dark bubble. The open sidebar has no bubble.', ['<span class="rec">The browser’s own tooltip, only when the name is cut, and never while the sidebar is collapsed, where the bubble already shows it (recommended: nothing new, and nothing pops up over a name you can already read). A screen reader always hears the whole name.</span>', 'The dark bubble in the open sidebar too, for the club’s name only.']],
+  ['B4', 'A logo whose size is not known, or whose file fails to load', 'Sizes are stored at upload from now on, and a one-time pass measures the logos already uploaded (dev in the build, production at the promote, with your yes). Until that pass, or if a file cannot be measured, the size is unknown. A file can also go missing later.', ['<span class="rec">The initials (recommended: never a sliver, never a broken picture; the pass makes an unknown size rare). A file that goes missing after the page appears is the one case where the picture turns into the initials on screen.</span>', 'The logo, shrunk to fit, until the size is known.']],
+  ['B5', 'A very tall logo', 'E10 ruled the initials for a logo wider than 2 : 1. A logo taller than 1 : 2 (a pennant, a tall crest) becomes the same sliver turned on its side: 7px wide at 24px.', ['<span class="rec">The initials for a logo taller than 1 : 2 as well (recommended).</span>', 'Only wider than 2 : 1, as ruled; a tall logo shows shrunk.']],
+  ['B6', 'The initials’ look', 'Today the club’s initials sit on an olive tint (tab 10 drew the same), while the collapsed sidebar’s other 40px tile (the event’s, the team’s) is white with a thin outline. A logo sits on white with a thin outline.', ['<span class="rec">One frame for everything: white with a thin outline, the initials in dark ink, so a club with a logo and one without wear the same tile, and the event’s and team’s tiles already match it (recommended).</span>', 'The olive tint for initials, white for a logo, as tab 10 drew.']]
+];
+var pbAskHTML = PB_ASKS.map(function (a) {
+  return '<div class="ask" id="ask-' + a[0] + '"><h3><span class="mk inl" style="cursor:default">' + a[0] + '</span>' + a[1] + '</h3><p class="muted" style="margin:0 0 4px">' + a[2] + '</p><ol type="A">' + a[3].map(function (o) { return '<li>' + o + '</li>'; }).join('') + '</ol></div>';
+}).join('');
+
 /* ── page content ──────────────────────────────────────────────────────────────────── */
 function spec(title, note, html, opts) {
   opts = opts || {};
@@ -954,6 +1085,22 @@ var SECTIONS = [
       spec('3 · The club’s More sheet · the owner', 'before / after · the whole sheet laid flat, true size (it scrolls on a phone); You is the shipped two-column grid', pair(S.clubMoreBefore, S.clubMoreAfter)) +
       spec('3 · The tournament’s More sheet · the owner', 'before / after · it opens on Notifications; “Club” joins You', pair(S.tMoreBefore, S.tMoreAfter)) +
       spec('N10 · who loses tiles when Tournaments leaves the phone’s fill', 'before / after · an admin without Families, on a club with a tournament and no house-league season. The tiles were Schedules · Public site · Tournaments; without Tournaments only two are found, and the tiles are three or none, so Schedules becomes a row and Public site goes back to Club. That is the sheet a club with no tournament already shows this person. Owners hold Families and keep their tiles. The build counts the real clubs and people before changing it.', pair(S.adPhoneBefore, S.adPhoneAfter));
+  }],
+  ['partb', '13 · Part B', true, function () {
+    return '<h2>The club’s name, its logo, and the back link</h2><p class="lede">Phase 1’s second part, drawn from the shipped screens (2026-11-09; revised after the /design pass). Three things change on the club admin’s desktop sidebar and strip; the phone keeps its bar (there is no cell on a phone, E10). Everything is decided before the page is sent, so nothing in the sidebar’s head changes after it appears. Six calls at the bottom, B1–B6; each recommendation is the first option.</p>' +
+      '<div class="cols"><div class="card"><h3>The name on up to two lines</h3><p>14px bold on a 16px line, at most two lines, and the cell stays 45px so its bottom line meets the tab band’s. A name too long for two is cut at the end of the second line, and the whole name shows on hover. It still opens Overview, with no chevron (a club has nothing to choose between).</p></div>' +
+      '<div class="card"><h3>One tile, the club’s logo</h3><p>The logo sits whole on white inside a thin outline: 24px beside the name, 40px alone when the sidebar is collapsed (today the collapsed club shows the 24px initials). The initials take the logo’s place when there is none, or it is too wide or too tall to read. The logo’s size is stored when it is uploaded, so the page arrives with the right one and never swaps. The tile stays white in the dark theme, so a dark logo never disappears. The event’s and team’s tiles use the same tile in Phases 2 and 4.</p></div>' +
+      '<div class="card"><h3>The back link, one look</h3><p>The strip and the phone bar show the same link (“← Teams” on a rep team’s page) with different tints and divider lines. The strip’s look becomes the only one: the olive tint under a pointer or while pressed, and a short divider line in the stronger shade. The phone keeps its 44px arrow.</p></div></div>' +
+      spec('The open cell · three names', 'true size · the cell and the start of the tab band beside it (its tabs vary by page) · the third shows the pointer over a cut name', S.pbCells) +
+      spec('The tile · every kind of logo', 'true size · open: the cell; collapsed: the 64px sidebar’s cell with the band beside it · drawn with B5 A and B6 A', S.pbTiles) +
+      spec('B5 B · a tall logo if only wide ones fall back', 'true size · the pennant shrunk to fit', S.pbTallB) +
+      spec('B6 · the initials’ look', 'true size · A: the same frame as a logo; B: the olive tint', S.pbFaces) +
+      spec('States the build needs', 'true size · keyboard focus (the olive ring the sidebar already uses), and the dark name bubble the collapsed sidebar already shows', S.pbStates) +
+      spec('The collapsed sidebar’s head', 'true size · today, the proposed 45px cell, tab 10’s 58px (the dashed lines mark the two bottom lines), and inside a club’s tournament until Phase 2', '<div class="pair">' +
+        '<div><div class="lbl">Today</div>' + S.pbColToday + '</div><div><div class="lbl after">Proposed · 45px (B1 A)</div>' + S.pbCol45 + '</div><div><div class="lbl">Tab 10 · 58px (B1 B)</div>' + S.pbCol58 + '</div><div><div class="lbl after">Inside the club’s tournament</div>' + S.pbColEvent + '</div></div>') +
+      '<p class="muted">Inside a club’s tournament, until Phase 2 puts the event in the cell, the event’s own tile sits under the club’s, white with a thin outline and the event’s initials, as it is today. Phase 2 gives it the event’s logo through the same tile.</p>' +
+      spec('The back link', 'true size · the strip’s left end (a rep team’s page) and the phone bar’s; the rest of each is unchanged', S.pbBack) +
+      '<h2 style="margin-top:28px">Your calls</h2>' + pbAskHTML;
   }]
 ];
 
@@ -976,7 +1123,13 @@ function show(id, askId) {
   if (askId) { var el = document.getElementById('ask-' + askId); if (el) { el.scrollIntoView({ block: 'start' }); el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1600); } }
   else window.scrollTo(0, 0);
 }
-document.addEventListener('click', function (e) { var m = e.target.closest && e.target.closest('[data-go]'); if (m) show('asks', m.getAttribute('data-go')); });
+document.addEventListener('click', function (e) {
+  var m = e.target.closest && e.target.closest('[data-go]'); if (!m) return;
+  var id = m.getAttribute('data-go'), here = document.querySelector('section.panel.on #ask-' + id);
+  // A tab that carries its own calls (13 · Part B) jumps within itself; every other marker opens tab 11.
+  if (here) { here.scrollIntoView({ block: 'start' }); here.classList.add('flash'); setTimeout(function () { here.classList.remove('flash'); }, 1600); }
+  else show('asks', id);
+});
 function seg(a, b, on) { document.getElementById(a).setAttribute('aria-pressed', on ? 'true' : 'false'); document.getElementById(b).setAttribute('aria-pressed', on ? 'false' : 'true'); }
 document.getElementById('v-all').addEventListener('click', function () { document.body.classList.remove('only-diff'); seg('v-all', 'v-diff', true); });
 document.getElementById('v-diff').addEventListener('click', function () { document.body.classList.add('only-diff'); seg('v-all', 'v-diff', false); });

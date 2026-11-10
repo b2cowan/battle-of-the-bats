@@ -13,6 +13,9 @@
  * repaid") is the thing a coach is actually choosing between. A native `<select>` cannot carry it,
  * which is the whole reason this is a button and a list.
  *
+ * ⚠ THE LIST IS ALSO CAPPED TO THE ROOM ON ITS SIDE OF THE FIELD (every variant) and flips above when the room below
+ * is smaller, scrolling inside itself — a long list under a mid-screen field otherwise runs off the page.
+ *
  * ⚠⚠ THE LIST IS VIEWPORT-**FIXED**, ANCHORED TO THE FIELD'S MEASURED RECT, and that is inherited
  * knowledge rather than a preference: both callers live inside a scrolling modal, an absolutely
  * positioned list is clipped by it, and an in-flow list was tried and rejected on sight (§80 walk,
@@ -185,13 +188,19 @@ export default function SublinedChoice<T extends string>({
           if (!open) {
             const r = wrapRef.current?.getBoundingClientRect();
             if (!r) setRect(null);
-            else if (variant !== 'menu') setRect({ top: r.bottom + 4, left: r.left, width: r.width });
             else {
-              // A menu is sized for its rows, hung from the trigger's right edge, and flips above
-              // it when the room below would hand the coach a slit to scroll through.
+              // ⚠ EVERY VARIANT FITS THE VIEWPORT (invite dialog's Role list, 2026-11-08: eight two-line roles hung
+              // below a field in the middle of the screen and ran off the page, unreachable because the list had
+              // no height cap to scroll within). The list is capped to the room on its side and flips above the
+              // field when the room below is the smaller side. A menu is also sized for its rows and hung from the
+              // trigger's right edge; a field's list keeps the field's own left edge and width.
               const gutter = 8;
-              const width = Math.min(listWidth, window.innerWidth - gutter * 2);
-              const left = Math.max(gutter, Math.min(r.right - width, window.innerWidth - width - gutter));
+              let left = r.left;
+              let width = r.width;
+              if (variant === 'menu') {
+                width = Math.min(listWidth, window.innerWidth - gutter * 2);
+                left = Math.max(gutter, Math.min(r.right - width, window.innerWidth - width - gutter));
+              }
               const below = window.innerHeight - r.bottom - 4 - gutter;
               const above = r.top - 4 - gutter;
               if (below >= 240 || below >= above) setRect({ top: r.bottom + 4, left, width, maxHeight: Math.max(160, below) });

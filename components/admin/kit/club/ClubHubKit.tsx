@@ -420,15 +420,16 @@ export default function ClubHubKit() {
               // A waiting count is the rail's amber pill — the number, never words (owner ruling 2026-10-01).
               // A program with no waiting count answers 0 (`briefProgramCount`), so the count alone decides the pill.
               const chip = waiting > 0
-                // The rail's pill, without the rail row's `margin-left: auto` — in the eyebrow's spread row it would
-                // shove the count against the arrow, off where every other card's chip sits (/review 2026-10-01).
+                // The rail's pill, without the rail row's `margin-left: auto`, so it stays beside the title.
                 ? <span className={frame.count} style={{ marginLeft: 0 }} aria-label={`${waiting} waiting`}>{kitCountText(waiting)}</span>
                 : p.key === 'public-site'
                   ? <CoachChip tone={currentOrg.isPublic ? 'good' : 'warn'}>{currentOrg.isPublic ? 'Online' : 'Offline'}</CoachChip>
                   : undefined;
               return (
                 <CoachDoorCard key={p.key} href={p.href} className={styles.programCard}>
-                  <CoachEyebrow icon={<Icon size={14} aria-hidden />} chip={chip} arrow>{p.label}</CoachEyebrow>
+                  {/* The chip rides INSIDE the title group so it sits right after the program's name (owner 2026-11-07);
+                      passed as the eyebrow's `chip` it landed mid-row, between the title and the arrow. */}
+                  <CoachEyebrow icon={<Icon size={14} aria-hidden />} arrow>{p.label}{chip}</CoachEyebrow>
                   <p className={styles.programLine}>{programLine(p.key)}</p>
                 </CoachDoorCard>
               );

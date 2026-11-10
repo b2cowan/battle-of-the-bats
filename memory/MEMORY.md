@@ -1,5 +1,7 @@
 # FieldLogicHQ Memory Index
 
+- [Bank check novice UX evaluation](bank-check-novice-ux-evaluation.md) — Codex evaluated both portals on dev at 1440/390 and incorporated a source-checked comparison with Claude on 2026-11-08; revised drawings and eight proposed owner asks live in the local HTML artifact. No product decision accepted or product code changed in this evaluation.
+
 - [Public tournament Stage 6](../docs/projects/active/PUBLIC_TOURNAMENT_STAGE6_BUILD_PROMPT.md) — implementation and manual review completed 2026-10-31; shared first-paint tab facts, current-publication crown gate and empty-withheld-division fix verified; 315 tests pass. [Owner walk §435](https://fieldlogichq-stage6-owner-walk.b2cowan.chatgpt.site) published privately (66 steps/16 parts); owner result pending. Implementation committed `295ebce8a` on dev 2026-10-31 (all parts combined). Next build: Stage 7 (pay page) or Stage 1a (look ownership), owner's choice.
 
 - [Public tournament Stage 5](public-tournament-stage5.md) — owner walk §432 passed 2026-10-31; both desktop layouts approved, optional installed-app checks skipped; eight review corrections and their verification are recorded in the plan and ledger.

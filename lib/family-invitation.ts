@@ -164,7 +164,7 @@ async function recordConsent(params: {
 }): Promise<void> {
   const { error } = await supabaseAdmin
     .from('family_consents')
-    .upsert(
+    .insert(
       {
         org_id: params.orgId,
         guardian_email: params.email,
@@ -180,10 +180,12 @@ async function recordConsent(params: {
         // The club's province, or 'unknown' — recorded so a protective path taken for want of it is visible.
         jurisdiction: consentJurisdiction(params.province),
       },
-      { onConflict: 'org_id,guardian_email,basis,scope,source_id', ignoreDuplicates: true },
     );
+  // 23505 = family_consents_live_uniq already holds this link's live consent (a retry after a part-way failure): success.
+  // ⚠ Never `.upsert(..., { onConflict })` here — that index is PARTIAL (where withdrawn_at is null) and keyed on
+  // COALESCE(source_id, …), so Postgres cannot infer it from a column list and every call fails with 42P10 (found 2026-11-09).
   // A consent we failed to record is a consent we cannot prove.
-  if (error) throw error;
+  if (error && error.code !== '23505') throw error;
 }
 
 /** Write (or upgrade) one verified link for an acceptance. Returns the link id, or null when the child cannot take it now

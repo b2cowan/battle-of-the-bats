@@ -59,7 +59,7 @@ tr > td.nowrap { white-space: nowrap; }
   .chipDoor { min-height: var(--tap-min, 44px); }
 }
 
-/* ── the Accounting Overview's bank line (BC5a, R0 tab 7): right of "Where the club stands", no row of its own ── */
+/* ── the Accounting Overview's bank line (BC5a, R0 tab 7; ONE line since 2026-11-09): right of "Where the club stands", no row of its own ── */
 .overviewHead { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 1rem; }
 .overviewMarks { display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem; margin: 0 0 0.45rem auto; min-width: 0; }
 .overviewMark { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.25rem 0.5rem; min-width: 0; }
@@ -78,6 +78,14 @@ tr > td.nowrap { white-space: nowrap; }
 .overviewDoor > svg { color: var(--text-tertiary); flex-shrink: 0; }
 .overviewDoor:hover { color: var(--text-primary); text-decoration: underline; }
 .overviewDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+/* The invitation (bank check S2, A3): the words and the quiet line under them are ONE door, right-aligned at a desk like
+   the line it replaces, left-aligned under the heading on a phone (the S2 drawings). */
+.overviewInvite { flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; column-gap: 0.5rem; row-gap: 0; text-align: right; }
+.inviteMain { display: inline-flex; align-items: center; column-gap: 0.25rem; }
+.inviteNote { font-size: var(--type-support); color: var(--text-tertiary); }
+@media (max-width: 640px) {
+  .overviewInvite { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; text-align: left; justify-content: center; padding-bottom: 0.2rem; }
+}
 /* A touch width: each door a full tap (the chip's floor too, above). A phone: the heading row wraps, the lines under it. */
 @media (max-width: 768px) {
   .overviewMarks { gap: 0; }

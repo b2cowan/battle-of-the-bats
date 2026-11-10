@@ -91,8 +91,9 @@ export default function MembersKit() {
   const [notice, setNotice] = useNotice();
 
   // A door that lands here with the invite open — once per visit (ref-guarded, as the schedule reads `?tool=`):
-  //   `?invite=volunteer` — the Staff kit's "Invite a volunteer", with the volunteer role chosen;
-  //   `?invite=open` — the setup checklist's step 1 (Stage 13b B1), with NO role chosen: the step names two roles.
+  //   `?invite=volunteer` — the Staff kit's "Invite a volunteer", with the volunteer role chosen.
+  // The setup checklist's "Staff your board" is NOT one: it lands on the list, so a first-time owner can read what each
+  // role can open before inviting anyone (owner, 2026-11-08; it used to open the window with no role chosen).
   // A reader who cannot manage members lands on the list, as before.
   const inviteParam = useSearchParams().get('invite');
   const inviteDoorRef = useRef(false);
@@ -100,9 +101,9 @@ export default function MembersKit() {
   const volunteersOffered = Boolean(roles?.some(r => r.role === 'official'));
   useEffect(() => {
     const volunteer = inviteParam === 'volunteer' && volunteersOffered;
-    if (inviteDoorRef.current || !canManage || (inviteParam !== 'open' && !volunteer)) return;
+    if (inviteDoorRef.current || !canManage || !volunteer) return;
     inviteDoorRef.current = true;
-    if (volunteer) setInviteRole('official');
+    setInviteRole('official');
     setInviteOpen(true);
   }, [inviteParam, canManage, volunteersOffered]);
 

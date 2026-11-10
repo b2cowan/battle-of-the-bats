@@ -500,12 +500,12 @@ export function clubPlaceGroups<T extends { key: string }>({ programs, alsoOnPla
 }
 
 /**
- * ⚖ N2 (13i): a heading is drawn over two or more rows; over a lone row the heading's space stays with no word (the
- * registrar's House league, the owner's sheet's Tournaments). "Also on your plan" is the exception: it is not a group's
- * name but the reason its rows are quiet, so it is said over one row too, as before 13i.
+ * ⚖ Every group with at least one row wears its heading — over one row or many — and a group with no rows wears nothing
+ * (owner, 2026-11-09, replacing N2 of 13i, which left a blank line over a lone row: the same height as the word, so it saved
+ * nothing, and it read as inconsistent beside "Also on your plan" over a lone Tournaments).
  */
 export function placeGroupHeading(group: ClubPlaceGroup<unknown>): string | null {
-  return group.key === 'also' || group.places.length > 1 ? group.heading : null;
+  return group.places.length > 0 ? group.heading : null;
 }
 
 /**

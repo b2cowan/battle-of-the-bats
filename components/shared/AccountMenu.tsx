@@ -70,8 +70,6 @@ import {
 } from '@/lib/user-theme';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import BottomSheet from '@/components/admin/BottomSheet';
-import { useLegalLinks } from '@/components/legal/LegalLinksProvider';
-import { LEGAL_SHORT_LABELS, LEGAL_SHORT_SEPARATOR, PRIVACY_TITLE, TERMS_TITLE } from '@/lib/legal-words';
 import styles from './AccountMenu.module.css';
 
 const THEME_OPTIONS: { value: UserTheme; label: string }[] = [
@@ -148,7 +146,6 @@ export default function AccountMenu({
   const [sheetHost, setSheetHost] = useState<HTMLElement | null>(null);
   // Live, so rotating or resizing across 900 px while open swaps popover and sheet cleanly.
   const isPhone = useIsPhoneNav();
-  const legal = useLegalLinks();
   // The rule above Sign out is drawn only when a row sits above it (GST/HST Stage 6 step 6.2, Ask 4 A). The support console's menu
   // shows only the Appearance strip, and in the popover that strip already ends in its own rule — a second one doubled it. So the
   // strip does not count here; in the phone sheet it has no rule of its own, so the sheet adds it back (`showTheme`). The sheet's
@@ -343,25 +340,6 @@ export default function AccountMenu({
     );
   }
 
-  // The legal line under Sign out (GST/HST Stage 6 step 6.2): nothing while the legal pages are off. Short labels, full titles as names.
-  function legalLine(inSheet: boolean) {
-    if (!legal) return null;
-    return (
-      <>
-        <div className={styles.sep} aria-hidden />
-        <div className={styles.legalLine} role={inSheet ? undefined : 'none'}>
-          <a href={legal.termsHref} className={styles.legalLink} role={itemRole(inSheet)} aria-label={TERMS_TITLE} onClick={() => setOpen(false)}>
-            {LEGAL_SHORT_LABELS.terms}
-          </a>
-          <span aria-hidden>{LEGAL_SHORT_SEPARATOR.trim()}</span>
-          <a href={legal.privacyHref} className={styles.legalLink} role={itemRole(inSheet)} aria-label={PRIVACY_TITLE} onClick={() => setOpen(false)}>
-            {LEGAL_SHORT_LABELS.privacy}
-          </a>
-        </div>
-      </>
-    );
-  }
-
   function signOutRow(inSheet: boolean) {
     return (
       <button
@@ -406,7 +384,6 @@ export default function AccountMenu({
           {settingRows(false)}
           {rowAboveSignOut && <div className={styles.sep} aria-hidden />}
           {signOutRow(false)}
-          {legalLine(false)}
         </div>
       )}
       {/* The phone's sheet. Its host is a layout-less element inside the wrapper, so the sheet inherits this bar's colours
@@ -428,7 +405,6 @@ export default function AccountMenu({
             {settingRows(true)}
             {(rowAboveSignOut || showTheme) && <div className={styles.sep} aria-hidden />}
             {signOutRow(true)}
-            {legalLine(true)}
           </div>
         )}
       </BottomSheet>

@@ -167,8 +167,8 @@ function ComingUp({ data, params, go, viewSwitch, planSelect, exportMenu }: View
             <table className={kit.comfortable}>
               <thead>
                 <tr>
-                  <th>{RW.coming.col.date}</th><th>{RW.coming.col.what}</th><th>{RW.coming.col.club}</th><th>{RW.coming.col.plan}</th>
-                  <th className={kit.num}>{RW.coming.col.price}</th><th aria-label="Open" />
+                  <th className={kit.nowrap}>{RW.coming.col.date}</th><th className={kit.nowrap}>{RW.coming.col.what}</th><th>{RW.coming.col.club}</th><th className={kit.nowrap}>{RW.coming.col.plan}</th>
+                  <th className={`${kit.num} ${kit.nowrap}`}>{RW.coming.col.price}</th><th aria-label="Open" />
                 </tr>
               </thead>
               <tbody>
@@ -197,9 +197,9 @@ function ComingUp({ data, params, go, viewSwitch, planSelect, exportMenu }: View
                           <Link href={r.door.href} className={kit.nameLink}>{r.name}</Link>
                           {r.isPortal && <span className={kit.sub}>{RW.coming.portalSub}</span>}
                         </td>
-                        <td data-label={RW.coming.col.plan}>{r.plan}</td>
-                        <td data-label={RW.coming.col.price} className={kit.num}><PriceCellView id={r.key} price={r.price} chip={chip} /></td>
-                        <td className={kit.rowDoor}><Link href={r.door.href} className={kit.door}>{r.door.label}</Link></td>
+                        <td data-label={RW.coming.col.plan} className={kit.nowrap}>{r.plan}</td>
+                        <td data-label={RW.coming.col.price} className={`${kit.num} ${kit.nowrap}`}><PriceCellView id={r.key} price={r.price} chip={chip} /></td>
+                        <td className={`${kit.rowDoor} ${styles.doorCell}`}><Link href={r.door.href} className={kit.door}>{r.door.label}</Link></td>
                       </tr>
                       {explainText && (
                         <tr id={`explain-${explainId}`} className={styles.explainRow}><td colSpan={6}>{explainText}</td></tr>
@@ -225,7 +225,7 @@ function Unpaid({ data, params, go, viewSwitch, planSelect, exportMenu }: ViewPr
   const { open, chip } = useExplain();
   const b = data.band;
   const dash = RW.dash;
-  const showOptions = SHOW_KEYS.map(k => ({ id: k, label: RW.unpaid.show[k], detail: RW.unpaid.showDetail[k] }));
+  const showOptions = SHOW_KEYS.map(k => ({ id: k, label: RW.unpaid.show[k], sub: RW.unpaid.showDetail[k] }));
 
   return (
     <>
@@ -253,9 +253,9 @@ function Unpaid({ data, params, go, viewSwitch, planSelect, exportMenu }: ViewPr
             <table className={kit.comfortable}>
               <thead>
                 <tr>
-                  <th>{RW.unpaid.col.issued}</th><th>{RW.unpaid.col.club}</th><th>{RW.unpaid.col.bill}</th>
-                  <th className={kit.num}>{RW.unpaid.col.beforeTax}</th><th className={kit.num}>{RW.unpaid.col.tax}</th>
-                  <th className={kit.num}>{RW.unpaid.col.total}</th><th>{RW.unpaid.col.plan}</th><th aria-label="Open" />
+                  <th className={kit.nowrap}>{RW.unpaid.col.issued}</th><th>{RW.unpaid.col.club}</th><th className={kit.nowrap}>{RW.unpaid.col.bill}</th>
+                  <th className={`${kit.num} ${kit.nowrap}`}>{RW.unpaid.col.beforeTax}</th><th className={`${kit.num} ${kit.nowrap}`}>{RW.unpaid.col.tax}</th>
+                  <th className={`${kit.num} ${kit.nowrap}`}>{RW.unpaid.col.total}</th><th className={kit.nowrap}>{RW.unpaid.col.plan}</th><th aria-label="Open" />
                 </tr>
               </thead>
               <tbody>
@@ -274,21 +274,21 @@ function Unpaid({ data, params, go, viewSwitch, planSelect, exportMenu }: ViewPr
                           {r.door ? <Link href={r.door.href} className={kit.nameLink}>{r.name}</Link> : r.name}
                           {r.isPortal && <span className={kit.sub}>{RW.coming.portalSub}</span>}
                         </td>
-                        <td data-label={RW.unpaid.col.bill}>
+                        <td data-label={RW.unpaid.col.bill} className={kit.nowrap}>
                           {r.bill
                             ? <>{r.bill.words}{r.bill.number ? <span className={kit.muted}> · {r.bill.number}</span> : null}</>
                             : chip(billId, RW.unpaid.noBill, 'warn')}
                         </td>
-                        <td data-label={RW.unpaid.col.beforeTax} className={kit.num}>{r.bill ? <Money cents={r.bill.beforeTax} currency={r.bill.currency} /> : dash}</td>
-                        <td data-label={RW.unpaid.col.tax} className={kit.num}>{r.bill ? <Money cents={r.bill.tax} currency={r.bill.currency} /> : dash}</td>
-                        <td data-label={RW.unpaid.col.total} className={kit.num}>{r.bill ? <Money cents={r.bill.total} currency={r.bill.currency} /> : dash}</td>
-                        <td data-label={RW.unpaid.col.plan}>
+                        <td data-label={RW.unpaid.col.beforeTax} className={`${kit.num} ${kit.nowrap}`}>{r.bill ? <Money cents={r.bill.beforeTax} currency={r.bill.currency} /> : dash}</td>
+                        <td data-label={RW.unpaid.col.tax} className={`${kit.num} ${kit.nowrap}`}>{r.bill ? <Money cents={r.bill.tax} currency={r.bill.currency} /> : dash}</td>
+                        <td data-label={RW.unpaid.col.total} className={`${kit.num} ${kit.nowrap}`}>{r.bill ? <Money cents={r.bill.total} currency={r.bill.currency} /> : dash}</td>
+                        <td data-label={RW.unpaid.col.plan} className={kit.nowrap}>
                           <span className={styles.notes}>
                             <span>{r.plan}</span>
                             {r.chip && <span>{chip(planId, r.chip.text, r.chip.tone)}</span>}
                           </span>
                         </td>
-                        <td className={kit.rowDoor}>{r.door ? <Link href={r.door.href} className={kit.door}>{r.door.label}</Link> : null}</td>
+                        <td className={`${kit.rowDoor} ${styles.doorCell}`}>{r.door ?<Link href={r.door.href} className={kit.door}>{r.door.label}</Link> : null}</td>
                       </tr>
                       {explainText && (
                         <tr id={`explain-${open}`} className={styles.explainRow}><td colSpan={8}>{explainText}</td></tr>

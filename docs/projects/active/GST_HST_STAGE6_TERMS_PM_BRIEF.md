@@ -8,9 +8,22 @@ Plan: [GST_HST_STAGE6_TERMS_PLAN.md](GST_HST_STAGE6_TERMS_PLAN.md) · Written 20
   registration makes, and the "follow this tournament" account.
 - **People who already have an account** see one short screen on their next sign-in: "We've published our Terms", with the same
   tick. One tick and they carry on.
-- **Terms and Privacy are one click away everywhere**: the site footer, the account menu on every portal, the account page, inside
-  the sign-in and sign-up cards, and the footer of our own account emails. Club and tournament public sites stay the club's own
-  pages.
+- **Terms and Privacy are one click away everywhere**: the site footer, the account menu on every portal, the account page, and
+  under the sign-in and sign-up forms. Club and tournament public sites stay the club's own pages. Our own emails stay without a
+  footer (ruled 2026-11-08); the purchase confirmation carries the Terms link in its body.
+- **Every version we publish stays readable at its own address**, so we can always show someone exactly what they agreed to. A
+  page shows its effective date and nothing else above the text; an older version says it is older and links to the current one.
+
+## Step 6.2 — the pages, built dark (planned 2026-11-08)
+- **Ruled:** the pages are built hidden behind a switch. On our test site they show the current drafts, with every note to the
+  owner taken out and a "Draft" banner, so the owner can read the real text in place before approving it. Production shows
+  nothing until publication.
+- The drafts stay the only copy of the words until publication; then the approved text is saved once per version and can never
+  be edited (the build refuses).
+- The product's contact address stays hello@ until support@ is confirmed to receive mail; then support@ becomes the one public
+  address.
+- A short drawing round comes first (the page, and where the links sit in the account menu and under sign-in).
+- Success: with the switch on in the test site, every surface links the pages; with it off, nothing shows anywhere.
 - **Anyone who buys or changes a paid plan gets a confirmation email** with what they bought, the price and tax, the renewal date,
   how to cancel, and a copy of the Terms they agreed to.
 - If ruled: **a reminder email 30 days before a yearly plan renews**, and **checkout politely declines a Québec address** until a

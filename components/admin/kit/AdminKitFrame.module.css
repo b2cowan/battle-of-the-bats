@@ -243,7 +243,8 @@
 /* The foot: the rail's quiet doors — Help, the Coaches Portal, Public site where no program row is it (the nav standard's
    N4). Sign out and Send feedback left it for the account menu (2026-10-17), and the red sign-out row's rules with them. */
 .foot { display: flex; flex-direction: column; border-top: 1px solid var(--home-line); padding-top: 0.4rem; }
-/* Pinned under the scrolling rows (navigation Phase 1): the foot never scrolls away on a short laptop (1366 × 768). */
+/* The foot's rows ride the ONE scrolling list (owner 2026-11-09: not pinned); the spacer rests them at the bottom on a tall screen. */
+.spacer { flex: 1; min-height: 1rem; }
 .railFoot { flex: none; display: flex; flex-direction: column; padding-bottom: 0.5rem; }
 /* The hairline between Plan & billing (or the sandbox's Help) and the other portals' doors (N4). */
 .footSep { height: 1px; background: var(--home-line); margin: 0.3rem 1.25rem; flex: none; }

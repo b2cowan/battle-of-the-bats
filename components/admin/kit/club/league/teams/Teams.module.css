@@ -234,6 +234,9 @@
   cursor: pointer;
 }
 .iconBtn:hover { color: var(--text-primary); background: rgba(var(--home-olive-rgb), 0.08); }
+/* A team card's pencil and bin sit side by side inside the head. The corner tuck above (-0.6rem right) is for a lone
+   button; on a pair it pushed the second button 10px past the head and slid it over the first. */
+.cardHead > .iconBtn { margin-right: 0; }
 .cardStat { font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .kids { display: flex; flex-direction: column; margin: 0 -0.9rem; }
 .emptyDrop {

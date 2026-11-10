@@ -455,12 +455,19 @@ describe('13i · the club sidebar lists places only', () => {
     assert.equal(both.tournamentsDoor, true);
   });
 
-  it('a heading over two or more rows; a lone row keeps its space with no word; "Also on your plan" always said', () => {
+  it('every group with a row wears its heading, a lone row too; a group with no rows wears none and is not listed', () => {
     const headings = (role: OrgRole, shape = RUNS_BOTH) => clubNavFor(role, shape).groups.map(placeGroupHeading);
     assert.deepEqual(headings('owner'), ['Programs', 'Club']);
-    assert.deepEqual(headings('league_registrar'), [null, null], 'House league and Organization, each alone');
+    assert.deepEqual(headings('league_registrar'), ['Programs', 'Club'], 'House league and Organization, each alone, each named');
     assert.deepEqual(headings('treasurer'), ['Club'], 'Accounting and Organization');
-    assert.deepEqual(headings('admin', RUNS_NEITHER), [null, 'Also on your plan', 'Club'], 'Rep teams alone; the quiet group is named');
+    assert.deepEqual(headings('admin', RUNS_NEITHER), ['Programs', 'Also on your plan', 'Club'], 'Rep teams alone is named too');
+    for (const role of ['owner', 'admin', 'league_registrar', 'treasurer'] as OrgRole[]) {
+      for (const shape of [RUNS_BOTH, RUNS_NEITHER]) {
+        const groups = clubNavFor(role, shape).groups;
+        assert.ok(groups.every(g => g.places.length > 0), `${role}: no empty group, so no orphan heading`);
+      }
+    }
+    assert.equal(placeGroupHeading({ key: 'programs', heading: 'Programs', places: [] }), null, 'an empty group says nothing');
   });
 
   it('one lit row at any depth: Rep teams on a team’s Roster, House league on a season’s Registrations, Organization on Audit log', () => {

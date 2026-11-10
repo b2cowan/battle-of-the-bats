@@ -304,13 +304,27 @@ test.describe('a request is not an approval', () => {
     expect(res.status).toBe(404);
   });
 
-  test('a revoked guardian cannot mint a calendar token', async ({ page }) => {
+  test('a revoked guardian cannot mint a calendar address', async ({ page }) => {
     await signIn(page, REVOKED_EMAIL);
+    // Stage 4a (Part 7): one address per parent, minted only at /api/family/calendar and only for an account with a live
+    // connection. 404 with the tier off, and 404 with it on (a revoked link reaches nothing).
+    const res = await page.evaluate(async () => {
+      const r = await fetch('/api/family/calendar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'make' }),
+      });
+      return r.status;
+    });
+    expect(res).toBe(404);
+  });
+
+  test('the per-link calendar mint is gone', async ({ page }) => {
+    await signIn(page, GUARDIAN_EMAIL);
+    // The old "make a calendar token on this team" POST was removed in Stage 4a: nothing mints a feed from a team page.
     const res = await page.evaluate(async (id) => {
       const r = await fetch(`/api/family/teams/${id}`, { method: 'POST' });
       return r.status;
     }, teamAId);
-    expect(res).toBe(404);
+    expect([404, 405]).toContain(res);
   });
 });
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  acceptUrl, connectedLineHtml, EMPTY_FILL, fillInvitationSlots, FAMILY_HOME_PATH, INVITE_PANEL_SLOT, INVITE_WHO_SLOT,
+  acceptUrl, connectedLineHtml, EMPTY_FILL, fillInvitationSlots, FAMILY_HOME_PATH, INVITE_PANEL_SLOT, INVITE_WHO_SLOT, moneyBlock,
   invitationPanelHtml, repInvitationHtml, secondSenderFootnote, whoAddedHtml, type MailChild,
 } from '../../lib/family-invitation-panel.ts';
 import { FAMILY_INVITATION_WORDS as W } from '../../lib/family-invitation-words.ts';
@@ -91,6 +91,51 @@ describe('Part 5 — the invitation panel (drawing 1b, 1d, 1e; /legal draft c)',
     assert.equal(fillInvitationSlots(built, EMPTY_FILL), '<p>Hi,</p><ul></ul><p>Questions?</p>');
     assert.equal(fillInvitationSlots(built, { who: 'W', panel: 'P' }), '<p>Hi,</p>W<ul></ul>P<p>Questions?</p>');
     assert.equal(fillInvitationSlots(built, { who: '$&', panel: '$1' }), '<p>Hi,</p>$&<ul></ul>$1<p>Questions?</p>', 'no replace() patterns');
+  });
+
+  // Owner 2026-11-09: two same-looking green buttons ("Your sign-up", then "Join Sam’s team") left a first-time parent guessing.
+  describe('the money link beside the invitation (one big button per email)', () => {
+    const PAY = 'https://example.test/pay/abc';
+    const BUTTON = `<table role="presentation"><tr><td><a href="${PAY}">Your sign-up</a></td></tr></table>`;
+    const LINE = `<p>There’s still a payment due on your sign-up. <a href="${PAY}">See what’s owed</a></p>`;
+    // The order the builders use: the panel slot, then the money block (nothing when the family owes nothing).
+    const built = (owes: boolean) => `<p>Teams</p>${INVITE_PANEL_SLOT}${owes ? moneyBlock(BUTTON, LINE) : ''}<p>Questions?</p>`;
+    const panel = invitationPanelHtml({ who: 'first', children: AARAV, email: 'p@example.com', url: acceptUrl(TOKEN), sender: CLUB });
+    const buttons = (html: string) => (html.match(/<table role="presentation"/g) ?? []).length;
+
+    it('the two builders draw the block after the panel slot, and only a family that owes gets a link', () => {
+      const src = readCode('lib/email.ts');
+      for (const name of ['leagueTeamsPlacedHtml', 'leagueTeamMovedHtml', 'leagueTeamChangesHtml']) {
+        assert.match(functionBody(src, name), /\$\{slot\(INVITE_PANEL_SLOT\)\}\$\{input\.invitationSlots \? signupBlock\(input\.signupUrl\) : signupButton\(input\.signupUrl\)\}/, name);
+      }
+      assert.match(functionBody(src, 'signupBlock'), /if \(!url\) return ''/);
+    });
+
+    it('an invited, owing parent gets ONE big button (Join) and the money as a line under it', () => {
+      const html = fillInvitationSlots(built(true), { who: '', panel });
+      assert.equal(buttons(html), 1);
+      assert.ok(html.includes('There’s still a payment due on your sign-up.'));
+      assert.ok(html.includes('See what’s owed'));
+      assert.ok(html.includes(PAY));
+      assert.ok(html.indexOf('Join Aarav’s team') < html.indexOf('See what’s owed'), 'the app first, the money after');
+      assert.ok(!html.includes('fl-money'), 'no marker is left behind');
+    });
+
+    it('a parent with no panel, or only the connected line, keeps today’s "Your sign-up" button', () => {
+      for (const fill of [EMPTY_FILL, { who: '', panel: connectedLineHtml(AARAV) }]) {
+        const html = fillInvitationSlots(built(true), fill);
+        assert.equal(buttons(html), 1);
+        assert.ok(html.includes('>Your sign-up<'));
+        assert.ok(!html.includes('See what’s owed') && !html.includes('fl-money'));
+      }
+    });
+
+    it('a family that owes nothing gets no money link at all, whichever panel they get', () => {
+      for (const fill of [EMPTY_FILL, { who: '', panel }]) {
+        const html = fillInvitationSlots(built(false), fill);
+        assert.ok(!html.includes('Your sign-up') && !html.includes('See what’s owed') && !html.includes(PAY));
+      }
+    });
   });
 });
 

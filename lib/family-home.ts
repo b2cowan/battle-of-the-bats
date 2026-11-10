@@ -10,7 +10,7 @@ import { clubPublicContact } from './club-email-context';
 import { leaguePayToken } from './league-pay-link';
 import { openSignupLink } from './league-signup-link';
 import { loadLeaguePayFacts } from './league-pay-facts';
-import { accountNameOf } from './family-invitation';
+import { accountNameOf, clubNameOf } from './family-invitation';
 import type { FamilyScheduleEntry } from './family-view';
 import { FAMILY_HOME_WORDS } from './family-home-words';
 
@@ -94,6 +94,10 @@ export const familyChildHref = (childId: string) => `/family/children/${childId}
 
 const EMPTY: FamilyHome = { clubs: [], children: [], teams: [], signups: [], removed: [] };
 
+/** A club from the list the read already holds; one that is somehow absent still names itself ("the club"), never throws. */
+const clubFrom = (clubs: readonly FamilyClub[], orgId: string): FamilyClub =>
+  clubs.find(c => c.orgId === orgId) ?? { orgId, name: 'the club', contact: null };
+
 export async function readFamilyHome(userId: string): Promise<FamilyHome> {
   return (await buildFamilyHome(userId)).home;
 }
@@ -120,7 +124,7 @@ async function buildFamilyHome(userId: string): Promise<{ home: FamilyHome; sche
 
   const orgIds = [...new Set([...children.map(c => c.orgId), ...removedLinks.map(r => r.org_id)])];
   const clubs = await clubsOf(orgIds);
-  const clubOf = (orgId: string) => clubs.find(c => c.orgId === orgId) ?? { orgId, name: 'the club', contact: null };
+  const clubOf = (orgId: string) => clubFrom(clubs, orgId);
 
   // Teams: one card per team; siblings on one team share it.
   const byTeam = new Map<string, { kind: TeamKind; teamId: string; orgId: string; children: FamilyChild[] }>();
@@ -191,7 +195,7 @@ export async function readConnectedAdults(userId: string, childId: string): Prom
   const home = await readFamilyHome(userId);
   const child = home.children.find(c => c.childId === childId);
   if (!child) return null;
-  const club = home.clubs.find(c => c.orgId === child.orgId) ?? { orgId: child.orgId, name: 'the club', contact: null };
+  const club = clubFrom(home.clubs, child.orgId);
   const teamNames = home.teams.filter(t => t.childIds.includes(childId)).map(t => t.teamName).filter(Boolean);
   return { child, club, adults: await adultsOf(userId, child), teamNames };
 }
@@ -232,13 +236,14 @@ async function adultsOf(userId: string, child: FamilyChild): Promise<ConnectedAd
     for (const a of [r.guardian_email, r.guardian_email_2]) { const n = normalizeGuardianEmail(a); if (n) addresses.add(n); }
   }
   const INV = 'email, child_id, source, created_at';
+  const now = new Date().toISOString(); // an expired invitation is not "invited"
   const [repInvs, placementInvs] = await Promise.all([
     // A rep coach's invitation names the child; a placement invitation names only the address (one acceptance, several children).
     supabaseAdmin.from('family_invitations').select(INV)
-      .eq('org_id', child.orgId).eq('child_id', childId).is('cancelled_at', null).is('used_at', null),
+      .eq('org_id', child.orgId).eq('child_id', childId).is('cancelled_at', null).is('used_at', null).gt('expires_at', now),
     addresses.size
       ? supabaseAdmin.from('family_invitations').select(INV)
-        .eq('org_id', child.orgId).eq('source', 'placement').in('email', [...addresses]).is('cancelled_at', null).is('used_at', null)
+        .eq('org_id', child.orgId).eq('source', 'placement').in('email', [...addresses]).is('cancelled_at', null).is('used_at', null).gt('expires_at', now)
       : Promise.resolve({ data: [], error: null }),
   ]);
   if (repInvs.error) throw repInvs.error;
@@ -261,7 +266,7 @@ async function adultsOf(userId: string, child: FamilyChild): Promise<ConnectedAd
 /** The signed link for a sign-up this account may open in the app, or null. The account must hold a live connection to a child
  *  on the sign-up, through an address that is ON the sign-up (its own sign-up, as first or second parent). */
 export async function familySignupFor(userId: string, registrationId: string): Promise<{
-  token: string; row: FamilySignupRow; children: string[];
+  token: string; row: FamilySignupRow; children: string[]; home: FamilyHome;
 } | null> {
   const home = await readFamilyHome(userId);
   const row = home.signups.find(s => s.registrationId === registrationId);
@@ -271,7 +276,7 @@ export async function familySignupFor(userId: string, registrationId: string): P
   const token = data ? currentSignupToken(registrationId, { linkVersion: Number((data as { link_version: number | null }).link_version ?? 0) }) : null;
   if (!token) return null;
   const children = home.children.filter(c => row.childIds.includes(c.childId)).map(c => c.firstName);
-  return { token, row, children };
+  return { token, row, children, home };
 }
 
 /** The sign-up's CURRENT signed link: signed with its anchor's `link_version`, so the club's "Send a new link" is followed,
@@ -301,19 +306,11 @@ async function childFirstNames(childIds: readonly string[]): Promise<Map<string,
 }
 
 async function clubsOf(orgIds: readonly string[]): Promise<FamilyClub[]> {
-  const out: FamilyClub[] = [];
-  for (const orgId of orgIds) {
-    const org = await getOrgForGate(orgId);
+  return Promise.all(orgIds.map(async orgId => {
     // A cancelled club still names itself in the removed line; its pages stop through the schedule's own gate.
-    const name = org?.name ?? (await orgName(orgId));
-    out.push({ orgId, name, contact: await clubPublicContact(orgId) });
-  }
-  return out;
-}
-
-async function orgName(orgId: string): Promise<string> {
-  const { data } = await supabaseAdmin.from('organizations').select('name').eq('id', orgId).maybeSingle();
-  return (data as { name?: string } | null)?.name ?? 'the club';
+    const [org, contact] = await Promise.all([getOrgForGate(orgId), clubPublicContact(orgId)]);
+    return { orgId, name: org?.name ?? (await clubNameOf(orgId)), contact };
+  }));
 }
 
 async function nameHiddenTeams(teams: FamilyTeamCard[]): Promise<void> {

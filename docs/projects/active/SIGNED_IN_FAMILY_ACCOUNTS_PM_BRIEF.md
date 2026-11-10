@@ -41,3 +41,7 @@ whoever forwards it.
 - A tournament coach receives one email at registration.
 - Once Stage 4 ships, every placed child's parent receives exactly one invitation, and no family is ever sent a calendar or
   RSVP link.
+- **Stage 4a is built (2026-11-08), switched off.** A parent joins once from the placement email and sees every child's team (house league
+  and rep) in a "Your family" page, with one calendar address, Leave, and "Your sign-up" inside the app; the club sees each parent's status
+  with Send again and Remove a parent; the rep coach's Send invitation now emails. In / Out / Maybe and the coach's headcount (4b) are next,
+  after a drawing session. Owner walk: ledger §498.

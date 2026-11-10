@@ -2,7 +2,7 @@
  * CLUB TIER STAGE 13b · SESSION B — the arrival (Ask 10 = A, ruled 2026-11-06; build 2026-11-07).
  *
  *   B1. The invite has NO default role: the field starts on "Choose a role", Send is off until one is chosen, and the line
- *       under it says what the role opens. The setup checklist's step 1 opens Members with the invite open, no role preset.
+ *       under it says what the role opens. The setup checklist's step 1 opens Members on the list (no window; owner 2026-11-08 — read the roles table first).
  *   B2. Every invite email says what the role opens — the accept page's sentence (`memberOpensSentence`), the one page the
  *       reader lands on next — plus one line on what FieldLogicHQ is; one role name, the screens' own; the club's name escaped.
  *   B3. Both arrival paths end on the role's home: the "added" email's link is built by the resolver sign-in and the accept
@@ -39,12 +39,14 @@ describe('B1. the invite has no default role', () => {
     assert.doesNotMatch(dialog, /Written to them/);
   });
 
-  it('the checklist’s step 1 opens Members with the invite open and no role chosen, until it is done', () => {
-    assert.match(readCode('lib/club-checklist.ts'), /href: board\.length > 0 \? `\$\{base\}\/org\/members` : `\$\{base\}\/org\/members\?invite=open`/);
+  it('the checklist’s step 1 opens Members with NOTHING open — the owner reads the roles table first (2026-11-08)', () => {
+    const checklist = readCode('lib/club-checklist.ts');
+    assert.match(checklist, /key: 'board',[\s\S]*?href: `\$\{base\}\/org\/members`,/);
+    assert.doesNotMatch(checklist, /invite=open/, 'the checklist pops the invite window again');
     const members = readCode('components/admin/kit/club/MembersKit.tsx');
-    // `open` opens the invite; only `volunteer` presets a role.
-    assert.match(members, /inviteParam !== 'open' && !volunteer/);
-    assert.match(members, /if \(volunteer\) setInviteRole\('official'\);\s*setInviteOpen\(true\);/);
+    // Only the Staff kit's `volunteer` door opens the invite, and it presets the role.
+    assert.doesNotMatch(members, /inviteParam !== 'open'/, 'the open-on-arrival door is back');
+    assert.match(members, /!volunteer\) return;[\s\S]*?setInviteRole\('official'\);\s*setInviteOpen\(true\);/);
   });
 });
 

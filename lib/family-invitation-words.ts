@@ -70,7 +70,7 @@ export const FAMILY_INVITATION_WORDS = {
       body: 'We can send a new one to the address it was for.',
       button: 'Email me a new invitation',
       sending: 'Sending…',
-      sent: 'If that address can still join, a new invitation is on its way to it. It works for 30 days.',
+      sent: 'If that address can still join, a new invitation is on its way. It works for 30 days.',
     },
     /** E: this account already joined. */
     joined: {

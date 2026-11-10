@@ -204,8 +204,9 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
     assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, accountKind: currentOrg\?\.accountKind, role: userRole, capabilities: userCapabilities, isSandbox \}\)/);
     assert.doesNotMatch(rail, /Sign out|<FeedbackLauncher|signOut/);
-    // Pinned: the foot is outside the scrolling list, so a short laptop scrolls the rows and never the doors.
-    assert.ok(rail.indexOf('<div className={styles.railFoot}>') > rail.indexOf('</nav>'), 'the foot sits after the scrolling nav');
+    // NOT pinned (owner 2026-11-09): the foot is the last rows of the ONE scrolling list, a spacer resting it at the bottom.
+    assert.ok(rail.indexOf('<div className={styles.railFoot}>') < rail.indexOf('</nav>'), 'the foot rides inside the scrolling nav');
+    assert.ok(rail.indexOf('<div className={styles.spacer} />') < rail.indexOf('<div className={styles.railFoot}>'), 'a spacer rests the foot at the bottom');
   });
 
   // ⚖ The doors, case by case (N4, E4): the one rule, `kitPortalDoors`.
@@ -474,10 +475,11 @@ describe('13i · places in the sidebar, pages on the page', () => {
   const clubBody = rail.slice(rail.indexOf('export default function AdminKitRail('), rail.indexOf('function TournamentRail('));
   const tourBody = rail.slice(rail.indexOf('function TournamentRail('));
 
-  it('N2: no club heading folds; a heading only over two or more rows (a lone row keeps the space, no word)', () => {
+  it('N2 (2026-11-09): no club heading folds; every group with a row wears its heading, and a group with none draws nothing', () => {
     assert.doesNotMatch(clubBody, /groupHeader|aria-expanded|toggleGroup/, 'a club heading folds');
     assert.match(clubBody, /const heading = placeGroupHeading\(group\);/);
-    assert.match(clubBody, /<div className=\{styles\.label\} aria-hidden=\{heading \? undefined : true\}>\{heading \?\? '\\u00a0'\}<\/div>/, 'the lone row’s heading space');
+    assert.match(clubBody, /\{heading && <div className=\{styles\.label\}>\{heading\}<\/div>\}/, 'no blank heading line');
+    assert.doesNotMatch(clubBody, /u00a0/, 'no empty heading space over a lone row');
     // The tournament's own groups still fold (Ask 8: tournament mode unchanged).
     assert.match(tourBody, /onClick=\{\(\) => toggleGroup\(g\.key\)\}/);
   });

@@ -33,7 +33,7 @@ const orgHelp: HelpPageContent = {
         <>
           <p>When you sign in as a Club owner for the first time, you land on a five-step checklist instead of the admin panel — <strong>Set up your club</strong>. Each step opens the screen that does the job, and a step is marked done only once it genuinely is. The checklist keeps greeting you at sign-in until you press <strong>Go to Overview</strong> or finish every step; after that you sign in straight to the Overview.</p>
           <ol>
-            <li><strong>Staff your board.</strong> Invite an admin and a treasurer so the work isn&rsquo;t all yours. Its button opens <strong>Members</strong> with the invite already open; choose each person&rsquo;s role there.</li>
+            <li><strong>Staff your board.</strong> Invite an admin and a treasurer so the work isn&rsquo;t all yours. Its button opens <strong>Members</strong>, where &ldquo;What each role can open&rdquo; shows what each role can do; read it, then press <strong>Invite</strong> and choose each person&rsquo;s role.</li>
             <li><strong>Add your teams.</strong> Each team, and the season it&rsquo;s playing.</li>
             <li><strong>Name a head coach for every team.</strong> Each coach gets the Premium Coaches Portal, included in your plan. <strong>Invite a coach</strong> opens the first team still without one — its Coaches page, where you enter their email.</li>
             <li><strong>Put your club online.</strong> Add a tagline and a contact email to your public page. The step is done once both are saved; until then it says which one is still needed.</li>
