@@ -330,7 +330,24 @@ the end** (the walk's accounts and their rows).
   `createFixtureUser` for UAT. Verified after simplify: unit tests 133/133, typecheck clean, spelling/dictionary/snapshot OK,
   Playwright lists 16/18 helper specs. `team-attendance-smoke` and `team-lineup-smoke` fail on a pre-existing `server-only`
   import through `team-workspace-provisioning` → `coach-membership`, with no legal file in the chain.
-- [ ] Chunk B — account doors + sign-in screen
+- [x] Chunk B — account doors + sign-in screen, BUILT dark, simplified, reviewed and COMMITTED de5c40218 2026-11-09 (45 files). Ten forms carry the
+  Terms box (nothing while the pages are off); nine server doors refuse BEFORE they create and record AFTER; the sign-in screen
+  (`components/legal/TermsAcceptGate` + `termsGateFor`) replaces the shell in the consumer app, club admin, both Coaches Portal
+  shells, scorekeeper, check-in and the house-league coach team page. **Owner-approved departures (2026-11-09):** (1) the consumer
+  shell lets `/auth/*` and `/family/claim/*` render (`CONSUMER_SHELL_DOORS`) — every emailed link lands signed in on /auth first;
+  (2) the house-league coach team page is a seventh surface with its own layout; (3) on "updated" only, a paid owner is let through to
+  their billing page (the cancel door's destination). Plus: `TermsGateWatch` (mounted only on a let-through page for a person who
+  still needs to agree) refreshes when the address leaves the let-through set — Next 16 does not re-run layouts on in-app navigation;
+  not a poll. `proxy.ts`: headers-only entry for /family/claim. **Residual (accepted):** `x-pathname` is the proxy's on `/auth/*` and
+  `/family/claim/*`; header tampering on unmatched consumer tabs could skip the screen — Chunk C's route gates still stop org/plan.
+  **/simplify:** one `termsDoorFrom` helper for the two shared routes; the screen's duplicated CSS merged; the per-form "missing →
+  error; refusal before 409" lines kept per form on purpose (the census pins the ordering). **/review fixes:** the watch keys on
+  content, not array identity (no self-re-arming refresh); the box uses `aria-required` (a native `required` bubble pre-empted the
+  form's (5b) line on nine forms). Verified: Chunk B + legal tests 287/287, typecheck clean on our files, spelling/dictionary/snapshot
+  OK, `check:demos` with the switch on, end-to-end screen probe. `npm test` 16 failures, all in files Chunk B never touched.
+  **For Chunk C:** the accept route records only door `sign_in_screen` — C adds `purchase_window`; the window uses
+  `ACCEPTANCE_WORDS.refuseChangedWindow` and `SCREEN_WORDS`; `checkAcceptance`'s `hadEarlier` picks the (5d) line; the family page's
+  third box can appear late for an existing account signing in on the page (by design).
 - [ ] Chunk C — organization and plan gates, line, window, census
   - Owner-logged 2026-11-09 (from the Chunk A simplify follow-up): build ONE shared fixture-account creator (`ensureFixtureUser` for scripts, `createFixtureUser` for UAT) so a new seed cannot skip acceptance silently before 6.7; replaces the ~32 hand-placed calls.
 - [ ] `/legal` review before hand-off · walk · ledger entry
