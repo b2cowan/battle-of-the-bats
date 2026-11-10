@@ -49,6 +49,10 @@ frontend:
         # Set ONLY on the dev branch's console variables (owner 2026-11-04, for the Stage 1 walk). Production has no value,
         # so the line writes an empty one and US sales stay closed ("We're not selling in the United States yet").
         - echo "US_SALES_OPEN=$US_SALES_OPEN" >> .env.production
+        # The family app / guardian tier (lib/family-guardian.ts): the literal 'true' opens it. Set ONLY on the dev branch's
+        # console variables (owner 2026-11-10, for the prospect demo on staging). Production has no value, so the line writes
+        # an empty one and the family app stays off. Without this line the console value never reaches the runtime.
+        - echo "GUARDIAN_TIER_ENABLED=$GUARDIAN_TIER_ENABLED" >> .env.production
         # A club's own web address (Club Tier 4e): the app asks Amplify to serve the club's domain. The app id and the branch
         # come from the build's own AWS_APP_ID / AWS_BRANCH (`master` on master, `dev` on dev), so no console variable needs a
         # per-branch override and none can be forgotten at a promote. Only the two keys are console variables (all branches,
