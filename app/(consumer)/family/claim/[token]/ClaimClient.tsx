@@ -11,6 +11,7 @@ import {
 import { FAMILY_INVITATION_WORDS } from '@/lib/family-invitation-words';
 import { useLegalLinks } from '@/components/legal/LegalLinksProvider';
 import { TermsSentence, useTermsTick } from '@/components/legal/TermsTickRow';
+import { Field, PasswordField, accountForm } from '@/components/auth/AccountForm';
 import type { InvitationChild, InvitationViewer } from '@/lib/family-invitation';
 import type { InvitationState } from '@/lib/family-invitation-rules';
 
@@ -55,7 +56,7 @@ export default function ClaimClient({ token, state, maskedEmail, from, kids, vie
     return shell(<>
       <h1 className={styles.joinTitle}>{W.joined.title}</h1>
       <div className={styles.acceptActions}>
-        <Link href={homePath} className={styles.chip}>
+        <Link href={homePath} className={accountForm.primary}>
           {kids.length === 1 ? W.joined.buttonOne(kids[0].firstName) : W.joined.buttonSeveral}
         </Link>
       </div>
@@ -108,7 +109,7 @@ function Expired({ token }: { token: string }) {
       <p className={styles.notice}>{W.expired.body}</p>
       {error && <p className={styles.error} role="alert">{error}</p>}
       <div className={styles.acceptActions}>
-        <button type="button" className={styles.chip} onClick={resend} disabled={busy}>{busy ? W.expired.sending : W.expired.button}</button>
+        <button type="button" className={accountForm.primary} onClick={resend} disabled={busy}>{busy ? W.expired.sending : W.expired.button}</button>
       </div>
     </>}
   </>;
@@ -234,36 +235,35 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
 
     {!signedIn && step === 'email' ? (
       <form className={styles.acceptStep} onSubmit={checkEmail} noValidate>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>{W.emailLabel}</span>
-          <input className={styles.input} type="email" autoComplete="email" inputMode="email" value={email}
-            onChange={e => setEmail(e.target.value)} required />
-        </label>
-        <p className={styles.acceptHint}>{W.emailHint(maskedEmail)}</p>
+        <Field id="claim-email" label={W.emailLabel} hint={W.emailHint(maskedEmail)}>
+          <input id="claim-email" className={accountForm.input} type="email" autoComplete="email" inputMode="email" value={email}
+            aria-describedby="claim-email-hint" onChange={e => setEmail(e.target.value)} required />
+        </Field>
         {error && <p className={styles.error} role="alert">{error}</p>}
         <div className={styles.acceptActions}>
-          <button type="submit" className={styles.chip} disabled={busy || !email.trim()}>{W.emailNext}</button>
+          <button type="submit" className={accountForm.primary} disabled={busy || !email.trim()}>{W.emailNext}</button>
         </div>
       </form>
     ) : (
       <form className={styles.acceptStep} onSubmit={join} noValidate>
-        {!signedIn && <>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>{W.emailLabel}</span>
-            <input className={styles.input} type="email" value={email} readOnly aria-readonly="true" />
-          </label>
-          <button type="button" className={styles.acceptLink} onClick={() => { setStep('email'); setPassword(''); setError(null); }}>
-            {W.otherEmail}
-          </button>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>{step === 'new' ? W.newPasswordLabel : W.existingPasswordLabel}</span>
-            <input className={styles.input} type="password" value={password} onChange={e => setPassword(e.target.value)}
-              autoComplete={step === 'new' ? 'new-password' : 'current-password'} minLength={step === 'new' ? 8 : undefined}
-              placeholder={step === 'new' ? W.newPasswordHint : undefined} required />
-          </label>
-          {step === 'existing' && <p className={styles.acceptHint}>{W.existingPasswordHint}</p>}
-          {step === 'existing' && <a className={styles.acceptLink} href={forgotHref}>{W.forgotPassword}</a>}
-        </>}
+        {!signedIn && <div className={styles.acceptFields}>
+          <div>
+            <Field id="claim-email-typed" label={W.emailLabel}>
+              <input id="claim-email-typed" className={accountForm.input} type="email" value={email} readOnly aria-readonly="true" />
+            </Field>
+            <button type="button" className={styles.acceptTextLink} onClick={() => { setStep('email'); setPassword(''); setError(null); }}>
+              {W.otherEmail}
+            </button>
+          </div>
+          <PasswordField id="claim-password" value={password} onChange={setPassword} showName="password"
+            purpose={step === 'new' ? 'create' : 'current'} label={step === 'new' ? W.newPasswordLabel : W.existingPasswordLabel} />
+          {step === 'existing' && (
+            <div>
+              <p className={accountForm.hint}>{W.existingPasswordHint}</p>
+              <a className={styles.acceptTextLink} href={forgotHref}>{W.forgotPassword}</a>
+            </div>
+          )}
+        </div>}
 
         <div className={styles.acceptSection}>
           <p className={styles.placeholderNote}>{GUARDIAN_CONSENT_DRAFT_NOTICE}</p>
@@ -303,7 +303,7 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
 
         {error && <p className={styles.error} role="alert">{error}</p>}
         <div className={styles.acceptActions}>
-          <button type="submit" className={styles.chip} disabled={busy || !guardianBox || !consentBox || (showTerms && !terms.ticked) || (!signedIn && !password)}>
+          <button type="submit" className={accountForm.primary} disabled={busy || !guardianBox || !consentBox || (showTerms && !terms.ticked) || (!signedIn && !password)}>
             {busy ? W.joining : words.button}
           </button>
         </div>

@@ -73,13 +73,15 @@ export interface AccountValues {
  * and the browser's new-password fill; `current` is a sign-in, with nothing under it. `label` is "New password" on the
  * reset screen (U4), where the person already has one.
  */
-export function PasswordField({ id, value, onChange, purpose = 'create', disabled = false, label = 'Password', autoFocus = false }: {
+export function PasswordField({ id, value, onChange, purpose = 'create', disabled = false, label = 'Password', showName, autoFocus = false }: {
   id: string;
   value: string;
   onChange: (value: string) => void;
   purpose?: 'create' | 'current';
   disabled?: boolean;
   label?: string;
+  /** What the eye's name calls the field ("Show password") when the visible label is a sentence ("Choose a password"). */
+  showName?: string;
   autoFocus?: boolean;
 }) {
   const [showPw, setShowPw] = useState(false);
@@ -106,7 +108,7 @@ export function PasswordField({ id, value, onChange, purpose = 'create', disable
           onClick={() => setShowPw(s => !s)}
           // One fixed name that says the action (named for its field: "Show new password" on the reset screen) and a
           // pressed state, so a screen reader hears "Show password, toggle button, pressed" and never a flipping name.
-          aria-label={`Show ${label.toLowerCase()}`}
+          aria-label={`Show ${(showName ?? label).toLowerCase()}`}
           aria-pressed={showPw}
           aria-controls={id}
         >

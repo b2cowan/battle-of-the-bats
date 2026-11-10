@@ -85,9 +85,9 @@
   font-size: 0.85rem;
   line-height: 1.5;
   color: var(--home-ink);
-  margin: 0.55rem 0;
+  margin: 0;
+  padding: 0.6rem 0;
   cursor: pointer;
-  min-height: 44px;
 }
 
 .check input {
@@ -454,9 +454,32 @@
   color: var(--home-ink-soft);
 }
 
+/* The base reset strips every margin and bullet, so the card's rhythm is set here: a paragraph gap, a heading gap, a list gap. */
+.acceptSection p + p { margin-top: 0.6rem; }
+
+.acceptSection p.acceptChildName {
+  margin-top: 0.9rem;
+  color: var(--home-ink);
+}
+
 .acceptSection ul {
-  margin: 0.3rem 0 0.6rem;
+  margin: 0.4rem 0 0.6rem;
   padding-left: 1.1rem;
+  list-style: disc;
+}
+
+.acceptSection li + li { margin-top: 0.4rem; }
+
+/* The card's own small title and draft note keep the sizes they were drawn with (the paragraph rule above is more specific). */
+.acceptSection p.cardTitle {
+  font-size: 0.7rem;
+  color: var(--home-dim);
+  margin: 0.9rem 0 0.5rem;
+}
+
+.acceptSection p.placeholderNote {
+  font-size: 0.76rem;
+  margin: 0 0 0.2rem;
 }
 
 .acceptChild + .acceptChild {
@@ -490,19 +513,37 @@
   color: var(--home-amber);
 }
 
+/* A link inside a sentence: it stays in the line (no box, so it never stretches the line it sits on). */
 .acceptLink {
   color: var(--home-olive);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  cursor: pointer;
+}
+
+/* A link on its own row (Use a different email, Forgot your password?): body size like the hint beside it, still a 44px row. */
+.acceptTextLink {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--home-olive);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.acceptTextLink:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+/* The account fields stacked with one even gap. */
+.acceptFields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .acceptActions {
