@@ -68,6 +68,8 @@
     "check:demos:prod": "node scripts/check-demos.mjs --prod",
     "reseed:demos": "node --env-file=.env.local scripts/reseed-demos-if-stale.mjs",
     "reseed:demos:dry": "node --env-file=.env.local scripts/reseed-demos-if-stale.mjs --dry-run",
+    "demo:milton": "node --env-file=.env.local scripts/seed-prospect-demo.mjs",
+    "demo:milton:reset": "node --env-file=.env.local scripts/seed-prospect-demo.mjs --reset",
     "measure:memory": "node scripts/measure-dev-memory.mjs",
     "capture:help-shots": "node scripts/capture-help-shots.mjs",
     "check:help-shots": "node scripts/capture-help-shots.mjs --check",
