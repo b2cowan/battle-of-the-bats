@@ -6,6 +6,8 @@
  * last-chosen tournament stays chosen while a club admin works in house league, rep teams or the organization, and every
  * one of those tabs read "House league - Harbourtown Invitational 2026".
  */
+import { isTournamentEventPath, SETTINGS_ACCESS_TITLE } from './admin-kit-nav.ts';
+import { PLAN_BILLING_TITLE } from './plan-billing-title.ts';
 
 const ROUTE_LABELS: Array<[RegExp, string]> = [
   [/\/admin\/onboarding$/, 'Onboarding'],
@@ -19,21 +21,34 @@ const ROUTE_LABELS: Array<[RegExp, string]> = [
   [/\/admin\/org\/settings(?:\/.*)?$/, 'Organization settings'],
   [/\/admin\/org(?:\/)?$/, 'Organization'],
   [/\/admin\/tournaments\/preview\/[^/]+(?:\/.*)?$/, 'Preview Site'],
-  [/\/admin\/tournaments\/dashboard$/, 'Tournament dashboard'],
+  // ⚖ Navigation Phase 2 Part B (2026-11-10): the strip names a tournament's page in the sidebar's words (E2), so the tab
+  // says those words too — "Teams", not "Registrations"; "Public site", not "Tournament branding".
+  [/\/admin\/tournaments\/dashboard$/, 'Dashboard'],
   [/\/admin\/tournaments\/manage(?:\/.*)?$/, 'Tournaments'],
-  [/\/admin\/tournaments\/venues(?:\/.*)?$/, 'Venues'],
+  [/\/admin\/tournaments\/archives(?:\/.*)?$/, 'Tournaments'],
+  [/\/admin\/tournaments\/venues(?:\/.*)?$/, 'Venues & facilities'],
   [/\/admin\/tournaments\/divisions(?:\/.*)?$/, 'Divisions'],
-  [/\/admin\/tournaments\/registrations(?:\/.*)?$/, 'Registrations'],
+  [/\/admin\/tournaments\/registrations(?:\/.*)?$/, 'Teams'],
   [/\/admin\/tournaments\/schedule(?:\/.*)?$/, 'Schedule'],
   [/\/admin\/tournaments\/results(?:\/.*)?$/, 'Results'],
+  [/\/admin\/tournaments\/check-in(?:\/.*)?$/, 'Check-in'],
+  [/\/admin\/tournaments\/chat(?:\/.*)?$/, 'Chat'],
   [/\/admin\/tournaments\/rules(?:\/.*)?$/, 'Rules & resources'],
-  [/\/admin\/tournaments\/communication(?:\/.*)?$/, 'Communication'],
-  [/\/admin\/tournaments\/branding(?:\/.*)?$/, 'Tournament branding'],
+  [/\/admin\/tournaments\/communication(?:\/.*)?$/, 'Communications'],
+  [/\/admin\/tournaments\/branding(?:\/.*)?$/, 'Public site'],
   [/\/admin\/tournaments\/summary(?:\/.*)?$/, 'Summary'],
   // Stage 6 (2026-10-07): the tab said "Admin" — and "Staff Kit" before that; one spelling, the title's.
   [/\/admin\/tournaments\/staff-kit(?:\/.*)?$/, 'Staff kit'],
   [/\/admin\/tournaments\/settings\/event(?:\/.*)?$/, 'Event settings'],
-  [/\/admin\/tournaments\/settings(?:\/.*)?$/, 'Tournament settings'],
+  [/\/admin\/tournaments\/settings\/notifications(?:\/.*)?$/, 'Your notifications'],
+  // A Tournament plan's Settings & access is a place with tabs (Part B, E3 + P1): each tab says its own name.
+  [/\/admin\/tournaments\/settings\/members\/audit(?:\/.*)?$/, 'Audit log'],
+  [/\/admin\/tournaments\/settings\/members(?:\/.*)?$/, 'Members'],
+  [/\/admin\/tournaments\/settings\/payouts(?:\/.*)?$/, 'Payouts'],
+  [/\/admin\/tournaments\/settings\/pdf(?:\/.*)?$/, 'PDF settings'],
+  [/\/admin\/tournaments\/settings\/web-address(?:\/.*)?$/, 'Web address'],
+  [/\/admin\/tournaments\/settings\/subscription(?:\/.*)?$/, PLAN_BILLING_TITLE],
+  [/\/admin\/tournaments\/settings(?:\/.*)?$/, SETTINGS_ACCESS_TITLE],
   [/\/admin\/tournaments(?:\/)?$/, 'Tournaments'],
   [/\/admin\/house-league(?:\/.*)?$/, 'House league'],
   [/\/admin\/rep-teams(?:\/.*)?$/, 'Rep teams'],
@@ -48,8 +63,15 @@ function adminRouteLabel(pathname: string): string {
   return ROUTE_LABELS.find(([pattern]) => pattern.test(pathname))?.[1] ?? 'Admin';
 }
 
-/** A tournament's own pages: `/{org}/admin/tournaments` and everything under it — never the club's other areas. */
+/** A tournament address: `/{org}/admin/tournaments` and everything under it — never the club's other areas. The title manager
+ *  keeps the tab's title on these (`AdminTitleManager`). */
 export const isTournamentRoute = (pathname: string) => /\/admin\/tournaments(?:\/|$)/.test(pathname);
+
+/** One of a tournament's OWN pages — a tournament address that is not the organization's (the list, Settings & access and its
+ *  tabs, Plan & billing: `isTournamentOrgScreen`, navigation Phase 2 Part B, A10/Q6). Only these carry the event's name. */
+export const isTournamentEventPage = (pathname: string) =>
+  isTournamentRoute(pathname)
+  && isTournamentEventPath(pathname, pathname.slice(0, pathname.indexOf('/admin/tournaments') + '/admin'.length));
 
 export function adminTabTitle(p: {
   pathname: string;
@@ -62,7 +84,7 @@ export function adminTabTitle(p: {
   const label = routed === 'Members' ? p.membersLabel : routed;
   return [
     label,
-    isTournamentRoute(p.pathname) ? p.tournamentName : null,
+    isTournamentEventPage(p.pathname) ? p.tournamentName : null,
     p.orgName,
     'FieldLogicHQ',
   ].filter(Boolean).join(' - ');

@@ -52,15 +52,35 @@ import { getNotificationSettingsHref } from '@/lib/billing-urls';
 import FlipPill from '@/components/shared/FlipPill';
 import { useAdminFlip } from '@/lib/use-admin-flip';
 import { adminStripWord, WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
-import { adminHelpHref } from '@/lib/admin-kit-nav';
+import { adminHelpHref, isTournamentEventPath } from '@/lib/admin-kit-nav';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { useAdminPlace } from './useAdminPlace';
+import { useDeskTitle } from './DeskNamedPage';
 import styles from '@/components/coaches/CoachTopStrip.module.css';
 import own from './AdminTopStrip.module.css';
 
 /** The place, drawn for the strip (desktop). The phone's rendering of the same model is `AdminEventHeader`. */
 function StripPlace() {
   const { title, titleHref, isPageTitle, onOverview, place, dates, phaseChip } = useAdminPlace(false);
+  const deskTitle = useDeskTitle();
+  // ⚖ THE STRIP NAMES THE PAGE (navigation Phase 2 Part B, E2, owner 2026-11-09): on the event's own pages the page's name (the
+  // sidebar's lit row) is the page's `<h1>` here, and the event's facts — its dates and phase — sit at the strip's RIGHT END,
+  // before View site, in quiet ink behind a hairline (§0 round 2 /design); they give way first on a narrow window and the
+  // page's name never truncates. The cell keeps the event's name alone. The organization's list and Plan & billing are named
+  // here too (no facts: no event is theirs). The phone bar still names the event until Phase 3.
+  if (deskTitle) {
+    return (
+      <div className={own.place}>
+        <h1 className={`${own.name} ${own.pageName}`}>{deskTitle}</h1>
+        {(dates || phaseChip) && (
+          <span className={own.facts}>
+            {dates && <span className={own.dates}>{dates}</span>}
+            {phaseChip && <span className={own.chip}>{phaseChip}</span>}
+          </span>
+        )}
+      </div>
+    );
+  }
   // D2: on the club's Overview the strip says "Overview" (the club already heads the sidebar). The phone's Overview bar
   // still names the club (A3).
   const text = onOverview ? 'Overview' : title;
@@ -118,7 +138,9 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
   // ⚖ "Club" or "Events" (owner 2026-11-09), from the address and the plan — both known on the server, so the first paint
   // says it; the tournament-only test is `useAdminKitNav`'s (the plan's fact, D8).
   const tournamentOnly = canOpen('module_tournaments') && !!currentOrg && isTournamentOnlyWorkspace(currentOrg);
-  const stripWord = adminStripWord({ onTournaments: pathname.startsWith(`${base}/tournaments`), tournamentOnly });
+  // ⚖ T1 (navigation Phase 2 Part B): a club's tournament screens that are the ORGANIZATION's (the list) wear the club's
+  // sidebar, so the strip says "Club" there; the event's own pages say "Events".
+  const stripWord = adminStripWord({ onTournaments: isTournamentEventPath(pathname, base), tournamentOnly });
   // The portal word: in the split strip, the short form for the sidebar-width cell (D4), which a collapsed sidebar hides
   // with the wordmark's name. A cancelled account's one page keeps its strip exactly as it was (no sidebar, no cell; on
   // a phone too): the full word, never hidden by a sidebar preference it has no sidebar for (/review, 2026-11-08).

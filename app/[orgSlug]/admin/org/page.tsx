@@ -7,24 +7,9 @@
  * "not yours" screen. Tournaments, My Coaches Portal and Plan & billing, which the hub also tiled, are reached from the
  * sidebar (a program row, the foot's doors). The board by name (13a R1) is the "The board" tab of anyone without Members.
  */
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useOrg } from '@/lib/org-context';
-import { NotYours } from '@/components/admin/kit/club/NotYours';
+import TabsDoor from '@/components/admin/kit/club/TabsDoor';
 import { useOrgTabs } from '@/components/admin/kit/useAdminKitNav';
-import LoadingState from '@/components/shared/LoadingState';
 
 export default function OrgDoor() {
-  const router = useRouter();
-  const { currentOrg, userRole, loading } = useOrg();
-  const { tabs } = useOrgTabs();
-  const ready = !loading && !!userRole && !!currentOrg;
-  const first = ready ? tabs[0]?.href ?? null : null;
-
-  useEffect(() => {
-    if (first) router.replace(first);
-  }, [first, router]);
-
-  if (!ready || first) return <LoadingState label="Loading the organization…" />;
-  return <NotYours page="organization" />;
+  return <TabsDoor tabs={useOrgTabs().tabs} label="Loading the organization…" />;
 }

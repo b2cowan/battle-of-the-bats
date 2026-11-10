@@ -29,6 +29,13 @@ interface OrgContextType {
    */
   clubHasPayouts: boolean;
   /**
+   * A Tournament-plan organization's Settings & access has a Payouts tab for this person (navigation Phase 2 Part B, E3):
+   * the payouts route's own gate — online payments on, a role that may see payouts, and the plan offering them or an
+   * account already connected — read once by the admin layout on the server, so the tab row is right on the first paint.
+   * False on every other plan (a club keeps Payouts in the club portal, P2) and wherever nobody read it.
+   */
+  tournamentPayoutsTab: boolean;
+  /**
    * The member is limited to some of the club's team groups (`repGroupIds`, read by the admin layout on the server). Such a
    * member is never given Families (`canOpenFamilies`, Stage 5a Ask 12), whatever their capability says, so the pinned bar
    * must not name Families over their refusal. False wherever nobody read it.
@@ -43,6 +50,8 @@ type OrgProviderProps = {
   initialUserCapabilities?: Record<string, boolean> | null;
   /** See `OrgContextType.clubHasPayouts`: decided by the server, never refetched. */
   clubHasPayouts?: boolean;
+  /** See `OrgContextType.tournamentPayoutsTab`: decided by the server, never refetched. */
+  tournamentPayoutsTab?: boolean;
   /** See `OrgContextType.limitedToTeamGroups`: decided by the server, never refetched. */
   limitedToTeamGroups?: boolean;
 };
@@ -56,6 +65,7 @@ const OrgContext = createContext<OrgContextType>({
   refresh: async () => {},
   canOpen: () => false,
   clubHasPayouts: false,
+  tournamentPayoutsTab: false,
   limitedToTeamGroups: false,
 });
 
@@ -65,6 +75,7 @@ export function OrgProvider({
   initialUserRole = null,
   initialUserCapabilities = null,
   clubHasPayouts = false,
+  tournamentPayoutsTab = false,
   limitedToTeamGroups = false,
 }: OrgProviderProps) {
   const [user, setUser] = useState<User | null>(null);
@@ -145,7 +156,7 @@ export function OrgProvider({
     && canOpenModule({ role: userRole, capabilities: userCapabilities }, currentOrg, cap);
 
   return (
-    <OrgContext.Provider value={{ user, currentOrg, userRole, userCapabilities, loading, refresh, canOpen, clubHasPayouts, limitedToTeamGroups }}>
+    <OrgContext.Provider value={{ user, currentOrg, userRole, userCapabilities, loading, refresh, canOpen, clubHasPayouts, tournamentPayoutsTab, limitedToTeamGroups }}>
       {children}
     </OrgContext.Provider>
   );

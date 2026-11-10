@@ -1067,6 +1067,28 @@ var ph2AskHTML = PH2_ASKS.map(function (a) {
   return '<div class="ask" id="ask-' + a[0] + '"><h3><span class="mk inl" style="cursor:default">' + a[0] + '</span>' + a[1] + '</h3><p class="muted" style="margin:0 0 4px">' + a[2] + '</p><ol type="A">' + a[3].map(function (o) { return '<li>' + o + '</li>'; }).join('') + '</ol></div>';
 }).join('');
 
+/* ── Tab 15 · Part B states (2026-11-10): the Web address tab (P1, owner and non-owner) and the event's sidebar after T2.
+   Copies S.oMembersAfter's strip, sidebar and band; the body is the Members body's own position (top 93, left 240). ── */
+function webAddrFrame(owner) {
+  var card = '<div style="display:flex;align-items:center;gap:16px;margin-top:18px;max-width:640px;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:20px">' +
+    '<div style="flex:1;min-width:0"><div style="font:500 12px/16px \'Inter\';color:var(--ink3)">Web address</div>' +
+    '<div style="font:600 16px/22px \'Inter\';color:var(--ink);margin-top:4px">fieldlogichq.ca/northbay-tournaments</div>' +
+    '<div style="font:400 13px/18px \'Inter\';color:var(--ink2);margin-top:4px">The start of every link to your tournaments.</div></div>' +
+    (owner ? '<span class="btn lime">Change the address</span>' : '<span style="font:400 12px/16px \'Inter\';color:var(--ink3);white-space:nowrap">Owner only</span>') + '</div>';
+  return frame(1040, 300,
+    strip({ rail: 240, word: 'Events', place: { name: 'Settings & access' }, site: 1, ws: 1 }) +
+    sidebar({ w: 240, cell: { tile: 'NT', logo: 1, name: TORG }, rows: [{ i: 'trophy', t: 'Tournaments', cls: 'chg' }, { i: 'gear', t: 'Settings & access', lit: true, cls: 'chg' }], foot: [['card', 'Plan & billing']] }) +
+    '<div class="band" style="left:240px"><span class="tab same">Members</span><span class="tab same">Payouts</span><span class="tab same">PDF settings</span><span class="tab on">Web address</span></div>' +
+    '<div class="pg" style="top:93px;left:240px;padding-top:18px"><div class="tb"><span class="act"><span class="qhelp">' + I('help', 20, 1.8) + '</span></span></div>' + card + '</div>');
+}
+S.p3WebOwner = webAddrFrame(true);
+S.p3WebOther = webAddrFrame(false);
+var P3_OPS = [['gauge', 'Dashboard'], ['users', 'Teams'], ['cal', 'Schedule'], ['medal', 'Results'], ['usercheck', 'Check-in'], ['qr', 'Staff kit'], ['mail', 'Communications'], ['msg', 'Chat']];
+var P3_SETUP = [['sliders', 'Event settings'], ['pin', 'Venues & facilities'], ['tag', 'Divisions'], ['book', 'Rules & resources'], ['globe', 'Public site']];
+S.p3EventSide = frame(241, 700, '<div class="side" style="top:0;width:241px">' + ecell(TEV, ptile('ev', 24), { chev: 1 }) + '<div class="rows">' +
+  [{ lab: 'Operations' }].concat(P3_OPS.map(function (x) { return { i: x[0], t: x[1] }; }), [{ lab: 'Setup' }], P3_SETUP.map(function (x) { return { i: x[0], t: x[1] }; }),
+    [{ lab: 'Admin' }, { i: 'bell', t: 'Your notifications', cls: 'chg' }]).map(row).join('') + '</div></div>');
+
 /* ── page content ──────────────────────────────────────────────────────────────────── */
 function spec(title, note, html, opts) {
   opts = opts || {};
@@ -1252,6 +1274,15 @@ var SECTIONS = [
       spec('Part B · the Tournaments list, a tournament-only organization', 'true size · as ruled (E3): the organization in the cell, its own short sidebar', S.p2OrgT) +
       spec('Part B · the Tournaments list, a club · T1', 'true size · A: the club’s own sidebar, the foot’s Tournaments door lit · B: the tournament-only shape', '<div class="pair stack"><div><div class="lbl after">T1 A · recommended</div>' + S.p2OrgClubA + '</div><div><div class="lbl">T1 B</div>' + S.p2OrgClubB + '</div></div>') +
       '<h2 style="margin-top:28px">Your calls</h2>' + ph2AskHTML;
+  }],
+  ['partb2', '15 · Part B states', true, function () {
+    return '<h2>Part B: the states the plan names</h2><p class="lede">Drawn at the Part B gate (2026-11-10) from the shipped parts: the Settings &amp; access screen of a tournament-only organization (tab 3’s after frame, with a fourth tab) and the event’s sidebar once Settings &amp; access and Tournaments leave it (T2).</p>' +
+      '<div class="cols"><div class="card"><h3>P1 · The web address</h3><p>The Web address is the fourth tab of Settings &amp; access, after Members, Payouts and PDF settings. It is read by everyone who can open the screen; only the owner changes it, through today’s window.</p></div>' +
+      '<div class="card"><h3>P2 · One home per setting</h3><p>In a club, Members, PDF settings, Payouts and Plan &amp; billing live only in the club portal, and nothing on the tournament side points there. Tournament-only organizations keep them on their own Settings &amp; access.</p></div>' +
+      '<div class="card"><h3>P3 · The phone</h3><p>Unchanged until Phase 3.</p></div></div>' +
+      spec('Settings &amp; access › Web address · the owner', 'P1 — the web address gets the fourth tab; Change the address opens today’s window (owner only).', S.p3WebOwner) +
+      spec('Settings &amp; access › Web address · another admin', 'Anyone else who can open Settings &amp; access reads the address; only the owner changes it.', S.p3WebOther) +
+      spec('The event’s sidebar · T2', 'T2 — Settings &amp; access and Tournaments leave the event’s sidebar; the event’s own mute page is its last row, under Admin. The way to the Tournaments list is the cell’s list (T6); Chat, Check-in and Staff kit show on the plans that carry them.', S.p3EventSide);
   }]
 ];
 

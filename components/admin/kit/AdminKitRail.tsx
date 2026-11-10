@@ -18,6 +18,10 @@
  * list (`EventSwitchMenu`), and Operations / Setup / Admin are labels over rows that never fold. The way back to the club is
  * the foot's "Club" door (navigation Phase 1, E4 — it replaced the "Club overview" row). A tournament-only organization (the
  * Tournament plans have no club hub) sees the tournament section alone.
+ * ⚖ PART B (owner 2026-11-10; E3, T1, T2, P2): the event's sidebar lists the EVENT's pages only, "Your notifications" last.
+ * The organization's tournament screens (`isTournamentOrgScreen`: the list, Settings & access and its tabs, Plan & billing)
+ * wear the ORGANIZATION's sidebar — a club's own (its foot's Tournaments door opens and lights the list), or a tournament-only
+ * organization's short one: its cell, then Tournaments and Settings & access (shown only to someone who holds one of its tabs).
  *
  * ⚠ The programs, Organization and their gates come from `lib/admin-kit-nav.ts`, which the phone bar reads too. Every
  * gate is the old rail's gate — read that file's header before adding a row.
@@ -35,7 +39,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Fragment, useEffect, useRef, useState, type ElementType } from 'react';
 import {
-  LayoutGrid, ChevronDown, HelpCircle, Trophy,
+  LayoutGrid, ChevronDown, HelpCircle, Trophy, Settings,
 } from 'lucide-react';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import { CollapseSidebarRow, SidebarStripTip } from '@/components/shared/SidebarStrip';
@@ -46,9 +50,9 @@ import { isSidebarStrip } from '@/lib/sidebar-strip';
 import SidebarLogoTile from '@/components/shared/SidebarLogoTile';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
-import { isKitLinkActive, isKitLinkActiveAmong, kitCountText, placeGroupHeading, type KitLink } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, isKitLinkActiveAmong, kitCountText, litTournamentRow, placeGroupHeading, SETTINGS_ACCESS_TITLE, type KitLink } from '@/lib/admin-kit-nav';
 import { eventSwitchLine, eventTileSource } from '@/lib/admin-event-cell';
-import { useAdminKitNav } from './useAdminKitNav';
+import { useAdminKitNav, useTournamentSettingsTabs } from './useAdminKitNav';
 import EventSwitchMenu from './EventSwitchMenu';
 import { briefPlaceCount } from './club/ClubBriefProvider';
 import { PERMIT_WORDS as PW } from '@/lib/permit-words';
@@ -172,16 +176,33 @@ export default function AdminKitRail() {
   const nav = useAdminKitNav();
   const {
     base, brief, orgLinks, placeGroups, litPlace, tournamentOnly, isCanceled,
-    onTournaments, portalDoors, calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
+    // The computer's foot (Part B, T1) — named `portalDoors` here, as the phone's list is in the More sheet (PHASE-3: one list).
+    inEvent, deskPortalDoors: portalDoors, calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
   const feeAlert = useFeeAlert();
   const currentOrg = useOrg().currentOrg;
   const clubName = currentOrg?.name ?? null;
-  // Inside a tournament with an event to show, the event heads the sidebar (Phase 2); otherwise the club or organization.
+  // ⚖ On one of the event's own pages with an event to show, the event heads the sidebar (Phase 2); everywhere else — the
+  // organization's tournament screens included (Part B, E3 + T1) — the club or the organization does.
   const { currentTournament } = useTournament();
-  const eventHeads = onTournaments && !!currentTournament;
+  const eventHeads = inEvent && !!currentTournament;
+  // A Tournament-plan organization's Settings & access (E3): its row shows only for someone who holds one of its tabs, opens
+  // the first of them straight away (no stop at the door), and lights on every one.
+  const settingsTabs = useTournamentSettingsTabs();
+  const settingsAccess: KitLink | null = settingsTabs?.length
+    ? { key: 'tsettings', label: SETTINGS_ACCESS_TITLE, href: settingsTabs[0].href, also: [`${base}/tournaments/settings`], icon: Settings }
+    : null;
+  const tournamentsList: KitLink = { key: 'manage', label: 'Tournaments', href: `${base}/tournaments/manage`, also: [`${base}/tournaments/archives`] };
   // The rail the strip's name bubble hangs beside.
   const railRef = useRef<HTMLElement>(null);
+  // ⚖ Leaving an event for the organization's screens (the list's "All tournaments", Part B) swaps the event's cell for the
+  // organization's. A keyboard user's focus was on the cell that left: it moves to the cell that came, never to the page body.
+  const wasEvent = useRef(eventHeads);
+  useEffect(() => {
+    const lost = !document.activeElement || document.activeElement === document.body || !document.activeElement.isConnected;
+    if (wasEvent.current && !eventHeads && lost) (railRef.current?.firstElementChild as HTMLElement | null)?.focus();
+    wasEvent.current = eventHeads;
+  }, [eventHeads]);
 
   // ⚖ N9 (13i B3): a place's row carries the sum of its tabs' waiting counts (`briefPlaceCount`), at every depth.
   const placeRow = (place: KitLink) => {
@@ -216,7 +237,7 @@ export default function AdminKitRail() {
         ? <EventCell base={base} />
         : clubName && <ClubCell href={base} name={clubName} logoUrl={currentOrg?.logoUrl} logoAspect={currentOrg?.logoAspect} />}
       <nav className={styles.railScroll} aria-label="Admin navigation">
-        {!tournamentOnly && !isCanceled && !onTournaments && (
+        {!tournamentOnly && !isCanceled && !inEvent && (
           // ⚖ Not inside a tournament (E4, navigation Phase 1): "Club overview" became the foot's "Club" door — a row that
           // swaps the whole sidebar is a portal door, and the portal doors live in the foot.
           <RailRow href={base} label="Overview" active={pathname === base} icon={LayoutGrid} />
@@ -225,22 +246,22 @@ export default function AdminKitRail() {
             program's row. `kitCalendarLink` holds its gate. ⚖ Not inside a tournament (owner 2026-10-20): there Overview
             is the one way back to the club, as Programs and Organization already are not rows, and the phone's tournament
             bar never carried either. Schedules, below, follows the same rule. */}
-        {calendarLink && !tournamentOnly && !onTournaments && (
+        {calendarLink && !tournamentOnly && !inEvent && (
           <RailRow href={calendarLink.href} label={calendarLink.label} active={isKitLinkActive(pathname, calendarLink)} icon={calendarLink.icon} />
         )}
         {/* The club's permits (Club Tier 13c, C1 = A): between Calendar and Schedules — the time the club holds, then where
             it hands it out. A place, unheaded like its neighbours (N2). `kitPermitsLink` holds its gate. */}
-        {permitsLink && !tournamentOnly && !onTournaments && (
+        {permitsLink && !tournamentOnly && !inEvent && (
           <RailRow href={permitsLink.href} label={permitsLink.label} active={isKitLinkActive(pathname, permitsLink)} icon={permitsLink.icon}
             count={permitsCount} countLabel={PW.outsideCountLabel(permitsCount)} />
         )}
         {/* The club scheduler (Club Tier 11a): directly under Calendar — Calendar reads what is booked, Schedules hands the
             club's time out. `kitSchedulesLink` holds its gate (owner or admin, the plan's key, rep teams to hand time to). */}
-        {schedulesLink && !tournamentOnly && !onTournaments && (
+        {schedulesLink && !tournamentOnly && !inEvent && (
           <RailRow href={schedulesLink.href} label={schedulesLink.label} active={isKitLinkActive(pathname, schedulesLink)} icon={schedulesLink.icon} />
         )}
 
-        {onTournaments ? (
+        {inEvent ? (
           <TournamentRail />
         ) : (
           <>
@@ -256,8 +277,17 @@ export default function AdminKitRail() {
               );
             })}
             {tournamentOnly && !isCanceled && (
-              // The one Tournaments list (D7) — `/tournaments` alone opens the selected event's board.
-              <RailRow href={`${base}/tournaments/manage`} label="Tournaments" active={false} icon={Trophy} />
+              // ⚖ A TOURNAMENT-ONLY ORGANIZATION'S OWN SIDEBAR (E3, navigation Phase 2 Part B): the one Tournaments list (D7 —
+              // `/tournaments` alone opens the selected event's board), then Settings & access, the place whose tabs are
+              // Members · Payouts · PDF settings · Web address (P1). No labels: two rows are no groups.
+              <>
+                <RailRow href={tournamentsList.href} label={tournamentsList.label} active={isKitLinkActive(pathname, tournamentsList)} icon={Trophy} />
+                {settingsAccess && (
+                  // Plan & billing's page sits under Settings & access's address: its foot row is the lit one there.
+                  <RailRow href={settingsAccess.href} label={settingsAccess.label} icon={settingsAccess.icon}
+                    active={isKitLinkActive(pathname, settingsAccess) && !(billingLink && isKitLinkActive(pathname, billingLink))} />
+                )}
+              </>
             )}
             {tournamentOnly && orgLinks.length > 0 && (
               // The tournament-only organization's flat Account list (unchanged by 13i; a cancelled club has no Organization
@@ -296,11 +326,15 @@ export default function AdminKitRail() {
             </Link>
           )}
           {(billingLink || isSandbox) && portalDoors.length > 0 && <div className={styles.footSep} aria-hidden />}
-          {portalDoors.map(door => (
-            <Link key={door.key} href={door.href} className={`${styles.item} ${styles.footItem}`}>
-              {door.icon && <door.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{door.label}</span>
-            </Link>
-          ))}
+          {portalDoors.map(door => {
+            // ⚖ T1: on a club's Tournaments list its foot door is the lit row (as Plan & billing lights on its own page).
+            const lit = door.key === 'tournaments' && isKitLinkActive(pathname, door);
+            return (
+              <Link key={door.key} href={door.href} className={`${styles.item} ${styles.footItem}${lit ? ` ${styles.itemActive}` : ''}`} aria-current={lit ? 'page' : undefined}>
+                {door.icon && <door.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{door.label}</span>
+              </Link>
+            );
+          })}
         </div>
         {/* ⚖ The last row (Ask 2). */}
         <CollapseSidebarRow className={`${styles.item} ${styles.footItem}`} />
@@ -321,16 +355,14 @@ export default function AdminKitRail() {
 function TournamentRail() {
   const pathname = usePathname();
   const worklist = useAdminWorklist();
-  const { base, tournamentGroups: groups, billingLink } = useAdminKitNav();
+  // The event's own pages (Part B): Settings & access and the list are the organization's; "Your notifications" is last (T2).
+  const { base, deskTournamentGroups: groups, billingLink } = useAdminKitNav();
   // Asked only where Chat is a row (an invite-only event has no Chat, the free tournament tier, R5).
   const chatUnread = useChatUnread(groups.some(g => g.items.some(i => i.key === 'chat')));
 
-  const allKeys = groups.flatMap(g => g.items.map(i => i.key));
-  // Plan & billing (the footer link) sits under Settings & access's address: it is the more specific door, so Settings
-  // steps aside while it is the page on screen.
-  const itemActive = (key: string) => pathname.startsWith(`${base}/tournaments/${key}`)
-    && !allKeys.some(k => k !== key && k.length > key.length && pathname.startsWith(`${base}/tournaments/${k}`))
-    && isKitLinkActiveAmong(pathname, { key, label: key, href: `${base}/tournaments/${key}` }, [billingLink]);
+  // ONE lit row, the one the strip names (`litTournamentRow`).
+  const lit = litTournamentRow(pathname, base, groups.flatMap(g => g.items.map(i => i.key)), billingLink);
+  const itemActive = (key: string) => key === lit;
 
   return (
     <>

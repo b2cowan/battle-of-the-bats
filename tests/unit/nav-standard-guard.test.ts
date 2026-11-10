@@ -126,7 +126,8 @@ describe('N6 · a door is named by where it goes', () => {
     const strip = readCode('components/admin/AdminTopStrip.tsx');
     // The split strip says the portal's word; a cancelled account's unsplit strip keeps the full word, as it was.
     assert.match(strip, /\{split \? stripWord : WORKSPACE_KIND_LABEL\.organization\}/);
-    assert.match(strip, /const stripWord = adminStripWord\(\{ onTournaments: pathname\.startsWith\(`\$\{base\}\/tournaments`\), tournamentOnly \}\);/);
+    // ⚖ T1 (navigation Phase 2 Part B): the organization's tournament screens (the list) say "Club" in a club — they wear its sidebar.
+    assert.match(strip, /const stripWord = adminStripWord\(\{ onTournaments: isTournamentEventPath\(pathname, base\), tournamentOnly \}\);/);
     assert.doesNotMatch(strip, /'(Admin( Area)?|Club|Events)'/, 'never typed in the strip');
     const words = readCode('lib/workspace-labels.ts');
     assert.match(words, /organization: 'Admin Area',/);

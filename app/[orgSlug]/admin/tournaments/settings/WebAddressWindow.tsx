@@ -1,6 +1,7 @@
 'use client';
 /**
- * THE WEB ADDRESS'S WINDOW — Settings & access's fourth door (Tournament admin redesign Stage 5 addendum, A75, owner
+ * THE WEB ADDRESS'S WINDOW — opened from Settings & access's Web address tab (navigation Phase 2 Part B, P1; it was the card
+ * page's fourth door, Tournament admin redesign Stage 5 addendum, A75, owner
  * 2026-10-12). The workspace's address is the first part of every link (fieldlogichq.ca/<address>/…); it was changed
  * from one event's settings, where it never belonged. The owner changes it here on Tournament and Tournament Plus; League
  * and Club keep it in the organization's Settings, so this door is absent there.
@@ -10,7 +11,7 @@
  *   asking     Change the address asks once more, naming both addresses (nothing redirects to the new one), in the
  *              kit's question window over the form
  *   the move   the same server call and validation as before (PATCH /api/admin/org-settings, owner-only); on success
- *              the admin moves to the new address's Settings & access — with the window still open, as KitDialog's
+ *              the admin moves to the new address's Web address tab — with the window still open, as KitDialog's
  *              header requires of a button that closes a window and navigates
  */
 import { useState } from 'react';
@@ -63,8 +64,8 @@ export default function WebAddressWindow({ orgName, current, eventSlug, onClose 
         setBusy(false);
         return;
       }
-      // The admin's address holds the old one — move to the new one's Settings & access, the window still open.
-      router.push(`/${data.slug}/admin/tournaments/settings`);
+      // The admin's address holds the old one — move to the new one's Web address tab, the window still open.
+      router.push(`/${data.slug}/admin/tournaments/settings/web-address`);
       router.refresh();
     } catch {
       setError(W.failed);

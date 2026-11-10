@@ -6,6 +6,7 @@ import { useOrg } from '@/lib/org-context';
 import AdminEventHeader from '@/components/admin/AdminEventHeader';
 import { AdminBarPlaceProvider } from '@/components/admin/AdminBarPlace';
 import AdminTopStrip from '@/components/admin/AdminTopStrip';
+import { DeskTitleProvider } from '@/components/admin/DeskNamedPage';
 import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { orgBell } from '@/lib/notification-bell-scope';
@@ -168,7 +169,10 @@ export default function AdminChrome({
         <SetupWizardProvider>
           {/* A club place hands the pinned bar its name, facts and tab row (Admin header bar Phase 2) — the bar above
               the page and the place's frame inside it both sit under this one hand-off. */}
-          <ClubBriefProvider seedShape={clubShape}><AdminBarPlaceProvider>{frame}</AdminBarPlaceProvider></ClubBriefProvider>
+          {/* What the strip names on a computer, decided once for the strip and every page header (navigation Phase 2 Part B). */}
+          <DeskTitleProvider suspended={suspended}>
+            <ClubBriefProvider seedShape={clubShape}><AdminBarPlaceProvider>{frame}</AdminBarPlaceProvider></ClubBriefProvider>
+          </DeskTitleProvider>
         </SetupWizardProvider>
       </AdminWorklistProvider>
     </AdminDensityProvider>

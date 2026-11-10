@@ -48,11 +48,21 @@ export function getBillingHref(org: BillingUrlOrg, options: { host?: 'admin' | '
     : `/${org.slug}/admin/org/billing`;
 }
 
-/** The web address, where the plan keeps it — Settings & access's door on the tournament tiers (Tournament admin
- *  redesign Stage 5 addendum, A75), the organization's Settings elsewhere. */
+/**
+ * ⚖ WHERE AN ORGANIZATION'S SETTINGS LIVE (navigation Phase 2 Part B, P2 — one home per setting): on the tournament side only
+ * for a Tournament plan that is no one-team workspace (its organization has no club portal: `admin/org/layout.tsx` sends it
+ * away, by this same rule). Everyone else keeps Members, PDF settings, Payouts, the web address and Plan & billing in
+ * Organization, and no tournament row points at them. The sidebar, the place and the old-address redirect all ask this.
+ */
+export function orgSettingsOnTournamentSide(org: { planId?: string | null; accountKind?: string | null } | null | undefined): boolean {
+  return !!org && isTournamentTier(org.planId) && !isTeamWorkspaceOrg(org);
+}
+
+/** The web address, where the plan keeps it — Settings & access's Web address tab on the tournament tiers (Tournament admin
+ *  redesign Stage 5 addendum, A75; its own tab since navigation Phase 2 Part B, P1), the organization's Settings elsewhere. */
 export function getWebAddressHref(orgSlug: string, planId: OrgPlan | string | undefined | null): string {
   return isTournamentTier(planId)
-    ? `/${orgSlug}/admin/tournaments/settings`
+    ? `/${orgSlug}/admin/tournaments/settings/web-address`
     : `/${orgSlug}/admin/org/settings`;
 }
 

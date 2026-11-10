@@ -106,7 +106,7 @@ const exportsHelp: HelpPageContent = {
                 team's Coaches Portal show the <strong>team's name</strong>, with the team's own crest
                 and colours if the coach has set them (in the portal's Team settings, under{' '}
                 <em>How your documents look</em>) — or the club's look until they do. Header text,
-                accent colour and footer are configured in <strong>Organization → PDF settings</strong>.
+                accent colour and footer are configured in <strong>Organization → PDF settings</strong> (on Tournament and Tournament Plus, <strong>Settings &amp; access → PDF settings</strong>).
               </p>
               <HelpNote variant="warning" title="PDF needs a paid plan">
                 <p>
@@ -252,8 +252,8 @@ const exportsHelp: HelpPageContent = {
             the guardian columns.
           </p>
           <p>
-            PDF privacy defaults can be configured in <strong>Organization → PDF settings</strong>
-            — set your preferences once and every PDF export follows those defaults unless you
+            PDF privacy defaults can be configured in <strong>Organization → PDF settings</strong>{' '}
+            (on Tournament and Tournament Plus, <strong>Settings &amp; access → PDF settings</strong>) — set your preferences once and every PDF export follows those defaults unless you
             override them at export time.
           </p>
         </>

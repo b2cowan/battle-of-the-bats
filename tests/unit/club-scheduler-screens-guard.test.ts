@@ -82,8 +82,8 @@ describe('1 · the Schedules row is there only where time can be handed out', ()
     const rail = readCode(RAIL);
     assert.match(rail, /schedulesLink && !tournamentOnly/);
     // ⚖ Inside a tournament neither club row shows (owner 2026-10-20): Overview alone is the way back to the club.
-    assert.match(rail, /calendarLink && !tournamentOnly && !onTournaments/);
-    assert.match(rail, /schedulesLink && !tournamentOnly && !onTournaments/);
+    assert.match(rail, /calendarLink && !tournamentOnly && !inEvent/);
+    assert.match(rail, /schedulesLink && !tournamentOnly && !inEvent/);
     assert.ok(rail.indexOf('calendarLink.href') < rail.indexOf('schedulesLink.href'), 'Schedules sits under Calendar');
     // ⚖ One club bar (owner 2026-10-17, `lib/nav-tiles.ts`): Calendar is a tab, and Schedules the first tile at the top of
     // More — or, without three tiles, the full row it was, under Notifications.
@@ -93,7 +93,7 @@ describe('1 · the Schedules row is there only where time can be handed out', ()
   });
   it('⚖ 13c (C1 = A): Permits sits between Calendar and Schedules, and inside a tournament it does not show either', () => {
     const rail = readCode(RAIL);
-    assert.match(rail, /permitsLink && !tournamentOnly && !onTournaments/);
+    assert.match(rail, /permitsLink && !tournamentOnly && !inEvent/);
     assert.ok(rail.indexOf('calendarLink.href') < rail.indexOf('permitsLink.href'), 'Permits under Calendar');
     assert.ok(rail.indexOf('permitsLink.href') < rail.indexOf('schedulesLink.href'), 'Schedules under Permits');
     // The phone: a lone sheet row after the tiles and Schedules' row, before the groups — never a tile, and the club bar

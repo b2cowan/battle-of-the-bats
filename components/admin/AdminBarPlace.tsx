@@ -25,7 +25,7 @@ import { isTournamentTier } from '@/lib/billing-urls';
 import { canOpenClubSchedules } from '@/lib/club-schedule-gate';
 import { canOpenCalendar, clubPlaceAt, type ClubPlaceAt, type PlaceTab } from '@/lib/admin-kit-nav';
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
-import { useOrgTabs, usePermitsLink } from '@/components/admin/kit/useAdminKitNav';
+import { useOrgTabs, usePermitsLink, useTournamentSettingsTabs } from '@/components/admin/kit/useAdminKitNav';
 
 /** What the address says (`ClubPlaceAt`: key, title, way up, facts, tabs, lit tab, label) plus the live parts only a frame has.
  *  Both of the admin's headers draw it (`useAdminPlace`): the phone bar and, above 900px, the top strip. */
@@ -47,6 +47,8 @@ export function useClubPlaceAt(): ClubPlaceAt | null {
   const seasonAccess = useHouseLeagueAccess(null);
   const { tabs: orgTabs, isTeamWorkspace } = useOrgTabs();
   const permitsLink = usePermitsLink();
+  // A Tournament plan's Settings & access tabs (navigation Phase 2 Part B, E3 + P1): the sidebar's row reads the same list.
+  const tournamentSettingsTabs = useTournamentSettingsTabs();
   // A cancelled account has one page and no place (`AdminChrome`'s `suspended`): its bar names the organization and its strip
   // draws no place, so nothing but the page itself can supply the `<h1>`. Answering null keeps Plan & billing's paper title.
   if (!currentOrg || currentOrg.subscriptionStatus === 'canceled') return null;
@@ -67,6 +69,7 @@ export function useClubPlaceAt(): ClubPlaceAt | null {
     opensSchedules: canOpenClubSchedules({ planId: currentOrg.planId, role: userRole }),
     opensPublicSite: canOpen('module_public_site'),
     opensBilling: userRole === 'owner',
+    tournamentSettingsTabs,
   });
 }
 

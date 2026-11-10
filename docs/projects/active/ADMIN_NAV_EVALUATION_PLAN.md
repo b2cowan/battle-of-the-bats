@@ -238,6 +238,25 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
 - **Stale wording in the Phase 2 prompt:** its line "the phase as a chip on the cell's line" predates round 2. E2
   holds: the cell keeps the name alone.
 
+**⚖ Part B gate — three calls (owner, 2026-11-10, at the start of the Part B session).**
+- **P1 · Web address = a fourth tab** of a tournament-only organization's Settings & access (Members · Payouts · PDF
+  settings · Web address). Found at this gate: the E3 drawing (shipped rows only) left it out, and its only door was a card
+  on the page that becomes the tabs. The tab shows today's address with "Change the address" (today's window), owner only.
+  Drawn as tab 15 before it was built.
+- **P2 · ONE HOME PER SETTING (the owner's rule, in his words: "if only the club sets it it should only live in the club
+  portal, if tournaments can override then the overrides live in the tournament settings … people will be wondering what
+  happened to their nav").** Asked whether the club's other org-wide tournament addresses should "open their club home",
+  the owner rejected a settings door that navigates to the club. Verified in the code: no tournament overrides a club
+  setting (PDF settings is one `organizations.pdf_settings`; Members is one page, a member's tournament scope set inside
+  it). So **in a club** Settings & access, Members, PDF settings, Payouts and Plan & billing live only in the club portal
+  and nothing on the tournament side points at them (the event's sidebar loses Settings & access in Part B; the phone's
+  tournament More sheet loses it for a club — data only, the phone component untouched). An old link or bookmark to a
+  tournament address opens the club's own page (a redirect; no row or button leads there). The event's own mute page is
+  the event's (T2). T1's Tournaments list keeps the club's sidebar (ruled; leaving an event, not a settings door).
+- **P3 · The phone is unchanged until Phase 3**: titles drop on a computer only; the phone keeps its titles and its event
+  bar. One exception: a tournament-only organization's Settings & access tab row shows on a phone as the club's
+  Organization tabs already do.
+
 ## 5. Build phases (if ruled) — by dependency and rework risk
 
 - **Phase 0 · The chosen event on first paint.** The server knows the selected event (a cookie beside the stored choice,
@@ -465,6 +484,50 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   - **Walk §508** (https://claude.ai/artifact/UC8MtahRswkropMWeTcDkp, source `ADMIN_NAV_PHASE2A_WALK.html`; fixture
     `scripts/walk-event-logo.mjs`): 3 walks, 24 checks; carries Phase 0's deferred first-paint proof. **Next: Part B** (the strip names the
     page, paper titles drop, the org-wide screens, page help; T1, T2) in a fresh session.
+  - **✅ Part B BUILT 2026-11-10** (the strip, the pages, the organization's screens); gate calls P1–P3 in §4; tab 15 drawn and
+    published (/design applied). What changed:
+    - **The strip names the page on a computer** (E2): one rule, `deskTitleAt` (`kit-tournament-groups.ts`) over the event sidebar's own
+      list, decided once by `DeskTitleProvider` (`components/admin/DeskNamedPage.tsx`) for the strip and every page header. The lit row's
+      word is the strip's `<h1>`; the event's dates + phase chip sit at its right end before View site (one hairline on their right; hidden
+      ≤1100 px). The phase words come from ONE source, `eventPhaseOf` (`lib/admin-event-cell.ts`), which the switch list's line reads too.
+      `AdminPageHeader` hides its title block above 900 px where the strip names the page (`data-desk-named`; with no actions the header
+      draws nothing there); its actions keep the top row, "?" last (E11 — already the shape on every tournament page). The phone bar and
+      phone titles are unchanged (P3). The org's Tournaments list and a Tournament plan's Plan & billing are named too (no facts).
+    - **The event's sidebar = the event's pages** (E3, T1, T2): Settings & access and Tournaments left it (`deskTournamentGroups`);
+      "Your notifications" (the event's mute page, /marketing approved the words; page title renamed from "Tournament notifications") is
+      the last row under Admin, on the computer AND in the phone's More sheet (its only other door was the retired card page — /review).
+    - **The organization's tournament screens wear the organization's sidebar** (`isTournamentEventPath` / `isTournamentOrgScreen`, the
+      one list): a club's own (T1: its foot Tournaments door opens and lights the list; the strip says "Club"); a tournament-only
+      organization's short one (E3: its cell, Tournaments, Settings & access — the row only for someone holding a tab, hidden in the
+      sandbox). Keyboard focus moves to the new cell when the event's cell gives way (/review).
+    - **Settings & access is a place on a Tournament plan** (E3 + P1): tabs Members · Payouts · PDF settings · Web address, each the
+      person's own (`tournamentSettingsTabs`; Payouts from the server fact `tournamentPayoutsTab`, the payouts route's own gate, read by
+      the admin layout so the tab row is right on the first paint); routed through `clubPlaceAt`, so it names itself on both widths (the
+      P3 exception). `/tournaments/settings` is a door to the first tab (`TabsDoor`, now shared with the club's `/org`). The card page
+      retired; the Web address tab took its fourth card.
+    - **One home per setting in a club** (P2): `orgSettingsOnTournamentSide` (`lib/billing-urls.ts`) is the one rule (a Tournament plan
+      that is no one-team workspace — `admin/org/layout.tsx`'s own test). Elsewhere the old tournament settings addresses open the club's
+      own page with their search kept (`tournamentSideOnly` / `openClubHome`; Plan & billing through a layout so the shared billing
+      page's routing is untouched); the phone's More sheet has no Settings & access row there.
+    - **The tab title** says the sidebar's words and drops the event's name on the organization's screens (`lib/admin-tab-title.ts`; a
+      test holds it to TOUR_GROUPS and the tabs).
+  - **Measured 2026-11-10** (dev; `.probe/nav-phase2b/firstpaint.mjs`, `run1`–`run4t`, screenshots beside them): the club (UAT Rep Club,
+    its Invitational on game day) and the tournament-only org (UAT Test Org) — event pages, the mute page, the lists, every Settings &
+    access tab, Plan & billing, an admin without Payouts — at 1440, 1366 and 390. **The server's paint (scripts off) = the only place state
+    during load on every screen**; one title per width; tab titles final and right. `check:layout` (Divisions, Teams, the club's list,
+    Members, Web address, Your notifications) at 1440 and 1366: no new findings. Redirects keep the search (`redirect.mjs`).
+  - **/design** (built vs. drawn): matches; Low, recorded: the page's top row sits ~14 px lower than drawn (the page's own padding kept).
+    **/simplify** applied: one desk-title rule and provider (it had been derived three times, the phone bar included), one event-page
+    test, one factory for the seven wrappers, a shared tabs door, one PDF-settings rule, a drift test for the tab words. Skipped: the
+    redirect in the admin layout (misses client navigation), narrowing the payouts read, one both-widths naming answer (Phase 3).
+    **/review** (high-risk, four lenses) FIXED: the phone had lost its door to the mute page (High); the redirect dropped the search
+    (a checkout's success flag after an upgrade to Club); the sandbox showed a Settings & access row; focus fell to the body after "All
+    tournaments"; the one-team workspace answered four ways. **Recorded (Low):** a click into an event before the list has loaded on a
+    non-tournament first load can briefly show the old strip (the sidebar shares it); switching to an event without the current page's
+    row flips the title for a render; the Payouts fact is frozen until reload (as the club's `clubHasPayouts`); 901–1100 px with the
+    sidebar folded names the event only in the tile's bubble; the strip's event name no longer links to the Dashboard (E2: the cell holds it).
+  - **Walk §509** (https://claude.ai/artifact/6b4BCkFNxB8RDnWq64cUDs, source `ADMIN_NAV_PHASE2B_WALK.html`): 4 walks, 28 checks. **Next:
+    Phase 3** (the tournament phone) after the walk; its prompt is written after this phase lands.
 - **Phase 3 · Tournament phone.** Bar names the page; the small line opens the sheet; More loses its dropdown (N7 item 1
   rewritten).
 - **Phase 4 · Coaches Portal desktop.** Sidebar widened to 240 and unfolded (E9, E14); strip split with the word "Coach" and the team's facts at its right end (E7); team cell replacing the `<select>`;

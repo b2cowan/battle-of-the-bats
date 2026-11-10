@@ -24,17 +24,20 @@ export function eventTileSource(event: EventLogo, org: { logoUrl?: string | null
   return { source: null, aspect: null };
 }
 
-/**
- * A row's second line in the switch list (T3, owner's change): the event's dates and its phase word — "Nov 1–3, 2026 ·
- * Game day". ⚖ ONE set of words for an event's state (E12 (2)): the phase words (`PHASE_LABEL`), the strip's chip's own,
- * from the same rule (`resolveEventPhase`). An event with no dates says its phase alone.
- */
-export function eventSwitchLine(event: {
+type EventFacts = {
   status?: string | null;
   startDate?: string | null;
   endDate?: string | null;
   firstGameStarted?: boolean;
-}, today?: string): string {
+};
+
+/**
+ * ⚖ ONE set of words for an event's state (E12 (2)), read by the switch list's rows and the strip's facts (navigation Phase 2
+ * Part B) alike, so the two can never disagree: the event's dates ("Nov 1–3, 2026", or null with none) and its phase, from
+ * the board's one rule (`resolveEventPhase`: the dates, or the first game having started, until it is marked complete), in
+ * the phase words (`PHASE_LABEL`).
+ */
+export function eventPhaseOf(event: EventFacts, today?: string) {
   const phase = resolveEventPhase({
     status: event.status,
     startDate: event.startDate,
@@ -42,6 +45,14 @@ export function eventSwitchLine(event: {
     firstGameStarted: Boolean(event.firstGameStarted),
     today,
   });
-  const dates = formatEventDateRange(event.startDate, event.endDate, true);
-  return dates ? `${dates} · ${PHASE_LABEL[phase]}` : PHASE_LABEL[phase];
+  return { phase, label: PHASE_LABEL[phase], dates: formatEventDateRange(event.startDate, event.endDate, true) || null };
+}
+
+/**
+ * A row's second line in the switch list (T3, owner's change): the event's dates and its phase word — "Nov 1–3, 2026 ·
+ * Game day". An event with no dates says its phase alone.
+ */
+export function eventSwitchLine(event: EventFacts, today?: string): string {
+  const { label, dates } = eventPhaseOf(event, today);
+  return dates ? `${dates} · ${label}` : label;
 }

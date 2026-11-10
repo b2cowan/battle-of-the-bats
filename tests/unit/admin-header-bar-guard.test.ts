@@ -267,9 +267,12 @@ describe('Phase 3 · one title per screen: a screen the header names has no pape
     assert.match(readCode('components/admin/AdminBarPlace.tsx'), /if \(!currentOrg \|\| currentOrg\.subscriptionStatus === 'canceled'\) return null;\s*return clubPlaceAt\(/);
   });
   it('a screen the header does NOT name keeps exactly one paper title (Club setup, Q1; the org-wide tournament screens, Q6)', () => {
-    for (const f of ['components/admin/kit/club/ClubSetupKit.tsx', `${A}/org/tournaments/page.tsx`, `${A}/tournaments/settings/page.tsx`]) {
+    // ⚖ Navigation Phase 2 Part B (2026-11-10): the Tournaments list keeps its one paper title (the strip names it on a computer
+    // only, `DeskNamedPage`); the Settings & access card page retired — its address is the door to its first tab (E3).
+    for (const f of ['components/admin/kit/club/ClubSetupKit.tsx', `${A}/org/tournaments/page.tsx`]) {
       assert.equal((readCode(f).match(/<AdminPageHeader\b/g) ?? []).length, 1, f);
     }
+    assert.doesNotMatch(readCode(`${A}/tournaments/settings/page.tsx`), /<AdminPageHeader\b/);
   });
   it('a record names itself through the hand-off, for the address’s key only; its own fact sits beside the name (Q4)', () => {
     const hand = readCode('components/admin/AdminBarPlace.tsx');

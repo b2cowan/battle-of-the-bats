@@ -118,7 +118,7 @@ export default function TournamentNotificationPreferencesPage() {
 
   if (!tournamentId) {
     // The tournament itself still loading is a wait, not "no tournament" (the settings' own words).
-    return <div className={repKit.page}>{tournamentLoading ? <LoadingState label="Loading notification settings…" /> : <p className={styles.quiet}>{W.noTournament}</p>}</div>;
+    return <div className={repKit.page}>{tournamentLoading ? <LoadingState label={W.loading} /> : <p className={styles.quiet}>{W.noTournament}</p>}</div>;
   }
 
   const rowsFor = (list: NotificationEventType[]) => list.map(et => (
@@ -138,7 +138,7 @@ export default function TournamentNotificationPreferencesPage() {
       {loadError ? (
         <LoadFailed title={loadError} onRetry={() => void load()} />
       ) : loading ? (
-        <LoadingState label="Loading notification settings…" />
+        <LoadingState label={W.loading} />
       ) : (
         <>
           <div className={styles.card}>

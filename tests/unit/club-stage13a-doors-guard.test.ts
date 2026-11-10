@@ -56,7 +56,8 @@ describe('A1 · one "not yours" screen', () => {
     ['components/admin/kit/club/MembersKit.tsx', /<NotYours page="members" title=\{pageTitle\} \/>/],
     ['app/[orgSlug]/admin/schedules/page.tsx', /<NotYours page="schedules" \/>/],
     ['app/[orgSlug]/admin/calendar/page.tsx', /<NotYours page="calendar" \/>/],
-    ['app/[orgSlug]/admin/org/page.tsx', /<NotYours page="organization" \/>/],
+    // Organization's door (and a Tournament plan's Settings & access) is the shared `TabsDoor` (navigation Phase 2 Part B).
+    ['components/admin/kit/club/TabsDoor.tsx', /<NotYours page="organization" \/>/],
   ];
 
   for (const [file, screen] of SITES) {
@@ -172,10 +173,12 @@ describe('A2 · Organization lists the doors the person holds, as its tabs', () 
 
   it('the door reads the shared list, sends the person to their first tab, and never lists a tile by hand', () => {
     const door = readCode('app/[orgSlug]/admin/org/page.tsx');
-    assert.match(door, /useOrgTabs\(\)/);
-    assert.match(door, /tabs\[0\]\?\.href/);
-    assert.match(door, /router\.replace\(first\)/);
-    assert.match(door, /<NotYours page="organization" \/>/);
+    assert.match(door, /<TabsDoor tabs=\{useOrgTabs\(\)\.tabs\}/);
+    // The door's rule, shared with a Tournament plan's Settings & access (navigation Phase 2 Part B): `TabsDoor`.
+    const shared = readCode('components/admin/kit/club/TabsDoor.tsx');
+    assert.match(shared, /tabs\?\.\[0\]\?\.href/);
+    assert.match(shared, /router\.replace\(first\)/);
+    assert.match(shared, /<NotYours page="organization" \/>/);
     assert.doesNotMatch(door, /Manage org members|label: 'Tournaments'|label: 'PDF settings'|className="card/, 'no tile left');
     assert.doesNotMatch(door, /Lock\b|rowLocked/, 'locked tiles are never added');
   });

@@ -1,0 +1,436 @@
+<title>The Page In The Strip</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Navigation across the three portals · Phase 2, Part B · Owner QA Ledger §509</span>
+    <h1>The strip names the page; the organization’s screens get their own sidebar</h1>
+    <p class="lead">On a computer, a tournament page is now named in the top strip (“Divisions”, “Teams”), with the event’s dates and phase at the strip’s right end, and the page’s own big title steps aside. The event’s sidebar lists the event’s pages only, ending with “Your notifications”. The organization’s screens wear the organization’s own sidebar: in a tournament-only organization, Settings &amp; access becomes tabs (Members · Payouts · PDF settings · Web address); in a club, those settings live only in the club portal. Four walks, one purpose each. About 30 minutes.</p>
+    <p class="lead">Written Nov 10, 2026 against the dev site. Nothing here is real data: the club, the organization and their events are test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Walks 1 and 4</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code><br>The owner of <b>UAT Rep Club</b> (a club), which runs five tournaments.</dd>
+      <dt>Walks 2 and 3</dt><dd><code>uat-owner@uat-test-org.local</code> (the owner of <b>UAT Test Org</b>, a tournament-only organization) and, for one step, <code>uat-admin@uat-test-org.local</code> (an admin who is not the owner); both <code>UATPassword2026!</code>.</dd>
+      <dt>Phone</dt><dd>Steps marked <b>phone</b> use your desk browser’s device toolbar at <b>390 px</b> wide. The phone is unchanged in this part, apart from the two things named in its steps.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Sign out before each new person, or use a private window per person.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>No script to run.</b> Every step uses the test data as it stands.</li>
+      <li><b>Walk the parts in order, 1 to 4.</b> Each opens with a stop check.</li>
+      <li>The drawings these screens were built to: <a href="https://claude.ai/artifact/S7XXbtLwNeZUjEWXzbUcw4">tabs 5, 14 and 15</a>.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>With scripts off (exactly what the server sends), every tournament page and organization screen in this walk already shows its final strip, sidebar head, lit row and title, for the club and the tournament-only organization, at 1440, 1366 and 390 wide. Nothing about the place changes after the page loads.</li>
+      <li>Exactly one title per screen at each width: the strip’s on a computer, the page’s own on a phone.</li>
+      <li>The layout check on the tournament pages, the Settings &amp; access tabs, the event’s Your notifications page and the club’s Tournaments list at 1440 and 1366: no new findings.</li>
+      <li>An old club link to a tournament settings address opens the club’s own page and keeps its search (for example a billing email’s <code>?keep_plan=1</code>).</li>
+      <li>The tab title uses the sidebar’s words, and the organization’s own screens no longer carry the event’s name.</li>
+      <li>Typecheck, lint, spelling, the demos check and 750+ navigation and billing tests pass.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: does the strip read as the page’s name, do the organization’s screens feel like their own place, and does every setting have one obvious home?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "nav-phase2b-walk-v1";
+  var PAGE = "Navigation across the three portals · Phase 2, Part B · Owner QA Ledger §509";
+  var WALKS = [
+ {
+  "id": "B1",
+  "title": "The strip names the page",
+  "job": "UAT Rep Club · owner · computer, 1440 wide",
+  "forText": "A tournament page on a computer: the strip says which page you are on, the event’s dates and phase sit at its right end, and the page’s big title has stepped aside.",
+  "passes": "Every tournament page is named in the strip in the sidebar’s own word, with the dates and the phase chip just before View site; no big title on the page; the page’s buttons and its “?” keep the right end of its top row, the “?” last; on a narrower window the dates give way first; the phone looks as it did.",
+  "notIn": "The sidebar’s rows (walk 2 for its new last row), the organization’s screens (walks 3 and 4).",
+  "who": "uat-club-owner@uat-rep-club.local",
+  "where": "localhost:3000/uat-rep-club/admin/tournaments/divisions on a computer, in UAT Rep Club Invitational 2026.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in and open <b>Divisions<\/b> in <b>UAT Rep Club Invitational 2026<\/b>.",
+    "s": "The top strip reads <b>EVENTS<\/b> over the sidebar, then <b>Divisions<\/b> in bold, and at its right end, before View site, the dates <b>Nov 1–3, 2026<\/b> and a red <b>GAME DAY<\/b> chip, with one thin line between them and View site. There is <b>no<\/b> big “Divisions” title on the page itself. If the strip says the event’s name instead, stop and tell me."
+   },
+   {
+    "d": "Look at the page’s top row.",
+    "s": "The <b>Add division<\/b> button and the round <b>?<\/b> sit at the right end of the row, the “?” last. Nothing else is in the row."
+   },
+   {
+    "d": "Click through <b>Teams<\/b>, <b>Schedule<\/b>, <b>Results<\/b>, <b>Event settings<\/b> and <b>Public site<\/b> in the sidebar.",
+    "s": "Each time the strip’s name changes to the row you clicked, in the same word (“Results”, not “Results &amp; scoring”), the lit row matches, and the dates and chip stay at the right end. No page shows a second, bigger title."
+   },
+   {
+    "d": "Open the <b>Dashboard<\/b>.",
+    "s": "The strip says <b>Dashboard<\/b>; the event’s name is in the sidebar’s cell, not the strip."
+   },
+   {
+    "d": "Look at the browser tab’s title on Teams, then on Public site.",
+    "s": "“Teams – UAT Rep Club Invitational 2026 – UAT Rep Club – FieldLogicHQ” and “Public site – …”: the sidebar’s words (it used to say “Registrations” and “Tournament branding”)."
+   },
+   {
+    "d": "Make the window narrower, to about 1050 px wide (or use the device toolbar).",
+    "s": "The dates and chip disappear from the strip first; the page’s name stays whole. At full width they come back."
+   },
+   {
+    "d": "Click the event’s cell and pick <b>UAT Rep Club Spring Classic 2026<\/b>.",
+    "s": "You stay on the same page; the strip’s name is unchanged and its right end now shows the Spring Classic’s dates and its own phase (the same words the list shows)."
+   },
+   {
+    "d": "<b>Phone<\/b> (390 px): open Divisions again.",
+    "s": "Unchanged from before this part: the top bar names the event with its dates and chip, and the page keeps its own <b>Divisions<\/b> title."
+   }
+  ]
+ },
+ {
+  "id": "B2",
+  "title": "The event’s sidebar and Your notifications",
+  "job": "Both owners · computer and phone",
+  "forText": "The event’s sidebar lists the event’s pages only. Settings &amp; access and Tournaments left it; the event’s own mute page is its last row.",
+  "passes": "Under Admin there is one row, “Your notifications”, on a computer and in the phone’s More sheet; the page it opens is titled “Your notifications”; the Tournaments list is reached from the cell’s list.",
+  "notIn": "What Settings &amp; access looks like now (walks 3 and 4).",
+  "who": "uat-club-owner@uat-rep-club.local, then uat-owner@uat-test-org.local.",
+  "where": "Any tournament page, computer then phone.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: as the UAT Rep Club owner, on a computer, look at the bottom of the event’s sidebar.",
+    "s": "Under <b>ADMIN<\/b> there is exactly one row: <b>Your notifications<\/b>, with a bell. There is <b>no<\/b> Settings &amp; access row and <b>no<\/b> Tournaments row."
+   },
+   {
+    "d": "Click <b>Your notifications<\/b>.",
+    "s": "The strip says <b>Your notifications<\/b>; the page offers “Mute everything from this tournament” and the “Tell me when” switches, and the row is lit."
+   },
+   {
+    "d": "Click the event’s cell at the top of the sidebar, then <b>All tournaments<\/b>.",
+    "s": "The Tournaments list opens (walk 4 looks at it). That is now the way from an event to the list."
+   },
+   {
+    "d": "<b>Phone<\/b> (390 px): open a tournament page and its <b>More<\/b> sheet.",
+    "s": "The sheet still has its Tournaments row and now also <b>Your notifications<\/b>; in this club it has <b>no<\/b> Settings &amp; access row. These are the phone’s only two changes in this part."
+   },
+   {
+    "d": "As <code>uat-owner@uat-test-org.local<\/code>, on a computer, open a tournament page.",
+    "s": "The same: Admin holds only <b>Your notifications<\/b>."
+   }
+  ]
+ },
+ {
+  "id": "B3",
+  "title": "A tournament-only organization’s own screens",
+  "job": "UAT Test Org · owner, then admin · computer and phone",
+  "forText": "An organization that only runs tournaments: its list and its settings wear the organization’s short sidebar, and Settings &amp; access is a place with tabs.",
+  "passes": "The organization heads the sidebar with Tournaments and Settings &amp; access as its rows; Settings &amp; access shows Members · Payouts · PDF settings · Web address as tabs (each person sees only theirs); Web address shows the address and only the owner can change it; nothing names an event on these screens.",
+  "notIn": "Changing the web address for real (it breaks every link, so do not save it).",
+  "who": "uat-owner@uat-test-org.local, then uat-admin@uat-test-org.local.",
+  "where": "localhost:3000/uat-test-org/admin/tournaments/manage on a computer.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as <code>uat-owner@uat-test-org.local<\/code> and open the Tournaments list (from an event: the cell, then All tournaments).",
+    "s": "The sidebar’s head is the <b>organization<\/b> (“UT” initials, <b>UAT Test Org<\/b>) with <b>no<\/b> arrow; under it just two rows, <b>Tournaments<\/b> (lit) and <b>Settings &amp; access<\/b>; Plan &amp; billing in the foot. The strip reads <b>EVENTS<\/b> · <b>Tournaments<\/b>, with no dates. If an event heads the sidebar here, stop and tell me."
+   },
+   {
+    "d": "Click <b>Settings &amp; access<\/b>.",
+    "s": "It opens straight onto <b>Members<\/b>. The strip says <b>Settings &amp; access<\/b>; a tab row under it reads <b>Members · Payouts · PDF settings · Web address<\/b> (Payouts only if online payments are on here), with Members lit. The page has no second “Members” title; its buttons (Audit log, Export, Invite) are on its top row."
+   },
+   {
+    "d": "Click the <b>PDF settings<\/b> tab, then <b>Web address<\/b>.",
+    "s": "PDF settings: the organization’s PDF form, under the same tab row. Web address: one card with “fieldlogichq.ca/uat-test-org”, the line “The start of every link to your tournaments.”, a lime <b>Change the address<\/b> button, and the “?” at the right end of the top row."
+   },
+   {
+    "d": "Press <b>Change the address<\/b>, look at the window, then <b>Cancel<\/b> (do not save).",
+    "s": "Today’s web address window opens and closes; nothing changed."
+   },
+   {
+    "d": "On the Members tab, press <b>Audit log<\/b>.",
+    "s": "The strip shows “← Members” and <b>Audit log<\/b>; the sidebar still lights Settings &amp; access."
+   },
+   {
+    "d": "Click <b>Plan &amp; billing<\/b> in the foot.",
+    "s": "The strip says <b>Plan &amp; billing<\/b>; the foot row is lit and Settings &amp; access is not."
+   },
+   {
+    "d": "Look at the browser tab on Members and on the Tournaments list.",
+    "s": "“Members – UAT Test Org – FieldLogicHQ” and “Tournaments – UAT Test Org – FieldLogicHQ”: no event’s name on the organization’s screens."
+   },
+   {
+    "d": "<b>Phone<\/b> (390 px): open Settings &amp; access from the More sheet.",
+    "s": "The top bar names <b>Settings &amp; access<\/b> with the same tab row, as the club’s Organization tabs do on a phone."
+   },
+   {
+    "d": "Sign in as <code>uat-admin@uat-test-org.local<\/code> and open Settings &amp; access › Web address.",
+    "s": "The tabs are this admin’s own (no Payouts); the card shows the address with <b>Owner only<\/b> in place of the button."
+   }
+  ]
+ },
+ {
+  "id": "B4",
+  "title": "A club keeps one home for each setting",
+  "job": "UAT Rep Club · owner · computer, then the demos",
+  "forText": "In a club, the organization’s settings live only in the club portal: the tournament side has no Settings &amp; access, the club’s Tournaments list wears the club’s sidebar, and an old link lands on the club’s own page.",
+  "passes": "The club’s Tournaments list shows the club’s sidebar with the foot’s Tournaments door lit and the strip saying CLUB; Members and PDF settings are reached only in Organization; an old tournament settings address opens the club’s own page; the demos still run.",
+  "notIn": "A tournament-only organization (walk 3).",
+  "who": "uat-club-owner@uat-rep-club.local, then no sign-in for the demos.",
+  "where": "localhost:3000/uat-rep-club/admin on a computer.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: from the club’s Overview, click <b>Tournaments<\/b> in the sidebar’s foot.",
+    "s": "It opens the club’s <b>Tournaments list<\/b> (it used to open an event’s Dashboard). The sidebar is the club’s own (Overview, Calendar … Organization) with the foot’s <b>Tournaments<\/b> row lit; the strip reads <b>CLUB<\/b> · <b>Tournaments<\/b>."
+   },
+   {
+    "d": "Open an event from the list, then use the cell’s <b>All tournaments<\/b> to come back.",
+    "s": "In the event, the event heads the sidebar; back on the list, the club does again. With the keyboard (Tab to the cell, Enter, arrow to All tournaments, Enter) the focus ring lands on the club’s cell at the top, not lost on the page."
+   },
+   {
+    "d": "Open <b>Organization<\/b> in the sidebar.",
+    "s": "Members, Audit log, Settings, Venue library and PDF settings are its tabs. This is the only home for them in a club."
+   },
+   {
+    "d": "Type the old address <code>localhost:3000/uat-rep-club/admin/tournaments/settings/members<\/code> into the address bar.",
+    "s": "It opens the club’s <b>Organization › Members<\/b> page, under the club’s sidebar. (Old links and bookmarks land at home; no button in the tournaments sends you there.)"
+   },
+   {
+    "d": "No sign-in: open <code>localhost:3000/demos<\/code>, then the tournament demo’s admin.",
+    "s": "The strip names the page you’re on with the demo event’s dates and phase; the sidebar has no Admin heading and no Settings &amp; access (the demo hides them); the tour still runs."
+   },
+   {
+    "d": "Open the coach demo.",
+    "s": "Looks as it did before."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "B1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "D1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "B1" }; save(); render();
+  });
+  render();
+})();
+</script>

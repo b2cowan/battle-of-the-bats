@@ -205,14 +205,17 @@ export function archiveQuestion(label: string): { title: string; body: string; a
 
 // ── Notifications ─────────────────────────────────────────────────────────────────────────────────────────────────
 export const NOTIFY_WORDS = {
-  title: 'Tournament notifications',
+  /** ONE name for the page and its door, the event sidebar's last row (navigation Phase 2 Part B, T2; /marketing 2026-11-10:
+   *  "Your" says it is the person's, not the event's — never "Notification settings", the account's universal page). */
+  title: 'Your notifications',
   mute: 'Mute everything from this tournament',
   muteCaption: 'You’ll still get emails your account settings ask for',
   tellMeWhen: 'Tell me when',
   mentions: '@mentions always reach you, even with chat messages turned off.',
   manage: 'Manage what you receive everywhere',
   noTournament: 'No tournament selected.',
-  loadFailed: 'Your notification settings didn’t load.',
+  loadFailed: 'Your notifications didn’t load.',
+  loading: 'Loading your notifications…',
   saveFailed: 'Couldn’t save',
 } as const;
 

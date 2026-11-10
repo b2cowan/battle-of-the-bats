@@ -283,9 +283,11 @@ describe('curated surfaces (S6)', () => {
     // settings forms. `settings` is the Settings & Access hub and carries three of the four.
     // ⚰ `data-tools` left with its page (Tournament admin redesign Stage 5, E10, A59): Data tools retired, each import
     // now on Teams' Export and the schedule's Tools — whether a demo hides those doors is the /demos session's call.
+    // `settings/notifications` (navigation Phase 2 Part B, 2026-11-10): the event's own mute page left the hub for the event's
+    // sidebar ("Your notifications", T2) and stays hidden, as it was behind the hub — a visitor has nothing to mute.
     assert.deepEqual(
       [...SANDBOX_HIDDEN_TOURNAMENT_NAV_KEYS].sort(),
-      ['settings', 'settings/event'],
+      ['settings', 'settings/event', 'settings/notifications'],
     );
   });
 

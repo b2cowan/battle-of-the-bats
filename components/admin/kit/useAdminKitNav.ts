@@ -13,11 +13,12 @@ import { isStandaloneCoachOwner } from '@/lib/coach-billing-access';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
-import { isTournamentTier } from '@/lib/billing-urls';
+import { isTournamentTier, orgSettingsOnTournamentSide } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, type KitLink } from '@/lib/admin-kit-nav';
-import { kitTournamentGroups } from './kit-tournament-groups';
+import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, isTournamentEventPath, tournamentSettingsTabs, canOpenPdfSettings, type KitLink, type PlaceTab } from '@/lib/admin-kit-nav';
+import { deskTournamentGroups, kitTournamentGroups } from './kit-tournament-groups';
+import type { TourGroup } from '../admin-nav-config';
 import { useClubBrief } from './club/ClubBriefProvider';
 
 /**
@@ -44,7 +45,25 @@ export function useOrgLinks() {
     hasVenueLibrary: hasOrgVenueLibrary(currentOrg?.planId),
     isTeamWorkspace,
   });
-  return { orgSlug, base, isCanceled, isTeamWorkspace, orgLinks };
+  return { orgSlug, base, isCanceled, isTeamWorkspace, orgLinks, canSeeMembers };
+}
+
+/**
+ * A Tournament-plan organization's Settings & access tabs for this person (navigation Phase 2 Part B, E3 + P1), or null on
+ * every other plan, where those settings live in the club portal (P2). The sidebar's row and the header's place read it.
+ * The demo sandbox has none: its staff, PDF, address and payout corners are the curated "hide the entry point" ones
+ * (`lib/sandbox-curation.ts` — the event sidebar's `settings` row was hidden there for the same reason).
+ */
+export function useTournamentSettingsTabs(): PlaceTab[] | null {
+  const { currentOrg, userRole, tournamentPayoutsTab } = useOrg();
+  const { base, isCanceled, canSeeMembers } = useOrgLinks();
+  const isSandbox = useIsSandbox();
+  if (!currentOrg || isCanceled || isSandbox || !orgSettingsOnTournamentSide(currentOrg)) return null;
+  return tournamentSettingsTabs(base, {
+    members: canSeeMembers,
+    payouts: tournamentPayoutsTab,
+    pdf: canOpenPdfSettings(userRole),
+  });
 }
 
 /** The person's Organization tabs — the pinned bar's, Organization's frame's and the `/org` door's one list. */
@@ -114,9 +133,13 @@ export function useAdminKitNav() {
     isStandaloneCoachOwner(currentOrg, userRole, userCapabilities));
   // The tournament's groups as this person sees them, every row's address resolved ONCE. Every row is an event page:
   // the club's Accounting book is not one (owner 2026-10-30 — a tournament admin manages payments on Teams).
-  const tournamentGroups = kitTournamentGroups({
-    status: currentTournament?.status, isSandbox, role: userRole, planId: currentOrg?.planId,
-  }).map(g => ({ ...g, items: g.items.map(i => ({ ...i, href: i.href ?? `${base}/tournaments/${i.key}` })) }));
+  const groups = kitTournamentGroups({
+    status: currentTournament?.status, isSandbox, role: userRole, planId: currentOrg?.planId, accountKind: currentOrg?.accountKind,
+  });
+  const withHrefs = (list: TourGroup[]) =>
+    list.map(g => ({ ...g, items: g.items.map(i => ({ ...i, href: i.href ?? `${base}/tournaments/${i.key}` })) }));
+  // PHASE-3: the phone's More sheet list; the computer reads `deskTournamentGroups` below.
+  const tournamentGroups = withHrefs(groups);
 
   // ⚖ 13i Session B: the club's places in their groups (Organization one place, its pages its tabs), built ONCE — the
   // sidebar and the More sheet read this list. None for a tournament-only organization (its flat Account list) or a
@@ -126,11 +149,18 @@ export function useAdminKitNav() {
   });
   const litPlace = litClubPlace(pathname, base, billingLink);
   const onTournaments = pathname.startsWith(`${base}/tournaments`);
+  // ⚖ An organization's tournament screens (the list, Settings & access and its tabs, Plan & billing) wear the
+  // ORGANIZATION's sidebar, never the event's (navigation Phase 2 Part B; E3, T1): `isTournamentOrgScreen`, the one list.
+  const inEvent = isTournamentEventPath(pathname, base);
   // The guide for where you are, in a new tab — the phone's More sheet foot (N7) and the demo sandbox's sidebar foot; on a
   // desktop outside the sandbox it is the account menu's Help row (E16), which reads the same answer.
   const helpHref = adminHelpHref(pathname, base);
   // ⚖ THE OTHER PORTALS (E4, navigation Phase 1): one list, the rail's foot and the sheet's You read it.
+  // PHASE-3: the phone's list; delete with the phone twins once the phone bar names the page.
   const portalDoors = kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor: order.door, canUse, coachDoor });
+  // The computer's foot (navigation Phase 2 Part B, T1): an organization's tournament screen wears the club's own foot, and
+  // there the Tournaments door opens the list it lights. The phone's More sheet keeps `portalDoors` until Phase 3.
+  const deskPortalDoors = kitPortalDoors({ base, onTournaments: inEvent, tournamentOnly, isCanceled, tournamentsDoor: order.door, canUse, coachDoor, desk: true });
 
   return {
     pathname,
@@ -160,7 +190,12 @@ export function useAdminKitNav() {
     schedulesLink,
     coachDoor,
     portalDoors,
+    deskPortalDoors,
     tournamentGroups,
+    /** The event's sidebar on a computer: its own pages, "Your notifications" last (Part B, T2). The phone keeps `tournamentGroups`. */
+    deskTournamentGroups: withHrefs(deskTournamentGroups(groups)),
     onTournaments,
+    /** On one of the event's own pages: the event heads the sidebar and the strip names the page. */
+    inEvent,
   };
 }

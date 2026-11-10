@@ -20,6 +20,7 @@
 import { Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { useDeskTitle } from './DeskNamedPage';
 import styles from './AdminPageHeader.module.css';
 
 /** One step of the eyebrow's path: a way back when it has an `href`, plain words when it does not. */
@@ -54,6 +55,9 @@ export default function AdminPageHeader({
   /** The way up, in the leading corner (the coach header's `backTo`, owner ruling 2026-08-26). */
   backTo?: { href: string; label: string };
 }) {
+  // ⚖ Navigation Phase 2 Part B (E2, P3): where the top strip names this page on a computer, the title (with its way up,
+  // eyebrow and chips) steps aside above 900px and the actions keep the row, the "?" last (E11). The phone keeps it all.
+  const deskNamed = useDeskTitle() !== null;
   const path = crumbs?.filter((c): c is AdminCrumb => !!c && !!c.label);
   const eyebrowContent = path?.length
     ? path.map((c, i) => (
@@ -64,7 +68,8 @@ export default function AdminPageHeader({
       ))
     : eyebrow;
   return (
-    <div className={styles.header} data-actions-inline={inlineActions || undefined}>
+    <div className={styles.header} data-actions-inline={inlineActions || undefined}
+      data-desk-named={deskNamed ? (actions ? 'actions' : 'empty') : undefined}>
       <div className={styles.left}>
         {backTo && (
           <>

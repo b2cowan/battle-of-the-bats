@@ -319,9 +319,11 @@ describe('the admin kit nav — one model, two navs', () => {
   });
 
   it('the tournament groups are built once — the rail and the bar read them, neither re-filters', () => {
-    for (const file of ['components/admin/kit/AdminKitRail.tsx', 'components/admin/kit/AdminKitBottomNav.tsx']) {
+    // ⚖ Navigation Phase 2 Part B (2026-11-10): the computer's rail reads the event's own rows (`deskTournamentGroups`, built
+    // from the same groups in the same hook); the phone's More sheet keeps `tournamentGroups` until Phase 3.
+    for (const [file, groups] of [['components/admin/kit/AdminKitRail.tsx', /deskTournamentGroups/], ['components/admin/kit/AdminKitBottomNav.tsx', /tournamentGroups/]] as const) {
       const code = readCode(file);
-      assert.match(code, /tournamentGroups/, `${file} must read the shared tournament groups`);
+      assert.match(code, groups, `${file} must read the shared tournament groups`);
       assert.doesNotMatch(code, /isNavKeyHiddenInSandbox|\.roles\b/, `${file} re-applies a sandbox or role filter of its own`);
     }
   });

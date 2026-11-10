@@ -140,16 +140,19 @@ describe('A75 · the web address: Settings & access\'s fourth door, one name', (
     assert.match(page, /\{WA\.publicUrlLead\(currentOrg\?\.slug \?\? ''\)\} <Link href=\{webAddressHref\}/);
   });
   it('a tournament plan links to Settings & access; League and Club to the organization\'s Settings', () => {
-    assert.equal(getWebAddressHref('x', 'tournament'), '/x/admin/tournaments/settings');
-    assert.equal(getWebAddressHref('x', 'tournament_plus'), '/x/admin/tournaments/settings');
+    // Its own tab of Settings & access since navigation Phase 2 Part B (P1, 2026-11-10).
+    assert.equal(getWebAddressHref('x', 'tournament'), '/x/admin/tournaments/settings/web-address');
+    assert.equal(getWebAddressHref('x', 'tournament_plus'), '/x/admin/tournaments/settings/web-address');
     assert.equal(getWebAddressHref('x', 'league'), '/x/admin/org/settings');
     assert.equal(getWebAddressHref('x', 'club'), '/x/admin/org/settings');
   });
-  it('Settings & access shows the door on the tournament plans only — owner opens it, anyone else reads Owner only', () => {
-    const hub = code('app/[orgSlug]/admin/tournaments/settings/page.tsx');
-    assert.match(hub, /\.\.\.\(isTournamentTier\(currentOrg\?\.planId\) \? \[\{\n\s+onOpen: \(\) => setAddressOpen\(true\),\n\s+icon: Globe,\n\s+title: WA\.name,/);
-    assert.match(hub, /meta: isOwner \? WA\.doorAction : WA\.ownerOnly,\n\s+enabled: isOwner,/);
-    assert.match(hub, /\{addressOpen && isOwner && currentOrg && \(/);
+  it('Settings & access’s Web address tab, on the tournament plans only — owner opens the window, anyone else reads Owner only', () => {
+    // ⚖ Navigation Phase 2 Part B (P1, 2026-11-10): the card page's fourth door became the place's fourth tab.
+    const tab = code('app/[orgSlug]/admin/tournaments/settings/web-address/WebAddressTab.tsx');
+    assert.match(tab, /\{isOwner\s*\? <button type="button" className="btn btn-lime" onClick=\{\(\) => setOpen\(true\)\} aria-haspopup="dialog">\{WA\.doorAction\}<\/button>\s*: <span className=\{styles\.addressOwnerOnly\}>\{WA\.ownerOnly\}<\/span>\}/);
+    assert.match(tab, /\{open && isOwner && currentOrg && \(/);
+    // A club's web address is its organization's Settings (P2): the tab's address sends it there.
+    assert.match(code('app/[orgSlug]/admin/tournaments/settings/web-address/page.tsx'), /export default tournamentSideOnly\(WebAddressTab, 'org\/settings'\);/);
   });
   it('its window asks once more, naming both addresses, and the server is unchanged', () => {
     const win = code('app/[orgSlug]/admin/tournaments/settings/WebAddressWindow.tsx');

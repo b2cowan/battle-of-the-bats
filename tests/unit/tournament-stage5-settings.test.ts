@@ -151,10 +151,12 @@ describe('notifications and the hub (E6, F31)', () => {
     assert.match(page, /<SavePill /);
     assert.match(page, /NOTIFICATION_EVENT_LABELS\[et\]/);
   });
-  it('the settings hub gains its "?" and keeps its three cards', () => {
-    const hub = code('app/[orgSlug]/admin/tournaments/settings/page.tsx');
-    assert.match(hub, /<HelpButton help=\{SETTINGS_HELP\}/);
-    assert.match(hub, /title: 'Staff & access'/);
-    assert.match(hub, /title: 'Notification preferences'/);
+  it('Settings & access is a door to its first tab; its "?" moved to the tabs (navigation Phase 2 Part B, E3 + E11)', () => {
+    // ⚰ The card page retired 2026-11-10: Staff & access → the Members tab, Notification preferences → the event sidebar's
+    // "Your notifications" (T2), Web address → its own tab (P1). A club's address goes to its Organization (P2).
+    assert.match(code('app/[orgSlug]/admin/tournaments/settings/SettingsAccessDoor.tsx'), /<TabsDoor tabs=\{useTournamentSettingsTabs\(\)\}/);
+    assert.match(code('components/admin/kit/club/TabsDoor.tsx'), /const first = ready \? tabs\?\.\[0\]\?\.href \?\? null : null;/);
+    assert.match(code('app/[orgSlug]/admin/tournaments/settings/page.tsx'), /export default tournamentSideOnly\(SettingsAccessDoor, 'org'\);/);
+    assert.match(code('app/[orgSlug]/admin/tournaments/settings/web-address/WebAddressTab.tsx'), /<HelpButton help=\{SETTINGS_ACCESS_HELP\}/);
   });
 });

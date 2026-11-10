@@ -1787,7 +1787,10 @@ export const SCREENS = [
     ['/communication', 'admin-t-communication'],
     ['/divisions', 'admin-t-divisions'], ['/manage', 'admin-t-manage'],
     ['/registrations', 'admin-t-registrations'], ['/results', 'admin-t-results'], ['/rules', 'admin-t-rules'],
-    ['/schedule', 'admin-t-schedule'], ['/settings', 'admin-t-settings'], ['/settings/event', 'admin-t-settings-event'],
+    ['/schedule', 'admin-t-schedule'], ['/settings/event', 'admin-t-settings-event'],
+    // ⚰ '/settings' (the Settings & access card page) retired 2026-11-10 (navigation Phase 2 Part B, E3): it is the door to its
+    // first tab now; Web address is the tab that took its fourth card (P1).
+    ['/settings/web-address', 'admin-t-settings-web-address'],
     ['/settings/members/audit', 'admin-t-settings-audit'],
     ['/settings/notifications', 'admin-t-settings-notifications'], ['/settings/pdf', 'admin-t-settings-pdf'],
     // Registration questions' page retired into Event settings' card (Stage 5 addendum, A74): its old address redirects.

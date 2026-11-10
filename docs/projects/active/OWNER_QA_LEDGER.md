@@ -28194,3 +28194,11 @@ performed over the shared working tree. The original walk result is not claimed 
 **Open owner steps (not part of this walk):** at the promote, migration 460 goes to production BEFORE the code, then the one-time pass `scripts/backfill-org-logo-aspect.mjs --prod --write` (now organizations and events), with the owner's yes.
 **Result:** owed.
 <!-- /§508 -->
+## §509 · Navigation across the three portals · Phase 2, Part B — **on a computer the top strip names the tournament page (the sidebar's word) with the event's dates and phase at its right end, and the page's own title steps aside; the event's sidebar ends with "Your notifications"; the organization's screens wear the organization's own sidebar (a tournament-only organization's Settings & access = tabs Members · Payouts · PDF settings · Web address; a club keeps one home per setting in the club portal)** · built 2026-11-10 · walk owed
+<!-- §509 -->
+**Walk published 2026-11-10:** https://claude.ai/artifact/6b4BCkFNxB8RDnWq64cUDs (source `docs/projects/active/ADMIN_NAV_PHASE2B_WALK.html`, built by `.probe/nav-phase2b/build-walk.cjs`); 4 walks, 28 checks. Build: navigation Phase 2 Part B, to the approved drawings https://claude.ai/artifact/S7XXbtLwNeZUjEWXzbUcw4 (tabs 5, 14, and tab 15 drawn at this gate); rulings E2, E3, E11, T1, T2 and the Part B gate's P1–P3 (plan `ADMIN_NAV_EVALUATION_PLAN.md` §4 and §5 Phase 2).
+**Sign-in:** the UAT Rep Club owner (`uat-club-owner@uat-rep-club.local`), the tournament organization's owner and admin (`uat-owner@` / `uat-admin@uat-test-org.local`); all `UATPassword2026!`. The demos need no sign-in. No fixture script.
+**Not walked (proved by the build's own measurements and tests):** the server's paint with scripts off against every change after load, for 19 screens × 1440 / 1366 / 390 across both kinds of organization (`.probe/nav-phase2b/firstpaint.mjs`, runs `run1`–`run4t`): one place state each; one title per width; the layout check on the changed screens at 1440 and 1366; an old club link keeping its search across the move (`redirect.mjs`); the tab title in the sidebar's words.
+**Open owner steps (not part of this walk):** none new. The T6 call (§508) is still open.
+**Result:** owed.
+<!-- /§509 -->

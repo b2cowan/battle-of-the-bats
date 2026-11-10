@@ -44,6 +44,7 @@ import { PLAN_BILLING_TITLE } from './plan-billing-title';
 import { seasonPageHref, seasonPagesFor, type SeasonPageKey } from './house-league-season';
 import type { HouseLeagueAccess } from './house-league-access';
 import { LEAGUE_TIME_WORDS } from './league-time';
+import { WEB_ADDRESS_WORDS } from './web-address-words';
 
 export type AdminProgramKey =
   | 'rep-teams'
@@ -239,10 +240,14 @@ export function clubTournamentsDoor(
  * "Club overview" row). Tournaments: in the club, once it hosts one (`clubTournamentsDoor`; never the director's, whose row
  * it is) and only for someone who can open it. A tournament-only organization has no club to go back to; a cancelled club
  * has no rail or bar at all. The Coaches Portal door is the person's own (`coachDoorFor`).
+ * ⚖ `desk` (navigation Phase 2 Part B, T1, owner 2026-11-10): on a computer the Tournaments door opens the Tournaments LIST,
+ * and lights there (the club's list wears the club's own sidebar). The phone's door keeps opening the chosen event (Phase 3).
  */
-export function kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor, canUse, coachDoor }: {
+export function kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor, canUse, coachDoor, desk = false }: {
   base: string;
+  /** On one of the event's own pages (the computer's foot) or anywhere under Tournaments (the phone's). */
   onTournaments: boolean;
+  desk?: boolean;
   tournamentOnly: boolean;
   isCanceled: boolean;
   /** `clubTournamentsDoor(...).door`: the club hosts a tournament and this person is not its director. */
@@ -254,7 +259,8 @@ export function kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled
   const doors: (KitLink | null)[] = [
     club && onTournaments ? { key: 'club', label: 'Club', href: base, icon: Shield } : null,
     club && !onTournaments && tournamentsDoor && canUse('module_tournaments')
-      ? { key: 'tournaments', label: 'Tournaments', href: `${base}/tournaments`, icon: Trophy } : null,
+      ? { key: 'tournaments', label: 'Tournaments', href: desk ? `${base}/tournaments/manage` : `${base}/tournaments`, icon: Trophy,
+        ...(desk ? { also: [`${base}/tournaments/archives`] } : {}) } : null,
     coachDoor.show ? { key: 'coaches-portal', label: 'Coaches Portal', href: coachDoor.href, icon: Users2 } : null,
   ];
   return doors.filter((d): d is KitLink => d !== null);
@@ -394,7 +400,6 @@ export function kitOrgLinks({
   isTeamWorkspace?: boolean;
 }): KitLink[] {
   const o = `${base}/org`;
-  const ownerOrAdmin = role === 'owner' || role === 'admin';
   const links: (KitLink | false)[] = [
     // A member card (N5, 2026-10-17): `Users2` is the Coaches Portal door's, and both sit on the phone's More sheet.
     !isCanceled && canSeeMembers && { key: 'org/members', label: membersLabel(isTeamWorkspace), href: `${o}/members`, icon: IdCard },
@@ -403,9 +408,14 @@ export function kitOrgLinks({
     !isCanceled && role === 'owner' && { key: 'org/audit', label: 'Audit log', href: `${o}/members/audit`, icon: ScrollText },
     !isCanceled && role === 'owner' && { key: 'org/settings', label: 'Settings', href: `${o}/settings`, exact: true, icon: Settings },
     !isCanceled && hasVenueLibrary && { key: 'org/venues', label: 'Venue library', href: `${o}/venues`, icon: MapPin },
-    !isCanceled && ownerOrAdmin && { key: 'org/pdf', label: 'PDF settings', href: `${o}/settings/pdf`, icon: FileText },
+    !isCanceled && canOpenPdfSettings(role) && { key: 'org/pdf', label: 'PDF settings', href: `${o}/settings/pdf`, icon: FileText },
   ];
   return links.filter((l): l is KitLink => Boolean(l));
+}
+
+/** PDF settings is the owner's or an admin's: the club's Organization tab and a Tournament plan's Settings & access tab. */
+export function canOpenPdfSettings(role: string | null | undefined): boolean {
+  return role === 'owner' || role === 'admin';
 }
 
 /* ⚰ The owner's LOCKED ROWS on the rail and the phone's More sheet (Club Stage 1 specimens 2–3,
@@ -773,6 +783,9 @@ export type ClubPlaceAccess = {
   opensPublicSite?: boolean;
   /** Plan & billing: the owner (BillingKit's "not yours"; the route sends a team workspace away). */
   opensBilling?: boolean;
+  /** A Tournament-plan organization's Settings & access tabs (`tournamentSettingsTabs`, navigation Phase 2 Part B, E3 + P1),
+   *  or null where the organization's settings live in the club portal (every other plan: P2, one home per setting). */
+  tournamentSettingsTabs?: readonly PlaceTab[] | null;
 };
 
 /** One of Phase 3's screens: a name and, for a record, its way back — no tab row (round 5). */
@@ -788,8 +801,20 @@ const flatPlace = (key: string, title: string, tabs: readonly PlaceTab[], active
 
 export function clubPlaceAt(pathname: string, base: string, {
   canUse, seasonAccess, orgTabs, runsRepTeams, hasPayouts, opensFamilies, opensPermits = false,
-  opensCalendar = false, opensSchedules = false, opensPublicSite = false, opensBilling = false,
+  opensCalendar = false, opensSchedules = false, opensPublicSite = false, opensBilling = false, tournamentSettingsTabs = null,
 }: ClubPlaceAccess): ClubPlaceAt | null {
+  // ⚖ A TOURNAMENT-ONLY ORGANIZATION'S SETTINGS & ACCESS IS A PLACE (navigation Phase 2 Part B, E3 + P1, owner 2026-11-09 /
+  // 2026-11-10): Members · Payouts · PDF settings · Web address as its tab row, as Organization is a club's. Only the person's
+  // own tabs; one tab draws no row. The audit log is a record page one level down, "← Members". The Settings & access address
+  // itself is the door to the first tab (its page), and Plan & billing is the foot's row, no tab (as a club's is).
+  const settingsAccess = `${base}/tournaments/settings`;
+  if (tournamentSettingsTabs && isAtOrUnder(pathname, settingsAccess) && isTournamentOrgScreen(pathname, base)) {
+    const membersTab = tournamentSettingsTabs.find(t => t.id === 'members');
+    if (membersTab && isAtOrUnder(pathname, `${membersTab.href}/audit`)) {
+      return namedScreen('tsettings-audit', 'Audit log', { back: { href: membersTab.href, label: membersTab.label } });
+    }
+    return flatPlace('tsettings', SETTINGS_ACCESS_TITLE, tournamentSettingsTabs, placeTabFor(tournamentSettingsTabs, pathname));
+  }
   // Permits (Club Tier 13c, C1 = A): a one-page place — the bar names it, and one tab draws no row.
   const permits = `${base}/permits`;
   if (isAtOrUnder(pathname, permits)) {
@@ -925,12 +950,77 @@ export function clubPlaceAt(pathname: string, base: string, {
  * Listed one by one, because `settings/` is not all the organization's: Event settings (`settings/event`), the event's own
  * Notifications (`settings/notifications`, "mute this tournament") and `settings/registration-fields` (a redirect into Event
  * settings) are the EVENT's. The list, archives, the Settings & access hub, Members, Plan & billing, Payouts, PDF settings
- * are the organization's.
+ * and Web address (Part B, P1) are the organization's. ⚖ Navigation Phase 2 Part B (E3, T1): these screens also take the
+ * ORGANIZATION'S sidebar — a club's own, or a tournament-only organization's short one — never the event's.
  */
-const TOURNAMENT_ORG_SCREENS = ['manage', 'archives', 'settings/members', 'settings/subscription', 'settings/payouts', 'settings/pdf'] as const;
+const TOURNAMENT_ORG_SCREENS = ['manage', 'archives', 'settings/members', 'settings/subscription', 'settings/payouts', 'settings/pdf', 'settings/web-address'] as const;
 export function isTournamentOrgScreen(pathname: string, base: string): boolean {
+  const path = pathname.replace(/\/+$/, '');
   const t = `${base}/tournaments`;
-  return pathname === `${t}/settings` || TOURNAMENT_ORG_SCREENS.some(s => isAtOrUnder(pathname, `${t}/${s}`));
+  return path === `${t}/settings` || TOURNAMENT_ORG_SCREENS.some(s => isAtOrUnder(path, `${t}/${s}`));
+}
+
+/** ⚖ One of the EVENT's own pages (navigation Phase 2 Part B): a tournament address that is not the organization's. The event
+ *  heads the sidebar there, the strip says "Events" and names the page, and the tab title carries the event's name. */
+export function isTournamentEventPath(pathname: string, base: string): boolean {
+  return isAtOrUnder(pathname.replace(/\/+$/, ''), `${base}/tournaments`) && !isTournamentOrgScreen(pathname, base);
+}
+
+/** The organization's Settings & access, on the Tournament plans: one name for its sidebar row, its place and its door. */
+export const SETTINGS_ACCESS_TITLE = 'Settings & access';
+
+/** Who may open which of a Tournament-plan organization's Settings & access tabs — each tab its page's own gate. */
+export type TournamentSettingsAccess = {
+  /** Members: the owner, or a role holding `module_members` on a plan that carries it (the sidebar's `canSeeMembers`). */
+  members: boolean;
+  /** Payouts: online payments are on, the person may see payouts, and the plan offers them or an account exists (the
+   *  payouts route's own gate, read by the admin layout's server so the tab row is right on the first paint). */
+  payouts: boolean;
+  /** PDF settings: `canOpenPdfSettings`, the club's Organization tab's own rule. */
+  pdf: boolean;
+};
+
+/**
+ * ⚖ A TOURNAMENT-ONLY ORGANIZATION'S SETTINGS & ACCESS TABS (navigation Phase 2 Part B; E3 as drawn, P1 = the fourth tab,
+ * owner 2026-11-10): Members · Payouts · PDF settings · Web address, the person's own only. Web address is everyone's who
+ * reaches the place (the owner changes it; anyone else reads it). Empty = no Settings & access row at all.
+ */
+export function tournamentSettingsTabs(base: string, access: TournamentSettingsAccess): PlaceTab[] {
+  const t = `${base}/tournaments/settings`;
+  const tabs: (PlaceTab | false)[] = [
+    access.members && { id: 'members', label: membersLabel(false), href: `${t}/members` },
+    access.payouts && { id: 'payouts', label: 'Payouts', href: `${t}/payouts` },
+    access.pdf && { id: 'pdf', label: 'PDF settings', href: `${t}/pdf` },
+  ];
+  const own = tabs.filter((x): x is PlaceTab => Boolean(x));
+  // The address alone is no reason to open the place: a person with none of its pages has no Settings & access.
+  return own.length ? [...own, { id: 'web-address', label: WEB_ADDRESS_WORDS.name, href: `${t}/web-address` }] : [];
+}
+
+/**
+ * ⚖ ONE LIT ROW IN THE EVENT'S SIDEBAR, and the strip names it (E2, navigation Phase 2 Part B): the row whose page this is,
+ * at any depth — the most specific key wins (`settings/event` over a shorter one), and Plan & billing, the foot's more
+ * specific door, takes the light from a row its page sits under. The sidebar lights it; the strip says its words.
+ */
+export function litTournamentRow(pathname: string, base: string, keys: readonly string[], billingLink: KitLink | null): string | null {
+  const t = `${base}/tournaments/`;
+  const lit = keys
+    .filter(key => isAtOrUnder(pathname.replace(/\/+$/, ''), `${t}${key}`))
+    .sort((a, b) => b.length - a.length)[0];
+  if (!lit) return null;
+  return isKitLinkActiveAmong(pathname, { key: lit, label: lit, href: `${t}${lit}` }, [billingLink]) ? lit : null;
+}
+
+/**
+ * ⚖ THE ORGANIZATION'S TOURNAMENT SCREENS THE STRIP NAMES ON A COMPUTER (E2 + E3 + T1, navigation Phase 2 Part B): the
+ * Tournaments list (archives goes to it), and Plan & billing on a Tournament plan. Settings & access is a place
+ * (`clubPlaceAt`). Null for any other address. The phone keeps naming the organization until Phase 3 (P3).
+ */
+export function tournamentOrgScreenName(pathname: string, base: string): string | null {
+  const t = `${base}/tournaments`;
+  if (isAtOrUnder(pathname, `${t}/manage`) || isAtOrUnder(pathname, `${t}/archives`)) return 'Tournaments';
+  if (isAtOrUnder(pathname, `${t}/settings/subscription`)) return PLAN_BILLING_TITLE;
+  return null;
 }
 
 /** The Organization tab a person without Members reads in its place: who runs the club, names and roles only (13a R1). */

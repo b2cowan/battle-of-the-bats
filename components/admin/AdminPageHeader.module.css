@@ -91,3 +91,12 @@
   .header[data-actions-inline] .actions { flex: none; flex-wrap: nowrap; gap: 0.4rem; margin-left: auto; }
   .header[data-actions-inline] .actions > :is(button, a) { min-width: var(--tap-min, 44px); justify-content: center; }
 }
+
+/* ⚖ THE STRIP NAMES THIS PAGE ON A COMPUTER (navigation Phase 2 Part B, E2 + P3, owner 2026-11-10; `DeskNamedPage.tsx`).
+   Above 900px the title, its way up, eyebrow and chips step aside — the strip's name is the page's one `<h1>` there — and the
+   actions keep the page's top row, at its right end with the "?" last (E11). A header with no actions draws nothing. At
+   900px and below the phone keeps the whole header until Phase 3. CSS at the sidebar's breakpoint, so nothing swaps. */
+@media (min-width: 901px) {
+  .header[data-desk-named] .left { display: none; }
+  .header[data-desk-named='empty'] { display: none; }
+}

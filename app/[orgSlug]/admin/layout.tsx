@@ -13,6 +13,10 @@ import { canOpenModule } from '@/lib/member-access';
 import { clubHasPayouts } from '@/lib/online-payouts';
 import { readClubShape } from '@/lib/club-shape-read';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
+import { isTournamentTier } from '@/lib/billing-urls';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { onlinePaymentsOn } from '@/lib/online-payments-switch';
+import { canSeePayouts } from '@/lib/online-payment-access';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import PlanPanelHost from '@/components/billing/PlanPanelHost';
@@ -114,10 +118,18 @@ export default async function AdminLayout({
   // The club's shape (Navigation Phase 1 Part B): what the club runs orders the sidebar's Programs and decides the foot's
   // Tournaments door, so it is read here and handed down — the sidebar's first paint is its last. A tournament-only
   // organization has no club to order, and a cancelled one gets no brief and no places. The read never throws.
-  const [hasPayouts, tournamentSeed, clubShape] = await Promise.all([
+  // A Tournament plan's Settings & access Payouts tab (navigation Phase 2 Part B, E3): the payouts route's own gate, asked
+  // here so the place's tab row is right on the first paint. Its one read (an account exists) only when the plan does not
+  // offer online payments itself — the wind-down case — and never for a role that may not see payouts.
+  const member = { role: authCtx.role, capabilities: authCtx.capabilities };
+  const payoutsTabAsked = isTournamentTier(authCtx.org.planId) && onlinePaymentsOn() && canSeePayouts(member, authCtx.org);
+  const [hasPayouts, tournamentPayoutsTab, tournamentSeed, clubShape] = await Promise.all([
     canOpenModule(authCtx, authCtx.org, 'module_accounting')
       ? clubHasPayouts(authCtx.org.id).catch(() => false)
       : Promise.resolve(false),
+    !payoutsTabAsked ? Promise.resolve(false)
+      : hasPlanFeature(authCtx.org.planId, 'online_payments') ? Promise.resolve(true)
+      : clubHasPayouts(authCtx.org.id).catch(() => false),
     onTournamentPage ? readAdminTournamentSeed(orgSlug, requestHeaders.get('x-search')) : Promise.resolve(undefined),
     isTournamentOnlyWorkspace(authCtx.org) || authCtx.org.subscriptionStatus === 'canceled'
       ? Promise.resolve(undefined)
@@ -130,6 +142,7 @@ export default async function AdminLayout({
       initialUserRole={authCtx.role}
       initialUserCapabilities={authCtx.capabilities}
       clubHasPayouts={hasPayouts}
+      tournamentPayoutsTab={tournamentPayoutsTab}
       limitedToTeamGroups={!!authCtx.repGroupIds}
     >
       <TournamentProvider orgSlug={orgSlug} seed={tournamentSeed}>

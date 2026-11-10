@@ -98,6 +98,26 @@
 }
 .chip { flex: none; display: inline-flex; }
 
+/* ⚖ THE PAGE'S NAME AND THE PLACE'S FACTS (navigation Phase 2 Part B, E2; drawings tab 5 + tab 14 "the strip's right end at
+   1366"). The page's name never truncates (it is a short sidebar word). The facts — the event's dates and its phase chip —
+   sit at the place's right end, before View site, in the quiet ink, with ONE hairline on their right between them and the
+   doors (as drawn: none on their left). Between 900 and 1100px wide they give way first (drawn "about 1100"), and the name
+   keeps its room. */
+.pageName { flex: none; overflow: visible; }
+.facts {
+  margin-left: auto;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 22px;
+  padding-right: 1rem;
+  border-right: 1px solid var(--home-line-strong);
+}
+@media (max-width: 1100px) {
+  .facts { display: none; }
+}
+
 /* The doors: View site first, beside the bell (D1). */
 .pill { flex-shrink: 0; }
 

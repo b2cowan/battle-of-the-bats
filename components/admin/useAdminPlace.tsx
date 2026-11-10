@@ -15,8 +15,7 @@ import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { resolveEventPhase, PHASE_LABEL } from '@/lib/tournament-phase';
-import { formatEventDateRange } from '@/lib/timezone';
+import { eventPhaseOf } from '@/lib/admin-event-cell';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { isTournamentOrgScreen } from '@/lib/admin-kit-nav';
 import { kit as coachKit } from '@/components/coaches/kit';
@@ -38,7 +37,8 @@ export type AdminPlaceView = {
   tabbed: AdminBarPlace | null;
   /** A tournament's dates. */
   dates: string | null;
-  /** A tournament's status chip, drawn once here for both headers. */
+  /** A tournament's status chip, drawn once here for both headers. On a computer, where the strip names the page
+   *  (`useDeskTitle`, navigation Phase 2 Part B), the dates and this chip sit at the strip's right end. */
   phaseChip: ReactNode;
 };
 
@@ -56,7 +56,7 @@ export function useAdminPlace(suspended: boolean): AdminPlaceView {
     !suspended &&
     pathname.includes('/admin/tournaments') &&
     !pathname.includes('/admin/tournaments/preview') &&
-    !(currentOrg && isTournamentOrgScreen(pathname.replace(/\/+$/, ''), `/${currentOrg.slug}/admin`)) &&
+    !(currentOrg && isTournamentOrgScreen(pathname, `/${currentOrg.slug}/admin`)) &&
     !!currentTournament?.slug;
 
   // The club's Overview (A3): its paper heading is gone, so the name is the page's one `<h1>`. A tournament-only workspace
@@ -83,23 +83,18 @@ export function useAdminPlace(suspended: boolean): AdminPlaceView {
     title = currentTournament.name;
     // ONE chip from ONE rule — the board's (G1): the dates, OR the first game having started, until the event is marked
     // complete. Past the last day it stays game day even with no game ever started — the organizer marking it complete is
-    // the only thing that ends it (the coach site reads the same status).
-    const phase = resolveEventPhase({
-      status: currentTournament.status,
-      startDate: currentTournament.startDate,
-      endDate: currentTournament.endDate,
-      firstGameStarted: Boolean(currentTournament.firstGameStarted),
-    });
-    const phaseLabel = PHASE_LABEL[phase as keyof typeof PHASE_LABEL] ?? null;
+    // the only thing that ends it (the coach site reads the same status). ⚖ The switch list's rows read the same answer
+    // (`eventPhaseOf`, E12 (2)), so the strip's facts and the list can never disagree.
+    const { phase, label: phaseLabel, dates: eventDates } = eventPhaseOf(currentTournament);
     // The phase chip keeps its shipped look: red for a live event, olive while open, quiet otherwise.
     const tone = phase === 'gameday' ? coachKit.chipDanger : phase === 'open' ? coachKit.chipGood : styles.chipNeutral;
-    phaseChip = phaseLabel ? (
-      <span className={`${coachKit.chip} ${styles.chip} ${tone}`} data-phase={phase ?? undefined}>
+    phaseChip = (
+      <span className={`${coachKit.chip} ${styles.chip} ${tone}`} data-phase={phase}>
         {phase === 'gameday' && <span className={styles.dot} aria-hidden />}
         {phaseLabel}
       </span>
-    ) : null;
-    dates = formatEventDateRange(currentTournament.startDate, currentTournament.endDate, true);
+    );
+    dates = eventDates;
     titleHref = `/${currentOrg?.slug ?? ''}/admin/tournaments/dashboard`;
   } else if (place) {
     title = place.title;

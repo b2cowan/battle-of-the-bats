@@ -190,7 +190,9 @@ describe('the /review of Part 3', () => {
   });
   it('a downgraded club’s status line and Payouts tile say online payments are off, never "Taking payments"', () => {
     assert.match(readCode('components/admin/kit/club/PayoutsStatusLine.tsx'), /if \(view\.windDown && view\.state !== 'disconnected'/);
-    assert.match(readCode('app/[orgSlug]/admin/tournaments/settings/page.tsx'), /payouts\.windDown && payouts\.state !== 'disconnected' \? LEAVING_WORDS\.windDown\.pill/);
+    // ⚖ Navigation Phase 2 Part B (2026-11-10): the Settings & access tile became its Payouts TAB (E3), whose page is the card
+    // itself (the wind-down card says it). A plan that no longer offers payments keeps the tab while an account exists.
+    assert.match(readCode('app/[orgSlug]/admin/layout.tsx'), /: hasPlanFeature\(authCtx\.org\.planId, 'online_payments'\) \? Promise\.resolve\(true\)\s*: clubHasPayouts\(authCtx\.org\.id\)/);
   });
   it('payouts access is asked before the account is read', () => {
     const src = readCode('app/api/admin/payouts/route.ts');
