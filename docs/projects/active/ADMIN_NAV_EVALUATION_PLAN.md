@@ -484,7 +484,7 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   - **Walk §508** (https://claude.ai/artifact/UC8MtahRswkropMWeTcDkp, source `ADMIN_NAV_PHASE2A_WALK.html`; fixture
     `scripts/walk-event-logo.mjs`): 3 walks, 24 checks; carries Phase 0's deferred first-paint proof. **Next: Part B** (the strip names the
     page, paper titles drop, the org-wide screens, page help; T1, T2) in a fresh session.
-  - **✅ Part B BUILT 2026-11-10** (the strip, the pages, the organization's screens); gate calls P1–P3 in §4; tab 15 drawn and
+  - **✅ Part B BUILT 2026-11-10**, committed `33ac442a3` 2026-11-10 (the strip, the pages, the organization's screens); gate calls P1–P3 in §4; tab 15 drawn and
     published (/design applied). What changed:
     - **The strip names the page on a computer** (E2): one rule, `deskTitleAt` (`kit-tournament-groups.ts`) over the event sidebar's own
       list, decided once by `DeskTitleProvider` (`components/admin/DeskNamedPage.tsx`) for the strip and every page header. The lit row's
