@@ -318,7 +318,7 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
       when the size is unknown or the file fails to load; B5 initials for a logo taller than 1 : 2 too (extends E10); B6
       one tile frame — white, thin outline — for logo and initials (the club's olive initials tile goes). Build in a fresh
       session from `ADMIN_NAV_BUILD_PHASE1_PARTB_PROMPT.md` (its hand-off block).
-    - **Part B BUILT 2026-11-10** (commit owed; walk §507 owed). The club cell: the name 14px bold on 16px leading, two lines,
+    - **Part B BUILT 2026-11-10**, committed `eb30602fb` 2026-11-10 (walk §507 owed). The club cell: the name 14px bold on 16px leading, two lines,
       the whole name as the native tooltip only while cut and never folded; the one `SidebarLogoTile` (24px open, 40px folded,
       white ground and thin outline for logo and initials, fixed white in the dark theme, initials when the stored shape is
       outside 1 : 2 … 2 : 1, unknown, or the file fails to load). The shape is stored with the logo (`organizations.logo_aspect`,
@@ -331,6 +331,17 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
       paint = after load for every logo case, the one swap is a broken file (B4); cell 45px open and folded, its line at 93px
       with the tab band's; two-line name fits with no tooltip, a cut one sets it, folded sets none. **Not done:** the N10
       production census (before the promote); the tournament's and the team's tile sources (Phases 2 and 4 pass their own).
+    - **/design + /review of Part B (2026-11-10), committed `eb30602fb`.** /design: the cell (one-line, two-line and cut name), the tile (logo,
+      initials, wide / tall / very light), folded, the dark theme and the back link (strip, phone bar, paper header) were looked at
+      on dev against tab 13: nothing to change. /review (four lenses) FIXED: two guard tests that asserted the rail's old source; the logo
+      size reader's pixel limit (a valid 5000 px logo was stored as "unknown" and drew initials; the reader only reads the header, so the
+      limit is gone); the backfill writing over a logo a club changed during its slow reads; an orphan comment. **For the owner / the
+      promote:** (1) apply migration 458 BEFORE the code, or logo upload, removal and the stock pick fail until it lands; (2) the one-time
+      pass must run too, or every existing club shows initials; (3) kept as Low, not changed: the cut-name tooltip can miss a late web-font
+      wrap, and a folded sidebar seen on a narrow screen never sets it; a name of only emoji (or a first letter outside the basic plane)
+      draws a broken initial (the existing initials helper); the layout's seed of the club's shape does not refresh until the brief lands;
+      two extra reads on a full admin load; two admins uploading at once can leave a mismatched shape (storage and row are last-writer-wins,
+      as before); the house-wide keyboard-focus ring (navy) is faint on the dark sidebar (pre-existing, global).
 - **Phase 2 · Tournament desktop.** Event in the cell; native `<select>` deleted; strip names the page
   (`useAdminPlace` names the lit row); paper titles drop where the strip names the page (Phase 3's `TabPageHeader`
   hand-off pattern); org-wide screens get the org sidebar (E3); `isTournamentOrgScreen` stays the one list.
