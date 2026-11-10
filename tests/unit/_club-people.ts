@@ -6,8 +6,8 @@
 import { hasCapability, type Capability } from '../../lib/roles.ts';
 import type { OrgRole } from '../../lib/types.ts';
 import {
-  clubPlaceGroups, clubProgramOrder, kitCalendarLink, kitOrgLinks, kitOrgPlace, kitPermitsLink, kitPrograms, kitSchedulesLink,
-  personClubShape, type ClubShape, type KitLink,
+  clubPlaceGroups, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, kitCalendarLink, kitOrgLinks, kitOrgPlace, kitPermitsLink, kitPrograms,
+  kitSchedulesLink, personClubShape, personOnlyProgram, type ClubShape, type KitLink,
 } from '../../lib/admin-kit-nav.ts';
 import { clubPhoneNav } from '../../lib/nav-tiles.ts';
 
@@ -23,7 +23,15 @@ export const RUNS_NEITHER: ClubShape = { runsHouseLeague: false, hostsTournament
 /** One person's club nav, as the hook builds it. `extra`: stored capability overrides (a league admin given Accounting). */
 export function clubNavFor(role: OrgRole, shape: ClubShape, extra: Record<string, boolean> | null = null) {
   const canUse = (c: Capability) => hasCapability(role, extra, c);
-  const order = clubProgramOrder(personClubShape(shape, canUse));
+  // The hook's own line (navigation Phase 1, E4 + E15): a hosted Tournaments leaves the lead for the foot's door, except
+  // for the tournament director.
+  const order = clubTournamentsDoor(clubProgramOrder(personClubShape(shape, canUse)), personOnlyProgram(canUse) === 'tournaments');
+  // The foot's doors at the club (not inside a tournament), through the hook's own rule; no Coaches Portal here.
+  const portalDoors = kitPortalDoors({
+    base: CLUB_BASE, onTournaments: false, tournamentOnly: false, isCanceled: false, tournamentsDoor: order.door, canUse,
+    coachDoor: { show: false, href: '' },
+  });
+  const tournamentsDoor = portalDoors.some(d => d.key === 'tournaments');
   const programs = kitPrograms({ base: CLUB_BASE, canUse, order: order.lead });
   const alsoOnPlan = kitPrograms({ base: CLUB_BASE, canUse, order: order.also });
   const calendar = kitCalendarLink({ base: CLUB_BASE, canUse, isCanceled: false, tournamentTier: false });
@@ -39,5 +47,5 @@ export function clubNavFor(role: OrgRole, shape: ClubShape, extra: Record<string
   // The sidebar's rows, top to bottom: Overview, Calendar, Permits, Schedules (each unheaded — 13c C1), then every group's places.
   const sidebarRows = ['overview', ...(calendar ? ['calendar'] : []), ...(permits ? ['permits'] : []), ...(schedules ? ['schedules'] : []), ...groups.flatMap(g => g.places.map(p => p.key))];
   const phone = clubPhoneNav<KitLink>({ calendar, schedules, programs, alsoOnPlan });
-  return { programs, alsoOnPlan, orgLinks, orgPlace, groups, sidebarRows, phone, permits };
+  return { programs, alsoOnPlan, orgLinks, orgPlace, groups, sidebarRows, phone, permits, tournamentsDoor };
 }

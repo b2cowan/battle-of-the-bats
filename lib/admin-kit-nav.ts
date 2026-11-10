@@ -29,7 +29,7 @@
  */
 import {
   Users, DollarSign, Contact, Globe, CalendarDays, CalendarClock, Trophy, Building2, IdCard, CreditCard, Settings,
-  MapPin, FileText, ScrollText, ChartGantt, FileCheck,
+  MapPin, FileText, ScrollText, ChartGantt, FileCheck, Shield, Users2,
   type LucideIcon,
 } from 'lucide-react';
 import type { Capability } from '@/lib/roles';
@@ -203,9 +203,61 @@ export function clubProgramOrder(shape: ClubShape): { lead: AdminProgramKey[]; a
  * itself (`useClubBrief().shape`) stays a fact about the ORG: the Members role guide reads it as one.
  */
 export function personClubShape(shape: ClubShape, canUse: (capability: Capability) => boolean): ClubShape {
-  if (shape.runsHouseLeague) return shape;
+  const only = personOnlyProgram(canUse);
+  if (only === 'house-league' && !shape.runsHouseLeague) return { ...shape, runsHouseLeague: true };
+  // ⚖ E15 (navigation Phase 1, owner 2026-11-09): the tournament director is house league's twin — Tournaments is their
+  // whole job, so it counts as hosted from day one and stays a row (and a phone-bar slot) rather than a foot door.
+  if (only === 'tournaments' && !shape.hostsTournaments) return { ...shape, hostsTournaments: true };
+  return shape;
+}
+
+/** The one program this person can open, or null when they can open none or several — decided by what they can OPEN,
+ *  never by the role's name (Ask 8, E15). */
+export function personOnlyProgram(canUse: (capability: Capability) => boolean): AdminProgramKey | null {
   const opens = LEAD_ORDER.filter(key => canUse(PROGRAM_CAPABILITY[key]));
-  return opens.length === 1 && opens[0] === 'house-league' ? { ...shape, runsHouseLeague: true } : shape;
+  return opens.length === 1 ? opens[0] : null;
+}
+
+/**
+ * ⚖ E4 (navigation Phase 1, owner 2026-11-09): Tournaments is a PORTAL door, not a place — a row that swaps the whole
+ * sidebar sits in the sidebar's foot (and the phone's More → You), beside the Coaches Portal. So once the club hosts a
+ * tournament it leaves the lead (the Programs group AND the phone bar's and tiles' fill, N10) and `door` is true. Two
+ * keep it where it was: the tournament director (`tournamentsIsRow`, E15 — it leads as a row, as house league does for a
+ * registrar), and a club with no current tournament (it is not in the lead: it stays the quiet "Also on your plan" row).
+ */
+export function clubTournamentsDoor(
+  order: { lead: AdminProgramKey[]; also: AdminProgramKey[] },
+  tournamentsIsRow: boolean,
+): { lead: AdminProgramKey[]; also: AdminProgramKey[]; door: boolean } {
+  if (tournamentsIsRow || !order.lead.includes('tournaments')) return { ...order, door: false };
+  return { lead: order.lead.filter(key => key !== 'tournaments'), also: order.also, door: true };
+}
+
+/**
+ * ⚖ THE OTHER PORTALS (N4, navigation Phase 1, E4): the doors the sidebar's foot and the phone's More → You list, in one
+ * order — Club · Tournaments · Coaches Portal — less the portal you are in. Club: inside a club's tournament (it replaced the
+ * "Club overview" row). Tournaments: in the club, once it hosts one (`clubTournamentsDoor`; never the director's, whose row
+ * it is) and only for someone who can open it. A tournament-only organization has no club to go back to; a cancelled club
+ * has no rail or bar at all. The Coaches Portal door is the person's own (`coachDoorFor`).
+ */
+export function kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor, canUse, coachDoor }: {
+  base: string;
+  onTournaments: boolean;
+  tournamentOnly: boolean;
+  isCanceled: boolean;
+  /** `clubTournamentsDoor(...).door`: the club hosts a tournament and this person is not its director. */
+  tournamentsDoor: boolean;
+  canUse: (capability: Capability) => boolean;
+  coachDoor: { show: boolean; href: string };
+}): KitLink[] {
+  const club = !isCanceled && !tournamentOnly;
+  const doors: (KitLink | null)[] = [
+    club && onTournaments ? { key: 'club', label: 'Club', href: base, icon: Shield } : null,
+    club && !onTournaments && tournamentsDoor && canUse('module_tournaments')
+      ? { key: 'tournaments', label: 'Tournaments', href: `${base}/tournaments`, icon: Trophy } : null,
+    coachDoor.show ? { key: 'coaches-portal', label: 'Coaches Portal', href: coachDoor.href, icon: Users2 } : null,
+  ];
+  return doors.filter((d): d is KitLink => d !== null);
 }
 
 /**
@@ -389,6 +441,20 @@ export function activeKitSection(pathname: string, base: string): AdminProgramKe
   return isAdminProgramKey(first) ? first : null;
 }
 
+/**
+ * The guide for where you are, opened in a new tab: any tournament page → the tournaments guide, a program's or
+ * Organization's pages → theirs, everything else → the admin help home. ONE answer for its two homes (E16, navigation
+ * Phase 1): the desktop account menu's Help row, and the phone More sheet's foot (and the demo sandbox's sidebar foot,
+ * which keeps Help because the sandbox hides the account menu).
+ */
+export function adminHelpHref(pathname: string, base: string): string {
+  if (pathname.startsWith(`${base}/tournaments`)) return `${base}/help/tournaments`;
+  const section = activeKitSection(pathname, base);
+  return section === 'house-league' || section === 'rep-teams' || section === 'accounting' || section === 'org'
+    ? `${base}/help/${section}`
+    : `${base}/help`;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
  * ⚖ PLACES IN THE SIDEBAR (Club Tier Stage 13i Session B, Asks 1, 2 and 5 = A, Ask 4 = B, owner 2026-11-06; NAV_STANDARD
  * N2, N3, N7, N11). The club sidebar lists PLACES only and never grows: nothing renders under a row, no row carries a
@@ -398,8 +464,9 @@ export function activeKitSection(pathname: string, base: string): AdminProgramKe
 /**
  * ⚖ THE SIDEBAR'S TWO HEADINGS (Ask 5 = A): Programs (Rep teams, House league, Tournaments) and Club (Accounting, Families,
  * Public site, then Organization). ⚠ A map BESIDE `LEAD_ORDER`, never a reordered `LEAD_ORDER`: the phone bar and tiles
- * fill from the programs' own order (N10), so moving Tournaments up into Programs here changes no club's bar or tiles.
- * Inside each group a program keeps `LEAD_ORDER`'s place.
+ * fill from the programs' own order (N10). Inside each group a program keeps `LEAD_ORDER`'s place. Tournaments sits in
+ * Programs only for the tournament director (E15); for everyone else a hosted tournament is a foot door
+ * (`clubTournamentsDoor`), and an unhosted one the "Also on your plan" row.
  */
 const PLACE_GROUP: Record<AdminProgramKey, 'programs' | 'club'> = {
   'rep-teams': 'programs',

@@ -239,11 +239,14 @@
   padding: 0.4rem 0.4rem;
 }
 
-.spacer { flex: 1; min-height: 1rem; }
 
 /* The foot: the rail's quiet doors — Help, the Coaches Portal, Public site where no program row is it (the nav standard's
    N4). Sign out and Send feedback left it for the account menu (2026-10-17), and the red sign-out row's rules with them. */
 .foot { display: flex; flex-direction: column; border-top: 1px solid var(--home-line); padding-top: 0.4rem; }
+/* Pinned under the scrolling rows (navigation Phase 1): the foot never scrolls away on a short laptop (1366 × 768). */
+.railFoot { flex: none; display: flex; flex-direction: column; padding-bottom: 0.5rem; }
+/* The hairline between Plan & billing (or the sandbox's Help) and the other portals' doors (N4). */
+.footSep { height: 1px; background: var(--home-line); margin: 0.3rem 1.25rem; flex: none; }
 .footItem { font-size: var(--type-support); }
 
 /* ── THE STRIP (Sidebar Strip & Grid Width, Stage 2 — hub screens 2 and 8, ratified 2026-10-12) ─────────
@@ -280,6 +283,8 @@
   :global(html[data-sidebar='strip']) .groupHeader,
   :global(html[data-sidebar='strip']) .chevron { display: none; }
   :global(html[data-sidebar='strip']) .foot { align-items: center; width: 100%; }
+  :global(html[data-sidebar='strip']) .railFoot { align-items: center; }
+  :global(html[data-sidebar='strip']) .footSep { width: 28px; margin: 6px auto; background: var(--home-line-strong); }
 }
 
 /* The coach rail's two warm overrides (its `.sidebar` / `.sidebarItem:hover`), for the same reason:

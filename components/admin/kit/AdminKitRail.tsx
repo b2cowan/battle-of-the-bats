@@ -14,8 +14,9 @@
  * Accounting ruling ("separate jobs are listed in the rail").
  *
  * Inside a TOURNAMENT the middle swaps for the old rail's tournament section (switcher, Operations / Setup / Admin),
- * restyled only and unchanged by 13i (Ask 8), with Overview still pinned above it, so there is always a way back to the
- * club. A tournament-only organization (the Tournament plans have no club hub) sees the tournament section alone.
+ * restyled only and unchanged by 13i (Ask 8). The way back to the club is the foot's "Club" door (navigation Phase 1, E4 —
+ * it replaced the "Club overview" row). A tournament-only organization (the Tournament plans have no club hub) sees the
+ * tournament section alone.
  *
  * ⚠ The programs, Organization and their gates come from `lib/admin-kit-nav.ts`, which the phone bar reads too. Every
  * gate is the old rail's gate — read that file's header before adding a row.
@@ -33,7 +34,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Fragment, useEffect, useRef, useState, type ElementType } from 'react';
 import {
-  LayoutGrid, ChevronRight, Users2, HelpCircle, Trophy,
+  LayoutGrid, ChevronRight, HelpCircle, Trophy,
 } from 'lucide-react';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import {
@@ -86,7 +87,7 @@ export default function AdminKitRail() {
   const nav = useAdminKitNav();
   const {
     base, brief, orgLinks, placeGroups, litPlace, tournamentOnly, isCanceled,
-    onTournaments, coachDoor, calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref,
+    onTournaments, portalDoors, calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
   const feeAlert = useFeeAlert();
   const clubName = useOrg().currentOrg?.name ?? null;
@@ -124,9 +125,10 @@ export default function AdminKitRail() {
         </Link>
       )}
       <nav className={styles.railScroll} aria-label="Admin navigation">
-        {!tournamentOnly && !isCanceled && (
-          // Inside a tournament this row is the one way back to the club, so it says so — as the phone's More sheet does.
-          <RailRow href={base} label={onTournaments ? 'Club overview' : 'Overview'} active={pathname === base} icon={LayoutGrid} />
+        {!tournamentOnly && !isCanceled && !onTournaments && (
+          // ⚖ Not inside a tournament (E4, navigation Phase 1): "Club overview" became the foot's "Club" door — a row that
+          // swaps the whole sidebar is a portal door, and the portal doors live in the foot.
+          <RailRow href={base} label="Overview" active={pathname === base} icon={LayoutGrid} />
         )}
         {/* The club calendar (Club Tier 6b, Ask 7): directly under Overview — it spans every program, so it is no
             program's row. `kitCalendarLink` holds its gate. ⚖ Not inside a tournament (owner 2026-10-20): there Overview
@@ -180,32 +182,37 @@ export default function AdminKitRail() {
           </>
         )}
 
-        <div className={styles.spacer} />
+      </nav>
 
-        {/* ⚖ ONE SIDEBAR FOOT (the nav standard's N4, Ask B1, 2026-10-17; unchanged by 13i, Ask 4 = B): Plan & billing, Help,
-            then the other portal, then Collapse sidebar last. On Plan & billing's page its row is the one lit row (no place
-            is: `litClubPlace`). Send feedback and Sign out live in the top strip's account menu only — the 2026-09-01
-            one-sign-out rule the coaches portal already kept (the account menu is hidden in the demo sandbox, where a
-            shared demo user must never be signed out, so the sandbox loses nothing it should have). */}
+      {/* ⚖ ONE SIDEBAR FOOT (N4, rewritten by navigation Phase 1, E4 + E16, owner 2026-11-09), PINNED under the scrolling
+          rows: Plan & billing (the owner, with its bill pill), a hairline, the doors to the other portals this person holds
+          (Club inside a tournament · Tournaments in the club once it hosts one · Coaches Portal), then Collapse sidebar.
+          Help is the desktop account menu's (beside What's new) — except in the demo sandbox, which hides the account menu,
+          so its sidebar keeps Help where Plan & billing would be (a sandbox has no billing door). On Plan & billing's page
+          its row is the one lit row (`litClubPlace`). Send feedback and Sign out live in the account menu only (2026-09-01).
+          No live-site door (Ask 9, Stage 13a): the header's "View site" pill is on every screen. */}
+      <div className={styles.railFoot}>
         <div className={styles.foot}>
           {billingLink && <Link href={billingLink.href} className={`${styles.item} ${styles.footItem}${isKitLinkActive(pathname, billingLink) ? ` ${styles.itemActive}` : ''}`} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
             {billingLink.icon && <billingLink.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{billingLink.label}</span>
             {/* Fee invoice alerts, Part 2: an invoice to pay (amber), an overdue one (red) or a failed plan payment (amber). */}
             {feeAlert && <WaitingCount count={feeAlert.count} label={feeAlert.label} tone={feeAlert.tone} className={strip.cornerCount} />}
           </Link>}
-          <Link href={helpHref} className={`${styles.item} ${styles.footItem}`} target="_blank" rel="noopener noreferrer">
-            <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span>
-          </Link>
-          {coachDoor.show && (
-            <Link href={coachDoor.href} className={`${styles.item} ${styles.footItem}`}>
-              <Users2 size={14} aria-hidden /> <span className={strip.rowLabel}>Coaches Portal</span>
+          {isSandbox && (
+            <Link href={helpHref} className={`${styles.item} ${styles.footItem}`} target="_blank" rel="noopener noreferrer">
+              <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span>
             </Link>
           )}
-          {/* ⚖ No live-site door here (Ask 9, Stage 13a): the header's "View site" pill is on every screen (N4). */}
+          {(billingLink || isSandbox) && portalDoors.length > 0 && <div className={styles.footSep} aria-hidden />}
+          {portalDoors.map(door => (
+            <Link key={door.key} href={door.href} className={`${styles.item} ${styles.footItem}`}>
+              {door.icon && <door.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{door.label}</span>
+            </Link>
+          ))}
         </div>
-        {/* ⚖ The last row (Ask 2): a rare door ends the body, never a pinned row. */}
+        {/* ⚖ The last row (Ask 2). */}
         <CollapseSidebarRow className={`${styles.item} ${styles.footItem}`} />
-      </nav>
+      </div>
       <SidebarStripTip scopeRef={railRef} />
     </aside>
     </>

@@ -10,7 +10,8 @@
  * these doors.
  *
  * ⚖ ROUND 4 (Admin header bar, option B, owner 2026-11-08, D1–D5): THE STRIP NAMES WHERE YOU ARE. It splits on
- * the sidebar's edge: over the sidebar, the wordmark and "Admin" (D4, `ADMIN_STRIP_LABEL`), the mark alone when
+ * the sidebar's edge: over the sidebar, the wordmark and the portal's word — "Club" or "Events" (owner 2026-11-09,
+ * `adminStripWord`; it replaced D4's "Admin") —, the mark alone when
  * the sidebar is collapsed; over the page, the place — its way up, its name, its switcher, its chip, from the ONE
  * model the phone bar reads (`useAdminPlace`) — then View site beside the bell (it moved up from the bar; the
  * phone keeps its globe in the bar), the account menu and Workspaces. The place's name starts at the page
@@ -37,6 +38,7 @@
 
 import { type Dispatch, type SetStateAction } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { orgBell } from '@/lib/notification-bell-scope';
@@ -49,7 +51,9 @@ import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { getNotificationSettingsHref } from '@/lib/billing-urls';
 import FlipPill from '@/components/shared/FlipPill';
 import { useAdminFlip } from '@/lib/use-admin-flip';
-import { ADMIN_STRIP_LABEL, WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
+import { adminStripWord, WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
+import { adminHelpHref } from '@/lib/admin-kit-nav';
+import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { useAdminPlace } from './useAdminPlace';
 import styles from '@/components/coaches/CoachTopStrip.module.css';
 import own from './AdminTopStrip.module.css';
@@ -94,7 +98,7 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
    *  whose notifications open tools the account no longer has. */
   suspended?: boolean;
 }) {
-  const { currentOrg } = useOrg();
+  const { currentOrg, canOpen } = useOrg();
   // The admin shell only renders signed-in — the hook may run unconditionally.
   const roleSummary = useRoleSummary(true);
   /** "See it live" demo: the account door leads out of the sandbox into the real platform, and a
@@ -109,6 +113,12 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
   // toggle that visibly does nothing reads as broken" reason for hiding it no longer holds.
 
   const split = !suspended;
+  const pathname = usePathname();
+  const base = `/${currentOrg?.slug ?? ''}/admin`;
+  // ⚖ "Club" or "Events" (owner 2026-11-09), from the address and the plan — both known on the server, so the first paint
+  // says it; the tournament-only test is `useAdminKitNav`'s (the plan's fact, D8).
+  const tournamentOnly = canOpen('module_tournaments') && !!currentOrg && isTournamentOnlyWorkspace(currentOrg);
+  const stripWord = adminStripWord({ onTournaments: pathname.startsWith(`${base}/tournaments`), tournamentOnly });
   // The portal word: in the split strip, the short form for the sidebar-width cell (D4), which a collapsed sidebar hides
   // with the wordmark's name. A cancelled account's one page keeps its strip exactly as it was (no sidebar, no cell; on
   // a phone too): the full word, never hidden by a sidebar preference it has no sidebar for (/review, 2026-11-08).
@@ -118,7 +128,7 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
       {/* ⚖ The strip names its portal (the nav standard's N6, Ask A6, 2026-10-17), as the coach strip says "Coaches
           Portal": someone with both hats flips between two shells that look alike. */}
       <span className={`${styles.stripDivider}${wordClass}`} aria-hidden />
-      <span className={`${styles.stripLabel}${wordClass}`}>{split ? ADMIN_STRIP_LABEL : WORKSPACE_KIND_LABEL.organization}</span>
+      <span className={`${styles.stripLabel}${wordClass}`}>{split ? stripWord : WORKSPACE_KIND_LABEL.organization}</span>
     </>
   );
   const doors = (
@@ -141,6 +151,10 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
         {!inSandbox && (
           <AccountMenu
             showWhatsNew
+            // ⚖ Help lives here on a desktop, under What's new (E16, owner 2026-11-09): the guide for where you are, in a
+            // new tab. The phone keeps it at the More sheet's foot; the sandbox (no menu) keeps it in the sidebar's foot. Not on
+            // a cancelled account's one page: its help would bounce to billing (a door that dead-ends).
+            helpHref={!suspended && currentOrg?.slug ? adminHelpHref(pathname, base) : undefined}
             className={styles.iconDoor}
             settingsHref={
               currentOrg?.slug ? getNotificationSettingsHref(currentOrg.slug) : '/account/notifications'

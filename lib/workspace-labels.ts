@@ -17,12 +17,19 @@ export const WORKSPACE_KIND_LABEL: Record<UserAccessContextKind, string> = {
 };
 
 /**
- * The admin's portal word in its top strip (Admin header bar round 4, D4, owner 2026-11-08): the short form of
- * `WORKSPACE_KIND_LABEL.organization`, because the strip's left cell is the sidebar's width (240, 64 collapsed). The
- * Workspaces list, Home's cards, the account pages' way back and the coaches portal's door keep "Admin Area" (they have
- * the room; the owner's gate answer, 2026-11-08). Both words live here, beside each other, so neither is retyped.
+ * ⚖ THE ADMIN STRIP'S PORTAL WORD (owner 2026-11-09, navigation Phase 1; replaced D4's "Admin" of 2026-11-08): the word
+ * over the sidebar names which portal you are in — "Club" on the club's screens, "Events" on a tournament's screens and
+ * on a tournament-only organization's ("Tournament" measured 246px against the 240px cell; /marketing confirmed "Events"
+ * 2026-11-09). The Coaches Portal's "Coach" waits for its own strip (Phase 4). The Workspaces list, Home's cards, the
+ * account pages' way back and the coaches portal keep "Admin Area" (they have the room). All the words live here, beside
+ * each other, so none is retyped. Decided from the ADDRESS, so the server's first paint already says it.
  */
-export const ADMIN_STRIP_LABEL = 'Admin';
+export const ADMIN_STRIP_WORD = { club: 'Club', events: 'Events' } as const;
+
+/** The word for a screen: "Events" anywhere under `/{org}/admin/tournaments` or in a tournament-only organization. */
+export function adminStripWord({ onTournaments, tournamentOnly }: { onTournaments: boolean; tournamentOnly: boolean }): string {
+  return onTournaments || tournamentOnly ? ADMIN_STRIP_WORD.events : ADMIN_STRIP_WORD.club;
+}
 
 /**
  * The platform admin's portal name (owner 2026-10-24, Support console Stage 1, Ask 1): the strip, the browser tab

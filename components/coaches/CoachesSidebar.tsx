@@ -436,36 +436,37 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           </div>
         </>
       )}
-      {/* ⚖ The foot sits at the rail's foot, as the admin's does (the nav standard's N4, drawing P3): the spacer first,
-          then the rule, Help and the other portal, then Collapse sidebar last. */}
+      {/* ⚖ ONE SIDEBAR FOOT (N4, rewritten by navigation Phase 1, E4 + E16, owner 2026-11-09), the admin's order: Plan &
+          billing (the standalone owner), a hairline, the doors to the other portals this person holds (Club · Tournaments
+          you run), then Collapse sidebar last. Help is the desktop account menu's (under What's new) — except in the demo
+          sandbox, which hides the account menu, so its sidebar keeps Help where Plan & billing would be. */}
       <div className={styles.sidebarSpacer} />
       <div className={styles.sidebarDivider} />
       <div className={styles.sidebarSection}>
-        <Link
-          href={`${base}/help`}
-          className={`${styles.sidebarItem} ${styles.sidebarFootItem}${pathname === `${base}/help` ? ` ${styles.sidebarItemActive}` : ''}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <HelpCircle size={14} />
-          <span className={strip.rowLabel}>Help</span>
-        </Link>
+        {inSandbox && (
+          <Link href={`${base}/help`} className={`${styles.sidebarItem} ${styles.sidebarFootItem}`} target="_blank" rel="noopener noreferrer">
+            <HelpCircle size={14} />
+            <span className={strip.rowLabel}>Help</span>
+          </Link>
+        )}
         {billingHref && (
           <Link href={billingHref} id="coaches-billing" className={`${styles.sidebarItem} ${styles.sidebarFootItem}${pathname === billingHref ? ` ${styles.sidebarItemActive}` : ''}`}>
             <CreditCard size={14} />
             <span className={strip.rowLabel}>{PLAN_BILLING_TITLE}</span>
           </Link>
         )}
+        {(billingHref || inSandbox) && (adminHome || tournamentsHref) && <div className={styles.sidebarFootSep} aria-hidden />}
+        {adminHome && (
+          // The club's door, named "Club" as the admin's foot names it (was "Admin" — the owner's strip words, 2026-11-09).
+          <Link href={adminHome.href} className={`${styles.sidebarItem} ${styles.sidebarFootItem}`}>
+            <Shield size={14} />
+            <span className={strip.rowLabel}>Club</span>
+          </Link>
+        )}
         {tournamentsHref && (
           <Link href={tournamentsHref} id="coaches-tournaments" className={`${styles.sidebarItem} ${styles.sidebarFootItem}`}>
             <Trophy size={14} />
             <span className={strip.rowLabel}>Tournaments you run</span>
-          </Link>
-        )}
-        {adminHome && (
-          <Link href={adminHome.href} className={`${styles.sidebarItem} ${styles.sidebarFootItem}`}>
-            <Shield size={14} />
-            <span className={strip.rowLabel}>Admin</span>
           </Link>
         )}
         {/* Sign out retired into the top strip's account menu 2026-09-01 (one door per

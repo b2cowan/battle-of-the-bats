@@ -28113,3 +28113,11 @@ performed over the shared working tree. The original walk result is not claimed 
 **Not walked (proved by tests and my own pass on temporary accounts, since removed):** a club with exactly one never-checked account; several accounts with some never checked ("1 of 3 not checked yet" keeps its count); a read-only coach keeps "Bank: not checked yet ›"; a made-up account in the address; a check opened from a door once; adding an account from the pill leaves the address on the new one.
 **Result:** owed. No fixture to tear down (every team and club in the walk already exists on dev).
 <!-- /§503 -->
+
+## §504 · Navigation across the three portals · Phase 1, Part A — **the sidebar's foot reads Plan & billing, a thin line, then the other portals (Tournaments at the club, Club inside a tournament, the Coaches Portal), then Collapse sidebar, pinned on a short laptop; Help sits in the account menu under What's new (admin and Coaches Portal, computer only) and stays at the phone's More sheet foot and in the demos' sidebars; "Club overview" is gone from a tournament's sidebar and More sheet; the phone's More → You lists the other portals; the word over the sidebar says CLUB or EVENTS; one call (the "Tournaments" door opening under "EVENTS")**
+<!-- §504 -->
+**Walk published 2026-11-09:** https://claude.ai/artifact/SErpWiVT4vx3UHzgRbwvrn (source `docs/projects/active/ADMIN_NAV_PHASE1_WALK.html`); 4 parts, 31 checks, nothing saved or deleted. Build: navigation Phase 1 Part A, to the approved drawings https://claude.ai/artifact/S7XXbtLwNeZUjEWXzbUcw4 (tabs 4 and 12; plan `ADMIN_NAV_EVALUATION_PLAN.md` §5 Phase 1).
+**Sign-in:** the UAT Rep Club owner and admin (`uat-club-owner@` / `uat-club-admin@uat-rep-club.local`), the tournament organization owner (`uat-owner@uat-test-org.local`), the coach (`uat-coach@uat-test-org.local`); all `UATPassword2026!`. Part 4 needs no sign-in (the demos).
+**Call in the walk:** whether the foot's "Tournaments" door and the "EVENTS" word over the place it opens read as the same place.
+**Not walked (proved by tests and the build's own measurements):** the word on the first paint (scripts off); one Help per screen on every surface, including none for a cancelled account; the tournament director (no such person on dev); a club with no current tournament; the pinned foot at 1366 × 768.
+<!-- /§504 -->

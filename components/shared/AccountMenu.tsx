@@ -55,7 +55,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePublicPathname } from '@/lib/use-public-pathname';
-import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check, Building2, Globe, Sparkles, Users } from 'lucide-react';
+import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check, Building2, Globe, Sparkles, Users, HelpCircle } from 'lucide-react';
 import { markReleasesSeen, useReleaseUnread } from '@/components/whats-new/release-seen';
 import { getSession, signOut } from '@/lib/auth';
 import { useDismissable } from '@/lib/overlay-hooks';
@@ -91,6 +91,7 @@ export default function AccountMenu({
   signOutTo = 'sign-in',
   showAccount = true,
   showWhatsNew = false,
+  helpHref,
   teams,
   door,
   className,
@@ -113,6 +114,9 @@ export default function AccountMenu({
   /** The admin and coach strips: a "What's new" row at the top of the settings group, with a "New" tag while an
    *  ANNOUNCED release is unread on this device (owner 2026-11-07). Off on the support console and the public bars. */
   showWhatsNew?: boolean;
+  /** OPT-IN, the admin and Premium coach strips only (E16, owner 2026-11-09): the portal's help, as a "Help" row under
+   *  What's new in the DESKTOP popover (never the phone sheet, never a public, family, marketing or support-console menu). */
+  helpHref?: string;
   /** A house-league coach's teams at THIS club (the club site passes them): one is a "My team" row, two or more sit under
    *  a "My teams" caption by name, the one being viewed shaded. The phone's way to the team, and a desk coach of two or more
    *  teams' only door from the bar; a desk coach of one also has the bar's own "My team" link. Nothing renders when empty. */
@@ -294,6 +298,15 @@ export default function AccountMenu({
             <Sparkles size={15} aria-hidden />
             What’s new
             {releaseUnread && <span className={styles.newTag}>New</span>}
+          </Link>
+        )}
+        {helpHref && !inSheet && (
+          // ⚖ Help, under What's new (E16, navigation Phase 1, owner 2026-11-09): the portal's guide for where you are, in a
+          // new tab. DESKTOP ONLY — a phone keeps Help at its More sheet's foot, one Help door per screen.
+          <Link href={helpHref} className={rowClass()} role={itemRole(inSheet)} target="_blank" rel="noopener noreferrer"
+            onClick={() => window.setTimeout(() => setOpen(false))}>
+            <HelpCircle size={15} aria-hidden />
+            Help
           </Link>
         )}
         {showAccount && familyHref && (

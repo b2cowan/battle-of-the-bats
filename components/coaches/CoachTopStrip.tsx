@@ -114,6 +114,9 @@ export default function CoachTopStrip({ wall = false, free = false }: {
             showWhatsNew
             showTheme
             showFeedback={!wall}
+            // ⚖ Help, under What's new (E16, owner 2026-11-09) — the Premium portal's sidebar gave it up. Not on a wall (no
+            // sidebar had it there) nor the free portal (out of this project, E13: its own sidebar keeps Help).
+            helpHref={!wall && !free && currentOrg?.slug ? `/${currentOrg.slug}/coaches/help` : undefined}
             className={styles.iconDoor}
             settingsHref={
               currentOrg?.slug

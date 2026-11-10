@@ -232,6 +232,66 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
 - **Phase 1 · The shared cell and its list.** One cell component (name on up to two lines, chevron, tile with logo) and the one sidebar foot (Plan & billing, Help, the portal doors, Collapse) and one list
   (popover / sheet), drawn from the shipped `SidebarStripMenu` rows and the `SingleSelectDropdown` chevron face. Club
   cell swaps in first (pixel-identical except the 40px collapsed tile, E10) so the club walks pass unchanged.
+  - **Gate (2026-11-09).** Tab **12 · Phase 1 states** added to the drawings (v7; v8 after /design): the tournament
+    director (E15) at the club, on a club with no tournament yet, inside the event (Phase-1-only state) and on a phone;
+    a club with no current tournament (owner); the club's and the tournament's More sheets; the demo foots; the N10 case.
+    /design's eight findings applied (the You group is the shipped two-column grid; the director's phone added; the N10
+    tile case drawn; "no current tournament" — archived counts as none; no empty foot block; pins moved; the Phase-1
+    double door to Overview captioned; the coach demo holds no other portal). **Owner ruled tab 12 as drawn ("looks
+    good, go for it").** /marketing confirmed **"Events"** (the tournament admin's own word — "Event settings", "Set Up
+    Your Event"; the coach portal's schedule "events" never sit under it). The account menu's Terms · Privacy line: **its
+    removal in the working copy is wanted** (owner, 2026-11-09); Help was built on the menu without it.
+  - **✅ Part A BUILT 2026-11-09** (the commit hash is recorded here at commit). What changed:
+    - **The foot, one order** (admin rail, club and tournament; the Premium coach rail): Plan & billing (the owner, bill
+      pill) · hairline (only with something on both sides) · the other portals (admin: Club inside a club's tournament
+      · Tournaments in the club once it hosts one · Coaches Portal; coach: Club — was "Admin" — · Tournaments you run) ·
+      Collapse sidebar. The admin foot is **pinned** outside the scrolling list (`railFoot`): a 1366 × 768 laptop
+      scrolls the rows, never the doors. The coach rail keeps its structure (Phase 4 rebuilds it).
+    - **Help** left every sidebar for the desktop account menu (under What's new, HelpCircle 15, new tab; opt-in
+      `helpHref`, passed only by the admin strip and the Premium coach strip — never a wall, the free portal or the
+      phone sheet). The phone keeps Help at the More sheet's foot; the demo sandboxes (no account menu) keep it at the
+      top of their sidebar foot. One answer for the admin's help address: `adminHelpHref`.
+    - **"Club overview"** left the tournament rail and the top of the tournament More sheet (it opens on
+      Notifications); **Club** is the foot door and a You door.
+    - **Tournaments** left the club's Programs and the phone's fill once hosted (`clubTournamentsDoor`): a foot door and
+      a You door. E15: `personClubShape` marks it hosted for a person whose only program is tournaments
+      (`personOnlyProgram`); it stays their Programs row and phone-bar slot. A club with no current tournament keeps
+      "Also on your plan · Tournaments" and no door.
+    - **The strip word** "Club" / "Events" (`ADMIN_STRIP_WORD`, `adminStripWord`, beside `WORKSPACE_KIND_LABEL`),
+      from the address and the plan, so the server paints it; "Admin Area" stays everywhere else.
+    - NAV_STANDARD N2, N4, N6, N7, N10 rewritten; help articles (org, coaches, tournaments) via `/docs`.
+  - **Measured 2026-11-09** (dev server, saved sign-ins refreshed first; `.probe/nav-phase1/`: `measure.mjs` →
+    `measure.json` / `measure-run1.json`, `phone.mjs`, `coachfoot.mjs`, `sandbox.mjs`, screenshots beside them):
+    - **The strip word** is right on the server's paint (JavaScript off) and never changes after load: club Overview,
+      Rep teams, Accounting "CLUB"; the club's tournament and a tournament-only org "EVENTS"; one value in each live
+      sequence. The Coaches Portal still says "Coaches Portal" (Phase 4).
+    - **The foot**: club owner (after the club's brief) Plan & billing 1 · ── · Tournaments · Collapse; the owner in the
+      tournament Plan & billing · ── · Club · Collapse; a club admin who is not the owner, in the tournament Club ·
+      Collapse (no hairline), at the club Collapse alone; tournament-only owner Plan & billing · Collapse; a coach with
+      no other portal Collapse alone (Help gone); the tournament demo …Help · Collapse and the coach demo …Help ·
+      Collapse, no account menu in either. Server paint and live page agree on tournament pages.
+    - **Pinned at 1366 × 768**: the foot ends at the viewport's bottom (768); the tournament rows scroll (664 of 539).
+    - **The account menu** (desktop): What's new, **Help**, Notification settings, Send feedback, Account settings, Sign
+      out — admin (club, tournament, tournament-only) and the Premium coach. The public club site's menu: no Help.
+    - **The phone More sheet**: club owner — no Programs group; You = Account, What's new, Home, Tournaments, Plan &
+      billing; then Help. Tournament — opens on Notifications; You = …, Club, Plan & billing.
+    - **Known and kept (pre-existing):** on a CLUB page the club's shape arrives with its brief after load (no server
+      seed), so until then the rail shows "Also on your plan · House league, Tournaments" and the foot has no Tournaments
+      door (dev: 5–20 s). Phase 0 seeded tournament pages only. Phase 1 adds the foot door to what moves; the rows
+      already moved. Follow-up for the owner: seed the club's shape on the server (Part B or Phase 2).
+  - **N10 census (dev, read-only, 2026-11-09; `.probe/nav-phase1/census.mts` → `out-dev.json`):** 17 club orgs, 67
+    active members. **One person's tiles change:** an admin without Families on Harbourtown Minor Ball (hosts, runs
+    house league) — Schedules · Public site · Tournaments → none (three or none). **Six people** lose the More sheet's
+    Tournaments row to the You door (UAT Rep Club ×3, Harbourtown ×2, QA Cancel Lab). No bar changed. All seven are
+    test clubs. No tournament director exists on dev (E15 covered by unit tests). **Prod not read** (needs the owner's yes).
+  - **Checks:** typecheck clean (8 GB heap), spelling clean, focused lint clean, the nav guards pass (633). The full
+    suite's 15 failures and plan-billing-coach-host's 20 "component suspended" failures are other sessions' (the latter
+    identical with this change's coach files at HEAD). `check:layout` (Overview, Rep teams, Accounting, the club's
+    tournaments list, the coach team hub) passes at 390 / 768 / 1440 except three tap-floor findings on Overview's
+    "Needs someone" links at 768 (another session's hub work); the tournament More sheet is unmeasurable there because
+    the dev server's badge covers the More button (the probe forced the click and read it as drawn).
+  - **Part B** (the club cell on two lines, the 40px logo tile for all three portals, the back link's look) → its own
+    session.
 - **Phase 2 · Tournament desktop.** Event in the cell; native `<select>` deleted; strip names the page
   (`useAdminPlace` names the lit row); paper titles drop where the strip names the page (Phase 3's `TabPageHeader`
   hand-off pattern); org-wide screens get the org sidebar (E3); `isTournamentOrgScreen` stays the one list.

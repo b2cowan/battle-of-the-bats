@@ -1,0 +1,444 @@
+<title>The Sidebar Foot And Help</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Navigation across the three portals · Phase 1, Part A · Owner QA Ledger §504</span>
+    <h1>The sidebar’s foot, Help and the portal word</h1>
+    <p class="lead">One purpose: the bottom of every sidebar now holds Plan &amp; billing and the doors to your other portals, Help moved into the account menu, and the word over the sidebar names the portal you are in (“Club” or “Events”). You look at the club and one of its tournaments as the owner on a computer and a phone, then three other people, then the two demos. About 25 minutes.</p>
+    <p class="lead">Written Nov 9, 2026 against the dev site. Nothing here saves or deletes anything: every part only looks and clicks.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Parts 1 and 2</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code><br>The owner of <b>UAT Rep Club</b>, which runs rep teams and house league and has tournaments.</dd>
+      <dt>Part 3</dt><dd><code>uat-club-admin@uat-rep-club.local</code> (an admin who is not the owner), <code>uat-owner@uat-test-org.local</code> (a tournament-only organization’s owner) and <code>uat-coach@uat-test-org.local</code> (a coach); all <code>UATPassword2026!</code>.</dd>
+      <dt>Part 4</dt><dd>No sign-in: the two public demos, from <code>localhost:3000/demos</code>.</dd>
+      <dt>Phone</dt><dd>Steps marked <b>phone</b> use your desk browser’s device toolbar at <b>390 px</b> wide.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Sign out before each new person, or use a private window per person.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>Nothing to set up.</b> Every club, person and demo above already exists on dev.</li>
+      <li><b>Give a club page a few seconds.</b> The club’s sidebar learns what the club runs a moment after the page appears (it always has). Until then Tournaments and House league can sit under “Also on your plan” and the foot has no Tournaments door. Wait for the page to settle before you judge a club sidebar. On the dev server that can take 10–20 seconds.</li>
+      <li><b>Walk the parts in order, 1 to 4.</b> Each opens with a stop check.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>The word over the sidebar is right on the very first paint (measured with scripts off) and never changes after the page loads: “CLUB” on Overview, Rep teams and Accounting; “EVENTS” in a tournament and in a tournament-only organization.</li>
+      <li>One Help per screen: the desktop account menu in the admin and the Coaches Portal; never in a public, family or support-console menu, never in the phone’s Account sheet; the More sheet’s foot on a phone; the sidebar only in the demos. A cancelled account’s menu shows no Help (its help page would send it to billing).</li>
+      <li>A person whose only program is tournaments keeps Tournaments as a sidebar row and a phone-bar button, before the club runs one too (no such person exists on dev; covered by tests).</li>
+      <li>A club with no current tournament keeps “Also on your plan · Tournaments” and gets no foot door (drawn in tab 12; tests).</li>
+      <li>At 1366 × 768 the foot stays at the bottom and the rows scroll above it (measured).</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: do the doors read as the way between portals, and do you find Help where it went?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "nav-phase1-walk-v1";
+  var PAGE = "Navigation across the three portals · Phase 1, Part A · Owner QA Ledger §504";
+  var WALKS = [
+ {
+  "id": "P1",
+  "title": "The club owner on a computer",
+  "job": "UAT Rep Club · owner · desktop, 1440 wide, then a short laptop",
+  "forText": "The club and one of its tournaments: the foot, the doors between them, the word over the sidebar, and Help in the account menu.",
+  "passes": "The foot reads Plan & billing, a thin line, then the other portals; Tournaments and Club take you across and back; the word says CLUB or EVENTS; Help sits under What’s new and opens the guide for where you are.",
+  "notIn": "A phone (part 2). Other people (part 3). The demos (part 4).",
+  "where": "Admin → Overview, Rep teams, then a tournament.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as the UAT Rep Club owner. You land on the club’s <b>Overview<\/b>, and the sidebar’s top says <b>UAT Rep Club<\/b>.",
+    "s": "If you land anywhere else, or the sidebar names something else, stop and tell me what you see."
+   },
+   {
+    "d": "Wait for the page to settle, then look at the top left, over the sidebar, beside the FieldLogicHQ wordmark.",
+    "s": "It says <b>CLUB<\/b> in small capitals (it used to say ADMIN)."
+   },
+   {
+    "d": "Look at the bottom of the sidebar.",
+    "s": "From the top: <b>Plan &amp; billing<\/b> (with its small count), a thin line, <b>Tournaments<\/b> (a trophy), then <b>Collapse sidebar<\/b>. No <b>Help<\/b> row."
+   },
+   {
+    "d": "Look at the sidebar’s list above the foot.",
+    "s": "Under <b>Programs<\/b>: Rep teams and House league only; Tournaments is no longer a row there. Then <b>Club<\/b>: Accounting, Families, Public site, Organization."
+   },
+   {
+    "d": "Look at the Overview page itself, at its programs.",
+    "s": "The club’s program cards still include <b>Tournaments<\/b> (only the sidebar moved it)."
+   },
+   {
+    "d": "Click the person icon at the top right.",
+    "s": "The menu reads: Signed in, Appearance, <b>What’s new<\/b>, then <b>Help<\/b> (a question-mark icon), Notification settings, Send feedback, Account settings, Sign out."
+   },
+   {
+    "d": "Open <b>Rep teams<\/b>, open the person menu again and click <b>Help<\/b>.",
+    "s": "A new tab opens on the Rep teams help. Close it."
+   },
+   {
+    "d": "Click <b>Tournaments<\/b> in the sidebar’s foot.",
+    "s": "You are on one of the club’s tournaments. The word over the sidebar now says <b>EVENTS<\/b>. The sidebar’s first row is no longer “Club overview”: it starts with the Tournament label and the event dropdown."
+   },
+   {
+    "d": "Look at the bottom of the sidebar again.",
+    "s": "<b>Plan &amp; billing<\/b>, a thin line, <b>Club<\/b> (a shield), then Collapse sidebar."
+   },
+   {
+    "d": "Open the person menu and click <b>Help<\/b>.",
+    "s": "A new tab opens on the tournaments help. Close it."
+   },
+   {
+    "d": "Click <b>Club<\/b> in the foot.",
+    "s": "You are back on the club’s Overview, and the word says CLUB again."
+   },
+   {
+    "d": "Judge it: the foot door says “Tournaments” and the place it opens says “EVENTS” over the sidebar. Do they read as the same place?",
+    "s": "Tick if they do. If the two names confuse you, tick and note it: “Tournament” did not fit the space, which is why the strip says Events."
+   },
+   {
+    "d": "Make the browser window about <b>1366 × 768<\/b> (or zoom to 125 %) and open the tournament again.",
+    "s": "The foot stays at the bottom of the screen; the sidebar’s list scrolls above it, and nothing in the foot is cut off."
+   },
+   {
+    "d": "Click <b>Collapse sidebar<\/b>.",
+    "s": "The sidebar becomes a strip of icons; the foot’s thin line is a short line between the card icon and the shield. Click <b>Expand sidebar<\/b> to restore it."
+   }
+  ]
+ },
+ {
+  "id": "P2",
+  "title": "The club owner on a phone",
+  "job": "UAT Rep Club · owner · 390 px",
+  "forText": "The More sheet: the other portals sit in “You”, and a tournament’s sheet opens on Notifications.",
+  "passes": "The club’s More sheet has no Programs heading and lists Tournaments under You; the tournament’s sheet starts with Notifications and lists Club under You; Help is still at the sheet’s foot.",
+  "notIn": "The desktop (part 1).",
+  "where": "Admin → Overview, then a tournament, on a 390 px window.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check (phone): switch the browser to 390 px wide on the club’s <b>Overview<\/b> and wait for it to settle. The bottom bar reads Overview · Calendar · Rep teams · Accounting · More.",
+    "s": "If the bar reads anything else, stop and tell me."
+   },
+   {
+    "d": "Tap <b>More<\/b>.",
+    "s": "Notifications, then the three tiles (Schedules · House league · Families), Permits, then <b>Club<\/b>: Public site, Organization. There is no <b>Programs<\/b> heading."
+   },
+   {
+    "d": "Look at the <b>You<\/b> group.",
+    "s": "Account, What’s new, Home, <b>Tournaments<\/b>, Plan &amp; billing (with its count), in two columns. Below a line: <b>Help<\/b>, Send feedback, Download app (if your browser offers it), Sign out."
+   },
+   {
+    "d": "Tap <b>Tournaments<\/b> under You.",
+    "s": "A tournament opens, its own bottom bar showing."
+   },
+   {
+    "d": "Tap <b>More<\/b>.",
+    "s": "The sheet opens on <b>Notifications<\/b> (no “Club overview” row above it), then Current tournament and the event’s groups."
+   },
+   {
+    "d": "Look at the <b>You<\/b> group, then tap <b>Club<\/b>.",
+    "s": "You lists Account, What’s new, Home, <b>Club<\/b>, Plan &amp; billing. Tapping Club opens the club’s Overview."
+   },
+   {
+    "d": "Open More once more and look at its foot.",
+    "s": "<b>Help<\/b> is still there (the phone keeps it on the sheet)."
+   }
+  ]
+ },
+ {
+  "id": "P3",
+  "title": "Three other people",
+  "job": "a club admin · a tournament organization’s owner · a coach · desktop",
+  "forText": "What someone who is not the club owner sees in the foot and the account menu.",
+  "passes": "The admin’s foot has no Plan & billing; the tournament organization says EVENTS everywhere and has no Club door; the coach’s sidebar has no Help and the coach’s account menu does; a public page’s menu has no Help.",
+  "notIn": "The club owner (parts 1 and 2).",
+  "where": "Admin and the Coaches Portal.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as the UAT Rep Club <b>admin<\/b> (<code>uat-club-admin@…<\/code>). You are on the club’s Overview.",
+    "s": "If not, stop and tell me."
+   },
+   {
+    "d": "Wait for it to settle and look at the sidebar’s foot.",
+    "s": "No Plan &amp; billing (only the owner has it). Tournaments (if this admin can open tournaments), then Collapse sidebar, with no thin line above the door."
+   },
+   {
+    "d": "Open one of the club’s tournaments.",
+    "s": "EVENTS over the sidebar; the foot reads <b>Club<\/b>, then Collapse sidebar."
+   },
+   {
+    "d": "Sign out, and sign in as the tournament organization’s owner (<code>uat-owner@uat-test-org.local<\/code>). Open its tournament.",
+    "s": "EVENTS over the sidebar. The foot reads Plan &amp; billing, then Collapse sidebar: no Club door (this organization has no club). The person menu has <b>Help<\/b> under What’s new."
+   },
+   {
+    "d": "Sign out, and sign in as the coach (<code>uat-coach@uat-test-org.local<\/code>). Open the team.",
+    "s": "The Coaches Portal’s sidebar has no <b>Help<\/b> row any more. The top left still says COACHES PORTAL (its own change comes later)."
+   },
+   {
+    "d": "Open the person menu and click <b>Help<\/b>.",
+    "s": "Help sits under What’s new; a new tab opens on the Coaches Portal help. Close it."
+   },
+   {
+    "d": "Still signed in as the coach, open the club’s public site: <code>localhost:3000/uat-rep-club<\/code>. Open its account menu (top right).",
+    "s": "No <b>Help<\/b> row there: Help is only in the admin’s and the Coaches Portal’s menus."
+   }
+  ]
+ },
+ {
+  "id": "P4",
+  "title": "The two demos",
+  "job": "no sign-in · desktop",
+  "forText": "The demos hide the account menu, so their sidebars keep Help.",
+  "passes": "Both demos show Help at the bottom of the sidebar and no person icon at the top right.",
+  "notIn": "A signed-in screen (parts 1 to 3).",
+  "where": "localhost:3000/demos.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign out (or use a private window) and open <code>localhost:3000/demos<\/code>.",
+    "s": "The demos page lists the tournament demo and the coach demo. If not, stop and tell me."
+   },
+   {
+    "d": "Open the <b>tournament<\/b> demo and go into its admin (the demo’s own door).",
+    "s": "EVENTS over the sidebar. The sidebar’s foot shows <b>Help<\/b>, then Collapse sidebar. No person icon at the top right."
+   },
+   {
+    "d": "Go back and open the <b>coach<\/b> demo.",
+    "s": "The Coaches Portal’s sidebar foot shows <b>Help<\/b>, then Collapse sidebar. No person icon at the top right."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "P1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "D1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "P1" }; save(); render();
+  });
+  render();
+})();
+</script>

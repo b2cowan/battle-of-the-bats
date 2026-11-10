@@ -13,14 +13,15 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   Gauge, Medal, Globe, Trophy, ChartGantt, IdCard, CalendarClock, Calendar, DollarSign, Megaphone, UserCheck, FileCheck,
-  FileText, MapPin,
+  FileText, MapPin, Shield, Users2,
 } from 'lucide-react';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
 import {
   kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink, kitPermitsLink, clubProgramOrder, personClubShape, clubSheetGroups, orgTabs,
-  placeGroupHeading, showsOrgBoard,
+  placeGroupHeading, showsOrgBoard, adminHelpHref, kitPortalDoors,
 } from '../../lib/admin-kit-nav.ts';
+import { adminStripWord } from '../../lib/workspace-labels.ts';
 import { CLUB_BASE, CLUB_PEOPLE, clubNavFor, RUNS_BOTH, RUNS_NEITHER } from './_club-people.ts';
 import { hasCapability } from '../../lib/roles.ts';
 import type { OrgRole } from '../../lib/types.ts';
@@ -89,9 +90,10 @@ describe('N5 · the icon dictionary', () => {
   });
 
   it('the Coaches Portal door is the people icon in the admin’s sidebar and sheet (Check-in owns the check mark)', () => {
-    for (const f of [ADMIN_RAIL, ADMIN_SHEET]) {
-      assert.match(readCode(f), /<Users2 size=\{\d+\} aria-hidden \/>\s*(<span[^>]*>)?\s*Coaches Portal|<Users2 size=\{\d+\} aria-hidden \/><span>Coaches Portal/, f);
-    }
+    // One list of portal doors (`kitPortalDoors`), read by the rail's foot and the sheet's You (navigation Phase 1).
+    const coaches = kitPortalDoors({ base: '/o/admin', onTournaments: false, tournamentOnly: false, isCanceled: false, tournamentsDoor: false, canUse: () => true, coachDoor: { show: true, href: '/o/coaches' } });
+    assert.deepEqual(coaches.map(d => [d.key, d.label, d.href, d.icon]), [['coaches-portal', 'Coaches Portal', '/o/coaches', Users2]]);
+    for (const f of [ADMIN_RAIL, ADMIN_SHEET]) assert.match(readCode(f), /portalDoors\.map\(door =>[\s\S]*?<door\.icon size=\{1[47]\} aria-hidden \/>/, f);
     assert.doesNotMatch(readCode(ADMIN_SHEET), /UserCheck/);
   });
 });
@@ -101,24 +103,41 @@ describe('N6 · a door is named by where it goes', () => {
     for (const f of [ADMIN_RAIL, ADMIN_SHEET, COACH_RAIL, COACH_SHEET, FREE_SHEET, FREE_SHELL]) {
       assert.doesNotMatch(readCode(f), />\s*Back to|label: ['"]Back to/, f);
     }
-    assert.match(readCode(ADMIN_SHEET), /<span>Club overview<\/span>/);
+    // ⚖ E4 (navigation Phase 1, owner 2026-11-09): inside a tournament the way back is the "Club" door — the sidebar
+    // foot's and the More sheet's You — and "Club overview" is gone from both. The coach portal's door says "Club" too.
+    for (const f of [ADMIN_RAIL, ADMIN_SHEET]) assert.doesNotMatch(readCode(f), /Club overview/, f);
+    const inEvent = kitPortalDoors({ base: '/o/admin', onTournaments: true, tournamentOnly: false, isCanceled: false, tournamentsDoor: true, canUse: () => true, coachDoor: { show: false, href: '' } });
+    assert.deepEqual(inEvent.map(d => [d.key, d.label, d.href, d.icon]), [['club', 'Club', '/o/admin', Shield]]);
+    assert.match(readCode(ADMIN_SHEET), /id=\{`admin-mob-\$\{door\.key\}`\}/,'the sheet’s doors keep their ids: admin-mob-club, -tournaments, -coaches-portal');
+    for (const f of [COACH_RAIL, COACH_SHEET]) {
+      assert.match(readCode(f), /<Shield size=\{\d+\}( aria-hidden)? \/>\s*<span[^>]*>Club<\/span>/, f);
+      assert.doesNotMatch(readCode(f), />Admin<\/span>/, `${f}: the club door is "Club", never "Admin"`);
+    }
   });
 
   it('"Rep teams", in sentence case', () => {
     assert.equal(kitPrograms({ base: '/o/admin', canUse: () => true }).find(p => p.key === 'rep-teams')?.label, 'Rep teams');
   });
 
-  // Round 4 (D4, owner 2026-11-08): the strip's left cell is the sidebar's width, so it says the short form, "Admin". The
-  // gate answer: the Workspaces list, Home, the account pages' way back and the portal's door keep "Admin Area". Both words
-  // live in ONE file, beside each other, so neither is retyped.
-  it('the admin top strip names its portal with the short form of the Workspaces list’s word', () => {
+  // ⚖ The strip words (owner 2026-11-09, navigation Phase 1; replaced round 4's "Admin"): "Club" on the club's screens,
+  // "Events" on a tournament's and a tournament-only organization's. The Workspaces list, Home, the account pages' way back
+  // and the coaches portal keep "Admin Area". All the words live in ONE file, beside each other, so none is retyped.
+  it('the admin top strip names its portal "Club" or "Events", decided from the address', () => {
     const strip = readCode('components/admin/AdminTopStrip.tsx');
-    // The split strip says the short form; a cancelled account's unsplit strip keeps the full word, as it was.
-    assert.match(strip, /\{split \? ADMIN_STRIP_LABEL : WORKSPACE_KIND_LABEL\.organization\}/);
-    assert.doesNotMatch(strip, /'Admin( Area)?'/, 'never typed in the strip');
+    // The split strip says the portal's word; a cancelled account's unsplit strip keeps the full word, as it was.
+    assert.match(strip, /\{split \? stripWord : WORKSPACE_KIND_LABEL\.organization\}/);
+    assert.match(strip, /const stripWord = adminStripWord\(\{ onTournaments: pathname\.startsWith\(`\$\{base\}\/tournaments`\), tournamentOnly \}\);/);
+    assert.doesNotMatch(strip, /'(Admin( Area)?|Club|Events)'/, 'never typed in the strip');
     const words = readCode('lib/workspace-labels.ts');
     assert.match(words, /organization: 'Admin Area',/);
-    assert.match(words, /export const ADMIN_STRIP_LABEL = 'Admin';/);
+    assert.match(words, /export const ADMIN_STRIP_WORD = \{ club: 'Club', events: 'Events' \} as const;/);
+    assert.doesNotMatch(words, /ADMIN_STRIP_LABEL/, 'the one "Admin" strip word is retired');
+  });
+
+  it('adminStripWord: Events on any tournament screen or a tournament-only organization, Club everywhere else', () => {
+    assert.equal(adminStripWord({ onTournaments: false, tournamentOnly: false }), 'Club');
+    assert.equal(adminStripWord({ onTournaments: true, tournamentOnly: false }), 'Events');
+    assert.equal(adminStripWord({ onTournaments: false, tournamentOnly: true }), 'Events');
   });
 });
 
@@ -141,17 +160,22 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
   });
 
   // 13i (N7): the groups are the sidebar's places, drawn from one list (Programs · Also on your plan · Club).
-  it('the admin sheet: Notifications, the places, You (Account, Home, Coaches Portal, Plan & billing), then the foot', () => {
-    order(readCode(ADMIN_SHEET), [
+  // ⚖ N7 (navigation Phase 1): You = Account, What's new, Home, the other portals (Club · Tournaments · Coaches Portal),
+  // Plan & billing. A tournament's sheet opens on Notifications ("Club overview" left its top).
+  it('the admin sheet: Notifications, the places, You (Account, Home, Club, Tournaments, Coaches Portal, Plan & billing), then the foot', () => {
+    const sheet = readCode(ADMIN_SHEET);
+    order(sheet, [
       'id="admin-mob-notifications"', '{sheetGroups.map(group)}', '>You</div>',
-      'id="admin-mob-account"', 'id="admin-mob-home"', 'id="admin-mob-coaches-portal"', 'id="admin-mob-billing"', '<MoreSheetFoot',
+      'id="admin-mob-account"', 'id="admin-mob-home"', '{portalDoors.map(door =>', 'id="admin-mob-billing"', '<MoreSheetFoot',
     ], ADMIN_SHEET);
+    assert.ok(sheet.indexOf('{moreOpen && (') < sheet.indexOf('id="admin-mob-notifications"'));
+    assert.doesNotMatch(sheet.slice(sheet.indexOf('<span className={styles.sheetGrab}'), sheet.indexOf('{currentOrg?.id && (')), /<Link/, 'nothing above Notifications');
   });
 
-  it('the Premium coach sheet: Notifications, the tiles, the groups, You (Account, Home, Plan & billing, Admin), then the foot', () => {
+  it('the Premium coach sheet: Notifications, the tiles, the groups, You (Account, Home, Club, Tournaments you run, Plan & billing), then the foot', () => {
     order(readCode(COACH_SHEET), [
       'id="coaches-mob-notifications"', '<MoreSheetTiles', '>You</div>',
-      'id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-billing"', 'id="coaches-mob-tournaments"', 'id="coaches-mob-back-to-admin"', '<MoreSheetFoot',
+      'id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-back-to-admin"', 'id="coaches-mob-tournaments"', 'id="coaches-mob-billing"', '<MoreSheetFoot',
     ], COACH_SHEET);
   });
 
@@ -165,18 +189,75 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     assert.doesNotMatch(readCode('components/coaches/CoachLiveSchedule.tsx'), /<InstallAppPrompt/);
   });
 
-  it('the admin sidebar’s foot: Help, the Coaches Portal; no Public site, Sign out or Send feedback', () => {
+  // ⚖ N4 (navigation Phase 1, E4 + E16, owner 2026-11-09): Plan & billing, a hairline, the other portals, Collapse.
+  it('the admin sidebar’s foot: Plan & billing, a hairline, the portal doors; Help only in the sandbox; no Public site, Sign out or Send feedback', () => {
     const rail = readCode(ADMIN_RAIL);
     const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<CollapseSidebarRow'));
-    order(foot, ['billingLink.href', 'helpHref', 'coachDoor.href'], ADMIN_RAIL);
+    order(foot, ['billingLink.href', '{isSandbox && (', 'styles.footSep', 'portalDoors.map'], ADMIN_RAIL);
     assert.match(foot, /billingLink && <Link/);
     assert.match(foot, /styles\.footItem/);
     assert.match(foot, /<billingLink\.icon size=\{14\}/);
+    assert.match(foot, /\{isSandbox && \(\s*<Link href=\{helpHref\}/, 'Help is the sandbox’s only (the account menu has it elsewhere)');
+    assert.match(foot, /\{\(billingLink \|\| isSandbox\) && portalDoors\.length > 0 && <div className=\{styles\.footSep\} aria-hidden \/>\}/);
+    assert.match(readCode('components/admin/kit/useAdminKitNav.ts'), /const portalDoors = kitPortalDoors\(\{ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor: order\.door, canUse, coachDoor \}\);/);
     assert.match(readCode(ADMIN_SHEET), /billingLink && <Link[\s\S]*?<billingLink\.icon size=\{17\}/);
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
     assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, accountKind: currentOrg\?\.accountKind, role: userRole, capabilities: userCapabilities, isSandbox \}\)/);
-    assert.ok(foot.indexOf('helpHref') < foot.indexOf('coachDoor.href'));
     assert.doesNotMatch(rail, /Sign out|<FeedbackLauncher|signOut/);
+    // Pinned: the foot is outside the scrolling list, so a short laptop scrolls the rows and never the doors.
+    assert.ok(rail.indexOf('<div className={styles.railFoot}>') > rail.indexOf('</nav>'), 'the foot sits after the scrolling nav');
+  });
+
+  // ⚖ The doors, case by case (N4, E4): the one rule, `kitPortalDoors`.
+  it('kitPortalDoors: Club inside a club’s tournament, Tournaments at a club that hosts one, the Coaches Portal last; never for a cancelled or tournament-only org', () => {
+    const coach = { show: true, href: '/o/coaches' };
+    const doors = (o: Partial<Parameters<typeof kitPortalDoors>[0]>) => kitPortalDoors({
+      base: '/o/admin', onTournaments: false, tournamentOnly: false, isCanceled: false, tournamentsDoor: true, canUse: () => true,
+      coachDoor: { show: false, href: '' }, ...o,
+    }).map(d => d.key);
+    assert.deepEqual(doors({}), ['tournaments'], 'at the club, once it hosts one');
+    assert.deepEqual(doors({ coachDoor: coach }), ['tournaments', 'coaches-portal'], 'one order');
+    assert.deepEqual(doors({ onTournaments: true, coachDoor: coach }), ['club', 'coaches-portal'], 'inside the event: never a Tournaments door');
+    assert.deepEqual(doors({ tournamentsDoor: false }), [], 'no current tournament, or the director (whose row it is)');
+    assert.deepEqual(doors({ canUse: c => c !== 'module_tournaments' }), [], 'only for someone who can open it');
+    assert.deepEqual(doors({ tournamentOnly: true, onTournaments: true, coachDoor: coach }), ['coaches-portal'], 'a tournament-only org has no club');
+    assert.deepEqual(doors({ isCanceled: true, onTournaments: true }), [], 'a cancelled club');
+    assert.deepEqual(doors({ isCanceled: true }), []);
+  });
+
+  // ⚖ The Overview keeps its Tournaments card: the rulings moved Tournaments out of the sidebar and the phone only.
+  it('the Overview’s program cards list what the club runs; the sidebar and the phone read the list less the door', () => {
+    const hook = readCode('components/admin/kit/useAdminKitNav.ts');
+    assert.match(hook, /const programs = kitPrograms\(\{ base, canUse, order: runOrder\.lead \}\);/);
+    assert.match(hook, /const navPrograms = kitPrograms\(\{ base, canUse, order: order\.lead \}\);/);
+    assert.match(hook, /programs: navPrograms, alsoOnPlan, organization: kitOrgPlace/, 'the sidebar’s places');
+    assert.match(readCode(ADMIN_SHEET), /programs: isCanceled \? \[\] : navPrograms, alsoOnPlan,/, 'the phone’s fill');
+    assert.match(readCode('components/admin/kit/club/ClubHubKit.tsx'), /const \{ base, programs, alsoOnPlan, permitsLink \} = useAdminKitNav\(\);/, 'the hub’s cards');
+  });
+
+  // ⚖ ONE HELP DOOR PER SCREEN (E16, owner 2026-11-09): on a desktop the account menu's row, on a phone the More sheet's
+  // foot, in the demo sandbox (no account menu) the sidebar's foot — never two at once, never none.
+  it('Help: the admin and Premium coach account menus opt in, desktop only; the sidebars keep it only in the sandbox', () => {
+    const menu = readCode('components/shared/AccountMenu.tsx');
+    assert.match(menu, /\{helpHref && !inSheet && \(/, 'never in the phone’s Account sheet');
+    assert.ok(menu.indexOf('{helpHref && !inSheet && (') > menu.indexOf('What’s new'), 'under What’s new');
+    assert.match(menu, /<HelpCircle size=\{15\} aria-hidden \/>/);
+    const admin = readCode('components/admin/AdminTopStrip.tsx');
+    assert.match(admin, /\{!inSandbox && \(\s*<AccountMenu[\s\S]*?helpHref=\{!suspended && currentOrg\?\.slug \? adminHelpHref\(pathname, base\) : undefined\}/, 'never on a cancelled account’s one page (its help bounces to billing)');
+    const coach = readCode('components/coaches/CoachTopStrip.tsx');
+    assert.match(coach, /\{!inSandbox && \(\s*<AccountMenu[\s\S]*?helpHref=\{!wall && !free && currentOrg\?\.slug \? `\/\$\{currentOrg\.slug\}\/coaches\/help` : undefined\}/);
+    for (const f of ['app/platform-admin/PlatformShell.tsx', 'components/public/ClubBar.tsx', 'components/public/TournamentBand.tsx', 'components/consumer/ConsumerNav.tsx', 'components/Navbar.tsx']) {
+      assert.doesNotMatch(readCode(f), /helpHref/, `${f}: no Help in a public, family, marketing or support-console menu`);
+    }
+    assert.match(readCode(COACH_RAIL), /\{inSandbox && \(\s*<Link href=\{`\$\{base\}\/help`\}/, 'the coach sidebar keeps Help only in the sandbox');
+    assert.equal((readCode(COACH_RAIL).match(/>Help<\/span>/g) ?? []).length, 1);
+    assert.equal((readCode(ADMIN_RAIL).match(/>Help<\/span>/g) ?? []).length, 1);
+    // The phone keeps Help at the sheet's foot, one answer for where you are.
+    assert.match(readCode(ADMIN_SHEET), /<MoreSheetFoot idPrefix="admin-mob" helpHref=\{helpHref\}/);
+    assert.equal(adminHelpHref('/o/admin/tournaments/divisions', '/o/admin'), '/o/admin/help/tournaments');
+    assert.equal(adminHelpHref('/o/admin/rep-teams/x', '/o/admin'), '/o/admin/help/rep-teams');
+    assert.equal(adminHelpHref('/o/admin/org/billing', '/o/admin'), '/o/admin/help/org');
+    assert.equal(adminHelpHref('/o/admin/calendar', '/o/admin'), '/o/admin/help');
   });
 
   // ⚖ Ask 9 = A (Club Tier Stage 13a, owner 2026-11-06): the header's "View site" pill is on every screen the sidebar and the
@@ -326,7 +407,7 @@ describe('N8 · the tiles', () => {
     // The club's own shape is never rewritten: the Members role guide reads it as a fact about the org.
     assert.deepEqual(personClubShape(noSeason, c => hasCapability('owner', null, c)), noSeason);
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
-    assert.match(hook, /const order = clubProgramOrder\(personClubShape\(club\.shape, canUse\)\);/, 'one place, the hook every surface shares');
+    assert.match(hook, /const runOrder = clubProgramOrder\(personClubShape\(club\.shape, canUse\)\);\s*const order = clubTournamentsDoor\(runOrder, personOnlyProgram\(canUse\) === 'tournaments'\);/, 'one place, the hook every surface shares');
     assert.match(readCode('components/admin/kit/club/MembersKit.tsx'), /runsHouseLeague=\{shape\.runsHouseLeague\}/);
   });
 
@@ -406,9 +487,9 @@ describe('13i · places in the sidebar, pages on the page', () => {
     assert.match(tourBody, /<ChevronRight size=\{12\} className=\{`\$\{styles\.chevron\}\$\{open \? ` \$\{styles\.chevronOpen\}` : ''\}`\} aria-hidden \/>/);
   });
 
-  it('N4: the foot as built, unchanged by 13i — Plan & billing first (its fee pill on it), Help, the other portal, then Collapse', () => {
+  it('N4 (navigation Phase 1): Plan & billing first (its fee pill on it), the sandbox’s Help, the hairline, the portal doors, then Collapse', () => {
     const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<SidebarStripTip'));
-    const at = ['billingLink.href', 'feeAlert && <WaitingCount', 'helpHref', 'coachDoor.href', '<CollapseSidebarRow'].map(m => foot.indexOf(m));
+    const at = ['billingLink.href', 'feeAlert && <WaitingCount', 'helpHref', 'styles.footSep', 'portalDoors.map', '<CollapseSidebarRow'].map(m => foot.indexOf(m));
     at.forEach((i, n) => assert.ok(i > 0 && (n === 0 || i > at[n - 1]), `foot order at ${n}`));
   });
 
@@ -469,12 +550,15 @@ describe('13i · places in the sidebar, pages on the page', () => {
     }
   });
 
-  it('the owner’s sheet: the place rows are Tournaments (no heading), then Club: Public site, Organization — 19 entries become 14', () => {
+  // ⚖ Navigation Phase 1 (E4): Tournaments left the sheet's Programs group for a door in You, so the owner's place rows are
+  // Club's two; the count is unchanged (a place row became a You row).
+  it('the owner’s sheet: the place rows are Club: Public site, Organization; Tournaments is a door in You — 14 entries', () => {
     const n = clubNavFor('owner', RUNS_BOTH);
     const groups = clubSheetGroups(n.groups, n.phone);
-    assert.deepEqual(groups.map(g => [placeGroupHeading(g), g.places.map(p => p.key)]), [[null, ['tournaments']], ['Club', ['public-site', 'org']]]);
-    // Notifications 1 + tiles 3 + places 3 + You (Account, Home, Plan & billing) 3 + the foot (Help, Send feedback,
-    // Download app, Sign out) 4 = 14; before 13i the Organization group added its five pages and the Programs group was one.
-    assert.equal(1 + n.phone.tiles!.length + groups.flatMap(g => g.places).length + 3 + 4, 14);
+    assert.deepEqual(groups.map(g => [placeGroupHeading(g), g.places.map(p => p.key)]), [['Club', ['public-site', 'org']]]);
+    assert.equal(n.tournamentsDoor, true);
+    // Notifications 1 + tiles 3 + places 2 + You (Account, Home, Tournaments, Plan & billing) 4 + the foot (Help, Send
+    // feedback, Download app, Sign out) 4 = 14.
+    assert.equal(1 + n.phone.tiles!.length + groups.flatMap(g => g.places).length + 4 + 4, 14);
   });
 });

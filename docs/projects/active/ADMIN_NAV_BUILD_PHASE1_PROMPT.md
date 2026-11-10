@@ -9,6 +9,22 @@
 > **Refreshed 2026-11-09 from what Phase 0 shipped** (committed `fd857b765`; plan Phase 0 section). Read the section
 > below before the rest; nothing in the rulings changed.
 
+## ✅ Hand-off after session 1 (2026-11-09): Part A is BUILT — the next session does Part B only
+- **Done:** the gate (tab 12 drawn, /design applied, owner ruled it as drawn; /marketing confirmed "Events"; the menu's
+  legal-line removal is wanted), all of Part A, its measurements, /docs, /design on the built screens, /simplify and
+  /review (applied: Help hidden for a cancelled account; the Overview keeps its Tournaments card — `programs` is what
+  the club runs, `navPrograms` what the sidebar and phone list; the doors are one rule, `kitPortalDoors`). Everything is
+  recorded in the plan's Phase 1 section; the walk is §504 (https://claude.ai/artifact/SErpWiVT4vx3UHzgRbwvrn).
+- **Part B, next session** (read the plan's Phase 1 section first): the club cell on two lines, the one 40px collapsed tile
+  with the logo for all three portals, the back link's look (E12 (1)). Then measure, `/design`, `/simplify`, `/review`,
+  `/docs`, its own walk.
+- **Open for the owner (asked at the end of session 1):** (1) the club page's sidebar moves when the club's brief arrives
+  (pre-existing; Phase 1 adds the Tournaments door to what moves) — seed the club's shape on the server, in Part B or
+  Phase 2?; (2) the N10 census ran on dev only — read prod (read-only) before shipping?; (3) the coach rail's foot is not
+  pinned (Phase 4 rebuilds that rail).
+- **Leftovers noted, not done:** the drawings' phone foot is drawn as one column (the shipped foot is a 2 × 2 grid);
+  two stale comments say the coach sidebar carries Help (`CoachesChrome.tsx` ~L23, `CoachPageHelpSlot.tsx` ~L34).
+
 ## What Phase 0 shipped that this phase stands on
 - **A tournament page knows its event on the server's first paint.** The admin layout seeds the tournament provider
   (the list this person may open + the chosen event, from a per-organization cookie and the address) on tournament

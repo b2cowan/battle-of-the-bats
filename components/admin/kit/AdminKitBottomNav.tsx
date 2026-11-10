@@ -16,7 +16,7 @@
  *     event's PHASE, the one the header shows (`tournamentBarKeys`, owner 2026-10-16), with Dashboard pinned to the
  *     left corner: Dashboard · Teams · Schedule · Site in Draft; Dashboard · Teams · Schedule · Chat while Open;
  *     Dashboard · Results · Schedule · Chat from game day on, Check-in in More. Today's counts and today's context
- *     strip sit above them. A club's More gains "Club overview" at its top. An invite-only event (the free plan, a
+ *     strip sit above them. A club's More names the club as a "Club" door in You (navigation Phase 1, E4). An invite-only event (the free plan, a
  *     Premium coach's event) has no Check-in or Chat, so Messages, which opens Communications, takes Chat's place
  *     (M6, the free tournament tier, 2026-10-16).
  */
@@ -24,7 +24,7 @@ import { useEffect, useRef, useState, type ElementType } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutGrid, MoreHorizontal, X, ChevronRight, Bell, Globe, Home, User, Users2,
+  LayoutGrid, MoreHorizontal, X, ChevronRight, Bell, Globe, Home, User,
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
@@ -60,7 +60,8 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const pathname = usePathname();
   const nav = useAdminKitNav();
   const {
-    base, programs, alsoOnPlan, brief, placeGroups, litPlace, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups,
+    base, navPrograms, alsoOnPlan, brief, placeGroups, litPlace, tournamentOnly, onTournaments, isCanceled, portalDoors,
+    tournamentGroups,
     calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
   const { currentOrg } = useOrg();
@@ -125,7 +126,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   // of More, in the programs' own order (N10). What the plan carries but the club does not run yet never fills a tab or a
   // tile: it lists under the sheet's "Also on your plan", as in the sidebar. A cancelled club's bar is More.
   const club = clubPhoneNav<KitLink>({
-    calendar: calendarLink, schedules: schedulesLink, programs: isCanceled ? [] : programs, alsoOnPlan,
+    calendar: calendarLink, schedules: schedulesLink, programs: isCanceled ? [] : navPrograms, alsoOnPlan,
   });
   // A place's door (a program, or Organization) lights while you are anywhere inside the place — the sidebar's one lit row
   // (`litClubPlace`: none on Plan & billing's page); the calendar and the scheduler on their own pages.
@@ -263,18 +264,12 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
             <div className={styles.dropdown} role="menu">
               <span className={styles.sheetGrab} aria-hidden />
 
-              {/* ⚖ ONE MORE-SHEET ORDER FOR EVERY OPERATOR PORTAL (the nav standard's N7, Ask B2, 2026-10-17): (1) the place
-                  you're in, a tournament only — Club overview, then the tournament picker; (2) Notifications; (3) the tiles;
-                  (4) the sidebar's groups, under the sidebar's names, in its order, an icon on every row; (5) You — Account,
-                  Home, the other portal; (6) Help, Send feedback, Download app, Sign out. */}
-              {tournamentBar && !tournamentOnly && (
-                // Named by where it goes, never "Back to…" (2026-07-31; N6, Ask A5): the club's Overview, in its icon.
-                <Link className={styles.dropItem} href={base} role="menuitem" id="admin-mob-club-overview" onClick={() => setMoreOpen(false)}>
-                  <LayoutGrid size={17} aria-hidden />
-                  <span>Club overview</span>
-                </Link>
-              )}
-
+              {/* ⚖ ONE MORE-SHEET ORDER FOR EVERY OPERATOR PORTAL (the nav standard's N7, rewritten by navigation Phase 1,
+                  owner 2026-11-09): (1) Notifications — then, in a tournament, its picker (until Phase 3); (2) the tiles;
+                  (3) the sidebar's groups, under the sidebar's names, in its order, an icon on every row; (4) You — Account,
+                  What's new, Home, the other portals you hold (Club · Tournaments · Coaches Portal), Plan & billing;
+                  (5) Help, Send feedback, Download app, Sign out. "Club overview" left the top of a tournament's sheet: the
+                  way back to the club is You's "Club" door (E4). */}
               {currentOrg?.id && (
                 <Link
                   className={`${styles.dropItem}${pathname === `${base}/notifications` ? ` ${styles.dropActive}` : ''}`}
@@ -350,11 +345,12 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                         <Home size={17} aria-hidden /><span>Home</span>
                       </Link>
                     )}
-                    {coachDoor.show && (
-                      <Link className={styles.dropItem} href={coachDoor.href} role="menuitem" id="admin-mob-coaches-portal" onClick={close}>
-                        <Users2 size={17} aria-hidden /><span>Coaches Portal</span>
+                    {/* The other portals, the sidebar foot's doors in its order (N4): Club · Tournaments · Coaches Portal. */}
+                    {portalDoors.map(door => (
+                      <Link key={door.key} className={styles.dropItem} href={door.href} role="menuitem" id={`admin-mob-${door.key}`} onClick={close}>
+                        {door.icon && <door.icon size={17} aria-hidden />}<span>{door.label}</span>
                       </Link>
-                    )}
+                    ))}
                     {billingLink && <Link className={styles.dropItem} href={billingLink.href} role="menuitem" id="admin-mob-billing" onClick={close} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
                       {billingLink.icon && <billingLink.icon size={17} aria-hidden />}<span>{billingLink.label}</span>
                       {feeAlert && <span className={`${styles.dropCount} ${feeTone}`} aria-label={feeAlert.label}>{kitCountText(feeAlert.count)}</span>}

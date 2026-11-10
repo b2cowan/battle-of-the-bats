@@ -395,9 +395,11 @@ describe('13i · the club sidebar lists places only', () => {
 
   // ⚖ 13c C1 = A (owner 2026-11-08): Permits is a place between Calendar and Schedules for every role that opened the permit
   // list before — owner 10 → 11, admin 9 → 10, league admin 4 → 5, registrar 4 → 5, treasurer 3 → 4 (and staff, the same day).
-  it('the place lists and their gates: owner 11, admin 10, league admin 5, registrar 5, treasurer 4', () => {
-    assert.deepEqual(rows('owner'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'tournaments', 'accounting', 'families', 'public-site', 'org']);
-    assert.deepEqual(rows('admin'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'tournaments', 'accounting', 'public-site', 'org'], 'no Families: an explicit grant only');
+  // ⚖ E4 (navigation Phase 1, owner 2026-11-09): a hosted Tournaments left the places for the foot's door — owner 11 → 10,
+  // admin 10 → 9 (the door is `tournamentsDoor`, below).
+  it('the place lists and their gates: owner 10, admin 9, league admin 5, registrar 5, treasurer 4', () => {
+    assert.deepEqual(rows('owner'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'accounting', 'families', 'public-site', 'org']);
+    assert.deepEqual(rows('admin'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'accounting', 'public-site', 'org'], 'no Families: an explicit grant only');
     assert.deepEqual(rows('league_admin'), ['overview', 'calendar', 'permits', 'house-league', 'org']);
     assert.deepEqual(rows('league_registrar'), ['overview', 'calendar', 'permits', 'house-league', 'org']);
     assert.deepEqual(rows('treasurer'), ['overview', 'permits', 'accounting', 'org']);
@@ -426,11 +428,31 @@ describe('13i · the club sidebar lists places only', () => {
     assert.equal(clubPlaceAt('/o/admin/permitsx', '/o/admin', { ...access, opensPermits: true }), null, 'never a sibling address');
   });
 
-  it('the groups: Programs (Rep teams, House league, Tournaments), then Also on your plan, then Club with Organization last', () => {
+  it('the groups: Programs (Rep teams, House league), then Also on your plan, then Club with Organization last', () => {
     const owner = clubNavFor('owner', RUNS_BOTH).groups.map(g => [g.key, g.places.map(p => p.key)]);
-    assert.deepEqual(owner, [['programs', ['rep-teams', 'house-league', 'tournaments']], ['club', ['accounting', 'families', 'public-site', 'org']]]);
+    assert.deepEqual(owner, [['programs', ['rep-teams', 'house-league']], ['club', ['accounting', 'families', 'public-site', 'org']]], 'a hosted Tournaments is the foot’s door, not a place');
+    assert.equal(clubNavFor('owner', RUNS_BOTH).tournamentsDoor, true);
     const notYet = clubNavFor('owner', RUNS_NEITHER).groups.map(g => [g.key, g.places.map(p => p.key)]);
     assert.deepEqual(notYet, [['programs', ['rep-teams']], ['also', ['house-league', 'tournaments']], ['club', ['accounting', 'families', 'public-site', 'org']]]);
+    assert.equal(clubNavFor('owner', RUNS_NEITHER).tournamentsDoor, false, 'no current tournament: the quiet row stays, no foot door');
+  });
+
+  // ⚖ E15 (navigation Phase 1, owner 2026-11-09): the tournament director — a person whose only program is tournaments,
+  // decided by what they OPEN (the staff role's default) — keeps Tournaments as a row and a phone-bar slot, before the club
+  // hosts one too: house league's twin (Ask 8). Never a foot door for them.
+  it('E15: the tournament director keeps Tournaments as a Programs row and the bar’s third slot, hosted or not', () => {
+    for (const shape of [RUNS_BOTH, RUNS_NEITHER]) {
+      const n = clubNavFor('staff', shape);
+      assert.deepEqual(n.programs.map(p => p.key), ['tournaments'], 'it leads');
+      assert.deepEqual(n.alsoOnPlan.map(p => p.key), [], 'never "Also on your plan"');
+      assert.equal(n.tournamentsDoor, false, 'no foot door: the row is the door');
+      assert.deepEqual(n.groups.find(g => g.key === 'programs')?.places.map(p => p.key), ['tournaments']);
+      assert.deepEqual(n.phone.tabs.map(t => t.key), ['calendar', 'tournaments']);
+    }
+    // A staff member also given Accounting opens two programs: the club's own shape, the door rule as everyone's.
+    const both = clubNavFor('staff', RUNS_BOTH, { module_accounting: true });
+    assert.ok(!both.programs.some(p => p.key === 'tournaments'));
+    assert.equal(both.tournamentsDoor, true);
   });
 
   it('a heading over two or more rows; a lone row keeps its space with no word; "Also on your plan" always said', () => {
@@ -474,7 +496,7 @@ describe('13i · the club sidebar lists places only', () => {
     assert.doesNotMatch(rail, /RepTeamBlock|SeasonBlock|repTeamPages|seasonPages|\.pages\.map|programOpen|useRailTeam/, 'a row opens pages under it again');
     assert.ok(!existsSync(path.join(process.cwd(), 'components/admin/kit/useRailTeam.ts')), 'the rail’s team name store is back');
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
-    assert.match(hook, /const placeGroups = tournamentOnly \|\| isCanceled \? \[\] : clubPlaceGroups<KitLink>\(\{\s*programs, alsoOnPlan, organization: kitOrgPlace\(\{ base, orgLinks, tournamentOnly \}\),\s*\}\);/);
+    assert.match(hook, /const placeGroups = tournamentOnly \|\| isCanceled \? \[\] : clubPlaceGroups<KitLink>\(\{\s*programs: navPrograms, alsoOnPlan, organization: kitOrgPlace\(\{ base, orgLinks, tournamentOnly \}\),\s*\}\);/);
     assert.match(hook, /const litPlace = litClubPlace\(pathname, base, billingLink\);/);
   });
 

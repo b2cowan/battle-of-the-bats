@@ -1171,6 +1171,9 @@
 /* The foot's quiet doors — Help, Admin, Collapse sidebar — at 12px, as the admin foot (`.footItem`, the nav standard's
    N1, 2026-10-17): they are ways out, not pages of the team. Rows and icons keep the row recipe. */
 .sidebarFootItem { font-size: var(--type-support); }
+/* The hairline between Plan & billing (or the sandbox's Help) and the other portals' doors — the admin foot's `.footSep`
+   (N4, navigation Phase 1). */
+.sidebarFootSep { height: 1px; flex-shrink: 0; background: var(--home-line, rgba(255,255,255,0.06)); margin: 0.3rem 1.25rem; }
 
 /* ── THE STRIP (Sidebar Strip & Grid Width, Stage 2 — hub screen 9, ratified 2026-10-12) ───────────────
    64 wide, 40 targets, 18 icons; the five headings become hairlines and every page an icon in today's
@@ -1200,6 +1203,7 @@
   :global(html[data-sidebar='strip']) .sidebarItem svg { width: 18px; height: 18px; }
   :global(html[data-sidebar='strip']) .sidebarGroupHeader { display: none; }
   :global(html[data-sidebar='strip']) .sidebarDivider { width: 28px; margin: 8px auto; }
+  :global(html[data-sidebar='strip']) .sidebarFootSep { width: 28px; margin: 6px auto; background: var(--home-line-strong); }
 }
 
 /* ── Page layout ────────────────────────────────────────────────────────── */

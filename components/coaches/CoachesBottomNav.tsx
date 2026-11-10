@@ -446,18 +446,9 @@ export default function CoachesBottomNav() {
                   <span>Home</span>
                 </Link>
               )}
-              {billingHref && (
-                <Link href={billingHref} className={`${styles.dropItem} ${isOnBilling ? styles.dropActive : ''}`} role="menuitem" id="coaches-mob-billing" onClick={() => setMoreOpen(false)}>
-                  <CreditCard size={17} aria-hidden />
-                  <span>{PLAN_BILLING_TITLE}</span>
-                </Link>
-              )}
-              {tournamentsHref && (
-                <Link href={tournamentsHref} className={styles.dropItem} role="menuitem" id="coaches-mob-tournaments" onClick={() => setMoreOpen(false)}>
-                  <Trophy size={17} aria-hidden />
-                  <span>Tournaments you run</span>
-                </Link>
-              )}
+              {/* ⚖ The other portals, then Plan & billing — the one You order (N7, navigation Phase 1, owner 2026-11-09):
+                  the sidebar foot's doors in its order (Club · Tournaments you run). The club's door says "Club" as the
+                  admin's does (was "Admin"). */}
               {adminHome && (
                 <Link
                   href={adminHome.href}
@@ -467,7 +458,19 @@ export default function CoachesBottomNav() {
                   onClick={() => setMoreOpen(false)}
                 >
                   <Shield size={17} aria-hidden />
-                  <span>Admin</span>
+                  <span>Club</span>
+                </Link>
+              )}
+              {tournamentsHref && (
+                <Link href={tournamentsHref} className={styles.dropItem} role="menuitem" id="coaches-mob-tournaments" onClick={() => setMoreOpen(false)}>
+                  <Trophy size={17} aria-hidden />
+                  <span>Tournaments you run</span>
+                </Link>
+              )}
+              {billingHref && (
+                <Link href={billingHref} className={`${styles.dropItem} ${isOnBilling ? styles.dropActive : ''}`} role="menuitem" id="coaches-mob-billing" onClick={() => setMoreOpen(false)}>
+                  <CreditCard size={17} aria-hidden />
+                  <span>{PLAN_BILLING_TITLE}</span>
                 </Link>
               )}
             </div>

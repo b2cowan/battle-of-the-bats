@@ -215,6 +215,7 @@ body.only-diff tr.same-row { display: none; }
 .cell .tx b.two { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 16px; }
 .pfx { margin-left: auto; display: flex; align-items: center; gap: 8px; font: 500 12px "Inter"; color: var(--ink3); white-space: nowrap; padding: 0 16px; margin-right: 6px; border-right: 1px solid var(--line2); height: 22px; }
 .pfx i { font-style: normal; font: 700 9px "Inter"; letter-spacing: .12em; color: var(--ink3); }
+.fr .mv { box-shadow: inset 3px 0 0 #B5470F; }
 .door-sep { height: 1px; background: var(--line); margin: 4px 20px; }
 .am { position: absolute; z-index: 20; min-width: 240px; width: max-content; background: #fff; border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 12px 30px rgba(36,30,21,.22); padding: 6px; }
 .am-id { display: flex; gap: 10px; align-items: center; padding: 8px 10px; } .am-id small { display: block; font: 400 11px Inter; color: var(--ink3); } .am-id b { font: 600 13px Inter; }
@@ -333,7 +334,7 @@ function cell(c) {
 }
 function sidebar(o) {
   return '<div class="side" style="width:' + o.w + 'px">' + cell(o.cell) + '<div class="rows">' + o.rows.map(row).join('') + '</div>' +
-    '<div class="foot same">' + (o.foot || []).map(function (f) { if (f === 'sep') return '<div class="door-sep"></div>'; return '<div class="row same">' + I(f[0], 14) + '<span>' + f[1] + '</span>' + (f[2] ? '<span class="cnt">' + f[2] + '</span>' : '') + '</div>'; }).join('') + '</div>' +
+    (o.noFoot ? '' : '<div class="foot same">') + (o.foot || []).map(function (f) { if (f === 'sep') return '<div class="door-sep"></div>'; return '<div class="row same">' + I(f[0], 14) + '<span>' + f[1] + '</span>' + (f[2] ? '<span class="cnt">' + f[2] + '</span>' : '') + '</div>'; }).join('') + (o.noFoot ? '' : '</div>') +
     '<div class="row same" style="height:38px;font-size:12px;border-top:1px solid var(--line2)">' + I('panel', 14) + '<span>Collapse sidebar</span></div>' + (o.marks || '') + '</div>';
 }
 function frame(w, h, inner, extra) { return '<div class="fr" style="width:' + w + 'px;height:' + h + 'px">' + '<div class="grid"></div>' + inner + (extra || '') + '</div>'; }
@@ -674,7 +675,7 @@ function moreYou(kind) {
     '<div class="sheet" style="bottom:72px"><div class="grab"></div>' +
     '<div class="op same" style="font-size:16px">' + I('bell', 17) + 'Notifications</div>' +
     '<div class="note same" style="padding:10px 6px">… the tiles and the ' + (kind === 't' ? 'event’s' : 'team’s') + ' pages, unchanged …</div>' +
-    '<div class="grp">You</div>' + you +
+    '<div class="grp">You</div><div style="display:grid;grid-template-columns:1fr 1fr;column-gap:10px">' + you + '</div>' +
     '<div class="note same" style="padding:10px 6px">Help · Send feedback · Sign out</div></div>' + mk('E4', 340, 412));
 }
 S.moreAfter = moreYou('t'); S.coachMore = moreYou('c');
@@ -702,6 +703,89 @@ function acctMenu(withHelp) {
     (withHelp ? mk('E16', -16, 150) : '') + '</div>');
 }
 S.acctBefore = acctMenu(false); S.acctAfter = acctMenu(true);
+
+/* ── PHASE 1 GATE (2026-11-09): the three states the drawings did not show yet ─────────────────────────────────────
+   Drawn from the shipped rows (the rail, the More sheet, the club nav model as they are in the working copy today).
+   An orange edge (.mv) marks a row this phase moves, adds or removes, in the before and the after alike. */
+var fOwnerNoT = [['card', 'Plan & billing', 1], 'sep', ['usersround', 'Coaches Portal']];
+function mvRows(rows, keys) { return rows.map(function (r) { return keys.indexOf(r.t || r.lab) > -1 ? Object.assign({}, r, { cls: 'mv' }) : r; }); }
+function sidebarMv(o, mvFoot) {
+  var html = sidebar(o);
+  (mvFoot || []).forEach(function (t) { html = html.replace('<div class="row same">' + I(t[0], 14) + '<span>' + t[1] + '</span>', '<div class="row mv">' + I(t[0], 14) + '<span>' + t[1] + '</span>'); });
+  return html;
+}
+/* the tournament director: a club's staff member whose only program is tournaments (E15) */
+function tdRows(hosted) {
+  return [{ i: 'grid', t: 'Overview', lit: 1 }, { i: 'calclock', t: 'Calendar' }, { i: 'filecheck', t: 'Permits', n: 8 },
+    { lab: hosted ? 'Programs' : 'Also on your plan' }, { i: 'trophy', t: 'Tournaments' }, { lab: 'Club' }, { i: 'building', t: 'Organization' }];
+}
+function overviewBody() {
+  return '<div class="pg same" style="top:48px;left:240px;padding-top:22px"><div class="pcard" style="height:96px;width:640px;align-items:flex-start;flex-direction:column"><b style="font:700 15px Inter">Lakeshore Fall Classic 2026</b><small style="color:#776D5D;font-size:13px">Nov 1–3 · 24 of 24 spots taken · 3 teams waiting on payment</small></div>' +
+    '<div class="pcard" style="height:64px;width:640px"><span class="l"><b>Permits</b><small>8 waiting on the city</small></span></div></div>';
+}
+S.tdClubBefore = frame(1000, 640, strip({ rail: 240, word: 'Admin', place: { name: 'Overview' }, site: 1, ws: 1 }) +
+  sidebarMv({ w: 240, cell: { tile: CI, name: CLUB }, rows: tdRows(true), foot: [['help', 'Help']] }, [['help', 'Help']]) + overviewBody());
+S.tdClubAfter = frame(1000, 640, strip({ rail: 240, word: 'Club', place: { name: 'Overview' }, site: 1, ws: 1 }) +
+  sidebar({ w: 240, cell: { tile: CI, name: CLUB, two: 1 }, rows: tdRows(true), foot: [], noFoot: 1, marks: mk('E15', 200, 232) }) + overviewBody());
+S.tdNewClub = trio([
+  ['Today · the club has no tournament yet', frame(250, 420, sidebar({ w: 240, cell: { tile: CI, name: CLUB }, rows: mvRows(tdRows(false), ['Also on your plan']), foot: [['help', 'Help']] }).replace('class="side" style="', 'class="side" style="top:0;'))],
+  ['Proposed · the same club', frame(250, 420, sidebar({ w: 240, cell: { tile: CI, name: CLUB, two: 1 }, rows: mvRows(tdRows(true), ['Programs']), foot: [], noFoot: 1 }).replace('class="side" style="', 'class="side" style="top:0;'))]]);
+function tdTournRows(before) {
+  return (before ? [{ i: 'grid', t: 'Club overview', cls: 'mv' }] : []).concat([{ lab: 'Tournament' }, { sel: EV }]).concat(tRows('Divisions'));
+}
+S.tdTournBefore = frame(1000, 760, strip({ rail: 240, word: 'Admin', place: { name: EV, fx: EVD, chip: '<span class="chip live">Game day</span>' }, site: 1, ws: 1 }) +
+  sidebarMv({ w: 240, cell: { tile: CI, name: CLUB }, rows: tdTournRows(true), foot: [['help', 'Help']] }, [['help', 'Help']]) + divisionsBody(48, true));
+S.tdTournAfter = frame(1000, 760, strip({ rail: 240, word: 'Events', place: { name: EV, fx: EVD, chip: '<span class="chip live">Game day</span>' }, site: 1, ws: 1 }) +
+  sidebarMv({ w: 240, cell: { tile: CI, name: CLUB, two: 1 }, rows: tdTournRows(false), foot: [['shield', 'Club']] }, [['shield', 'Club']]) + divisionsBody(48, true));
+/* the club that has not run a tournament (the owner) */
+function noTRows() {
+  return [{ i: 'grid', t: 'Overview' }, { i: 'calclock', t: 'Calendar' }, { i: 'filecheck', t: 'Permits', n: 8 }, { i: 'gantt', t: 'Schedules' }, { lab: 'Programs' }, { i: 'users', t: 'Rep teams', lit: 1 }, { i: 'cal', t: 'House league', n: 2 },
+    { lab: 'Also on your plan' }, { i: 'trophy', t: 'Tournaments' }, { lab: 'Club' }, { i: 'dollar', t: 'Accounting', n: 9 }, { i: 'idcard', t: 'Families', n: 1 }, { i: 'globe', t: 'Public site' }, { i: 'building', t: 'Organization' }];
+}
+S.noTBefore = frame(1000, 900, strip({ rail: 240, word: 'Admin', place: { name: 'Rep teams' }, site: 1, ws: 1 }) +
+  sidebarMv({ w: 240, cell: { tile: CI, name: CLUB }, rows: noTRows(), foot: aFoot }, [['help', 'Help']]) + clubPage());
+S.noTAfter = frame(1000, 900, strip({ rail: 240, word: 'Club', place: { name: 'Rep teams' }, site: 1, ws: 1 }) +
+  sidebar({ w: 240, cell: { tile: CI, name: CLUB, two: 1 }, rows: noTRows(), foot: fOwnerNoT, marks: mk('E4', 200, 790) }) + clubPage());
+/* the demo sandbox: no account menu, so its sidebar keeps Help (and has no Plan & billing) */
+S.demoFoot = trio([['The demo sandbox · club (the doors it holds)', footOnly([['help', 'Help'], 'sep', ['trophy', 'Tournaments'], ['usersround', 'Coaches Portal']])], ['The demo sandbox · Coaches Portal', footOnly([['help', 'Help']])]]);
+/* phone: the whole More sheet, laid flat (it scrolls on a real phone) */
+var PILL1 = '<span style="margin-left:auto;font:700 10px/18px Inter;min-width:18px;height:18px;border-radius:9px;background:var(--amber-soft);color:var(--amber);text-align:center;border:1px solid rgba(131,80,6,.25)">1</span>';
+function sop(ic, t, cls, extra) { return '<div class="op ' + (cls || 'same') + '" style="font-size:16px">' + I(ic, 17) + t + (extra || '') + '</div>'; }
+function sgrp(t, cls) { return '<div class="grp ' + (cls || 'same') + '">' + t + '</div>'; }
+function stiles(list) { return '<div class="same" style="display:flex;gap:8px;padding:10px 0">' + list.map(function (x) { return '<span class="pcard" style="flex:1;height:64px;justify-content:center;flex-direction:column;font:700 12px Inter;gap:4px;margin:0">' + I(x[0], 20) + x[1] + '</span>'; }).join('') + '</div>'; }
+function s2col(list) { return '<div style="display:grid;grid-template-columns:1fr 1fr;column-gap:10px">' + list.join('') + '</div>'; }
+function sdiv() { return '<div class="same" style="height:1px;background:var(--line2);margin:8px 0"></div>'; }
+function sYou(doors, noBill) {
+  return sdiv() + sgrp('You') + s2col([sop('user', 'Account'), sop('spark', 'What’s new'), sop('house', 'Home')].concat(
+    doors.map(function (d) { return sop(d[0], d[1], d[2] || 'same'); }), noBill ? [] : [sop('card', 'Plan & billing', 'same', PILL1)])) +
+    sdiv() + sop('help', 'Help') + sop('msg', 'Send feedback') + sop('dl', 'Download app') + '<div class="op same" style="font-size:16px;color:#B23A26;border-bottom:0">' + I('logout', 17) + 'Sign out</div>';
+}
+function sheetFull(h, inner, marks) { return frame(390, h, '<div class="sheet" style="top:0;bottom:auto;border-radius:0;box-shadow:none;padding-top:10px"><div class="grab same"></div>' + inner + '</div>' + (marks || '')); }
+var clubTiles = stiles([['gantt', 'Schedules'], ['cal', 'House league'], ['idcard', 'Families']]);
+S.clubMoreBefore = sheetFull(950, sop('bell', 'Notifications') + clubTiles + sop('filecheck', 'Permits', 'same', '<span class="st">8</span>') +
+  sgrp('Programs', 'mv') + sop('trophy', 'Tournaments', 'mv') + sgrp('Club') + s2col([sop('globe', 'Public site'), sop('building', 'Organization')]) +
+  sYou([['usersround', 'Coaches Portal']]));
+S.clubMoreAfter = sheetFull(950, sop('bell', 'Notifications') + clubTiles + sop('filecheck', 'Permits', 'same', '<span class="st">8</span>') +
+  sgrp('Club') + s2col([sop('globe', 'Public site'), sop('building', 'Organization')]) +
+  sYou([['trophy', 'Tournaments', 'mv'], ['usersround', 'Coaches Portal']]), mk('E4', 362, 452));
+var tTiles = stiles([['usercheck', 'Check-in'], ['qr', 'Staff kit'], ['users', 'Teams']]);
+function tGroupsNote() { return '<div class="note same" style="padding:8px 6px 4px">Operations · Setup · Admin: the event’s other pages, under their headings, unchanged</div>'; }
+S.tMoreBefore = sheetFull(930, sop('grid', 'Club overview', 'mv') + sop('bell', 'Notifications') + sgrp('Current tournament') + '<div class="mselect same"><span>' + EV + ' - Live</span>' + I('down', 14) + '</div>' +
+  tTiles + tGroupsNote() + sYou([['usersround', 'Coaches Portal']]));
+S.tMoreAfter = sheetFull(930, sop('bell', 'Notifications') + sgrp('Current tournament') + '<div class="mselect same"><span>' + EV + ' - Live</span>' + I('down', 14) + '</div>' +
+  tTiles + tGroupsNote() + sYou([['shield', 'Club', 'mv'], ['usersround', 'Coaches Portal']]), mk('E4', 360, 470) + mk('E5', 340, 150));
+/* the director's phone (E15's twin of the house-league exception): Tournaments keeps the bar's third slot; no You door */
+function sheetBar(h, inner, items, marks) { return frame(390, h, '<div class="sheet" style="top:0;bottom:72px;border-radius:0;box-shadow:none;padding-top:10px;overflow:hidden"><div class="grab same"></div>' + inner + '</div>' + bnav(items, 'More') + (marks || '')); }
+var tdBar = [['grid', 'Overview'], ['calclock', 'Calendar'], ['trophy', 'Tournaments'], ['more', 'More']];
+S.tdPhoneBefore = sheetBar(720, sop('bell', 'Notifications') + sop('filecheck', 'Permits', 'same', '<span class="st">8</span>') + sgrp('Club') + sop('building', 'Organization') + sYou([], 1), tdBar);
+S.tdPhoneAfter = sheetBar(720, sop('bell', 'Notifications') + sop('filecheck', 'Permits', 'same', '<span class="st">8</span>') + sgrp('Club') + sop('building', 'Organization') + sYou([], 1), tdBar, mk('E15', 210, 652));
+/* N10: an admin without Families, on a club with a tournament and no house-league season — the tiles were Schedules ·
+   Public site · Tournaments; without Tournaments only two are found, and the tiles are three or none */
+var adBar = [['grid', 'Overview'], ['calclock', 'Calendar'], ['users', 'Rep teams'], ['dollar', 'Accounting'], ['more', 'More']];
+S.adPhoneBefore = sheetBar(800, sop('bell', 'Notifications') + '<div class="mv">' + stiles([['gantt', 'Schedules'], ['globe', 'Public site'], ['trophy', 'Tournaments']]) + '</div>' + sop('filecheck', 'Permits', 'same', '<span class="st">8</span>') +
+  sgrp('Also on your plan') + sop('cal', 'House league') + sgrp('Club') + sop('building', 'Organization') + sYou([['usersround', 'Coaches Portal']], 1), adBar);
+S.adPhoneAfter = sheetBar(800, sop('bell', 'Notifications') + sop('gantt', 'Schedules', 'mv') + sop('filecheck', 'Permits', 'same', '<span class="st">8</span>') +
+  sgrp('Also on your plan') + sop('cal', 'House league') + sgrp('Club', 'mv') + s2col([sop('globe', 'Public site', 'mv'), sop('building', 'Organization')]) + sYou([['trophy', 'Tournaments', 'mv'], ['usersround', 'Coaches Portal']], 1), adBar, mk('N10', 340, 66));
 
 /* ── today, side by side (cropped, true size) ─────────────────────────────────────── */
 S.todayClub = frame(1000, 300,
@@ -855,7 +939,22 @@ var SECTIONS = [
       spec('Collapsed', 'one 40px tile everywhere (today the club’s is 24px and the event’s 40px)', S.logoCol) +
       spec('On a phone', 'the switching sheet, with each tournament’s logo', S.logoPhone());
   }],
-  ['asks', '11 · Asks', false, function () { return '<h2>Your calls</h2><p class="lede">Answer with letters (“E1 A, E2 A …”). Each recommendation is the first option.</p>' + askHTML; }]
+  ['asks', '11 · Asks', false, function () { return '<h2>Your calls</h2><p class="lede">Answer with letters (“E1 A, E2 A …”). Each recommendation is the first option.</p>' + askHTML; }],
+  ['phase1', '12 · Phase 1 states', true, function () {
+    return '<h2>Three states the build needs before it starts</h2><p class="lede">Phase 1 moves Help into the account menu, puts the other portals in the sidebar’s foot, takes “Club overview” and the Tournaments row out of the sidebars, and changes the strip’s word. These are the three cases the earlier tabs did not draw. Every frame is the shipped screen with only this phase’s changes; an <b style="color:#B5470F">orange edge</b> marks a row that moves, appears or goes. The event’s own cell, the page name in the strip and the unfolded groups are Phase 2, so the tournament sidebar here still has today’s dropdown.</p>' +
+      '<div class="cols"><div class="card"><h3>1 · The tournament director (E15)</h3><p>A staff member whose only program is tournaments, decided by what they can open (the same test as the house-league exception). Tournaments stays a row for them, under Programs, even before the club has run one: it is their whole job, and a foot door would hide it. They are not the owner and hold no other portal, so their club foot is only Collapse sidebar. Inside the event, “Club overview” goes and the foot’s “Club” door replaces it.</p></div>' +
+      '<div class="card"><h3>2 · A club with no current tournament</h3><p>Tournaments stays where it is today, the one row under “Also on your plan”, and the foot gets no Tournaments door. Once the club has a tournament (a draft counts, as today), the row leaves and the door appears in the foot (tab 4). A club whose tournaments are all archived counts as having none, as today. Help leaves the foot for the account menu.</p></div>' +
+      '<div class="card"><h3>3 · The phone More sheets</h3><p>The club’s sheet loses its Programs heading and its one row, Tournaments; Tournaments becomes a door in You, after Home. The tournament’s sheet loses “Club overview” at its top, so it opens on Notifications; “Club” becomes a door in You. Help stays at the sheet’s foot, so the phone is unchanged there. The “Current tournament” dropdown stays until Phase 3.</p></div></div>' +
+      spec('1 · The tournament director · the club’s Overview', 'before / after · desktop, true size · a club that has run a tournament', pair(S.tdClubBefore, S.tdClubAfter)) +
+      spec('1 · The tournament director · a club with no tournament yet', 'today the row sits under “Also on your plan”; proposed, it leads under Programs, as house league does for a registrar', S.tdNewClub) +
+      spec('1 · The tournament director · inside the event', 'before / after · Phase 1 only: the club cell and the dropdown stay until Phase 2; “Club overview” becomes the foot’s “Club”. Until then the club’s name at the top and the “Club” door both open the club’s Overview, as the name and “Club overview” do today; Phase 2 puts the event in that cell.', pair(S.tdTournBefore, S.tdTournAfter)) +
+      spec('1 · The tournament director · phone', 'unchanged, and drawn so it stays that way: Tournaments keeps the bar’s third slot (the twin of the registrar’s House league), so the sheet names it nowhere else and You has no Tournaments door', S.tdPhoneAfter) +
+      spec('2 · A club with no current tournament · the owner', 'before / after · whole screen · Tournaments stays under “Also on your plan”; no Tournaments door in the foot', pair(S.noTBefore, S.noTAfter)) +
+      spec('The demo sandbox', 'the sandbox hides the account menu, so its sidebars keep Help at the top of the foot (and have no Plan & billing). The coach demo is a team of its own, so it holds no other portal.', S.demoFoot) +
+      spec('3 · The club’s More sheet · the owner', 'before / after · the whole sheet laid flat, true size (it scrolls on a phone); You is the shipped two-column grid', pair(S.clubMoreBefore, S.clubMoreAfter)) +
+      spec('3 · The tournament’s More sheet · the owner', 'before / after · it opens on Notifications; “Club” joins You', pair(S.tMoreBefore, S.tMoreAfter)) +
+      spec('N10 · who loses tiles when Tournaments leaves the phone’s fill', 'before / after · an admin without Families, on a club with a tournament and no house-league season. The tiles were Schedules · Public site · Tournaments; without Tournaments only two are found, and the tiles are three or none, so Schedules becomes a row and Public site goes back to Club. That is the sheet a club with no tournament already shows this person. Owners hold Families and keep their tiles. The build counts the real clubs and people before changing it.', pair(S.adPhoneBefore, S.adPhoneAfter));
+  }]
 ];
 
 /* ── wiring ─────────────────────────────────────────────────────────────────────────── */

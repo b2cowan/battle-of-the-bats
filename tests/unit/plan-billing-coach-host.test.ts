@@ -290,7 +290,9 @@ describe('workspace billing stays outside the team nav and season gates', () => 
         assert.equal(html.includes(mobile ? 'id="coaches-mob-billing"' : 'id="coaches-billing"'), allowed, path);
         const tournamentId = mobile ? 'coaches-mob-tournaments' : 'coaches-tournaments';
         assert.equal(html.includes(`id="${tournamentId}"`), tournamentsAllowed, `${path}/${scenario}`);
-        assert.equal(html.includes('>Admin</span>'), scenario === 'club-owner', 'all standalone roles lose Admin');
+        // The club's door says "Club" (navigation Phase 1, owner 2026-11-09; was "Admin").
+        assert.equal(html.includes('>Club</span>'), scenario === 'club-owner', 'all standalone roles lose the club door');
+        assert.ok(!html.includes('>Admin</span>'));
         assert.doesNotMatch(html, /Tournament helpers/);
         if (tournamentsAllowed) {
           assert.match(html, /href="\/falcons\/admin\/tournaments\/manage"/);
@@ -298,7 +300,11 @@ describe('workspace billing stays outside the team nav and season gates', () => 
           assert.match(door, /Tournaments you run/);
           assert.doesNotMatch(door, /sidebarItemActive|dropActive|aria-current/);
           assert.match(door, new RegExp(`width="${mobile ? 17 : 14}"`));
-          if (allowed) assert.ok(html.indexOf(mobile ? 'id="coaches-mob-billing"' : 'id="coaches-billing"') < html.indexOf(`id="${tournamentId}"`));
+          // The sidebar foot: Plan & billing, a hairline, the doors. The phone's You: the doors, then Plan & billing (N7).
+          if (allowed) {
+            const billingAt = html.indexOf(mobile ? 'id="coaches-mob-billing"' : 'id="coaches-billing"');
+            assert.ok(mobile ? billingAt > html.indexOf(`id="${tournamentId}"`) : billingAt < html.indexOf(`id="${tournamentId}"`));
+          }
         }
         if (allowed) assert.match(html, /href="\/falcons\/coaches\/billing"/);
         if (closed) {
@@ -312,10 +318,13 @@ describe('workspace billing stays outside the team nav and season gates', () => 
     const rail = readCode('components/coaches/CoachesSidebar.tsx');
     const phone = readCode('components/coaches/CoachesBottomNav.tsx');
     for (const source of [rail, phone]) assert.match(source, /coachBillingLink\(currentOrg, userRole, userCapabilities, inSandbox\)/);
+    // Navigation Phase 1 (N4, E16): the sandbox's Help, Plan & billing, the hairline, Club, Tournaments you run, Collapse.
     assert.ok(rail.indexOf('id="coaches-billing"') > rail.indexOf('>Help</span>'));
-    assert.ok(rail.indexOf('id="coaches-tournaments"') > rail.indexOf('id="coaches-billing"'));
+    assert.ok(rail.indexOf('styles.sidebarFootSep') > rail.indexOf('id="coaches-billing"'));
+    assert.ok(rail.indexOf('id="coaches-tournaments"') > rail.indexOf('>Club</span>'));
+    assert.ok(rail.indexOf('>Club</span>') > rail.indexOf('styles.sidebarFootSep'));
     assert.ok(rail.indexOf('<CollapseSidebarRow') > rail.indexOf('id="coaches-tournaments"'));
-    const ids = ['id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-billing"', 'id="coaches-mob-tournaments"', 'id="coaches-mob-back-to-admin"', '<MoreSheetFoot'];
+    const ids = ['id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-back-to-admin"', 'id="coaches-mob-tournaments"', 'id="coaches-mob-billing"', '<MoreSheetFoot'];
     for (let index = 1; index < ids.length; index++) assert.ok(phone.indexOf(ids[index - 1]) < phone.indexOf(ids[index]));
     assert.match(phone, /const isOnBilling = pathname === `\$\{base\}\/billing`/);
     assert.match(phone, /const isOnTeamMore = isOnNotifications \|\| isOnBilling/);

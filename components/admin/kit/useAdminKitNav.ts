@@ -16,7 +16,7 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgramOrder, personClubShape, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, type KitLink } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, type KitLink } from '@/lib/admin-kit-nav';
 import { kitTournamentGroups } from './kit-tournament-groups';
 import { useClubBrief } from './club/ClubBriefProvider';
 
@@ -85,9 +85,15 @@ export function useAdminKitNav() {
   // hub reads too — so the rail, the phone bar and the hub list the programs in one order.
   // ⚖ Ask 8 (Stage 13a): a person whose only program is house league sees it lead from day one — the one exception to
   // N10, decided here ONCE so the rail, the phone bar and the Overview cannot disagree.
+  // ⚖ E4 + E15 (navigation Phase 1, owner 2026-11-09): a hosted Tournaments leaves the lead for the foot's door — except
+  // for the tournament director, whose whole job it is (it stays their row, as house league does for a registrar).
   const club = useClubBrief();
-  const order = clubProgramOrder(personClubShape(club.shape, canUse));
-  const programs = kitPrograms({ base, canUse, order: order.lead });
+  const runOrder = clubProgramOrder(personClubShape(club.shape, canUse));
+  const order = clubTournamentsDoor(runOrder, personOnlyProgram(canUse) === 'tournaments');
+  // Two lists: the Overview's program cards list everything the club RUNS, Tournaments included (the rulings moved it out
+  // of the sidebar and the phone, never off the club's front page); the sidebar's places and the phone's fill read `navPrograms`.
+  const programs = kitPrograms({ base, canUse, order: runOrder.lead });
+  const navPrograms = kitPrograms({ base, canUse, order: order.lead });
   const alsoOnPlan = kitPrograms({ base, canUse, order: order.also });
   // ⚖ D8 (Club Stage 1): "tournament-only" is a fact about the PLAN, never the person — the same
   // helper the hub, today's sidebar and the post-login resolver call, so a club's staff member is
@@ -112,23 +118,19 @@ export function useAdminKitNav() {
     status: currentTournament?.status, isSandbox, role: userRole, planId: currentOrg?.planId,
   }).map(g => ({ ...g, items: g.items.map(i => ({ ...i, href: i.href ?? `${base}/tournaments/${i.key}` })) }));
 
-  const section = activeKitSection(pathname, base);
   // ⚖ 13i Session B: the club's places in their groups (Organization one place, its pages its tabs), built ONCE — the
   // sidebar and the More sheet read this list. None for a tournament-only organization (its flat Account list) or a
   // cancelled club. One club row is lit: the place you are in at any depth, none on Plan & billing's page (its foot row).
   const placeGroups = tournamentOnly || isCanceled ? [] : clubPlaceGroups<KitLink>({
-    programs, alsoOnPlan, organization: kitOrgPlace({ base, orgLinks, tournamentOnly }),
+    programs: navPrograms, alsoOnPlan, organization: kitOrgPlace({ base, orgLinks, tournamentOnly }),
   });
   const litPlace = litClubPlace(pathname, base, billingLink);
   const onTournaments = pathname.startsWith(`${base}/tournaments`);
-  // The guide for where you are — the sidebar's foot and the phone's More sheet open the same one (N7: Help on every
-  // sheet), in a new tab.
-  const helpHref = onTournaments ? `${base}/help/tournaments`
-    : section === 'house-league' ? `${base}/help/house-league`
-    : section === 'rep-teams' ? `${base}/help/rep-teams`
-    : section === 'accounting' ? `${base}/help/accounting`
-    : section === 'org' ? `${base}/help/org`
-    : `${base}/help`;
+  // The guide for where you are, in a new tab — the phone's More sheet foot (N7) and the demo sandbox's sidebar foot; on a
+  // desktop outside the sandbox it is the account menu's Help row (E16), which reads the same answer.
+  const helpHref = adminHelpHref(pathname, base);
+  // ⚖ THE OTHER PORTALS (E4, navigation Phase 1): one list, the rail's foot and the sheet's You read it.
+  const portalDoors = kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor: order.door, canUse, coachDoor });
 
   return {
     pathname,
@@ -139,6 +141,8 @@ export function useAdminKitNav() {
     isCanceled,
     canUse,
     programs,
+    /** The sidebar's and the phone's programs: `programs` less a hosted Tournaments, which is a portal door (E4). */
+    navPrograms,
     alsoOnPlan,
     brief: club.brief,
     tournamentOnly,
@@ -155,6 +159,7 @@ export function useAdminKitNav() {
     permitsCount: club.outside?.count ?? 0,
     schedulesLink,
     coachDoor,
+    portalDoors,
     tournamentGroups,
     onTournaments,
   };
