@@ -10,11 +10,17 @@
  *   ordinary candidates (the sign is the check's own, BC6a), markable Not in the bank yet; nothing of last season opens.
  * ⚖ THE HINTS ARE THE ENGINE'S (`coachHints` → `hintsFor`): over both lists less the marked lines, on the TYPED
  *   difference. Nothing here adds or compares money.
- * ⚖ ANY LINE can be marked "Not in the bank yet" (ask 2): shown on a hinted row, and on any other under the pointer or the
- *   keyboard's focus (never hover-only). A marked line stays, greyed, with Undo.
+ * ⚖ ANY LINE can be marked "Not in the bank yet" (ask 2): the bordered button on a hinted row, the quiet link at rest on
+ *   every other (S3, D1). A marked line stays, greyed, with Undo.
  * ⚖ EVERY HIGHLIGHT OPENS: a row's chip brings its possibility into the callout.
  * ⚖ "RECORD THE MISSING AMOUNT" (renamed from "Add the missing line", WD2) sits with the callout's "Or the bank…" sentence
  *   (and alone when nothing can be named); it opens the Ledger's own Record money window. Nothing here writes a line. A team has no starting statement: no "Waiting at the start".
+ * ⚖ S3 (A5, A13, A7; drawing BANK_CHECK_NOVICE_UX_S3_DRAWINGS.html): with NOTHING to name, the sentence is the shipped
+ *   amber callout with its buttons — "Record a bank fee" / "Record interest" beside "Record the missing amount" for a gap
+ *   of $100.00 or less (`gapDoorFor`) — and the list waits behind "No line matches $X on its own. Show the n lines"
+ *   (it still opens on its own when a line could explain the gap). "The same $X as your last check, on {date}." heads
+ *   it when the gap repeats (`repeatOf`, the parent's `sameGapAs`). A desk row the callout doesn't name shows "Not in
+ *   the bank yet" as the quiet link at rest (D1, the phone's recipe).
  */
 import { useState, type ReactNode } from 'react';
 import SearchField from '@/components/shared/SearchField';
@@ -25,6 +31,7 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { signed, type BankLine, type CheckFigure, type Hint, type WaitingItem } from '@/lib/bank-check';
 import { itemOfLine } from '@/lib/bank-check-draft';
 import { coachHints } from '@/lib/bank-coach-map';
+import { gapDoorFor, type GapDoor } from '@/lib/bank-gap-doors';
 import { lineMatches, pickerSearch } from '@/lib/bank-club-rules';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { cents, dayShort, dayYear, moved, nameOf } from '@/lib/bank-screen';
@@ -36,16 +43,18 @@ import b from './CoachBank.module.css';
 const PAGE = 50;
 const PAGE_PHONE = 10;
 
-export default function CoachBankFind({ figure, band, typed, marked, onMark, onUndo, onAddLine }: {
+export default function CoachBankFind({ figure, band, typed, marked, repeatOf = null, onMark, onUndo, onAddLine }: {
   figure: TeamFigure;
   /** The engine's band, figured with the marked items and the cash. */
   band: CheckFigure;
   typed: boolean;
   marked: ReadonlyMap<string, WaitingItem>;
+  /** A7: the newest earlier saved check's date when its signed gap is today's (shown only while off). */
+  repeatOf?: string | null;
   onMark: (item: WaitingItem) => void;
   onUndo: (key: string) => void;
-  /** "Record the missing amount" (money write). */
-  onAddLine?: () => void;
+  /** "Record the missing amount" (money write); with a door, "Record a bank fee" / "Record interest" (S3). */
+  onAddLine?: (door?: GapDoor) => void;
 }) {
   const [open, setOpen] = useState(false); // "Show them", while the check isn't off
   const [pick, setPick] = useState<string | null>(null); // the possibility the callout names
@@ -95,7 +104,11 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
   const lastShown = more > 0 ? [] : foundLast.slice(0, lastPages * page);
   const lastMore = more > 0 ? 0 : Math.min(page, foundLast.length - lastShown.length);
   const searchedEmpty = (suspects.lines.length > 0 || lastCount > 0) && found.length === 0 && foundLast.length === 0;
-  const listOpen = off || open;
+  // A13: off with a line to name, the list opens on its own; off with nothing to name it waits behind its link.
+  const quiet = off && !current;
+  const listOpen = (off && !quiet) || open;
+  const listCount = suspects.lines.length + lastCount; // what the list would show (this season's, then last season's)
+  const door = gapDoorFor({ off, named: !!current, band });
   const when = dayYear(suspects.since);
   const sinceHint = suspects.sinceMatch ? W.linesSinceMatch(when, suspects.total) : W.coachLinesSinceSeason(when, suspects.total);
   const sinceTitle = suspects.sinceMatch ? W.findSinceMatch(when) : W.coachFindSinceSeason(when);
@@ -141,19 +154,39 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
         </p>
       )}
 
+      {/* A7 (D2): one plain line under the heading, before the callout. */}
+      {off && repeatOf && <p className={b.repeat}>{W.sameGapLead} <b>{cents(band.offByCents)}</b> {W.sameGapTail(dayYear(repeatOf))}</p>}
+
       {off && current && (
         <HintCallout hint={current} target={target} bankMore={bankMore}
-          onMark={() => onMark(itemOfLine(current.lines[0]))} onAddLine={onAddLine}
+          onMark={() => onMark(itemOfLine(current.lines[0]))} onAddLine={onAddLine ? () => onAddLine() : undefined}
           next={hints.length > 1 ? {
             count: W.hintCount(hints.indexOf(current) + 1, hints.length),
             go: () => setPick(hints[(hints.indexOf(current) + 1) % hints.length].key),
           } : null} />
       )}
-      {/* Nothing to name: the callout drops away (drawn); the bank-side reading and its door stay. */}
-      {off && !current && (
+      {/* Nothing to name (S3, A5): the bank-side reading is the callout, its doors buttons — the fee or interest door
+          first, for $100.00 or less, then today's. A read-only coach reads the sentence alone. Then the list's link. */}
+      {quiet && (
+        <div className={b.callout} role="status">
+          <span className={b.calloutWords}>{(bankMore ? W.coachHintOrMore : W.coachHintOrLess)(target, true)}</span>
+          {onAddLine && (
+            <span className={b.calloutActs}>
+              {door && <button type="button" className={styles.btnSecondary} onClick={() => onAddLine(door)}>
+                {door === 'fee' ? W.coachFeeDoor : W.coachInterestDoor}
+              </button>}
+              <button type="button" className={styles.btnSecondary} onClick={() => onAddLine()}>{W.recordMissingAmount}</button>
+            </span>
+          )}
+        </div>
+      )}
+      {quiet && listCount > 0 && (
         <p className={`${styles.formHint} ${b.hint}`}>
-          {(bankMore ? W.coachHintOrMore : W.coachHintOrLess)(target, true)}{' '}
-          {onAddLine && <button type="button" className={b.link} onClick={onAddLine}>{W.recordMissingAmount}</button>}
+          {W.noLineOnItsOwn(target)}{' '}
+          <button type="button" className={`${b.link} ${b.inlineLink}`} aria-expanded={open} onClick={() => setOpen(o => !o)}>
+            {open ? W.hideTheLines(listCount) : W.showTheLines(listCount)}
+          </button>
+          {open ? '.' : <>{' '}{W.toMarkAny}</>}
         </p>
       )}
 
@@ -259,22 +292,21 @@ function LineRow({ line: l, chip, onMark, undo }: { line: BankLine; chip: ReactN
       <td className={`${styles.td} ${styles.tdNum}`} data-label={W.findCol.out}>{l.direction === 'out' ? cents(l.amountCents) : ''}</td>
       <td className={`${styles.td} ${styles.tdNum} ${b.moneyIn}`} data-label={W.findCol.in}>{l.direction === 'in' ? cents(l.amountCents) : ''}</td>
       <td className={`${styles.td} ${b.actCell}`}>
-        <LineAction name={name} onMark={onMark} undo={undo} shown={!!chip} />
+        <LineAction name={name} onMark={onMark} undo={undo} quiet={!chip} />
       </td>
     </tr>
   );
 }
 
-/** A line's one action, at a desk and on a phone: "Not in the bank yet", or Undo once marked. `shown`: the bordered button
- *  always visible (a hinted row), where an unhinted desk row shows it under the pointer or the keyboard's focus. `quiet`:
- *  an unhinted PHONE row says it as the underlined link (still a full tap), so ten rows don't each carry a bordered button
- *  and the hinted one stands out (owner 2026-11-06, from /design BC7b). */
-function LineAction({ name, onMark, undo, shown, quiet = false }: {
-  name: string; onMark: () => void; undo?: () => void; shown: boolean; quiet?: boolean;
+/** A line's one action, at a desk and on a phone: "Not in the bank yet", or Undo once marked. The bordered button on a
+ *  hinted row; `quiet`: an unhinted row says it as the underlined link at rest (still a full tap on a phone), so thirty rows
+ *  don't each carry a bordered button and the hinted one stands out (the phone since 2026-11-06, /design BC7b; the desk
+ *  since S3, D1 — it was hidden until hover or focus there). */
+function LineAction({ name, onMark, undo, quiet }: {
+  name: string; onMark: () => void; undo?: () => void; quiet: boolean;
 }) {
   if (undo) return <button type="button" className={b.link} aria-label={W.undoLine(name)} onClick={undo}>{W.undo}</button>;
-  const cls = quiet ? b.link : `${b.markBtn}${shown ? ` ${b.markShown}` : ''}`;
-  return <button type="button" className={cls} aria-label={W.markLine(name)} onClick={onMark}>{W.notInBankYet}</button>;
+  return <button type="button" className={quiet ? b.link : b.markBtn} aria-label={W.markLine(name)} onClick={onMark}>{W.notInBankYet}</button>;
 }
 
 /** "· {part}": a part of a line that keeps its dot, so a narrow screen wraps before both and never starts or ends a line
@@ -302,6 +334,6 @@ function LineCard({ line: l, chip, onMark, undo }: Parameters<typeof LineRow>[0]
       title={name}
       caption={<span className={b.findWhat}><span>{dayShort(l.date)}{isMarked && ` · ${W.markedDetail}`}</span>{!isMarked && chip}</span>}
       trail={<span className={`${b.cardAmt}${l.direction === 'in' ? ` ${b.moneyIn}` : ''}`}>{moved(signed(l.direction, l.amountCents))}</span>}
-      actions={<LineAction name={name} onMark={onMark} undo={undo} shown quiet={!chip} />} />
+      actions={<LineAction name={name} onMark={onMark} undo={undo} quiet={!chip} />} />
   );
 }

@@ -1,7 +1,7 @@
 # Bank check through a volunteer's eyes — plan of record
 
 **Status:** STARTED 2026-11-08. Every owner ask is ruled (§0). **S1 committed `bdb56dd2f` 2026-11-08** (§4; owner walk
-owed). **S1b committed `4b9e9a655` 2026-11-08** (§4); owner walk §497 PASSED 24/24 2026-11-09; S2 committed `0147063c5` 2026-11-09 (§4; owner walk §503 owed); next S3 (S1 needs no walk, owner: "the words are good"). PM brief:
+owed). **S1b committed `4b9e9a655` 2026-11-08** (§4); owner walk §497 PASSED 24/24 2026-11-09; S2 committed `0147063c5` 2026-11-09 (§4); owner walk §503 PASSED 23/23 2026-11-09; next S3 (S1 needs no walk, owner: "the words are good"). PM brief:
 `BANK_CHECK_NOVICE_UX_PM_BRIEF.md`.
 
 **Source:** the evaluation "The Volunteer's Bank Check" (2026-11-08), published at
@@ -122,6 +122,14 @@ rows show "Not in the bank yet" without hover. "The same $4.50 as your last chec
 default library.
 - **Depends on:** S1; **`/accounting` review before handing off** (a new default item; Off-plan on Budget vs. Actual until
   budgeted). **Asks:** A5, A7, A13. **Risk:** medium (touches the Record money prefill and the club's category words).
+- **⚖ Ruled 2026-11-09 (owner, all as recommended; supersedes the paragraph above where they differ):** the coach REUSES
+  `League & Fees › Bank & payment fees` and `Other Income › Interest` (the coach library already has both; no "Bank fees"
+  word is added); the CLUB gains a fee word and an interest word (one migration, every club); **no "Record a deposit"
+  door**; fee/interest doors only when NOTHING explains the gap and the gap is **$100.00 or less**; the coach's budget
+  warning becomes a plain note only when opened from those doors; the repeat line keeps both doors. Drawings approved
+  2026-11-09 (artifact `9EAmporN7VP8J7Q7Eqj6Kj`, asks D1–D4 as recommended: desk rows get the quiet link, the repeat line
+  names the date, the banking-app line sits in the window's pinned footer, the coach's phone callout stacks its buttons
+  like the club's). Rulings in full: `BANK_CHECK_NOVICE_UX_S3_BUILD_PROMPT.md`.
 
 ### S4 — The printed check names its method
 One method line above the items on both portals' printed checks (row 15, D6).
@@ -242,3 +250,28 @@ sentence; the walked working-draft cards change shape and their walks are redone
   (`BankOverviewLine.tsx`, the `.overviewInvite` styles in `Bank.module.css`, two club-line pins in `bank-r2c-screens-guard`),
   which sits inside another session's uncommitted one-line Overview rewrite and rides with that commit; the club Overview keeps
   today's wording until it lands. Clean-checkout proof: typecheck clean, bank + room-key + help guards 528/528.
+- 2026-11-09 — **S3 built (Find's doors and its quiet list), both portals, to the approved drawings**
+  https://claude.ai/artifact/9EAmporN7VP8J7Q7Eqj6Kj; NOT committed yet, owner walk owed. Rules in one client-safe module
+  (`lib/bank-gap-doors.ts`: `gapDoorFor` — off, nothing named, ≤ 10000 cents; the platform words by NAME among platform rows;
+  `sameGapAs` — signed, newest check before the date, never a start); both Finds draw the nothing-to-name callout with its
+  buttons and the folded list; desk rows say their action as the quiet link at rest (D1; the hover-only CSS is gone); the
+  coach phone callout stacks (D4). Coach Record money: optional `prefill.description` / `word` / `bankDoor`, the word chosen
+  LATE (a render-phase adjustment when the team's list lands, into the baseline), the plain off-plan note only with the
+  door (ruling 6); the club's Add an entry: optional `description` / `word` / `footLine`. The banking-app line is the shared
+  window's new `footerAbove` slot (KitDialog + QuestionShell), the foot's first row. **Mig 457** (data only, dev applied
+  2026-11-09, prod pending in `MANUAL_PROD_STEPS.json`): platform `Admin › Bank & payment fees` (org) + the platform
+  `Other Income` heading widened `team → both` (`/dba`: one heading of that name, never two; clubs also gain Rebate,
+  Donation, Other income — no receipt behaviour anywhere). `/marketing` (helper): drafts kept; "Show the line" / "Hide the
+  line" for one; the opened link reads "Hide the n lines." and the trailing words drop (drawing note updated). Bookkeeping
+  principles review (helper; the /accounting agent's own scope is our books): fine as built on direction, date, no tax,
+  interest gross, Posted, the $100 cap, the grey note. **Owner questions from it (not applied — copy the owner approved):**
+  (a) a line "If both a fee and interest posted, record them as two lines"; (b) "the date the bank posted it" for "the
+  date it shows"; (c) the repeat line adding "If you recorded it then, this may be a new charge."; (d) a "Tax: none set"
+  hint for GST/HST-registered clubs (card-processor fees are taxable); (e) the coach's fee word under League & Fees
+  (ruling 1 reuse) — a professional might prefer an admin heading. Help: club `bank-tab` and coach `premium-money-bank`
+  Find sections (doors, the $100 rule, the folded list, the repeat line; keywords + searchText). Tests: new
+  `bank-gap-doors.test.ts`; pins moved in `bank-coach-view-guard`, `bank-r2c-screens-guard`, `bank-check-draft`. Bank +
+  dialog guards green; typecheck + spelling clean; full suite 15 failures, none in S3's files (other sessions' sign-up,
+  billing, practice plans, admin chrome, plus-tax phrase in their help hunks). **Not done in this session:** the dev walk
+  and the Save-distance measurement on a 390 phone (they need the shared dev server restarted for the new files);
+  `check:layout --changed`; `/simplify`, `/review`.

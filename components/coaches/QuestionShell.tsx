@@ -85,6 +85,7 @@ export default function QuestionShell({
   dirty = false,
   footer,
   footerStart,
+  footerAbove,
   children,
 }: {
   /** A form (the default), or the small centred "are you sure" — see the header. */
@@ -126,6 +127,8 @@ export default function QuestionShell({
   footer?: ReactNode;
   /** The foot's far left: a sentence, or a door that shares the main act's row (Remove). */
   footerStart?: ReactNode;
+  /** One line above the buttons, the foot's first row (KitDialog's `footerAbove`: the bank doors' banking-app line). */
+  footerAbove?: ReactNode;
   children: ReactNode;
 }) {
   /* The reload warning stays armed while the form is dirty even if its tab is hidden (the hub
@@ -179,6 +182,7 @@ export default function QuestionShell({
         dirty={isForm && dirty}
         footer={footer}
         footerStart={footerStart}
+        footerAbove={footerAbove}
         openOn="panel"
         ownType
         onFootHeight={isForm ? onFootHeight : undefined}

@@ -36,9 +36,11 @@ describe('1 · the Ledger\'s fourth view, Bank (B8)', () => {
     assert.match(ledger, /\{onBank \? \(\s*<CoachBankView orgSlug=\{orgSlug\} teamId=\{teamId\} active=\{tabActive\}/);
   });
   it('"Add the missing line" opens the Ledger\'s own Record money window, money write only, filled with the gap', () => {
-    assert.match(ledger, /onAddLine=\{canWriteMoney \? line => openConversationFrom\(line\.direction === 'in'/);
-    assert.match(ledger, /\{ branch: 'other-in', amount: line\.amount, prefill: \{ receivedDate: line\.date \} \}/);
-    assert.match(ledger, /\{ branch: 'spend', amount: line\.amount, prefill: \{ paidDate: line\.date \} \}/);
+    assert.match(ledger, /onAddLine=\{canWriteMoney \? line => \{[\s\S]{0,400}?openConversationFrom\(line\.direction === 'in'/);
+    // S3 (A5): the fee / interest door adds the description, the platform word and the door; without one, nothing more.
+    assert.match(ledger, /const fill = line\.door \? \{ \.\.\.doorFill\('coach', line\.door\), bankDoor: line\.door \} : \{\};/);
+    assert.match(ledger, /\{ branch: 'other-in', amount: line\.amount, prefill: \{ receivedDate: line\.date, \.\.\.fill \} \}/);
+    assert.match(ledger, /\{ branch: 'spend', amount: line\.amount, prefill: \{ paidDate: line\.date, \.\.\.fill \} \}/);
     assert.match(ledger, /\.\.\.\(paidDate \? \{ paidDate \} : \{\}\)/, 'the opener seeds the paid date into the form and its baseline');
     assert.doesNotMatch(ALL, /\/register|\/expenses|accounting_entries|rep_team_expenses/, 'no bank screen writes a money line (ask 1)');
   });
@@ -161,8 +163,11 @@ describe('6 · the phone (BC7b: drawing tab 2, the club\'s BC4b recipe in the po
     assert.match(find, /const page = isPhone \? PAGE_PHONE : PAGE;/);
     assert.match(find, /<CoachRowList label=\{sinceTitle\}/);
     assert.match(find, /moved\(signed\(l\.direction, l\.amountCents\)\)/);
-    assert.match(find, /actions=\{<LineAction name=\{name\} onMark=\{onMark\} undo=\{undo\} shown quiet=\{!chip\} \/>\}/,
+    assert.match(find, /actions=\{<LineAction name=\{name\} onMark=\{onMark\} undo=\{undo\} quiet=\{!chip\} \/>\}/,
       'the bordered button on a hinted phone row only; the rest say it as the quiet link (owner 2026-11-06)');
+    // S3, D1: the desk row takes the same recipe (it hid the button until hover or focus before).
+    assert.match(find, /<LineAction name=\{name\} onMark=\{onMark\} undo=\{undo\} quiet=\{!chip\} \/>\s*<\/td>/);
+    assert.doesNotMatch(readCode('components/coaches/bank/CoachBank.module.css'), /opacity: 0;/, 'no row action hides until hover');
     assert.doesNotMatch(ALL, /tableAsCards/, 'the phone draws its own list; no label/value table cards');
   });
   it('the saved checks on a phone are rows of the framed list, each the door to its check', () => {

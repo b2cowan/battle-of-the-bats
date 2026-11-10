@@ -16,7 +16,9 @@
  *   final check's ("Still waiting across the rollover"): Yes marks it, No drops it for this check. A new date clears both.
  * ⚖ "RECORD THE MISSING AMOUNT" opens the Ledger's own Record money window (`onAddLine`), filled with the gap, the
  *   statement's day and the direction (the bank holding more → money in); the Ledger's routes write it, never bank code
- *   (ask 1). Its save bumps the money revision, and the day is read again (the typed balance and cash stay).
+ *   (ask 1). Its save bumps the money revision, and the day is read again (the typed balance and cash stay). S3 (A5): the
+ *   fee and interest doors open the same window with `door` set (the word, the description and the banking-app line);
+ *   A7: "The same $X as your last check" when the gap is the newest earlier saved check's, signed (`sameGapAs`).
  * Only a money-write coach is given this component (K7: `canWrite`, the server's).
  * ⚖ WORK IT DOWN TO ZERO (WD2, plan BANK_CHECK_WORKING_DRAFT_PLAN.md, owner asks 1A–6A 2026-11-07; the club card's WD1, in
  *   the coach's words and kit):
@@ -48,6 +50,7 @@ import {
 import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { bankBandTiles, cents, dayYear, fieldAmount, moved, nameOf } from '@/lib/bank-screen';
+import { sameGapAs, type GapDoor } from '@/lib/bank-gap-doors';
 import { readTeamBank, saveTeamCheck, type TeamBank, type TeamFigure } from './coachBank';
 import CoachBankFind from './CoachBankFind';
 import b from './CoachBank.module.css';
@@ -58,7 +61,9 @@ const BALANCE_ID = 'coach-bank-balance';
 const CASH_ID = 'coach-bank-cash';
 
 /** The line "Record the missing amount" opens the Ledger's Record money window with: the gap, the statement's day, the way it goes. */
-export type MissingLine = { direction: 'in' | 'out'; amount: string; date: string };
+export type MissingLine = { direction: 'in' | 'out'; amount: string; date: string;
+  /** S3: opened from "Record a bank fee" / "Record interest" (absent: "Record the missing amount"). */
+  door?: GapDoor };
 
 export default function CoachBankCheck({ orgSlug, teamId, view, personId, active = true, againDate, onAddLine, onRecord, onSaved, onTouched }: {
   orgSlug: string;
@@ -386,9 +391,11 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
             </div>
           </div>
           <CoachBankFind key={date} figure={fresh} band={band} typed={typed !== null} marked={marked} onMark={mark} onUndo={unmark}
-            onAddLine={onAddLine ? () => onAddLine({
+            repeatOf={typed !== null ? sameGapAs(view.checks, date, band.differenceCents) : null}
+            onAddLine={onAddLine ? door => onAddLine({
               // The gap, the statement's day, and the way it must go to close it: the bank holding more is money in.
               direction: band.direction === 'bank_more' ? 'in' : 'out', amount: fieldAmount(band.offByCents), date,
+              ...(door ? { door } : {}),
             }) : undefined} />
         </>
       )}

@@ -45,6 +45,7 @@ import fy from './FiscalYear.module.css';
 import cr from './ClubReport.module.css';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import type { BudgetCategoryWithItems } from '@/lib/types';
+import { findPlatformWord, type PlatformWordRef } from '@/lib/bank-gap-doors';
 import type { Filing, LedgerKind } from '@/lib/club-ledger';
 import { addCalendarDays, tournamentToday } from '@/lib/timezone';
 import { closedThrough, isAddressableDay, lockedIn, type FiscalSetting } from '@/lib/club-fiscal-year';
@@ -263,17 +264,31 @@ export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove
    * balance check BC3b: the gap's amount, the statement's date, the direction; its "+ Add entry", WD1: the date and the
    * direction, no amount). Every field stays editable; without it the
    * window starts as it always has (money out, today, empty).
+   * Its "Add a bank fee" / "Add interest" (Bank check novice UX S3, A5) add `description` (What), a platform `word` to
+   * file under — found by its names when the word list arrives (`words` reads lazily), left unchosen when the club can't
+   * see it — and `footLine`, the banking-app line in the pinned foot above Add entry (D3).
    */
-  prefill?: { entryType?: 'income' | 'expense'; date?: string; amount?: string };
+  prefill?: { entryType?: 'income' | 'expense'; date?: string; amount?: string; description?: string; word?: PlatformWordRef;
+    footLine?: string };
   /** A sentence under Status (the Bank tab's, which status a bank fee takes); none from the Ledger itself. */
   statusHint?: string;
   onAdded: (text: string) => void; onClose: () => void;
 }) {
   const [entryType, setEntryType] = useState<'income' | 'expense'>(prefill?.entryType ?? 'expense');
   const [date, setDate] = useState(() => prefill?.date ?? tournamentToday());
-  const [what, setWhat] = useState('');
+  const [what, setWhat] = useState(prefill?.description ?? '');
   const [amount, setAmount] = useState(prefill?.amount ?? '');
   const [word, setWord] = useState<BudgetItemSelection | null>(null);
+  // A door's word (S3), chosen once the list has landed: a render-phase adjustment, so no frame shows the list without it.
+  const [wordWanted, setWordWanted] = useState<PlatformWordRef | null>(prefill?.word ?? null);
+  if (wordWanted && words !== null) {
+    setWordWanted(null);
+    const hit = findPlatformWord(words, wordWanted);
+    if (hit && !word) {
+      setWord({ categoryId: hit.category.id, categoryName: hit.category.name, itemId: hit.item.id, itemName: hit.item.name,
+        suggestedAmount: null });
+    }
+  }
   const [payee, setPayee] = useState<PayeeSelection | null>(null);
   const [method, setMethod] = useState<DuesPaymentMethod | ''>('');
   const [reference, setReference] = useState('');
@@ -318,6 +333,7 @@ export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove
       title="Add an entry"
       onClose={onClose}
       busy={busy}
+      footerAbove={prefill?.footLine}
       footer={
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Cancel</button>

@@ -41,6 +41,7 @@ import type { LedgerKind } from '@/lib/club-ledger';
 import { AddEntryWindow, useBudgetWords } from '../LedgerWindows';
 import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
+import { doorFill, doorFootLine, sameGapAs, type PlatformWordRef } from '@/lib/bank-gap-doors';
 import { tournamentToday } from '@/lib/timezone';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useDeskPicker } from '@/lib/hooks/useDeskPicker';
@@ -122,7 +123,9 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
   // "Add the missing entry": the Ledger's add window, filled with what the screen said when it opened (the gap, the day, the
   // direction), so a figure read again meanwhile never moves or closes it; the budget words read when it opens.
   // "+ Add entry" opens it blank (no amount: a statement line is rarely the gap, drawing tab 3).
-  const [adding, setAdding] = useState<{ entryType?: 'income' | 'expense'; date: string; amount?: string } | null>(null);
+  // S3: "Add a bank fee" / "Add interest" add the description, the platform word and the banking-app line (`doorFill`).
+  const [adding, setAdding] = useState<{ entryType?: 'income' | 'expense'; date: string; amount?: string; description?: string;
+    word?: PlatformWordRef; footLine?: string } | null>(null);
   const beginRead = useLatestRead();
   // A saved or deleted check, or a corrected start, changes what the day's figure says: re-read after one.
   const checksKey = `${view.checks.map(c => c.id).join(',')}|${view.start?.id ?? ''}:${view.start?.booksCents ?? ''}`;
@@ -364,9 +367,11 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
             shouldBeCents={band.shouldBeCents} onItsWay={fresh.onItsWay} payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
             onRetry={() => setAgain(n => n + 1)} waiting={waitingRows} asking={askingRows} />
           <BankFind key={date} figure={fresh} band={band} typed={typed !== null} marked={marked} busy={busy} onMark={mark} onUndo={unmark}
-            onAtStart={l => void atStart(l)} onAddLine={() => setAdding({
+            repeatOf={typed !== null ? sameGapAs(view.checks, date, band.differenceCents) : null}
+            onAtStart={l => void atStart(l)} onAddLine={door => setAdding({
               // The gap, the statement's day, and the way it must go to close it: the bank holding more is money in.
               entryType: band.direction === 'bank_more' ? 'income' : 'expense', date, amount: fieldAmount(band.offByCents),
+              ...(door ? { ...doorFill('club', door), footLine: doorFootLine(door) } : {}),
             })} />
         </>
       )}

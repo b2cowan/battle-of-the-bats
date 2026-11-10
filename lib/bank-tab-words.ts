@@ -190,6 +190,29 @@ export const BANK_WORDS = {
   recordMissingAmount: 'Record the missing amount',
   addEntry: 'Add entry',
   addMissingEntry: 'Add the missing entry',
+  // ── S3 (A5, A7, A13; drawing BANK_CHECK_NOVICE_UX_S3_DRAWINGS.html, /marketing 2026-11-09): when NOTHING explains a gap
+  // of $100.00 or less, the callout offers a fee (bank less) or interest (bank more) door beside the gap door, each
+  // portal in its own verb. Never a deposit door (ruling 3). The window it opens is filled with the word, the description
+  // and the gap, and says the banking-app line in its pinned footer.
+  coachFeeDoor: 'Record a bank fee',
+  coachInterestDoor: 'Record interest',
+  feeDoor: 'Add a bank fee',
+  interestDoor: 'Add interest',
+  feeDescription: 'Bank fee',
+  interestDescription: 'Bank interest',
+  bankAppCheckFee: 'Check your banking app first: was this a bank fee? Use the date it shows.',
+  bankAppCheckInterest: 'Check your banking app first: was this interest? Use the date it shows.',
+  // Ruling 6: the coach's Record money, opened from a fee or interest door, says the unbudgeted word plainly (grey).
+  coachOffPlanNote: 'Not in your budget yet, so it shows as off-plan on Budget vs. Actual.',
+  // A13 (row 24): with nothing to name, the list waits behind this line ("Show the line" for one; the trailing words drop
+  // once it is open, because the marking happens in the open list).
+  noLineOnItsOwn: (amount: string) => `No line matches ${amount} on its own.`,
+  showTheLines: (n: number) => (n === 1 ? 'Show the line' : `Show the ${n} lines`),
+  hideTheLines: (n: number) => (n === 1 ? 'Hide the line' : `Hide the ${n} lines`),
+  toMarkAny: 'to mark any the bank hasn’t received yet.',
+  // A7 (D2): the gap is the newest earlier saved check's, signed. "The same **$4.50** as your last check, on Oct 31, 2026."
+  sameGapLead: 'The same',
+  sameGapTail: (date: string) => `as your last check, on ${date}.`,
   // S1 row 19: under Status in the Ledger's Add an entry window, when the Bank tab opened it (only posted lines reach the
   // check's figure; a bank fee left Pending would keep the check off).
   addEntryStatusHint: 'Choose Posted for a fee the bank has already taken. Pending entries aren’t counted in a balance check.',

@@ -397,7 +397,8 @@ describe('12 · the coach card wires it as the club card does (WD2)', () => {
     const find = readCode(COACH_FIND);
     assert.match(find, /import \{ itemOfLine \} from '@\/lib\/bank-check-draft';/);
     assert.doesNotMatch(find, /const itemOf\b/);
-    assert.equal((find.match(/\{W\.recordMissingAmount\}/g) ?? []).length, 2, 'the link and the callout button');
+    assert.equal((find.match(/\{W\.recordMissingAmount\}/g) ?? []).length, 2,
+      'the nothing-to-name callout\'s button (S3, a button since) and the hint callout\'s');
     assert.doesNotMatch(find, /W\.addMissing\b/);
   });
 });

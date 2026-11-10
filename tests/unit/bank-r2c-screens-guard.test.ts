@@ -254,11 +254,10 @@ describe('9 · Find: the hints, the lines, Not in the bank yet, Still waiting?',
     assert.match(find, /aria: W\.markLine\(nameOf\(l\)\)/, 'each row\'s button names its line');
     assert.match(find, /aria: W\.atStartLine\(nameOf\(l\)\)/, 'a line before the start names its line too');
     assert.match(find, /aria-label=\{action\.aria\}/);
-    // Not hover-only: focus shows the button, and a touch screen shows it always.
-    const css = readSource(CSS);
-    assert.match(css, /\.findTable tr:focus-within \.markBtn \{ opacity: 1; \}|\.findTable tr:focus-within \.markBtn,?[\s\S]{0,40}\{ opacity: 1; \}/);
-    assert.match(css, /\.markBtn:focus-visible \{ opacity: 1;/);
-    assert.match(css, /@media \(hover: none\) \{\s*\.markBtn \{ opacity: 1; \}/);
+    // Never hover-only (S3, D1): the row the callout names keeps the bordered button, every other says it as the quiet
+    // link at rest — nothing waits for the pointer or the keyboard's focus to appear.
+    assert.match(find, /className=\{chip \? s\.markBtn : s\.link\} aria-label=\{action\.aria\}/);
+    assert.doesNotMatch(readSource(CSS), /opacity: 0;/, 'no row action hides until hover');
   });
   it('a hinted row is amber-soft, never red', () => {
     assert.match(readSource(CSS), /tr\.hitRow > td \{ background: rgba\(var\(--warning-rgb\), 0\.08\); \}/);
@@ -278,7 +277,7 @@ describe('10 · Add the missing line, Waiting at the start', () => {
       'the gap, the statement\'s day, and the direction that closes it');
     assert.match(form, /view\.account\.books\.find\(b => b\.kind === 'org' && !b\.entityId\) \?\? view\.account\.books\[0\]/, 'the account\'s own club book (the Ledger\'s rule)');
     // Renamed "Add the missing entry" in WD1 (after the window it opens); the coach card's is "Record the missing amount" (WD2).
-    assert.match(code('BankFind.tsx'), /onClick=\{onAddLine\} disabled=\{busy\}>\{W\.addMissingEntry\}<\/button>/, 'a real door, never a dead button; held while a write is on its way');
+    assert.match(code('BankFind.tsx'), /onClick=\{\(\) => onAddLine\(\)\} disabled=\{busy\}>\{W\.addMissingEntry\}<\/button>/, 'a real door, never a dead button; held while a write is on its way');
     // The window keeps what it opened with (a figure read again never moves or closes it) and knows the closed years.
     assert.match(form, /\{adding && ownBook && \(/);
     assert.match(form, /fiscal=\{view\.fiscal\} canMove prefill=\{adding\}/);

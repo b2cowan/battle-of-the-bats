@@ -219,8 +219,9 @@ p.afterStart { margin: 0 0 0.75rem; }
 .findTable tr.hitRow > td { background: rgba(var(--warning-rgb), 0.08); }
 .findTable tr.markedRow > td, .findTable tr.clearedRow > td { color: var(--text-tertiary); }
 .findTable tr.markedRow > td.moneyIn { color: var(--text-tertiary); }
-/* "Not in the bank yet" on any row: shown on a hinted row, and under the pointer or the keyboard's focus on the rest —
-   never hover-only (focus shows it; a touch screen, which has no pointer to hover, shows it always). */
+/* A row's action ("Not in the bank yet", "Waiting at the start"): the bordered button on the row the callout names; every
+   other row says it as the quiet `.link` at rest, as the phone's cards do (S3, D1: thirty bordered buttons would bury the
+   named one; never hover-only). */
 .markBtn {
   padding: 0.3rem 0.65rem;
   border: 1px solid var(--home-line);
@@ -231,17 +232,13 @@ p.afterStart { margin: 0 0 0.75rem; }
   font-weight: 600;
   color: var(--text-primary);
   cursor: pointer;
-  opacity: 0;
 }
 .markBtn:hover { border-color: var(--home-olive); }
 .markBtn:disabled { cursor: progress; }
-.markBtn:focus-visible { opacity: 1; outline: 2px solid var(--home-olive); outline-offset: 2px; }
-.markShown,
-.findTable tr:hover .markBtn,
-.findTable tr:focus-within .markBtn { opacity: 1; }
-@media (hover: none) {
-  .markBtn { opacity: 1; }
-}
+.markBtn:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+/* A7 (S3, D2): "The same $X as your last check, on {date}." — one plain line under Find's heading, before the callout. */
+.repeat { margin: 0; font-size: var(--type-body); color: var(--text-secondary); }
+.repeat b { color: var(--text-primary); font-weight: 600; }
 
 /* ══ THE PHONE (390): the saved checks are the kit's row cards; the starting point a quiet head row ══ */
 /* A saved check card's caption lines, one under another. */
@@ -271,6 +268,8 @@ p.afterStart { margin: 0 0 0.75rem; }
   .addEntry { min-height: var(--tap-min, 44px); }
   /* The link's 44px box would push the line's words off their baseline: centre them instead. */
   p.restoreLine { align-items: center; }
+  /* "Show the n lines" inside its sentence (S3, A13): the tap box stays 44px, the line box keeps the hint's rhythm. */
+  .inlineLink { margin-block: -0.6rem; }
 }
 
 /* Find on a phone (BC4b, drawing tab 3): the kit's row cards in one white list, never the table. A hinted card is

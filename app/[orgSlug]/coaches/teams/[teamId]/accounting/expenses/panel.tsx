@@ -88,6 +88,8 @@ import { fetchAccountingSettings } from '@/lib/coach-accounting-settings';
 import { WHOLE_TEAM_ENTRY_LABEL, raisingForFiling, type CreditUnit } from '@/lib/coach-fundraising';
 import RaisingForField, { defaultRaisingFor } from '@/components/coaches/RaisingForField';
 import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
+import { doorFill, doorFootLine, findPlatformWord, type GapDoor, type PlatformWordRef } from '@/lib/bank-gap-doors';
+import { BANK_WORDS } from '@/lib/bank-tab-words';
 import { accrueArrival, deriveAllArrivalCredits, creditPlanProblem, sharesFromRows, stillToCome } from '@/lib/sponsor-arrivals';
 import { isFundingKind } from '@/lib/coach-budget-totals';
 import { newMoneyInWordNote } from '@/lib/coach-budget-totals';
@@ -995,6 +997,14 @@ function MoneyRecordsPanel({
   // Structured categories (owner decision 2026-07-08: free-text retired). The picker
   // shares the budget taxonomy so Budget vs. Actual's name-match join can't misfire.
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
+  /* ⚖ THE BANK VIEW'S FEE AND INTEREST DOORS (Bank check novice UX S3, A5 + ruling 6). `bankDoor`: this Record money was
+     opened from "Record a bank fee" / "Record interest" — its foot says the banking-app line, and an unbudgeted word reads
+     as the plain off-plan note instead of the amber warning; every other door leaves it null. `pendingWord`: the door's
+     platform word, waiting for `categories` — the list is usually still empty when the intent applies (see
+     `openConversationFrom`), so it is chosen LATE, below, when the list lands. A word the team can't see is dropped:
+     the window keeps the description and the coach picks. Both clear with the form (`resetForm`). */
+  const [bankDoor, setBankDoor] = useState<GapDoor | null>(null);
+  const [pendingWord, setPendingWord] = useState<PlatformWordRef | null>(null);
   /* Which category+item pairs this team actually BUDGETED for (mig 240) — cost lines only.
      ⚠ IT EXISTS ONLY TO SAY SO AT ENTRY TIME. Nothing here is saved on the cost; the report
      derives the same answer from the same two ids. A coach filing something the plan never
@@ -1677,6 +1687,19 @@ function MoneyRecordsPanel({
      whenever it is open, including when the hub's Record button opened it while this panel sits hidden under another
      tab — gating on the tab would hide it exactly then (see the render). */
 
+  /* A bank door's word, chosen as soon as the team's list has landed (see `pendingWord`): a render-phase adjustment, so
+     the form never paints a frame with the list in and the word missing. Into the baseline too: a word the door chose
+     is not the coach's typing (the discard guard's rule). Declared here, after the form's own state. */
+  if (pendingWord && categories.length > 0) {
+    const hit = findPlatformWord(categories, pendingWord);
+    setPendingWord(null);
+    if (hit) {
+      const seed = { budgetCategoryId: hit.category.id, budgetItemId: hit.item.id, budgetItemName: hit.item.name, category: hit.category.name };
+      setForm(f => ({ ...f, ...seed }));
+      setFormOpenedWith(f => ({ ...f, ...seed }));
+    }
+  }
+
   /* One reset, three callers (close, save, delete). It was four lines repeated at each — which is
      the shape where a fifth form field gets added to two of them and quietly persists into the next
      record opened at the third. */
@@ -1701,6 +1724,8 @@ function MoneyRecordsPanel({
     setConvBranch(null);
     setConvLock(null);
     setConvClaims(null);
+    setBankDoor(null);
+    setPendingWord(null);
     setWhatOpen(false);
     setConv(BLANK_CONV);
     setConvOpenedWith(BLANK_CONV);
@@ -2072,15 +2097,19 @@ function MoneyRecordsPanel({
     /* A door's other pre-answers (the club's hand-off, Stage 5c: the day it came, how, a note) go in like the amount —
        into the baseline too, so a form nobody touched never asks "discard this?". */
     if (intent.prefill) {
-      const { receivedDate, paidDate, method, note } = intent.prefill;
+      const { receivedDate, paidDate, method, note, description, word, bankDoor: door } = intent.prefill;
       const seed = {
         ...(receivedDate ? { receivedDate } : {}), ...(paidDate ? { paidDate } : {}), ...(note !== undefined ? { notes: note } : {}),
+        ...(description !== undefined ? { description } : {}),
       };
       setForm(f => ({ ...f, ...seed }));
       setFormOpenedWith(f => ({ ...f, ...seed }));
       if (method && (DUES_PAYMENT_METHODS as readonly string[]).includes(method)) {
         prefillConv(c => ({ ...c, duesMethod: method as DuesPaymentMethod }));
       }
+      // The bank view's fee / interest door (S3): its word is chosen once the list lands (`pendingWord`).
+      if (word) setPendingWord(word);
+      if (door) setBankDoor(door);
     }
     if (intent.claims) setConvClaims(intent.claims);
     /* ⚖⚖ A DOOR THAT NAMES A BILL DOES **NOT** SUGGEST AN AMOUNT, and this was built the other way
@@ -6285,7 +6314,10 @@ function MoneyRecordsPanel({
         />
         {/* Honest at entry time, exactly as the old category warning was — one level finer, and
             now describing a row the coach will actually see rather than a list they might not. */}
-        {unplanned && fieldWarning(
+        {/* ⚖ Opened from the bank view's fee or interest door (S3, ruling 6), the same fact reads as a plain note: the
+            door chose the word, so it is expected rather than a slip. Every other door keeps the warning. */}
+        {unplanned && bankDoor && <p className={styles.formHint} style={{ margin: '0.3rem 0 0' }}>{BANK_WORDS.coachOffPlanNote}</p>}
+        {unplanned && !bankDoor && fieldWarning(
           wantIn
             ? `${chosenName || 'This'} isn’t in your budget — it will show on Budget vs. Actual as income you didn’t plan for.`
             : `${chosenName || 'This'} isn’t in your budget — it will show on Budget vs. Actual as spending you didn’t plan for.`,
@@ -7574,9 +7606,13 @@ function MoneyRecordsPanel({
            blank but for the check's date (both date fields: the coach picks the way it went), so the line is written by
            the Ledger's routes, never by bank code; its save bumps the money revision, which the view reads again on. */
         <CoachBankView orgSlug={orgSlug} teamId={teamId} active={tabActive}
-          onAddLine={canWriteMoney ? line => openConversationFrom(line.direction === 'in'
-            ? { branch: 'other-in', amount: line.amount, prefill: { receivedDate: line.date } }
-            : { branch: 'spend', amount: line.amount, prefill: { paidDate: line.date } }) : undefined}
+          onAddLine={canWriteMoney ? line => {
+            /* S3 (A5): "Record a bank fee" / "Record interest" add the description, the platform word and the door. */
+            const fill = line.door ? { ...doorFill('coach', line.door), bankDoor: line.door } : {};
+            openConversationFrom(line.direction === 'in'
+              ? { branch: 'other-in', amount: line.amount, prefill: { receivedDate: line.date, ...fill } }
+              : { branch: 'spend', amount: line.amount, prefill: { paidDate: line.date, ...fill } });
+          } : undefined}
           onRecord={canWriteMoney ? date => openConversationFrom({ prefill: { receivedDate: date, paidDate: date } }) : undefined} />
       ) : loading ? (
         <LoadingState label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />
@@ -8350,6 +8386,8 @@ function MoneyRecordsPanel({
           /* ⚠ HELD WHILE SAVING (/review, 2026-08-23): the window's `busy` holds Cancel, ×, Escape and Back while a
              save or a delete is in flight — every save path through this foot moves money, and a form that closed
              mid-POST would read as nothing happened while the payment landed a moment later. */
+          /* The bank view's fee / interest door (S3, D3): "Check your banking app first…" right above Save. */
+          footerAbove={bankDoor && !confirmDelete ? doorFootLine(bankDoor) : undefined}
           footer={confirmDelete ? undefined : (
             <>
               <QuestionCancel className={styles.btnGhost} />

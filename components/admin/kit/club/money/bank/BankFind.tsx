@@ -9,9 +9,8 @@
  * ⚖ THE HINTS ARE THE ENGINE'S (`hintsFor`, lib/bank-check.ts): over the suspects less the lines already marked and less
  *   those counted on their way, on the TYPED difference, only in the direction that can explain the gap (BC3, said to the
  *   owner 2026-11-06). Nothing here adds or compares money.
- * ⚖ ANY LINE can be marked "Not in the bank yet" (ask 2): the button shows on a hinted row, and on any other row under the
- *   pointer or the keyboard's focus (never hover-only; a touch screen shows it always). A marked line stays in the list,
- *   greyed, with Undo, so a search still finds it.
+ * ⚖ ANY LINE can be marked "Not in the bank yet" (ask 2): the bordered button on a hinted row, the quiet link at rest on
+ *   every other (S3, D1). A marked line stays in the list, greyed, with Undo, so a search still finds it.
  * ⚖ EVERY HIGHLIGHT OPENS: a row's chip brings its possibility into the callout.
  * ⚖ Online payments on their way are counted above: one greyed row, no action (drawn).
  * ⚖ "ADD THE MISSING ENTRY" (BC3b, drawn; "Add the missing line" until WD1 named it after the window it opens) sits with the callout's "Or the bank…" sentence: the bank holds money the books
@@ -21,6 +20,12 @@
  *   lines of the 60 days before the starting statement follow under their own heading. Each offers "Waiting at the start"
  *   (it corrects the start: a server write, `onAtStart`), never "Not in the bank yet" (M3). The callout names one only when
  *   it is exactly the gap (`hintsFor`'s `atStart`).
+ * ⚖ S3 (A5, A13, A7; drawing BANK_CHECK_NOVICE_UX_S3_DRAWINGS.html): with NOTHING to name, the sentence is the kit's amber
+ *   callout with its buttons — "Add a bank fee" / "Add interest" beside "Add the missing entry" for a gap of $100.00 or
+ *   less (`gapDoorFor`) — and the list waits behind "No line matches $X on its own. Show the n lines" (it still opens on
+ *   its own when a line could explain the gap). "The same $X as your last check, on {date}." heads it when the gap
+ *   repeats (`repeatOf`, the form's `sameGapAs`). A desk row the callout doesn't name says its action as the quiet link
+ *   at rest (D1, the phone's recipe).
  * Only a writer reaches this (`BankCheckForm`, mounted behind `canMove`).
  */
 import { useState, type ReactNode } from 'react';
@@ -31,6 +36,7 @@ import { Callout, ClubRow, ClubRowBand, ClubRowList, RepChip, RowAction, repKit 
 import { day } from '../MoneyKit';
 import { checkingStartsOn, hintsFor, signed, type BankLine, type CheckFigure, type Hint, type WaitingItem } from '@/lib/bank-check';
 import { itemOfLine } from '@/lib/bank-check-draft';
+import { gapDoorFor, type GapDoor } from '@/lib/bank-gap-doors';
 import { lineMatches, pickerSearch } from '@/lib/bank-club-rules';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { cents, dayYear, howWord, moved, nameOf, type Figure } from './BankShared';
@@ -44,7 +50,7 @@ const PAGE_PHONE = 10;
 type Line = Figure['suspects']['lines'][number];
 
 
-export default function BankFind({ figure, band, typed, marked, busy, onMark, onUndo, onAtStart, onAddLine }: {
+export default function BankFind({ figure, band, typed, marked, busy, repeatOf = null, onMark, onUndo, onAtStart, onAddLine }: {
   /** The server's figure for the day (a check's, with its books). */
   figure: Figure;
   /** The engine's band, figured with the marked items. */
@@ -54,12 +60,15 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
   marked: ReadonlyMap<string, WaitingItem>;
   /** A write is under way (Waiting at the start): its doors wait. */
   busy: boolean;
+  /** A7: the newest earlier saved check's date when its signed gap is today's (shown only while off). */
+  repeatOf?: string | null;
   onMark: (item: WaitingItem) => void;
   onUndo: (key: string) => void;
   /** "Waiting at the start" (Q2): correct the starting statement with this line. */
   onAtStart: (line: BankLine) => void;
-  /** "Add the missing entry": the Ledger's add window, filled with the gap. */
-  onAddLine: () => void;
+  /** "Add the missing entry": the Ledger's add window, filled with the gap; with a door, "Add a bank fee" / "Add
+   *  interest" (S3), filled with the word and the description too. */
+  onAddLine: (door?: GapDoor) => void;
 }) {
   const [open, setOpen] = useState(false); // "Show them", while the check isn't off
   const [pick, setPick] = useState<string | null>(null); // the possibility the callout names
@@ -115,7 +124,12 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
   const beforeShown = isPhone ? foundBefore.slice(0, beforePages * PAGE_PHONE) : foundBefore;
   const beforeMore = Math.min(PAGE_PHONE, foundBefore.length - beforeShown.length);
   const searchedEmpty = (lines.length > 0 || before.length > 0) && found.length === 0 && foundBefore.length === 0;
-  const listOpen = off || open;
+  // A13: off with a line to name, the list opens on its own; off with nothing to name it waits behind its link.
+  const quiet = off && !current;
+  const listOpen = (off && !quiet) || open;
+  // What the list would show: the lines since, the online payments' one row, the look-back's lines.
+  const listCount = lines.length + (onWay.length > 0 ? 1 : 0) + before.length;
+  const door = gapDoorFor({ off, named: !!current, band });
   const bankMore = band.direction === 'bank_more';
 
   const sinceHint = (suspects.sinceMatch ? W.linesSinceMatch : W.linesSinceStart)(when, suspects.total);
@@ -199,19 +213,38 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
         </p>
       )}
 
+      {/* A7 (D2): one plain line under the heading, before the callout. */}
+      {off && repeatOf && <p className={s.repeat}>{W.sameGapLead} <b>{cents(band.offByCents)}</b> {W.sameGapTail(dayYear(repeatOf))}</p>}
+
       {off && current && (
         <HintCallout hint={current} target={target} bankMore={bankMore} busy={busy}
-          onMark={() => onMark(itemOfLine(current.lines[0]))} onAtStart={() => onAtStart(current.lines[0])} onAddLine={onAddLine}
+          onMark={() => onMark(itemOfLine(current.lines[0]))} onAtStart={() => onAtStart(current.lines[0])} onAddLine={() => onAddLine()}
           next={hints.length > 1 ? {
             count: W.hintCount(hints.indexOf(current) + 1, hints.length),
             go: () => setPick(hints[(hints.indexOf(current) + 1) % hints.length].key),
           } : null} />
       )}
-      {/* Nothing to name: the callout drops away (drawn); the bank-side reading and its door stay (not drawn). */}
-      {off && !current && (
+      {/* Nothing to name (S3, A5): the bank-side reading is the kit's callout, its doors buttons — the fee or interest
+          door first, for $100.00 or less, then today's. Then the list's link. */}
+      {quiet && (
+        <Callout tone="warn" role="status" action={
+          <span className={s.calloutActs}>
+            {door && <button type="button" className="btn btn-outline" onClick={() => onAddLine(door)} disabled={busy}>
+              {door === 'fee' ? W.feeDoor : W.interestDoor}
+            </button>}
+            <button type="button" className="btn btn-outline" onClick={() => onAddLine()} disabled={busy}>{W.addMissingEntry}</button>
+          </span>
+        }>
+          <span>{(bankMore ? W.hintOrMore : W.hintOrLess)(target, true)}</span>
+        </Callout>
+      )}
+      {quiet && listCount > 0 && (
         <p className={`${ck.hint} ${s.hintLine}`}>
-          {(bankMore ? W.hintOrMore : W.hintOrLess)(target, true)}{' '}
-          <button type="button" className={s.link} onClick={onAddLine} disabled={busy}>{W.addMissingEntry}</button>
+          {W.noLineOnItsOwn(target)}{' '}
+          <button type="button" className={`${s.link} ${s.inlineLink}`} aria-expanded={open} onClick={() => setOpen(o => !o)}>
+            {open ? W.hideTheLines(listCount) : W.showTheLines(listCount)}
+          </button>
+          {open ? '.' : <>{' '}{W.toMarkAny}</>}
         </p>
       )}
 
@@ -311,7 +344,8 @@ function LineRow({ line: l, chip, action, undo }: {
       <td className={s.actCell}>
         {isMarked
           ? <button type="button" className={s.link} aria-label={W.undoLine(name)} onClick={undo}>{W.undo}</button>
-          : <button type="button" className={`${s.markBtn}${chip ? ` ${s.markShown}` : ''}`} aria-label={action.aria}
+          // The bordered button on the row the callout names; the quiet link at rest on every other (S3, D1).
+          : <button type="button" className={chip ? s.markBtn : s.link} aria-label={action.aria}
               onClick={action.onClick} disabled={action.disabled}>{action.label}</button>}
       </td>
     </tr>

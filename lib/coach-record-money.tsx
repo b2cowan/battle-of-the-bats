@@ -30,6 +30,7 @@
  */
 import { createContext, useContext } from 'react';
 import type { MoneySummary } from './coach-money-summary';
+import type { GapDoor, PlatformWordRef } from './bank-gap-doors';
 
 /**
  * The eight answers to "What happened?", as the conversation's own table names them.
@@ -151,7 +152,15 @@ export interface RecordMoneyIntent {
   prefill?: { receivedDate?: string; method?: string; note?: string;
     /** The day money LEFT (the spend branch's own date): the Bank view's "Record the missing amount" (BC7a) opens on
      *  the statement's day; its "+ Record" (WD2) sets both days, before the coach picks the way it went. */
-    paidDate?: string };
+    paidDate?: string;
+    /** The description, pre-typed (S3: "Bank fee" / "Bank interest"); the coach's to change. */
+    description?: string;
+    /** A platform word to choose, by its names (S3, `lib/bank-gap-doors.ts`). Resolved LATE, when the team's word list
+     *  arrives (it is usually still empty when the intent applies); a word the team can't see is left unchosen. */
+    word?: PlatformWordRef;
+    /** S3: opened from the Bank view's "Record a bank fee" / "Record interest" — the banking-app line in the footer, and
+     *  the plain off-plan note in place of the amber budget warning (ruling 6). Every other door leaves it unset. */
+    bankDoor?: GapDoor };
   /**
    * A record the save settles with the payment: a payment the CLUB received and handed to this team's head coach (Club
    * Tier Stage 5c, Ask 26 — the bell's Record it). The save carries its id, so the club's record learns it was recorded;

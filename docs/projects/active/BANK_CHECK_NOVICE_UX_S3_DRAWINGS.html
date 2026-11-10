@@ -1,0 +1,605 @@
+<title>Find's Doors Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one sticky tab row and a View switch; one section at a time; each specimen sits at TRUE SIZE (1440 / 390)
+   inside its own horizontal scroller, drawn from the shipped Find section, Record money window and Add an entry window. */
+:root {
+  --bg: #EFEBE3; --card: #FFFFFF; --fg: #241E15; --fg-soft: #4A4235; --muted: #615A54; --line: rgba(70,55,30,.14);
+  --accent: #57651E; --accent-soft: rgba(87,101,30,.10);
+  --sans: 'DM Sans', system-ui, sans-serif; --cond: 'Barlow Condensed', 'Arial Narrow', sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  /* the portals' own values, for the specimens (they keep the light portal look in both themes, as the product does) */
+  --p-paper: #F8F4ED; --p-side: #FBF8F2; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink-soft: #4A4235; --p-dim: #615A54; --p-line: rgba(70,55,30,.12);
+  --p-olive: #57651E; --p-lime: #D9F285; --p-field: #F8F4ED; --p-amber-ink: #6B4105; --p-amber-bg: #FBF4E8; --p-amber-line: #C99A3C; --p-warn: #A0620A; --p-down: #B33B23;
+  --t-new: #1F5FBF; --t-restyled: #6B4105; --t-unchanged: #4A4235; --t-ground: #FFFFFF;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1B1915; --card: #26231E; --fg: #EDE7DA; --fg-soft: #CFC7B8; --muted: #A49C8F; --line: rgba(255,255,255,.12);
+  --accent: #B5C45A; --accent-soft: rgba(181,196,90,.14);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #1B1915; --card: #26231E; --fg: #EDE7DA; --fg-soft: #CFC7B8; --muted: #A49C8F; --line: rgba(255,255,255,.12);
+  --accent: #B5C45A; --accent-soft: rgba(181,196,90,.14);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1490px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 56px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 { font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
+h2 { font-size: 20px; font-weight: 700; }
+.top { padding-block: 22px 12px; display: flex; flex-direction: column; gap: 6px; }
+.top p { margin: 0; color: var(--fg-soft); max-width: 75ch; }
+.eyebrow { font-family: var(--cond); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; color: var(--muted); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 8px; display: flex; flex-direction: column; gap: 8px; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; }
+.tabs a { flex: 0 0 auto; padding: 7px 12px; border-radius: 8px; color: var(--fg-soft); text-decoration: none; font-weight: 600; font-size: 14px; white-space: nowrap; }
+.tabs a[aria-current="page"] { background: var(--card); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+.tabs a:focus-visible, .seg button:focus-visible, .tag:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 2px; }
+.seg button { font: 600 13px var(--sans); border: 0; background: transparent; color: var(--fg-soft); padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+@media (max-width: 560px) { .viewrow .say { display: none; } }
+section.tab { padding-top: 18px; display: flex; flex-direction: column; gap: 14px; }
+.why { margin: 0; max-width: 80ch; color: var(--fg-soft); }
+.why b { color: var(--fg); }
+.cap { font: 600 12px var(--mono); letter-spacing: .03em; color: var(--muted); text-transform: uppercase; margin: 6px 0 0; }
+.cap .swipe { display: none; text-transform: none; }
+@media (max-width: 1500px) { .cap .swipe { display: inline; } }
+.scroll { overflow-x: auto; padding: 16px 2px 8px; }
+.frame { position: relative; flex: none; background: var(--p-paper); border: 1px solid var(--line); border-radius: 10px; color: var(--p-ink); font-family: var(--sans); }
+.frame.w1440 { width: 1440px; } .frame.w390 { width: 390px; }
+.chrome { font: 600 11px var(--mono); letter-spacing: .04em; color: var(--p-dim); padding: 6px 12px; border-bottom: 1px dashed var(--p-line); background: var(--p-side); border-radius: 10px 10px 0 0; }
+.desk { display: grid; }
+.desk.coach { grid-template-columns: 220px 1fr; } .desk.club { grid-template-columns: 240px 1fr; }
+.side { background: var(--p-side); border-right: 1px solid var(--p-line); font: 600 11px var(--mono); color: #8D857A; padding: 14px; border-radius: 0 0 0 10px; }
+.main { padding: 16px 32px 20px; }
+.phone { padding: 12px 16px 16px; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.pair { display: flex; gap: 28px; align-items: flex-start; }
+.pair > * { flex: none; }
+/* After / Today: hide the other state; everything else keeps its own display. */
+body:not([data-when="today"]) .when-today { display: none !important; }
+body[data-when="today"] .when-after { display: none !important; }
+.dim { opacity: .45; }
+
+/* the portal's pieces (shipped recipes: CoachBank .callout / .calloutActs, btnSecondary / btn-outline, .link, hint, table) */
+.p-card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 12px; padding: 18px 20px; }
+.p-h3 { font-size: 16px; font-weight: 600; line-height: 1.25; color: var(--p-ink); margin: 0; }
+.p-hint { font-size: 13px; line-height: 1.45; color: var(--p-dim); margin: 0; }
+.p-link { color: var(--p-olive); text-decoration: underline; text-underline-offset: 2px; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
+.p-btn { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 14px; border-radius: 8px; font: 600 14px var(--sans); border: 1px solid rgba(70,55,30,.22); background: var(--p-card); color: var(--p-ink); white-space: nowrap; }
+.p-btn.lime { background: var(--p-lime); border-color: var(--p-lime); color: #1F2A0C; }
+.p-btn.plain { border-color: transparent; background: transparent; color: var(--p-ink-soft); font-weight: 500; }
+.p-btn.tall { height: 44px; width: 100%; }
+.p-btn.tap { height: 44px; }
+.p-callout { border: 1px solid rgba(201,154,60,.32); border-left: 3px solid var(--p-amber-line); background: var(--p-amber-bg); border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.45; color: var(--p-ink); display: flex; gap: 10px 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.p-callout .txt { flex: 1 1 320px; min-width: 0; }
+.p-callout .sub { display: block; font-size: 13px; color: var(--p-dim); margin-top: 3px; }
+.p-callout .doors { display: inline-flex; gap: 8px 12px; flex-wrap: wrap; }
+.p-callout.col { flex-direction: column; align-items: stretch; }
+.p-callout.col .txt { flex: 0 0 auto; }
+.p-callout.col .doors { display: flex; flex-direction: column; }
+.p-findbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.p-findbar b { font-size: 15px; font-weight: 600; }
+.p-search { width: 256px; height: 40px; border: 1px solid var(--p-line); border-radius: 999px; background: var(--p-card); display: flex; align-items: center; padding: 0 14px; font-size: 14px; color: #8D857A; }
+.p-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; background: var(--p-card); font-size: 14px; }
+.p-table th { font: 700 11px var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--p-dim); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--p-line); }
+.p-table td { padding: 9px 14px; border-top: 1px solid var(--p-line); vertical-align: middle; }
+.p-table tbody tr:first-child td { border-top: 0; }
+.p-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.p-table .act { text-align: right; width: 190px; }
+.p-table tr.hit td { background: var(--p-amber-bg); }
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #F6E7C9; color: var(--p-amber-ink); margin-left: 8px; }
+.markbtn { display: inline-flex; align-items: center; padding: 4px 10px; border: 1px solid rgba(70,55,30,.22); border-radius: 6px; background: var(--p-card); font-size: 13px; font-weight: 600; color: var(--p-ink); }
+.marklink { font-size: 13px; }
+.ghost { color: transparent; border-style: dashed; border-color: rgba(70,55,30,.25); background: transparent; }
+.p-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-top: 1px solid var(--p-line); background: var(--p-card); }
+.p-row:first-child { border-top: 0; }
+.p-row .t { font-size: 14px; font-weight: 600; } .p-row .c { font-size: 12.5px; color: var(--p-dim); } .p-row .a { font-variant-numeric: tabular-nums; font-size: 14px; }
+.p-list { border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.p-repeat { font-size: 14px; color: var(--p-ink-soft); margin: 0; }
+.p-repeat b { color: var(--p-ink); font-weight: 600; }
+
+/* the windows (desk: a centred window, body scrolls, footer pinned; phone: a full-screen sheet, back arrow, footer pinned) */
+.win { width: 520px; background: var(--p-card); border-radius: 12px; box-shadow: 0 18px 50px rgba(36,30,21,.22); border: 1px solid var(--p-line); display: flex; flex-direction: column; flex: none; }
+.win.club { width: 640px; }
+.win .hd { padding: 20px 24px 6px; display: flex; justify-content: space-between; }
+.win .hd .t { font-size: 18px; font-weight: 700; } .win .hd .s { font-size: 13px; color: var(--p-dim); }
+.win .hd .eb { font: 700 11px var(--mono); letter-spacing: .08em; color: var(--p-dim); }
+.win .bd { padding: 8px 24px 16px; display: flex; flex-direction: column; gap: 14px; }
+.win .ft { border-top: 1px solid var(--p-line); padding: 12px 24px; display: flex; flex-direction: column; gap: 10px; }
+.btns { display: flex; justify-content: flex-end; gap: 10px; align-items: center; }
+.sheet { width: 390px; height: 844px; background: var(--p-card); border: 1px solid var(--line); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; flex: none; color: var(--p-ink); }
+.sheet .hd { display: flex; gap: 14px; align-items: flex-start; padding: 16px 20px 8px; }
+.sheet .hd .t { font-size: 18px; font-weight: 700; line-height: 1.2; } .sheet .hd .s { font-size: 13px; color: var(--p-dim); }
+.sheet .bd { flex: 1; padding: 6px 20px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+.sheet .ft { border-top: 1px solid var(--p-line); padding: 10px 20px 16px; display: flex; flex-direction: column; gap: 10px; }
+.fld { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--p-ink-soft); }
+.fld .i { height: 36px; border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-field); display: flex; align-items: center; padding: 0 12px; font-size: 14px; color: var(--p-ink); white-space: nowrap; overflow: hidden; }
+.fld .i.sel { background: #F0F1E4; border-color: rgba(87,101,30,.55); font-weight: 600; }
+.fld .i.ph { color: #8D857A; }
+.fld .i.white { background: var(--p-card); }
+.fld .i.tall { height: 44px; }
+.fld .i.area { height: 70px; }
+.fld .h { font-size: 12.5px; color: var(--p-dim); }
+.fld .warn { font-size: 12px; color: var(--p-warn); display: flex; gap: 5px; align-items: flex-start; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.more { border: 1px dashed rgba(70,55,30,.3); border-radius: 8px; padding: 10px 14px; font-weight: 600; color: var(--p-olive); font-size: 14px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chips span { border: 1px solid var(--p-line); border-radius: 6px; padding: 3px 8px; font-size: 12.5px; color: var(--p-ink-soft); }
+.chips b.dn { color: var(--p-down); }
+.check { border: 1px solid rgba(201,154,60,.32); border-left: 3px solid var(--p-amber-line); background: var(--p-amber-bg); border-radius: 8px; padding: 10px 14px; font-size: 14px; line-height: 1.4; color: var(--p-ink); }
+
+/* tags + their notes (a note is placed from its tag and clamped to the screen, so a scroller never clips it) */
+.tagged { position: relative; }
+.frame.w390 .tagged.hintwrap { padding-top: 14px; }
+.tag { position: absolute; top: -11px; right: 6px; z-index: 3; font: 700 10.5px var(--mono); letter-spacing: .04em; padding: 2px 6px; border-radius: 4px; border: 1px solid; cursor: pointer; line-height: 1.4; background: var(--t-ground); }
+.tag::after { content: ""; position: absolute; inset: -10px; }
+.tag.new { color: var(--t-new); border-color: var(--t-new); } .tag.restyled { color: var(--t-restyled); border-color: var(--t-restyled); } .tag.unchanged { color: var(--t-unchanged); border-color: var(--t-unchanged); }
+.legend .tag { position: relative; top: 0; right: 0; }
+body[data-when="today"] .tag:not(.keep) { display: none; }
+.tagnote { position: fixed; z-index: 20; width: min(340px, calc(100vw - 32px)); background: #fff; color: #241E15; border: 1px solid rgba(70,55,30,.25); border-radius: 8px; padding: 10px 12px; font: 400 13px/1.45 var(--sans); box-shadow: 0 10px 28px rgba(36,30,21,.18); }
+
+/* asks */
+.asks { display: flex; flex-direction: column; gap: 12px; max-width: 860px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.ask h3 { font-size: 16px; }
+.ask p { margin: 0; color: var(--fg-soft); }
+.ask .rec { font-weight: 600; color: var(--fg); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Bank check through a volunteer's eyes · S3 · drawn 2026-11-09</span>
+    <h1>Find's doors and its quiet list</h1>
+    <p>What a coach and a treasurer see when the bank took out a fee, paid interest, or shows a gap nothing explains, and the window each new door opens. Drawn from the shipped Find section and windows at true size, with your eight rulings of 2026-11-09 applied. Tap a tag for its note.</p>
+    <div class="legend"><button class="tag new keep" type="button" data-note="A piece that does not exist today.">NEW</button><button class="tag restyled keep" type="button" data-note="A shipped piece that changes look or words.">RESTYLED</button><button class="tag unchanged keep" type="button" data-note="Drawn for context, exactly as it ships.">UNCHANGED</button></div>
+  </header>
+
+  <nav class="bar" aria-label="Sections">
+    <div class="tabs">
+      <a href="#fee" data-tab="fee">1 · A fee nothing explains</a>
+      <a href="#interest" data-tab="interest">2 · Interest, and a large gap</a>
+      <a href="#quiet" data-tab="quiet">3 · The quiet list</a>
+      <a href="#repeat" data-tab="repeat">4 · The same as last check</a>
+      <a href="#windows" data-tab="windows">5 · The filled-in windows</a>
+      <a href="#asks" data-tab="asks">6 · Asks</a>
+    </div>
+    <div class="viewrow">View
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" data-when="after" aria-pressed="true">After S3</button>
+        <button type="button" data-when="today" aria-pressed="false">Today</button>
+      </div>
+      <span class="say">Today shows the shipped screen for the same moment.</span>
+    </div>
+  </nav>
+
+  <!-- ─────────────── 1 · FEE ─────────────── -->
+  <section class="tab" id="tab-fee" data-tab="fee">
+    <h2>1 · The bank took out $4.50 and nothing explains it</h2>
+    <p class="why">The sentence becomes a box with two buttons, and the 31 lines wait behind one quiet line. <b>Record a bank fee</b> opens Record money already filled (tab 5). <b>Record the missing amount</b> is today's door, unchanged. The fee button shows only for a gap of $100 or less that the bank took out.</p>
+
+    <div class="cap">Coach · desktop 1440 <span class="swipe">· swipe →</span></div>
+    <div class="scroll"><div class="frame w1440">
+      <div class="chrome">COACHES PORTAL · DESKTOP 1440 · Money › Ledger › View Bank · the Find section (the band and sums above it are unchanged)</div>
+      <div class="desk coach"><div class="side">sidebar 220</div><div class="main"><div class="p-card stack">
+        <h3 class="p-h3">Find the $4.50</h3>
+        <div class="when-after stack">
+          <div class="tagged"><div class="p-callout" role="status"><span class="txt">The bank took out $4.50 your Ledger doesn’t have: a fee or a payment you haven’t recorded.</span><span class="doors"><span class="p-btn">Record a bank fee</span><span class="p-btn">Record the missing amount</span></span></div>
+            <button class="tag new" type="button" data-note="NEW · A5 (D2). Today's sentence moves into the shipped amber box (the same box a matching line gets) with two buttons of equal weight, the portal's secondary button. Record a bank fee shows only when the bank took out $100 or less (ruling 4); above that the box keeps one button.">NEW</button></div>
+          <div class="tagged"><p class="p-hint">No line matches $4.50 on its own. <button class="p-link" type="button">Show the 31 lines</button> to mark any the bank hasn’t received yet.</p>
+            <button class="tag restyled" type="button" data-note="RESTYLED · A13 (row 24). The list stays closed when nothing could explain the gap. The link opens it in place and then reads Hide the 31 lines, and the words after it drop away (you mark lines in the open list; copy review 2026-11-09). With one line it reads Show the line / Hide the line. With no lines since the start, the whole line drops away.">RESTYLED</button></div>
+        </div>
+        <div class="when-today stack">
+          <p class="p-hint">The bank took out $4.50 your Ledger doesn’t have: a fee or a payment you haven’t recorded. <button class="p-link" type="button">Record the missing amount</button></p>
+          <div class="p-findbar"><b>Lines since the season started · May 21, 2026</b><span class="p-search">⌕&nbsp; Find an amount or a name</span></div>
+          <table class="p-table dim"><thead><tr><th>Date</th><th>What</th><th class="num">Money out</th><th class="num">Money in</th><th class="act"></th></tr></thead>
+            <tbody><tr><td>Nov 6</td><td>Umpire fees · Week 9</td><td class="num">$60.00</td><td class="num"></td><td class="act"></td></tr><tr><td>Nov 4</td><td>Dues · Avery Chen</td><td class="num"></td><td class="num">$150.00</td><td class="act"></td></tr><tr><td colspan="5" class="p-hint">… 29 more lines, open on their own</td></tr></tbody></table>
+        </div>
+      </div></div></div>
+    </div></div>
+
+    <div class="cap">Club · desktop 1440 <span class="swipe">· swipe →</span></div>
+    <div class="scroll"><div class="frame w1440">
+      <div class="chrome">ADMIN · DESKTOP 1440 · Accounting › Bank · the Find section</div>
+      <div class="desk club"><div class="side">sidebar 240</div><div class="main"><div class="p-card stack">
+        <h3 class="p-h3">Find the $4.50</h3>
+        <div class="when-after stack">
+          <div class="tagged"><div class="p-callout" role="status"><span class="txt">The bank took out $4.50 your books don’t have: a fee or a payment you haven’t entered.</span><span class="doors"><span class="p-btn">Add a bank fee</span><span class="p-btn">Add the missing entry</span></span></div>
+            <button class="tag new" type="button" data-note="NEW · A5. The club's own words (books, entered, Add). Add a bank fee opens Add an entry filled in, filed under Admin · Bank & payment fees, a word every club gains with this stage (ruling 2).">NEW</button></div>
+          <div class="tagged"><p class="p-hint">No line matches $4.50 on its own. <button class="p-link" type="button">Show the 31 lines</button> to mark any the bank hasn’t received yet.</p>
+            <button class="tag restyled" type="button" data-note="RESTYLED · A13. The count includes every line the list would show: this account's lines since the last match and any still waiting from before the start.">RESTYLED</button></div>
+        </div>
+        <div class="when-today stack">
+          <p class="p-hint">The bank took out $4.50 your books don’t have: a fee or a payment you haven’t entered. <button class="p-link" type="button">Add the missing entry</button></p>
+          <div class="p-findbar"><b>Lines since your last match · Nov 5, 2026</b><span class="p-search">⌕&nbsp; Find an amount or a name</span></div>
+          <table class="p-table dim"><thead><tr><th>Date</th><th>What</th><th>Book</th><th class="num">Money out</th><th class="num">Money in</th><th class="act"></th></tr></thead>
+            <tbody><tr><td>Nov 6</td><td>Cheque 2024 · Umpire fee</td><td>UAT Rep Club — General</td><td class="num">$10.00</td><td class="num"></td><td class="act"></td></tr><tr><td colspan="6" class="p-hint">… 30 more lines, open on their own</td></tr></tbody></table>
+        </div>
+      </div></div></div>
+    </div></div>
+
+    <div class="cap">Phone 390 · coach and club</div>
+    <div class="scroll"><div class="pair">
+      <div class="frame w390"><div class="chrome">COACHES PORTAL · PHONE 390 · Find</div><div class="phone stack">
+        <h3 class="p-h3">Find the $4.50</h3>
+        <div class="when-after stack">
+          <div class="tagged"><div class="p-callout col" role="status"><span class="txt">The bank took out $4.50 your Ledger doesn’t have: a fee or a payment you haven’t recorded.</span><span class="doors"><span class="p-btn tall">Record a bank fee</span><span class="p-btn tall">Record the missing amount</span></span></div>
+            <button class="tag restyled" type="button" data-note="NEW + RESTYLED · A5. The box itself is new here; its phone layout is restyled: the coach's box gains the club's shipped phone rule (buttons stacked, full width, 44px tall). Today the coach's box lets its buttons wrap at their own width, which reads ragged with two long labels.">RESTYLED</button></div>
+          <div class="tagged hintwrap"><p class="p-hint">No line matches $4.50 on its own. <button class="p-link" type="button">Show the 31 lines</button> to mark any the bank hasn’t received yet.</p>
+            <button class="tag restyled" type="button" data-note="RESTYLED · A13. The link keeps a 44px tap box without breaking the line's rhythm (the shipped recipe for links inside a note). With the list closed, Save comes up the page; its distance is measured after the build, and that decides S5.">RESTYLED</button></div>
+        </div>
+        <div class="when-today stack">
+          <p class="p-hint">The bank took out $4.50 your Ledger doesn’t have: a fee or a payment you haven’t recorded. <button class="p-link" type="button">Record the missing amount</button></p>
+          <div class="p-search" style="width:100%">⌕&nbsp; Find an amount or a name</div>
+          <div class="p-list dim"><div class="p-row"><span><span class="t">Umpire fees · Week 9</span><br><span class="c">Nov 6</span></span><span class="a">−$60.00</span></div><div class="p-row"><span class="c">… 30 more (the evaluation measured about 2,900px to Save)</span></div></div>
+        </div>
+      </div></div>
+      <div class="frame w390"><div class="chrome">ADMIN · PHONE 390 · Find</div><div class="phone stack">
+        <h3 class="p-h3">Find the $4.50</h3>
+        <div class="when-after stack">
+          <div class="tagged"><div class="p-callout col" role="status"><span class="txt">The bank took out $4.50 your books don’t have: a fee or a payment you haven’t entered.</span><span class="doors"><span class="p-btn tall">Add a bank fee</span><span class="p-btn tall">Add the missing entry</span></span></div>
+            <button class="tag new" type="button" data-note="NEW · A5. The club's box already stacks its buttons full width on a phone (shipped); only the second button is new.">NEW</button></div>
+          <div class="tagged hintwrap"><p class="p-hint">No line matches $4.50 on its own. <button class="p-link" type="button">Show the 31 lines</button> to mark any the bank hasn’t received yet.</p>
+            <button class="tag restyled" type="button" data-note="RESTYLED · A13, as on the coach's phone.">RESTYLED</button></div>
+        </div>
+        <div class="when-today stack">
+          <p class="p-hint">The bank took out $4.50 your books don’t have: a fee or a payment you haven’t entered. <button class="p-link" type="button">Add the missing entry</button></p>
+          <div class="p-list dim"><div class="p-row"><span><span class="t">Cheque 2024 · Umpire fee</span><br><span class="c">Nov 6 · UAT Rep Club — General</span></span><span class="a">−$10.00</span></div><div class="p-row"><span class="c">… 30 more</span></div></div>
+        </div>
+      </div></div>
+    </div></div>
+  </section>
+
+  <!-- ─────────────── 2 · INTEREST / LARGE ─────────────── -->
+  <section class="tab" id="tab-interest" data-tab="interest" hidden>
+    <h2>2 · Interest, and a gap too large to be a fee</h2>
+    <p class="why">When the bank paid in money nothing explains, the box offers <b>Record interest</b> beside today's door. There is no deposit button (ruling 3): a deposit the books lack is usually the team's own money or a payment that belongs on a real income line, so the person picks the word. Over $100 either way, the box keeps today's one door (ruling 4).</p>
+
+    <div class="cap">Coach · desktop 1440 · the bank paid in $0.85 <span class="swipe">· swipe →</span></div>
+    <div class="scroll"><div class="frame w1440">
+      <div class="chrome">COACHES PORTAL · DESKTOP 1440 · Find, bank shows more</div>
+      <div class="desk coach"><div class="side">sidebar 220</div><div class="main"><div class="p-card stack">
+        <h3 class="p-h3">Find the $0.85</h3>
+        <div class="when-after stack">
+          <div class="tagged"><div class="p-callout" role="status"><span class="txt">The bank received $0.85 your Ledger doesn’t have: a deposit or interest you haven’t recorded.</span><span class="doors"><span class="p-btn">Record interest</span><span class="p-btn">Record the missing amount</span></span></div>
+            <button class="tag new" type="button" data-note="NEW · A5. Record interest opens Record money as Other money in, filed under Other Income · Interest, with Bank interest as the description and the amount and date filled (tab 5).">NEW</button></div>
+          <div class="tagged"><p class="p-hint">No line matches $0.85 on its own. <button class="p-link" type="button">Show the 31 lines</button> to mark any the bank hasn’t received yet.</p>
+            <button class="tag restyled" type="button" data-note="RESTYLED · A13, as in tab 1.">RESTYLED</button></div>
+        </div>
+        <div class="when-today stack">
+          <p class="p-hint">The bank received $0.85 your Ledger doesn’t have: a deposit or interest you haven’t recorded. <button class="p-link" type="button">Record the missing amount</button></p>
+          <div class="p-findbar"><b>Lines since the season started · May 21, 2026</b><span class="p-search">⌕&nbsp; Find an amount or a name</span></div>
+          <table class="p-table dim"><thead><tr><th>Date</th><th>What</th><th class="num">Money out</th><th class="num">Money in</th><th class="act"></th></tr></thead>
+            <tbody><tr><td>Nov 6</td><td>Umpire fees · Week 9</td><td class="num">$60.00</td><td class="num"></td><td class="act"></td></tr><tr><td colspan="5" class="p-hint">… 30 more lines, open on their own</td></tr></tbody></table>
+        </div>
+      </div></div></div>
+    </div></div>
+
+    <div class="cap">Club · desktop 1440 · the bank paid in $0.85 <span class="swipe">· swipe →</span></div>
+    <div class="scroll"><div class="frame w1440">
+      <div class="chrome">ADMIN · DESKTOP 1440 · Find, bank shows more</div>
+      <div class="desk club"><div class="side">sidebar 240</div><div class="main"><div class="p-card stack">
+        <h3 class="p-h3">Find the $0.85</h3>
+        <div class="when-after stack">
+          <div class="tagged"><div class="p-callout" role="status"><span class="txt">The bank received $0.85 your books don’t have: a deposit or interest you haven’t entered.</span><span class="doors"><span class="p-btn">Add interest</span><span class="p-btn">Add the missing entry</span></span></div>
+            <button class="tag new" type="button" data-note="NEW · A5. Add interest files under Other Income · Interest, a money-in word every club gains with this stage (ruling 2). The words go through the copy review.">NEW</button></div>
+          <div class="tagged"><p class="p-hint">No line matches $0.85 on its own. <button class="p-link" type="button">Show the 31 lines</button> to mark any the bank hasn’t received yet.</p>
+            <button class="tag restyled" type="button" data-note="RESTYLED · A13, as in tab 1.">RESTYLED</button></div>
+        </div>
+        <div class="when-today stack">
+          <p class="p-hint">The bank received $0.85 your books don’t have: a deposit or interest you haven’t entered. <button class="p-link" type="button">Add the missing entry</button></p>
+          <div class="p-findbar"><b>Lines since your last match · Nov 5, 2026</b><span class="p-search">⌕&nbsp; Find an amount or a name</span></div>
+          <table class="p-table dim"><thead><tr><th>Date</th><th>What</th><th>Book</th><th class="num">Money out</th><th class="num">Money in</th><th class="act"></th></tr></thead>
+            <tbody><tr><td>Nov 6</td><td>Cheque 2024 · Umpire fee</td><td>UAT Rep Club — General</td><td class="num">$10.00</td><td class="num"></td><td class="act"></td></tr><tr><td colspan="6" class="p-hint">… 30 more lines, open on their own</td></tr></tbody></table>
+        </div>
+      </div></div></div>
+    </div></div>
+
+    <div class="cap">Coach · desktop 1440 · the bank took out $350.00, over the $100 cap (the club's box behaves the same) <span class="swipe">· swipe →</span></div>
+    <div class="scroll"><div class="frame w1440">
+      <div class="chrome">COACHES PORTAL · DESKTOP 1440 · Find, a large gap nothing explains</div>
+      <div class="desk coach"><div class="side">sidebar 220</div><div class="main"><div class="p-card stack">
+        <h3 class="p-h3">Find the $350.00</h3>
+        <div class="when-after stack">
+          <div class="tagged"><div class="p-callout" role="status"><span class="txt">The bank took out $350.00 your Ledger doesn’t have: a fee or a payment you haven’t recorded.</span><span class="doors"><span class="p-btn">Record the missing amount</span></span></div>
+            <button class="tag restyled" type="button" data-note="RESTYLED · A5 + ruling 4. The same box with one button. A $350 gap is rarely a bank fee; a shortcut here would nudge a missing cheque into Bank fees.">RESTYLED</button></div>
+          <div class="tagged"><p class="p-hint">No line matches $350.00 on its own. <button class="p-link" type="button">Show the 31 lines</button> to mark any the bank hasn’t received yet.</p>
+            <button class="tag restyled" type="button" data-note="RESTYLED · A13, as in tab 1.">RESTYLED</button></div>
+        </div>
+        <div class="when-today stack">
+          <p class="p-hint">The bank took out $350.00 your Ledger doesn’t have: a fee or a payment you haven’t recorded. <button class="p-link" type="button">Record the missing amount</button></p>
+          <div class="p-findbar"><b>Lines since the season started · May 21, 2026</b><span class="p-search">⌕&nbsp; Find an amount or a name</span></div>
+          <table class="p-table dim"><thead><tr><th>Date</th><th>What</th><th class="num">Money out</th><th class="num">Money in</th><th class="act"></th></tr></thead>
+            <tbody><tr><td>Nov 6</td><td>Umpire fees · Week 9</td><td class="num">$60.00</td><td class="num"></td><td class="act"></td></tr><tr><td colspan="5" class="p-hint">… 30 more lines, open on their own</td></tr></tbody></table>
+        </div>
+      </div></div></div>
+    </div></div>
+  </section>
+
+  <!-- ─────────────── 3 · QUIET LIST ─────────────── -->
+  <section class="tab" id="tab-quiet" data-tab="quiet" hidden>
+    <h2>3 · The quiet list, and the rows when it is open</h2>
+    <p class="why">When a line could explain the gap, the list still opens by itself and the box above it keeps today's two buttons, with no fee button (ruling 5). What changes is the rows: at a desk, every row now shows <b>Not in the bank yet</b> as a quiet link. The row the box names keeps its bordered button, the same recipe the phone already uses. Today the link appears only under the mouse.</p>
+
+    <div class="cap">Coach · desktop 1440 · the bank shows $40.00 more, and one cheque is exactly $40.00 <span class="swipe">· swipe →</span></div>
+    <div class="scroll"><div class="frame w1440">
+      <div class="chrome">COACHES PORTAL · DESKTOP 1440 · Find with a matching line (list open on its own)</div>
+      <div class="desk coach"><div class="side">sidebar 220</div><div class="main"><div class="p-card stack">
+        <h3 class="p-h3">Find the $40.00</h3>
+        <div class="tagged"><div class="p-callout" role="status"><span class="txt"><b>Cheque 118 · Diamond permit</b> (Nov 2) is exactly $40.00. If the bank hasn’t cashed it yet, that’s the gap.<span class="sub">Or the bank received $40.00 your Ledger doesn’t have: a deposit or interest you haven’t recorded.</span></span><span class="doors"><span class="p-btn">Not in the bank yet</span><span class="p-btn">Record the missing amount</span></span></div>
+          <button class="tag unchanged" type="button" data-note="UNCHANGED (ruling 5). A box that names a line keeps its two buttons; no fee or interest button joins it. The half-a-line box is unchanged too.">UNCHANGED</button></div>
+        <div class="p-findbar"><b>Lines since the season started · May 21, 2026</b><span class="p-search">⌕&nbsp; Find an amount or a name</span></div>
+        <div class="tagged">
+          <table class="p-table"><thead><tr><th>Date</th><th>What</th><th class="num">Money out</th><th class="num">Money in</th><th class="act"></th></tr></thead>
+            <tbody>
+              <tr class="hit"><td>Nov 2</td><td>Cheque 118 · Diamond permit<span class="chip">Exactly $40.00</span></td><td class="num">$40.00</td><td class="num"></td><td class="act"><span class="markbtn">Not in the bank yet</span></td></tr>
+              <tr><td>Nov 6</td><td>Umpire fees · Week 9</td><td class="num">$60.00</td><td class="num"></td><td class="act"><span class="when-after"><button class="p-link marklink" type="button">Not in the bank yet</button></span><span class="when-today"><span class="markbtn ghost">Not in the bank yet</span></span></td></tr>
+              <tr><td>Nov 4</td><td>Dues · Avery Chen</td><td class="num"></td><td class="num">$150.00</td><td class="act"><span class="when-after"><button class="p-link marklink" type="button">Not in the bank yet</button></span><span class="when-today"><span class="markbtn ghost">Not in the bank yet</span></span></td></tr>
+              <tr><td>Oct 30</td><td>Fall tournament entry</td><td class="num">$275.00</td><td class="num"></td><td class="act"><span class="when-after"><button class="p-link marklink" type="button">Not in the bank yet</button></span><span class="when-today"><span class="markbtn ghost">Not in the bank yet</span></span></td></tr>
+            </tbody></table>
+          <button class="tag restyled" type="button" data-note="RESTYLED · A13. Unnamed rows show the quiet underlined link at rest (no hover, no keyboard focus needed), as the phone does since 2026-11-06. Thirty bordered buttons would bury the one the box names. Switch the View to Today: the button is invisible until the row is hovered; the dashed outline marks where it hides.">RESTYLED</button>
+        </div>
+      </div></div></div>
+    </div></div>
+
+    <div class="cap">Club · desktop 1440 · the same rows (the club's table carries a Book column) <span class="swipe">· swipe →</span></div>
+    <div class="scroll"><div class="frame w1440">
+      <div class="chrome">ADMIN · DESKTOP 1440 · Find with a matching line</div>
+      <div class="desk club"><div class="side">sidebar 240</div><div class="main"><div class="p-card stack">
+        <div class="tagged">
+        <table class="p-table"><thead><tr><th>Date</th><th>What</th><th>Book</th><th class="num">Money out</th><th class="num">Money in</th><th class="act"></th></tr></thead>
+          <tbody>
+            <tr class="hit"><td>Nov 2</td><td>Cheque 2019 · Field lining<span class="chip">Exactly $40.00</span></td><td>UAT Rep Club — General</td><td class="num">$40.00</td><td class="num"></td><td class="act"><span class="markbtn">Not in the bank yet</span></td></tr>
+            <tr><td>Nov 6</td><td>Cheque 2024 · Umpire fee</td><td>UAT Rep Club — General</td><td class="num">$10.00</td><td class="num"></td><td class="act"><span class="when-after"><button class="p-link marklink" type="button">Not in the bank yet</button></span><span class="when-today"><span class="markbtn ghost">Not in the bank yet</span></span></td></tr>
+            <tr><td>Oct 31</td><td>Online payments · 3 · on their way, counted above</td><td>2026 Fall House League</td><td class="num">$6.75</td><td class="num"></td><td class="act"></td></tr>
+          </tbody></table>
+          <button class="tag restyled" type="button" data-note="RESTYLED · A13. The club's rows take the same recipe. The online-payments row keeps no action, as today.">RESTYLED</button>
+        </div>
+      </div></div></div>
+    </div></div>
+  </section>
+
+  <!-- ─────────────── 4 · REPEAT ─────────────── -->
+  <section class="tab" id="tab-repeat" data-tab="repeat" hidden>
+    <h2>4 · The same gap as the last saved check</h2>
+    <p class="why">When today's gap is the same amount in the same direction as the newest earlier saved check, one line says so under the heading, before the box (A7). It names that check's date so the person can open it. The buttons stay (ruling 8): the same gap means either the item is still missing or this month's fee came again. A check saved on the same date doesn't count, because saving replaces it.</p>
+
+    <div class="cap">Coach · desktop 1440 <span class="swipe">· swipe →</span></div>
+    <div class="scroll"><div class="frame w1440">
+      <div class="chrome">COACHES PORTAL · DESKTOP 1440 · Find, the last check (Oct 31) was also off by $4.50, bank less</div>
+      <div class="desk coach"><div class="side">sidebar 220</div><div class="main"><div class="p-card stack">
+        <h3 class="p-h3">Find the $4.50</h3>
+        <div class="when-after tagged"><p class="p-repeat">The same <b>$4.50</b> as your last check, on Oct 31, 2026.</p>
+          <button class="tag new" type="button" data-note="NEW · A7. One plain line under the heading, before the box. It compares signed gaps: a $4.50 fee and a $4.50 deposit never match. Coach checks are this season's only, so a season's first check never shows it. The words go through the copy review.">NEW</button></div>
+        <div class="p-callout when-after" role="status"><span class="txt">The bank took out $4.50 your Ledger doesn’t have: a fee or a payment you haven’t recorded.</span><span class="doors"><span class="p-btn">Record a bank fee</span><span class="p-btn">Record the missing amount</span></span></div>
+        <p class="p-hint when-after">No line matches $4.50 on its own. <button class="p-link" type="button">Show the 31 lines</button> to mark any the bank hasn’t received yet.</p>
+        <p class="p-hint when-today">The bank took out $4.50 your Ledger doesn’t have: a fee or a payment you haven’t recorded. <button class="p-link" type="button">Record the missing amount</button> <span class="dim">(and the 31 lines underneath; nothing says the gap repeats)</span></p>
+      </div></div></div>
+    </div></div>
+
+    <div class="cap">Phone 390 · coach and club</div>
+    <div class="scroll"><div class="pair">
+      <div class="frame w390"><div class="chrome">COACHES PORTAL · PHONE 390</div><div class="phone stack">
+        <h3 class="p-h3">Find the $4.50</h3>
+        <div class="when-after tagged hintwrap"><p class="p-repeat">The same <b>$4.50</b> as your last check, on Oct 31, 2026.</p>
+          <button class="tag new" type="button" data-note="NEW · A7, the same line on a phone.">NEW</button></div>
+        <div class="p-callout col when-after"><span class="txt">The bank took out $4.50 your Ledger doesn’t have: a fee or a payment you haven’t recorded.</span><span class="doors"><span class="p-btn tall">Record a bank fee</span><span class="p-btn tall">Record the missing amount</span></span></div>
+        <p class="p-hint when-today">The bank took out $4.50 your Ledger doesn’t have: a fee or a payment you haven’t recorded. <button class="p-link" type="button">Record the missing amount</button></p>
+      </div></div>
+      <div class="frame w390"><div class="chrome">ADMIN · PHONE 390</div><div class="phone stack">
+        <h3 class="p-h3">Find the $4.50</h3>
+        <div class="when-after tagged hintwrap"><p class="p-repeat">The same <b>$4.50</b> as your last check, on Oct 31, 2026.</p>
+          <button class="tag new" type="button" data-note="NEW · A7. The club compares the checks of the account on screen.">NEW</button></div>
+        <div class="p-callout col when-after"><span class="txt">The bank took out $4.50 your books don’t have: a fee or a payment you haven’t entered.</span><span class="doors"><span class="p-btn tall">Add a bank fee</span><span class="p-btn tall">Add the missing entry</span></span></div>
+        <p class="p-hint when-today">The bank took out $4.50 your books don’t have: a fee or a payment you haven’t entered. <button class="p-link" type="button">Add the missing entry</button></p>
+      </div></div>
+    </div></div>
+  </section>
+
+  <!-- ─────────────── 5 · WINDOWS ─────────────── -->
+  <section class="tab" id="tab-windows" data-tab="windows" hidden>
+    <h2>5 · The windows the new buttons open</h2>
+    <p class="why">The ordinary windows, already filled: the word chosen, a description, the amount and the date. One line in the pinned footer, right above Save, asks the person to check their banking app first, so it is in view however far the window scrolls. Nothing saves until they press Save. On the coach side the budget warning becomes a plain note (ruling 6); the club's note already reads plainly and stays as it is.</p>
+
+    <div class="cap">Coach · desktop · Record money from "Record a bank fee" (520px window, as shipped)</div>
+    <div class="scroll"><div class="pair">
+      <div class="win when-after">
+        <div class="hd"><div><div class="t">Record money</div><div class="s">We paid for something</div></div><span style="color:var(--p-dim)">✕</span></div>
+        <div class="bd">
+          <div class="fld"><span class="l">What happened? *</span><span class="i sel">We paid for something ⌄</span></div>
+          <div class="fld tagged"><span class="l">What did this pay for? *</span><span class="i white">League &amp; Fees · Bank &amp; payment fees</span>
+            <span class="h">Not in your budget yet, so it shows as off-plan on Budget vs. Actual.</span>
+            <button class="tag new" type="button" data-note="NEW (the word arrives chosen) + RESTYLED (the note). Opened from the fee or interest button only, the amber warning becomes this plain note; every other way into the window keeps today's warning (switch the View to Today). Wording to the copy review.">NEW</button></div>
+          <div class="fld tagged"><span class="l">Description *</span><span class="i">Bank fee</span><button class="tag new" type="button" data-note="NEW. Filled with Bank fee. The person can add the statement's own wording.">NEW</button></div>
+          <div class="two"><div class="fld"><span class="l">Amount *</span><span class="i">4.50</span></div><div class="fld"><span class="l">Date paid *</span><span class="i">Nov 8, 2026 &nbsp;▦</span><span class="h">The day the money actually left.</span></div></div>
+          <div class="more">+ &nbsp;More — paid by, payee, tags, notes</div>
+          <div class="chips tagged"><span>Cash on hand <b class="dn">▼ $4.50</b></span><span>Bank &amp; payment fees · spent <b>▲ $4.50</b></span>
+            <button class="tag unchanged" type="button" data-note="UNCHANGED. The window's own preview: with a word chosen, its name replaces Not itemized.">UNCHANGED</button></div>
+          <span class="p-hint">Recorded as paid on Nov 8, 2026.</span>
+        </div>
+        <div class="ft">
+          <div class="tagged"><div class="check">Check your banking app first: was this a bank fee? Use the date it shows.</div>
+            <button class="tag new" type="button" data-note="NEW · A5 (Codex's caution). In the pinned footer, above Cancel and Save, so it stays in view when the window scrolls. The second sentence answers the accounting review: a fee charged weeks ago keeps the bank's date. Wording to the copy review.">NEW</button></div>
+          <div class="btns"><span class="p-btn plain">Cancel</span><span class="p-btn lime">Save</span></div>
+        </div>
+      </div>
+      <div class="win when-today">
+        <div class="hd"><div><div class="t">Record money</div><div class="s">We paid for something</div></div><span style="color:var(--p-dim)">✕</span></div>
+        <div class="bd">
+          <div class="fld"><span class="l">What happened? *</span><span class="i sel">We paid for something ⌄</span></div>
+          <div class="fld"><span class="l">What did this pay for? *</span><span class="i white ph">Search a bill you owe, or what the cost was for</span></div>
+          <div class="fld"><span class="l">Description *</span><span class="i ph">e.g. Diamond rental</span></div>
+          <div class="two"><div class="fld"><span class="l">Amount *</span><span class="i">4.50</span></div><div class="fld"><span class="l">Date paid *</span><span class="i">Nov 8, 2026 &nbsp;▦</span><span class="h">The day the money actually left.</span></div></div>
+          <div class="more">+ &nbsp;More — paid by, payee, tags, notes</div>
+          <div class="chips"><span>Cash on hand <b class="dn">▼ $4.50</b></span><span>Not itemized · spent <b>▲ $4.50</b></span></div>
+          <span class="p-hint">Recorded as paid on Nov 8, 2026.</span>
+          <div class="fld"><span class="warn">⚠ If they then pick Bank &amp; payment fees: “Bank &amp; payment fees isn’t in your budget — it will show on Budget vs. Actual as spending you didn’t plan for.”</span></div>
+        </div>
+        <div class="ft"><div class="btns"><span class="p-btn plain">Cancel</span><span class="p-btn lime">Save</span></div></div>
+      </div>
+      <div class="when-after">
+        <div class="sheet">
+          <div class="hd"><span style="font-size:20px;color:var(--p-ink-soft)">←</span><div><div class="t">Record money</div><div class="s">We paid for something</div></div></div>
+          <div class="bd">
+            <div class="fld"><span class="l">What happened? *</span><span class="i sel tall">We paid for something ⌄</span></div>
+            <div class="fld"><span class="l">What did this pay for? *</span><span class="i white tall">League &amp; Fees · Bank &amp; payment fees</span><span class="h">Not in your budget yet, so it shows as off-plan on Budget vs. Actual.</span></div>
+            <div class="fld"><span class="l">Description *</span><span class="i tall">Bank fee</span></div>
+            <div class="fld"><span class="l">Amount *</span><span class="i tall">4.50</span></div>
+            <div class="fld"><span class="l">Date paid *</span><span class="i tall">2026-11-08</span><span class="h">The day the money actually left.</span></div>
+            <div class="more">+ &nbsp;More — paid by, payee, tags, notes</div>
+          </div>
+          <div class="ft tagged">
+            <div class="check">Check your banking app first: was this a bank fee? Use the date it shows.</div>
+            <div class="btns"><span class="p-btn plain tap">Cancel</span><span class="p-btn lime tap">Save</span></div>
+            <button class="tag new" type="button" data-note="NEW · A5. On a phone the window is a full-screen sheet; the line sits in its pinned footer, above Cancel and Save. The body above scrolls.">NEW</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="cap">Coach · desktop · Record money from "Record interest"</div>
+    <div class="scroll"><div class="pair">
+      <div class="win when-after">
+        <div class="hd"><div><div class="t">Record money</div><div class="s">Other money in</div></div><span style="color:var(--p-dim)">✕</span></div>
+        <div class="bd">
+          <div class="fld"><span class="l">What happened? *</span><span class="i sel">Other money in ⌄</span></div>
+          <div class="fld tagged"><span class="l">What is this? *</span><span class="i white">Other Income · Interest</span>
+            <span class="h">Not in your budget yet, so it shows as off-plan on Budget vs. Actual.</span>
+            <button class="tag new" type="button" data-note="NEW. The window today's door already opens (Other money in), with the word, the description, the amount and the date filled.">NEW</button></div>
+          <div class="fld"><span class="l">Description</span><span class="i">Bank interest</span></div>
+          <div class="two"><div class="fld"><span class="l">Amount *</span><span class="i">0.85</span></div><div class="fld"><span class="l">Date received *</span><span class="i">Nov 8, 2026 &nbsp;▦</span></div></div>
+        </div>
+        <div class="ft">
+          <div class="tagged"><div class="check">Check your banking app first: was this interest? Use the date it shows.</div>
+            <button class="tag new" type="button" data-note="NEW · A5. The same line, asking about interest.">NEW</button></div>
+          <div class="btns"><span class="p-btn plain">Cancel</span><span class="p-btn lime">Save</span></div>
+        </div>
+      </div>
+      <div class="when-today p-hint" style="max-width:420px">Today "Record the missing amount" opens this window as Other money in with only the amount and the date filled; the person searches for the word and types the description.</div>
+    </div></div>
+
+    <div class="cap">Club · desktop and phone · Add an entry from "Add a bank fee" (640px window, as shipped)</div>
+    <div class="scroll"><div class="pair">
+      <div class="win club">
+        <div class="hd"><div><div class="eb">UAT CLUB ORG — GENERAL</div><div class="t">Add an entry</div></div><span style="color:var(--p-dim)">✕</span></div>
+        <div class="bd">
+          <div class="two"><div class="fld"><span class="l">Money *</span><span class="i">Out — the club paid ⌄</span></div><div class="fld"><span class="l">Date *</span><span class="i">Nov 8, 2026 &nbsp;▦</span></div></div>
+          <div class="fld tagged"><span class="l">What *</span><span class="i when-after">Bank fee</span><span class="i ph when-today">For example: Diamond permit</span><button class="tag new" type="button" data-note="NEW. Filled with Bank fee (Bank interest from Add interest).">NEW</button></div>
+          <div class="fld"><span class="l">Amount *</span><span class="i">4.50</span></div>
+          <div class="fld tagged"><span class="l">Filed under *</span><span class="i white when-after">Admin · Bank &amp; payment fees</span><span class="i white ph when-today">Search what this is — e.g. “diamond”, “entry”</span><span class="h when-after">Not on the 2026 plan, so it counts as off-plan.</span>
+            <button class="tag new" type="button" data-note="NEW (the word arrives chosen; the word itself is new to every club, ruling 2). The plan note under it is UNCHANGED: it already reads plainly. Changing Money in/out still clears the word, as it does today.">NEW</button></div>
+          <div class="fld"><span class="l">Paid to</span><span class="i ph white">Search or enter payee…</span></div>
+          <div class="two"><div class="fld"><span class="l">How it was paid</span><span class="i">Choose… ⌄</span></div><div class="fld"><span class="l">Reference</span><span class="i ph">Cheque or E-Transfer number</span></div></div>
+          <div class="fld"><span class="l">Status</span><span class="i">Posted ⌄</span></div>
+          <div class="fld"><span class="l">Notes</span><span class="i area"></span></div>
+        </div>
+        <div class="ft">
+          <div class="tagged when-after"><div class="check">Check your banking app first: was this a bank fee? Use the date it shows.</div>
+            <button class="tag new" type="button" data-note="NEW · A5. In the pinned footer, above Cancel and Add entry. At 1440 × 900 this window already fills the screen, so a line at the end of the body would sit below the fold. Status stays Posted: the bank already took the money, and a Pending line would stay out of the check.">NEW</button></div>
+          <div class="btns"><span class="p-btn">Cancel</span><span class="p-btn lime">Add entry</span></div>
+        </div>
+      </div>
+      <div class="when-after">
+        <div class="sheet">
+          <div class="hd"><span style="font-size:20px;color:var(--p-ink-soft)">←</span><div><div class="s" style="font:700 11px var(--mono);letter-spacing:.08em">UAT CLUB ORG — GENERAL</div><div class="t">Add an entry</div></div></div>
+          <div class="bd">
+            <div class="fld"><span class="l">Money *</span><span class="i tall">Out — the club paid ⌄</span></div>
+            <div class="fld"><span class="l">Date *</span><span class="i tall">2026-11-08</span></div>
+            <div class="fld"><span class="l">What *</span><span class="i tall">Bank fee</span></div>
+            <div class="fld"><span class="l">Amount *</span><span class="i tall">4.50</span></div>
+            <div class="fld"><span class="l">Filed under *</span><span class="i white tall">Admin · Bank &amp; payment fees</span><span class="h">Not on the 2026 plan, so it counts as off-plan.</span></div>
+            <div class="fld"><span class="l">Paid to</span><span class="i ph white tall">Search or enter payee…</span></div>
+          </div>
+          <div class="ft tagged">
+            <div class="check">Check your banking app first: was this a bank fee? Use the date it shows.</div>
+            <div class="btns"><span class="p-btn tap">Cancel</span><span class="p-btn lime tap">Add entry</span></div>
+            <button class="tag new" type="button" data-note="NEW · A5. The club's phone sheet: the same line in the pinned footer.">NEW</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ─────────────── 6 · ASKS ─────────────── -->
+  <section class="tab" id="tab-asks" data-tab="asks" hidden>
+    <h2>6 · Asks</h2>
+    <p class="why">Your eight calls of 2026-11-09 are drawn as ruled. Four small things the drawing had to decide:</p>
+    <div class="asks">
+      <div class="ask"><h3>D1 · Desk rows: a quiet link, not thirty buttons (tab 3)</h3>
+        <p>"Visible without hover" could mean a bordered button on every row. Thirty of them would bury the one row the box names. The phone settled this on 2026-11-06: the named row keeps its button and the rest show the underlined link.</p>
+        <p class="rec">Recommend: the phone's recipe at a desk too, as drawn.</p></div>
+      <div class="ask"><h3>D2 · The repeat line names the last check's date (tab 4)</h3>
+        <p>The ruled words were "The same $4.50 as your last check". Adding "on Oct 31, 2026" tells the person which check, so they can open it from the list of saved checks below.</p>
+        <p class="rec">Recommend: keep the date, as drawn.</p></div>
+      <div class="ask"><h3>D3 · The banking-app line sits in the window's pinned footer (tab 5)</h3>
+        <p>The club's window already fills a 1440 × 900 screen, so a line at the end of the form would land below the fold while Save stays in view. In the footer it is always right above Save, on a desk and on a phone. It adds about 50px to the footer.</p>
+        <p class="rec">Recommend: in the footer, as drawn. "Use the date it shows" stays as its second sentence (the accounting review's date point).</p></div>
+      <div class="ask"><h3>D4 · The coach's phone box stacks its buttons full width (tab 1)</h3>
+        <p>The club's box already does this on a phone; the coach's lets buttons wrap at their own width. With two long labels the coach's box would read ragged, so it gains the club's rule. This also changes the coach's matching-line box on a phone ("Not in the bank yet" · "Record the missing amount" stack full width).</p>
+        <p class="rec">Recommend: one rule for both portals, as drawn.</p></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tabs a'));
+  var panes = Array.prototype.slice.call(document.querySelectorAll('section.tab'));
+  function startScrollers() {
+    if (window.innerWidth >= 1500) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.scroll'), function (s) {
+      if (s.querySelector('.w1440') && s.scrollLeft === 0) s.scrollLeft = 220;
+    });
+  }
+  function show(name) {
+    if (!panes.some(function (p) { return p.dataset.tab === name; })) name = 'fee';
+    panes.forEach(function (p) { p.hidden = p.dataset.tab !== name; });
+    tabs.forEach(function (a) { if (a.dataset.tab === name) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    closeNotes();
+    startScrollers();
+  }
+  function closeNotes() { Array.prototype.forEach.call(document.querySelectorAll('.tagnote'), function (n) { n.remove(); }); }
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+
+  var segs = Array.prototype.slice.call(document.querySelectorAll('.seg button'));
+  segs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.body.dataset.when = b.dataset.when;
+      segs.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      closeNotes();
+    });
+  });
+  document.body.dataset.when = 'after';
+  show(location.hash.slice(1));
+
+  var openFor = null;
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('.tag') : null;
+    var was = openFor;
+    closeNotes(); openFor = null;
+    if (!t || t === was) return;
+    var n = document.createElement('div');
+    n.className = 'tagnote';
+    n.setAttribute('role', 'note');
+    n.textContent = t.dataset.note || '';
+    document.body.appendChild(n);
+    var r = t.getBoundingClientRect();
+    var w = n.offsetWidth, h = n.offsetHeight;
+    var left = Math.min(Math.max(16, r.right - w), window.innerWidth - w - 16);
+    var top = r.bottom + 6;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+    n.style.left = left + 'px'; n.style.top = top + 'px';
+    openFor = t;
+  });
+  window.addEventListener('scroll', function () { closeNotes(); openFor = null; }, true);
+  window.addEventListener('resize', function () { closeNotes(); openFor = null; });
+})();
+</script>

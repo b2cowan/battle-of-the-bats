@@ -201,8 +201,8 @@ tr.divider > td {
   color: var(--text-secondary);
   background: var(--surface-2);
 }
-/* "Not in the bank yet" on any row: shown on a hinted row, and under the pointer or the keyboard's focus on the rest —
-   never hover-only (focus shows it; a touch screen, which has no pointer to hover, shows it always). */
+/* "Not in the bank yet": the bordered button on the row the callout names; every other row says it as the quiet `.link`
+   at rest, at a desk as on a phone (S3, D1: thirty bordered buttons would bury the named one; never hover-only). */
 .markBtn {
   padding: 0.3rem 0.65rem;
   border: 1px solid var(--home-line);
@@ -213,16 +213,12 @@ tr.divider > td {
   font-weight: 600;
   color: var(--text-primary);
   cursor: pointer;
-  opacity: 0;
 }
 .markBtn:hover { border-color: var(--home-olive); }
-.markBtn:focus-visible { opacity: 1; outline: 2px solid var(--home-olive); outline-offset: 2px; }
-.markShown,
-tr:hover .markBtn,
-tr:focus-within .markBtn { opacity: 1; }
-@media (hover: none) {
-  .markBtn { opacity: 1; }
-}
+.markBtn:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+/* A7 (S3, D2): "The same $X as your last check, on {date}." — one plain line under Find's heading, before the callout. */
+.repeat { margin: 0; font-size: var(--type-body); color: var(--text-secondary); }
+.repeat b { color: var(--text-primary); font-weight: 600; }
 
 /* ── the saved checks (tab 5) ── */
 .listHead { margin: 0 0 0.6rem; }
@@ -257,6 +253,12 @@ tr:focus-within .markBtn { opacity: 1; }
   /* The cash link ends the note line (S1, A8): the tap box stays 44px, the line box keeps the note's rhythm (/design S1;
      the `.findCards .chipDoor` recipe). */
   p.note > .link { margin-block: -0.6rem; }
+  /* "Show the n lines" inside its sentence (S3, A13): the same recipe, the tap box without the line box. */
+  .inlineLink { margin-block: -0.6rem; }
+  /* The callout's buttons stack full width, 44px each (S3, D4: the club's shipped rule, `Bank.module.css`), the matching-
+     line callout's too. */
+  .calloutActs { display: flex; flex-direction: column; align-items: stretch; flex: 1 1 100%; }
+  .calloutActs > button { width: 100%; min-height: var(--tap-min, 44px); justify-content: center; }
 }
 
 /* A desk lays the fields out in a row; a narrow screen puts Statement date and Bank balance side by side and the cash

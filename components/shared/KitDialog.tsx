@@ -175,6 +175,7 @@ export default function KitDialog({
   children,
   footer,
   footerStart,
+  footerAbove,
   steps,
   record = false,
   back,
@@ -223,6 +224,11 @@ export default function KitDialog({
    *  can't go. Guarded: `tests/unit/kit-dialog-foot-text-guard.test.ts`. Not a rare door: that ends the body
    *  (2026-10-09; Manage's Suspend / Remove left this slot 2026-10-19). */
   footerStart?: ReactNode;
+  /** One line the person should read right before they press the main act, as the foot's own first row, full width,
+   *  in the amber callout's face — so it stays in view however far the body scrolls (Bank check novice UX S3, D3: the
+   *  bank-door windows' "Check your banking app first…"). Not a refusal (that is the reason slot) and not a count (that
+   *  is `footerStart`). It steps aside while the foot asks. */
+  footerAbove?: ReactNode;
   /** A record opened from a list: its neighbours, named, and where it sits ("3 of 8"; `positionWide`,
    *  "3 of 8 in U11 Girls", above a phone). `noun` names what steps for a screen reader ("team"). */
   steps?: { prev: KitStep | null; next: KitStep | null; position: string; positionWide?: string; noun: string };
@@ -463,6 +469,7 @@ export default function KitDialog({
           {/* A window with no foot of its own grows one while it asks (a read window, a list of choices). */}
           {(hasFoot || asking) && (
             <div ref={setFootEl} className={styles.foot} onClickCapture={() => setReasonQuiet(false)}>
+              {footerAbove != null && !asking && <p className={styles.footAbove}>{footerAbove}</p>}
               {footStart && <div className={styles.footStart}>{footStart}</div>}
               <div ref={setReasonSlot} className={`${styles.footReason}${reasonQuiet || asking ? ` ${styles.footReasonQuiet}` : ''}`} />
               {footEnd != null && <div className={styles.footEnd}>{footEnd}</div>}

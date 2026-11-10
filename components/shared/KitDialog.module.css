@@ -210,6 +210,20 @@
   border-top: 1px solid var(--home-line);
 }
 .footStart { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-right: auto; }
+/* `footerAbove`: the foot's own first row, full width, the amber callout's face (never red), the body's size; the
+   buttons wrap to the row under it (Bank check S3, D3). */
+.footAbove {
+  flex: 1 1 100%;
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--warning) 32%, transparent);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--home-radius-sm, 9px);
+  background: rgba(var(--warning-rgb), 0.08);
+  font-size: var(--type-body);
+  line-height: 1.4;
+  color: var(--text-primary);
+}
 /* A sentence handed in bare (a <span> or <p> with no class of its own) wears the foot note's face, not the panel's 16px
    primary ink — it read larger and darker than the body it sums up (owner, 2026-10-25, Correct a price). A refusal
    (`role="alert"`) reads in the danger ink. A caller's own class still decides its face (`repKit.footNote`). */
