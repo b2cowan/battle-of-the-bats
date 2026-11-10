@@ -69,6 +69,17 @@ export type SendEmailResult = {
   refused?: boolean;
 };
 
+/**
+ * Demo households (the Milton prospect demo seeds `first.last@miltonfamilies.local`, the other coaches
+ * `@milton-bats.local`) carry `.local` addresses: a reserved name that can never be delivered. They are never handed to
+ * the mail service, so practising a demo send to "54 families" spends the daily quota only on the real inboxes in it.
+ * The caller still sees `sent`, so the screens show the full count a prospect expects. A real customer is never affected:
+ * nothing at `.local` could have arrived.
+ */
+export function isUndeliverableDemoAddress(to: string): boolean {
+  return /\.local$/i.test(to.trim().replace(/>$/, ''));
+}
+
 /** The mail service's answers that mean the request itself was refused, so nothing was sent. */
 const DEFINITE_REFUSALS = new Set([400, 401, 403, 404, 422]);
 
@@ -113,6 +124,11 @@ export async function sendEmail(
   const logId = log
     ? opts.logId ?? await log.openSentEmailRow({ kind: opts.kind as LoggedEmailKind, to, orgId: opts.orgId, askedBy: opts.askedBy, feedbackId: opts.feedbackId })
     : null;
+
+  if (isUndeliverableDemoAddress(to)) {
+    if (log && logId) await log.settleSentEmailRow(logId, {});
+    return { status: 'sent', logId };
+  }
 
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -171,6 +187,9 @@ export async function sendEmailBatch(
 ): Promise<SendEmailResult> {
   if (emails.length === 0) return { status: 'sent' };
   if (emails.length > EMAIL_BATCH_SIZE) throw new Error(`sendEmailBatch: ${emails.length} emails exceeds the batch limit of ${EMAIL_BATCH_SIZE}`);
+  // Demo addresses never reach the mail service (see isUndeliverableDemoAddress); an all-demo batch is "sent" without a request.
+  const going = emails.filter(e => !isUndeliverableDemoAddress(e.to));
+  if (going.length === 0) return { status: 'sent' };
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn('[email] RESEND_API_KEY not set - skipping batch send');
@@ -179,7 +198,7 @@ export async function sendEmailBatch(
   const request = {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(emails.map(e => ({
+    body: JSON.stringify(going.map(e => ({
       from: fromHeader(e.fromName), to: e.to, subject: e.subject, html: e.html, text: htmlToText(e.html),
       ...(e.replyTo ? { reply_to: e.replyTo } : {}),
     }))),
