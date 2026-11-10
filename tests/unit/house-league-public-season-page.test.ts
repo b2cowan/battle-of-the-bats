@@ -170,6 +170,21 @@ describe('5 · the page draws the two shapes', () => {
   it('"Already signed up? Email me my link" in both shapes (P4)', () => {
     assert.equal(page.match(/\{signedUp\}/g)?.length, 2);
   });
+  it('the sign-up shape carries the play links: Schedule once published, Standings with the first score, quiet buttons above the age groups', () => {
+    const signupShape = page.slice(page.indexOf('const divisions: DivisionWithCount[]'));
+    // The same two tests the season shape uses, so the two pages never disagree about when a table exists.
+    assert.match(signupShape, /const hasSchedule = rawDivisions\.some\(d => d\.schedulePublishedAt\)/);
+    assert.match(signupShape, /rawDivisions\.filter\(d => d\.showStandings && d\.schedulePublishedAt\)/);
+    assert.match(signupShape, /playTables\.some\(t => t\.scored\)/);
+    assert.match(signupShape, /\{hasSchedule && \(/);
+    assert.match(signupShape, /\{hasStandings && \(/);
+    assert.match(signupShape, /\{W\.title\}/);
+    // Above the age groups, both secondary: Register now stays the one filled button.
+    assert.ok(signupShape.indexOf('{hasSchedule && (') < signupShape.indexOf('id="season-divisions"'), 'the row sits above Divisions');
+    assert.doesNotMatch(signupShape.slice(signupShape.indexOf('{hasSchedule && (') , signupShape.indexOf('id="season-divisions"')), /btnPrimary/);
+    // The old bottom Schedule button (before registration opens) is gone: the row is the one place.
+    assert.equal(signupShape.match(/\/schedule`\)/g)?.length, 1);
+  });
   it('no champion, no winner, no "Top three" on the page (copy §6)', () => {
     assert.doesNotMatch(page, /[Cc]hampion|[Ww]inner|Top 3|Top three|Leaderboard|signups/);
   });

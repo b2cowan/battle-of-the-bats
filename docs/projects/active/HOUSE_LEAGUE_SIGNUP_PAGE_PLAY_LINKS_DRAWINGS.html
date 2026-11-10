@@ -1,0 +1,356 @@
+<title>Season Page Play Links</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky section tabs, one section at a time, a View switch on pages that compare, phone specimens on a cool ground so they read as specimens. */
+:root {
+  --bg: #e8ecf3; --panel: #ffffff; --ink: #172033; --mute: #56607a; --rule: #cdd5e3;
+  --accent: #2b4acb; --accent-soft: #e4e9fb; --new: #1c6e46; --new-bg: #dff3e8; --keep: #56607a; --keep-bg: #eceff5;
+  --track: #ffffff; --seg-on: #172033; --seg-on-ink: #ffffff;
+  --chrome-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151d; --panel: #1a2030; --ink: #e7ebf5; --mute: #9aa5bf; --rule: #2d3650;
+    --accent: #9db0ff; --accent-soft: #232c4d; --new: #7fdcaa; --new-bg: #173a2a; --keep: #9aa5bf; --keep-bg: #232a3c;
+    --track: #1a2030; --seg-on: #e7ebf5; --seg-on-ink: #11151d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151d; --panel: #1a2030; --ink: #e7ebf5; --mute: #9aa5bf; --rule: #2d3650;
+  --accent: #9db0ff; --accent-soft: #232c4d; --new: #7fdcaa; --new-bg: #173a2a; --keep: #9aa5bf; --keep-bg: #232a3c;
+  --track: #1a2030; --seg-on: #e7ebf5; --seg-on-ink: #11151d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--chrome-font); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { padding-block: 20px 12px; }
+header.top h1 { margin: 0; font-size: 1.35rem; line-height: 1.2; text-wrap: balance; }
+header.top p { margin: 4px 0 0; color: var(--mute); max-width: 70ch; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.tabbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--rule); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px 0; }
+.tab { appearance: none; border: 0; background: none; color: var(--mute); font: 600 0.9rem var(--chrome-font); padding: 10px 14px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 12px; padding-block: 12px; flex-wrap: wrap; }
+.viewrow label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--mute); }
+.seg { display: inline-flex; padding: 3px; background: var(--track); border: 1px solid var(--rule); border-radius: 10px; }
+.seg button { appearance: none; border: 0; background: none; color: var(--mute); font: 600 0.85rem var(--chrome-font); padding: 7px 14px; border-radius: 7px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--seg-on); color: var(--seg-on-ink); }
+main { padding-block: 8px 56px; }
+h2.sec { margin: 8px 0 4px; font-size: 1.15rem; text-wrap: balance; }
+.lede { margin: 0 0 16px; color: var(--mute); max-width: 72ch; }
+.pair { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+.col { flex: 0 1 390px; min-width: 0; max-width: 100%; }
+.cap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; font-weight: 700; }
+.tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; padding: 3px 7px; border-radius: 5px; }
+.tag.new { color: var(--new); background: var(--new-bg); }
+.tag.keep { color: var(--keep); background: var(--keep-bg); }
+.note { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; margin-top: 12px; max-width: 390px; font-size: 0.9rem; }
+.note.wide { max-width: 72ch; }
+.note p { margin: 0 0 8px; } .note p:last-child { margin: 0; }
+.measure { font-variant-numeric: tabular-nums; font-weight: 700; }
+.states { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 24px; }
+.state { min-width: 0; }
+.rule { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; max-width: 72ch; }
+.rule ul { margin: 6px 0 0; padding-left: 20px; } .rule li { margin: 3px 0; }
+.asks { display: grid; gap: 14px; max-width: 76ch; }
+.ask { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; }
+.ask.hl { outline: 3px solid var(--accent); }
+.ask h3 { margin: 0 0 4px; font-size: 1rem; }
+.ask p { margin: 4px 0; }
+.rec { color: var(--new); font-weight: 700; }
+.mk { position: absolute; z-index: 3; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; background: var(--accent); color: #fff; font: 700 0.8rem var(--chrome-font); cursor: pointer; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+.mk { --accent: #2b4acb; }
+body[data-view="diff"] .same { opacity: 0.22; filter: grayscale(1); }
+body[data-view="diff"] .unch { opacity: 0.35; filter: grayscale(1); }
+body[data-view="diff"] .strip { outline: 3px solid #2b4acb; outline-offset: 4px; border-radius: 8px; }
+.hide-nodiff { display: none; }
+
+/* ── The product frame: Milton's real look, fixed in both themes (the public page is light). ── */
+.phone {
+  --g: #f5f3ef; --card: #ffffff; --line: #e6e1d8; --soft: #5d5964; --tx: #1c1a20; --fill: #4a1568; --ok: #2d6a2a; --okbg: #e3f1df; --field: #cdc7bd;
+  position: relative; width: 390px; max-width: 100%; background: var(--g); color: var(--tx); border: 1px solid #9fb0c7; border-radius: 14px; overflow: hidden;
+  font-family: "Inter", system-ui, sans-serif; font-size: 16px; line-height: 1.45; box-shadow: 0 4px 18px rgba(20, 30, 60, .14);
+}
+.phone.first { max-height: 760px; }
+.phone.first::after { content: ""; position: absolute; inset: auto 0 0 0; height: 64px; background: linear-gradient(to bottom, rgba(245,243,239,0), #f5f3ef); pointer-events: none; }
+.phone.slice { max-height: none; }
+.ch { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--fill); color: #fff; }
+.ch > div { flex: 1; min-width: 0; }
+.ch b { display: block; font: 700 1.3rem/1.1 "Barlow Condensed", "Arial Narrow", sans-serif; }
+.ch small { display: block; font-size: 0.8rem; font-weight: 600; margin-top: 2px; }
+.logo { width: 48px; height: 48px; border-radius: 50%; border: 2px solid #fff; background: radial-gradient(circle at 35% 35%, #8e4bb8, #2c0c42); flex: none; }
+.ct { display: flex; gap: 24px; padding: 0 16px; background: #fff; border-bottom: 1px solid var(--line); font-weight: 600; }
+.ct span { padding: 14px 0 12px; color: #4a4650; border-bottom: 3px solid transparent; }
+.ct span.on { color: var(--tx); border-bottom-color: var(--fill); }
+.body { padding: 20px 16px 24px; display: flex; flex-direction: column; gap: 24px; }
+.hd { display: flex; flex-direction: column; gap: 10px; }
+.chip { align-self: flex-start; display: inline-flex; padding: 6px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; }
+.chip.ok { color: var(--ok); background: var(--okbg); }
+.chip.neu { color: var(--soft); background: var(--g); border: 1px solid var(--field); }
+.pn { margin: 0; font: 700 1.9rem/1.1 "Barlow Condensed", "Arial Narrow", sans-serif; color: var(--tx); }
+.desc { margin: 0; font-size: 1.1rem; line-height: 1.55; color: #4a4650; }
+.facts { display: flex; flex-direction: column; gap: 18px; padding-top: 4px; }
+.band { margin-bottom: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--soft); }
+.fv { font-weight: 700; }
+.rs { display: block; font-size: 0.82rem; color: var(--soft); }
+.sh { display: flex; align-items: center; gap: 10px; }
+.sh h2 { margin: 0; font-size: 1.2rem; font-weight: 700; }
+.pill { min-width: 34px; text-align: center; padding: 3px 10px; border: 1px solid var(--field); border-radius: 999px; background: var(--g); font-size: 0.85rem; font-weight: 600; color: var(--soft); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; }
+.divgrid { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.dn { font-weight: 700; }
+.dp { font-weight: 700; color: var(--ok); margin-top: 6px; }
+.bar { height: 6px; border-radius: 3px; background: var(--line); margin: 10px 0 8px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--fill); border-radius: 3px; }
+.sp { font-size: 0.875rem; color: var(--soft); }
+.btnrow { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border-radius: 8px; font-weight: 600; }
+.btn.pri { background: var(--fill); color: #fff; border: 1.5px solid #2c0c42; }
+.btn.sec { background: var(--card); color: var(--tx); border: 1px solid var(--field); }
+.regline { margin: 12px 0 0; font-size: 0.875rem; color: var(--soft); }
+.greybox { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; font-size: 0.875rem; color: var(--soft); }
+.stub { height: 12px; border-radius: 6px; background: #e2ddd3; }
+.stub.s { width: 55%; } .stub.m { width: 80%; }
+.stubrow { display: flex; flex-direction: column; gap: 8px; }
+.sth { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.sth h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+.lnk { font-size: 0.875rem; font-weight: 600; color: var(--fill); white-space: nowrap; }
+table.t { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+table.t th { font-size: 0.72rem; font-weight: 700; text-align: right; color: var(--soft); padding: 4px 4px 6px; border-bottom: 1px solid var(--line); }
+table.t td { padding: 7px 4px; text-align: right; border-bottom: 1px solid var(--line); }
+table.t th.l, table.t td.l { text-align: left; }
+table.t td.n { width: 22px; color: var(--soft); }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: baseline; }
+.more { margin: 8px 0 0; font-size: 0.82rem; color: var(--soft); }
+.gap { color: #8a8590; text-align: center; font-size: 0.8rem; }
+@media (max-width: 440px) { .col { flex-basis: 100%; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<header class="top"><div class="wrap">
+  <h1>Milton house league page: where families find games and standings</h1>
+  <p>The page you screenshotted is the sign-up page. It has no way to reach Schedule or Standings while registration is open, even when games are being played. This page draws the proposed fix in every state.</p>
+</div></header>
+
+<div class="tabbar"><div class="wrap">
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-screen" data-tab="screen">1 · Your screen</button>
+    <button class="tab" role="tab" id="t-states" data-tab="states">2 · Every state</button>
+    <button class="tab" role="tab" id="t-option-b" data-tab="option-b">3 · The bigger option</button>
+    <button class="tab" role="tab" id="t-asks" data-tab="asks">4 · Asks</button>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <div class="viewrow" id="viewrow">
+    <label id="viewlabel">View</label>
+    <div class="seg" role="group" aria-labelledby="viewlabel">
+      <button type="button" data-view="all" aria-pressed="true">Everything</button>
+      <button type="button" data-view="diff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+
+  <main>
+    <section id="p-screen" role="tabpanel" aria-labelledby="t-screen" hidden>
+      <h2 class="sec">Your screen: Milton on the sign-up page, today and proposed</h2>
+      <p class="lede">Both phones are the same page on the same day: registration open, games already being played. The only change is a row of two buttons directly under the dates and price. Tap a numbered dot to jump to the question it raises.</p>
+      <div class="pair">
+        <div class="col">
+          <div class="cap">Today <span class="tag keep">UNCHANGED</span></div>
+          <div class="phone first" data-m="before" id="f-before"></div>
+          <div class="note">Schedule and Standings are nowhere on the page. Divisions start <span class="measure" data-for="before">…</span> down.</div>
+        </div>
+        <div class="col">
+          <div class="cap">Proposed <span class="tag new">NEW</span></div>
+          <div class="phone first" data-m="after" id="f-after"></div>
+          <div class="note">The row sits above the age groups, where a parent who already registered looks first. Divisions start <span class="measure" data-for="after">…</span> down, so the sign-up content moves by <span class="measure" data-for="delta">…</span>. Register now stays at the bottom of the age groups, as it is today, and stays the only filled button on the page. The new buttons are the quiet outlined kind, so the page's main job does not get any quieter.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-states" role="tabpanel" aria-labelledby="t-states" hidden>
+      <h2 class="sec">Every state the page can be in</h2>
+      <p class="lede">Each card is the same page cut down to the parts that move: the status chip, the dates, the new button row, the age groups and the bottom of the page. Chips and date lines use the words the page already shows; only the example dates are made up.</p>
+      <div class="rule"><b>When the row appears</b>
+        <ul>
+          <li><b>Schedule</b> appears once any age group has published its schedule.</li>
+          <li><b>Standings</b> appears once any age group that keeps standings has a scored game. This is the same test the closed-registration page already uses, so the two pages never disagree.</li>
+          <li>No schedule published yet, no row. The page is exactly what it is today.</li>
+        </ul>
+      </div>
+      <div class="states" id="states"></div>
+    </section>
+
+    <section id="p-option-b" role="tabpanel" aria-labelledby="t-option-b" hidden>
+      <h2 class="sec">The bigger option: show the standings tables on the sign-up page</h2>
+      <p class="lede">This is the closed-registration treatment (top three per age group) dropped in under the dates. I would not do this, and the reason is on the right.</p>
+      <div class="pair">
+        <div class="col">
+          <div class="cap">Option B <span class="tag new">NEW</span></div>
+          <div class="phone first" data-m="optb" id="f-optb"></div>
+        </div>
+        <div class="col">
+          <div class="note wide" style="max-width:420px">
+            <p><b>Divisions start <span class="measure" data-for="optb">…</span> down</b>, against <span class="measure" data-for="before">…</span> today and <span class="measure" data-for="after">…</span> with the button row.</p>
+            <p>During sign-up the page has one job: get a family registered. A full table per age group puts the thing they came for below two screens of results, and Milton has five age groups.</p>
+            <p>The button row gives the same access in two taps and keeps the sign-up content where it is. Once registration closes, the page already switches to the full standings view (tab 2, state 5).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="p-asks" role="tabpanel" aria-labelledby="t-asks" hidden>
+      <h2 class="sec">Asks</h2>
+      <p class="lede">Five calls for you. The sign-up page was ruled to stay as it was when the closed-registration page was redesigned, so this needs your yes before it is built.</p>
+      <div class="asks">
+        <div class="ask" id="ask-1"><h3>1 · Add the button row to the sign-up page?</h3>
+          <p><span class="rec">Recommended: yes, the row (tab 1).</span> Alternatives: the full tables (tab 3), or leave the page as it is and rely on the club site menu.</p></div>
+        <div class="ask" id="ask-2"><h3>2 · Where does the row sit?</h3>
+          <p><span class="rec">Recommended: under the dates and price, above the age groups.</span> The only place today for these links is the bottom of the page, below every age group card. On a phone that is five cards down, which is a large part of why you could not find it. After registration closes, the page puts Schedule at the bottom, below the standings (tab 2, state 5), so the two pages would differ in position. Top-of-page is the better answer for a family who is already signed up; the alternative is the bottom, matching the closed page, which keeps the sign-up content exactly where it is.</p></div>
+        <div class="ask" id="ask-3"><h3>3 · Schedule only when something is published</h3>
+          <p><span class="rec">Recommended: yes.</span> Today, before registration opens, a Schedule button shows at the bottom whether or not anything is published. The row would replace it and appear only once a schedule is. I have not checked what the Schedule page shows when nothing is published, so confirm that this loses nothing.</p></div>
+        <div class="ask" id="ask-4"><h3>4 · Standings appears with the first score</h3>
+          <p><span class="rec">Recommended: yes.</span> It follows the age groups that keep standings and the first scored game, exactly like the closed-registration page. A club that turns standings off for every age group never sees the button.</p></div>
+        <div class="ask" id="ask-5"><h3>5 · The Milton demo keeps its dates</h3>
+          <p><span class="rec">Correction to what I told you earlier:</span> closing registration before the season starts would break the live sign-up walk and the U13 waitlist, because the demo needs registration open and games played at once. The demo is exactly the case this fix is for. No date change is needed once the row exists.</p></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* The specimen parts. Copy words are the shipped ones; nothing new is written for families. */
+var USER = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3-6 7-6s7 2 7 6"/></svg>';
+function head() {
+  return '<div class="ch"><span class="logo"></span><div><b>Milton Bats Softball Association</b><small>Softball for Milton kids, ages 6 to 15</small></div>' + USER + '</div>' +
+    '<nav class="ct"><span>Home</span><span class="on">House league</span></nav>';
+}
+function chip(t, tone) { return '<span class="chip ' + (tone || 'ok') + '">' + t + '</span>'; }
+function title() {
+  return '<h1 class="pn">2027 Summer House League</h1><p class="desc">House league softball for Milton players. Saturday-morning games, weeknight practices, and a team to play with all summer.</p>';
+}
+function fact(k, v, sub) { return '<div><div class="band">' + k + '</div><div class="fv">' + v + '</div>' + (sub ? '<span class="rs">' + sub + '</span>' : '') + '</div>'; }
+function facts() {
+  return '<div class="facts">' + fact('Registration', 'September 11, 2026 — December 15, 2026') + fact('Season dates', 'October 7, 2026 — January 23, 2027') +
+    fact('Price', '$100 – $140', 'Save $20 through Nov 24, then $120 – $160') + '</div>';
+}
+function divCard(n, born, p, reg, filled, cap) {
+  var pct = Math.round(filled / cap * 100);
+  return '<div class="card"><div class="dn">' + n + '</div><span class="rs">' + born + '</span><div class="dp">' + p + ' · Save $20</div><span class="rs">Early bird through Nov 24, then ' + reg + '</span>' +
+    '<div class="bar"><i style="width:' + pct + '%"></i></div><div class="sp">' + filled + ' / ' + cap + ' spots filled</div></div>';
+}
+function divisions() {
+  return '<section><div class="sh divs-head"><h2>Divisions</h2><span class="pill">5</span></div><div class="divgrid">' +
+    divCard('U7', 'Born 2020 to 2021', '$100', '$120', 14, 30) + divCard('U9', 'Born 2018 to 2019', '$120', '$140', 38, 48) + divCard('U11', 'Born 2016 to 2017', '$130', '$150', 36, 40) + '</div></section>';
+}
+function strip(btns) {
+  return '<div class="btnrow strip">' + btns.map(function (b) { return '<span class="btn sec">' + b + '</span>'; }).join('') + '</div>';
+}
+function standingsBand(final) {
+  var rows = [['Diamondbacks', '#00695C', '5-1-0', 10], ['Wildcats', '#E65100', '4-2-0', 8], ['Sluggers', '#283593', '2-3-1', 5]];
+  return '<section><div class="sh"><h2>' + (final ? 'Final standings' : 'Standings') + '</h2></div><div class="divgrid"><div class="card"><div class="sth"><h3>U11</h3><span class="lnk">Full table →</span></div>' +
+    '<table class="t"><thead><tr><th class="l">#</th><th class="l">Team</th><th>W-L-T</th><th>Pts</th></tr></thead><tbody>' +
+    rows.map(function (r, i) { return '<tr><td class="l n">' + (i + 1) + '</td><td class="l"><span class="dot" style="background:' + r[1] + '"></span>' + r[0] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td></tr>'; }).join('') +
+    '</tbody></table><p class="more">1 more team</p></div></div></section>';
+}
+function cta(kind) {
+  if (kind === 'reg') return '<div><span class="btn pri">Register now</span><p class="regline">Registration closes Dec 15.</p></div>';
+  if (kind === 'grey') return '<div class="greybox">Registration opens Jan 12, 2027.</div>';
+  return '';
+}
+var MK = function (n, style) { return '<button type="button" class="mk" data-ask="' + n + '" style="' + style + '" aria-label="Question ' + n + '">' + n + '</button>'; };
+function wrap(inner) { return head() + '<div class="body">' + inner + '</div>'; }
+function same(h) { return '<div class="same">' + h + '</div>'; }
+
+function bodyToday(extra) {
+  return same('<div class="hd">' + chip('Registration open') + title() + '</div>' + facts()) + (extra || '') + same(divisions());
+}
+document.getElementById('f-before').innerHTML = wrap(bodyToday(''));
+document.getElementById('f-after').innerHTML = wrap(bodyToday(strip(['Schedule', 'Standings']))) + MK(1, 'left:340px;top:0');
+document.getElementById('f-optb').innerHTML = wrap(bodyToday(standingsBand(false)));
+
+/* The state slices: stubs stand in for the parts that do not change. */
+var SIGNED = '<p class="regline same" style="margin:0">Already signed up? <span class="lnk" style="text-decoration:underline">Email me my link</span></p>';
+function slice(o) {
+  var inner;
+  if (o.season) {
+    /* The closed-registration shape: chip, title, one dates line, the standings band, Schedule at the foot. No facts block, no Divisions. */
+    inner = '<div class="hd">' + chip(o.chip, o.tone) + '<h1 class="pn">2027 Summer House League</h1><p class="rs" style="font-size:0.95rem">Runs October 7, 2026 to January 23, 2027.</p></div>' +
+      o.band + o.cta + SIGNED;
+  } else {
+    inner = '<div class="hd">' + chip(o.chip, o.tone) + '<h1 class="pn">2027 Summer House League</h1></div>' +
+      '<div class="stubrow same"><div class="stub m"></div><div class="stub s"></div></div>' +
+      (o.strip ? strip(o.strip) : '') +
+      '<div class="same"><div class="sh"><h2>Divisions</h2><span class="pill">5</span></div><div class="stubrow" style="margin-top:12px"><div class="card"><div class="stubrow"><div class="stub s"></div><div class="stub m"></div></div></div></div></div>' +
+      (o.cta ? o.cta : '') + SIGNED;
+  }
+  return '<div class="phone slice">' + head() + '<div class="body">' + inner + '</div></div>';
+}
+var S = [
+  { n: '1 · Before registration opens, nothing published', tag: 'keep', t: 'UNCHANGED', chip: 'Opens Jan 12, 2027', tone: 'neu', strip: null, cta: cta('grey'), why: 'No row. The grey line says when sign-up opens. Today a Schedule button shows under it even with nothing published (Ask 3).', unch: true },
+  { n: '2 · Registration open, nothing published', tag: 'keep', t: 'UNCHANGED', chip: 'Registration open', strip: null, cta: cta('reg'), why: 'No row. The page is exactly what it is today.', unch: true },
+  { n: '3 · Registration open, schedule published, no scores', tag: 'new', t: 'NEW', chip: 'Registration open', strip: ['Schedule'], cta: cta('reg'), why: 'One button. Standings would be an empty table, so it waits for the first score.' },
+  { n: '4 · Registration open, games scored (Milton today)', tag: 'new', t: 'NEW', chip: 'Registration open', strip: ['Schedule', 'Standings'], cta: cta('reg'), why: 'Both buttons. This is the page you screenshotted.' },
+  { n: '5 · Registration closed, season playing', tag: 'keep', t: 'UNCHANGED', chip: 'Playing now', season: true, band: '<div class="same">' + standingsBand(false) + '</div>', cta: strip(['Schedule']), why: 'Already works this way: standings tables, then a Schedule button at the foot. Same two words as the proposed row, but at the bottom of the page. Ask 2 asks whether the sign-up page should match that position.', unch: true }
+];
+document.getElementById('states').innerHTML = S.map(function (s) {
+  return '<div class="state"><div class="cap">' + s.n + '</div><div style="margin-bottom:8px"><span class="tag ' + s.tag + '">' + s.t + '</span></div>' +
+    '<div class="' + (s.unch ? 'unch' : '') + '">' + slice(s) + '</div><div class="note">' + s.why + '</div></div>';
+}).join('');
+
+/* Measure how far down the age groups start, in the frames as they actually render. */
+function measure() {
+  var m = {};
+  document.querySelectorAll('[data-m]').forEach(function (f) {
+    var h = f.querySelector('.divs-head');
+    if (!h || !f.offsetParent) return;
+    m[f.getAttribute('data-m')] = Math.round(h.getBoundingClientRect().top - f.getBoundingClientRect().top);
+  });
+  function out(k, v) { document.querySelectorAll('[data-for="' + k + '"]').forEach(function (e) { e.textContent = v; }); }
+  if (m.before != null) out('before', m.before + ' px');
+  if (m.after != null) out('after', m.after + ' px');
+  if (m.optb != null) out('optb', m.optb + ' px');
+  if (m.before != null && m.after != null) out('delta', (m.after - m.before) + ' px');
+  var f = document.getElementById('f-after'), s = f && f.querySelector('.strip'), k = f && f.querySelector('.mk');
+  if (s && k && f.offsetParent) k.style.top = (s.offsetTop + 9) + 'px';
+}
+
+/* Tabs, hash routing, the View switch, the numbered dots. */
+var NAMES = ['screen', 'states', 'option-b', 'asks'];
+function show(name) {
+  if (NAMES.indexOf(name) < 0) name = 'screen';
+  NAMES.forEach(function (n) {
+    document.getElementById('p-' + n).hidden = n !== name;
+    document.getElementById('t-' + n).setAttribute('aria-selected', n === name ? 'true' : 'false');
+  });
+  document.getElementById('viewrow').hidden = name === 'asks';
+  measure();
+  window.scrollTo(0, 0);
+}
+function route() { show(location.hash.replace('#', '')); }
+document.querySelectorAll('.tab').forEach(function (b) { b.addEventListener('click', function () { location.hash = b.getAttribute('data-tab'); }); });
+window.addEventListener('hashchange', route);
+document.querySelectorAll('.seg button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.body.setAttribute('data-view', b.getAttribute('data-view'));
+    document.querySelectorAll('.seg button').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+  });
+});
+document.addEventListener('click', function (e) {
+  var t = e.target.closest ? e.target.closest('.mk') : null;
+  if (!t) return;
+  var id = 'ask-' + t.getAttribute('data-ask');
+  location.hash = 'asks';
+  setTimeout(function () {
+    var a = document.getElementById(id);
+    document.querySelectorAll('.ask').forEach(function (x) { x.classList.remove('hl'); });
+    if (a) { a.classList.add('hl'); a.scrollIntoView({ block: 'center' }); }
+  }, 30);
+});
+route();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+window.addEventListener('resize', measure);
+</script>

@@ -54,7 +54,8 @@ const factBand: React.CSSProperties = { marginBottom: '0.2rem' };
  *   - the SIGN-UP shape while the form opens soon or takes sign-ups: price, early bird, age groups with spots, Register now;
  *   - the SEASON shape from the day registration closes (P1): the dates line, each age group's top three (P2, P5), the
  *     next season's card on an old season's page (P3), Schedule. Price, registration dates, spots and the grey box are gone.
- * "Already signed up? Email me my link" is in both (P4).
+ * "Already signed up? Email me my link" is in both (P4). The sign-up shape also carries two quiet play links (Schedule, Standings)
+ * under the dates once a schedule is published / a game is scored, because a season can be played while it still takes sign-ups.
  */
 export default async function LeagueSeasonPage({
   params,
@@ -213,6 +214,14 @@ export default async function LeagueSeasonPage({
     }),
   );
 
+  // The play links (owner 2026-11-10, HOUSE_LEAGUE_SIGNUP_PAGE_PLAY_LINKS_DRAWINGS): a season can be played while it still takes
+  // sign-ups, so a family who already registered finds Schedule and Standings here too. Schedule once any age group has published
+  // its schedule; Standings once a listed age group (the season shape's own test) has a scored game. Neither before.
+  const hasSchedule = rawDivisions.some(d => d.schedulePublishedAt);
+  const playListed = rawDivisions.filter(d => d.showStandings && d.schedulePublishedAt);
+  const playTables = await Promise.all(playListed.map(d => computeStandings(d.id, season.sport)));
+  const hasStandings = playTables.some(t => t.scored);
+
   // The dates and the status together (9b-1 Part 4, lib/league-registration-state.ts): the form, the chip and the line agree.
   const regLine = publicRegistrationLine(season);
   const priceRange = seasonPriceRange(divisions, season);
@@ -266,6 +275,20 @@ export default async function LeagueSeasonPage({
           )}
         </div>
       </div>
+
+      {/* The play links: two quiet buttons under the dates, above the age groups — Register now below stays the one filled button. */}
+      {hasSchedule && (
+        <div className={kit.btnRow}>
+          <Link href={href(`/league/${seasonSlug}/schedule`)} className={`${kit.btn} ${kit.btnSecondary}`}>
+            Schedule
+          </Link>
+          {hasStandings && (
+            <Link href={href(`/league/${seasonSlug}/standings`)} className={`${kit.btn} ${kit.btnSecondary}`}>
+              {W.title}
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Divisions */}
       {divisions.length > 0 && (
@@ -375,15 +398,6 @@ export default async function LeagueSeasonPage({
             }}
           >
             {regLine}
-          </div>
-
-          <div className={kit.btnRow}>
-            <Link
-              href={href(`/league/${seasonSlug}/schedule`)}
-              className={`${kit.btn} ${kit.btnSecondary}`}
-            >
-              Schedule
-            </Link>
           </div>
         </div>
       )}
