@@ -38,7 +38,9 @@ export default {
   // MILTON_DEMO_PASSWORD in .env.local (gitignored); it is read only when an account has to be created.
   password: process.env.MILTON_DEMO_PASSWORD,
   people: {
-    owner: { email: 'b2cowan@gmail.com', role: 'owner' },
+    /** A demo account, not the owner's real one (owner 2026-11-10): a club has exactly ONE owner — "the owner's email"
+     *  lookups read a single row — so the real account is not a member of this club at all. */
+    owner: { email: 'b2cowan+owner@gmail.com', role: 'owner', name: 'Jordan Whitfield', title: 'President' },
     admin: { email: 'b2cowan+hladmin@gmail.com', role: 'league_admin', name: 'Kelly Barrett', title: 'League Administrator' },
     /** Coach of the first U11 team (see divisions[U11].teams). */
     coach: { email: 'b2cowan+coach@gmail.com', name: 'Ryan Delaney' },

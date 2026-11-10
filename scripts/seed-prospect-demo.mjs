@@ -156,23 +156,20 @@ if (DRY) {
   console.log(`  ${regs.length} children (${mine('active')} accepted · ${mine('pending')} to review · ${mine('waitlisted')} waitlisted), ${new Set(regs.map(r => r.household)).size} households`);
   console.log(`  money lines: ${regs.filter(r => r.pay).length} receipts + ${previous.length} for the finished season, through club_league_money`);
   console.log('  would NOT touch: auth users, passwords, memberships (except a pending/walk-made +registrar one), org row, theme, logo, public-site content, venues.');
-  const owner = await findUserByEmail(db, cfg.people.owner.email);
-  console.log(`  owner account ${cfg.people.owner.email}: ${owner ? 'found' : 'NOT FOUND — a real run would stop'}`);
-  for (const p of [cfg.people.admin, cfg.people.coach]) console.log(`  account ${p.email}: ${(await findUserByEmail(db, p.email)) ? 'exists (password untouched)' : 'would be created (password set once)'}`);
+  for (const p of [cfg.people.owner, cfg.people.admin, cfg.people.coach]) console.log(`  account ${p.email}: ${(await findUserByEmail(db, p.email)) ? 'exists (password untouched)' : 'would be created (password set once)'}`);
   console.log('\nDry run done. Nothing was written.');
   process.exit(0);
 }
 
 // ── accounts: found, or made once (a password is set ONLY on creation) ───────────────────────────────────────────
 head('Accounts');
-const owner = await findUserByEmail(db, cfg.people.owner.email);
-if (!owner) { console.error(`✗ The owner account ${cfg.people.owner.email} does not exist on dev. Sign in once with it, then run this again.`); process.exit(1); }
 async function account(email, name) {
   if (!cfg.password && !(await findUserByEmail(db, email))) { console.error(`✗ ${email} has to be created, and MILTON_DEMO_PASSWORD is not set in .env.local. Set it, then run this again.`); process.exit(1); }
   const { user, created } = await ensureFixtureUser(db, { email, password: cfg.password, userMetadata: { full_name: name }, resetPassword: false });
   ok(`${email} — ${created ? 'created (password set)' : 'already there (password untouched)'}`);
   return user;
 }
+const owner = await account(cfg.people.owner.email, cfg.people.owner.name);
 const adminUser = await account(cfg.people.admin.email, cfg.people.admin.name);
 const coachUsers = {}; // by key
 coachUsers.coach = await account(cfg.people.coach.email, cfg.people.coach.name);
@@ -219,7 +216,11 @@ if (!ORG) {
 // Members: only the missing ones are added; an existing row (owner's, the admin's) is never edited.
 const members = await one('members', db.from('organization_members').select('user_id, role, status').eq('organization_id', ORG));
 const hasMember = (uid) => members.some(m => m.user_id === uid);
-if (!hasMember(OWNER)) die('owner member', (await db.from('organization_members').insert({ organization_id: ORG, user_id: OWNER, role: 'owner', status: 'active', invited_at: nowIso, accepted_at: nowIso })).error);
+if (!hasMember(OWNER)) die('owner member', (await db.from('organization_members').insert({ organization_id: ORG, user_id: OWNER, role: 'owner', status: 'active', display_name: cfg.people.owner.name, title: cfg.people.owner.title, invited_at: nowIso, accepted_at: nowIso })).error);
+// A club has ONE owner (the "owner's email" lookups read a single row). Another owner row here means the seat changed by
+// hand — say so rather than silently demoting a real account.
+const otherOwners = members.filter(m => m.role === 'owner' && m.user_id !== OWNER);
+if (otherOwners.length) console.warn(`⚠ ${otherOwners.length} other Owner seat(s) in this club besides ${cfg.people.owner.email}. Owner-email lookups need exactly one; remove the extra seat.`);
 if (!hasMember(ADMIN)) die('admin member', (await db.from('organization_members').insert({ organization_id: ORG, user_id: ADMIN, role: cfg.people.admin.role, status: 'active', display_name: cfg.people.admin.name, title: cfg.people.admin.title, invited_at: nowIso, accepted_at: nowIso })).error);
 ok('members: owner (Owner) · League admin');
 
@@ -600,6 +601,6 @@ const totals = sql(`SELECT (SELECT count(*) FROM league_registrations WHERE org_
     (SELECT count(*) FROM league_season_notices WHERE org_id = ${q(ORG)}) AS notices`)[0];
 console.log('  totals:', JSON.stringify(totals));
 console.log(`\n  Club:   http://localhost:3000/${SLUG}/admin    public: http://localhost:3000/${SLUG}   league: http://localhost:3000/${SLUG}/league`);
-console.log(`  Sign in: ${cfg.people.owner.email} (Owner, existing password) · ${cfg.people.admin.email} (League admin) · ${cfg.people.coach.email} (coach, ${TEAM.U11[0].name}) — the password is MILTON_DEMO_PASSWORD in .env.local`);
+console.log(`  Sign in: ${cfg.people.owner.email} (Owner) · ${cfg.people.admin.email} (League admin) · ${cfg.people.coach.email} (coach, ${TEAM.U11[0].name}) — the password is MILTON_DEMO_PASSWORD in .env.local`);
 console.log(`  ${cfg.people.parent.email} is the guardian contact of Ella (U9) and Owen (U11) — no account is made; the family-app invitation creates it.`);
 console.log('  ⚠ Dev-only world. Reset any time: npm run demo:milton:reset');

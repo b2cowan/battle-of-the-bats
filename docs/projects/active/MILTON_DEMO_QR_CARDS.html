@@ -1,0 +1,239 @@
+<title>Milton Demo Phone Cards</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  /* Layout: a scan strip of three phone cards on top (what he sees), the presenter's prep sheet below. */
+  :root {
+    --bg: #f6f4f8;
+    --surface: #ffffff;
+    --ink: #1f1a26;
+    --muted: #625b6c;
+    --line: #e2dde8;
+    --brand: #47156c;      /* Milton purple, from the demo club's look */
+    --brand-soft: #efe7f6;
+    --warn: #8a5300;
+    --warn-soft: #fdf1dc;
+    --font-display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+    --font-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17131c; --surface: #221c29; --ink: #f1edf5; --muted: #ada4b8; --line: #3a3244;
+      --brand: #c9a3ea; --brand-soft: #2f2240; --warn: #f2c47a; --warn-soft: #3a2c14; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17131c; --surface: #221c29; --ink: #f1edf5; --muted: #ada4b8; --line: #3a3244;
+    --brand: #c9a3ea; --brand-soft: #2f2240; --warn: #f2c47a; --warn-soft: #3a2c14; color-scheme: dark;
+  }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 56px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 36px; }
+  header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.1; }
+  h1 { font-size: 2rem; letter-spacing: .01em; }
+  .eyebrow { font-size: .78rem; text-transform: uppercase; letter-spacing: .1em; color: var(--brand); font-weight: 600; margin: 0 0 4px; }
+  .toggle {
+    font: 600 .95rem var(--font-body); color: var(--brand); background: var(--brand-soft); border: 0;
+    border-radius: 999px; padding: 8px 16px; cursor: pointer;
+  }
+  .toggle:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px; display: grid; gap: 14px; align-content: start; min-width: 0;
+  }
+  .card h2 { font-size: 1.45rem; }
+  .who { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  /* QR codes stay black on white in both themes: phone cameras need the contrast. */
+  .qr { background: #ffffff; border-radius: 10px; padding: 14px; justify-self: center; line-height: 0; }
+  .qr img, .qr canvas { width: 200px; height: 200px; max-width: 100%; }
+  .card p { margin: 0; }
+  .url { font-family: var(--font-mono); font-size: .74rem; color: var(--muted); overflow-wrap: anywhere; }
+
+  .login { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 8px; }
+  .row { display: flex; gap: 8px; align-items: center; min-width: 0; }
+  .row label { font-size: .8rem; color: var(--muted); width: 70px; flex: none; }
+  .row code, .row input {
+    flex: 1; min-width: 0; font-family: var(--font-mono); font-size: .85rem; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px;
+    overflow-wrap: anywhere;
+  }
+  .row button {
+    flex: none; font: 600 .8rem var(--font-body); color: var(--brand); background: transparent;
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer;
+  }
+  .hint { font-size: .8rem; color: var(--muted); }
+
+  .prep { display: grid; gap: 20px; }
+  .prep h2 { font-size: 1.5rem; }
+  .steps { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; counter-reset: s; }
+  .steps li {
+    counter-increment: s; display: grid; grid-template-columns: 32px 1fr; gap: 12px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+  }
+  .steps li::before {
+    content: counter(s); font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;
+    color: var(--brand); background: var(--brand-soft); border-radius: 50%; width: 32px; height: 32px;
+    display: grid; place-items: center;
+  }
+  .steps li > div { min-width: 0; display: grid; gap: 6px; }
+  .steps strong { font-weight: 600; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  td.mono { font-family: var(--font-mono); font-size: .8rem; overflow-wrap: anywhere; }
+  .note { background: var(--warn-soft); color: var(--ink); border-radius: 10px; padding: 10px 14px; font-size: .92rem; }
+  .note b { color: var(--warn); }
+  kbd { font-family: var(--font-mono); font-size: .8rem; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">Milton Bats · house league demo</p>
+      <h1>Pick up your phone</h1>
+    </div>
+    <button class="toggle" id="toggle" type="button">Hide my prep notes</button>
+  </header>
+
+  <section class="cards" aria-label="Scan with a phone">
+    <article class="card">
+      <span class="who">As a parent</span>
+      <h2>Sign up a player</h2>
+      <div class="qr" id="qr-signup" aria-label="QR code: house league sign-up"></div>
+      <p>Sign up a pretend child for <b>U9</b>. Use <b>your own email</b>, and the confirmation and every email after it come to your phone.</p>
+      <span class="url" data-url="signup"></span>
+    </article>
+
+    <article class="card">
+      <span class="who">As the league admin</span>
+      <h2>Rain at 7 a.m. Saturday</h2>
+      <div class="qr" id="qr-admin" aria-label="QR code: league admin sign-in"></div>
+      <p>Open the <b>2027 season</b>, go to <b>Schedule</b> and call off Saturday's games. Families hear by email.</p>
+      <p class="hint"><b>Skip the typing:</b> double-click <b>Milton phone sign-in</b> on your desktop for a code that signs his phone straight in. Use this card only if that doesn't work.</p>
+      <div class="login">
+        <div class="row"><label for="admin-email">Email</label><code id="admin-email">b2cowan+hladmin@gmail.com</code><button type="button" data-copy="admin-email">Copy</button></div>
+        <div class="row"><label for="admin-pass">Password</label><input id="admin-pass" type="password" autocomplete="off" placeholder="type it once"><button type="button" id="reveal">Show</button></div>
+        <span class="hint">The password stays in this browser only. It is not saved in the page.</span>
+      </div>
+      <span class="url" data-url="admin"></span>
+    </article>
+
+    <article class="card">
+      <span class="who">As anyone</span>
+      <h2>The club's page</h2>
+      <div class="qr" id="qr-club" aria-label="QR code: Milton Bats public page"></div>
+      <p>What families find before they ever sign in: the season, the schedule, the standings and the way to register.</p>
+      <span class="url" data-url="club"></span>
+    </article>
+  </section>
+
+  <section class="prep" id="prep">
+    <h2>Before he arrives</h2>
+    <ol class="steps">
+      <li><div>
+        <strong>On the morning of the demo, rebuild the world.</strong>
+        <span>Run <kbd>npm run demo:milton:reset</kbd>. Whether sign-ups are open, the early-bird price and "the coming Saturday" all follow today's date, so a world built days earlier drifts. The rebuild never signs anyone out.</span>
+      </div></li>
+      <li><div>
+        <strong>Double-click "Milton demo windows" on the desktop.</strong>
+        <span>Four full-size Chrome windows open, already signed in, slightly cascaded so every title bar shows, with the owner in front. Double-click it again any time to put them back in order and signed in. Your everyday Chrome is not touched.</span>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Window</th><th>Signed in as</th><th>Opens on</th></tr></thead>
+          <tbody>
+            <tr><td>Owner (Jordan Whitfield, President)</td><td class="mono">b2cowan+owner@gmail.com</td><td>Club home</td></tr>
+            <tr><td>League admin</td><td class="mono">b2cowan+hladmin@gmail.com</td><td>House league</td></tr>
+            <tr><td>Coach</td><td class="mono">b2cowan+coach@gmail.com</td><td>Home, with the coach's team</td></tr>
+            <tr><td>Public</td><td>Nobody, ever</td><td>The 2027 season page</td></tr>
+          </tbody>
+        </table></div>
+      </div></li>
+      <li><div>
+        <strong>The first time only, name each window.</strong>
+        <span>Click the profile picture at the top right of each window and rename it to "Owner", "Admin", "Coach" or "Public", with its own colour. That is how you tell four Chrome windows apart at a glance.</span>
+      </div></li>
+      <li><div>
+        <strong>Move between people with the taskbar or <kbd>Alt</kbd>+<kbd>Tab</kbd>.</strong>
+        <span>Admin screens are wide, so on this screen they read best full size. For a side-by-side moment (his phone sign-up arriving in the admin's list), press <kbd>Win</kbd>+<kbd>←</kbd> on one window and <kbd>Win</kbd>+<kbd>→</kbd> on the other.</span>
+      </div></li>
+      <li><div>
+        <strong>For his phone, double-click "Milton phone sign-in".</strong>
+        <span>It opens two fresh codes, one for the league admin and one for the coach. Scanning a code signs the phone straight in, with nothing to type. Each code is for one phone: if you scanned it yourself while rehearsing, double-click again for a new one before he scans.</span>
+      </div></li>
+      <li><div>
+        <strong>Try the rainout on a phone once before you offer it.</strong>
+        <span>It is the one admin job worth doing on a phone, but it has not been rehearsed at phone width yet. If anything looks cramped, do the rainout on the PC and keep the phone for the sign-up and the emails.</span>
+      </div></li>
+    </ol>
+    <p class="note"><b>Saved links break on a rebuild.</b> The admin's season screens carry an address that changes every time the world is rebuilt, so always click through from the house league home. The three codes above only point at addresses that survive it.</p>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  const BASE = 'https://dev.fieldlogichq.ca';
+  const URLS = {
+    signup: BASE + '/milton-bats/league/2027-summer-house-league/register',
+    admin: BASE + '/auth/login?next=' + encodeURIComponent('/milton-bats/admin/house-league'),
+    club: BASE + '/milton-bats',
+  };
+  const QR_IDS = { signup: 'qr-signup', admin: 'qr-admin', club: 'qr-club' };
+
+  for (const [key, id] of Object.entries(QR_IDS)) {
+    const el = document.getElementById(id);
+    try {
+      new QRCode(el, { text: URLS[key], width: 400, height: 400, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    } catch (e) {
+      el.textContent = 'QR code did not load. Open the link below instead.';
+      el.style.lineHeight = '1.4';
+    }
+  }
+  document.querySelectorAll('[data-url]').forEach(el => { el.textContent = URLS[el.dataset.url].replace('https://', ''); });
+
+  // Copy buttons
+  document.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = document.getElementById(btn.dataset.copy).textContent;
+      const done = () => { btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1500); };
+      try {
+        navigator.clipboard.writeText(text).then(done, () => selectText(btn.dataset.copy));
+      } catch (e) { selectText(btn.dataset.copy); }
+    });
+  });
+  function selectText(id) {
+    const r = document.createRange(); r.selectNodeContents(document.getElementById(id));
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+
+  // Password: remembered in this browser only.
+  const pass = document.getElementById('admin-pass');
+  const PASS_KEY = 'milton-admin-pass';
+  try { pass.value = localStorage.getItem(PASS_KEY) || ''; } catch (e) {}
+  pass.addEventListener('input', () => { try { localStorage.setItem(PASS_KEY, pass.value); } catch (e) {} });
+  const reveal = document.getElementById('reveal');
+  reveal.addEventListener('click', () => {
+    const show = pass.type === 'password';
+    pass.type = show ? 'text' : 'password';
+    reveal.textContent = show ? 'Hide' : 'Show';
+  });
+
+  // Presenter view: #scan hides the prep notes.
+  const prep = document.getElementById('prep');
+  const toggle = document.getElementById('toggle');
+  function apply() {
+    const scan = location.hash === '#scan';
+    prep.hidden = scan;
+    toggle.textContent = scan ? 'Show my prep notes' : 'Hide my prep notes';
+  }
+  toggle.addEventListener('click', () => { location.hash = location.hash === '#scan' ? '' : 'scan'; apply(); });
+  window.addEventListener('hashchange', apply);
+  apply();
+</script>

@@ -32,7 +32,9 @@ Fees (placeholders until the owner supplies Milton's): U7 $120 · U9 $140 · U11
 Dates are **relative to `--demo-day`** (default today). Games are dated around it (a past block, the coming Saturday, a future block).
 
 ## 2. People
-Owner = the owner's real account, Owner of the org. Aliases (Gmail plus-addresses, delivered to the owner's inbox):
+Owner = `+owner` ("Jordan Whitfield", President), a demo account like the others (owner 2026-11-10). The owner's real account
+is **not** a member: a club has exactly one Owner seat (the "owner's email" lookups read a single row), so the seat moved
+rather than doubled. Aliases (Gmail plus-addresses, delivered to the owner's inbox):
 `+hladmin` (League admin, "the admin" persona), `+coach` (coach of one U11 team), `+parent` (a parent with a child in U9 and U11).
 `+registrar` is **not** seeded (Walk 5 invites it live). **Passwords are set only when a user is first created — never on a reset.**
 
