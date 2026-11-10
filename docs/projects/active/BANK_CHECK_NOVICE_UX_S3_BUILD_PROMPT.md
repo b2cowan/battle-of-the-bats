@@ -1,4 +1,4 @@
-**Written 2026-11-09 (rewritten after the owner's rulings and drawing approval the same day). S2 committed `0147063c5`, walk §503 PASSED. S3 RULED and DRAWINGS APPROVED 2026-11-09; BUILT 2026-11-09 (mig 457 on dev), record in the plan §4; commit, dev walk + Save measurement, /simplify, /review owed.**
+**Written 2026-11-09 (rewritten after the owner's rulings and drawing approval the same day). S2 committed `0147063c5`, walk §503 PASSED. S3 RULED and DRAWINGS APPROVED 2026-11-09; BUILT and COMMITTED 2026-11-09 (`568175d16` code, `563bbb695` mig 457, dev applied), record in the plan §4; dev walk + Save measurement, /simplify, /review owed.**
 
 # Bank check through a volunteer's eyes — S3 (Find's doors and its quiet list) — build prompt, one session
 

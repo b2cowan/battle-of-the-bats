@@ -251,7 +251,10 @@ sentence; the walked working-draft cards change shape and their walks are redone
   which sits inside another session's uncommitted one-line Overview rewrite and rides with that commit; the club Overview keeps
   today's wording until it lands. Clean-checkout proof: typecheck clean, bank + room-key + help guards 528/528.
 - 2026-11-09 — **S3 built (Find's doors and its quiet list), both portals, to the approved drawings**
-  https://claude.ai/artifact/9EAmporN7VP8J7Q7Eqj6Kj; NOT committed yet, owner walk owed. Rules in one client-safe module
+  https://claude.ai/artifact/9EAmporN7VP8J7Q7Eqj6Kj; **committed `568175d16` (code) + `563bbb695` (mig 457) 2026-11-09**
+  (own hunks only, from a temp index; the staged tree typechecked and passed the bank + dialog + help guards in a clean
+  worktree, the one failure there — the tournament-preview island pin — fails on the base commit too); owner walk owed.
+  Rules in one client-safe module
   (`lib/bank-gap-doors.ts`: `gapDoorFor` — off, nothing named, ≤ 10000 cents; the platform words by NAME among platform rows;
   `sameGapAs` — signed, newest check before the date, never a start); both Finds draw the nothing-to-name callout with its
   buttons and the folded list; desk rows say their action as the quiet link at rest (D1; the hover-only CSS is gone); the
