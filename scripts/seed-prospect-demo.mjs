@@ -4,7 +4,7 @@
  *
  *   npm run demo:milton                       build or refresh (same as the reset: a refresh IS a rebuild)
  *   npm run demo:milton:reset                 the explicit alias
- *   npm run demo:milton -- --demo-day 2027-06-02   move every date (default: today)
+ *   npm run demo:milton -- --demo-day YYYY-MM-DD   move every date (default: today; within -35 to +60 days of today)
  *   npm run demo:milton -- --dry-run          print what it would do; write nothing
  *
  * ⚖ WHAT THE RESET TOUCHES: rows the Milton organization OWNS in the world — the season(s), their divisions, teams,
@@ -46,6 +46,15 @@ const todayLocal = (() => { const t = new Date(); t.setMinutes(t.getMinutes() - 
 const DEMO_DAY = dayArg >= 0 ? argv[dayArg + 1] : todayLocal;
 for (const a of argv) if (!['--dry-run', '--reset', '--demo-day', DEMO_DAY].includes(a)) { console.error(`✗ Unknown argument: ${a}`); process.exit(1); }
 if (!/^\d{4}-\d{2}-\d{2}$/.test(DEMO_DAY) || Number.isNaN(Date.parse(`${DEMO_DAY}T12:00:00Z`))) { console.error('✗ --demo-day must be YYYY-MM-DD.'); process.exit(1); }
+
+// The app judges "open", "early bird" and "the coming Saturday" by the REAL clock, so a demo day far from today builds a world
+// whose sign-up form says "isn't open yet" or whose rainout has no games to catch. Refuse the far cases, warn on the near ones.
+const driftDays = Math.round((Date.parse(`${DEMO_DAY}T12:00:00Z`) - Date.parse(`${todayLocal}T12:00:00Z`)) / 86400000);
+if (driftDays < -35 || driftDays > 60) {
+  console.error(`✗ --demo-day ${DEMO_DAY} is ${driftDays} days from today. The sign-up form and the rainout only work within about -35 to +60 days of the real date. Use a nearer day, or leave it off.`);
+  process.exit(1);
+}
+if (Math.abs(driftDays) > 3) console.warn(`⚠ --demo-day is ${driftDays} days from today: the early-bird price and the coming Saturday's games age with the real clock. Rebuild on the morning of the demo.`);
 
 // ── safety 1: the dev project only, and only the Milton organization ─────────────────────────────────────────────
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -123,7 +132,7 @@ const RESET_TABLES = [
   ['org_budget_lines', 'org_id'], ['budget_items', 'org_id'], ['budget_categories', 'org_id'],
 ];
 /** Tables the reset leaves alone on purpose (the club itself). Everything else with an org_id must come back empty. */
-const KEEP = new Set(['organizations', 'organization_members', 'org_public_site_content', 'org_venues', 'org_venue_facilities', 'notification_preferences']);
+const KEEP = new Set(['organizations', 'organization_members', 'org_public_site_content', 'org_venues', 'org_venue_facilities', 'notification_preferences', 'org_payment_accounts']);
 
 async function ownedCounts() {
   const rows = sql(`select t.table_name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I where org_id = %L', t.table_name, ${q(ORG)}), false, true, '')))[1]::text::int as n
@@ -249,6 +258,11 @@ head('Reset — only rows the Milton organization owns');
 const before = await ownedCounts();
 // 1. Money first: the seasons' books (their lines have no foreign key to a registration), then the seasons (which cascade
 //    divisions, teams, registrations, games, scores, notices, email rows, coaches, ratings, price changes, slot uses).
+// 0. A test-card checkout in a walk leaves online payment rows whose lines point at the books below with NO ACTION, so they go
+//    first (children before parents). The club's payment ACCOUNT (org_payment_accounts) is kept: it is the owner's Stripe test setup.
+for (const table of ['online_payment_clear_decisions', 'online_payment_disputes', 'online_payment_refunds', 'online_payment_items', 'online_refunds_unassigned', 'online_payments']) {
+  die(`delete ${table}`, (await db.from(table).delete().eq('org_id', ORG)).error);
+}
 die('delete season books', (await db.from('accounting_ledgers').delete().eq('org_id', ORG).eq('entity_type', 'league_season')).error);
 die('delete seasons', (await db.from('league_seasons').delete().eq('org_id', ORG)).error);
 // 2. Everything else the world and a live walk create, by organization id.
@@ -278,8 +292,10 @@ const S = cfg.season;
 const season = await one('season', db.from('league_seasons').insert({
   org_id: ORG, name: S.name, slug: S.slug, sport: cfg.sport, status: 'registration_open', description: S.description,
   registration_fee: S.baseFee, auto_approve_under_capacity: true, auto_promote_waitlist: false,
-  registration_open_at: torontoInstant(addDays(DEMO_DAY, S.opensOffset), '09:00'),
-  registration_close_at: torontoInstant(addDays(DEMO_DAY, S.closesOffset), '23:59'),
+  // The app stores these as the wall-clock time typed, with a literal Z (CreateLeagueSeasonDialog), and reads the first 16
+  // characters back — so a real UTC instant would show as 1:00 p.m. / 4:59 a.m. and a day late. Same convention here.
+  registration_open_at: `${addDays(DEMO_DAY, S.opensOffset)}T09:00:00Z`,
+  registration_close_at: `${addDays(DEMO_DAY, S.closesOffset)}T23:59:00Z`,
   season_start_date: addDays(SAT0, -S.startsBeforeFirstSaturday), season_end_date: addDays(SAT0, S.endsAfterFirstSaturday),
   waiver_text: S.waiverText, early_bird_until: addDays(DEMO_DAY, S.earlyBirdOffset), how_to_pay: S.howToPay,
   ask_email_consent: true, owing_amber_days: S.owingAmberDays,

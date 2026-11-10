@@ -190,7 +190,11 @@ export function buildWorld(cfg, demoDay) {
 
   // accepted day: a day or two after sign-up (a pending / waitlisted child has none)
   for (const r of regs) {
-    if (r.status === 'active') r.acceptedAt = at(addDays(r.registeredAt.slice(0, 10), rint(0, 2)), rint(13, 23));
+    if (r.status === 'active') {
+      const accepted = addDays(r.registeredAt.slice(0, 10), rint(0, 2));
+      // never later than yesterday: an acceptance "tomorrow" ages as negative days in Still owing
+      r.acceptedAt = at(accepted > addDays(demoDay, -1) ? addDays(demoDay, -1) : accepted, rint(13, 23));
+    }
   }
 
   // ── money: who has paid, when, how, and the odd ones out (all through the real money writer) ──

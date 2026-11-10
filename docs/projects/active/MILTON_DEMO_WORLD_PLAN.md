@@ -1,6 +1,6 @@
 # Milton Bats demo world — build plan (P1 of the Prospect Demo Program)
 
-Status: Phase A built and run on dev 2026-11-10 (uncommitted; sign-ups auto-approve under capacity; password only in .env.local) · Parent: `PROSPECT_DEMO_PROGRAM_PLAN.md` (P1, P4c) · Brief: `MILTON_DEMO_WORLD_PM_BRIEF.md`
+Status: Phase A built and run on dev 2026-11-10 (committed 9ca8c679d; sign-ups auto-approve under capacity; password only in .env.local) · Parent: `PROSPECT_DEMO_PROGRAM_PLAN.md` (P1, P4c) · Brief: `MILTON_DEMO_WORLD_PM_BRIEF.md`
 Playbook (walkthrough): the "House League Demo Playbook" Artifact (republished from this plan's §6).
 
 ## 0. Rulings this plan stands on
@@ -58,3 +58,13 @@ on the local dev server; confirm the public page; confirm Publish is not blocked
 ## 6. Owed from the owner
 Logo files · Milton's real fees and early-bird date · whether the aliases above are the inboxes wanted · the real tournament and rep
 team names (or "invent") · push to staging (D1) before a staging dry run (a local dry run works now against the same dev database).
+
+## 7. Review 2026-11-10 — fixed, and known limits
+Fixed in the review commit: a reset after a test-card payment (online payment rows are now cleared first; the club's payment account is kept);
+sign-up window times written as the app reads them; no acceptance dated after yesterday; `--demo-day` refused beyond -35/+60 days of today
+(the app judges "open", the early bird and "the coming Saturday" by the real clock — rebuild on the morning of the demo).
+Known limits, deliberately left: (a) a reset stops if a walk closes a fiscal year or adds a tournament fee-book row (latent; Phase B adds a
+tournament, revisit then); (b) a member who accepted an invitation under any address other than the seeded `+registrar` keeps their seat through
+a reset; (c) ids in season URLs change on every rebuild, so use navigation, not saved links; (d) U7/U9 hold "To review" rows although the season
+auto-approves, and 2 U13 "To review" children registered after the waitlist formed; (e) the card-payment step shows only when the club has a
+connected Stripe test account (D4) — a reset keeps it; (f) the previous season's acceptance dates are the build date.
