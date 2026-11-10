@@ -1,4 +1,4 @@
-import { recordLegalAcceptance } from '../helpers/legal-acceptance' // GST/HST 6.3 A5
+import { createFixtureUser } from '../helpers/fixture-user' // GST/HST 6.3 C
 import { expect, test, type Browser } from '@playwright/test'
 import path from 'path'
 
@@ -69,22 +69,13 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
     const workspaceSlug = `team-direct-smoke-${suffix}`
     const teamName = `Team Direct Smoke ${suffix}`
 
-    const { data: coachUser, error: coachUserError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email: coachEmail,
-        email_confirm: true,
-        password: SMOKE_COACH_PASSWORD,
-      })
-
-    if (coachUserError) throw coachUserError
-    if (!coachUser.user?.id) throw new Error('Smoke coach user was not created.')
-    createdCoachUserIds.add(coachUser.user.id)
-    await recordLegalAcceptance(supabaseAdmin, coachUser.user)
+    const coachUser = await createFixtureUser(supabaseAdmin, { email: coachEmail, password: SMOKE_COACH_PASSWORD })
+    createdCoachUserIds.add(coachUser.id)
 
     // GST/HST Stage 1: a paid checkout refuses a buyer with no billing address on file, and the Premium buyer is the coach.
     // The row goes with the user (ON DELETE CASCADE).
     const { error: addressError } = await supabaseAdmin.from('billing_locations').insert({
-      user_id: coachUser.user.id, country: 'CA', region_code: 'ON', line1: '120 Elm Street', city: 'Guelph', postal_code: 'N1H 4H2',
+      user_id: coachUser.id, country: 'CA', region_code: 'ON', line1: '120 Elm Street', city: 'Guelph', postal_code: 'N1H 4H2',
     })
     if (addressError) throw addressError
 
@@ -150,7 +141,7 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
 
     expect(workspace.workspace_state).toBe('independent')
     expect(workspace.billing_mode).toBe('team_direct')
-    expect(workspace.billing_owner_user_id).toBe(coachUser.user.id)
+    expect(workspace.billing_owner_user_id).toBe(coachUser.id)
     expect(workspace.subscription_status).toBe('active')
     expect(workspace.source).toBe('direct_signup')
 
@@ -182,7 +173,7 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
 
     states.push({
       coachEmail,
-      coachUserId: coachUser.user.id,
+      coachUserId: coachUser.id,
       repTeamId: workspace.rep_team_id,
       teamWorkspaceId: workspace.id,
       workspaceOrgId: workspace.workspace_org_id,

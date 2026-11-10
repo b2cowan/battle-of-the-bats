@@ -99,6 +99,56 @@ export const SCREEN_WORDS = {
 } as const;
 
 /**
+ * The purchase window's words (§20 (5d); Chunk C, drawing tab 6, Ask 4A). The box, Continue, (5a) and the terms-changed line
+ * are the screen's (`SCREEN_WORDS`, `ACCEPTANCE_WORDS.refuseChangedWindow`). The first line follows the person's history, as
+ * the screen's title does (`hadEarlier`). One set of words for a purchase and an organization create alike.
+ */
+export const WINDOW_WORDS = {
+  title: 'Before you continue',
+  published: ['FieldLogicHQ now has ', TERMS_TITLE, ' and a ', PRIVACY_TITLE, '. Please read them and tick the box, and we’ll carry on where you left off.'],
+  updated: ['We’ve changed our ', TERMS_TITLE, ' since you last agreed to them. Please read them and tick the box, and we’ll carry on where you left off.'],
+  cancel: 'Cancel',
+} as const;
+
+/** The doors the accept route records (`/api/legal/accept`): the sign-in screen, and the window over a stopped purchase. */
+export const ACCEPT_ROUTE_DOORS = ['sign_in_screen', 'purchase_window'] as const satisfies readonly AcceptanceDoor[];
+
+/** What a gated route's refusal (`requireAcceptance`'s 409 `terms_required`) hands the window: the version to show, and the history. */
+export interface TermsStop {
+  termsVersion: string;
+  hadEarlier: boolean;
+}
+
+/** `fetch` for a route that may stop on the Terms (`useTermsGate().send`): null when the person closed the Terms window. */
+export type TermsSend = (input: string, init?: RequestInit) => Promise<Response | null>;
+
+/**
+ * Is this answer a gated route's Terms refusal? Read FIRST by every caller of a gated route, before any 409 of its own ("this
+ * slug is taken", `subscription_exists`, `portal_exists`): a Terms stop must never read as another refusal.
+ */
+export function termsStopOf(status: number, data: unknown): TermsStop | null {
+  if (status !== 409) return null;
+  const d = (data ?? {}) as { code?: unknown; termsVersion?: unknown; hadEarlier?: unknown };
+  if (d.code !== 'terms_required' || typeof d.termsVersion !== 'string') return null;
+  return { termsVersion: d.termsVersion, hadEarlier: d.hadEarlier === true };
+}
+
+/**
+ * §20 (3): the line beside every button that starts, renews into or changes a paid plan — a line, not a second box (the account
+ * already agreed at (1) or (2)). Only where a PRICE is shown (§20 note 3: a comped or Founding Season button carries none). `trial`
+ * comes first, as one paragraph, where the screen already says a trial applies. `terms` is the link.
+ */
+export const PLAN_LINE_WORDS = {
+  /** Where the screen KNOWS this purchase starts a trial (the "Start your club" window's checkout quote). */
+  trial: 'Your trial ends on the date shown at checkout, and your card is charged then unless you cancel. ',
+  /** Where the plan has trial days but checkout decides (a trial is for a first subscription only) — `/legal` 2026-11-09. */
+  trialMaybe: 'If your plan starts with a trial, it ends on the date shown at checkout, and your card is charged then unless you cancel. ',
+  lead: 'Your plan renews automatically until you cancel. You can cancel any time from your billing page, and your plan runs to the end of the period you’ve paid for. By continuing, you agree to the ',
+  terms: TERMS_TITLE,
+  end: '.',
+} as const;
+
+/**
  * WHERE THE SIGN-IN SCREEN DOES NOT TAKE OVER (Chunk B, owner yes 2026-11-09 — disagreements 1 and 3 with the build prompt).
  *
  * The consumer shell wraps more than the family app: the whole sign-in area (`/auth/*`) and the family join page sit under

@@ -5,6 +5,7 @@ import { PLAN_CONFIG } from './plan-config';
 import type { MoveOrg, MoveRefusal } from './plan-move';
 import type { OrgPlan } from './types';
 import { ownPlanOf } from './entitlement-grants';
+import type { AcceptanceUser } from './legal-acceptance';
 
 /**
  * The shared front half of the three move routes (preview, move, cancel-the-scheduled-move): the
@@ -14,7 +15,7 @@ import { ownPlanOf } from './entitlement-grants';
  * `early_access` until the Stage 8 flip; until then these answer 403 like checkout does.
  */
 export async function authorizeMove(orgSlug: string | undefined): Promise<
-  | { ok: true; org: MoveOrg & { name: string; slug: string }; actor: string; actorId: string }
+  | { ok: true; org: MoveOrg & { name: string; slug: string }; actor: string; actorId: string; user: AcceptanceUser }
   | { ok: false; response: Response }
 > {
   const auth = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -23,6 +24,8 @@ export async function authorizeMove(orgSlug: string | undefined): Promise<
   if (denied) return { ok: false, response: denied };
   return {
     ok: true,
+    // The signed-in person, for the move's Terms check (GST/HST Stage 6 step 6.3, C1 — POST only; DELETE and the preview never ask).
+    user: auth.user,
     actor: auth.user.email ?? auth.user.id,
     actorId: auth.user.id,
     org: {

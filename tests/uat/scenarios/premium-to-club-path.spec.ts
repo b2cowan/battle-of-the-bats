@@ -36,7 +36,7 @@
  * check the charge"); the platform admin's free-time power; migration 414 applied (the flip).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-import { recordLegalAcceptance } from '../helpers/legal-acceptance'; // GST/HST 6.3 A5
+import { createFixtureUser } from '../helpers/fixture-user'; // GST/HST 6.3 C
 import { test, expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
@@ -277,14 +277,12 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
   test('make a free coach, give them free time from FieldLogicHQ: a Premium portal they own', async ({ browser }) => {
     test.skip(!adminCtx || !mockBillingOn, 'needs the platform admin session and the dev mock-billing tool switched on');
     const email = `premium-to-club-${suffix}@dev.local`;
-    const { data: user, error } = await supabaseAdmin.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
-    if (error || !user.user) throw error ?? new Error('no user');
-    const partial: Partial<Made> = { userId: user.user.id, email };
+    const user = await createFixtureUser(supabaseAdmin, { email, password: PASSWORD });
+    const partial: Partial<Made> = { userId: user.id, email };
     try {
-      await recordLegalAcceptance(supabaseAdmin, user.user);
       // GST/HST Stage 1: the Start my club window fills the club's billing address in from the coach's own home address, and a
       // checkout refuses without one. Give the new coach a home address (the row goes with the user, ON DELETE CASCADE).
-      const { error: addressError } = await supabaseAdmin.from('billing_locations').insert({ user_id: user.user.id, ...HOME_ADDRESS });
+      const { error: addressError } = await supabaseAdmin.from('billing_locations').insert({ user_id: user.id, ...HOME_ADDRESS });
       if (addressError) throw addressError;
       const { ctx, page } = await logIn(browser, email);
       const team = await page.request.post('/api/coaches/teams', { data: { name: `UAT Path ${suffix}`, sport: 'baseball' } });
@@ -293,7 +291,7 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
       await ctx.close();
 
       const lastDay = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
-      const give = await adminCtx!.request.post(`/api/platform-admin/people/${user.user.id}/portal-free-time`, {
+      const give = await adminCtx!.request.post(`/api/platform-admin/people/${user.id}/portal-free-time`, {
         data: { team_id: partial.basicTeamId, last_day: lastDay, reason: 'UAT: Premium to Club whole-path spec' },
       });
       test.skip(give.status() === 403, 'the platform admin fixture lacks the free-time power');
@@ -312,7 +310,7 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
       if (!made) {
         if (partial.orgId) await supabaseAdmin.from('organizations').delete().eq('id', partial.orgId);
         if (partial.basicTeamId) await supabaseAdmin.from('basic_coach_teams').delete().eq('id', partial.basicTeamId);
-        await supabaseAdmin.auth.admin.deleteUser(user.user.id);
+        await supabaseAdmin.auth.admin.deleteUser(user.id);
       }
     }
   });

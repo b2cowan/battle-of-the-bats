@@ -42,7 +42,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
-import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
+import { ensureFixtureUser } from './lib/fixture-user.mjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -75,22 +75,11 @@ const COACH = ['Frankie', 'Okafor'];
 const FEATURES = ['roster', 'schedule', 'fees', 'announcements'];
 
 // ── the auth user ────────────────────────────────────────────────────────────
-async function findUser() {
-  for (let page = 1; page <= 20; page += 1) {
-    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) die('list users', error);
-    const hit = data.users.find(u => u.email?.toLowerCase() === email);
-    if (hit) return hit;
-    if (data.users.length < 200) return null;
-  }
-  return null;
-}
 const meta = { first_name: COACH[0], last_name: COACH[1], full_name: COACH.join(' '), display_name: COACH.join(' ') };
-let user = await findUser();
-if (!user) {
-  const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: meta });
-  if (error) die(`create ${email}`, error);
-  user = data.user;
+// resetPassword:false on purpose — the helper finds-or-makes the login and records Terms acceptance, and leaves an existing
+// account's password alone; the check-then-maybe-reset below stays this script's own (see the warning in it).
+const { user, created } = await ensureFixtureUser(db, { email, password, userMetadata: meta, resetPassword: false });
+if (created) {
   ok(`created auth user ${email}`);
 } else {
   // ⚠ SETTING THE PASSWORD ENDS EVERY SESSION THE ACCOUNT HOLDS — the layout sweep's saved sign-in included (measured
@@ -107,8 +96,6 @@ if (!user) {
   if (error) die('update user', error);
   ok(`auth user ${email} exists (${signInErr ? 'password reset' : 'password already works — left alone, sessions kept'}; name re-asserted)`);
 }
-
-await recordLegalAcceptance(db, user); // GST/HST 6.3 A5: a fixture never meets the Terms screen
 
 // ── the free team (found by THIS user's own membership, never by name) ───────
 const { data: memberships, error: mErr } = await db.from('basic_coach_team_users')

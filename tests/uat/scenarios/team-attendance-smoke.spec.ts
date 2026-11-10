@@ -1,4 +1,4 @@
-import { recordLegalAcceptance } from '../helpers/legal-acceptance' // GST/HST 6.3 A5
+import { createFixtureUser } from '../helpers/fixture-user' // GST/HST 6.3 C
 import { expect, test } from '@playwright/test'
 import path from 'path'
 
@@ -42,28 +42,19 @@ test.describe.serial('standalone Team attendance smoke', () => {
 
     const suffix = `attendance-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
     const coachEmail = `team-attendance-smoke-${suffix}@dev.local`
-    const { data: coachUser, error: coachUserError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email: coachEmail,
-        email_confirm: true,
-        password: SMOKE_COACH_PASSWORD,
-      })
-
-    if (coachUserError) throw coachUserError
-    if (!coachUser.user?.id) throw new Error('Smoke coach user was not created.')
-    await recordLegalAcceptance(supabaseAdmin, coachUser.user)
+    const coachUser = await createFixtureUser(supabaseAdmin, { email: coachEmail, password: SMOKE_COACH_PASSWORD })
 
     const teamName = `Team Attendance Smoke ${suffix}`
     const workspaceSlug = `team-attendance-smoke-${suffix}`
     const provisioned = await provisionStandaloneTeamWorkspace({
       actorEmail: coachEmail,
-      actorUserId: coachUser.user.id,
+      actorUserId: coachUser.id,
       division: 'U13',
       billingMode: 'platform_override',
       entitlementSource: 'platform_override',
       eventSource: 'platform_admin',
       ownerEmail: coachEmail,
-      ownerUserId: coachUser.user.id,
+      ownerUserId: coachUser.id,
       seasonName: `Attendance Smoke ${new Date().getFullYear()}`,
       seasonYear: new Date().getFullYear(),
       source: 'platform_admin',
@@ -150,9 +141,9 @@ test.describe.serial('standalone Team attendance smoke', () => {
         status: 'linked',
         link_type: 'visibility',
         sharing_level: 'basic',
-        requested_by_user_id: coachUser.user.id,
-        approved_by_team_user_id: coachUser.user.id,
-        approved_by_org_user_id: coachUser.user.id,
+        requested_by_user_id: coachUser.id,
+        approved_by_team_user_id: coachUser.id,
+        approved_by_org_user_id: coachUser.id,
         billing_mode_after_approval: null,
         updated_at: now,
       })
@@ -172,7 +163,7 @@ test.describe.serial('standalone Team attendance smoke', () => {
 
     state = {
       coachEmail,
-      coachUserId: coachUser.user.id,
+      coachUserId: coachUser.id,
       eventId: event.id as string,
       eventName,
       linkedOrgId: linkedOrg.id as string,

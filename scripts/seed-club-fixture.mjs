@@ -99,7 +99,7 @@ import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
 import { DATES_OFF_MARK } from './lib/club-fixture-marks.mjs';
-import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
+import { ensureFixtureUser, findUserByEmail as findUserByEmailIn } from './lib/fixture-user.mjs';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -297,29 +297,12 @@ const LAST = ['Martin', 'Roy', 'Gagnon', 'Singh', 'Walsh', 'Bouchard', 'Patel', 
 const GUARDIAN_FIRST = ['Sarah', 'Mike', 'Jen', 'Dave', 'Amanda', 'Chris', 'Lisa', 'Paul', 'Nicole', 'Steve', 'Kate', 'Rob'];
 
 // ── Auth + membership helpers (the qa-day recipes) ───────────────────────────────
-async function findUserByEmail(email) {
-  for (let page = 1; page <= 40; page++) {
-    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
-    die('listUsers', error);
-    const hit = data.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-    if (hit) return hit;
-    if (data.users.length < 200) return null;
-  }
-  return null;
-}
+const findUserByEmail = email => findUserByEmailIn(db, email);
 async function ensureUser(email, password, fullName) {
-  const existing = await findUserByEmail(email);
-  if (existing) {
-    // Re-assert the password so the walk card is always true (a tester may have changed it).
-    die(`reset password ${email}`, (await db.auth.admin.updateUserById(existing.id, { password })).error);
-    await recordLegalAcceptance(db, existing); // GST/HST 6.3 A5: a fixture never meets the Terms screen
-    return existing;
-  }
-  const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: fullName } });
-  die(`createUser ${email}`, error);
-  ok(`sign-in created ${email}`);
-  await recordLegalAcceptance(db, data.user);
-  return data.user;
+  // Re-asserts the password so the walk card is always true (a tester may have changed it).
+  const { user, created } = await ensureFixtureUser(db, { email, password, userMetadata: { full_name: fullName } });
+  if (created) ok(`sign-in created ${email}`);
+  return user;
 }
 
 // ── Club Tier Stage 6a — `--club-venues`: ADD the club's venues and a week of bookings on them, and stop ──────

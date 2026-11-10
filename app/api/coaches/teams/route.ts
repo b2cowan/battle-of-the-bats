@@ -6,6 +6,7 @@ import { coachTeamPath } from '@/lib/coaches-portal-routes';
 import { basicCoachTeamWelcomeHtml, sendEmail, SITE_URL } from '@/lib/email';
 import { withObservability } from '@/lib/observability';
 import { clearStartDoor } from '@/lib/start-door-server';
+import { requireAcceptance } from '@/lib/legal-acceptance';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -31,7 +32,8 @@ async function requireCoachUser() {
     pick(md.full_name) || pick(md.display_name) || `${pick(md.first_name)} ${pick(md.last_name)}`.trim(),
     120,
   ) || null;
-  return { id: user.id, email: user.email, name };
+  // `app_metadata` rides along so the Terms check reads its mirror without a query (step 6.3, C1).
+  return { id: user.id, email: user.email, name, app_metadata: user.app_metadata };
 }
 
 /**
@@ -44,6 +46,9 @@ export const POST = withObservability(async (req: NextRequest) => {
   try {
     const user = await requireCoachUser();
     if (!user) return json({ error: 'Sign in required.' }, 401);
+    // A free coach team is a workspace a person owns: never without the current Terms (step 6.3, C1).
+    const terms = await requireAcceptance(user);
+    if (!terms.ok) return terms.response;
 
     const body = await req.json().catch(() => ({})) as {
       name?: unknown;

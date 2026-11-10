@@ -22,6 +22,7 @@ import type { OrgPlan } from '@/lib/types';
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { getBillingHref } from '@/lib/billing-urls';
 import { billingBuyerOf, requireBillingLocation } from '@/lib/billing-location-server';
+import { requireAcceptance } from '@/lib/legal-acceptance';
 
 /**
  * POST /api/billing/choose-next-season
@@ -56,6 +57,10 @@ export const POST = withObservability(async (req: Request) => {
   // Billing is owner-only — enforced server-side; the UI also hides the control.
   const denied = await requireCapability(auth, 'billing');
   if (denied) return denied;
+  // Choosing next season's paid plan starts a subscription: never without the current Terms (GST/HST Stage 6 step 6.3, C1),
+  // before every branch (the dev mock records the choice without Stripe).
+  const terms = await requireAcceptance(auth.user);
+  if (!terms.ok) return terms.response;
 
   // ── 1. The window ─────────────────────────────────────────────────────────
   if (!isNextSeasonChoiceOpen()) {

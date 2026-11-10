@@ -1,4 +1,4 @@
-import { recordLegalAcceptance } from '../helpers/legal-acceptance'; // GST/HST 6.3 A5
+import { createFixtureUser } from '../helpers/fixture-user'; // GST/HST 6.3 C
 import { test, expect, type Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -132,12 +132,7 @@ async function cleanup() {
 
 /** A plain consumer account — deliberately NOT an org member. */
 async function makeAccount(email: string): Promise<string> {
-  const { data: created, error } = await admin.auth.admin.createUser({
-    email, password: PASSWORD, email_confirm: true,
-  });
-  if (error) throw error;
-  await recordLegalAcceptance(admin, created.user);
-  return created.user!.id;
+  return (await createFixtureUser(admin, { email, password: PASSWORD })).id;
 }
 
 async function makeTeam(suffix: string, seasonStatus: string): Promise<{ teamId: string; yearId: string }> {

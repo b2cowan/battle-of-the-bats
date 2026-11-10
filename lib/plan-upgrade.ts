@@ -13,6 +13,7 @@
  */
 import type { OrgPlan } from './types';
 import { PLAN_CONFIG } from './plan-config';
+import type { TermsSend } from './legal-acceptance-rules';
 import { BILLING_ADDRESS_REQUIRED } from './billing-location';
 
 /** The plans a panel can be opened for. */
@@ -51,21 +52,27 @@ export type PlanUpgradeResult =
   /** Stripe's checkout — the caller leaves for it. */
   | { applied?: false; url: string }
   /** No billing address on file (GST/HST Stage 1): the caller opens the Billing address window, then asks again. */
-  | { applied?: false; addressRequired: true };
+  | { applied?: false; addressRequired: true }
+  /** The checkout stopped on the Terms and the person closed the window (GST/HST Stage 6 step 6.3, C3): nothing happened. */
+  | { applied?: false; closed: true };
 
-/** Ask for the plan. Throws with the server's own words when it refuses (owner-only, a gated plan, …). */
+/**
+ * Ask for the plan. Throws with the server's own words when it refuses (owner-only, a gated plan, …). `send` is the caller's
+ * Terms gate (`useTermsGate().send`): a stop on the Terms opens the window and, once agreed, sends the same request again.
+ */
 export async function requestPlanUpgrade(input: {
   planKey: UpgradePlanKey;
   billingCycle: 'monthly' | 'annual';
   orgSlug: string;
   /** Where checkout comes back to; the server accepts this organization's admin or exact standalone billing page. */
   returnTo: string;
-}): Promise<PlanUpgradeResult> {
-  const res = await fetch('/api/billing/create-checkout', {
+}, send: TermsSend): Promise<PlanUpgradeResult> {
+  const res = await send('/api/billing/create-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
+  if (!res) return { closed: true };
   const data = await res.json().catch(() => ({})) as { applied?: boolean; url?: string; error?: string; code?: string } & Retention
     & { foundingSeason?: boolean; compUntil?: string };
   if (!res.ok && data.code === BILLING_ADDRESS_REQUIRED) return { addressRequired: true };

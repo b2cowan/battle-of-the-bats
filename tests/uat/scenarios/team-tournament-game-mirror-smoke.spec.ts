@@ -1,4 +1,4 @@
-import { recordLegalAcceptance } from '../helpers/legal-acceptance'; // GST/HST 6.3 A5
+import { createFixtureUser } from '../helpers/fixture-user'; // GST/HST 6.3 C
 import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -104,12 +104,7 @@ test.beforeAll(async () => {
   const { data: org } = await admin.from('organizations').select('id').eq('slug', ORG_SLUG).single();
   orgId = org!.id;
 
-  const { data: created, error: userErr } = await admin.auth.admin.createUser({
-    email: EMAIL, password: PASSWORD, email_confirm: true,
-  });
-  if (userErr) throw userErr;
-  userId = created.user!.id;
-  await recordLegalAcceptance(admin, created.user);
+  userId = (await createFixtureUser(admin, { email: EMAIL, password: PASSWORD })).id;
 
   // getAuthContext requires the membership row or the portal bounces to /discover.
   await admin.from('organization_members').insert({

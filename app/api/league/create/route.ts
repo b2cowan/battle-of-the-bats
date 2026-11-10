@@ -13,6 +13,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { clearStartDoor } from '@/lib/start-door-server';
 import { slugifyOrgName } from '@/lib/utils';
+import { requireAcceptance } from '@/lib/legal-acceptance';
 
 // Abuse controls (Phase 6.6): blunt scripted mass-creation of free workspaces before the beta flag
 // is turned on for real users. Best-effort, per-Lambda-instance (no external store wired). Legit use
@@ -68,6 +69,10 @@ export const POST = withObservability(async (req: Request) => {
     if (await isPlatformAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }
+    // Nobody starts an organization without the current Terms (GST/HST Stage 6 step 6.3, C1) — before every branch,
+    // the rate limiter and the Founding Season comp included. Off (production until 6.7): passes, nothing read.
+    const terms = await requireAcceptance(user);
+    if (!terms.ok) return terms.response;
 
     // Single-org by default (decision 2026-06-19): a user who already belongs to a REAL org can't
     // self-serve a second via the league path either. A user's own Coaches Portal (team_workspace)

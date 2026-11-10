@@ -24,6 +24,9 @@
 - 0.2 · 2026-11-09 · §20 item (5), the accept step's other lines (Stage 6 step 6.3 drawing round): failed save, refusals, the
   purchase window's own title, the cancel door on the "updated" screen, the six-year keep, R10 confirmed, the family page's
   third box. §20's record sentence gains "for six years after your account closes".
+- 0.2 · 2026-11-09 · §20 item (3) gains the conditional trial sentence ("If your plan starts with a trial, …") for a screen
+  that cannot know whether this purchase starts one (`/legal`, the Stage 6 step 6.3 Chunk C review: Tournament Plus is on
+  sale with a trial for a first subscription, so the plain line under-told the main paid path).
 
 > **How to read this draft.** `[square brackets]` = a fact the owner must supply (only the phone and mailing address are left
 > — no personal name, by ruling O1′ — and the one Stripe choice in §6). A `> NOTE` block is for the owner and is deleted before publication.
@@ -423,6 +426,17 @@ plan move and next-season choice). A line, not a second box — the account alre
 
 For a plan with a trial, add before it:
 > Your trial ends on the date shown at checkout, and your card is charged then unless you cancel.
+
+Where the plan has a trial but the screen cannot know whether **this** purchase starts one (a trial is for a first
+subscription only, and checkout decides — the billing table's monthly-or-yearly window, the plan drawer, onboarding's plan
+step, address step and plan chooser), add this instead:
+> If your plan starts with a trial, it ends on the date shown at checkout, and your card is charged then unless you cancel.
+
+> NOTE on (3), `/legal` 2026-11-09 (the Stage 6 step 6.3 Chunk C review). "A plan with a trial" means the plan's own settings
+> give it trial days (`lib/plan-config.ts`; the facts live in `docs/agents/strategy/PLAN_PRICING_FACTS.md` — no number here).
+> The unconditional sentence is for a screen that knows a trial applies (the "Start your club" window's checkout quote). The
+> conditional one exists because the client cannot see whether this buyer has subscribed before, and a sentence that says
+> "your trial ends" to a returning buyer who gets none would be untrue. A plan with no trial days carries neither.
 
 **(4) Page words — the legal pages themselves, and the links to them** (Stage 6 step 6.2; rulings Q1–Q6 of 2026-11-08 stand).
 Above the text a page shows only its title and one line below it. Dates are written with `formatStoredDate(..., { longMonth: true })`

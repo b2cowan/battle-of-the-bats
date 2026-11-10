@@ -19,7 +19,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
-import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
+import { ensureFixtureUser } from './lib/fixture-user.mjs';
 
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -41,16 +41,8 @@ const endDate = iso(new Date(today.getTime() + 7 * DAY));
 function die(label, error) { if (error) { console.error(`❌ ${label}:`, error.message); process.exit(1); } }
 
 // ── 1. auth user (owner) ──────────────────────────────────────────────────────
-const { data: userList } = await db.auth.admin.listUsers();
-let owner = userList?.users.find(u => u.email === OWNER_EMAIL);
-if (!owner) {
-  const { data, error } = await db.auth.admin.createUser({ email: OWNER_EMAIL, password: PASSWORD, email_confirm: true });
-  die('createUser', error); owner = data.user;
-  console.log(`created auth user ${OWNER_EMAIL}`);
-} else {
-  console.log(`auth user exists ${OWNER_EMAIL}`);
-}
-await recordLegalAcceptance(db, owner); // GST/HST 6.3 A5: a fixture never meets the Terms screen
+const { user: owner, created: ownerCreated } = await ensureFixtureUser(db, { email: OWNER_EMAIL, password: PASSWORD, resetPassword: false });
+console.log(ownerCreated ? `created auth user ${OWNER_EMAIL}` : `auth user exists ${OWNER_EMAIL}`);
 
 // ── 2. organization (FREE tier) ───────────────────────────────────────────────
 let org = (await db.from('organizations').select('*').eq('slug', ORG_SLUG).maybeSingle()).data;

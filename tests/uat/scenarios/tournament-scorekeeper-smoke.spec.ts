@@ -1,4 +1,4 @@
-import { recordLegalAcceptance } from '../helpers/legal-acceptance' // GST/HST 6.3 A5
+import { createFixtureUser } from '../helpers/fixture-user' // GST/HST 6.3 C
 import { expect, test } from '@playwright/test'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -200,22 +200,13 @@ test.describe.serial('Tournament scorekeeper UAT smoke', () => {
     const suffix = `scorekeeper-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
     const scorekeeperEmail = `uat-${suffix}@example.test`
 
-    const { data: scorekeeperUser, error: scorekeeperUserError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email: scorekeeperEmail,
-        email_confirm: true,
-        password: SCOREKEEPER_PASSWORD,
-      })
-
-    if (scorekeeperUserError) throw scorekeeperUserError
-    if (!scorekeeperUser.user?.id) throw new Error('Smoke scorekeeper user was not created.')
-    await recordLegalAcceptance(supabaseAdmin, scorekeeperUser.user)
+    const scorekeeperUser = await createFixtureUser(supabaseAdmin, { email: scorekeeperEmail, password: SCOREKEEPER_PASSWORD })
 
     const { data: member, error: memberError } = await supabaseAdmin
       .from('organization_members')
       .insert({
         organization_id: org.id,
-        user_id: scorekeeperUser.user.id,
+        user_id: scorekeeperUser.id,
         role: 'official',
         invited_at: new Date().toISOString(),
         accepted_at: new Date().toISOString(),
@@ -254,7 +245,7 @@ test.describe.serial('Tournament scorekeeper UAT smoke', () => {
       orgSlug,
       scorekeeperEmail,
       scorekeeperMemberId: member.id,
-      scorekeeperUserId: scorekeeperUser.user.id,
+      scorekeeperUserId: scorekeeperUser.id,
       review,
       final,
     }

@@ -39,6 +39,8 @@ import { isAddressRefusal, useBillingAddressGate } from './BillingAddressDialog'
 // A held account (GST/HST Stage 2 Ask 1) shows the server's sentence with no "Check again": asking again cannot change it.
 import { BILLING_REVIEW_HOLD, type QuoteTax } from '@/lib/billing-tax';
 import addressStyles from './BillingAddress.module.css';
+import PlanTermsLine from '@/components/legal/PlanTermsLine';
+import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 
 /** Where "Contact us" goes until a band is on sale (the Stage 8 flip) and above the largest band.
  *  The company's one inbox (owner 2026-09-26), the same address `lib/email.ts` falls back to. */
@@ -85,6 +87,9 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   // address (drawing tab 5) and saved to the CLUB's row with the purchase; otherwise the Billing address window, opened when
   // the move or checkout says none is on file.
   const address = useBillingAddressGate({ orgSlug: org.slug });
+  // A person who has not agreed to the current Terms: the move or the checkout stops, the Terms window opens OVER this one, and
+  // after the tick the same request is sent again (GST/HST Stage 6 step 6.3, C3; drawing tab 6, Ask 5A).
+  const terms = useTermsGate();
   const clubAddress = useAddressDraft(null, address.info?.usSalesOpen ?? false);
   const homeAddress = address.info?.location ?? null;
   const [prefilled, setPrefilled] = useState(false);
@@ -181,13 +186,14 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     busyRef.current = true; setWorking(true); setFailure(null); setChanged(null);
     let accepted = false;
     try {
-      const res = await fetch('/api/billing/move', {
+      const res = await terms.send('/api/billing/move', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orgSlug: org.slug, planKey: toPlan,
           ...(state.preview.direction === 'up' ? { prorationDate: state.preview.prorationDate, expectedAmountDue: state.preview.amountDueToday } : {}),
           ...club,
         }),
       });
+      if (!res) return; // the Terms window was closed: this window stays as it was
       const d = await res.json().catch(() => ({}));
       if (!live.current) return;
       if (!res.ok) {
@@ -258,12 +264,13 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     if (club === null) return;
     busyRef.current = true; setWorking(true); setFailure(null);
     try {
-      const res = await fetch('/api/billing/create-checkout', {
+      const res = await terms.send('/api/billing/create-checkout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planKey: toPlan, billingCycle: quote?.billingCycle ?? org.subscriptionPeriod ?? 'monthly', orgSlug: org.slug, returnTo,
           ...club,
         }),
       });
+      if (!res) return; // the Terms window was closed: this window stays as it was
       const d = await res.json().catch(() => ({}));
       if (!live.current) return;
       if (!res.ok) {
@@ -319,7 +326,10 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     : null;
   // The Billing address window takes this window's place while it is open (the move or checkout found no address on file).
   if (address.open) return address.dialog;
-  return <KitDialog kind={inPlace ? 'form' : 'question'} title={inPlace ? W.clubUpgrade.title : W.move.title(target.label)}
+  // §20 (3) ends the body whenever a paid button is in the foot (drawing tab 5, pins 2 and 3): the move (up, or down at renewal)
+  // or the checkout. The trial sentence first only where this window already says a trial applies.
+  const paidButton = !clubHold && figures !== 'failed' && (preview !== null || canCheckout);
+  return <><KitDialog kind={inPlace ? 'form' : 'question'} title={inPlace ? W.clubUpgrade.title : W.move.title(target.label)}
     onClose={onClose} busy={working} dirty={inPlace && (clubName.trim().length > 0 || clubAddress.dirty) && state.status !== 'finished'} openOn={inPlace ? 'panel' : 'field'}
     footerStart={clubHold && (preview || quote) ? <span className={addressStyles.amber}>{BILLING_LOCATION_WORDS.usClosed}</span>
       : figures === 'loading' && inPlace ? <LoadingState inline label={W.move.loadingCharge} />
@@ -377,5 +387,6 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     {refusal?.code === 'no_live_subscription' && !quote && inPlace && <PageNotice notice={{ tone: 'bad', text: W.clubUpgrade.previewFailed }} />}
     {refusal?.code === 'plan_not_on_sale' && <p>{W.move.notOnSale(target.label, org.name)}</p>}
     {refusal && !['band_too_small', 'no_live_subscription', 'plan_not_on_sale'].includes(refusal.code) && <PageNotice notice={{ tone: 'bad', text: refusalText(refusal) }} />}
-  </KitDialog>;
+    {paidButton && <PlanTermsLine trial={quote && quote.trialDays > 0 ? 'known' : undefined} />}
+  </KitDialog>{terms.window}</>;
 }

@@ -11,6 +11,7 @@ import { isDemoOrgSlug } from '@/lib/demo-org';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { slugifyOrgName } from '@/lib/utils';
+import { requireAcceptance } from '@/lib/legal-acceptance';
 
 async function isSlugAvailable(slug: string) {
   // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
@@ -50,6 +51,10 @@ export const POST = withObservability(async (req: Request) => {
     if (await isPlatformAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }
+    // Nobody starts an organization without the current Terms (GST/HST Stage 6 step 6.3, C1) — before every branch,
+    // the Founding Season comp included. Off (production until 6.7): passes, nothing read.
+    const terms = await requireAcceptance(user);
+    if (!terms.ok) return terms.response;
 
     // Single-org by default (decision 2026-06-19): a signed-in user who already belongs to a REAL
     // organization cannot self-serve a second — a second org comes only from a deliberate invite or

@@ -14,7 +14,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
-import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
+import { ensureFixtureUser } from './lib/fixture-user.mjs';
 
 const env = readFileSync('.env.local', 'utf8');
 const get = k => (env.match(new RegExp('^' + k + '=(.*)$', 'm')) || [])[1]?.trim().replace(/^["']|["']$/g, '');
@@ -44,14 +44,13 @@ async function main() {
   }
 
   // ── Auth user (confirmed, password set) ──
-  const { data: created, error: uErr } = await sb.auth.admin.createUser({
-    email: EMAIL, password: PASSWORD, email_confirm: true,
-    user_metadata: { first_name: 'BOTB', last_name: 'Admin', full_name: DISPLAY },
-  });
-  if (uErr) throw uErr;
-  const userId = created.user.id;
   // GST/HST 6.3 A5: this script reads .env.local itself, so the switch's two values are handed over.
-  await recordLegalAcceptance(sb, created.user, { LEGAL_PAGES_PREVIEW: get('LEGAL_PAGES_PREVIEW'), STRIPE_SECRET_KEY: get('STRIPE_SECRET_KEY') });
+  const { user: created } = await ensureFixtureUser(sb, {
+    email: EMAIL, password: PASSWORD,
+    userMetadata: { first_name: 'BOTB', last_name: 'Admin', full_name: DISPLAY },
+    env: { LEGAL_PAGES_PREVIEW: get('LEGAL_PAGES_PREVIEW'), STRIPE_SECRET_KEY: get('STRIPE_SECRET_KEY') },
+  });
+  const userId = created.id;
 
   // ── Owner membership (full admin access) ──
   const { error: mErr } = await sb.from('organization_members').insert({

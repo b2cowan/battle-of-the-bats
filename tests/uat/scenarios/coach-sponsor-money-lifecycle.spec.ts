@@ -1,4 +1,4 @@
-import { recordLegalAcceptance } from '../helpers/legal-acceptance'; // GST/HST 6.3 A5
+import { createFixtureUser } from '../helpers/fixture-user'; // GST/HST 6.3 C
 import { test, expect, type Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -181,12 +181,7 @@ test.beforeAll(async () => {
   if (orgErr) throw orgErr;
   orgId = org!.id;
 
-  const { data: created, error: userErr } = await admin.auth.admin.createUser({
-    email: HEAD_EMAIL, password: PASSWORD, email_confirm: true,
-  });
-  if (userErr) throw userErr;
-  headUserId = created.user!.id;
-  await recordLegalAcceptance(admin, created.user);
+  headUserId = (await createFixtureUser(admin, { email: HEAD_EMAIL, password: PASSWORD })).id;
   await insert('organization_members', {
     organization_id: orgId, user_id: headUserId, role: 'coach',
     status: 'active', accepted_at: new Date().toISOString(),

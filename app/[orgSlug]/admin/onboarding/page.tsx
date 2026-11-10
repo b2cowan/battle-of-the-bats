@@ -31,6 +31,7 @@ import DateInput from '@/components/shared/DateInput';
 import DateTimeInput from '@/components/shared/DateTimeInput';
 import { isAddressRefusal, saveBillingAddress, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
 import { useAddressDraft } from '@/components/billing/BillingAddressFields';
+import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 
 /*
  * THE FIRST RUN (Tournament admin redesign Stage 5, E1 and A47 — ruled 2026-10-10). Plan selection is a standalone gate
@@ -287,6 +288,7 @@ function OnboardingPageLegacy() {
   const [planError, setPlanError] = useState('');
   // GST/HST Stage 1: a paid plan choice with no billing address on file opens the Billing address window, then goes on.
   const address = useBillingAddressGate(currentOrg ? { orgSlug: currentOrg.slug } : null);
+  const terms = useTermsGate();
   // The first-time plan screen asks in a screen of its own, not the window (owner 2026-11-04, PLAN_STEP_ADDRESS_DRAWINGS
   // Ask 1 A): `addressAsk` is the paid pick waiting on an address; the draft lives here so Back keeps what was typed.
   const addressForm = useAddressDraft(null, address.info?.usSalesOpen ?? false);
@@ -570,7 +572,9 @@ function OnboardingPageLegacy() {
 
     setPlanLoading(planKey);
     try {
-      const res = await fetch('/api/billing/create-checkout', {
+      // Through the Terms gate (GST/HST Stage 6 step 6.3, C3): a stop on the Terms opens the window; after the tick the same
+      // checkout goes again. Closed: the pick is as it was.
+      const res = await terms.send('/api/billing/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -580,6 +584,7 @@ function OnboardingPageLegacy() {
           returnTo: `/${currentOrg.slug}/admin/onboarding`,
         }),
       });
+      if (!res) return;
       const data = await res.json();
       if (!res.ok && isAddressRefusal(data)) {
         // The first-time plan screen is a page of steps: it asks on its own screen. Anywhere else this is the window.
@@ -1445,10 +1450,10 @@ function OnboardingPageLegacy() {
   }
 
   if (planChoiceRequired) {
-    return (
-      // GST/HST Stage 1: a paid choice with no billing address on file is refused (choosePlan → addressAsk). This page is a
-      // walk through numbered steps, so it asks on a screen of its own instead of the window (owner 2026-11-04).
-      addressAsk ? (
+    return (<>
+      {/* GST/HST Stage 1: a paid choice with no billing address on file is refused (choosePlan → addressAsk). This page is a
+          walk through numbered steps, so it asks on a screen of its own instead of the window (owner 2026-11-04). */}
+      {addressAsk ? (
         <AddressStep
           orgName={currentOrg.name}
           plan={addressAsk.planKey}
@@ -1470,8 +1475,10 @@ function OnboardingPageLegacy() {
           error={planError}
           onChoose={choosePlan}
         />
-      )
-    );
+      )}
+      {/* A paid pick that stops on the Terms: their window over the step, then the checkout carries on (step 6.3, C3). */}
+      {terms.window}
+    </>);
   }
 
   if (workflowRedirecting || shouldRedirectFromTournamentOnboarding) {
@@ -1486,6 +1493,7 @@ function OnboardingPageLegacy() {
         {renderActiveModal()}
         {planChooserOpen && <div className={styles.modalOverlay} role="presentation">{renderPlanChooser()}</div>}
         {address.dialog}
+        {terms.window}
       </div>
     );
   }
@@ -1620,6 +1628,7 @@ function OnboardingPageLegacy() {
       {renderActiveModal()}
       {planChooserOpen && <div className={styles.modalOverlay} role="presentation">{renderPlanChooser()}</div>}
       {address.dialog}
+      {terms.window}
     </div>
   );
 }

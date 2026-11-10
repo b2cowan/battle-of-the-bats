@@ -48,6 +48,7 @@ import { fileURLToPath } from 'url';
 import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
 import { fillPlayerRecord } from './lib/seed-filled-player.mjs';
 import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
+import { ensureFixtureUser } from './lib/fixture-user.mjs';
 /* ⚠⚠ A SEEDED LINE'S KIND MUST AGREE WITH ITS WORD (mig 280).
    The add-a-line form stopped asking "is this a cost / expected fundraising / expected sponsorship /
    expected other income?" because the answer could contradict the item picked under it — a
@@ -2923,18 +2924,13 @@ const QA_PEOPLE = [
 ];
 
 for (const person of QA_PEOPLE) {
-  let qaUser = userPage.users.find(u => u.email?.toLowerCase() === person.email.toLowerCase());
-  if (!qaUser) {
-    const [first, last] = person.account;
-    const created = await db.auth.admin.createUser({
-      email: person.email, password: process.env.UAT_COACH_PASSWORD, email_confirm: true,
-      user_metadata: { first_name: first, last_name: last, full_name: `${first} ${last}`, display_name: `${first} ${last}` },
-    });
-    if (created.error) { console.error(`✗ create ${person.email}`, created.error.message); process.exit(1); }
-    qaUser = created.data.user;
-  }
+  const [first, last] = person.account;
+  // resetPassword:false — an existing QA account keeps its password (as before); a new one is made with metadata and records Terms acceptance.
+  const { user: qaUser } = await ensureFixtureUser(db, {
+    email: person.email, password: process.env.UAT_COACH_PASSWORD, resetPassword: false,
+    userMetadata: { first_name: first, last_name: last, full_name: `${first} ${last}`, display_name: `${first} ${last}` },
+  });
   await ensureAccountName(qaUser, person.account);
-  await recordLegalAcceptance(db, qaUser); // GST/HST 6.3 A5: a fixture never meets the Terms screen
 
   const { data: orgRow } = await db.from('organization_members')
     .select('id, status').eq('organization_id', org.id).eq('user_id', qaUser.id).maybeSingle();

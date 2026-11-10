@@ -1,6 +1,6 @@
 'use client';
 import { planStepPath, type StartPricing, type StartStepViewer } from '@/lib/start-door';
-import StartDoorForm from '../StartDoorForm';
+import StartDoorForm, { type StartCreate } from '../StartDoorForm';
 import { slugifyOrgName } from '@/lib/utils';
 
 /**
@@ -22,18 +22,20 @@ export default function StartTournamentForm({ pricing, ...props }: {
   confirmed?: boolean;
   pricing: StartPricing | null;
 }) {
-  async function createOrganization(orgName: string): Promise<string> {
-    const res = await fetch('/api/org/create', {
+  const createOrganization: StartCreate = async (orgName, send) => {
+    // Through the step's Terms gate (step 6.3, C3): a stop on the Terms is read before the route's own 409s.
+    const res = await send('/api/org/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orgName }),
     });
+    if (!res) return null;
     const data = await res.json().catch(() => ({})) as { orgSlug?: string; error?: string };
     if (!res.ok || !data.orgSlug) {
       throw new Error(data.error ?? 'Could not create your organization.');
     }
     return planStepPath(data.orgSlug, pricing);
-  }
+  };
 
   return <StartDoorForm door="organization" create={createOrganization} help={publicAddress} pricing={pricing} {...props} />;
 }

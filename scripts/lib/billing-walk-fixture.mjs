@@ -5,7 +5,7 @@
  */
 import { createServerClient } from '@supabase/ssr';
 import { stripeKeyIsTest } from '../../lib/stripe-mode.ts';
-import { recordLegalAcceptance } from './record-legal-acceptance.mjs';
+import { ensureFixtureUser } from './fixture-user.mjs';
 
 // The dev project's ref, as `PROJECTS.dev` in scripts/lib/supabase-ops.mjs. NOT imported from there: that module fills any
 // unset variable from .env.local the moment it loads, so a guard importing it would turn "no key" into .env.local's key.
@@ -23,31 +23,9 @@ export function refusal({ stripeKey, supabaseUrl }) {
   return null;
 }
 
-/** The auth user with this address (any case), or null. Pages 200 at a time. */
-export async function findUserByEmail(db, email) {
-  for (let page = 1; page <= 40; page++) {
-    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) throw new Error(`listUsers: ${error.message}`);
-    const hit = data.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-    if (hit) return hit;
-    if (data.users.length < 200) return null;
-  }
-  return null;
-}
-
-/** The sign-in for this address with this password: found (password reset to it) or made (confirmed). */
+/** The sign-in for this address with this password: found (password reset to it) or made (confirmed). Records Terms acceptance (6.3). */
 export async function ensureUser(db, { email, password, fullName }) {
-  const found = await findUserByEmail(db, email);
-  if (found) {
-    const { error } = await db.auth.admin.updateUserById(found.id, { password });
-    if (error) throw new Error(`password ${email}: ${error.message}`);
-    await recordLegalAcceptance(db, found); // GST/HST 6.3 A5: a fixture never meets the Terms screen
-    return { user: found, created: false };
-  }
-  const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: fullName } });
-  if (error) throw new Error(`createUser ${email}: ${error.message}`);
-  await recordLegalAcceptance(db, data.user);
-  return { user: data.user, created: true };
+  return ensureFixtureUser(db, { email, password, userMetadata: { full_name: fullName } });
 }
 
 /**

@@ -10,6 +10,7 @@ import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from 
 import type { OrgPlan } from '@/lib/types';
 import kit from './marketing/MarketingKit.module.css';
 import styles from './PricingSection.module.css';
+import PlanTermsLine from '@/components/legal/PlanTermsLine';
 
 type Billing = 'monthly' | 'annual';
 
@@ -322,6 +323,19 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
   const stripLabel = stripPlans.length > 0 && stripPlans.every(p => p.key === 'league' || p.key === 'club')
     ? `Express interest in ${stripPlans.map(p => p.name).join(' or ')}`
     : 'Express interest';
+  // Promo wording only while the promo is actually running — afterwards the card falls back to its permanent note and a
+  // truthful "Start now" CTA on its own, with no runbook. For the viewer's OWN current plan the offer state is a per-account
+  // fact (is this account's comp still running?), not the signup window — supplied by the caller when it knows; the window is
+  // the fallback until it answers (/review 2026-09-07).
+  const promoActiveFor = (plan: (typeof cardPlans)[number]) => !!plan.promoNote && (
+    currentPlan === plan.key && currentPlanComped !== undefined
+      ? currentPlanComped
+      : showsFoundingZero(plan.key, foundingOfferHeld)
+  );
+  // §20 (3) under the cards: some card's own button starts a paid plan at a price shown (a $0 Founding Season card, the
+  // current plan and an included one carry none). Only the onboarding chooser posts; the marketing cards are links.
+  const paidChoices = !onChoosePlan ? [] : cardPlans.filter(plan => !(gatingMap[plan.key] ?? false) && !promoActiveFor(plan)
+    && currentPlan !== plan.key && !(disabledPlans?.includes(plan.key) ?? false) && PLAN_CONFIG[plan.key].monthlyPrice > 0);
 
   return (
     <>
@@ -363,16 +377,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
           const isFeatured = !isGated && leadPlan === plan.key;
           const isAnnual = !isGated && billing === 'annual' && plan.annualPrice;
           const displayPrice = isGated ? gatedPlanTag(plan.key) : (isAnnual ? plan.annualPrice! : plan.monthlyPrice);
-          // Promo wording only while the promo is actually running — afterwards the card falls
-          // back to its permanent note and a truthful "Start now" CTA on its own, with no runbook.
-          // For the viewer's OWN current plan the offer state is a per-account fact (is this
-          // account's comp still running?), not the signup window — supplied by the caller when it
-          // knows; the window is the fallback until it answers (/review 2026-09-07).
-          const promoActive = !!plan.promoNote && (
-            isCurrent && currentPlanComped !== undefined
-              ? currentPlanComped
-              : showsFoundingZero(plan.key, foundingOfferHeld)
-          );
+          const promoActive = promoActiveFor(plan);
           const displayNote = isGated
             ? GATED_PLAN_INTEREST_LINE
             : promoActive
@@ -508,6 +513,10 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
           );
         })}
       </div>
+      {/* §20 (3) once under the cards, as under the billing table — only where the cards' own buttons start a paid plan
+          (onboarding's chooser; the marketing pages' cards are links to sign-up, not purchases). Step 6.3, drawing tab 5. */}
+      {/* "If your plan starts with a trial" when a paid card's plan has trial days (checkout decides — `/legal` 2026-11-09). */}
+      {paidChoices.length > 0 && <PlanTermsLine trial={Math.max(...paidChoices.map(plan => PLAN_CONFIG[plan.key].trialDays))} />}
 
       {/* Marketing coming-soon strip — the gated plans, at footnote weight. Visible, priced, and
           capturing interest, but never peers of what's actually on sale. */}

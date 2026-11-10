@@ -29,6 +29,10 @@ From a code census 2026-11-05: checkout is Stripe Checkout (subscription mode; a
 step anywhere at signup or checkout**; **no purchase email carrying the terms** (Stripe's receipt only); **no reminder
 before an ordinary renewal**; trial lengths stated nowhere outside checkout; a cancel button exists (owner only). The ruled
 "plan ends at the renewal date" is built on dev, not on production.
+**Update 2026-11-09 (step 6.3, built dark):** the accept-the-Terms step now exists at every account door, the sign-in screen
+and a window over any stopped purchase (version, sentence, door and time recorded); every priced paid button carries §20 (3)'s
+renewal line, with a trial sentence where the plan has trial days (conditional where checkout decides). The purchase email
+(item 3, the copy) is still 6.4.
 
 ## Recommendation
 - Checkout/signup: a required accept-the-Terms step recording version, person and time (reuse the payout-terms shape).

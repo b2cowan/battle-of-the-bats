@@ -1,0 +1,21 @@
+/* The paid-plan line (GST/HST Stage 6 step 6.3, Chunk C; drawing tab 5, Ask 6A): the house's small print, one shade darker
+   than the tax line beside it (secondary ink, not tertiary) because it is the one people are agreeing to. Read BEFORE the
+   button: a window's body end, under a table after its tax line. */
+.line {
+  margin: 0.6rem 0 0;
+  max-width: 64ch;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+  text-align: left;
+}
+/* On an account column (the Coaches Portal start, onboarding's plan and address steps): the column's fine-print size and its
+   dim ink, left-aligned because it is three sentences, above the main button. */
+.column {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--home-dim); /* accountForm's `.fine` ("No credit card."), left-aligned */
+  text-align: left;
+}

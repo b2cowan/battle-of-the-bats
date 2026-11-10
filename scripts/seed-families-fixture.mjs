@@ -85,7 +85,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
-import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
+import { ensureFixtureUser } from './lib/fixture-user.mjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { allocateDuesPayments } from '../lib/dues-payments.ts';
@@ -122,27 +122,8 @@ ok(`org ${org.slug} (${org.id})`);
 // ── 1b. The owner sign-in (Stage 5a, case 11) ─────────────────────────────────
 const OWNER_EMAIL = 'uat-families-owner@qa-families-fixture.local';
 const OWNER_PASSWORD = 'UATPassword2026!'; // the standing UAT password (scripts/seed-club-fixture.mjs DEFAULT_PASSWORD)
-async function findUserByEmail(email) {
-  for (let page = 1; page <= 40; page++) {
-    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) die('listUsers', error);
-    const hit = data.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-    if (hit) return hit;
-    if (data.users.length < 200) return null;
-  }
-  return null;
-}
-let owner = await findUserByEmail(OWNER_EMAIL);
-if (owner) {
-  // Re-assert the password so the walk card is always true (a tester may have changed it).
-  const r = await db.auth.admin.updateUserById(owner.id, { password: OWNER_PASSWORD });
-  if (r.error) die('owner password', r.error);
-} else {
-  const r = await db.auth.admin.createUser({ email: OWNER_EMAIL, password: OWNER_PASSWORD, email_confirm: true, user_metadata: { full_name: 'Fixture Owner' } });
-  if (r.error) die('owner createUser', r.error);
-  owner = r.data.user;
-}
-await recordLegalAcceptance(db, owner); // GST/HST 6.3 A5: a fixture never meets the Terms screen
+// Re-asserts the password so the walk card is always true (a tester may have changed it).
+const { user: owner } = await ensureFixtureUser(db, { email: OWNER_EMAIL, password: OWNER_PASSWORD, userMetadata: { full_name: 'Fixture Owner' } });
 {
   const { data: m } = await db.from('organization_members').select('id').eq('organization_id', org.id).eq('user_id', owner.id).maybeSingle();
   if (!m) {
@@ -466,17 +447,8 @@ const ROBIN_EMAIL = 'robin.treasurer@qa-families-fixture.local';
 
 /** An auth user with the standing password, re-asserted each run (the owner's recipe, 1b). */
 async function ensureSignIn(email, fullName) {
-  let u = await findUserByEmail(email);
-  if (u) {
-    const r = await db.auth.admin.updateUserById(u.id, { password: COACH_PASSWORD });
-    if (r.error) die(`password ${email}`, r.error);
-  } else {
-    const r = await db.auth.admin.createUser({ email, password: COACH_PASSWORD, email_confirm: true, user_metadata: { full_name: fullName } });
-    if (r.error) die(`createUser ${email}`, r.error);
-    u = r.data.user;
-  }
-  await recordLegalAcceptance(db, u);
-  return u;
+  const { user } = await ensureFixtureUser(db, { email, password: COACH_PASSWORD, userMetadata: { full_name: fullName } });
+  return user;
 }
 /** The org membership row, re-asserted (role, name, capabilities) so a tester's edit never leaves the walk card false. */
 async function ensureOrgMember(userId, role, displayName, capabilities) {

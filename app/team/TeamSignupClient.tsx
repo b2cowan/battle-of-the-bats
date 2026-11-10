@@ -7,7 +7,7 @@ import { OFFERED_SPORT_OPTIONS as SHARED_SPORT_OPTIONS } from '@/lib/sports';
 import { signIn } from '@/lib/auth';
 import { signInErrorCopy } from '@/lib/auth-errors';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
-import { formatPlanPeriodPrice, normalizeBillingCycle, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPlanPeriodPrice, normalizeBillingCycle, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import { startDoorLinkPath } from '@/lib/start-door';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import StartSteps from '@/components/auth/StartSteps';
@@ -30,6 +30,8 @@ import BillingAddressFields, { useAddressDraft } from '@/components/billing/Bill
 import { addressOnFile, isAddressRefusal, saveBillingAddress, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
 import addressStyles from '@/components/billing/BillingAddress.module.css';
 import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
+import PlanTermsLine from '@/components/legal/PlanTermsLine';
+import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 
 /** The checkout found no home address on file: the page shows the Address step instead of an error. */
 class AddressNeededError extends Error {}
@@ -145,6 +147,8 @@ export default function TeamSignupClient({
   const [error, setError] = useState('');
   // The Terms box (step 6.3, §20 (1)), on the sign-up form only: nothing while the legal pages are off.
   const terms = useTermsTick();
+  // The checkout's Terms window (step 6.3, C3) — for someone already signed in who has not agreed yet.
+  const checkoutGate = useTermsGate();
   const [verificationEmail, setVerificationEmail] = useState('');
   // Back from "Use a different email", or switched between the account form and the sign-in: the cursor goes to the email.
   const [focusEmail, setFocusEmail] = useState(false);
@@ -204,6 +208,8 @@ export default function TeamSignupClient({
   const addressOnFileNow = billingAddress.location;
   const needsAddressStep = paid && !addressOnFileNow;
   const addressFieldsShown = addressStep || changingAddress;
+  // The main button (and the §20 (3) line above it) is withheld while the address fields say the country is closed.
+  const buttonShown = !(addressFieldsShown && addressForm.usClosed);
 
   // The two notices sit just above whichever step's button is showing.
   const notices = (
@@ -305,7 +311,9 @@ export default function TeamSignupClient({
   async function startCheckout() {
     setBusyLabel('Starting checkout…');
 
-    const response = await fetch('/api/billing/create-team-checkout', {
+    // Through the Terms gate (GST/HST Stage 6 step 6.3, C3): read before any other 409 (`portal_exists`). A stop opens the
+    // window; after the tick the same checkout goes again. Closed: the step is as it was.
+    const response = await checkoutGate.send('/api/billing/create-team-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -324,6 +332,7 @@ export default function TeamSignupClient({
         basicCoachTeamId: prefillBasicTeamId,
       }),
     });
+    if (!response) { setBusyLabel(''); return; }
 
     const payload = await readJson(response);
     if (response.status === 401) {
@@ -487,6 +496,8 @@ export default function TeamSignupClient({
               variant="start" disabled={busy} />
             {notices}
             {/* A US address while US sales are closed: the amber line under Country says why, and there is no button. */}
+            {/* §20 (3) above Continue to checkout, at the column's fine-print size (step 6.3, drawing tab 5, pin 4). */}
+            {!addressForm.usClosed && <PlanTermsLine place="column" trial={PLAN_CONFIG.team.trialDays} />}
             {!addressForm.usClosed && (
               <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated}>
                 {busyLabel || 'Continue to checkout'}
@@ -556,8 +567,11 @@ export default function TeamSignupClient({
             )}
 
             {notices}
+            {/* §20 (3) above the button when it goes to checkout at a price (step 6.3, drawing tab 5, pin 4). Not on the Founding
+                Season start (no price), nor while the button is "Next" to the Address step (the line waits there). */}
+            {paid && !(needsAddressStep && !changingAddress) && buttonShown && <PlanTermsLine place="column" trial={PLAN_CONFIG.team.trialDays} />}
             {/* Tappable whenever it can work: a missing name or the wrong account says so beside it (validateTeam). */}
-            {!(addressFieldsShown && addressForm.usClosed) && (
+            {buttonShown && (
               <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated}>
                 {busyLabel || (needsAddressStep && !changingAddress ? 'Next' : submitLabel)}
               </button>
@@ -574,6 +588,7 @@ export default function TeamSignupClient({
           </StartFoot>
         </>
       )}
+      {checkoutGate.window}
     </StartColumn>
   );
 }

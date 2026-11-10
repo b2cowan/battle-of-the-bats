@@ -30,6 +30,23 @@ export function TermsSentence() {
   );
 }
 
+/**
+ * A Terms sentence held as parts (`WINDOW_WORDS.published`, `PLAN_LINE_WORDS`): each part that is a document's title becomes its
+ * link, underlined and opening in a new tab, as the box's own links do. Nothing while the pages are off.
+ */
+export function LinkedLine({ parts }: { parts: readonly string[] }) {
+  const links = useLegalLinks();
+  if (!links) return null;
+  return (
+    <>
+      {parts.map((part, i) =>
+        part === P.terms ? <a key={i} className={styles.link} href={links.termsHref} target="_blank" rel="noopener noreferrer">{part}</a>
+          : part === P.privacy ? <a key={i} className={styles.link} href={links.privacyHref} target="_blank" rel="noopener noreferrer">{part}</a>
+          : <span key={i}>{part}</span>)}
+    </>
+  );
+}
+
 export interface TermsTick {
   /** The legal pages are on: the row renders and the fields are sent. */
   on: boolean;
@@ -43,11 +60,12 @@ export interface TermsTick {
   refusal: (data: unknown) => string | null;
 }
 
-export function useTermsTick(): TermsTick {
+/** `initialVersion`: a host that already knows the current version (the purchase window — its refusal named it) seeds it here. */
+export function useTermsTick(initialVersion?: string): TermsTick {
   const links = useLegalLinks();
   const [ticked, setTicked] = useState(false);
   // The version the next tick agrees to: the one the page rendered, or the one a `terms_changed` refusal said is current now.
-  const [version, setVersion] = useState<string | null>(null);
+  const [version, setVersion] = useState<string | null>(initialVersion ?? null);
   const shown = version ?? links?.termsVersion ?? null;
   const refusal = useCallback((data: unknown): string | null => {
     const d = (data ?? {}) as { code?: unknown; error?: unknown; termsVersion?: unknown };

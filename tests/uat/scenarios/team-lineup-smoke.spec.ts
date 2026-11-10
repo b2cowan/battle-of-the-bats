@@ -1,4 +1,4 @@
-import { recordLegalAcceptance } from '../helpers/legal-acceptance' // GST/HST 6.3 A5
+import { createFixtureUser } from '../helpers/fixture-user' // GST/HST 6.3 C
 import { expect, test } from '@playwright/test'
 
 import { supabaseAdmin } from '../../../lib/supabase-admin'
@@ -24,28 +24,19 @@ test.describe.serial('standalone Team lineup smoke', () => {
   test.beforeAll(async () => {
     const suffix = `lineup-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
     const coachEmail = `team-lineup-smoke-${suffix}@dev.local`
-    const { data: coachUser, error: coachUserError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email: coachEmail,
-        email_confirm: true,
-        password: SMOKE_COACH_PASSWORD,
-      })
-
-    if (coachUserError) throw coachUserError
-    if (!coachUser.user?.id) throw new Error('Smoke coach user was not created.')
-    await recordLegalAcceptance(supabaseAdmin, coachUser.user)
+    const coachUser = await createFixtureUser(supabaseAdmin, { email: coachEmail, password: SMOKE_COACH_PASSWORD })
 
     const teamName = `Team Lineup Smoke ${suffix}`
     const workspaceSlug = `team-lineup-smoke-${suffix}`
     const provisioned = await provisionStandaloneTeamWorkspace({
       actorEmail: coachEmail,
-      actorUserId: coachUser.user.id,
+      actorUserId: coachUser.id,
       division: 'U15',
       billingMode: 'platform_override',
       entitlementSource: 'platform_override',
       eventSource: 'platform_admin',
       ownerEmail: coachEmail,
-      ownerUserId: coachUser.user.id,
+      ownerUserId: coachUser.id,
       seasonName: `Lineup Smoke ${new Date().getFullYear()}`,
       seasonYear: new Date().getFullYear(),
       source: 'platform_admin',
@@ -103,7 +94,7 @@ test.describe.serial('standalone Team lineup smoke', () => {
 
     state = {
       coachEmail,
-      coachUserId: coachUser.user.id,
+      coachUserId: coachUser.id,
       eventId: event.id as string,
       eventName,
       playerIds: Object.fromEntries(players.map(player => [String(player.player_number), player.id as string])),

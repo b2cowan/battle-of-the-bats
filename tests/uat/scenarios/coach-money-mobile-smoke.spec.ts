@@ -1,4 +1,4 @@
-import { recordLegalAcceptance } from '../helpers/legal-acceptance'; // GST/HST 6.3 A5
+import { createFixtureUser } from '../helpers/fixture-user'; // GST/HST 6.3 C
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -109,12 +109,7 @@ async function cleanup() {
 }
 
 async function makeCoach(email: string): Promise<string> {
-  const { data: created, error } = await admin.auth.admin.createUser({
-    email, password: PASSWORD, email_confirm: true,
-  });
-  if (error) throw error;
-  const id = created.user!.id;
-  await recordLegalAcceptance(admin, created.user);
+  const id = (await createFixtureUser(admin, { email, password: PASSWORD })).id;
   // getAuthContext requires the membership row or the portal bounces to /discover.
   const { error: memErr } = await admin.from('organization_members').insert({
     organization_id: orgId, user_id: id, role: 'coach',

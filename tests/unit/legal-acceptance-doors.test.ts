@@ -160,9 +160,11 @@ const FORMS: Record<string, string> = {
 };
 
 describe('the forms (B1): the box and the server refusal land together', () => {
-  it('exactly these files use the tick row (the screen is the one non-form)', () => {
+  it('exactly these files use the tick row (the screen, the purchase window and the paid-plan line are the non-forms)', () => {
     const users = filesMatching(/from '@\/components\/legal\/TermsTickRow'|from '\.\/TermsTickRow'/);
-    assert.deepEqual(users, [...Object.keys(FORMS), 'components/legal/TermsAcceptScreen.tsx'].sort());
+    // Chunk C: the window ticks the same box; the line links the Terms as the box does (`LinkedLine`). Neither makes an account.
+    assert.deepEqual(users, [...Object.keys(FORMS), 'components/legal/PlanTermsLine.tsx', 'components/legal/TermsAcceptScreen.tsx',
+      'components/legal/TermsAcceptWindow.tsx'].sort());
   });
   for (const [form, door] of Object.entries(FORMS)) {
     it(`${form} checks the box before sending and sends its fields to ${door}`, () => {

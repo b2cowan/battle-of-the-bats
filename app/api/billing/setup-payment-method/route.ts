@@ -3,6 +3,7 @@ import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { createCardSetupSession } from '@/lib/billing-setup';
 import { withObservability } from '@/lib/observability';
 import { getBillingHref } from '@/lib/billing-urls';
+import { requireAcceptance } from '@/lib/legal-acceptance';
 
 /**
  * Founding Season "Add payment method" — saves a card on file WITHOUT starting a
@@ -27,6 +28,10 @@ export const POST = withObservability(async (req: Request) => {
   // Billing is owner-only — enforce server-side (the UI also hides these controls).
   const denied = await requireCapability(auth, 'billing');
   if (denied) return denied;
+  // The card the next season will charge: never saved without the current Terms (GST/HST Stage 6 step 6.3, C1), before the
+  // dev mock's early answer.
+  const terms = await requireAcceptance(auth.user);
+  if (!terms.ok) return terms.response;
 
   // ── Dev mock: no Stripe — bounce straight back with the saved flag ─────────
   if (isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production')) {

@@ -22,6 +22,7 @@ import KitDialog from '@/components/shared/KitDialog';
 import { NoticePill } from '@/components/admin/kit/club/RepKit';
 import PlanArticlePanel from './PlanArticlePanel';
 import { useBillingAddressGate } from './BillingAddressDialog';
+import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 
 type Outcome = { title: string; message: string; type: 'success' | 'danger' };
 
@@ -33,6 +34,8 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
   // Once the Upgrade answers, the panel gives way to what it came to; closing that closes the whole thing.
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const address = useBillingAddressGate(currentOrg ? { orgSlug: currentOrg.slug } : null);
+  // A stop on the Terms opens their window over the panel; after the tick the upgrade carries on (step 6.3, C3).
+  const terms = useTermsGate();
 
   // Back from Stripe's checkout through the browser's own cache: the page comes back as it was left — loading.
   useEffect(() => {
@@ -51,12 +54,14 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
         billingCycle: 'monthly',
         orgSlug: currentOrg.slug,
         returnTo: getBillingHref(currentOrg, { host: 'admin' }),
-      });
+      }, terms.send);
     } catch (err: unknown) {
       setLoading(false);
       setOutcome({ title: 'Something went wrong', message: err instanceof Error ? err.message : 'Something went wrong. Please try again.', type: 'danger' });
       return;
     }
+    // The Terms window was closed: the panel is as it was.
+    if ('closed' in result) { setLoading(false); return; }
     // GST/HST Stage 1: no billing address on file → the Billing address window, then the same upgrade again. Asked by the
     // server, not here: a comped Founding upgrade charges nothing and is never asked.
     if ('addressRequired' in result) {
@@ -94,6 +99,7 @@ export default function PlanPanelDrawer({ plan, onClose }: { plan: PanelPlanKey;
         // includes, with no Upgrade that would only be refused.
         canUpgrade={hasBillingAccess(userRole, userCapabilities) && (upgradePlansFor(currentOrg ? ownPlanOf(currentOrg) : undefined) as PanelPlanKey[]).includes(plan)}
       />
+      {terms.window}
       {outcome?.type === 'success' && (
         <NoticePill message={outcome.message} onDone={onClose} news />
       )}

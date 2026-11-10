@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { withObservability } from '@/lib/observability';
 import { recordAcceptance } from '@/lib/legal-acceptance';
-import { ACCEPTANCE_WORDS } from '@/lib/legal-acceptance-rules';
+import { ACCEPTANCE_WORDS, ACCEPT_ROUTE_DOORS, termsDoorFrom } from '@/lib/legal-acceptance-rules';
 import { currentVersion } from '@/lib/legal-documents';
 
 /**
- * The sign-in screen's tick (GST/HST Stage 6 step 6.3, Chunk B, ruling R3). Chunk C's purchase window will post here too.
- * Body `{ termsVersion }`: the version the screen showed.
+ * The sign-in screen's tick (GST/HST Stage 6 step 6.3, Chunk B, ruling R3) and the purchase window's (Chunk C, door
+ * `purchase_window`). Body `{ termsVersion, door? }`: the version shown, and which of the two asked (anything else is the screen).
  *
  * Signed-in only. `requireAcceptance` is deliberately NOT asked: this is the door that satisfies it. Answers:
  *   200 `{ ok }`                     — recorded (row first, then the mirror); the screen re-reads and the shell takes over.
@@ -22,8 +22,9 @@ export const POST = withObservability(async (req: Request) => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'sign_in_required' }, { status: 401 });
 
-  const body = await req.json().catch(() => ({})) as { termsVersion?: unknown };
-  const result = await recordAcceptance({ user, door: 'sign_in_screen', shownTermsVersion: body.termsVersion });
+  const body = await req.json().catch(() => ({})) as { termsVersion?: unknown; door?: unknown };
+  const door = termsDoorFrom(body.door, ACCEPT_ROUTE_DOORS, 'sign_in_screen');
+  const result = await recordAcceptance({ user, door, shownTermsVersion: body.termsVersion });
   if (result.ok) return NextResponse.json({ ok: true });
   if (result.code === 'terms_changed') {
     return NextResponse.json(

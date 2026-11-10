@@ -22,7 +22,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'node:crypto';
-import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
+import { ensureFixtureUser } from './lib/fixture-user.mjs';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -51,28 +51,9 @@ function check(label, passed, detail = '') {
   console.log(`  ${passed ? 'PASS' : 'FAIL'} — ${label}${detail ? `  (${detail})` : ''}`);
 }
 
-async function findUser(email) {
-  for (let page = 1; page <= 10; page++) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) throw error;
-    const hit = data.users.find((u) => u.email === email);
-    if (hit) return hit;
-    if (data.users.length < 200) return null;
-  }
-  return null;
-}
-
 async function ensureUser(email) {
-  const existing = await findUser(email);
-  if (existing) {
-    await admin.auth.admin.updateUserById(existing.id, { password: PASSWORD, email_confirm: true });
-    await recordLegalAcceptance(admin, existing); // GST/HST 6.3 A5: a fixture never meets the Terms screen
-    return existing;
-  }
-  const { data, error } = await admin.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
-  if (error) throw error;
-  await recordLegalAcceptance(admin, data.user);
-  return data.user;
+  const { user } = await ensureFixtureUser(admin, { email, password: PASSWORD });
+  return user;
 }
 
 function anonClient() {

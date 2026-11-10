@@ -36,9 +36,13 @@ import { inPlaceReturnPath, isInPlaceReturn } from '@/lib/workspace-upgrade';
 import { BILLING_ADDRESS_FORM_WORDS, formatBilledTo, formatBillingAddress } from '@/lib/billing-location';
 import { NoticePill } from '@/components/admin/kit/club/RepKit';
 import { isAddressRefusal, useBillingAddressGate } from './BillingAddressDialog';
+import PlanTermsLine from '@/components/legal/PlanTermsLine';
+import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
 
 /** What `post` answers when a paid route refused for want of a billing address (the caller opens the window and retries). */
 const ADDRESS_REFUSED = Symbol('address-refused');
+/** What `post` answers when a route stopped on the Terms and the person closed the window: nothing happened, nothing to say. */
+const TERMS_CLOSED = Symbol('terms-closed');
 
 type Registry = Record<string, PlanBillingProfile<string>>;
 /** Consume return flags without discarding an explicitly requested drawer or another query parameter. */
@@ -331,7 +335,11 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
             </> : <a id="billing-reactivate-btn" href={CONTACT_HREF} className="btn btn-lime">{W.reactivate.contact}</a>}
         </div>
         {/* GST/HST Stage 2 Part 4 (owner 2026-11-05): the cycle choices keep their short price; the one sentence sits under them. */}
-        {!premium && paid && s.gating.status === 'ready' && sale(ownProfile.key) && <p className={styles.hint}>{W.reactivate.pricesPlusTax}</p>}
+        {!premium && paid && s.gating.status === 'ready' && sale(ownProfile.key) && <>
+          <p className={styles.hint}>{W.reactivate.pricesPlusTax}</p>
+          {/* §20 (3) under the Reactivate button, after its tax line (step 6.3, drawing tab 5, pin 1's note). */}
+          <PlanTermsLine />
+        </>}
         <ReadFailure read={s.gating} section="plan availability" />
       </CoachCard>
       {premium && <CoachCard className={styles.section}>
@@ -346,6 +354,11 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
 
   const usage = s.usage.status === 'ready' ? s.usage.data : null;
   const changeKeys = Object.keys(profiles).filter(key => key === ownProfile.key || changes.some(change => change.target === key));
+  const paidChangeKeys = changeKeys.filter(key => profiles[key].config.monthlyPrice > 0);
+  // The trial sentence is about a CHECKOUT: only a row whose button goes to checkout can start a trial (a move or a downgrade
+  // never does, and neither does the viewer's own row).
+  const checkoutTrialDays = Math.max(0, ...paidChangeKeys.filter(key => changes.find(c => c.target === key)?.mechanism === 'checkout')
+    .map(key => profiles[key].config.trialDays));
   const choice = founding ? fd?.nextSeason ?? null : null;
   const card = fd ? W.founding.formatCard(fd.card ?? null) : null;
   const nextPlans = nextSeasonPlanOptions(ownProfile.key as OrgPlan);
@@ -442,6 +455,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         <p className={styles.hint}>{premium ? W.founding.coachChoiceHelp(ownProfile.config.label) : W.founding.orgChoiceHelp(ownProfile.config.label, PLAN_CONFIG.tournament.label)}</p>
         {nextPlans.map(key => <div key={key} className={styles.planActions}>{(['annual', 'monthly'] as const).map(cycle => <button key={cycle} type="button" className={`btn ${cycle === 'annual' ? 'btn-lime' : 'btn-outline'}`} onClick={() => a.choose(key, cycle)} disabled={disabled}>{W.founding.choose(profiles[key].config.label, cycle)} · {W.plan.price(cycle === 'annual' ? profiles[key].config.annualPrice : profiles[key].config.monthlyPrice, cycle)}</button>)}</div>)}
         <p className={styles.hint}>{W.founding.pricesPlusTax}</p>
+        {/* §20 (3): choosing next season's plan starts a subscription that renews (step 6.3, drawing tab 5, pin 1's note). */}
+        <PlanTermsLine />
         <p className={styles.hint}>{W.founding.guarantee}</p>
       </> : null}
       {cardWindowOpen && justChose && !choice && <p className={styles.hint}>{W.founding.confirming} {retry}</p>}
@@ -484,7 +499,12 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
             </tr>;
           })}</tbody>
         </table></div>
-        {changeKeys.some(key => profiles[key].config.monthlyPrice > 0) && <p className={`${styles.lede} ${styles.afterTable}`}>{W.change.pricesPlusTax}</p>}
+        {paidChangeKeys.length > 0 && <>
+          <p className={`${styles.lede} ${styles.afterTable}`}>{W.change.pricesPlusTax}</p>
+          {/* §20 (3): one line under the table serves every row's button, straight after the tax line (step 6.3, drawing tab 5, pin 1);
+              "if your plan starts with a trial" when a row's plan has trial days (checkout decides — a first subscription only). */}
+          <PlanTermsLine trial={checkoutTrialDays} />
+        </>}
         <ReadFailure read={s.gating} section="plan availability" />
         <ReadFailure read={s.move} section="scheduled plan changes" />
         {profile.usageMeters.includes('teams') && <p className={`${styles.lede} ${styles.afterTable}`}>{W.change.custom(Math.max(...changeKeys.map(key => profiles[key].config.teamLimit)))} <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a> {W.change.customEnd}</p>}
@@ -574,6 +594,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
   const [payFor, setPayFor] = useState<OrgPlan | null>(null);
   // GST/HST Stage 1: the buyer's billing address (a Coaches Portal's is the coach's own home address).
   const address = useBillingAddressGate({ orgSlug: org.slug });
+  const terms = useTermsGate();
   const [review, setReview] = useState<{ kind: 'cancel'; data: BillingCancellation } | { kind: 'downgrade'; read: BillingRead<BillingDowngrade> } | null>(null);
   const [reason, setReason] = useState('');
   const [reviewError, setReviewError] = useState<string | null>(null);
@@ -679,7 +700,11 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
   }, [justChose, founding, retryReads, setNotice]);
 
   async function post(endpoint: string, input: Record<string, unknown> = {}, method = 'POST') {
-    const response = await fetch(endpoint, { method, headers: { 'Content-Type': 'application/json' }, body: method === 'DELETE' ? undefined : JSON.stringify({ ...input, orgSlug: org.slug }) });
+    // Through the Terms gate (GST/HST Stage 6 step 6.3, C3): a paid route that stops on the Terms opens the window, and after the
+    // tick the same request goes again. Only checkout, the next-season choice and the card can stop; every other route here
+    // never does (cancelling is never gated), so for them this is the plain fetch.
+    const response = await terms.send(endpoint, { method, headers: { 'Content-Type': 'application/json' }, body: method === 'DELETE' ? undefined : JSON.stringify({ ...input, orgSlug: org.slug }) });
+    if (!response) return TERMS_CLOSED;
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       // GST/HST Stage 1: a paid route with no billing address on file opens the Billing address window, not an error.
@@ -705,7 +730,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
   async function checkout(target: OrgPlan, chosen: BillingCycle = cycle) {
     await run('checkout', async () => {
       const result = await post('/api/billing/create-checkout', { planKey: target, billingCycle: chosen, returnTo: billingBase });
-      if (!live.current) return;
+      if (!live.current || result === TERMS_CLOSED) return;
       if (result === ADDRESS_REFUSED) { address.refused(() => void checkout(target, chosen)); return; }
       if (result.applied) { setNotice({ tone: 'good', text: W.notice.updated(PLAN_BILLING_PROFILES[target].config.label, result.restoredCount, result.remainingRetainedCount) }); reloadAfterAction(); }
       else if (result.url) leave(result.url);
@@ -733,7 +758,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
   const actions: Action = {
     busy: busy ?? (retrying ? 'retry' : null), cycle, setCycle, retry: retryReads,
     portal: () => void run('portal', async () => { const result = await post('/api/billing/portal', { returnTo: billingBase }); if (result.url) leave(result.url); else if (live.current) throw new Error(W.errors.portal); }),
-    card: () => void run('card', async () => { const result = await post('/api/billing/setup-payment-method', { returnTo: billingBase }); if (result.url) leave(result.url); else if (live.current) throw new Error(W.errors.card); }),
+    card: () => void run('card', async () => { const result = await post('/api/billing/setup-payment-method', { returnTo: billingBase }); if (result === TERMS_CLOSED) return; if (result.url) leave(result.url); else if (live.current) throw new Error(W.errors.card); }),
     // Every paid button asks for the billing address first when none is on file (GST/HST Stage 1): window → question → Stripe.
     reactivate: () => address.ensure(() => void checkout(ownProfile.key)),
     keep: () => void run('keep', async () => { await post(`/api/billing/move?${scope}`, {}, 'DELETE'); if (live.current) { setNotice({ tone: 'good', text: W.plan.kept(org.name, ownProfile.config.label) }); reloadAfterAction(); } }),
@@ -753,7 +778,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
   function choose(key: string, billingCycle: BillingCycle) {
     return run('choose', async () => {
       const result = await post('/api/billing/choose-next-season', { planKey: key, billingCycle, returnTo: billingBase });
-      if (!live.current) return;
+      if (!live.current || result === TERMS_CLOSED) return;
       if (result === ADDRESS_REFUSED) { address.refused(() => void choose(key, billingCycle)); return; }
       if (result.applied || result.url) { choiceRetries.current = 0; setJustChose(true); }
       if (result.applied) { setNotice({ tone: 'good', text: W.notice.nextSeason }); reloadAfterAction(); }
@@ -838,11 +863,12 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
         setMoveTo(null); setNotice({ tone: 'good', text }); reloadAfterAction();
       } }} />}
     {payFor && <PlanCycleDialog key={`${org.id}:${payFor}`} label={PLAN_BILLING_PROFILES[payFor].config.label} monthlyPrice={PLAN_BILLING_PROFILES[payFor].config.monthlyPrice}
-      annualPrice={PLAN_BILLING_PROFILES[payFor].config.annualPrice} savings={W.plan.savings(payFor)} initial={cycle} onClose={() => setPayFor(null)}
-      billedTo={address.location ? formatBilledTo(address.location) : null}
+      annualPrice={PLAN_BILLING_PROFILES[payFor].config.annualPrice} trialDays={PLAN_BILLING_PROFILES[payFor].config.trialDays} savings={W.plan.savings(payFor)} initial={cycle} onClose={() => setPayFor(null)}
+      billedTo={address.location ? formatBilledTo(address.location) : null} free={freeChoice(payFor)}
       onChangeAddress={() => { const plan = payFor; setPayFor(null); address.edit(() => setPayFor(plan)); }}
       onContinue={chosen => { setPayFor(null); setCycle(chosen); void checkout(payFor, chosen); }} />}
     {address.dialog}
+    {terms.window}
     {address.savedAt !== null && <NoticePill key={address.savedAt} message={BILLING_ADDRESS_FORM_WORDS.saved} onDone={address.clearSaved} />}
     {keepOpen && pendingEnding && <KitDialog kind="question" title={W.cancel.keepTitle(ownKey)} onClose={() => setKeepOpen(false)} busy={busy !== null}
       footer={<><DialogCancel>{W.cancel.notNow}</DialogCancel>

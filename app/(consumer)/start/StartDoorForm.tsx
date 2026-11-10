@@ -8,6 +8,8 @@ import StartSteps from '@/components/auth/StartSteps';
 import { AccountFields, Field, StartColumn, StartFoot, StartHead, accountForm, hintId, type AccountValues } from '@/components/auth/AccountForm';
 import { accountExistsSignInHref } from '@/lib/auth-errors';
 import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
+import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
+import type { TermsSend } from '@/lib/legal-acceptance-rules';
 import { pickedPlanLabel } from '@/lib/plan-config';
 import { RUN_A_TOURNAMENT_STEPS, START_DOOR_PATH, runATournamentPick, startDoorLinkPath, startPricingParams, withStartPricing, type StartPricing, type StartStepViewer } from '@/lib/start-door';
 
@@ -75,6 +77,9 @@ const SIGNUP_ROUTE: Record<FormDoor, string> = {
   organization: '/api/auth/signup',
 };
 
+/** A door's create function: sends its request through `send`, answers where to go next, or null (the Terms window closed). */
+export type StartCreate = (name: string, send: TermsSend) => Promise<string | null>;
+
 /** A door's create step, carrying the pricing page's plan for an account that signs in instead of signing up. */
 function stepHref(door: FormDoor, pricing: StartPricing | null): string {
   return withStartPricing(START_DOOR_PATH[door], pricing);
@@ -96,8 +101,9 @@ export default function StartDoorForm({ door, viewer, initialName = '', confirme
   confirmed?: boolean;
   /** Run a tournament only: the plan picked on the pricing page, riding on the account (A6). */
   pricing?: StartPricing | null;
-  /** Makes the thing, and answers where to go next. */
-  create: (name: string) => Promise<string>;
+  /** Makes the thing, and answers where to go next — or null when it stopped on the Terms and the person closed the window.
+   *  `send` is the step's Terms gate (GST/HST Stage 6 step 6.3, C3): the create route's request goes through it. */
+  create: StartCreate;
   /** The line under the name field (the public address). */
   help?: (name: string) => ReactNode;
 }) {
@@ -353,11 +359,14 @@ function NameStep({ door, viewer, initialName, confirmed, create, help }: {
   viewer: StartStepViewer;
   initialName: string;
   confirmed: boolean;
-  create: (name: string) => Promise<string>;
+  create: StartCreate;
   help?: (name: string) => ReactNode;
 }) {
   const copy = DOOR_COPY[door];
   const router = useRouter();
+  // Someone signed in who has not agreed to the current Terms: the create stops, their window opens over the step, and after
+  // the tick the same create goes again (step 6.3, C3). Closed: the name stays typed and nothing was made.
+  const terms = useTermsGate();
   const [name, setName] = useState(initialName);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -373,7 +382,9 @@ function NameStep({ door, viewer, initialName, confirmed, create, help }: {
     }
     setLoading(true);
     try {
-      router.push(await create(name.trim()));
+      const next = await create(name.trim(), terms.send);
+      if (next === null) { setLoading(false); return; }
+      router.push(next);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : copy.failed);
@@ -424,6 +435,7 @@ function NameStep({ door, viewer, initialName, confirmed, create, help }: {
           </Link>
         </p>
       </StartFoot>
+      {terms.window}
     </StartColumn>
   );
 }

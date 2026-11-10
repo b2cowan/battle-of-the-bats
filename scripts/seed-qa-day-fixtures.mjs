@@ -43,7 +43,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
-import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
+import { ensureFixtureUser } from './lib/fixture-user.mjs';
 /* ⚠⚠ A SEEDED LINE'S KIND IS DERIVED FROM ITS WORD, NEVER TYPED BESIDE IT (mig 280).
    The form stopped asking "is this a cost / expected fundraising / expected sponsorship / expected
    other income?" because the answer could contradict the item picked under it — a sponsorship line
@@ -107,27 +107,11 @@ function normalizeOpponentName(name) {
   return c;
 }
 
-async function findUserByEmail(email) {
-  for (let page = 1; page <= 40; page++) {
-    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
-    die('listUsers', error);
-    const hit = data.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-    if (hit) return hit;
-    if (data.users.length < 200) return null;
-  }
-  return null;
-}
-
+// resetPassword:false — a re-run leaves an existing account's password and metadata alone (as before); it still records Terms acceptance.
 async function ensureUser(email, password, fullName) {
-  const existing = await findUserByEmail(email);
-  if (existing) { note(`auth user exists ${email}`); await recordLegalAcceptance(db, existing); return existing; }
-  const { data, error } = await db.auth.admin.createUser({
-    email, password, email_confirm: true, user_metadata: { full_name: fullName },
-  });
-  die(`createUser ${email}`, error);
-  ok(`auth user created ${email} / ${password}`);
-  await recordLegalAcceptance(db, data.user); // GST/HST 6.3 A5: a fixture never meets the Terms screen
-  return data.user;
+  const { user, created } = await ensureFixtureUser(db, { email, password, userMetadata: { full_name: fullName }, resetPassword: false });
+  if (created) ok(`auth user created ${email} / ${password}`); else note(`auth user exists ${email}`);
+  return user;
 }
 
 /**

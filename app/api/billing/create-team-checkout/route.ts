@@ -23,6 +23,7 @@ import { hadSubscriptionBefore } from '@/lib/plan-move';
 import { requireBillingLocation, stampStripeCustomerAddress } from '@/lib/billing-location-server';
 import { BUYER_NAME_META, TAXED_CHECKOUT } from '@/lib/billing-tax';
 import { toStripeAddress } from '@/lib/billing-location';
+import { requireAcceptance } from '@/lib/legal-acceptance';
 
 function appendSuccess(url: string) {
   return `${url}${url.includes('?') ? '&' : '?'}success=1`;
@@ -41,6 +42,10 @@ async function orgSlugById(orgId: string | null | undefined): Promise<string | n
 export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();
+  // Nobody starts a paid plan without the current Terms (GST/HST Stage 6 step 6.3, C1) — before every branch: the comp
+  // and dev-mock paths provision a workspace without Stripe.
+  const terms = await requireAcceptance(user);
+  if (!terms.ok) return terms.response;
 
   let checkoutRequest;
   let rawBody: Record<string, unknown>;

@@ -18,6 +18,7 @@ import { useFoundingOfferOnPlanChoice } from '@/lib/use-founding-season-lock';
 import type { PanelPlanKey as PlanKey } from '@/lib/plan-upgrade';
 import type { PlanBillingProfile } from '@/lib/plan-billing-profile';
 import styles from './PlanArticlePanel.module.css';
+import PlanTermsLine from '@/components/legal/PlanTermsLine';
 
 interface Props {
   planKey: PlanKey | null;
@@ -175,7 +176,9 @@ export default function PlanArticlePanel({
             <Link className={`btn btn-lime btn-data ${styles.upgradeBtn}`} href={COACHES_START_PATH}>
               Start your Coaches Portal
             </Link>
-          ) : canUpgrade && planKey && !readOnly ? (
+          ) : canUpgrade && planKey && !readOnly ? (<>
+            {/* §20 (3), read before the button — only when the button shows a price (a Founding "Get … free" carries none). */}
+            {!promoActive && config.monthlyPrice > 0 && <PlanTermsLine trial={config.trialDays} />}
             <button
               className={`btn btn-lime btn-data ${styles.upgradeBtn}`}
               onClick={() => onUpgrade(planKey)}
@@ -183,7 +186,7 @@ export default function PlanArticlePanel({
             >
               {upgradeLoading === planKey ? loadingLabel : promoActive ? `Get ${config.label} free` : `Upgrade to ${config.label}${picksCycle ? ` · ${billingCycle === 'annual' ? `$${config.annualPrice} / year` : `$${config.monthlyPrice} / month`}` : ''}`}
             </button>
-          ) : null}
+          </>) : null}
           <button className={`btn btn-ghost ${styles.cancelBtn}`} onClick={onClose}>
             Not right now
           </button>

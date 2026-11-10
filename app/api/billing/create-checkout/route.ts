@@ -26,6 +26,7 @@ import {
   billingAddressFromBody, billingBuyerOf, requireBillingLocation, type BillingBuyer,
 } from '@/lib/billing-location-server';
 import type { BillingLocation } from '@/lib/billing-location';
+import { requireAcceptance } from '@/lib/legal-acceptance';
 
 /** Welcome email fires this many days after a user selects Tournament Plus at onboarding. */
 const PLUS_WELCOME_DELAY_DAYS = 1;
@@ -85,6 +86,10 @@ export const POST = withObservability(async (req: Request) => {
   // Billing is owner-only — enforce server-side (the UI also hides these controls).
   const denied = await requireCapability(auth, 'billing');
   if (denied) return denied;
+  // Nobody starts or changes a paid plan without the current Terms (GST/HST Stage 6 step 6.3, C1) — before every branch:
+  // the address save, the dev mock and the Founding Season upgrade all write a plan or a record without Stripe.
+  const terms = await requireAcceptance(auth.user);
+  if (!terms.ok) return terms.response;
 
   const planKey = typeof body.planKey === 'string' ? body.planKey : undefined;
   const returnTo = typeof body.returnTo === 'string' ? body.returnTo : undefined;

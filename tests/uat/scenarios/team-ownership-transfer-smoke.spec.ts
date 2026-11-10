@@ -1,4 +1,4 @@
-import { recordLegalAcceptance } from '../helpers/legal-acceptance' // GST/HST 6.3 A5
+import { createFixtureUser } from '../helpers/fixture-user' // GST/HST 6.3 C
 import { expect, test, type Page } from '@playwright/test'
 import { readdirSync, readFileSync } from 'fs'
 import path from 'path'
@@ -124,12 +124,7 @@ test.describe.serial('a coach’s own team moves into a club, whole', () => {
 
     const suffix = `move-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
     const coachEmail = `team-move-smoke-${suffix}@dev.local`
-    const { data: coachUser, error: coachUserError } = await supabaseAdmin.auth.admin.createUser({
-      email: coachEmail, email_confirm: true, password: SMOKE_COACH_PASSWORD,
-    })
-    if (coachUserError) throw coachUserError
-    const coachUserId = coachUser.user!.id
-    await recordLegalAcceptance(supabaseAdmin, coachUser.user)
+    const coachUserId = (await createFixtureUser(supabaseAdmin, { email: coachEmail, password: SMOKE_COACH_PASSWORD })).id
 
     const teamName = `Team Move Smoke ${suffix}`
     const provisioned = await provisionWorkspace({ ownerUserId: coachUserId, teamName, slug: `team-move-smoke-${suffix}` })

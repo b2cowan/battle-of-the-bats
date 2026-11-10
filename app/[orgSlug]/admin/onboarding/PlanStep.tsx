@@ -9,6 +9,7 @@ import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { RUN_A_TOURNAMENT_STEPS, runATournamentPick, type StartBilling, type StartPricing } from '@/lib/start-door';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PlanStep.module.css';
+import PlanTermsLine from '@/components/legal/PlanTermsLine';
 
 /**
  * THE PLAN STEP (The first look, Stage 3a — Ask 4, F07, F08; gate G3–G5 ruled 2026-10-20, drawn at
@@ -95,6 +96,8 @@ export default function PlanStep({ orgName, pricing, initialBilling, foundingOff
       <ul className={styles.points}>{PLUS_POINTS.map(p => <li key={p}>{p}</li>)}</ul>
       <span className={`${accountForm.label} ${styles.billingLabel}`} id="plan-step-billing">Billing</span>
       <ChoicePair labelledBy="plan-step-billing" value={billing} options={billingOptions} onChange={setBilling} disabled={busy} />
+      {/* §20 (3) above the paid button; the $0 Founding Season choice carries none (§20 note 3; step 6.3, drawing tab 5). */}
+      {!zero && <PlanTermsLine place="column" trial={PLAN_CONFIG.tournament_plus.trialDays} />}
       {startButton('tournament_plus', 'Start with Tournament Plus')}
     </section>
   );

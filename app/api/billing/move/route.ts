@@ -9,6 +9,7 @@ import type { OrgPlan } from '@/lib/types';
 import { ownPlanOf } from '@/lib/entitlement-grants';
 import { billingAddressFromBody, requireBillingLocation, withClubAddressOnStripe, type BillingBuyer } from '@/lib/billing-location-server';
 import type { BillingLocation } from '@/lib/billing-location';
+import { requireAcceptance } from '@/lib/legal-acceptance';
 
 /**
  * The move between plans — one subscription, never a second checkout (Ask 4, D7; A06).
@@ -53,6 +54,10 @@ export const POST = withObservability(async (req: Request) => {
   const authorized = await authorizeMove(typeof body.orgSlug === 'string' ? body.orgSlug : undefined);
   if (!authorized.ok) return authorized.response;
   const { org, actor } = authorized;
+  // A move changes a paid plan: never without the current Terms (GST/HST Stage 6 step 6.3, C1) — before the address save and
+  // every branch. DELETE (keep my current plan) and the preview are never asked: cancelling is never gated (§18).
+  const terms = await requireAcceptance(authorized.user);
+  if (!terms.ok) return terms.response;
 
   const toPlan = parseTargetPlan(body.planKey);
   if (!toPlan) return NextResponse.json({ error: 'Choose a plan to move to.', code: 'not_a_move' }, { status: 400 });

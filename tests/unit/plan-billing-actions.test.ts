@@ -11,6 +11,21 @@ import { PLAN_BILLING_WORDS as W } from '../../lib/plan-billing-words.ts';
 type Element = React.ReactElement<Record<string, unknown>>;
 type Effect = { deps?: readonly unknown[]; cleanup?: () => void };
 
+/**
+ * The move window, loaded with the runner's hooks, answering its own window. Since GST/HST Stage 6 step 6.3 (C3) it returns
+ * the window AND the Terms window beside it (a fragment, so the Terms window opens over it — Ask 5A); these tests read the
+ * move window itself, its footer and body.
+ */
+function moveDialogOf(runner: ReturnType<typeof hookRunner>) {
+  const mod = billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element };
+  return {
+    default: (props: Record<string, unknown>) => {
+      const out = mod.default(props);
+      return (out.type === React.Fragment ? [out.props.children].flat()[0] : out) as Element;
+    },
+  };
+}
+
 /** Execute the real component's hooks, then inspect its returned React elements and invoke their handlers.
  * Effects, state, cleanup and rerenders run deterministically; no replacement action implementation is used. */
 function hookRunner() {
@@ -424,7 +439,7 @@ describe('real move dialog request contracts', () => {
     try {
       env.answer('/api/billing/move/preview', { direction: 'up', amountDueToday: 10000, currency: 'cad', prorationDate: 123, nextAmount: 21900, renewsAt: null, billingCycle: 'monthly', lines: null, tax: taxedOn(8850, 1150) });
       env.answer('/api/billing/move', { direction: 'up', finishing: true });
-      const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
+      const Dialog = (moveDialogOf(runner) as { default: (p: Record<string, unknown>) => Element }).default;
       const moved: string[] = [];
       const render = () => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', returnTo: '/falcons-club/coaches/billing', teamsHref: '/teams', onClose() {}, onMoved: (text: string) => moved.push(text) }));
       let dialog = await settle(render);
@@ -449,7 +464,7 @@ describe('real move dialog request contracts', () => {
     try {
       env.answer('/api/billing/move/preview', { code: 'no_live_subscription', error: 'Checkout needed', checkout: { toPlan: 'club', billingCycle: 'monthly', trialDays, amountDueToday: trialDays ? 0 : 24747, nextAmount: 21900, currency: 'cad', firstChargeAt: '2027-01-29', renewsAt: null, tax: trialDays ? null : taxedOn(21900, 2847) } }, false);
       env.answer('/api/billing/create-checkout', { url: 'https://stripe.test/club-checkout' });
-      const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
+      const Dialog = (moveDialogOf(runner) as { default: (p: Record<string, unknown>) => Element }).default;
       const render = () => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', freeThrough: '2026-12-31', returnTo: '/falcons-club/coaches/billing', teamsHref: '/teams', onClose() {}, onMoved() {} }));
       let dialog = await settle(render);
       const copy = find(dialog, e => e.type === 'p' && e.props.children === (trialDays ? W.clubUpgrade.trial(trialDays) : W.clubUpgrade.noTrial));
@@ -467,7 +482,7 @@ describe('real move dialog request contracts', () => {
     const env = environment(), runner = hookRunner();
     try {
       env.answer('/api/billing/move/preview', { code, error: 'A named refusal', endsAt: '2026-12-31' }, false);
-      const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
+      const Dialog = (moveDialogOf(runner) as { default: (p: Record<string, unknown>) => Element }).default;
       const render = () => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', returnTo: billingBase, teamsHref: '/teams', onClose() {}, onMoved() {} }));
       const dialog = await settle(render);
       assert.equal(elements(dialog.props.footer).some(e => e.props.children === W.clubUpgrade.start || e.props.children === W.move.checkout), false);
@@ -478,7 +493,7 @@ describe('real move dialog request contracts', () => {
     const env = environment(), runner = hookRunner();
     try {
       env.answer('/api/billing/move/preview', { code: 'band_too_small', error: 'Archive teams first', activeTeams: 22, teamLimit: 15 }, false);
-      const moveExports = billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (props: Record<string, unknown>) => Element };
+      const moveExports = moveDialogOf(runner) as { default: (props: Record<string, unknown>) => Element };
       const teamsHref = '/falcons-club/admin/rep-teams';
       const render = () => runner.render(() => moveExports.default({ org: organization('club_large'), toPlan: 'club', returnTo: billingBase, teamsHref, onClose() {}, onMoved() {} }));
       const dialog = await settle(render);
@@ -496,7 +511,7 @@ describe('real move dialog request contracts', () => {
         ? { direction, amountDueToday: 14250, currency: 'cad', prorationDate: 1793188800, nextAmount: 37900, renewsAt: '2026-11-03', billingCycle: 'monthly', lines: null, tax: taxedOn(12611, 1639) }
         : { direction, effectiveAt: '2026-11-03', nextAmount: 21900, currency: 'cad', billingCycle: 'monthly' });
       const moved: string[] = [];
-      const moveExports = billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (props: Record<string, unknown>) => Element };
+      const moveExports = moveDialogOf(runner) as { default: (props: Record<string, unknown>) => Element };
       const render = () => runner.render(() => moveExports.default({ org, toPlan, returnTo: billingBase, teamsHref: '/falcons-club/admin/rep-teams', onClose() {}, onMoved: (text: string) => moved.push(text) }));
       const dialog = await settle(render);
       assertRequest(env.requests[0], '/api/billing/move/preview', 'POST', { orgSlug: org.slug, planKey: toPlan });
@@ -509,7 +524,7 @@ describe('real move dialog request contracts', () => {
 
   // ── GST/HST Stage 2 Part 3 (drawings tabs 2–4, ruled 2026-11-05) ──
   const loadDialog = (runner: ReturnType<typeof hookRunner>) =>
-    (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
+    (moveDialogOf(runner) as { default: (p: Record<string, unknown>) => Element }).default;
   const rowOf = (dialog: Element, label: string) => elements(dialog).find(e => e.type === 'div' && elements(e.props.children).some(c => c.type === 'dt' && c.props.children === label));
   const text = (node: unknown): string => typeof node === 'string' || typeof node === 'number' ? String(node)
     : Array.isArray(node) ? node.map(text).join('') : React.isValidElement(node) ? text((node as Element).props.children) : '';
@@ -605,7 +620,7 @@ describe('real move dialog request contracts', () => {
       env.answer('/api/billing/move/preview', { code: 'no_live_subscription', error: 'No live subscription' }, false);
       env.answer('/api/billing/create-checkout', { url: 'https://stripe.test/move-checkout' });
       const org = { ...organization('club'), subscriptionPeriod: 'annual' };
-      const moveExports = billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (props: Record<string, unknown>) => Element };
+      const moveExports = moveDialogOf(runner) as { default: (props: Record<string, unknown>) => Element };
       const render = () => runner.render(() => moveExports.default({ org, toPlan: 'club_large', returnTo: billingBase, teamsHref: '/falcons-club/admin/rep-teams', onClose() {}, onMoved() {} }));
       const dialog = await settle(render);
       click(find(dialog.props.footer, element => element.type === 'button' && element.props.className === 'btn btn-lime'));
@@ -797,7 +812,7 @@ describe('a waiting cancel: Keep {Plan} and the dated Cancel window', () => {
       const env = environment(), runner = hookRunner();
       try {
         env.answer('/api/billing/move/preview', { code: 'subscription_ending', error: 'refused', endsAt }, false);
-        const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
+        const Dialog = (moveDialogOf(runner) as { default: (p: Record<string, unknown>) => Element }).default;
         const kept: string[] = [];
         const render = () => runner.render(() => Dialog({ org: organization('club_large'), toPlan: 'club', returnTo: billingBase, teamsHref: '/teams', onClose() {}, onMoved() {},
           ...(inPlace ? { onKeep: () => kept.push('keep') } : {}) }));

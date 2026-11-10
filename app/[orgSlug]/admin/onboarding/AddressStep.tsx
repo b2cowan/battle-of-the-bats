@@ -9,6 +9,7 @@ import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { RUN_A_TOURNAMENT_STEPS, type StartBilling } from '@/lib/start-door';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PlanStep.module.css';
+import PlanTermsLine from '@/components/legal/PlanTermsLine';
 
 /**
  * THE BILLING ADDRESS SCREEN of first-time setup (GST/HST Stage 1, owner rulings 2026-11-04 on
@@ -62,6 +63,8 @@ export default function AddressStep({ orgName, plan, billing, form, saving, fail
           <p className={accountForm.hint}>{F.intro}</p>
           <BillingAddressFields form={form} idPrefix="setup-address" subject={{ kind: 'club', name: orgName }} variant="start" disabled={saving} />
           {message && <p className={accountForm.error} role="alert">{message}</p>}
+          {/* §20 (3) above Continue to checkout, at the column's fine-print size (step 6.3, drawing tab 5, pin 4). */}
+          {!form.usClosed && PLAN_CONFIG[plan].monthlyPrice > 0 && <PlanTermsLine place="column" trial={PLAN_CONFIG[plan].trialDays} />}
           {!form.usClosed && (
             <button type="submit" className={accountForm.primary} disabled={saving} aria-busy={saving || undefined}>
               {saving ? F.saving : 'Continue to checkout'}
