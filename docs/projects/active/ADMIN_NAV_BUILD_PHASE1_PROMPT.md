@@ -14,7 +14,7 @@
   legal-line removal is wanted), all of Part A, its measurements, /docs, /design on the built screens, /simplify and
   /review (applied: Help hidden for a cancelled account; the Overview keeps its Tournaments card — `programs` is what
   the club runs, `navPrograms` what the sidebar and phone list; the doors are one rule, `kitPortalDoors`). Everything is
-  recorded in the plan's Phase 1 section; the walk is §504 (https://claude.ai/artifact/SErpWiVT4vx3UHzgRbwvrn).
+  recorded in the plan's Phase 1 section; **committed `664f9113d` 2026-11-09**; the walk is §504 (https://claude.ai/artifact/SErpWiVT4vx3UHzgRbwvrn).
 - **Part B, next session** (read the plan's Phase 1 section first): the club cell on two lines, the one 40px collapsed tile
   with the logo for all three portals, the back link's look (E12 (1)). Then measure, `/design`, `/simplify`, `/review`,
   `/docs`, its own walk.

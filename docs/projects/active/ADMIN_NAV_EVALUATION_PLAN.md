@@ -241,7 +241,7 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
     good, go for it").** /marketing confirmed **"Events"** (the tournament admin's own word — "Event settings", "Set Up
     Your Event"; the coach portal's schedule "events" never sit under it). The account menu's Terms · Privacy line: **its
     removal in the working copy is wanted** (owner, 2026-11-09); Help was built on the menu without it.
-  - **✅ Part A BUILT 2026-11-09** (the commit hash is recorded here at commit). What changed:
+  - **✅ Part A BUILT + COMMITTED `664f9113d` 2026-11-09** (only this session's hunks; the heading rule, the menu's legal-line removal and the help articles' family-app and "Staff your board" edits stayed with their sessions). What changed:
     - **The foot, one order** (admin rail, club and tournament; the Premium coach rail): Plan & billing (the owner, bill
       pill) · hairline (only with something on both sides) · the other portals (admin: Club inside a club's tournament
       · Tournaments in the club once it hosts one · Coaches Portal; coach: Club — was "Admin" — · Tournaments you run) ·
