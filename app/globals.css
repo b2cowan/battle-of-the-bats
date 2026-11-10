@@ -75,6 +75,12 @@
   --black-30:    rgba(0, 0, 0, 0.3);
   --black-40:    rgba(0, 0, 0, 0.4);
 
+  /* THE LOGO TILE'S GROUND AND INK (navigation Phase 1 Part B, B6): a logo is drawn for a light page, so its tile is white
+     and its initials dark in EVERY theme — the one place where Dark does not flip the ground. Named, not literal, so the
+     admin kit and the coaches portal stay token-only (`components/shared/SidebarLogoTile`). */
+  --logo-tile-ground: #FFFFFF;
+  --logo-tile-ink:    #241E15;
+
   /* ⚠⚠ THE SEMANTIC INK LADDER — the ONE place a text tier is decided (retuned 2026-08-18).
      Named for the ROLE, never the appearance, which is the whole point: `--white-45` means "white
      at 45%", so it serves meta TEXT and hairlines at once and neither can move without the other.

@@ -231,8 +231,10 @@ describe('desktop: the place in the strip, the bar is the tab band, the club cel
     assert.doesNotMatch(block(frameCss, '.clubCell'), /(^|[\s;{])(min-|max-)?height: \d/);
     // D5: the cell is a link to Overview; collapsed it is the club's initials.
     const rail = readCode('components/admin/kit/AdminKitRail.tsx');
-    assert.match(rail, /<Link href=\{base\} className=\{styles\.clubCell\}>/);
-    assert.match(rail, /stripTileText\(clubName\)/);
+    // (Part B moved the Link into `ClubCell`; the collapsed initials come from the one `SidebarLogoTile`.)
+    assert.match(rail, /<Link href=\{href\} className=\{styles\.clubCell\}>/);
+    assert.match(rail, /<ClubCell href=\{base\} /);
+    assert.match(rail, /<SidebarLogoTile source=\{logoUrl\} aspect=\{logoAspect\} name=\{name\} \/>/);
   });
 });
 

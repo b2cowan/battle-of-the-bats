@@ -84,8 +84,12 @@
   font-size: var(--type-body); font-weight: 600; line-height: 1;
   padding: 0.4rem 0.5rem; margin-left: -0.5rem; border-radius: 6px;
 }
-.back:hover { color: var(--text-primary); background: var(--white-8); }
-.backRule { width: 1px; align-self: stretch; margin: 0.15rem 0; flex: none; background: var(--home-line); }
+/* ⚖ The strip's look, the survivor of the pair (Part B, B2): see `AdminTopStrip.module.css`. */
+@media (hover: hover) {
+  .back:hover { color: var(--text-primary); background: var(--home-olive-soft); }
+}
+.back:active, .back:focus-visible { color: var(--text-primary); background: var(--home-olive-soft); }
+.backRule { width: 1px; height: 22px; flex: none; background: var(--home-line-strong); }
 
 /* The name beside its switcher: the name is cut to ONE line with "…" (walk §486 E) and gives way first; the switcher
    never does. The switcher's 44px square overhangs the name's line, so the line does not grow (the drawing's `.tr .chev`). */

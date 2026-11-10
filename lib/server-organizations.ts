@@ -11,6 +11,8 @@ type OrganizationRow = {
   name: string;
   slug: string;
   logo_url: string | null;
+  /** The logo's width / height (mig 458); the select is `*`. */
+  logo_aspect?: number | null;
   plan_id: Organization['planId'];
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
@@ -48,6 +50,7 @@ function mapOrganization(row: OrganizationRow): Organization {
     name: row.name,
     slug: row.slug,
     logoUrl: row.logo_url ?? undefined,
+    logoAspect: row.logo_aspect ?? undefined,
     planId: row.plan_id,
     stripeCustomerId: row.stripe_customer_id ?? undefined,
     stripeSubscriptionId: row.stripe_subscription_id ?? undefined,

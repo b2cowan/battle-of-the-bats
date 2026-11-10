@@ -4,7 +4,7 @@ import { canMoveClubMoney, canOpenModule, canOpenRepMoney } from '@/lib/member-a
 import { briefMoneyCounts, seasonsHoldingPayout } from '@/lib/club-money-reads';
 import { WAITING_ON_CLUB_STATUSES } from '@/lib/club-money-figures';
 import { planCarriesModule } from '@/lib/module-entitlements';
-import { orgRunsHouseLeague } from '@/lib/board-roles';
+import { readClubShape } from '@/lib/club-shape-read';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canOpenFamilies } from '@/lib/families-access';
@@ -107,16 +107,11 @@ export const GET = withObservability(async (req: Request) => {
   const fail: { error: unknown } = { error: null };
 
   // ── The shape: what the club runs (every reader of the hub, whatever their role) ──────────────
+  // One read, shared with the admin layout's first-paint seed (lib/club-shape-read.ts).
   const shapeRead = (async () => {
-    const [runsHouseLeague, tournamentsRes] = await Promise.all([
-      orgRunsHouseLeague({ ...org, id: org.id }),
-      planCarriesModule(org, 'module_tournaments')
-        ? supabaseAdmin.from('tournaments').select('id', { count: 'exact', head: true })
-            .eq('org_id', org.id).neq('status', 'archived')
-        : Promise.resolve({ count: 0, error: null }),
-    ]);
-    if (tournamentsRes.error) fail.error = tournamentsRes.error;
-    return { runsHouseLeague, hostsTournaments: (tournamentsRes.count ?? 0) > 0 };
+    const read = await readClubShape({ ...org, id: org.id });
+    if (read.error) fail.error = read.error;
+    return read.shape;
   })();
 
   // Teams in the person's reach: non-archived, and inside their rep-group scope when they have one.

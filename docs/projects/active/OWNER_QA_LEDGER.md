@@ -28141,3 +28141,13 @@ performed over the shared working tree. The original walk result is not claimed 
 **Not walked (proved by tests and the helper's pass on a since-removed fixture):** the bank screen writing no line; the word arriving under a 9-second delay; a team that cannot see the word (simulated); a read-only coach (no form, so no doors); layout at 361/390/768/1440.
 **Result:** pending.
 <!-- /§505 -->
+
+## §507 · Navigation across the three portals · Phase 1, Part B — **the head of the club's sidebar: the club's name on up to two lines (the whole name on hover only when it was cut, never folded), one white logo tile with a thin outline that is the club's logo or its initials (initials when there is no logo, it is wider than 2 : 1, taller than 1 : 2, or the file will not load), 24 px open and 40 px folded, the cell's line meeting the tab row's line; nothing in the head or the rows moves after the page appears; the back link wears one look in the strip and on the phone**
+<!-- §507 -->
+**Walk published 2026-11-10:** https://claude.ai/artifact/PCppSvfDoD9DVaJ5Qtrded (source `docs/projects/active/ADMIN_NAV_PHASE1B_WALK.html`); 4 walks, 25 checks. Build: navigation Phase 1 Part B, to the approved drawings https://claude.ai/artifact/S7XXbtLwNeZUjEWXzbUcw4 (tab 13, B1–B6 all A; plan `ADMIN_NAV_EVALUATION_PLAN.md` §5 Phase 1).
+**Sign-in:** the UAT Rep Club owner and admin (`uat-club-owner@` / `uat-club-admin@uat-rep-club.local`), the tournament organization owner (`uat-owner@uat-test-org.local`), the coach (`uat-coach@uat-test-org.local`); all `UATPassword2026!`. Walk 4 needs no sign-in (the demos).
+**Fixture:** `node scripts/walk-logo-tile.mjs logo|two|long|wide|tall|light|none|broken` changes the UAT Rep Club's logo and name on dev; `restore` puts them back (the club's first values are remembered in the system temp folder). Run `restore` when the walk is done. Dev only: the script refuses the production project.
+**Not walked (proved by tests and the build's own measurements):** the first paint with scripts off for every logo case; the 45 px cell against the tab band's line; the shape stored by a real upload (wide, tall, square, a camera-turned picture); the Programs order and the foot's Tournaments door in the server's page; a made stock logo (a square).
+**Open owner steps (not part of this walk):** migration 458 and the one-time logo measuring pass (`scripts/backfill-org-logo-aspect.mjs --prod --write`) go to production only at the promote, with the owner's yes; the production read-only census of which clubs' tiles changed (N10) is owed before the promote.
+**Result:** pending.
+<!-- /§507 -->

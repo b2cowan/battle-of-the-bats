@@ -1,9 +1,9 @@
 {
-  "generated": "2026-11-09",
-  "total": 494,
+  "generated": "2026-11-10",
+  "total": 495,
   "counts": {
     "tables": 16,
-    "columns": 230,
+    "columns": 231,
     "indexes": 75,
     "constraints": 63,
     "rls": 110
@@ -683,6 +683,10 @@
     },
     {
       "key": "column:only-dev:org_public_site_content.mailing_address",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.logo_aspect",
       "sig": ""
     },
     {

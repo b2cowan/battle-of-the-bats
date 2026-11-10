@@ -43,7 +43,8 @@ import {
 import strip from '@/components/shared/SidebarStrip.module.css';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import { stripTileText } from '@/lib/team-color';
+import { isSidebarStrip } from '@/lib/sidebar-strip';
+import SidebarLogoTile from '@/components/shared/SidebarLogoTile';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
@@ -82,6 +83,30 @@ function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, count 
   );
 }
 
+/** The club cell: the one logo tile and the name on up to two lines. Its whole name is the native `title`, set only while
+ *  the name is cut and never in the folded strip (B3 — the strip's bubble already shows it). */
+function ClubCell({ href, name, logoUrl, logoAspect }: { href: string; name: string; logoUrl?: string; logoAspect?: number }) {
+  const nameRef = useRef<HTMLSpanElement>(null);
+  const [cut, setCut] = useState(false);
+  // Cut = the clamp is hiding lines, and the sidebar is not folded. Measured on mount and whenever the name's box changes
+  // size — a window resize, and the strip folding (the label then collapses to a 1px clip, which resizes it).
+  useEffect(() => {
+    const el = nameRef.current;
+    if (!el) return;
+    const measure = () => setCut(!isSidebarStrip() && el.scrollHeight > el.clientHeight + 1);
+    // `observe` reports the first size at once, so no separate first read.
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [name]);
+  return (
+    <Link href={href} className={styles.clubCell}>
+      <SidebarLogoTile source={logoUrl} aspect={logoAspect} name={name} />
+      <span ref={nameRef} className={`${strip.rowLabel} ${styles.clubName}`} title={cut ? name : undefined}>{name}</span>
+    </Link>
+  );
+}
+
 export default function AdminKitRail() {
   const pathname = usePathname();
   const nav = useAdminKitNav();
@@ -90,7 +115,8 @@ export default function AdminKitRail() {
     onTournaments, portalDoors, calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
   const feeAlert = useFeeAlert();
-  const clubName = useOrg().currentOrg?.name ?? null;
+  const currentOrg = useOrg().currentOrg;
+  const clubName = currentOrg?.name ?? null;
   // The rail the strip's name bubble hangs beside.
   const railRef = useRef<HTMLElement>(null);
 
@@ -117,13 +143,11 @@ export default function AdminKitRail() {
           a link to Overview (switching clubs stays in the strip's Workspaces pill). Its height is the desktop tab band's
           (`--admin-band-h`, one variable both read), so its bottom rule and the band's are one line; it keeps that height
           on a screen with no tabs, so the navigation below never moves. Collapsed: the club's initials, its name in the
-          bubble. A tournament-only organization's cell names the organization; inside a club's tournament, the club. */}
-      {clubName && (
-        <Link href={base} className={styles.clubCell}>
-          <span className={styles.clubTile} aria-hidden>{stripTileText(clubName)}</span>
-          <span className={`${strip.rowLabel} ${styles.clubName}`}>{clubName}</span>
-        </Link>
-      )}
+          bubble. A tournament-only organization's cell names the organization; inside a club's tournament, the club.
+          ⚖ Phase 1 Part B (owner 2026-11-09): the name on up to two lines and the ONE logo tile (the logo, or the initials when
+          there is none, it is wider than 2 : 1 or taller than 1 : 2, or it will not load — decided from the logo's stored shape,
+          on the server's first paint). */}
+      {clubName && <ClubCell href={base} name={clubName} logoUrl={currentOrg?.logoUrl} logoAspect={currentOrg?.logoAspect} />}
       <nav className={styles.railScroll} aria-label="Admin navigation">
         {!tournamentOnly && !isCanceled && !onTournaments && (
           // ⚖ Not inside a tournament (E4, navigation Phase 1): "Club overview" became the foot's "Club" door — a row that

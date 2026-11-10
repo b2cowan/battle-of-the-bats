@@ -292,6 +292,45 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
     the dev server's badge covers the More button (the probe forced the click and read it as drawn).
   - **Part B** (the club cell on two lines, the 40px logo tile for all three portals, the back link's look) → its own
     session.
+    - **⚖ Owner answers before code, 2026-11-09 (all four as recommended):** (1) **seed the club's shape on the server in
+      Part B** — the club page's sidebar rows and foot door right on the first paint (the brief's waiting counts still
+      arrive after load: they decorate rows, they don't move them); (2) **logo size stored at upload** (stock logos are
+      always square; a one-time fill measures the logos already uploaded — dev in the build, production at the promote
+      with the owner's yes). Found at the gate: `organizations.logo_url` is on the server's first paint (`OrgProvider`
+      seed), but no size is; the only stored size is the family-email cache in `pdf_settings.logoSize`, which a PDF
+      settings save wipes, so the tile cannot lean on it; (3) **the logo open AND collapsed** (24px beside the name, 40px
+      collapsed), as E10 ruled and tab 10 drew; (4) **the N10 census on production, read-only, before the next promote**
+      — not this session's work.
+    - **Drawings tab 13 · Part B** (v9, 2026-11-09): the three name lengths, the tile with six kinds of logo, the collapsed
+      head at 45px vs tab 10's 58px, the back link in the strip and the phone bar. Not drawn before: the back link's hover
+      (and the phone bar's back link at all), the wide-logo fallback, the collapsed cell's height against the band.
+      Asks B1–B4 on the tab. **/design pass (v10, applied):** the initials drawn on the shipped 40px tile's white face
+      (one frame for logo and initials = new ask B6; tab 10 had an olive tint that ships nowhere at 40px); a tall logo
+      (taller than 1 : 2) = new ask B5, an addition to E10; a file that fails to load folded into B4 (initials); keyboard
+      focus (cell ring open, the tile's own ring collapsed, the strip tile's 2px-out recipe), the collapsed name bubble
+      and the back link's focus drawn; B1 gains C (36px tile); copy de-jargoned ("thin outline", "one-time pass").
+      Build notes from the pass: the logo's white ground is a fixed white in the dark theme too (not `--home-card`, which
+      turns dark); B3's tooltip needs an overflow measurement and none while collapsed (the bubble shows it); B2's tint
+      only under `(hover: hover)` plus `:active` and `:focus-visible`, so it never sticks after a tap.
+    - **⚖ Owner ruled tab 13 2026-11-09: B1–B6 all A** ("i agree with your recommendations"): B1 the collapsed cell
+      stays 45px (the lines meet; 40px tile, 2px air); B2 the strip's back-link look in both (olive tint on hover/press,
+      22px divider in the stronger shade); B3 the native tooltip only when the name is cut, never collapsed; B4 initials
+      when the size is unknown or the file fails to load; B5 initials for a logo taller than 1 : 2 too (extends E10); B6
+      one tile frame — white, thin outline — for logo and initials (the club's olive initials tile goes). Build in a fresh
+      session from `ADMIN_NAV_BUILD_PHASE1_PARTB_PROMPT.md` (its hand-off block).
+    - **Part B BUILT 2026-11-10** (commit owed; walk §507 owed). The club cell: the name 14px bold on 16px leading, two lines,
+      the whole name as the native tooltip only while cut and never folded; the one `SidebarLogoTile` (24px open, 40px folded,
+      white ground and thin outline for logo and initials, fixed white in the dark theme, initials when the stored shape is
+      outside 1 : 2 … 2 : 1, unknown, or the file fails to load). The shape is stored with the logo (`organizations.logo_aspect`,
+      mig 458, dev only until the promote): an upload measures it, a made stock logo is 1, a removal clears it, and a one-time
+      pass measured the logos already uploaded (dev; production at the promote with the owner's yes). The club's shape is read
+      on the server (the layout and the brief's route share one read) and seeds the provider, so the Programs order, "Also on
+      your plan" and the foot's Tournaments door are in the server's page; the brief's waiting counts still arrive after load.
+      The back link: the strip's look (olive-soft tint under `(hover: hover)` plus press and keyboard focus; a 1 × 22px divider in
+      the stronger line shade) in the strip, the phone bar and the paper header. **Measured (dev, UAT Rep Club, 1440):** first
+      paint = after load for every logo case, the one swap is a broken file (B4); cell 45px open and folded, its line at 93px
+      with the tab band's; two-line name fits with no tooltip, a cut one sets it, folded sets none. **Not done:** the N10
+      production census (before the promote); the tournament's and the team's tile sources (Phases 2 and 4 pass their own).
 - **Phase 2 · Tournament desktop.** Event in the cell; native `<select>` deleted; strip names the page
   (`useAdminPlace` names the lit row); paper titles drop where the strip names the page (Phase 3's `TabPageHeader`
   hand-off pattern); org-wide screens get the org sidebar (E3); `isTournamentOrgScreen` stays the one list.

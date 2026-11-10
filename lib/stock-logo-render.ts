@@ -97,7 +97,7 @@ export async function applyStockLogo(
 
   const logoUrl = supabaseAdmin.storage.from(ORG_LOGO_BUCKET).getPublicUrl(objectPath).data.publicUrl;
 
-  let write = supabaseAdmin.from('organizations').update({ logo_url: logoUrl }).eq('id', orgId);
+  let write = supabaseAdmin.from('organizations').update({ logo_url: logoUrl, logo_aspect: 1 }).eq('id', orgId); // a made stock logo is always a 512 x 512 square (mig 458)
   if (onlyOverPrevious) write = previousUrl ? write.eq('logo_url', previousUrl) : write.is('logo_url', null);
   const { data: written, error: dbError } = await write.select('id');
   if (dbError) throw new Error(dbError.message);

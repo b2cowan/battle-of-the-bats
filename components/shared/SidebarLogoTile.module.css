@@ -1,0 +1,61 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE ONE LOGO TILE (navigation Phase 1 Part B, E10 + B1–B6, owner 2026-11-09; drawn in tab 13 of
+   ADMIN_NAV_EVALUATION_DRAWINGS.html). Worn by the club cell today; the event (Phase 2) and the team's crest
+   (Phase 4) pass their own source and fallback later — the frame is shared so the three portals' heads match.
+
+   ONE FRAME for the logo and for the initials (B6): a white ground, a thin outline (the inset 1px ring the 40px strip
+   tile wore), 6px corners at 24 and 8px at 40. The ground and the initials' ink are fixed (`--logo-tile-*`): a logo is
+   drawn for a light page and a dark theme must not turn its ground dark.
+
+   `rail` is the sidebar's club cell: 24 beside the name, 40 when the person folded the sidebar to its strip (keyed to
+   `html[data-sidebar='strip']`, set before the first paint — never to a class React adds after hydration).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+.tile {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: var(--logo-tile-ground);
+  color: var(--logo-tile-ink);
+  box-shadow: inset 0 0 0 1px var(--home-line-strong);
+  font-weight: 700;
+  line-height: 1;
+}
+.s24, .rail {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: var(--type-token);
+}
+/* 40 is its own size and the folded strip's size for `rail`: written once. */
+.s40 {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  letter-spacing: 0.02em;
+}
+@media (min-width: 901px) {
+  :global(html[data-sidebar='strip']) .rail {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    font-family: var(--font-data);
+    font-size: var(--type-label);
+    letter-spacing: 0.02em;
+  }
+}
+
+/* The logo sits inside the ring, whole (never cropped): a 2px margin of white keeps a logo that touches its own edge
+   off the outline. Drawn above the ring, which is an inset shadow on the tile itself. */
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 2px;
+  box-sizing: border-box;
+  object-fit: contain;
+}

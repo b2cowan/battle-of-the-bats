@@ -14987,6 +14987,15 @@
         "column_default": "'club_default'::text"
       },
       {
+        "table_name": "organizations",
+        "pos": 50,
+        "column_name": "logo_aspect",
+        "data_type": "real",
+        "udt_name": "float4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "pitch_decks",
         "pos": 1,
         "column_name": "id",

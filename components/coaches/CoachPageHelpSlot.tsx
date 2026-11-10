@@ -31,8 +31,8 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * (bell panel · account menu · Workspaces popover — the 2026-09-01 account-menu ruling), with real
  * exits living INSIDE them; the CHAT door was removed from it by owner ruling 2026-07-31 for the
  * two faults a "?" would repeat: it is not an exit, and it duplicated a door already reachable at
- * the same width — `CoachesSidebar` carries a `Help` item (reaffirmed 2026-09-01: help stays OUT
- * of the account menu for the same no-duplicate-doors reason). Do not re-propose the strip for
+ * the same width. (Help lives in the account menu beside What's new since
+ * navigation Phase 1; the coach sidebar's own `Help` item is the demo sandbox's only, where the account menu is hidden.) Do not re-propose the strip for
  * contextual help.
  *
  * ⚠ **A PAGE WITHOUT A HOST KEEPS DRAWING ITS OWN "?" — the fallback is the default context value,

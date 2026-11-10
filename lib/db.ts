@@ -1780,6 +1780,7 @@ function mapOrg(r: any): Organization {
     name:                 r.name,
     slug:                 r.slug,
     logoUrl:              r.logo_url ?? undefined,
+    logoAspect:           r.logo_aspect ?? undefined,
     planId:               r.plan_id,
     stripeCustomerId:            r.stripe_customer_id ?? undefined,
     stripeSubscriptionId:        r.stripe_subscription_id ?? undefined,

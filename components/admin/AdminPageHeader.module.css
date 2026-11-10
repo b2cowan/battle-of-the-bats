@@ -54,8 +54,12 @@
   font-size: var(--type-body); font-weight: 600;
   padding: 0.4rem 0.5rem; margin-left: -0.5rem; border-radius: 6px;
 }
-.header .back:hover { color: var(--text-primary); background: var(--white-8); }
-.header .backRule { width: 1px; align-self: stretch; margin: 0.15rem 0; flex: none; background: var(--home-line); }
+/* ⚖ The strip's look (navigation Phase 1 Part B, B2): see `AdminTopStrip.module.css`. */
+@media (hover: hover) {
+  .header .back:hover { color: var(--text-primary); background: var(--home-olive-soft); }
+}
+.header .back:active, .header .back:focus-visible { color: var(--text-primary); background: var(--home-olive-soft); }
+.header .backRule { width: 1px; height: 22px; flex: none; background: var(--home-line-strong); }
 
 .header .actions {
   display: flex;

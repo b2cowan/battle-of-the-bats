@@ -1,13 +1,13 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-09 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-10 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 494 divergence(s)** across dev/prod.
+**⚠️ 495 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 10 | 6 | — |
-| Columns | 170 | 59 | 1 |
+| Columns | 171 | 59 | 1 |
 | Indexes | 49 | 26 | 0 |
 | Constraints | 35 | 28 | — |
 | RLS / CHECK | 82 | 26 | 0 (RLS state) |
@@ -34,7 +34,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (170)
+### Only in DEV (171)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -93,6 +93,7 @@
 - `org_children.emergency_contact_phone`
 - `org_children.medical_notes`
 - `org_public_site_content.mailing_address`
+- `organizations.logo_aspect`
 - `platform_charge_tax_looks.after_id`
 - `platform_charge_tax_looks.id`
 - `platform_charge_tax_looks.livemode`

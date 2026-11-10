@@ -11,6 +11,8 @@ import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
 import { canOpenModule } from '@/lib/member-access';
 import { clubHasPayouts } from '@/lib/online-payouts';
+import { readClubShape } from '@/lib/club-shape-read';
+import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import PlanPanelHost from '@/components/billing/PlanPanelHost';
@@ -109,11 +111,17 @@ export default async function AdminLayout({
   // This layout is already dynamic per request (it reads the session), so the cookie read costs no caching.
   const requestHeaders = await headers();
   const onTournamentPage = /^\/[^/]+\/admin\/tournaments(?:\/|$)/.test(requestHeaders.get('x-pathname') ?? '');
-  const [hasPayouts, tournamentSeed] = await Promise.all([
+  // The club's shape (Navigation Phase 1 Part B): what the club runs orders the sidebar's Programs and decides the foot's
+  // Tournaments door, so it is read here and handed down — the sidebar's first paint is its last. A tournament-only
+  // organization has no club to order, and a cancelled one gets no brief and no places. The read never throws.
+  const [hasPayouts, tournamentSeed, clubShape] = await Promise.all([
     canOpenModule(authCtx, authCtx.org, 'module_accounting')
       ? clubHasPayouts(authCtx.org.id).catch(() => false)
       : Promise.resolve(false),
     onTournamentPage ? readAdminTournamentSeed(orgSlug, requestHeaders.get('x-search')) : Promise.resolve(undefined),
+    isTournamentOnlyWorkspace(authCtx.org) || authCtx.org.subscriptionStatus === 'canceled'
+      ? Promise.resolve(undefined)
+      : readClubShape(authCtx.org).then(r => r.shape),
   ]);
 
   const shell = (
@@ -125,7 +133,7 @@ export default async function AdminLayout({
       limitedToTeamGroups={!!authCtx.repGroupIds}
     >
       <TournamentProvider orgSlug={orgSlug} seed={tournamentSeed}>
-        <AdminChrome>
+        <AdminChrome clubShape={clubShape}>
           <HelpDrawerProvider>
             {children}
           </HelpDrawerProvider>

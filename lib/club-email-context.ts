@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { readImageSize } from './org-logo-measure';
 import { getOrgPublicSiteContent } from './db';
 import {
   familyReplyPlan, familySenderName, isEmailableLogoUrl, usableContactEmail,
@@ -19,8 +20,6 @@ import {
 const LOGO_FETCH_TIMEOUT_MS = 4000;
 /** A logo that could not be measured is not tried again for a day, so a bad file never slows every send. */
 const LOGO_RETRY_AFTER_MS = 24 * 3600 * 1000;
-/** Same decode ceiling as the PDF pipeline: a small file may still declare enormous pixel dimensions. */
-const LOGO_MAX_INPUT_PX = 4096 * 4096;
 /** A club logo is a small file; anything bigger is not measured (the email shows the initials). */
 const LOGO_MAX_BYTES = 5 * 1024 * 1024;
 
@@ -43,15 +42,10 @@ async function measureLogo(url: string): Promise<{ width: number; height: number
     const res = await fetch(url, { signal: AbortSignal.timeout(LOGO_FETCH_TIMEOUT_MS), redirect: 'error' });
     if (!res.ok) return null;
     if (Number(res.headers.get('content-length') ?? 0) > LOGO_MAX_BYTES) return null;
-    // Lazy: sharp is a native module — loaded only when an image actually has to be measured.
-    const { default: sharp } = await import('sharp');
     const bytes = Buffer.from(await res.arrayBuffer());
     if (bytes.length > LOGO_MAX_BYTES) return null;
-    const meta = await sharp(bytes, { limitInputPixels: LOGO_MAX_INPUT_PX }).metadata();
-    if (!meta.width || !meta.height) return null;
-    // EXIF orientations 5–8 turn the picture on its side: a mail app shows it turned, so the size is the turned one.
-    const sideways = (meta.orientation ?? 1) >= 5;
-    return sideways ? { width: meta.height, height: meta.width } : { width: meta.width, height: meta.height };
+    // The turned size (a mail app shows an EXIF-turned picture turned): the one reader, lib/org-logo-measure.ts.
+    return await readImageSize(bytes);
   } catch {
     return null;
   }

@@ -55,7 +55,14 @@
   line-height: 1;
   text-decoration: none;
 }
-.back:hover { color: var(--text-primary); background: var(--home-olive-soft); }
+/* ⚖ ONE BACK LINK, ONE LOOK (navigation Phase 1 Part B, E12 (1) + B2, owner 2026-11-09): the strip's, the phone bar's and the
+   paper header's way up share it — an olive-soft tint and a 22px divider in `--home-line-strong`. The tint is under
+   `(hover: hover)` plus `:active` and `:focus-visible`, so a tap on a phone never leaves it stuck. (The bar's used
+   `--white-8`, which the kit maps to the card colour: white on white, and a rule stretched to the bar's height.) */
+@media (hover: hover) {
+  .back:hover { color: var(--text-primary); background: var(--home-olive-soft); }
+}
+.back:active, .back:focus-visible { color: var(--text-primary); background: var(--home-olive-soft); }
 .backRule { flex: none; width: 1px; height: 22px; background: var(--home-line-strong); }
 
 /* The name: 16px bold, one line, "…" (walk §486 E). On Overview and a club place it is the page's `<h1>`, so the heading's

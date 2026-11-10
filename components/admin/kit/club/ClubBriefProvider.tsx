@@ -9,9 +9,11 @@
  * Mounted by `AdminChrome` round the whole frame. It reads again whenever you come back to the hub
  * (the page whose job is "what waits this morning"), so the counts there are never a visit stale.
  *
- * ⚠ Before the first answer the ORDER is still right for most clubs: `fallbackShape` reads what the
- * org itself says (a League plan runs its house league by definition) and the tournaments the shell
- * already holds, so the rail does not reshuffle on arrival for a club that runs neither.
+ * ⚠ Before the first answer the ORDER is still right: the admin layout reads the club's shape on the server and hands it
+ * down as `seedShape` (navigation Phase 1 Part B, owner 2026-11-09), so the rows and the foot's Tournaments door are in the
+ * server's HTML and nothing moves when the brief lands. `initialShape` is the seed, or the guess for a render with no seed (a test, a
+ * failed server read): what the org itself says (a League plan runs its house league by definition) and the tournaments
+ * the shell already holds.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
@@ -64,7 +66,7 @@ type ClubBriefValue = {
 
 const ClubBriefContext = createContext<ClubBriefValue | null>(null);
 
-export function ClubBriefProvider({ children }: { children: ReactNode }) {
+export function ClubBriefProvider({ children, seedShape }: { children: ReactNode; seedShape?: ClubShape }) {
   const pathname = usePathname();
   const { currentOrg, userRole, userCapabilities } = useOrg();
   const { tournaments } = useTournament();
@@ -129,18 +131,18 @@ export function ClubBriefProvider({ children }: { children: ReactNode }) {
     return () => { stale = true; };
   }, [asksOutside, orgSlug, briefAnswer, permitsLeft]);
   const outsideNow = asksOutside && outside.orgSlug === orgSlug ? outside.value : null;
-  const fallbackShape = useMemo<ClubShape>(() => ({
+  const initialShape = useMemo<ClubShape>(() => seedShape ?? ({
     runsHouseLeague: currentOrg?.planId === 'league' || currentOrg?.freeFloor === 'league_starter',
     hostsTournaments: tournaments.some(t => t.status !== 'archived'),
-  }), [currentOrg?.planId, currentOrg?.freeFloor, tournaments]);
+  }), [seedShape, currentOrg?.planId, currentOrg?.freeFloor, tournaments]);
 
   const value = useMemo<ClubBriefValue>(() => ({
     status: current.status,
     brief: current.brief,
-    shape: current.brief?.shape ?? fallbackShape,
+    shape: current.brief?.shape ?? initialShape,
     outside: outsideNow,
     reload,
-  }), [current.status, current.brief, fallbackShape, outsideNow, reload]);
+  }), [current.status, current.brief, initialShape, outsideNow, reload]);
 
   return <ClubBriefContext.Provider value={value}>{children}</ClubBriefContext.Provider>;
 }

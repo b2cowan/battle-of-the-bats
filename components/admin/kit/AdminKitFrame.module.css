@@ -54,7 +54,11 @@
    name, a link to Overview. ITS HEIGHT IS THE TAB BAND'S (`--admin-band-h`, admin.module.css — ONE declaration, which the
    band reads too, `AdminKitEventHeader.module.css` `.deskBand`), so its bottom rule meets the band's in one line; on a
    screen without tabs it keeps that height, so the navigation never moves. It sits outside the scrolling list, so the
-   list's own top spacing (`.railScroll`) is the space before Overview. */
+   list's own top spacing (`.railScroll`) is the space before Overview.
+   ⚖ PHASE 1 PART B (owner 2026-11-09, B1–B3, E10): the name takes up to TWO lines (14px bold on 16px leading, so 32px in a
+   44px cell); the cell stays the band's height; the tile is the one shared logo tile (`SidebarLogoTile`: 24 open, 40 collapsed,
+   so the folded strip's cell has 2px of air above and below). The whole name is the native `title`, set by the rail only when
+   the name is cut and never while collapsed (the strip's bubble already shows it). */
 .clubCell {
   flex: none;
   height: var(--admin-band-h);
@@ -64,30 +68,26 @@
   gap: 0.5rem;
   padding: 0 1.25rem;
   border-bottom: 1px solid var(--home-line);
-  font-size: var(--type-body);
-  font-weight: 700;
-  line-height: 1.25;
   color: var(--text-primary);
   text-decoration: none;
   transition: background 0.1s;
 }
 .clubCell:hover { background: var(--home-olive-soft); }
 .clubCell:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
-/* The club's initials (the drawing's tile): beside the name open, alone collapsed. */
-.clubTile {
-  flex: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  display: inline-grid;
-  place-items: center;
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-  font-size: var(--type-token);
+/* The name: 14px bold, 16px leading, at most two lines and cut with "…" past them; a word longer than the cell breaks
+   rather than overflowing it. */
+.clubName {
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+  font-size: var(--type-body);
   font-weight: 700;
-  line-height: 1;
+  line-height: 1rem;
 }
-.clubName { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 @media (min-width: 901px) {
   :global(html[data-sidebar='strip']) .clubCell { justify-content: center; padding-inline: 0; }
 }

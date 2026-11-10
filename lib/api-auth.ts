@@ -63,6 +63,8 @@ type AuthOrgRow = {
   name: string;
   slug: string;
   logo_url: string | null;
+  /** The logo's width / height (mig 458); the select is `*`. */
+  logo_aspect?: number | null;
   plan_id: OrgPlan;
   tournament_limit: number | null;
   team_limit: number | null;
@@ -200,6 +202,7 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     name: orgRow.name,
     slug: orgRow.slug,
     logoUrl: orgRow.logo_url ?? undefined,
+    logoAspect: orgRow.logo_aspect ?? undefined,
     planId: orgRow.plan_id as OrgPlan,
     tournamentLimit: getEffectiveTournamentLimit(orgRow.plan_id as OrgPlan, orgRow.tournament_limit),
     teamLimit: getEffectiveTeamLimit(orgRow.plan_id as OrgPlan, orgRow.team_limit),

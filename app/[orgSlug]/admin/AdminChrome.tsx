@@ -17,6 +17,7 @@ import { AdminWorklistProvider } from '@/lib/admin-worklist';
 import AdminTitleManager from './AdminTitleManager';
 import { SetupWizardProvider } from '@/components/admin/tournament/SetupWizardOpener';
 import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
+import type { ClubShape } from '@/lib/admin-kit-nav';
 import styles from './admin.module.css';
 
 // Admin Design Continuity — the admin's frame (the rail, the phone bar, the phone's program row) and the
@@ -36,8 +37,11 @@ const FeeOverdueBanner = dynamic(() => import('@/components/admin/kit/club/FeeOv
 
 export default function AdminChrome({
   children,
+  clubShape,
 }: {
   children: React.ReactNode;
+  /** What the club runs, read on the server (navigation Phase 1 Part B): the sidebar's first paint. */
+  clubShape?: ClubShape;
 }) {
   // All hooks must be called unconditionally — before any early return.
   const pathname = usePathname();
@@ -164,7 +168,7 @@ export default function AdminChrome({
         <SetupWizardProvider>
           {/* A club place hands the pinned bar its name, facts and tab row (Admin header bar Phase 2) — the bar above
               the page and the place's frame inside it both sit under this one hand-off. */}
-          <ClubBriefProvider><AdminBarPlaceProvider>{frame}</AdminBarPlaceProvider></ClubBriefProvider>
+          <ClubBriefProvider seedShape={clubShape}><AdminBarPlaceProvider>{frame}</AdminBarPlaceProvider></ClubBriefProvider>
         </SetupWizardProvider>
       </AdminWorklistProvider>
     </AdminDensityProvider>

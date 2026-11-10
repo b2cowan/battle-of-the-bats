@@ -241,6 +241,9 @@ export interface Organization {
   name: string;
   slug: string;
   logoUrl?: string;
+  /** The logo's width / height (mig 458), or absent when there is no logo or it is not measured yet — the admin sidebar
+   *  tile shows the logo only within 1 : 2 … 2 : 1 (`lib/logo-aspect.ts`). */
+  logoAspect?: number;
   /** The plan every ACCESS decision reads: the club's own, or the plan its running free time gives it (the door,
    *  `lib/entitlement-grants.ts`). A billing action reads `ownPlanOf(org)` instead. */
   planId: OrgPlan;

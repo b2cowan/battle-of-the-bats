@@ -20,8 +20,8 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * that parity, deliberately using the same shape and the same vocabulary.
  *
  * ⚠ The "new tab" above is a real invariant, not an assumption: both entry points
- * carry target="_blank" (HelpDrawer's "Open the full guide" and CoachesSidebar's
- * Help item). If either ever navigates in place, this surface becomes reachable
+ * carry target="_blank" (HelpDrawer's "Open the full guide" and the account
+ * menu's Help row; the demo sandbox's sidebar keeps a Help item too). If either ever navigates in place, this surface becomes reachable
  * with no way out and needs one — that is the condition to re-check, not the tab.
  *
  * ── AND THE THEME ─────────────────────────────────────────────────────────────
@@ -55,8 +55,8 @@ export default function CoachesChrome({
 
   if (isHelp) {
     // No chrome at all — not even a "back to your portal" bar. BOTH doors into the
-    // guide force a new tab (the drawer's "Open the full guide" and the sidebar's
-    // Help entry both carry target="_blank"), so the portal is still sitting in the
+    // guide force a new tab (the drawer's "Open the full guide" and the account
+    // menu's Help row both carry target="_blank"), so the portal is still sitting in the
     // tab the reader came from and a way back is furniture for a journey nobody took.
     // Owner ruling 2026-08-14, after seeing the bar in place.
     return (

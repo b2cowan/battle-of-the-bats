@@ -81,7 +81,7 @@ describe('the switch — the hub', () => {
     // is unconditional; it stays its own chunk.
     const chrome = readCode('app/[orgSlug]/admin/AdminChrome.tsx');
     // Admin header bar Phase 2: the bar's place hand-off sits inside it, still around the whole frame.
-    assert.match(chrome, /<ClubBriefProvider><AdminBarPlaceProvider>\{frame\}<\/AdminBarPlaceProvider><\/ClubBriefProvider>/);
+    assert.match(chrome, /<ClubBriefProvider seedShape=\{clubShape\}><AdminBarPlaceProvider>\{frame\}<\/AdminBarPlaceProvider><\/ClubBriefProvider>/);
     assert.match(chrome, /const ClubBriefProvider = dynamic\(/);
   });
 });
@@ -159,8 +159,11 @@ describe('the morning brief (J4-041) — counts, never money (C04)', () => {
 
   it('the team counts are for someone who can open Rep Teams; the shape is about the org', () => {
     assert.match(route, /\.\.\.\(repTeams && planCarriesModule\(org, 'module_rep_teams'\)\s*\?\s*\{ teams:/);
-    assert.match(route, /orgRunsHouseLeague\(\{ \.\.\.org, id: org\.id \}\)/,
-      'the hub and the role dropdown answer "does this club run a house league" with ONE function (Ask 2)');
+    // (Navigation Phase 1 Part B: the route and the admin layout's first paint read the shape through the one `readClubShape`,
+    // which asks `orgRunsHouseLeague`.)
+    assert.match(route, /readClubShape\(\{ \.\.\.org, id: org\.id \}\)/,
+      'the hub, the sidebar\'s first paint and the role dropdown answer "does this club run a house league" with ONE function (Ask 2)');
+    assert.match(readCode('lib/club-shape-read.ts'), /orgRunsHouseLeague\(org\)/);
   });
 
   it('a failed read is an error, never a calm zero', () => {

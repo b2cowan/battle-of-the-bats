@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { ORG_LOGO_BUCKET as BUCKET, ensureOrgLogoBucket } from '@/lib/org-logo-storage';
 import { parseStockLogoUrl, removeStockLogoFile } from '@/lib/stock-logo-render';
+import { measureLogoAspect } from '@/lib/org-logo-measure';
 
 const MAX_BYTES = ORG_LOGO_MAX_BYTES;
 const ALLOWED_MIME: readonly string[] = ORG_IMAGE_TYPES;
@@ -55,6 +56,8 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
+  const logoAspect = await measureLogoAspect(bytes);
+
   const { data: urlData } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
   // Version stamp: the storage path is stable across re-uploads, so without this the URL
   // never changes — browsers keep the old image cached, and the PDF pipeline's derived-logo
@@ -63,7 +66,9 @@ export const POST = withObservability(async (req: Request) => {
 
   const { error: dbError } = await supabaseAdmin
     .from('organizations')
-    .update({ logo_url: logoUrl })
+    // The shape is stored with the logo (mig 458): the sidebar tile decides logo-or-initials from it on the server's first
+    // paint. Unreadable bytes store null, which the tile reads as initials.
+    .update({ logo_url: logoUrl, logo_aspect: logoAspect })
     .eq('id', org.id);
 
   if (dbError) {
@@ -84,7 +89,7 @@ export const DELETE = withObservability(async (req: Request) => {
 
   const { error: dbError } = await supabaseAdmin
     .from('organizations')
-    .update({ logo_url: null })
+    .update({ logo_url: null, logo_aspect: null })
     .eq('id', org.id);
 
   if (dbError) {

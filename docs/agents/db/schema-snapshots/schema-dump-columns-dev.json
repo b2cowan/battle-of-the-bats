@@ -14985,6 +14985,15 @@
     "ordinal_position": 49
   },
   {
+    "table_name": "organizations",
+    "column_name": "logo_aspect",
+    "data_type": "real",
+    "udt_name": "float4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 50
+  },
+  {
     "table_name": "pitch_decks",
     "column_name": "id",
     "data_type": "uuid",
