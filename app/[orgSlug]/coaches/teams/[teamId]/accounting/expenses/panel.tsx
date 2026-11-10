@@ -1693,7 +1693,7 @@ function MoneyRecordsPanel({
   if (pendingWord && categories.length > 0) {
     const hit = findPlatformWord(categories, pendingWord);
     setPendingWord(null);
-    if (hit) {
+    if (hit && !form.budgetItemId) { // never over a word the coach has already chosen while the list was coming
       const seed = { budgetCategoryId: hit.category.id, budgetItemId: hit.item.id, budgetItemName: hit.item.name, category: hit.category.name };
       setForm(f => ({ ...f, ...seed }));
       setFormOpenedWith(f => ({ ...f, ...seed }));
@@ -2354,6 +2354,9 @@ function MoneyRecordsPanel({
        writer" rule was about writers, not about which form calls the one that exists). */
     const prev = convBranch;
     setConvBranch(next);
+    // The bank view's fee / interest door (S3) described THIS branch: once the coach picks another, its banking-app line
+    // and plain off-plan note no longer apply. (Opened from the door, `openConversationFrom` sets it again right after.)
+    setBankDoor(null);
     /* A refusal about the unanswered question ("Choose what happened first.") must not outlive
        the answer — it read as a live error over a fully-filled form (owner, §80 walk). Any save
        refusal clears here: the form under it has materially changed either way. */
@@ -6297,6 +6300,8 @@ function MoneyRecordsPanel({
             /* The mirror of `leadGroup.onPick`: choosing a WORD abandons the bill. Without this a
                coach who picked a bill, changed their mind and picked an item would save a payment
                against the bill with an item stapled to it. */
+            // A word the coach chose is not the one a bank door chose (S3): its foot line and off-plan note step aside.
+            setBankDoor(null);
             if (conv.spendExpenseId) setConv(c => ({ ...c, spendExpenseId: '', spendInstallmentId: '' }));
             setForm(f => ({
             ...f,

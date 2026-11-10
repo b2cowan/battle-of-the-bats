@@ -1,0 +1,667 @@
+<title>Bank Check Fee Door</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Bank check through a volunteer’s eyes · S3, the fee door · Owner QA Ledger §505</span>
+    <h1>The bank check’s fee and interest doors</h1>
+    <p class="lead">One purpose: when the bank is off by a small amount nothing explains, the check now offers a bank fee door (or an interest door) beside “Record the missing amount”, the long list waits behind one line, and the window opens filled with a reminder to check the banking app. You look at it in both portals on a computer and a phone, save a fee in each, see the repeat line, and answer nine calls. About 30 minutes.</p>
+    <p class="lead">Written Nov 9, 2026 against the dev site. Parts 1, 2, 3 and 6 only look. Parts 4 and 5 save, on a team and a club account made for this walk (“S3 owner walk team”, “S3 owner walk chequing”); I remove both after you report.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> (dev; the dev server must be running)</dd>
+      <dt>Coach</dt><dd><code>uat-club-coach-15aaa@uat-rep-club.local</code> · password <code>UATPassword2026!</code><br>Head coach of 15U AAA (UAT Rep Club), who can record money. After sign-in you land on 15U AAA: use the <b>Switch team</b> select at the top and pick <b>S3 owner walk team</b>. Then <b>Money → Ledger → View → Balance check</b>. Direct link: <code>/uat-rep-club/coaches/teams/339222f8-9137-47c0-875b-6e9bdea393c8/accounting?section=ledger&amp;view=bank</code></dd>
+      <dt>Club</dt><dd><code>uat-admin@uat-test-org.local</code> · password <code>UATPassword2026!</code><br>Admin of UAT Club Org. <b>Admin → Accounting → Bank</b>, on the account <b>S3 owner walk chequing</b>. Direct link: <code>/uat-club-org/admin/accounting/bank</code> (the page adds <code>?account=…</code>).</dd>
+      <dt>Phone</dt><dd>Steps marked <b>phone</b> use your desk browser’s device toolbar at <b>390 px</b> wide.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Sign out before each new part, or use a private window per part.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>The fixture is made.</b> Each portal has 31 plain lines (Sep 30 to Oct 30) and no saved checks. Books on Oct 31 are $855.64 in both.</li>
+      <li><b>Walk the parts in order, 1 to 7.</b> Look-only parts first; the saves are last, so each step starts from the state it expects.</li>
+      <li><b>If a number you typed comes back on its own</b>, that is the page remembering your draft in your browser. Retype it.</li>
+      <li>On a phone the date field is the phone’s own date picker; at a desk you can type <code>Oct 31, 2026</code>.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>The bank screen itself writes no line: the books were counted before and after opening and cancelling every window, and only the window’s own Save added one.</li>
+      <li>A window opened before the word list has loaded still gets its word when the list arrives (tested with a 9-second delay, both portals, desk and phone), and never over a word you picked meanwhile.</li>
+      <li>A team that cannot see the “Bank & payment fees” word (it cannot happen in the data today; tested by hiding it) gets the window with the description and no word.</li>
+      <li>A coach who can only read money sees no check form, so no doors at all.</li>
+      <li>The Bank views pass the layout check at 361, 390, 768 and 1440 px.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: would a volunteer notice the fee door, trust the filled window, and not lose the Save button?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "s3-fee-door-walk-v1";
+  var PAGE = "Bank check through a volunteer’s eyes · S3, the fee door · Owner QA Ledger §505";
+  var WALKS = [
+ {
+  "id": "P1",
+  "title": "Coach, desk: five gaps, look only",
+  "job": "S3 owner walk team · Balance check · desk 1440",
+  "forText": "What a volunteer coach sees when the bank is off by a small amount nothing explains: the fee and interest doors, the folded list, the filled window.",
+  "passes": "A fee gap offers “Record a bank fee” beside “Record the missing amount”; a gap of interest offers “Record interest”; a big gap has one door; a gap one line explains keeps its own buttons and opens the list; the window opens filled with the banking-app line right above Save.",
+  "notIn": "Anything saved (parts 4 and 5). The club (part 2). The phone (part 3).",
+  "who": "The coach (card at the top). Nothing in this part saves.",
+  "where": "Coaches portal → S3 owner walk team → Money → Ledger → View → Balance check. The coach lands on 15U AAA first: use the Switch team select at the top and pick S3 owner walk team.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as the coach, switch to <b>S3 owner walk team<\/b>, and open <b>Money → Ledger → View → Balance check<\/b>.",
+    "s": "The Balance check view with an empty list of saved checks. If a saved check is listed, someone walked this before: stop and tell me."
+   },
+   {
+    "d": "Type the date <b>Oct 31, 2026<\/b> and the bank balance <span class=\"amt\">851.14<\/span>.",
+    "s": "<b>Off by $4.50<\/b> · The bank shows $4.50 less than your Ledger. Under Find: <b>The bank took out $4.50 your Ledger doesn’t have: a fee or a payment you haven’t recorded.<\/b> with two buttons, <b>Record a bank fee<\/b> and <b>Record the missing amount<\/b>. No interest button. Below it: <b>No line matches $4.50 on its own. Show the 31 lines to mark any the bank hasn’t received yet.<\/b> and no rows showing."
+   },
+   {
+    "d": "Click <b>Show the 31 lines<\/b>.",
+    "s": "31 rows open and the sentence now reads <b>No line matches $4.50 on its own. Hide the 31 lines.<\/b> with nothing after the full stop. Click it again to fold the list."
+   },
+   {
+    "d": "Click <b>Record a bank fee<\/b>.",
+    "s": "A <b>Record money<\/b> window, already filled: What happened? <b>We paid for something<\/b>; What is this? <b>League & Fees · Bank & payment fees<\/b>; Description <b>Bank fee<\/b>; Amount <span class=\"amt\">4.50<\/span>; Date paid <b>Oct 31, 2026<\/b>; a grey note <b>Not in your budget yet, so it shows as off-plan on Budget vs. Actual.<\/b> Just above Cancel and Save, an amber line: <b>Check your banking app first: was this a bank fee? Use the date it shows.<\/b>"
+   },
+   {
+    "d": "In that window click <b>What is this?<\/b> and pick <b>Officials<\/b>.",
+    "s": "The amber banking-app line disappears, and the grey note becomes the amber warning <b>Officials isn’t in your budget — it will show on Budget vs. Actual as spending you didn’t plan for.<\/b>"
+   },
+   {
+    "d": "Click <b>Cancel<\/b>, then <b>Discard<\/b> on “Close without saving?”. Open <b>Record a bank fee<\/b> again and change <b>What happened?<\/b> to <b>We settled up with the club<\/b>. Then Cancel and Discard.",
+    "s": "The amber banking-app line is gone as soon as you change what happened. Nothing was saved."
+   },
+   {
+    "d": "Type the date <b>Oct 25, 2026<\/b>, balance <span class=\"amt\">1668.69<\/span>. Click <b>Record interest<\/b>.",
+    "s": "<b>Off by $0.85<\/b>, the bank shows more. Two buttons: <b>Record interest<\/b> and <b>Record the missing amount<\/b> (no fee button), and “Show the 26 lines…”. The window: <b>Other money in<\/b>, <b>Other Income · Interest<\/b>, Description <b>Bank interest<\/b>, Amount <span class=\"amt\">0.85<\/span>, Date received <b>Oct 25, 2026<\/b>, the grey note, and the amber line ending <b>was this interest? Use the date it shows.<\/b> Cancel (Discard if asked)."
+   },
+   {
+    "d": "Date <b>Oct 20, 2026<\/b>, balance <span class=\"amt\">2775.29<\/span>.",
+    "s": "<b>Off by $350.00<\/b>. Exactly <b>one<\/b> button, <b>Record the missing amount<\/b>: no fee door, no interest door. “Show the 21 lines…” folded."
+   },
+   {
+    "d": "Date <b>Oct 15, 2026<\/b>, balance <span class=\"amt\">3221.36<\/span>.",
+    "s": "<b>Off by $107.77<\/b>, the bank shows more. The list is already open by itself, with no fee or interest door. The callout names <b>S3 walk line 9 (Oct 8)<\/b> as exactly $107.77 with the buttons <b>Not in the bank yet<\/b> and <b>Record the missing amount<\/b>. In the list that row keeps a bordered <b>Not in the bank yet<\/b> button; the 15 other rows show it as a quiet underlined link."
+   },
+   {
+    "d": "Date <b>Oct 20, 2026<\/b>, balance <span class=\"amt\">2666.09<\/span>.",
+    "s": "The callout reads <b>S3 walk line 17 (Oct 16) is $120.40, half of the $240.80 gap. Was it recorded the wrong way round?<\/b> like before S3: no fee or interest door, the list open."
+   },
+   {
+    "d": "Date <b>Sep 30, 2026<\/b>, balance <span class=\"amt\">4876.95<\/span>.",
+    "s": "<b>Off by $20.17<\/b>, fee door and gap door, and the link reads <b>Show the line<\/b> (not “Show the 1 lines”) in <b>No line matches $20.17 on its own. Show the line to mark any the bank hasn’t received yet.<\/b>"
+   }
+  ]
+ },
+ {
+  "id": "P2",
+  "title": "Club, desk: the same gaps, look only",
+  "job": "S3 owner walk chequing · Bank tab · desk 1440",
+  "forText": "The club treasurer’s version of part 1, in the club’s own words (“books”, “entered”, “Add”).",
+  "passes": "The same doors and the same folded list, with “Add a bank fee”, “Add interest” and “Add the missing entry”, and the Add an entry window filled the same way.",
+  "notIn": "Saving (part 5). The phone (part 3).",
+  "who": "The club admin (card at the top). Sign out of the coach first. Nothing in this part saves.",
+  "where": "Admin → Accounting → Bank tab. The address gains ?account=… when the tab opens; that is normal.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as the club admin and open <b>Admin → Accounting → Bank<\/b> on the account <b>S3 owner walk chequing<\/b>.",
+    "s": "A check form with an empty list of saved checks. If a saved check is listed, someone walked this before: stop and tell me."
+   },
+   {
+    "d": "Date <b>Oct 31, 2026<\/b>, balance <span class=\"amt\">851.14<\/span>.",
+    "s": "<b>The bank took out $4.50 your books don’t have: a fee or a payment you haven’t entered.<\/b> with <b>Add a bank fee<\/b> and <b>Add the missing entry<\/b> (no interest button), then <b>No line matches $4.50 on its own. Show the 31 lines…<\/b> folded. Click the link: <b>Hide the 31 lines.<\/b> with nothing after the full stop."
+   },
+   {
+    "d": "Fold the list again and click <b>Add a bank fee<\/b>.",
+    "s": "<b>Add an entry<\/b>, filled: Money <b>Out — the club paid<\/b>; Date <b>Oct 31, 2026<\/b>; What <b>Bank fee<\/b>; Amount <span class=\"amt\">4.50<\/span>; Filed under <b>Admin · Bank & payment fees<\/b> with “Not on the 2026 plan, so it counts as off-plan.”; Status <b>Posted<\/b>; and the amber line <b>Check your banking app first: was this a bank fee? Use the date it shows.<\/b> right above Cancel and Add entry. Cancel (Discard if asked)."
+   },
+   {
+    "d": "Date <b>Oct 25, 2026<\/b>, balance <span class=\"amt\">1668.69<\/span>. Click <b>Add interest<\/b>.",
+    "s": "<b>Add interest<\/b> and <b>Add the missing entry<\/b>. The window: Money <b>In — the club received<\/b>, What <b>Bank interest<\/b>, Amount <span class=\"amt\">0.85<\/span>, Filed under <b>Other Income · Interest<\/b>, the amber line ending <b>was this interest?<\/b> Cancel."
+   },
+   {
+    "d": "Date <b>Oct 20, 2026<\/b>, balance <span class=\"amt\">2775.29<\/span>.",
+    "s": "<b>Off by $350.00<\/b> and one button only, <b>Add the missing entry<\/b>."
+   },
+   {
+    "d": "Date <b>Oct 15, 2026<\/b>, balance <span class=\"amt\">3221.36<\/span>.",
+    "s": "The list is open by itself, no fee or interest door, the callout names <b>S3 walk line 9<\/b>; that row keeps its bordered button and the other rows show the quiet link."
+   },
+   {
+    "d": "Date <b>Sep 30, 2026<\/b>, balance <span class=\"amt\">4876.95<\/span>.",
+    "s": "<b>Off by $20.17<\/b> and the link reads <b>Show the line<\/b>."
+   }
+  ]
+ },
+ {
+  "id": "P3",
+  "title": "Phone: the same on a 390 px screen",
+  "job": "Both portals · 390 px wide · look only",
+  "forText": "The phone is where a volunteer will really use this: stacked doors, a sentence you can tap, a sheet whose banking-app line stays above Save.",
+  "passes": "The two doors stack full width; “Show the n lines” is a full-height tap target; Save this check sits a third of a screen under the callout; the window sheet shows the banking-app line directly above Cancel and Save.",
+  "notIn": "Saving. Two things on the phone are calls for you, not passes: club rows, and where a refusal sits.",
+  "who": "Whichever portal each step names (cards at the top).",
+  "where": "Your desk browser’s device toolbar at 390 px wide, then reload the page. The round “N” badge at the bottom right is the dev tool and covers part of Save: ignore it.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: set the browser to <b>390 px<\/b> and sign in as the coach on <b>S3 owner walk team<\/b>, <b>Balance check<\/b>. Date <b>Oct 31, 2026<\/b>, balance <span class=\"amt\">851.14<\/span>.",
+    "s": "The two buttons under “Find the $4.50” are stacked, each full width. Nothing scrolls sideways."
+   },
+   {
+    "d": "Tap <b>Show the 31 lines<\/b>.",
+    "s": "The link is a tall tap target (44 px). The list shows 10 rows and <b>Show 21 more<\/b>, and the sentence reads <b>Hide the 31 lines.<\/b>"
+   },
+   {
+    "d": "Fold it. Look at where <b>Save this check<\/b> is.",
+    "s": "Just under the Find callout: about a third of a screen away, in the same view as the doors."
+   },
+   {
+    "d": "Tap <b>Record a bank fee<\/b>.",
+    "s": "A sheet, filled as on the desk, with the amber banking-app line directly above Cancel and Save, and Save fully on screen."
+   },
+   {
+    "d": "Clear the Description and press <b>Save<\/b>.",
+    "s": "<b>Call G:<\/b> a red refusal (“Description is required”) appears ABOVE the amber banking-app line, not between that line and the buttons. Tick the step whichever way it looks; you rule on it in part 7."
+   },
+   {
+    "d": "Sign in as the club admin, the Bank tab, the same date and balance. Tap <b>Add a bank fee<\/b>.",
+    "s": "The same behaviour: stacked doors, a 44 px “Show the 31 lines”, the sheet with the amber line above Cancel and Add entry. Clearing What and pressing Add entry gives “Say what it was for.” above the amber line."
+   },
+   {
+    "d": "Date <b>Oct 15, 2026<\/b>, balance <span class=\"amt\">3221.36<\/span> in both portals, and look at the unnamed rows.",
+    "s": "<b>Call F:<\/b> the coach’s unnamed rows say “Not in the bank yet” as a quiet underlined link; the club’s every row has a full-width bordered button. Tick the step; you rule on it in part 7."
+   }
+  ]
+ },
+ {
+  "id": "P4",
+  "title": "Coach, desk: save the fee, then the repeat line",
+  "job": "S3 owner walk team · desk 1440 · SAVES to the walk team only",
+  "forText": "The window’s own Save writes the fee; the check then matches; a later check with the same gap says so.",
+  "passes": "Save writes one “Bank fee” line and the band reads Matches; a second check dated later with the same gap says “The same $4.50 as your last check, on Oct 12, 2026.”",
+  "notIn": "The club (part 5).",
+  "who": "The coach. This part saves, on the walk team only; I remove the team afterwards.",
+  "where": "Coaches portal → S3 owner walk team → Money → Ledger → View → Balance check.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: you finished part 1 and nothing is saved yet. The date <b>Oct 31, 2026<\/b> with balance <span class=\"amt\">851.14<\/span> still reads Off by $4.50.",
+    "s": "If it already says Matches, a fee was recorded before: stop and tell me."
+   },
+   {
+    "d": "Click <b>Record a bank fee<\/b>, then <b>Save<\/b> in the window.",
+    "s": "The window closes. The band reads <b>Matches<\/b> · The bank and your Ledger agree on Oct 31, 2026 · Started off by $4.50. One new <b>Bank fee<\/b> line of $4.50 dated Oct 31 now exists."
+   },
+   {
+    "d": "Click <b>Save this check<\/b>.",
+    "s": "The list of checks shows <b>Oct 31, 2026 · $851.14 · Matches<\/b>."
+   },
+   {
+    "d": "Date <b>Oct 12, 2026<\/b>, balance <span class=\"amt\">3506.27<\/span> (Off by $4.50), click <b>Save this check<\/b>.",
+    "s": "It saves as an off check. The list now has two checks."
+   },
+   {
+    "d": "Change the date to <b>Oct 20, 2026<\/b> and the balance to <span class=\"amt\">2420.79<\/span>.",
+    "s": "Near the top of Find: <b>The same $4.50 as your last check, on Oct 12, 2026.<\/b> and both the fee door and the gap door are still there."
+   },
+   {
+    "d": "Now date <b>Oct 12, 2026<\/b>, balance <span class=\"amt\">3506.27<\/span> (same date as the saved check). Then date <b>Oct 20, 2026<\/b>, balance <span class=\"amt\">2429.79<\/span> (the bank holds $4.50 MORE).",
+    "s": "Neither shows the “same as your last check” line: a same-day re-save replaces the old check, and a fee is not the same as a deposit of the same size. The second offers <b>Record interest<\/b>."
+   }
+  ]
+ },
+ {
+  "id": "P5",
+  "title": "Club, desk: the same writes",
+  "job": "S3 owner walk chequing · desk 1440 · SAVES to the walk account only",
+  "forText": "The club’s version of part 4. The club has its own books, so the same dates and balances work again.",
+  "passes": "Add entry files one “Bank fee” under Admin · Bank & payment fees and the check matches; the repeat line appears on the later check.",
+  "notIn": "The coach (part 4).",
+  "who": "The club admin. This part saves, on the walk account only; I remove it afterwards.",
+  "where": "Admin → Accounting → Bank tab.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: date <b>Oct 31, 2026<\/b>, balance <span class=\"amt\">851.14<\/span> reads Off by $4.50.",
+    "s": "If it already says Matches, stop and tell me."
+   },
+   {
+    "d": "Click <b>Add a bank fee<\/b>, then <b>Add entry<\/b>.",
+    "s": "The window closes and the band reads <b>Matches<\/b>. One <b>Bank fee<\/b> of $4.50 now sits in the account’s books."
+   },
+   {
+    "d": "Click <b>Save this check<\/b> (the new row can take about two seconds to show).",
+    "s": "A saved check for Oct 31, 2026 that matches."
+   },
+   {
+    "d": "Date <b>Oct 12, 2026<\/b>, balance <span class=\"amt\">3506.27<\/span>, save the check. Then date <b>Oct 20, 2026<\/b>, balance <span class=\"amt\">2420.79<\/span>.",
+    "s": "<b>The same $4.50 as your last check, on Oct 12, 2026.<\/b> above the callout."
+   }
+  ]
+ },
+ {
+  "id": "P6",
+  "title": "Phone: the repeat line",
+  "job": "Both portals · 390 px · look only",
+  "forText": "The repeat line has to survive a narrow screen.",
+  "passes": "On a 390 px screen the line fits in one sentence with the doors stacked under it.",
+  "notIn": "Anything saved.",
+  "who": "Coach first, then the club admin.",
+  "where": "Device toolbar at 390 px, after parts 4 and 5.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: parts 4 and 5 are done (a check saved on Oct 12 in each portal).",
+    "s": "If not, skip this part and say so."
+   },
+   {
+    "d": "At 390 px, in each portal, type date <b>Oct 20, 2026<\/b>, balance <span class=\"amt\">2420.79<\/span>.",
+    "s": "<b>The same $4.50 as your last check, on Oct 12, 2026.<\/b> wraps in a few lines without clipping; the stacked doors sit under it."
+   }
+  ]
+ },
+ {
+  "id": "P7",
+  "title": "Your calls",
+  "job": "Nine questions · my recommendation on each",
+  "forText": "Five wording and scope questions from the bookkeeping review, three things this walk surfaced, and whether the phone needs a second Save.",
+  "passes": "Every call has an answer. Anything you rule “yes” on wording goes through /marketing before it ships.",
+  "notIn": "Nothing is built until you answer.",
+  "who": "You.",
+  "where": "This page.",
+  "steps": [
+   {
+    "d": "Choose an answer for each call below, then use “Copy this walk’s summary”.",
+    "s": "Every call shows my recommendation, marked (Recommended)."
+   }
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "q": "Fee and interest in one gap",
+    "why": "Today the window’s foot says: “Check your banking app first: was this a bank fee? Use the date it shows.” A bank can post a fee and interest the same month, and the check only sees the difference. Add: “If both a fee and interest posted, record them as two lines.”?",
+    "opts": [
+     [
+      "yes",
+      "Yes, add the sentence (Recommended)"
+     ],
+     [
+      "no",
+      "No, leave the foot line as it is"
+     ]
+    ]
+   },
+   {
+    "id": "B",
+    "q": "“Use the date it shows” or the bank’s posting date?",
+    "why": "“Use the date it shows” can be read as the statement date or the date on the fee line. Change it to “Use the date the bank posted it”?",
+    "opts": [
+     [
+      "yes",
+      "Yes, “Use the date the bank posted it” (Recommended)"
+     ],
+     [
+      "no",
+      "No, keep “Use the date it shows”"
+     ]
+    ]
+   },
+   {
+    "id": "C",
+    "q": "The repeat line could be taken for a duplicate",
+    "why": "“The same $4.50 as your last check, on Oct 12, 2026.” A monthly fee really does repeat. Add: “If you recorded it then, this may be a new charge.”?",
+    "opts": [
+     [
+      "yes",
+      "Yes, add it (Recommended)"
+     ],
+     [
+      "no",
+      "No, the line stands alone"
+     ]
+    ]
+   },
+   {
+    "id": "D",
+    "q": "Tax on a card-processor fee",
+    "why": "A club registered for GST/HST pays tax on card-processor fees, so a “Tax: none set” hint on the fee window would help the treasurer. It means the window learning about the club’s tax setting, and it is bookkeeping advice, so it would go through /accounting first.",
+    "opts": [
+     [
+      "later",
+      "Not now: put it on the later list (Recommended)"
+     ],
+     [
+      "now",
+      "Yes, plan it next"
+     ]
+    ]
+   },
+   {
+    "id": "E",
+    "q": "The coach’s fee word lives under “League & Fees”",
+    "why": "A coach’s fee is filed under League & Fees › Bank & payment fees (reusing the word every team already has). A bookkeeper might expect an “Admin” heading like the club’s.",
+    "opts": [
+     [
+      "stay",
+      "Stay under League & Fees (Recommended)"
+     ],
+     [
+      "admin",
+      "Give coaches an admin heading later"
+     ]
+    ]
+   },
+   {
+    "id": "F",
+    "q": "Club phone rows: bordered button or quiet link?",
+    "why": "You saw this in part 3. The coach’s phone says “Not in the bank yet” as a quiet link on each unnamed row, so the one row the callout names stands out. The club’s phone gives all ten rows a bordered button, as drawn in the earlier stage.",
+    "opts": [
+     [
+      "link",
+      "Quiet link like the coach (Recommended)"
+     ],
+     [
+      "button",
+      "Leave the bordered buttons"
+     ]
+    ]
+   },
+   {
+    "id": "G",
+    "q": "Phone: where a refusal sits in the fee window",
+    "why": "The red refusal (“Description is required”) sits above the amber banking-app line, with the line between it and the buttons. The other way puts the refusal beside the buttons it blocks, but pushes it below a longer line.",
+    "opts": [
+     [
+      "leave",
+      "Leave it on top, where it is seen first (Recommended)"
+     ],
+     [
+      "below",
+      "Put the banking-app line above the refusal"
+     ]
+    ]
+   },
+   {
+    "id": "H",
+    "q": "A word missing from the folded sentence",
+    "why": "It reads “…Show the 31 lines to mark any the bank hasn’t received yet.” Without “that”, it reads like a slip. Make it “to mark any that the bank hasn’t received yet.”?",
+    "opts": [
+     [
+      "yes",
+      "Yes, add “that” (Recommended)"
+     ],
+     [
+      "no",
+      "No, keep the approved wording"
+     ]
+    ]
+   },
+   {
+    "id": "I",
+    "q": "A second Save under the band on a phone (plan S5)",
+    "why": "I measured a 390 px screen with the list folded: Save this check sits 69 px (coach) and 80 px (club) under the Find callout, about a third of a screen. With the list open it is about 1,400 px (coach) and 1,600 px (club) away, because you are reading rows on purpose. Before this stage it was about 2,900 px.",
+    "opts": [
+     [
+      "no",
+      "Not needed now: revisit only if people lose Save after opening the list (Recommended)"
+     ],
+     [
+      "yes",
+      "Build the second Save anyway"
+     ]
+    ]
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "P1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "P1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      if (w.choices) {
+        w.choices.forEach(function (c) {
+          var box = el("div", "card"); box.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); box.appendChild(el("p", null, c.why));
+          var o = el("div", "opts");
+          c.opts.forEach(function (op) {
+            var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "ch-" + c.id; r.checked = state.choice[c.id] === op[0];
+            r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+            lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+          });
+          box.appendChild(o); sec.appendChild(box);
+        });
+      }
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    if (w.choices) w.choices.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "P1" }; save(); render();
+  });
+  render();
+})();
+</script>

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { readFileSync } from 'node:fs';
 import { between, functionBody, readCode } from './_source-code.ts';
 import { BANK_WORDS as W } from '../../lib/bank-tab-words.ts';
 import {
@@ -18,6 +19,26 @@ const PANEL = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.ts
 const LEDGER_WINDOWS = 'components/admin/kit/club/money/LedgerWindows.tsx';
 const CLUB_FORM = 'components/admin/kit/club/money/bank/BankCheckForm.tsx';
 const COACH_CHECK = 'components/coaches/bank/CoachBankCheck.tsx';
+
+describe('S3 · the door words exist in the platform library under exactly these names (/review 2026-11-09)', () => {
+  // The doors find their word by NAME; a rename in a later migration would silently open the window with no word. The
+  // migrations that created each name are read, so the rename has to come here first.
+  const sql = (file: string) => readFileSync(`supabase/migrations/${file}`, 'utf8');
+  it('coach: League & Fees › Bank & payment fees (241), Other Income › Interest (276)', () => {
+    const m241 = sql('241_budget_taxonomy_sport_aware.sql');
+    assert.ok(m241.includes(`('${GAP_DOOR_WORDS.coach.fee.category}', '${GAP_DOOR_WORDS.coach.fee.item}'`));
+    const m276 = sql('276_other_income_gets_a_home_in_the_library.sql');
+    assert.ok(m276.includes(`'${GAP_DOOR_WORDS.coach.interest.category}'`));
+    assert.ok(m276.includes(`('${GAP_DOOR_WORDS.coach.interest.item}'`));
+  });
+  it('club: Admin (027) › Bank & payment fees (457), and the same Other Income › Interest', () => {
+    assert.ok(sql('027_budget_categories.sql').includes(`('${GAP_DOOR_WORDS.club.fee.category}', 'org'`));
+    const m457 = sql('457_every_club_can_file_a_bank_fee.sql');
+    assert.ok(m457.includes(`'${GAP_DOOR_WORDS.club.fee.item}'`));
+    assert.ok(m457.includes(`'${GAP_DOOR_WORDS.club.interest.category}'`));
+    assert.deepEqual(GAP_DOOR_WORDS.club.interest, GAP_DOOR_WORDS.coach.interest);
+  });
+});
 
 const band = (offByCents: number, direction: 'bank_more' | 'bank_less' | null) => ({ offByCents, direction });
 
@@ -162,13 +183,17 @@ describe('S3 · the windows the doors open (A5, D3, ruling 6)', () => {
     assert.match(panel, /\.\.\.\(description !== undefined \? \{ description \} : \{\}\),/);
     assert.match(panel, /if \(word\) setPendingWord\(word\);\s*if \(door\) setBankDoor\(door\);/);
     // Late: chosen when the list lands, into the baseline too; a word the team can't see is dropped.
-    assert.match(panel, /if \(pendingWord && categories\.length > 0\) \{\s*const hit = findPlatformWord\(categories, pendingWord\);\s*setPendingWord\(null\);\s*if \(hit\) \{/);
+    assert.match(panel, /if \(pendingWord && categories\.length > 0\) \{\s*const hit = findPlatformWord\(categories, pendingWord\);\s*setPendingWord\(null\);\s*if \(hit && !form\.budgetItemId\) \{/);
     assert.match(panel, /setFormOpenedWith\(f => \(\{ \.\.\.f, \.\.\.seed \}\)\);\s*\}\s*\}/);
     // The adjustment reads the form's state, so it must sit below its declarations (a TDZ crash otherwise).
     assert.ok(panel.indexOf('if (pendingWord && categories.length > 0)') > panel.indexOf('const [formOpenedWith, setFormOpenedWith]'));
     const reset = functionBody(panel, 'resetForm');
     assert.match(reset, /setBankDoor\(null\);/);
     assert.match(reset, /setPendingWord\(null\);/);
+    // /review 2026-11-09: the door's foot line and plain note end with the door's meaning — a different "What happened?"
+    // or a word the coach picked (the same hook sets the door again right after a door opens the branch).
+    assert.match(functionBody(panel, 'selectBranch'), /setConvBranch\(next\);[^]*?setBankDoor\(null\);/);
+    assert.match(panel, /setBankDoor\(null\);\s*if \(conv\.spendExpenseId\) setConv\(/);
   });
   it('coach, ruling 6: the plain note only with the bank door; every other opener keeps the amber warning', () => {
     const panel = readCode(PANEL);

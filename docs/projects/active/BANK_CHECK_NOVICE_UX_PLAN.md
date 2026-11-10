@@ -275,6 +275,37 @@ sentence; the walked working-draft cards change shape and their walks are redone
   Find sections (doors, the $100 rule, the folded list, the repeat line; keywords + searchText). Tests: new
   `bank-gap-doors.test.ts`; pins moved in `bank-coach-view-guard`, `bank-r2c-screens-guard`, `bank-check-draft`. Bank +
   dialog guards green; typecheck + spelling clean; full suite 15 failures, none in S3's files (other sessions' sign-up,
-  billing, practice plans, admin chrome, plus-tax phrase in their help hunks). **Not done in this session:** the dev walk
-  and the Save-distance measurement on a 390 phone (they need the shared dev server restarted for the new files);
-  `check:layout --changed`; `/simplify`, `/review`.
+  billing, practice plans, admin chrome, plus-tax phrase in their help hunks). **S3 finished the same day (this replaces the old "not done" list).**
+  `/simplify` (four reviewers): applied — `sameGapAs` now calls the engine's `latestBefore` (one "newest earlier check" rule).
+  Left alone, with reasons: carrying only the door through the club window and the coach intent instead of description + word +
+  foot line (it would reshape pinned tests in a tree other sessions share; the asymmetry is noted); one shared wording helper
+  for the two Finds' quiet branch (the build prompt keeps the portals' own components, and `lib/bank-tab-words.ts` holds other
+  sessions' hunks); a case-insensitive word match (platform names are constants and a miss is graceful). `/review` (standard,
+  three lenses: state, callers and layout, data and copy; gate: lint 0 errors, typecheck clean for S3, focused guards green).
+  **Confirmed and fixed:** (1) in the coach Record money window the banking-app line and the plain off-plan note outlived the
+  door's meaning — a different "What happened?" or a word the coach picked — so `bankDoor` now clears in `selectBranch` and in
+  the picker's change (the door's own opening sets it again after its branch); (2) a late-landing word could overwrite one the
+  coach had already chosen — guarded by `!form.budgetItemId`, like the club's `!word`; (3) nothing tied the door words to the
+  library's names — `bank-gap-doors.test.ts` now reads migrations 027, 241, 276 and 457. Pins added for (1) and (2). **Noted, not
+  changed:** the phone refusal renders above the banking-app line (KitDialog `.footReason` order -1) → walk call G; club phone
+  cards give every row a bordered `RowAction` (drawn that way in BC; D1 was desk-only) → call F; the club desk `.link` has no
+  `:disabled` style; "to mark any the bank hasn't received yet" lacks "that" → call H; a Pending (not Posted) fee is invisible to
+  the check, so a door can file a second copy of it (also true of today's gap door; the window's Posted hint mitigates); the
+  amount is seeded when the window opens and can go stale after unmarking. **Dev walk** (helper, Playwright, its own fixture
+  "S3 walk team" / "S3 walk chequing", torn down; one append-only `legal_acceptances` row remains with user_id null): every case
+  PASSED in both portals at desk 1440 and phone 390 — the $4.50 fee (both doors, folded list, "Show the 31 lines" → "Hide the 31
+  lines." with the trailing words gone, the filled window with the banking-app line right above Save, save, the check matches),
+  the $0.85 interest, the $350 one door, the one-line explanation (list opens itself, no fee door, bordered button on the named
+  row only), half a line unchanged, "Show the line", the repeat line / same-date / opposite sign, the word arriving under a 9-second
+  delay, the bank screen writing no line (rows counted before and after). Not walkable: a read-only coach (no form renders, so no
+  doors — by source) and a team that cannot see the word (impossible in the data, the words carry no sport; simulated by dropping
+  it from the list request). `check:layout --only=coach-ledger-bank,admin-accounting-bank` clean at 361/390/768/1440. **Save's
+  distance, 390 phone, list folded:** Find callout bottom → Save 69 px (coach) / 80 px (club); callout top → Save 262 / 276 px; page
+  1,579 / 1,594 px; Save's top from the page top 1,342 / 1,167 px. List open: 1,389 / 1,627 px bottom-to-Save, page 2,899 / 3,141 px
+  (before S3: ~2,900 px with Find open). **S5 recommendation: not needed** — folded, Save is a third of a screen under the
+  callout; the long distance returns only when the person opens the list on purpose (walk call I; revisit if people lose Save).
+  **Owner walk written:** https://claude.ai/artifact/UxVWFqJ5njVwCiypSjBufM (Owner QA Ledger §505; 7 walks, 38 steps, 9 calls — owner questions a–e as calls A–E, plus F–I),
+  on its own fixture ("S3 owner walk team", "S3 owner walk chequing"; `.probe/bank-ux-s3/owner/` setup + teardown), torn down after
+  he reports. The review's fixes are in the working tree, commit on his yes. `check-schema-parity` still reports six bank-check
+  tables on PROD only (`bank_check_added_lines`, `bank_check_changes`, `bank_check_events`, `bank_check_marks`,
+  `bank_line_exclusions`, `bank_saved_lines`) — not from S3; reported to the owner as a finding, not fixed.

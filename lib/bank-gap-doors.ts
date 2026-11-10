@@ -14,7 +14,7 @@
  * ⚖ THE REPEAT LINE (A7) compares SIGNED gaps: a $4.50 fee and a $4.50 deposit never match. Against the newest saved
  *   check dated BEFORE the form's date (one on the same date is replaced by saving), never the starting statement.
  */
-import type { CheckFigure } from './bank-check';
+import { latestBefore, type CheckFigure } from './bank-check';
 import { BANK_WORDS as W } from './bank-tab-words';
 
 /** Ruling 4: a door for a gap of $100.00 or less. */
@@ -73,7 +73,6 @@ export function findPlatformWord<I extends WordItem, C extends WordCategory<I>>(
 export function sameGapAs(checks: readonly { kind: 'start' | 'check'; date: string; figure: { differenceCents: number } }[],
   date: string, differenceCents: number): string | null {
   if (differenceCents === 0) return null;
-  let last: (typeof checks)[number] | null = null;
-  for (const c of checks) if (c.kind === 'check' && c.date < date && (!last || c.date > last.date)) last = c;
+  const last = latestBefore(checks.filter(c => c.kind === 'check'), date);
   return last && last.figure.differenceCents === differenceCents ? last.date : null;
 }
