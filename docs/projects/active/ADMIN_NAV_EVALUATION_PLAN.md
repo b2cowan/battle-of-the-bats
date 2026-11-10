@@ -409,7 +409,7 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
 - **Phase 2 · Tournament desktop.** Event in the cell; native `<select>` deleted; strip names the page
   (`useAdminPlace` names the lit row); paper titles drop where the strip names the page (Phase 3's `TabPageHeader`
   hand-off pattern); org-wide screens get the org sidebar (E3); `isTournamentOrgScreen` stays the one list.
-  - **✅ Part A BUILT 2026-11-10** (the sidebar; commit owed, the owner's yes — the commit hash goes here). What changed:
+  - **✅ Part A BUILT 2026-11-10** (the sidebar), committed `c9502c6a1` 2026-11-10. What changed:
     - **The event heads the tournament sidebar** (`EventCell` in `AdminKitRail.tsx`): the club cell's frame (45 px, the name 14/16 bold on up to
       two lines, the whole name as a tooltip only while cut, `CellName` now shared with the club cell), the one `SidebarLogoTile` (24 open, 40
       folded) and a 16 px down chevron (hidden folded). The tile's source is ONE pure rule, `eventTileSource` (`lib/admin-event-cell.ts`): the
