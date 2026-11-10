@@ -1,0 +1,336 @@
+<title>Terms Acceptance Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: one column, a sticky progress bar, one card per part; steps are Do → You should see. */
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --ink: #1d2428; --dim: #5a666d; --line: #dcd9d0;
+    --accent: #0f6b66; --accent-ink: #ffffff; --soft: #e3efed; --warn: #8a5a00; --warn-soft: #fbefd2;
+    --bad: #a3321f; --bad-soft: #f8e1dc; --good: #1f6b3a; --good-soft: #dff0e4; --code: #eef0ec;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #14191b; --card: #1b2224; --ink: #e8ece9; --dim: #9fadb2; --line: #2c3639;
+    --accent: #52b8b0; --accent-ink: #0c1415; --soft: #1d3331; --warn: #e3b24a; --warn-soft: #34290f;
+    --bad: #f0907d; --bad-soft: #3a1f19; --good: #7fd09a; --good-soft: #17301f; --code: #11181a; color-scheme: dark; } }
+  :root[data-theme="dark"] {
+    --bg: #14191b; --card: #1b2224; --ink: #e8ece9; --dim: #9fadb2; --line: #2c3639;
+    --accent: #52b8b0; --accent-ink: #0c1415; --soft: #1d3331; --warn: #e3b24a; --warn-soft: #34290f;
+    --bad: #f0907d; --bad-soft: #3a1f19; --good: #7fd09a; --good-soft: #17301f; --code: #11181a; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+    padding-block: 0 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 24px; line-height: 1.2; margin: 28px 0 6px; text-wrap: balance; }
+  h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+  p { margin: 0 0 10px; }
+  .lede { color: var(--dim); max-width: 68ch; }
+  code, .cmd { font-family: var(--mono); font-size: 12.5px; }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; word-break: break-word; }
+  a { color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 14px 0; }
+  .card h3 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+  table.who { width: 100%; border-collapse: collapse; font-size: 14px; display: block; overflow-x: auto; }
+  table.who td, table.who th { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .keep { background: var(--warn-soft); color: var(--warn); padding: 8px 12px; border-radius: 8px; font-size: 13.5px; margin-top: 10px; }
+  .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 8px 0 10px; border-bottom: 1px solid var(--line); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  .meter { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 6px; }
+  .meter i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+  .barrow { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: 13.5px; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 7px 12px; min-height: 36px; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  details.part { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin: 12px 0; }
+  details.part > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  details.part > summary::-webkit-details-marker { display: none; }
+  .chip { font-size: 12px; padding: 2px 9px; border-radius: 99px; background: var(--code); color: var(--dim); white-space: nowrap; }
+  .chip.pass { background: var(--good-soft); color: var(--good); } .chip.issue { background: var(--bad-soft); color: var(--bad); } .chip.call { background: var(--warn-soft); color: var(--warn); }
+  .body { padding: 0 16px 16px; }
+  .intro { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; margin: 0 0 12px; font-size: 14px; }
+  .intro b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+  .steps { list-style: none; margin: 0; padding: 0; }
+  .step { display: grid; grid-template-columns: 26px 1fr; gap: 6px 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .step input[type=checkbox] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+  .step .do { margin: 0; } .step .see { margin: 4px 0 0; color: var(--dim); font-size: 14px; }
+  .step .see::before { content: "You should see: "; font-weight: 600; color: var(--ink); }
+  .step.check .see::before { content: ""; }
+  .step.cmd { background: var(--code); border-radius: 8px; padding: 10px; margin: 6px 0; border-top: 0; }
+  .who-tag { display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 99px; background: var(--soft); color: var(--accent); margin-right: 6px; vertical-align: 1px; }
+  .opt2 { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px; font-size: 14px; }
+  .opt2 label { display: flex; gap: 6px; align-items: center; }
+  .cmdline { display: flex; gap: 8px; align-items: flex-start; margin-top: 6px; }
+  .cmdline code { flex: 1; min-width: 0; display: block; padding: 7px 9px; }
+  .cmdline button { flex: none; min-height: 32px; padding: 4px 10px; font-size: 13px; }
+  .verdict { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 8px; align-items: center; }
+  .verdict button[aria-pressed=true] { outline: 2px solid var(--accent); }
+  textarea { width: 100%; min-height: 70px; font: inherit; font-size: 14px; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: var(--bg); color: var(--ink); }
+  pre#out { white-space: pre-wrap; background: var(--code); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 12.5px; max-height: 360px; overflow: auto; }
+  .small { font-size: 13px; color: var(--dim); }
+</style>
+
+<div class="wrap">
+  <h1>Terms acceptance, with the switch on, then off</h1>
+  <p class="lede">One job: prove that, with the legal pages switched on, nobody makes an account, starts an organization or buys a plan without agreeing to the Terms, that everyone who already has an account meets the “updated” screen once, and that with the switch off nothing shows anywhere. This is the first walk of all of step 6.3 (the account doors, the sign-in screen, the organization and plan gates, the renewal line and the window over a stopped purchase). Chunk B was never walked on its own.</p>
+
+  <div class="card">
+    <h3>Sign in as</h3>
+    <table class="who">
+      <tr><th>Address</th><th>Account</th><th>Its job in this walk</th></tr>
+      <tr><td><code>http://localhost:3000</code></td><td>the dev site</td><td>Use a private window for anything “signed out”. Keep this page open in another window.</td></tr>
+      <tr><td><code>walk-never@walk-terms.local</code></td><td>never agreed</td><td>The first-publication screen on every signed-in place (Part C).</td></tr>
+      <tr><td><code>walk-earlier@walk-terms.local</code></td><td>agreed an earlier version</td><td>The “updated” screen (Part D); left like that for the switch-off check (Part I).</td></tr>
+      <tr><td><code>uat-owner@uat-test-org.local</code></td><td>owner of UAT Test Org (Tournament Plus, live test subscription)</td><td>The paid owner: the cancel door (Part E) and the window over the move window (Part G).</td></tr>
+      <tr><td><code>walk-buyer@walk-terms.local</code></td><td>agreed, owns nothing</td><td>Makes an organization and picks a plan in a stopped purchase (Part F).</td></tr>
+      <tr><td><code>walk-buyer2@walk-terms.local</code></td><td>agreed, owns nothing</td><td>A second organization, kept free, for the billing screens (Part G).</td></tr>
+      <tr><td>platform admin: <code>uat-platform@fieldlogichq.ca</code></td><td>staff</td><td>Only in Part A, to switch mock billing and the plan gates on. Staff never see Terms, so sign out afterwards.</td></tr>
+    </table>
+    <p class="small" style="margin-top:8px">Password for every account above: <code>UATPassword2026!</code> (dev only; keep this page private). Sign-in page: <code>http://localhost:3000/auth/login</code>; platform admin: <code>http://localhost:3000/platform-admin/login</code>.</p>
+    <div class="keep">Terminal commands run in the project folder. <b>$FIX</b> in a step means
+      <code>node --env-file=.env.local scripts/seed-terms-walk-fixture.mjs</code>; every command has a Copy button with the whole line.
+      Phone width means a browser window about 390 px wide (or the browser’s phone view).</div>
+  </div>
+
+  <div class="bar" id="bar">
+    <div class="barrow"><span id="count">0 of 0 steps</span><span><button id="copyAll" class="primary">Copy results for Claude</button> <button id="reset">Clear all ticks</button></span></div>
+    <div class="meter"><i id="meter"></i></div>
+  </div>
+
+  <div id="parts"></div>
+
+  <div class="card">
+    <h3>Results to paste back</h3>
+    <p class="small">Press “Copy results for Claude” and paste the text into the chat. The fraction (not the verdict) says which steps you read.</p>
+    <pre id="out" hidden></pre>
+  </div>
+</div>
+
+<script id="data" type="application/json">
+{
+ "fix": "node --env-file=.env.local scripts/seed-terms-walk-fixture.mjs",
+ "parts": [
+  {"id":"A","title":"A · Before you start","why":"Make sure the dev site is on the right footing. Mock billing lets a purchase finish without a card; the plan gates make the club plans buyable. Both only last for this walk.","passes":"The fixture shows its four accounts; the Terms box shows on a sign-up; mock billing and the gates are on.","not":"Nothing about Terms is judged here.",
+   "steps":[
+    {"id":"A1","kind":"cmd","do":"Check the walk’s accounts exist.","cmd":"$FIX status","see":"Four rows: walk-never <b>mirror=— latest row=none</b>; walk-earlier <b>2026-01-01</b>; walk-buyer, walk-buyer2 and uat-owner all <b>draft</b>."},
+    {"id":"A2","do":"In a private window open <code>http://localhost:3000/auth/signup</code>.","see":"A sign-up form with the box above the main button: “I’m 18 or older (or the age of majority where I live). I agree to the Terms of Service and have read the Privacy Policy.” <b>Terms of Service</b> and <b>Privacy Policy</b> are underlined links that open in a new tab."},
+    {"id":"A3","do":"Sign in as the <b>platform admin</b>, open <code>/platform-admin/dev-tools</code>, turn <b>Mock billing</b> ON and switch the plan gates to <b>live</b>. Then sign out.","see":"Both read as on. Mock billing lasts until the dev server restarts. The plan gates are remembered by the browser you did this in, so use <b>that same browser</b> for every signed-in step and for Door 6 below (a private window will not have them)."}
+   ]},
+  {"id":"B","title":"B · Every door that makes an account","why":"The box must be on every place a person sets up an account, the button must refuse without it, and an account made with it must leave a record.","passes":"At each door below: unticked is refused with the red line and creates nothing; ticked makes the account.","not":"Five doors need a link that only arrives by email or an installed app (listed in the last step). The words of each refusal are unit-tested.",
+   "steps":[
+    {"id":"B0","kind":"check","do":"<b>How each door is done.</b> Use a private window, signed out. Fill every field (first and last name, email, password) but <b>leave the box unticked</b> and press the main button. Then tick the box and press again. Use an address you can receive mail at with a tag (<code>you+door1@…</code>); write each address you make in this part’s notes box.","see":"<b>Unticked:</b> a red line “Tick the box to confirm you’re 18 or older and agree to the Terms of Service.” and no account (no check-your-email screen). <b>Ticked:</b> the account is made (a “check your email” screen is normal; email verification is on)."},
+    {"id":"B1","do":"Door 1 · Run a tournament: <code>/start/tournament</code>.","see":"Unticked refused; ticked makes the account.","two":true},
+    {"id":"B2","do":"Door 2 · Start a team: <code>/start/team</code>.","see":"Same.","two":true},
+    {"id":"B3","do":"Door 3 · Start a league: <code>/start/league</code>.","see":"Same.","two":true},
+    {"id":"B4","do":"Door 4 · Account only: <code>/auth/signup</code>.","see":"Same (this form checks name and a password length first).","two":true},
+    {"id":"B5","do":"Door 5 · Coach join: <code>/coaches/join</code>.","see":"Same.","two":true},
+    {"id":"B6","kind":"opt","do":"Door 6 · Coaches Portal sign-up: <code>/coaches/start</code> (open because of the gates in A3). Do the unticked press and the ticked press.","see":"Same. Tick “Skipped” if you did not reach it."},
+    {"id":"B7","kind":"opt","do":"Door 7 · Register for a tournament: <code>/uat-plus-org/…/register</code> with registration open in that tournament’s admin; a new coach email.","see":"Unticked is refused on the step after “Review Registration”; ticked makes the account. Tick “Skipped” if no tournament has registration open."},
+    {"id":"B8","kind":"opt","do":"The five doors that need an emailed link or an installed app: the follow-a-team sheet, the assistant-coach invitation, the league-coach invitation, the staff invitation, and a family’s claim-a-child page. If you hold any of the links, do the same two presses and name which in the notes.","see":"Same box, same refusal. Tick “Skipped” if you hold none."},
+    {"id":"B9","kind":"check","do":"<b>Records.</b> Write every address you made in this part in the notes box below. Claude reads each one back from the database after your paste.","see":"Nothing to see here; this step is the hand-off."}
+   ]},
+  {"id":"C","title":"C · The sign-in screen, first time — at phone width, in seven places","why":"Someone who already has an account but has never agreed meets one full screen before their portal opens. It replaces the page at the same address, with no menus behind it.","passes":"Every place shows the same screen; a failed save keeps the tick and brings the button back; agreeing opens the page you asked for, at the same address.","not":"“Terms changed while the screen was open” (it needs a publication change; unit-tested). Nothing is agreed until step C10.",
+   "steps":[
+    {"id":"C1","kind":"check","who":"walk-never","do":"Make the browser phone width. Sign in as <b>walk-never</b>. <b>Do not agree on any screen until C10.</b>","see":"The first page you land on is the screen below."},
+    {"id":"C2","who":"walk-never","do":"Open <code>/discover</code> (the family app).","see":"The FieldLogicHQ mark, “We’ve published our Terms”, then “FieldLogicHQ now has Terms of Service and a Privacy Policy. Please read them and tick the box to keep using your account.”, the box unticked, a Continue button that is greyed. No menu, tabs or header behind it."},
+    {"id":"C3","who":"walk-never","do":"Open <code>/uat-rep-club/admin</code> (the club admin).","see":"The same screen, same address, no admin sidebar."},
+    {"id":"C4","who":"walk-never","do":"Open <code>/uat-rep-club/coaches</code> (the Coaches Portal inside a club).","see":"The same screen."},
+    {"id":"C5","who":"walk-never","do":"Open <code>/coaches</code> (the Coaches Portal, account level).","see":"The same screen."},
+    {"id":"C6","who":"walk-never","do":"Open <code>/uat-plus-org/scorekeeper</code>.","see":"The same screen."},
+    {"id":"C7","who":"walk-never","do":"Open <code>/uat-plus-org/check-in</code>.","see":"The same screen."},
+    {"id":"C8","who":"walk-never","do":"Open the house-league coach team page: <code>/uat-rep-club/league/2026-fall-house-league/team/708527ff-d1ac-4ae7-97b1-36aa4fd2cc5d</code>.","see":"The same screen."},
+    {"id":"C9","who":"walk-never","do":"Look at the foot of the screen, and press each of the two links in the sentence.","see":"“Signed in as walk-never@walk-terms.local” and a Sign out button. No “cancel your plan” line (this person pays for nothing). Each link opens its page in a new tab."},
+    {"id":"C10","who":"walk-never","do":"On this screen: browser developer tools → Network → <b>Offline</b>. Tick the box and press Continue.","see":"A red line: “Couldn’t save your agreement. Check your connection and try again.” The box is still ticked and Continue is pressable again."},
+    {"id":"C11","who":"walk-never","do":"Go back online. Press Continue.","see":"The button reads “Saving…” briefly, then the page you asked for opens at the same address (the house-league team page), no redirect, no flash of the screen."},
+    {"id":"C12","who":"walk-never","do":"Open each of the seven addresses above again.","see":"All seven open normally. The screen is gone everywhere (one agreement covers the person)."}
+   ]},
+  {"id":"D","title":"D · “We’ve updated our Terms”, and Sign out","why":"Someone who agreed an earlier version is told the Terms changed, not that they are new.","passes":"The wording says changed, the paid-plan cancel door is absent for someone who pays nothing, and Sign out leaves cleanly.","not":"The cancel door itself is Part E.",
+   "steps":[
+    {"id":"D1","who":"walk-earlier","do":"Sign in as <b>walk-earlier</b> (phone width). Open <code>/uat-rep-club/admin</code>.","see":"“We’ve updated our Terms”, then “We’ve changed our Terms of Service since you last agreed to them. Please read them and tick the box to keep using your account.” No cancel line."},
+    {"id":"D2","who":"walk-earlier","do":"Open <code>/uat-rep-club/league/2026-fall-house-league/team/7bd8fe48-2851-49bf-8ccd-0eb6f5698558</code>.","see":"The same “updated” screen. <b>Do not agree</b>; this account stays like this for Part I."},
+    {"id":"D3","who":"walk-earlier","do":"Press Sign out on the screen.","see":"You are signed out and land on the public Discover page; signing in again as walk-earlier brings the screen back."}
+   ]},
+  {"id":"E","title":"E · A paid owner who disagrees: the cancel door and the billing page","why":"A person is never forced to agree in order to stop paying. The “updated” screen offers a way out for someone who owns a paid plan.","passes":"The line shows only for the paid owner; it leads to the billing page, which opens without agreeing; cancelling and keeping the plan both work; wandering off brings the screen back.","not":"Cancelling for real (a cancel here is on the test subscription and is put back in E6).",
+   "steps":[
+    {"id":"E1","kind":"cmd","do":"Move the paid owner to “agreed an earlier version”.","cmd":"$FIX unagree uat-owner@uat-test-org.local","see":"A line ending <b>mirror=2026-01-01</b>."},
+    {"id":"E2","who":"uat-owner","do":"Sign in as <b>uat-owner@uat-test-org.local</b> and open <code>/uat-test-org/admin</code>.","see":"The “updated” screen, and above the button: “Don’t agree? You can <b>cancel your plan</b> instead. It runs to the end of the period you’ve paid for.”"},
+    {"id":"E3","who":"uat-owner","do":"Press <b>cancel your plan</b>.","see":"The Plan &amp; billing page for UAT Test Org opens (Tournament Plus). You were not asked to agree."},
+    {"id":"E4","who":"uat-owner","do":"On that page press Cancel plan and confirm it.","see":"The page says the plan ends at the end of the period, with a date."},
+    {"id":"E5","who":"uat-owner","do":"Press Keep Tournament Plus (keep my plan).","see":"The ending notice is gone and the plan reads as before. Still no request to agree."},
+    {"id":"E6","kind":"check","who":"uat-owner","do":"<b>Put-back check.</b> Confirm the page no longer says the plan ends, and that the plan is Tournament Plus.","see":"This is the step that proves E5 landed; do not skip it."},
+    {"id":"E7","who":"uat-owner","do":"On the billing page click any other link (the sidebar’s Overview, or the logo).","see":"The “updated” screen comes back: you can reach billing without agreeing, but not wander off."},
+    {"id":"E8","kind":"cmd","do":"Put the paid owner back to agreed.","cmd":"$FIX agree uat-owner@uat-test-org.local","see":"A line ending <b>mirror=draft</b>."}
+   ]},
+  {"id":"F","title":"F · A purchase stopped mid-way: tournament create and the plan step","why":"If the Terms go live while someone’s app is open, the first thing they press that starts an organization or a paid plan stops them with a small window. When they agree, the same action carries on by itself, nothing retyped.","passes":"The window opens over the page; Cancel leaves everything as it was; Continue finishes the very action that was stopped.","not":"The first-publication wording in the window (the screen’s test is C; the window’s two lines are unit-tested). The window here reads the “changed” line because the fixture agreed an earlier version.",
+   "steps":[
+    {"id":"F1","kind":"check","who":"walk-buyer","do":"<b>The trick.</b> Each stop below needs the page opened while the person was still agreed, then the Terms “change” from the terminal, then the button. The terminal command is the stand-in for “the Terms went live while the page was open”. Do not reload between the command and the button.","see":"Nothing to see here."},
+    {"id":"F2","who":"walk-buyer","do":"Sign in as <b>walk-buyer</b>. Open <code>/start/tournament</code> (it asks for an organization name). Type <b>Terms Walk One</b>, but do not press the button.","see":"The name step, no Terms screen (this person is agreed)."},
+    {"id":"F3","kind":"cmd","do":"Change the Terms for walk-buyer.","cmd":"$FIX unagree walk-buyer@walk-terms.local","see":"A line ending <b>mirror=2026-01-01</b>."},
+    {"id":"F4","who":"walk-buyer","do":"Press the create button.","see":"A small window opens over the page: “Before you continue”, “We’ve changed our Terms of Service since you last agreed to them. Please read them and tick the box, and we’ll carry on where you left off.”, the box, Cancel, and Continue greyed until you tick."},
+    {"id":"F5","who":"walk-buyer","do":"Press Cancel.","see":"Only the window closes. The name “Terms Walk One” is still typed; no organization was made."},
+    {"id":"F6","who":"walk-buyer","do":"Press the create button again, tick the box, press Continue.","see":"Continue reads “Saving…”, the window closes, and the organization is made by itself: you arrive at “How do you want to start?” (the plan step). You did not retype the name."},
+    {"id":"F7","who":"walk-buyer","do":"Look at the Tournament Plus card’s button, then the “Start free with Tournament” button.","see":"Under the Tournament Plus card: “If your plan starts with a trial, it ends on the date shown at checkout, and your card is charged then unless you cancel.” then “Your plan renews automatically until you cancel. You can cancel any time from your billing page, and your plan runs to the end of the period you’ve paid for. By continuing, you agree to the Terms of Service.” <b>No line</b> by “Start free with Tournament”."},
+    {"id":"F8","kind":"cmd","do":"Change the Terms for walk-buyer again (the tick in F6 agreed them).","cmd":"$FIX unagree walk-buyer@walk-terms.local","see":"A line ending <b>mirror=2026-01-01</b>."},
+    {"id":"F9","who":"walk-buyer","do":"Press “Start with Tournament Plus”.","see":"The same window opens over the plan step."},
+    {"id":"F10","who":"walk-buyer","do":"Press Cancel.","see":"The window closes; the plan step is as it was and its buttons work."},
+    {"id":"F11","who":"walk-buyer","do":"Press “Start with Tournament Plus” again, tick, Continue.","see":"The window closes and the purchase carries on with the same choice: either a billing-address window comes first (fill it in and continue; the Terms are not asked again) or you go straight on as a Tournament Plus organization (mock billing)."}
+   ]},
+  {"id":"G","title":"G · A stopped purchase on the billing screens, and the window over the move window","why":"Every paid button on the billing screens carries the renewal line, and every one stops the same way.","passes":"The line is under the table and beside each Upgrade; each stop opens the window; Cancel leaves the screen as it was; Continue upgrades with the same choices.","not":"“Move” going all the way through (it would change the shared test organization’s real test subscription).",
+   "steps":[
+    {"id":"G1","who":"walk-buyer2","do":"Sign in as <b>walk-buyer2</b>. Open <code>/start/tournament</code>, name it <b>Terms Walk Two</b>, create it. On the plan step press <b>Start free with Tournament</b>.","see":"No Terms screen, no window (this person is agreed). You end up in the new organization’s admin."},
+    {"id":"G2","who":"walk-buyer2","do":"Open Plan &amp; billing: <code>/terms-walk-two/admin/tournaments/settings/subscription</code> (if the address differs, use the sidebar’s Plan &amp; billing).","see":"A “change plan” table with an Upgrade to Tournament Plus row. Under the table, after the prices-plus-tax sentence: “If your plan starts with a trial…” and the renewal line."},
+    {"id":"G3","kind":"cmd","do":"Change the Terms for walk-buyer2.","cmd":"$FIX unagree walk-buyer2@walk-terms.local","see":"A line ending <b>mirror=2026-01-01</b>."},
+    {"id":"G4","who":"walk-buyer2","do":"Press Upgrade → in the “how to pay” dialog read the line by Continue, pick <b>Monthly</b>, press Continue.","see":"The renewal line (with the trial sentence) sits by Continue. Pressing it opens the Terms window over the page."},
+    {"id":"G5","who":"walk-buyer2","do":"Press Cancel in the window.","see":"You are on the billing table; the plan is still the free one."},
+    {"id":"G6","who":"walk-buyer2","do":"Press the <b>Details</b> link on the Tournament Plus row, then the lime “Upgrade to Tournament Plus” button in the panel (still unagreed).","see":"The panel’s foot has the same line. Pressing opens the window; Cancel leaves the panel as it was."},
+    {"id":"G7","who":"walk-buyer2","do":"Open <code>/terms-walk-two/admin/tournaments/branding</code>, click a Tournament Plus lock link (the plan drawer opens), read the foot, press its Upgrade, then Cancel in the window.","see":"The drawer carries the line; the window opens over it; Cancel leaves the drawer open and nothing changed."},
+    {"id":"G8","who":"walk-buyer2","do":"Back on the billing table: Upgrade → Monthly → Continue → tick → Continue in the window.","see":"The window closes and the upgrade finishes with Monthly by itself: a “Plan updated” notice and the page reloads as Tournament Plus (mock billing). If a billing-address window comes first, fill it in; the Terms are not asked again."},
+    {"id":"G9","kind":"cmd","do":"Put Terms Walk Two back on the free plan.","cmd":"$FIX freeplan terms-walk-two","see":"“terms-walk-two is back on the free Tournament plan”."},
+    {"id":"G10","who":"walk-buyer2","do":"Reload <code>/terms-walk-two/admin/tournaments/branding</code> and click a Tournament Plus lock link so the plan drawer is open.","see":"The drawer opens with the renewal line at its foot (no Terms screen: this person is agreed again)."},
+    {"id":"G10c","kind":"cmd","do":"Change the Terms for walk-buyer2 again. Do not reload.","cmd":"$FIX unagree walk-buyer2@walk-terms.local","see":"A line ending <b>mirror=2026-01-01</b>."},
+    {"id":"G11","who":"walk-buyer2","do":"Press Upgrade in the drawer, tick the box in the window, press Continue.","see":"The upgrade finishes by itself: a “Plan updated” pill, and the locked page unlocks."},
+    {"id":"G12","who":"uat-owner","do":"In a second browser (same one as A3, so the plan gates are on), sign in as <b>uat-owner@uat-test-org.local</b> and open <code>/uat-test-org/admin/tournaments/settings/subscription</code>.","see":"The billing table for a Tournament Plus owner, with a Move to Club row."},
+    {"id":"G13","kind":"cmd","do":"Change the Terms for the paid owner. Do not reload the page.","cmd":"$FIX unagree uat-owner@uat-test-org.local","see":"A line ending <b>mirror=2026-01-01</b>."},
+    {"id":"G14","who":"uat-owner","do":"Press <b>Move to Club</b>.","see":"The move window opens with its figures and its own button. Under its prices, the renewal line with no trial sentence (this move is not a first subscription)."},
+    {"id":"G15","who":"uat-owner","do":"Press the move window’s own button to make the move.","see":"The Terms window opens <b>over</b> the move window, which stays visible underneath it."},
+    {"id":"G16","who":"uat-owner","do":"Press Cancel in the Terms window, then close the move window with its own Cancel.","see":"Only the Terms window closes first; the move window is exactly as it was. Closing it leaves the plan unchanged (Tournament Plus)."},
+    {"id":"G17","kind":"cmd","do":"Put the paid owner back.","cmd":"$FIX agree uat-owner@uat-test-org.local","see":"A line ending <b>mirror=draft</b>."}
+   ]},
+  {"id":"H","title":"H · The renewal line in the places Part G did not reach","why":"The line sits beside eleven paid buttons. Parts F and G showed the table, the dialog, the panel, the drawer, the plan step and the move window; these are the rest.","passes":"Each place you reach carries the line beside its priced button, and none sits by a free or comped one.","not":"A Founding Season $0 choice cannot be made on dev now (new organizations get no comp), so “no line on a $0 choice” is held by the unit tests.",
+   "steps":[
+    {"id":"H1","kind":"opt","do":"Coaches Portal sign-up, address step and team step (<code>/coaches/start</code>, signed in as walk-buyer2 or a new coach, no home billing address on file): the line sits above “Continue to checkout”.","see":"Plain renewal line, no trial sentence (this plan has no trial). Tick “Skipped” if the page was not reachable."},
+    {"id":"H2","kind":"opt","do":"Onboarding address screen: after pressing the paid button on the plan step with no billing address on file, the screen above “Continue to checkout”.","see":"The line with the trial sentence. Tick “Skipped” if an address was already on file."},
+    {"id":"H3","kind":"opt","do":"Reactivate on a cancelled club’s billing page, and the “View plans” chooser on a League or Club setup page.","see":"Reactivate: the plain line. Chooser: one line under the cards. Tick “Skipped” if you have no such organization."},
+    {"id":"H4","kind":"check","do":"Look at <b>Start free with Tournament</b> (plan step) and the sign-in screen’s Continue.","see":"No renewal line by either: only priced paid buttons carry it."}
+   ]},
+  {"id":"I","title":"I · The two demo tours, switch on","why":"The demo accounts are never asked to agree. A visitor on a tour must never meet a Terms box or screen.","passes":"Both tours run with no Terms screen, box or window.","not":"Nothing else.",
+   "steps":[
+    {"id":"I1","do":"In a private window open <code>http://localhost:3000/see-it-live</code> (the tournament demo) and click around the admin: the dashboard, a tournament, Plan &amp; billing if it is there.","see":"No “We’ve published our Terms” screen, no Terms box, no renewal line you could press into a window."},
+    {"id":"I2","do":"In a new private window open <code>http://localhost:3000/see-it-live/coaches</code> (the Coaches Portal demo) and click around.","see":"The same: nothing about Terms anywhere."}
+   ]},
+  {"id":"J","title":"J · Switch OFF, and repeat a sample","why":"Until the real switch-over, production runs with the legal pages off. With the switch off, nothing may show, record or refuse.","passes":"Every sample behaves as it did before step 6.3.","not":"Production itself; the switch is a dev setting here.",
+   "steps":[
+    {"id":"J1","kind":"cmd","do":"Turn the preview off in .env.local.","cmd":"$FIX switch off","see":"“LEGAL_PAGES_PREVIEW=false … now restart the dev server”."},
+    {"id":"J2","kind":"check","do":"Restart the dev server: stop the terminal running it (Ctrl+C) and run <code>npm run dev</code>. Wait for “Ready”.","see":"The site answers again."},
+    {"id":"J3","who":"walk-earlier","do":"Sign in as <b>walk-earlier</b> (still “agreed an earlier version”). Open <code>/uat-rep-club/admin</code>, <code>/uat-rep-club/coaches</code> and <code>/discover</code>.","see":"All three open normally. No screen at all."},
+    {"id":"J4","do":"Signed out, in a private window, open <code>/auth/signup</code> and <code>/start/tournament</code>.","see":"No Terms box, and no Terms of Service / Privacy Policy links on either form."},
+    {"id":"J5","who":"uat-owner","do":"Sign in as <b>uat-owner</b>. Open the billing page and press Move to Club.","see":"No renewal line under the table or in the move window. (Close the move window; do not move.)"},
+    {"id":"J6","who":"walk-buyer","do":"Sign in as <b>walk-buyer</b> and open <code>/terms-walk-one/admin/tournaments/settings/subscription</code>.","see":"No renewal line anywhere on the page, and the buttons behave exactly as before step 6.3."}
+   ]},
+  {"id":"K","title":"K · Put everything back","why":"Leave dev as you found it.","passes":"The switch is on again, the walk’s accounts and organizations are gone, and the standing owner is agreed.","not":"The acceptance rows themselves stay (they cannot be deleted by design); only their link to the deleted accounts is cleared.",
+   "steps":[
+    {"id":"K1","kind":"cmd","do":"Turn the preview back on.","cmd":"$FIX switch on","see":"“LEGAL_PAGES_PREVIEW=true … now restart the dev server”. Restart it once more."},
+    {"id":"K2","kind":"cmd","do":"Delete the walk’s accounts and the organizations they made; put the standing owner back to agreed.","cmd":"$FIX teardown","see":"Deleted lines for the four walk accounts and for terms-walk-one and terms-walk-two; “put back to agreed”."},
+    {"id":"K3","kind":"check","do":"Tell Claude the addresses you made at the doors in Part B (the notes box there). Claude deletes them and reads their records.","see":"Nothing to see; this is the hand-off."},
+    {"id":"K4","kind":"check","do":"Mock billing was a runtime setting: it is off after the restart. The plan gates are a cookie: set them back to enforced in <code>/platform-admin/dev-tools</code> if you want the original dev behaviour.","see":"Nothing to see."}
+   ]}
+ ]
+}
+</script>
+
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById('data').textContent);
+  var KEY = 'terms63walk-v1';
+  var state = { c: {}, v: {}, n: {}, open: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var FIX = DATA.fix;
+  function sub(s) { return String(s).split('$FIX').join(FIX); }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function stepIds(p) { var ids = []; p.steps.forEach(function (s) { if (s.kind === 'opt' || s.two) { ids.push(s.id); } else { ids.push(s.id); } }); return ids; }
+  function done(s) { if (s.kind === 'opt') return !!(state.c[s.id + '-did'] || state.c[s.id + '-skip']); if (s.two) return !!(state.c[s.id + '-unticked'] && state.c[s.id + '-ticked']); return !!state.c[s.id]; }
+  function counts() {
+    var total = 0, got = 0, per = {};
+    DATA.parts.forEach(function (p) { var t = 0, g = 0; p.steps.forEach(function (s) { t++; if (done(s)) g++; }); per[p.id] = { t: t, g: g }; total += t; got += g; });
+    return { total: total, got: got, per: per };
+  }
+  var partsEl = document.getElementById('parts');
+  function render() {
+    var c = counts();
+    partsEl.innerHTML = '';
+    DATA.parts.forEach(function (p) {
+      var d = document.createElement('details'); d.className = 'part';
+      if (state.open[p.id]) d.open = true;
+      d.addEventListener('toggle', function () { state.open[p.id] = d.open; save(); });
+      var pc = c.per[p.id], v = state.v[p.id];
+      var chip = v ? '<span class="chip ' + v + '">' + ({ pass: 'Passed', issue: 'Issue', call: 'Needs a call' })[v] + '</span>' : '';
+      d.innerHTML = '<summary><h2>' + p.title + '</h2><span>' + chip + ' <span class="chip">' + pc.g + ' of ' + pc.t + '</span></span></summary>';
+      var b = document.createElement('div'); b.className = 'body';
+      var h = '<div class="intro"><b>What this part is for</b>' + p.why + '</div><div class="intro"><b>It passes when</b>' + p.passes + '</div><div class="intro"><b>Not in this part</b>' + p.not + '</div><ul class="steps">';
+      p.steps.forEach(function (s) {
+        var cls = 'step' + (s.kind === 'cmd' ? ' cmd' : '') + (s.kind === 'check' ? ' check' : '');
+        var who = s.who ? '<span class="who-tag">' + s.who + '</span>' : '';
+        var box;
+        if (s.kind === 'opt') {
+          box = '<input type="checkbox" disabled style="visibility:hidden">';
+        } else if (s.two) {
+          box = '<input type="checkbox" disabled style="visibility:hidden">';
+        } else {
+          box = '<input type="checkbox" id="s-' + s.id + '" data-k="' + s.id + '"' + (state.c[s.id] ? ' checked' : '') + ' aria-label="Done: ' + s.id + '">';
+        }
+        h += '<li class="' + cls + '">' + box + '<div><p class="do"><b>' + s.id + '</b> · ' + who + sub(s.do) + '</p>';
+        if (s.cmd) h += '<div class="cmdline"><code>' + esc(sub(s.cmd)) + '</code><button type="button" data-copy="' + esc(sub(s.cmd)).replace(/"/g, '&quot;') + '">Copy</button></div>';
+        if (s.see) h += '<p class="see">' + sub(s.see) + '</p>';
+        if (s.kind === 'opt') h += '<div class="opt2"><label><input type="checkbox" data-k="' + s.id + '-did"' + (state.c[s.id + '-did'] ? ' checked' : '') + '> Did it</label><label><input type="checkbox" data-k="' + s.id + '-skip"' + (state.c[s.id + '-skip'] ? ' checked' : '') + '> Skipped it</label></div>';
+        if (s.two) h += '<div class="opt2"><label><input type="checkbox" data-k="' + s.id + '-unticked"' + (state.c[s.id + '-unticked'] ? ' checked' : '') + '> Unticked was refused, nothing made</label><label><input type="checkbox" data-k="' + s.id + '-ticked"' + (state.c[s.id + '-ticked'] ? ' checked' : '') + '> Ticked made the account</label></div>';
+        h += '</div></li>';
+      });
+      h += '</ul><div class="verdict"><b>Verdict:</b>' +
+        ['pass:Passed', 'issue:Issue', 'call:Needs a call'].map(function (x) { var k = x.split(':'); return '<button type="button" data-v="' + p.id + ':' + k[0] + '" aria-pressed="' + (state.v[p.id] === k[0]) + '">' + k[1] + '</button>'; }).join('') +
+        '</div><textarea id="n-' + p.id + '" placeholder="Notes for ' + p.id + (p.id === 'B' ? ' (write every address you made here)' : '') + '">' + esc(state.n[p.id] || '') + '</textarea>';
+      b.innerHTML = h; d.appendChild(b); partsEl.appendChild(d);
+    });
+    var pct = c.total ? Math.round(100 * c.got / c.total) : 0;
+    document.getElementById('count').textContent = c.got + ' of ' + c.total + ' steps';
+    document.getElementById('meter').style.width = pct + '%';
+  }
+  partsEl.addEventListener('change', function (e) {
+    var k = e.target.getAttribute && e.target.getAttribute('data-k');
+    if (k) { state.c[k] = e.target.checked; save(); updateCounts(); }
+  });
+  partsEl.addEventListener('input', function (e) {
+    if (e.target.id && e.target.id.indexOf('n-') === 0) { state.n[e.target.id.slice(2)] = e.target.value; save(); }
+  });
+  partsEl.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.getAttribute('data-v')) { var a = t.getAttribute('data-v').split(':'); state.v[a[0]] = state.v[a[0]] === a[1] ? null : a[1]; save(); keepOpen(a[0]); }
+    else if (t.getAttribute('data-copy')) { copy(t.getAttribute('data-copy'), t); }
+  });
+  function keepOpen(id) { state.open[id] = true; render(); }
+  function updateCounts() {
+    var c = counts();
+    document.getElementById('count').textContent = c.got + ' of ' + c.total + ' steps';
+    document.getElementById('meter').style.width = (c.total ? Math.round(100 * c.got / c.total) : 0) + '%';
+    var ds = partsEl.querySelectorAll('details.part');
+    DATA.parts.forEach(function (p, i) { var chips = ds[i].querySelectorAll('summary .chip'); chips[chips.length - 1].textContent = c.per[p.id].g + ' of ' + c.per[p.id].t; });
+  }
+  function copy(text, btn) {
+    function fallback() { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); }
+    var ok = function () { if (btn) { var o = btn.textContent; btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = o; }, 1200); } };
+    try { navigator.clipboard.writeText(text).then(ok, function () { fallback(); ok(); }); } catch (e) { fallback(); ok(); }
+  }
+  function summary() {
+    var c = counts(), L = ['Terms acceptance walk (step 6.3) · ' + c.got + ' of ' + c.total + ' steps ticked', ''];
+    DATA.parts.forEach(function (p) {
+      var pc = c.per[p.id], v = state.v[p.id];
+      L.push(p.title + ' · ' + (v ? ({ pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' })[v] : 'no verdict') + ' · ' + pc.g + '/' + pc.t);
+      var open = [];
+      p.steps.forEach(function (s) {
+        if (s.kind === 'opt') { L.push('   ' + s.id + ': ' + (state.c[s.id + '-did'] ? 'did it' : state.c[s.id + '-skip'] ? 'skipped' : 'NOT TICKED')); return; }
+        if (s.two) { L.push('   ' + s.id + ': unticked refused=' + (state.c[s.id + '-unticked'] ? 'yes' : 'NO') + ', ticked made it=' + (state.c[s.id + '-ticked'] ? 'yes' : 'NO')); return; }
+        if (!state.c[s.id]) open.push(s.id);
+      });
+      if (open.length) L.push('   not ticked: ' + open.join(', '));
+      if (state.n[p.id]) L.push('   notes: ' + state.n[p.id].replace(/\n/g, ' / '));
+    });
+    return L.join('\n');
+  }
+  document.getElementById('copyAll').addEventListener('click', function (e) {
+    var s = summary(), out = document.getElementById('out'); out.hidden = false; out.textContent = s; copy(s, e.target);
+  });
+  document.getElementById('reset').addEventListener('click', function (e) {
+    if (e.target.getAttribute('data-sure') !== '1') { e.target.setAttribute('data-sure', '1'); e.target.textContent = 'Press again to clear every tick'; setTimeout(function () { e.target.removeAttribute('data-sure'); e.target.textContent = 'Clear all ticks'; }, 3000); return; }
+    state = { c: {}, v: {}, n: {}, open: state.open }; save(); render(); e.target.removeAttribute('data-sure'); e.target.textContent = 'Clear all ticks';
+  });
+  render();
+})();
+</script>
