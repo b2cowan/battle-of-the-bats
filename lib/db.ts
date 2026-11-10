@@ -289,6 +289,8 @@ export async function cloneTournament(
       // the hero banner, Dark/Light, card style and the App icon's three — are not carried (Public tournament pages
       // Stage 8 Parts 1 and 4b; the columns stay until a later /db pass, ask C).
       tournamentInsert.logo_url = source.logo_url ?? null;
+      // The logo's stored shape travels with it (mig 460): the admin sidebar's tile reads it on the first paint.
+      tournamentInsert.logo_aspect = source.logo_aspect ?? null;
       tournamentInsert.theme_preset = source.theme_preset ?? null;
       tournamentInsert.theme_primary = source.theme_primary ?? null;
       tournamentInsert.theme_accent = source.theme_accent ?? null;
@@ -443,6 +445,8 @@ export async function populateTournamentFrom(
     // What the public pages read (as cloneTournament): the dead banner, Dark/Light, card style and App icon columns stay
     // behind (Stage 8 Parts 1 and 4b).
     for (const column of ['logo_url', 'theme_preset', 'theme_primary', 'theme_accent', 'theme_font']) fill(column);
+    // The logo's stored shape (mig 460) moves only WITH the logo — never onto a draft's own logo, whose shape is its own.
+    if ('logo_url' in patch) patch.logo_aspect = source.logo_aspect ?? null;
     const draftHidden = Array.isArray(destination.public_hidden_pages) ? destination.public_hidden_pages : [];
     if (draftHidden.length === 0 && Array.isArray(source.public_hidden_pages) && source.public_hidden_pages.length > 0) {
       patch.public_hidden_pages = source.public_hidden_pages;
@@ -1851,6 +1855,7 @@ function mapTournament(r: any): Tournament {
     totalFeeAmount:           r.total_fee_amount != null ? Number(r.total_fee_amount) : null,
     totalFeeDueDate:          r.total_fee_due_date ?? null,
     logoUrl:                  r.logo_url ?? null,
+    logoAspect:               r.logo_aspect ?? null,
     themePreset:              r.theme_preset ?? null,
     themePrimary:             r.theme_primary ?? null,
     themeAccent:              r.theme_accent ?? null,

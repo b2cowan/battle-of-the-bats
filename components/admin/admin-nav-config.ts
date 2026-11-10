@@ -21,7 +21,7 @@ export type TourNavItem = {
 export type TourGroup = {
   key: string;
   label: string;
-  defaultOpenFor: string[];
+  // ⚰ `defaultOpenFor` (the groups a phase opened) retired with the folding (navigation Phase 2, E14): nothing folds.
   items: TourNavItem[];
 };
 
@@ -29,7 +29,6 @@ export const TOUR_GROUPS: TourGroup[] = [
   {
     key: 'operations',
     label: 'Operations',
-    defaultOpenFor: ['draft', 'active', 'completed'],
     items: [
       { key: 'dashboard',     icon: Gauge,           label: 'Dashboard'      },
       { key: 'registrations', icon: Users,           label: 'Teams'          },
@@ -44,7 +43,6 @@ export const TOUR_GROUPS: TourGroup[] = [
   {
     key: 'setup',
     label: 'Setup',
-    defaultOpenFor: ['draft'],
     items: [
       { key: 'settings/event', icon: Settings2,  label: 'Event settings',     roles: ['owner', 'admin'] },
       { key: 'venues',         icon: MapPin,     label: 'Venues & facilities'                            },
@@ -56,7 +54,6 @@ export const TOUR_GROUPS: TourGroup[] = [
   {
     key: 'admin',
     label: 'Admin',
-    defaultOpenFor: [],
     items: [
       // ⚰ Data tools retired (Stage 5, E10, A59): each import lives with its data — Teams' Export, the schedule's Tools.
       { key: 'settings',   icon: Settings, label: 'Settings & access' },

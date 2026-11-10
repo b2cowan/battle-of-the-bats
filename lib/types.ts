@@ -335,6 +335,9 @@ export interface Tournament {
   // resolveTournamentLook(). The retired columns (hero banner, card style, Dark/Light, the App icon's colour, name and
   // logo size) are not mapped: nothing reads them, and they are queued for a drop (DATA_DICTIONARY, Stage 8 ask C).
   logoUrl?: string | null;
+  /** The logo's width / height (mig 460), or null when there is no logo or it is not measured yet — the admin sidebar's
+   *  tile shows the event's logo only within 1 : 2 … 2 : 1, else the event's initials (`lib/admin-event-cell.ts`). */
+  logoAspect?: number | null;
   themePreset?: string | null;
   themePrimary?: string | null;
   themeAccent?: string | null;

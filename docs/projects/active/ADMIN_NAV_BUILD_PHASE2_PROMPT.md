@@ -64,11 +64,25 @@ Broad reading goes to a helper (CLAUDE.md); check its claims against the code be
    one-swap-on-load.
 3. Present the **product-manager UX summary** and the task list before any code.
 
+> **⚖ GATE RULED 2026-11-10 — start at Steps 2.**
+> - The rulings are in the plan, §4, under "Phase 2 gate ruling(s)": the logo, the status words, the scope, and T1–T6.
+> - The states are drawn in tab 14 of the drawings (`/design` pass applied), published to the same artifact.
+> - **This prompt's Part A is amended by those rulings:**
+>   - The cell holds the name alone; there is **no chip in the cell** (E2; the line below predates round 2).
+>   - The chevron shows whenever the person can reach the organization's tournament screens, even with one event (T6).
+>   - The list rows are the standard two-line dropdown row: name, then dates · phase; the current row is olive with a
+>     check (T3 + the owner's change).
+>   - There is no game-day dot on the collapsed tile (T4).
+>   - A badly shaped event logo shows the event's initials (T5).
+>   - The event logo's shape is stored at upload, which is a migration.
+> - Part B carries T1 and T2.
+
 ## What this session changes
 **Part A — the sidebar**
 - **The event heads the sidebar in the cell** (E1, E10): the event's name on up to two lines, the logo tile (24 px open,
-  40 px folded — the same `SidebarLogoTile`), the phase as a chip on the cell's line. **When there is more than one event
-  the whole cell opens the list** (the chevron is its sign — §6); with one, it opens that event's Overview. The native
+  40 px folded — the same `SidebarLogoTile`). ~~the phase as a chip on the cell's line~~ (superseded, see the gate box).
+  **When the person has a choice the whole cell opens the list** (the chevron is its sign — §6, amended by T6); without
+  one, it opens that event's Dashboard. The native
   `<select>` and the strip tile are deleted. The list is a switcher window in the house kind (not a native control);
   keyboard: open, arrow, Enter, Escape returns focus to the cell.
 - **No folding anywhere in the tournament sidebar** (E14): group headings become labels; the list scrolls between the
@@ -125,6 +139,22 @@ rewrite and the help articles (Phase 6 — but write the N3 exception now), a to
    org-wide screens; the demo; Phase 0's first-paint proof), the ledger §, the plan's Phase 2 section with the
    measurements, the TODO line, the prompts index row and project memory (positive facts, "built 2026-MM-DD").
 7. **Do not commit without asking me.** On my yes, only this session's files, through a private index on HEAD.
+
+## Hand-off to Part B (written 2026-11-10, when Part A was built)
+> **Part A is built** (record: plan §5 Phase 2, "Part A BUILT 2026-11-10"; walk §508). Paste this prompt into a fresh
+> session and **build Part B only** — the strip names the page, paper titles drop, the org-wide screens (E3 + T1), page
+> help (E11), and T2 ("Your notifications", `/marketing` checks the words). Read the plan's Part A record first.
+- **What Part A left for you:** the event's cell (`EventCell`, `AdminKitRail.tsx`) and its list (`EventSwitchMenu.tsx`)
+  are built; the strip (`AdminTopStrip`, `useAdminPlace`) is untouched and still names the event with its dates and
+  chip — that is your first change. `eventSwitchLine` (`lib/admin-event-cell.ts`) already joins the dates and the phase
+  word; the strip's facts should read the same rule (`resolveEventPhase` + `PHASE_LABEL` — consider one shared
+  `eventPhaseOf` so the strip and the list cannot drift; /review noted the field mapping is written twice).
+- **The org-wide screens (E3, T1):** today the event's cell heads Settings & access / Members / Tournaments too
+  (`eventHeads` in `AdminKitRail`). In a club those screens take the club's own sidebar and cell (T1); in a
+  tournament-only organization, the organization's short sidebar with the org in the cell (E3). `isTournamentOrgScreen`
+  stays the one list. The list's "All tournaments" foot stays the way back from an event.
+- **Not yours:** the phone (Phase 3); the shared sidebar switcher extraction (first step of Phase 4 — see the plan).
+- **The walk §508 may come back with findings** — check the ledger before starting.
 
 ## Done when
 - A tournament sidebar's head is the event: name, logo or initials, phase chip; more than one event → the whole cell

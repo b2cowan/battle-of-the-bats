@@ -201,8 +201,10 @@ describe('4. no count, dot or door is lost in the strip', () => {
     }
   });
 
+  // ⚖ Navigation Phase 2 Part A (E14, owner 2026-11-09): the tournament sidebar folds no more, so only the coach rail still
+  // folds a group (until Phase 4); the admin rail has no folded group to keep (pinned in admin-event-cell.test.ts).
   it('a group folded shut keeps its rows in the page for the strip to show', () => {
-    for (const f of [ADMIN_RAIL, COACH_RAIL]) {
+    for (const f of [COACH_RAIL]) {
       const code = readCode(f);
       assert.doesNotMatch(code, /open && (g\.)?items\.map/, f);
       assert.match(code, /<div className=\{strip\.foldedGroup\}>/, f);
@@ -223,17 +225,22 @@ describe('4. no count, dot or door is lost in the strip', () => {
 
   // ⚖ Club Tier Stage 13i (Ask 2 = A, owner 2026-11-06; N3): the program and Organization menus retired with the pages
   // under the rows. Every club icon is a straight link to its place; the tournament's own tile menu is unchanged (Ask 8).
-  it('every club icon is a straight link — no program or Organization menu; the tournament tile keeps its list', () => {
+  it('every club icon is a straight link — no program or Organization menu; the event’s cell opens its list', () => {
     const admin = readCode(ADMIN_RAIL);
     assert.doesNotMatch(admin, /stripMenuRowProps|opensMenu|menuFor\(|StripMenuLink|StripMenuGroup|useSidebarStrip/);
     const club = admin.slice(0, admin.indexOf('function TournamentRail('));
     assert.doesNotMatch(club, /<SidebarStripMenu\b|useStripMenu\(/, 'the club body opens a menu again');
-    const tour = admin.slice(admin.indexOf('function TournamentRail('));
-    assert.match(tour, /<SidebarStripMenu key=\{openKey \?\? 'closed'\} open=\{openKey === 'tournament'\}/);
+    // ⚖ Phase 2 Part A (T3): the strip's tile menu became the event cell's ONE switch list, under the open cell and beside
+    // the folded tile alike (`EventSwitchMenu`).
+    const cell = admin.slice(admin.indexOf('function EventCell('), admin.indexOf('export default function AdminKitRail('));
+    assert.match(cell, /<EventSwitchMenu\b/);
   });
 
   it('the pickers become tiles that open their lists — the coach list keeps "No live season"', () => {
-    for (const f of RAILS) assert.match(readCode(f), /<SidebarStripTile\b/, f);
+    // ⚖ Phase 2 Part A: the admin's tournament picker is the event's cell itself, folded to its 40px logo tile (E10) — the
+    // coach rails keep their initials tiles until Phase 4.
+    for (const f of [COACH_RAIL, FREE_SHELL]) assert.match(readCode(f), /<SidebarStripTile\b/, f);
+    assert.match(readCode(ADMIN_RAIL), /<SidebarLogoTile source=\{source\} aspect=\{aspect\} name=\{name\} \/>/);
     assert.match(readCode(COACH_RAIL), /<StripMenuGroup label="No live season">/);
     // The tournament list switches only: a new tournament starts on the Tournaments page (owner 2026-10-19).
     assert.doesNotMatch(readCode(ADMIN_RAIL), /New tournament/);

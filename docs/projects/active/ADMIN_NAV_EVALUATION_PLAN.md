@@ -206,6 +206,38 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
 - The states the drawings do not show are drawn as a new tab and given a `/design` pass before any code.
 - This session builds **Part A only** (the sidebar). Part B goes to a fresh session.
 
+**⚖ Phase 2 gate — the drawings' calls T1–T6, all A (owner, 2026-11-10; drawings tab 14, after a `/design` pass).**
+- **T1:** a club's org-wide tournament screens use the club's own sidebar.
+  - The Tournaments list lights the foot's Tournaments door, and in a club that door opens the list. Today it opens
+    the chosen event's Dashboard.
+  - The strip says "Club".
+  - The tournament addresses for Members and PDF settings open the club's Organization tabs, so each screen has one
+    home in a club.
+  - A tournament-only organization keeps E3 as drawn.
+  - This is Part B.
+- **T2:** the event's personal "Notification preferences" page gets a row of its own, last in the event's sidebar,
+  once Settings & access and Tournaments leave that label in Part B.
+  - The working words are "Your notifications"; `/marketing` checks them.
+  - Today its only door is a card on Settings & access.
+- **T3:** the list window is 320 px.
+  - **Owner's change:** its rows are the portal's standard two-line dropdown row (`SublinedChoice`):
+    - the event's name on the first line, 14 px semibold;
+    - its dates and phase word on a 12 px tertiary line under it ("Nov 1–3, 2026 · Game day");
+    - 44 px rows with a hairline between them;
+    - the olive tint under a pointer and on keyboard focus.
+  - The current event shows its name in olive with an olive check on the right.
+  - The head is that list's group band ("Tournaments"), and "All tournaments" sits at the foot.
+  - It is the same window under the open cell and beside the collapsed tile.
+- **T4:** no game-day dot on the collapsed tile; the strip's chip says it.
+- **T5:** a too-wide or too-tall event logo falls back to the event's initials, never the organization's logo.
+- **T6:** the chevron shows whenever the person can reach the organization's tournament screens, even with one event.
+  - The list then holds that event and "All tournaments".
+  - It hides only for someone who can open one event and nothing above it (a scoped volunteer), whose cell opens the
+    event's Dashboard.
+  - This amends E1's "more than one".
+- **Stale wording in the Phase 2 prompt:** its line "the phase as a chip on the cell's line" predates round 2. E2
+  holds: the cell keeps the name alone.
+
 ## 5. Build phases (if ruled) — by dependency and rework risk
 
 - **Phase 0 · The chosen event on first paint.** The server knows the selected event (a cookie beside the stored choice,
@@ -377,6 +409,62 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
 - **Phase 2 · Tournament desktop.** Event in the cell; native `<select>` deleted; strip names the page
   (`useAdminPlace` names the lit row); paper titles drop where the strip names the page (Phase 3's `TabPageHeader`
   hand-off pattern); org-wide screens get the org sidebar (E3); `isTournamentOrgScreen` stays the one list.
+  - **✅ Part A BUILT 2026-11-10** (the sidebar; commit owed, the owner's yes — the commit hash goes here). What changed:
+    - **The event heads the tournament sidebar** (`EventCell` in `AdminKitRail.tsx`): the club cell's frame (45 px, the name 14/16 bold on up to
+      two lines, the whole name as a tooltip only while cut, `CellName` now shared with the club cell), the one `SidebarLogoTile` (24 open, 40
+      folded) and a 16 px down chevron (hidden folded). The tile's source is ONE pure rule, `eventTileSource` (`lib/admin-event-cell.ts`): the
+      event's logo with its own shape, else the organization's with its shape, else initials; a badly shaped event logo stays the source, so the
+      tile falls to the EVENT's initials (T5). The whole cell is one button that opens the list (§6); with no event yet the club cell shows.
+    - **The switch list** (`EventSwitchMenu.tsx`): a 320 px `role="menu"` window wearing `SublinedChoice`'s list and rows (`convWhat*`), the
+      "Tournaments" band, a row per event (name; "dates · phase word", `eventSwitchLine` — PHASE_LABEL words, E12 (2): "Active" left the list),
+      the current event olive with a check, "All tournaments" (trophy) at the foot → the Tournaments list. Under the open cell (2 px below, 2 px
+      in) or 8 px beside the folded tile. Keyboard: Enter / Space / ArrowDown open; focus on the current row; arrows rove; Escape and Tab close
+      to the cell; a press outside, a page change or a resize closes. The sidebar raises its layer (z 70) while it is open.
+    - **T6, built narrower than ruled — owner call:** the chevron shows whenever the cell has an event. The ruled "no chevron" case (a scoped
+      volunteer who can reach nothing above their event) has no member in the code today: every person who can open an event can open the
+      Tournaments list (scoped people see only their events there), so the branch would be unreachable. Keeping a scoped volunteer off that
+      list is a separate access change.
+    - **No folding** (E14): the tournament headings are `.label`s; `fl_nav_groups`, the phase defaults (`defaultOpenFor`) and the folded-group
+      wrapper are gone. The native `<select id="admin-tournament-select">`, its one-event span, the "Tournament" label, the strip's initials tile
+      and its menu went with the cell; `StripMenuButton` lost its last caller and was deleted. NAV_STANDARD N3 has the switcher exception.
+    - **One width**: measured, not changed — the club and the tournament sidebar are both 240 (one `--admin-rail-w`).
+    - **The event logo's shape** (gate ruling): migration **460** `tournaments.logo_aspect` (dev 2026-11-10; prod at the promote, BEFORE the
+      code). The upload route measures it (in parallel with the storage upload) and adds the `?v=` stamp the organization's route has; removal
+      clears it; the clone and "reuse a setup" copy it only with the logo; the provider maps `logoUrl` + `logoAspect` (seed and browser read);
+      the Public site page updates the cell at once through `patchTournament`. The one-time pass `scripts/backfill-org-logo-aspect.mjs` now
+      covers events too (dev: 24 event logos measured, 0 unreadable). The fixture seed `seed-public-frame-fixtures.mjs` copies the shape too.
+    - **Found and fixed by /review (pre-existing):** the tournament-logo route never checked that the event is the caller's organization's
+      before writing or removing the storage file (`requireTournamentInOrg` now runs first in both).
+  - **Measured 2026-11-10** (dev; `.probe/nav-phase2/measure.mjs` → `run1.json`, `run2.json`, screenshots; `switch.mjs`): the club's event
+    (UAT Rep Club Invitational 2026: the club's crest, it has no logo) and a tournament-only org's (UAT Import Smoke Tournament: initials "UI",
+    no logo anywhere), on Divisions and Settings & access, at 1440 and 1366, open and folded. **First paint = after load**: one value in every
+    live sequence, the server's paint (scripts off) already the event with its tile; tab title unchanged ("Divisions - {event} - {org} -
+    FieldLogicHQ"). Width 240 / folded 64; cell 45 px, bottom at 93 (the club's line). List: 320 wide at (2, 95) open / (71, 50) folded;
+    rows 49–50 px (67 for a wrapped name), All tournaments 44; focus on the current row, ArrowDown moves, Escape closes onto the cell, ArrowDown
+    on the cell opens; picking a row switches the event on the same page (strip and cell follow); All tournaments → /tournaments/manage.
+    Names: one line fits, a long one cuts at two lines with "…". No `<select>`, no folding button, labels Operations / Setup / Admin. At 1366
+    × 768 every event row fits; the foot scrolls (the owner's "whole nav scrolls"). `check:layout` (Dashboard, Divisions, Settings & access,
+    Tournaments list) at 1440, 1366 and folded: no new findings. **Not measured on dev data:** one-event list, an event's own logo, a wide
+    event logo (dev's measured event logos all belong to orgs without a UAT sign-in) — unit tests cover the rule, the walk's fixture shows them.
+  - **/design** (against tab 14): no change needed; the open list's left edge moved from 8 px to the drawn 2 px. Recorded, not changed: the
+    folded cell's focus ring is the club cell's inset ring (tab 13 drew a ring outside the tile — change both cells together if wanted).
+  - **/simplify** applied: rows built only while open; the logo measured during the upload; `setTournamentLogo` → `patchTournament`; the
+    chevron hides through `strip.fullOnly`; `StripMenuButton` + `.menuItemAdd/.menuItemPlus` deleted. **⚠ First step of Phase 4 (all four
+    reviewers):** lift `EventSwitchMenu`'s keyboard contract and placement into ONE shared sidebar switcher (`components/shared/`) that
+    `SidebarStripMenu` and the coach team cell also use — do it before the coach cell is built, or the contract is copied a third time; fold
+    the `.rail:has(.switchMenu)` layer rule into it.
+  - **/review** (high-risk; five lenses): fixed the org check above, the fixture seed's shape, and focus on resize. **Recorded (Low):** a
+    copied event shares its source's logo FILE (replacing or removing it changes or breaks the copy while its stored shape stays — fixing means
+    copying the file on clone); a failed row write after the storage upload leaves the new picture beside the old shape; a list re-read in
+    flight can briefly put back the old logo after an upload (the next load heals it; discarding the read could strand a loud read's loading
+    line); the Public site page can show the wrong event's logo if the event is switched mid-upload (pre-existing); two shared check scripts
+    (`check-layout-invariants.mjs`, `admin-identity.mjs`) still seed the now-unread `fl_nav_groups` (watched automation — owner's call).
+  - **Owed at the promote, in this order:** migration 460 to prod BEFORE the code (clone-with-branding, reuse-with-a-logo, logo upload and
+    removal fail without it); then `node scripts/backfill-org-logo-aspect.mjs --prod` (dry run) and `--prod --write` (until then existing event
+    logos show initials) — both with the owner's yes, beside mig 458's pass.
+  - **Walk §508** (https://claude.ai/artifact/UC8MtahRswkropMWeTcDkp, source `ADMIN_NAV_PHASE2A_WALK.html`; fixture
+    `scripts/walk-event-logo.mjs`): 3 walks, 24 checks; carries Phase 0's deferred first-paint proof. **Next: Part B** (the strip names the
+    page, paper titles drop, the org-wide screens, page help; T1, T2) in a fresh session.
 - **Phase 3 · Tournament phone.** Bar names the page; the small line opens the sheet; More loses its dropdown (N7 item 1
   rewritten).
 - **Phase 4 · Coaches Portal desktop.** Sidebar widened to 240 and unfolded (E9, E14); strip split with the word "Coach" and the team's facts at its right end (E7); team cell replacing the `<select>`;

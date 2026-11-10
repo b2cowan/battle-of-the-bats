@@ -118,8 +118,11 @@ const srcGames = await rows('games', db.from('games').select('*').eq('tournament
 const srcVenues = await rows('venues', db.from('diamonds').select('*').eq('tournament_id', srcT.id));
 const srcFacilities = srcVenues.length ? await rows('facilities', db.from('venue_facilities').select('*').in('venue_id', srcVenues.map(v => v.id))) : [];
 // A logo already in dev storage (the branded-dark variant's), so the paid standalone has a real image.
-const logos = await rows('logo', db.from('tournaments').select('logo_url').not('logo_url', 'is', null).limit(20));
-const LOGO = (logos.find(l => l.logo_url.startsWith(URL_)) ?? logos[0])?.logo_url ?? null;
+const logos = await rows('logo', db.from('tournaments').select('logo_url, logo_aspect').not('logo_url', 'is', null).limit(20));
+const LOGO_ROW = logos.find(l => l.logo_url.startsWith(URL_)) ?? logos[0] ?? null;
+const LOGO = LOGO_ROW?.logo_url ?? null;
+// The logo's stored shape travels with it (mig 460), or the admin sidebar's tile shows the event's initials instead.
+const LOGO_ASPECT = LOGO_ROW?.logo_aspect ?? null;
 
 async function wipe(slug) {
   const [org] = await rows('find org', db.from('organizations').select('id, internal_notes').eq('slug', slug));
@@ -155,7 +158,7 @@ async function build(f) {
     ...srcT, id: tid, org_id: org.id, slug: f.t.slug, name: f.t.name, status: f.t.status, is_active: false,
     start_date: f.t.start, end_date: addDays(srcT.end_date ?? srcT.start_date, delta),
     theme_preset: null, theme_primary: f.t.theme_primary ?? null, theme_accent: null,
-    logo_url: f.t.logo ? LOGO : null, list_in_directory: false,
+    logo_url: f.t.logo ? LOGO : null, logo_aspect: f.t.logo ? LOGO_ASPECT : null, list_in_directory: false,
   };
   for (const k of ['created_at', 'results_notified_at', 'results_notification_sent_count', 'champions_crowned_at']) delete row[k];
   die('event', (await db.from('tournaments').insert(row)).error);

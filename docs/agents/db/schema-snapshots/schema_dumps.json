@@ -30098,6 +30098,15 @@
         "column_default": null
       },
       {
+        "table_name": "tournaments",
+        "pos": 49,
+        "column_name": "logo_aspect",
+        "data_type": "real",
+        "udt_name": "float4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "user_hidden_workspaces",
         "pos": 1,
         "column_name": "user_id",

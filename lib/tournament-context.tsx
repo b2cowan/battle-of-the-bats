@@ -23,6 +23,9 @@ interface TournamentContextType {
   /** Re-read the list. `selectId` makes that event the current one once it is in the list (a tournament
    *  just created: its row exists only after this read). */
   refresh: (selectId?: string) => Promise<void>;
+  /** An event's fields changed by a save on this page (the Public site page's logo upload or removal): the sidebar's cell
+   *  shows them at once, without a re-read (a loud `refresh` would blank the page for its loading line). */
+  patchTournament: (id: string, patch: Partial<Omit<Tournament, 'id'>>) => void;
 }
 
 const TournamentContext = createContext<TournamentContextType>({
@@ -32,6 +35,7 @@ const TournamentContext = createContext<TournamentContextType>({
   loading: true,
   setCurrentTournament: () => {},
   refresh: async () => {},
+  patchTournament: () => {},
 });
 
 const ADMIN_T_KEY = 'botb_admin_tournament_id';
@@ -56,6 +60,9 @@ type TournamentRow = {
   results_notified_at?: string | null;
   results_notification_sent_count?: number | null;
   settings?: Record<string, unknown> | null;
+  logo_url?: string | null;
+  /** The logo's stored shape (mig 460): the sidebar's tile decides logo-or-initials from it on the server's first paint. */
+  logo_aspect?: number | null;
   /** Computed by the list route, not a column (the game-day rule's "first game started" half). */
   first_game_started?: boolean;
 };
@@ -123,6 +130,9 @@ function mapRow(r: TournamentRow): Tournament {
     resultsNotifiedAt: r.results_notified_at ?? null,
     resultsNotificationSentCount: r.results_notification_sent_count ?? 0,
     settings:       (r.settings && typeof r.settings === 'object') ? r.settings : {},
+    // The sidebar's cell heads with the event and its logo (navigation Phase 2, E10): the logo and its stored shape.
+    logoUrl:        r.logo_url ?? null,
+    logoAspect:     r.logo_aspect ?? null,
   };
 }
 
@@ -289,8 +299,14 @@ export function TournamentProvider({ children, orgSlug, seed }: {
 
   const isLocked = currentTournament?.status === 'completed';
 
+  const patchTournament = useCallback((id: string, patch: Partial<Omit<Tournament, 'id'>>) => {
+    const apply = (t: Tournament) => (t.id === id ? { ...t, ...patch } : t);
+    setTournaments(prev => prev.map(apply));
+    setCurrentState(prev => (prev ? apply(prev) : prev));
+  }, []);
+
   return (
-    <TournamentContext.Provider value={{ tournaments, currentTournament, isLocked, loading, setCurrentTournament, refresh }}>
+    <TournamentContext.Provider value={{ tournaments, currentTournament, isLocked, loading, setCurrentTournament, refresh, patchTournament }}>
       {children}
     </TournamentContext.Provider>
   );

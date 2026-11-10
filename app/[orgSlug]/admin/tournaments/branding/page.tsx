@@ -103,7 +103,7 @@ function fileName(url: string | null): string {
 }
 
 export default function TournamentBrandingPage() {
-  const { currentTournament, loading: tournamentLoading } = useTournament();
+  const { currentTournament, loading: tournamentLoading, patchTournament } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
   usePageTitle('Public site');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
@@ -235,9 +235,11 @@ export default function TournamentBrandingPage() {
       const fd = new FormData();
       fd.append('file', file);
       const res = await fetch(logoRoute, { method: 'POST', body: fd });
-      const data = await res.json().catch(() => null) as { logoUrl?: string; error?: string } | null;
+      const data = await res.json().catch(() => null) as { logoUrl?: string; logoAspect?: number | null; error?: string } | null;
       if (!res.ok) throw new Error(data?.error && res.status < 500 ? data.error : W.uploadFailed);
       setLogoUrl(data?.logoUrl ?? null);
+      // The sidebar's cell shows the event's new logo at once (navigation Phase 2).
+      if (tournamentId) patchTournament(tournamentId, { logoUrl: data?.logoUrl ?? null, logoAspect: data?.logoAspect ?? null });
     } catch (e) {
       setLogoError(e instanceof Error ? e.message : W.uploadFailed);
     } finally {
@@ -253,6 +255,7 @@ export default function TournamentBrandingPage() {
       const res = await fetch(logoRoute, { method: 'DELETE' });
       if (!res.ok) throw new Error('remove');
       setLogoUrl(null);
+      if (tournamentId) patchTournament(tournamentId, { logoUrl: null, logoAspect: null });
     } catch {
       setLogoError(W.removeFailed);
     } finally {

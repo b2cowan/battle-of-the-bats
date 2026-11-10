@@ -2,12 +2,12 @@
 
 **Generated:** 2026-11-10 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 505 divergence(s)** across dev/prod.
+**⚠️ 506 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 10 | 6 | — |
-| Columns | 175 | 59 | 1 |
+| Columns | 176 | 59 | 1 |
 | Indexes | 50 | 26 | 0 |
 | Constraints | 36 | 28 | — |
 | RLS / CHECK | 84 | 26 | 0 (RLS state) |
@@ -34,7 +34,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (175)
+### Only in DEV (176)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -207,6 +207,7 @@
 - `second_parent_stops.registration_ids`
 - `second_parent_stops.source`
 - `second_parent_stops.stopped_at`
+- `tournaments.logo_aspect`
 - `user_hidden_workspaces.hidden_at`
 - `user_hidden_workspaces.organization_id`
 - `user_hidden_workspaces.user_id`

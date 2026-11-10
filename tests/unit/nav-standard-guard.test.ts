@@ -480,13 +480,16 @@ describe('13i · places in the sidebar, pages on the page', () => {
     assert.match(clubBody, /const heading = placeGroupHeading\(group\);/);
     assert.match(clubBody, /\{heading && <div className=\{styles\.label\}>\{heading\}<\/div>\}/, 'no blank heading line');
     assert.doesNotMatch(clubBody, /u00a0/, 'no empty heading space over a lone row');
-    // The tournament's own groups still fold (Ask 8: tournament mode unchanged).
-    assert.match(tourBody, /onClick=\{\(\) => toggleGroup\(g\.key\)\}/);
+    // ⚖ E14 (navigation Phase 2 Part A, owner 2026-11-09): the tournament's groups no longer fold either — labels, as the club's.
+    assert.doesNotMatch(tourBody, /groupHeader|aria-expanded|toggleGroup/, 'a tournament heading folds');
+    assert.match(tourBody, /<div className=\{styles\.label\}>\{g\.label\}<\/div>/);
   });
 
-  it('N3: no chevron anywhere in the club body; the tournament group headings keep theirs', () => {
+  // ⚖ N3 as rewritten in navigation Phase 2 Part A (E14): a sidebar chevron only ever means "switch" — the event cell's.
+  it('N3: no chevron in the club body or the tournament groups; the only one is the event cell’s switch chevron', () => {
     assert.doesNotMatch(clubBody, /<ChevronRight|styles\.chevron|opensPages/);
-    assert.match(tourBody, /<ChevronRight size=\{12\} className=\{`\$\{styles\.chevron\}\$\{open \? ` \$\{styles\.chevronOpen\}` : ''\}`\} aria-hidden \/>/);
+    assert.doesNotMatch(tourBody, /<ChevronRight|<ChevronDown|styles\.chevron/);
+    assert.match(rail, /<ChevronDown size=\{16\} aria-hidden className=\{`\$\{styles\.eventChevron\} \$\{strip\.fullOnly\}`\} \/>/);
   });
 
   it('N4 (navigation Phase 1): Plan & billing first (its fee pill on it), the sandbox’s Help, the hairline, the portal doors, then Collapse', () => {

@@ -223,10 +223,5 @@
 .menuItemText { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menuItemMeta { flex-shrink: 0; font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); }
 .menuItemCheck { flex-shrink: 0; color: var(--home-olive); }
-/* The picker's "+ New …" foot row. */
-.menuItemAdd {
-  margin-top: 4px;
-  border-top: 1px solid var(--home-line);
-  border-radius: 0 0 6px 6px;
-}
-.menuItemPlus { flex-shrink: 0; color: var(--home-olive); }
+/* ⚰ The picker's "+ New …" foot row (`.menuItemAdd`, `.menuItemPlus`) and its button, `StripMenuButton`, went with their last
+   caller — the tournament sidebar's tile menu, replaced by the event cell's switch list (navigation Phase 2 Part A). */

@@ -261,6 +261,40 @@ body.only-diff tr.same-row { display: none; }
 .ppbar .r { display: flex; align-items: center; gap: 12px; min-height: 36px; }
 .ppbar .r b { font: 700 16px/19px 'Inter'; }
 .ppbar .r small { display: block; font: 400 11px/14px 'IBM Plex Mono'; color: var(--ink3); }
+/* Tab 14 · Phase 2 gate — the event's cell (tab 13's .pbc + .ptile, as built) with its chevron, and the list window drawn
+   from the shipped strip menu (SidebarStrip.module.css .menu: 6px padding, 8px corners, a ruled head, 34px rows, the
+   current row tinted and bold with its status word in place of a check, a hairline over the foot row). */
+/* The chevron is the SingleSelectDropdown chevron face's own: 18px, the secondary ink (tab 5 drew 16px in the tertiary). */
+.pbc .pchev { margin-left: auto; flex: none; width: 18px; display: grid; place-items: center; color: var(--ink2); }
+.pbc.copen { background: rgba(70,55,30,.07); } .pbc.copen .pchev { color: var(--ink); }
+.pmenu { position: absolute; z-index: 20; background: var(--white); border: 1px solid var(--line2); border-radius: 8px; box-shadow: 0 10px 28px rgba(36,30,21,.22); padding: 6px; }
+.pmh { padding: 6px 10px 7px; margin-bottom: 4px; border-bottom: 1px solid var(--line); font: 700 11px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); }
+.pmi { display: flex; align-items: flex-start; gap: 8px; min-height: 34px; padding: 8px 10px; border-radius: 6px; font: 400 14px/18px 'Inter'; color: var(--ink); }
+.pmi.on { background: var(--olive-soft); color: var(--olive); font-weight: 600; }
+.pmi.hov { background: var(--olive-soft); }
+.pmi.kf { outline: 2px solid var(--olive); outline-offset: -2px; }
+.pmi .pmt { flex: 1; min-width: 0; }
+.pmi .pmm { flex: none; font: 400 12px/18px 'Inter'; color: var(--ink3); }
+.pmi.pmall { margin-top: 4px; border-top: 1px solid var(--line); border-radius: 0 0 6px 6px; align-items: center; }
+.pmi.pmall svg { flex: none; color: var(--olive); }
+/* the shipped tile fills its frame, whole (Part B, owner 2026-11-10); tab 13 still draws 82%, left as it is */
+#p-phase2 .ptile.img svg { width: 100%; height: 100%; }
+.pmi.pmone .pmt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the portal's standard two-line dropdown (SublinedChoice / coaches.module.css .convWhat*) */
+.psl { position: absolute; z-index: 20; background: var(--white); border: 1px solid var(--olive); border-radius: 9px; box-shadow: 0 10px 28px rgba(0,0,0,.28); overflow: hidden; }
+.psg { font: 700 11px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); background: rgba(119,109,93,.10); padding: 6px 12px; }
+.psr { display: flex; justify-content: space-between; align-items: center; gap: 13px; min-height: 44px; padding: 8px 12px; border-top: 1px solid var(--line); }
+.psg + .psr { border-top: 0; }
+.psr.hov { background: var(--olive-soft); }
+.psn { display: block; font: 600 14px/18px 'Inter'; color: var(--ink); }
+.pss { display: block; font: 400 12px/16px 'Inter'; color: var(--ink3); margin-top: 1px; }
+.psr.on .psn { color: var(--olive); }
+.psk { flex: none; color: var(--olive); }
+.psr.psall { justify-content: flex-start; gap: 8px; }
+.psr.psall svg { color: var(--olive); }
+.chip.nt { color: var(--ink2); background: #F1EEE6; border-color: var(--line2); }
+.p2body { position: absolute; right: 0; bottom: 0; padding: 18px 32px; }
+.p2body .ph-note { border: 1px dashed var(--line2); border-radius: 8px; padding: 18px; color: var(--ink3); font-size: 13px; background: rgba(255,255,255,.5); }
 /* "Show only what differs": unchanged parts fade */
 body.only-diff .fr .same { opacity: .16; }
 body.only-diff .fr .grid { opacity: .15; }
@@ -932,6 +966,107 @@ var pbAskHTML = PB_ASKS.map(function (a) {
   return '<div class="ask" id="ask-' + a[0] + '"><h3><span class="mk inl" style="cursor:default">' + a[0] + '</span>' + a[1] + '</h3><p class="muted" style="margin:0 0 4px">' + a[2] + '</p><ol type="A">' + a[3].map(function (o) { return '<li>' + o + '</li>'; }).join('') + '</ol></div>';
 }).join('');
 
+/* ── Tab 14 · Phase 2 gate (2026-11-10): the event in the cell — the states the earlier tabs did not draw. Drawn from the
+   shipped parts: tab 13's cell and ONE tile (Part B, as built) and the strip menu's window. ── */
+LOGO.ev = '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#8C2F39"/><circle cx="20" cy="20" r="14.5" fill="none" stroke="#F4D9A6" stroke-width="1.6"/><path d="M12 24c4-1 7-5 8-11 1 6 4 10 8 11" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="20" cy="27.5" r="2.4" fill="#fff"/></svg>';
+var EV_SHORT = 'Fall Classic 2026', EV_LONG = 'Lakeshore Minor Baseball Fall Classic Invitational 2026';
+function ecell(name, tile, o) {
+  o = o || {};
+  return '<div class="pbc' + (o.hov ? ' hov' : '') + (o.foc ? ' foc' : '') + (o.open ? ' copen' : '') + '" style="width:240px">' + tile + '<b>' + name + '</b>' +
+    (o.chev ? '<span class="pchev">' + I('down', 16) + '</span>' : '') + '</div>';
+}
+/* A tournament page has no tab band, so these frames draw the cell alone (tab 13's frames carry the club's band). */
+function ecellFrame(cellHtml, h, extra, w) { return frame(w || 500, h || 46, '<div class="side" style="top:0;bottom:auto;height:46px;width:241px">' + cellHtml + '</div>' + (extra || '')); }
+function ecolFrame(tile, extra, w) { return frame(w || 150, 46, '<div class="side" style="top:0;bottom:auto;height:46px;width:65px"><div class="pbc col" style="width:64px">' + tile + '</div></div>' + (extra || '')); }
+var ECELLS = [
+  ['One event · a person who can open only it', 'nothing to choose between and no organization-wide screens to reach: no chevron, and the cell opens the event’s Dashboard, as the club’s opens Overview. A volunteer who can open one event of many is this case too: the list holds only theirs.', function () { return ecellFrame(ecell(EV_SHORT, ptile('ev', 24))); }],
+  ['One event · an organizer', 'the chevron stays: the list is also the only door to All tournaments (New tournament), Settings & access and Members once Part B takes them out of this sidebar. A club has the foot’s Club door; a tournament-only organization with one event would have none. The list is drawn below.', function () { return ecellFrame(ecell(EV_SHORT, ptile('ev', 24), { chev: 1 })); }],
+  ['Several events', 'the chevron is the sign; the whole cell opens the list (one target, never a name opening one thing beside a chevron opening another)', function () { return ecellFrame(ecell(EV, ptile('ev', 24), { chev: 1 })); }],
+  ['Too long for two', 'cut at the end of the second line; the whole name on hover only when cut (B3), and always in the list', function () { return ecellFrame(ecell(EV_LONG, ptile('ev', 24), { chev: 1, hov: 1 }), 84, '<div class="ostip" style="left:60px;top:52px">' + EV_LONG + '</div>'); }],
+  ['Keyboard focus', 'the olive ring the sidebar already uses; Enter, Space or the down arrow opens the list', function () { return ecellFrame(ecell(EV, ptile('ev', 24), { chev: 1, foc: 1 })); }],
+  ['Its list open', 'the cell keeps a quiet tint while its list is open', function () { return ecellFrame(ecell(EV, ptile('ev', 24), { chev: 1, open: 1 })); }]
+];
+S.p2Cells = '<div class="lgrid" style="grid-template-columns:240px max-content"><span></span><span class="h">Open sidebar · 240</span>' +
+  ECELLS.map(function (r) { return '<span class="rl">' + r[0] + '<small>' + r[1] + '</small></span>' + r[2](); }).join('') + '</div>';
+var EKINDS = [
+  ['The event’s own logo', 'a round badge, about 1 : 1', 'ev'],
+  ['Very light', 'white art on cream; the thin outline keeps its edge', 'light'],
+  ['Wide wordmark', '4 : 1, wider than 2 : 1, so the event’s initials (T5)', null],
+  ['Tall pennant', '1 : 3, taller than 1 : 2, so the event’s initials (T5)', null],
+  ['No logo of its own', 'the organization’s logo (here the club’s crest), the same tile at the same size', 'crest'],
+  ['No logo anywhere', 'the event’s initials', null],
+  ['Shape not known, or the file fails to load', 'the initials (B4); the one-time pass measures the logos already uploaded', null]
+];
+S.p2Tiles = '<div class="lgrid" style="grid-template-columns:240px repeat(2, max-content)"><span></span><span class="h">Open</span><span class="h">Collapsed</span>' +
+  EKINDS.map(function (r) { return '<span class="rl">' + r[0] + '<small>' + r[1] + '</small></span>' + ecellFrame(ecell(EV, ptile(r[2], 24, 'LF'), { chev: 1 }), 0, '', 320) + ecolFrame(ptile(r[2], 40, 'LF')); }).join('') + '</div>';
+S.p2WideB = '<div class="pair"><div><div class="lbl after">T5 A · the event’s initials</div>' + ecellFrame(ecell(EV, ptile(null, 24, 'LF'), { chev: 1 }), 0, '', 320) + '</div>' +
+  '<div><div class="lbl">T5 B · the organization’s logo in its place</div>' + ecellFrame(ecell(EV, ptile('crest', 24), { chev: 1 }), 0, '', 320) + '</div></div>';
+/* the list window: phase words (gate ruling, E12 (2)); the current row tinted and bold with its word; All tournaments at the foot (E3) */
+/* Owner 2026-11-10 (with T1–T6 = A): the rows take the portal's standard two-line dropdown (SublinedChoice: the name
+   14px semibold, a 12px tertiary line under it, 44px rows, a hairline between them, the olive tint under a pointer and on
+   keyboard focus). The second line carries the event's dates and its phase word; the right-hand slot, freed, carries
+   the current event's olive check. The head is the same list's group band. */
+var MROWS = [[EV, 'Game day', 1, 0, 0, EVD], ['Lakeshore Winter Indoor 2026', 'Open', 0, 1, 0, 'Dec 12–14, 2026'], ['Lakeshore Spring Opener 2027', 'Draft', 0, 0, 0, 'May 14–16, 2027'], ['Lakeshore Minor Baseball Spring Invitational 2026', 'Completed', 0, 0, 0, 'May 22–24, 2026']];
+function p2menu(rows, x, y, w) {
+  return '<div class="psl" style="left:' + x + 'px;top:' + y + 'px;width:' + (w || 320) + 'px"><div class="psg">Tournaments</div>' +
+    rows.map(function (r) {
+      return '<div class="psr' + (r[2] ? ' on' : '') + (r[3] || r[4] ? ' hov' : '') + '"><span><span class="psn">' + r[0] + '</span><span class="pss">' + (r[5] ? r[5] + ' · ' : '') + r[1] + '</span></span>' +
+        (r[2] ? '<span class="psk">' + I('check', 16) + '</span>' : '') + '</div>';
+    }).join('') +
+    '<div class="psr psall">' + I('trophy', 15) + '<span class="psn" style="font-weight:400">All tournaments</span></div></div>';
+}
+/* T3 B as drawn before the owner's change: the strip menu's one-line rows */
+function p2menuOne(rows, x, y, w, one) {
+  return '<div class="pmenu" style="left:' + x + 'px;top:' + y + 'px;width:' + (w || 320) + 'px"><div class="pmh">Tournaments</div>' +
+    rows.map(function (r) { return '<div class="pmi' + (r[2] ? ' on' : '') + (r[3] ? ' kf' : '') + (r[4] ? ' hov' : '') + (one ? ' pmone' : '') + '"><span class="pmt">' + r[0] + '</span><span class="pmm">' + r[1] + '</span></div>'; }).join('') +
+    '<div class="pmi pmall">' + I('trophy', 14) + '<span class="pmt">All tournaments</span></div></div>';
+}
+function p2colRows(lead) {
+  return '<div class="rows" style="padding-top:10px;align-items:center">' + (lead || '') + '<div class="ico40">' + I('gauge', 18) + '</div><div class="ico40">' + I('users', 18) + '</div><div class="ico40">' + I('cal', 18) + '</div>' +
+    '<div class="hair" style="align-self:stretch"></div><div class="ico40">' + I('sliders', 18) + '</div><div class="ico40 lit">' + I('tag', 18) + '</div></div>';
+}
+function p2colSide(tile, lead, extra, w, open) { return frame(w || 220, 330, '<div class="side" style="top:0;width:65px"><div class="pbc col' + (open ? ' copen' : '') + '" style="width:64px">' + tile + '</div>' + p2colRows(lead) + '</div>' + (extra || '')); }
+S.p2ListOpen = frame(600, 400, '<div class="side" style="top:0;width:241px">' + ecell(EV, ptile('ev', 24), { chev: 1, open: 1 }) + '<div class="rows">' + tRows('Divisions', { flat: 1 }).slice(0, 7).map(row).join('') + '</div></div>' + p2menu(MROWS, 2, 48));
+S.p2ListCol = p2colSide(ptile('ev', 40), '', p2menu(MROWS.map(function (r, i) { return i === 1 ? [r[0], r[1], 0, 0, 0, r[5]] : i === 2 ? [r[0], r[1], 0, 0, 1, r[5]] : r; }), 73, 2), 420, 1);
+S.p2ListOne = frame(600, 190, '<div class="side" style="top:0;width:241px">' + ecell(EV_SHORT, ptile('ev', 24), { chev: 1, open: 1 }) + '</div>' + p2menu([[EV_SHORT, 'Game day', 1, 0, 0, EVD]], 2, 48));
+S.p2ColToday = p2colSide(ptile('crest', 40), '<div style="display:grid;place-items:center;margin:2px 0 6px"><span class="ptile s40 ini">LF</span></div><div class="hair" style="align-self:stretch"></div>');
+S.p2ColAfter = p2colSide(ptile('ev', 40), '', '<div class="tip" style="left:75px;top:11px">' + EV + ' · switch tournament</div>', 300);
+S.p2ListB = frame(600, 260, '<div class="side" style="top:0;width:241px">' + ecell(EV, ptile('ev', 24), { chev: 1, open: 1 }) + '</div>' + p2menuOne(MROWS, 2, 48, 236, 1));
+/* Part B · the strip's right end at 1366: the longest page names, every phase word (the shipped chip's tones) */
+function p2strip(page, facts) { return frame(1366, 49, strip({ rail: 240, word: 'Events', place: { name: page, pfx: facts }, site: 1, ws: 1 })); }
+S.p2Strips = '<div class="pair stack">' + [
+  ['Draft', 'Event settings', 'May 14–16, 2027 <span class="chip nt">Draft</span>'],
+  ['Open', 'Venues & facilities', 'Dec 12–14, 2026 <span class="chip ok">Open</span>'],
+  ['Game day', 'Rules & resources', EVD + ' <span class="chip live">Game day</span>'],
+  ['Completed', 'Communications', 'Jul 10–12, 2026 <span class="chip nt">Completed</span>'],
+  ['Archived', 'Event settings', 'Jan 9–11, 2026 <span class="chip nt">Archived</span>']
+].map(function (r) { return '<div><div class="lbl">' + r[0] + '</div>' + p2strip(r[1], r[2]) + '</div>'; }).join('') + '</div>';
+/* Part B · the Tournaments list, an org-wide screen: a tournament-only organization as ruled (E3), a club both ways (T1) */
+function p2side(cellHtml, rows, foot, litFoot) {
+  var html = sidebar({ w: 240, cell: null, rows: rows, foot: foot }).replace('<div class="side" style="width:240px">', '<div class="side" style="width:240px">' + cellHtml);
+  if (litFoot) html = html.replace('<div class="row same">' + I(litFoot[0], 14) + '<span>' + litFoot[1] + '</span>', '<div class="row lit">' + I(litFoot[0], 14) + '<span>' + litFoot[1] + '</span>');
+  return html;
+}
+function p2listBody() { return '<div class="p2body same" style="top:48px;left:240px"><div class="ph-note">The Tournaments page itself (its New tournament, its bands, its rows) is unchanged by this phase and not redrawn here.</div></div>'; }
+var ORG_ROWS = [{ i: 'trophy', t: 'Tournaments', lit: true, cls: 'chg' }, { i: 'gear', t: 'Settings & access', cls: 'chg' }];
+S.p2OrgT = frame(1040, 560, strip({ rail: 240, word: 'Events', place: { name: 'Tournaments' }, site: 1, ws: 1 }) +
+  p2side(ecell(TORG, ptile(null, 24, 'NT')), ORG_ROWS, [['card', 'Plan & billing']]) + p2listBody());
+S.p2OrgClubA = frame(1040, 700, strip({ rail: 240, word: 'Club', place: { name: 'Tournaments' }, site: 1, ws: 1, marks: mk('T1', 410, 12) }) +
+  p2side(ecell(CLUB, ptile('crest', 24)), clubRows(false).map(function (r) { return Object.assign({}, r, { lit: false }); }), fAdmin, ['trophy', 'Tournaments']) + p2listBody());
+S.p2OrgClubB = frame(1040, 560, strip({ rail: 240, word: 'Events', place: { name: 'Tournaments' }, site: 1, ws: 1, marks: mk('T1', 410, 12) }) +
+  p2side(ecell(CLUB, ptile('crest', 24)), ORG_ROWS, fTourn) + p2listBody());
+var PH2_ASKS = [
+  ['T1', 'A club’s organization-wide tournament screens', 'E3 was ruled and drawn for a tournament-only organization. In a club these addresses are the club’s own places under a second name: Members under Tournaments is the club’s Organization › Members page itself, PDF settings is the club’s, Payouts lives in the club’s Accounting and the web address in its Settings. Only the Tournaments list has no club home today.', ['<span class="rec">The club’s own sidebar. The Tournaments list lights the foot’s Tournaments door (as Plan & billing lights its foot row on its page), and in a club that door then opens the list (today it opens the chosen event’s Dashboard, so a lit door would lead away from the page it lights), the strip says “Club”, and the tournament addresses for Members and PDF settings open the club’s Organization tabs. One home per screen in a club, the rule E16 used (a move keeps one door).</span> Recommended.', 'The tournament-only shape in both kinds: the short sidebar (Tournaments · Settings & access) with the club in the cell and the strip saying “Events”. The same in every organization, but a club then has two homes for Members and PDF settings.']],
+  ['T2', 'The event’s own Notification preferences', 'Its only door today is a card on Settings & access: “Mute all notifications for this tournament … Settings are personal — only affect your account.” The page is the event’s and the person’s (it is outside the org-wide list), so once Settings & access becomes the organization’s (E3, and T1 A in a club) the card would mute whichever event the list last picked, from a screen that names the organization. Found at this gate; Part B builds it.', ['<span class="rec">A row in the event’s own sidebar, last, under its Admin label, once Settings & access and Tournaments leave that label in Part B: “Your notifications” (/marketing checks the words).</span> Recommended: it is the event’s page, so it belongs in the event’s sidebar, and nothing dead-ends.', 'Into the person’s own Notification settings (the account menu), one line per tournament they can mute: the right long-term home, but a separate change; the card stays where it is until then.', 'Keep the card on the organization’s Settings & access.']],
+  ['T3', 'How wide the list is', 'The shipped strip menu is 236px, its rows one line cut short with “…”. E2 promised the whole name in the list.', ['<span class="rec">320px, the name wraps to a second line, the status word on the first line’s right; the same window under the open cell and beside the collapsed tile.</span> Recommended: the list is where a cut name is read whole.', 'The strip menu as shipped: 236px, one line, cut short, the whole name on hover.']],
+  ['T4', 'The collapsed tile’s game-day dot', 'Round 1 drew a red dot on the collapsed 40px tile on game day (tab 5). Round 2 moved the phase to the strip, which stays on screen while the sidebar is collapsed.', ['<span class="rec">No dot: the strip’s chip already says it, and the event’s tile wears its logo alone, as the club’s does.</span> Recommended.', 'Keep the dot on game day.']],
+  ['T5', 'An event logo too wide or too tall', 'E10’s chain is the event’s logo, then the organization’s, then the initials, with the initials for a logo wider than 2 : 1 (taller than 1 : 2 by B5). It does not say which way a badly shaped event logo falls.', ['<span class="rec">The event’s initials: the cell names the event, and the club’s crest in its place would read as the club.</span> Recommended.', 'The organization’s logo, then the initials.']],
+  ['T6', 'The chevron with one event', 'E1 says the chevron shows only when there is more than one event. Found at the /design pass: the list is also the one door to All tournaments (New tournament), and once Part B takes Settings & access and Tournaments out of the event’s sidebar, to Members and Settings & access too. A club keeps the foot’s Club door; a tournament-only organization with one event would have no way to start its second.', ['<span class="rec">The chevron shows whenever the person can reach the organization’s tournament screens, even with one event: the list then holds that event and All tournaments. It hides only for someone who can open one event and nothing above it (a scoped volunteer), whose cell opens the event’s Dashboard.</span> Recommended: amends E1’s “more than one” to “more than one, or a way out to the organization”.', 'As E1 reads: one event, no chevron; a tournament-only organizer reaches New tournament some other way (a row in the event’s sidebar, to be drawn).']]
+];
+var ph2AskHTML = PH2_ASKS.map(function (a) {
+  return '<div class="ask" id="ask-' + a[0] + '"><h3><span class="mk inl" style="cursor:default">' + a[0] + '</span>' + a[1] + '</h3><p class="muted" style="margin:0 0 4px">' + a[2] + '</p><ol type="A">' + a[3].map(function (o) { return '<li>' + o + '</li>'; }).join('') + '</ol></div>';
+}).join('');
+
 /* ── page content ──────────────────────────────────────────────────────────────────── */
 function spec(title, note, html, opts) {
   opts = opts || {};
@@ -1101,6 +1236,22 @@ var SECTIONS = [
       '<p class="muted">Inside a club’s tournament, until Phase 2 puts the event in the cell, the event’s own tile sits under the club’s, white with a thin outline and the event’s initials, as it is today. Phase 2 gives it the event’s logo through the same tile.</p>' +
       spec('The back link', 'true size · the strip’s left end (a rep team’s page) and the phone bar’s; the rest of each is unchanged', S.pbBack) +
       '<h2 style="margin-top:28px">Your calls</h2>' + pbAskHTML;
+  }],
+  ['phase2', '14 · Phase 2 gate', true, function () {
+    return '<h2>The event in the cell: the states the drawings did not show</h2><p class="lede">Drawn at the Phase 2 gate (2026-11-10) from the shipped parts: tab 13’s cell and its one tile, as built in Part B, and the strip menu’s window. Already ruled at the gate: the cell shows the event’s existing logo (the one its Public site page uploads), else the organization’s, else the initials, and the logo’s shape is remembered at upload so the cell is right on the first paint; an event’s state reads the same words in the list, the chip and the strip (Draft · Open · Game day · Completed · Archived). The cell holds the name alone (E2): the dates and the phase go to the strip’s right end. Six calls at the bottom, T1–T6; each recommendation is the first option.</p>' +
+      '<div class="cols"><div class="card"><h3>This session · Part A, the sidebar</h3><p>The event’s cell and tile, the list window, no folding (the headings become labels), the one set of status words. The tab’s top four drawings. Until Part B, the strip keeps today’s event name, dates and chip beside it, and the Admin label keeps Settings & access and Tournaments.</p></div>' +
+      '<div class="card"><h3>Next session · Part B, the strip and the org-wide screens</h3><p>The strip names the page with the event’s dates and phase at its right end; the paper titles go; the organization-wide screens take the organization’s own sidebar; page help sits last at the right of the page’s top row. The tab’s last two drawings, and T1 and T2.</p></div></div>' +
+      spec('The event’s cell', 'true size · tab 13’s 45px cell, with the chevron only when there is a choice', S.p2Cells) +
+      spec('The tile · every kind of event logo', 'true size · open and collapsed · drawn with T5 A', S.p2Tiles) +
+      spec('T5 · a badly shaped event logo', 'true size', S.p2WideB) +
+      spec('The list, open', 'true size · under the cell when the sidebar is open, beside the tile when it is collapsed (where the strip menu opens today) · your change (2026-11-10): each row is the portal’s standard two-line dropdown row, the event’s name with its dates and phase under it · the current event in olive with the check · “All tournaments” at its foot opens the Tournaments list (E3) · the arrows move and the focused row takes the olive tint (the open list’s second row), Enter opens, Escape closes and puts focus back on the cell · under a pointer a row takes the same tint (the collapsed list’s third row), and the collapsed tile’s cell keeps its quiet tint while the list is open · drawn with T3 A', '<div class="pair"><div><div class="lbl after">Open sidebar</div>' + S.p2ListOpen + '</div><div><div class="lbl after">Collapsed</div>' + S.p2ListCol + '</div></div>') +
+      spec('The list for one event · an organizer', 'true size · the one row is the current event, and All tournaments stays under it', S.p2ListOne) +
+      spec('T3 B · the strip menu as shipped', 'true size · 236px, one line, cut short', S.p2ListB) +
+      spec('The collapsed sidebar’s head inside a tournament', 'true size · today, the club’s tile, then the event’s initials under it; proposed, one 40px tile, the event’s, its name in the bubble, opening the list · drawn with T4 A (no game-day dot)', pair(S.p2ColToday, S.p2ColAfter, 'Today (after Part B)', 'Proposed')) +
+      spec('Part B · the strip’s right end at 1366', 'true size · long page names and every phase word, in the shipped chip’s tones · the page’s name never truncates; between 900 and about 1100 wide the dates and chip give way first (tab 5)', S.p2Strips) +
+      spec('Part B · the Tournaments list, a tournament-only organization', 'true size · as ruled (E3): the organization in the cell, its own short sidebar', S.p2OrgT) +
+      spec('Part B · the Tournaments list, a club · T1', 'true size · A: the club’s own sidebar, the foot’s Tournaments door lit · B: the tournament-only shape', '<div class="pair stack"><div><div class="lbl after">T1 A · recommended</div>' + S.p2OrgClubA + '</div><div><div class="lbl">T1 B</div>' + S.p2OrgClubB + '</div></div>') +
+      '<h2 style="margin-top:28px">Your calls</h2>' + ph2AskHTML;
   }]
 ];
 

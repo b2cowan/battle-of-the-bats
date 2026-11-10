@@ -1,0 +1,407 @@
+<title>The Event Cell Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Navigation across the three portals · Phase 2, Part A · Owner QA Ledger §508</span>
+    <h1>The event at the top of the tournament sidebar</h1>
+    <p class="lead">One purpose: the head of a tournament’s sidebar on a computer. The event now sits where the club’s name sits on club pages: its name, its logo (or the club’s, or its initials) and a small arrow. Clicking it opens the list of your tournaments; the old dropdown is gone, and Operations, Setup and Admin no longer fold. A small script changes the test event’s logo and name so you can see every case; one command puts it back. About 25 minutes.</p>
+    <p class="lead">Written Nov 10, 2026 against the dev site. Nothing here is real data: the club and its events are test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Walk 1</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code><br>The owner of <b>UAT Rep Club</b>, which runs five tournaments.</dd>
+      <dt>Walk 2</dt><dd><code>uat-owner@uat-test-org.local</code> (a tournament-only organization’s owner, two events, no logo anywhere) and <code>uat-club-admin@uat-rep-club.local</code> (an admin who is not the owner); both <code>UATPassword2026!</code>.</dd>
+      <dt>Walk 3</dt><dd>The two owners above, then no sign-in for the demos (<code>localhost:3000/demos</code>).</dd>
+      <dt>Phone</dt><dd>Steps marked <b>phone</b> use your desk browser’s device toolbar at <b>390 px</b> wide. The phone itself is not changed in this part.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Sign out before each new person, or use a private window per person.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>One command changes the event, one command puts it back.</b> In a terminal in the project folder: <code>node scripts/walk-event-logo.mjs logo</code> (also <code>wide</code>, <code>tall</code>, <code>light</code>, <code>none</code>, <code>broken</code>, <code>long</code>, <code>two</code>), then reload the page. It changes <b>UAT Rep Club Invitational 2026</b> only. <b>When you are done: <code>node scripts/walk-event-logo.mjs restore</code>.</b></li>
+      <li><b>The top strip is not part of this walk.</b> It still names the event with its dates and its chip; Part B moves the page’s name there next. <b>Settings &amp; access</b> and <b>Tournaments</b> still sit under Admin until then too.</li>
+      <li><b>Walk the parts in order, 1 to 3.</b> Each opens with a stop check.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>With scripts off (exactly what the server sends), the top of the sidebar is already the event, with its tile, for the club’s event and for a tournament-only organization’s, at 1440 and 1366 wide. Nothing about it changes after the page loads, and the tab’s title is as before.</li>
+      <li>The sidebar is 240 px wide on club and tournament pages alike; the event’s cell is 45 px tall and its bottom line is at the same height as the club’s.</li>
+      <li>The list is 320 px wide, under the cell (2 px below, lined up with the sidebar’s edge) or beside the folded tile; the keyboard opens it, moves through it and closes it back onto the cell; picking an event switches it on the same page; “All tournaments” opens the Tournaments page.</li>
+      <li>Uploading an event logo stores its shape; the 24 event logos already on dev were measured by the one-time pass. The rule for which picture shows (the event’s, the club’s, the initials) is covered by tests for every case.</li>
+      <li>Typecheck, spelling, the navigation guards and the layout check on the Dashboard, Divisions, Settings &amp; access and the Tournaments page at 1440, 1366 and folded all pass.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: does the event read as the head of its sidebar, does the list feel like the product’s own dropdowns, and does every logo case look right?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "nav-phase2a-walk-v1";
+  var PAGE = "Navigation across the three portals · Phase 2, Part A · Owner QA Ledger §508";
+  var WALKS = [
+ {
+  "id": "P1",
+  "title": "The event’s cell and its list, on a computer",
+  "job": "UAT Rep Club · owner · desktop, 1440 wide",
+  "forText": "The top of a tournament’s sidebar: the event’s name and tile, the list it opens, the logo cases, folding the sidebar, and a logo uploaded on the Public site page.",
+  "passes": "The event heads the sidebar with its tile (its logo; the club’s when it has none; its initials when its logo is wider than 2 : 1, taller than 1 : 2 or broken); a click anywhere on it opens one list of your tournaments, each with its dates and its state word (never “Active”); the keyboard works; nothing folds; folded, the tile opens the same list; a new logo shows at once.",
+  "notIn": "Other people (walk 2), the first-paint proof on both kinds of organization and the demos (walk 3), the phone (Phase 3).",
+  "who": "uat-club-owner@uat-rep-club.local",
+  "where": "localhost:3000/uat-rep-club/admin/tournaments/divisions on a computer. Run each command, then reload.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in and open <b>Divisions<\/b> in the tournament <b>UAT Rep Club Invitational 2026<\/b> (pick it in the list if another event is showing).",
+    "s": "At the top of the sidebar: the club’s crest in a small white tile, the name <b>UAT Rep Club Invitational 2026<\/b> on two lines, and a small down arrow at the right. There is <b>no<\/b> “Tournament” label and no dropdown box under it. If you see the old dropdown, stop and tell me."
+   },
+   {
+    "d": "Look down the sidebar.",
+    "s": "<b>Operations<\/b>, <b>Setup<\/b> and <b>Admin<\/b> are small capital headings with every page listed under them. Clicking a heading does nothing: no group folds or opens."
+   },
+   {
+    "d": "Click anywhere on the event’s name (not only the arrow).",
+    "s": "A list opens <b>under<\/b> the cell, wider than the sidebar: a grey <b>TOURNAMENTS<\/b> band, then one row per tournament with its name and, under it, its dates and its state (“Nov 1–3, 2026 · Game day”, “May 22–24, 2026 · Completed”, “Dec 13–15, 2026 · Open”). The current one is in olive with a check on the right. <b>All tournaments<\/b> with a trophy is the last row. The word “Active” appears nowhere."
+   },
+   {
+    "d": "Pick <b>UAT Rep Club Spring Classic 2026<\/b>.",
+    "s": "The list closes, you stay on <b>Divisions<\/b>, and both the sidebar’s head and the top strip now name the Spring Classic. Open the list again and pick the Invitational to go back."
+   },
+   {
+    "d": "Keyboard: click on the page’s empty background, then press Tab until the event’s cell has the olive ring. Press Enter.",
+    "s": "The list opens with the current event’s row tinted. The down arrow moves the tint row by row (all the way to All tournaments); <b>Escape<\/b> closes it and the ring is back on the cell. With the ring on the cell, the <b>down arrow<\/b> alone also opens it."
+   },
+   {
+    "d": "Open the list and click somewhere on the page outside it. Then open it again and choose <b>All tournaments<\/b>.",
+    "s": "A click outside just closes it. All tournaments opens the <b>Tournaments<\/b> page. (Go back to Divisions afterwards.)"
+   },
+   {
+    "d": "Run <code>node scripts/walk-event-logo.mjs logo<\/code>, reload.",
+    "s": "The tile now shows the event’s <b>own<\/b> logo (a dark red circle) instead of the club’s crest."
+   },
+   {
+    "d": "Run <code>wide<\/code>, reload. Then <code>tall<\/code>, reload.",
+    "s": "Both times the tile shows the <b>event’s<\/b> initials (“UR”) in the same white tile, never the club’s crest: a logo that would be a sliver at this size gives way to the initials."
+   },
+   {
+    "d": "Run <code>light<\/code>, reload. Then <code>broken<\/code>, reload and wait a second.",
+    "s": "Light: a very pale circle, still visible because of the tile’s thin outline. Broken: the initials, never a broken-picture icon."
+   },
+   {
+    "d": "Run <code>none<\/code>, reload.",
+    "s": "The event has no logo of its own, so the tile shows the <b>club’s<\/b> crest again."
+   },
+   {
+    "d": "Run <code>long<\/code>, reload, and hover the name for a second. Then run <code>two<\/code>, reload, and hover again.",
+    "s": "Long: the name takes two lines and ends with “…”; the hover shows the whole name. Two: “Lakeshore Winter Indoor 2026” fits on two lines and the hover shows nothing extra. Either way the cell is no taller. In the open list the whole long name is readable (its row wraps)."
+   },
+   {
+    "d": "Press <b>Collapse sidebar<\/b> at the foot. Hover the tile at the top, then click it.",
+    "s": "Folded, the head is one 40 px tile with the event’s logo, and <b>no<\/b> red game-day dot. The hover bubble reads “<i>event name<\/i> · switch tournament”. The click opens the <b>same<\/b> list beside the tile, and the tile’s cell keeps a quiet tint while it is open. Press Expand to open the sidebar again."
+   },
+   {
+    "d": "Switch to the <b>dark theme<\/b> the way you normally do, open the list, then switch back.",
+    "s": "The list and its rows are readable on the dark sidebar; the tile itself stays white with the logo on it."
+   },
+   {
+    "d": "Run <code>none<\/code>, reload. Open <b>Public site<\/b> (under Setup), upload any square picture as the tournament’s logo, then remove it.",
+    "s": "The moment the upload finishes, the sidebar’s tile shows the new logo without a reload; after <b>Remove<\/b> it goes back to the club’s crest."
+   },
+   {
+    "d": "Finish: run <code>node scripts/walk-event-logo.mjs restore<\/code> and reload.",
+    "s": "The event is back to <b>UAT Rep Club Invitational 2026<\/b> with the club’s crest in its tile."
+   }
+  ]
+ },
+ {
+  "id": "P2",
+  "title": "Another organization and another person",
+  "job": "A tournament-only organization’s owner, a club admin · desktop",
+  "forText": "The same head of the sidebar for a tournament-only organization (no logo anywhere) and for a club admin who is not the owner.",
+  "passes": "The tournament-only organization’s events head their sidebar with their initials and open their list of two; the admin sees what the owner sees.",
+  "notIn": "The phone; the organization’s own screens getting their own sidebar (Part B).",
+  "who": "The two people on the card at the top.",
+  "where": "localhost:3000, a private window per person.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as <code>uat-owner@uat-test-org.local<\/code> and open a tournament’s <b>Divisions<\/b>.",
+    "s": "The head of the sidebar names <b>UAT Import Smoke Tournament<\/b> with “UI” initials in the white tile (the organization has no logo), and the down arrow."
+   },
+   {
+    "d": "Click the head.",
+    "s": "The list holds two events (“Jul 1–3, 2099 · Open” and one on game day) and All tournaments."
+   },
+   {
+    "d": "Open <b>Settings &amp; access<\/b> under Admin, then its Members tab.",
+    "s": "The event’s head stays at the top of the sidebar for now (Part B gives these organization pages their own sidebar)."
+   },
+   {
+    "d": "Sign in as <code>uat-club-admin@uat-rep-club.local<\/code> and open a tournament’s Divisions.",
+    "s": "The same head and list as the owner saw in walk 1."
+   }
+  ]
+ },
+ {
+  "id": "P3",
+  "title": "The first paint, and the demos",
+  "job": "Both owners · computer and phone · then no sign-in",
+  "forText": "Phase 0’s proof, owed to this walk: a tournament page shows the event, never the club first, the moment it appears; and the tournament demo runs the new head.",
+  "passes": "On a hard reload the event is named at once in the sidebar and the strip on a computer, and in the phone’s top bar, for both kinds of organization; the demo’s sidebar head is its event and opens its list.",
+  "notIn": "Logo cases (walk 1).",
+  "who": "uat-club-owner@uat-rep-club.local, then uat-owner@uat-test-org.local, then no sign-in.",
+  "where": "A tournament’s Divisions page, desktop 1440 and phone 390; then localhost:3000/demos.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: as the UAT Rep Club owner, on a computer, open a tournament’s Divisions and hard-reload (Ctrl+Shift+R), watching the top left and the strip.",
+    "s": "The event’s name is in the sidebar head and the strip from the first moment; the club’s name never shows there first."
+   },
+   {
+    "d": "<b>Phone<\/b> (390 px): the same page, hard-reload.",
+    "s": "The top bar names the event from the first moment (the phone is unchanged otherwise)."
+   },
+   {
+    "d": "As <code>uat-owner@uat-test-org.local<\/code>: the same two reloads, computer and phone.",
+    "s": "The event (UAT Import Smoke Tournament) from the first moment, never the organization’s name first."
+   },
+   {
+    "d": "No sign-in: open <code>localhost:3000/demos<\/code> and the <b>tournament<\/b> demo’s admin.",
+    "s": "The sidebar’s head is the demo’s event with its tile and the down arrow; clicking it opens the list of the demo’s tournaments."
+   },
+   {
+    "d": "Open the <b>coach<\/b> demo.",
+    "s": "Looks as it did before."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "P1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "D1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "P1" }; save(); render();
+  });
+  render();
+})();
+</script>

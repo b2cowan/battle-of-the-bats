@@ -92,12 +92,45 @@
   :global(html[data-sidebar='strip']) .clubCell { justify-content: center; padding-inline: 0; }
 }
 
+/* ⚖ THE EVENT'S CELL (navigation Phase 2 Part A; drawings tab 14, owner 2026-11-10): the club cell above, as a button — the
+   whole cell opens the switch list (§6, T6) — with the chevron the SingleSelectDropdown face wears (16px in an 18px slot,
+   the secondary ink). While its list is open it keeps a quiet tint and the chevron darkens. Folded, it is the 40px tile
+   alone (the name is the bubble's, the chevron hides). */
+.eventCell {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--home-line);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.eventChevron { margin-left: auto; flex: none; color: var(--text-secondary); }
+.eventCellOpen { background: color-mix(in srgb, var(--text-primary) 7%, transparent); }
+.eventCellOpen .eventChevron { color: var(--text-primary); }
+/* Folded, the chevron hides with the sidebar's other full-only furniture (`strip.fullOnly`, on the icon). */
+
+/* ⚖ THE SWITCH LIST (`EventSwitchMenu`): the portal's standard two-line dropdown (`SublinedChoice`'s `convWhat*` list and rows,
+   coaches.module.css) at the drawing's 320 (T3). This adds only what that list has no need for: the current event's olive
+   name and check, a check centred on the row's two lines, and the "All tournaments" foot under its hairline. */
+.switchRow { align-items: center; color: var(--text-primary); text-decoration: none; }
+.switchText { min-width: 0; }
+.switchCurrent { color: var(--home-olive); }
+.switchIcon { flex: none; color: var(--home-olive); }
+/* The foot row: a link, so it is the list's FIRST `a` and `.convWhatOpt:first-of-type` would drop its hairline — put back. */
+.switchAll.switchAll { justify-content: flex-start; gap: 0.5rem; border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12); }
+.switchAllText { font-size: var(--type-body); color: var(--text-primary); }
+/* The list is 320 wide and hangs over the page: the sidebar raises its own layer while it is open (the strip's `stripLayer`
+   value), so the page's own pinned bands never paint over it. */
+.rail:has(.switchMenu) { z-index: 70; }
+
 /* A group's heading — "Programs", "Organization", "Tournament". The coach rail's heading type
    (`.sidebarGroupHeader`), as a label: the admin's groups are PROGRAMS, and a program opens because
    you are in it, not because a heading was pressed.
    ⚖ THE NAV STANDARD'S HEADING (N1 + N2, owner 2026-10-17, docs/agents/design/NAV_STANDARD.md): 11px capitals
    (`--type-label`, the scale's step for capitals that must be READ), and ONE spacing — 12px above, 6px below — shared
-   by this heading over places, the tournament's folding headings below and the coach rail's. */
+   by this heading over places, the tournament's group headings (labels since navigation Phase 2, E14), the support
+   console's folding headings below and the coach rail's. */
 .label {
   font-size: var(--type-label);
   font-weight: 700;
@@ -178,8 +211,8 @@
    chevron) wears this sheet. No club row carries a chevron since 13i (N3). */
 .count + .chevron { margin-left: 0.25rem; }
 
-/* A tournament group heading — the coach rail's collapsible heading, button and all (the
-   tournament rail's groups DO collapse, today and here; the club's programs do not). */
+/* A folding group heading — the coach rail's collapsible heading, button and all. Worn by the platform support console's
+   groups only: the tournament sidebar's headings stopped folding in navigation Phase 2 (E14) and are `.label`s now. */
 .groupHeader {
   display: flex;
   align-items: center;
@@ -204,8 +237,9 @@
 .groupHeaderActive { color: var(--text-secondary); }
 .groupHeaderText { margin-right: auto; }
 
-/* The tournament switcher — the coach rail's team switcher (`.teamSwitcherSelect`), plus the
-   admin's "+ new tournament" square beside it. */
+/* The tournament switcher of the PHONE's More sheet (`AdminKitBottomNav`) — the coach rail's team switcher
+   (`.teamSwitcherSelect`). The desktop sidebar's native `<select>` went in navigation Phase 2 Part A (the event's cell and
+   its list); the phone's goes in Phase 3. */
 .switcher { display: flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.85rem 0.5rem; }
 .switcherSelect {
   flex: 1;

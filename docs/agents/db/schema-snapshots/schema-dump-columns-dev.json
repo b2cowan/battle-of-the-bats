@@ -30096,6 +30096,15 @@
     "ordinal_position": 48
   },
   {
+    "table_name": "tournaments",
+    "column_name": "logo_aspect",
+    "data_type": "real",
+    "udt_name": "float4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 49
+  },
+  {
     "table_name": "user_hidden_workspaces",
     "column_name": "user_id",
     "data_type": "uuid",

@@ -90,8 +90,9 @@ export function withClosedSeasonNav<T extends { label: string }>(
  * the only group where the trade is favourable: five rows, and a coach visits them when they set
  * the season up rather than when they run it. That takes the rail from fifteen rows to ten.
  *
- * ⚠ **FIXED, NEVER PHASE-VARYING.** The admin sidebar varies its defaults by tournament status
- * (`defaultOpenFor`); the coach equivalent would be season state, and it is deliberately not built.
+ * ⚠ **FIXED, NEVER PHASE-VARYING.** The admin sidebar varied its defaults by tournament status
+ * (`defaultOpenFor`, retired with its folding in navigation Phase 2, E14); the coach equivalent would be season state, and it is
+ * deliberately not built.
  * Phase 4 deleted the `conditional` mechanism precisely because a rail that rearranges itself moves
  * items a coach has already learned the position of, and auto-opening is a softer form of the same
  * thing. A coach's stored preference is the only thing that changes this.

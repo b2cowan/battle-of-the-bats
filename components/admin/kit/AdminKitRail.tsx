@@ -13,10 +13,11 @@
  * row, Organization's rows and the bold "open program" style retired with it; so did the reversed half of the 2026-09-30
  * Accounting ruling ("separate jobs are listed in the rail").
  *
- * Inside a TOURNAMENT the middle swaps for the old rail's tournament section (switcher, Operations / Setup / Admin),
- * restyled only and unchanged by 13i (Ask 8). The way back to the club is the foot's "Club" door (navigation Phase 1, E4 —
- * it replaced the "Club overview" row). A tournament-only organization (the Tournament plans have no club hub) sees the
- * tournament section alone.
+ * Inside a TOURNAMENT the sidebar is the EVENT's (navigation Phase 2 Part A, owner rulings E1, E10, E14, T3–T6, 2026-11-10):
+ * the event heads it in the cell (its name, its logo or the organization's, else its initials), the whole cell opens the switch
+ * list (`EventSwitchMenu`), and Operations / Setup / Admin are labels over rows that never fold. The way back to the club is
+ * the foot's "Club" door (navigation Phase 1, E4 — it replaced the "Club overview" row). A tournament-only organization (the
+ * Tournament plans have no club hub) sees the tournament section alone.
  *
  * ⚠ The programs, Organization and their gates come from `lib/admin-kit-nav.ts`, which the phone bar reads too. Every
  * gate is the old rail's gate — read that file's header before adding a row.
@@ -27,19 +28,17 @@
  * the server's sidebar is everybody's and nothing snaps on a cold load. In the strip: headings become hairlines; every
  * place is an icon with its name in a bubble on hover and keyboard focus, and in its visually hidden label for a screen
  * reader; counts sit on the icon's corner. ⚖ Every club icon is a straight link to its place (13i Ask 2 = A: the program
- * and Organization menus retired with the pages under the rows). The tournament picker is an initials tile with its own
- * menu; a tournament group folded shut in the full sidebar still shows its icons (the strip has no heading to open).
+ * and Organization menus retired with the pages under the rows). Inside a tournament the cell folds to the event's 40px
+ * tile, which opens the same switch list beside it (T3); its name is in the bubble.
  */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Fragment, useEffect, useRef, useState, type ElementType } from 'react';
 import {
-  LayoutGrid, ChevronRight, HelpCircle, Trophy,
+  LayoutGrid, ChevronDown, HelpCircle, Trophy,
 } from 'lucide-react';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
-import {
-  CollapseSidebarRow, SidebarStripMenu, SidebarStripTile, SidebarStripTip, StripMenuButton, useStripMenu,
-} from '@/components/shared/SidebarStrip';
+import { CollapseSidebarRow, SidebarStripTip } from '@/components/shared/SidebarStrip';
 import strip from '@/components/shared/SidebarStrip.module.css';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -47,10 +46,10 @@ import { isSidebarStrip } from '@/lib/sidebar-strip';
 import SidebarLogoTile from '@/components/shared/SidebarLogoTile';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
-import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
 import { isKitLinkActive, isKitLinkActiveAmong, kitCountText, placeGroupHeading, type KitLink } from '@/lib/admin-kit-nav';
+import { eventSwitchLine, eventTileSource } from '@/lib/admin-event-cell';
 import { useAdminKitNav } from './useAdminKitNav';
-import { STATUS_WORD } from '@/lib/tournament-status-words';
+import EventSwitchMenu from './EventSwitchMenu';
 import { briefPlaceCount } from './club/ClubBriefProvider';
 import { PERMIT_WORDS as PW } from '@/lib/permit-words';
 import { useFeeAlert } from './useFeeAlert';
@@ -83,13 +82,12 @@ function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, count 
   );
 }
 
-/** The club cell: the one logo tile and the name on up to two lines. Its whole name is the native `title`, set only while
- *  the name is cut and never in the folded strip (B3 — the strip's bubble already shows it). */
-function ClubCell({ href, name, logoUrl, logoAspect }: { href: string; name: string; logoUrl?: string; logoAspect?: number }) {
+/** A cell's name and its whole-name `title`, set only while the two-line clamp cuts it and never in the folded strip (B3 —
+ *  the strip's bubble already shows it). Measured on mount and whenever the name's box changes size — a window resize, and the
+ *  strip folding (the label then collapses to a 1px clip, which resizes it). */
+function CellName({ name }: { name: string }) {
   const nameRef = useRef<HTMLSpanElement>(null);
   const [cut, setCut] = useState(false);
-  // Cut = the clamp is hiding lines, and the sidebar is not folded. Measured on mount and whenever the name's box changes
-  // size — a window resize, and the strip folding (the label then collapses to a 1px clip, which resizes it).
   useEffect(() => {
     const el = nameRef.current;
     if (!el) return;
@@ -99,11 +97,73 @@ function ClubCell({ href, name, logoUrl, logoAspect }: { href: string; name: str
     observer.observe(el);
     return () => observer.disconnect();
   }, [name]);
+  return <span ref={nameRef} className={`${strip.rowLabel} ${styles.clubName}`} title={cut ? name : undefined}>{name}</span>;
+}
+
+/** The club cell: the one logo tile and the name on up to two lines, a link to Overview. */
+function ClubCell({ href, name, logoUrl, logoAspect }: { href: string; name: string; logoUrl?: string; logoAspect?: number }) {
   return (
     <Link href={href} className={styles.clubCell}>
       <SidebarLogoTile source={logoUrl} aspect={logoAspect} name={name} />
-      <span ref={nameRef} className={`${strip.rowLabel} ${styles.clubName}`} title={cut ? name : undefined}>{name}</span>
+      <CellName name={name} />
     </Link>
+  );
+}
+
+/**
+ * ⚖ THE EVENT HEADS ITS SIDEBAR (navigation Phase 2 Part A; E1, E10, owner 2026-11-09, and the gate's T3–T6, 2026-11-10). The
+ * club cell's frame, height and name, with the event's tile (its own logo, else the organization's, else its initials — a
+ * badly shaped event logo shows the EVENT's initials, T5) and a chevron. The name alone: the dates and the phase are the
+ * strip's (E2). ⚖ THE WHOLE CELL OPENS THE SWITCH LIST (§6; T6): one target, never a name opening one thing beside a chevron
+ * opening another. The chevron shows whenever there is an event — the list always carries "All tournaments", and every
+ * person who can open an event can open that list (a person scoped to some events sees only theirs there). Folded, the cell
+ * is the 40px tile and its name is the bubble's ("Fall Classic 2026 · switch tournament"); no game-day dot (T4).
+ * Keyboard: Enter, Space or the down arrow opens; the list owns the keys from there (`EventSwitchMenu`).
+ */
+function EventCell({ base }: { base: string }) {
+  const { tournaments, currentTournament, setCurrentTournament } = useTournament();
+  const { currentOrg } = useOrg();
+  const pathname = usePathname();
+  const cellRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  // The list closes when the page changes (the shell survives client navigation — "All tournaments", a sidebar row).
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
+    if (open) setOpen(false);
+  }
+  if (!currentTournament) return null;
+  const name = currentTournament.name;
+  const { source, aspect } = eventTileSource(currentTournament, currentOrg);
+  // Built only while the list is open: the cell re-renders on every page change, and the list is shut nearly always.
+  const rows = open
+    ? tournaments.map(t => ({ id: t.id, name: t.name, line: eventSwitchLine(t), current: t.id === currentTournament.id }))
+    : [];
+  return (
+    <>
+      <button
+        ref={cellRef}
+        type="button"
+        className={`${styles.clubCell} ${styles.eventCell}${open ? ` ${styles.eventCellOpen}` : ''}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`${name} · switch tournament`}
+        onClick={() => setOpen(o => !o)}
+        onKeyDown={e => { if (e.key === 'ArrowDown' && !open) { e.preventDefault(); setOpen(true); } }}
+      >
+        <SidebarLogoTile source={source} aspect={aspect} name={name} />
+        <CellName name={name} />
+        <ChevronDown size={16} aria-hidden className={`${styles.eventChevron} ${strip.fullOnly}`} />
+      </button>
+      <EventSwitchMenu
+        open={open}
+        anchorRef={cellRef}
+        rows={rows}
+        allHref={`${base}/tournaments/manage`}
+        onPick={id => { const t = tournaments.find(x => x.id === id); if (t) setCurrentTournament(t); }}
+        onClose={() => setOpen(false)}
+      />
+    </>
   );
 }
 
@@ -117,6 +177,9 @@ export default function AdminKitRail() {
   const feeAlert = useFeeAlert();
   const currentOrg = useOrg().currentOrg;
   const clubName = currentOrg?.name ?? null;
+  // Inside a tournament with an event to show, the event heads the sidebar (Phase 2); otherwise the club or organization.
+  const { currentTournament } = useTournament();
+  const eventHeads = onTournaments && !!currentTournament;
   // The rail the strip's name bubble hangs beside.
   const railRef = useRef<HTMLElement>(null);
 
@@ -146,8 +209,12 @@ export default function AdminKitRail() {
           bubble. A tournament-only organization's cell names the organization; inside a club's tournament, the club.
           ⚖ Phase 1 Part B (owner 2026-11-09): the name on up to two lines and the ONE logo tile (the logo, or the initials when
           there is none, it is wider than 2 : 1 or taller than 1 : 2, or it will not load — decided from the logo's stored shape,
-          on the server's first paint). */}
-      {clubName && <ClubCell href={base} name={clubName} logoUrl={currentOrg?.logoUrl} logoAspect={currentOrg?.logoAspect} />}
+          on the server's first paint).
+          ⚖ Inside a tournament the EVENT heads it (Phase 2, `EventCell`), from the event the server seeded (Phase 0), so the
+          first paint is the last. With no event yet, the club or organization's cell as before. */}
+      {eventHeads
+        ? <EventCell base={base} />
+        : clubName && <ClubCell href={base} name={clubName} logoUrl={currentOrg?.logoUrl} logoAspect={currentOrg?.logoAspect} />}
       <nav className={styles.railScroll} aria-label="Admin navigation">
         {!tournamentOnly && !isCanceled && !onTournaments && (
           // ⚖ Not inside a tournament (E4, navigation Phase 1): "Club overview" became the foot's "Club" door — a row that
@@ -174,7 +241,7 @@ export default function AdminKitRail() {
         )}
 
         {onTournaments ? (
-          <TournamentRail labelled={!tournamentOnly} />
+          <TournamentRail />
         ) : (
           <>
             {/* ⚖ The club's places, in their groups (13i Ask 5 = A). Every group with a row wears its heading, over one row
@@ -245,54 +312,18 @@ export default function AdminKitRail() {
   );
 }
 
-/** The tournament groups a status opens by default (the old rail's rule; a stored choice replaces it). */
-function defaultGroups(status: string): Set<string> {
-  return new Set(TOUR_GROUPS.filter(g => g.defaultOpenFor.includes(status)).map(g => g.key));
-}
-
-/** Today's tournament rail, restyled: switcher, Operations / Setup / Admin. */
-function TournamentRail({ labelled }: { labelled: boolean }) {
+/**
+ * The event's sidebar: Operations / Setup / Admin, each a LABEL over its rows. ⚖ NOTHING FOLDS (E14, owner 2026-11-09): the
+ * headings were buttons that hid their rows (a stored choice, `fl_nav_groups`, and a phase's defaults); they are now the club's
+ * own `.label`, and the list scrolls between the pinned cell and the foot. A chevron in a sidebar now only ever means "switch"
+ * (the event's cell, N3). In the strip a label is a hairline, as the club's is. The switcher is the cell's (`EventCell`).
+ */
+function TournamentRail() {
   const pathname = usePathname();
-  const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
   const { base, tournamentGroups: groups, billingLink } = useAdminKitNav();
   // Asked only where Chat is a row (an invite-only event has no Chat, the free tournament tier, R5).
   const chatUnread = useChatUnread(groups.some(g => g.items.some(i => i.key === 'chat')));
-  // Seeded with defaults rather than an empty set, as the coach rail seeds its own (CoachesSidebar): the empty set drew
-  // every group closed for a frame on each load. The tournament arrives after the first render (a client fetch), so the
-  // seed is draft's set until then; a stored set, or an event past draft, still settles a frame later.
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => defaultGroups(currentTournament?.status ?? 'draft'));
-  const [groupsReady, setGroupsReady] = useState(false);
-  // The strip's tile opens the tournament list (its own menu: the club's programs never show beside it).
-  const { openKey, anchorRef, toggle, close } = useStripMenu(pathname);
-
-  // The same stored preference, key and defaults as today's rail: a restyle must not reset an
-  // organizer's open groups.
-  useEffect(() => {
-    if (groupsReady) return;
-    const frame = window.requestAnimationFrame(() => {
-      try {
-        const parsed: unknown = JSON.parse(localStorage.getItem('fl_nav_groups') ?? 'null');
-        if (Array.isArray(parsed) && parsed.every(v => typeof v === 'string')) {
-          setOpenGroups(new Set(parsed as string[]));
-          setGroupsReady(true);
-          return;
-        }
-      } catch { /* fall through to the defaults */ }
-      setOpenGroups(defaultGroups(currentTournament?.status ?? 'draft'));
-      setGroupsReady(true);
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [groupsReady, currentTournament?.status]);
-
-  function toggleGroup(key: string) {
-    setOpenGroups(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      try { localStorage.setItem('fl_nav_groups', JSON.stringify([...next])); } catch { /* ignore */ }
-      return next;
-    });
-  }
 
   const allKeys = groups.flatMap(g => g.items.map(i => i.key));
   // Plan & billing (the footer link) sits under Settings & access's address: it is the more specific door, so Settings
@@ -301,83 +332,24 @@ function TournamentRail({ labelled }: { labelled: boolean }) {
     && !allKeys.some(k => k !== key && k.length > key.length && pathname.startsWith(`${base}/tournaments/${k}`))
     && isKitLinkActiveAmong(pathname, { key, label: key, href: `${base}/tournaments/${key}` }, [billingLink]);
 
-  // ⚰ The switcher's + and the strip's "New tournament" are gone (owner 2026-10-19): a new tournament starts on the
-  // Tournaments page's own New tournament, its one door (with its slot line), and the switcher takes the full width.
-  const tileName = currentTournament?.name ?? tournaments[0]?.name ?? '';
-  // A group's rows. A group folded shut keeps them in the page, out of sight (`foldedGroup`) — the strip shows
-  // every icon, because it has no heading to open.
-  const rows = (g: (typeof groups)[number]) => g.items.map(i => (
-    <RailRow
-      key={i.key}
-      href={i.href}
-      label={i.label}
-      active={itemActive(i.key)}
-      icon={i.icon}
-      count={worklist[i.key] ?? 0}
-      chatUnread={i.key === 'chat' ? chatUnread : undefined}
-    />
-  ));
-
   return (
     <>
-      {labelled && <div className={styles.label}>Tournament</div>}
-      {tournaments.length > 0 && (
-        <>
-          <div className={`${styles.switcher} ${strip.fullOnly}`}>
-            {tournaments.length > 1 ? (
-              <select
-                className={styles.switcherSelect}
-                value={currentTournament?.id ?? ''}
-                onChange={e => { const t = tournaments.find(x => x.id === e.target.value); if (t) setCurrentTournament(t); }}
-                aria-label="Editing tournament"
-                id="admin-tournament-select"
-              >
-                {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-            ) : (
-              <span className={styles.switcherName}>{currentTournament?.name}</span>
-            )}
-          </div>
-          {/* The strip's tile (hub screen 8): the event's initials, opening the list. */}
-          <SidebarStripTile
-            name={tileName}
-            label={`${tileName} · switch tournament`}
-            open={openKey === 'tournament'}
-            onToggle={el => toggle('tournament', el)}
-          />
-        </>
-      )}
-      {groups.map(g => {
-        const hasActive = g.items.some(i => itemActive(i.key));
-        const open = openGroups.has(g.key) || hasActive;
-        return (
-          <div key={g.key}>
-            <button
-              type="button"
-              className={`${styles.groupHeader}${hasActive ? ` ${styles.groupHeaderActive}` : ''}`}
-              onClick={() => toggleGroup(g.key)}
-              aria-expanded={open}
-            >
-              <span className={styles.groupHeaderText}>{g.label}</span>
-              <ChevronRight size={12} className={`${styles.chevron}${open ? ` ${styles.chevronOpen}` : ''}`} aria-hidden />
-            </button>
-            <div className={strip.stripRule} aria-hidden />
-            {open ? rows(g) : <div className={strip.foldedGroup}>{rows(g)}</div>}
-          </div>
-        );
-      })}
-      <SidebarStripMenu key={openKey ?? 'closed'} open={openKey === 'tournament'} anchorRef={anchorRef} title="Tournaments" onClose={close}>
-        {tournaments.map(t => (
-          <StripMenuButton
-            key={t.id}
-            current={t.id === currentTournament?.id}
-            meta={STATUS_WORD[t.status]}
-            onSelect={() => setCurrentTournament(t)}
-          >
-            {t.name}
-          </StripMenuButton>
-        ))}
-      </SidebarStripMenu>
+      {groups.map(g => (
+        <Fragment key={g.key}>
+          <div className={styles.label}>{g.label}</div>
+          {g.items.map(i => (
+            <RailRow
+              key={i.key}
+              href={i.href}
+              label={i.label}
+              active={itemActive(i.key)}
+              icon={i.icon}
+              count={worklist[i.key] ?? 0}
+              chatUnread={i.key === 'chat' ? chatUnread : undefined}
+            />
+          ))}
+        </Fragment>
+      ))}
     </>
   );
 }

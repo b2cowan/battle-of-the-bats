@@ -5,7 +5,7 @@ import {
   type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject,
 } from 'react';
 import Link from 'next/link';
-import { Check, PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react';
+import { Check, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { rescueFocusTo, rovingMenuKey, scrollingAncestor, useDismissable } from '@/lib/overlay-hooks';
 import { isSidebarStrip, setSidebarStrip } from '@/lib/sidebar-strip';
 import { stripTileText } from '@/lib/team-color';
@@ -148,7 +148,8 @@ const ENABLED_ITEMS = '[role="menuitem"]:not([aria-disabled="true"])';
  * with `CoachToolbarMenu` (`rovingMenuKey`): focus moves in on open, the arrows rove, Home/End jump, Space
  * activates a link row, Tab closes and hands focus back to the icon so the browser's Tab carries on from
  * there, Escape closes and returns focus, a press outside closes (`useDismissable`). Its rows are
- * `StripMenuLink` / `StripMenuButton`.
+ * `StripMenuLink` (the tournament's tile menu and its `StripMenuButton` rows became the event cell's switch list,
+ * `components/admin/kit/EventSwitchMenu.tsx`, in navigation Phase 2 Part A).
  *
  * Placement: its top beside the icon's, clamped so it never runs off the window's foot or rises above the
  * sidebar's own top (the strip under the top bar), and it scrolls inside when even that is short. It
@@ -278,33 +279,6 @@ export function StripMenuLink({
       {trailing}
       {current && !meta && <Check size={14} aria-hidden className={styles.menuItemCheck} />}
     </Link>
-  );
-}
-
-/** A menu row that acts in place (switch tournament, New tournament). `add` draws the picker's
- *  "+ New …" foot row, under a hairline. */
-export function StripMenuButton({
-  onSelect, current = false, meta, disabled = false, title, add = false, children,
-}: {
-  onSelect: () => void; current?: boolean; meta?: string; disabled?: boolean; title?: string; add?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="menuitem"
-      tabIndex={-1}
-      className={`${styles.menuItem}${current ? ` ${styles.menuItemOn}` : ''}${add ? ` ${styles.menuItemAdd}` : ''}`}
-      aria-current={current ? 'true' : undefined}
-      aria-disabled={disabled || undefined}
-      title={title}
-      onClick={() => { if (!disabled) onSelect(); }}
-    >
-      {add && <Plus size={14} aria-hidden className={styles.menuItemPlus} />}
-      <span className={styles.menuItemText}>{children}</span>
-      {meta && <small className={styles.menuItemMeta}>{meta}</small>}
-      {current && !meta && <Check size={14} aria-hidden className={styles.menuItemCheck} />}
-    </button>
   );
 }
 
