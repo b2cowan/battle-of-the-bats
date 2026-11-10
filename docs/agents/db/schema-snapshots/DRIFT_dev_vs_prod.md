@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-10 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 495 divergence(s)** across dev/prod.
+**⚠️ 505 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 10 | 6 | — |
-| Columns | 171 | 59 | 1 |
-| Indexes | 49 | 26 | 0 |
-| Constraints | 35 | 28 | — |
-| RLS / CHECK | 82 | 26 | 0 (RLS state) |
+| Columns | 175 | 59 | 1 |
+| Indexes | 50 | 26 | 0 |
+| Constraints | 36 | 28 | — |
+| RLS / CHECK | 84 | 26 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (10)
@@ -34,7 +34,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (171)
+### Only in DEV (175)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -81,6 +81,10 @@
 - `family_links.child_id`
 - `family_links.ended_by`
 - `family_links.invited_as`
+- `league_placement_emails.changes`
+- `league_registrations.told_at`
+- `league_registrations.told_team_id`
+- `league_season_notices.skipped_count`
 - `legal_acceptances.accepted_at`
 - `legal_acceptances.box_text`
 - `legal_acceptances.door`
@@ -272,7 +276,7 @@
 - `family_links.rep_team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (49)
+### Only in DEV (50)
 - `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
@@ -299,6 +303,7 @@
 - `family_invite_stops_pkey`
 - `family_links_child_id_idx`
 - `family_links_live_child_uniq`
+- `league_registrations_told_team_idx`
 - `legal_acceptances_pkey`
 - `legal_acceptances_user_idx`
 - `platform_charge_tax_looks_chain_idx`
@@ -355,7 +360,7 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (35)
+### Only in DEV (36)
 - `bank_check_waiting.bank_check_waiting_added_by_fkey`
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
@@ -376,6 +381,7 @@ _none_
 - `family_invite_stops.family_invite_stops_org_id_fkey`
 - `family_invite_stops.family_invite_stops_pkey`
 - `family_links.family_links_child_id_fkey`
+- `league_registrations.league_registrations_told_team_fk`
 - `legal_acceptances.legal_acceptances_pkey`
 - `legal_acceptances.legal_acceptances_user_id_fkey`
 - `platform_charge_tax_looks.platform_charge_tax_looks_after_id_fkey`
@@ -426,7 +432,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (82)
+### CHECK only in DEV (84)
 - `bank_check_waiting.bank_check_waiting_added_shape`
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
@@ -442,6 +448,8 @@ _none_
 - `family_links.family_links_ended_by_check`
 - `family_links.family_links_invited_as_check`
 - `family_links.family_links_made_on_entry_ck`
+- `league_placement_emails.league_placement_emails_changes_check`
+- `league_season_notices.league_season_notices_skipped_count_check`
 - `legal_acceptances.legal_acceptances_door_check`
 - `legal_acceptances.legal_acceptances_text_shape`
 - `legal_acceptances.legal_acceptances_version_shape`

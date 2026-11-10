@@ -54,7 +54,7 @@ export function stateWords(state: DivisionState, f: { day: string; familyCount: 
     case 'noTeams': return { pill: 'No teams', says: 'Make the teams first.' };
     case 'notDrafted': return { pill: 'Not drafted', says: 'Run the draft, or drag players onto teams. Nothing is sent until you publish.' };
     case 'drafted': return { pill: 'Drafted · not published', says: `Publish tells ${families(f.familyCount)} their child’s team.` };
-    case 'published': return { pill: `Published ${f.day}`, says: `Families were told on ${f.day}. A move now emails that family.` };
+    case 'published': return { pill: `Published ${f.day}`, says: `Families were told on ${f.day}. Moving a player doesn’t email anyone; you choose when families are told.` };
   }
 }
 
@@ -70,19 +70,18 @@ export function draftRefusal(code: DraftRefusalCode, f: { division: string; play
     case 'noPlayers': return 'No players to draft yet.';
     case 'lockedFull': return 'Every player is locked, so there is nothing to deal. Unlock some, or publish as it is.';
     case 'changed': return `${f.division} changed while this window was open. Close it and look again.`;
-    case 'published': return `${f.division} is published, so it can’t be drafted again. Move players one at a time; each family is told.`;
+    case 'published': return `${f.division} is published, so it can’t be drafted again. Move players one at a time. You choose when families are told.`;
   }
 }
 
 // ── 6 Moving a player, and its refusals ───────────────────────────────────────────────────────
 
-/** Said when a move can't land. `published` never reaches a person: the screen asks first (copy §6.2). */
-export function placeRefusal(code: 'not_accepted' | 'no_division' | 'team' | 'published' | 'finished', name: string, division: string): string {
+/** Said when a move can't land. */
+export function placeRefusal(code: 'not_accepted' | 'no_division' | 'team' | 'finished', name: string, division: string): string {
   switch (code) {
     case 'not_accepted': return `${name} isn’t accepted, so they can’t be on a team.`;
     case 'no_division': return `${name} isn’t in a division yet.`;
     case 'team': return `That team isn’t in ${division}.`;
-    case 'published': return `${division} is published. Moving ${name} emails their family.`;
     case 'finished': return 'This season is finished. Reopen it to change it.';
   }
 }
@@ -124,7 +123,6 @@ export const placedMail = {
   lead: (division: string, season: string) => `The ${division} teams for ${season} are set.`,
   next: (anyCoach: boolean, manyTeams: boolean) =>
     !anyCoach ? null : manyTeams ? 'Each coach will be in touch about getting started.' : 'The coach will be in touch about getting started.',
-  button: 'See your registration',
 } as const;
 
 export const movedMail = {
@@ -132,7 +130,6 @@ export const movedMail = {
   heading: (first: string) => `A new team for ${first}`,
   lead: (child: string, from: string, to: string, division: string) => `${child} has moved from ${from} to ${to} in ${division}.`,
   coach: (names: readonly string[]) => (names.length === 0 ? 'Coach to be announced.' : `${names.length === 1 ? 'Coach' : 'Coaches'}: ${nameList(names)}`),
-  button: 'See your registration',
 } as const;
 
 export const coachInviteMail = {

@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-10",
-  "total": 495,
+  "total": 505,
   "counts": {
     "tables": 16,
-    "columns": 231,
-    "indexes": 75,
-    "constraints": 63,
-    "rls": 110
+    "columns": 235,
+    "indexes": 76,
+    "constraints": 64,
+    "rls": 114
   },
   "items": [
     {
@@ -16,6 +16,14 @@
     {
       "key": "check:changed:family_links.family_links_role_player_ck",
       "sig": "((role = 'guardian'::text) AND (child_id IS NOT NULL)) :: ((role = 'guardian'::text) AND (player_id IS NOT NULL))"
+    },
+    {
+      "key": "check:changed:league_placement_emails.league_placement_emails_kind_check",
+      "sig": "(kind = ANY (ARRAY['placed'::text, 'moved'::text, 'changes'::text])) :: (kind = ANY (ARRAY['placed'::text, 'moved'::text]))"
+    },
+    {
+      "key": "check:changed:league_season_notices.league_season_notices_kind_check",
+      "sig": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text, 'team_changes'::text])) :: (kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text]))"
     },
     {
       "key": "check:only-dev:bank_check_waiting.bank_check_waiting_added_shape",
@@ -75,6 +83,14 @@
     },
     {
       "key": "check:only-dev:family_links.family_links_made_on_entry_ck",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_placement_emails.league_placement_emails_changes_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_season_notices.league_season_notices_skipped_count_check",
       "sig": ""
     },
     {
@@ -635,6 +651,22 @@
     },
     {
       "key": "column:only-dev:family_links.invited_as",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_placement_emails.changes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.told_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.told_team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_notices.skipped_count",
       "sig": ""
     },
     {
@@ -1454,6 +1486,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_registrations.league_registrations_told_team_fk",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:legal_acceptances.legal_acceptances_pkey",
       "sig": ""
     },
@@ -1727,6 +1763,10 @@
     },
     {
       "key": "index:only-dev:family_links_live_child_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registrations_told_team_idx",
       "sig": ""
     },
     {

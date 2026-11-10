@@ -2,15 +2,12 @@
 /**
  * MOVE A PLAYER (Club Tier Stage 9c, Part 3; copy §5, §6). "Move {name} to…" lists the division's teams with what each
  * would read with them ("2 players · avg 3.5 → 3.0 with Jaya", the averages for the people who see ratings), the team they
- * are on ("Now here"), Not on a team, and the lock. Before publishing a pick is immediate and silent. After publishing it
- * opens the held question (`HeldMoveWindow`): who is emailed, and the one button that moves and emails.
+ * are on ("Now here"), Not on a team, and the lock. A pick is immediate and silent, before and after publishing (TC·1: the
+ * held "Move and email" window is gone; families are told from the Teams screen's banner).
  */
-import { useState } from 'react';
 import { Check, Lock } from 'lucide-react';
-import KitDialog, { DialogCancel } from '../../KitDialog';
-import ck from '../../ClubKit.module.css';
+import KitDialog from '../../KitDialog';
 import { teamAverage } from '@/lib/house-league-draft';
-import { familyName } from '@/lib/house-league-teams-words';
 import { TEAMS_WORDS as W } from '@/lib/house-league-teams-screen-words';
 import type { BoardPlayer, BoardTeam } from './api';
 import css from './Teams.module.css';
@@ -73,41 +70,6 @@ export function MoveSheet({ player, teams, players, ratings, seeRatings, divisio
           </li>
         )}
       </ul>
-    </KitDialog>
-  );
-}
-
-export function HeldMoveWindow({ player, to, teams, onConfirm, onClose }: {
-  player: BoardPlayer;
-  /** The team they go to, or null for Not on a team. */
-  to: string | null;
-  teams: readonly BoardTeam[];
-  onConfirm: () => Promise<void>;
-  onClose: () => void;
-}) {
-  const [busy, setBusy] = useState(false);
-  const name = `${player.firstName} ${player.lastName}`;
-  const family = familyName(player.guardianLastName, name);
-  const target = to ? teams.find(t => t.id === to) ?? null : null;
-  const placing = !player.teamId && !!target;
-  const title = !target ? W.move.offTitle(name) : placing ? W.move.placeTitle(name, target.name) : W.move.confirmTitle(name, target.name);
-  const body = !target
-    ? W.move.offBody(family, player.firstName)
-    : placing ? W.move.placeBody(family, player.firstName)
-      : W.move.confirmBody(family, player.firstName, target.name, target.coaches.map(c => c.name));
-  const button = !target ? W.move.offButton : placing ? W.move.placeButton : W.move.button;
-  return (
-    <KitDialog kind="question" title={title} onClose={onClose} busy={busy}
-      footerStart={target ? <span>{W.move.foot}</span> : undefined}
-      footer={(
-        <>
-          <DialogCancel />
-          <button type="button" className="btn btn-lime" disabled={busy} onClick={() => { setBusy(true); void onConfirm(); }}>
-            {busy ? W.move.working : button}
-          </button>
-        </>
-      )}>
-      <p className={ck.hint}>{body}</p>
     </KitDialog>
   );
 }

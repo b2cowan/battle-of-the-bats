@@ -127,19 +127,6 @@ export const TEAMS_WORDS = {
     current: 'Now here',
     off: 'Not on a team',
     offSub: (first: string) => `Take ${first} off the team`,
-    confirmTitle: (name: string, team: string) => `Move ${name} to ${team}?`,
-    confirmBody: (family: string, first: string, team: string, coaches: readonly string[]) =>
-      `${capital(family)} gets an email saying ${first} is now on ${team}${coaches.length ? `, ${coaches.length === 1 ? 'coach' : 'coaches'} ${nameList([...coaches])}` : ''}. Both teams’ pages change for their coaches.`,
-    offTitle: (name: string) => `Take ${name} off their team?`,
-    offBody: (family: string, first: string) => `${capital(family)} isn’t emailed: ${first} goes back to Not on a team until you place them.`,
-    foot: '1 email',
-    button: 'Move and email',
-    offButton: 'Take off the team',
-    placeTitle: (name: string, team: string) => `Put ${name} on ${team}?`,
-    placeBody: (family: string, first: string) => `${capital(family)} gets an email with ${possessive(first)} team and coach.`,
-    placeButton: 'Place and email',
-    working: 'Moving…',
-    emailFailed: 'That email couldn’t be sent. Their status page shows the team.',
   },
 
   rate: {
@@ -252,7 +239,7 @@ export const TEAMS_WORDS = {
       return `${lead} ${nameList(shown)}${coaches.length > 3 ? `, and ${coaches.length - 3} more coaches` : ''}.`;
     },
     placed: (n: number) => `All ${n} accepted players are on a team`,
-    unplaced: (n: number) => `${players(n)} accepted ${n === 1 ? 'isn’t' : 'aren’t'} on a team. They’re told when you place them.`,
+    unplaced: (n: number) => `${players(n)} accepted ${n === 1 ? 'isn’t' : 'aren’t'} on a team. After publishing you choose when their families are told.`,
     noCoach: (team: string) => `No coach for ${team} yet · Their families read “Coach to be announced”. Add one any time; they’re invited then.`,
     review: (names: readonly string[]) => `${namesCapped(names)} ${names.length === 1 ? 'is' : 'are'} still to review · Not on a team, so not emailed now.`,
     preview: (family: string, children: number) => `Preview the email to the ${family} family (${children} ${children === 1 ? 'child' : 'children'})`,
@@ -265,10 +252,5 @@ export const TEAMS_WORDS = {
     doneQuiet: (day: string) => `Published ${day}.`,
     failed: (bad: number, total: number) => `The teams are published, but ${bad} of ${emails(Math.max(total, bad))} couldn’t be sent. Their status pages show the team.`,
     sendAgain: (n: number) => `Send the ${n} again`,
-    after: 'Moving a player now emails their family. There is no unpublish: families already have the email.',
   },
 } as const;
-
-function capital(s: string): string {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-}

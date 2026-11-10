@@ -6,6 +6,7 @@ import { dollarsLine } from './house-league-season';
 import { methodInBrackets } from './house-league-money-words';
 import { LEAGUE_PAY_WORDS, SIGNUP_LINK_WORDS } from './league-pay-words';
 import { SECOND_PARENT_WORDS } from './league-second-parent';
+import { TC_MAIL } from './house-league-team-changes-words';
 import { INVITE_PANEL_SLOT, INVITE_WHO_SLOT } from './family-invitation-panel';
 import { formatStoredDate } from './timezone';
 import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
@@ -1267,6 +1268,53 @@ function teamsContactLine(clubName: string, contactEmail: string | null | undefi
   if (!contactEmail) return '';
   const contact = escapeEmailHtml(contactEmail);
   return `<p style="color:${WARM_EMAIL.secondary};font-size:0.9rem;margin-top:1.25rem;">Questions? Contact ${escapeEmailHtml(clubName)} at <a href="mailto:${contact}" style="color:${WARM_EMAIL.olive};">${contact}</a>.</p>`;
+}
+
+/** One changed child in a team-change email: new (movedFrom null) or moved from the team the family was last told. */
+export interface TeamChangeLine {
+  child: string; team: string; coaches: string[]; movedFrom: string | null;
+  /** The new team's practice dates, when its families have been told them (9d-3). */
+  practices?: { heading: string; lines: readonly string[]; zone: string } | null;
+}
+
+/**
+ * THE TEAM-CHANGE EMAIL (House League team-change emails, TC·1 to TC·5; drawing tab 5): one per family after the convenor
+ * presses Send, one boxed block per CHANGED child only. A SERVICE notice, as the placement email (`sendFamilyServiceBatch`).
+ * The "Your sign-up" button shows only while money is owed, as the Publish email does.
+ */
+export function leagueTeamChangesHtml(input: {
+  guardianFirstName: string;
+  divisionName: string;
+  clubName: string;
+  lines: readonly TeamChangeLine[];
+  signupUrl: string | null;
+  seasonName: string;
+  contactEmail?: string | null;
+  face?: FamilyMailFace | null;
+  invitationSlots?: boolean;
+}) {
+  const p = escapeEmailFields(input);
+  const slot = (marker: string) => (input.invitationSlots ? marker : '');
+  const blocks = input.lines.map(l => {
+    const detail = `${l.movedFrom === null ? TC_MAIL.newTeam : TC_MAIL.movedFrom(l.movedFrom)} · ${TC_MAIL.coach(l.coaches)}`;
+    const practices = l.practices && l.practices.lines.length ? `
+      <p style="margin:0.5rem 0 0.25rem;font-size:0.9rem;">${escapeEmailHtml(l.practices.heading)}</p>
+      <ul style="margin:0 0 0.25rem;padding-left:1.2rem;color:${WARM_EMAIL.ink};font-size:0.9rem;">${l.practices.lines.map(x => `<li style="margin:0 0 0.2rem;">${escapeEmailHtml(x)}</li>`).join('')}</ul>
+      <p style="color:${WARM_EMAIL.secondary};font-size:0.8rem;margin:0;">${escapeEmailHtml(l.practices.zone)}</p>` : '';
+    return `<div style="border:1px solid ${WARM_EMAIL.cardEdge};border-radius:8px;padding:0.7rem 0.9rem;margin:0 0 0.6rem;">
+      <div style="font-weight:700;color:${WARM_EMAIL.ink};">${escapeEmailHtml(TC_MAIL.childTitle(l.child, l.team))}</div>
+      <div style="color:${WARM_EMAIL.secondary};font-size:0.85rem;margin-top:0.15rem;">${escapeEmailHtml(detail)}</div>${practices}
+    </div>`;
+  }).join('');
+  return familyNotice(`
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${TC_MAIL.heading}</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>${slot(INVITE_WHO_SLOT)}
+    <p>${escapeEmailHtml(TC_MAIL.lead(input.divisionName))}</p>
+    ${blocks}
+    <p>${TC_MAIL.close}</p>
+    ${signupButton(input.signupUrl)}${slot(INVITE_PANEL_SLOT)}
+    ${teamsContactLine(input.clubName, input.contactEmail)}
+  `, input.face, `your family is registered for ${input.seasonName}`);
 }
 
 /**

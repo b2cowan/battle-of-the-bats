@@ -3680,6 +3680,16 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "league_registrations",
+    "constraint_name": "league_registrations_told_team_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "told_team_id",
+    "foreign_table": "league_teams",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "league_schedule_emails",
     "constraint_name": "league_schedule_emails_division_id_fkey",
     "constraint_type": "FOREIGN KEY",

@@ -20,6 +20,7 @@ import { PRACTICES_SENT_NOTICE } from '@/lib/league-practice-tell';
 import type { ClubEmailRecord, EmailLogRow } from '@/lib/families-emails-log';
 import LoadingState from '@/components/shared/LoadingState';
 import KitDialog, { DialogCancel } from '../KitDialog';
+import { TC_HISTORY } from '@/lib/house-league-team-changes-words';
 import ck from '../ClubKit.module.css';
 import { ClubRow, ClubRowList, RepChip, repKit, useDeferredLoad } from '../RepKit';
 import { jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
@@ -31,6 +32,11 @@ export const reachedText = (r: EmailLogRow) => {
   if (!r.counts) return W.oneFamily;
   if (r.state === 'sending') return W.sending;
   if (r.state === 'stopped') return W.stopped(r.counts.reached, r.counts.families);
+  if (r.noticeKind === 'team_changes') {
+    // "3 families emailed" / "Not emailed (3 families)" / "2 emailed, 1 not emailed" (TC·4); a failed send says what reached.
+    const sent = r.counts.families - (r.skipped ?? 0);
+    return r.counts.failed > 0 ? W.reached(r.counts.reached, sent) : TC_HISTORY.summary(sent, r.skipped ?? 0);
+  }
   return W.reached(r.counts.reached, r.counts.families);
 };
 /** The Reached cell: a send that stopped partway wears the amber chip (a status is said once, by a chip), its figures after. */
@@ -231,6 +237,9 @@ export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClos
           </p>
           {r.state === 'stopped' && <p className={ck.hint}>{SW.stoppedNote(missed)}</p>}
         </>
+      ) : r.kind === 'notice' && r.noticeKind === 'team_changes' ? (
+        // After a division is published, the families not yet told (House League team-change emails, TC·4).
+        <p className={`${ck.hint} ${fam.readAfter}`}>{TC_HISTORY.body(r.division ?? null, r.skipped ?? 0)}</p>
       ) : r.kind === 'notice' && r.noticeKind === 'practices_sent' ? (
         // A league admin told a division's families their practice times (House League 9d-3, copy section E).
         <>

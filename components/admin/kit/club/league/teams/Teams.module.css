@@ -555,3 +555,44 @@
 
 /* The draft window's families switch (A7): the house switch row, standing in its own box under the facts. */
 .draftSwitch { margin-top: 1rem; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+
+/* ── Team changes after publishing (TC·2 to TC·6): the "Not told" chip and the Review and email window ── */
+.notTold {
+  flex: 0 0 auto;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid rgba(var(--warning-rgb), 0.35);
+  border-radius: 999px;
+  background: rgba(var(--warning-rgb), 0.1);
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--badge-warning-ink);
+}
+.tcList { list-style: none; margin: 0.75rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tcFam { border: 1px solid var(--home-line); border-radius: 10px; background: var(--card-bg); padding: 10px 12px; }
+.tcFamOff { background: rgba(0, 0, 0, 0.03); }
+.tcFamOff .tcFamName, .tcFamOff .tcKid { color: var(--text-tertiary); text-decoration: line-through; }
+.tcFamHead { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; min-height: 36px; }
+.tcFamName { font-size: var(--type-body); color: var(--text-primary); }
+.tcMail { font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+.tcToggle { border: 0; background: none; padding: 0; font: inherit; font-size: var(--type-support); color: var(--text-secondary); text-decoration: underline; cursor: pointer; min-height: 36px; }
+.tcKids { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.tcKid { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: var(--type-body); color: var(--text-primary); }
+.tcKidName { font-weight: 650; }
+.tcKidTeam { color: var(--text-secondary); }
+.tcChip {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--home-line);
+  border-radius: 999px;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.tcChipMoved { border-color: rgba(var(--warning-rgb), 0.35); background: rgba(var(--warning-rgb), 0.1); color: var(--badge-warning-ink); }
+.tcOffNote { margin: 6px 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.tcQuiet { margin: 10px 0 0; padding: 8px 12px; border: 1px dashed var(--home-line); border-radius: 10px; font-size: var(--type-support); color: var(--text-secondary); }
+.tcWarnLine { margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; background: rgba(var(--warning-rgb), 0.1); font-size: var(--type-support); color: var(--badge-warning-ink); }
+.tcAllOff { color: var(--badge-warning-ink); }
+@media (max-width: 640px) {
+  /* A touch width: the per-family button is its own 44px row. */
+  .tcToggle { flex: 1 0 100%; display: flex; align-items: center; min-height: 44px; }
+}

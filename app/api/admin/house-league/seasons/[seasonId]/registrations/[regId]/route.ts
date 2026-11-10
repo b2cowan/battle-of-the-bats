@@ -559,13 +559,11 @@ export const PATCH = withObservability(async (req: Request,
       keptPrice = moved.keptPrice;
     }
     if ('teamId' in body) {
-      // 9c: a team changes only through the one placement function (mig 377), so a published division's move is held and
-      // emailed on Teams & draft, never made silently here.
-      const placed = await placePlayer(ctx!.org.id, seasonId, regId, body.teamId ?? null, false, ctx!.user.id);
+      // 9c: a team changes only through the one placement function (mig 377/459). After publishing the move lands at once
+      // and emails nobody; the family is told from the Teams & draft banner (TC·1).
+      const placed = await placePlayer(ctx!.org.id, seasonId, regId, body.teamId ?? null, ctx!.user.id);
       if ('refusal' in placed) {
-        const words = placed.refusal === 'published'
-          ? 'This division is published. Move players on Teams & draft, where the family is told.'
-          : placed.refusal === 'not_accepted' ? 'Only an accepted player is put on a team.' : 'Team not found';
+        const words = placed.refusal === 'not_accepted' ? 'Only an accepted player is put on a team.' : 'Team not found';
         return NextResponse.json({ error: words, code: placed.refusal }, { status: 409 });
       }
     }

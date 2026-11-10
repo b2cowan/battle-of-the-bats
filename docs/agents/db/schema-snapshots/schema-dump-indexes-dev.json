@@ -1875,6 +1875,11 @@
     "indexdef": "CREATE INDEX league_registrations_team_id_idx ON public.league_registrations USING btree (team_id)"
   },
   {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_told_team_idx",
+    "indexdef": "CREATE INDEX league_registrations_told_team_idx ON public.league_registrations USING btree (told_team_id) WHERE (told_team_id IS NOT NULL)"
+  },
+  {
     "tablename": "league_schedule_emails",
     "indexname": "league_schedule_emails_notice_idx",
     "indexdef": "CREATE INDEX league_schedule_emails_notice_idx ON public.league_schedule_emails USING btree (notice_id, status)"

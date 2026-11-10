@@ -155,7 +155,7 @@ describe('Part 9 guard (a) â€” with the tier off, the placement email is todayâ€
     assert.match(MAILER, /^[^{]*\{\s*if \(!GUARDIAN_TIER_ENABLED\) return null;/);
     assert.match(MAILER, /if \(!sender\.ready\) return null;/);
     const SEND = readCode('lib/house-league-placement-mail.ts');
-    assert.equal((SEND.match(/invitationSlots: !!mailer/g) ?? []).length, 2, 'placed and moved');
+    assert.equal((SEND.match(/invitationSlots: !!mailer/g) ?? []).length, 3, 'placed, moved and team changes');
   });
   it('an invitation is never the reason a placement email did not go', () => {
     assert.match(functionBody(readCode('lib/house-league-placement-mail.ts'), 'sendClaimed'), /placementInviteMailer\(org\.id, named\.map\(r => r\.id\)\)\.catch\(/);

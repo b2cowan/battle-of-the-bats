@@ -8354,6 +8354,15 @@
         "column_default": null
       },
       {
+        "table_name": "league_placement_emails",
+        "pos": 16,
+        "column_name": "changes",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_player_ratings",
         "pos": 1,
         "column_name": "registration_id",
@@ -9416,6 +9425,24 @@
         "column_default": null
       },
       {
+        "table_name": "league_registrations",
+        "pos": 45,
+        "column_name": "told_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 46,
+        "column_name": "told_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_schedule_emails",
         "pos": 1,
         "column_name": "id",
@@ -9648,6 +9675,15 @@
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 12,
+        "column_name": "skipped_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "league_seasons",
@@ -32093,6 +32129,13 @@
         "constraint_name": "league_registrations_team_id_fkey"
       },
       {
+        "table_name": "league_registrations",
+        "column_name": "told_team_id",
+        "foreign_table": "league_teams",
+        "foreign_column": "id",
+        "constraint_name": "league_registrations_told_team_fk"
+      },
+      {
         "table_name": "league_schedule_emails",
         "column_name": "division_id",
         "foreign_table": "league_divisions",
@@ -38205,6 +38248,11 @@
         "indexdef": "CREATE INDEX league_registrations_team_id_idx ON public.league_registrations USING btree (team_id)"
       },
       {
+        "tablename": "league_registrations",
+        "indexname": "league_registrations_told_team_idx",
+        "indexdef": "CREATE INDEX league_registrations_told_team_idx ON public.league_registrations USING btree (told_team_id) WHERE (told_team_id IS NOT NULL)"
+      },
+      {
         "tablename": "league_schedule_emails",
         "indexname": "league_schedule_emails_notice_idx",
         "indexdef": "CREATE INDEX league_schedule_emails_notice_idx ON public.league_schedule_emails USING btree (notice_id, status)"
@@ -43853,6 +43901,12 @@
       {
         "kind": "CHECK",
         "table_name": "league_placement_emails",
+        "detail": "league_placement_emails_changes_check",
+        "check_clause": "((kind = 'changes'::text) = (changes IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_placement_emails",
         "detail": "league_placement_emails_guardian_email_check",
         "check_clause": "(guardian_email = lower(btrim(guardian_email)))"
       },
@@ -43860,7 +43914,7 @@
         "kind": "CHECK",
         "table_name": "league_placement_emails",
         "detail": "league_placement_emails_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['placed'::text, 'moved'::text]))"
+        "check_clause": "(kind = ANY (ARRAY['placed'::text, 'moved'::text, 'changes'::text]))"
       },
       {
         "kind": "CHECK",
@@ -44124,13 +44178,19 @@
         "kind": "CHECK",
         "table_name": "league_season_notices",
         "detail": "league_season_notices_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text]))"
+        "check_clause": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text, 'team_changes'::text]))"
       },
       {
         "kind": "CHECK",
         "table_name": "league_season_notices",
         "detail": "league_season_notices_reached_count_check",
         "check_clause": "(reached_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_season_notices",
+        "detail": "league_season_notices_skipped_count_check",
+        "check_clause": "((skipped_count >= 0) AND (skipped_count <= family_count))"
       },
       {
         "kind": "RLS",

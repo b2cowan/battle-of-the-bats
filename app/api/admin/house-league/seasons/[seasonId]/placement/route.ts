@@ -5,16 +5,15 @@ import { getLeagueSeasonById } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { registrationsInSeason, teamsInSeason } from '@/lib/league-season-scope';
 import { placePlayer, setLock } from '@/lib/house-league-teams';
-import { sendPlacementEmails } from '@/lib/house-league-placement-mail';
 import { lockWords, placeRefusal } from '@/lib/house-league-teams-words';
 import { withObservability } from '@/lib/observability';
 
 /**
  * One player on Teams & draft (Club Tier 9c, copy §5-6). Replaces Randomize, assign, bulk assign and clear (9c·5; clear is
  * now the draft route's "Take all players off teams").
- *   · `place` — onto a team, or off it (teamId null). Before publishing: immediate and silent. After publishing it is
- *     refused with `code: 'published'` until the screen has asked and sends `confirmed: true` (9c·12); then the family is
- *     emailed (the move email, or the placement email for a player placed late). Off a team emails nobody.
+ *   · `place` — onto a team, or off it (teamId null). Immediate and silent, before and after publishing (TC·1, which
+ *     supersedes 9c·12): no window, no email. After publishing the family is told later from the Teams screen's banner
+ *     (the team-changes route).
  *   · `lock` — Lock to this team / Unlock (9c·3), before publishing.
  */
 export const POST = withObservability(async (req: Request,
@@ -40,7 +39,7 @@ export const POST = withObservability(async (req: Request,
     if (teamId !== null && !(await teamsInSeason(seasonId, [teamId]))) {
       return NextResponse.json({ error: 'Team not found' }, { status: 404 });
     }
-    const placed = await placePlayer(ctx!.org.id, seasonId, registrationId, teamId, body.confirmed === true, ctx!.user.id);
+    const placed = await placePlayer(ctx!.org.id, seasonId, registrationId, teamId, ctx!.user.id);
     if ('refusal' in placed) {
       const { data: reg } = await supabaseAdmin.from('league_registrations')
         .select('player_first_name, player_last_name, league_divisions(name)').eq('id', registrationId).maybeSingle();
@@ -49,10 +48,7 @@ export const POST = withObservability(async (req: Request,
       const status = placed.refusal === 'finished' ? 423 : 409;
       return NextResponse.json({ error: placeRefusal(placed.refusal, name, division), code: placed.refusal }, { status });
     }
-    const emailed = placed.emailId
-      ? await sendPlacementEmails({ ...ctx!.org, slug: ctx!.org.slug }, season, [placed.emailId])
-      : null;
-    return NextResponse.json({ ok: true, ...(emailed ? { emailed } : {}) });
+    return NextResponse.json({ ok: true });
   }
 
   if (action === 'lock') {

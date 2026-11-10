@@ -34,6 +34,7 @@ import { formatLeagueMoney } from '@/lib/league-money';
 import { teamAverage } from '@/lib/house-league-draft';
 import { coachesLine } from '@/lib/house-league-teams-words';
 import { REGS_WORDS } from '@/lib/house-league-money-words';
+import { TC_CHIP } from '@/lib/house-league-team-changes-words';
 import { TEAMS_WORDS as W } from '@/lib/house-league-teams-screen-words';
 import {
   familiesOf, filterCounts, householdKey, narrowPool, sortPool, type PoolFilter, type PoolSort,
@@ -248,7 +249,9 @@ function PlayerRow({ p, props, kit, overlay = false }: { p: BoardPlayer; props: 
   const name = `${p.firstName} ${p.lastName}`;
   const key = householdKey(p.guardianEmail);
   const lit = !!key && kit.lit === key;
-  const hasState = locked || !!p.askedToWithdrawAt || (moved && !!p.draftTeamId);
+  // TC·6: a small amber chip with words on a child whose family has not been told their team (never on a team card).
+  const notTold = rights.run && p.untold;
+  const hasState = locked || notTold || !!p.askedToWithdrawAt || (moved && !!p.draftTeamId);
   return (
     <div id={overlay ? undefined : rowId(p.id)} className={`${css.kid}${moved ? ` ${css.kidMoved}` : ''}${lit ? ` ${css.kidLit}` : ''}`}>
       {rights.seeRatings && <RatingChip rating={rating} />}
@@ -272,6 +275,7 @@ function PlayerRow({ p, props, kit, overlay = false }: { p: BoardPlayer; props: 
       {hasState && (
         <div className={css.states} style={{ gridColumn: rights.seeRatings ? '2 / -1' : '1 / -1' }}>
           {locked && <span className={css.lockBadge}><Lock size={12} aria-hidden />{W.kid.locked}</span>}
+          {notTold && <span className={css.notTold}>{TC_CHIP.notTold}</span>}
           {moved && p.draftTeamId && (
             <CoachToolbarMenu
               variant="glyph"

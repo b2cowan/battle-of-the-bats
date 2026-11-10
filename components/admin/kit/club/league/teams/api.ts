@@ -51,6 +51,7 @@ export function teamsRoutes(seasonId: string, orgQuery: string) {
     placement: join('/placement'),
     ratings: join('/ratings'),
     publish: join('/publish'),
+    teamChanges: (divisionId?: string) => join('/team-changes', divisionId ? `divisionId=${encodeURIComponent(divisionId)}` : ''),
     teams: join('/teams'),
     team: (teamId: string) => join(`/teams/${teamId}`),
     coaches: (teamId: string, coachId?: string) => join(`/teams/${teamId}/coaches`, coachId ? `coachId=${encodeURIComponent(coachId)}` : ''),

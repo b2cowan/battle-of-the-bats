@@ -1,11 +1,12 @@
 -- DEV only. Club Tier Stage 9c Part 1 (mig 377; T11 mig 379): teams and people, proved on the database.
 -- Run: node scripts/db-query.mjs --dev -f scripts/house-league-teams-check.sql
+-- T7 (mig 459): after publishing a move is silent; the families not yet told are sent (or skipped) in one transaction.
 -- The final exception rolls back every fixture row; the run passes only when it ends in HOUSE_LEAGUE_TEAMS_PASSED.
 DO $hlteams$
 DECLARE
   v_org uuid; v_season uuid; v_div uuid; v_div2 uuid; v_t1 uuid; v_t2 uuid; v_t3 uuid;
   v_a uuid; v_b uuid; v_c uuid; v_d uuid; v_coach uuid; v_coach2 uuid;
-  v_fp text; v_refusal text; v_email uuid; v_res record; v_n integer;
+  v_fp text; v_refusal text; v_email uuid; v_res record; v_tell record; v_n integer;
 BEGIN
   INSERT INTO organizations(name, slug, plan_id)
   VALUES ('TEAMS CHECK 9c', 'teams-check-9c-' || substr(md5(random()::text), 1, 10), 'league') RETURNING id INTO v_org;
@@ -110,22 +111,67 @@ BEGIN
   SELECT * INTO v_res FROM league_division_publish(v_org, v_season, v_div, NULL, v_fp, ARRAY[]::uuid[], ARRAY[]::text[]);
   IF v_res.refusal IS DISTINCT FROM 'already' THEN RAISE EXCEPTION 'FAIL T6h: a second publish was not refused'; END IF;
 
-  -- T7 · after publishing, a move is held, then writes one email row that remembers the old team.
+  -- T7 (mig 459) · after publishing, a move saves at once and writes NO email row; everyone is "told" from Publish.
+  IF (SELECT count(*) FROM league_registrations WHERE division_id = v_div AND status = 'active'
+        AND team_id IS NOT NULL AND told_team_id IS DISTINCT FROM team_id) <> 0 THEN
+    RAISE EXCEPTION 'FAIL T7: Publish left a child untold'; END IF;
+  SELECT count(*) INTO v_n FROM league_placement_emails WHERE division_id = v_div;
   SELECT * INTO v_res FROM league_team_place(v_org, v_season, v_c, v_t1, false, NULL);
-  IF v_res.refusal IS DISTINCT FROM 'published' THEN RAISE EXCEPTION 'FAIL T7: an unconfirmed move after publishing landed'; END IF;
-  SELECT * INTO v_res FROM league_team_place(v_org, v_season, v_c, v_t1, true, NULL);
-  IF v_res.refusal IS NOT NULL OR v_res.email IS NULL THEN RAISE EXCEPTION 'FAIL T7b: a confirmed move wrote no email'; END IF;
-  IF (SELECT kind || ':' || coalesce(from_team_id::text, '') FROM league_placement_emails WHERE id = v_res.email)
-     <> 'moved:' || v_t2::text THEN RAISE EXCEPTION 'FAIL T7c: the move email lost its old team'; END IF;
-  IF (SELECT previous_team_id FROM league_registrations WHERE id = v_c) IS DISTINCT FROM v_t2 THEN
-    RAISE EXCEPTION 'FAIL T7d: the moved line has no previous team'; END IF;
-  -- Off a team after publishing emails nobody.
+  IF v_res.refusal IS NOT NULL OR v_res.email IS NOT NULL THEN RAISE EXCEPTION 'FAIL T7b: a move after publishing was refused or wrote an email'; END IF;
+  IF (SELECT count(*) FROM league_placement_emails WHERE division_id = v_div) <> v_n THEN
+    RAISE EXCEPTION 'FAIL T7c: a silent move stored an email row'; END IF;
+  IF (SELECT previous_team_id FROM league_registrations WHERE id = v_c) IS DISTINCT FROM v_t2
+     OR (SELECT told_team_id FROM league_registrations WHERE id = v_c) IS DISTINCT FROM v_t2 THEN
+    RAISE EXCEPTION 'FAIL T7d: the move lost the previous or the told team'; END IF;
+  -- Moved and moved back: nothing to tell.
+  SELECT * INTO v_res FROM league_team_place(v_org, v_season, v_c, v_t2, false, NULL);
+  IF EXISTS (SELECT 1 FROM league_registrations WHERE division_id = v_div AND status = 'active' AND team_id IS NOT NULL
+               AND team_id IS DISTINCT FROM told_team_id) THEN
+    RAISE EXCEPTION 'FAIL T7e: a child moved and moved back is still untold'; END IF;
+  -- Off a team emails nobody and is never untold.
   SELECT * INTO v_res FROM league_team_place(v_org, v_season, v_c, NULL, true, NULL);
-  IF v_res.email IS NOT NULL THEN RAISE EXCEPTION 'FAIL T7e: taking a player off a team emailed the family'; END IF;
-  -- A late placement is a "placed" email.
-  SELECT * INTO v_res FROM league_team_place(v_org, v_season, v_c, v_t2, true, NULL);
-  IF (SELECT kind FROM league_placement_emails WHERE id = v_res.email) <> 'placed' THEN
-    RAISE EXCEPTION 'FAIL T7f: a placement from Not on a team was not a placement email'; END IF;
+  IF v_res.email IS NOT NULL THEN RAISE EXCEPTION 'FAIL T7f: taking a player off a team emailed the family'; END IF;
+
+  -- Send: a stale fingerprint, a short list and an unpublished division are refused.
+  SELECT * INTO v_res FROM league_team_place(v_org, v_season, v_c, v_t1, false, NULL);
+  v_fp := league_division_untold_fingerprint(v_div);
+  SELECT * INTO v_tell FROM league_division_tell_changes(v_org, v_season, v_div, NULL, 'stale', ARRAY['chen@example.invalid'], ARRAY[]::text[]);
+  IF v_tell.refusal IS DISTINCT FROM 'changed' THEN RAISE EXCEPTION 'FAIL T7g: a stale send landed'; END IF;
+  SELECT * INTO v_tell FROM league_division_tell_changes(v_org, v_season, v_div, NULL, v_fp, ARRAY[]::text[], ARRAY[]::text[]);
+  IF v_tell.refusal IS DISTINCT FROM 'changed' THEN RAISE EXCEPTION 'FAIL T7h: a send that left a family out landed'; END IF;
+  SELECT * INTO v_tell FROM league_division_tell_changes(v_org, v_season, v_div2, NULL, league_division_untold_fingerprint(v_div2), ARRAY[]::text[], ARRAY[]::text[]);
+  IF v_tell.refusal IS DISTINCT FROM 'not_published' THEN RAISE EXCEPTION 'FAIL T7i: an unpublished division took a send'; END IF;
+
+  -- Send: one `changes` email that remembers the team the family was told, one notice, and the stamps.
+  SELECT * INTO v_tell FROM league_division_tell_changes(v_org, v_season, v_div, NULL, v_fp, ARRAY['chen@example.invalid'], ARRAY[]::text[]);
+  IF v_tell.refusal IS NOT NULL OR v_tell.sent_families <> 1 OR cardinality(v_tell.email_ids) <> 1 THEN
+    RAISE EXCEPTION 'FAIL T7j: the send was refused (%) or made % emails', v_tell.refusal, cardinality(v_tell.email_ids); END IF;
+  IF (SELECT kind || ':' || (changes -> 0 ->> 'from_team_id') || ':' || cardinality(registration_ids)
+        FROM league_placement_emails WHERE id = v_tell.email_ids[1]) <> 'changes:' || v_t2::text || ':1' THEN
+    RAISE EXCEPTION 'FAIL T7k: the changes email lost the from-team'; END IF;
+  IF (SELECT kind || ':' || family_count || ':' || skipped_count FROM league_season_notices WHERE id = v_tell.notice) <> 'team_changes:1:0' THEN
+    RAISE EXCEPTION 'FAIL T7l: the notice is wrong'; END IF;
+  IF (SELECT notice_id FROM league_placement_emails WHERE id = v_tell.email_ids[1]) IS DISTINCT FROM v_tell.notice THEN
+    RAISE EXCEPTION 'FAIL T7m: the email is not stamped with its notice'; END IF;
+  IF (SELECT told_team_id FROM league_registrations WHERE id = v_c) IS DISTINCT FROM v_t1 THEN
+    RAISE EXCEPTION 'FAIL T7n: the sent child is not told their team'; END IF;
+
+  -- Don't email: no email row, the notice counts the skip, the child counts as told the team they are on now.
+  SELECT * INTO v_res FROM league_team_place(v_org, v_season, v_c, v_t2, false, NULL);
+  v_fp := league_division_untold_fingerprint(v_div);
+  SELECT * INTO v_tell FROM league_division_tell_changes(v_org, v_season, v_div, NULL, v_fp, ARRAY[]::text[], ARRAY['chen@example.invalid']);
+  IF v_tell.refusal IS NOT NULL OR cardinality(v_tell.email_ids) <> 0 OR v_tell.skipped_families <> 1 THEN
+    RAISE EXCEPTION 'FAIL T7o: a skip was refused or wrote an email'; END IF;
+  IF (SELECT kind || ':' || family_count || ':' || skipped_count FROM league_season_notices WHERE id = v_tell.notice) <> 'team_changes:1:1' THEN
+    RAISE EXCEPTION 'FAIL T7p: the skip notice is wrong'; END IF;
+  IF (SELECT told_team_id FROM league_registrations WHERE id = v_c) IS DISTINCT FROM v_t2 THEN
+    RAISE EXCEPTION 'FAIL T7q: a skipped child is not counted as told'; END IF;
+  -- A late placement (never told) is "new": from-team null.
+  UPDATE league_registrations SET told_team_id = NULL WHERE id = v_c;
+  v_fp := league_division_untold_fingerprint(v_div);
+  SELECT * INTO v_tell FROM league_division_tell_changes(v_org, v_season, v_div, NULL, v_fp, ARRAY['chen@example.invalid'], ARRAY[]::text[]);
+  IF v_tell.refusal IS NOT NULL OR (SELECT changes -> 0 -> 'from_team_id' FROM league_placement_emails WHERE id = v_tell.email_ids[1]) IS DISTINCT FROM 'null'::jsonb THEN
+    RAISE EXCEPTION 'FAIL T7r: a new placement did not carry a null from-team'; END IF;
 
   -- T8 · a published division can't be drafted or cleared.
   v_fp := league_division_fingerprint(v_div);
@@ -139,6 +185,8 @@ BEGIN
   IF (SELECT team_id IS NULL AND previous_team_id = v_t2 AND team_changed_at IS NOT NULL
         FROM league_registrations WHERE id = v_a) IS NOT TRUE THEN
     RAISE EXCEPTION 'FAIL T9: an ended child kept their team'; END IF;
+  IF (SELECT told_team_id FROM league_registrations WHERE id = v_a) IS NOT NULL THEN
+    RAISE EXCEPTION 'FAIL T9c: an ended child was still told a team'; END IF;
   -- T11 (mig 379) · the ended child's rating went with them (Nora was rated 4 in T3).
   IF EXISTS (SELECT 1 FROM league_player_ratings WHERE registration_id = v_a) THEN
     RAISE EXCEPTION 'FAIL T11: an ended child kept their rating'; END IF;

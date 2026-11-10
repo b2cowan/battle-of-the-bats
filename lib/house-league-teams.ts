@@ -6,6 +6,7 @@ import { receivedOf } from './league-money';
 import { registrationOwes } from './league-price';
 import { tournamentToday } from './timezone';
 import { coachNameParts } from './house-league-coach-invites';
+import { familyKey, isUntold, teamChanges } from './house-league-team-changes';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -58,6 +59,8 @@ export interface BoardPlayer {
   guardianLastName: string;
   /** Trimmed and lower-cased: the household key (a family is one guardian email, never a surname). */
   guardianEmail: string;
+  /** Published division, on a team their family was not last told, and there is an address to tell (the amber "Not told" chip). */
+  untold: boolean;
 }
 
 export interface BoardLeft {
@@ -83,6 +86,8 @@ export interface DivisionBoard {
   notDrafted: { review: { id: string; name: string }[]; waitlisted: number };
   left: BoardLeft[];
   emails: BoardEmails;
+  /** Team changes not yet told (published divisions): families to email, their children, children with no address. */
+  untold: { families: number; children: number; noEmail: number };
 }
 
 export interface DivisionTab {
@@ -91,6 +96,8 @@ export interface DivisionTab {
   accepted: number;
   capacity: number | null;
   publishedAt: string | null;
+  /** Families not yet told about team changes (the picker's amber count); 0 before publishing. */
+  untold: number;
 }
 
 /** The coach's line under their name (copy §2.2). There is no "didn't arrive": the product cannot see a bounce. It can see
@@ -118,23 +125,37 @@ export function ageOn(dateOfBirth: string | null | undefined, today: string): nu
 
 /** The season's divisions as tabs: each with its accepted count and whether it is published. */
 export async function readDivisionTabs(seasonId: string): Promise<DivisionTab[]> {
-  const { data: divisions, error } = await supabaseAdmin.from('league_divisions')
-    .select('id, name, capacity, teams_published_at').eq('season_id', seasonId).order('sort_order').order('created_at');
+  const [{ data: divisions, error }, { data: regs, error: regError }] = await Promise.all([
+    supabaseAdmin.from('league_divisions')
+      .select('id, name, capacity, teams_published_at').eq('season_id', seasonId).order('sort_order').order('created_at'),
+    supabaseAdmin.from('league_registrations')
+      .select('division_id, team_id, told_team_id, guardian_email').eq('season_id', seasonId).eq('status', 'active'),
+  ]);
   if (error) throw new Error(`Couldn't read divisions: ${error.message}`);
-  const { data: regs, error: regError } = await supabaseAdmin.from('league_registrations')
-    .select('division_id').eq('season_id', seasonId).eq('status', 'active');
   if (regError) throw new Error(`Couldn't read registrations: ${regError.message}`);
   const counts = new Map<string, number>();
-  for (const r of regs ?? []) if (r.division_id) counts.set(r.division_id, (counts.get(r.division_id) ?? 0) + 1);
+  const untoldFamilies = new Map<string, Set<string>>();
+  const published = new Set((divisions ?? []).filter(d => d.teams_published_at).map(d => d.id));
+  for (const r of regs ?? []) {
+    if (!r.division_id) continue;
+    counts.set(r.division_id, (counts.get(r.division_id) ?? 0) + 1);
+    const key = familyKey(r.guardian_email);
+    if (published.has(r.division_id) && key !== '' && isUntold({ teamId: r.team_id, toldTeamId: r.told_team_id })) {
+      const set = untoldFamilies.get(r.division_id) ?? new Set<string>();
+      set.add(key);
+      untoldFamilies.set(r.division_id, set);
+    }
+  }
   return (divisions ?? []).map(d => ({
     id: d.id, name: d.name, capacity: d.capacity ?? null, accepted: counts.get(d.id) ?? 0,
     publishedAt: d.teams_published_at ?? null,
+    untold: untoldFamilies.get(d.id)?.size ?? 0,
   }));
 }
 
 const BOARD_REG_COLUMNS =
   'id, status, player_first_name, player_last_name, player_date_of_birth, team_id, team_locked_at, draft_team_id, '
-  + 'previous_team_id, team_changed_at, fee_amount, withdraw_requested_at, guardian_first_name, guardian_last_name, guardian_email';
+  + 'previous_team_id, team_changed_at, told_team_id, told_at, fee_amount, withdraw_requested_at, guardian_first_name, guardian_last_name, guardian_email';
 
 /** One division's board. The season and division are the caller's, already proven to be this org's. */
 export async function readDivisionBoard(
@@ -167,10 +188,19 @@ export async function readDivisionBoard(
   const regs = (regsRes.data ?? []) as unknown as {
     id: string; status: string; player_first_name: string; player_last_name: string; player_date_of_birth: string | null;
     team_id: string | null; team_locked_at: string | null; draft_team_id: string | null; previous_team_id: string | null;
-    team_changed_at: string | null; fee_amount: number | null; withdraw_requested_at: string | null;
+    team_changed_at: string | null; told_team_id: string | null; told_at: string | null; fee_amount: number | null; withdraw_requested_at: string | null;
     guardian_first_name: string | null; guardian_last_name: string | null; guardian_email: string | null;
   }[];
   const accepted = regs.filter(r => r.status === 'active');
+  const published = !!division.teams_published_at;
+  // Which families still need telling: the rule is lib/house-league-team-changes.ts (a division before Publish has none).
+  const changes = published
+    ? teamChanges(accepted.map(r => ({
+      id: r.id, firstName: r.player_first_name, lastName: r.player_last_name, guardianEmail: r.guardian_email,
+      teamId: r.team_id, toldTeamId: r.told_team_id, toldAt: r.told_at, teamChangedAt: r.team_changed_at,
+    })))
+    : { families: [], quiet: [], noEmail: [] };
+  const untoldIds = new Set(changes.families.flatMap(f => f.children.map(c => c.id)));
   const lines = await loadRegistrationMoneyLines(accepted.map(r => r.id));
   const today = tournamentToday();
 
@@ -182,7 +212,8 @@ export async function readDivisionBoard(
       age: ageOn(r.player_date_of_birth, today),
       teamId: r.team_id, locked: !!r.team_locked_at, draftTeamId: r.draft_team_id,
       owes: owes > 0 ? owes : null, askedToWithdrawAt: r.withdraw_requested_at,
-      guardianFirstName: r.guardian_first_name ?? '', guardianLastName: r.guardian_last_name ?? '', guardianEmail: (r.guardian_email ?? '').trim().toLowerCase(),
+      guardianFirstName: r.guardian_first_name ?? '', guardianLastName: r.guardian_last_name ?? '', guardianEmail: familyKey(r.guardian_email),
+      untold: untoldIds.has(r.id),
     };
   });
 
@@ -219,6 +250,11 @@ export async function readDivisionBoard(
     },
     left,
     emails,
+    untold: {
+      families: changes.families.length,
+      children: changes.families.reduce((n, f) => n + f.children.length, 0),
+      noEmail: changes.noEmail.length,
+    },
   };
 }
 
@@ -284,22 +320,23 @@ export async function clearDivision(
   return (data as DivisionRefusal | null) ?? null;
 }
 
-export type PlaceRefusal = 'finished' | 'not_accepted' | 'no_division' | 'team' | 'published';
+export type PlaceRefusal = 'finished' | 'not_accepted' | 'no_division' | 'team';
 
 /**
- * One player onto a team (or off it, with null). Before publishing it is immediate and silent. After publishing it is
- * refused unless `confirmed` (the held window, 9c·12); then the returned email row is the family's email, to send.
+ * One player onto a team (or off it, with null). Immediate and silent, before and after publishing (TC·1, which supersedes
+ * 9c·12): an email is never sent here. After publishing the family is told later, from the Teams screen's banner
+ * (lib/house-league-team-changes-server.ts). The database function still takes `p_confirmed` and ignores it.
  */
 export async function placePlayer(
-  orgId: string, seasonId: string, registrationId: string, teamId: string | null, confirmed: boolean, actorId: string,
-): Promise<{ refusal: PlaceRefusal } | { emailId: string | null }> {
+  orgId: string, seasonId: string, registrationId: string, teamId: string | null, actorId: string,
+): Promise<{ refusal: PlaceRefusal } | { ok: true }> {
   const { data, error } = await supabaseAdmin.rpc('league_team_place', {
-    p_org: orgId, p_season: seasonId, p_registration: registrationId, p_team: teamId, p_confirmed: confirmed, p_actor: actorId,
+    p_org: orgId, p_season: seasonId, p_registration: registrationId, p_team: teamId, p_confirmed: true, p_actor: actorId,
   });
   if (error) throw new Error(`Couldn't move the player: ${error.message}`);
-  const row = (Array.isArray(data) ? data[0] : data) as { refusal: PlaceRefusal | null; email: string | null } | undefined;
+  const row = (Array.isArray(data) ? data[0] : data) as { refusal: PlaceRefusal | null } | undefined;
   if (row?.refusal) return { refusal: row.refusal };
-  return { emailId: row?.email ?? null };
+  return { ok: true };
 }
 
 export type LockRefusal = 'no_team' | 'published';

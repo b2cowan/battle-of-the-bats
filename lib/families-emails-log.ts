@@ -1,4 +1,5 @@
 import 'server-only';
+import { TC_HISTORY } from './house-league-team-changes-words';
 import { supabaseAdmin } from './supabase-admin';
 import { getLeagueEmailLog, resolvePersonNamer } from './db';
 import { personDisplayName } from './families-read';
@@ -51,12 +52,14 @@ export interface EmailLogRow {
   /** A notice's own kind: Publish teams (9c), a practice change the club's Send the changes made (Stage 11b Part 5),
    *  Publish schedule or a division's schedule changes (House League 9d-2b, f4). */
   noticeKind?: NoticeKind;
+  /** A `team_changes` notice: of its families, how many the convenor chose NOT to email (Don't email). */
+  skipped?: number;
   /** A notice's division, for its body's words ("when U12 Division's schedule was published"). */
   division?: string | null;
   state: 'sending' | 'stopped' | 'done';
 }
 
-export type NoticeKind = 'teams_published' | 'practices_changed' | 'schedule_published' | 'games_changed' | 'practices_sent';
+export type NoticeKind = 'teams_published' | 'practices_changed' | 'schedule_published' | 'games_changed' | 'practices_sent' | 'team_changes';
 
 /** A notice's subject and To (f4: "Schedule published: U12 Division" · "U12 Division · 66 families · reached 66"). */
 function noticeFace(kind: NoticeKind, division: string | null, families: number, reached: number): { subject: string; to: string } {
@@ -67,6 +70,8 @@ function noticeFace(kind: NoticeKind, division: string | null, families: number,
     case 'games_changed': return { subject: SCHEDULE_NOTICE_WORDS.changesSubject(division), to: SCHEDULE_NOTICE_WORDS.to(division, families, reached) };
     // House League 9d-3: a league admin told a division's families their practice times (copy section E).
     case 'practices_sent': return { subject: PRACTICES_SENT_NOTICE.subject(division), to: SCHEDULE_NOTICE_WORDS.to(division, families, reached) };
+    // House League team-change emails: one press of Review and email or Don't email after publishing (TC·4).
+    case 'team_changes': return { subject: TC_HISTORY.subject(division), to: division ?? SW.everyone };
     default: return { subject: SW.teamsPublished(division), to: division ?? SW.everyone };
   }
 }
@@ -243,7 +248,7 @@ export async function readSeasonHistory(orgId: string, seasonId: string): Promis
       .order('sent_at', { ascending: false }).limit(SEASON_HISTORY_MAX),
     supabaseAdmin.from('family_messages').select('id, sent_at, sent_by, person_id').eq('org_id', orgId).eq('season_id', seasonId)
       .order('sent_at', { ascending: false }).limit(SEASON_HISTORY_MAX),
-    supabaseAdmin.from('league_season_notices').select('id, kind, division_id, family_count, reached_count, failed_count, created_by, created_at')
+    supabaseAdmin.from('league_season_notices').select('id, kind, division_id, family_count, reached_count, failed_count, skipped_count, created_by, created_at')
       .eq('org_id', orgId).eq('season_id', seasonId).order('created_at', { ascending: false }).limit(SEASON_HISTORY_MAX),
     // ⚠ READ-ONLY (9d1·3): nothing writes league_email_log again. A read that fails hides the old rows, never the page.
     getLeagueEmailLog(seasonId).catch(() => []),
@@ -283,7 +288,7 @@ export async function readSeasonHistory(orgId: string, seasonId: string): Promis
       return {
         key: `notice:${n.id}`, kind: 'notice', id: n.id, sentAt: n.created_at, seasonId,
         ...noticeFace(kind, division, n.family_count, n.reached_count),
-        noticeKind: kind, division, by: nameOf(n.created_by), state: noticeState(kind, n, inFlight),
+        noticeKind: kind, division, skipped: kind === 'team_changes' ? (n.skipped_count as number) : undefined, by: nameOf(n.created_by), state: noticeState(kind, n, inFlight),
         counts: { families: n.family_count, reached: n.reached_count, optedOut: 0, failed: n.failed_count, coaches: 0 },
       };
     }),

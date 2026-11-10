@@ -5,7 +5,8 @@ import { timesInZoneSentence } from './timezone';
 import { supabaseAdmin } from './supabase-admin';
 import { chunked } from './supabase-paging';
 import { sendFamilyServiceBatch, type FamilyServiceMessage } from './family-email';
-import { leagueTeamMovedHtml, leagueTeamsPlacedHtml, type PlacedTeamLine } from './email';
+import { leagueTeamChangesHtml, leagueTeamMovedHtml, leagueTeamsPlacedHtml, type PlacedTeamLine, type TeamChangeLine } from './email';
+import { TC_MAIL } from './house-league-team-changes-words';
 import { readClubEmailOrg, systemMailFace, type ClubEmailOrg } from './club-email-context';
 import { leaguePayUrl } from './league-pay-link';
 import { signupsOwingNow } from './league-pay-facts';
@@ -40,8 +41,10 @@ export interface MailOrg extends ClubEmailOrg { slug: string }
 export interface MailSeason { id: string; name: string; slug: string }
 
 interface EmailRow {
-  id: string; kind: 'placed' | 'moved'; guardian_email: string; registration_ids: string[];
+  id: string; kind: 'placed' | 'moved' | 'changes'; guardian_email: string; registration_ids: string[];
   from_team_id: string | null; division_id: string;
+  /** A `changes` row's snapshot of each child's from-team (mig 459); null on placed / moved rows. */
+  changes: { registration_id: string; from_team_id: string | null }[] | null;
 }
 interface RegRow {
   id: string; player_first_name: string; player_last_name: string; guardian_first_name: string | null;
@@ -60,7 +63,7 @@ function signupUrl(org: MailOrg, season: MailSeason, reg: RegRow, owing: Readonl
 }
 
 /** Team names and each team's coaches, for the teams these rows name. */
-async function readTeamFacts(teamIds: readonly string[]): Promise<{ names: Map<string, string>; coaches: Map<string, string[]> }> {
+export async function readTeamFacts(teamIds: readonly string[]): Promise<{ names: Map<string, string>; coaches: Map<string, string[]> }> {
   const names = new Map<string, string>();
   const coaches = new Map<string, string[]>();
   for (const chunk of chunked([...new Set(teamIds)])) {
@@ -141,7 +144,7 @@ async function recordOutcome(ids: readonly string[], status: 'sent' | 'failed' |
 async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly string[]): Promise<SendOutcome> {
   const outcome: SendOutcome = { sent: 0, failed: 0, skipped: 0 };
   const { data: rowData, error: rowError } = await supabaseAdmin.from('league_placement_emails')
-    .select('id, kind, guardian_email, registration_ids, from_team_id, division_id').in('id', [...ids]);
+    .select('id, kind, guardian_email, registration_ids, from_team_id, division_id, changes').in('id', [...ids]);
   if (rowError) throw new Error(`Couldn't read the emails: ${rowError.message}`);
   const rows = (rowData ?? []) as EmailRow[];
 
@@ -158,9 +161,12 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
     .in('id', [...new Set(rows.map(r => r.division_id))]);
   const divisionName = new Map((divisions ?? []).map(d => [d.id as string, d.name as string]));
   const teamIds = [...regs.values()].map(r => r.team_id).filter((t): t is string => !!t)
-    .concat(rows.map(r => r.from_team_id).filter((t): t is string => !!t));
-  // 9d-3 Part 4: a moved child's new team's practice dates, when that team's families have been told them.
-  const movedTo = rows.filter(r => r.kind === 'moved').flatMap(r => r.registration_ids.map(id => regs.get(id)?.team_id)).filter((t): t is string => !!t);
+    .concat(rows.map(r => r.from_team_id).filter((t): t is string => !!t))
+    .concat(rows.flatMap(r => (r.changes ?? []).map(c => c.from_team_id)).filter((t): t is string => !!t));
+  // 9d-3 Part 4: a moved child's new team's practice dates, when that team's families have been told them (a team-change
+  // email keeps that for every child it names).
+  const movedTo = rows.filter(r => r.kind === 'moved' || r.kind === 'changes')
+    .flatMap(r => r.registration_ids.map(id => regs.get(id)?.team_id)).filter((t): t is string => !!t);
   // Each message's link is its first named child's; ask once, for all of them, whether that sign-up owes.
   const anchors = rows.map(row => row.registration_ids.map(id => regs.get(id)).find(c => !!c && c.status === 'active' && !!c.team_id)?.id)
     .filter((id): id is string => !!id);
@@ -196,7 +202,31 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
     const asMail = mailChildrenOf(children, facts.names);
     // A move stays a move email when its old team has since been deleted: the family reads "their old team", never
     // "The teams are set".
-    if (row.kind === 'moved') {
+    if (row.kind === 'changes') {
+      // TC·5: only the children that changed, one block each. "Moved from" is the team the family was last TOLD, taken when
+      // the row was made, so a resend still says it. A from-team that has since been deleted reads "their old team".
+      const fromOf = new Map((row.changes ?? []).map(c => [c.registration_id, c.from_team_id]));
+      const lines: TeamChangeLine[] = children.map(c => {
+        const from = fromOf.get(c.id) ?? null;
+        const team = facts.names.get(c.team_id!) ?? '';
+        return {
+          child: `${c.player_first_name} ${c.player_last_name}`, team, coaches: facts.coaches.get(c.team_id!) ?? [],
+          movedFrom: from === null ? null : (facts.names.get(from) ?? 'their old team'),
+          practices: toldLines.has(c.team_id!) ? {
+            heading: PRACTICE_TELL_WORDS.firstOpening(c.player_first_name, team),
+            lines: toldLines.get(c.team_id!)!, zone: timesInZoneSentence(),
+          } : null,
+        };
+      });
+      messages.push({
+        to: row.guardian_email,
+        subject: TC_MAIL.subject(children.map(c => c.player_first_name), season.name),
+        html: leagueTeamChangesHtml({
+          guardianFirstName, seasonName: season.name, divisionName: division, clubName: org.name, lines,
+          signupUrl: url, contactEmail: face?.contact ?? null, face, invitationSlots: !!mailer,
+        }),
+      });
+    } else if (row.kind === 'moved') {
       const child = children[0];
       messages.push({
         to: row.guardian_email,

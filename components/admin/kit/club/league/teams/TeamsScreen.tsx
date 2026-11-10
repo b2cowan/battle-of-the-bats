@@ -10,7 +10,7 @@
  *                   can be pressed), Tools ⋯ (Export; Take all players off teams, before publishing);
  *   the steps     — Teams · Ratings · Draft · Publish, each a line that says where it stands;
  *   the board     — Not on a team and the team cards (TeamsBoard); a phone has a list and a team's view;
- *   the windows   — Rate · the draft · a team and its coaches · Create teams · Publish · Move to… and the held move.
+ *   the windows   — Rate · the draft · a team and its coaches · Create teams · Publish · Move to… and, after publishing, Review and email.
  *
  * WHO MAY (the one gate): `run` drags, moves, locks, drafts, publishes and edits teams; `seeRatings` / `rate` are the
  * runners' alone (9c·2a): the registrar reads the board with no rating, average, lock, "Moved by you" or button (copy §13).
@@ -40,7 +40,12 @@ import RateWindow from './RateWindow';
 import DraftWindow from './DraftWindow';
 import TeamWindow, { CreateTeamsWindow } from './TeamWindow';
 import PublishWindow, { type PublishOutcome } from './PublishWindow';
-import { HeldMoveWindow, MoveSheet } from './MoveWindow';
+import { MoveSheet } from './MoveWindow';
+import TeamChangesBanner from './TeamChangesBanner';
+import TeamChangesWindow, { type TellResult } from './TeamChangesWindow';
+import { TC_BANNER, TC_PICKER, TC_PILL, TC_SKIP } from '@/lib/house-league-team-changes-words';
+import { formatTime } from '@/lib/utils';
+import { utcToZonedInputs } from '@/lib/timezone';
 import { exportTeamsXlsx } from './teamsExport';
 import css from './Teams.module.css';
 
@@ -51,7 +56,8 @@ type Act =
   | { kind: 'create' }
   | { kind: 'team'; teamId: string; how?: 'edit' | 'coach' | 'delete' }
   | { kind: 'move'; playerId: string }
-  | { kind: 'held'; playerId: string; teamId: string | null }
+  | { kind: 'tell' }
+  | { kind: 'skipAll' }
   | { kind: 'clear' };
 
 interface SeasonLite { id: string; name: string; status: string }
@@ -164,17 +170,24 @@ export default function TeamsScreen() {
   const findPlayer = (id: string) => players.find(p => p.id === id) ?? null;
 
   // ── The presses ──────────────────────────────────────────────────────────────────────────────
-  async function place(player: BoardPlayer, teamId: string | null, confirmed = false) {
-    if (published && !confirmed) { setAct({ kind: 'held', playerId: player.id, teamId }); return; }
-    const r = await send<{ emailed?: { failed: number } }>(routes.placement, 'POST', { action: 'place', registrationId: player.id, teamId, confirmed });
-    if (!r.ok) {
-      if (r.code === 'published') { setAct({ kind: 'held', playerId: player.id, teamId }); return; }
-      setNotice(r.error);
-    } else if (r.data.emailed && r.data.emailed.failed > 0) {
-      setNotice(W.move.emailFailed);
-    }
+  // A move saves at once and emails nobody, before and after publishing (TC·1); the family is told from the banner.
+  async function place(player: BoardPlayer, teamId: string | null) {
+    const r = await send(routes.placement, 'POST', { action: 'place', registrationId: player.id, teamId });
+    if (!r.ok) setNotice(r.error);
     setAct(null);
     reload();
+  }
+  // Review and email landed (TC·8): the screen's own pill says what happened; a failed email shows in "Send the {n} again".
+  function told(r: TellResult) {
+    const time = formatTime(utcToZonedInputs(r.at).time);
+    setNotice(r.sent > 0 && r.skipped > 0 ? TC_PILL.mixed(r.sent, r.skipped, time) : r.sent > 0 ? TC_PILL.emailed(r.sent, time) : TC_PILL.skipped(r.skipped));
+    setAct(null);
+    reload();
+  }
+  async function skipAll() {
+    const r = await send<{ skippedFamilies: number; at: string }>(routes.teamChanges(), 'POST', { divisionId: division.id, skipAll: true, count: board!.untold.families });
+    if (!r.ok) { setNotice(r.error); setAct(null); reload(); return; }
+    told({ sent: 0, skipped: r.data.skippedFamilies, at: r.data.at });
   }
   async function lock(player: BoardPlayer, locked: boolean) {
     const r = await send(routes.placement, 'POST', { action: 'lock', registrationId: player.id, locked });
@@ -275,7 +288,7 @@ export default function TeamsScreen() {
   const emailed = lastPublish ? lastPublish.outcome.sent + lastPublish.outcome.skipped : board.emails.atPublishSent;
   const unsent = board.emails.unsent;
 
-  const playerFor = act && (act.kind === 'move' || act.kind === 'held') ? findPlayer(act.playerId) : null;
+  const playerFor = act?.kind === 'move' ? findPlayer(act.playerId) : null;
   const teamFor = act?.kind === 'team' ? board.teams.find(t => t.id === act.teamId) ?? null : null;
 
   return (
@@ -286,9 +299,10 @@ export default function TeamsScreen() {
           toolbar's left. Each division keeps its own address (`?d=`), so Back and a bookmark land on it. */}
       <div className={tb.toolbar}>
         <DivisionPicker
-          divisions={tabs.map(t => ({ id: t.id, name: t.name, waiting: 0 }))}
+          divisions={tabs.map(t => ({ id: t.id, name: t.name, waiting: rights.run ? t.untold : 0 }))}
           value={division.id}
           onChange={id => router.push(`${base}/teams?d=${id}`, { scroll: false })}
+          words={TC_PICKER}
         />
       </div>
 
@@ -315,7 +329,10 @@ export default function TeamsScreen() {
                 <b>{W.publish.failed(unsent, Math.max(board.emails.atPublish, unsent))}</b>
               </Callout>
             )}
-            {rights.run && <p className={css.quiet}>{W.publish.after}</p>}
+            {/* TC·2: the families not yet told sit directly under the published notice, with the two plain choices. */}
+            <TeamChangesBanner families={board.untold.families} children={board.untold.children} canRun={rights.run}
+              onReview={() => setAct({ kind: 'tell' })} onSkip={() => setAct({ kind: 'skipAll' })} />
+            {rights.run && <p className={css.quiet}>{TC_BANNER.quiet}</p>}
           </>
         )}
 
@@ -414,9 +431,13 @@ export default function TeamsScreen() {
           divisionName={division.name} published={published}
           onPick={teamId => void place(playerFor, teamId)} onLock={locked => void lock(playerFor, locked)} onClose={() => setAct(null)} />
       )}
-      {act?.kind === 'held' && playerFor && (
-        <HeldMoveWindow player={playerFor} to={act.teamId} teams={board.teams}
-          onConfirm={() => place(playerFor, act.teamId, true)} onClose={() => setAct(null)} />
+      {act?.kind === 'tell' && rights.run && (
+        <TeamChangesWindow divisionId={division.id} divisionName={division.name} seasonName={season.name} routes={routes} isPhone={isPhone}
+          onDone={told} onClose={() => { setAct(null); reload(); }} />
+      )}
+      {act?.kind === 'skipAll' && rights.run && (
+        <ConfirmWindow title={TC_SKIP.title(board.untold.families)} body={TC_SKIP.body} go={TC_SKIP.confirm}
+          onClose={() => setAct(null)} onConfirm={skipAll} />
       )}
       {act?.kind === 'clear' && (
         <ConfirmWindow title={W.clear.title(division.name)} body={W.clear.body(placed.length, division.name)} go={W.clear.button}
