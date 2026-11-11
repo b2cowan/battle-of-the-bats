@@ -196,6 +196,20 @@ any club's files.
 - **Fix:** a confirm page that writes only on POST (keep a one-click POST for the mail header). Route the wording to `/legal`
   (CASL: an unsubscribe must be easy, which one click on a confirm page still is).
 
+### 8 · MEDIUM (crosses clubs; low likelihood) — late finding 2026-11-11: two database merge functions answer any signed-in account — **FIXED on dev (mig 464)**
+- Found by the two-step sign-in census (Board Ready two-step, Part 1), not by this sweep, which read routes and pages, not
+  database grants. `merge_rep_team_tags` (mig 302's body) and `merge_rep_team_award_types` (mig 289) are SECURITY DEFINER,
+  were granted EXECUTE to `authenticated` (migs 221, 239, 289, 302 each re-granted it), and neither asks who is calling.
+  Any signed-in account, in any club, could call them straight on the database with two ids and merge one team's tags or
+  award types into another's, re-pointing every link and deleting the one merged away.
+- Likelihood is low: the ids are not listable by a signed-in token (the tag and award tables grant it nothing), and the
+  app only calls them through the service role after its own checks (`lib/db.ts`).
+- **Fixed (owner: fix now, its own commit):** mig 464 revokes EXECUTE from `authenticated`; the service role keeps it.
+  Verified on dev 2026-11-11 (`has_function_privilege` false for `authenticated`, true for `service_role`). Prod: any time,
+  independent of the code (MANUAL_PROD_STEPS.json).
+- The same census found that a signed-in token can reach 15 tables directly (the mig 311 keep-list). None holds family,
+  medical, roster or money rows; mig 463 now requires the code there too for a person with two-step on.
+
 ### Small (one TODO line; reviewers' traces unless marked)
 - **Demo sandbox billing:** the demo write block matches a demo club in the URL only, and the billing POSTs name the club in
   the body. An anonymous "See it live" visitor can therefore reach portal, checkout, setup-payment, move, cancel and
