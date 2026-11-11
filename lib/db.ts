@@ -1274,92 +1274,53 @@ export type RuleSectionDraft = {
   items: Array<{ id: string | null; key: string; content: string }>;
 };
 
-export async function createRuleSection(tournamentId: string, order: number, s: Omit<RuleSectionDraft, 'items'> & { items: string[] }): Promise<string> {
-  const client = authClient();
-  const { data, error } = await client
-    .from('rules')
-    .insert({
-      tournament_id: tournamentId,
-      title: s.title,
-      icon: s.icon,
-      display_order: order,
-      division_ids: s.divisionIds?.length ? s.divisionIds : null,
-    })
-    .select('id')
-    .single();
-  if (error || !data) throw error ?? new Error('insert');
-  const points = s.items.map(c => c.trim()).filter(Boolean);
-  if (points.length) {
-    const { error: e2 } = await client.from('rule_items').insert(points.map((content, i) => ({ rule_id: data.id, content, display_order: i })));
-    if (e2) {
-      // The section and its points arrive together or not at all.
-      await client.from('rules').delete().eq('id', data.id);
-      throw e2;
-    }
-  }
-  return data.id as string;
+/**
+ * A section's writes go to the SERVER (`/api/admin/rules`: the club and `post_rules` are checked there; the browser no longer
+ * holds write access to `rules` or `rule_items`). Each throws on a non-2xx answer; `signal` aborts the request when the
+ * record's save is abandoned (its timeout), as it did the browser calls.
+ */
+async function ruleRequest(orgSlug: string | undefined, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', body: unknown, signal?: AbortSignal): Promise<Response> {
+  const res = await fetch(`/api/admin/rules?orgSlug=${encodeURIComponent(orgSlug ?? '')}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  });
+  // 404 on a delete = already gone (deleted in another tab): the screen's goal is met.
+  if (!res.ok && !(method === 'DELETE' && res.status === 404)) throw new Error(`rules ${method} ${res.status}`);
+  return res;
+}
+
+export async function createRuleSection(tournamentId: string, order: number, s: Omit<RuleSectionDraft, 'items'> & { items: string[] }, orgSlug: string | undefined): Promise<string> {
+  const res = await ruleRequest(orgSlug, 'POST', {
+    tournamentId, order, title: s.title, icon: s.icon, divisionIds: s.divisionIds?.length ? s.divisionIds : null, items: s.items,
+  });
+  const data = await res.json().catch(() => null) as { id?: string } | null;
+  if (!data?.id) throw new Error('insert');
+  return data.id;
 }
 
 /**
  * The section and its points in one save: removed points deleted, changed ones updated, new ones inserted (each new
  * point's id comes back by its client key). A point whose id is gone (deleted in another tab, or emptied and dropped
- * by an earlier save) is added again rather than skipped, so nothing typed vanishes. `signal` cancels the requests
- * still to go when the record's save is abandoned (its timeout), so a retry never races the first attempt.
+ * by an earlier save) is added again rather than skipped, so nothing typed vanishes. `signal` abandons the request when
+ * the record's save times out.
  */
-export async function saveRuleSectionWhole(id: string, s: RuleSectionDraft, signal?: AbortSignal): Promise<Record<string, string>> {
-  const client = authClient();
-  const cancel = <Q extends { abortSignal: (sig: AbortSignal) => Q }>(q: Q): Q => (signal ? q.abortSignal(signal) : q);
-  // The section's own fields and the read of its points don't wait on each other.
-  const [{ error: e1 }, { data: current, error: e2 }] = await Promise.all([
-    cancel(client.from('rules')
-      .update({ title: s.title, icon: s.icon, division_ids: s.divisionIds?.length ? s.divisionIds : null })
-      .eq('id', id)),
-    cancel(client.from('rule_items').select('id, content, display_order').eq('rule_id', id)),
-  ]);
-  if (e1) throw e1;
-  if (e2) throw e2;
-  const byId = new Map((current ?? []).map(c => [c.id as string, c]));
-  const kept = new Set(s.items.filter(i => i.id && byId.has(i.id)).map(i => i.id as string));
-  const gone = (current ?? []).filter(c => !kept.has(c.id as string)).map(c => c.id as string);
-  if (gone.length) {
-    const { error } = await cancel(client.from('rule_items').delete().in('id', gone));
-    if (error) throw error;
-  }
-  // Changed or moved points: each its own row, written together.
-  const changedPoints = [...s.items.entries()].filter(([order, item]) => {
-    const was = item.id ? byId.get(item.id) : undefined;
-    return was && (was.content !== item.content || was.display_order !== order);
-  });
-  const updated = await Promise.all(changedPoints.map(([order, item]) =>
-    cancel(client.from('rule_items').update({ content: item.content, display_order: order }).eq('id', item.id as string))));
-  const updateFailed = updated.find(r => r.error);
-  if (updateFailed?.error) throw updateFailed.error;
-  const created: Record<string, string> = {};
-  const fresh = [...s.items.entries()].filter(([, i]) => !i.id || !byId.has(i.id));
-  if (fresh.length) {
-    const { data, error } = await cancel(client.from('rule_items')
-      .insert(fresh.map(([order, i]) => ({ rule_id: id, content: i.content, display_order: order })))
-      .select('id, display_order'));
-    if (error || !data) throw error ?? new Error('insert');
-    for (const [order, i] of fresh) {
-      const row = data.find(r => r.display_order === order);
-      if (row) created[i.key] = row.id as string;
-    }
-  }
-  return created;
+export async function saveRuleSectionWhole(id: string, s: RuleSectionDraft, orgSlug: string | undefined, signal?: AbortSignal): Promise<Record<string, string>> {
+  const res = await ruleRequest(orgSlug, 'PUT', {
+    id, title: s.title, icon: s.icon, divisionIds: s.divisionIds?.length ? s.divisionIds : null, items: s.items,
+  }, signal);
+  const data = await res.json().catch(() => null) as { created?: Record<string, string> } | null;
+  return data?.created ?? {};
 }
 
 /** The sections' order (Reorder, or a drag at a desk). Callers run one at a time, so the last order is the one kept. */
-export async function saveRuleOrder(ids: string[]): Promise<void> {
-  const client = authClient();
-  const results = await Promise.all(ids.map((id, order) => client.from('rules').update({ display_order: order }).eq('id', id)));
-  const failed = results.find(r => r.error);
-  if (failed?.error) throw failed.error;
+export async function saveRuleOrder(ids: string[], orgSlug: string | undefined): Promise<void> {
+  await ruleRequest(orgSlug, 'PATCH', { ids });
 }
 
-export async function deleteRuleSection(id: string): Promise<void> {
-  const { error } = await authClient().from('rules').delete().eq('id', id);
-  if (error) throw error;
+export async function deleteRuleSection(id: string, orgSlug: string | undefined): Promise<void> {
+  await ruleRequest(orgSlug, 'DELETE', { id });
 }
 
 // ── Public Site Module ────────────────────────────────────────────────────────

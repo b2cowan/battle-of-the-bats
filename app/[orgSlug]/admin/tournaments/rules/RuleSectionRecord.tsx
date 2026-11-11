@@ -62,11 +62,13 @@ export function namesFor(divisionIds: readonly string[] | null | undefined, divi
 }
 
 export default function RuleSectionRecord({
-  section, tournamentId, divisions, canWrite, order, prev, next, position, onStep, onClose, onChanged,
+  section, tournamentId, orgSlug, divisions, canWrite, order, prev, next, position, onStep, onClose, onChanged,
 }: {
   /** null = Add a section (the same window, creating). */
   section: RuleSection | null;
   tournamentId: string;
+  /** The club — the sections' route names it (every write goes through the server). */
+  orgSlug?: string;
   divisions: readonly RuleDivision[];
   canWrite: boolean;
   /** Its place in the list (a new one goes last). */
@@ -102,16 +104,22 @@ export default function RuleSectionRecord({
 
   const write = useCallback(async (signal: AbortSignal) => {
     if (!section) return;
-    const created = await saveRuleSectionWhole(section.id, {
-      ...payload(draft),
-      items: draft.points
-        .filter(p => p.content.trim())
-        // The newest id first: a point re-added after it was emptied came back with a new one.
-        .map(p => ({ id: savedIds.current.get(p.key) ?? p.id, key: p.key, content: p.content.trim() })),
-    }, signal);
+    let created: Record<string, string>;
+    try {
+      created = await saveRuleSectionWhole(section.id, {
+        ...payload(draft),
+        items: draft.points
+          .filter(p => p.content.trim())
+          // The newest id first: a point re-added after it was emptied came back with a new one.
+          .map(p => ({ id: savedIds.current.get(p.key) ?? p.id, key: p.key, content: p.content.trim() })),
+      }, orgSlug, signal);
+    } catch (e) {
+      // A timeout is said as one; any other failure is said in words, never as a status code.
+      throw e instanceof DOMException && e.name === 'AbortError' ? e : new Error(W.saveFailed);
+    }
     for (const [key, id] of Object.entries(created)) savedIds.current.set(key, id);
     changed.current = true;
-  }, [section, draft, payload]);
+  }, [section, draft, payload, orgSlug]);
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: canWrite && editing && !creating, loading: false, sig: JSON.stringify(draft), blocked: editing ? held : null, write, failText: W.saveFailed,
   });
@@ -143,7 +151,7 @@ export default function RuleSectionRecord({
     setBusy(true);
     setCreateError('');
     try {
-      await createRuleSection(tournamentId, order, { ...payload(draft), items: draft.points.map(p => p.content) });
+      await createRuleSection(tournamentId, order, { ...payload(draft), items: draft.points.map(p => p.content) }, orgSlug);
       await onChanged();
       onClose();
     } catch {
@@ -161,7 +169,7 @@ export default function RuleSectionRecord({
     setBusy(true);
     setAskError('');
     try {
-      await deleteRuleSection(section.id);
+      await deleteRuleSection(section.id, orgSlug);
       setAsking(false);
       await onChanged();
       onClose();

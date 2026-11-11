@@ -84,8 +84,12 @@ any club's files.
   465 takes INSERT/UPDATE/DELETE on the table from signed-in accounts. A new address must be http(s), an email link or `#` (a
   `javascript:` link would run for every visitor), and a file address must be in the caller's own club folder. Proof:
   `.probe/sweep3-fixB2-prove.mjs` (25 checks: owner/admin work; another club, a coach row, a scorekeeper and a parent are refused;
-  a direct browser write is refused). **Same shape, still open:** the Rules SECTIONS (`rules`, `rule_items`) are written from the
-  browser under the same "member of the club" policy. **Owner call:** fix them the same way (recommended). **Also open (owner call, not a regression):** neither the row route nor the file route refuses writes on a completed (sealed) event, as the old browser path did not; the pool and schedule routes do. **Follow-up audit after migration 465 reaches production:** the query in its prod-steps note lists any old link row with a non-web address.
+  a direct browser write is refused). **Same shape, fixed in the third step (owner yes 2026-11-11; hash on commit; migration 466 applied to
+  dev; production: code first, then 466):** the Rules SECTIONS (`rules`, `rule_items`) were written from the browser under the
+  same "member of the club" policy. They now go through `POST`/`PUT`/`PATCH`/`DELETE /api/admin/rules` (club + `post_rules` +
+  the event of every row; a section's divisions must be the same event's, which the browser path never asked; the icon must be
+  one the screen offers). Proof: `.probe/sweep3-fixB3-prove.mjs` (34 checks, incl. a direct browser write refused on both
+  tables). **Review fixes (same day):** a saved section that still names a since-deleted division is saved with the dead id dropped (it would otherwise have been refused for ever; a list with nothing live left is refused, never widened to every division); two points sharing one id are refused; the save stops between steps when the browser has given up on it. **Known, narrowed:** a save that times out and is retried can still add a point twice when the first request had already finished its inserts (the old browser path had a wider window); the real fix is one database transaction. **Also open (owner call, not a regression):** neither the row route nor the file route refuses writes on a completed (sealed) event, as the old browser path did not; the pool and schedule routes do. **Follow-up audit after migration 465 reaches production:** the query in its prod-steps note lists any old link row with a non-web address.
 - **Found while building the fix (W2 fix B, 2026-11-11) — the link ROWS are not capability-checked.** The `resources`
   TABLE's insert/update/delete policies (`resources_member_*`, mig 009) ask `can_access_tournament(tournament_id)`: the
   caller is a member of the event's club and in scope for it. They do not ask `post_rules`. The Rules screen writes those

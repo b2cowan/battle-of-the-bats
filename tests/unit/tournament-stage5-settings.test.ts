@@ -85,7 +85,8 @@ describe('one save model, no browser boxes (A50)', () => {
   it('the rules writes report their failure (lib/db throws)', () => {
     const db = code('lib/db.ts');
     assert.match(db, /export async function saveRuleSectionWhole\(/);
-    assert.match(db, /export async function deleteRuleSection[\s\S]{0,200}if \(error\) throw error;/);
+    assert.match(db, /async function ruleRequest[\s\S]{0,700}throw new Error/);
+    assert.match(db, /export async function deleteRuleSection[\s\S]{0,200}ruleRequest\(orgSlug, 'DELETE'/);
     assert.match(db, /async function resourceRequest[\s\S]{0,500}if \(!res\.ok\) throw new Error/);
     assert.match(db, /export async function updateResource[\s\S]{0,600}resourceRequest\(orgSlug, 'PATCH'/);
     assert.doesNotMatch(db, /export async function (?:saveRuleItem|updateRuleItem|deleteRuleItem)\(/);

@@ -91,7 +91,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
   function moveSection(from: number, to: number) {
     const next = arrayMove(rules, from, to);
     setRules(next);
-    void runPageSave(() => saveRuleOrder(next.map(s => s.id)), ORDER_WORDS.saveFailed);
+    void runPageSave(() => saveRuleOrder(next.map(s => s.id), orgSlug), ORDER_WORDS.saveFailed);
   }
   function moveResource(from: number, to: number) {
     const next = arrayMove(resources, from, to);
@@ -101,7 +101,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
 
   // ── Samples: add as today, each failure said in the window ──
   async function addSampleSection(sample: SampleSection) {
-    await createRuleSection(tournament.id, nextRuleOrder, { title: sample.title, icon: sample.icon, divisionIds: null, items: sample.items });
+    await createRuleSection(tournament.id, nextRuleOrder, { title: sample.title, icon: sample.icon, divisionIds: null, items: sample.items }, orgSlug);
     await refresh();
   }
   async function addSampleResource(sample: SampleResource) {
@@ -201,6 +201,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
         <RuleSectionRecord
           section={openSection === 'new' ? null : rules[sIdx]}
           tournamentId={tournament.id}
+          orgSlug={orgSlug}
           divisions={divisions}
           canWrite
           order={nextRuleOrder}
