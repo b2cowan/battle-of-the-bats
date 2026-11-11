@@ -246,7 +246,7 @@ describe('the pay link: signed, one team, never stored', () => {
   const team = '44e793cd-617d-40bd-bad3-406a6304a1bc';
 
   it('reads back the team it was signed for', () => {
-    assert.equal(readTeamPayToken(signTeamPayToken(team, secret), secret), team);
+    assert.deepEqual(readTeamPayToken(signTeamPayToken(team, secret), secret), { teamId: team, version: 0 });
   });
 
   it('refuses a token signed under another secret, a changed team, or a mangled token', () => {

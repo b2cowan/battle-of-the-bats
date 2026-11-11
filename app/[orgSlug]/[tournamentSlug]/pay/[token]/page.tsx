@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { buildTeamPayView } from '@/lib/team-pay-view';
+import { redirect } from 'next/navigation';
+import { buildTeamPayView, currentAddressForPaidReturn } from '@/lib/team-pay-view';
 import { getOrganizationBySlug, getPublicTournamentBySlug } from '@/lib/db';
 import { publicTournamentContactEmail } from '@/lib/public-frame-server';
 import TeamPayContent from '@/components/public/TeamPayContent';
@@ -34,6 +35,10 @@ export default async function TeamPayPage({
 }) {
   const { orgSlug, tournamentSlug, token } = await params;
   const { paid, left } = await searchParams;
+  // Back from Stripe on a link the club has since replaced: carry on at the team's current address so it still sees its
+  // payment confirmed (see currentAddressForPaidReturn; any other visit on an old link is refused below).
+  const current = await currentAddressForPaidReturn(token, paid, { orgSlug, tournamentSlug });
+  if (current) redirect(`${current}?paid=${encodeURIComponent(paid!)}`);
   const [view, contactEmail] = await Promise.all([
     buildTeamPayView(token, { orgSlug, tournamentSlug }),
     addressContact(orgSlug, tournamentSlug).catch(() => null),

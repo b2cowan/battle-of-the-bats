@@ -6,7 +6,7 @@ import { warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagrap
 import { formatStoredDate } from './timezone';
 import { loadTeamPayFacts } from './team-pay-facts';
 import { refusalMessage } from './team-pay-view';
-import { teamPayUrl } from './team-pay-link';
+import { payLinkSecret, teamPayUrl } from './team-pay-link';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { BANK_DEBIT_EMAIL_WORDS as D, DISPUTE_WORDS, ONLINE_EMAIL_WORDS as E, REFUND_BLOCK_WORDS, SCOPE_LINE, SCOPE_WORDS, cardLabel, money, receiptLabel } from './online-payment-words';
 import { refundBlockHtml, type RefundBlockInput } from './online-refund-block';
@@ -121,7 +121,7 @@ async function sendReceipt(op: OnlineForEmail): Promise<void> {
     themePreset: facts.org.themePreset ?? null, themePrimary: facts.org.themePrimary ?? null, themeAccent: facts.org.themeAccent ?? null,
   });
   const receiptNo = receiptLabel(op.receipt_no ?? '');
-  const payLink = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId: facts.teamId });
+  const payLink = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId: facts.teamId, version: facts.linkVersion });
   const test = !op.livemode;
   const lines = [
     warmEmailHeading(escapeHtml(E.receiptNumber(receiptNo))),
@@ -221,7 +221,7 @@ export async function sendTeamPayLink(
   const refusal = refusalMessage(facts);
   if (refusal) return { error: refusal };
   if (!facts.teamEmail) return { error: 'This team has no email address.' };
-  const payLink = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId });
+  const payLink = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId, version: facts.linkVersion });
   if (!payLink) return { error: 'Pay links aren’t set up on this server.' };
   // Owner ruling 5 (2026-10-27): after a lost card dispute the reminders leave the team out; one send asks first.
   if (opts.askIfLost && await teamLostDispute(teamId)) return { error: DISPUTE_WORDS.sendAnywayBody(true), disputeLost: 'ask' };
@@ -242,6 +242,46 @@ export async function sendTeamPayLink(
   const sentAt = new Date().toISOString();
   await supabaseAdmin.from('teams').update({ pay_link_sent_at: sentAt }).eq('id', teamId);
   return { sentTo: facts.teamEmail, sentAt };
+}
+
+/**
+ * "Send a new link" for a tournament team (mig 467; the server half — the club's button is a `/design` session). Stops EVERY
+ * link already sent to this team, then emails the team the new one with the same words as "Email the pay link".
+ *
+ * The stop comes first and does not depend on the team being able to pay: a forwarded link shows the team's receipts even
+ * when nothing is owed, and a team with no email address still has a link someone else may hold. So it answers
+ * `stopped: true` whatever the send does, and says plainly when the new link did not go (`notSent`), the same shape as the
+ * family link's "the old one is already stopped" (`replaceSignupLink`). Pressing again mints the next version.
+ */
+export async function replaceTeamPayLink(
+  teamId: string,
+  opts: { askIfLost?: boolean } = {},
+): Promise<
+  | { stopped: true; sentTo: string; sentAt: string }
+  | { stopped: true; notSent: string; disputeLost?: 'ask' }
+  | { stopped: false; error: string }
+> {
+  if (!payLinkSecret()) return { stopped: false, error: 'Pay links aren’t set up on this server.' };
+  // The next version is one past the team's current one. A conditional update, so two presses at once cannot both claim the
+  // same number (the second sees a changed version and tries again).
+  let replaced = false;
+  for (let attempt = 0; attempt < 3 && !replaced; attempt++) {
+    const { data: team, error } = await supabaseAdmin.from('teams').select('link_version').eq('id', teamId).maybeSingle();
+    if (error) throw error;
+    if (!team) return { stopped: false, error: 'That team couldn’t be found.' };
+    const current = Number(team.link_version ?? 0);
+    const { data: moved, error: upError } = await supabaseAdmin.from('teams')
+      .update({ link_version: current + 1, link_replaced_at: new Date().toISOString() })
+      .eq('id', teamId).eq('link_version', current).select('id').maybeSingle();
+    if (upError) throw upError;
+    replaced = !!moved;
+  }
+  if (!replaced) return { stopped: false, error: 'Couldn’t replace the link. Try again.' };
+  const sent: Awaited<ReturnType<typeof sendTeamPayLink>> = await sendTeamPayLink(teamId, { askIfLost: opts.askIfLost })
+    .catch(() => ({ error: 'Couldn’t send the pay link. Try again.' }));
+  return 'error' in sent
+    ? { stopped: true, notSent: sent.error, ...(sent.disputeLost === 'ask' ? { disputeLost: 'ask' as const } : {}) }
+    : { stopped: true, sentTo: sent.sentTo, sentAt: sent.sentAt };
 }
 
 /**
@@ -335,7 +375,7 @@ export async function teamPayNowLink(teamId: string): Promise<{ url: string; pai
   try {
     const facts = await loadTeamPayFacts(teamId);
     if (!facts || facts.refusal) return null;
-    const url = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId });
+    const url = teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId, version: facts.linkVersion });
     return url ? { url, paidSome: facts.totalPaid > 0 } : null;
   } catch {
     return null; // an email never fails over its Pay button

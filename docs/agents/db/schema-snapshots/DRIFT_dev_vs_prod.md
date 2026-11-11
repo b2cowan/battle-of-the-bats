@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-11 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 609 divergence(s)** across dev/prod.
+**⚠️ 612 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 15 | 6 | — |
-| Columns | 228 | 59 | 1 |
+| Columns | 230 | 59 | 1 |
 | Indexes | 65 | 26 | 0 |
 | Constraints | 54 | 28 | — |
-| RLS / CHECK | 97 | 26 | 0 (RLS state) |
+| RLS / CHECK | 98 | 26 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (15)
@@ -39,7 +39,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (228)
+### Only in DEV (230)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -238,6 +238,8 @@
 - `second_parent_stops.registration_ids`
 - `second_parent_stops.source`
 - `second_parent_stops.stopped_at`
+- `teams.link_replaced_at`
+- `teams.link_version`
 - `tournaments.logo_aspect`
 - `two_step_backup_codes.code_hash`
 - `two_step_backup_codes.created_at`
@@ -523,7 +525,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (97)
+### CHECK only in DEV (98)
 - `bank_check_waiting.bank_check_waiting_added_shape`
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
@@ -621,6 +623,7 @@ _none_
 - `platform_refunds.platform_refunds_note_needs_invoice_chk`
 - `rep_document_templates.rep_document_templates_validity_check`
 - `second_parent_stops.second_parent_stops_email_check`
+- `teams.teams_link_version_check`
 
 ### CHECK only in PROD (26)
 - `bank_accounts.bank_accounts_opening_pair`

@@ -29081,6 +29081,24 @@
         "column_default": "0"
       },
       {
+        "table_name": "teams",
+        "pos": 31,
+        "column_name": "link_version",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "teams",
+        "pos": 32,
+        "column_name": "link_replaced_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "tournament_archives",
         "pos": 1,
         "column_name": "id",
@@ -48727,6 +48745,12 @@
         "table_name": "teams",
         "detail": "teams_entry_lowered_chk",
         "check_clause": "(entry_lowered >= (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "teams",
+        "detail": "teams_link_version_check",
+        "check_clause": "(link_version >= 0)"
       },
       {
         "kind": "RLS",

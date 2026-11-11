@@ -29079,6 +29079,24 @@
     "ordinal_position": 30
   },
   {
+    "table_name": "teams",
+    "column_name": "link_version",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 31
+  },
+  {
+    "table_name": "teams",
+    "column_name": "link_replaced_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 32
+  },
+  {
     "table_name": "tournament_archives",
     "column_name": "id",
     "data_type": "uuid",

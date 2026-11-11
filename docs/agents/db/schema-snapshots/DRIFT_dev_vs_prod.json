@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-11",
-  "total": 609,
+  "total": 612,
   "counts": {
     "tables": 21,
-    "columns": 288,
+    "columns": 290,
     "indexes": 91,
     "constraints": 82,
-    "rls": 127
+    "rls": 128
   },
   "items": [
     {
@@ -411,6 +411,10 @@
     },
     {
       "key": "check:only-dev:second_parent_stops.second_parent_stops_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:teams.teams_link_version_check",
       "sig": ""
     },
     {
@@ -1311,6 +1315,14 @@
     },
     {
       "key": "column:only-dev:second_parent_stops.stopped_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:teams.link_replaced_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:teams.link_version",
       "sig": ""
     },
     {

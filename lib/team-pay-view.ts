@@ -4,7 +4,7 @@ import { loadTeamPayFacts, type TeamPayFacts } from './team-pay-facts';
 import { refusalMessage } from './team-pay-refusal';
 
 export { refusalMessage };
-import { payLinkSecret, readTeamPayToken } from './team-pay-link';
+import { payLinkSecret, readTeamPayToken, signTeamPayToken, teamPayPath } from './team-pay-link';
 import { PAY_WORDS as W } from './online-payment-words';
 import { toCents } from './online-payment-fee';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
@@ -87,10 +87,50 @@ const blank = (message: string): PayPageView => ({
   schedule: { totalCents: null, totalDue: null, depositCents: null, depositDue: null }, receipts: [],
 });
 
-/** The team a pay link names, or null. */
-export function teamFromPayToken(token: string): string | null {
+/**
+ * THE ONE DOOR A TEAM'S PAY LINK GOES THROUGH (mig 467): the page, the pay route and the post-checkout poll all ask this —
+ * never `readTeamPayToken` on its own, so no door can open a link the others refuse. The team a link names, or null when
+ * the signature fails or the link's version is not the team's current one (the club sent a new link, which stopped this one).
+ * `afterCheckout` (the post-checkout poll only) skips the version rule: a team that paid through a link replaced a minute
+ * later must still see its payment confirmed, and the poll only answers for a Checkout session that already belongs to it.
+ */
+export async function teamFromPayToken(token: string, opts: { afterCheckout?: boolean } = {}): Promise<string | null> {
   const secret = payLinkSecret();
-  return secret ? readTeamPayToken(token, secret) : null;
+  const read = secret ? readTeamPayToken(token, secret) : null;
+  if (!read) return null;
+  if (opts.afterCheckout) return read.teamId;
+  const { data, error } = await supabaseAdmin.from('teams').select('link_version').eq('id', read.teamId).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return read.version === Number(data.link_version ?? 0) ? read.teamId : null;
+}
+
+/**
+ * A team that PAID through a link the club replaced a moment later comes back from Stripe on the OLD address
+ * (`/pay/{old token}?paid={session}`), which the page would refuse as a replaced link: the team would see "This link no longer
+ * works" for a payment that went through. This answers the current address for that visit, or null for every other case.
+ *
+ * It answers only when ALL of these hold: the token's signature is good, its version is no longer the team's, the address it was
+ * opened under is this team's own, AND `paidSession` is a Checkout session recorded against THIS team. A Checkout session id is
+ * unguessable and only the payer's own browser holds it, so a forwarded old link (no session) is refused exactly as before and
+ * the replacement still does what it is for.
+ */
+export async function currentAddressForPaidReturn(
+  token: string, paidSession: string | null | undefined, at: { orgSlug: string; tournamentSlug: string },
+): Promise<string | null> {
+  const secret = payLinkSecret();
+  const read = secret && paidSession ? readTeamPayToken(token, secret) : null;
+  if (!secret || !read || !paidSession) return null;
+  const { data: team } = await supabaseAdmin.from('teams').select('link_version').eq('id', read.teamId).maybeSingle();
+  if (!team) return null;
+  const current = Number(team.link_version ?? 0);
+  if (read.version === current) return null; // not replaced: the page opens it as it always did
+  const { data: op } = await supabaseAdmin.from('online_payments').select('id')
+    .eq('stripe_checkout_session_id', paidSession).eq('team_id', read.teamId).maybeSingle();
+  if (!op) return null;
+  const f = await loadTeamPayFacts(read.teamId);
+  if (!f || f.org.slug !== at.orgSlug || f.tournament.slug !== at.tournamentSlug) return null;
+  return teamPayPath(f.org.slug, f.tournament.slug, signTeamPayToken(read.teamId, secret, current));
 }
 
 async function receiptsFor(teamId: string): Promise<PayPageReceipt[]> {
@@ -129,7 +169,7 @@ function balanceAfter(f: TeamPayFacts): { cents: number; dueDate: string | null 
 }
 
 export async function buildTeamPayView(token: string, at?: { orgSlug: string; tournamentSlug: string }): Promise<PayPageView> {
-  const teamId = teamFromPayToken(token);
+  const teamId = await teamFromPayToken(token);
   if (!teamId) return blank(W.error.linkInvalid);
   // 12c: a bank debit still clearing past Stripe's window is asked of Stripe first (loaded late: the landing reads this file).
   await (await import('./bank-debit-overdue')).settleOverdueDebits({ teamId });

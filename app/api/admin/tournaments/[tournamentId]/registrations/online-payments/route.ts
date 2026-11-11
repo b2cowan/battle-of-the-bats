@@ -7,7 +7,7 @@ import { canRefundOnline } from '@/lib/online-payment-access';
 import { DisputeOpenError, keepOverpayment, recordRefundAnotherWay, refundOnlinePayment, refundTeamPart, resolveLeagueRefundAnotherWay, settleDecisionAfterSave } from '@/lib/online-payment-landing';
 import { clearSettled } from '@/lib/needs-attention';
 import { OVER_WORDS } from '@/lib/online-payment-words';
-import { sendTeamPayLink } from '@/lib/online-payment-receipt';
+import { replaceTeamPayLink, sendTeamPayLink } from '@/lib/online-payment-receipt';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,6 +19,8 @@ export const dynamic = 'force-dynamic';
  *   POST { action: 'refund', onlinePaymentId, amount, partialReason, note }       12c: part of it (never the fee; lowers the entry)
  *   POST { action: 'refund_another_way', onlinePaymentId, feeIncluded, reason, note }  after a refund to the card came back
  *   POST { action: 'email_pay_link', teamId, despiteLostDispute? }                 "Email the pay link" → "Pay link sent"
+ *   POST { action: 'replace_pay_link', teamId, despiteLostDispute? }               "Send a new link" (mig 467): stops every link already
+ *                                                                                  sent to the team, then emails the new one
  *   POST { action: 'clear_decision', onlinePaymentId, choice, feeBack, reason }    12c Part 6: a team ended while its bank debit
  *                                                                                  clears — send it back or keep it, when it clears
  *   POST { action: 'keep_over', onlinePaymentId, reason }                          12d-1: the club keeps what a team paid past
@@ -55,6 +57,16 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     const sent = await sendTeamPayLink(body.teamId, { askIfLost: body.despiteLostDispute !== true });
     if ('error' in sent) return json({ error: sent.error, ...(sent.disputeLost === 'ask' ? { code: 'dispute_lost_ask' } : {}) }, 409);
     return json(sent);
+  }
+
+  if (body.action === 'replace_pay_link') {
+    if (typeof body.teamId !== 'string' || !UUID.test(body.teamId)) return json({ error: 'That team couldn’t be found.' }, 404);
+    const { data: team } = await supabaseAdmin.from('teams').select('tournament_id').eq('id', body.teamId).maybeSingle();
+    if (team?.tournament_id !== tournamentId) return json({ error: 'That team couldn’t be found.' }, 404);
+    const out = await replaceTeamPayLink(body.teamId, { askIfLost: body.despiteLostDispute !== true });
+    if (!out.stopped) return json({ error: out.error }, 409);
+    // The old links are stopped whatever the send did; `notSent` says why the new one did not go (the desk can send it again).
+    return json('notSent' in out ? { stopped: true, notSent: out.notSent, ...(out.disputeLost === 'ask' ? { code: 'dispute_lost_ask' } : {}) } : out);
   }
 
   if (body.action === 'clear_decision') {

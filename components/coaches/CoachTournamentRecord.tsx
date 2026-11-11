@@ -366,7 +366,7 @@ export default async function CoachTournamentRecord({
       const facts = await loadTeamPayFacts(teamId);
       if (facts?.refusal === 'clearing') payOnline = { state: 'clearing' };
       else if (facts && facts.refusal === null) {
-        const href = teamPayUrl(process.env.NEXT_PUBLIC_APP_URL ?? '', { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId });
+        const href = teamPayUrl(process.env.NEXT_PUBLIC_APP_URL ?? '', { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId, version: facts.linkVersion });
         if (href) payOnline = { state: 'ready', href };
       }
     } catch (e) {

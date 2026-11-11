@@ -19,7 +19,8 @@ const ASK_STRIPE_AFTER_MS = 8_000;
 export const GET = withObservability(async (req: Request, { params }: { params: Promise<{ token: string }> }) => {
   const { token } = await params;
   if (!onlinePaymentsOn()) return NextResponse.json({ state: 'unknown' }, { status: 404 });
-  const teamId = teamFromPayToken(token);
+  // The poll after Checkout: a link replaced mid-payment still confirms its own payment (see teamFromPayToken).
+  const teamId = await teamFromPayToken(token, { afterCheckout: true });
   const sessionId = new URL(req.url).searchParams.get('session');
   if (!teamId || !sessionId) return NextResponse.json({ state: 'unknown' }, { status: 404 });
   const { data: op } = await supabaseAdmin.from('online_payments')

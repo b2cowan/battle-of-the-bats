@@ -21,6 +21,8 @@ export interface TeamPayFacts {
   teamName: string;
   teamEmail: string | null;
   teamStatus: string;
+  /** The team's pay link version (mig 467): every link minted for this team signs it, and a replacement bumps it. */
+  linkVersion: number;
   divisionName: string | null;
   tournament: { id: string; name: string; slug: string; status: string | null; settings: unknown };
   org: Organization;
@@ -60,7 +62,7 @@ export interface TeamDebit {
 export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | null> {
   const { data: team } = await supabaseAdmin
     .from('teams')
-    .select('id, name, email, coach_email, status, division_id, tournament_id, total_paid, deposit_paid, entry_lowered')
+    .select('id, name, email, coach_email, status, division_id, tournament_id, total_paid, deposit_paid, entry_lowered, link_version')
     .eq('id', teamId)
     .maybeSingle();
   if (!team) return null;
@@ -120,6 +122,7 @@ export async function loadTeamPayFacts(teamId: string): Promise<TeamPayFacts | n
     teamName: team.name as string,
     teamEmail: (team.coach_email as string | null) || (team.email as string | null) || null,
     teamStatus: team.status as string,
+    linkVersion: Number(team.link_version ?? 0),
     divisionName: (div?.name as string | undefined) ?? null,
     tournament: { id: t.id as string, name: t.name as string, slug: t.slug as string, status: (t.status as string | null) ?? null, settings: t.settings },
     org,

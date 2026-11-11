@@ -54,7 +54,7 @@ async function debitContext(onlinePaymentId: string): Promise<DebitContext | nul
     return {
       op, org: facts.org as Organization, who: facts.teamName, season: facts.tournament.name,
       held: B.holdTeam(possessive(facts.teamName)), stillHeld: D.returnedHeldTeam(possessive(facts.teamName)),
-      payLink: teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId: facts.teamId }),
+      payLink: teamPayUrl(appUrl(), { orgSlug: facts.org.slug, tournamentSlug: facts.tournament.slug, teamId: facts.teamId, version: facts.linkVersion }),
       payLabel: D.payNow,
       canPayAgain: !facts.refusal,
       howToPay: tournamentTracksPayments(facts.tournament.settings) ? String((facts.tournament.settings as { payment_instructions?: string } | null)?.payment_instructions ?? '').trim() || null : null,

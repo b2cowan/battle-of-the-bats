@@ -698,6 +698,10 @@
     "466_the_rules_sections_take_no_browser_writes.sql": {
       "prod": "pending",
       "note": "Board Ready W2 fix B, the Rules SECTIONS (sweep 3 finding 2, third part; same shape as mig 465). Privilege-only: REVOKE INSERT, UPDATE, DELETE ON public.rules, public.rule_items FROM authenticated (a club's assistant coach or scorekeeper, with no post_rules, could rewrite or delete the public Rules page's sections straight from the browser). SELECT is untouched. INVISIBLE to check:migrations (no table or column changes). ORDER, load-bearing: ship the CODE FIRST (the Rules screen adds, edits, reorders and deletes sections through /api/admin/rules), THEN apply this to prod. Applied first, the live Rules screen cannot add, edit, reorder or delete a section. Idempotent. Applied to DEV 2026-11-11. Verify on prod: select count(*) from information_schema.role_table_grants where table_schema = 'public' and table_name in ('rules','rule_items') and grantee = 'authenticated' and privilege_type in ('INSERT','UPDATE','DELETE') -> 0; the same with privilege_type = 'SELECT' -> 2."
+    },
+    "467_a_teams_pay_link_can_be_replaced.sql": {
+      "prod": "pending",
+      "note": "Board Ready W2 fix D, item 2 (sweep 3 small: a tournament team's pay link could not be revoked). Visible: two columns on teams (link_version int NOT NULL DEFAULT 0 with CHECK >= 0, link_replaced_at timestamptz nullable). Constant default, no rewrite of existing values; re-runnable; version 0 signs exactly the link already in every inbox, so no emailed link stops. ORDER, load-bearing: apply to prod BEFORE the code that reads teams.link_version ships (every team pay page, the pay route, the payment emails and the coach Pay now button read it: without the column they answer 500). Applied to DEV 2026-11-11. Verify on prod: both columns present in information_schema.columns for table teams; constraint teams_link_version_check exists; select count(*) from teams where link_version <> 0 -> 0."
     }
   }
 }

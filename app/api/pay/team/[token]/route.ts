@@ -66,7 +66,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   // Public: throttled like every family form, as the league pay route is — each press asks Stripe (review 2026-10-26).
   const throttled = throttlePublicForm(req);
   if (throttled) return throttled;
-  const teamId = teamFromPayToken(token);
+  const teamId = await teamFromPayToken(token);
   if (!teamId) return NextResponse.json({ error: W.error.linkInvalid }, { status: 404 });
   const body = await req.json().catch(() => ({}));
   const scope = body.scope as PayScope;

@@ -333,7 +333,8 @@ const site = process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.
 
 // ── The pay page walk (--pay-page; Public tournament pages Stage 7) ──────────────────────────────────────────────
 // The token is lib/team-pay-link.ts signTeamPayToken, copied (a .mjs cannot import the .ts): the team id in base64url,
-// a dot, the first 16 bytes of HMAC-SHA256 over "team-pay:{id}" under PAY_LINK_SECRET.
+// a dot, the first 16 bytes of HMAC-SHA256 over "team-pay:{id}" under PAY_LINK_SECRET. That is VERSION 0 (mig 467 added
+// teams.link_version; "Send a new link" bumps it), so the reset below puts link_version back to 0 and this token opens again.
 function payToken(teamId, secret) {
   const id = Buffer.from(teamId.replace(/-/g, ''), 'hex').toString('base64url');
   return `${id}.${createHmac('sha256', secret).update(`team-pay:${teamId.toLowerCase()}`).digest().subarray(0, 16).toString('base64url')}`;
@@ -341,7 +342,7 @@ function payToken(teamId, secret) {
 async function ensureTeam(tid, divisionId, name, status) {
   const shape = {
     division_id: divisionId, status, payment_status: 'pending', waitlist_position: null,
-    deposit_paid: 0, total_paid: 0, entry_lowered: 0, fee_book_baseline: 0, payment_collected_at: null, pay_link_sent_at: null,
+    deposit_paid: 0, total_paid: 0, entry_lowered: 0, fee_book_baseline: 0, payment_collected_at: null, pay_link_sent_at: null, link_version: 0, link_replaced_at: null,
     check_in_status: 'not_arrived', checked_in_at: null,
   };
   const found = await one(`find ${name}`, db.from('teams').select('id, total_paid').eq('tournament_id', tid).eq('name', name).maybeSingle());
