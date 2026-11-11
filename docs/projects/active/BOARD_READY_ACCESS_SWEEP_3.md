@@ -187,6 +187,10 @@ any club's files.
   dates, times, places, teams and scores. No notes and no submitters are sent, so this is display data, not personal data.
   `team-profile` and the `scores` section already honour the Schedule switch.
 - **Fix:** blank `games` and `standingsByDivision` in those branches when Schedule is hidden.
+- **→ Fixed, W2 fix C, 2026-11-11** (committed `ae474966e` 2026-11-11). Teams sends no games, and no records unless Standings and
+  Schedule are both on. Standings and Playoffs send no round-robin games; **they keep the playoff games, owner call open** (a test
+  says hiding Schedule never hides the bracket, and a bracket is those games). Standings tables stay (their own switch). The share
+  image keeps its games through a server-only option the HTTP route cannot pass.
 
 ### 7 · MEDIUM-SMALL — an unsubscribe link writes on a plain visit, so mail scanners can unsubscribe people
 - `GET /unsubscribe` (`app/unsubscribe/route.ts` — the user, guardian and org branches all upsert or update on GET; re-read).
@@ -195,6 +199,10 @@ any club's files.
   (second parent, invitation) already use a confirm page and a POST for exactly this reason.
 - **Fix:** a confirm page that writes only on POST (keep a one-click POST for the mail header). Route the wording to `/legal`
   (CASL: an unsubscribe must be easy, which one click on a confirm page still is).
+- **→ Fixed, W2 fix C, 2026-11-11** (committed `ae474966e` 2026-11-11). `/unsubscribe` is now a page that writes nothing; the
+  button POSTs to `/api/unsubscribe`. Links already sent keep working. `/legal` reviewed (`CASL_UNSUBSCRIBE_CONFIRM_STEP.md`):
+  wording and a masked family address applied. **Owner question open:** `List-Unsubscribe` / one-click headers (not CASL; no sender
+  sets one today, the new route is ready for it).
 
 ### 8 · MEDIUM (crosses clubs; low likelihood) — late finding 2026-11-11: two database merge functions answer any signed-in account — **FIXED on dev (mig 464)**
 - Found by the two-step sign-in census (Board Ready two-step, Part 1), not by this sweep, which read routes and pages, not
@@ -225,6 +233,7 @@ any club's files.
 - **House-league registrations search** escapes only `%` and `_`, so commas can add `.or()` conditions. Still bounded to the
   season, by a caller who can read all of it.
 - **Draft season name** shows on the public register and status pages (every other public league page answers 404).
+  **→ Fixed, W2 fix C, `ae474966e` 2026-11-11.**
 - **Anonymous feedback form:** the per-address limit keys on a header the caller sets, and the limits are per server
   instance, so the admin inbox can be flooded.
 - **Sign-up answers** tell an anonymous caller that an email has a pending invitation, and to which club. Per-instance,
@@ -234,6 +243,9 @@ any club's files.
   club's private bucket.
 - **Dev seed guard** (`lib/platform-auth.ts:164-195`) has no production check of its own. Defence in depth: the flag is off
   in production and a super admin is required.
+- **W2 fix C (`ae474966e` 2026-11-11) fixed three of the "Also" items below:** `pay/tournament/[id]` (live, un-canceled tournament
+  only, throttled), Overview and News posts aimed at a held-back division, and Rules sending held-back divisions. Left open from
+  that check: rule sections tagged to a held-back division still show to everyone (the same class as the posts).
 - Also: `pay/tournament/[id]` answers yes/no for any id, unthrottled; family claim doesn't check `email_confirmed_at`
   (defence in depth); members/invite adds an existing account as active with no acceptance (consent call), and fails past
   1,000 platform users; an admin can edit an owner's display name; `request-deletion` puts the reason unescaped into the
