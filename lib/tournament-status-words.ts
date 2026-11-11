@@ -83,6 +83,10 @@ export function archiveSentence(freesSlot: boolean): string {
 /** The event's record: its blocks, its fields, and what it says before a tap. */
 export const RECORD_WORDS = {
   noun: 'tournament',
+  // The door into the event's own admin (a button that navigates out of the window; the list had no way in).
+  manage: 'Manage',
+  openTournament: 'Open tournament',
+  openHint: 'Teams, schedule, scores and settings',
   status: 'Status',
   nextYear: 'Next year',
   permanentRecord: 'Permanent record',

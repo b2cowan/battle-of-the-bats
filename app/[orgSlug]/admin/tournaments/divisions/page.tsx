@@ -95,7 +95,7 @@ export default function DivisionsPage() {
   const addButton = canWrite && tournamentId ? (
     <button
       type="button"
-      className={`btn btn-outline btn-data ${screenParts.headerButton}`}
+      className={`btn btn-lime btn-data ${screenParts.headerButton}`}
       onClick={() => setCreating(true)}
       aria-label={W.add}
       title={W.add}

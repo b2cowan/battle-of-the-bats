@@ -5,7 +5,10 @@
  * kit's form window: full screen with ← on a phone, a window at a desk. It READS first; the head's pencil
  * edits the Details whole (the 2026-10-01 standard). In order:
  *
- *   Status          what the status means for the public site and the slot, opening with the day it
+ *   Manage          Open tournament — the list's one way INTO the event (it sets the event as the admin's current one
+ *                   and opens its Dashboard). A white button in the record's own recipe, not olive or lime: it is a
+ *                   door, not a change. Absent for an archived event (not in the admin's event list).
+ *   Status         what the status means for the public site and the slot, opening with the day it
  *                   finished, never repeating its chip; then the changes the status allows, each a white
  *                   button that ASKS FIRST in the kit's question window (A20 — the list's menu wrote on
  *                   change, F35). A change the plan or the data cannot make is said BEFORE the tap, in
@@ -23,6 +26,8 @@
  * The routes stay the authority: a refusal that races (a slot taken a moment ago) shows in words.
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTournament } from '@/lib/tournament-context';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import DateInput from '@/components/shared/DateInput';
 import { RecordDelete, RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
@@ -96,6 +101,10 @@ const yearOk = (v: string) => { const n = Number(v); return Number.isInteger(n) 
 export default function TournamentRecord(props: TournamentRecordProps) {
   const { event, sealed, plan, canWrite } = props;
   const { openReuse } = useSetupWizard();
+  const router = useRouter();
+  const { tournaments, setCurrentTournament, refresh } = useTournament();
+  // The door into the event's own admin. An archived event is not in the admin's event list, so it has no board to open.
+  const openable = tournaments.find(t => t.id === event.id) ?? null;
   const finiteSlots = plan.limit < 9999;
   const today = tournamentToday();
   const orgQuery = `?orgSlug=${encodeURIComponent(props.orgSlug)}`;
@@ -336,6 +345,32 @@ export default function TournamentRecord(props: TournamentRecordProps) {
           noun: W.noun,
         }}
       >
+        {openable && (
+          <RecordSection title={W.manage}>
+            <div className={screenParts.recordActions}>
+              <button
+                type="button"
+                className={screenParts.plainButton}
+                // Set the event as the admin's current one, then go, the window still open (the kit's rule for a
+                // button that navigates out of a window; the calendar's tournament door does the same). Details edited in
+                // this window were saved by `leave`, after `openable` was read: the pick is then asked of the provider's
+                // fresh read (it remembers it too), so the Dashboard never opens on the old name or dates.
+                onClick={() => {
+                  const mayBeStale = editing || changedAnything.current;
+                  leave(() => {
+                    if (mayBeStale) void refresh(event.id);
+                    else setCurrentTournament(openable);
+                    router.push(`/${props.orgSlug}/admin/tournaments/dashboard`);
+                  });
+                }}
+              >
+                {W.openTournament}
+              </button>
+              <span className={ck.hint}>{W.openHint}</span>
+            </div>
+          </RecordSection>
+        )}
+
         <RecordSection title={W.status}>
           <p className={screenParts.recordText}>
             {statusSentence({ status, startDate: event.startDate, endDate: event.endDate, today, finiteSlots, sealed: Boolean(sealed) })}

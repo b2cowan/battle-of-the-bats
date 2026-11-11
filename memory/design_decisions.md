@@ -7,6 +7,19 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-10 — A SCREEN'S ONE ADD IS LIME, ON DIVISIONS AND VENUES TOO; "OPENS A WINDOW" NO LONGER MEANS OUTLINED (owner, "yes" to the recommendation after asking why Add division was white and Add game green)
+
+**Decision:** The header Add on the tournament admin's Divisions and Venues screens is the screen's one lime (`btn-lime`), like Add game, Add team, New tournament and New message. A button that opens a window is NOT outlined for that reason alone; lime is the screen's one main action (A12, 2026-09-29). Registration questions' Add (a secondary button inside Event settings) and the empty-state button in the card stay outlined. Rules and Chat were not changed (not checked for a single main action).
+**Rationale:** Add game also opens a window and is lime, so the Stage 5 line "an action that opens a window is an olive outlined button" contradicted the screens built beside it. Divisions' only action is its Add.
+**Supersedes:** the Stage 5 hub check line naming "Add division" and "Add a venue" as outlined (reason did not hold).
+**Applies to:** `app/[orgSlug]/admin/tournaments/divisions/page.tsx`, `venues/page.tsx`.
+
+### 2026-11-10 — THE TOURNAMENT RECORD WINDOW GETS A "MANAGE" SECTION WITH A WHITE "OPEN TOURNAMENT" BUTTON FIRST (owner, "ok go ahead" on https://claude.ai/artifact/9REs9x4qgHxah1jAQ48txg)
+
+**Decision:** The Tournaments list's event window opens with a "Manage" section holding Open tournament (sets the event as current, opens its Dashboard) and the hint "Teams, schedule, scores and settings". It is the record's own white button, not olive or lime: it is a door, not a change. No button for an archived event (not in the admin's event list).
+**Rationale:** the list had no way into an event after Navigation Phase 2 Part B made the foot's Tournaments door open the list; the whole row stays the window (F35), so the door sits inside it.
+**Applies to:** `components/admin/tournament/TournamentRecord.tsx`.
+
 ### 2026-11-10 — THE HOUSE-LEAGUE SIGN-UP PAGE CARRIES TWO QUIET PLAY LINKS, SCHEDULE AND STANDINGS, UNDER THE DATES (owner, "looks good, go ahead and build it" on https://claude.ai/artifact/KupG3ShXrqEJoa7bht4BCF; asks 1–5 as recommended)
 
 **Decision:** While a season is on the sign-up shape (opens soon or taking sign-ups), a row of two kit secondary buttons sits under the dates and price, above the age groups: **Schedule** once any age group has published its schedule; **Standings** once a listed age group (standings on, schedule published) has a scored game: the season shape's own two tests. Neither before. Register now stays the one filled button, below the age groups. The old bottom Schedule button (before registration opens) is replaced by the row. The closed-registration shape is unchanged (standings band, then Schedule at the foot).

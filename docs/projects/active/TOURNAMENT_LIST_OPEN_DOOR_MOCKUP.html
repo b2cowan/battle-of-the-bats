@@ -1,0 +1,304 @@
+<title>Tournament List Door</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout concept: sticky tab row, a View switch, then fixed-size product specimens on a cool grey ground so they read as drawings, not as this page. */
+:root {
+  --doc-bg: #E9EDF1;
+  --doc-fg: #1B2430;
+  --doc-muted: #5A6675;
+  --doc-line: #CBD3DC;
+  --doc-card: #FFFFFF;
+  --doc-accent: #3F5A12;
+  --doc-hi: #FFF1B8;
+  /* product tokens, fixed: the specimens always show the warm portal */
+  --p-bg: #F6F1E9;
+  --p-surface: #FFFFFF;
+  --p-band: #F3EEE5;
+  --p-line: #E4DDD0;
+  --p-ink: #1F1E1A;
+  --p-ink2: #5C5A52;
+  --p-olive: #55691A;
+  --p-olive-d: #44550F;
+  --p-chip: #ECE8DE;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-label: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #141A21; --doc-fg: #E6EBF1; --doc-muted: #9AA7B6; --doc-line: #2C3743; --doc-card: #1C242D; --doc-accent: #B9D26A; --doc-hi: #5A4B10;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #141A21; --doc-fg: #E6EBF1; --doc-muted: #9AA7B6; --doc-line: #2C3743; --doc-card: #1C242D; --doc-accent: #B9D26A; --doc-hi: #5A4B10;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-fg); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-bg); }
+.wrap { max-width: 1240px; margin: 0 auto; }
+header.top { padding: 22px 0 10px; }
+header.top h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; text-wrap: balance; }
+header.top p { margin: 0; color: var(--doc-muted); max-width: 72ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-bg); display: flex; gap: 4px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--doc-line); }
+nav.tabs button { font: inherit; font-weight: 500; color: var(--doc-muted); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 8px 12px; min-height: 40px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-card); color: var(--doc-fg); border-color: var(--doc-line); }
+nav.tabs button:focus-visible, .seg button:focus-visible, .pin:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 10px; padding: 14px 0 4px; color: var(--doc-muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.seg { display: inline-flex; background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 9px; padding: 3px; }
+.seg button { font: inherit; font-size: 13px; text-transform: none; letter-spacing: 0; color: var(--doc-muted); background: transparent; border: 0; border-radius: 6px; padding: 6px 12px; min-height: 32px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--doc-bg); color: var(--doc-fg); font-weight: 600; }
+section.panel { display: none; padding-top: 14px; }
+section.panel.on { display: block; }
+.say { max-width: 76ch; margin: 0 0 16px; }
+.say b { font-weight: 600; }
+.row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+.spec { flex: 0 0 auto; min-width: 0; max-width: 100%; }
+.spec > h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--doc-muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.tag { font-size: 11px; letter-spacing: .06em; font-weight: 600; padding: 2px 7px; border-radius: 5px; border: 1px solid var(--doc-line); color: var(--doc-fg); }
+.tag.new { background: var(--doc-hi); border-color: transparent; }
+.scroll { overflow-x: auto; max-width: 100%; padding-bottom: 4px; }
+.note { margin: 8px 0 0; color: var(--doc-muted); font-size: 13px; max-width: 60ch; }
+
+/* ---------- product frame ---------- */
+.frame { position: relative; width: 600px; height: 560px; background: var(--p-bg); border: 1px solid var(--p-line); border-radius: 12px; overflow: hidden; color: var(--p-ink); font-family: var(--font-ui); font-size: 14px; }
+.frame .bar { height: 52px; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid var(--p-line); background: var(--p-bg); font-weight: 600; font-size: 17px; }
+.frame .list { margin: 24px 16px 0; background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.lh, .lr, .lb { display: grid; grid-template-columns: 1fr 130px 50px 24px; align-items: center; padding: 0 14px; }
+.lh { height: 34px; background: var(--p-band); font-family: var(--font-label); font-weight: 700; letter-spacing: .08em; font-size: 12px; text-transform: uppercase; color: var(--p-ink); }
+.lb { height: 32px; background: var(--p-band); border-top: 1px solid var(--p-line); display: flex; gap: 8px; font-size: 12px; color: var(--p-ink2); }
+.lb strong { font-family: var(--font-label); letter-spacing: .08em; text-transform: uppercase; color: var(--p-ink); }
+.lr { height: 44px; border-top: 1px solid var(--p-line); font-size: 14px; }
+.lr .nm { font-weight: 600; }
+.lr .nm.link { color: var(--p-olive); text-decoration: underline; text-underline-offset: 3px; }
+.lr .ch { color: var(--p-ink2); }
+.lr.sel { background: #FAF6EC; }
+.scrim { position: absolute; inset: 0; background: rgba(40, 36, 28, .42); }
+.dlg { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); width: 500px; background: var(--p-surface); border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,.28); overflow: hidden; }
+.dh { padding: 16px 20px 12px; border-bottom: 1px solid var(--p-line); display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; }
+.dh .t { font-weight: 600; font-size: 17px; }
+.dh .icons { display: flex; gap: 14px; color: var(--p-ink2); font-size: 16px; }
+.dh .id { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; color: var(--p-ink2); font-size: 13px; }
+.chip { font-family: var(--font-label); font-weight: 700; letter-spacing: .08em; font-size: 12px; background: var(--p-chip); border: 1px solid var(--p-line); border-radius: 999px; padding: 1px 9px; color: var(--p-ink); }
+.sec { padding: 14px 20px; border-bottom: 1px solid var(--p-line); position: relative; }
+.sec:last-child { border-bottom: 0; }
+.sec h4 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.sec p { margin: 0 0 8px; color: var(--p-ink2); font-size: 13px; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pb { font: inherit; font-weight: 600; font-size: 14px; background: var(--p-surface); color: var(--p-ink); border: 1px solid var(--p-line); border-radius: 8px; padding: 0 14px; height: 36px; display: inline-flex; align-items: center; gap: 6px; }
+/* Design review: the record's buttons are white with ink text (plainButton); filled olive does not exist inside a record, so .go is the same white button. */
+.pb.go { background: var(--p-surface); border-color: #CFC7B6; color: var(--p-ink); }
+.hint { color: var(--p-ink2); font-size: 13px; }
+.facts div { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: var(--p-ink2); }
+.facts dd, .facts dt { margin: 0; }
+.facts dd { color: var(--p-ink); }
+.foot { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-top: 1px solid var(--p-line); color: var(--p-ink2); font-size: 13px; }
+.foot .nx { border: 1px solid var(--p-line); border-radius: 8px; padding: 4px 12px; text-align: right; min-width: 200px; }
+.nx small { display: block; font-size: 11px; }
+.nx b { color: var(--p-ink); font-weight: 600; }
+.diff .same { opacity: .28; }
+.pin { position: absolute; right: 12px; top: 10px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: #B0361F; color: #fff; font: 600 12px var(--font-ui); cursor: pointer; display: grid; place-items: center; z-index: 3; }
+.pin.left { right: auto; left: -12px; top: 12px; }
+.crop { width: 400px; background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 12px; overflow: hidden; position: relative; color: var(--p-ink); font-family: var(--font-ui); }
+.crop .dh { padding-top: 14px; }
+.crop.listcrop { background: var(--p-bg); padding: 14px; width: 400px; }
+.crop.listcrop .list { margin: 0; background: var(--p-surface); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.crop .lh, .crop .lr, .crop .lb { grid-template-columns: 1fr 100px 20px; }
+.phone { width: 390px; height: 640px; border: 1px solid var(--p-line); border-radius: 22px; background: var(--p-bg); position: relative; overflow: hidden; font-family: var(--font-ui); color: var(--p-ink); }
+.phone .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--p-surface); border-radius: 16px 16px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,.22); }
+.phone .dh { padding: 14px 16px 10px; }
+.phone .sec { padding: 12px 16px; }
+.phone .pb.go.wide { width: 100%; justify-content: center; height: 44px; }
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; margin: 0 0 12px; max-width: 80ch; scroll-margin-top: 70px; }
+.ask.flash { box-shadow: 0 0 0 3px var(--doc-accent); }
+.ask h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.ask p { margin: 0 0 6px; }
+.ask .rec { color: var(--doc-accent); font-weight: 600; }
+@media (max-width: 700px) { .frame { width: 560px; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Opening a tournament from the Tournaments list</h1>
+    <p>Today the list only opens a housekeeping window. These drawings add one way into the tournament's own admin and show where it could sit. Nothing here is built.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" aria-selected="true" data-tab="t1">1 · The door</button>
+    <button role="tab" aria-selected="false" data-tab="t2">2 · Where it sits</button>
+    <button role="tab" aria-selected="false" data-tab="t3">3 · On a phone</button>
+    <button role="tab" aria-selected="false" data-tab="t4">4 · Asks</button>
+  </nav>
+
+  <!-- ============ 1 ============ -->
+  <section class="panel on" id="t1">
+    <div class="viewrow">View
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" data-view="all" aria-pressed="true">Everything</button>
+        <button type="button" data-view="diff" aria-pressed="false">Show only what differs</button>
+      </div>
+    </div>
+    <p class="say" style="margin-top:12px">You click a tournament and get the window. <b>Today it has no way into the tournament itself.</b> The proposal adds one section at the top of that window with an <b>Open tournament</b> button. Everything else in the window stays where it is, and the list behind it does not change.</p>
+    <div class="scroll" id="specs1">
+      <div class="row">
+        <div class="spec">
+          <h3>Today · club admin, desktop <span class="tag">UNCHANGED</span></h3>
+          <div class="frame">
+            <div class="bar same">Tournaments</div>
+            <div class="list same">
+              <div class="lh"><span>Tournament</span><span>Dates</span><span>Teams</span><span></span></div>
+              <div class="lb"><strong>Active 3</strong> public site online</div>
+              <div class="lr sel"><span class="nm">UAT Rep Club Invitational 2026</span><span>Nov 1–3, 2026</span><span>10</span><span class="ch">›</span></div>
+              <div class="lr"><span class="nm">Stripe Walk Invitational</span><span>Dec 13–15, 2026</span><span>1</span><span class="ch">›</span></div>
+              <div class="lr"><span class="nm">Stripe Walk Pay Direct</span><span>Dec 13–15, 2026</span><span>1</span><span class="ch">›</span></div>
+              <div class="lb"><strong>Completed 2</strong> public site online</div>
+              <div class="lr"><span class="nm">UAT Rep Club Summer Slam 2026</span><span>Aug 14–16, 2026</span><span>0</span><span class="ch">›</span></div>
+            </div>
+            <div class="scrim same"></div>
+            <div class="dlg">
+              <div class="dh same"><span class="t">UAT Rep Club Invitational 2026</span><span class="icons"><span>✎</span><span>✕</span></span>
+                <span class="id"><span class="chip">ACTIVE</span> Nov 1–3, 2026 · 10 teams</span></div>
+              <div class="sec same"><h4>Status</h4><p>Its public site is online.</p><div class="btns"><span class="pb">Mark complete</span><span class="pb">Move back to draft</span></div></div>
+              <div class="sec same"><h4>Next year</h4><div class="btns"><span class="pb">Reuse this setup</span><span class="hint">Starts a private draft from this event</span></div></div>
+              <div class="sec same"><h4>Details</h4>
+                <dl class="facts" style="margin:0"><div><dt>Name</dt><dd>UAT Rep Club Invitational 2026</dd></div><div><dt>Year</dt><dd>2026</dd></div><div><dt>Dates</dt><dd>Nov 1–3, 2026</dd></div></dl></div>
+              <div class="foot same"><span>1 of 3 in Active</span><span class="nx"><small>Next ›</small><b>Stripe Walk Invitational</b></span></div>
+            </div>
+          </div>
+          <p class="note">The only exits are the ✕ and Next. Nothing opens the event.</p>
+        </div>
+
+        <div class="spec">
+          <h3>Proposed <span class="tag new">NEW: the Manage section</span> <span class="tag">Everything else UNCHANGED</span></h3>
+          <div class="frame">
+            <div class="bar same">Tournaments</div>
+            <div class="list same">
+              <div class="lh"><span>Tournament</span><span>Dates</span><span>Teams</span><span></span></div>
+              <div class="lb"><strong>Active 3</strong> public site online</div>
+              <div class="lr sel"><span class="nm">UAT Rep Club Invitational 2026</span><span>Nov 1–3, 2026</span><span>10</span><span class="ch">›</span></div>
+              <div class="lr"><span class="nm">Stripe Walk Invitational</span><span>Dec 13–15, 2026</span><span>1</span><span class="ch">›</span></div>
+              <div class="lr"><span class="nm">Stripe Walk Pay Direct</span><span>Dec 13–15, 2026</span><span>1</span><span class="ch">›</span></div>
+              <div class="lb"><strong>Completed 2</strong> public site online</div>
+              <div class="lr"><span class="nm">UAT Rep Club Summer Slam 2026</span><span>Aug 14–16, 2026</span><span>0</span><span class="ch">›</span></div>
+            </div>
+            <div class="scrim same"></div>
+            <div class="dlg" style="top:28px">
+              <div class="dh same"><span class="t">UAT Rep Club Invitational 2026</span><span class="icons"><span>✎</span><span>✕</span></span>
+                <span class="id"><span class="chip">ACTIVE</span> Nov 1–3, 2026 · 10 teams</span></div>
+              <div class="sec">
+                <button class="pin" data-ask="a1" aria-label="See ask 1">1</button>
+                <h4>Manage</h4>
+                <div class="btns"><span class="pb go">Open tournament</span><span class="hint">Teams, schedule, scores and settings</span></div>
+              </div>
+              <div class="sec same"><h4>Status</h4><p>Its public site is online.</p><div class="btns"><span class="pb">Mark complete</span><span class="pb">Move back to draft</span></div></div>
+              <div class="sec same"><h4>Next year</h4><div class="btns"><span class="pb">Reuse this setup</span><span class="hint">Starts a private draft from this event</span></div></div>
+              <div class="sec same"><h4>Details</h4>
+                <dl class="facts" style="margin:0"><div><dt>Name</dt><dd>UAT Rep Club Invitational 2026</dd></div><div><dt>Year</dt><dd>2026</dd></div><div><dt>Dates</dt><dd>Nov 1–3, 2026</dd></div></dl></div>
+              <div class="foot same"><span>1 of 3 in Active</span><span class="nx"><small>Next ›</small><b>Stripe Walk Invitational</b></span></div>
+            </div>
+          </div>
+          <p class="note">The window grows by one section, roughly 90 px in this drawing (the build measures the real figure). The Status section moves down one slot. The button is a white button with ink text, like Mark complete and Reuse this setup in the same window. Colour was checked by design: a filled olive or lime button does not exist inside a record, and this is a door, not a change. Clicking the button goes to that event's Dashboard inside the tournament admin.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2 ============ -->
+  <section class="panel" id="t2">
+    <p class="say">Three places the door could sit. <b>A is the recommendation.</b> It is the only one that gives the door a clear label and a full-size button, and it leaves the list as the ruling on rows describes it.</p>
+    <div class="scroll"><div class="row">
+      <div class="spec">
+        <h3>A · A section at the top of the window <span class="tag new">RECOMMENDED</span></h3>
+        <div class="crop">
+          <div class="dh"><span class="t">UAT Rep Club Invitational 2026</span><span class="icons"><span>✎</span><span>✕</span></span><span class="id"><span class="chip">ACTIVE</span> Nov 1–3, 2026 · 10 teams</span></div>
+          <div class="sec"><h4>Manage</h4><div class="btns"><span class="pb go">Open tournament</span><span class="hint">Teams, schedule, scores and settings</span></div></div>
+          <div class="sec"><h4>Status</h4><p>Its public site is online.</p></div>
+        </div>
+        <p class="note">Labelled and full size. Costs one section of height.</p>
+      </div>
+      <div class="spec">
+        <h3>B · A link in the window's header <span class="tag">OPTION</span></h3>
+        <div class="crop">
+          <div class="dh"><span class="t">UAT Rep Club Invitational 2026</span><span class="icons"><span class="pb go" style="height:30px;font-size:13px;margin-top:-2px">Open</span><span>✎</span><span>✕</span></span><span class="id"><span class="chip">ACTIVE</span> Nov 1–3, 2026 · 10 teams</span></div>
+          <div class="sec"><h4>Status</h4><p>Its public site is online.</p><div class="btns"><span class="pb">Mark complete</span><span class="pb">Move back to draft</span></div></div>
+          <div class="sec"><h4>Next year</h4><div class="btns"><span class="pb">Reuse this setup</span></div></div>
+        </div>
+        <p class="note">No extra height. The header is already crowded with the pencil and the close, and "Open" alone does not say what opens.</p>
+      </div>
+      <div class="spec">
+        <h3>C · The row name becomes the link <span class="tag">OPTION</span></h3>
+        <div class="crop listcrop">
+          <div class="list">
+            <div class="lh"><span>Tournament</span><span>Dates</span><span></span></div>
+            <div class="lr"><span class="nm link">UAT Rep Club Invitational 2026</span><span>Nov 1–3, 2026</span><span class="ch">›</span></div>
+            <div class="lr"><span class="nm link">Stripe Walk Invitational</span><span>Dec 13–15, 2026</span><span class="ch">›</span></div>
+          </div>
+        </div>
+        <p class="note">The name opens the event. The row's › opens the window. Two targets on one row is the thing the row ruling was written to avoid. Phones and the next-year row action get tighter.</p>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ============ 3 ============ -->
+  <section class="panel" id="t3">
+    <p class="say">On a phone the window is drawn as a sheet that rises from the bottom. The button spans the width and is 44 px tall. The real component's phone layout is checked at build time, so this is an approximation of its shape.</p>
+    <div class="scroll"><div class="row">
+      <div class="spec">
+        <h3>Proposed · phone, 390 px wide <span class="tag new">NEW</span></h3>
+        <div class="phone">
+          <div class="bar" style="height:48px;display:flex;align-items:center;padding:0 16px;font-weight:600;font-size:17px;border-bottom:1px solid var(--p-line)">Tournaments</div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="dh"><span class="t">UAT Rep Club Invitational 2026</span><span class="icons"><span>✎</span><span>✕</span></span><span class="id"><span class="chip">ACTIVE</span> Nov 1–3, 2026 · 10 teams</span></div>
+            <div class="sec"><h4>Manage</h4><span class="pb go wide">Open tournament</span><p style="margin:8px 0 0">Teams, schedule, scores and settings</p></div>
+            <div class="sec"><h4>Status</h4><p>Its public site is online.</p><div class="btns"><span class="pb">Mark complete</span><span class="pb">Move back to draft</span></div></div>
+            <div class="sec"><h4>Next year</h4><span class="pb">Reuse this setup</span></div>
+          </div>
+        </div>
+        <p class="note">Same section, same wording. Measured size: 44 px button, 390 px frame. Open this page on your phone for the real feel.</p>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ============ 4 ============ -->
+  <section class="panel" id="t4">
+    <div class="ask" id="a1"><h3>1 · Add one door to the window, and which placement?</h3>
+      <p>The ruling on this list says no other controls on a row, and the whole row opens the record. This keeps that ruling for the row and adds one control inside the window, so it does amend the ruling slightly.</p>
+      <p class="rec">Recommendation: A, a "Manage" section at the top of the window.</p></div>
+    <div class="ask"><h3>2 · Where does the button land?</h3>
+      <p>On that event's Dashboard, with that event chosen as the current one. It is the same page the event switcher lands on today.</p>
+      <p class="rec">Recommendation: Dashboard.</p></div>
+    <div class="ask"><h3>3 · Which events get the button?</h3>
+      <p>Every event in the Active, Completed and Draft bands. Sealed records have no admin to open and keep their public link. Someone scoped to certain events only sees those events in the list anyway.</p>
+      <p class="rec">Recommendation: all events except sealed records.</p></div>
+    <div class="ask"><h3>4 · Should the club Overview also get a way into an event?</h3>
+      <p>I did not find another door into an event's admin for a club in the code I read, other than this list and the event switcher. If you can reach events another way, that changes how much this matters. Worth a quick look at the Overview before building.</p></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('nav.tabs button');
+  function show(id) {
+    document.querySelectorAll('section.panel').forEach(function (p) { p.classList.toggle('on', p.id === id); });
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-tab') === id ? 'true' : 'false'); });
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-tab')); }); });
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var diff = b.getAttribute('data-view') === 'diff';
+      document.querySelectorAll('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      document.getElementById('specs1').classList.toggle('diff', diff);
+    });
+  });
+  document.querySelectorAll('.pin').forEach(function (p) {
+    p.addEventListener('click', function () {
+      var id = p.getAttribute('data-ask');
+      show('t4');
+      var el = document.getElementById(id);
+      if (el) { el.classList.add('flash'); el.scrollIntoView({ block: 'center' }); setTimeout(function () { el.classList.remove('flash'); }, 1800); }
+    });
+  });
+})();
+</script>
