@@ -209,7 +209,7 @@ points here, so they aren't tracked twice)
       - **⚠ the same code is accepted twice within its 30-second window** (no replay record). Harmless at sign-in
         (both are the person's), but the five "ask for a code" actions and backup codes must not rely on the service
         for one-time use; our backup codes are marked used by us.
-  - **Part 1 (the foundation) BUILT 2026-11-11, commit owed; owner walk §511 owed** (`BOARD_READY_TWO_STEP_PART1_WALK.html`).
+  - **Part 1 (the foundation) BUILT 2026-11-11, committed `7c8f092ab` 2026-11-11 (mig 464 `6b19b5aca`); owner walk §511 owed** (`BOARD_READY_TWO_STEP_PART1_WALK.html`).
     Rulings in the session (owner 2026-11-11): the database also requires the code (asked: yes); the merge-function defect
     fixed in its own commit (yes); dev requires two-step for staff like production, `TWO_STEP_STAFF_REQUIRED=off` the dev-only
     opt-out (yes). What was built, and where it differs from the outline:
