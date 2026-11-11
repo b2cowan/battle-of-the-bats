@@ -182,8 +182,9 @@ export default function AdminKitRail() {
   const feeAlert = useFeeAlert();
   const currentOrg = useOrg().currentOrg;
   const clubName = currentOrg?.name ?? null;
-  // ⚖ On one of the event's own pages with an event to show, the event heads the sidebar (Phase 2); everywhere else — the
-  // organization's tournament screens included (Part B, E3 + T1) — the club or the organization does.
+  // ⚖ In the event's shell with an event to show, the event heads the sidebar (Phase 2) — its own pages, and the Tournaments
+  // list in a club (owner 2026-11-10); everywhere else — the organization's Settings & access and Plan & billing included
+  // (Part B, E3) — the club or the organization does.
   const { currentTournament } = useTournament();
   const eventHeads = inEvent && !!currentTournament;
   // A Tournament-plan organization's Settings & access (E3): its row shows only for someone who holds one of its tabs, opens
@@ -195,8 +196,8 @@ export default function AdminKitRail() {
   const tournamentsList: KitLink = { key: 'manage', label: 'Tournaments', href: `${base}/tournaments/manage`, also: [`${base}/tournaments/archives`] };
   // The rail the strip's name bubble hangs beside.
   const railRef = useRef<HTMLElement>(null);
-  // ⚖ Leaving an event for the organization's screens (the list's "All tournaments", Part B) swaps the event's cell for the
-  // organization's. A keyboard user's focus was on the cell that left: it moves to the cell that came, never to the page body.
+  // ⚖ Leaving an event for the club (the foot's Club door) swaps the event's cell for the club's. A keyboard user's focus was
+  // on the cell that left: it moves to the cell that came, never to the page body.
   const wasEvent = useRef(eventHeads);
   useEffect(() => {
     const lost = !document.activeElement || document.activeElement === document.body || !document.activeElement.isConnected;
@@ -326,15 +327,12 @@ export default function AdminKitRail() {
             </Link>
           )}
           {(billingLink || isSandbox) && portalDoors.length > 0 && <div className={styles.footSep} aria-hidden />}
-          {portalDoors.map(door => {
-            // ⚖ T1: on a club's Tournaments list its foot door is the lit row (as Plan & billing lights on its own page).
-            const lit = door.key === 'tournaments' && isKitLinkActive(pathname, door);
-            return (
-              <Link key={door.key} href={door.href} className={`${styles.item} ${styles.footItem}${lit ? ` ${styles.itemActive}` : ''}`} aria-current={lit ? 'page' : undefined}>
-                {door.icon && <door.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{door.label}</span>
-              </Link>
-            );
-          })}
+          {/* A door leaves for another portal and never lights: Tournaments opens an event's Dashboard (owner 2026-11-10). */}
+          {portalDoors.map(door => (
+            <Link key={door.key} href={door.href} className={`${styles.item} ${styles.footItem}`}>
+              {door.icon && <door.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{door.label}</span>
+            </Link>
+          ))}
         </div>
         {/* ⚖ The last row (Ask 2). */}
         <CollapseSidebarRow className={`${styles.item} ${styles.footItem}`} />

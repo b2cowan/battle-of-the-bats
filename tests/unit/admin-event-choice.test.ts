@@ -8,7 +8,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readCode } from './_source-code.ts';
-import { chooseTournament, adminEventCookieName, adminEventCookiePath } from '../../lib/admin-event-choice.ts';
+import { chooseTournament, closestToComeUp, adminEventCookieName, adminEventCookiePath } from '../../lib/admin-event-choice.ts';
 
 const list = [
   { id: 'a', slug: 'spring', status: 'completed' },
@@ -44,6 +44,27 @@ describe('chooseTournament', () => {
     const noLive = list.filter(t => t.status !== 'active');
     assert.equal(chooseTournament(noLive, {}).current?.id, 'a');
     assert.deepEqual(chooseTournament([], { savedIds: ['a'] }), { current: null, remember: null });
+  });
+
+  it('⚖ with nothing chosen, the event closest to come up: live events first, then today’s, then the next, then the latest', () => {
+    const ev = (id: string, status: string, startDate: string | null, endDate: string | null = startDate) => ({ id, slug: id, status, startDate, endDate });
+    const today = '2026-11-10';
+    // Live events beat a nearer completed one; among them the next to start wins over a past one.
+    assert.equal(closestToComeUp([ev('past', 'active', '2026-11-01', '2026-11-03'), ev('dec', 'active', '2026-12-13', '2026-12-15'), ev('done', 'completed', '2026-11-12')], today)?.id, 'dec');
+    // One happening today beats a later one.
+    assert.equal(closestToComeUp([ev('later', 'active', '2026-11-20'), ev('now', 'active', '2026-11-09', '2026-11-11')], today)?.id, 'now');
+    // The soonest of several upcoming ones.
+    assert.equal(closestToComeUp([ev('b', 'active', '2027-01-05'), ev('a', 'active', '2026-12-13')], today)?.id, 'a');
+    // Nothing ahead: the one that ended most recently.
+    assert.equal(closestToComeUp([ev('may', 'completed', '2026-05-22', '2026-05-24'), ev('aug', 'completed', '2026-08-14', '2026-08-16')], today)?.id, 'aug');
+    // No live event: completed ones come before drafts; only drafts left, a draft.
+    assert.equal(closestToComeUp([ev('draft', 'draft', '2026-11-12'), ev('done', 'completed', '2026-08-14')], today)?.id, 'done');
+    assert.equal(closestToComeUp([ev('draft', 'draft', '2026-11-12')], today)?.id, 'draft');
+    // No dates yet: after anything with dates ahead, before the past.
+    assert.equal(closestToComeUp([ev('old', 'active', '2026-05-01'), ev('tbd', 'active', null)], today)?.id, 'tbd');
+    assert.equal(closestToComeUp([], today), null);
+    // A choice still wins; only the fallback changed.
+    assert.equal(chooseTournament([ev('dec', 'active', '2026-12-13'), ev('last', 'completed', '2026-05-22')], { savedIds: ['last'] }).current?.id, 'last');
   });
 
   it('an empty slug never matches an event without one', () => {

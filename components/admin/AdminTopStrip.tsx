@@ -52,7 +52,8 @@ import { getNotificationSettingsHref } from '@/lib/billing-urls';
 import FlipPill from '@/components/shared/FlipPill';
 import { useAdminFlip } from '@/lib/use-admin-flip';
 import { adminStripWord, WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
-import { adminHelpHref, isTournamentEventPath } from '@/lib/admin-kit-nav';
+import { adminHelpHref, isTournamentEventShell } from '@/lib/admin-kit-nav';
+import { useTournament } from '@/lib/tournament-context';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { useAdminPlace } from './useAdminPlace';
 import { useDeskTitle } from './DeskNamedPage';
@@ -138,9 +139,10 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
   // ⚖ "Club" or "Events" (owner 2026-11-09), from the address and the plan — both known on the server, so the first paint
   // says it; the tournament-only test is `useAdminKitNav`'s (the plan's fact, D8).
   const tournamentOnly = canOpen('module_tournaments') && !!currentOrg && isTournamentOnlyWorkspace(currentOrg);
-  // ⚖ T1 (navigation Phase 2 Part B): a club's tournament screens that are the ORGANIZATION's (the list) wear the club's
-  // sidebar, so the strip says "Club" there; the event's own pages say "Events".
-  const stripWord = adminStripWord({ onTournaments: isTournamentEventPath(pathname, base), tournamentOnly });
+  // ⚖ The event's shell says "Events": its own pages, and the Tournaments list in a club that has an event (owner 2026-11-10,
+  // amending Part B's T1). The organization's other tournament screens (Settings & access, Plan & billing) say "Club".
+  const { currentTournament } = useTournament();
+  const stripWord = adminStripWord({ onTournaments: isTournamentEventShell(pathname, base, { tournamentOnly, hasEvent: !!currentTournament }), tournamentOnly });
   // The portal word: in the split strip, the short form for the sidebar-width cell (D4), which a collapsed sidebar hides
   // with the wordmark's name. A cancelled account's one page keeps its strip exactly as it was (no sidebar, no cell; on
   // a phone too): the full word, never hidden by a sidebar preference it has no sidebar for (/review, 2026-11-08).

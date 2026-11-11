@@ -7,7 +7,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  clubPlaceAt, isTournamentOrgScreen, kitPortalDoors, litTournamentRow, tournamentOrgScreenName, tournamentSettingsTabs,
+  clubPlaceAt, isTournamentEventShell, isTournamentOrgScreen, kitPortalDoors, litTournamentRow, tournamentOrgScreenName, tournamentSettingsTabs,
   type ClubPlaceAccess,
 } from '../../lib/admin-kit-nav.ts';
 import { deskTitleAt, deskTournamentGroups, kitTournamentGroups, YOUR_NOTIFICATIONS_ITEM } from '../../components/admin/kit/kit-tournament-groups.ts';
@@ -120,14 +120,32 @@ describe('Part B · a Tournament plan’s Settings & access is a place with tabs
 });
 
 describe('Part B · a club’s organization screens (T1, P2)', () => {
-  const doors = (inEvent: boolean, desk: boolean) => kitPortalDoors({
+  const doors = (inEvent: boolean) => kitPortalDoors({
     base: B, onTournaments: inEvent, tournamentOnly: false, isCanceled: false, tournamentsDoor: true, canUse: () => true,
-    coachDoor: { show: false, href: '' }, desk,
+    coachDoor: { show: false, href: '' },
   });
-  it('on a computer the club’s Tournaments door opens the list (and lights there); the phone’s keeps opening the event', () => {
-    assert.equal(doors(false, true).find(d => d.key === 'tournaments')?.href, `${B}/tournaments/manage`);
-    assert.equal(doors(false, false).find(d => d.key === 'tournaments')?.href, `${B}/tournaments`);
-    assert.deepEqual(doors(true, true).map(d => d.key), ['club'], 'inside an event the foot keeps its Club door');
+  it('⚖ the club’s Tournaments door leaves the club for an event’s Dashboard (owner 2026-11-10, amending T1), on a computer and a phone', () => {
+    assert.equal(doors(false).find(d => d.key === 'tournaments')?.href, `${B}/tournaments`, '/tournaments lands on the chosen event');
+    assert.deepEqual(doors(true).map(d => d.key), ['club'], 'inside the event’s shell the foot keeps its Club door');
+  });
+  it('⚖ the Tournaments LIST wears the event’s shell in a club that has an event; nothing else changes', () => {
+    const shell = (path: string, tournamentOnly: boolean, hasEvent: boolean) => isTournamentEventShell(`${B}${path}`, B, { tournamentOnly, hasEvent });
+    assert.ok(shell('/tournaments/manage', false, true), 'the list, in a club with an event');
+    assert.ok(shell('/tournaments/archives', false, true), 'its old Past tournaments address');
+    assert.ok(shell('/tournaments/dashboard', false, false), 'the event’s own pages, always');
+    assert.ok(!shell('/tournaments/manage', false, false), 'a club with no event yet keeps the club’s sidebar (New tournament)');
+    assert.ok(!shell('/tournaments/manage', true, true), 'a tournament-only organization keeps its own short sidebar on the list');
+    assert.ok(!shell('/tournaments/settings/subscription', false, true), 'Plan & billing stays the organization’s');
+    assert.ok(!shell('/tournaments/settings/members', false, true), 'so does Members');
+    // The facts stay the event's pages' own: the list still shows no dates and no chip, and the tab title no event name.
+    assert.ok(isTournamentOrgScreen(`${B}/tournaments/manage`, B));
+  });
+  it('⚖ the strip and the sidebar read the one shell predicate', () => {
+    assert.match(readCode('components/admin/AdminTopStrip.tsx'), /isTournamentEventShell\(pathname, base, \{ tournamentOnly, hasEvent: !!currentTournament \}\)/);
+    assert.match(readCode('components/admin/kit/useAdminKitNav.ts'), /isTournamentEventShell\(pathname, base, \{ tournamentOnly, hasEvent: !!currentTournament \}\)/);
+  });
+  it('the foot door waits for the event list before it decides where to go', () => {
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/page.tsx'), /if \(loading \|\| eventsLoading \|\| !currentOrg\) return;/);
   });
   it('every organization-wide tournament address sends a club to its own page; nothing else', () => {
     const S = 'app/[orgSlug]/admin/tournaments/settings';

@@ -253,6 +253,19 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   tournament More sheet loses it for a club — data only, the phone component untouched). An old link or bookmark to a
   tournament address opens the club's own page (a redirect; no row or button leads there). The event's own mute page is
   the event's (T2). T1's Tournaments list keeps the club's sidebar (ruled; leaving an event, not a settings door).
+- **⚖ T1 AMENDED (owner, 2026-11-11, in conversation, after the Tournaments list proved a dead end: a club owner clicking a
+  row got a housekeeping window with no way into the event).** In a club, the sidebar foot's **Tournaments door leaves the
+  club for the tournament admin**, like the Club and Coaches Portal doors, and opens the **Dashboard of the event the choice
+  rule lands on** (the last event opened in this browser; otherwise the Active one happening now or next to start, then the
+  most recently finished; drafts only when nothing else exists: `closestToComeUp` in `lib/admin-event-choice.ts`). The
+  **Tournaments list lives inside the tournament admin**: it wears the event's sidebar and the strip says EVENTS · Tournaments
+  with no dates; its only door is the event switcher's **All tournaments**. No second door now ("cross that bridge later").
+  Built: foot door href, `isTournamentEventShell`, the strip word, the redirect waiting for the event list, the record
+  window's **Open tournament** button (Manage section, white button). Kept: a tournament-only organization's list keeps its own
+  short sidebar; a club with no event yet keeps the club's sidebar so New tournament is there; Settings & access, Members, PDF
+  settings, Payouts and Plan & billing are untouched (P2); the phone is unchanged (it already lands on the chosen event).
+  Replaces T1's "the club's own sidebar on the list, the foot door lights, the strip says Club". Walk: §509 walk 4 rewritten
+  (id `B4R`). Open: whether the landing rule should prefer the nearest event over the remembered one.
 - **P3 · The phone is unchanged until Phase 3**: titles drop on a computer only; the phone keeps its titles and its event
   bar. One exception: a tournament-only organization's Settings & access tab row shows on a phone as the club's
   Organization tabs already do.

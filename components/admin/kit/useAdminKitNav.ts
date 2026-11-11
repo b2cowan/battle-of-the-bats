@@ -16,7 +16,7 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier, orgSettingsOnTournamentSide } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, isTournamentEventPath, tournamentSettingsTabs, canOpenPdfSettings, type KitLink, type PlaceTab } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, isTournamentEventShell, tournamentSettingsTabs, canOpenPdfSettings, type KitLink, type PlaceTab } from '@/lib/admin-kit-nav';
 import { deskTournamentGroups, kitTournamentGroups } from './kit-tournament-groups';
 import type { TourGroup } from '../admin-nav-config';
 import { useClubBrief } from './club/ClubBriefProvider';
@@ -149,18 +149,20 @@ export function useAdminKitNav() {
   });
   const litPlace = litClubPlace(pathname, base, billingLink);
   const onTournaments = pathname.startsWith(`${base}/tournaments`);
-  // ⚖ An organization's tournament screens (the list, Settings & access and its tabs, Plan & billing) wear the
-  // ORGANIZATION's sidebar, never the event's (navigation Phase 2 Part B; E3, T1): `isTournamentOrgScreen`, the one list.
-  const inEvent = isTournamentEventPath(pathname, base);
+  // ⚖ An organization's tournament screens (Settings & access and its tabs, Plan & billing) wear the ORGANIZATION's sidebar,
+  // never the event's (navigation Phase 2 Part B; E3): `isTournamentOrgScreen`, the one list. The Tournaments LIST is the
+  // exception in a club that has an event: it wears the event's (owner 2026-11-10, amending T1) — `isTournamentEventShell`.
+  const inEvent = isTournamentEventShell(pathname, base, { tournamentOnly, hasEvent: !!currentTournament });
   // The guide for where you are, in a new tab — the phone's More sheet foot (N7) and the demo sandbox's sidebar foot; on a
   // desktop outside the sandbox it is the account menu's Help row (E16), which reads the same answer.
   const helpHref = adminHelpHref(pathname, base);
   // ⚖ THE OTHER PORTALS (E4, navigation Phase 1): one list, the rail's foot and the sheet's You read it.
   // PHASE-3: the phone's list; delete with the phone twins once the phone bar names the page.
   const portalDoors = kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor: order.door, canUse, coachDoor });
-  // The computer's foot (navigation Phase 2 Part B, T1): an organization's tournament screen wears the club's own foot, and
-  // there the Tournaments door opens the list it lights. The phone's More sheet keeps `portalDoors` until Phase 3.
-  const deskPortalDoors = kitPortalDoors({ base, onTournaments: inEvent, tournamentOnly, isCanceled, tournamentsDoor: order.door, canUse, coachDoor, desk: true });
+  // The computer's foot: in the event's shell (its pages, and the list in a club) the Club door; in the club, the Tournaments
+  // door, which opens an event's Dashboard. An organization's other tournament screens wear the club's own foot. The phone's
+  // More sheet keeps `portalDoors` until Phase 3.
+  const deskPortalDoors = kitPortalDoors({ base, onTournaments: inEvent, tournamentOnly, isCanceled, tournamentsDoor: order.door, canUse, coachDoor });
 
   return {
     pathname,

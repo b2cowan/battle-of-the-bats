@@ -76,6 +76,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
     <span class="eyebrow">Navigation across the three portals · Phase 2, Part B · Owner QA Ledger §509</span>
     <h1>The strip names the page; the organization’s screens get their own sidebar</h1>
     <p class="lead">On a computer, a tournament page is now named in the top strip (“Divisions”, “Teams”), with the event’s dates and phase at the strip’s right end, and the page’s own big title steps aside. The event’s sidebar lists the event’s pages only, ending with “Your notifications”. The organization’s screens wear the organization’s own sidebar: in a tournament-only organization, Settings &amp; access becomes tabs (Members · Payouts · PDF settings · Web address); in a club, those settings live only in the club portal. Four walks, one purpose each. About 30 minutes.</p>
+    <p class="lead"><b>Changed Nov 11, 2026 (owner ruling):</b> in a club, the sidebar foot’s Tournaments door now leaves the club and opens an event’s Dashboard; the list of tournaments lives in the tournament admin, under the event’s sidebar, reached from the event’s cell. Walk 4 is rewritten for it; the other walks are as written. The dev server needs a restart before you walk it.</p>
     <p class="lead">Written Nov 10, 2026 against the dev site. Nothing here is real data: the club, the organization and their events are test data.</p>
     <p class="progress" id="progress">Checked 0 of 0</p>
   </header>
@@ -105,7 +106,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
     <ul class="plain">
       <li>With scripts off (exactly what the server sends), every tournament page and organization screen in this walk already shows its final strip, sidebar head, lit row and title, for the club and the tournament-only organization, at 1440, 1366 and 390 wide. Nothing about the place changes after the page loads.</li>
       <li>Exactly one title per screen at each width: the strip’s on a computer, the page’s own on a phone.</li>
-      <li>The layout check on the tournament pages, the Settings &amp; access tabs, the event’s Your notifications page and the club’s Tournaments list at 1440 and 1366: no new findings.</li>
+      <li>The layout check on the tournament pages, the Settings &amp; access tabs and the event’s Your notifications page at 1440 and 1366: no new findings. <b>Not yet checked after the Nov 11 change:</b> a club’s Tournaments list under the event’s sidebar (walk 4 is its first look).</li>
       <li>An old club link to a tournament settings address opens the club’s own page and keeps its search (for example a billing email’s <code>?keep_plan=1</code>).</li>
       <li>The tab title uses the sidebar’s words, and the organization’s own screens no longer carry the event’s name.</li>
       <li>Typecheck, lint, spelling, the demos check and 750+ navigation and billing tests pass.</li>
@@ -187,7 +188,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   "title": "The event’s sidebar and Your notifications",
   "job": "Both owners · computer and phone",
   "forText": "The event’s sidebar lists the event’s pages only. Settings &amp; access and Tournaments left it; the event’s own mute page is its last row.",
-  "passes": "Under Admin there is one row, “Your notifications”, on a computer and in the phone’s More sheet; the page it opens is titled “Your notifications”; the Tournaments list is reached from the cell’s list.",
+  "passes": "Under Admin there is one row, “Your notifications”, on a computer and in the phone’s More sheet; the page it opens is titled “Your notifications”; the Tournaments list is reached from the cell’s list (in a club it keeps the event’s sidebar, walk 4).",
   "notIn": "What Settings &amp; access looks like now (walks 3 and 4).",
   "who": "uat-club-owner@uat-rep-club.local, then uat-owner@uat-test-org.local.",
   "where": "Any tournament page, computer then phone.",
@@ -203,7 +204,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "d": "Click the event’s cell at the top of the sidebar, then <b>All tournaments<\/b>.",
-    "s": "The Tournaments list opens (walk 4 looks at it). That is now the way from an event to the list."
+    "s": "The Tournaments list opens (walk 4 looks at it). That is the way from an event to the list. In this club it opens under the event’s sidebar; in UAT Test Org (below) under the organization’s short one."
    },
    {
     "d": "<b>Phone<\/b> (390 px): open a tournament page and its <b>More<\/b> sheet.",
@@ -265,23 +266,35 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   ]
  },
  {
-  "id": "B4",
-  "title": "A club keeps one home for each setting",
+  "id": "B4R",
+  "title": "A club’s Tournaments door goes into an event; its settings keep one home",
   "job": "UAT Rep Club · owner · computer, then the demos",
-  "forText": "In a club, the organization’s settings live only in the club portal: the tournament side has no Settings &amp; access, the club’s Tournaments list wears the club’s sidebar, and an old link lands on the club’s own page.",
-  "passes": "The club’s Tournaments list shows the club’s sidebar with the foot’s Tournaments door lit and the strip saying CLUB; Members and PDF settings are reached only in Organization; an old tournament settings address opens the club’s own page; the demos still run.",
-  "notIn": "A tournament-only organization (walk 3).",
+  "forText": "In a club, the Tournaments door in the sidebar’s foot leaves the club and opens an event’s Dashboard, like the Club and Coaches Portal doors. The list of tournaments is reached from the event’s cell (“All tournaments”) and wears the event’s sidebar. The organization’s settings live only in the club portal, and an old link lands on the club’s own page. CHANGED Nov 11 (owner ruling): this walk replaces the earlier one, which had the door open a list in the club’s sidebar.",
+  "passes": "The foot’s Tournaments door opens an event’s Dashboard under the event’s sidebar (strip EVENTS); All tournaments opens the list under that same sidebar with the strip naming Tournaments and no dates; the Open tournament button in a list row’s window goes into that event; the Club door in the foot comes back to the club; Members and PDF settings are reached only in Organization; an old tournament settings address opens the club’s own page; the demos still run.",
+  "notIn": "A tournament-only organization (walk 3, unchanged: its list keeps its own short sidebar) and a club with no tournaments yet (not in the test data: it opens the list under the club’s own sidebar so New tournament is there).",
   "who": "uat-club-owner@uat-rep-club.local, then no sign-in for the demos.",
   "where": "localhost:3000/uat-rep-club/admin on a computer.",
   "steps": [
    {
     "stop": true,
     "d": "Stop check: from the club’s Overview, click <b>Tournaments<\/b> in the sidebar’s foot.",
-    "s": "It opens the club’s <b>Tournaments list<\/b> (it used to open an event’s Dashboard). The sidebar is the club’s own (Overview, Calendar … Organization) with the foot’s <b>Tournaments<\/b> row lit; the strip reads <b>CLUB<\/b> · <b>Tournaments<\/b>."
+    "s": "It opens an <b>event’s Dashboard<\/b>, not a list. The event heads the sidebar (its name and logo, with Dashboard lit), the strip reads <b>EVENTS<\/b> with the event’s dates and phase at its right end, and the foot now shows a <b>Club<\/b> door (no Tournaments door). Which event: the one you last opened in this browser; with none remembered, the Active one happening now or next to start (never a Draft or a finished one while a live one exists). If it opens the club’s Tournaments list instead, stop and tell me."
    },
    {
-    "d": "Open an event from the list, then use the cell’s <b>All tournaments<\/b> to come back.",
-    "s": "In the event, the event heads the sidebar; back on the list, the club does again. With the keyboard (Tab to the cell, Enter, arrow to All tournaments, Enter) the focus ring lands on the club’s cell at the top, not lost on the page."
+    "d": "Click the event’s cell at the top of the sidebar, then <b>All tournaments<\/b> at the foot of its list.",
+    "s": "The <b>Tournaments list<\/b> opens under the <b>same event sidebar<\/b> (the event’s cell still heads it; no row is lit). The strip reads <b>EVENTS<\/b> · <b>Tournaments<\/b> with <b>no dates and no phase chip</b>. The browser tab reads “Tournaments - UAT Rep Club - FieldLogicHQ”, with no event name. The page itself (bands, New tournament, Reuse setup) is as before."
+   },
+   {
+    "d": "Open an <b>Active<\/b> row (not the one you came from), then press <b>Open tournament<\/b> in the window’s first section (Manage). Repeat with a <b>Completed<\/b> row.",
+    "s": "The window opens with <b>Manage<\/b> first: a white <b>Open tournament<\/b> button and “Teams, schedule, scores and settings”; Status, Next year and Details follow. The button opens <b>that<\/b> tournament’s Dashboard, and the sidebar’s cell now names it (check the name). It works on Completed rows too. An archived event (kept out of the sidebar’s list of events) has the same window with no Open tournament button."
+   },
+   {
+    "d": "In the foot, click <b>Club<\/b>.",
+    "s": "The club’s Overview opens under the club’s sidebar, with <b>Tournaments<\/b> back in the foot. With the keyboard (Tab to the Club door, Enter) the focus ring lands on the club’s cell at the top, not lost on the page."
+   },
+   {
+    "d": "Click the foot’s <b>Tournaments<\/b> again.",
+    "s": "It opens the event you chose in the last step (the choice is remembered), not the nearest one."
    },
    {
     "d": "Open <b>Organization<\/b> in the sidebar.",
@@ -298,6 +311,10 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    {
     "d": "Open the coach demo.",
     "s": "Looks as it did before."
+   },
+   {
+    "d": "<b>Phone<\/b> (390 px), as the club owner: open <b>More<\/b> from the club’s Overview and tap <b>Tournaments<\/b>.",
+    "s": "Unchanged: it opens the chosen event’s Dashboard, as before. The phone is untouched in this change."
    }
   ]
  }

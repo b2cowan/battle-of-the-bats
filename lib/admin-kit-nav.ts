@@ -240,14 +240,15 @@ export function clubTournamentsDoor(
  * "Club overview" row). Tournaments: in the club, once it hosts one (`clubTournamentsDoor`; never the director's, whose row
  * it is) and only for someone who can open it. A tournament-only organization has no club to go back to; a cancelled club
  * has no rail or bar at all. The Coaches Portal door is the person's own (`coachDoorFor`).
- * ⚖ `desk` (navigation Phase 2 Part B, T1, owner 2026-11-10): on a computer the Tournaments door opens the Tournaments LIST,
- * and lights there (the club's list wears the club's own sidebar). The phone's door keeps opening the chosen event (Phase 3).
+ * ⚖ The Tournaments door LEAVES the club for the tournament admin, like the other two (owner 2026-11-10, amending Part B's T1):
+ * `/tournaments` opens the Dashboard of the event the choice rule lands on, in the event's own sidebar. The list of tournaments
+ * is no door of its own: it is the event switcher's "All tournaments" (and it wears the event's sidebar too).
  */
-export function kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor, canUse, coachDoor, desk = false }: {
+export function kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor, canUse, coachDoor }: {
   base: string;
-  /** On one of the event's own pages (the computer's foot) or anywhere under Tournaments (the phone's). */
+  /** On one of the event's own pages or the list inside a club's tournament admin (the computer's foot), or anywhere under
+   *  Tournaments (the phone's). */
   onTournaments: boolean;
-  desk?: boolean;
   tournamentOnly: boolean;
   isCanceled: boolean;
   /** `clubTournamentsDoor(...).door`: the club hosts a tournament and this person is not its director. */
@@ -259,8 +260,7 @@ export function kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled
   const doors: (KitLink | null)[] = [
     club && onTournaments ? { key: 'club', label: 'Club', href: base, icon: Shield } : null,
     club && !onTournaments && tournamentsDoor && canUse('module_tournaments')
-      ? { key: 'tournaments', label: 'Tournaments', href: desk ? `${base}/tournaments/manage` : `${base}/tournaments`, icon: Trophy,
-        ...(desk ? { also: [`${base}/tournaments/archives`] } : {}) } : null,
+      ? { key: 'tournaments', label: 'Tournaments', href: `${base}/tournaments`, icon: Trophy } : null,
     coachDoor.show ? { key: 'coaches-portal', label: 'Coaches Portal', href: coachDoor.href, icon: Users2 } : null,
   ];
   return doors.filter((d): d is KitLink => d !== null);
@@ -964,6 +964,24 @@ export function isTournamentOrgScreen(pathname: string, base: string): boolean {
  *  heads the sidebar there, the strip says "Events" and names the page, and the tab title carries the event's name. */
 export function isTournamentEventPath(pathname: string, base: string): boolean {
   return isAtOrUnder(pathname.replace(/\/+$/, ''), `${base}/tournaments`) && !isTournamentOrgScreen(pathname, base);
+}
+
+/** The Tournaments list (and its old Past tournaments address): `manage` and `archives`. */
+export function isTournamentListPath(pathname: string, base: string): boolean {
+  const path = pathname.replace(/\/+$/, '');
+  return isAtOrUnder(path, `${base}/tournaments/manage`) || isAtOrUnder(path, `${base}/tournaments/archives`);
+}
+
+/**
+ * ⚖ THE EVENT'S SHELL (owner 2026-11-10, amending Part B's T1): the event heads the sidebar, the strip says "Events", and the
+ * foot offers the Club door. It is on the event's own pages, AND on the Tournaments list in a CLUB that has an event to
+ * show — the list is the tournament admin's, reached by the switcher's "All tournaments". A tournament-only organization keeps
+ * its own short sidebar on the list (it has Settings & access beside it), and a club with no event yet keeps the club's.
+ * `isTournamentOrgScreen` still decides what shows an event's dates and chip and what the tab title names: the list shows
+ * neither, though the event heads the sidebar.
+ */
+export function isTournamentEventShell(pathname: string, base: string, { tournamentOnly, hasEvent }: { tournamentOnly: boolean; hasEvent: boolean }): boolean {
+  return isTournamentEventPath(pathname, base) || (!tournamentOnly && hasEvent && isTournamentListPath(pathname, base));
 }
 
 /** The organization's Settings & access, on the Tournament plans: one name for its sidebar row, its place and its door. */
