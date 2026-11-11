@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import ConsumerNav from '@/components/consumer/ConsumerNav';
 import { OrgNavProvider } from '@/components/OrgNavContext';
 import { LegalLinksProvider } from '@/components/legal/LegalLinksProvider';
+import CodeAgainProvider from '@/components/shared/CodeAgainProvider';
 import { resolveLegalLinks } from '@/lib/legal-links';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import ViewportKeyboardVars from '@/components/ViewportKeyboardVars';
@@ -116,6 +117,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ConsumerNav variant="tournament" />
         </OrgNavProvider>
         </LegalLinksProvider>
+        {/* Two-step sign-in, Part 2: the ONE "type your code again" window, for every portal. A press refused for a fresh
+            code (or the 30-day re-ask on an open page) opens it in place, then the press is sent again once. */}
+        <CodeAgainProvider />
         {/* Install prompts are mounted per-context, not globally: the fan prompt on
             tournament pages and the member prompt in authenticated shells. The
             marketing root no longer shows an install banner. */}

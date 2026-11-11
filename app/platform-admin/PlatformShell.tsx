@@ -84,6 +84,7 @@ export default function PlatformShell({ role, canBookkeep, children }: {
             showTheme
             showFeedback={false}
             showAccount={false}
+            showSecurity
             signOutTo="platform"
           />
         </div>

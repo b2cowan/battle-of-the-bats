@@ -5,7 +5,8 @@ import type { User } from '@supabase/supabase-js';
 import { createClient } from './supabase-server';
 import { writePlatformAuditLog } from './platform-audit';
 import { getSessionTwoStep } from './api-auth';
-import { verifyAuthenticatorCode } from './two-step-codes';
+import { checkProofAgain } from './code-again-server';
+import type { SessionTwoStep } from './two-step-session';
 import {
   SIGN_IN_AGAIN_AUDIT, SIGN_IN_AGAIN_CODE, SIGN_IN_AGAIN_MINUTES, SIGN_IN_AGAIN_WORDS,
   isFreshPassword, passwordEnteredAt, type SignInAgainMethod, type SignInAgainRefusal,
@@ -59,31 +60,26 @@ export async function requireFreshSignIn(user: User): Promise<
 const CHECK_TIMEOUT_MS = 15_000;
 
 /**
- * The window's CODE, checked for THIS staff member on the server (the session's own authenticator; the sign-in service
- * makes the session "password and code" again, with a new time). A code already accepted once is refused: the service
- * would take it twice in its window. Each wrong try is written to the audit log, with no email (Ask 7).
+ * The window's CODE or BACKUP CODE, checked for THIS staff member on the server, through the one check every "type your
+ * code again" window uses (lib/code-again-server.ts; owner call 6, 2026-11-11: staff may use a backup code too). Each
+ * wrong try is written to the audit log, with no email (Ask 7).
  */
-export async function checkCodeAgain(user: User, code: string): Promise<{ ok: true } | { ok: false; refusal: SignInAgainRefusal }> {
+export async function checkCodeAgain(
+  user: User,
+  state: SessionTwoStep,
+  proof: { code?: unknown; backupCode?: unknown },
+): Promise<{ ok: true; left?: number } | { ok: false; refusal: SignInAgainRefusal }> {
   const email = user.email!;
-  try {
-    const supabase = await createClient();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const result = await Promise.race([
-      verifyAuthenticatorCode(supabase, user.id, code),
-      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('timeout')), CHECK_TIMEOUT_MS); }),
-    ]).finally(() => clearTimeout(timer));
-    if (result.ok) {
-      await writePlatformAuditLog(email, null, SIGN_IN_AGAIN_AUDIT.signedIn);
-      return { ok: true };
-    }
-    if (result.reason === 'wrong_code' || result.reason === 'reused_code') {
-      await writePlatformAuditLog(email, null, SIGN_IN_AGAIN_AUDIT.wrongCode);
-      return { ok: false, refusal: 'wrong_code' };
-    }
-    return { ok: false, refusal: 'not_checked' };
-  } catch {
-    return { ok: false, refusal: 'not_checked' };
+  if (state.user.id !== user.id) return { ok: false, refusal: 'not_checked' };
+  const result = await checkProofAgain(state, proof);
+  if (result.ok) {
+    await writePlatformAuditLog(email, null, SIGN_IN_AGAIN_AUDIT.signedIn);
+    return { ok: true, left: result.left };
   }
+  if (result.refusal === 'wrong_code' || result.refusal === 'wrong_backup_code') {
+    await writePlatformAuditLog(email, null, SIGN_IN_AGAIN_AUDIT.wrongCode);
+  }
+  return { ok: false, refusal: result.refusal };
 }
 
 /**

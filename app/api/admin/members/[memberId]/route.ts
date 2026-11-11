@@ -15,6 +15,7 @@ import { readAccountKeepFacts } from '@/lib/member-account-keep-server';
 import { withObservability } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { FAMILIES_GRANT_REFUSAL } from '@/lib/families-words';
+import { requireFreshCode } from '@/lib/two-step-fresh';
 
 const VALID_CAPABILITIES = new Set<string>(ALL_CAPABILITY_KEYS);
 
@@ -352,6 +353,11 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     const join = await checkCrossOrgJoin(target.user_id, org.id, body.role);
     if (join.blocked) {
       return NextResponse.json({ error: crossOrgJoinRefusalForAdmin(join), code: 'one_home_org' }, { status: 409 });
+    }
+    // Making someone an admin asks for a code (Board Ready two-step, Part 2): after every check, before the write.
+    if (body.role === 'admin') {
+      const stale = await requireFreshCode();
+      if (stale) return stale;
     }
   }
 

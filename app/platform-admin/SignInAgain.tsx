@@ -1,16 +1,15 @@
 'use client';
 
-import { useCallback, useId, useRef, useState, type ReactNode } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
-import KitDialog, { DialogCancel } from '@/components/shared/KitDialog';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
+import CodeAgainWindow, { type CodeAgainCheck } from '@/components/shared/CodeAgainWindow';
+import type { CodeAgainProof } from '@/lib/code-again';
 import { SIGN_IN_AGAIN_CODE, SIGN_IN_AGAIN_WORDS as W, type SignInAgainMethod, type SignInAgainRefusal } from '@/lib/sign-in-again';
 import kit from './console.module.css';
-import styles from './sign-in-again.module.css';
 
 /** What the window says for one door (tabs 3 and 4): its title, the sentence naming the change, the button, the foot. */
 export type SignInAgainAsk = { title: string; lead: string; confirm: string; foot: string };
 
-const REFUSALS = new Set<SignInAgainRefusal>(['wrong_password', 'wrong_code', 'too_many_tries', 'not_checked']);
+const REFUSALS = new Set<SignInAgainRefusal>(['wrong_password', 'wrong_code', 'wrong_backup_code', 'no_authenticator', 'too_many_tries', 'not_checked']);
 
 /**
  * Whether a gated route answered "sign in again" (401 with the code), read from a copy so the caller can still read it,
@@ -24,11 +23,12 @@ async function asksToSignInAgain(res: Response): Promise<SignInAgainMethod | nul
 }
 
 /**
- * SIGN IN AGAIN (Stage 0, Part 10, tab 2): the product's small question window with one field: the authenticator CODE
- * (staff always use two-step sign-in, Board Ready Part 1), or the password for a dev account with no authenticator. It opens only
- * when the server answers "sign in again" to the press; once the password is accepted it closes and the same request goes
- * again once, with no second press (Ask 4). Cancel, Escape or a tap outside means no, and nothing runs. While it checks,
- * the window holds. A wrong password keeps it open with the text selected, so typing again replaces it.
+ * SIGN IN AGAIN (Stage 0, Part 10, tab 2): staff's door to the ONE "type your code again" window
+ * (components/shared/CodeAgainWindow.tsx; Board Ready two-step, Part 2: one window, so staff's and everyone's never
+ * drift). It asks for the authenticator CODE, or a backup code (owner call 6, 2026-11-11), or the password for a dev
+ * account with no authenticator. Staff keep their own words, their own 10-minute clock and their own audit lines (the
+ * check is `/api/platform-admin/sign-in-again`). It opens only when the server answers "sign in again" to the press;
+ * once accepted it closes and the same request goes again once, with no second press (Ask 4).
  */
 function SignInAgainWindow({ ask, email, method, onDone }: {
   ask: SignInAgainAsk;
@@ -36,104 +36,31 @@ function SignInAgainWindow({ ask, email, method, onDone }: {
   method: SignInAgainMethod;
   onDone: (accepted: boolean) => void;
 }) {
-  const isCode = method === 'code';
-  const id = useId();
-  const fieldRef = useRef<HTMLInputElement>(null);
-  const [password, setPassword] = useState('');
-  const [show, setShow] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [refusal, setRefusal] = useState<SignInAgainRefusal | null>(null);
-
-  async function check() {
-    if (busy || !password) return;
-    setBusy(true);
-    setRefusal(null);
-    let outcome: SignInAgainRefusal | null = 'not_checked';
+  async function check(proof: CodeAgainProof): Promise<CodeAgainCheck> {
     try {
       const res = await fetch('/api/platform-admin/sign-in-again', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(isCode ? { code: password } : { password }),
+        body: JSON.stringify(proof),
       });
-      if (res.ok) outcome = null;
-      else {
-        const code = (await res.json().catch(() => null) as { code?: SignInAgainRefusal } | null)?.code;
-        if (code && REFUSALS.has(code)) outcome = code;
-      }
-    } catch { /* a dropped connection: the password could not be checked */ }
-    if (outcome === null) { onDone(true); return; }
-    setBusy(false);
-    setRefusal(outcome);
-    if (outcome === 'wrong_password' || outcome === 'wrong_code') window.requestAnimationFrame(() => fieldRef.current?.select());
+      if (res.ok) return { ok: true };
+      const code = (await res.json().catch(() => null) as { code?: SignInAgainRefusal } | null)?.code;
+      return { ok: false, refusal: code && REFUSALS.has(code) ? code : 'not_checked' };
+    } catch {
+      return { ok: false, refusal: 'not_checked' };
+    }
   }
-
-  // A wait or a failed check replaces the sentence (tab 2, frames 3 and 4); a wrong password is a red line under the field.
-  const wait = refusal === 'too_many_tries' ? W.tooManyTries : refusal === 'not_checked' ? W.notChecked : null;
-  const wrong = refusal === 'wrong_password' || refusal === 'wrong_code';
   return (
-    <KitDialog
-      kind="question"
+    <CodeAgainWindow
       title={ask.title}
-      identity={email || undefined}
-      busy={busy}
-      followKeyboard
-      onClose={() => onDone(false)}
-      footerStart={<p>{ask.foot}</p>}
-      footer={(
-        <>
-          <DialogCancel />
-          <button type="submit" form={id} className="btn btn-primary" disabled={busy}>{busy ? W.checking : ask.confirm}</button>
-        </>
-      )}
-    >
-      <div className={styles.window}>
-        {wait ? <p className={`${kit.callout} ${kit.calloutWarn}`} role="alert">{wait}</p> : <p className={styles.lead}>{ask.lead}</p>}
-        <form id={id} onSubmit={event => { event.preventDefault(); void check(); }}>
-          <label className={kit.fieldGroup} htmlFor={`${id}-pw`}>
-            <span className={kit.label}>{isCode ? W.code : W.password}<span className={kit.req} aria-hidden="true"> *</span></span>
-            {isCode ? (
-              // The authenticator's code: one numeric field with the one-time-code fill (two-step sign-in, tab 3).
-              <input
-                ref={fieldRef}
-                id={`${id}-pw`}
-                className={kit.field}
-                value={password}
-                onChange={event => setPassword(event.target.value.replace(/[^\d\s]/g, '').slice(0, 7))}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="6-digit code"
-                required
-                aria-invalid={wrong || undefined}
-                aria-describedby={wrong ? `${id}-wrong` : undefined}
-              />
-            ) : (
-              <span className={styles.pwWrap}>
-                <input
-                  ref={fieldRef}
-                  id={`${id}-pw`}
-                  type={show ? 'text' : 'password'}
-                  className={kit.field}
-                  value={password}
-                  onChange={event => setPassword(event.target.value)}
-                  // The current password, so a password manager offers it (tab 7, the honest limit).
-                  autoComplete="current-password"
-                  required
-                  aria-invalid={wrong || undefined}
-                  aria-describedby={wrong ? `${id}-wrong` : undefined}
-                />
-                {/* The product's eye (`components/auth/PasswordInput`): one name, pressed or not. That field wears the
-                    public pages' tokens, so the console keeps its own look here. */}
-                <button type="button" className={styles.pwToggle} onClick={() => setShow(value => !value)}
-                  aria-label="Show password" aria-pressed={show} aria-controls={`${id}-pw`} disabled={busy}>
-                  {show ? <EyeOff size={15} aria-hidden /> : <Eye size={15} aria-hidden />}
-                </button>
-              </span>
-            )}
-            {wrong && <span id={`${id}-wrong`} className={kit.fieldError} role="alert">{isCode ? W.wrongCode : W.wrongPassword}</span>}
-          </label>
-        </form>
-      </div>
-    </KitDialog>
+      lead={ask.lead}
+      confirm={ask.confirm}
+      foot={ask.foot}
+      identity={email}
+      password={method === 'password'}
+      check={check}
+      onDone={onDone}
+    />
   );
 }
 

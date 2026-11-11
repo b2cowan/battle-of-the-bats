@@ -4,6 +4,7 @@ import { getPlatformUsers, createPlatformUser } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
+import { requireFreshCode } from '@/lib/two-step-fresh';
 
 export const GET = withObservability(async () => {
   // The staff list is Super admin's (the Staff page is theirs alone, Support console Stage 2): it answered any console
@@ -24,6 +25,10 @@ export const POST = withObservability(async (req: NextRequest) => {
   const safeRole = ['super_admin', 'support', 'billing', 'product', 'growth', 'read_only'].includes(role) ? role : 'support';
 
   const normalized = email.trim().toLowerCase();
+
+  // Adding a staff account asks for a code (Board Ready two-step, Part 2; owner 2026-11-11), before anything is created.
+  const stale = await requireFreshCode();
+  if (stale) return stale;
 
   // Create Supabase auth account (email already confirmed, no org)
   const { error: authError } = await supabaseAdmin.auth.admin.createUser({

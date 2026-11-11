@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from './supabase-admin';
 
@@ -6,7 +6,13 @@ import { supabaseAdmin } from './supabase-admin';
  * BACKUP CODES and ONE-TIME CODE CHECKS (Board Ready · two-step sign-in, Part 1; drawings tab 2 and tab 3).
  *
  * Backup codes are OURS, not the sign-in service's (its recovery codes are still "experimental"). Ten per person, shown
- * once, used once, stored only as one-way hashes (sha-256 of a per-code salt and the code; a code is 40 random bits).
+ * once, used once, stored only as one-way hashes (a code is about 40 random bits).
+ *
+ * ⚖ KEYED HASHES (Part 2, owner call 3, 2026-11-11): a new code is stored as `k1:` + HMAC-SHA-256, under a server secret
+ * (`TWO_STEP_CODE_KEY`), of its salt and the code, so a copy of the database alone cannot be searched for the codes (40
+ * bits falls to brute force in hours; the key puts it out of reach). Codes made before the secret existed (sha-256 of
+ * salt and code, no prefix) keep working until they are used or replaced. Without the secret, new codes fall back to the
+ * older form, with a warning: production gains the secret before the promote (an owner step).
  * Using one lets that sign-in through: the code's row records the session it let in, and both our server
  * (lib/two-step-session.ts) and the database (public.session_passed_two_step, mig 463) accept that session.
  *
@@ -23,6 +29,42 @@ export const AUTHENTICATOR_CODE_PATTERN = /^\d{6}$/;
 
 function sha256(text: string): string {
   return createHash('sha256').update(text).digest('hex');
+}
+
+const KEYED_PREFIX = 'k1:';
+let warnedNoKey = false;
+function codeKey(): string | null {
+  const key = (process.env.TWO_STEP_CODE_KEY ?? '').trim();
+  if (key.length >= 32) return key;
+  if (!warnedNoKey) {
+    warnedNoKey = true;
+    console.warn('[two-step] TWO_STEP_CODE_KEY is not set (or is under 32 characters): new backup codes use the unkeyed hash.');
+  }
+  return null;
+}
+
+const hmac = (key: string, text: string) => createHmac('sha256', key).update(text).digest('hex');
+
+/** The stored form of a backup code: keyed when the server has its secret, the older salted form otherwise. */
+export function hashBackupCode(salt: string, code: string, key: string | null = codeKey()): string {
+  return key ? `${KEYED_PREFIX}${hmac(key, `${salt}:${code}`)}` : sha256(`${salt}:${code}`);
+}
+
+/** Does a typed code match a stored hash, in either form? Constant-time on the digest. */
+export function backupCodeMatches(stored: string, salt: string, code: string, key: string | null = codeKey()): boolean {
+  let want: string;
+  let got: string;
+  if (stored.startsWith(KEYED_PREFIX)) {
+    if (!key) return false; // a keyed code cannot be checked without the secret: refused, never let through
+    want = stored.slice(KEYED_PREFIX.length);
+    got = hmac(key, `${salt}:${code}`);
+  } else {
+    want = stored;
+    got = sha256(`${salt}:${code}`);
+  }
+  const a = Buffer.from(want, 'hex');
+  const b = Buffer.from(got, 'hex');
+  return a.length > 0 && a.length === b.length && timingSafeEqual(a, b);
 }
 
 /** "kd7p r4ts" / "KD7P-R4TS" → "KD7PR4TS". */
@@ -53,9 +95,10 @@ function newBackupCode(): string {
  */
 export async function createBackupCodes(userId: string): Promise<string[]> {
   const codes = Array.from({ length: BACKUP_CODE_COUNT }, newBackupCode);
+  const key = codeKey();
   const rows = codes.map(code => {
     const salt = randomBytes(16).toString('hex');
-    return { salt, code_hash: sha256(`${salt}:${code}`) };
+    return { salt, code_hash: hashBackupCode(salt, code, key) };
   });
   // One step in the database (mig 463, two_step_backup_codes_replace): the old unused set and the new one swap together,
   // under a per-person lock, so a double press never leaves twenty codes, or none.
@@ -89,11 +132,8 @@ export async function redeemBackupCode(userId: string, sessionId: string, typed:
     .eq('user_id', userId)
     .is('used_at', null);
   if (error) throw error;
-  const match = (data ?? []).find(row => {
-    const want = Buffer.from(row.code_hash as string, 'hex');
-    const got = Buffer.from(sha256(`${row.salt}:${code}`), 'hex');
-    return want.length === got.length && timingSafeEqual(want, got);
-  });
+  const key = codeKey();
+  const match = (data ?? []).find(row => backupCodeMatches(row.code_hash as string, row.salt as string, code, key));
   if (!match) return false;
   const { data: marked, error: markErr } = await supabaseAdmin
     .from('two_step_backup_codes')
@@ -130,8 +170,8 @@ export type CodeCheck = { ok: true } | { ok: false; reason: 'wrong_code' | 'reus
 
 /**
  * Check an authenticator code on the SERVER, for the signed-in person, on a client that writes the session cookies (the
- * session becomes `aal2` with a new "code typed" time). Refuses a code this person already used. Platform "sign in
- * again" uses it now; Part 2's five actions use it.
+ * session becomes `aal2` with a new "code typed" time). Refuses a code this person already used. The one "type your code
+ * again" window uses it (lib/code-again-server.ts), staff's "sign in again" included.
  */
 export async function verifyAuthenticatorCode(supabase: SupabaseClient, userId: string, typed: string): Promise<CodeCheck> {
   const code = normalizeAuthenticatorCode(typed);

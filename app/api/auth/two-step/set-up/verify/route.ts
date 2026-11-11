@@ -6,11 +6,13 @@ import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { createBackupCodes, normalizeAuthenticatorCode, recordCodeUse } from '@/lib/two-step-codes';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { REPLACING_AUTHENTICATOR_FLAG, isReplacingAuthenticator } from '@/lib/two-step-session';
+import { freshCodeRefusal, hasFreshCode } from '@/lib/two-step-fresh';
 
 /**
  * Finish setting up two-step (tab 2): the first code from the app turns it on, and the ten backup codes are made and
  * returned ONCE. The session becomes "password and code" (its cookies are rewritten here); the sign-in service signs
- * every OTHER session out at this moment, which is what "Your other devices were signed out" says.
+ * every OTHER session out at this moment, which is what "Your other devices were signed out" says. A new phone set up
+ * beside the old one (`replace`) removes the old one here, after the new one is verified (Part 2).
  */
 export const POST = withObservability(async (req: Request) => {
   const state = await getSessionTwoStep();
@@ -18,7 +20,12 @@ export const POST = withObservability(async (req: Request) => {
   if (isDemoOrganizerEmail(state.user.email)) {
     return NextResponse.json({ error: 'The demo account can’t use two-step sign-in.', code: 'demo_account' }, { status: 403 });
   }
-  const body = await req.json().catch(() => ({})) as { factorId?: string; code?: string };
+  // Like set-up/start (/review of Part 2): an account that already has two-step (or is replacing a lost phone) finishes
+  // a set-up only with a proof from the last 15 minutes. Otherwise a stale session that set up an authenticator directly
+  // with the sign-in service could finish here and remove the real one, or swap the backup codes. A first set-up (two-step
+  // off) is never asked: hasFreshCode is true with no authenticator.
+  if (!hasFreshCode(state)) return freshCodeRefusal();
+  const body = await req.json().catch(() => ({})) as { factorId?: string; code?: string; replace?: boolean };
   const code = normalizeAuthenticatorCode(body.code ?? '');
   if (!body.factorId || !code) {
     return NextResponse.json({ error: 'Type the 6 digits the app shows.', code: 'wrong_code' }, { status: 400 });
@@ -37,12 +44,31 @@ export const POST = withObservability(async (req: Request) => {
     }, { status: 400 });
   }
   await recordCodeUse(state.user.id, code);
-  // A replaced phone is finished: the account's "replacing" mark goes (the new authenticator now keeps two-step on).
-  if (isReplacingAuthenticator(state.user)) {
+  const wasReplacing = isReplacingAuthenticator(state.user);
+  // A new phone set up BESIDE the old one (set-up/start "adding"): now that it works, the old one goes. A failure there
+  // leaves both working (never neither). While a lost phone was being replaced, the sign-in service would let anyone
+  // holding the password add an authenticator of their own: every other one goes then too, so only the one just verified
+  // here remains — and BEFORE the mark is cleared, since clearing it is what lets a code count again (/review of Part 2).
+  let oldRemoved = true;
+  if (body.replace === true || wasReplacing) {
+    const { data: listed, error: listErr } = await supabaseAdmin.auth.admin.mfa.listFactors({ userId: state.user.id });
+    if (listErr) oldRemoved = false;
+    for (const f of listed?.factors ?? []) {
+      if (f.id === body.factorId || f.status !== 'verified') continue;
+      const { error } = await supabaseAdmin.auth.admin.mfa.deleteFactor({ userId: state.user.id, id: f.id });
+      if (error) oldRemoved = false;
+    }
+  }
+  if (wasReplacing) {
+    // An authenticator that could not be removed keeps the mark on (only backup codes count) until a retry removes it.
+    if (!oldRemoved) {
+      return NextResponse.json({ error: 'We couldn’t finish setting up your new phone. Try again.', code: 'not_finished' }, { status: 502 });
+    }
+    // The replaced phone is finished: the mark goes (the new authenticator now keeps two-step on).
     await supabaseAdmin.auth.admin.updateUserById(state.user.id, {
       app_metadata: { ...(state.user.app_metadata ?? {}), [REPLACING_AUTHENTICATOR_FLAG]: false },
     });
   }
   const backupCodes = await createBackupCodes(state.user.id);
-  return NextResponse.json({ ok: true, backupCodes });
+  return NextResponse.json({ ok: true, backupCodes, oldRemoved });
 }, { route: '/api/auth/two-step/set-up/verify' });

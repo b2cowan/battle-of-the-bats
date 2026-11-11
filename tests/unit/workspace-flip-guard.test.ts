@@ -386,6 +386,7 @@ const SPECIAL: Record<string, [Klass, string]> = {
   'lib/team-workspace-kind.ts': ['definition', 'the one definition of the portal test'],
   'lib/two-step-rule.ts': ['live-row', "two-step: a coach's own team workspace (isTeamWorkspaceOrg) is never a required seat; the row is read fresh per request, so a flipped club is asked as a club"],
   'lib/two-step-requirements.ts': ['live-row', "two-step: reads each seat's organization row fresh to apply the same rule across a person's seats"],
+  'lib/two-step-lost-phone.ts': ['live-row', "two-step Lost your phone?: a coach's own team workspace (isTeamWorkspaceOrg) gets the support version; read fresh, so a flipped club reads as a club"],
   'lib/team-workspace-entitlements.ts': ['live-row', 'the entitlement mapper; re-exports the one definition'],
   'lib/legal-acceptance-plans.ts': ['live-row', "the Terms screen's cancel door (6.3): reads the row fresh and hands the tag to getBillingHref, so a flipped club's door is its club billing page"],
   'lib/team-workspace-provisioning.ts': ['portal-only', 'CREATES a workspace organization (account_kind team_workspace, status active); a club is never created here'],

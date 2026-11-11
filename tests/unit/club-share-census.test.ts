@@ -45,6 +45,7 @@ const STAYS_ON_FIELDLOGICHQ: Record<string, string> = {
   'components/notifications/NotificationMessage.tsx': 'compares a notification\'s path with the current page; no link is handed out',
   'app/team/TeamSignupClient.tsx': 'same-origin guard on a sign-up redirect; no link is handed out',
   'lib/push-client.ts': 'names this site in a browser permission message',
+  'components/shared/CodeAgainProvider.tsx': 'same-origin check: the code window answers only our own server’s refusals; no link is handed out',
   'app/[orgSlug]/admin/public-site/SitePreview.tsx': 'postMessage origin check between the editor and its preview',
   'app/[orgSlug]/admin/public-site/preview/PreviewClicks.tsx': 'postMessage origin for the preview frame',
   'app/[orgSlug]/admin/public-site/page.tsx': 'the Public site editor: shows the FieldLogicHQ address beside the club\'s own, which comes from useOwnAddress',

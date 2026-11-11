@@ -10,11 +10,13 @@
  */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, Bell, Sun, Smartphone, LifeBuoy } from 'lucide-react';
+import { User, Bell, Sun, Smartphone, LifeBuoy, ShieldCheck } from 'lucide-react';
 import styles from './account.module.css';
 
 const SECTIONS = [
   { href: '/account', label: 'Profile', icon: User, signedInOnly: false },
+  // Board Ready two-step sign-in, Part 2 (drawings tab 5): one more row, second in the rail as drawn.
+  { href: '/account/security', label: 'Sign-in & security', icon: ShieldCheck, signedInOnly: true },
   { href: '/account/notifications', label: 'Notifications', icon: Bell, signedInOnly: true },
   { href: '/account/appearance', label: 'Appearance', icon: Sun, signedInOnly: false },
   { href: '/account/get-the-app', label: 'Get the app', icon: Smartphone, signedInOnly: false },

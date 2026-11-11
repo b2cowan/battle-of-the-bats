@@ -1,0 +1,99 @@
+/* THE ONE "TYPE YOUR CODE AGAIN" WINDOW (Board Ready two-step, Part 2): the shipped small question window (KitDialog)
+   with one field. Portal-neutral: it reads the shared tokens KitDialog itself reads, so it sits right in the club admin,
+   the Coaches Portal, the family pages, the Account page and the staff console alike. */
+
+.window { display: grid; gap: 0.85rem; }
+.lead { margin: 0; color: var(--text-secondary); font-size: var(--type-body, 0.95rem); }
+
+.callout {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-left: 3px solid var(--warning, #c98a12);
+  background: rgba(var(--warning-rgb, 201, 138, 18), 0.08);
+  border-radius: var(--home-radius-sm, 6px);
+  color: var(--text-primary);
+  font-size: var(--type-support, 0.88rem);
+}
+
+.form { display: grid; gap: 0.5rem; justify-items: start; }
+.fieldGroup { display: grid; gap: 0.35rem; width: 100%; }
+.label { font-size: var(--type-label, 0.82rem); font-weight: 600; color: var(--text-primary); }
+
+.field {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--home-line-strong, rgba(0, 0, 0, 0.22));
+  border-radius: var(--home-radius-sm, 6px);
+  background: var(--card-bg, #fff);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 1rem;
+}
+.field:focus { outline: 2px solid var(--home-olive, #5c6b2e); outline-offset: 1px; }
+.field[aria-invalid='true'] { border-color: var(--danger, #b42318); }
+/* The data face for a recorded code (/design ask D: a named exception). */
+.data { font-family: var(--font-data, ui-monospace, monospace); letter-spacing: 0.08em; }
+
+.fieldError { color: var(--danger, #b42318); font-size: var(--type-support, 0.85rem); }
+
+.textBtn {
+  background: none;
+  border: none;
+  padding: 0.35rem 0;
+  min-height: var(--tap-min, 44px);
+  color: var(--home-olive, #5c6b2e);
+  font: inherit;
+  font-size: var(--type-support, 0.9rem);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.textBtn:disabled { opacity: 0.6; cursor: default; }
+
+.pwWrap { position: relative; display: block; }
+.pwWrap .field { padding-right: 2.75rem; }
+.pwToggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  padding: 0.5rem;
+  cursor: pointer;
+}
+.pwToggle:hover { color: var(--text-primary); }
+
+/* The product-wide notice when a press needs two-step SET UP (it cannot be answered in a window). */
+.setUpNotice {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--home-radius-sm, 8px);
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--home-line-strong, rgba(0, 0, 0, 0.22));
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  color: var(--text-primary);
+  font-size: var(--type-support, 0.9rem);
+}
+.setUpNotice a { color: var(--home-olive, #5c6b2e); font-weight: 700; }
+.setUpClose {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  font: inherit;
+  cursor: pointer;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.25rem;
+}

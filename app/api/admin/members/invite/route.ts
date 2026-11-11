@@ -15,6 +15,7 @@ import { INVITE_EMAIL_ACTION, VOLUNTEER_EMAIL_NOTE } from '@/lib/volunteer-words
 import type { OrgRole } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
+import { requireFreshCode } from '@/lib/two-step-fresh';
 
 function getActionLink(data: unknown) {
   return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
@@ -74,6 +75,13 @@ export const POST = withObservability(async (req: Request) => {
         { status: 403 }
       );
     }
+  }
+
+  // Adding an admin is one of the actions that ask for a code (Board Ready two-step, Part 2): after the checks above,
+  // before anything is written or sent. (No club can hand out "owner"; only support's ownership transfer can.)
+  if (role === 'admin') {
+    const stale = await requireFreshCode();
+    if (stale) return stale;
   }
 
   // Check if a Supabase auth user already exists with this email.

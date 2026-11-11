@@ -226,6 +226,14 @@ describe('4 · the rule, and the session read', () => {
     const replacing = await readSessionTwoStep(fakeClient({ id, factors: [], app_metadata: { two_step_replacing: true } }, { sub: id, aal: 'aal1', session_id: id }));
     assert.equal(replacing?.hasFactor, true);
     assert.equal(replacing?.passed, false);
+    // ⚠ /review of Part 2: mid-replacement the sign-in service lets ANY session (a stolen password's) set up its own first
+    // authenticator and reach aal2. Then aal2 counts for nothing; only one of our backup codes lets a session through.
+    const sideApp = await readSessionTwoStep(fakeClient(
+      { id, factors: verified, app_metadata: { two_step_replacing: true } },
+      { sub: id, aal: 'aal2', session_id: id, amr: [{ method: 'totp', timestamp: t }] },
+    ));
+    assert.equal(sideApp?.passed, false, 'an authenticator set up on the side during a replacement is not a sign-in');
+    assert.equal(sideApp?.provedAt, null);
   });
 
   it('"when the code was typed" is the latest totp entry', () => {

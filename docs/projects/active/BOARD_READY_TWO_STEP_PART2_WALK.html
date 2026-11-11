@@ -1,0 +1,438 @@
+<title>Your Account Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready · two-step sign-in · Part 2, your account · Owner QA Ledger §513</span>
+    <h1>Sign-in &amp; security, and “type your code again”</h1>
+    <p class="lead">Every Account page now has a <b>Sign-in &amp; security</b> section: two-step sign-in in its states, Set up a new phone, New backup codes, Turn off (only where nothing requires it), Sign out everywhere else, and Change password. Six actions ask for your code if the last one was over 15 minutes ago, in one small window that then finishes what you pressed. The code step gains <b>Lost your phone?</b>. Four walks, one purpose each. About 45 minutes (walk 4 starts at least 15 minutes after walk 1), and you need an authenticator app on your phone.</p>
+    <p class="lead">Not in this walk: the club’s two switches and the 14 days (Part 3, which also brings the club’s version of “Lost your phone?” and the reset that uses this window), and the Members column, Overview notice and emails (Part 4). The “required, set it up by …” state needs Part 3’s switch, so it is walked there.</p>
+    <p class="lead">Written Nov 11, 2026 against the dev site. Every account here is a dev test account.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Walks 1, 3 and 4</dt><dd><code>club-owner@dev.local</code> · password <code>devpass123</code><br>The owner of <b>Dev Club Org</b> and nothing else. Nothing requires two-step for them, so it is offered.</dd>
+      <dt>Walk 2</dt><dd><code>support@dev.local</code> · password <code>devpass123</code><br>A FieldLogicHQ staff account. Staff must use two-step: if you haven’t walked §511 yet, the console sends you to set it up first.</dd>
+      <dt>Phone</dt><dd>Steps marked <b>phone</b> use your desk browser’s device toolbar at <b>390 px</b> wide. Your real phone runs the authenticator app.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>Walk 1 first.</b> It turns two-step on for the club owner. Walk 4 must start <b>at least 15 minutes after</b> walk 1’s last code; walks 2 and 3 fill the time.</li>
+      <li>Walk 1 changes the club owner’s password and back: if you stop half-way, the password may be <code>devpass456</code>.</li>
+      <li>Walk 4 ends by turning two-step off for the club owner, so the account is as it was. <code>support@dev.local</code> keeps it on.</li>
+      <li>The drawings these screens were built to: <a href="https://claude.ai/artifact/5b956A7svYzjzmZhZUfnkc">tabs 4 and 5</a>. The “type your code again” window was not drawn; it is built from tab 8’s “Stop requiring it” window.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>Each of the actions asks before it writes or hands out a link (a build check per action), and a person with two-step off is never asked.</li>
+      <li>A session with only the password cannot reach Turn off, Change password, New backup codes or Set up a new phone, and a seat that requires two-step can never turn it off. Turn off’s order leaves two-step on if anything fails part-way, and a deliberate swap of that order is caught by the build.</li>
+      <li>Setting up a new phone while you still have the old one adds the new one first and removes the old one only once the new one works. With a backup code (a lost phone) the account stays protected the whole way; an authenticator someone sets up on the side with only the password counts for nothing, and is removed when you finish (a review fix).</li>
+      <li>Change password checks the current one without touching your own session (proved on dev: the check’s own session is ended at once), saves, and signs out your other devices.</li>
+      <li>The 30-day ask on a page already open uses the same window; staff’s “sign in again” is the same window and now takes a backup code.</li>
+      <li>New backup codes are stored with a keyed hash on dev. Codes made before keep working.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: does each state say what is true for this person, does the window read as “one more step” rather than an error, and does the lost-phone screen help without telling a stranger anything?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "board-ready-two-step-p2-walk-v1";
+  var PAGE = "Board Ready · two-step sign-in · Part 2 · Owner QA Ledger §513";
+  var WALKS = [
+ {
+  "id": "A1",
+  "title": "The section, turned on from the Account page",
+  "job": "club-owner@dev.local · offered · computer and phone",
+  "forText": "Every account menu already opens the one Account page; it gains Sign-in & security. For someone nothing requires it of, two-step is offered, and turning it on starts from here.",
+  "passes": "The rail shows Sign-in & security second; “Off. Turn it on so a stolen password isn’t enough…” with the lime button; set-up returns here; “On since …” with Set up a new phone, New backup codes, Turn off and “10 of 10 backup codes left”; Sign out everywhere else and Change password each confirm and say what happened; the phone list has the row with its second line.",
+  "notIn": "The window that asks for a code (walk 4): right after setting it up your code is fresh, so nothing asks.",
+  "who": "club-owner@dev.local · devpass123",
+  "where": "Sign in at localhost:3000/auth/login, then your account menu › Account settings",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as <b>club-owner@dev.local<\/b>, open the account menu at the top right and choose <b>Account settings<\/b>.",
+    "s": "The Account page. The left rail reads <b>Profile<\/b>, <b>Sign-in &amp; security<\/b>, Notifications, Appearance, Get the app, Help."
+   },
+   {
+    "d": "Press <b>Sign-in &amp; security<\/b>.",
+    "s": "Three white cards. <b>Two-step sign-in<\/b>: “Off. Turn it on so a stolen password isn’t enough to sign in as you.” with a lime <b>Turn on two-step sign-in<\/b>. <b>Signed in on other devices<\/b> with <b>Sign out everywhere else<\/b>. <b>Password<\/b>: “Change the password you sign in with.” with <b>Change password<\/b>. No chip, no Turn off."
+   },
+   {
+    "d": "Press <b>Turn on two-step sign-in<\/b>; scan, type the code, save the backup codes (keep them for walks 3 and 4), tick, Done, Continue.",
+    "s": "Part 1’s three screens; Continue brings you <b>back to Sign-in &amp; security<\/b>, not to the club."
+   },
+   {
+    "d": "Read the two-step card now.",
+    "s": "An olive <b>On<\/b> chip; “On since Nov 11, 2026. Signing in asks for a code from your authenticator app.”; three white buttons <b>Set up a new phone<\/b>, <b>New backup codes<\/b>, <b>Turn off<\/b>; and “10 of 10 backup codes left. New codes replace the old ones. Turning it off, getting new codes or setting up a new phone asks for a code first.”"
+   },
+   {
+    "d": "Press <b>Sign out everywhere else<\/b>, read the window, then press its <b>Sign out everywhere else<\/b>.",
+    "s": "A small window: “Every other phone, tablet and computer signed in to this account is signed out. This one stays signed in.” After pressing: a green line “Your other devices are signed out. This one stays signed in.” You are still signed in here."
+   },
+   {
+    "d": "Press <b>Change password<\/b>. Type a wrong current password and <code>devpass456<\/code> as the new one; press <b>Save password<\/b>.",
+    "s": "The window stays open with one red line, once, inside the window: “That isn’t your current password.”"
+   },
+   {
+    "d": "Type <code>devpass123<\/code> as the current one and <code>devpass456<\/code> as the new one; save.",
+    "s": "No code is asked (you typed one minutes ago). The window closes; a green line “Your password is changed. Your other devices were signed out.”"
+   },
+   {
+    "d": "Change it back: current <code>devpass456<\/code>, new <code>devpass123<\/code>.",
+    "s": "The same green line. The password is <code>devpass123<\/code> again."
+   },
+   {
+    "d": "<b>Phone<\/b> (390 px): open <code>localhost:3000/account<\/code>.",
+    "s": "The Account list’s first row is <b>Sign-in &amp; security<\/b> with a second line “Two-step sign-in is on”. Tapping it opens the section as its own page: the cards stack, the buttons are full width, and the devices card has its button but no sentence."
+   }
+  ]
+ },
+ {
+  "id": "A2",
+  "title": "Staff: required, and a door from the console",
+  "job": "support@dev.local · staff · computer",
+  "forText": "Staff must use two-step, so it can’t be turned off; the console’s menu had no way to the Account page, so it gains one row.",
+  "passes": "The console’s account menu has Sign-in & security; the page says “Required for FieldLogicHQ staff, so it can’t be turned off.” with no Turn off; a “Back to your support console” bar returns to where you were.",
+  "notIn": "Staff’s “sign in again” window (bulk changes, a Production price) is the same window as walk 4’s; it is not walked here because it runs a real change.",
+  "who": "support@dev.local · devpass123",
+  "where": "localhost:3000/platform-admin/login",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in to the console as <b>support@dev.local<\/b> (set it up first if the console asks), and open the account menu at the top right.",
+    "s": "The menu shows a row <b>Sign-in &amp; security<\/b> with a shield. It still has no “Account settings” or “Notification settings” rows."
+   },
+   {
+    "d": "Press <b>Sign-in &amp; security<\/b>.",
+    "s": "The Account page, with a bar at the top “Back to your support console”. The two-step card: <b>On<\/b> chip, “On since …”, and “<b>Required for FieldLogicHQ staff, so it can’t be turned off.<\/b>” Buttons: <b>Set up a new phone<\/b>, <b>New backup codes<\/b>. <b>No Turn off.<\/b>"
+   },
+   {
+    "d": "Press <b>Back to your support console<\/b>.",
+    "s": "You return to the console page you came from."
+   }
+  ]
+ },
+ {
+  "id": "A3",
+  "title": "Lost your phone?",
+  "job": "club-owner@dev.local · a private window",
+  "forText": "Shown after the password, before the code, so it never tells a stranger anything about the account: no club, no person. Until Part 3 builds the club’s reset, everyone sees the support version.",
+  "passes": "The code step’s foot reads “Use a backup code” at the left and “Lost your phone?” at the right; the screen offers a backup code first, then “No codes? Email us” with the address as text you can copy; “Back to the code” returns; the backup-code screen has the same link.",
+  "notIn": "The club version (“Ask your club”, “Are you the club’s owner?”): Part 3’s walk, once the club’s reset exists.",
+  "who": "club-owner@dev.local · devpass123 (two-step on since walk 1)",
+  "where": "A private window: localhost:3000/auth/login",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: in a <b>private window<\/b>, sign in as <b>club-owner@dev.local<\/b> with the password only.",
+    "s": "<b>Enter your code<\/b>. Under the Sign in button, one row: <b>Use a backup code<\/b> at the left, <b>Lost your phone?<\/b> at the right."
+   },
+   {
+    "d": "Press <b>Lost your phone?<\/b>.",
+    "s": "<b>Lost your phone?<\/b> “Here’s how to get back in.” Then “<b>Use a backup code<\/b> · You saved ten when you set up two-step sign-in.” and a white <b>Use a backup code<\/b> button; then “<b>No codes? Email us<\/b> · Email <b>hello@fieldlogichq.ca<\/b> from this account’s address. We confirm by email and reset it 24 hours later.” No club’s name anywhere. <b>Back to the code<\/b> at the foot."
+   },
+   {
+    "d": "Press the address.",
+    "s": "It is copied (the line says “(copied)” for two seconds). It is plain text, not only a mail link."
+   },
+   {
+    "d": "Press <b>Back to the code<\/b>, then <b>Use a backup code<\/b>.",
+    "s": "The backup-code screen; its foot reads <b>Use my authenticator app<\/b> at the left and <b>Lost your phone?<\/b> at the right."
+   },
+   {
+    "d": "Close the private window without typing a code.",
+    "s": "Nothing else to see. Closing it leaves walk 4’s clock alone: each window is its own sign-in."
+   }
+  ]
+ },
+ {
+  "id": "A4",
+  "title": "The actions that ask for a code",
+  "job": "club-owner@dev.local · computer · 15+ minutes after walk 1",
+  "forText": "Six actions ask for a code when the last one was more than 15 minutes ago: payout details, adding an admin, new backup codes, setting up a new phone, turning it off (and Part 3’s reset). One window asks; once the code is in, what you pressed finishes by itself. Cancel means nothing happened.",
+  "passes": "Payouts and Invite as Admin each open “Type your code to continue”; Cancel leaves nothing done; a wrong code is a red line under the field; “Use a backup code” takes one; New backup codes then finishes without a second press; for 15 minutes nothing asks again; Set up a new phone keeps the old app working until the new one is in, then the old one stops; Turn off asks to confirm and leaves it off.",
+  "notIn": "The 30-day ask (proved by tests); staff’s window (walk 2 says why).",
+  "who": "club-owner@dev.local, in walk 1’s window (still signed in)",
+  "where": "localhost:3000/dev-club-org/admin",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: at least 15 minutes since walk 1’s last code. In the club’s admin open <b>Settings<\/b> › Payouts, press <b>Set up payouts<\/b>, then the “Before you set up payouts” window’s button (tick its terms box). If a billing-address window opens first, fill it in and save: that check comes before the code.",
+    "s": "A small window <b>Type your code to continue<\/b>: “This needs a code from your authenticator app. Your last one was typed more than 15 minutes ago.” One <b>Code<\/b> field, <b>Use a backup code<\/b>, Cancel and <b>Continue<\/b>."
+   },
+   {
+    "d": "Press <b>Cancel<\/b>.",
+    "s": "The code window closes. The payouts window shows the line “Type your code to continue.” Nothing was set up and Stripe did not open."
+   },
+   {
+    "d": "Open <b>Members<\/b> › Invite; type <code>walk-admin@dev.local<\/code>, choose <b>Admin<\/b>, send.",
+    "s": "The same window opens. Press Cancel: the invite shows “Type your code to continue.” and nobody was invited."
+   },
+   {
+    "d": "Open <b>Account › Sign-in &amp; security<\/b> › <b>New backup codes<\/b>, and confirm on the next screen.",
+    "s": "The window opens over the set-up page."
+   },
+   {
+    "d": "Type <b>000000<\/b> and press Continue.",
+    "s": "A red line under the field: “That code didn’t work. The codes change every 30 seconds. Type the one showing now.” The text is selected, so typing replaces it."
+   },
+   {
+    "d": "Press <b>Use a backup code<\/b>, type one of walk 1’s backup codes, press Continue.",
+    "s": "The field becomes <b>Backup code<\/b> (“…It works once.”). On Continue the window closes and ten new codes show <b>without pressing again<\/b>. Save them; the old ones stop working."
+   },
+   {
+    "d": "Back in Members › Invite, invite <code>walk-admin@dev.local<\/code> as <b>Admin<\/b> again.",
+    "s": "<b>No window<\/b> this time (a code was typed a moment ago). The invite goes."
+   },
+   {
+    "d": "On Sign-in &amp; security press <b>Set up a new phone<\/b>. Scan with your app (a second FieldLogicHQ entry appears) but <b>don’t type the code yet<\/b>.",
+    "s": "No window (still fresh). Your old app entry still works: nothing was removed yet."
+   },
+   {
+    "d": "Type the code from the <b>new<\/b> entry; save the codes, Done, Continue.",
+    "s": "Back on Sign-in &amp; security, two-step On. The <b>old<\/b> entry no longer works (delete it from your app)."
+   },
+   {
+    "d": "Press <b>Turn off<\/b> and read the window.",
+    "s": "“Turn off two-step sign-in?” “Signing in will ask only for your password. Your authenticator app and your backup codes stop working.” with a red <b>Turn off<\/b>. No code window: still fresh."
+   },
+   {
+    "d": "Press <b>Turn off<\/b>.",
+    "s": "A green line “Two-step sign-in is off. Signing in asks only for your password.” The card is back to “Off. Turn it on…”. The club owner is as before the walk."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "A1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "A1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "A1" }; save(); render();
+  });
+  render();
+})();
+</script>

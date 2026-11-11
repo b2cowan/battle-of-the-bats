@@ -113,25 +113,35 @@ export async function readSessionTwoStep(supabase: SupabaseClient): Promise<Sess
   const aal = claims.aal === 'aal2' ? 'aal2' : 'aal1';
   // Two-step is ON for a person with a verified authenticator, and also while they are replacing a lost phone (their
   // old authenticator removed, the new one not finished): a stolen password must not find a gap there either.
-  const hasFactor = hasVerifiedFactor(user) || isReplacingAuthenticator(user);
+  const replacing = isReplacingAuthenticator(user);
+  const hasFactor = hasVerifiedFactor(user) || replacing;
   const sessionId = typeof claims.session_id === 'string' ? claims.session_id : null;
-  const typedAt = aal === 'aal2' ? codeTypedAt(claims) : null;
+  // ⚠ While a lost phone is being replaced (the mark is set and the account has no working authenticator), the sign-in
+  // service lets ANY session — a stolen password's too — set up a first authenticator of its own and reach `aal2`. So
+  // during a replacement `aal2` counts for nothing: only one of OUR backup codes lets a session through, until our own
+  // set-up/verify finishes the replacement and clears the mark (/review of Part 2, 2026-11-11).
+  const codeCounts = aal === 'aal2' && !replacing;
+  const typedAt = codeCounts ? codeTypedAt(claims) : null;
 
   // Our backup codes: read when they can matter — a session the service calls password-only, or one whose last code is
   // older than the shortest window anything asks for (a backup code typed at a re-ask must count; /review 2026-11-11).
   let backupAt: number | null = null;
-  if (hasFactor && (aal === 'aal1' || typedAt === null || Date.now() - typedAt > BACKUP_READ_AFTER_MS)) {
+  if (hasFactor && (!codeCounts || typedAt === null || Date.now() - typedAt > BACKUP_READ_AFTER_MS)) {
     backupAt = await backupCodeProvedAt(user.id, sessionId);
   }
 
-  const passed = !hasFactor || aal === 'aal2' || backupAt !== null;
+  const passed = !hasFactor || codeCounts || backupAt !== null;
   const provedAt = typedAt === null ? backupAt : backupAt === null ? typedAt : Math.max(typedAt, backupAt);
   const viaBackupCode = backupAt !== null && (typedAt === null || backupAt > typedAt);
   return { user, aal, sessionId, hasFactor, provedAt, viaBackupCode, passed };
 }
 
-/** A code typed within this long needs no backup-code read: nothing asks for a fresher proof than 15 minutes. */
-const BACKUP_READ_AFTER_MS = 15 * 60_000;
+/**
+ * A code typed within this long needs no backup-code read. It is the SHORTEST window anything asks for: staff's "sign in
+ * again" (10 minutes, lib/sign-in-again.ts) — at 15, a staff backup code typed 10–15 minutes after the last app code
+ * would be accepted, never counted, and the next one burned (/review of Part 2). tests/unit/two-step-part2.test.ts holds it.
+ */
+export const BACKUP_READ_AFTER_MS = 10 * 60_000;
 
 /**
  * Replacing a lost phone (tab 3, "Set up my new phone"): the sign-in service will not set up a second authenticator for a
@@ -152,5 +162,6 @@ export async function getSignedInUser(supabase: SupabaseClient): Promise<User | 
 /** A code (or a backup code) proved this session within the last `minutes`. Part 2 wires it to five actions. */
 export function provedWithin(state: Pick<SessionTwoStep, 'provedAt' | 'passed'> | null, minutes: number, now = Date.now()): boolean {
   if (!state?.passed || state.provedAt === null) return false;
-  return now - state.provedAt <= minutes * 60_000;
+  const age = now - state.provedAt;
+  return age >= 0 && age <= minutes * 60_000; // a time in the future never counts (the staff check's rule too)
 }

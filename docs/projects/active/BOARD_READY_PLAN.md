@@ -247,6 +247,56 @@ points here, so they aren't tracked twice)
     - pages route a password-only session in a required seat to the code or set-up step;
     - our own hashed backup codes, unless the service's codes are stable by then;
     - the re-ask clock from the session's methods;
+  - **Part 2 (your account) — rulings at the UX summary (owner 2026-11-11, all four as recommended):**
+    - **call 4:** ONE "type your code again" window for the whole product. A press refused for "type your code" (the
+      15-minute actions AND the 30-day re-ask on an already-open page) opens it in place, and the press is sent again once;
+      a press refused because two-step must be SET UP shows a notice with a link;
+    - **call 3:** keyed backup-code hashes now, with "New backup codes"; codes already issued keep working; the new
+      production secret is an owner step before the promote;
+    - **the window takes a backup code, for everyone including staff (call 6):** staff's "sign in again" becomes the same
+      window, keeping its own 10-minute rule and audit lines;
+    - **staff doors ask too:** transferring a club's ownership, and adding a staff account or raising one to super admin.
+    - Session calls (stated in the summary, not objected to): "Set up a new phone" while still holding the old one ADDS the
+      new authenticator first and removes the old one after it is verified (no gap); the backup-code path keeps Part 1's
+      mark-first order. Turn off is refused in any covered seat, grace included. Setting up a new phone asks for a code
+      (tab 5's note; ask 4's list omits it). Payout coverage = every button that hands out a Stripe link where the bank
+      account can change (connect, continue, dashboard, disconnect). Reported, not fixed: every ordinary "Sign out"
+      already signs the account out on every device (the default scope). Part 4 + `/legal` emails: "two-step turned off",
+      "password changed", call 2's "turned on".
+  - **Part 2 (your account) BUILT 2026-11-11, commit owed (the owner's yes); owner walk §513 owed**
+    (`BOARD_READY_TWO_STEP_PART2_WALK.html`). What was built:
+    - **One server helper** `lib/two-step-fresh.ts` (`requireFreshCode` / `hasFreshCode`; two-step off is never asked), wired
+      into payouts (connect, continue, dashboard, disconnect), invite-as-admin and role→admin, staff's ownership transfer and
+      staff accounts (add; raise to super admin; restore), new backup codes, set-up start AND verify, turn off, change
+      password. `tests/unit/two-step-part2.test.ts` holds each door before its first write.
+    - **One window** `components/shared/CodeAgainWindow.tsx`, opened product-wide by `CodeAgainProvider` (root layout; patches
+      fetch once at module load; answers `two_step_fresh_code` and `two_step_code`, re-sends the press once; a notice for
+      `two_step_set_up`; quiet for 2 minutes after a Cancel on the 30-day ask; `x-code-again: manual` opts out). One check
+      `lib/code-again-server.ts` for everyone's route and staff's "sign in again" (which keeps its 10 minutes and audit).
+    - **Account › Sign-in & security** (`app/(consumer)/account/security`), the rail row, the phone row, the console menu's
+      row (`AccountMenu showSecurity`), "Back to your support console". Change password = cookie-less check (its session
+      revoked; proved on dev), admin save, others signed out. Sign out everywhere else = `scope: 'others'`.
+    - **Set up a new phone:** an `aal2` session ADDS beside the old one and verify removes the old one; a backup-code
+      session keeps Part 1's mark-first order. **Turn off:** mark → remove all → confirm → clear → backup codes.
+    - **Lost your phone?** on the code step; `lib/two-step-lost-phone.ts` returns `support` for everyone until Part 3 flips
+      `CLUB_RESET_DOOR_BUILT`.
+    - **Keyed backup-code hashes** (`k1:` HMAC under `TWO_STEP_CODE_KEY`; the old form still checked; dev value in
+      `.env.local`).
+    - **`/review` (high-risk, 4 lenses) found and fixed a Part 1 hole:** mid-replacement (mark set, no authenticator) the
+      sign-in service lets ANY session set up a first authenticator and reach `aal2`. Now `aal2` counts for nothing while the
+      mark is set (only our backup codes), and verify removes every other authenticator before it clears the mark. Also
+      fixed: verify asks for a fresh code; staff's 10-minute window reads backup codes (was 15); the seat list fails closed;
+      a future proof time never counts; ~10 client/robustness fixes. Not fixed (noted): a password-holder can burn the
+      account's 10 window tries for 15 minutes; an `aal2` session can call the sign-in service's enrol/unenrol directly (our
+      15 minutes guards our own doors only).
+    - **Open owner calls from Part 2:**
+      1. **The database half of the mid-replacement fix** (`public.session_passed_two_step()`, mig 463, still counts
+         `aal2` and "no authenticator" while the mark is set, so a password-holder reaches the 15 tables directly during a
+         replacement). Needs a small migration. Recommended: yes, before Part 2 is promoted.
+      2. **`TWO_STEP_CODE_KEY` never reaches production:** `amplify.yml` copies server values one by one and has no line for
+         it. Needs one line in the deploy file (shared automation: the owner's yes, its own commit) plus the value in
+         Amplify. Until then new codes use the unkeyed form (today's).
+      3. Staff "Back to your support console" wording; the reason sentence says "Required" during a seat's 14 days too.
     - probably one migration: the organization's coach switch and test exemption, backup codes, grace start, and a
       waiting owner reset (existing org and platform audit logs, no new log), with the dictionary and snapshots in the
       same unit;

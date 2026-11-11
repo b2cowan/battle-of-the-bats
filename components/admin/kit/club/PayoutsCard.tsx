@@ -20,6 +20,8 @@ import { isAddressRefusal, useBillingAddressGate } from '@/components/billing/Bi
 import type { PayoutsState } from '@/lib/online-payment-account';
 import type { OnlineFeePayer } from '@/lib/online-payment-fee';
 import KitDialog from './KitDialog';
+import { askForCodeAgain, CODE_AGAIN_MANUAL_HEADER } from '@/components/shared/CodeAgainProvider';
+import { TWO_STEP_CODE_REFUSAL, TWO_STEP_FRESH_CODE } from '@/lib/code-again';
 import PayoutsDisclosure from './money/PayoutsDisclosure';
 import { Callout, RecordAction, RepChip, SavePill, type ChipTone } from './RepKit';
 import ck from './ClubKit.module.css';
@@ -86,10 +88,12 @@ export function loadPayouts(orgSlug: string): Promise<PayoutsView | null> {
     .catch(() => null);
 }
 
-async function post(orgSlug: string, body: Record<string, unknown>): Promise<{ url?: string | null; error?: string }> {
+async function post(orgSlug: string, body: Record<string, unknown>, manualCode = false): Promise<{ url?: string | null; error?: string }> {
   // org-slug-ok: sent in the body
   const res = await fetch('/api/admin/payouts', {
-    method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orgSlug, ...body }),
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', ...(manualCode ? { [CODE_AGAIN_MANUAL_HEADER]: 'manual' } : {}) },
+    body: JSON.stringify({ orgSlug, ...body }),
   });
   const data = await res.json().catch(() => ({}));
   // The code rides on the error, so a caller can tell "ask for the billing address" (Part 2b) from a sentence to show.
@@ -107,6 +111,8 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   const [opening, setOpening] = useState(false);
   const openingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  // The dashboard asked for a code first (Board Ready two-step, Part 2): its Stripe tab could not wait behind the window.
+  const [codeTaken, setCodeTaken] = useState(false);
   const [before, setBefore] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -124,6 +130,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
     openingRef.current = true;
     setOpening(true);
     setError(null);
+    setCodeTaken(false);
     let stripeTab: Window | null = null;
     try {
       if (action === 'dashboard') {
@@ -133,7 +140,22 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         if (!stripeTab) throw new Error('Allow pop-ups for this site, then try again.');
         stripeTab.opener = null;
       }
-      const { url } = await post(orgSlug, { action });
+      // The dashboard's tab is already open, so the code window must not open behind it: the tab closes, the window asks,
+      // and the next press opens Stripe (a new tab needs a press of its own). Onboarding stays in this tab: the window
+      // answers it in place.
+      let url: string | null | undefined;
+      try {
+        ({ url } = await post(orgSlug, { action }, action === 'dashboard'));
+      } catch (e) {
+        const refusal = (e as { code?: string }).code;
+        if (stripeTab && (refusal === TWO_STEP_FRESH_CODE || refusal === TWO_STEP_CODE_REFUSAL)) {
+          stripeTab.close();
+          stripeTab = null;
+          if (await askForCodeAgain(refusal === TWO_STEP_FRESH_CODE ? 'fresh' : 'reask')) setCodeTaken(true);
+          return;
+        }
+        throw e;
+      }
       if (stripeTab) {
         if (!url) throw new Error('Something went wrong. Try again.');
         if (!stripeTab.closed) {
@@ -253,6 +275,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
           state !== 'taking_payments' && <p className={ck.hint}>{W.ownerOnly(home)}</p>
         )}
         {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
+        {!error && codeTaken && <p className={`${ck.notice} ${ck.noticeGood}`} role="status">Code accepted. Press the button again to open Stripe.</p>}
 
         {/* 12d-2 (words §3.3): the payouts list, collapsed, for a club without Accounting — before Disconnect, which still
             ends the card's body. */}

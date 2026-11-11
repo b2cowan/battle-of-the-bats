@@ -72,6 +72,8 @@ function route() {
   const stubs = {
     '@/lib/api-auth': { getAuthContextWithRole: async () => ctx, forbidden: () => Response.json({}, { status: 403 }), unauthorized: () => Response.json({}, { status: 401 }) },
     '@/lib/observability': { withObservability: (handler: unknown) => handler },
+    // Two-step Part 2: connect asks for a fresh code; this file is about the billing address, so the code is always fresh.
+    '@/lib/two-step-fresh': { requireFreshCode: async () => null },
     '@/lib/app-origin': { resolveTrustedAppOrigin: () => 'http://localhost' },
     '@/lib/plan-features': { hasPlanFeature: () => true },
     '@/lib/online-payments-switch': { onlinePaymentsOn: () => true, stripeKeyIsTest: () => true, ONLINE_PAYMENTS_OFF_ERROR: 'off' },

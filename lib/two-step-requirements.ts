@@ -31,7 +31,7 @@ export async function twoStepRequirementsFor(user: Pick<User, 'id' | 'email'>, n
   const reasons: TwoStepReason[] = [];
   if (user.email && platformStaffTwoStepRequired() && (await isPlatformAdminEmail(user.email))) reasons.push({ kind: 'staff' });
 
-  const [{ data: members }, { data: graces }] = await Promise.all([
+  const [{ data: members, error: membersErr }, { data: graces, error: gracesErr }] = await Promise.all([
     supabaseAdmin
       .from('organization_members')
       .select('role, organization_id, organizations(id, name, slug, two_step_board_required_since, two_step_coaches_required_since, is_test_organization, account_kind, plan_id)')
@@ -40,6 +40,10 @@ export async function twoStepRequirementsFor(user: Pick<User, 'id' | 'email'>, n
       .returns<MemberRow[]>(),
     supabaseAdmin.from('two_step_grace').select('organization_id, starts_at').eq('user_id', user.id),
   ]);
+  // Fails CLOSED (/review of Part 2): an unreadable seat list must never read as "nothing requires it", or a required
+  // person could turn two-step off. The caller's request fails instead.
+  if (membersErr) throw membersErr;
+  if (gracesErr) throw gracesErr;
   const graceBy = new Map((graces ?? []).map(g => [g.organization_id as string, g.starts_at as string]));
 
   for (const m of members ?? []) {

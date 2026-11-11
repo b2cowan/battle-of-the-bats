@@ -47,6 +47,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/api-auth.ts': ['door', 'getAuthContext builds the org, then calls the door with the stored limits'],
   'lib/two-step-rule.ts': ['identity', "plan_id names the portal stub only (isTeamWorkspaceOrg): a coach's own team workspace is never a two-step seat"],
   'lib/two-step-requirements.ts': ['identity', "selects plan_id only for isTeamWorkspaceOrg (the two-step rule's workspace test)"],
+  'lib/two-step-lost-phone.ts': ['identity', "selects plan_id only for isTeamWorkspaceOrg: a coach's own team gets the support version of Lost your phone?"],
   'lib/db.ts': ['door', 'getOrganizationBySlug builds the org, then calls the door; createOrganization writes them; the sweep reads status through the door'],
   'lib/server-organizations.ts': ['door', 'getOrganizationBySlugForServer builds the org, then calls the door'],
   // ── through the door ──

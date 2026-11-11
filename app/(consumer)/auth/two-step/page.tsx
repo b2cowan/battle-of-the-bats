@@ -6,6 +6,7 @@ import StartSteps from '@/components/auth/StartSteps';
 import LoadingState from '@/components/shared/LoadingState';
 import { safeNextPath } from '@/lib/safe-redirect';
 import { twoStepStepUrl } from '@/lib/two-step-paths';
+import { TWO_STEP_FRESH_CODE } from '@/lib/code-again';
 import styles from './two-step.module.css';
 
 /**
@@ -32,7 +33,8 @@ type Status = {
   replacing?: boolean;
 };
 
-type Enrolment = { factorId: string; qrCode: string; secret: string; uri: string };
+/** `adding`: a new phone set up beside the old one (the session typed the app's code); verify removes the old one. */
+type Enrolment = { factorId: string; qrCode: string; secret: string; uri: string; adding?: boolean };
 
 type Screen =
   | { kind: 'loading' }
@@ -123,8 +125,12 @@ function SetUp() {
         body: JSON.stringify({ replace }),
       });
       const data = await res.json().catch(() => ({})) as Partial<Enrolment> & { code?: string };
-      // Replacing needs a backup code from the last 15 minutes: type one again, then come back here.
-      if (data.code === 'needs_fresh_code') { window.location.assign(twoStepStepUrl('code', self)); return; }
+      // A new phone needs a code from the last 15 minutes: the one window asked (and sent this again). Reaching here with
+      // the refusal means the person said no in the window.
+      if (res.status === 401 && data.code === TWO_STEP_FRESH_CODE) {
+        setScreen({ kind: 'refused', title: 'A code comes first', body: 'Setting up a new phone asks for a code from your authenticator app, or a backup code. Nothing has changed.' });
+        return;
+      }
       if (!res.ok || !data.factorId) {
         setScreen(data.code === 'already_on'
           ? { kind: 'refused', title: 'Two-step sign-in is already on', body: 'Signing in asks for a code from your app.' }
@@ -140,8 +146,9 @@ function SetUp() {
     const res = await fetch('/api/auth/two-step/backup-codes', { method: 'POST' });
     const data = await res.json().catch(() => ({})) as { backupCodes?: string[]; code?: string };
     setBusy(false);
-    if (res.status === 401 && data.code === 'two_step_fresh_code') {
-      window.location.assign(twoStepStepUrl('code', `/auth/two-step${window.location.search}`));
+    // The one window asked for a code (and sent this again); reaching here with the refusal means the person said no.
+    if (res.status === 401 && data.code === TWO_STEP_FRESH_CODE) {
+      setScreen({ kind: 'refused', title: 'A code comes first', body: 'New backup codes ask for a code from your authenticator app, or a backup code. Your codes haven’t changed.' });
       return;
     }
     if (!res.ok || !data.backupCodes) {
@@ -181,7 +188,7 @@ function SetUp() {
     const res = await fetch('/api/auth/two-step/set-up/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ factorId: enrolment.factorId, code: digits }),
+      body: JSON.stringify({ factorId: enrolment.factorId, code: digits, replace: enrolment.adding === true }),
     });
     const data = await res.json().catch(() => ({})) as { backupCodes?: string[]; error?: string; code?: string };
     setBusy(false);

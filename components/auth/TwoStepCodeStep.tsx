@@ -14,10 +14,15 @@ import { Field, StartFoot, StartHead, accountForm } from './AccountForm';
  *   backup      "Use a backup code": one of the ten saved at set-up; ours, checked on the server.
  *   afterBackup "You're in": how many are left, and the offer to set up a new phone.
  *
- * "Use a different account" signs out THIS device only. "Lost your phone?" is Part 2's (both versions of that screen).
+ * "Use a different account" signs out THIS device only.
+ *
+ *   lostPhone   "Lost your phone?" (Part 2, drawings tab 4): a backup code first, then the club or support. Which version
+ *               is decided by the server from the account's seats after the password matched, and it never names the
+ *               club or anyone in it. The support address is shown as copyable text, not only a mail link.
  */
 
-type Mode = 'code' | 'backup' | 'afterBackup';
+type Mode = 'code' | 'backup' | 'afterBackup' | 'lostPhone';
+type LostPhone = { version: 'club' | 'support'; supportEmail: string } | 'loading' | 'failed';
 
 export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccount, showDifferentAccount = true, offerNewPhone = true }: {
   email: string | null;
@@ -38,6 +43,25 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [left, setLeft] = useState<number | null>(null);
+  const [lost, setLost] = useState<LostPhone>('loading');
+  const [copied, setCopied] = useState(false);
+
+  async function openLostPhone() {
+    setMode('lostPhone');
+    setError(null);
+    setLost('loading');
+    try {
+      const res = await fetch('/api/auth/two-step/lost-phone');
+      const data = await res.json().catch(() => null) as { version?: 'club' | 'support'; supportEmail?: string } | null;
+      setLost(res.ok && data?.version && data.supportEmail ? { version: data.version, supportEmail: data.supportEmail } : 'failed');
+    } catch {
+      setLost('failed');
+    }
+  }
+
+  async function copyAddress(address: string) {
+    try { await navigator.clipboard.writeText(address); setCopied(true); window.setTimeout(() => setCopied(false), 2000); } catch { /* the address is on screen to type */ }
+  }
 
   async function submitCode(e: React.FormEvent) {
     e.preventDefault();
@@ -135,6 +159,73 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
     </StartFoot>
   );
 
+  if (mode === 'lostPhone') {
+    const address = lost !== 'loading' && lost !== 'failed' ? lost.supportEmail : null;
+    const club = lost !== 'loading' && lost !== 'failed' && lost.version === 'club';
+    const emailUs = address ? (
+      <>
+        Email{' '}
+        <button type="button" className={accountForm.textBtn} onClick={() => void copyAddress(address)} aria-label={`Copy ${address}`}>
+          <strong>{address}</strong>
+        </button>
+        {copied ? ' (copied)' : ''} from this account’s address.
+      </>
+    ) : null;
+    return (
+      <>
+        <StartHead title="Lost your phone?" sub="Here’s how to get back in." />
+        <div className={accountForm.form}>
+          <div>
+            <strong>Use a backup code</strong>
+            <p className={accountForm.hint}>
+              You saved ten when you set up two-step sign-in.{club ? ' One gets you in, and then you can set up your new phone.' : ''}
+            </p>
+          </div>
+          <button type="button" className={accountForm.secondary} onClick={() => { setMode('backup'); setError(null); }}>
+            Use a backup code
+          </button>
+          {lost === 'loading' ? null : lost === 'failed' ? (
+            <div className={accountForm.noticeWarn} role="alert">
+              <strong>We couldn’t load the rest of this page.</strong>{' '}
+              Try again in a moment.
+            </div>
+          ) : club ? (
+            <>
+              <div>
+                <strong>No codes? Ask your club</strong>
+                <p className={accountForm.hint}>
+                  Your club’s owner or an admin can reset your two-step sign-in. Then sign in with your password and set it up
+                  on your new phone.
+                </p>
+              </div>
+              <div>
+                <strong>Are you the club’s owner?</strong>
+                <p className={accountForm.hint}>
+                  {emailUs} We confirm by email, tell your club’s other admins and treasurer that you asked, and reset it 24 hours
+                  later.
+                </p>
+              </div>
+            </>
+          ) : (
+            <div>
+              <strong>No codes? Email us</strong>
+              <p className={accountForm.hint}>
+                {emailUs} We confirm by email and reset it 24 hours later.
+              </p>
+            </div>
+          )}
+          <StartFoot split>
+            <button type="button" className={accountForm.textBtn} onClick={() => { setMode('code'); setError(null); }}>
+              Back to the code
+            </button>
+            <span />
+          </StartFoot>
+        </div>
+        {foot}
+      </>
+    );
+  }
+
   if (mode === 'afterBackup') {
     const n = left ?? 0;
     return (
@@ -193,9 +284,14 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
           <button type="submit" className={accountForm.primary} disabled={busy || backup.trim() === ''} id="two-step-backup-submit">
             {busy ? 'Signing in…' : 'Sign in'}
           </button>
-          <button type="button" className={accountForm.textBtn} onClick={() => { setMode('code'); setError(null); }}>
-            Use my authenticator app
-          </button>
+          <StartFoot split>
+            <button type="button" className={accountForm.textBtn} onClick={() => { setMode('code'); setError(null); }}>
+              Use my authenticator app
+            </button>
+            <button type="button" className={accountForm.textBtn} onClick={() => void openLostPhone()}>
+              Lost your phone?
+            </button>
+          </StartFoot>
         </form>
         {foot}
       </>
@@ -227,9 +323,14 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
         <button type="submit" className={accountForm.primary} disabled={busy} id="two-step-submit">
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
-        <button type="button" className={accountForm.textBtn} onClick={() => { setMode('backup'); setError(null); }}>
-          Use a backup code
-        </button>
+        <StartFoot split>
+          <button type="button" className={accountForm.textBtn} onClick={() => { setMode('backup'); setError(null); }}>
+            Use a backup code
+          </button>
+          <button type="button" className={accountForm.textBtn} onClick={() => void openLostPhone()}>
+            Lost your phone?
+          </button>
+        </StartFoot>
       </form>
       {foot}
     </>

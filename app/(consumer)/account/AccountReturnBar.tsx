@@ -34,6 +34,8 @@ function returnLabel(path: string): string | null {
   // slugs (lib/reserved-slugs.ts) — but the admin check runs first anyway so this file stays
   // correct even if that reservation is ever relaxed.
   const seg = path.split('?')[0].split('/').filter(Boolean);
+  // Staff arrive from the support console's menu (two-step Part 2: its Sign-in & security row).
+  if (seg[0] === 'platform-admin') return 'support console';
   if (seg[1] === 'admin') return WORKSPACE_KIND_LABEL.organization;
   if (seg[1] === 'coaches') return WORKSPACE_KIND_LABEL.coaches_premium;
   if (seg[0] === 'coaches') return WORKSPACE_KIND_LABEL.coaches_basic;

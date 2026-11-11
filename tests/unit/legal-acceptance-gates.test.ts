@@ -576,7 +576,12 @@ describe('requireAcceptance (C1): the gated routes’ check', () => {
 async function postAccept(env: Record<string, string>, body: unknown) {
   const h = legalHarness();
   const load = billingTestLoader({
-    '@/lib/supabase-server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: 'u1', email: 'pat@x.test', app_metadata: {} } } }) } }) },
+    // The one server check (two-step Part 1) reads getUser, then the same session's token: a password-only token for a
+    // person with no authenticator, so the session has passed.
+    '@/lib/supabase-server': { createClient: async () => ({ auth: {
+      getUser: async () => ({ data: { user: { id: 'u1', email: 'pat@x.test', app_metadata: {} } } }),
+      getSession: async () => ({ data: { session: { access_token: `x.${Buffer.from(JSON.stringify({ sub: 'u1', aal: 'aal1' })).toString('base64url')}.y` } } }),
+    } }) },
     '@/lib/observability': { withObservability: (fn: unknown) => fn },
     '@/lib/legal-acceptance': h.load('lib/legal-acceptance.ts'),
   });

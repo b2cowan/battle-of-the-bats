@@ -4,6 +4,7 @@ import { getPlatformUsers, updatePlatformUser, deletePlatformUser } from '@/lib/
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
+import { requireFreshCode } from '@/lib/two-step-fresh';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -15,6 +16,15 @@ export const PATCH = withObservability(async (req: NextRequest, { params }: Para
   const { isActive, displayName, role } = await req.json();
   const safeRole = role && ['super_admin', 'support', 'billing', 'product', 'growth', 'read_only'].includes(role) ? role : undefined;
   const before = (await getPlatformUsers()).find(platformUser => platformUser.id === id) ?? null;
+
+  // Raising an account to super admin, or bringing a removed one back, asks for a code (Board Ready two-step, Part 2;
+  // owner 2026-11-11). A rename or a lowered role does not.
+  const raising = safeRole === 'super_admin' && before?.role !== safeRole;
+  const restoring = isActive === true && before !== null && !before.isActive;
+  if (raising || restoring) {
+    const stale = await requireFreshCode();
+    if (stale) return stale;
+  }
 
   const updated = await updatePlatformUser(id, {
     ...(isActive    !== undefined && { isActive }),

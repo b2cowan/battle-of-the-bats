@@ -3,6 +3,7 @@ import { requirePlatformPower } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
+import { requireFreshCode } from '@/lib/two-step-fresh';
 
 type MemberRow = {
   user_id: string;
@@ -57,6 +58,11 @@ export const POST = withObservability(async (req: NextRequest,
   }
 
   const currentOwners = (members ?? []).filter(m => m.role === 'owner');
+
+  // Handing someone a club asks for a code (Board Ready two-step, Part 2: staff doors ask too, owner 2026-11-11), after
+  // every check above and before the first write.
+  const stale = await requireFreshCode();
+  if (stale) return stale;
 
   // Promote the new owner first so the org is never briefly ownerless.
   const { error: promoteError } = await supabaseAdmin

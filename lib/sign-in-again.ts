@@ -25,6 +25,7 @@
  */
 
 import { pluralize } from './utils';
+import type { CodeAgainRefusal } from './code-again';
 
 /** How long a typed password counts, in minutes (Ask 3). */
 export const SIGN_IN_AGAIN_MINUTES = 10;
@@ -35,8 +36,9 @@ export const BULK_MAX_ACCOUNTS = 100;
 /** The code a gated route answers with, so the screen knows to open the window rather than show an error. */
 export const SIGN_IN_AGAIN_CODE = 'sign_in_again';
 
-/** Why the window's code (or password) was not accepted: the route's `code`. */
-export type SignInAgainRefusal = 'wrong_password' | 'wrong_code' | 'too_many_tries' | 'not_checked';
+/** Why the window's code, backup code (or password) was not accepted: the route's `code`. The code refusals are the one
+ *  window's (lib/code-again.ts), so staff's window and everyone's read the same words. */
+export type SignInAgainRefusal = 'wrong_password' | CodeAgainRefusal;
 
 /**
  * What the window asks for (Board Ready · two-step sign-in, Part 1): the CODE, because staff always have two-step on; the

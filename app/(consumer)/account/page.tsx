@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { User, Bell, LifeBuoy, ChevronRight, HelpCircle, FileText } from 'lucide-react';
+import { User, Bell, LifeBuoy, ChevronRight, HelpCircle, FileText, ShieldCheck } from 'lucide-react';
 import { getAuthUserCached } from '@/lib/supabase-server';
+import { hasVerifiedFactor, isReplacingAuthenticator } from '@/lib/two-step-session';
 import { getUserAccessContextsCached, hasCoachAccess } from '@/lib/user-contexts';
 import AccountSignOutButton from '@/components/consumer/AccountSignOutButton';
 import AppearanceCard from '@/components/consumer/AppearanceCard';
@@ -26,6 +27,7 @@ export default async function AccountPage() {
   const user = await getAuthUserCached();
   const email = user?.email ?? null;
   const signedIn = !!email;
+  const twoStepOn = hasVerifiedFactor(user) || isReplacingAuthenticator(user);
 
   // A2 (2026-07-25): the free coach portal's "More" sheet retired — its account utilities
   // (Coaches Portal help, Send feedback) live HERE now, per consumer convention. Coach-gated
@@ -85,6 +87,17 @@ export default async function AccountPage() {
                 they render only while it is on, so installed-PWA users have a path to the documents the day they publish
                 and the page never links a 404 before (owner call 2026-07-20; built GST/HST Stage 6 step 6.2). */}
             <div className={styles.rows}>
+              {/* Board Ready two-step sign-in, Part 2 (drawings tab 5): the section opens as its own page on a phone. Its
+                  second line is new (the shipped rows have one). */}
+              <Link href="/account/security" className={styles.row}>
+                <span className={styles.rowIcon}><ShieldCheck size={19} aria-hidden /></span>
+                <span className={styles.rowLabel}>
+                  Sign-in &amp; security
+                  <span className={styles.rowSub}>{twoStepOn ? 'Two-step sign-in is on' : 'Two-step sign-in is off'}</span>
+                </span>
+                <ChevronRight size={18} className={styles.rowChevron} aria-hidden />
+              </Link>
+
               <Link href="/account/notifications" className={styles.row}>
                 <span className={styles.rowIcon}><Bell size={19} aria-hidden /></span>
                 <span className={styles.rowLabel}>Notification settings</span>

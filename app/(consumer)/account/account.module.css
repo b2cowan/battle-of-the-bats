@@ -139,6 +139,14 @@
   font-weight: 600;
   color: var(--home-ink);
 }
+/* A row's second line (Sign-in & security, two-step Part 2): the only row that has one. */
+.rowSub {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--home-ink-soft, var(--home-ink));
+}
 .rowChevron { flex-shrink: 0; color: var(--home-dim); }
 
 /* Sign out — the one session-ending row, set apart by a gap and a quiet neutral icon

@@ -1,0 +1,127 @@
+/* ACCOUNT › SIGN-IN & SECURITY (Board Ready two-step, Part 2; drawings tab 5). The Account page's own vocabulary: white
+   14px-radius cards with the soft shadow, ghost buttons (white, 44–52px) and the one lime primary (consumer warm page).
+   On the phone the buttons go full width, and the devices card drops its sentence (drawn). */
+
+.stack { display: grid; gap: 0.9rem; }
+
+.card {
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow-sm);
+  padding: 1.05rem 1.15rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.head {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--home-ink);
+}
+
+.chipOn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--home-olive-soft, rgba(92, 107, 46, 0.12));
+  color: var(--home-olive, #5c6b2e);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.chipOff {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.07);
+  color: var(--home-ink-soft, var(--home-ink));
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.body { margin: 0; color: var(--home-ink-soft, var(--home-ink)); font-size: 0.93rem; line-height: 1.45; }
+.fine { margin: 0; color: var(--home-ink-soft, var(--home-ink)); font-size: 0.82rem; opacity: 0.85; }
+
+.acts { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.2rem; }
+
+.btn,
+.btnLime {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+  border-radius: var(--home-radius);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn {
+  background: var(--home-card);
+  color: var(--home-ink);
+  border: 1px solid var(--home-line-strong);
+  box-shadow: var(--home-shadow-sm);
+}
+.btn:hover { border-color: var(--home-olive); }
+.btnLime {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  border: 1px solid var(--home-lime);
+  font-weight: 700;
+}
+
+/* The club's deadline (drawn amber: nobody did anything wrong yet, /design ask E). */
+.callout {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--warning, #c98a12);
+  background: rgba(var(--warning-rgb, 201, 138, 18), 0.09);
+  border-radius: var(--home-radius-sm, 8px);
+  color: var(--home-ink);
+  font-size: 0.9rem;
+}
+
+.noticeGood,
+.noticeBad {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--home-radius-sm, 8px);
+  font-size: 0.88rem;
+  color: var(--home-ink);
+}
+.noticeGood { background: var(--home-olive-soft, rgba(92, 107, 46, 0.12)); }
+.noticeBad { background: rgba(var(--danger-rgb, 180, 35, 24), 0.08); border-left: 3px solid var(--danger, #b42318); }
+
+.dialogText { margin: 0; }
+
+.form { display: grid; gap: 0.85rem; }
+.field { display: grid; gap: 0.35rem; }
+.label { font-size: var(--type-label, 0.82rem); font-weight: 600; color: var(--text-primary); }
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 2.75rem 0.55rem 0.75rem;
+  border: 1px solid var(--home-line-strong, rgba(0, 0, 0, 0.22));
+  border-radius: var(--home-radius-sm, 6px);
+  background: var(--card-bg, #fff);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 1rem;
+}
+
+@media (max-width: 640px) {
+  .acts { flex-direction: column; }
+  .btn, .btnLime { width: 100%; min-height: 48px; }
+  .wideOnly { display: none; }
+}

@@ -55,7 +55,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePublicPathname } from '@/lib/use-public-pathname';
-import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check, Building2, Globe, Sparkles, Users, HelpCircle } from 'lucide-react';
+import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check, Building2, Globe, Sparkles, Users, HelpCircle, ShieldCheck } from 'lucide-react';
 import { markReleasesSeen, useReleaseUnread } from '@/components/whats-new/release-seen';
 import { getSession, signOut } from '@/lib/auth';
 import { useDismissable } from '@/lib/overlay-hooks';
@@ -88,6 +88,7 @@ export default function AccountMenu({
   warm = false,
   signOutTo = 'sign-in',
   showAccount = true,
+  showSecurity = false,
   showWhatsNew = false,
   helpHref,
   teams,
@@ -109,6 +110,10 @@ export default function AccountMenu({
   signOutTo?: 'sign-in' | 'here' | 'platform';
   /** False in the support console: no Notification settings / Account settings rows. */
   showAccount?: boolean;
+  /** The support console only (Board Ready two-step sign-in, Part 2; drawings tab 5): staff have no other door to
+   *  Account › Sign-in & security, where they set up a new phone, get new backup codes and change their password. Every
+   *  other host reaches it through Account settings. */
+  showSecurity?: boolean;
   /** The admin and coach strips: a "What's new" row at the top of the settings group, with a "New" tag while an
    *  ANNOUNCED release is unread on this device (owner 2026-11-07). Off on the support console and the public bars. */
   showWhatsNew?: boolean;
@@ -329,6 +334,12 @@ export default function AccountMenu({
             <MessageSquarePlus size={15} aria-hidden />
             Send feedback
           </button>
+        )}
+        {showSecurity && (
+          <Link href={`/account/security?back=${back}`} className={rowClass()} role={itemRole(inSheet)} onClick={() => setOpen(false)}>
+            <ShieldCheck size={15} aria-hidden />
+            Sign-in &amp; security
+          </Link>
         )}
         {showAccount && (
           <Link href={accountHref} className={rowClass()} role={itemRole(inSheet)} onClick={() => setOpen(false)}>

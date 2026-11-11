@@ -15,8 +15,8 @@
 | Part | What | Model | Waits on |
 |---|---|---|---|
 | 1 | The foundation: the server check, the code step at sign-in, setting it up, backup codes, staff always required, demos and tests | **Opus** | **Wave 2 Fix A committed** (same shared sign-in check) |
-| 2 | Your account: Sign-in &amp; security, change password, lost phone, the "ask for a code" window on five actions | Sonnet | Part 1 committed |
-| 3 | The club's switches, the grace period, and every reset (club, coach, support's owner reset) | **Opus** | Part 1 committed (can run beside Part 2) |
+| 2 | Your account: Sign-in &amp; security, change password, lost phone, the "ask for a code" window on five actions | **Opus** (changed 2026-11-11, see below) | Part 1 committed ✅ (`7c8f092ab`) |
+| 3 | The club's switches, the grace period, and every reset (club, coach, support's owner reset) | **Opus** | **Part 2 committed** (changed 2026-11-11, owner: Part 2 first) |
 | 4 | What the club sees, and the words: Members, Overview, the emails, help, policies | Sonnet | Parts 2 and 3 committed |
 
 **Why these models.**
@@ -25,7 +25,17 @@
   - a reset that crosses organizations;
   - an identity check with a timed wait;
   - a switch a thief would try to turn off.
-- *Sonnet for 2 and 4:* they build screens and words on mechanisms Parts 1 and 3 have already proven.
+- *Sonnet for 4:* it builds screens and words on mechanisms Parts 1–3 have already proven.
+- *Part 2 moved to Opus (2026-11-11, after Part 1 was built):* the original reason ("screens on proven mechanisms") stopped
+  holding. Part 2 has to change Part 1's security rules, not just call them: turning your own two-step off (the move a
+  thief makes), replacing a phone you still hold (Part 1 allows that only after a backup code), and checking the current
+  password without dropping the person's own session. One wrong order in any of those switches two-step off for a
+  password-holder.
+
+**Why Part 2 now runs before Part 3 (owner, 2026-11-11).** Part 2 builds the one "type your code again" window. Two of
+Part 3's doors need it (turning a switch off, resetting someone), and so does the lost-phone screen's club version, which
+points at Part 3's reset. Run side by side, both sessions would build that window in the same shared files at the same
+time. In order, Part 3 plugs into a finished one.
 
 **Not in these prompts:** the short "Two-step sign-in" paragraph `/legal` drafted for the Terms belongs to the Terms work
 (`GST_HST_STAGE6_TERMS_PLAN.md`). Sonnet, any time, before the Terms publish.
@@ -50,7 +60,7 @@
 
 > **BUILT 2026-11-11, committed `7c8f092ab` 2026-11-11** (mig 464 on its own, `6b19b5aca`) (migs 463 + 464 applied to dev; walk §511 ✅ 24/24 2026-11-11). What was built, the census
 > correction (twelve sign-in doors) and six open owner calls: `BOARD_READY_PLAN.md` §5 Stage 0a "Part 1 (the foundation)".
-> Parts 2 and 3 can start once Part 1 is committed.
+> Next is Part 2; Part 3 starts after Part 2 is committed (owner, 2026-11-11; reason under "Order and models").
 
 > **Step 0 DONE 2026-11-11** (both facts hold; results in `BOARD_READY_PLAN.md` §5 Stage 0a, "Sign-in service
 > facts"). A session picking up Part 1 **starts at Step 1**. Before Step 1, confirm Wave 2 Fix A is committed
@@ -129,7 +139,60 @@ Return each one with the routes behind it.
   - confirm a demo still opens and refuses set-up;
   - confirm a UAT run passes.
 
-## Part 2 · Sonnet — your account
+## Part 2 · Opus — your account
+
+> **BUILT 2026-11-11, commit owed (the owner's yes); walk §513 owed.** What was built, the review's Part 1 fix and two
+> open owner calls (the database half of that fix; the production secret's deploy line): `BOARD_READY_PLAN.md` §5 Stage 0a
+> "Part 2". **For Part 3:** the window is `components/shared/CodeAgainWindow.tsx`, opened by any route that returns
+> `freshCodeRefusal()` (`lib/two-step-fresh.ts`) — the reset and the switches call `requireFreshCode()` after their own
+> checks and need no client code; "Lost your phone?"'s club version turns on by flipping `CLUB_RESET_DOOR_BUILT` in
+> `lib/two-step-lost-phone.ts` and making its rule the reset's rule.
+
+> **Start here (written 2026-11-11 from the Part 1 build, `7c8f092ab`).** Read `BOARD_READY_PLAN.md` §5 Stage 0a, the
+> "Part 1 (the foundation)" note and its six open owner calls, before the UX summary. Part 1 is committed; its owner walk
+> (§511) is owed but does not gate this part. **Build on Part 1's pieces; do not make second copies of them:**
+> - **The one server check** is `getSignedInUser` / `getSessionTwoStep` (`lib/two-step-session.ts`, `lib/api-auth.ts`).
+>   "Typed a code in the last 15 minutes" is `provedWithin(state, TWO_STEP_FRESH_MINUTES)`. It already counts a backup
+>   code. The guard test `tests/unit/two-step-server-check-guard.test.ts` fails a route that reads the session another way.
+> - **Codes:** `lib/two-step-codes.ts` (`verifyAuthenticatorCode` records the use BEFORE it verifies, so a replayed code is
+>   refused; `redeemBackupCode`; `createBackupCodes` through the atomic RPC; `backupCodesLeft`).
+> - **"Is this person required, and why":** `twoStepRequirementsFor(user)` (`lib/two-step-requirements.ts`), giving
+>   `requiredNow` + reasons (staff, club seats with their grace). The status route `app/api/auth/two-step/status` already
+>   returns `requiredNow` / `requiredBy` / `backupCodesLeft`, and only to a session that has passed.
+> - **Screens:** the set-up page (`app/(consumer)/auth/two-step`, with `step=codes` = "new backup codes, asked first", and
+>   `replace=1`) and the code step `components/auth/TwoStepCodeStep.tsx` (modes code / backup / afterBackup).
+> - **The existing "type it again" window** is staff-only: `app/platform-admin/SignInAgain.tsx` with
+>   `lib/platform-sign-in-again.ts` (`checkCodeAgain`). Part 2's window is the general one; decide in the census whether
+>   staff's becomes a use of it. Don't leave two that drift.
+> - **The 15-minute rule today has two homes:** `backup-codes` (`two_step_fresh_code`) and `set-up/start` (`needs_fresh_code`).
+>   Part 2 gives them one server helper and one client window.
+>
+> **Three traps found while building Part 1. Each one, done wrong, turns two-step off for a password-holder:**
+> 1. **Checking the current password (Change password).** Do NOT reuse `checkPasswordAgain` as it stands: it signs in on
+>    the cookie-writing client, which REPLACES the person's own aal2 session with a new aal1 one, and they land on the code
+>    step mid-action. Check on a client that keeps no cookies, then revoke the session that check created. Save through
+>    the admin API, as `app/api/auth/two-step/reset-password` does, then sign out the other sessions. Do not rely on, or
+>    change, the service's "secure password change" setting (standing rule: no production Auth settings).
+> 2. **Set up a new phone while you still hold the old one.** `set-up/start` allows a replace only from a session a backup
+>    code let in. Widen it to "any proof in the last 15 minutes". Keep its order exactly: the `two_step_replacing` mark
+>    is set FIRST, the old authenticator is deleted after it, and the mark is cleared only at verify. Add a mutant that
+>    swaps that order.
+> 3. **Turn off.** The server refuses when `twoStepRequirementsFor` says required (staff always), and asks for a proof in
+>    the last 15 minutes. It removes every authenticator, deletes the backup codes and clears the replacing mark, in an
+>    order where a failure part-way leaves two-step ON. A guard test proves a password-only session cannot reach it.
+>
+> **Two open owner calls land here; raise them in the UX summary rather than deciding them:** call 4 (one shared client
+> handler for a `two_step_*` refusal on an already-open page; Part 1 recommends Part 2 builds it), and call 3 (keyed
+> backup-code hashes need a new production secret). A third question belongs in the summary too: does the window take a
+> backup code as well as the app's code? (Recommended: yes for everyone; the staff window is call 6.) Call 2 (an email when
+> two-step is turned on) stays with Part 4. If turning it OFF should also email the account, that is a Part 4 + `/legal`
+> line, so say so here.
+>
+> **The lost-phone screen is shown to a session that has only the password, which may be a thief's.** Its seat-based
+> version says only that a club admin can reset it, never which club and never who. The club-reset version points at
+> Part 3's door, which does not exist yet: until Part 3 is committed the chooser returns the support version for everyone
+> (one place, which Part 3 changes). Build both; Part 2's walk shows the support version, and the club version is
+> walked in Part 3's walk once its door exists.
 
 Build to tab 5 and tab 4, on Part 1's pieces.
 - **Account › Sign-in &amp; security**, a new rail row and phone row, in every state drawn:
@@ -152,6 +215,10 @@ Build to tab 5 and tab 4, on Part 1's pieces.
 - **Walk:** each state, each action asking for a code, change password, and the lost-phone screens.
 
 ## Part 3 · Opus — the switches, the grace period, the resets
+
+> **Starts after Part 2 is committed (owner, 2026-11-11).** Turning a switch off and the club's reset ask for the
+> owner's or admin's code through **Part 2's one "type your code again" window**: use it, don't build another. The
+> lost-phone screen's club version is waiting on your reset door: change Part 2's chooser to show it, and walk it.
 
 Build to tabs 6, 7 and 8.
 - **The club's switches** (Organization › Settings › Sign-in):

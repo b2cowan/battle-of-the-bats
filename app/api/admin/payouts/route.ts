@@ -20,6 +20,7 @@ import { endingNotice, readOutstanding, upcomingEnding } from '@/lib/online-paym
 import { closeClubPayPages } from '@/lib/online-pay-pages';
 import { requireBillingLocation } from '@/lib/billing-location-server';
 import { clubFeeInvoicePlaceable } from '@/lib/platform-stripe-fees';
+import { requireFreshCode } from '@/lib/two-step-fresh';
 import { demoBillingRefusal } from '@/lib/demo-guard';
 
 export const runtime = 'nodejs';
@@ -212,6 +213,9 @@ export const POST = withObservability(async (req: Request) => {
       // The club's OWN row (kind 'org'), the one the fee invoice reads (`clubBillingLocation`), never the payout account's.
       const address = await requireBillingLocation({ kind: 'org', orgId: ctx.org.id, name: ctx.org.name, stripeCustomerId: ctx.org.stripeCustomerId ?? null });
       if (!address.ok) return address.response;
+      // Where the club's money is paid out to (Board Ready two-step, Part 2): a fresh code first, after every check above.
+      const stale = await requireFreshCode();
+      if (stale) return stale;
       const feePayer: OnlineFeePayer = ONLINE_FEE_PAYERS.includes(body.feePayer) ? body.feePayer : 'family';
       const terms = { terms_version: PAYMENTS_TERMS_VERSION, terms_agreed_by: ctx.user.id, terms_agreed_by_email: ctx.user.email ?? 'unknown', terms_agreed_at: now };
       let accountId = row?.stripe_account_id ?? null;
@@ -258,15 +262,23 @@ export const POST = withObservability(async (req: Request) => {
     }
     case 'continue': {
       if (!row || row.disconnected_at) return NextResponse.json({ error: 'Set up payouts first.' }, { status: 409 });
+      // Stripe's sign-up is where the bank account is typed: a fresh code first.
+      const stale = await requireFreshCode();
+      if (stale) return stale;
       return NextResponse.json({ url: await onboardingLink(row.stripe_account_id, back(true), back(false)) });
     }
     case 'dashboard': {
       // Stripe refuses a dashboard sign-in until its sign-up is finished; an account taking card payments has finished it.
       if (!row?.onboarding_finished_at && row?.card_payments_status !== 'active') return NextResponse.json({ error: 'Finish setting up payouts first.' }, { status: 409 });
+      // Stripe's dashboard is where the bank account is changed: a fresh code first.
+      const stale = await requireFreshCode();
+      if (stale) return stale;
       return NextResponse.json({ url: await dashboardLink(row.stripe_account_id) });
     }
     case 'disconnect': {
       if (!row || row.disconnected_at) return NextResponse.json({ ok: true });
+      const stale = await requireFreshCode();
+      if (stale) return stale;
       // A1: stops new payments. Past payments stay in the books; their refunds are made in Stripe.
       await supabaseAdmin.from('org_payment_accounts').update({ disconnected_at: now, disconnected_by: ctx.user.id, updated_at: now }).eq('org_id', ctx.org.id);
       // 12d-2 (ask 11): every ending closes the club's open pay pages. A debit already submitted is no open page.

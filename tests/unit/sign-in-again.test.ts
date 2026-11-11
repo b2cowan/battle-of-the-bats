@@ -103,7 +103,7 @@ describe('3 · the window checks the signed-in staff member', () => {
     assert.ok(codeBranch > 0, 'the route no longer asks a staff member with two-step for the code');
     assert.ok(codeBranch < route.indexOf('checkPasswordAgain('), 'the code is decided before any password is checked');
     assert.match(route.slice(codeBranch, route.indexOf('checkPasswordAgain(')), /return result\.ok \?/);
-    assert.match(route, /checkCodeAgain\(auth\.user, code\)/);
+    assert.match(route, /checkCodeAgain\(auth\.user, state, \{ code: body\?\.code, backupCode: body\?\.backupCode \}\)/);
     const gate = functionBody(readCode('lib/platform-sign-in-again.ts'), 'requireFreshSignIn');
     assert.ok(gate.indexOf('state.hasFactor') < gate.indexOf('getClaims'), 'the code clock comes first');
     assert.match(gate, /refuse\('code'\)/);
