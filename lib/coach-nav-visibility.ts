@@ -71,55 +71,11 @@ export function withClosedSeasonNav<T extends { label: string }>(
 }
 
 /**
- * ══════════════════════════════════════════════════════════════════════════════════════════════
- * THE DESKTOP RAIL'S GROUPS COLLAPSE (Phase 5b, owner-approved mockups 2026-08-18)
- *
- * Fifteen rows ran off the bottom of a laptop rail. These two rules live here rather than inside
- * `CoachesSidebar` for the reason everything else in this file does: they are decisions, they are
- * invisible when they break, and a rule inside a client component cannot be asserted without
- * rendering React. `tests/unit/coach-nav-groups.test.ts` pins both.
- * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * ⚰ THE DESKTOP RAIL'S FOLDING GROUPS RETIRED (navigation Phase 4, E14, owner 2026-11-09). `COACH_NAV_DEFAULT_CLOSED_GROUPS`
+ * ("Team" started closed), `coachNavDefaultOpenGroups` and `isCoachNavGroupOpen` (an active row forced its group open) lived
+ * here from Phase 5b (2026-08-18). The rail is 240 wide and unfolded now: its headings are labels over rows that are always
+ * there, and the list scrolls between the pinned team cell and the foot — the tournament sidebar's rule (Phase 2 Part A).
  */
-
-/**
- * The groups that start CLOSED, keyed by their heading.
- *
- * ⚠ **DECIDED BY HOW OFTEN A COACH OPENS THE GROUP, NOT BY ITS SIZE.** A group opened weekly or
- * more never starts closed, however many rows it has — the collapse is meant to shorten the rail,
- * not to make the week's work take a click. `Team` (roster, tryouts, staff, documents, settings) is
- * the only group where the trade is favourable: five rows, and a coach visits them when they set
- * the season up rather than when they run it. That takes the rail from fifteen rows to ten.
- *
- * ⚠ **FIXED, NEVER PHASE-VARYING.** The admin sidebar varied its defaults by tournament status
- * (`defaultOpenFor`, retired with its folding in navigation Phase 2, E14); the coach equivalent would be season state, and it is
- * deliberately not built.
- * Phase 4 deleted the `conditional` mechanism precisely because a rail that rearranges itself moves
- * items a coach has already learned the position of, and auto-opening is a softer form of the same
- * thing. A coach's stored preference is the only thing that changes this.
- */
-export const COACH_NAV_DEFAULT_CLOSED_GROUPS: readonly string[] = ['Team'];
-
-/** The groups that start open — every heading the rail renders, minus the closed ones above. */
-export function coachNavDefaultOpenGroups(allGroupLabels: readonly string[]): string[] {
-  return allGroupLabels.filter(label => !COACH_NAV_DEFAULT_CLOSED_GROUPS.includes(label));
-}
-
-/**
- * Whether a group renders its items.
- *
- * ⚠⚠ **AN ACTIVE ITEM FORCES ITS GROUP OPEN, WHATEVER THE STORED STATE SAYS.** Without this a
- * coach closes a group, arrives inside it from a link, a card or a search result — and their own
- * location is missing from the menu they are looking at. The stored preference is a preference
- * about what to show them *elsewhere*; it was never an instruction to hide where they are.
- */
-export function isCoachNavGroupOpen(
-  groupLabel: string,
-  openGroups: ReadonlySet<string>,
-  hasActiveItem: boolean,
-): boolean {
-  if (hasActiveItem) return true;
-  return openGroups.has(groupLabel);
-}
 
 /**
  * Whether a coach nav item (keyed by its display label) is visible for the given capabilities.
@@ -292,6 +248,12 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
     case 'Settings':      return true;
     default:              return true;
   }
+}
+
+/** The team in a coaches address (`/{org}/coaches/teams/{id}/…`), or null off a team's pages — ONE reading of "which team is
+ *  this page", shared by the sidebar, the strip's name and the strip's split (navigation Phase 4). */
+export function coachTeamIdIn(pathname: string): string | null {
+  return pathname.match(/\/coaches\/teams\/([^/]+)/)?.[1] ?? null;
 }
 
 /**

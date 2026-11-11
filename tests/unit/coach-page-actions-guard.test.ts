@@ -1039,8 +1039,11 @@ describe('coach page headers — what the actions slot may hold', () => {
     );
     // And the fallback for everything outside it, which is what makes the second shape legal.
     const header = blankComments(readFileSync(HEADER_COMPONENT, 'utf8')).text;
+    // ⚖ UPDATED IN THE OPEN (navigation Phase 4, E11): the header now draws the "?" itself whenever it has one — at every
+    // width outside a host, and above 900 inside one (the team bar that hosts it is the phone's only). Hosted, it is
+    // hidden at 900 and below, where the bar draws it: still one "?" per width.
     assert.ok(
-      header.includes('!helpHosted'),
+      /const showHelp = !!help && !nested;/.test(header) && /helpHosted \? ` \$\{styles\.pageHeaderHelpDesk\}` : ''/.test(header),
       'CoachPageHeader lost its own-"?" fallback. Pages outside the team layout (Link Organization, and ' +
       'the layout\'s own no-auth early return) would silently lose their help button.',
     );

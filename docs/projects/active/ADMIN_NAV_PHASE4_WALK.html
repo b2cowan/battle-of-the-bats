@@ -1,0 +1,512 @@
+<title>The Coach Sidebar And Strip</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Navigation across the three portals · Phase 4, the Coaches Portal on a computer · Owner QA Ledger §514</span>
+    <h1>On a computer, a team cell heads the sidebar and the top strip names the page</h1>
+    <p class="lead">On a computer, the Coaches Portal sidebar is now 240 wide and never folds its groups. It opens with your team: its crest (or its colour, or its initials), its name and season; with more than one team, a click on it lists them. The team bar above the page is gone. The strip at the top says “Coach”, then the name of the page you are on (one level down into a record: “← back” and where it goes), and the team’s facts at its right end (club, season, record, the Game day chip). The page’s own title row loses its title where the strip already says it; the “?” is last, a page with only a “?” keeps it at the right, and the scouting reminder is a slim notice under that row. A closed season is named in the strip (“2025 Season”) with one door in the sidebar. The phone is unchanged. Eight walks, one purpose each. About 35 minutes.</p>
+    <p class="lead">Written Nov 11, 2026 against the dev site. Nothing here is real data: the clubs, the teams and their games are test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Walks 1 (one team), 2, 3, 4, 5, 6</dt><dd><code>uat-coach@uat-test-org.local</code> · password <code>UATPassword2026!</code> — opens at <code>localhost:3000/uat-rep-club/coaches</code>. <b>UAT Test Team</b> is live; <b>UAT Between Seasons</b> has no live season.</dd>
+      <dt>Walk 1 (three teams), parts of 2 and 6</dt><dd><code>uat-club-coach-15aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code> — the 15U AAA head coach, on <code>localhost:3000/uat-rep-club/coaches</code>. <b>15U AAA</b> has a team colour; its other teams are <b>UAT Test Team</b> and <b>S3 owner walk team</b>.</dd>
+      <dt>Walk 7</dt><dd>No sign-in: <code>localhost:3000/riverdale-ridge/coaches</code> (the coach demo).</dd>
+      <dt>Phone</dt><dd>Walk 8 uses your desk browser’s device toolbar at <b>390 × 844</b>.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Use a private window per person.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>No script to run.</b> Every step uses the test data as it stands. Use a full-size browser window (about 1440 wide) unless a step says otherwise.</li>
+      <li><b>Walk the parts in order, 1 to 8.</b> Each opens with a stop check.</li>
+      <li>The drawings these screens were built to: <a href="https://claude.ai/artifact/S7XXbtLwNeZUjEWXzbUcw4#phase4">tab 17 “Phase 4 gate”</a> and tab 7.</li>
+      <li>Your rulings it was built to: C1–C9, all A (a lone “?” keeps a top row; game day at every width; the scouting reminder under the row; a drill-in carries the way back in the strip; badges on Overview only; a picked team opens its Overview; the crest, then the colour, then initials; the sidebar’s words in the strip; the club’s name leading the facts).</li>
+      <li>This replaces older checks in earlier walks that looked for the team dropdown, the team bar on a computer or the sidebar’s folding groups; those no longer exist.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>With scripts off (exactly what the server sends), the strip’s page name and facts, the sidebar’s team cell and its crest or colour are already there on a one-team coach, a club coach with three teams, a team between seasons and the demo. A few pages that load their record in the browser (an opponent’s page, Documents’ header, Overview’s setup chip) fill in a beat later, as before.</li>
+      <li>One visible title per screen at each width.</li>
+      <li>The list’s keyboard: focus lands on the current team, the arrows move, Escape returns to the cell, Down opens, Tab closes; folded, it opens beside the tile.</li>
+      <li>At 1440 × 900 only “Collapse sidebar” scrolls; at 1366 × 768 the last rows and the foot scroll. The facts hide at 1000 and narrower.</li>
+      <li>The phone: the team bar is 37 px with its “?”, as before.</li>
+      <li>Not walked, for want of a fixture: a coach with exactly one team, a long team name, a game today, the scouting reminder (a game inside 24 hours with scouting notes). The build’s tests cover them.</li>
+      <li>The layout check on Overview, Roster, Schedule, Lineups, Money, Season’s End and Insights at 1440 and 390: no new findings.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: does the cell read as “this is my team”, does the strip name the page, and is the top row calmer than before?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "nav-phase4-walk-v1";
+  var PAGE = "Navigation across the three portals · Phase 4, the Coaches Portal on a computer · Owner QA Ledger §514";
+  var WALKS = [
+ {
+  "id": "T1",
+  "title": "The team cell and its list",
+  "job": "One team, then three teams · computer, 1440 wide",
+  "forText": "The sidebar opens with your team. With one team it is just a header; with more it is the way to switch.",
+  "passes": "The cell shows the team’s tile, name and season with a small arrow (there are several teams); a click lists “Your teams” (and “No live season” for a team with none), the current team is checked, 15U AAA’s tile wears its colour; picking a team opens that team’s Overview; the keyboard works. A new crest shows in the tile at once.",
+  "notIn": "The folded rail (walk 6) and the phone (walk 8). A coach with exactly one team (the cell then has no arrow and is just a link to Overview) has no fixture, so it is not walked here.",
+  "who": "uat-coach@uat-test-org.local, then uat-club-coach-15aaa@uat-rep-club.local",
+  "where": "localhost:3000/uat-rep-club/coaches",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as <code>uat-coach@uat-test-org.local<\/code> and open a team’s Roster.",
+    "s": "The sidebar is wider than before, headed by a tile, the team’s name and its season. There is <b>no<\/b> team dropdown and <b>no<\/b> team bar above the page. If the old dropdown is still there, stop and tell me."
+   },
+   {
+    "d": "Click the cell.",
+    "s": "This coach has a live team and a closed one, so the cell has an arrow and opens a list of both (the closed one under “No live season”)."
+   },
+   {
+    "d": "Sign out. Sign in as <code>uat-club-coach-15aaa@uat-rep-club.local<\/code> and open 15U AAA.",
+    "s": "The cell shows a tile in the team’s colour with dark or light initials that read clearly, the name, the season, and a small down arrow."
+   },
+   {
+    "d": "Click the cell.",
+    "s": "A list opens under it headed “Your teams”: 15U AAA (checked), UAT Test Team, S3 owner walk team — each with a tile and its season. If a team has no live season, it sits under “No live season”."
+   },
+   {
+    "d": "Use the keyboard: Down, Up, Escape; then open it and press Tab.",
+    "s": "Focus starts on the current team; arrows move; Escape closes it and puts you back on the cell; Tab closes it."
+   },
+   {
+    "d": "Pick UAT Test Team.",
+    "s": "You land on that team’s Overview, the cell now shows it, and the strip’s facts changed to its own."
+   },
+   {
+    "d": "Use the browser’s Back, then Forward, then pick a team again.",
+    "s": "Nothing flashes the wrong team’s name in the strip or the cell."
+   },
+   {
+    "d": "Optional: as the head coach, open the team’s Documents and upload a crest under “How your documents look” (then “Use club look” to undo it afterwards).",
+    "s": "The team’s tile in the sidebar shows the crest without a reload (a very wide or tall picture, past 2 : 1, falls back to the team’s colour). Skip if you would rather not touch the fixture."
+   }
+  ]
+ },
+ {
+  "id": "T2",
+  "title": "The strip names the page and carries the facts",
+  "job": "UAT coach and the club coach · computer, 1440 then narrower",
+  "forText": "The strip at the top says “Coach”, the page you are on, and the team’s facts at its right end.",
+  "passes": "The strip reads “Coach” then the page’s name in the sidebar’s word (“Roster”, “Staff”, “Settings”); the right end shows the club (for a club’s team), the season, the record, and on game day an olive “Game day” chip; at 1100 and narrower the quiet words give way and game day stays; at 1000 the facts are gone; the page has no second big title.",
+  "notIn": "A drill-in’s back arrow (walk 4) and a closed season (walk 5).",
+  "who": "uat-coach@uat-test-org.local; uat-club-coach-15aaa@uat-rep-club.local for the club’s name",
+  "where": "localhost:3000/uat-rep-club/coaches, a team’s pages",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <b>Roster<\/b> at 1440 wide.",
+    "s": "The strip reads <b>Coach<\/b>, then <b>Roster<\/b>, and the team’s facts sit at the far right. The page below has no second “Roster” title and no team bar. If the strip still says “Coaches Portal”, stop and tell me."
+   },
+   {
+    "d": "Click through Overview, Schedule, Lineups, Money, Staff and Settings.",
+    "s": "The strip changes to the sidebar’s word each time (“Staff”, “Settings” — not “Coaching staff” or “Team settings”); the facts stay put."
+   },
+   {
+    "d": "As the club coach, open 15U AAA.",
+    "s": "The club’s name leads the facts, then the season, then the record. A 0–0 record shows nothing; a record with no ties reads like “5-0”."
+   },
+   {
+    "d": "Narrow the window to about 1100, then to about 1000.",
+    "s": "At 1100 the quiet words (club, season) go first; at 1000 the facts are gone and only “Coach” and the page’s name remain. Nothing wraps or overlaps."
+   },
+   {
+    "d": "If a team has a game today, look at it (if no fixture shows game day, skip this step and say so).",
+    "s": "An olive <b>Game day<\/b> chip and “Open the bench ›” sit beside the page’s name at every width, in place of the record."
+   },
+   {
+    "d": "Open Overview of a team in a draft or other non-active season, if one exists (skip if none).",
+    "s": "The season’s state (“Draft”) joins the facts; Overview is the only page that does this."
+   }
+  ]
+ },
+ {
+  "id": "T3",
+  "title": "The page’s top row and the “?”",
+  "job": "UAT coach · computer, 1440 wide",
+  "forText": "The row under the strip holds only the page’s buttons and the “?”, and is gone when empty. (Two known things for the top-row review, not for this walk: on narrow pages — Overview, Season’s End, an opponent — the “?” sits further left than on wide pages; and on Schedule and Roster the page’s own view switch and buttons sit on a second row below.)",
+  "passes": "A page with buttons: buttons then the “?” last at the right end; a page with only a “?”: the “?” alone at the right; a page with neither: no row drawn; the scouting reminder is a slim notice under the row on every team page, with its ×, and scrolls with the page.",
+  "notIn": "The review of the top row across both portals (owed after this phase).",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "localhost:3000/uat-rep-club/coaches, a team’s pages",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <b>Schedule<\/b>.",
+    "s": "The row under the strip holds the page’s buttons with the round “?” last. No icon tile or big title sits at the left. If a title is still there, stop and tell me."
+   },
+   {
+    "d": "Open a page that has only a “?” (try Documents, Staff, Roster).",
+    "s": "A row with the “?” alone at its right end. Tell me if it feels like too much room for one button — it is the ruled behaviour (C1) and the row is queued for its own review."
+   },
+   {
+    "d": "Open a page with neither (try the Insights hub, if it has none).",
+    "s": "No empty row: the page starts right under the strip."
+   },
+   {
+    "d": "If the scouting reminder shows, read it.",
+    "s": "It is a slim notice under the top row, with the same words and a ×. Scroll: it scrolls away with the page; the buttons and the “?” never move for it. Dismiss it with the ×."
+   }
+  ]
+ },
+ {
+  "id": "T4",
+  "title": "A drill-in and the way back",
+  "job": "UAT coach · computer, 1440 wide",
+  "forText": "One level down into a record, the strip carries the back arrow and where it goes.",
+  "passes": "On an opponent’s page the strip reads “← All opponents”; the page keeps the record’s own title, chips and buttons, “?” last, and has no arrow of its own; the same on a lineup template (“← Templates”) and Tryout history (“← Tryouts”); the arrow goes back one level.",
+  "notIn": "The phone, which keeps the page’s own arrow.",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "Insights → Opponents → Lakeside; Lineups → Templates; Tryouts → History",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open Insights, then the opponents list, then <b>Lakeside<\/b>.",
+    "s": "The strip reads <b>← All opponents<\/b>. The page shows “Lakeside” as its own title and has no back arrow of its own. If two arrows show, stop and tell me."
+   },
+   {
+    "d": "Click the strip’s arrow.",
+    "s": "You are back on the opponents list; the strip reads “Coach › Insights”-style naming again."
+   },
+   {
+    "d": "Open a lineup template, then Tryout history.",
+    "s": "The strip’s arrow reads “← Templates” and “← Tryouts” respectively, each taking you one level up."
+   },
+   {
+    "d": "Open a handout preview from Documents, if one is easy to reach (skip if not).",
+    "s": "The arrow reads “← Player”."
+   }
+  ]
+ },
+ {
+  "id": "T5",
+  "title": "A closed season",
+  "job": "UAT coach · computer, 1440 wide",
+  "forText": "A team with no live season shows one page and one door, named by its season.",
+  "passes": "UAT Between Seasons’ strip reads “Coach” then the season’s name (“2025 Season” or the club’s typed name); the sidebar offers one door; the team sits under “No live season” in the list; the live tools are not reachable.",
+  "notIn": "Anything about starting or closing a season, which is unchanged.",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "Pick UAT Between Seasons from the list",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open the cell’s list and pick <b>UAT Between Seasons<\/b>.",
+    "s": "You land on its season’s page (not an Overview). The strip reads the season’s name. If a live tool (Roster, Schedule) opens instead, stop and tell me."
+   },
+   {
+    "d": "Look at the sidebar.",
+    "s": "One door only; the rest of the live rows are not there."
+   },
+   {
+    "d": "Open the list again.",
+    "s": "This team sits under “No live season”."
+   }
+  ]
+ },
+ {
+  "id": "T6",
+  "title": "The folded rail",
+  "job": "UAT coach and the club coach · computer, 1440 wide",
+  "forText": "Collapsing the sidebar leaves a rail with the team’s tile at the top.",
+  "passes": "Folded, the rail shows the team’s tile; clicking it (with more than one team) opens the list beside it; with one team the tile does nothing; the page widens and the strip stays right.",
+  "notIn": "The unfolded cell (walk 1).",
+  "who": "uat-club-coach-15aaa@uat-rep-club.local",
+  "where": "Any team page, “Collapse sidebar” at the foot",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: click <b>Collapse sidebar<\/b> at the foot.",
+    "s": "The sidebar narrows to a rail; the team’s tile stays at the top. If the tile disappears, stop and tell me."
+   },
+   {
+    "d": "Click the tile.",
+    "s": "The team list opens to the right of the rail, the same list as unfolded."
+   },
+   {
+    "d": "Hover a rail icon, then expand the sidebar again.",
+    "s": "Hover names the door; expanding restores the cell and the full list."
+   }
+  ]
+ },
+ {
+  "id": "T7",
+  "title": "The demo",
+  "job": "No sign-in · computer, 1440 wide",
+  "forText": "The public coach demo runs the same chrome.",
+  "passes": "The demo shows the team cell, the strip with “Coach” and the page, the facts; its banner and tour still work.",
+  "notIn": "The demo’s story, which is curated per release.",
+  "who": "No sign-in",
+  "where": "localhost:3000/riverdale-ridge/coaches",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <code>localhost:3000/riverdale-ridge/coaches<\/code>.",
+    "s": "The demo opens with the new sidebar and strip. If it will not open, stop and tell me."
+   },
+   {
+    "d": "Click through a few pages and follow the tour for a step or two.",
+    "s": "The strip names each page; the tour’s steps still point at things on the screen."
+   }
+  ]
+ },
+ {
+  "id": "T8",
+  "title": "The phone unchanged",
+  "job": "UAT coach · phone, 390 wide",
+  "forText": "Nothing about the phone moved.",
+  "passes": "The team bar is still at the top with the team’s name and its “?”; the page keeps its own title and back arrows; the bottom bar and the More sheet list the same rows as before; a closed team still has its one door.",
+  "notIn": "Phase 5 (the phone’s own redesign).",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "localhost:3000/uat-rep-club/coaches at 390 wide",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open a team’s Roster at 390 wide.",
+    "s": "The team bar (about 37 px) is at the top with the “?”; the page has its own title. No sidebar, no strip. If the page looks like the computer’s, stop and tell me."
+   },
+   {
+    "d": "Open the More sheet.",
+    "s": "The same rows as before this phase."
+   },
+   {
+    "d": "Open a drill-in (an opponent).",
+    "s": "The page’s own back arrow is there."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "B1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "D1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "B1" }; save(); render();
+  });
+  render();
+})();
+</script>

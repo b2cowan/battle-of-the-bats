@@ -1,14 +1,14 @@
 'use client';
 
 import {
-  useCallback, useEffect, useLayoutEffect, useRef, useState,
+  useCallback, useEffect, useRef, useState,
   type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject,
 } from 'react';
 import Link from 'next/link';
 import { Check, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
-import { rescueFocusTo, rovingMenuKey, scrollingAncestor, useDismissable } from '@/lib/overlay-hooks';
 import { isSidebarStrip, setSidebarStrip } from '@/lib/sidebar-strip';
 import { stripTileText } from '@/lib/team-color';
+import SidebarMenu from './SidebarMenu';
 import styles from './SidebarStrip.module.css';
 
 /**
@@ -24,8 +24,10 @@ import styles from './SidebarStrip.module.css';
  *     from the first paint, before any JavaScript has run. Its hairline is the module's `collapseRow`.
  *   · `SidebarStripTip` — an icon's name on hover AND keyboard focus (plan §3), read from the row's
  *     own accessible name, so a row needs nothing beyond the label it already carries.
- *   · `SidebarStripMenu` — a program with 2+ pages opens a menu beside its icon, on click (Ask 3).
- *   · `SidebarStripTile` — the tournament and team pickers as initials tiles that open their lists.
+ *   · `SidebarStripMenu` — a menu beside a folded tile or icon, on click (Ask 3); its keys and placement are the shared
+ *     sidebar menu's (`SidebarMenu`, navigation Phase 4 Step 0). Today: the free portal's "Your teams".
+ *   · `SidebarStripTile` — a picker as an initials tile that opens its list (the free portal's; the event and the
+ *     Premium team cells fold to their own logo tiles since navigation Phases 2 and 4).
  *   · `styles.rowLabel` / `fullOnly` / `stripRule` / `foldedGroup` / `cornerCount` /
  *     `stripLayer` — the class recipe a sidebar puts on its labels, its full-only furniture, its group
  *     hairlines, a group folded shut, its counts and its own element.
@@ -137,114 +139,27 @@ export function SidebarStripTip({ scopeRef }: { scopeRef: RefObject<HTMLElement 
   );
 }
 
-/** The menu's keep-out from the window's foot, and its gap from the icon (the drawing's 8). */
-const MENU_MARGIN = 8;
-const MENU_GAP = 8;
-const ENABLED_ITEMS = '[role="menuitem"]:not([aria-disabled="true"])';
-
 /**
- * A program's menu, beside its icon (Ask 3, ruled: a click menu, never hover-only — a touch laptop or a
- * tablet held sideways gets the desktop layout). It is a MENU by the house's keyboard contract, shared
- * with `CoachToolbarMenu` (`rovingMenuKey`): focus moves in on open, the arrows rove, Home/End jump, Space
- * activates a link row, Tab closes and hands focus back to the icon so the browser's Tab carries on from
- * there, Escape closes and returns focus, a press outside closes (`useDismissable`). Its rows are
- * `StripMenuLink` (the tournament's tile menu and its `StripMenuButton` rows became the event cell's switch list,
- * `components/admin/kit/EventSwitchMenu.tsx`, in navigation Phase 2 Part A).
- *
- * Placement: its top beside the icon's, clamped so it never runs off the window's foot or rises above the
- * sidebar's own top (the strip under the top bar), and it scrolls inside when even that is short. It
- * follows its icon while the sidebar scrolls, and closes once the icon leaves the sidebar's view.
+ * A menu beside a folded tile or icon (Ask 3, ruled: a click menu, never hover-only — a touch laptop or a tablet held
+ * sideways gets the desktop layout). Its keyboard contract and placement are the shared sidebar menu's (`SidebarMenu`,
+ * placement `beside`: it follows its icon while the sidebar scrolls and closes once the icon leaves the sidebar's view —
+ * navigation Phase 4, Step 0). Its rows are `StripMenuLink`. Today its one user is the free coach portal's team tile.
  */
 export function SidebarStripMenu({
   open, anchorRef, title, onClose, children,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
-  /** The menu's small-capitals label (the program, "Tournaments", "Your teams") and its accessible name. */
+  /** The menu's small-capitals label ("Your teams") and its accessible name. */
   title: string;
   onClose: () => void;
   children: ReactNode;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  const closeToAnchor = () => {
-    onClose();
-    anchorRef.current?.focus({ preventScroll: true });
-  };
-  useDismissable(open, [anchorRef, panelRef], onClose, closeToAnchor);
-
-  const onCloseRef = useRef(onClose);
-  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
-
-  useLayoutEffect(() => {
-    if (!open) return;
-    const anchor = anchorRef.current;
-    const panel = panelRef.current;
-    if (!anchor || !panel) return;
-    // The box the icon scrolls in — the sidebar itself, or its list.
-    const box = scrollingAncestor(anchor);
-    let frame = 0;
-    const place = () => {
-      frame = 0;
-      const r = anchor.getBoundingClientRect();
-      const b = box?.getBoundingClientRect();
-      if (b && (r.bottom <= b.top || r.top >= b.bottom)) { onCloseRef.current(); return; }
-      const floor = b ? Math.max(MENU_MARGIN, b.top) : MENU_MARGIN;
-      const foot = document.documentElement.clientHeight - MENU_MARGIN;
-      const height = panel.scrollHeight;
-      // Beside the icon, lifted to fit above the foot — and never above the sidebar's own top, even for an icon
-      // half scrolled out of view (the top bar stays clear).
-      const top = Math.max(floor, Math.min(r.top - 4, foot - height));
-      panel.style.left = `${r.right + MENU_GAP}px`;
-      panel.style.top = `${top}px`;
-      panel.style.maxHeight = `${foot - top}px`;
-    };
-    const schedule = (e?: Event) => {
-      if (e?.target instanceof Node && panel.contains(e.target)) return;
-      if (!frame) frame = window.requestAnimationFrame(place);
-    };
-    place();
-    // Focus lands on the page you are on (or the picker's current choice), else the first row.
-    (panel.querySelector<HTMLElement>(`${ENABLED_ITEMS}[aria-current]`) ?? panel.querySelector<HTMLElement>(ENABLED_ITEMS))
-      ?.focus({ preventScroll: true });
-    window.addEventListener('resize', schedule);
-    window.addEventListener('scroll', schedule, true);
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener('resize', schedule);
-      window.removeEventListener('scroll', schedule, true);
-    };
-  }, [open, anchorRef]);
-
-  if (!open) return null;
-
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    // Tab: close and hand focus to the icon WITHOUT preventing the key — the browser's own Tab then moves
-    // on from the icon, so the menu is never a trap and the page behind it is never reached by accident.
-    if (e.key === 'Tab') { closeToAnchor(); return; }
-    rovingMenuKey(e, Array.from(panelRef.current?.querySelectorAll<HTMLElement>(ENABLED_ITEMS) ?? []));
-  };
-  // A row that acts closes the menu (its navigation or switch carries on) — and focus, which was on that row,
-  // goes back to the icon unless what the row opened took it (the house safety net, `rescueFocusTo`).
-  const onClick = (e: MouseEvent<HTMLDivElement>) => {
-    const row = (e.target as Element).closest('[role="menuitem"]');
-    if (!row || row.getAttribute('aria-disabled') === 'true') return;
-    onClose();
-    rescueFocusTo(anchorRef);
-  };
-
   return (
-    <div
-      ref={panelRef}
-      role="menu"
-      aria-label={title}
-      className={styles.menu}
-      onKeyDown={onKeyDown}
-      onClick={onClick}
-    >
+    <SidebarMenu open={open} anchorRef={anchorRef} label={title} placement="beside" className={styles.menu} onClose={onClose}>
       <div className={styles.menuHead} aria-hidden>{title}</div>
       {children}
-    </div>
+    </SidebarMenu>
   );
 }
 

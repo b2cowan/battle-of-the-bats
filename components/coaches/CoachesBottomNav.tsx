@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutGrid, Archive, Calendar, MessageSquare, Trophy,
-  Users, UserCog, Mail, DollarSign, FileText, BarChart3,
-  MoreHorizontal, X, Settings, ClipboardList, NotebookPen, ListOrdered, TrendingUp, Shield, Bell,
+  Users,
+  MoreHorizontal, X, NotebookPen, Shield, Bell,
   User, Home, ChevronRight, CreditCard,
 } from 'lucide-react';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
@@ -24,6 +24,7 @@ import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { orgBell } from '@/lib/notification-bell-scope';
 import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
+import { COACH_MORE_SECTIONS, type CoachMoreItem } from '@/lib/coach-team-nav';
 import styles from './CoachesBottomNav.module.css';
 import { useDismissable } from '@/lib/overlay-hooks';
 
@@ -55,61 +56,14 @@ const BAR_KEYS = new Set<string>(TEAM_TABS.map(t => t.key));
 /**
  * Remaining team sections — surfaced under More, each beneath a plain-language section header.
  *
- * ⚠ THIS MIRRORS `TEAM_NAV_GROUPS` IN `CoachesSidebar` — same six groups, same order, same
- * heat rule (hot at the top, cold at the bottom). **Read that file's header before changing
- * anything here**; it holds the reasoning, the label-vs-heading rule, and why the "Explore" shelf
- * and the whole `conditional` mechanism were deleted rather than renamed. Changing one nav and not
- * the other leaves the two telling different stories — pinned by
- * `tests/unit/coach-nav-groups.test.ts`.
- *
- * ⚠ The ORDER matches; the CONTENTS differ by exactly the phone's primary tabs. Overview,
- * Schedule, Roster and Chat are bottom-bar primaries (`TEAM_TABS`), so they do not repeat here —
- * which is why "Team" holds only Tryouts and "Communication" only Email families. That is the one
- * legal divergence, and it is a consequence of the bar, not a second opinion about grouping.
- *
- * Hrefs keep their existing routes (/accounting, /history); only the labels differ from the path.
+ * ⚖ IT IS THE SIDEBAR'S LIST (navigation Phase 4): `COACH_MORE_SECTIONS` (lib/coach-team-nav.ts) — `TEAM_NAV_GROUPS`, the
+ * same five groups, the same order, the same heat rule — minus the phone bar's primary tabs (`PHONE_PRIMARY_HREFS`). **Read
+ * that file's header before changing anything**; it holds the reasoning, the label-vs-heading rule, and why the "Explore"
+ * shelf and the whole `conditional` mechanism were deleted rather than renamed. ⚠ Attendance is in NEITHER nav (a report
+ * under Insights). ⚠ The sheet does NOT collapse — a coach opens it in order to find something.
  */
-type MoreItem = { key: string; icon: typeof Users; label: string };
-const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
-  { header: 'Season', items: [
-    // ⚠ Attendance is in NEITHER nav now, live or archived. It left both live navs on 2026-08-15
-    // (plan Phase 3) and left the archive menu on 2026-08-16 (archive rail Phase 2), once the
-    // Insights hub became the archive's door and could carry it. It is a report whose parent is
-    // that hub, in every season — reachable, just not listed. `CLOSED_SECTION_EXTRAS` in
-    // lib/coach-nav-visibility.ts is what keeps the season switcher honouring that distinction.
-    // Practice plans (2026-08-15) — the sidebar puts it directly under Schedule; Schedule is a
-    // PRIMARY tab down here, so the hub leads its section instead.
-    { key: '/practice',      icon: NotebookPen,   label: 'Practice plans' },
-    { key: '/lineups',       icon: ListOrdered,   label: 'Lineups' },
-    { key: '/tournaments',   icon: Trophy,        label: 'Tournaments' },
-  ] },
-  // ⚠ "Development" → "Skills & goals" (owner ruling 5, 2026-08-18) — matching the sidebar, whose
-  // note carries the reasoning. Route unchanged; the gate keeps the old label as a fallthrough.
-  { header: 'Progress', items: [
-    { key: '/development',   icon: TrendingUp,    label: 'Skills & goals' },
-    { key: '/history',       icon: BarChart3,     label: 'Insights' },
-  ] },
-  { header: 'Money', items: [
-    { key: '/accounting',    icon: DollarSign,    label: 'Money' },
-  ] },
-  // Chunk B (P1 #1) — renamed to name its audience; see the sidebar's note for why Chat kept its
-  // name. The route is unchanged, and the capability gate keeps the old label as a fallthrough.
-  { header: 'Communication', items: [
-    { key: '/announcements', icon: Mail,          label: 'Email families' },
-  ] },
-  // ⚠ **"TEAM ADMIN" IS MERGED INTO "TEAM"** (Phase 5b, owner-approved 2026-08-18) — matching the
-  // sidebar, because the two navs are required to carry the same grouping and the guard test below
-  // asserts them equal. The split asked a coach to know whether Staff was "the team" or
-  // "administering the team". Nothing moved: these four were already consecutive and are in the
-  // same order. ⚠ The sheet does NOT collapse — a coach opens it in order to find something, so
-  // hiding rows behind a chevron here would be a second tap to reach the thing they came for.
-  { header: 'Team', items: [
-    { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts' },
-    { key: '/staff',         icon: UserCog,       label: 'Staff' },
-    { key: '/documents',     icon: FileText,      label: 'Documents' },
-    { key: '/settings',      icon: Settings,      label: 'Settings' },
-  ] },
-];
+type MoreItem = CoachMoreItem;
+const MORE_SECTIONS = COACH_MORE_SECTIONS;
 const ALL_MORE_KEYS = MORE_SECTIONS.flatMap(s => s.items.map(i => i.key));
 /** The More pages that are not on the bar (while chat is paused, Practice plans is a tab, not a More page). */
 const MORE_ONLY_KEYS = ALL_MORE_KEYS.filter(key => !BAR_KEYS.has(key));
@@ -118,7 +72,7 @@ const MORE_ONLY_KEYS = ALL_MORE_KEYS.filter(key => !BAR_KEYS.has(key));
  * THE HOT ROW — a SHORTCUT, not a regrouping (owner ruling 2026-09-20, phone re-evaluation
  * stage 0 · A1). The three tools a coach reaches for most on a phone in-season sit as tiles at
  * the top of the sheet, one tap from anywhere; each is still listed in its own group in
- * `MORE_SECTIONS` above (that literal is what the nav-groups guard reads, and it is unchanged),
+ * `MORE_SECTIONS` above (the shared `COACH_MORE_SECTIONS`, which the nav-groups guard imports),
  * and the sheet simply does not repeat a hot key inside its group. Measured before: the three
  * were two taps and a scroll away inside a 210px popover that showed eight of sixteen rows.
  * ⚠ Every key here MUST be a `MORE_SECTIONS` item — a tile is a door, and a door the groups do

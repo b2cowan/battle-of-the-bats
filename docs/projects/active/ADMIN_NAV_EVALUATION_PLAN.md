@@ -584,10 +584,102 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   a toolbar row; nested pages' back arrows into the strip; the closed-season page titled "2025 Season" in the strip;
   `CoachTeamSeasonGate` untouched. ⚠ The header-bar project's guards pin the portal as "pixel-identical"
   (`ADMIN_HEADER_BAR_PLAN.md` L182, L261, L448, L548) — retire them deliberately in this phase, not silently.
+  **⚖ Gate ruled 2026-11-11 (drawings tab 17 "Phase 4 gate", artifact version 15; /design applied): C1–C9 all A.**
+  - **C1** a page with only its "?" keeps a top row with the "?" alone at its right end (the tournament phone's rule); no buttons and no "?" → nothing drawn.
+  - **C2** on game day the Game day chip + "Open the bench ›" stay at every width, as their own pair beside the page's name; the quiet words (club, season, opponent, time) give way at ≤1100 (the shipped `.facts` rule is `max-width: 1100px`).
+  - **C3** the scouting reminder becomes a slim notice UNDER the page's top row, every team page, same words and ×, scrolls with the page (the buttons and "?" never move for it).
+  - **C4** one level down the strip carries the back arrow and where it goes (today's words, one table: All opponents, Roster, Templates, Circuits, All lineups, Practice plans, Skills & goals, Tournaments, Season's End, Tryouts for Tryout history; the handout preview reads "← Player"); the page keeps the record's own title, chips and buttons, "?" last; the page's own back arrow goes. Reason: the coach drill-ins load their record client-side, so a record name in the strip could not be right on first paint (tab 7's "← Practice plans │ Tuesday hitting" is superseded).
+  - **C5** Overview is the only coach page whose title carries badges: a non-active season state (Draft …) joins the strip's facts; Premium + division badges go on a computer; the phone keeps all three until Phase 5.
+  - **C6** a picked team opens its Overview (a closed team its season's page), as today on both widths.
+  - **C7** the crest is built in this phase: crest → the team's colour (`rep_teams.color`; dark initials on a light colour) → initials. The crest is `rep_teams.pdf_settings.logoDataUrl`: record its shape when saved, measure existing uploads once (dev in the build, prod at the promote with the owner's yes, as B4), serve it at its own address (never inline in the page). A crest past 2 : 1 / 1 : 2 falls to the colour.
+  - **C8** the strip uses the sidebar's words ("Staff", "Settings", not "Coaching staff" / "Team settings"). The closed-season page is the one exception: the strip names the season through `mastheadSeasonLabel` ("2025 season", or the club's typed name), from the coach's team list (first paint); a long typed name is the one strip name that may be cut, after the facts.
+  - **C9** for a club's team the club's name leads the strip's facts and is the first words to give way (today the team bar's meta is the only place it shows on a computer).
+  - Facts use the coach's own shipped looks (olive "Game day", amber "Complete") and its words; a record drops a zero tie ("5-0"); a 0-0 record shows nothing; game day with no opponent and no event shows the chip alone. E7's "the chip replaces the record on game day" stands.
+  - **Measured at the gate (dev, 2026-11-11, `.probe/nav-phase4/fit.mjs`):** 220 → 240 at 1280 / 1366 costs Overview, Roster, Schedule, Lineups and Money nothing (main 1060→1040 / 1146→1126; no overflow, wrap or new truncation). Unfolded rail ≈ 889 px: at 1366 × 768 Documents, Settings and the foot scroll; at 1440 × 900 only Collapse sidebar. One fixture team; re-measure in the build with a long roster and long opponent names.
+  - **BUILT 2026-11-11 (working copy → one commit, see below).** One shared sidebar menu (`SidebarMenu`, placements `cell` / `beside`)
+    now serves the event list, the free portal's strip menu and the new team cell. The coach sidebar is 240, unfolded, headed by
+    `CoachTeamCell` (crest → colour → initials; chevron only with 2+ teams; "Your teams" then "No live season"; folded = the tile with
+    the list beside it); folding retired. The nav list lives once (`lib/coach-team-nav.ts`: sidebar, More sheet, the strip's name,
+    the drill-back words). The split strip on TEAM pages only ("Coach", the page's `<h1>` or "← back", the facts at the right end),
+    its facts rendered on the server by a new parallel-route slot (`@stripFacts`) from the one cached loader the phone's team bar
+    shares. Team bar hidden above 900 (`--coach-header-h` → 0); phone unchanged. The page's top row: `data-desk-named` /
+    `data-desk-drill`, "?" last, a lone "?" packs right (C1), the scouting reminder under the row (C3). Crest (C7): `logoAspect`
+    + `logoVersion` written by the pdf-settings PUT beside `logoDataUrl`, served at `…/teams/[teamId]/crest`, read by the coach list
+    with JSON paths; NO migration; dictionary updated; `scripts/backfill-team-crest-aspect.mjs` (dev: nothing to measure).
+  - **Measured (dev, `.probe/nav-phase4/desk.mjs`, runs 2 and 3):** first paint (scripts off) = after load for a one-team coach, a club
+    coach with 3 teams, a team between seasons and the demo (exceptions as before: the opponent page, Documents' header, Overview's
+    setup chip load client-side); one visible `<h1>` per width; the list's keyboard contract (focus on current, arrows, Escape
+    returns to the cell, ArrowDown opens, Tab closes; folded opens beside); at 1440 × 900 only Collapse sidebar scrolls (18 px for a
+    coach with no foot doors), at 1366 × 768 the last rows and the foot scroll; the facts hide at 1000 and narrower; phone bar 37 px,
+    `--coach-header-h` 37 px, "?" in the bar. After the review fix, a soft-navigation probe (team A → notifications → A → B →
+    hub → A, `.probe/nav-phase4/softnav.mjs`) draws the right strip every time with no page errors.
+  - **Checks (2026-11-11):** typecheck clean (exit 0); the 14-file guard set plus the two help-content guards: 392 of 393 pass, the
+    one failure the workspace-flip census naming other sessions' files (`lib/console-money-sales-tax-wait.ts`,
+    `components/admin/DeskNamedPage.tsx`, `components/admin/kit/kit-tournament-groups.ts`); `check:spelling` and `check:demos`
+    clean; `check-admin-type` and `check-css-selectors` flag only others' files (platform-admin, `statItem`);
+    `check:layout` on coach-overview, coach-roster and coach-season-end at 1440 and at 390: no new findings (Roster's 12 at 390
+    are baselined).
+  - **/simplify** applied (four reviewers). **Skipped, recorded:** crest facts as real columns (a JSON path reads the whole jsonb,
+    picture included, on every coach load — small; **owner call**, it means a migration); one drill-back table also feeding the pages'
+    own `backTo` (9 call sites; the phone shows the page's arrow, the computer the table's, the words can drift); lifting `CellName`,
+    the cell CSS and the switch-row markup into shared parts; moving the split-strip CSS out of `AdminTopStrip.module.css`; one client
+    season hook (resolution repeated in about 5 components); an `inkOnBrand` helper shared with `lib/themes.ts`; `nudgeDay` shared
+    with the team bar (Phase 5 retires the bar).
+  - **/design** (built vs tab 17 and tab 7; run 3, 23 frames): **no High.** The strip, the "Coach" word, the facts, the cell, the
+    list, the drill-in arrows and the closed-season page match. **Two Mediums, NOT fixed here — owner calls, because both are the
+    queued top-row review (below), which changes both portals together and a Coaches-only fix would fork the rule:** (1) the "?" has
+    no fixed x on a computer: ≈1390 on full-width pages, ≈1302 on 960-wide pages (Overview, Season's End, an opponent — where the
+    back arrow and strip name also sit at x=272 against the title at 360), ≈1167 on Notifications — before Phase 4 it lived in the
+    full-width team bar; (2) on Schedule and Roster the header's buttons and the page's own toolbar are two components: Schedule's
+    "?" is alone on a row with the view switch, Export and Add event a row below (≈100 px from the strip to the first content);
+    Roster's Export sits a row below Add Player / Import. **Recorded (Low):** the folded rail's tile measures 32 px, drawn 40 (the
+    shared rule is the club cell's owner-ruled 32); a coach with no foot doors scrolls the rail 18 px at 1440 × 900 so Collapse sits 6 px
+    under the edge; the live demo's banner + tour bar (147 px) push Staff … Collapse below the fold at 900; Notifications keeps the
+    unsplit strip and still says "Coaches Portal" where team pages say "Coach"; the top row sits ≈14 px lower than drawn (the admin's
+    accepted Low); the list rows show the season but not another team's record or game day (the team list doesn't carry them).
+    **Not verifiable on dev (no fixture):** game day at 1000 / 1101, the scouting reminder, a one-team cell (no arrow), a long team
+    name, a real crest upload (C7).
+  - **/review** (high-risk, five lenses; report-only helper, claims checked against the code): the gate (`seasonFinished={!live &&
+    !!closed}` literal), the phone (More sheet rows identical, `pageHeaderHelpDesk` / `deskNudge` hidden ≤ 900), the sticky offsets
+    (every consumer reads `--coach-topstrip-top + --coach-header-h`; none hard-coded to the bar) and the crest / save routes (same
+    door as the pdf-settings GET: signed in → same org → team in org → entitled membership; aspect and version measured from the
+    stored bytes, never from the request; fixed `image/png` + `nosniff`; private one-year immutable cache keyed by the version) held.
+    **FIXED:** (Medium) the strip's facts went stale when a coach left a team for notifications / billing / help / link-org / the hub
+    and came back by a soft navigation (Next keeps a slot's last active state on its default, and reuses a matching node) — each of
+    those pages now has an empty page in the slot, so leaving a team replaces its facts (guarded in `coach-nav-phase4`); (Low) a new
+    crest now refreshes the sidebar's tile at once (`router.refresh()` after the save). **Recorded (Low):** re-saving an unchanged
+    crest may change its version stamp if sharp's re-encode is not byte-identical (busts a one-year cache for nothing; unconfirmed);
+    the crest route ignores `?v=` (a stale tab can cache the new picture under the old key; harmless, self-heals); the backfill's
+    `wrote` count counts attempts. Not reviewed: the admin side of the shared menu refactor beyond its tests.
+  - **/docs:** the Premium-portal help sections for collapsing the sidebar, where every tool lives, the bar across the top, the game
+    day link, the scouting reminder and two "team switcher" mentions now describe the cell and the split strip; the free portal's
+    help is unchanged (it keeps its `<select>`, its folded header and "Coaches Portal"). NAV_STANDARD: only N2, N3's chevron rule
+    (superseded by the cell's switch chevron), the coach groups line and the widths line (220 exception retired) — the full rewrite
+    is Phase 6. A pre-existing help line ("the whole menu still opens them, read-only") contradicts the one-page closed season;
+    left for a separate `/docs` pass.
+  - **Older walk checks this phase makes false (not edited — history):** `ADMIN_NAV_PHASE1B_WALK.html` L263 ("sidebar and strip look
+    exactly as they did"), `ADMIN_NAV_PHASE1_WALK.html` L276 ("COACHES PORTAL" top left, on a team page), `BANK_CHECK_S3_WALK.html`
+    L148 and the ledger sign-in line at §505 ("Switch team" select), `PLAN_AND_BILLING_STAGE2_OWNER_WALK` ("no team picker and no team
+    masthead", borderline), `COACH_NAV_GROUPS_COLLAPSE_BUILD_PROMPT.md` L203 (the folding done-criterion), and unchecked ledger
+    lines about the team masthead on a computer (≈ L2662, L6050, L7674).
+  - **Not clean, and not this phase's:** about 40 unit failures in other sessions' money, two-step and support-console files;
+    `verify-changed`'s ESLint config is broken (the `react-hooks` plugin is missing); token, old-look and index-coverage flags on
+    others' files; a `statItem` dead class; the workspace-flip census lists others' files.
+  - **Walk §514** (https://claude.ai/artifact/7ium3Z1NFePTBbMTcLUSXS, source `ADMIN_NAV_PHASE4_WALK.html`): 8 walks — the team cell
+    and list, the strip, the top row and "?", a drill-in, a closed season, the folded rail, the demo, the phone — **owed**.
+  - **Owed at the promote, with the owner's yes (record; not run):** `node scripts/backfill-team-crest-aspect.mjs --prod`, then
+    `--prod --write`. No migration. **Owner calls:** crest facts as real columns (a migration); the two top-row Mediums above (fold
+    into the queued top-row review).
 - **Phase 5 · Coaches Portal phone.** Bar names the page; the team on the small line opens `CoachTeamSwitchSheet`.
 - **Phase 6 · Words, help, demos, sweep, walk.** NAV_STANDARD rewritten (N7 item 1, N11, exceptions, the cell);
   `memory/design_decisions.md` entry; help articles (`/docs`); demo tour anchors (the build fails if one vanishes);
   `check:layout --changed` on the touched screens, the full sweep on staging; one closing walk.
+- **Owner review owed (logged 2026-11-11, after the Phase 4 gate): the page's top row in the tournament admin and the Coaches
+  Portal.** With the paper titles gone, the row that is left (the page's buttons and the "?") takes too much room for what it
+  holds now that everything on its left is gone; on about twenty coach pages it is a full row for a lone "?" (C1). The owner
+  wants the "?" and the top buttons in general looked at across both portals. Phase 4 builds C1 as ruled so the two portals
+  stay one rule; this review then changes both together. Not a phase yet: draw it (whole screens, both portals, desktop and
+  phone) once Phase 4 has landed, before Phase 6's closing walk.
 
 ## 6. The /design pass (2026-11-09) — what it changed in the drawings
 - **The whole cell opens the list** when there is more than one to choose from (the chevron is its sign); a club's cell

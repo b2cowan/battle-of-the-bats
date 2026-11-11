@@ -53,9 +53,14 @@ export const metadata: Metadata = {
 export default async function CoachesLayout({
   params,
   children: page,
+  stripFacts,
 }: {
   params: Promise<{ orgSlug: string }>;
   children: React.ReactNode;
+  /** ⚖ The team's facts for the strip's right end on a computer (navigation Phase 4, E7): the `@stripFacts` slot renders
+   *  them on the server for a team's pages (so the first paint has them) and nothing elsewhere. Only the chrome's strip
+   *  shows them, and only on a team's pages — a wall's strip never does. */
+  stripFacts: React.ReactNode;
 }) {
   const { orgSlug } = await params;
 
@@ -365,7 +370,7 @@ export default async function CoachesLayout({
                     help guide is a focused reading surface (no sidebar, no strip, no bottom
                     nav, pinned dark) — the same line the admin side has drawn since Stage C.
                     See components/coaches/CoachesChrome.tsx. */}
-                <CoachesChrome orgSlug={orgSlug} billingOnlyHref={ownerBillingPage ? ownerBillingHref : null}>{children}</CoachesChrome>
+                <CoachesChrome orgSlug={orgSlug} billingOnlyHref={ownerBillingPage ? ownerBillingHref : null} stripFacts={stripFacts}>{children}</CoachesChrome>
               </ConfirmProvider>
             </CoachesOverlayProvider>
             <InstallAppPrompt

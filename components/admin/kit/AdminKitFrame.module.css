@@ -112,22 +112,9 @@
 .eventCellOpen .eventChevron { color: var(--text-primary); }
 /* Folded, the chevron hides with the sidebar's other full-only furniture (`strip.fullOnly`, on the icon). */
 
-/* ⚖ THE SWITCH LIST (`EventSwitchMenu`): the portal's standard two-line dropdown (`SublinedChoice`'s `convWhat*` list and rows,
-   coaches.module.css) at the drawing's 320 (T3). This adds only what that list has no need for: the current event's olive
-   name and check, a check centred on the row's two lines, and the "All tournaments" foot under its hairline. */
-.switchRow { align-items: center; gap: 0.6rem; color: var(--text-primary); text-decoration: none; }
-/* ⚖ The tile leads the row (navigation Phase 3, owner 2026-11-11, both widths): the words take the room between it and the check. */
-.switchText { min-width: 0; flex: 1; }
-.switchCurrent { color: var(--home-olive); }
-.switchIcon { flex: none; color: var(--home-olive); }
-/* The foot row: a link, so it is the list's FIRST `a` and `.convWhatOpt:first-of-type` would drop its hairline — put back. */
-.switchAll.switchAll { justify-content: flex-start; border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12); }
-/* The trophy sits in a box the tile's width, so "All tournaments" starts where the event names do. */
-.switchAllIcon { flex: none; width: 24px; display: inline-grid; place-items: center; }
-.switchAllText { font-size: var(--type-body); color: var(--text-primary); }
-/* The list is 320 wide and hangs over the page: the sidebar raises its own layer while it is open (the strip's `stripLayer`
-   value), so the page's own pinned bands never paint over it. */
-.rail:has(.switchMenu) { z-index: 70; }
+/* ⚖ THE SWITCH LIST (`EventSwitchMenu`): its rows' styles are the shared `SidebarSwitchList.module.css` (the coach team list
+   wears them too), and the layer it raises while open is the shared sidebar menu's one rule (`.stripLayer:has(.cellMenu)`,
+   SidebarStrip.module.css) — navigation Phase 4, Step 0. */
 
 /* A group's heading — "Programs", "Organization", "Tournament". The coach rail's heading type
    (`.sidebarGroupHeader`), as a label: the admin's groups are PROGRAMS, and a program opens because

@@ -11,35 +11,21 @@
  * head is that list's group band ("Tournaments"); "All tournaments" at the foot opens the Tournaments list. ⚖ Since navigation
  * Phase 3 (owner 2026-11-11) the event's 24px logo tile leads every row, here and in the phone's sheet (`EventSwitchItems`).
  *
- * ⚖ IT IS A MENU BY THE HOUSE'S KEYBOARD CONTRACT (`SidebarStripMenu`, `rovingMenuKey`): focus lands on the current event;
- * the arrows rove, Home/End jump; Enter or Space picks; Escape closes and puts focus back on the cell; Tab closes and hands
- * focus to the cell without stopping the browser's own Tab; a press outside closes (`useDismissable`).
- *
- * ⚠ `position: fixed` INSIDE THE SIDEBAR, NOT PORTALED (the strip menu's reason): it stays in the sidebar's warm / dark palette
- * scope. Being 320 wide it hangs over the page, so the sidebar raises its own layer while it is open (`.rail:has(...)`,
- * AdminKitFrame.module.css). The cell it hangs from is pinned (outside the scrolling list), so it never needs to follow a scroll.
+ * ⚖ ITS KEYBOARD CONTRACT AND PLACEMENT ARE THE SHARED SIDEBAR MENU'S (`SidebarMenu`, placement `cell` — navigation Phase 4,
+ * Step 0): focus lands on the current event; the arrows rove; Escape, Tab and a press outside close it; under the open cell,
+ * beside the folded tile. The coach team cell wears the same window and the same rows' classes.
  */
 import Link from 'next/link';
-import { useLayoutEffect, useRef, type KeyboardEvent, type MouseEvent, type RefObject } from 'react';
+import { type RefObject } from 'react';
 import { Check, Trophy } from 'lucide-react';
-import { rescueFocusTo, rovingMenuKey, useDismissable } from '@/lib/overlay-hooks';
-import { isSidebarStrip } from '@/lib/sidebar-strip';
 import type { EventSwitchRow } from '@/lib/admin-event-cell';
 import SidebarLogoTile from '@/components/shared/SidebarLogoTile';
+import SidebarMenu from '@/components/shared/SidebarMenu';
 import coachKit from '@/app/[orgSlug]/coaches/coaches.module.css';
-import styles from './AdminKitFrame.module.css';
+import styles from '@/components/shared/SidebarSwitchList.module.css';
 
 /** The drawing's window: 320 wide (T3), 2px below the open cell, 8px beside the folded tile, 8px clear of the window's edges. */
 const WIDTH = 320;
-const MARGIN = 8;
-/** The list's items, the menu's and the phone sheet's alike. */
-export const SWITCH_ITEMS = '[role="menuitem"]';
-const ITEMS = SWITCH_ITEMS;
-
-/** Focus the event you are in, else the first row — where both lists open. */
-export function focusCurrentItem(panel: HTMLElement | null) {
-  (panel?.querySelector<HTMLElement>(`${ITEMS}[aria-current]`) ?? panel?.querySelector<HTMLElement>(ITEMS))?.focus({ preventScroll: true });
-}
 
 export default function EventSwitchMenu({ open, anchorRef, rows, allHref, onPick, onClose }: {
   open: boolean;
@@ -50,67 +36,19 @@ export default function EventSwitchMenu({ open, anchorRef, rows, allHref, onPick
   onPick: (id: string) => void;
   onClose: () => void;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const closeToAnchor = () => {
-    onClose();
-    anchorRef.current?.focus({ preventScroll: true });
-  };
-  useDismissable(open, [anchorRef, panelRef], onClose, closeToAnchor);
-
-  const onCloseRef = useRef(onClose);
-  useLayoutEffect(() => { onCloseRef.current = onClose; }, [onClose]);
-
-  useLayoutEffect(() => {
-    if (!open) return;
-    const anchor = anchorRef.current;
-    const panel = panelRef.current;
-    if (!anchor || !panel) return;
-    const r = anchor.getBoundingClientRect();
-    const viewW = document.documentElement.clientWidth;
-    const viewH = document.documentElement.clientHeight;
-    const width = Math.min(WIDTH, viewW - MARGIN * 2);
-    // Folded: beside the tile, its top with the cell's. Open: under the cell, its left edge with the sidebar's.
-    const folded = isSidebarStrip();
-    const left = Math.max(2, Math.min(folded ? r.right + MARGIN : r.left + 2, viewW - width - MARGIN));
-    const top = folded ? r.top + 2 : r.bottom + 2;
-    panel.style.left = `${left}px`;
-    panel.style.top = `${top}px`;
-    panel.style.width = `${width}px`;
-    panel.style.maxHeight = `${viewH - top - MARGIN}px`;
-    // Focus lands on the event you are in, else the first row.
-    focusCurrentItem(panel);
-    // The window was placed for this size of screen: a resize closes it, and the next press opens it in the right place.
-    // Focus was on a row: hand it back to the cell, or a keyboard user is left on <body>.
-    const close = () => { onCloseRef.current(); rescueFocusTo(anchorRef); };
-    window.addEventListener('resize', close);
-    return () => window.removeEventListener('resize', close);
-  }, [open, anchorRef]);
-
-  if (!open) return null;
-
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Tab') { closeToAnchor(); return; }
-    rovingMenuKey(e, Array.from(panelRef.current?.querySelectorAll<HTMLElement>(ITEMS) ?? []));
-  };
-  // A row that acts closes the window; focus, which was on that row, goes back to the cell unless the row took it elsewhere.
-  const onClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (!(e.target as Element).closest(ITEMS)) return;
-    onClose();
-    rescueFocusTo(anchorRef);
-  };
-
   return (
-    <div
-      ref={panelRef}
-      role="menu"
-      aria-label="Tournaments"
-      className={`${coachKit.convWhatList} ${styles.switchMenu}`}
-      onKeyDown={onKeyDown}
-      onClick={onClick}
+    <SidebarMenu
+      open={open}
+      anchorRef={anchorRef}
+      label="Tournaments"
+      placement="cell"
+      width={WIDTH}
+      className={coachKit.convWhatList}
+      onClose={onClose}
     >
       <div className={coachKit.convWhatGroup} aria-hidden>Tournaments</div>
       <EventSwitchItems rows={rows} allHref={allHref} onPick={onPick} roving />
-    </div>
+    </SidebarMenu>
   );
 }
 

@@ -111,7 +111,9 @@ describe('2. no sidebar width is hard-coded outside its variable', () => {
 
   it('Premium coach: the sidebar and the Save bar read --coach-sidebar-w with no second copy', () => {
     const css = readCode(COACH_CSS);
-    assert.equal(css.match(/--coach-sidebar-w: 220px;/g)?.length, 1);
+    // ⚖ 240 since navigation Phase 4 (E9, owner 2026-11-09): one sidebar width across the portals (was 220).
+    assert.equal(css.match(/--coach-sidebar-w: 240px;/g)?.length, 1);
+    assert.doesNotMatch(css, /--coach-sidebar-w: 220px;/);
     assert.equal(css.match(/--coach-sidebar-w: 64px;/g)?.length, 1);
     assert.match(rule(css, /^\.sidebar/m), /width: var\(--coach-sidebar-w\);/);
     assert.match(rule(css, /^\.saveBar/m), /left: var\(--coach-sidebar-w\);/);
@@ -170,9 +172,6 @@ describe('4. no count, dot or door is lost in the strip', () => {
     for (const f of RAILS) {
       const code = railCode(f);
       for (const badge of code.match(/<ChatUnreadBadge[^>]*\/>/g) ?? []) {
-        // The coach group heading's rolled-up badge is full-sidebar furniture: the strip hides the heading and
-        // shows the Chat row itself, which carries the count.
-        if (badge.includes('sidebarGroupBadge')) continue;
         assert.match(badge, /className=\{strip\.cornerCount\}/, `${f}: ${badge}`);
       }
       // ⚖ What's new left Help on 2026-11-07 (owner): the dot on a rail's Help row is gone for good.
@@ -201,21 +200,33 @@ describe('4. no count, dot or door is lost in the strip', () => {
     }
   });
 
-  // ⚖ Navigation Phase 2 Part A (E14, owner 2026-11-09): the tournament sidebar folds no more, so only the coach rail still
-  // folds a group (until Phase 4); the admin rail has no folded group to keep (pinned in admin-event-cell.test.ts).
-  it('a group folded shut keeps its rows in the page for the strip to show', () => {
-    for (const f of [COACH_RAIL]) {
+  // ⚖ NOTHING FOLDS ANY MORE (E14, owner 2026-11-09): the tournament sidebar since navigation Phase 2 Part A, the coach rail
+  // since Phase 4. Every row is always in the page, so the strip shows them all; no rail keeps a folded group or its choice.
+  it('no rail folds a group: every row is always in the page for the strip to show', () => {
+    for (const f of [ADMIN_RAIL, COACH_RAIL]) {
       const code = readCode(f);
-      assert.doesNotMatch(code, /open && (g\.)?items\.map/, f);
-      assert.match(code, /<div className=\{strip\.foldedGroup\}>/, f);
+      assert.doesNotMatch(code, /strip\.foldedGroup|toggleGroup|openGroups|flhq-coach-nav-groups|fl_nav_groups/, f);
     }
-    assert.match(rule(readCode(SHARED_CSS), /^\.foldedGroup/m), /display: none;/);
-    assert.match(desktopBlocks(readCode(SHARED_CSS)).join('\n'), /\.foldedGroup \{ display: contents; \}/);
+    assert.match(readCode(COACH_RAIL), /\{group\.items\.map\(renderNavItem\)\}/, 'every row of every group, always');
   });
 
-  it('the strip menu keeps the house menu keys — one shared copy with the toolbar menu', () => {
-    assert.match(readCode(SHARED), /rovingMenuKey\(e, /);
+  // ⚖ Navigation Phase 4, Step 0 (the Phase 2 reviewers' first step): the keyboard contract and the placement live in ONE
+  // shared sidebar menu; the strip menu, the event's cell and the coach team cell wear it and copy none of it.
+  it('one sidebar menu holds the house menu keys and the placement — its users copy neither', () => {
+    const shared = readCode('components/shared/SidebarMenu.tsx');
+    assert.match(shared, /rovingMenuKey\(e, /);
+    assert.match(shared, /useDismissable\(open, \[anchorRef, panelRef\], onClose, closeToAnchor\)/);
+    assert.match(shared, /placement === 'cell'/);
     assert.match(readCode('components/coaches/CoachToolbarMenu.tsx'), /rovingMenuKey\(event, items\(\)\)/);
+    const users = [SHARED, 'components/admin/kit/EventSwitchMenu.tsx', 'components/coaches/CoachTeamCell.tsx'];
+    for (const f of users) {
+      const code = readCode(f);
+      assert.match(code, /<SidebarMenu\b/, `${f} wears the shared menu`);
+      assert.doesNotMatch(code, /rovingMenuKey|useDismissable|scrollingAncestor|rescueFocusTo|\srole="menu"/, `${f} copies the contract`);
+    }
+    // The cell's list hangs over the page: ONE layer rule for every sidebar, no rail's own copy.
+    assert.match(readCode(SHARED_CSS), /\.stripLayer:has\(\.cellMenu\) \{ z-index: 70; \}/);
+    assert.doesNotMatch(readCode(ADMIN_CSS), /:has\(\.switchMenu\)/);
   });
 
   it('the club and Premium sidebars raise their own layer in the strip (the free rail is already over its page)', () => {
@@ -237,11 +248,15 @@ describe('4. no count, dot or door is lost in the strip', () => {
   });
 
   it('the pickers become tiles that open their lists — the coach list keeps "No live season"', () => {
-    // ⚖ Phase 2 Part A: the admin's tournament picker is the event's cell itself, folded to its 40px logo tile (E10) — the
-    // coach rails keep their initials tiles until Phase 4.
-    for (const f of [COACH_RAIL, FREE_SHELL]) assert.match(readCode(f), /<SidebarStripTile\b/, f);
+    // ⚖ Phase 2 Part A: the admin's tournament picker is the event's cell itself, folded to its logo tile (E10). ⚖ Phase 4: the
+    // Premium coach rail's too — the team cell folds to the team's tile (crest, colour, initials) and opens the same list;
+    // only the free portal keeps its initials tile (E13, out of scope).
+    assert.match(readCode(FREE_SHELL), /<SidebarStripTile\b/);
+    assert.doesNotMatch(readCode(COACH_RAIL), /<SidebarStripTile\b|<SidebarStripMenu\b|<select\b|coach-team-select/);
+    assert.match(readCode(COACH_RAIL), /<CoachTeamCell orgSlug=\{orgSlug\} currentTeamId=\{currentTeamId\} \/>/);
+    assert.match(readCode('components/coaches/CoachTeamCell.tsx'), /<SidebarLogoTile source=\{tile\.source\} aspect=\{tile\.aspect\} color=\{tile\.color\} name=\{name\} \/>/);
+    assert.match(readCode('lib/coach-team-tile.ts'), /\{ label: 'No live season', rows: closed\.map/);
     assert.match(readCode(ADMIN_RAIL), /<SidebarLogoTile source=\{source\} aspect=\{aspect\} name=\{name\} \/>/);
-    assert.match(readCode(COACH_RAIL), /<StripMenuGroup label="No live season">/);
     // The tournament list switches only: a new tournament starts on the Tournaments page (owner 2026-10-19).
     assert.doesNotMatch(readCode(ADMIN_RAIL), /New tournament/);
   });

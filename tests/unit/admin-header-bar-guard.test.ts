@@ -227,9 +227,16 @@ describe('desktop: the place in the strip, the bar is the tab band, the club cel
     assert.match(stripCss, /\.lcell \{[^}]*width: var\(--admin-rail-w\);/);
     assert.match(stripCss, /\.rcell \{[^}]*padding: 0 1rem 0 2rem;/, 'the name starts where the bar’s name sat (call G)');
     assert.doesNotMatch(stripCss, /\b240px\b|\b64px\b/, 'the cell follows the sidebar’s one width variable');
-    // The shared sheet gains one opt-in class, after `.strip` so it wins at equal weight; the portal never sets it.
+    // The shared sheet gains one opt-in class, after `.strip` so it wins at equal weight.
     assert.ok(coachStripCss.indexOf('.stripSplit {') > coachStripCss.indexOf('.strip {'));
-    assert.doesNotMatch(readCode('components/coaches/CoachTopStrip.tsx'), /stripSplit/);
+    // ⚖ UPDATED IN THE OPEN (navigation Phase 4, E6, owner 2026-11-09): this line pinned "the Coaches Portal never sets it"
+    // — the "pixel-identical portal" of this project's plan, retired on purpose. The coach strip now opts in on a TEAM's
+    // pages only: never on a wall, never the free portal (E13 — its strip is exactly as it was).
+    const coachStrip = readCode('components/coaches/CoachTopStrip.tsx');
+    assert.match(coachStrip, /const split = !wall && !free && !!teamId;/);
+    assert.equal(coachStrip.match(/styles\.stripSplit/g)?.length, 1, 'one split strip, behind that one test');
+    assert.match(coachStrip, /<header className=\{`\$\{styles\.strip\}\$\{free \? ` \$\{styles\.stripFree\}` : ''\}`\}>\s*<BrandLockup tone="follow" size=\{15\} \/>\s*<span className=\{styles\.stripDivider\} aria-hidden \/>\s*<span className=\{styles\.stripLabel\}>Coaches Portal<\/span>/,
+      'the unsplit strip — walls, the free portal, off a team — keeps its words and its order');
   });
 
   it('View site sits in the strip by the bell, never on a cancelled account’s page', () => {

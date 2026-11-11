@@ -120,7 +120,8 @@ describe('the event’s sidebar (E1, E14, T3, T6)', () => {
     assert.match(menu, /coachKit\.convWhatOpt/);
     assert.match(menu, /coachKit\.convWhatOptSub/);
     assert.match(menu, /All tournaments/);
-    assert.match(menu, /rovingMenuKey\(e, /);
+    // Its keys and placement are the shared sidebar menu's (navigation Phase 4, Step 0 — sidebar-strip-guard holds the contract).
+    assert.match(menu, /<SidebarMenu[\s\S]*placement="cell"[\s\S]*width=\{WIDTH\}/);
     assert.doesNotMatch(menu, /STATUS_WORD/);
   });
 });

@@ -50,7 +50,10 @@
  * chat-unread pipeline, which retires the KNOWN COST this file used to carry.
  */
 
+import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import BrandLockup from '@/components/shared/BrandLockup';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { TEAM_COACH_BELL, orgBell } from '@/lib/notification-bell-scope';
@@ -59,9 +62,32 @@ import AccountMenu from '@/components/shared/AccountMenu';
 import { useRoleSummary } from '@/lib/use-role-summary';
 import { useOrg } from '@/lib/org-context';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
+import { useCoachDeskTitle } from './CoachDeskTitle';
+import own from '@/components/admin/AdminTopStrip.module.css';
 import styles from './CoachTopStrip.module.css';
 
-export default function CoachTopStrip({ wall = false, free = false }: {
+/**
+ * ⚖ THE PAGE, OVER THE PAGE (navigation Phase 4, E6, C4; drawings tab 17): the page's name — the sidebar's lit row, the
+ * page's `<h1>` on a computer — or, one level down, the way back ("← Roster", the page keeping its record's title); then
+ * the team's facts at the right end (`CoachStripFacts`, rendered on the server by the `@stripFacts` slot).
+ */
+function CoachStripPlace({ facts }: { facts: ReactNode }) {
+  const { title } = useCoachDeskTitle();
+  return (
+    <div className={own.place}>
+      {title?.kind === 'name' && <h1 className={`${own.name} ${own.pageName}`}>{title.name}</h1>}
+      {title?.kind === 'back' && (
+        <Link href={title.href} className={own.back} aria-label={`Back to ${title.label}`}>
+          <ArrowLeft size={15} aria-hidden />
+          <span>{title.label}</span>
+        </Link>
+      )}
+      {facts}
+    </div>
+  );
+}
+
+export default function CoachTopStrip({ wall = false, free = false, facts = null }: {
   /** True on the portal's WALLS (billing-suspended, not-assigned): a wall keeps only the
    *  identity + exit doors it always had. Portal FUNCTION stays off — the bell (a working
    *  notification feed on the hard-block billing wall would undercut the wall's whole job;
@@ -74,6 +100,8 @@ export default function CoachTopStrip({ wall = false, free = false }: {
    *  (`TEAM_COACH_BELL`) — and its settings door opens Account → Notifications, where the Pause switch
    *  governs that bell. Everything else is the paid strip unchanged. */
   free?: boolean;
+  /** The team's facts for the right end (the coaches layout's `@stripFacts` slot, through `CoachesChrome`). */
+  facts?: ReactNode;
 }) {
   // The premium portal only renders signed-in, so this may run unconditionally.
   const roleSummary = useRoleSummary(true);
@@ -87,12 +115,14 @@ export default function CoachTopStrip({ wall = false, free = false }: {
   // review A3/D2): the mechanism existed three rows away and this link simply never used it.
   const pathname = usePathname() ?? '';
   const back = encodeURIComponent(pathname);
+  // ⚖ SPLIT ON THE SIDEBAR'S EDGE ON A TEAM'S PAGES ONLY (navigation Phase 4, E6/E7/E9): over the 240 sidebar the wordmark and
+  // "Coach" (the short word for the sidebar-width cell; "Coaches Portal" stays on every other surface), over the page its
+  // name and the team's facts. Never on a wall, never the free portal (E13 — its strip stays exactly as it was), and not
+  // off a team's pages (the hub, notifications, Plan & billing keep today's strip).
+  const { teamId } = useCoachDeskTitle();
+  const split = !wall && !free && !!teamId;
 
-  return (
-    <header className={`${styles.strip}${free ? ` ${styles.stripFree}` : ''}`}>
-      <BrandLockup tone="follow" size={15} />
-      <span className={styles.stripDivider} aria-hidden />
-      <span className={styles.stripLabel}>Coaches Portal</span>
+  const doors = (
       <div className={styles.doors}>
         {!wall && free && (
           <NotificationBell
@@ -130,6 +160,30 @@ export default function CoachTopStrip({ wall = false, free = false }: {
             --home-* set when the warm skin is active (falls back to HUD tokens in dark). */}
         <WorkspacesPill workspaces={roleSummary?.workspaces ?? []} className={styles.pill} warm />
       </div>
+  );
+
+  if (split) {
+    return (
+      <header className={`${styles.strip} ${styles.stripSplit}`}>
+        <div className={own.lcell}>
+          <BrandLockup tone="follow" size={15} className={own.lcellBrand} />
+          <span className={`${styles.stripDivider} ${own.lcellWord}`} aria-hidden />
+          <span className={`${styles.stripLabel} ${own.lcellWord}`}>Coach</span>
+        </div>
+        <div className={own.rcell}>
+          <CoachStripPlace facts={facts} />
+          {doors}
+        </div>
+      </header>
+    );
+  }
+
+  return (
+    <header className={`${styles.strip}${free ? ` ${styles.stripFree}` : ''}`}>
+      <BrandLockup tone="follow" size={15} />
+      <span className={styles.stripDivider} aria-hidden />
+      <span className={styles.stripLabel}>Coaches Portal</span>
+      {doors}
     </header>
   );
 }

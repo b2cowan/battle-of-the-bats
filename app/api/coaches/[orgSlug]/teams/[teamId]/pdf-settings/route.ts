@@ -12,6 +12,7 @@ import {
   type TeamPdfLook,
 } from '@/lib/export/resolve-pdf-settings';
 import { withObservability } from '@/lib/observability';
+import { crestFacts } from '@/lib/team-crest';
 
 /**
  * The team layer of document branding (PDF Export Quality Phase 1, decision 7).
@@ -139,6 +140,10 @@ export const PUT = withObservability(async (req: Request,
       return NextResponse.json({ error: 'Crest must be a valid image.' }, { status: 400 });
     }
     look.logoDataUrl = normalized;
+    // ⚖ The crest's shape and version, measured from the stored bytes (navigation Phase 4, C7): the sidebar's team tile
+    // decides crest or colour from the shape on the server (the first paint is the last), and the crest's own address
+    // changes with the picture. Never taken from the request — a client re-sending the look sends them back, ignored.
+    Object.assign(look, await crestFacts(normalized));
   }
   if (body.accentColor != null) {
     if (typeof body.accentColor !== 'string' || !HEX_COLOR_RE.test(body.accentColor)) {

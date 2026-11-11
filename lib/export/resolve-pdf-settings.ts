@@ -25,6 +25,11 @@ import type { OrgPlan } from '../types';
 /** The team layer (rep_teams.pdf_settings): every key optional — absent = inherit the club's. */
 export interface TeamPdfLook {
   logoDataUrl?: string;
+  /** ⚖ The crest's width / height and a version stamp (navigation Phase 4, C7) — written by the SERVER beside the picture
+   *  on every save, never taken from the request: the sidebar's team tile reads them without the picture (lib/db.ts
+   *  `crestOf`), and the crest is served at its own address keyed by the version. */
+  logoAspect?: number;
+  logoVersion?: string;
   accentColor?: string;
   footerText?: string;
 }

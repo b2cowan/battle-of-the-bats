@@ -11,7 +11,8 @@
  * The one swap that can still happen is the broken file (B4, accepted): `onError` falls back to the initials.
  *
  * `source` and `aspect` are props, not the club's fields, so the event (Phase 2: its logo, then the organization's) and
- * the team (Phase 4: its crest, then its colour) pass their own later — nothing here reads an organization. `size`:
+ * the team (Phase 4: its crest, then its `color` — `lib/coach-team-tile.ts`) pass their own — nothing here reads an
+ * organization. `color` paints the initials' ground when there is no logo to show (a failed crest falls to it too). `size`:
  * 24 beside a name, 40 as a strip tile, `rail` = 24 open and 32 in the folded strip (the club cell, decided by CSS so the
  * server's markup is everybody's).
  *
@@ -30,9 +31,12 @@ export type SidebarLogoTileProps = {
   /** Names the initials ("Riverdale Minor Ball" → "RM"), also what a failed logo falls back to. */
   name: string;
   size?: 24 | 40 | 'rail';
+  /** ⚖ The team's colour step (navigation Phase 4, C7: crest → colour → initials, `lib/coach-team-tile.ts`): when there is
+   *  no logo to show, the initials sit on this fill in this ink instead of on the white ground. */
+  color?: { fill: string; ink: string } | null;
 };
 
-export default function SidebarLogoTile({ source, aspect, name, size = 'rail' }: SidebarLogoTileProps) {
+export default function SidebarLogoTile({ source, aspect, name, size = 'rail', color }: SidebarLogoTileProps) {
   // A failure belongs to ONE address: a new logo gets its own try.
   const [failed, setFailed] = useState<string | null>(null);
   const img = useRef<HTMLImageElement>(null);
@@ -44,8 +48,14 @@ export default function SidebarLogoTile({ source, aspect, name, size = 'rail' }:
     if (el && source && el.complete && el.naturalWidth === 0) setFailed(source);
   }, [source, showLogo]);
 
+  const filled = !showLogo && color;
+  const sizeClass = size === 'rail' ? styles.rail : size === 40 ? styles.s40 : styles.s24;
   return (
-    <span className={`${styles.tile} ${styles[size === 'rail' ? 'rail' : `s${size}`]}`} aria-hidden>
+    <span
+      className={`${styles.tile} ${sizeClass}${filled ? ` ${styles.filled}` : ''}`}
+      style={filled ? { background: color.fill, color: color.ink } : undefined}
+      aria-hidden
+    >
       {showLogo
         // eslint-disable-next-line @next/next/no-img-element -- an uploaded or made logo at a fixed 24/40 box; no resize pipeline to ask for
         ? <img ref={img} src={source} alt="" className={styles.image} onError={() => setFailed(source)} />

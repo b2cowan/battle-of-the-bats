@@ -13,8 +13,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   Gauge, Medal, Globe, Trophy, ChartGantt, IdCard, CalendarClock, Calendar, DollarSign, Megaphone, UserCheck, FileCheck,
-  FileText, MapPin, Shield, Users2,
+  FileText, MapPin, Shield, Users2, LayoutGrid, Archive, Mail,
 } from 'lucide-react';
+import { OVERVIEW_ITEM, SEASON_END_ITEM, COACH_NAV_ITEMS } from '../../lib/coach-team-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
 import {
@@ -78,12 +79,17 @@ describe('N5 · the icon dictionary', () => {
   });
 
   it('the coaches portal: Overview the grid, Season’s End an archive box, Email families an envelope', () => {
-    for (const f of [COACH_RAIL, COACH_SHEET]) {
-      const code = readCode(f);
-      assert.match(code, /label: 'Overview'[^}]*icon: LayoutGrid|icon: LayoutGrid, label: 'Overview'/, `${f}: Overview`);
-      assert.match(code, /(href|key): '\/season-end',\s*icon: Archive/, `${f}: Season's End`);
-      assert.match(code, /'\/announcements',\s*icon: Mail/, `${f}: Email families`);
-      assert.doesNotMatch(code, /LayoutDashboard|Megaphone/, `${f}: an icon the dictionary gave to another idea`);
+    // ⚖ The sidebar's rows are the coach nav's ONE list since navigation Phase 4 (lib/coach-team-nav.ts) — read as values; the
+    // phone's More sheet derives from it, and its bar keeps its own two landing tabs.
+    assert.equal(OVERVIEW_ITEM.icon, LayoutGrid);
+    assert.equal(SEASON_END_ITEM.icon, Archive);
+    assert.equal(COACH_NAV_ITEMS.find(i => i.href === '/announcements')?.icon, Mail);
+    const sheet = readCode(COACH_SHEET);
+    assert.match(sheet, /icon: LayoutGrid, label: 'Overview'/, 'the bar: Overview');
+    assert.match(sheet, /key: '\/season-end',\s*icon: Archive/, "the bar: Season's End");
+    assert.match(sheet, /const MORE_SECTIONS = COACH_MORE_SECTIONS;/, 'the sheet is the list, not a copy of it');
+    for (const f of [COACH_RAIL, COACH_SHEET, 'lib/coach-team-nav.ts']) {
+      assert.doesNotMatch(readCode(f), /LayoutDashboard|Megaphone/, `${f}: an icon the dictionary gave to another idea`);
     }
     assert.match(readCode(FREE_SHELL), /key: 'overview', label: 'Overview', icon: LayoutGrid/);
     assert.match(readCode(FREE_SHEET), /key: 'overview', sub: '', icon: LayoutGrid/);

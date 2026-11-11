@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Upload } from 'lucide-react';
 import CoachCollapseSection from '@/components/coaches/CoachCollapseSection';
 import { accentNeedsLightInk } from '@/lib/export/pdf';
@@ -78,6 +79,7 @@ export default function TeamDocumentsLookCard({
   const [saved, setSaved] = useState<TeamLook>({});
   const [draft, setDraft] = useState<TeamLook>({});
   const [hexDraft, setHexDraft] = useState('');
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
@@ -159,6 +161,9 @@ export default function TeamDocumentsLookCard({
       setDraft(persisted);
       setHexDraft(persisted.accentColor ?? '');
       setMsg(okMsg);
+      // The sidebar's team tile reads the crest's shape and version from the team list the server loaded (navigation Phase 4,
+      // C7): ask for it again so a new crest shows there now, not at the next full load.
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save.');
     } finally {

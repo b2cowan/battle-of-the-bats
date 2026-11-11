@@ -129,11 +129,56 @@
   display: flex;
 }
 
-/* ⚠ OPT-IN, the admin strip's only (round 4, D1, owner 2026-11-08): the strip splits on the sidebar's edge into two
-   cells that carry their own padding (`components/admin/AdminTopStrip.module.css`). The coaches portal never sets it, so
-   none of this reaches the portal. After `.strip`, equal weight: the later rule wins. */
+/* ⚠ OPT-IN (round 4, D1, owner 2026-11-08): the strip splits on the sidebar's edge into two cells that carry their own
+   padding (`components/admin/AdminTopStrip.module.css`). The admin strip, and since navigation Phase 4 (E6) the Coaches
+   Portal's strip on a TEAM's pages only — never a wall, never the free portal. After `.strip`, equal weight: the later
+   rule wins. */
 .stripSplit {
   padding: 0;
   gap: 0;
   align-items: stretch;
+}
+
+/* ⚖ THE TEAM'S FACTS AT THE STRIP'S RIGHT END (navigation Phase 4, E7, C2, C9; tab 17): before View site, in the quiet
+   ink, ONE hairline on their right (the event's facts' recipe, `AdminTopStrip.module.css .facts`). At 1100 and narrower
+   the quiet words give way; the Game day chip and "Open the bench ›" stay (C2). The club's name gives way first above it
+   (C9). The page's name never truncates. */
+.teamFacts {
+  margin-left: auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 22px;
+  padding-right: 1rem;
+  border-right: 1px solid var(--home-line-strong);
+  font-size: var(--type-support);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+.factsQuiet { min-width: 0; display: inline-flex; align-items: center; gap: 0.6rem; }
+/* The words, a dot between them (drawn between siblings, so no word ever starts with an orphan dot). */
+.factsWord { flex: none; }
+.factsClub { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.factsClub + .factsWord::before, .factsWord + .factsWord::before { content: '·'; margin-right: 0.6rem; color: var(--text-tertiary); }
+.factsKey {
+  flex: none;
+  font-family: var(--font-data); /* type-ok: eyebrow — the team bar's own "NEXT" key, moved */
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.12em; /* type-ok: eyebrow */
+  text-transform: uppercase; /* type-ok: eyebrow */
+  color: var(--text-tertiary);
+}
+.factsGameDay { flex: none; display: inline-flex; align-items: center; gap: 0.6rem; }
+.factsBench { flex: none; color: var(--home-olive); font-weight: 600; text-decoration: none; }
+.factsBench:hover { text-decoration: underline; }
+.factsBench:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+@media (max-width: 1100px) {
+  .factsQuiet { display: none; }
+  /* Nothing left but a door, or nothing at all: no hairline over an empty end. */
+  .teamFacts:not(:has(.factsGameDay)) { display: none; }
 }

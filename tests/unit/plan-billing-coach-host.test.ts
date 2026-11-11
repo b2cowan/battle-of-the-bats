@@ -228,7 +228,8 @@ describe('workspace billing stays outside the team nav and season gates', () => 
     const effects: Array<() => void> = [], destinations: string[] = [];
     const load = billingTestLoader({
       react: { ...React, useEffect: (effect: () => void) => { effects.push(effect); } },
-      'next/navigation': { usePathname: () => sample.pathname },
+      // The chrome's strip reads the address's search too (navigation Phase 4: the way back one level down, `CoachDeskTitle`).
+      'next/navigation': { usePathname: () => sample.pathname, useSearchParams: () => new URLSearchParams() },
       './CoachTopStrip': { __esModule: true, default: nothing },
       './CoachesSidebar': { __esModule: true, default: nothing },
       './CoachesBottomNav': { __esModule: true, default: nothing },

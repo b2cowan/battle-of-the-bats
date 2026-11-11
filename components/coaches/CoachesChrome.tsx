@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import CoachTopStrip from './CoachTopStrip';
 import CoachesSidebar from './CoachesSidebar';
 import CoachesBottomNav from './CoachesBottomNav';
+import { CoachDeskTitleProvider } from './CoachDeskTitle';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -36,11 +37,14 @@ export default function CoachesChrome({
   orgSlug,
   children,
   billingOnlyHref,
+  stripFacts = null,
 }: {
   orgSlug: string;
   children: React.ReactNode;
   /** A zero-team owner may render only this workspace page, even while Next retains this layout. */
   billingOnlyHref?: string | null;
+  /** The team's facts for the strip's right end (the coaches layout's `@stripFacts` slot; navigation Phase 4). */
+  stripFacts?: React.ReactNode;
 }) {
   const pathname = usePathname() ?? '';
   const needsWallRequest = !!billingOnlyHref && pathname !== billingOnlyHref;
@@ -67,7 +71,8 @@ export default function CoachesChrome({
   }
 
   return (
-    <>
+    // ⚖ The strip names the page from ONE answer the page headers read too (navigation Phase 4, `CoachDeskTitle`).
+    <CoachDeskTitleProvider orgSlug={orgSlug}>
       <div className={styles.coachesShell}>
         {/* Stage H.1 (Nav Unification, D2 ratified 2026-07-31): the operator frame strip —
             desktop-only fixed top bar (wordmark → Home, account · Workspaces) in the portal's
@@ -75,7 +80,7 @@ export default function CoachesChrome({
             operator, and the coach sidebar keeps the bell. Mounted INSIDE the shell so it reads
             the shell's --coach-topstrip-h (custom properties don't reach siblings);
             position:fixed keeps it out of the flex flow. */}
-        <CoachTopStrip />
+        <CoachTopStrip facts={stripFacts} />
         <CoachesSidebar orgSlug={orgSlug} />
         {/* The pinned team MASTHEAD (D2 Option A) is mounted by the TEAM layout, not here —
             that is the first place `teamId` exists server-side. It still renders as the first
@@ -84,6 +89,6 @@ export default function CoachesChrome({
         <main className={styles.coachesMain}>{children}</main>
       </div>
       <CoachesBottomNav />
-    </>
+    </CoachDeskTitleProvider>
   );
 }

@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import HelpButton from '@/components/help/HelpButton';
 import { useCoachPageHelp } from '@/components/coaches/CoachPageHelpSlot';
+import { useCoachDeskTitle } from '@/components/coaches/CoachDeskTitle';
+import CoachDeskNudge from '@/components/coaches/CoachDeskNudge';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -49,6 +51,17 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   and doubled as the season SWITCHER, which is what it really was; both died with the archive
  *   as a place. A finished working season is signalled once, by the masthead's own "Complete"
  *   chip — where the season already lives, and where it costs no page its title line.
+ *
+ * ⚖ ON A COMPUTER THE STRIP NAMES THE PAGE (navigation Phase 4, E6, E11, C1, C3, C4; drawings tab 17). On a team's
+ *   pages above 900 the strip carries the page's name (the sidebar's lit row), so this header drops its icon tile and its
+ *   title (`data-desk-named`, CSS — the server's first paint is already right) and keeps its actions as the page's top
+ *   row with the "?" LAST at its right end; a page with only its "?" keeps a row holding the "?" alone (C1); a header
+ *   with no actions and no "?" draws nothing there. ONE LEVEL DOWN (C4) the strip carries the way back, so this header
+ *   keeps the RECORD's own title, its chips and its buttons and drops only its arrow and its icon tile
+ *   (`data-desk-drill`). The answer is the strip's own (`useCoachDeskTitle`) — one rule, never decided twice. Because
+ *   the team bar is the phone's only (≤900), the "?" a page publishes to it is also drawn HERE, above 900. The scouting
+ *   reminder sits right under this row on a computer (`CoachDeskNudge`, C3). The phone is exactly as it was (Phase 5).
+ *   No call site changes: the mechanism is this component's.
  *
  * CoachModalHeader is this component's older sibling for modals; pages went years without the
  * equivalent and grew ~40 hand-rolled copies, two forked CSS blocks and one live bug.
@@ -173,6 +186,7 @@ export default function CoachPageHeader({
      (nested is one line under a header that already carries this screen's), so they publish null —
      but a hook behind the `embedded` early return below is the classic ordering crash. */
   const helpHosted = useCoachPageHelp(help && !nested && variant !== 'embedded' ? help : null, helpLabel);
+  const { title: desk } = useCoachDeskTitle();
   if (variant === 'embedded') {
     return actions ? (
       <div className={`${styles.pageHeader} ${styles.pageHeaderStd}`}>
@@ -180,8 +194,17 @@ export default function CoachPageHeader({
       </div>
     ) : null;
   }
+  // The strip's answer, for this page's ONE standard header (a nested header is a record inside a tab: never).
+  const deskNamed = !nested && desk?.kind === 'name';
+  const deskDrill = !nested && desk?.kind === 'back';
+  const showHelp = !!help && !nested;
   return (
-    <div className={`${styles.pageHeader} ${styles.pageHeaderStd}${nested ? ` ${styles.pageHeaderNested}` : ''}${actionsPhoneInTitleRow ? ` ${styles.pageHeaderActionsCorner}` : ''}`}>
+    <>
+    <div
+      className={`${styles.pageHeader} ${styles.pageHeaderStd}${nested ? ` ${styles.pageHeaderNested}` : ''}${actionsPhoneInTitleRow ? ` ${styles.pageHeaderActionsCorner}` : ''}`}
+      data-desk-named={deskNamed ? (actions || showHelp ? 'actions' : 'empty') : undefined}
+      data-desk-drill={deskDrill ? '' : undefined}
+    >
       <div className={styles.pageHeaderLeft}>
         {backTo && (
           <>
@@ -215,13 +238,16 @@ export default function CoachPageHeader({
       {/* `!nested` is the doc above made true rather than merely stated: a nested header sits one
           line under a header that already carries this screen's "?", and two of them would be two
           doors to the same drawer.
-          `!helpHosted` is the 2026-08-25 move: inside the team layout the masthead draws it, and
-          rendering it here as well would be exactly the two-doors bug one row apart. */}
-      {help && !nested && !helpHosted && (
-        <span className={styles.pageHeaderHelp}>
+          Hosted (inside the team layout, the 2026-08-25 move), the team bar draws the "?" on a phone and this copy hides
+          there; above 900 the bar is gone, so this row draws it, last (E11, navigation Phase 4). One "?" per width. */}
+      {showHelp && (
+        <span className={`${styles.pageHeaderHelp}${helpHosted ? ` ${styles.pageHeaderHelpDesk}` : ''}`}>
           <HelpButton iconOnly label={helpLabel} help={help} />
         </span>
       )}
     </div>
+    {/* Under the page's ONE top row: the header the strip's answer names (or one level down, carries back for). */}
+    {(deskNamed || deskDrill) && <CoachDeskNudge />}
+    </>
   );
 }

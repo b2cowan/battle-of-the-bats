@@ -181,7 +181,9 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
   the admin sidebar. It is also navigation (D5 opens Overview), and the coaches portal is untouched.
 - **2026-07-31 / 2026-10-17, one strip shared with the coaches portal.** The admin strip gains a split layout. It stays
   48px (`--chrome-bar-h`), so someone with both roles never sees the bar change height; the coaches portal must stay
-  pixel-identical.
+  pixel-identical. **⚖ RETIRED ON PURPOSE, navigation Phase 4 (2026-11-11):** on a team's pages the coach strip is now
+  split ("Coach", the page's name, the team's facts at the right end) and the sidebar is 240 wide; it is no longer
+  identical to its earlier look. The phone is still the old bar until Phase 5.
 - **2026-10-12, the sidebar collapses to a 64px icon strip.** D1 covers it: the left cell and the club cell narrow with
   the sidebar (initials).
 
@@ -286,7 +288,7 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
   phone (Rep teams), `.withTabs` gives up the bottom padding. The `<h1>` rule is `isPageTitle = onOverview || !!place`.
 - **`HubTabBar inBar`:** every rule scoped under `.inBar` (margin 0.45rem −0.85rem 0, −0.6rem inline ≤640, so the first
   tab's label lines up with the name; no line of its own; the arrows paint `--card-bg` over `--pitch-black`, the bar's
-  own two layers). **Portal measured identical** (dev, UAT Rep Club coach, 2026-11-07): Money, Insights, Development,
+  own two layers). **Portal measured identical** (dev, UAT Rep Club coach, 2026-11-07; ⚖ no longer the rule on a computer: retired on purpose by navigation Phase 4, 2026-11-11 — the coach strip and sidebar changed by design): Money, Insights, Development,
   Lineups and Practice plans at 390 and 1280, every tab's box, colour and underline and every arrow's box and gradient,
   with the committed `HubTabBar` swapped back in vs this build — 10 of 10 the same.
 - **Measured (dev, UAT Rep Club owner):** Rep teams 95px phone / 103px desktop; a season 98 / 104 (its one season draws no
@@ -446,7 +448,7 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
       `width: var(--admin-rail-w)` (240 / 64), wordmark + divider + "Admin"; collapsed, the mark alone. Right cell
       `padding: 0 1rem 0 2rem`: the name at x=272 open (the bar's old spot), 96 collapsed. 48px. The shared sheet gained
       one opt-in class (`.stripSplit`, after `.strip`). **Measured:** the coaches portal's strip and tab row identical,
-      node for node, at 1280 and 390 on three pages. **As built:** a cancelled account's one page keeps the unsplit strip
+      node for node, at 1280 and 390 on three pages (⚖ retired on purpose for a computer by navigation Phase 4, 2026-11-11). **As built:** a cancelled account's one page keeps the unsplit strip
       and "Admin Area" (it has no sidebar to split on) and its white bar names the org (/review, 2026-11-08)
 - [x] **The place in the strip:** one place model, `components/admin/useAdminPlace.tsx` (address first, then the
       frame's hand-off), read by both headers. Club place: back link + divider, name (16px bold, one line, "…"),
@@ -546,7 +548,8 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
       name the event. Throttled first loads: placeholder then name ("Child" → the child, "← Team" → "← 15U AAA"), never the
       org's name. The phone bar on the screens Phase 3 did not touch (Overview, Rep teams, a team, a season, Accounting, a
       tournament): node-for-node identical to Phase 2D's snapshot; desktop pinned heights unchanged (48 / 93). The coaches
-      portal's strip and tab row (accounting, lineups, practice at 1280 and 390): node-for-node identical
+      portal's strip and tab row (accounting, lineups, practice at 1280 and 390): node-for-node identical (⚖ at 1280 this no
+      longer holds by design: navigation Phase 4, 2026-11-11, split the coach strip on a team's pages; 390 is still the old bar)
 - [x] **Layout** (`check:layout --only=` the 11 Phase 3 screens, dev server, 1440 + 390): no new findings at 1440. At 390,
       three "NEW" that are old findings re-keyed: "Save all renames" 38px and the past season's own tab row spilling 27px
       (another session's sentence-case sweep changed the text the baseline keys on, "Save All Renames" / "Schedule &

@@ -485,7 +485,6 @@ const LIVE_ROW_FILES: string[] = [
   'app/[orgSlug]/coaches/layout.tsx',
   'app/[orgSlug]/coaches/link-org/page.tsx',
   'app/[orgSlug]/coaches/page.tsx',
-  'app/[orgSlug]/coaches/teams/[teamId]/layout.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/tournaments/page.tsx',
   'lib/admin-kit-nav.ts',
@@ -503,6 +502,8 @@ const LIVE_ROW_FILES: string[] = [
   'lib/coach-membership.ts',
   'lib/coach-portal-plan.ts',
   'lib/coach-portal-request.ts',
+  // Navigation Phase 4: the team layout's masthead read, moved unchanged into the loader the strip's facts share.
+  'lib/coach-team-masthead.ts',
   'lib/coach-team-read.ts',
   'lib/db.ts',
   'lib/directory.ts',

@@ -7,6 +7,20 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-11 — THE HOUSE-LEAGUE SEASON SWITCHER'S ROWS ARE TWO LINES WITH THE SEASON'S STATE PILL (owner, "looks good, go ahead and build it" on drawings https://claude.ai/artifact/KsSaWfU1y5xySHdffLTycW; all five asks as recommended)
+
+**Decision:** Each row of the list the season title's chevron opens is the season's name with its state pill at the END of the name's line, and "dates · sport" beneath ("Dates not set · Softball" when it has no dates). Every row carries a pill, the chosen season's too (the chosen one is told by its olive dot and bold name). The pill is the one the season's bar wears (`SeasonStatePill`), so no new words: Getting ready · Opens {date} · Registration open · Closed {date} · Registration closed · Starts {date} · Playing now · Ended {date} · Finished. "Live" is NOT a word; "Playing now" is. Colour only on green (open / playing) and amber (Ended, the club should complete it). The panel is taller for this list (about seven rows, 440px), capped at 360px wide, a long name is cut with "…" and the pill never is, and it opens with the chosen season in view. The same rows fill the phone's sheet. Built as an opt-in `roomy` prop and a `trail` slot on `SingleSelectDropdown`; every other caller unchanged.
+**Rationale:** the old rows said only a name and a "Finished" mark, so a club could not tell a draft from a running season without opening it. The pill is scannable in a way a phase word on a second line is not (the tournament switcher uses words and no pill; they are different controls, and seasons already own a coloured pill vocabulary). A row with no pill reads as a season with no state, so the chosen row keeps its own.
+**Applies to:** `components/admin/kit/club/SeasonFrame.tsx`, `components/coaches/SingleSelectDropdown.tsx` (`roomy`, `trail`), `components/shared/FilterPill.module.css`
+
+### 2026-11-11 — ON A COMPUTER THE COACH STRIP NAMES THE PAGE, AND THE TEAM HEADS THE SIDEBAR (owner, Phase 4 gate C1–C9, all A; built and committed with navigation Phase 4)
+
+**Decision:** On a team's pages above 900 px the strip reads "Coach", then the page's name in the sidebar's word (one level down: "← back" and where it goes), with the team's facts at its right end; the team bar is gone, the sidebar is 240 and never folds, and the team cell (crest, else colour, else initials) heads it and lists the coach's teams. The page's own title and icon step aside; its buttons and the "?" stay as the top row. The phone keeps the team bar until Phase 5.
+**Rationale:** One rule across the three portals: the chrome names where you are, the page does not say it twice. Plan of record: `docs/projects/active/ADMIN_NAV_EVALUATION_PLAN.md` §5 Phase 4. The "pixel-identical" coach lines in the header-bar plan are retired by this on purpose.
+**Applies to:** `components/coaches/CoachTopStrip.tsx`, `CoachesSidebar.tsx`, `CoachTeamCell.tsx`, `CoachPageHeader.tsx`
+
+---
+
 ### 2026-11-11 — A TOURNAMENT-ONLY ORGANIZATION'S SETTINGS & ACCESS IS A ROW IN THE EVENT SIDEBAR'S FOOT, ABOVE PLAN & BILLING (owner, "go ahead with option 1", after not finding it from an event's Dashboard; AMENDS E3 of Part B)
 
 **Decision:** On the event's own pages, a Tournament-plan organization's sidebar foot now starts with a "Settings & access" row (opens the first Settings & access tab the person holds, e.g. Members), then Plan & billing, a hairline, the doors, Collapse. It shows only for someone who holds at least one of its tabs. A club has no such row (its settings are in Organization). The phone's More sheet already had it. The two-click route (the cell, then All tournaments) stays.

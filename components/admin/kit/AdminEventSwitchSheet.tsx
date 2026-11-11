@@ -25,7 +25,8 @@ import { eventSwitchRows } from '@/lib/admin-event-cell';
 import { rovingMenuKey } from '@/lib/overlay-hooks';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import SheetFrame from '@/components/coaches/SheetFrame';
-import { EventSwitchItems, focusCurrentItem, SWITCH_ITEMS } from './EventSwitchMenu';
+import { EventSwitchItems } from './EventSwitchMenu';
+import { focusCurrentItem, MENU_ITEMS as SWITCH_ITEMS } from '@/components/shared/SidebarMenu';
 
 export const ADMIN_EVENT_SHEET_ID = 'admin-event-sheet';
 

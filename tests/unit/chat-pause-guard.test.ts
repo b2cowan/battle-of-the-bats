@@ -97,7 +97,8 @@ describe('the chat pause: one switch, read by every door', () => {
   it('a link to a chat address reads the switch, or is gated by something that does', () => {
     // Gated by a reader of the switch, or not a door at all. Each names what keeps it honest, and that is checked.
     const INDIRECT: Record<string, RegExp> = {
-      'components/coaches/CoachesSidebar.tsx': /isCoachNavItemVisible\(/,       // the Chat row is visible only through it
+      // The Chat row is visible only through it — the coach nav's one list since navigation Phase 4 (it was the sidebar's).
+      'lib/coach-team-nav.ts': /isCoachNavItemVisible\(caps, i\.label\)/,
       'components/coaches/CoachFreeBottomNav.tsx': /\.\.\.\(showChat \? \[/,  // the tab exists only when useChatDoor says so
       'components/coaches/CoachPortalShell.tsx': /useChatDoor\(/,              // the left menu's row, the same answer
       'lib/consumer-routes.ts': /CONSUMER_SHELL_PREFIXES/,                     // a route list (the redirect needs it), not a door

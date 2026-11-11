@@ -3006,7 +3006,7 @@ function mapRepTeam(r: any): RepTeam {
  */
 export async function updateRepTeamPdfLook(
   teamId: string,
-  look: { logoDataUrl?: string; accentColor?: string; footerText?: string },
+  look: { logoDataUrl?: string; logoAspect?: number; logoVersion?: string; accentColor?: string; footerText?: string },
 ): Promise<void> {
   const { error } = await supabaseAdmin
     .from('rep_teams')
@@ -3862,6 +3862,12 @@ export interface CoachingAssignment {
   teamName: string;
   teamSlug: string;
   teamColor: string | null;
+  /** ⚖ The team's crest (navigation Phase 4, C7): its stored shape and a version stamp, both written by the server when the
+   *  head coach saves it in "How your documents look" (`rep_teams.pdf_settings.logoAspect` / `logoVersion`). Never the
+   *  picture: it is served at its own address (`teamCrestUrl`, lib/coach-team-tile.ts). Null when there is none, or for a
+   *  crest saved before its shape was recorded (until the one-time pass measures it). */
+  teamCrestAspect?: number | null;
+  teamCrestVersion?: string | null;
   teamSport: string;
   programYearId: string;
   programYearName: string;
@@ -3890,7 +3896,10 @@ type CoachingAssignmentRow = {
   program_year_id: string;
   coach_role: string;
   capabilities?: AssistantCapabilityGrants | null;
-  rep_teams?: { name?: string | null; slug?: string | null; color?: string | null; sport?: string | null } | null;
+  rep_teams?: {
+    name?: string | null; slug?: string | null; color?: string | null; sport?: string | null;
+    crest_aspect?: number | string | null; crest_version?: string | null;
+  } | null;
   rep_program_years?: { name?: string | null; status?: RepProgramYearStatus | null } | null;
 };
 
@@ -4088,6 +4097,16 @@ type CoachAssignmentBaseRow = CoachingAssignmentRow & {
   rep_program_years?: { name?: string | null; status?: RepProgramYearStatus | null; year?: number | null } | null;
 };
 
+/** The crest's shape and version off the joined team (JSON paths into `pdf_settings`: the picture itself never rides along). */
+function crestOf(r: CoachingAssignmentRow): { teamCrestAspect: number | null; teamCrestVersion: string | null } {
+  const aspect = Number(r.rep_teams?.crest_aspect);
+  const version = r.rep_teams?.crest_version;
+  return {
+    teamCrestAspect: Number.isFinite(aspect) && aspect > 0 ? aspect : null,
+    teamCrestVersion: typeof version === 'string' && version ? version : null,
+  };
+}
+
 /**
  * Shared base of the active + closed assignment lookups: org entitlement posture, the
  * rep_team_coaches join, the status filter, and (for standalone workspaces) the
@@ -4119,7 +4138,7 @@ async function loadCoachAssignmentRows(
       program_year_id,
       coach_role,
       capabilities,
-      rep_teams!team_id ( name, slug, color, sport ),
+      rep_teams!team_id ( name, slug, color, sport, crest_aspect:pdf_settings->logoAspect, crest_version:pdf_settings->>logoVersion ),
       rep_program_years!program_year_id ( name, status, year )
     `)
     .eq('org_id', orgId)
@@ -4163,6 +4182,7 @@ export async function getCoachingAssignmentsForUser(
     teamName: r.rep_teams?.name ?? '',
     teamSlug: r.rep_teams?.slug ?? '',
     teamColor: r.rep_teams?.color ?? null,
+    ...crestOf(r),
     teamSport: r.rep_teams?.sport ?? DEFAULT_SPORT,
     programYearId: r.program_year_id,
     programYearName: r.rep_program_years?.name ?? '',
@@ -4196,6 +4216,8 @@ export interface ClosedCoachingAssignment {
   teamId: string;
   teamName: string;
   teamColor: string | null;
+  teamCrestAspect?: number | null;
+  teamCrestVersion?: string | null;
   teamSport: string;
   programYearId: string;
   programYearName: string;
@@ -4231,6 +4253,7 @@ export async function getClosedCoachingAssignmentsForUser(
       teamId: r.team_id,
       teamName: r.rep_teams?.name ?? '',
       teamColor: r.rep_teams?.color ?? null,
+      ...crestOf(r),
       teamSport: r.rep_teams?.sport ?? DEFAULT_SPORT,
       programYearId: r.program_year_id,
       programYearName: r.rep_program_years?.name ?? '',

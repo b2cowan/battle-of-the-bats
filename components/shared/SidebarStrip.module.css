@@ -26,6 +26,12 @@
    out of sight, and the strip — which has no heading to open — shows them as if the wrapper were not there. */
 .foldedGroup { display: none; }
 
+/* ⚖ A CELL'S LIST HANGS OVER THE PAGE (`SidebarMenu`, placement `cell` — the event's cell and the coach team cell, both
+   widths of the sidebar; navigation Phase 4 Step 0): while one is open the sidebar raises its own layer to the strip's value
+   below, so the page's pinned bands never paint over it. ONE rule for every sidebar that wears `stripLayer` (it was the admin
+   rail's own `.rail:has(.switchMenu)`). */
+.stripLayer:has(.cellMenu) { z-index: 70; }
+
 /* "Collapse sidebar", the last row of every sidebar (Ask 2) — the host's own row skin, plus this: its own
    hairline above it, at the foot rows' quieter size, as a button. ⚠ The doubled class out-ranks the host's
    single-class row rule, which lives in another module (equal weight would be settled by bundle order). The

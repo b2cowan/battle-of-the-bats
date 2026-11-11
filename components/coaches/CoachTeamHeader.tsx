@@ -60,7 +60,11 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   rest, and scrolls away with the page instead of snapping. See `teamHeaderPageLine`.
  * - THE TEAM NAME IS THE SWITCHER'S DOOR ON A PHONE (stage 1 · B1): with two or more teams it
  *   renders as a button with a chevron and opens `CoachTeamSwitchSheet` — the More sheet's own
- *   rows, moved. One team: plain text. Desktop: the sidebar's select, untouched.
+ *   rows, moved. One team: plain text.
+ * - ⚖ THE PHONE'S ONLY SINCE NAVIGATION PHASE 4 (E6, owner 2026-11-09): above 900 it draws nothing (coaches.module.css
+ *   `.teamHeader` at min-width 901). On a computer the strip names the page and carries these facts at its right end
+ *   (`CoachStripFacts`, one feed — `loadCoachTeamMasthead`), the sidebar's team cell names and switches the team, the "?"
+ *   is the page's top row's, and the scouting reminder sits under that row (`CoachDeskNudge`). Phase 5 retires the rest.
  * - Mounted by the TEAM layout, so it exists only under /teams/{teamId}.
  * - ⚠ NO "PUBLIC SITE" DOOR (owner ruling 2026-10-06). The masthead carried a ⇄ "Public site" pill
  *   from D2 (2026-08-01) until then. It opened the CLUB's home page — a place the club admin runs and
