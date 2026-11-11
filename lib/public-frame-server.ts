@@ -3,6 +3,7 @@ import { cache } from 'react';
 import { getAnnouncements, getDivisions, getResources, getRules, getTeams, resolveTournamentContactEmail } from './db';
 import { getRegistrationState } from './registration-state';
 import { tournamentFrameTabContent, type FrameTabContent } from './tournament-page-tabs';
+import { publicPosts } from './public-tournament-shape';
 import type { Tournament } from './types';
 
 /**
@@ -38,7 +39,7 @@ export async function publicFrameBandFacts(
   return {
     registrationOpen: registration?.state === 'open',
     frameContent: tournamentFrameTabContent({
-      announcementCount: announcements.length, ruleCount: rules.length, resourceCount: resources.length,
+      announcementCount: publicPosts(announcements, divisions).length, ruleCount: rules.length, resourceCount: resources.length,
       registrationCta: registration?.cta ?? null, championsCrownedAt: tournament.championsCrownedAt, divisions,
     }),
   };

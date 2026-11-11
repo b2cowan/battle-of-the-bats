@@ -35,7 +35,8 @@ export default async function EmailMyLinkPage({
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
   const season = await getClubSeason(org.id, seasonSlug);
-  if (!season) notFound();
+  // Only show non-draft seasons publicly (sweep 3, small items): this page prints the season's name.
+  if (!season || season.status === 'draft') notFound();
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1). A club form in the club page column
   // (club round C2): 640 on the logo edge. The back link opens the title block.

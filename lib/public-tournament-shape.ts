@@ -132,10 +132,20 @@ export function publicNotices(
   divisions: Pick<Division, 'id' | 'scheduleVisibility'>[],
 ): PublicNotice[] {
   if (!isPublicPageEnabled(tournament, 'news')) return [];
-  const pinned = announcements.filter(a => a.pinned);
-  if (pinned.length === 0) return [];
-  const byId = new Map(divisions.map(d => [d.id, d]));
-  return pinned
-    .filter(a => !(a.divisionIds ?? []).some(id => { const d = byId.get(id); return d !== undefined && d.scheduleVisibility !== 'published'; }))
+  return publicPosts(announcements.filter(a => a.pinned), divisions)
     .map(a => ({ id: a.id, title: a.title, body: a.body, pinned: a.pinned }));
+}
+
+/**
+ * The posts a public page may show: none aimed at a division whose schedule is still held back (a post naming a held-back
+ * division would give the division away). A post that targets no division is for everyone; an id that no longer matches a
+ * division is ignored. The News page, the Overview and the nav's "does News have anything" count all read this, so the
+ * Schedule's strip and every other place a post appears agree (sweep 3, small items). Pass the FULL division list.
+ */
+export function publicPosts<T extends Pick<Announcement, 'divisionIds'>>(
+  announcements: T[],
+  divisions: Pick<Division, 'id' | 'scheduleVisibility'>[],
+): T[] {
+  const byId = new Map(divisions.map(d => [d.id, d]));
+  return announcements.filter(a => !(a.divisionIds ?? []).some(id => { const d = byId.get(id); return d !== undefined && d.scheduleVisibility !== 'published'; }));
 }

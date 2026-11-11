@@ -36,6 +36,14 @@ export function withInviteOnlyPages<T extends Pick<Tournament, 'publicHiddenPage
   return hidden.includes('register') ? tournament : { ...tournament, publicHiddenPages: [...hidden, 'register'] };
 }
 
+/**
+ * Which tournament statuses have a public site at all. The ONE list: the public feed reads it, and so does the anonymous
+ * pay-online yes/no (`/api/pay/tournament/[id]`), so a draft or canceled event answers nothing to a stranger.
+ */
+export function isPublicTournamentStatus(status: Tournament['status'] | string | null | undefined): boolean {
+  return status === 'active' || status === 'completed';
+}
+
 export function isPublicPageEnabled(tournament: Pick<Tournament, 'publicHiddenPages' | 'settings'> | null | undefined, key: PublicPageKey): boolean {
   // No round robin (bracket-only) means no standings to show. An Exhibition HAS a round robin, so
   // its Standings page follows the organizer's choice like any other.

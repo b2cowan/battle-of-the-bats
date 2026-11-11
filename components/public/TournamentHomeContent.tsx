@@ -7,6 +7,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { heroFirstPitchISO } from '@/lib/tournament-hero-copy';
 import { deriveTierChampions } from '@/lib/champions';
 import { toPublicTeam } from '@/lib/public-tournament-data';
+import { publicPosts } from '@/lib/public-tournament-shape';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { orgLinks } from '@/lib/org-links';
 import { tournamentMoment } from '@/lib/tournament-moment';
@@ -138,7 +139,8 @@ export default async function TournamentHomeContent({
       teamName={id => teams.find(t => t.id === id)?.name ?? 'TBD'}
       divisions={divisions}
       venues={venues}
-      announcements={allAnnouncements.slice(0, 3)}
+      // The three newest the public may see: a post aimed at a held-back division is filtered out BEFORE the cut.
+      announcements={publicPosts(allAnnouncements, divisions).slice(0, 3)}
       scheduleWithheld={scheduleWithheld}
       showSchedulePage={showSchedulePage}
       showNewsPage={showNewsPage}

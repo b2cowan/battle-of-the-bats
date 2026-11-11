@@ -73,7 +73,7 @@ const announcements = [
   { id: 'n3', tournamentId: 't1', title: 'Quiet', body: SECRET.unpinnedNotice, date: '2026-11-07', pinned: false, divisionIds: null },
 ] as unknown as Announcement[];
 
-type Setup = { tournament?: Tournament; contact?: string | null };
+type Setup = { tournament?: Tournament; contact?: string | null; games?: Game[] };
 function feed(setup: Setup = {}) {
   const t = setup.tournament ?? record();
   const other = record({ id: 't2', slug: 'old-event', name: 'Last Year', status: 'completed', year: 2025, contactEmail: SECRET.otherContact });
@@ -81,7 +81,7 @@ function feed(setup: Setup = {}) {
     getOrganizationBySlug: async () => ({ id: 'org', name: 'Club', slug: 'club', planId: 'tournament_plus', subscriptionStatus: 'active', contactEmail: 'club@public.test', requireScoreFinalization: true }),
     getTournamentsByOrg: async () => [t, other],
     resolveTournamentContactEmail: async () => (setup.contact === undefined ? null : setup.contact),
-    getDivisions: async () => divisions, getTeams: async () => teams, getGames: async () => games, getVenues: async () => venues,
+    getDivisions: async () => divisions, getTeams: async () => teams, getGames: async () => setup.games ?? games, getVenues: async () => venues,
     getAnnouncements: async () => announcements,
     getRules: async () => [{ id: 'r1', tournamentId: 't1', title: 'Rule', body: 'Play fair', order: 0 }],
     getResources: async () => [],
@@ -90,7 +90,7 @@ function feed(setup: Setup = {}) {
   };
   const load = componentLoader({ './db': db, './supabase-admin': { supabaseAdmin: {} } });
   return load('lib/public-tournament-data.ts') as {
-    getPublicTournamentPageData: (org: string, t: string | null, section?: string, opts?: { look?: boolean }) => Promise<Record<string, unknown> & { tournament: Record<string, unknown> | null } | null>;
+    getPublicTournamentPageData: (org: string, t: string | null, section?: string, opts?: { look?: boolean; keepGames?: boolean }) => Promise<Record<string, unknown> & { tournament: Record<string, unknown> | null } | null>;
   };
 }
 
@@ -129,7 +129,9 @@ describe('every section the route serves, read through the real feed', () => {
       assert.ok(!('tournaments' in data), `${section} sends the club's other events`);
     });
   }
-  for (const section of ROUTE_SECTIONS.filter(s => s !== 'rules' && s !== 'register' && s !== 'context')) {
+  // Register is the one section that keeps every division (a team signs up for any open one); every other section, the
+  // Rules page included (sweep 3, small items), names published divisions only.
+  for (const section of ROUTE_SECTIONS.filter(s => s !== 'register' && s !== 'context')) {
     it(`${section}: a held-back division's team and division names never appear`, async () => {
       const body = json(await feed().getPublicTournamentPageData('club', 'cup', section));
       assert.ok(!body.includes(SECRET.heldTeam), `${section} names the held-back team`);
@@ -185,6 +187,52 @@ describe('what the pages need is still there', () => {
   it('teams-preview says only THAT something is held back, never what', async () => {
     const data = (await feed().getPublicTournamentPageData('club', 'cup', 'teams-preview'))!;
     assert.equal(data.teamsWithheld, true);
+  });
+  describe('a hidden Schedule page sends no round-robin game through any other section (sweep 3, finding 6)', () => {
+    const playoff = { id: 'g3', tournamentId: 't1', divisionId: 'dA', homeTeamId: 'tA', awayTeamId: 'tA', date: '2026-11-08', time: '14:00', status: 'scheduled',
+      location: 'Park', isPlayoff: true, notes: SECRET.gameNote } as unknown as Game;
+    const all = [...games, playoff];
+    const ids = (data: Record<string, unknown>) => (data.games as Game[]).map(g => g.id);
+    const hidden = (pages: string[]) => feed({ tournament: record({ publicHiddenPages: pages as Tournament['publicHiddenPages'] }), games: all });
+
+    it('with Schedule shown, the three sections still carry the published games (the proof is not vacuous)', async () => {
+      for (const section of ['teams-preview', 'standings-preview', 'playoffs']) {
+        const data = (await feed({ games: all }).getPublicTournamentPageData('club', 'cup', section))!;
+        assert.deepEqual(ids(data), ['g1', 'g3'], section);
+      }
+    });
+    it('teams-preview: no game at all, and no record either (the Teams page shows a record only with Standings AND Schedule on)', async () => {
+      const data = (await hidden(['schedule']).getPublicTournamentPageData('club', 'cup', 'teams-preview'))!;
+      assert.deepEqual(ids(data), []);
+      assert.deepEqual(data.standingsByDivision, {});
+      assert.match(json(data), /Open Team/, 'the team list itself still goes');
+    });
+    it('teams-preview: a hidden Standings page sends no record even while Schedule is shown', async () => {
+      const data = (await hidden(['standings']).getPublicTournamentPageData('club', 'cup', 'teams-preview'))!;
+      assert.deepEqual(data.standingsByDivision, {});
+      assert.deepEqual(ids(data), ['g1', 'g3']);
+    });
+    it('teams-preview: a server-only caller (the share image) can still read the games it never sends on', async () => {
+      const data = (await hidden(['schedule']).getPublicTournamentPageData('club', 'cup', 'teams-preview', { keepGames: true }))!;
+      assert.deepEqual(ids(data), ['g1', 'g3']);
+    });
+    for (const section of ['standings-preview', 'playoffs']) {
+      it(`${section}: the round-robin game is gone, the playoff game and the standings stay (the bracket is its own page)`, async () => {
+        const data = (await hidden(['schedule']).getPublicTournamentPageData('club', 'cup', section))!;
+        assert.equal(data.pageEnabled, true, 'the page itself is still on');
+        assert.deepEqual(ids(data), ['g3']);
+        assert.ok('dA' in (data.standingsByDivision as object), 'standings are their own switch');
+      });
+    }
+    it('the HTTP route cannot ask for the server-only keepGames option', () => {
+      assert.doesNotMatch(readCode('app/api/public/tournament-data/route.ts'), /keepGames/);
+    });
+  });
+  it('rules: the held-back division is not sent, the published one is', async () => {
+    const data = (await feed().getPublicTournamentPageData('club', 'cup', 'rules'))!;
+    assert.deepEqual((data.divisions as Division[]).map(d => d.id), ['dA']);
+    const register = (await feed().getPublicTournamentPageData('club', 'cup', 'register'))!;
+    assert.deepEqual((register.divisions as Division[]).map(d => d.id), ['dA', 'dB'], 'Register still needs every division for sign-up');
   });
   it('a hidden News page sends no notice at all', async () => {
     const data = (await feed({ tournament: record({ publicHiddenPages: ['news'] }) }).getPublicTournamentPageData('club', 'cup', 'schedule-preview'))!;
@@ -346,7 +394,7 @@ describe('every reader of the feed goes through the shape (source sweep)', () =>
       assert.match(readCode(file), /getPublicTournamentPageData\([^)]*'schedule-preview'/, file);
       assert.doesNotMatch(readCode(file), /getPublicTournamentPageData\([^)]*'(schedule|teams|standings)'/, file);
     }
-    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx'), /getPublicTournamentPageData\(orgSlug, tournamentSlug, 'teams-preview', \{ look: true \}\)/);
+    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx'), /getPublicTournamentPageData\(orgSlug, tournamentSlug, 'teams-preview', \{ look: true, keepGames: true \}\)/);
   });
   it('the tournament share image shows no count tiles while every division is held back or the Teams page is off, rather than zeros', () => {
     const image = readCode('app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx');

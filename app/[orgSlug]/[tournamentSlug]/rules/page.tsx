@@ -41,6 +41,8 @@ export default async function RulesPage({
       getResources(tournament.id, { admin: true }),
       getDivisions(tournament.id, { admin: true }),
     ]);
+    // The Rules page's division picker names only published divisions: a held-back one is not public yet.
+    divisions = divisions.filter(d => d.scheduleVisibility === 'published');
   }
 
   // Public tournament pages Stage 8 Part 3a: the new body is the only body (the old RulesContent is gone).

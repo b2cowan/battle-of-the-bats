@@ -4,6 +4,7 @@ import { getAnnouncements, getOrganizationBySlug, getPublicTournamentBySlug, get
 import { publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { notFound } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
+import { publicPosts } from '@/lib/public-tournament-shape';
 import NewsContent from '@/components/public/NewsContent';
 
 export const dynamic = 'force-dynamic';
@@ -43,8 +44,9 @@ export default async function NewsPage({
       orgSlug={orgSlug}
       tournamentSlug={tournamentSlug}
       pageEnabled={pageEnabled}
-      announcements={announcements}
-      divisions={divisions}
+      // A post aimed at a held-back division, and a held-back division's name in the picker, are not public yet.
+      announcements={publicPosts(announcements, divisions)}
+      divisions={divisions.filter(d => d.scheduleVisibility === 'published')}
       prefName={prefName}
       view={view}
       contactEmail={contactEmail}

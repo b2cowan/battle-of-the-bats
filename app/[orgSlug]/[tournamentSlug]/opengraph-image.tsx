@@ -54,7 +54,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
   try {
     const { orgSlug, tournamentSlug } = await params;
     // Published-only: the counts and the live line never include a division the organizer is holding back.
-    const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'teams-preview', { look: true });
+    const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'teams-preview', { look: true, keepGames: true });
     if (!data?.tournament) return null;
     const t = data.tournament;
     const theme = await shareImageTheme(orgSlug, t);

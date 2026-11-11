@@ -10,6 +10,7 @@ import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { getRegistrationState } from '@/lib/registration-state';
 import { hasRoundRobin } from '@/lib/tournament-phase';
 import { isPublicBracketVisible } from '@/lib/public-pages';
+import { publicPosts } from '@/lib/public-tournament-shape';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import { tournamentToday } from '@/lib/timezone';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -217,7 +218,7 @@ export default async function TournamentLayout({
   // division's schedule is held back and the whole tournament's playoffs are decided — exactly Ask 14's "the
   // whole tournament is Finished, matching the Overview's own PublicChampions trigger" ruling, at no extra query.
   const frameContent = tournamentFrameTabContent({
-    announcementCount: frameAnnouncements.length, ruleCount: frameRules.length, resourceCount: frameResources.length,
+    announcementCount: publicPosts(frameAnnouncements, divisions).length, ruleCount: frameRules.length, resourceCount: frameResources.length,
     registrationCta: registration?.cta ?? null, championsCrownedAt: tournament.championsCrownedAt, divisions,
   });
 

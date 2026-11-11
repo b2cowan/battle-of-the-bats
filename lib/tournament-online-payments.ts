@@ -4,6 +4,24 @@ import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { factsFromRow, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from '@/lib/online-payment-account';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { getOrganizationBySlugForServer } from '@/lib/server-organizations';
+import { isPublicTournamentStatus } from '@/lib/public-pages';
+
+/**
+ * Does this tournament have a public site a stranger can reach: a live (active or completed) event of an organization that
+ * has not canceled? The anonymous yes/no route asks this BEFORE answering anything, so it says nothing about a draft, a
+ * canceled event or a made-up id (sweep 3, small items). Any doubt answers no.
+ */
+export async function tournamentHasPublicSite(tournamentId: string): Promise<boolean> {
+  try {
+    if (!/^[0-9a-f-]{36}$/i.test(tournamentId)) return false;
+    const { data: t } = await supabaseAdmin.from('tournaments').select('org_id, status').eq('id', tournamentId).maybeSingle();
+    if (!t || !isPublicTournamentStatus(t.status as string)) return false;
+    const { data: org } = await supabaseAdmin.from('organizations').select('subscription_status').eq('id', t.org_id as string).maybeSingle();
+    return !!org && org.subscription_status !== 'canceled';
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Does this tournament take payments online right now? The ONE answer the public registration form (via

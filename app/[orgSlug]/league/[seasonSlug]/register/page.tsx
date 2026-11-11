@@ -19,12 +19,12 @@ import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
 
-// This page does not hide a draft season (it says "not yet opened for registration"), so the tab names it as it stands.
+// A draft season is hidden by this page (it answers 404, like every other league page), so the tab does not name it either.
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> }): Promise<Metadata> {
   const { orgSlug, seasonSlug } = await params;
   return clubPageMetadata(orgSlug, async club => {
     const season = await getClubSeason(club.id, seasonSlug);
-    return season ? `Register for ${season.name}` : null;
+    return season && season.status !== 'draft' ? `Register for ${season.name}` : null;
   }, { path: `/league/${seasonSlug}/register` });
 }
 
@@ -41,7 +41,8 @@ export default async function RegisterPage({
   if (!org) notFound();
 
   const season = await getClubSeason(org.id, seasonSlug);
-  if (!season) notFound();
+  // Only show non-draft seasons publicly (sweep 3, small items): a draft season's name is not public yet.
+  if (!season || season.status === 'draft') notFound();
 
   const rawDivisions = await getDivisionsForSeason(season.id);
 
