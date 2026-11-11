@@ -97,6 +97,7 @@ export const RULES_WORDS = {
   nameHeld: 'Give it a name to save it.',
   addressHeld: 'Give it a web address to save it.',
   uploadFailed: 'Couldn’t upload the file. Try again.',
+  fileTooBig: 'That file is over 9 MB. Choose a smaller one.',
   addLink: 'Add link',
   addFile: 'Add file',
   deleteResource: 'Delete this link or file',

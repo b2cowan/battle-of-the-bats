@@ -76,6 +76,26 @@ any club's files.
   Production has the same two policies per mig 311's own notes; the live policy list was not read (prod is never read here).
 - **Fix:** drop the two `authenticated` policies, move upload and delete to a server route that checks the club, the
   tournament and `post_rules`, and key new files under `{orgId}/{tournamentId}/…`.
+- **Found while building the fix (W2 fix B, 2026-11-11) — the link ROWS are not capability-checked.** The `resources`
+  TABLE's insert/update/delete policies (`resources_member_*`, mig 009) ask `can_access_tournament(tournament_id)`: the
+  caller is a member of the event's club and in scope for it. They do not ask `post_rules`. The Rules screen writes those
+  rows straight from the browser (`saveResource`, `updateResource`, `saveResourceOrder` in `lib/db.ts`), so a capability-less
+  `coach` row of the club can still add, rename, repoint or reorder the public Rules page's links with the public key and its
+  session. It is inside one club (not across clubs) and changes no file; the stored files are now closed. **Not fixed
+  here:** closing it moves those three writes behind a route too. **Owner call:** do it as its own small fix (recommended —
+  the same shape as this one) or leave it. The delete of a row now goes through the file route, which asks `post_rules`.
+- **Design notes of the fix (dev, 2026-11-11):** the delete takes the ROW id; it removes the row, then the stored file only
+  when (a) the address is this project's own public address in the bucket, (b) the key is under the caller's club folder or
+  is an old flat key, and (c) **no other row in any event still names the key**. (c) is what stops a typed link that imitates
+  another club's flat-key address from getting that club's file deleted, and it keeps a copied event's shared file alive.
+  Old flat files can be removed only by the club whose row is the last to name them.
+- **Owner call · the upload limit drops from 50 MB to 9 MB (found by /review, 2026-11-11).** Uploads now pass through the server,
+  and every `/api/*` request goes through the proxy, which buffers a body only up to 10 MB (Next's `proxyClientMaxBodySize`
+  default) and cuts the rest. A 20 MB rulebook would arrive as a broken form. So the route and the screen stop a file over
+  9 MB with a plain message ("That file is over 9 MB. Choose a smaller one."). Other document routes cap at 10 MB for the same
+  reason. **Options:** keep 9 MB (recommended; a rules PDF is rarely larger) · raise `proxyClientMaxBodySize` in the shared
+  Next config (every route then buffers that much) · a signed-upload flow where the browser sends the file straight to storage
+  under a one-time address from the server (keeps 50 MB; more to build). The 9 MB is `RESOURCE_MAX_BYTES` in one place.
 
 ### 3 · MEDIUM — the same "any member" door on three more tournament-admin routes — **PROVEN (two of three)**
 - `GET /api/admin/tournaments` (`lib/admin-tournament-list.ts:31` on dev; `app/api/admin/tournaments/route.ts:274-279` on

@@ -1560,52 +1560,32 @@ export async function saveResourceOrder(ids: string[]): Promise<void> {
   if (failed?.error) throw failed.error;
 }
 
-export async function deleteResource(id: string): Promise<void> {
-  // Get the resource first to see if it has a file to delete
-  const { data: res } = await supabase.from('resources').select('*').eq('id', id).single();
-
-  // Only a file this bucket holds (its public address): a typed link that merely lives on a supabase.co host must never
-  // name a file to remove (Stage 5 /review — the same test as the Rules screen's `isResourceFile`).
-  if (res && /\/storage\/v1\/object\/public\/resources\//.test(res.url)) {
-    try {
-      // Extract filename from public URL
-      // Format: .../public/resources/filename.ext
-      const parts = res.url.split('/');
-      const fileName = parts[parts.length - 1].split('?')[0]; // Remove query params
-
-      await authClient().storage.from('resources').remove([fileName]);
-    } catch (err) {
-      console.error('Error removing file from storage:', err);
-    }
-  }
-
-  const { error } = await authClient().from('resources').delete().eq('id', id);
-  if (error) throw error;
+/**
+ * Delete a link or file from the Rules page. The SERVER removes the row and, when the row owns one, the stored file
+ * (`/api/admin/resources/file`): the `resources` bucket takes no browser writes (W2 fix B). Throws on failure.
+ */
+export async function deleteResource(id: string, orgSlug: string | undefined): Promise<void> {
+  const res = await fetch(`/api/admin/resources/file?orgSlug=${encodeURIComponent(orgSlug ?? '')}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resourceId: id }),
+  });
+  // 404 = already gone (deleted in another tab): the screen's goal is met.
+  if (!res.ok && res.status !== 404) throw new Error(`delete resource ${res.status}`);
 }
 
-export async function uploadResourceFile(file: File): Promise<string | null> {
+/** Upload a file for the Rules page through the server; returns its public address, or null when it could not be stored. */
+export async function uploadResourceFile(file: File, tournamentId: string, orgSlug: string | undefined): Promise<string | null> {
   try {
-    const cleanName = file.name.replace(/[^\w\s\.\-]/gi, '').replace(/\s+/g, '_');
-    const fileName = `${Date.now()}-${cleanName}`;
-    const filePath = fileName;
-
-    const { error } = await authClient().storage
-      .from('resources')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (error) {
-      console.error('Supabase Storage Error:', error);
-      throw error;
-    }
-
-    const { data: { publicUrl } } = authClient().storage
-      .from('resources')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(
+      `/api/admin/resources/file?orgSlug=${encodeURIComponent(orgSlug ?? '')}&tournamentId=${encodeURIComponent(tournamentId)}`,
+      { method: 'POST', body: form },
+    );
+    const data = await res.json().catch(() => null) as { url?: string } | null;
+    if (!res.ok || !data?.url) return null;
+    return data.url;
   } catch (err) {
     console.error('uploadResourceFile catch:', err);
     return null;

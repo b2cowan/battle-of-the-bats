@@ -217,6 +217,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
         <ResourceRecord
           resource={openResource === 'new' ? null : resources[rIdx]}
           tournamentId={tournament.id}
+          orgSlug={orgSlug}
           canWrite
           order={nextResourceOrder}
           prev={rIdx > 0 ? { id: resources[rIdx - 1].id, name: resources[rIdx - 1].label } : null}

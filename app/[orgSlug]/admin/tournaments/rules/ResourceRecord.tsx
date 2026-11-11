@@ -15,6 +15,7 @@ import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
 import { deleteResource, saveResource, updateResource, uploadResourceFile } from '@/lib/db';
 import { RULES_WORDS as W, deleteResourceQuestion, resourceCaption } from '@/lib/tournament-settings-words';
+import { RESOURCE_MAX_BYTES } from '@/lib/resource-file-storage';
 import type { Resource } from '@/lib/types';
 import styles from './rules.module.css';
 
@@ -27,11 +28,13 @@ const hasAddress = (url: string) => {
 };
 
 export default function ResourceRecord({
-  resource, tournamentId, canWrite, order, prev, next, position, onStep, onClose, onChanged,
+  resource, tournamentId, orgSlug, canWrite, order, prev, next, position, onStep, onClose, onChanged,
 }: {
   /** null = Add a link or file (the same window, asking). */
   resource: Resource | null;
   tournamentId: string;
+  /** The club — the file store's route names it (uploads and deletes go through the server). */
+  orgSlug?: string;
   canWrite: boolean;
   order: number;
   prev: { id: string; name: string } | null;
@@ -90,12 +93,13 @@ export default function ResourceRecord({
     if (busy) return;
     const mistake = !label.trim() ? W.nameHeld : kind === 'link' && !url.trim() ? W.addressHeld : kind === 'file' && !file ? W.chooseFile : null;
     if (mistake) { setCreateError(mistake); return; }
+    if (kind === 'file' && file && file.size > RESOURCE_MAX_BYTES) { setCreateError(W.fileTooBig); return; }
     setBusy(true);
     setCreateError('');
     try {
       let address = url.trim();
       if (kind === 'file' && file) {
-        const uploaded = await uploadResourceFile(file);
+        const uploaded = await uploadResourceFile(file, tournamentId, orgSlug);
         if (!uploaded) { setCreateError(W.uploadFailed); return; }
         address = uploaded;
       }
@@ -117,7 +121,7 @@ export default function ResourceRecord({
     setBusy(true);
     setAskError('');
     try {
-      await deleteResource(resource.id);
+      await deleteResource(resource.id, orgSlug);
       setAsking(false);
       await onChanged();
       onClose();
