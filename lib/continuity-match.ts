@@ -64,6 +64,9 @@ export interface ContinuityRow {
     guardianFirstName: string | null;
     guardianLastName: string | null;
     guardianEmail: string | null;
+    /** True when the reader lacks the roster-privacy grant: the guardian names and email and the birth date above are
+     *  withheld (null), while the match itself is intact. The card says so rather than "no birth date on file". */
+    contactHidden?: boolean;
   };
 }
 

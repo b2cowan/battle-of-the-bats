@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, getAuthContextWithScope, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, getAuthContextWithScope, unauthorized, forbidden, GROUP_UNSCOPED_ROLES } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
@@ -83,7 +83,11 @@ export const GET = withObservability(async (req: Request) => {
       return NextResponse.json({ permits: (await readLinePermits(orgId, [lineId]))[lineId] ?? [] });
     }
     if (params.get('teams') === '1') {
-      const { data, error } = await supabaseAdmin.from('rep_teams').select('id, name').eq('org_id', orgId).eq('is_archived', false).order('name');
+      // A member limited to some team groups reads only those groups' teams (the rep-teams routes' rule).
+      const limit = GROUP_UNSCOPED_ROLES.includes(ctx.role) ? null : (await getAuthContextWithRole({ orgSlug: params.get('orgSlug') ?? undefined, requireOrgSlug: true }))?.repGroupIds ?? null;
+      let teamsQ = supabaseAdmin.from('rep_teams').select('id, name').eq('org_id', orgId).eq('is_archived', false);
+      if (limit) teamsQ = teamsQ.in('group_id', limit);
+      const { data, error } = await teamsQ.order('name');
       if (error) throw error;
       return NextResponse.json({ teams: (data ?? []).map(t => ({ id: t.id, name: t.name })) });
     }

@@ -3,7 +3,8 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
-import { canSaveVenueLibrary } from '@/lib/venue-library';
+import { canSaveVenueLibrary, canOpenPermitDocument } from '@/lib/venue-library';
+import { canMoveClubMoney } from '@/lib/member-access';
 import { PERMIT_WORDS as W } from '@/lib/permit-words';
 import { isUuid } from '@/lib/utils';
 
@@ -18,7 +19,8 @@ import { isUuid } from '@/lib/utils';
 // The private `org-permit-documents` bucket was made by mig 322 (never in the dashboard), with NO storage policies: this
 // route reads and writes it with the service role, as `rep-team-documents` is used. Path:
 // `${org.id}/permits/${permitId}/${uuid}-${name}`.
-// WHO: the Venue library's readers read it (a coach never does); its savers replace it.
+// WHO: the Venue library's savers and the seats that hold the club's money open it (a coach never does, and nor does a
+// scorekeeper or a tournament-staff reader of the library: the file may state the fee their screens hide); its savers replace it.
 // ---------------------------------------------------------------------------
 
 const BUCKET = 'org-permit-documents';
@@ -51,6 +53,7 @@ export const GET = withObservability(async (req: Request) => {
   try {
     const g = await gate(req);
     if ('error' in g) return g.error;
+    if (!canOpenPermitDocument(canSaveVenueLibrary(g.ctx.role, g.ctx.capabilities), canMoveClubMoney(g.ctx, g.ctx.org))) return forbidden();
     if (!g.permit.document_path) return refusal(404, 'no_document', 'This permit has no document.');
     const { data, error } = await supabaseAdmin.storage.from(BUCKET).createSignedUrl(g.permit.document_path, 3600);
     if (error || !data?.signedUrl) return refusal(502, 'document_unavailable', 'The document couldn’t be opened just now. Try again.');

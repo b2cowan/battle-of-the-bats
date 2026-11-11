@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import {
   getAuthContextWithScope,
+  getAuthContextWithRole,
   unauthorized,
   forbidden,
   scopeGuard,
   requireTournamentInOrg,
+  repGroupScopeGuard,
+  GROUP_UNSCOPED_ROLES,
 } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -15,6 +18,9 @@ import {
   unlinkRepTeamFromRegistration,
   repTeamBelongsToOrg,
   registrationBelongsToTournament,
+  repTeamGroupId,
+  linkedRepTeamIdOfRegistration,
+  repTeamIdsInGroups,
 } from '@/lib/rep-team-tournament-links';
 
 /**
@@ -23,6 +29,9 @@ import {
  * the `/api/admin/teams` auth chain (scope guard → tournament-in-org) and additionally
  * requires the rep-teams module AND asserts `rep_teams.org_id === ctx.org.id`, so
  * cross-tenant linking is structurally impossible. Passive: no proactive match prompts.
+ *
+ * ⚖ A member limited to some team groups links, unlinks and lists only those groups' teams (Board Ready W2 fix E, sweep 3
+ * small finding — `repGroupScopeGuard`, the rep-teams routes' rule; `our-teams` narrows its list the same way).
  */
 
 function badRequest(message: string) {
@@ -62,7 +71,13 @@ async function guardTournamentRepAccess(req: Request, tournamentId: string | nul
   const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
   if (wrongOrg) return { error: wrongOrg };
 
-  return { ctx };
+  // The member's team-group limit (null = every team). The roles a group never limits skip the lookup.
+  const roleCtx = GROUP_UNSCOPED_ROLES.includes(ctx.role)
+    ? { ...ctx, repGroupIds: null as string[] | null }
+    : await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
+  if (!roleCtx) return { error: unauthorized() as Response };
+
+  return { ctx, roleCtx };
 }
 
 export const GET = withObservability(async (req: Request) => {
@@ -70,7 +85,10 @@ export const GET = withObservability(async (req: Request) => {
   const gate = await guardTournamentRepAccess(req, tournamentId);
   if (gate.error) return gate.error;
 
-  const links = await getRepTeamLinksForTournament(tournamentId!);
+  const all = await getRepTeamLinksForTournament(tournamentId!);
+  const limit = gate.roleCtx.repGroupIds;
+  const inScope = limit ? await repTeamIdsInGroups([...new Set(all.map(l => l.repTeamId))], limit, gate.ctx.org.id) : null;
+  const links = inScope ? all.filter(l => inScope.has(l.repTeamId)) : all;
   return NextResponse.json({ links });
 }, { route: '/api/admin/teams/rep-team-link' });
 
@@ -82,7 +100,7 @@ export const POST = withObservability(async (req: Request) => {
 
   const gate = await guardTournamentRepAccess(req, tournamentId);
   if (gate.error) return gate.error;
-  const { ctx } = gate;
+  const { ctx, roleCtx } = gate;
 
   if (!registrationId || !repTeamId) return badRequest('registrationId and repTeamId are required.');
 
@@ -93,6 +111,19 @@ export const POST = withObservability(async (req: Request) => {
   // ...and the rep team must belong to the caller's org (cross-tenant linking impossible).
   if (!(await repTeamBelongsToOrg(repTeamId, ctx.org.id))) {
     return NextResponse.json({ error: 'That rep team is not in your organization.' }, { status: 404 });
+  }
+  // ...and, for a member limited to some team groups, in one of their groups.
+  const groupId = await repTeamGroupId(repTeamId, ctx.org.id);
+  const outOfGroup = repGroupScopeGuard(roleCtx, groupId ?? null);
+  if (outOfGroup) return outOfGroup;
+  // Linking REPLACES a registration's existing link (one per registration), so a member limited to some groups may not
+  // replace one that points at a team outside them — the list hides it from them, and the save would silently destroy it.
+  if (roleCtx.repGroupIds) {
+    const current = await linkedRepTeamIdOfRegistration(registrationId);
+    if (current && current !== repTeamId) {
+      const replacing = repGroupScopeGuard(roleCtx, (await repTeamGroupId(current, ctx.org.id)) ?? null);
+      if (replacing) return replacing;
+    }
   }
 
   try {
@@ -122,6 +153,14 @@ export const DELETE = withObservability(async (req: Request) => {
   // Scope: only unlink a registration that belongs to this scope-checked tournament.
   if (!(await registrationBelongsToTournament(registrationId, tournamentId!))) {
     return NextResponse.json({ error: 'That registration is not part of this tournament.' }, { status: 404 });
+  }
+  // A member limited to some team groups ends only a link to one of their groups' teams.
+  if (gate.roleCtx.repGroupIds) {
+    const linkedTo = await linkedRepTeamIdOfRegistration(registrationId);
+    if (linkedTo) {
+      const outOfGroup = repGroupScopeGuard(gate.roleCtx, (await repTeamGroupId(linkedTo, gate.ctx.org.id)) ?? null);
+      if (outOfGroup) return outOfGroup;
+    }
   }
 
   try {

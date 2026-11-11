@@ -61,7 +61,7 @@ import type { DatesOffNotice } from '@/lib/permit-dates-off-view';
 import { clockOf } from '@/lib/club-calendar-view';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { kit } from '@/components/coaches/kit';
-import type { LibraryVenue } from '@/lib/venue-library';
+import { canOpenPermitDocument, type LibraryVenue } from '@/lib/venue-library';
 import own from './Permits.module.css';
 import vl from './VenueLibrary.module.css';
 import fy from './money/FiscalYear.module.css';
@@ -844,7 +844,9 @@ export function PermitWindow({
               <dd>
                 {view.document ? (
                   <>
-                    <button type="button" className={own.docDoor} onClick={() => void openDocument()}><FileText size={14} aria-hidden />{view.document.name}</button>
+                    {canOpenPermitDocument(canSave, money)
+                      ? <button type="button" className={own.docDoor} onClick={() => void openDocument()}><FileText size={14} aria-hidden />{view.document.name}</button>
+                      : <span className={own.docDoor} style={{ cursor: 'default' }}><FileText size={14} aria-hidden />{view.document.name}</span>}
                     <span className={own.docMeta}>{fileSizeWords(view.document.size)} · added {formatStoredDate(view.document.addedAt, { withYear: false })}</span>
                   </>
                 ) : <span className={vl.quiet}>{W.noDocument}</span>}

@@ -274,6 +274,10 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
 
   if (target.role === 'coach') return coachingStaffRowRefusal();
 
+  // An owner's name and title are the owner's to edit (Board Ready W2 fix E, sweep 3): a member who may manage members, an
+  // admin included, never rewrites how an owner is named on the board, in the Members list and in the audit trail.
+  if ((hasDisplayNameUpdate || hasTitleUpdate) && target.role === 'owner' && ctx.role !== 'owner') return ownerRowRefusal();
+
   // Prevent demoting the last owner
   if (hasRoleUpdate && target.role === 'owner' && (await ownerCount(org.id)) <= 1) {
     return NextResponse.json(

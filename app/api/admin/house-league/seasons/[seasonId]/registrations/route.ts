@@ -38,7 +38,10 @@ export const GET = withObservability(async (req: Request,
   if (status)     q = q.eq('status', status as LeagueRegistrationStatus);
   if (divisionId) q = q.eq('division_id', divisionId);
   if (search) {
-    const s = search.trim().replace(/[%_]/g, '\\$&');
+    // The text goes into a PostgREST `.or()` string, where a comma starts another condition and brackets or quotes group one
+    // (Board Ready W2 fix E, sweep 3). `%`, `_` and `\` are escaped for LIKE; `, ( ) " .` become the single-character wildcard,
+    // so "ann.lee@x.com" still finds itself and nothing typed can add a condition.
+    const s = search.trim().replace(/[%_\\]/g, '\\$&').replace(/[,()".]/g, '_');
     q = q.or(
       `player_first_name.ilike.%${s}%,player_last_name.ilike.%${s}%,guardian_email.ilike.%${s}%,guardian_email_2.ilike.%${s}%`,
     );

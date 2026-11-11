@@ -9,6 +9,7 @@ import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } f
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { canOpenModule } from '@/lib/member-access';
+import { canManageRegistrations } from '@/lib/registration-access';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
@@ -93,6 +94,9 @@ export const GET = withObservability(async (req: Request) => {
 
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
 
+  // The private admin notes are the registrations manager's, here as on /api/registrations (owner 2026-11-11, sweep 3 finding 5):
+  // the schedule, bracket and Teams screens read this list too, and tournament staff use it for schedule and check-in.
+  const mayReadNotes = canManageRegistrations(ctx.role, ctx.capabilities);
   const teams = (data ?? []).map((t: any) => ({
     id: t.id,
     tournamentId: t.tournament_id,
@@ -105,7 +109,7 @@ export const GET = withObservability(async (req: Request) => {
     checkInStatus: t.check_in_status ?? 'not_arrived',
     registered_at: t.registered_at,
     registeredAt: t.registered_at,
-    adminNotes: t.admin_notes,
+    adminNotes: mayReadNotes ? t.admin_notes : null,
     poolId: t.pool_id,
     waitlistPosition: t.waitlist_position ?? null,
     slotId: t.slot_id ?? null,

@@ -107,6 +107,8 @@ export interface TeamRecordProps {
   payDoneSaid?: string | null;
   /** False while the event is locked (completed): read-only, the plain name, no actions. */
   canWrite: boolean;
+  /** The private admin notes belong to whoever manages registrations; the server sends them no one else. */
+  showNotes: boolean;
   /** Seed feeds only the playoff bracket's "By seed number" — absent for an Exhibition. */
   showSeed: boolean;
   /** A division with pools and no slots: the in-row pool picker moved here (T6). */
@@ -512,7 +514,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
           </RecordSection>
         )}
 
-        <RecordSection title={W.notes}>
+        {props.showNotes && <RecordSection title={W.notes}>
           {editing ? (
             <textarea className={ck.textarea} aria-label={W.notes} placeholder={W.notesPlaceholder}
               value={form.adminNotes} onChange={e => set({ adminNotes: e.target.value })} />
@@ -521,7 +523,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
               {saved.adminNotes.trim() || W.notesEmpty}
             </p>
           )}
-        </RecordSection>
+        </RecordSection>}
 
         {t.customAnswers && t.customAnswers.length > 0 && (
           <RecordSection title={W.answers}>

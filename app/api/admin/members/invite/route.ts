@@ -16,6 +16,7 @@ import type { OrgRole } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { requireFreshCode } from '@/lib/two-step-fresh';
+import { findAuthUserByEmail } from '@/lib/auth-account-lookup';
 
 function getActionLink(data: unknown) {
   return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
@@ -84,12 +85,16 @@ export const POST = withObservability(async (req: Request) => {
     if (stale) return stale;
   }
 
-  // Check if a Supabase auth user already exists with this email.
-  // NOTE: supabase.auth.admin.getUserByEmail() is not available in supabase-js v2.x.
-  // Using listUsers with perPage:1000 — sufficient for current platform scale.
-  // Revisit with pagination or a direct email lookup API when the user base grows.
-  const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-  const existingUser = usersData?.users.find(u => u.email?.toLowerCase() === email);
+  // Check if a Supabase auth user already exists with this email. supabase-js v2 has no getUserByEmail, so this is the
+  // platform's paged scan (lib/auth-account-lookup.ts): it reads every page (the single first page of 1,000 missed an
+  // existing account past that, which then got a second invitation instead of the add) and it THROWS on a read error rather
+  // than reading it as "no such account" (Board Ready W2 fix E, sweep 3).
+  let existingUser: Awaited<ReturnType<typeof findAuthUserByEmail>>;
+  try {
+    existingUser = await findAuthUserByEmail(email);
+  } catch (err) {
+    return captureAndJson(err, { error: 'We couldn’t check whether that person already has an account. Try again.' }, 500);
+  }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
   const roleLabel = roleEmailLabel(role);

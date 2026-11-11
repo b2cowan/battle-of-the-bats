@@ -157,3 +157,40 @@ export async function registrationBelongsToTournament(
   if (error) throw error;
   return !!data;
 }
+
+/** A rep team's team group (null = ungrouped), read for the link endpoint's group-limit check. `undefined` = no such team. */
+export async function repTeamGroupId(repTeamId: string, orgId: string): Promise<string | null | undefined> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams')
+    .select('group_id')
+    .eq('id', repTeamId)
+    .eq('org_id', orgId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? ((data.group_id as string | null) ?? null) : undefined;
+}
+
+/** The rep team a registration is linked to now (null = not linked) — an unlink is refused when that team is outside the
+ *  caller's team groups. */
+export async function linkedRepTeamIdOfRegistration(registrationId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tournament_registrations')
+    .select('rep_team_id')
+    .eq('tournament_team_id', registrationId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.rep_team_id as string | undefined) ?? null;
+}
+
+/** Of these rep teams, the ids whose team group is one of `groupIds`. */
+export async function repTeamIdsInGroups(repTeamIds: string[], groupIds: string[], orgId: string): Promise<Set<string>> {
+  if (repTeamIds.length === 0 || groupIds.length === 0) return new Set();
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id')
+    .eq('org_id', orgId)
+    .in('id', repTeamIds)
+    .in('group_id', groupIds);
+  if (error) throw error;
+  return new Set((data ?? []).map(r => r.id as string));
+}

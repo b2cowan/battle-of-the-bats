@@ -134,6 +134,8 @@ export default function ManageMemberDialog({
   );
   const draftOpens = (cap: Capability) => draftAccess.find(a => a.module === cap)?.canOpen ?? false;
 
+  // An owner's name and title are the owner's to edit (the route refuses anyone below owner — W2 fix E).
+  const nameLocked = targetIsOwner && !viewerIsOwner;
   const canChangeRole = canManage && !targetIsOwner && !isSelf;
   const canChangeAccess = viewerIsOwner && !targetIsOwner;
   const canScopeGroups = (viewerRole === 'owner' || viewerRole === 'admin') && !targetIsOwner && repGroups.length > 0;
@@ -378,13 +380,13 @@ export default function ManageMemberDialog({
         <div className={styles.twoFields}>
           <div className={ck.field}>
             <label className={ck.label} htmlFor="kit-manage-title">Title</label>
-            <input id="kit-manage-title" className={ck.input} value={title} maxLength={80} onChange={e => setTitle(e.target.value)} placeholder="e.g. Vice-president" />
-            <p className={ck.hint}>Shown under their name on this list.</p>
+            <input id="kit-manage-title" className={ck.input} value={title} maxLength={80} onChange={e => setTitle(e.target.value)} placeholder="e.g. Vice-president" disabled={nameLocked} />
+            <p className={ck.hint}>{nameLocked ? 'Only an owner can change an owner’s title.' : 'Shown under their name on this list.'}</p>
           </div>
           <div className={ck.field}>
             <label className={ck.label} htmlFor="kit-manage-name">Display name</label>
-            <input id="kit-manage-name" className={ck.input} value={displayName} maxLength={60} onChange={e => setDisplayName(e.target.value)} />
-            <p className={ck.hint}>Shown instead of their email.</p>
+            <input id="kit-manage-name" className={ck.input} value={displayName} maxLength={60} onChange={e => setDisplayName(e.target.value)} disabled={nameLocked} />
+            <p className={ck.hint}>{nameLocked ? 'Only an owner can change an owner’s name.' : 'Shown instead of their email.'}</p>
           </div>
         </div>
 

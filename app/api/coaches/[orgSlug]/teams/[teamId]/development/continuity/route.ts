@@ -60,6 +60,11 @@ export const GET = withObservability(async (req: Request,
   if (!assignment) return refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId);
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), DEVELOPMENT_GRANT_MESSAGE);
   if (denied) return denied;
+  // ⚖ Owner 2026-11-11 (Board Ready W2 fix E, sweep 3 finding 4): the Development grant runs the scan and keeps the
+  // MATCH, but a prior season's guardian names, email and the child's birth date are family contacts — the roster-privacy
+  // grant's reading. An assistant without it gets the pair (child, season, buttons) and none of those. The match runs
+  // on the server with the full identities either way, so the suggestions are the same for everyone.
+  const seesContacts = Boolean(assignment.capabilities.rosterPii);
 
   const url = new URL(req.url);
   const target = url.searchParams.get('target') === 'roster' ? 'roster' : 'registrations';
@@ -169,10 +174,11 @@ export const GET = withObservability(async (req: Request,
         seasonLabel: seasonLabelByYearId.get(prior.programYearId) ?? 'a previous season',
         firstName: prior.firstName,
         lastName: prior.lastName,
-        dateOfBirth: prior.dateOfBirth,
-        guardianFirstName: prior.guardianFirstName,
-        guardianLastName: prior.guardianLastName,
-        guardianEmail: prior.guardianEmail,
+        dateOfBirth: seesContacts ? prior.dateOfBirth : null,
+        guardianFirstName: seesContacts ? prior.guardianFirstName : null,
+        guardianLastName: seesContacts ? prior.guardianLastName : null,
+        guardianEmail: seesContacts ? prior.guardianEmail : null,
+        ...(seesContacts ? {} : { contactHidden: true }),
       },
     });
   }

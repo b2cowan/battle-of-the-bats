@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
+import { canManageRegistrations } from '@/lib/registration-access';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
@@ -110,6 +111,10 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();
+  // ⚖ Owner 2026-11-11 (Board Ready W2 fix E, sweep 3 finding 5): the file carries every team's contact email and payment
+  // amounts, so it asks what the sibling actions (bulk, reminders, resend, import) ask. Tournament staff keep the team
+  // list on the Teams screen for schedule and check-in, not the download.
+  if (!canManageRegistrations(ctx.role, ctx.capabilities)) return forbidden();
 
   const { tournamentId } = await params;
   const denied = scopeGuard(ctx, tournamentId);

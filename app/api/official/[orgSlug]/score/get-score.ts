@@ -40,9 +40,6 @@ type GameRow = {
   away_placeholder: string | null;
   home_slot_id: string | null;
   away_slot_id: string | null;
-  notes: string | null;
-  score_submitted_by_user_id: string | null;
-  score_submitted_by_email: string | null;
   score_submitted_at: string | null;
   score_submission_source: Game['scoreSubmissionSource'] | null;
   duration_minutes: number | null;
@@ -58,7 +55,6 @@ type VenueRow = {
   tournament_id: string;
   name: string;
   address: string | null;
-  notes: string | null;
 };
 
 type DivisionRow = {
@@ -172,9 +168,8 @@ function mapGame(row: GameRow): Game {
     awayPlaceholder: row.away_placeholder ?? undefined,
     homeSlotId: row.home_slot_id ?? undefined,
     awaySlotId: row.away_slot_id ?? undefined,
-    notes: row.notes ?? undefined,
-    scoreSubmittedByUserId: row.score_submitted_by_user_id,
-    scoreSubmittedByEmail: row.score_submitted_by_email,
+    // ⚖ Board Ready W2 fix E (sweep 3): no game notes, and no id or email of whoever submitted a score — the scorekeeper
+    // screen draws neither, and every scorekeeper in the club read them for every game of the day.
     scoreSubmittedAt: row.score_submitted_at,
     scoreSubmissionSource: row.score_submission_source,
     durationMinutes: row.duration_minutes ?? undefined,
@@ -187,7 +182,6 @@ function mapVenue(row: VenueRow): Venue {
     tournamentId: row.tournament_id,
     name: row.name,
     address: row.address ?? '',
-    notes: row.notes ?? undefined,
   };
 }
 
@@ -307,9 +301,6 @@ export async function getScore(req: Request, { params }: Params) {
       away_placeholder,
       home_slot_id,
       away_slot_id,
-      notes,
-      score_submitted_by_user_id,
-      score_submitted_by_email,
       score_submitted_at,
       score_submission_source,
       duration_minutes
@@ -344,7 +335,7 @@ export async function getScore(req: Request, { params }: Params) {
       .in('tournament_id', tournamentIds),
     supabaseAdmin
       .from('diamonds')
-      .select('id, tournament_id, name, address, notes')
+      .select('id, tournament_id, name, address')
       .in('tournament_id', tournamentIds)
       .order('name', { ascending: true }),
     supabaseAdmin

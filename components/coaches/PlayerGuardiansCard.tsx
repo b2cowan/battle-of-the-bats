@@ -4,6 +4,7 @@ import { Users } from 'lucide-react';
 import CoachCollapseSection from './CoachCollapseSection';
 import styles from './FamilyCard.module.css';
 import { possessive } from '@/lib/utils';
+import { useConfirm } from './ConfirmProvider';
 
 /**
  * "{Player}'s guardians" (S5, bottom card) — the coach's per-player guardian management.
@@ -56,6 +57,7 @@ export default function PlayerGuardiansCard({
   const [error, setError] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState(rosterGuardianEmail ?? '');
   const [inviteOpen, setInviteOpen] = useState(false);
+  const confirm = useConfirm();
 
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/guardians`;
 
@@ -92,6 +94,18 @@ export default function PlayerGuardiansCard({
     } finally {
       setBusy(null);
     }
+  }
+
+  // A connection is to the CHILD, on every team in the club (mig 453, owner ruling 3, 2026-11-08): Remove from this team's
+  // card ends the parent's access to the child on all of them, and stops their calendar feed. The coach is told so before it
+  // happens (Board Ready W2 fix E, sweep 3) — it used to read as "remove from my team" and was immediate.
+  async function removeConnected(r: GuardianRow) {
+    const ok = await confirm({
+      title: `Remove ${r.email}?`,
+      message: `This ends ${r.email}'s connection to ${playerFirstName} on every team, rep and house league, not only this one. Their calendar feed stops too, and they won't be invited again on their own.`,
+      confirmText: 'Remove', cancelText: 'Keep connected', tone: 'danger',
+    });
+    if (ok) await decide(r.id, 'revoke');
   }
 
   async function invite() {
@@ -163,7 +177,7 @@ export default function PlayerGuardiansCard({
             {r.email}{r.relationship ? ` · ${r.relationship}` : ''}
             {r.verifiedVia === 'email_match' && <> · connected from your invite</>}
           </span>
-          <button type="button" className={styles.linkBtn} onClick={() => decide(r.id, 'revoke')} disabled={busy === r.id}>
+          <button type="button" className={styles.linkBtn} onClick={() => void removeConnected(r)} disabled={busy === r.id}>
             Remove
           </button>
         </div>

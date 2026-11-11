@@ -27,8 +27,10 @@ export default function ContinuityCompareCard({ row, busy, onConfirm, onReject, 
       </p>
       <p style={{ margin: '0 0 0.45rem', fontSize: '0.8rem' }}>
         <strong>{row.prior.seasonLabel}:</strong> {row.prior.firstName} {row.prior.lastName ?? ''}
-        {row.prior.dateOfBirth ? ` · born ${row.prior.dateOfBirth}` : ' · no birth date on file'}
-        {(row.prior.guardianFirstName || row.prior.guardianEmail)
+        {row.prior.contactHidden
+          ? ' · birth date and guardian details are shown to coaches with roster privacy'
+          : row.prior.dateOfBirth ? ` · born ${row.prior.dateOfBirth}` : ' · no birth date on file'}
+        {!row.prior.contactHidden && (row.prior.guardianFirstName || row.prior.guardianEmail)
           ? ` · guardian ${[row.prior.guardianFirstName, row.prior.guardianLastName].filter(Boolean).join(' ') || '—'}${row.prior.guardianEmail ? ` (${row.prior.guardianEmail})` : ''}`
           : ''}
       </p>

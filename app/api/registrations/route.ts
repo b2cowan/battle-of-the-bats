@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
 import { canOpenModule } from '@/lib/member-access';
+import { canManageRegistrations } from '@/lib/registration-access';
 import { captureError, withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
@@ -68,8 +69,12 @@ export const GET = withObservability(async (req: NextRequest) => {
     for (const c of (clearingRes.data ?? []) as Array<{ team_id: string | null; base_amount: number }>) {
       if (c.team_id) clearing.set(c.team_id, (clearing.get(c.team_id) ?? 0) + Number(c.base_amount));
     }
+    // The private admin notes are the registrations manager's (owner 2026-11-11, sweep 3 finding 5); the team list stays the
+    // tournaments area's, which is what schedule and check-in volunteers use.
+    const mayReadNotes = canManageRegistrations(ctx.role, ctx.capabilities);
     const flattened = teamsRes.data?.map((r: any) => ({
       ...r,
+      admin_notes: mayReadNotes ? r.admin_notes : null,
       clearing_amount: clearing.get(r.id) ?? 0,
       division_name: groupsMap.get(r.division_id) || 'Unknown Division',
       tournament_name: r.tournament_id ? tournsMap.get(r.tournament_id) : 'Internal',

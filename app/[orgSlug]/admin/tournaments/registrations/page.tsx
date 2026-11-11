@@ -76,7 +76,7 @@ import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
 import ImportSheet from '@/components/admin/tournament/ImportSheet';
 import { PlanLockedTool, PlanLockMenuFoot, useTournamentPlusHref } from '@/components/admin/tournament/PlanLockLine';
 import { IMPORT_WORDS } from '@/lib/tournament-import-words';
-import { hasCapability } from '@/lib/roles';
+import { canManageRegistrations } from '@/lib/registration-access';
 import HealthButton from '@/components/admin/tournament/HealthButton';
 import RegistrationHealthWindow from '@/components/admin/tournament/RegistrationHealthWindow';
 import PaymentsLine, { type PaymentSummary } from './components/PaymentsLine';
@@ -955,8 +955,10 @@ export default function UnifiedTeamsPage() {
   // The import's door, a Tools row (P1, ruled at the build's start: Tools, so every import in the product is a Tools
   // or create-menu row and Export only exports): who may import (the roles Data tools allowed), and the plan
   // (Tournament Plus — on the Tournament plan the row is the Tools lock in words, A44, opening the plan's panel).
-  const canImportTeams = !isLocked && Boolean(userRole && (
-    hasCapability(userRole, userCapabilities, 'manage_registrations') || hasCapability(userRole, userCapabilities, 'create_tournaments')));
+  // The export file and the private admin notes are the same member's (lib/registration-access.ts, owner 2026-11-11): tournament
+  // staff keep the team list for schedule and check-in, and the server refuses them both, so neither is drawn for them.
+  const mayManageRegistrations = canManageRegistrations(userRole, userCapabilities);
+  const canImportTeams = !isLocked && mayManageRegistrations;
   const importOnPlan = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_data_imports') : false;
 
   // ── Export handlers (server-side — registration data has custom fields) ──
@@ -1855,7 +1857,7 @@ export default function UnifiedTeamsPage() {
                 onOpen={() => setHealthOpen(true)}
               />
             )}
-            <ExportMenu
+            {mayManageRegistrations && <ExportMenu
               formats={['xlsx', 'csv', 'pdf']}
               onExportXLSX={handleExportXLSX}
               onExportCSV={handleExportCSV}
@@ -1865,7 +1867,7 @@ export default function UnifiedTeamsPage() {
               disabled={!currentTournament}
               exportDisabled={regs.length === 0}
               planLock={exportLock}
-            />
+            />}
             {/* Add our teams (Club Tier Stage 7b): a club's teams, many at once. Never beside the portal's star (a portal has
                 one team): the server gives no list to a portal. No glyph at a desk (drawing change 15); on a phone a secondary
                 action is its symbol alone (standing ruling 2026-10-20). */}
@@ -2217,6 +2219,7 @@ export default function UnifiedTeamsPage() {
           orgQuery={orgQuery}
           onPaymentsChanged={load}
           canWrite={!isLocked}
+          showNotes={mayManageRegistrations}
           showSeed={hasPlayoffs(currentTournament ?? undefined)}
           poolChoices={poolAssignable ? poolsForDivision : null}
           slotDivision={slotConfigured}

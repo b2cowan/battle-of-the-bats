@@ -28,6 +28,16 @@ export function canSaveVenueLibrary(role: OrgRole | string | null | undefined, c
   return hasCapability(role as OrgRole, capabilities ?? null, 'create_tournaments');
 }
 
+/**
+ * ⚖ WHO OPENS A PERMIT'S FILE (Board Ready W2 fix E, sweep 3 small finding): the file is the issuer's own copy and may state
+ * the fee that the Venue library's screens hide from every seat without Accounting (owner 2026-10-11), so it opens for the
+ * library's savers and the seats that hold the club's money — not for every reader of the library. The route checks it, and
+ * the window reads the same answer so a reader who cannot open the file is not handed a button that fails.
+ */
+export function canOpenPermitDocument(canSave: boolean, canMoney: boolean): boolean {
+  return canSave || canMoney;
+}
+
 /** A venue as the library's route returns it (`?library=1`). */
 export interface LibraryFacility { id: string; name: string; facilityType: string; displayOrder: number }
 export interface LibraryVenue {
