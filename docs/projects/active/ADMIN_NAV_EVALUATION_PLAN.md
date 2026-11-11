@@ -454,7 +454,7 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
       the current event olive with a check, "All tournaments" (trophy) at the foot → the Tournaments list. Under the open cell (2 px below, 2 px
       in) or 8 px beside the folded tile. Keyboard: Enter / Space / ArrowDown open; focus on the current row; arrows rove; Escape and Tab close
       to the cell; a press outside, a page change or a resize closes. The sidebar raises its layer (z 70) while it is open.
-    - **T6, built narrower than ruled — owner call:** the chevron shows whenever the cell has an event. The ruled "no chevron" case (a scoped
+    - **T6, built narrower than ruled — owner call RULED 2026-11-11: accept as built:** the chevron shows whenever the cell has an event. The ruled "no chevron" case (a scoped
       volunteer who can reach nothing above their event) has no member in the code today: every person who can open an event can open the
       Tournaments list (scoped people see only their events there), so the branch would be unreachable. Keeping a scoped volunteer off that
       list is a separate access change.
@@ -497,7 +497,7 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
     removal fail without it); then `node scripts/backfill-org-logo-aspect.mjs --prod` (dry run) and `--prod --write` (until then existing event
     logos show initials) — both with the owner's yes, beside mig 458's pass.
   - **Walk §508** (https://claude.ai/artifact/UC8MtahRswkropMWeTcDkp, source `ADMIN_NAV_PHASE2A_WALK.html`; fixture
-    `scripts/walk-event-logo.mjs`): 3 walks, 24 checks; carries Phase 0's deferred first-paint proof. **Next: Part B** (the strip names the
+    `scripts/walk-event-logo.mjs`): 3 walks, 24 checks; carries Phase 0's deferred first-paint proof. **✅ PASSED 24/24 2026-11-10, no findings** (Phase 0's first-paint proof closed with it). **Next: Part B** (the strip names the
     page, paper titles drop, the org-wide screens, page help; T1, T2) in a fresh session.
   - **✅ Part B BUILT 2026-11-10**, committed `33ac442a3` 2026-11-10 (the strip, the pages, the organization's screens); gate calls P1–P3 in §4; tab 15 drawn and
     published (/design applied). What changed:
@@ -541,8 +541,8 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
     non-tournament first load can briefly show the old strip (the sidebar shares it); switching to an event without the current page's
     row flips the title for a render; the Payouts fact is frozen until reload (as the club's `clubHasPayouts`); 901–1100 px with the
     sidebar folded names the event only in the tile's bubble; the strip's event name no longer links to the Dashboard (E2: the cell holds it).
-  - **Walk §509** (https://claude.ai/artifact/6b4BCkFNxB8RDnWq64cUDs, source `ADMIN_NAV_PHASE2B_WALK.html`): 4 walks, 28 checks. **Next:
-    Phase 3** (the tournament phone) after the walk; its prompt is written after this phase lands.
+  - **Walk §509** (https://claude.ai/artifact/6b4BCkFNxB8RDnWq64cUDs, source `ADMIN_NAV_PHASE2B_WALK.html`): 4 walks, 32 checks after walk 4's rewrite (B4R); **PASSED 32/32 2026-11-11**. **Next:
+    Phase 3** (the tournament phone); its prompt is written after this phase lands.
 - **Phase 3 · Tournament phone.** Bar names the page; the small line opens the sheet; More loses its dropdown (N7 item 1
   rewritten).
 - **Phase 4 · Coaches Portal desktop.** Sidebar widened to 240 and unfolded (E9, E14); strip split with the word "Coach" and the team's facts at its right end (E7); team cell replacing the `<select>`;

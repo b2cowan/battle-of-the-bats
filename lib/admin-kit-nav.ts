@@ -979,9 +979,16 @@ export function isTournamentListPath(pathname: string, base: string): boolean {
  * its own short sidebar on the list (it has Settings & access beside it), and a club with no event yet keeps the club's.
  * `isTournamentOrgScreen` still decides what shows an event's dates and chip and what the tab title names: the list shows
  * neither, though the event heads the sidebar.
+ * ⚖ A TOURNAMENT-ONLY ORGANIZATION'S SETTINGS & ACCESS AND PLAN & BILLING KEEP THE EVENT'S SIDEBAR (owner 2026-11-11, amending
+ * Part B's E3): choosing either from the foot must not swap the sidebar for another one. Only with an event to show, and only
+ * there — a club's `/tournaments/settings/*` addresses redirect to its own Organization pages, and the list is the one screen
+ * a tournament-only organization still gives its short sidebar.
  */
 export function isTournamentEventShell(pathname: string, base: string, { tournamentOnly, hasEvent }: { tournamentOnly: boolean; hasEvent: boolean }): boolean {
-  return isTournamentEventPath(pathname, base) || (!tournamentOnly && hasEvent && isTournamentListPath(pathname, base));
+  if (isTournamentEventPath(pathname, base)) return true;
+  if (!hasEvent) return false;
+  if (isTournamentListPath(pathname, base)) return !tournamentOnly;
+  return tournamentOnly && isTournamentOrgScreen(pathname, base);
 }
 
 /** The organization's Settings & access, on the Tournament plans: one name for its sidebar row, its place and its door. */

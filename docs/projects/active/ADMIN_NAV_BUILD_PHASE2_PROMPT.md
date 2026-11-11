@@ -154,7 +154,7 @@ rewrite and the help articles (Phase 6 — but write the N3 exception now), a to
   tournament-only organization, the organization's short sidebar with the org in the cell (E3). `isTournamentOrgScreen`
   stays the one list. The list's "All tournaments" foot stays the way back from an event.
 - **Not yours:** the phone (Phase 3); the shared sidebar switcher extraction (first step of Phase 4 — see the plan).
-- **The walk §508 may come back with findings** — check the ledger before starting.
+- **The walk §508 PASSED 24/24 on 2026-11-10 with no findings** — nothing to fold in from it.
 
 ## Done when
 - A tournament sidebar's head is the event: name, logo or initials, phase chip; more than one event → the whole cell

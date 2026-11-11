@@ -7,7 +7,8 @@
    tile wore), 6px corners at 24 and 8px at 40. The ground and the initials' ink are fixed (`--logo-tile-*`): a logo is
    drawn for a light page and a dark theme must not turn its ground dark.
 
-   `rail` is the sidebar's club cell: 24 beside the name, 40 when the person folded the sidebar to its strip (keyed to
+   `rail` is the sidebar's club cell: 24 beside the name, 32 when the person folded the sidebar to its strip (owner
+   2026-11-10: 40 read too large beside the strip's 18px icons; keyed to
    `html[data-sidebar='strip']`, set before the first paint — never to a class React adds after hydration).
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 .tile {
@@ -29,7 +30,7 @@
   font-family: var(--font-sans);
   font-size: var(--type-token);
 }
-/* 40 is its own size and the folded strip's size for `rail`: written once. */
+/* 40 is its own size (the folded strip's `rail` is 32, restated in the media query below). */
 .s40 {
   width: 40px;
   height: 40px;
@@ -40,9 +41,9 @@
 }
 @media (min-width: 901px) {
   :global(html[data-sidebar='strip']) .rail {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     font-family: var(--font-data);
     font-size: var(--type-label);
     letter-spacing: 0.02em;

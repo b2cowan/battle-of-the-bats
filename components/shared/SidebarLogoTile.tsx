@@ -12,7 +12,7 @@
  *
  * `source` and `aspect` are props, not the club's fields, so the event (Phase 2: its logo, then the organization's) and
  * the team (Phase 4: its crest, then its colour) pass their own later — nothing here reads an organization. `size`:
- * 24 beside a name, 40 as a strip tile, `rail` = 24 open and 40 in the folded strip (the club cell, decided by CSS so the
+ * 24 beside a name, 40 as a strip tile, `rail` = 24 open and 32 in the folded strip (the club cell, decided by CSS so the
  * server's markup is everybody's).
  *
  * Decorative (`aria-hidden`): the host names the thing — the cell's text, or the strip tile's label.

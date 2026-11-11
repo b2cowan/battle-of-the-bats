@@ -56,8 +56,8 @@
    screen without tabs it keeps that height, so the navigation never moves. It sits outside the scrolling list, so the
    list's own top spacing (`.railScroll`) is the space before Overview.
    ⚖ PHASE 1 PART B (owner 2026-11-09, B1–B3, E10): the name takes up to TWO lines (14px bold on 16px leading, so 32px in a
-   44px cell); the cell stays the band's height; the tile is the one shared logo tile (`SidebarLogoTile`: 24 open, 40 collapsed,
-   so the folded strip's cell has 2px of air above and below). The whole name is the native `title`, set by the rail only when
+   44px cell); the cell stays the band's height; the tile is the one shared logo tile (`SidebarLogoTile`: 24 open, 32 collapsed,
+   so the folded strip's cell has 6px of air above and below). The whole name is the native `title`, set by the rail only when
    the name is cut and never while collapsed (the strip's bubble already shows it). */
 .clubCell {
   flex: none;
@@ -66,7 +66,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0 1.25rem;
+  /* Open, the 24px tile's CENTRE sits on the centre of the 14px door icons below it (and the wordmark's mark above): the
+     left gutter gives up the 5px by which the tile is wider than an icon. Folded, the cell centres itself (below). */
+  padding: 0 1.25rem 0 calc(1.25rem - 5px);
   border-bottom: 1px solid var(--home-line);
   color: var(--text-primary);
   text-decoration: none;

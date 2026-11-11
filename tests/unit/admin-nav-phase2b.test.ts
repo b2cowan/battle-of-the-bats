@@ -144,6 +144,13 @@ describe('Part B · a club’s organization screens (T1, P2)', () => {
     assert.ok(!shell('/tournaments/manage', true, true), 'a tournament-only organization keeps its own short sidebar on the list');
     assert.ok(!shell('/tournaments/settings/subscription', false, true), 'Plan & billing stays the organization’s');
     assert.ok(!shell('/tournaments/settings/members', false, true), 'so does Members');
+    // Owner 2026-11-11: in a tournament-only organization, Settings & access and Plan & billing keep the event's sidebar.
+    for (const p of ['/tournaments/settings', '/tournaments/settings/members', '/tournaments/settings/payouts', '/tournaments/settings/pdf',
+      '/tournaments/settings/web-address', '/tournaments/settings/subscription']) {
+      assert.ok(shell(p, true, true), `${p} keeps the event's sidebar in a tournament-only organization`);
+      assert.ok(!shell(p, true, false), `${p} with no event has no event to head the sidebar`);
+    }
+    assert.ok(!shell('/org/members', true, true), 'only the tournament addresses, never another page');
     // The facts stay the event's pages' own: the list still shows no dates and no chip, and the tab title no event name.
     assert.ok(isTournamentOrgScreen(`${B}/tournaments/manage`, B));
   });

@@ -193,6 +193,7 @@ export default function AdminKitRail() {
   const settingsAccess: KitLink | null = settingsTabs?.length
     ? { key: 'tsettings', label: SETTINGS_ACCESS_TITLE, href: settingsTabs[0].href, also: [`${base}/tournaments/settings`], icon: Settings }
     : null;
+  const settingsLit = !!settingsAccess && isKitLinkActive(pathname, settingsAccess) && !(billingLink && isKitLinkActive(pathname, billingLink));
   const tournamentsList: KitLink = { key: 'manage', label: 'Tournaments', href: `${base}/tournaments/manage`, also: [`${base}/tournaments/archives`] };
   // The rail the strip's name bubble hangs beside.
   const railRef = useRef<HTMLElement>(null);
@@ -320,7 +321,10 @@ export default function AdminKitRail() {
               which left it two clicks away behind the cell's All tournaments): the foot's first row, above Plan & billing.
               `settingsAccess` is null for a club (its settings are in Organization) and for someone who holds none of its tabs. */}
           {inEvent && settingsAccess && (
-            <Link href={settingsAccess.href} className={`${styles.item} ${styles.footItem}`}>
+            // Lit on its own tabs (the sidebar stays the event's there, owner 2026-11-11); Plan & billing's page sits under its
+            // address, so that row takes the light there.
+            <Link href={settingsAccess.href} className={`${styles.item} ${styles.footItem}${settingsLit ? ` ${styles.itemActive}` : ''}`}
+              aria-current={settingsLit ? 'page' : undefined}>
               {settingsAccess.icon && <settingsAccess.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{settingsAccess.label}</span>
             </Link>
           )}

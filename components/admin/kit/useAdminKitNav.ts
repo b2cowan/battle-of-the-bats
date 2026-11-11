@@ -152,6 +152,7 @@ export function useAdminKitNav() {
   // ⚖ An organization's tournament screens (Settings & access and its tabs, Plan & billing) wear the ORGANIZATION's sidebar,
   // never the event's (navigation Phase 2 Part B; E3): `isTournamentOrgScreen`, the one list. The Tournaments LIST is the
   // exception in a club that has an event: it wears the event's (owner 2026-11-10, amending T1) — `isTournamentEventShell`.
+  // ⚖ Owner 2026-11-11: a tournament-only organization's Settings & access and Plan & billing keep the event's sidebar too.
   const inEvent = isTournamentEventShell(pathname, base, { tournamentOnly, hasEvent: !!currentTournament });
   // The guide for where you are, in a new tab — the phone's More sheet foot (N7) and the demo sandbox's sidebar foot; on a
   // desktop outside the sandbox it is the account menu's Help row (E16), which reads the same answer.
