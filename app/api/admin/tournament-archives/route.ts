@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext } from '@/lib/api-auth';
+import { getAuthContextWithScope, forbidden } from '@/lib/api-auth';
+import { canOpenModule } from '@/lib/member-access';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { TournamentArchive } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -44,15 +45,20 @@ function mapArchive(row: ArchiveRow): TournamentArchive {
 
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
+  // An ACCEPTED member who can open the tournaments area, within their assigned tournaments — the Past tournaments list's
+  // reader. Before, any membership row passed, a pending invitee's included (sweep 3, 2026-11-10).
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments')) return forbidden();
 
-  const { data, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from('tournament_archives')
     .select('*')
-    .eq('org_id', ctx.org.id)
+    .eq('org_id', ctx.org.id);
+  if (ctx.assignedTournamentIds !== null) query = query.in('tournament_id', ctx.assignedTournamentIds);
+  const { data, error } = await query
     .order('sealed_at', { ascending: false })
     .returns<ArchiveRow[]>();
 

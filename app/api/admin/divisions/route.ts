@@ -1,5 +1,7 @@
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
+import { canOpenModule } from '@/lib/member-access';
+import { canGate } from '@/lib/volunteer-jobs';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { coinTossKey } from '@/lib/tie-breakers';
 import { announcePlayoffsSetIfReady, fillPlayoffTeamsThenAnnounce } from '@/lib/playoffs-set';
@@ -104,6 +106,9 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  // The tournaments area, or the gate: the gate's board (CheckInBoard, on /check-in) lists teams by division, and a gate
+  // volunteer holds no tournaments door. A capability-less coach row is refused (sweep 3 finding 3, 2026-11-10).
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments') && !canGate(ctx.role, ctx.capabilities)) return forbidden();
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return Response.json([]);

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { forbidden, getAuthContextWithScope, scopeGuard, unauthorized } from '@/lib/api-auth';
+import { canOpenModule } from '@/lib/member-access';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PRESETS } from '@/lib/themes';
@@ -31,6 +32,9 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  // The event’s branding and its score policy. The tournaments area's door; a capability-less coach row or a
+  // scorekeeper is refused (sweep 3 finding 3, 2026-11-10).
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments')) return forbidden();
   // Admins may read tournament branding + score policy for their own org's tournaments
   // (scopeGuard below still restricts which tournaments). Owner-only enforcement on
   // *writes* is handled per-field in PATCH.
@@ -89,6 +93,9 @@ export const PATCH = withObservability(async (req: Request) => {
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  // The tournaments area first, so a field added to this write later is never "any member in scope" by default; each
+  // field still asks its own capability below (/review 2026-11-10).
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments')) return forbidden();
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
@@ -108,9 +115,14 @@ export const PATCH = withObservability(async (req: Request) => {
 
   // Branding fields: the tournament's public visual identity + which public pages show.
   // Gated on the manage_branding capability (owner + admin by default; tunable per-member).
-  // Operational settings like requireScoreFinalization are not branding and stay as-is.
+  // Score review is not branding: it is a tournament setting, and it decides whether a scorekeeper's OWN scores are held
+  // for review (lib/scorekeeper/get-score) — so it is the tournament settings' capability, never "any member in scope"
+  // (sweep 3 finding 3, 2026-11-10: a coach row and a scorekeeper could switch it).
   const BRANDING_FIELDS = [...PLUS_VISUAL_FIELDS, 'publicHiddenPages', 'coachNamesShowOnPublic'] as const;
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_branding') && BRANDING_FIELDS.some(field => field in body)) {
+    return forbidden();
+  }
+  if ('requireScoreFinalization' in body && !hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) {
     return forbidden();
   }
 

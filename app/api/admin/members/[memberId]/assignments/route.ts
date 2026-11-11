@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
+import { getAuthContextWithRole, getAuthContextWithScope, unauthorized, forbidden } from '@/lib/api-auth';
+import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
@@ -8,7 +9,9 @@ type Params = { params: Promise<{ memberId: string }> };
 /** GET /api/admin/members/[memberId]/assignments — returns current tournament assignment IDs */
 export const GET = withObservability(async (req: Request, { params }: Params) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
+  // An ACCEPTED member who manages members, or the member reading their own row. Before, any membership row passed — a
+  // pending invitee's included — and read anyone's assignments (sweep 3 finding 3, 2026-11-10).
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { memberId } = await params;
@@ -16,7 +19,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   // Verify the target member belongs to the caller's org
   const { data: target } = await supabaseAdmin
     .from('organization_members')
-    .select('id')
+    .select('id, user_id')
     .eq('id', memberId)
     .eq('organization_id', ctx.org.id)
     .single();
@@ -24,6 +27,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   if (!target) {
     return NextResponse.json({ error: 'Member not found' }, { status: 404 });
   }
+  if (target.user_id !== ctx.user.id && !hasCapability(ctx.role, ctx.capabilities, 'manage_members')) return forbidden();
 
   const { data: assignments, error } = await supabaseAdmin
     .from('org_member_tournament_assignments')
@@ -43,28 +47,31 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
  * PUT /api/admin/members/[memberId]/assignments
  * Body: { tournamentIds: string[] }
  * Replaces the full assignment set for the member. An empty array makes the user unrestricted.
- * Requires manage_members capability.
+ * Requires manage_members capability. Below the owner, never on your OWN row, and a manager limited to some tournaments
+ * gives only those (and never "every tournament") — the member route's own-role rule, applied to access (sweep 3 /review,
+ * 2026-11-10: a limited admin could PUT [] on their own row and lift their limit).
  */
 export const PUT = withObservability(async (req: Request, { params }: Params) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
-
-  const denied = await requireCapability(ctx, 'manage_members');
-  if (denied) return denied;
+  if (!hasCapability(ctx.role, ctx.capabilities, 'manage_members')) return forbidden();
 
   const { memberId } = await params;
 
   // Verify the target member belongs to this org
   const { data: target } = await supabaseAdmin
     .from('organization_members')
-    .select('id, role')
+    .select('id, role, user_id')
     .eq('id', memberId)
     .eq('organization_id', ctx.org.id)
     .single();
 
   if (!target) {
     return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+  }
+  if (target.user_id === ctx.user.id && ctx.role !== 'owner') {
+    return NextResponse.json({ error: 'You can’t change your own tournament access. Ask the club’s owner.', code: 'own_access' }, { status: 403 });
   }
 
   // Owners cannot be scoped
@@ -74,6 +81,10 @@ export const PUT = withObservability(async (req: Request, { params }: Params) =>
 
   const body = await req.json();
   const tournamentIds: string[] = Array.isArray(body.tournamentIds) ? body.tournamentIds : [];
+  const mine = ctx.assignedTournamentIds;
+  if (mine !== null && (tournamentIds.length === 0 || tournamentIds.some(id => !mine.includes(id)))) {
+    return NextResponse.json({ error: 'You can give access only to the tournaments you can open yourself.', code: 'beyond_own_access' }, { status: 403 });
+  }
 
   // Validate all provided tournament IDs belong to this org
   if (tournamentIds.length > 0) {

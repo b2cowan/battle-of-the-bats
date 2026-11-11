@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
+import { canOpenModule } from '@/lib/member-access';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
@@ -305,6 +306,9 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  // Every game of the event, drafts and notes included. The tournaments area's door; a capability-less coach row or a
+  // scorekeeper is refused (sweep 3 finding 3, 2026-11-10).
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments')) return forbidden();
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import { withObservability, captureError } from '@/lib/observability';
@@ -18,7 +18,8 @@ export const GET = withObservability(async (req: Request) => {
   // Resolve the org from the visited slug — a user may now own several workspaces, so
   // the default "first membership" is ambiguous (Phase 2 add-workspace).
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
+  // An ACCEPTED member (never a pending invitee): the club's look, as the public site shows it (sweep 3, 2026-11-10).
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { org } = ctx;

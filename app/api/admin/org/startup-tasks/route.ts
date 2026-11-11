@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { canOpenModule } from '@/lib/member-access';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
@@ -159,6 +160,9 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  // The tournament-only hub reads this to route a member on (dashboard, or the tournaments list) and it carries the first
+  // event's contact email: the tournaments area's door, as the hub's own destinations (sweep 3 finding 3, 2026-11-10).
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments')) return forbidden();
 
   try {
     return NextResponse.json(await buildProgress(ctx.org.id));
@@ -173,6 +177,9 @@ export const POST = withObservability(async (req: Request) => {
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  // Setup is the owner's (the onboarding page): marking a step done or skipped locks the owner's first-run choice, so only
+  // the owner or an admin writes it. Before, any member could (sweep 3 finding 3, 2026-11-10).
+  if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
 
   try {
     const body = await req.json().catch(() => null);

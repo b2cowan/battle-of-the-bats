@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { sendEmail, announcementHtml } from '@/lib/email';
 import { getAuthContextWithScope, scopeGuard, unauthorized, forbidden, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
+import { canOpenModule } from '@/lib/member-access';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -107,6 +108,13 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  // Every post and email, with each address it went to (mostly the VISITING teams' contacts) — for whoever can open the
+  // Communication screen by its own rule (lib/flip-twins ADMIN_SCREEN_CAPABILITIES): post an announcement or send email,
+  // inside the tournaments area. A capability-less coach row or a scorekeeper is refused (sweep 3 finding 1, 2026-11-10).
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments')
+    || !(hasCapability(ctx.role, ctx.capabilities, 'post_announcements') || hasCapability(ctx.role, ctx.capabilities, 'send_communications'))) {
+    return forbidden();
+  }
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json([]);

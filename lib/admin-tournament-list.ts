@@ -8,7 +8,9 @@
  */
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getAuthContextWithScope } from '@/lib/api-auth';
+import { getAuthContextWithScope, type AuthContextWithScope } from '@/lib/api-auth';
+import { canOpenModule } from '@/lib/member-access';
+import { hasCapability } from '@/lib/roles';
 import { OrgBillingSuspendedError } from '@/lib/org-billing-access';
 import { hasFirstGameStarted, type GameStartFact } from '@/lib/tournament-phase';
 import { tournamentNow } from '@/lib/timezone';
@@ -20,6 +22,24 @@ export type AdminTournamentRow = Record<string, unknown> & {
   /** Computed here, not a column (the game-day rule's "first game started" half). */
   first_game_started: boolean;
 };
+
+/**
+ * WHAT A PERSON MAY SEE OF THE CLUB'S TOURNAMENTS — the list route and the layout's first paint both ask THIS, so a
+ * person the route refuses never gets the list baked into a page (sweep 3 finding 3, 2026-11-10). The full rows are
+ * `select('*')`: the contact email and the settings carrying the payment instructions.
+ *  · 'full'  — whoever can open the tournaments area (a coach given "Run tournaments" holds the bundle as overrides: the
+ *              question is the capability, never the role);
+ *  · 'names' — without it, a member manager (the Manage window lists the events to assign, MembersKit) or whoever holds
+ *              the club's Accounting (the treasurer's "Add a ledger" offers each tournament's book, AddLedgerWindow): each
+ *              event's id, name, year and status, nothing more (/review 2026-11-10);
+ *  · null    — refused: a capability-less coach row, a scorekeeper.
+ */
+export type AdminTournamentListView = 'full' | 'names';
+export function adminTournamentListView(ctx: Pick<AuthContextWithScope, 'role' | 'capabilities' | 'org'>): AdminTournamentListView | null {
+  if (canOpenModule(ctx, ctx.org, 'module_tournaments')) return 'full';
+  if (hasCapability(ctx.role, ctx.capabilities, 'manage_members') || canOpenModule(ctx, ctx.org, 'module_accounting')) return 'names';
+  return null;
+}
 
 /** Every event of the organization the caller may open, newest year first. Throws on a failed read. */
 export async function readAdminTournamentRows(
@@ -101,7 +121,7 @@ const asKey = (v: string | null | undefined) => (v && v.length <= 200 ? v : null
 
 async function readSeed(orgSlug: string, search: string | null): Promise<AdminTournamentSeed | undefined> {
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
-  if (!ctx || ctx.org.slug !== orgSlug) return undefined;
+  if (!ctx || ctx.org.slug !== orgSlug || adminTournamentListView(ctx) !== 'full') return undefined;
   const [rows, cookieStore] = await Promise.all([
     readAdminTournamentRows(ctx.org.id, ctx.assignedTournamentIds),
     cookies(),

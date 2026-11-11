@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
+import { canOpenModule } from '@/lib/member-access';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -155,6 +156,9 @@ export const GET = withObservability(async (req: Request) => {
 
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  // The event’s venues, and the club’s past ones. The tournaments area's door; a capability-less coach row or a
+  // scorekeeper is refused (sweep 3 finding 3, 2026-11-10).
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments')) return forbidden();
 
   // -- scope=past: "your venues" — each past event's venues, with their facilities ---------------
   if (scope === 'past') {

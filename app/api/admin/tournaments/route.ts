@@ -8,7 +8,8 @@ import {
 import { hasCapability } from '@/lib/roles';
 import type { TournamentStatus } from '@/lib/types';
 import { TOURNAMENT_FORMAT_VALUES } from '@/lib/tournament-phase';
-import { readAdminTournamentRows, type AdminTournamentRow } from '@/lib/admin-tournament-list';
+import { adminTournamentListView, readAdminTournamentRows, type AdminTournamentRow } from '@/lib/admin-tournament-list';
+import { canOpenModule } from '@/lib/member-access';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -273,6 +274,8 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  const view = adminTournamentListView(ctx);
+  if (!view) return forbidden();
 
   // ONE read with the admin layout's first paint (Navigation Phase 0): the org filter, the assignment scope and the
   // game-day rule's "first game started" half all live in `readAdminTournamentRows`.
@@ -281,6 +284,9 @@ export const GET = withObservability(async (req: Request) => {
     rows = await readAdminTournamentRows(ctx.org.id, ctx.assignedTournamentIds);
   } catch (failed) {
     return Response.json({ error: failed instanceof Error ? failed.message : 'Couldn’t read the tournaments.' }, { status: 500 });
+  }
+  if (view === 'names') {
+    return Response.json(rows.map(r => ({ id: r.id, name: r.name ?? null, year: r.year ?? null, status: r.status ?? null })));
   }
 
   // ?counts=1 — the Tournaments list and Past tournaments (Tournament admin redesign Stage 4): each event's
@@ -353,8 +359,11 @@ export const POST = withObservability(async (req: Request) => {
     const supabase = createClient(url, key);
     const { action, id, data } = await req.json();
 
-    // Mutating actions require create_tournaments capability
-    if (action !== 'check-slug' && !hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) {
+    // Mutating actions require create_tournaments capability; the slug check (the event settings' address field) the
+    // tournaments area — it answered any member before, a coach row included (/review 2026-11-10).
+    if (action === 'check-slug'
+      ? !canOpenModule(ctx, ctx.org, 'module_tournaments')
+      : !hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) {
       return forbidden();
     }
 

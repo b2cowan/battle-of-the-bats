@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithScope, unauthorized, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
+import { canOpenModule } from '@/lib/member-access';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
@@ -26,6 +27,9 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  // The live feed of teams, games and posts. The tournaments area's door; a capability-less coach row or a
+  // scorekeeper is refused (sweep 3 finding 3, 2026-11-10).
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments')) return forbidden();
 
   const tournamentId = searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json([]);
