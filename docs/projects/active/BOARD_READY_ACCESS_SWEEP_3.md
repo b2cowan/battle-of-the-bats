@@ -76,6 +76,9 @@ any club's files.
   Production has the same two policies per mig 311's own notes; the live policy list was not read (prod is never read here).
 - **Fix:** drop the two `authenticated` policies, move upload and delete to a server route that checks the club, the
   tournament and `post_rules`, and key new files under `{orgId}/{tournamentId}/…`.
+- **→ Fixed, W2 fix B, 2026-11-11** (committed `b164c707e` 2026-11-11; migration 462 applied to dev; production: code first, then
+  462 — registered in `MANUAL_PROD_STEPS.json`, and production state lives in the release-history record). The row writes below
+  and the upload-limit owner call are the two open items it leaves.
 - **Found while building the fix (W2 fix B, 2026-11-11) — the link ROWS are not capability-checked.** The `resources`
   TABLE's insert/update/delete policies (`resources_member_*`, mig 009) ask `can_access_tournament(tournament_id)`: the
   caller is a member of the event's club and in scope for it. They do not ask `post_rules`. The Rules screen writes those
