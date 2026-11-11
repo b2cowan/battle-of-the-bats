@@ -110,7 +110,114 @@ points here, so they aren't tracked twice)
   report-only first, on the pattern of the second sweep (`TEAM_UPDATE_ALLOWLIST_FIX_PROMPT.md` § Second sweep). It covers
   every route and page added or changed since 2026-10-16, reads as well as writes, tenant boundaries and seat by seat.
   Each finding is fixed with the owner's go. It is the evidence behind the pack's "doesn't leak", and it comes before Stage 2.
-- [ ] Two-step sign-in for club admin seats (owner, admin, treasurer, registrar) at minimum; Supabase Auth MFA. Owner call: offered or required.
+- [ ] **Two-step sign-in** (§7b step 3). **Drawn 2026-11-10; ALL ASKS RULED 2026-11-10** (ask 1 as amended by the owner; asks 2–8 and A–F as recommended,
+  owner: "I agree with the recommendations on this mockup"). **Build prompts written 2026-11-10: `BOARD_READY_TWO_STEP_BUILD_PROMPTS.md`
+  (Part 1 Opus, 2 Sonnet, 3 Opus, 4 Sonnet); Part 1 waits for Board Ready Wave 2 Fix A to be committed** (both change the shared sign-in check in `lib/api-auth.ts`); nothing
+  built.** Drawings (round 3, after `/design` + `/legal` and the ask 1 ruling):
+  https://claude.ai/artifact/5b956A7svYzjzmZhZUfnkc, source `BOARD_READY_TWO_STEP_SIGNIN_DRAWINGS.html`. Prompt:
+  `BOARD_READY_W1_TWO_STEP_SIGNIN_PROMPT.md`.
+  - **Decisions (owner asks 1–8, A–F on the drawings' Asks tab; all RULED 2026-11-10, 2–8 and A–F as written
+    below):**
+    1. **RULED (owner 2026-11-10): offered to everyone; the club decides.**
+       - Two-step is available to every account and off unless the person turns it on.
+       - A club (any organization kind, every plan) may require it with two owner-only switches, both off by default:
+         **"Require it for the board"** (owner, admins, treasurer, registrars, league admins) and **"Also require it
+         for coaches"**.
+       - **FieldLogicHQ platform staff must always use it** (no grace).
+       - Owner's reasoning: required two-step would be a nuisance for the average volunteer coach or admin, while a
+         switch satisfies a board with security-minded members.
+       - Agreed in the same reply:
+         - turning a requirement **off** asks for the owner's code and emails the club's other admins and treasurer;
+         - the owner must have two-step on before turning a requirement on;
+         - the owner sees a one-time prompt on Overview;
+         - every switch change is a club audit line;
+         - the 14-day grace period starts when a switch is turned on.
+       - One person with any seat a club requires must use it; once on, every sign-in asks.
+       - *Replaces* the earlier recommendation (required for the money and family-file seats).
+       - **Consequences, recorded so they are not a surprise:**
+         - "we offered it" holds in our terms with clubs (the organization's choice), but is a mitigation, not a
+           shield, with a privacy regulator;
+         - the privacy policy says "available; an organization can require it", nothing stronger;
+         - the policy's medical-notes finding 5 stays **open**, reworded, not closed.
+    2. Authenticator app only. No emailed codes: "Forgot your password?" goes to the same inbox, so a password plus an
+       emailed code is the inbox twice. No SMS. A second device may be set up as a spare.
+    3. Recovery:
+       - ten one-time backup codes;
+       - the club's owner and admins reset anyone but the owner and themselves (the person is emailed and signed out;
+         club audit line), **and only when the account reaches no other organization**, because the authenticator is
+         the person's, not the club's; otherwise it goes to support, with no reason shown to the club;
+       - the owner is reset by support only: a request from the account's address, a confirmation link to it, an
+         email to the club's other admins and treasurer (who can put it on hold), a 24-hour wait, and a cancel when the
+         owner signs in with the real code; platform audit line written first.
+       - **Known gap:** a sole owner gets only the wait. Recommended: support phones the owner on a number from the
+         club's records.
+    4. No "remember this device" box: staying signed in does the remembering. Required seats are asked again after
+       30 days. Five actions ask for a code if the last one was more than 15 minutes ago: payout or bank details,
+       adding an owner or admin, resetting someone's two-step, turning your own off, and new backup codes.
+    5. "Sign out everywhere else", no device list (less personal information).
+    6. Status column on Members (owner and admins) plus an Overview reminder; **not** on The board tab, where it
+       would be a list of whose password is worth stealing.
+    7. 14-day grace period (from the day a club switches a requirement on, or from accepting a new seat in a club that
+       already requires it), a reminder screen at sign-in, two emails
+       with no link, then setting it up comes first and only the club's admin waits. **Add "Change password"**: no
+       signed-in person can change their password today.
+    8. A "test organization" exemption set by platform admin, setting up refused for shared demo accounts, and one
+       UAT account with a known authenticator key.
+    - From `/design`:
+      - A: a coach's reset door lives on the team staff page (coaches aren't managed in Members).
+      - B: Done explains on press.
+      - D: the data face is a named exception for recorded codes.
+      - E: past the deadline stays amber.
+      - F: the Overview reminder follows the one-notice rule.
+  - **Census facts the build stands on (2026-11-10, checked against the code):**
+    - no two-step code exists;
+    - one shared sign-in page, a browser password sign-in (`lib/auth.ts`), and five other callers that must hand off
+      to the code step;
+    - `proxy.ts` skips every `/api/*` route but `/api/admin`, so enforcement belongs in `lib/api-auth.ts`
+      (`getAuthenticatedUser` → `getAuthContext*`, about 265 routes), `lib/platform-auth.ts` (about 87 routes) and the
+      guards that call `getUser` themselves (`coach-team-guard`, `families-auth`, `supabase-server`);
+    - **platform "sign in again" (`lib/platform-sign-in-again.ts` `checkPasswordAgain`) replaces the session with a
+      password-only one and must become a code check**;
+    - the tournament demo's shared user is the **owner** of its org, and setting up an authenticator signs out every
+      other session, so set-up must be refused for demo users;
+    - the Milton links and probes skip passwords by design (they need the exemption);
+    - `ensureFixtureUser` password resets don't remove factors.
+  - **Sign-in service facts (supabase.com, read 2026-11-10):**
+    - authenticator enrol, challenge, verify and an admin delete exist;
+    - assurance level and methods are in the session token;
+    - recovery codes are **experimental**, and there is no "remember this device";
+    - verifying an enrolment signs out other sessions;
+    - **not documented, verify on dev before building:** that a session refresh keeps the code level; the hosted
+      limit on factors per person; clean-up of half-finished set-ups.
+  - **Build outline:**
+    - server enforcement in the helpers above;
+    - pages route a password-only session in a required seat to the code or set-up step;
+    - our own hashed backup codes, unless the service's codes are stable by then;
+    - the re-ask clock from the session's methods;
+    - probably one migration: the organization's coach switch and test exemption, backup codes, grace start, and a
+      waiting owner reset (existing org and platform audit logs, no new log), with the dictionary and snapshots in the
+      same unit;
+    - `/docs`: a new "Two-step sign-in" article plus Members, Account and sign-in help;
+    - **no change to production Auth settings** (the authenticator is already on there);
+    - verify first whether a Premium coach holds an org owner seat.
+  - **`/legal` (light, 2026-11-10), no blocker:**
+    - *Now:* the Terms draft §3 gains a "Two-step sign-in" paragraph (we may require it; the organization may
+      require it; owner resets may take time and need confirmation), and §14 says requiring it for coaches is the
+      organization's call, so a later launch needs no change notice.
+    - *After the build:*
+      - privacy policy §10 gains the drafted paragraph ("scrambled" only if the codes really are hashed);
+      - §5 says admins see the on/off status, never codes, apps or devices;
+      - §3 and §9 gain the new data kinds and their retention;
+      - **finding 5 is reworded, not deleted**: after the ask 1 ruling, every club seat that can open medical notes
+        is offered, and required only where the club switches it on;
+      - the "No MFA exists" line in `LEGAL_FACTS.md` changes;
+      - `BREACH_PROCEDURE.md` gains "a fraudulent reset";
+      - the support note joins L16.
+    - Applied to the drawings: the admin email no longer says why the owner asked, admins can hold the reset, the
+      cross-organization refusal gives the club no reason, and the email reads "This email has no link on purpose".
+    - CASL: all of these emails are non-commercial (security and account facts); keep any offer out of them.
+    - For a lawyer, optional: the owner-reset check against PIPEDA 4.7, the Terms for a consumer coach, and consent for
+      telling the club's admins.
 - [ ] Org delete removes its file storage (gap in `LEGAL_FACTS.md`).
 - [ ] Backups: confirm what the Pro plan does (daily backups vs point-in-time recovery), decide whether PITR is worth the add-on, and write it down in `docs/agents/ops/`.
 - [ ] Publish the legal pages (privacy policy, terms) already tied to `GST_HST_STAGE6_TERMS_PLAN.md`, so this plan does not duplicate that work.
@@ -126,7 +233,8 @@ board's two questions:
     advertising cookies, AI service or SMS;
   - who can see what (by seat, with the role table), and that platform staff access is audit-logged;
   - encryption;
-  - sign-in (two-step);
+  - sign-in: two-step sign-in is available to everyone, and the club can require it for its board and its coaches
+    (ruled 2026-11-10); FieldLogicHQ staff always use it;
   - how payments work: the club is the merchant and no card data is held;
   - backups and the breach procedure;
   - the club owns its data and can export and delete it;
@@ -337,7 +445,7 @@ parallel.
 |---|---|---|---|---|
 | 1 | **0a-1** Third access sweep (report, then fixes on the owner's go) | 1 | nothing | no |
 | 2 | **Stage 1** Friend requests in the draft | 1 | nothing | yes |
-| 3 | **0a-2** Two-step sign-in for club admin seats | 1 | nothing | yes |
+| 3 | **0a-2** Two-step sign-in: offered to everyone, club may require (all asks ruled 2026-11-10) | 1 | build waits on Wave 2 Fix A (same shared sign-in check) | yes |
 | 4 | **0a-3** Org delete removes its files · backups written down (PITR call) | 2 | nothing | no |
 | 5 | **0a-4** Privacy policy + terms published (the legal-pages work in GST/HST Stage 6) | 2 | that plan | no |
 | 6 | **0c** Board pack: brief, diagrams, questionnaire answers, Security page | 2 | 1, 3, 4, 5 | the page only |

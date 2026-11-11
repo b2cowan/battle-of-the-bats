@@ -1,0 +1,813 @@
+<title>Two-Step Sign-In</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: the house drawings layout — a document on a cool slate ground, sticky tab row, a View row on the one tab that
+   compares (Members, before/after), one section at a time. Product specimens sit inside the product's own warm skin
+   (every portal and platform admin wear it) so they read as specimens, not as page. Round 2: /design pass applied. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --ok: #2E6B3A; --ok-soft: #E2F0E4; --warn: #8A5A00;
+  --warn-soft: #F7ECD4; --bad: #A2321F; --bad-soft: #F6E0DA;
+  --doc-sans: 'Inter', system-ui, sans-serif; --doc-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1280px; margin: 0 auto; }
+header.doc { padding-block: 22px 10px; }
+header.doc h1 { font: 700 30px/1.1 var(--doc-display); letter-spacing: .01em; margin: 0 0 6px; text-wrap: balance; }
+header.doc p { margin: 0; color: var(--muted); max-width: 82ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); overflow-x: auto; white-space: nowrap; }
+nav.tabs button { font: 600 14px var(--doc-sans); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 13px 12px 11px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+nav.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+section.panel { display: none; } section.panel.on { display: block; }
+h2 { font: 700 24px/1.15 var(--doc-display); margin: 18px 0 6px; letter-spacing: .01em; text-wrap: balance; }
+h3 { font: 650 16px/1.3 var(--doc-sans); margin: 22px 0 6px; }
+p, li { max-width: 82ch; } .muted { color: var(--muted); }
+.lede { font-size: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card h3 { margin-top: 0; }
+.card ul { margin: 6px 0 0; padding-left: 18px; }
+.tag { display: inline-block; font: 600 11px/1 var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; vertical-align: 2px; }
+.t-new { background: var(--accent-soft); color: var(--accent); } .t-chg { background: var(--warn-soft); color: var(--warn); } .t-same { background: var(--line); color: var(--muted); }
+.tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+table.cmp { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13.5px; }
+table.cmp th { font: 700 12px var(--doc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+table.cmp td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.cmp td:first-child { font-weight: 650; width: 200px; }
+table.cmp tr.band td { background: var(--bg); font: 700 12px var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.req { color: var(--bad); font-weight: 650; } .off { color: var(--accent); font-weight: 650; }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); }
+.spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.row2 { display: flex; gap: 22px; align-items: flex-start; width: max-content; }
+.stack { display: flex; flex-direction: column; gap: 22px; width: max-content; }
+.lbl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.lbl.after { color: var(--accent); }
+.mk { min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 2px solid transparent; background: var(--mark); color: var(--mark-ink); font: 700 11px/18px var(--doc-mono); text-align: center; cursor: pointer; display: inline-block; vertical-align: 1px; margin-right: 4px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; } .ask p { margin: 4px 0; } .ask ul { margin: 4px 0; padding-left: 18px; }
+.rec { font-weight: 650; color: var(--accent); }
+.push { border-left: 3px solid var(--mark); padding: 2px 0 2px 10px; margin: 8px 0; }
+.build { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; }
+body.only-diff .same { opacity: .22; filter: grayscale(1); }
+@media (prefers-reduced-motion: no-preference) { .ask { transition: outline-color .3s; } }
+
+/* ───────── PRODUCT SPECIMEN (the warm skin as shipped; fixed colours in both document themes). Type ladder 32/24/16/14/12. ───────── */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #615A54; --line: rgba(70,55,30,.12);
+  --line2: rgba(70,55,30,.24); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --amber-soft: #F4E7CF; --red: #B03A22; --red-soft: #F9E3DE;
+  position: relative; background: var(--paper); color: var(--ink); font: 400 14px/1.45 'Inter', sans-serif;
+  border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.12); flex: none; padding: 16px; }
+.fr * { box-sizing: border-box; }
+.fr.w1200 { width: 1200px; } .fr.w960 { width: 960px; } .fr.w720 { width: 720px; } .fr.w560 { width: 560px; } .fr.w390 { width: 390px; padding: 12px; }
+.fr p { margin: 0; max-width: none; }
+.fr svg { flex: none; }
+.fr .chrome { font: 600 10px 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); margin: -4px 0 10px; }
+/* The start column (AccountForm): 420px centred, no card, display heading over a hairline, 48px fields, one lime. */
+.fr .col { width: 100%; max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.fr .shead { text-align: center; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.fr .shead h4 { margin: 4px 0 8px; font: 700 32px/1.05 'Barlow Condensed', sans-serif; }
+.fr .shead p { color: var(--ink3); font-size: 16px; }
+.fr .shead p strong { color: var(--ink); font-weight: 600; }
+/* StartSteps: one step line under the heading, single-noun labels, finished steps at full strength. */
+.fr .ssteps { display: flex; justify-content: center; gap: 6px; margin: 0 0 10px; font-size: 12px; color: var(--ink3); }
+.fr .ssteps span.done, .fr .ssteps span.cur { color: var(--ink); font-weight: 600; }
+.fr .ssteps i { font-style: normal; opacity: .5; }
+.fr .fld { display: flex; flex-direction: column; gap: 6px; }
+.fr .fld label { font-weight: 600; color: var(--ink2); font-size: 14px; }
+.fr .inp { height: 48px; border: 1px solid var(--line2); border-radius: 10px; background: var(--white); padding: 0 14px; display: flex; align-items: center; font-size: 16px; color: var(--ink); }
+.fr .inp.code { font-variant-numeric: tabular-nums; letter-spacing: .24em; }
+.fr .inp.focus { border-color: var(--olive); box-shadow: 0 0 0 3px rgba(87,101,30,.16); }
+.fr .inp .ph { color: var(--ink3); opacity: .75; letter-spacing: normal; }
+.fr .hint { color: var(--ink3); font-size: 14px; }
+.fr .lead { display: flex; flex-direction: column; gap: 6px; }
+.fr .lead b { font-size: 16px; }
+.fr .primary { min-height: 48px; border-radius: 10px; background: var(--lime); border: 0; font: 700 16px 'Inter'; color: var(--ink); display: flex; align-items: center; justify-content: center; }
+.fr .secondary { min-height: 48px; border-radius: 10px; background: var(--white); border: 1px solid var(--line2); font: 700 16px 'Inter'; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.fr .textbtn { min-height: 44px; display: flex; align-items: center; justify-content: center; color: var(--ink3); text-decoration: underline; text-underline-offset: 3px; }
+.fr .flink { color: var(--olive); font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
+.fr .forgot { display: flex; justify-content: flex-end; margin-top: -6px; }
+/* footSplit: rule above, one link at each end, 44px. StartFoot legal: the fine print under it. */
+.fr .fsplit { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 4px; }
+.fr .sfoot { border-top: 1px solid var(--line); padding-top: 4px; text-align: center; color: var(--ink3); }
+.fr .sfoot .legal { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+.fr .note { background: var(--white); border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 8px; padding: 12px 14px; }
+.fr .note.err { border-left-color: var(--red); }
+.fr .note b { display: block; font-size: 16px; margin-bottom: 2px; }
+.fr .qr { width: 156px; height: 156px; background: var(--white); border: 1px solid var(--line2); border-radius: 8px; padding: 10px; }
+/* Mono for recorded codes is a proposed named exception (ask D): 0/O and 1/I must not be confused. */
+.fr .key { font: 500 14px 'IBM Plex Mono', monospace; letter-spacing: .06em; background: var(--white); border: 1px dashed var(--line2); border-radius: 8px; padding: 8px 10px; display: inline-flex; gap: 10px; align-items: center; }
+.fr .key em { font: 600 14px 'Inter'; color: var(--olive); font-style: normal; }
+.fr .codes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; background: var(--white); border: 1px solid var(--line2); border-radius: 10px; padding: 14px 18px; font: 500 16px 'IBM Plex Mono', monospace; letter-spacing: .05em; }
+/* TermsTickRow: native 18px checkbox, accent olive, 44px row. */
+.fr .tick { display: flex; gap: 10px; align-items: center; min-height: 44px; }
+.fr .tick input { width: 18px; height: 18px; accent-color: #57651E; margin: 0; flex: none; }
+.fr .btnrow { display: flex; gap: 10px; } .fr .btnrow > * { flex: 1; }
+/* Admin kit pieces (the club admin and platform admin wear the same kit). */
+.fr .btn { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 6px; font: 600 14px 'Inter'; background: var(--white); color: var(--ink); border: 1px solid var(--line2); white-space: nowrap; }
+.fr .btn.lime { background: var(--lime); border-color: transparent; }
+.fr .btn.danger { background: var(--red); color: #fff; border-color: transparent; }
+.fr .btn.sm { height: 28px; padding: 0 10px; font-size: 12px; }
+.fr .phead { display: flex; align-items: flex-end; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.fr .phead .eb { font: 600 10px 'IBM Plex Mono'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); }
+.fr .phead h4 { margin: 2px 0 0; font: 700 24px 'Barlow Condensed', sans-serif; }
+.fr .eye { font: 600 10px 'IBM Plex Mono'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); margin: 0 0 8px; display: block; }
+.fr .sp { flex: 1; }
+.fr .tf { background: var(--white); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.fr table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.fr th { font: 700 12px 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.fr td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.fr tr:last-child td { border-bottom: 0; }
+.fr td small { display: block; color: var(--ink3); font-size: 12px; }
+.fr .chip { display: inline-block; font: 600 10px 'IBM Plex Mono'; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--ink3); background: #EFEBE2; white-space: nowrap; vertical-align: 1px; }
+.fr .chip.amber { color: var(--amber); background: var(--amber-soft); border-color: rgba(131,80,6,.3); }
+.fr .chip.good { color: var(--olive); background: var(--olive-soft); border-color: rgba(87,101,30,.3); }
+.fr .newcol { background: rgba(31,95,107,.07); }
+.fr .dim { color: var(--ink3); }
+.fr .newline { outline: 2px dashed rgba(31,95,107,.6); outline-offset: 1px; border-radius: 3px; }
+.fr .coachlist { margin-top: 14px; }
+.fr .crow { display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin-top: 6px; }
+.fr .crow .t { flex: 1; } .fr .crow .t small { display: block; color: var(--ink3); font-size: 12px; }
+.fr .scrim { position: absolute; inset: 0; background: rgba(36,30,21,.38); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.fr .dlg { background: var(--white); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.28); width: 100%; max-width: 460px; overflow: hidden; }
+.fr .dlg .dh { padding: 16px 18px 4px; font: 700 16px/1.25 'Inter'; display: flex; gap: 10px; }
+.fr .dlg .dh small { display: block; font: 400 12px 'Inter'; color: var(--ink2); margin-top: 3px; }
+.fr .dlg .dh .x { margin-left: auto; color: var(--ink3); font-weight: 400; font-size: 20px; line-height: 1; }
+.fr .dlg .db { padding: 10px 18px 14px; display: flex; flex-direction: column; gap: 10px; }
+.fr .dlg .db p { color: var(--ink2); }
+.fr .dlg .df { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line2); background: #FBF9F4; }
+.fr .dlg .df .l { margin-right: auto; font-size: 12px; color: var(--ink3); max-width: 280px; }
+.fr .kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; font-size: 14px; }
+.fr .kv dt { color: var(--ink3); } .fr .kv dd { margin: 0; }
+.fr .more { color: var(--ink3); font-size: 12px; border: 1px dashed var(--line2); border-radius: 6px; padding: 10px; text-align: center; }
+/* RecordAction / RecordDelete: icon + words at body size, no rule above; delete red with a trash icon. */
+.fr .doors { display: flex; flex-wrap: wrap; gap: 4px 20px; padding-top: 4px; }
+.fr .door { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font: 600 14px 'Inter'; color: var(--ink2); }
+.fr .door.red { color: var(--red); }
+.fr .door.olive { color: var(--olive); font-weight: 650; }
+.fr .door.new { outline: 2px dashed rgba(31,95,107,.6); outline-offset: 2px; border-radius: 4px; padding: 0 4px; }
+.fr .co { --tone: #C98A12; display: flex; gap: 10px; align-items: center; padding: 12px 16px; border-radius: 8px; background: var(--white); border: 1px solid var(--line); border-left: 3px solid var(--tone); }
+.fr .co .tx { flex: 1; min-width: 0; }
+.fr .co .tx small { display: block; font-size: 12px; color: var(--ink2); margin-top: 2px; }
+/* Account page (the consumer warm page): 248px rail; white 14px-radius cards with a soft shadow; 44-52px white buttons. */
+.fr .acc { display: grid; grid-template-columns: 248px 1fr; gap: 28px; }
+.fr .rail { display: flex; flex-direction: column; gap: 2px; }
+.fr .rail a { display: flex; gap: 10px; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--ink2); font-weight: 500; text-decoration: none; }
+.fr .rail a.on { background: var(--white); color: var(--ink); font-weight: 650; box-shadow: 0 0 0 1px var(--line); }
+.fr .rail a.newrow { outline: 2px dashed rgba(31,95,107,.6); outline-offset: -2px; }
+.fr .ico { width: 17px; height: 17px; border: 1.6px solid currentColor; border-radius: 4px; flex: none; opacity: .8; }
+.fr .ico.olive { color: var(--olive); opacity: 1; }
+.fr .acctitle { margin: 0 0 4px; font: 700 24px 'Inter'; }
+.fr .pane { margin: 0 0 14px; font: 700 17px 'Inter'; color: var(--ink2); }
+.fr .sec { background: var(--white); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 1px 3px rgba(70,55,30,.08); padding: 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.fr .sec h6 { margin: 0; font: 700 16px 'Inter'; display: flex; gap: 8px; align-items: center; }
+.fr .sec .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.fr .sec .fine { font-size: 12px; color: var(--ink3); }
+.fr .abtn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; border-radius: 14px; background: var(--white); border: 1px solid var(--line2); font: 600 14px 'Inter'; color: var(--ink); }
+.fr .abtn.lime { background: var(--lime); border-color: transparent; font-weight: 700; }
+.fr .abtn.full { width: 100%; }
+.fr .rows { display: flex; flex-direction: column; gap: 8px; }
+.fr .prow { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 12px 16px; background: var(--white); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 1px 3px rgba(70,55,30,.08); }
+.fr .prow .t { flex: 1; } .fr .prow .t small { display: block; color: var(--ink3); font-size: 12px; }
+.fr .chev { color: var(--ink3); }
+.fr .sel { height: 36px; border: 1px solid var(--line2); border-radius: 6px; background: var(--white); padding: 0 10px; display: flex; align-items: center; justify-content: space-between; }
+.fr .ta { min-height: 64px; border: 1px solid var(--line2); border-radius: 6px; background: var(--white); padding: 8px 10px; color: var(--ink2); }
+.fr .ptabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.fr .ptabs span { padding: 8px 0; color: var(--ink3); font-weight: 600; }
+.fr .ptabs span.on { color: var(--ink); border-bottom: 2px solid var(--olive); }
+.fr .band { font: 600 10px 'IBM Plex Mono'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); }
+.fr .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+.fr .facts div { display: flex; flex-direction: column; gap: 3px; }
+</style>
+
+<div class="wrap">
+<header class="doc">
+  <h1>Two-Step Sign-In</h1>
+  <p>Board Ready, Wave 1 step 3. A stolen treasurer password should not open a club&rsquo;s books. Drawn from the shipped sign-in page, the Account page, Members and its Manage window, and the support console&rsquo;s person record, then checked by <code>/design</code> and <code>/legal</code> (round 2). Round 3: the owner&rsquo;s 2026-11-10 ruling on ask 1 (offered to everyone; the club decides whether its board must) redraws tabs 1 and 8. Nothing here is built; every word is a draft for the copy pass. The numbered markers open the matching ask.</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" aria-selected="true" data-tab="t1">1 · Who must</button>
+  <button role="tab" aria-selected="false" data-tab="t2">2 · Setting it up</button>
+  <button role="tab" aria-selected="false" data-tab="t3">3 · Signing in</button>
+  <button role="tab" aria-selected="false" data-tab="t4">4 · Lost phone</button>
+  <button role="tab" aria-selected="false" data-tab="t5">5 · Your account</button>
+  <button role="tab" aria-selected="false" data-tab="t6">6 · Members</button>
+  <button role="tab" aria-selected="false" data-tab="t7">7 · Support resets an owner</button>
+  <button role="tab" aria-selected="false" data-tab="t8">8 · Turning it on</button>
+  <button role="tab" aria-selected="false" data-tab="t9">9 · Test accounts</button>
+  <button role="tab" aria-selected="false" data-tab="t10">10 · Build outline</button>
+  <button role="tab" aria-selected="false" data-tab="t11">11 · Asks</button>
+</nav>
+
+<div class="viewrow" id="viewrow" hidden>
+  <span>View</span>
+  <span class="seg" role="group" aria-label="View">
+    <button type="button" id="vAll" aria-pressed="true">Everything</button>
+    <button type="button" id="vDiff" aria-pressed="false">Show only what differs</button>
+  </span>
+  <span>Dimmed areas are the same before and after.</span>
+</div>
+
+<!-- ═════════ 1 · WHO MUST ═════════ -->
+<section class="panel on" id="t1">
+  <h2>Offered to everyone; the club decides whether its board must</h2>
+  <p class="lede"><b>Ruled by the owner 2026-11-10.</b> Two-step sign-in is available to every account and switched off unless the person turns it on. A club that wants it can require it for its board seats, and for its coaches too, with one switch each (tab 8). Both start off. Only FieldLogicHQ&rsquo;s own staff must always use it.</p>
+  <div class="tablewrap"><table class="cmp">
+    <thead><tr><th>Seat</th><th>What it can open</th><th><button class="mk" data-ask="1">1</button>Two-step</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr class="band"><td colspan="4">FieldLogicHQ</td></tr>
+      <tr><td>Platform staff (you, and any staff account)</td><td>Every club</td><td class="req">Always required, no grace period</td><td>One stolen password here opens every customer. Not a club&rsquo;s choice.</td></tr>
+      <tr class="band"><td colspan="4">A club, league or tournament organization</td></tr>
+      <tr><td>Owner · Admin · Treasurer · League admin · Registrar (the board seats)</td><td>Money and payouts, or every family&rsquo;s file and medical notes</td><td class="off">Offered. Required if the club switches on &ldquo;Require for the board&rdquo;</td><td>Most volunteers won&rsquo;t want it; a board with a security-minded member turns it on in one place. Payout bank details already sit behind Stripe&rsquo;s own sign-in.</td></tr>
+      <tr><td>Coach</td><td>Their own team: families, and medical notes for a head coach</td><td class="off">Offered. Required if the club also switches on &ldquo;Also coaches&rdquo;</td><td>One team, often a volunteer.</td></tr>
+      <tr><td>Staff (scorekeeper) · Volunteer</td><td>Scores, check-in</td><td class="off">Offered</td><td>No family files.</td></tr>
+      <tr class="band"><td colspan="4">Everyone else</td></tr>
+      <tr><td>A coach running their own team in the Coaches Portal</td><td>Their team&rsquo;s money and medical notes</td><td class="off">Offered, with a nudge</td><td>The coach is the only person who could reset it, so every lost phone would become a support email. A nudge, not a wall.</td></tr>
+      <tr><td>A parent (family app)</td><td>Their own children</td><td class="off">Offered</td><td>It is their own information.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="cols" style="margin-top:14px">
+    <div class="card"><h3>One person, several seats</h3><p>A person who is treasurer in a club that requires it, and a coach in a club that doesn&rsquo;t, must use two-step <b>because of the treasurer seat</b>. Once it is on, every sign-in asks for the code, everywhere. There is no half-on account.</p></div>
+    <div class="card"><h3>Every kind of organization, every plan</h3><p>Tournament organizers and leagues get the same switches. On every plan, including the free tournament tier, as Business Decisions 2026-11-10 says.</p></div>
+    <div class="card"><h3>What &ldquo;we offered it&rdquo; covers, and what it doesn&rsquo;t</h3><p>In our terms with clubs, whether to require it is the organization&rsquo;s decision, and that holds. A privacy regulator would still judge whether our safeguards were reasonable for children&rsquo;s information. Offering it is a mitigation, not a shield, so the privacy policy says exactly what we do: available to everyone, and an organization can require it.</p></div>
+    <div class="card"><h3>The demos and test clubs are exempt</h3><p>The shared demo accounts must never be able to turn it on: one visitor setting it up would sign out every other visitor and lock the demo. Tab 9 lists every account that signs in without a person.</p></div>
+  </div>
+</section>
+
+<!-- ═════════ 2 · SETTING IT UP ═════════ -->
+<section class="panel" id="t2">
+  <h2>Three screens: scan, save your backup codes, done</h2>
+  <p class="lede">Reached from Account › Sign-in &amp; security, or by itself at sign-in when a seat requires it. It is the sign-in page&rsquo;s own column (420px, one lime, 48px fields, the sign-up step line), so it looks like the step after the password, not a settings form.</p>
+
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="2">2</button>Desktop: the three steps</b><span>Shared start column and its step line. Words are drafts.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560"><div class="chrome">Scan · desktop</div><div class="col">
+        <div class="shead"><div class="ssteps"><span class="cur">Scan</span><i>·</i><span>Backup codes</span><i>·</i><span>Done</span></div><h4>Set up two-step sign-in</h4><p>When you sign in, you&rsquo;ll also type a 6-digit code from an app on your phone.</p></div>
+        <div class="lead"><b>Open an authenticator app on your phone</b><span class="hint">Any of them works: Google Authenticator, Microsoft Authenticator, 1Password, or the Passwords app on an iPhone.</span></div>
+        <div class="lead"><b>Scan this code with the app</b>
+          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+            <svg class="qr" viewBox="0 0 21 21" shape-rendering="crispEdges" aria-label="QR code (example)"><rect width="21" height="21" fill="#fff"/><g fill="#241E15"><rect x="0" y="0" width="7" height="7"/><rect x="14" y="0" width="7" height="7"/><rect x="0" y="14" width="7" height="7"/></g><g fill="#fff"><rect x="1" y="1" width="5" height="5"/><rect x="15" y="1" width="5" height="5"/><rect x="1" y="15" width="5" height="5"/></g><g fill="#241E15"><rect x="2" y="2" width="3" height="3"/><rect x="16" y="2" width="3" height="3"/><rect x="2" y="16" width="3" height="3"/><rect x="9" y="1" width="1" height="2"/><rect x="11" y="3" width="2" height="1"/><rect x="8" y="5" width="1" height="3"/><rect x="10" y="8" width="3" height="1"/><rect x="1" y="9" width="2" height="1"/><rect x="4" y="10" width="1" height="2"/><rect x="9" y="10" width="2" height="2"/><rect x="14" y="9" width="2" height="1"/><rect x="17" y="10" width="3" height="1"/><rect x="12" y="12" width="1" height="3"/><rect x="15" y="13" width="2" height="2"/><rect x="9" y="15" width="1" height="2"/><rect x="11" y="17" width="3" height="1"/><rect x="18" y="16" width="2" height="3"/><rect x="15" y="18" width="1" height="2"/><rect x="9" y="19" width="2" height="1"/><rect x="6" y="8" width="1" height="1"/><rect x="19" y="13" width="1" height="1"/></g></svg>
+            <span class="hint" style="max-width:200px">Can&rsquo;t scan? Type this key into the app instead:<br><span class="key" style="margin-top:4px">JBSW Y3DP EHPK 3PXP <em>Copy</em></span></span>
+          </div></div>
+        <div class="fld"><label>The 6-digit code the app shows</label><div class="inp code focus">482</div></div>
+        <div class="primary">Turn on two-step sign-in</div>
+        <div class="textbtn">Not now</div>
+      </div></div>
+
+      <div class="fr w560"><div class="chrome">Backup codes · desktop</div><div class="col">
+        <div class="shead"><div class="ssteps"><span class="done">Scan</span><i>·</i><span class="cur">Backup codes</span><i>·</i><span>Done</span></div><h4>Save your backup codes</h4><p>If you lose your phone, one of these gets you in. Each code works once.</p></div>
+        <div class="codes"><span>7Q4K-M2XD</span><span>H8RT-3VPA</span><span>N5CW-9ELB</span><span>2JFY-6QZM</span><span>KD7P-R4TS</span><span>W3XB-8HNC</span><span>9GVE-5LQJ</span><span>PM6A-T2YW</span><span>4RZN-K7FD</span><span>BE8S-3CXV</span></div>
+        <div class="btnrow"><div class="secondary">Copy</div><div class="secondary">Download</div></div>
+        <div class="note"><b>Keep them somewhere other than your phone.</b>A password manager, or printed and kept with your club papers. We can&rsquo;t show them again.</div>
+        <label class="tick"><input type="checkbox" checked><span>I&rsquo;ve saved my backup codes somewhere other than my phone.</span></label>
+        <div class="primary">Done</div>
+      </div></div>
+
+      <div class="fr w560"><div class="chrome">Done · desktop</div><div class="col">
+        <div class="shead"><div class="ssteps"><span class="done">Scan</span><i>·</i><span class="done">Backup codes</span><i>·</i><span class="cur">Done</span></div><h4>Two-step sign-in is on</h4><p>From now on, signing in asks for a code from your app.</p></div>
+        <div class="note"><b>Your other devices were signed out.</b>Sign in on them again, with a code. That&rsquo;s how we know a stolen password isn&rsquo;t still signed in somewhere.</div>
+        <div class="primary">Continue to Milton Minor Ball</div>
+      </div></div>
+    </div></div>
+    <p class="build">Build notes: the shared start column (<i>AccountForm</i>: StartHead with <i>StartSteps</i> labels &ldquo;Scan · Backup codes · Done&rdquo;, the 48px field, the one lime, the textBtn way out). The code field is one numeric input in the body face with one-time-code autofill, never six boxes. The backup-code list and the key use the data face as a proposed exception (ask D). Pressing Done without the tick shows a red hint under it (&ldquo;Tick the box once your codes are saved.&rdquo;) rather than a faded button (ask B). &ldquo;Not now&rdquo; is absent once the grace period has ended (tab 8). &ldquo;Your other devices were signed out&rdquo; is not a choice: the sign-in service does it when two-step is turned on.</p>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="2">2</button>Phone: the app is on the same phone, so a QR code is no use</b><span>390px. The button hands the key to the authenticator app; the QR code is for setting up a different phone.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w390"><div class="chrome">Scan · phone</div><div class="col">
+        <div class="shead"><div class="ssteps"><span class="cur">Scan</span><i>·</i><span>Backup codes</span><i>·</i><span>Done</span></div><h4>Set up two-step sign-in</h4><p>When you sign in, you&rsquo;ll also type a 6-digit code from an app on your phone.</p></div>
+        <div class="lead"><b>Add FieldLogicHQ to your authenticator app</b><div class="secondary">Open in authenticator app</div><span class="hint">No app opens? Copy this key into it:<br><span class="key" style="margin-top:4px">JBSW Y3DP EHPK 3PXP <em>Copy</em></span></span></div>
+        <div class="fld"><label>The 6-digit code it shows</label><div class="inp code"><span class="ph">6-digit code</span></div></div>
+        <div class="primary">Turn on two-step sign-in</div>
+        <div class="fsplit"><span class="flink">Show the QR code</span><span class="flink">Not now</span></div>
+      </div></div>
+      <div class="fr w390"><div class="chrome">Backup codes · phone</div><div class="col">
+        <div class="shead"><div class="ssteps"><span class="done">Scan</span><i>·</i><span class="cur">Backup codes</span><i>·</i><span>Done</span></div><h4>Save your backup codes</h4><p>If you lose your phone, one of these gets you in. Each works once.</p></div>
+        <div class="codes" style="font-size:16px;padding:12px 14px;gap:6px 12px"><span>7Q4K-M2XD</span><span>H8RT-3VPA</span><span>N5CW-9ELB</span><span>2JFY-6QZM</span><span>KD7P-R4TS</span><span>W3XB-8HNC</span><span>9GVE-5LQJ</span><span>PM6A-T2YW</span><span>4RZN-K7FD</span><span>BE8S-3CXV</span></div>
+        <div class="btnrow"><div class="secondary">Copy</div><div class="secondary">Download</div></div>
+        <label class="tick"><input type="checkbox"><span>I&rsquo;ve saved my backup codes somewhere other than this phone.</span></label>
+        <div class="primary">Done</div>
+      </div></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ═════════ 3 · SIGNING IN ═════════ -->
+<section class="panel" id="t3">
+  <h2>After the password, one more field</h2>
+  <p class="lede">The same page, a second step. Only people who have turned two-step on see it. Everyone else signs in exactly as today.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-same">Unchanged</span> → <span class="tag t-new">New</span> <button class="mk" data-ask="4">4</button>Desktop: password, then the code</b><span>The code step names the account in its sub line, as the &ldquo;Sent&rdquo; screen names an address, and offers a way out on a shared computer.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560 same"><div class="chrome">Today, unchanged</div><div class="col">
+        <div class="shead"><h4>Sign in</h4><p>Welcome back.</p></div>
+        <div class="fld"><label>Email</label><div class="inp">dana.whitfield@miltonball.ca</div></div>
+        <div class="fld"><label>Password</label><div class="inp">••••••••••••</div></div>
+        <div class="forgot"><span class="flink">Forgot your password?</span></div>
+        <div class="primary">Sign in</div>
+        <div class="sfoot"><span>New here? <span class="flink">Get started</span></span><p class="legal">Terms of Service · Privacy Policy</p></div>
+      </div></div>
+      <div class="fr w560"><div class="chrome">New · the code</div><div class="col">
+        <div class="shead"><h4>Enter your code</h4><p>Signing in as <strong>dana.whitfield@miltonball.ca</strong>. Type the 6-digit code from your authenticator app.</p></div>
+        <div class="fld"><label>Code</label><div class="inp code focus"><span class="ph">6-digit code</span></div></div>
+        <div class="primary">Sign in</div>
+        <div class="fsplit"><span class="flink">Use a backup code</span><span class="flink">Lost your phone?</span></div>
+        <div class="sfoot"><span>Not you? <span class="flink">Use a different account</span></span><p class="legal">Terms of Service · Privacy Policy</p></div>
+      </div></div>
+      <div class="fr w560"><div class="chrome">A wrong code</div><div class="col">
+        <div class="shead"><h4>Enter your code</h4><p>Signing in as <strong>dana.whitfield@miltonball.ca</strong>. Type the 6-digit code from your authenticator app.</p></div>
+        <div class="fld"><label>Code</label><div class="inp code">519204</div></div>
+        <div class="note err"><b>That code didn&rsquo;t work.</b>The codes change every 30 seconds. Type the one showing now.</div>
+        <div class="primary">Sign in</div>
+        <div class="fsplit"><span class="flink">Use a backup code</span><span class="flink">Lost your phone?</span></div>
+      </div></div>
+    </div></div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="3">3</button>Using a backup code</b><span>One field, then a count of what is left.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560"><div class="col">
+        <div class="shead"><h4>Use a backup code</h4><p>Type one of the codes you saved when you set up two-step sign-in.</p></div>
+        <div class="fld"><label>Backup code</label><div class="inp code" style="letter-spacing:.12em">KD7P-R4TS</div></div>
+        <div class="primary">Sign in</div>
+        <div class="fsplit"><span class="flink">Use my authenticator app</span><span class="flink">Lost your phone?</span></div>
+      </div></div>
+      <div class="fr w560"><div class="chrome">Right after a backup code</div><div class="col">
+        <div class="shead"><h4>You&rsquo;re in</h4><p>That code won&rsquo;t work again. You have 2 backup codes left.</p></div>
+        <div class="note"><b>Do you still have your authenticator app?</b>If your phone is lost or replaced, set up the new one now.</div>
+        <div class="primary">Set up my new phone</div>
+        <div class="secondary">I still have it, continue</div>
+        <div class="textbtn">Get new backup codes</div>
+      </div></div>
+    </div></div>
+    <p class="build">Build notes: the code step is a state of the one shared sign-in page, and the five other places that sign a person in (platform admin sign-in, the family claim page, team sign-up, the follow nudge on public pages, the account-only sign-up) all hand off to it rather than each growing a code field. A wrong code paints the red notice only, as the wrong password does. A password reset never skips this step. &ldquo;Use a different account&rdquo; signs out this device only.</p>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> Phone</b><span>Same step at 390px; the code field fills from the authenticator&rsquo;s suggestion where the phone offers it.</span></div>
+    <div class="stage"><div class="fr w390"><div class="col">
+      <div class="shead"><h4>Enter your code</h4><p>Signing in as <strong>dana.whitfield@miltonball.ca</strong>. Type the 6-digit code from your authenticator app.</p></div>
+      <div class="fld"><label>Code</label><div class="inp code focus"><span class="ph">6-digit code</span></div></div>
+      <div class="primary">Sign in</div>
+      <div class="fsplit"><span class="flink">Use a backup code</span><span class="flink">Lost your phone?</span></div>
+      <div class="sfoot"><span>Not you? <span class="flink">Use a different account</span></span></div>
+    </div></div></div>
+  </div>
+</section>
+
+<!-- ═════════ 4 · LOST PHONE ═════════ -->
+<section class="panel" id="t4">
+  <h2>Lost your phone: three ways back, and you are the last one</h2>
+  <p class="lede">The one-person reality decides this screen. The person helps themselves first, their own club second, and support only when there is no one else.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="3">3</button>Lost your phone?</b><span>Shown after the password, so it never tells a stranger anything about an account.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560"><div class="chrome">A club seat</div><div class="col">
+        <div class="shead"><h4>Lost your phone?</h4><p>Here&rsquo;s how to get back in.</p></div>
+        <div class="lead"><b>Use a backup code</b><span class="hint">You saved ten when you set up two-step sign-in. One gets you in, and then you can set up your new phone.</span><div class="secondary">Use a backup code</div></div>
+        <div class="lead"><b>No codes? Ask your club</b><span class="hint">Your club&rsquo;s owner or an admin can reset your two-step sign-in. Then sign in with your password and set it up on your new phone.</span></div>
+        <div class="lead"><b>Are you the club&rsquo;s owner?</b><span class="hint">Email <b style="color:#241E15">support@fieldlogichq.ca</b> from this account&rsquo;s address. We confirm by email, tell your club&rsquo;s other admins and treasurer that you asked, and reset it 24 hours later.</span></div>
+        <div class="fsplit"><span class="flink">Back to the code</span><span></span></div>
+      </div></div>
+      <div class="fr w560"><div class="chrome">A coach&rsquo;s own team, or a parent</div><div class="col">
+        <div class="shead"><h4>Lost your phone?</h4><p>Here&rsquo;s how to get back in.</p></div>
+        <div class="lead"><b>Use a backup code</b><span class="hint">You saved ten when you set up two-step sign-in.</span><div class="secondary">Use a backup code</div></div>
+        <div class="lead"><b>No codes? Email us</b><span class="hint">Email <b style="color:#241E15">support@fieldlogichq.ca</b> from this account&rsquo;s address. We confirm by email and reset it 24 hours later.</span></div>
+        <div class="fsplit"><span class="flink">Back to the code</span><span></span></div>
+      </div></div>
+    </div></div>
+    <p class="build">Build notes: which version shows is decided by the account&rsquo;s seats after the password matched. The support address is shown as text (copyable), not only a mail link. The owner is told before confirming that the club&rsquo;s admins will be told (the <code>/legal</code> consent point); the confirmation email says it again.</p>
+  </div>
+</section>
+
+<!-- ═════════ 5 · YOUR ACCOUNT ═════════ -->
+<section class="panel" id="t5">
+  <h2>Account › Sign-in &amp; security, one page for every portal</h2>
+  <p class="lede">Every portal&rsquo;s account menu already opens the same Account page. It gets one more section. Nothing is added to the menus themselves.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="5">5</button>Desktop: two-step on, in a required seat</b><span>The rail gains one row. &ldquo;Turn off&rdquo; is absent in a required seat, and a sentence says why. <button class="mk" data-ask="7">7</button>The Password card is ask 7.</span></div>
+    <div class="stage"><div class="fr w960"><div class="chrome">Account · desktop</div><div class="acc">
+      <nav class="rail"><a><span class="ico"></span>Profile</a><a class="on newrow"><span class="ico"></span>Sign-in &amp; security</a><a><span class="ico"></span>Notifications</a><a><span class="ico"></span>Appearance</a><a><span class="ico"></span>Get the app</a><a><span class="ico"></span>Help</a></nav>
+      <div>
+        <p class="acctitle">Account</p>
+        <p class="pane">Sign-in &amp; security</p>
+        <div class="sec"><h6>Two-step sign-in <span class="chip good">On</span></h6>
+          <p>On since Nov 12, 2026. Signing in asks for a code from your authenticator app.</p>
+          <p class="fine">Required for your role as Treasurer at Milton Minor Ball, so it can&rsquo;t be turned off.</p>
+          <div class="acts"><span class="abtn">Set up a new phone</span><span class="abtn">New backup codes</span></div>
+          <p class="fine">7 of 10 backup codes left. New codes replace the old ones.</p>
+        </div>
+        <div class="sec"><h6>Signed in on other devices</h6>
+          <p>Sign out everywhere except this device, if a phone or computer is lost or shared.</p>
+          <div class="acts"><span class="abtn">Sign out everywhere else</span></div>
+        </div>
+        <div class="sec"><h6>Password</h6>
+          <p>Change the password you sign in with.</p>
+          <div class="acts"><span class="abtn">Change password</span></div>
+        </div>
+      </div>
+    </div></div></div>
+  </div>
+  <div class="spec">
+    <div class="cap"><b>Other states</b><span>Off and offered; off and required (inside the grace period); on and not required.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560"><div class="chrome">Off · a coach (offered)</div><div class="sec"><h6>Two-step sign-in</h6><p>Off. Turn it on so a stolen password isn&rsquo;t enough to sign in as you.</p><div class="acts"><span class="abtn lime">Turn on two-step sign-in</span></div></div></div>
+      <div class="fr w560"><div class="chrome">Off · required, 9 days left</div>
+        <div class="co" style="margin-bottom:10px"><div class="tx"><b>Milton Minor Ball requires two-step sign-in for treasurers.</b><small>Set it up by Nov 24. After that you&rsquo;ll set it up when you sign in.</small></div></div>
+        <div class="sec"><h6>Two-step sign-in</h6><p>Off.</p><div class="acts"><span class="abtn lime">Turn on two-step sign-in</span></div></div></div>
+      <div class="fr w560"><div class="chrome">On · not required</div><div class="sec"><h6>Two-step sign-in <span class="chip good">On</span></h6><p>On since Nov 12, 2026.</p><div class="acts"><span class="abtn">Set up a new phone</span><span class="abtn">New backup codes</span><span class="abtn">Turn off</span></div><p class="fine">Turning it off, getting new codes or setting up a new phone asks for a code first.</p></div></div>
+    </div></div>
+  </div>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> Phone: one more row on the Account list</b><span>The phone Account page is a list of separate row cards; the section opens as its own page. The row&rsquo;s second line is new (shipped rows have one line).</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w390"><div class="chrome">Account · phone</div>
+        <p class="acctitle" style="margin-bottom:12px">Account</p>
+        <div class="rows">
+          <div class="prow newline"><span class="ico olive"></span><span class="t">Sign-in &amp; security<small>Two-step sign-in is on</small></span><span class="chev">›</span></div>
+          <div class="prow"><span class="ico olive"></span><span class="t">Notification settings</span><span class="chev">›</span></div>
+          <div class="prow"><span class="ico olive"></span><span class="t">Help &amp; support</span><span class="chev">›</span></div>
+        </div>
+      </div>
+      <div class="fr w390"><div class="chrome">Sign-in &amp; security · phone</div>
+        <p class="acctitle" style="margin-bottom:12px">Sign-in &amp; security</p>
+        <div class="sec"><h6>Two-step sign-in <span class="chip good">On</span></h6><p>On since Nov 12, 2026.</p><p class="fine">Required for your role as Treasurer at Milton Minor Ball.</p>
+          <span class="abtn full">Set up a new phone</span><span class="abtn full">New backup codes</span><p class="fine">7 of 10 backup codes left.</p></div>
+        <div class="sec"><h6>Signed in on other devices</h6><span class="abtn full">Sign out everywhere else</span></div>
+      </div>
+    </div></div>
+    <p class="build">Build notes: the Account page&rsquo;s rail, its white cards and its ghost and lime buttons (consumer warm page); the phone rows are its separate row cards. Platform staff reach the same page; the platform menu hides the Account row today, so the build adds the door there. A list of signed-in devices (with each device&rsquo;s name and place) is <b>not</b> drawn: see ask 5.</p>
+  </div>
+</section>
+
+<!-- ═════════ 6 · MEMBERS ═════════ -->
+<section class="panel" id="t6">
+  <h2>Members: one column, and one door in the Manage window</h2>
+  <p class="lede">The club sees whether each person has it on and, for a required seat, how long they have left. It never sees codes, apps or devices.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-chg">Restyled</span> <button class="mk" data-ask="6">6</button>Whole screen, before and after</b><span>Use View › Show only what differs. The new column sits between Status and Last sign-in; the coaching-staff rows gain a few words. Nothing else moves.</span></div>
+    <div class="stage"><div class="stack">
+      <div><div class="lbl">Before (shipped)</div>
+      <div class="fr w1200"><div class="chrome">Club admin · Organization · desktop</div>
+        <div class="phead"><div><div class="eb">Organization</div><h4>Members</h4></div><span class="sp"></span><span class="btn">Export</span><span class="btn lime">Invite</span></div>
+        <span class="eye">The board · 4 people</span>
+        <div class="tf"><table>
+          <thead><tr><th>Person</th><th>Role</th><th>What they can open</th><th>Status</th><th>Last sign-in</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><b>Kim Patel</b> <span class="chip">You</span><small>kim.patel@miltonball.ca · President</small></td><td>Owner</td><td>Everything</td><td>Active</td><td>Today</td><td></td></tr>
+            <tr><td><b>Dana Whitfield</b><small>dana.whitfield@miltonball.ca</small></td><td>Treasurer</td><td>Money, payments, payouts</td><td>Active</td><td>Nov 9</td><td><span class="btn sm">Manage</span></td></tr>
+            <tr><td><b>Raj Mehta</b><small>raj.mehta@miltonball.ca</small></td><td>Registrar</td><td>Registrations, families</td><td>Active</td><td>Nov 3</td><td><span class="btn sm">Manage</span></td></tr>
+            <tr><td><b>sam.ortiz@example.com</b></td><td>League admin</td><td>House league</td><td>Invited Nov 9</td><td>—</td><td><span class="btn sm">Manage</span></td></tr>
+          </tbody>
+        </table></div>
+        <div class="coachlist"><span class="eye">Coaching staff · 1</span>
+          <div class="crow"><span class="t"><b>Leah Fournier</b><small>leah.f@example.com · Managed on the team&rsquo;s staff page</small></span></div>
+        </div>
+      </div></div>
+      <div><div class="lbl after">After</div>
+      <div class="fr w1200"><div class="chrome">Club admin · Organization · desktop</div>
+        <div class="phead same"><div><div class="eb">Organization</div><h4>Members</h4></div><span class="sp"></span><span class="btn">Export</span><span class="btn lime">Invite</span></div>
+        <span class="eye same">The board · 4 people</span>
+        <div class="tf"><table>
+          <thead><tr><th class="same">Person</th><th class="same">Role</th><th class="same">What they can open</th><th class="same">Status</th><th class="newcol">Two-step</th><th class="same">Last sign-in</th><th class="same"></th></tr></thead>
+          <tbody>
+            <tr><td class="same"><b>Kim Patel</b> <span class="chip">You</span><small>kim.patel@miltonball.ca · President</small></td><td class="same">Owner</td><td class="same">Everything</td><td class="same">Active</td><td class="newcol">On</td><td class="same">Today</td><td class="same"></td></tr>
+            <tr><td class="same"><b>Dana Whitfield</b><small>dana.whitfield@miltonball.ca</small></td><td class="same">Treasurer</td><td class="same">Money, payments, payouts</td><td class="same">Active</td><td class="newcol">On</td><td class="same">Nov 9</td><td class="same"><span class="btn sm">Manage</span></td></tr>
+            <tr><td class="same"><b>Raj Mehta</b><small>raj.mehta@miltonball.ca</small></td><td class="same">Registrar</td><td class="same">Registrations, families</td><td class="same">Active</td><td class="newcol"><span class="chip amber">Not set up · 9 days</span></td><td class="same">Nov 3</td><td class="same"><span class="btn sm">Manage</span></td></tr>
+            <tr><td class="same"><b>sam.ortiz@example.com</b></td><td class="same">League admin</td><td class="same">House league</td><td class="same">Invited Nov 9</td><td class="newcol dim">—</td><td class="same">—</td><td class="same"><span class="btn sm">Manage</span></td></tr>
+          </tbody>
+        </table></div>
+        <div class="coachlist"><span class="eye same">Coaching staff · 1</span>
+          <div class="crow"><span class="t"><b class="same">Leah Fournier</b><small><span class="same">leah.f@example.com · Managed on the team&rsquo;s staff page</span> <span class="newline">· Two-step off</span></small></span></div>
+        </div>
+      </div></div>
+    </div></div>
+    <p class="build">Build notes: the shipped Members table (<i>MembersKit</i>: the board table, its Manage button, the collapsed Coaching staff list), the kit chip for the amber state, plain words for On and Off. A required seat past its grace period reads &ldquo;Not set up&rdquo; in amber with no count (ask E). The phone row list adds the state to its second line (&ldquo;Registrar · Registrations, families · Two-step not set up&rdquo;). The export gains the column and stays with owners and admins. <b>The board</b> tab does not get it: see ask 6. Where a coach&rsquo;s reset lives is ask A.</p>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="3">3</button>Manage window: the door, and its question</b><span>A rare door at the end of the body, beside Suspend and Remove, as the 10-19 ruling places them. It asks first.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w720" style="min-height:540px"><div class="chrome">Manage Dana Whitfield</div>
+        <div class="scrim" style="position:relative;inset:auto;min-height:500px;background:none;padding:0">
+          <div class="dlg" style="max-width:none">
+            <div class="dh"><div>Manage Dana Whitfield<small>Treasurer since Sep 2025</small></div><span class="x">×</span></div>
+            <div class="db">
+              <div class="fld"><label>Role</label><div class="sel">Treasurer <span class="dim">▾</span></div></div>
+              <div class="fld"><label>Title</label><div class="sel" style="color:#615A54">Optional</div></div>
+              <div class="more">What Dana can open · the shipped access table, unchanged</div>
+              <dl class="kv"><dt>Two-step sign-in</dt><dd>On since Nov 12, 2026</dd></dl>
+              <div class="doors">
+                <span class="door"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M10 15V9M14 15V9"/></svg>Suspend…</span>
+                <span class="door new"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset two-step sign-in…</span>
+                <span class="door red"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Remove…</span>
+              </div>
+            </div>
+            <div class="df"><span class="sp"></span><span class="btn">Cancel</span><span class="btn lime">Save</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="fr w560" style="min-height:420px"><div class="chrome">The question, on top of the form</div>
+        <div class="scrim">
+          <div class="dlg">
+            <div class="dh">Reset Dana&rsquo;s two-step sign-in?</div>
+            <div class="db">
+              <p>Dana&rsquo;s authenticator app and backup codes stop working, and Dana is signed out everywhere. Next time Dana signs in with their password, they set up two-step sign-in again.</p>
+              <p>We&rsquo;ll email Dana to say you did this. It&rsquo;s recorded in the audit log.</p>
+            </div>
+            <div class="df"><span class="sp"></span><span class="btn">Cancel</span><span class="btn danger">Reset two-step</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="fr w560"><div class="chrome">When the club can&rsquo;t reset it: no door, one line</div>
+        <dl class="kv"><dt>Two-step sign-in</dt><dd>On since Nov 12, 2026<br><span class="dim" style="font-size:12px">Only FieldLogicHQ support can reset this one. Dana emails support@fieldlogichq.ca from their account&rsquo;s address.</span></dd></dl>
+        <div class="doors" style="margin-top:10px">
+          <span class="door"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M10 15V9M14 15V9"/></svg>Suspend…</span>
+          <span class="door red"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Remove…</span>
+        </div>
+      </div>
+    </div></div>
+    <p class="build">Build notes: <i>ManageMemberDialog</i>&rsquo;s body-end doors (<i>RecordAction</i> ink, since a reset can be redone by setting it up again; <i>RecordDelete</i> red); the question is a <i>KitDialog</i> question window with the red button, as Suspend uses. The doors end a much longer body (the access table sits above them). The door is absent for yourself (use a backup code), for the owner (support only), for a person with two-step off, and for a person whose account reaches another organization. That case shows one line with no reason given to the club (<code>/legal</code>); Dana and support are told why. The audit line reads &ldquo;Kim Patel reset Dana Whitfield&rsquo;s two-step sign-in.&rdquo;</p>
+  </div>
+</section>
+
+<!-- ═════════ 7 · SUPPORT ═════════ -->
+<section class="panel" id="t7">
+  <h2>Support resets an owner: confirm by email, tell the club, wait a day</h2>
+  <p class="lede">The owner is the one person no one in the club can reset. An email alone is the weakest identity check, because the inbox is also where a password reset goes. So the reset gets two more guards: the club&rsquo;s other admins are told and can stop it, and nothing happens for 24 hours. Signing in with the real code during that day cancels it.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="3">3</button>Person record › Account tab</b><span>Platform admin. One new fact in the tab&rsquo;s grid and one new door among the shipped ones.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w720"><div class="chrome">Platform admin · Support · person</div>
+        <div class="phead"><div><div class="eb">← People</div><h4>kim.patel@miltonball.ca</h4></div><span class="sp"></span><span class="btn">Send a reset link</span></div>
+        <div class="ptabs"><span>Story</span><span>Clubs</span><span class="on">Account</span><span>Emails</span></div>
+        <div class="facts"><div class="newline"><span class="band">Two-step sign-in</span><span>On since Nov 12, 2026 · 0 backup codes left</span></div></div>
+        <div class="doors"><span class="door olive">Sign out everywhere</span><span class="door olive new">Reset two-step sign-in</span><span class="door red">Ban this person</span><span class="door red">Delete this person</span></div>
+      </div>
+      <div class="fr w560" style="min-height:560px"><div class="chrome">The window (the console&rsquo;s record window)</div>
+        <div class="scrim">
+          <div class="dlg">
+            <div class="dh">Reset two-step sign-in for kim.patel@miltonball.ca<span class="x">×</span></div>
+            <div class="db">
+              <p>Kim owns Milton Minor Ball, so no one in the club can reset this. Kim gets an email to confirm. When Kim confirms, the club&rsquo;s other admins and treasurer are emailed, and the reset happens 24 hours later.</p>
+              <div class="fld"><label>How did Kim ask?</label><div class="sel">Email from this account&rsquo;s address <span class="dim">▾</span></div></div>
+              <div class="fld"><label>Why <span style="color:#B03A22">*</span></label><div class="ta">Lost phone, no backup codes. Asked from the account&rsquo;s address on Nov 18.</div></div>
+            </div>
+            <div class="df"><span class="l">Nothing changes until Kim confirms.</span><span class="btn">Cancel</span><span class="btn lime">Send confirmation</span></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+  <div class="spec">
+    <div class="cap"><b>While it waits</b><span>On the record, and the email the club&rsquo;s other admins get.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w720"><div class="co"><div class="tx"><b>Two-step reset waiting.</b><small>Kim confirmed Nov 18, 3:10 p.m. It happens Nov 19, 3:10 p.m. Signing in with a code cancels it.</small></div><span class="btn">Cancel the reset</span></div></div>
+      <div class="fr w560"><div class="chrome">Email to the club&rsquo;s other admins and treasurer · no links</div>
+        <p style="font-size:12px;color:#4A4235;margin-bottom:8px"><b style="color:#241E15">Subject:</b> Two-step sign-in for Milton Minor Ball&rsquo;s owner will be reset</p>
+        <p>Kim Patel asked FieldLogicHQ support to reset their two-step sign-in. It will be reset on November 19 at 3:10 p.m.</p>
+        <p style="margin-top:8px">If you think this isn&rsquo;t right, reply to this email or write to support@fieldlogichq.ca before then. We&rsquo;ll hold the reset until we&rsquo;ve checked with Kim.</p>
+      </div>
+    </div></div>
+    <p class="build">Build notes: the console&rsquo;s record window (a form with its ×, the sentence first, the required &ldquo;Why&rdquo;, the foot note at left), the Account tab&rsquo;s fact grid and its olive and red doors (the conditional Coaches Portal tab is left out of the drawing). The reset is written to the platform audit log before it happens (the console&rsquo;s audit-first rule), with the note and how the person asked. Only staff with the support power see the door. A sole owner with no other admin or treasurer still gets the 24-hour wait; the record says the club notice was skipped (ask 3 names this gap).</p>
+  </div>
+</section>
+
+<!-- ═════════ 8 · TURNING IT ON ═════════ -->
+<section class="panel" id="t8">
+  <h2>The club&rsquo;s switch, and what happens when it is turned on</h2>
+  <p class="lede">The club owner decides, in Organization › Settings. Both switches start off. When one is turned on, each person it covers gets 14 days. During that time, signing in shows a reminder they can pass. After it, signing in goes straight to setting it up, and the club&rsquo;s screens wait until that is done. Nobody is locked out of their other places (a coach team, the family app).</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="1">1</button>The setting, its one-time prompt, and turning it off</b><span>Only the owner changes it. Turning a requirement off asks for the owner&rsquo;s code and tells the other admins, so a stolen owner password can&rsquo;t quietly remove it.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560"><div class="chrome">Organization › Settings · Sign-in · owner only</div>
+        <div class="sec" style="border-radius:8px;box-shadow:none"><h6>Two-step sign-in</h6>
+          <p>Anyone can turn on two-step sign-in for their own account. You can also make it required.</p>
+          <label class="tick"><input type="checkbox" checked><span>Require it for the board<br><span class="fine">Owner, admins, treasurer, registrars and league admins. On since Nov 12; each has until Nov 26.</span></span></label>
+          <label class="tick"><input type="checkbox"><span>Also require it for coaches<br><span class="fine">They get 14 days to set it up.</span></span></label>
+        </div>
+      </div>
+      <div class="fr w560"><div class="chrome">Overview · the owner, once</div>
+        <div class="co" style="--tone:#57651E"><div class="tx"><b>Your club can require two-step sign-in for the board.</b><small>It stops a stolen password from opening your books and families&rsquo; details. Off unless you turn it on.</small></div><span class="btn">Open Settings</span><span class="btn" style="border-color:transparent;padding:0 4px;font-size:20px;font-weight:400;color:#615A54">×</span></div>
+      </div>
+      <div class="fr w560" style="min-height:360px"><div class="chrome">Turning a requirement off</div>
+        <div class="scrim">
+          <div class="dlg">
+            <div class="dh">Stop requiring two-step sign-in for the board?</div>
+            <div class="db">
+              <p>People who have it on keep it. New board members won&rsquo;t be asked to set it up. We&rsquo;ll email your club&rsquo;s other admins and treasurer that you turned it off.</p>
+              <div class="fld"><label>Your code</label><div class="inp code"><span class="ph">6-digit code</span></div></div>
+            </div>
+            <div class="df"><span class="sp"></span><span class="btn">Cancel</span><span class="btn danger">Stop requiring it</span></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <p class="build">Build notes: the setting is the owner&rsquo;s alone (an admin sees it read-only). The owner must have two-step on before turning a requirement on, so it can&rsquo;t be switched on by someone who would then be locked out of turning it off. The one-time prompt sits on the owner&rsquo;s Overview until they open Settings or close it, then never returns; the board pack points there too. Every change to the switches is a line in the club&rsquo;s audit log.</p>
+  </div>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="7">7</button>After the password, during and after the grace period</b><span>The same start column as tab 2.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560"><div class="chrome">During · 9 days left</div><div class="col">
+        <div class="shead"><h4>Your club now asks for two-step sign-in</h4><p>Milton Minor Ball requires it for treasurers. It takes about two minutes.</p></div>
+        <div class="primary">Set it up now</div>
+        <div class="textbtn">Remind me next time (9 days left)</div>
+      </div></div>
+      <div class="fr w560"><div class="chrome">After · Nov 24 has passed</div><div class="col">
+        <div class="shead"><h4>Set up two-step sign-in to continue</h4><p>Milton Minor Ball requires it for treasurers. Until it&rsquo;s set up, you can&rsquo;t open the club&rsquo;s admin.</p></div>
+        <div class="primary">Set it up now</div>
+        <div class="textbtn">Go to my other teams instead</div>
+      </div></div>
+    </div></div>
+    <p class="build">Build notes: &ldquo;Go to my other teams instead&rdquo; appears only for a person who has somewhere else to go. Platform staff get no grace period. A person given a required seat later (a new treasurer) gets their own 14 days from the day they accept.</p>
+  </div>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> While people are still setting it up</b><span>Only in a club that has switched a requirement on. Overview shows owners and admins who is still waiting (ask F).</span></div>
+    <div class="stage"><div class="fr w720"><div class="chrome">Club admin · Overview · owner and admins only</div>
+      <div class="co"><div class="tx"><b>1 person still needs to set up two-step sign-in.</b><small>Raj Mehta (registrar). Their deadline is Nov 24.</small></div><span class="btn">Open Members</span></div>
+    </div></div>
+  </div>
+  <div class="spec">
+    <div class="cap"><b>Emails, two of them, with no link</b><span>When the grace period starts, and 3 days before it ends.</span></div>
+    <div class="stage"><div class="fr w560"><p style="font-size:12px;color:#4A4235;margin-bottom:8px"><b style="color:#241E15">Subject:</b> Milton Minor Ball now requires two-step sign-in</p><p>Your club now asks treasurers to use two-step sign-in, so a stolen password isn&rsquo;t enough to open the club&rsquo;s books.</p><p style="margin-top:8px">Set it up by November 24: sign in to FieldLogicHQ and open Account, then Sign-in &amp; security. It takes about two minutes and needs an authenticator app on your phone.</p><p style="margin-top:8px" class="dim">This email has no link on purpose. If an email about two-step sign-in asks you to click a link to set it up, it isn&rsquo;t from us.</p></div></div>
+  </div>
+</section>
+
+<!-- ═════════ 9 · TEST ACCOUNTS ═════════ -->
+<section class="panel" id="t9">
+  <h2>Everything that signs in without a person, and how each keeps working</h2>
+  <p class="lede">Census 2026-11-10, from the code. Two things decide it: a <b>test-organization exemption</b> (the requirement never applies, and the shared demo accounts can never turn it on) and <b>one test account with a known authenticator key</b>, so the real code step is tested on purpose rather than by accident.</p>
+  <div class="tablewrap"><table class="cmp">
+    <thead><tr><th>What</th><th>How it signs in today</th><th>Seat it uses</th><th><button class="mk" data-ask="8">8</button>How it keeps working</th></tr></thead>
+    <tbody>
+      <tr><td>Tournament demo (riverdale-minor-ball), production</td><td>A one-time sign-in link redeemed on the server; the password is random and thrown away</td><td><b>Owner</b></td><td>Exempt as a demo organization. Setting up two-step is <b>refused</b> for the shared demo accounts: one visitor doing it would sign out every visitor at once and lock the demo.</td></tr>
+      <tr><td>Coach demo (riverdale-ridge), production</td><td>Same</td><td>Coach, head coach</td><td>Offered seat, so nothing is required. Setting it up is refused for the same reason.</td></tr>
+      <tr><td>Milton prospect demo (dev): one-click windows and scan-to-sign-in phone codes</td><td>A one-time sign-in link made by a script, finished in the browser</td><td><b>Owner, league admin</b>, coach, parent</td><td>Exempt as a test organization, set once by platform admin. These links skip the code step by design, so the exemption has to be real: a link like this for a non-exempt owner must land on the code step.</td></tr>
+      <tr><td>Probe scripts (126 of them, local only)</td><td>Password sign-in in a script, then a hand-made session cookie</td><td>Fixture owners and treasurers</td><td>Fixture clubs are test organizations, so exempt. No change to the scripts.</td></tr>
+      <tr><td>UAT (Playwright) sign-in setup and its saved sessions</td><td>Types into the real sign-in page</td><td>Owner, admin, treasurer, registrar, coach</td><td>UAT clubs are test organizations. <b>One new UAT account</b> holds a known authenticator key, and its test types the code the key produces, so the code step is covered every run.</td></tr>
+      <tr><td>UAT platform admin account</td><td>Types into platform admin sign-in</td><td>Platform staff (required)</td><td>Gets the known-key authenticator; the setup step types its code.</td></tr>
+      <tr><td>Seeded platform staff on dev (support, billing and others)</td><td>Seed resets their password</td><td>Platform staff</td><td>On dev only, the platform requirement follows a dev setting so seeds and probes keep working; production is always required.</td></tr>
+      <tr><td>Seeds that reset passwords</td><td>Reset the password on every run</td><td>Various</td><td>No change. A password reset does not remove an authenticator, and no seed sets one up.</td></tr>
+      <tr><td>Scheduled jobs and payment webhooks</td><td>A secret header, no person</td><td>None</td><td>Unaffected. Running one by hand from platform admin is a staff session and needs the code.</td></tr>
+      <tr><td>Tryout scoring links</td><td>A scoped link, not an account</td><td>None</td><td>Unaffected. It never opens an account.</td></tr>
+      <tr><td>Platform admin &ldquo;sign in again&rdquo; (bulk operations, catalog changes)</td><td>Re-enters the password on the server and <b>replaces the session</b></td><td>Platform staff</td><td><b>Must change.</b> Under two-step this would drop a staff session back to password-only. It becomes &ldquo;enter your code&rdquo;.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ═════════ 10 · BUILD OUTLINE ═════════ -->
+<section class="panel" id="t10">
+  <h2>Build outline, for the later build prompt</h2>
+  <div class="cols">
+    <div class="card"><h3>Enforced on the server, not by hiding screens</h3><ul>
+      <li>The sign-in service marks every session as password-only or password-and-code. The check reads that mark.</li>
+      <li>It goes in the server&rsquo;s shared sign-in helpers, which about 265 admin routes and 87 platform routes already pass through, plus the handful of coach, families and team guards that check sign-in on their own. Because the request layer skips most server routes, a check there alone would leave them open.</li>
+      <li>Pages (club admin, platform admin) send a password-only session in a required seat to the code step or the set-up step, never to an error.</li>
+      <li>A census of every place that checks sign-in on its own comes first; one missed is a hole.</li>
+    </ul></div>
+    <div class="card"><h3>What we build ourselves</h3><ul>
+      <li>The sign-in service has the authenticator, its set-up, its check and an admin reset. Its own backup codes are marked <b>experimental</b>, and it has no &ldquo;remember this device&rdquo;.</li>
+      <li>Backup codes: ten, stored only as one-way hashes, each used once. Using one lets you in for that sign-in and offers to set up a new phone. Whether to use the sign-in service&rsquo;s experimental codes instead is a build-time call, decided by whether they are stable then.</li>
+      <li>Asking again: the session records when the code was last typed. Required seats are asked again after 30 days, and before a short list of actions (ask 4).</li>
+      <li>The 24-hour owner reset, its hold and its cancel.</li>
+    </ul></div>
+    <div class="card"><h3>Probably one migration</h3><ul>
+      <li>An organization&rsquo;s two switches (&ldquo;require for the board&rdquo;, &ldquo;also coaches&rdquo;, both off by default, with when each was turned on), whether the owner has closed the one-time prompt, and its &ldquo;test organization&rdquo; exemption.</li>
+      <li>Backup codes (hashed) and each person&rsquo;s grace-period start.</li>
+      <li>A waiting owner reset (who asked, when confirmed, when it runs, held or not).</li>
+      <li>The audit lines use the club&rsquo;s and the platform&rsquo;s existing audit logs, so no new log.</li>
+      <li>The data dictionary and snapshots, in the same unit of work.</li>
+    </ul></div>
+    <div class="card"><h3>Must verify before building</h3><ul>
+      <li>That refreshing a session keeps it password-and-code. The sign-in service&rsquo;s docs don&rsquo;t say; test it on dev.</li>
+      <li>The hosted limit on authenticators per person (the docs give 10 for self-hosting only), and cleaning up a half-finished set-up.</li>
+      <li>Whether a Coaches Portal coach who bought their own team holds the organization&rsquo;s owner seat. If so, the &ldquo;offered&rdquo; row in tab 1 needs its own rule in code.</li>
+      <li><b>Production Auth settings are not changed in this session.</b> The authenticator is already switched on there.</li>
+    </ul></div>
+    <div class="card"><h3>Words and policies</h3><ul>
+      <li><code>/docs</code>: a new article (&ldquo;Two-step sign-in&rdquo;), plus Members, Account, and the sign-in help.</li>
+      <li><code>/legal</code>, after the build: privacy policy §10 and §3/§5/§9 (wording drafted in the plan), finding 5 reworded (partly closed), the facts file, the breach procedure gains &ldquo;a fraudulent reset&rdquo;.</li>
+      <li><code>/legal</code>, now: the Terms draft gains a short &ldquo;Two-step sign-in&rdquo; paragraph before it publishes, so turning this on later needs no change notice.</li>
+      <li><code>/marketing</code>: one copy pass before the walk; the board pack&rsquo;s sign-in line.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ═════════ 11 · ASKS ═════════ -->
+<section class="panel" id="t11">
+  <h2>Asks</h2>
+  <p class="lede"><b style="color:var(--ok)">All ruled 2026-11-10.</b> Ask 1 as the owner amended it; asks 2–8 and A–F as recommended (&ldquo;I agree with the recommendations on this mockup&rdquo;). Asks 1–8 are the decisions; A–F came out of the <code>/design</code> check.</p>
+
+  <div class="ask" id="ask1"><h3><span class="mk" style="cursor:default">1</span>Who must, and who may · <span style="color:var(--ok)">RULED 2026-11-10</span></h3>
+    <p class="rec">Ruled: offered to everyone. A club may require it for its board seats (owner, admins, treasurer, registrars, league admins) and, separately, for its coaches; both switches start off and only the owner changes them. FieldLogicHQ staff must always use it.</p>
+    <p>Owner&rsquo;s reasoning: required two-step would be a nuisance for the average volunteer, while a switch satisfies a board with security-minded members. Agreed in the same reply: turning a requirement off asks for the owner&rsquo;s code and emails the other admins; the owner sees a one-time prompt on Overview; the 14-day grace period starts when a switch is turned on. My earlier recommendation (required for those seats) is replaced.</p>
+    <p class="push">What this leaves open, so it isn&rsquo;t a surprise later: the draft privacy policy&rsquo;s note about medical notes stays open rather than closed, and the policy says &ldquo;available; an organization can require it&rdquo;, nothing stronger. In our terms with clubs, the choice is theirs.</p></div>
+
+  <div class="ask" id="ask2"><h3><span class="mk" style="cursor:default">2</span>Method: an authenticator app only</h3>
+    <p class="rec">Recommended: authenticator app only. No emailed codes, and no text messages.</p>
+    <p class="push">Emailed codes give no protection here. &ldquo;Forgot your password?&rdquo; already sends a link to the same inbox, so a password plus an emailed code is only the inbox, twice. The person who has stolen a treasurer&rsquo;s email still gets in. We would also spend the daily email quota on sign-ins.</p>
+    <p>A person may set up a second phone or tablet as a spare. That is the friendliest backup for a volunteer who forgets where they put their codes.</p></div>
+
+  <div class="ask" id="ask3"><h3><span class="mk" style="cursor:default">3</span>Recovery without you as the bottleneck</h3>
+    <ul>
+      <li><b>Backup codes:</b> ten at set-up, each works once, new ones on demand. <span class="rec">Recommended: yes.</span></li>
+      <li><b>The club resets its own people:</b> the owner and admins, for anyone but the owner and themselves. The person is emailed and signed out everywhere. <span class="rec">Recommended: yes.</span></li>
+      <li><b>But not across clubs.</b> The authenticator belongs to the person, not the club. If Dana is treasurer here and coaches in another club, a reset here takes it off there too. <span class="rec">Recommended: a club resets only people whose account reaches no other organization; anyone else goes to support.</span> The club is given no reason (that Dana is elsewhere is Dana&rsquo;s business, per <code>/legal</code>); Dana and support are told why.</li>
+      <li><b>The owner:</b> only support resets it. They email from the account&rsquo;s address and confirm by a link sent to it. The club&rsquo;s other admins and treasurer are emailed and can put it on hold, there is a 24-hour wait, and signing in with the real code cancels it. <span class="rec">Recommended: yes.</span> The inbox alone is not enough of an identity check, because it is the same inbox a password reset uses; the wait and the club&rsquo;s admins are what make it safe. The lost-phone screen and the confirmation email both say, before the owner confirms, that the club&rsquo;s admins will be told. <b>Gap you should know about:</b> an owner with no other admin or treasurer gets only the 24-hour wait, and the notice goes to the same inbox a thief may hold. <span class="rec">Recommended: accept it as a known gap, and have support phone the owner on a number from the club&rsquo;s own records before resetting a sole owner.</span></li>
+      <li><b>An audit line for every reset</b>, in the club&rsquo;s audit log (by a club) or the platform audit log (by support), with the support note. <span class="rec">Recommended: yes.</span></li>
+    </ul></div>
+
+  <div class="ask" id="ask4"><h3><span class="mk" style="cursor:default">4</span>&ldquo;Remember this device&rdquo; and asking again</h3>
+    <p class="rec">Recommended: no checkbox. A person stays signed in on their own device, as today, and is asked for a code when they sign in again. Required seats are asked again after 30 days. Five actions ask for a code if the last one was more than 15 minutes ago: changing payout or bank details, adding an owner or admin, resetting someone&rsquo;s two-step, turning your own off, and getting new backup codes.</p>
+    <p class="push">A &ldquo;remember this device for 30 days&rdquo; box would mean a session that has <i>not</i> passed the code is let in anyway, which is a second rule for the server to trust and get wrong. Staying signed in already does the remembering. Recording a payment or a dues entry does not ask again; that would be every treasurer&rsquo;s whole evening.</p></div>
+
+  <div class="ask" id="ask5"><h3><span class="mk" style="cursor:default">5</span>Signed-in devices: one button, not a list</h3>
+    <p class="rec">Recommended: &ldquo;Sign out everywhere else&rdquo;, and no device list.</p>
+    <p>A list means recording and showing each device&rsquo;s name and location, which is more personal information for the privacy policy to explain and one more screen to keep right. The button does the job a lost phone needs.</p></div>
+
+  <div class="ask" id="ask6"><h3><span class="mk" style="cursor:default">6</span>What the club sees: Members only, never The board</h3>
+    <p class="rec">Recommended: the Two-step column on Members (owner and admins), the Overview reminder, nothing on The board tab.</p>
+    <p class="push">The brief asked for it on The board&rsquo;s seats too. I&rsquo;d leave it off. The board tab is read more widely, and a list of which board members have no second step is a list of whose password is worth stealing. Members already shows it to the people who can act on it.</p></div>
+
+  <div class="ask" id="ask7"><h3><span class="mk" style="cursor:default">7</span>Grace period: 14 days, then set up at sign-in; and Change password</h3>
+    <p class="rec">Recommended: 14 days from the day the club switches a requirement on (or from the day a new seat is accepted in a club that already requires it). A reminder screen at each sign-in, an Overview reminder for owners and admins, and two emails with no link. After that, signing in sets it up first, and only the club&rsquo;s admin waits. Platform staff: no grace.</p>
+    <p>Related gap found on the way: <b>a signed-in person cannot change their password anywhere today</b>, only reset it by email. The new Sign-in &amp; security page is its natural home. <span class="rec">Recommended: add &ldquo;Change password&rdquo; to this build. It is small, and a security page without it looks unfinished to a board.</span></p></div>
+
+  <div class="ask" id="ask8"><h3><span class="mk" style="cursor:default">8</span>Test and demo accounts</h3>
+    <p class="rec">Recommended: a &ldquo;test organization&rdquo; exemption that only platform admin can set (on the demos, the Milton demo, and the UAT and fixture clubs), set-up refused for the shared demo accounts, and one UAT account with a known authenticator key so the code step is tested on every run.</p></div>
+
+  <div class="ask" id="askA"><h3>A · Where a coach&rsquo;s reset lives</h3>
+    <p>Coaches aren&rsquo;t managed in Members: the Coaching staff list there says &ldquo;Managed on the team&rsquo;s staff page&rdquo; and has no Manage window. So &ldquo;ask your club to reset it&rdquo; needs a door somewhere else for a coach.</p>
+    <p class="rec">Recommended: the state line on the Coaching staff rows (drawn), and the reset door in the team staff page&rsquo;s own person window, for the club&rsquo;s owner and admins only. It is drawn at the build session, from that page.</p></div>
+  <div class="ask" id="askB"><h3>B · &ldquo;Done&rdquo; explains on press</h3>
+    <p>The 2026-11-09 Terms ruling keeps a sign-in screen&rsquo;s button off until its box is ticked. The backup-codes &ldquo;Done&rdquo; instead stays on and explains when pressed without the tick, like a sign-up card.</p>
+    <p class="rec">Recommended: explain on press. It&rsquo;s an account step, not an agreement, and a faded button doesn&rsquo;t say what&rsquo;s missing.</p></div>
+  <div class="ask" id="askD"><h3>D · The data face for codes</h3>
+    <p>The sign-in column never uses the monospace face. Ten backup codes and the set-up key are the case for it: 0 and O, 1 and I must not be confused when someone types them back in from paper.</p>
+    <p class="rec">Recommended: a named exception for recorded codes only (the backup-code list and the key). The code field the person types into stays in the body face.</p></div>
+  <div class="ask" id="askE"><h3>E · Past the deadline: amber or red</h3>
+    <p class="rec">Recommended: stays amber (&ldquo;Not set up&rdquo;, no count). Nobody did anything wrong yet; the person simply hasn&rsquo;t signed in since. Red is kept for something that failed.</p></div>
+  <div class="ask" id="askF"><h3>F · A second callout on Overview</h3>
+    <p class="rec">Recommended: keep the reminder, but it follows the Overview&rsquo;s one-notice rule when the build lands, and it disappears when the last person sets it up.</p></div>
+
+  <div class="ask"><h3>No decision needed</h3>
+    <p>Enforced on the server, not by hiding screens. Production Auth settings are untouched in this session. The platform admin &ldquo;sign in again&rdquo; window must change to ask for a code, or it would undo two-step for staff.</p></div>
+</section>
+</div>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('nav.tabs button');
+  var panels = document.querySelectorAll('section.panel');
+  var viewrow = document.getElementById('viewrow');
+  var compareTab = 't6';
+  var vAll = document.getElementById('vAll'), vDiff = document.getElementById('vDiff');
+  function setView(diff) {
+    vAll.setAttribute('aria-pressed', diff ? 'false' : 'true');
+    vDiff.setAttribute('aria-pressed', diff ? 'true' : 'false');
+    document.body.classList.toggle('only-diff', diff);
+  }
+  function show(id, keepScroll) {
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === id ? 'true' : 'false'); });
+    panels.forEach(function (p) { p.classList.toggle('on', p.id === id); });
+    viewrow.hidden = id !== compareTab;
+    if (id !== compareTab) document.body.classList.remove('only-diff');
+    else document.body.classList.toggle('only-diff', vDiff.getAttribute('aria-pressed') === 'true');
+    if (!keepScroll) window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); }); });
+  vAll.addEventListener('click', function () { setView(false); });
+  vDiff.addEventListener('click', function () { setView(true); });
+  document.querySelectorAll('.mk[data-ask]').forEach(function (m) {
+    m.addEventListener('click', function () {
+      show('t11', true);
+      var a = document.getElementById('ask' + m.dataset.ask);
+      if (a) { a.scrollIntoView({ block: 'center' }); a.classList.add('flash'); setTimeout(function () { a.classList.remove('flash'); }, 1400); }
+    });
+  });
+})();
+</script>

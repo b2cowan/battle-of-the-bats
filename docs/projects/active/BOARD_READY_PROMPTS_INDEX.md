@@ -10,7 +10,7 @@ actually shipped. The order is set by dependency and rework risk, never by calen
 |---|---|---|---|---|
 | 1 | Third access sweep: what leaks today, plus the seat-by-seat "who sees what" table | report-only | `BOARD_READY_W1_ACCESS_SWEEP_PROMPT.md` | written 2026-11-10 |
 | 2 | Friend requests in the house-league draft | drawings + asks | `BOARD_READY_W1_FRIEND_REQUESTS_PROMPT.md` | **drawn 2026-11-10** (round 2 after `/design` + `/legal`): https://claude.ai/artifact/KxYr8LW6r5yvsUJ7FmvPL8 (round 3 adds tidier board rows); **all asks A1–A15 RULED 2026-11-10** as recommended; build prompt next (plan §5 Stage 1) |
-| 3 | Two-step sign-in | drawings + decisions | `BOARD_READY_W1_TWO_STEP_SIGNIN_PROMPT.md` | written 2026-11-10 |
+| 3 | Two-step sign-in | drawings + decisions | `BOARD_READY_W1_TWO_STEP_SIGNIN_PROMPT.md` | **drawn 2026-11-10** (round 2 after `/design` + `/legal`): https://claude.ai/artifact/5b956A7svYzjzmZhZUfnkc (round 3: ask 1 ruled 2026-11-10, offered to everyone and the club may require it); **all asks RULED 2026-11-10** (2–8 + A–F as recommended); **build prompts written 2026-11-10**: `BOARD_READY_TWO_STEP_BUILD_PROMPTS.md`, four parts: 1 foundation (**Opus**, after Wave 2 Fix A is committed), 2 your account (Sonnet), 3 switches + resets (**Opus**, beside 2), 4 what the club sees + words (Sonnet, last) |
 
 The three can run at the same time. Only step 1 runs probes, on dev only, and none of them writes product code. The
 builds for steps 2 and 3 come as later prompts. If both need a migration, each checks the latest migration number at
