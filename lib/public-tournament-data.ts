@@ -18,7 +18,7 @@ import { isPublicPageEnabled, isPublicBracketVisible, isPublicTournamentStatus, 
 import { runsInviteOnlyEvents } from './invite-only-event';
 import { publishedCompetitionData, publishedGameTeams } from './public-standings';
 import { publicFrameGame, publicTeamsData, publicVenue, type PublicVenue } from './public-teams';
-import { publicDivisions, publicNotices, publicTournament, type PublicNotice, type PublicTournament, type PublicTournamentOptions } from './public-tournament-shape';
+import { publicDivisions, publicNotices, publicPosts, publicTournament, type PublicNotice, type PublicTournament, type PublicTournamentOptions } from './public-tournament-shape';
 import type { Division, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
 
 /**
@@ -267,7 +267,8 @@ export async function getPublicTournamentPageData(
     ]);
     // Only published divisions: the Rules page reads the divisions for its filter, and a held-back division's name and
     // settings must not ride along (Register still gets them all, below: a team signs up for any open division).
-    return { ...base, rules, resources, divisions: sendDivisions(divisions.filter(d => d.scheduleVisibility === 'published')) };
+    // A rule section aimed at a held-back division is not sent either (the same filter as a post, judged against ALL divisions).
+    return { ...base, rules: publicPosts(rules, divisions), resources, divisions: sendDivisions(divisions.filter(d => d.scheduleVisibility === 'published')) };
   }
 
   if (section === 'register') {

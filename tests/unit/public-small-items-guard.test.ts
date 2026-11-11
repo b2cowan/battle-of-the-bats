@@ -31,6 +31,12 @@ describe('posts aimed at a held-back division', () => {
     assert.match(readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx'), /publicPosts\(frameAnnouncements, divisions\)\.length/);
     assert.match(readCode('lib/public-frame-server.ts'), /publicPosts\(announcements, divisions\)\.length/);
   });
+  it('a rule section aimed at a held-back division is dropped from the Rules page, its feed section and the nav\'s count', () => {
+    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/rules/page.tsx'), /rules = publicPosts\(rules, divisions\);\s*divisions = divisions\.filter/);
+    assert.match(readCode('lib/public-tournament-data.ts'), /rules: publicPosts\(rules, divisions\)/);
+    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx'), /publicPosts\(frameRules, divisions\)\.length/);
+    assert.match(readCode('lib/public-frame-server.ts'), /publicPosts\(rules, divisions\)\.length/);
+  });
   it('the News and Rules pages name published divisions only in their picker', () => {
     assert.match(readCode('app/[orgSlug]/[tournamentSlug]/news/page.tsx'), /divisions=\{divisions\.filter\(d => d\.scheduleVisibility === 'published'\)\}/);
     assert.match(readCode('app/[orgSlug]/[tournamentSlug]/rules/page.tsx'), /divisions = divisions\.filter\(d => d\.scheduleVisibility === 'published'\)/);

@@ -4,6 +4,7 @@ import { getOrganizationBySlug, getPublicTournamentBySlug, getRules, getResource
 import { publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { notFound } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
+import { publicPosts } from '@/lib/public-tournament-shape';
 import type { Division, Resource, RuleSection } from '@/lib/types';
 import PublicRules from '@/components/public/PublicRules';
 
@@ -41,7 +42,8 @@ export default async function RulesPage({
       getResources(tournament.id, { admin: true }),
       getDivisions(tournament.id, { admin: true }),
     ]);
-    // The Rules page's division picker names only published divisions: a held-back one is not public yet.
+    // A rule section aimed at a held-back division is not public yet, and the picker names only published divisions.
+    rules = publicPosts(rules, divisions);
     divisions = divisions.filter(d => d.scheduleVisibility === 'published');
   }
 

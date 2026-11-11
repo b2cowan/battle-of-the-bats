@@ -49,9 +49,14 @@ describe('GET /unsubscribe writes nothing', () => {
 
 describe('POST /api/unsubscribe is the only writer', () => {
   const route = readCode('app/api/unsubscribe/route.ts');
-  it('exports a POST and no GET', () => {
+  it('exports a POST, and a GET that only redirects to the confirm page (it is the mail header\'s address)', () => {
     assert.match(route, /export const POST = /);
-    assert.doesNotMatch(route, /export (const|async function|function) GET\b/);
+    const get = route.slice(route.indexOf('export const GET'), route.indexOf('export const POST'));
+    assert.ok(get.length > 0, 'a GET exists');
+    assert.doesNotMatch(get, WRITES);
+    assert.doesNotMatch(get, /supabaseAdmin/);
+    assert.match(get, /NextResponse\.redirect\(target, 303\)/);
+    assert.match(get, /new URL\('\/unsubscribe', request\.url\)/);
   });
   it('checks the token before any database call, in every branch', () => {
     for (const verify of ['verifyUserUnsubscribeToken', 'verifyGuardianUnsubscribeToken', 'verifyUnsubscribeToken']) {
@@ -72,6 +77,37 @@ describe('POST /api/unsubscribe is the only writer', () => {
   });
   it('can also answer a mail client\'s one-click POST, which carries the link\'s query string', () => {
     assert.match(route, /query\.get\(name\)/);
+  });
+});
+
+describe('a mail client\'s own Unsubscribe button (RFC 8058 one-click)', () => {
+  it('the header is the footer link\'s own address on the route that writes, with the one-click marker', () => {
+    process.env.UNSUBSCRIBE_SECRET = 'test-secret-for-the-guard-xxxxxxxxxxxxxxxx';
+    for (const url of [T.buildUnsubscribeUrl('org-1'), T.buildUserUnsubscribeUrl('user-1'), T.buildGuardianUnsubscribeUrl('org-1', 'a+b@example.test')]) {
+      const h = T.oneClickUnsubscribeHeaders(url);
+      assert.equal(h['List-Unsubscribe-Post'], 'List-Unsubscribe=One-Click');
+      const target = new URL(h['List-Unsubscribe'].slice(1, -1));
+      assert.equal(target.pathname, '/api/unsubscribe');
+      assert.equal(target.search, new URL(url!).search, 'same query, same signed token');
+      assert.doesNotMatch(h['List-Unsubscribe'], /[\r\n]/);
+    }
+  });
+  it('no link, no header', () => {
+    assert.deepEqual(T.oneClickUnsubscribeHeaders(null), {});
+    assert.deepEqual(T.oneClickUnsubscribeHeaders(undefined), {});
+    assert.deepEqual(T.oneClickUnsubscribeHeaders('https://example.test/somewhere-else'), {});
+  });
+  it('the three senders that put an unsubscribe footer in a mail also put the header on it, and a transactional send gets neither', () => {
+    const marketing = readCode('lib/email-sender.ts');
+    assert.match(marketing, /!skipOptOutCheck && unsubscribeUrl \? \{ headers: oneClickUnsubscribeHeaders\(unsubscribeUrl\) \}/);
+    const family = readCode('lib/family-email.ts');
+    assert.equal((family.match(/headers: oneClickUnsubscribeHeaders\(buildGuardianUnsubscribeUrl\(params\.orgId, to\)\)/g) ?? []).length, 2, 'single and batch');
+    // The service batch (placement and moved-team emails) carries no unsubscribe link, so it carries no header either.
+    const service = family.slice(family.indexOf('export async function sendFamilyServiceBatch'));
+    assert.doesNotMatch(service, /oneClickUnsubscribeHeaders/);
+    const transport = readCode('lib/email.ts');
+    assert.match(transport, /headers: opts\.headers/);
+    assert.match(transport, /headers: e\.headers/);
   });
 });
 

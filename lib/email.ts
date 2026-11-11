@@ -108,6 +108,8 @@ export type SendEmailOptions = {
   timeoutMs?: number;
   /** A plain-text email: pass `html` as '' and the words here. */
   text?: string;
+  /** Extra mail headers: the one-click unsubscribe pair (`oneClickUnsubscribeHeaders`) on a mail that carries an unsubscribe footer. */
+  headers?: Record<string, string>;
   /**
    * Repeat an earlier send's log row instead of writing a new one: a retry under the same once-only key is the same
    * email, and the mail service's callbacks name the first row's tag.
@@ -144,6 +146,7 @@ export async function sendEmail(
     from: fromHeader(opts.fromName), to, subject,
     ...(html ? { html, text: opts.text ?? htmlToText(html) } : { text: opts.text ?? '' }),
     ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
+    ...(opts.headers && Object.keys(opts.headers).length > 0 ? { headers: opts.headers } : {}),
     ...(log && logId ? { tags: [{ name: log.ROW_TAG, value: logId }, { name: log.DB_TAG, value: log.logDatabaseRef() }] } : {}),
   };
 
@@ -184,7 +187,7 @@ export const EMAIL_BATCH_SIZE = 100;
  * More than the limit is a caller's bug and throws before anything is sent.
  */
 export async function sendEmailBatch(
-  emails: readonly { kind: UnloggedEmailKind; to: string; subject: string; html: string; replyTo?: string | null; fromName?: string | null }[],
+  emails: readonly { kind: UnloggedEmailKind; to: string; subject: string; html: string; replyTo?: string | null; fromName?: string | null; headers?: Record<string, string> }[],
 ): Promise<SendEmailResult> {
   if (emails.length === 0) return { status: 'sent' };
   if (emails.length > EMAIL_BATCH_SIZE) throw new Error(`sendEmailBatch: ${emails.length} emails exceeds the batch limit of ${EMAIL_BATCH_SIZE}`);
@@ -202,6 +205,7 @@ export async function sendEmailBatch(
     body: JSON.stringify(going.map(e => ({
       from: fromHeader(e.fromName), to: e.to, subject: e.subject, html: e.html, text: htmlToText(e.html),
       ...(e.replyTo ? { reply_to: e.replyTo } : {}),
+      ...(e.headers && Object.keys(e.headers).length > 0 ? { headers: e.headers } : {}),
     }))),
   };
   let res = await fetch(`${RESEND_API}/batch`, request);

@@ -218,7 +218,7 @@ export default async function TournamentLayout({
   // division's schedule is held back and the whole tournament's playoffs are decided — exactly Ask 14's "the
   // whole tournament is Finished, matching the Overview's own PublicChampions trigger" ruling, at no extra query.
   const frameContent = tournamentFrameTabContent({
-    announcementCount: publicPosts(frameAnnouncements, divisions).length, ruleCount: frameRules.length, resourceCount: frameResources.length,
+    announcementCount: publicPosts(frameAnnouncements, divisions).length, ruleCount: publicPosts(frameRules, divisions).length, resourceCount: frameResources.length,
     registrationCta: registration?.cta ?? null, championsCrownedAt: tournament.championsCrownedAt, divisions,
   });
 

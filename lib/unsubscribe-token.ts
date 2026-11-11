@@ -68,6 +68,21 @@ export function buildUnsubscribeUrl(orgId: string): string | null {
   return `${base}/unsubscribe?org=${encodeURIComponent(orgId)}&token=${encodeURIComponent(token)}`;
 }
 
+/**
+ * The mail headers that give a mail client its own "Unsubscribe" button (RFC 8058 one-click), for a footer link built by
+ * one of the builders below. The client POSTs `List-Unsubscribe=One-Click` to the header's address, which is the
+ * footer link's own address on the route that writes (`/api/unsubscribe`, same query, same signed token). A client that
+ * only opens the address gets the confirm page instead (that route's GET), so nothing ever unsubscribes on a visit.
+ * Empty when there is no link (no secret: no link, no header).
+ */
+export function oneClickUnsubscribeHeaders(pageUrl: string | null | undefined): Record<string, string> {
+  if (!pageUrl || !pageUrl.includes('/unsubscribe?')) return {};
+  return {
+    'List-Unsubscribe': `<${pageUrl.replace('/unsubscribe?', '/api/unsubscribe?')}>`,
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  };
+}
+
 // ── Per-USER unsubscribe (CASL fix — coach-audience campaigns) ─────────────────
 // An email sent to an individual (a coach) must unsubscribe THAT PERSON, not the org it
 // happens to be attributed to. A distinct HMAC message suffix keeps user tokens and org

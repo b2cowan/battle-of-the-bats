@@ -27,6 +27,7 @@ const SECRET = {
   venueNote: 'PRIVATE_VENUE_NOTE',
   fieldNote: 'PRIVATE_FIELD_NOTE',
   heldNotice: 'NOTICE_AIMED_AT_THE_HELD_BACK_DIVISION',
+  heldRule: 'RULE_SECTION_AIMED_AT_THE_HELD_BACK_DIVISION',
   unpinnedNotice: 'NOTICE_NOT_PINNED',
   internal: 'DIRECTORY_PROVINCE_FLAG',
 };
@@ -83,7 +84,10 @@ function feed(setup: Setup = {}) {
     resolveTournamentContactEmail: async () => (setup.contact === undefined ? null : setup.contact),
     getDivisions: async () => divisions, getTeams: async () => teams, getGames: async () => setup.games ?? games, getVenues: async () => venues,
     getAnnouncements: async () => announcements,
-    getRules: async () => [{ id: 'r1', tournamentId: 't1', title: 'Rule', body: 'Play fair', order: 0 }],
+    getRules: async () => [
+      { id: 'r1', tournamentId: 't1', title: 'Rule', body: 'Play fair', order: 0 },
+      { id: 'r2', tournamentId: 't1', title: SECRET.heldRule, items: [], order: 1, divisionIds: ['dB'] },
+    ],
     getResources: async () => [],
     getTournamentRegistrationFields: async () => [],
     getStandings: async () => [],
@@ -114,7 +118,7 @@ describe('the route serves only the published-only sections', () => {
 
 describe('every section the route serves, read through the real feed', () => {
   const FORBIDDEN_EVERYWHERE = [SECRET.waiver, SECRET.otherContact, 'RAW_CONTACT_ON_THE_RECORD', SECRET.gameNote, SECRET.venueNote, SECRET.fieldNote,
-    SECRET.heldNotice, SECRET.unpinnedNotice, SECRET.internal, 'PRIVATE_ADMIN_NOTE', 'coach@private.test', 'directoryProvince', 'listInDirectory',
+    SECRET.heldNotice, SECRET.heldRule, SECRET.unpinnedNotice, SECRET.internal, 'PRIVATE_ADMIN_NOTE', 'coach@private.test', 'directoryProvince', 'listInDirectory',
     'notifyTeamsOnComplete', 'resultsNotifiedAt', 'buffer_minutes', 'roster_waiver_text', 'coach_email_acceptance', '"tournaments"', 'organizationId',
     'scoreSubmittedBy', 'scoreSubmittedAt', 'scoreSubmissionSource', 'KEEPER_EMAIL', 'KEEPER_USER_ID', 'KEEPER_SOURCE', 'Coach A', 'Coach B', 'sport'];
   for (const section of ROUTE_SECTIONS) {
@@ -231,6 +235,7 @@ describe('what the pages need is still there', () => {
   it('rules: the held-back division is not sent, the published one is', async () => {
     const data = (await feed().getPublicTournamentPageData('club', 'cup', 'rules'))!;
     assert.deepEqual((data.divisions as Division[]).map(d => d.id), ['dA']);
+    assert.deepEqual((data.rules as { id: string }[]).map(r => r.id), ['r1'], 'a rule section aimed at the held-back division is not sent');
     const register = (await feed().getPublicTournamentPageData('club', 'cup', 'register'))!;
     assert.deepEqual((register.divisions as Division[]).map(d => d.id), ['dA', 'dB'], 'Register still needs every division for sign-up');
   });

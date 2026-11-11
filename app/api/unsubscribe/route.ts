@@ -6,8 +6,8 @@
  * scanners prefetch links and a person (or a whole club) must never be opted out by a robot.
  *
  * No authentication: the signed token IS the authorization, verified BEFORE any database call. The fields also read from the
- * query string when the body has none, so the same address answers a mail client's one-click POST if a sender ever sets a
- * `List-Unsubscribe-Post` header (none does today).
+ * query string when the body has none, so the same address answers a mail client's one-click POST: every unsubscribe footer's
+ * mail carries `List-Unsubscribe` / `List-Unsubscribe-Post` pointing here (`oneClickUnsubscribeHeaders`).
  *
  *   user                → that PERSON opts out (coach campaigns); never the org the email was attributed to
  *   org + guardian      → that family address opts out of that club's emails; never the whole organization
@@ -24,6 +24,16 @@ import { verifyUnsubscribeToken, verifyUserUnsubscribeToken, verifyGuardianUnsub
 import { withObservability } from '@/lib/observability/with-observability';
 
 export const runtime = 'nodejs';
+
+/**
+ * GET /api/unsubscribe?…  — NEVER WRITES. It is the address in the mail header (`List-Unsubscribe`), and a client that does not
+ * speak one-click just opens it: that visit lands on the confirm page with the same query. Only the POST below writes.
+ */
+export const GET = withObservability(async (request: NextRequest) => {
+  const target = new URL('/unsubscribe', request.url);
+  target.search = new URL(request.url).search;
+  return NextResponse.redirect(target, 303);
+}, { route: '/api/unsubscribe' });
 
 export const POST = withObservability(async (request: NextRequest) => {
   const go = (query = '') => NextResponse.redirect(new URL(`/unsubscribe/confirmed${query}`, request.url), 303);

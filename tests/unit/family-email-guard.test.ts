@@ -223,8 +223,8 @@ describe('Family email — the Families message door (claim + cap, then the guar
 
   it('the reply address is an additive option on the choke point, passed to the transport', () => {
     assert.match(choke, /replyTo\?:\s*string\s*\|\s*null/);
-    // S3b added the club's sender name beside it (fromName); the reply address is still handed to the transport.
-    assert.match(choke, /return sendEmail\([^;]*\{\s*kind: params\.kind,\s*replyTo: params\.replyTo \?\? null,\s*fromName: familyFromName\(params\.content\),?\s*\}\);/,
+    // S3b added the club's sender name beside it (fromName), and W2 fix C the one-click unsubscribe headers; the reply address is still handed to the transport.
+    assert.match(choke, /return sendEmail\([^;]*\{\s*kind: params\.kind,\s*replyTo: params\.replyTo \?\? null,\s*fromName: familyFromName\(params\.content\),\s*headers: oneClickUnsubscribeHeaders\([^;]*\),?\s*\}\);/,
       'sendFamilyEmail takes replyTo but no longer hands it to sendEmail.');
   });
 

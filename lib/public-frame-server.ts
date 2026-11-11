@@ -39,7 +39,7 @@ export async function publicFrameBandFacts(
   return {
     registrationOpen: registration?.state === 'open',
     frameContent: tournamentFrameTabContent({
-      announcementCount: publicPosts(announcements, divisions).length, ruleCount: rules.length, resourceCount: resources.length,
+      announcementCount: publicPosts(announcements, divisions).length, ruleCount: publicPosts(rules, divisions).length, resourceCount: resources.length,
       registrationCta: registration?.cta ?? null, championsCrownedAt: tournament.championsCrownedAt, divisions,
     }),
   };

@@ -2,7 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { sendEmail, sendEmailBatch, EMAIL_BATCH_SIZE, escapeHtml, type SendEmailResult } from './email';
 import type { UnloggedEmailKind } from './email-kinds';
-import { buildGuardianUnsubscribeUrl } from './unsubscribe-token';
+import { buildGuardianUnsubscribeUrl, oneClickUnsubscribeHeaders } from './unsubscribe-token';
 import { normalizeGuardianEmail, isSendableGuardianEmail } from './guardian-email';
 import { fetchAll as readAllPaged, chunked } from './supabase-paging';
 import { familyEnvelopeFooterWords } from './family-mail-footer';
@@ -204,6 +204,7 @@ export async function sendFamilyEmail(params: {
 
   return sendEmail(to, params.subject, familyEmailHtml(params.content, params.orgId, to), {
     kind: params.kind, replyTo: params.replyTo ?? null, fromName: familyFromName(params.content),
+    headers: oneClickUnsubscribeHeaders(buildGuardianUnsubscribeUrl(params.orgId, to)),
   });
 }
 
@@ -242,7 +243,7 @@ export async function sendFamilyEmailBatch(params: {
     try {
       result = await sendEmailBatch(chunk.map(to => ({
         kind: params.kind, to, subject: params.subject, html: familyEmailHtml(params.content, params.orgId, to), replyTo: params.replyTo ?? null,
-        fromName,
+        fromName, headers: oneClickUnsubscribeHeaders(buildGuardianUnsubscribeUrl(params.orgId, to)),
       })));
     } catch (err) {
       console.error('[family-email] a batch threw:', err instanceof Error ? err.message : String(err));

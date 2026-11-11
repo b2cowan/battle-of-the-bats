@@ -19,7 +19,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
-import { buildUnsubscribeUrl, buildUserUnsubscribeUrl } from '@/lib/unsubscribe-token';
+import { buildUnsubscribeUrl, buildUserUnsubscribeUrl, oneClickUnsubscribeHeaders } from '@/lib/unsubscribe-token';
 import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import { MARKETING_EMAIL_AUDIENCE, type MarketingAudience } from '@/lib/marketing-email-defaults';
 import { isDemoOrgId } from '@/lib/demo-org-server';
@@ -193,6 +193,8 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
         html: htmlWithFooter,
         text: htmlToText(htmlWithFooter),
         reply_to: FIELDLOGICHQ_CONTACT_EMAIL,
+        // A transactional send carries no footer link and no header; every other one gives the mail client its own button.
+        ...(!skipOptOutCheck && unsubscribeUrl ? { headers: oneClickUnsubscribeHeaders(unsubscribeUrl) } : {}),
         ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
       }),
     });
