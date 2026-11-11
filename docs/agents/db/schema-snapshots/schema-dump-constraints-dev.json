@@ -2820,6 +2820,96 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_decided_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "decided_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_kept_apart_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "kept_apart_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_matched_registration_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "matched_registration_id",
+    "foreign_table": "league_registrations",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_registration_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "registration_id",
+    "foreign_table": "league_registrations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_slot_uniq",
+    "constraint_type": "UNIQUE",
+    "column_name": "registration_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_slot_uniq",
+    "constraint_type": "UNIQUE",
+    "column_name": "slot",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "league_game_changes",
     "constraint_name": "league_game_changes_division_id_fkey",
     "constraint_type": "FOREIGN KEY",

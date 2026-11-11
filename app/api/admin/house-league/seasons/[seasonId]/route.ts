@@ -28,6 +28,7 @@ import { seasonMoney } from '@/lib/league-money';
 import { seedLeagueSeasonBudget } from '@/lib/house-league-budget';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
 import { houseLeagueSlotCount } from '@/lib/league-time-server';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
 
 // Two steps go back (Club Tier Stage 9a; owner 2026-10-24): Reopen registration only while registration is closed and play
 // has not started, and Reopen a finished season (completed or archived) back to running. A finished season is locked
@@ -220,6 +221,15 @@ export const PATCH = withObservability(async (req: Request,
     const v = typeof body.howToPay === 'string' ? body.howToPay.trim() : '';
     if (v.length > 1000) return NextResponse.json({ error: 'How to pay is 1,000 characters or fewer.' }, { status: 400 });
     patch.howToPay = v || null;
+  }
+  // Board Ready Stage 1 (ruling A8): friends a family can name per child, None · 1 · 2, on a plan with friend requests.
+  if ('friendRequestsMax' in body) {
+    if (!hasOrgVenueLibrary(ctx!.org.planId)) {
+      return NextResponse.json({ error: 'Friend requests are included with League Plus and Club.' }, { status: 403 });
+    }
+    const n = body.friendRequestsMax;
+    if (n !== 0 && n !== 1 && n !== 2) return NextResponse.json({ error: 'Choose None, 1 or 2.' }, { status: 400 });
+    patch.friendRequestsMax = n;
   }
 
   // A date range runs forward (owner, 2026-10-25): judged on the values the season would hold after this save, so moving

@@ -1,12 +1,12 @@
 {
-  "generated": "2026-11-10",
-  "total": 506,
+  "generated": "2026-11-11",
+  "total": 558,
   "counts": {
-    "tables": 16,
-    "columns": 236,
-    "indexes": 76,
-    "constraints": 64,
-    "rls": 114
+    "tables": 17,
+    "columns": 258,
+    "indexes": 84,
+    "constraints": 72,
+    "rls": 127
   },
   "items": [
     {
@@ -86,11 +86,63 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_code_entered_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_mark_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_named",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_not_self",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_note_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_slot_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_state_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_typed_first_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_typed_last_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_typed_parent_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:league_placement_emails.league_placement_emails_changes_check",
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_registrations.league_registrations_friend_code_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:league_season_notices.league_season_notices_skipped_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_seasons.league_seasons_friend_requests_max_check",
       "sig": ""
     },
     {
@@ -654,7 +706,91 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_friend_requests.code_entered",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.decided_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.decided_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.kept_apart_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.kept_apart_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.mark",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.matched_registration_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.registration_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.season_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.slot",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.state",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.typed_first",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.typed_last",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.typed_parent",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.updated_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_placement_emails.changes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_registrations.friend_code",
       "sig": ""
     },
     {
@@ -667,6 +803,10 @@
     },
     {
       "key": "column:only-dev:league_season_notices.skipped_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_seasons.friend_requests_max",
       "sig": ""
     },
     {
@@ -1490,6 +1630,38 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_friend_requests.league_friend_requests_decided_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_friend_requests.league_friend_requests_kept_apart_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_friend_requests.league_friend_requests_matched_registration_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_friend_requests.league_friend_requests_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_friend_requests.league_friend_requests_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_friend_requests.league_friend_requests_registration_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_friend_requests.league_friend_requests_season_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_friend_requests.league_friend_requests_slot_uniq",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:league_registrations.league_registrations_told_team_fk",
       "sig": ""
     },
@@ -1770,6 +1942,38 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_friend_requests_decided_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_friend_requests_kept_apart_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_friend_requests_matched_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_friend_requests_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_friend_requests_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_friend_requests_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_friend_requests_slot_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_registrations_friend_code_uniq",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:league_registrations_told_team_idx",
       "sig": ""
     },
@@ -1983,6 +2187,10 @@
     },
     {
       "key": "table:only-dev:family_invite_stops",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_friend_requests",
       "sig": ""
     },
     {

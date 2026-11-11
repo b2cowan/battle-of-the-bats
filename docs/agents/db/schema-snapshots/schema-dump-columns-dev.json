@@ -7686,6 +7686,186 @@
     "ordinal_position": 10
   },
   {
+    "table_name": "league_friend_requests",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "season_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "registration_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "slot",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "typed_first",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "typed_last",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "typed_parent",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "code_entered",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "state",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'to_confirm'::text",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "mark",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "matched_registration_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "decided_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "decided_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "kept_apart_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "kept_apart_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 20
+  },
+  {
     "table_name": "league_game_changes",
     "column_name": "id",
     "data_type": "uuid",
@@ -9441,6 +9621,15 @@
     "ordinal_position": 46
   },
   {
+    "table_name": "league_registrations",
+    "column_name": "friend_code",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 47
+  },
+  {
     "table_name": "league_schedule_emails",
     "column_name": "id",
     "data_type": "uuid",
@@ -9934,6 +10123,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 29
+  },
+  {
+    "table_name": "league_seasons",
+    "column_name": "friend_requests_max",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "2",
+    "ordinal_position": 30
   },
   {
     "table_name": "league_slot_uses",

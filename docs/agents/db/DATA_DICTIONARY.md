@@ -7187,6 +7187,9 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_seasons.owing_amber_days -->
 **`owing_amber_days`** (smallint, NOT NULL, default 14, CHECK 1–365; mig 368, owner 9b·8) — an accepted registration that still owes turns amber on Registrations after this many days from `league_registrations.accepted_at`. Set on the season's Registration block.
 
+<!-- dict:col:league_seasons.friend_requests_max -->
+**`friend_requests_max`** (smallint, NOT NULL, default 2, CHECK IN (0, 1, 2) `league_seasons_friend_requests_max_check`; **mig 461**, Board Ready Stage 1, ruling A8) — friends a family can name per child on the sign-up form: 0 = None (the form asks nothing and the registrar's Friend requests view is absent), 1 or 2. Set on the season's Overview › Registration block. **Read only through `friendMaxFor` / `friendRequestsOn` (lib/league-friends.ts)**, which also require the plan gate (`hasOrgVenueLibrary`: League Plus and both Club bands); on any other plan the stored value is ignored and the question is absent. The draft's keep-together group cap (3 children, brothers and sisters counted) is fixed, not stored (A1).
+
 <!-- dict:col:league_seasons.finished_at -->
 **`finished_at`** (timestamptz, nullable; mig 377, Club Tier 9c) — when the season last became finished (`completed` or `archived`), stamped by the trigger `league_seasons_finished` on the status change and cleared when it is reopened. **The same trigger erases the season's `league_player_ratings`** (ruling 9c·2b; a reopened season does not get them back). A house-league coach's team page stays 30 days from it (`COACH_PAGE_DAYS_AFTER_FINISH`, [lib/house-league-access.ts](../../../lib/house-league-access.ts)). Mig 377 backfilled already-finished seasons from `updated_at`.
 
@@ -7686,6 +7689,53 @@ Sent and By).
 
 ---
 
+## `league_friend_requests`
+<!-- dict:table:league_friend_requests -->
+
+**Purpose:** **Friend requests** (Board Ready Stage 1, **mig 461**; plan `docs/projects/active/BOARD_READY_PLAN.md`, section 5 Stage 1): one row per friend a family named for a child on the house-league sign-up form or "Your sign-up", by typed name (first and/or last, optionally the friend's parent) or by the other family's `friend_code`. The registrar confirms name matches (Part 2); the draft keeps confirmed friends together (Part 3). RLS on, **no policies, service role only** (revoked from anon and authenticated): mig 020 lets every org member read `league_registrations`, and these names are for the seats that can open Registrations alone (ruling A11).
+
+**Gotchas (read first):**
+1. **Hangs on the season's registration, never on the cross-season child** (`org_children`; /legal build rule), so deleting a season's requests is clean. `registration_id` is the ASKING child; deleting that sign-up deletes what its family typed (CASCADE).
+2. **A code resolves on save**, inside `league_friend_requests_save` (below): same season, by code, a LIVE sign-up only (not declined or withdrawn). Same division: `state = 'confirmed'`, `decided_at` set, `decided_by` NULL (nobody decided it). Another division: `state = 'to_confirm'`, `mark = 'different_division'` (an asking child with no division: unmarked), `matched_registration_id` set (the registrar's Can't honour, A2). No match: `to_confirm` with no match. **A typed name is stored only**; matching runs on read in the registrar's queue (Part 2). The family is never told any of this.
+3. **Every save is ONE transaction** (`league_friend_requests_save(org, season, registration, friends jsonb)`, service role only; /review 2026-11-11): the registration row is locked, a friend still asked for keeps its row (same id, every column, so the registrar's decision stands) at its new slot, the rest are replaced. Never write these rows from the app by delete-then-insert.
+4. **Typed names are used only for team placement** (/legal): never fed into families, people or prospect lists; no outreach to a "Not signed up" family. They never go into "Excel with contact details".
+5. **Deletion** (ruling A12, built in Part 2): every row of a season is deleted when the season is marked finished, or 60 days after its last day if it never is.
+
+<!-- dict:col:league_friend_requests.id -->
+<!-- dict:col:league_friend_requests.org_id -->
+<!-- dict:col:league_friend_requests.season_id -->
+<!-- dict:col:league_friend_requests.registration_id -->
+**`id`** (uuid PK) / **`org_id`** (FK → `organizations` CASCADE; indexed) / **`season_id`** (FK → `league_seasons` CASCADE; indexed: the queue's read and the deletion) / **`registration_id`** (FK → `league_registrations` CASCADE, NOT NULL): the asking child's sign-up.
+<!-- dict:col:league_friend_requests.slot -->
+**`slot`** (smallint, NOT NULL, CHECK 1–2; UNIQUE `(registration_id, slot)` `league_friend_requests_slot_uniq`): "Friend 1" / "Friend 2", the order the family named them.
+<!-- dict:col:league_friend_requests.typed_first -->
+<!-- dict:col:league_friend_requests.typed_last -->
+<!-- dict:col:league_friend_requests.typed_parent -->
+<!-- dict:col:league_friend_requests.code_entered -->
+**`typed_first` / `typed_last`** (text ≤ 80) / **`typed_parent`** (text ≤ 120) / **`code_entered`** (text, the friend-code shape): what the family typed. CHECK `league_friend_requests_named`: a code and no name fields, or no code and a first or last name (the parent's name only helps).
+<!-- dict:col:league_friend_requests.state -->
+**`state`** (text, NOT NULL, default `to_confirm`; `to_confirm` · `confirmed` · `not_signed_up` · `cant_honour`): the registrar's answer. Only `confirmed` reaches the draft.
+<!-- dict:col:league_friend_requests.mark -->
+**`mark`** (text, nullable; `different_division`): the matched child is in another division (set on a code match at save; Part 2 sets it on a name match). "Both asked" and "Code match" are derived, not stored.
+<!-- dict:col:league_friend_requests.matched_registration_id -->
+**`matched_registration_id`** (FK → `league_registrations` ON DELETE SET NULL, nullable; partial index): the child the request names, once known. CHECK `league_friend_requests_not_self`: never the asking child.
+<!-- dict:col:league_friend_requests.reason -->
+<!-- dict:col:league_friend_requests.note -->
+**`reason`** (text, nullable; `different_division` · `other`) / **`note`** (text 1–280, nullable): why it can't be honoured (Part 2's Can't honour window).
+<!-- dict:col:league_friend_requests.decided_by -->
+<!-- dict:col:league_friend_requests.decided_at -->
+**`decided_by`** (FK → `auth.users` SET NULL; partial index) / **`decided_at`**: who answered it and when (a code match: `decided_at` only).
+<!-- dict:col:league_friend_requests.kept_apart_by -->
+<!-- dict:col:league_friend_requests.kept_apart_at -->
+**`kept_apart_by`** (FK → `auth.users` SET NULL; partial index) / **`kept_apart_at`**: the convenor split this link on the draft board (Part 3, "Keep apart from a friend…").
+<!-- dict:col:league_friend_requests.created_at -->
+<!-- dict:col:league_friend_requests.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()).
+
+**Functions (mig 461, invisible to check:migrations):** `league_friend_code_new(season)` and `league_friend_requests_save(uuid, uuid, uuid, jsonb)` (service role only); the trigger function `league_registrations_friend_code_fill()` (SECURITY DEFINER), trigger `league_registrations_friend_code_fill` BEFORE INSERT ON `league_registrations`; the trigger function `league_seasons_friend_codes_on_reopen()` (SECURITY DEFINER), trigger `league_seasons_friend_codes_on_reopen` AFTER UPDATE OF status ON `league_seasons`: a season moved from completed/archived to a live status gives a code to every sign-up without one.
+
+---
+
 ## `league_registrations`
 <!-- dict:table:league_registrations -->
 
@@ -7815,6 +7865,9 @@ See `org_children` for the rules (confirm joins, undo splits, live name edits wr
 <!-- dict:col:league_registrations.link_version -->
 <!-- dict:col:league_registrations.link_replaced_at -->
 **`link_version` / `link_replaced_at`** (int NOT NULL DEFAULT 0, CHECK ≥ 0 `league_registrations_link_version_check` / timestamptz nullable; mig 419, Signed-in family accounts Stage 1) — the family's "Your sign-up" link can be replaced. The link stays a derived token (never stored), but its signature now covers the version: **0 signs the original message** (`league-pay:{id}`), so links already emailed keep working; n ≥ 1 signs `league-pay:{id}:v{n}` and the token carries the version as a third segment. The club's "Send a new link" bumps the version and stamps `link_replaced_at` on **every row of the sign-up** in one statement (the same `signup_ref` + `guardian_email`, the set `signupRowsFromAnchor` reads), so every brother's and sister's old link stops at once. Every door that reads a family token checks the version against the anchor row's (`lib/league-signup-link.ts` `openSignupLink`); minting signs with the anchor's current version. `link_replaced_at` drives the history line "New link sent; the old one stopped". Never rotates `PAY_LINK_SECRET`, so a reset cannot touch a tournament team's pay link. The writer is `replaceSignupLink` (lib/league-signup-link-mail.ts): the next version is one past the highest on the sign-up, refused before any write when the row has no email or the server cannot sign links.
+
+<!-- dict:col:league_registrations.friend_code -->
+**`friend_code`** (text, nullable, CHECK `^[2-9A-HJ-NP-Z]{5}[A-HJ-NP-Y]$` `league_registrations_friend_code_check`; unique per season, partial index `league_registrations_friend_code_uniq` on `(season_id, friend_code) WHERE friend_code IS NOT NULL`; **mig 461**, Board Ready Stage 1, ruling A10) — the child's **friend code**: six characters from 2–9 and A–Z without I and O, shown 3 + 3 ("K7M 4QP"). The sixth is a **check letter** (the five data characters' places in the 32-symbol alphabet, weighted 1..5, summed mod 23, one of 23 letters without I, O, Z) so the form catches a typo with no lookup. Filled on every insert by the BEFORE INSERT trigger `league_registrations_friend_code_fill` (SECURITY DEFINER; calls `league_friend_code_new(season)`, service role only, which retries until the code is free in the season); backfilled by mig 461 for every sign-up in a season not finished (`completed`/`archived` seasons got none). **The SQL generator and `lib/league-friend-code.ts` must stay identical** (`tests/unit/league-friend-code.test.ts` pins both). Not a secret: holding a code reveals nothing, because entering it shows no name. Shown to the family on "Your sign-up", the confirmation and the confirmation email only while the club asks for friends. Org members can read it through mig 020's registrations policy, which is harmless. Deleted with the season's friend requests at the season's end (Part 2).
 
 ---
 

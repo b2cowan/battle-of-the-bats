@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import DateInput from '@/components/shared/DateInput';
 import { CheckCircle } from 'lucide-react';
 import { useOrgHref } from '@/lib/use-public-pathname';
@@ -14,6 +14,8 @@ import LeaguePayBlock from '@/components/public/LeaguePayBlock';
 import type { LeaguePayView } from '@/lib/league-pay-view';
 import PhoneInput from '@/components/shared/PhoneInput';
 import { SECOND_PARENT_WORDS as SP } from '@/lib/league-second-parent';
+import FriendFields, { FriendCodeRow, friendsToSend, type FriendDraft } from './FriendFields';
+import { FRIEND_WORDS as FW } from '@/lib/league-friends';
 
 /**
  * THE FAMILY'S SIGN-UP FORM (Club Tier Stage 9b-1, Part 5; drawing §4, words HOUSE_LEAGUE_STAGE9B1_COPY.md §7–§8; owner Q5,
@@ -24,11 +26,13 @@ import { SECOND_PARENT_WORDS as SP } from '@/lib/league-second-parent';
  * form says so with the club's contact, and that child is left out (the others can still sign up). The total counts only
  * children who will be accepted. After Sign up: the reference, each child's tag ("Accepted", never "Approved"), and the
  * club's how-to-pay words — or, while the club takes card payments (12b, drawn k2), THE one pay block: Pay by card for
- * every accepted child at once. When it doesn't, today's words and no button at all (A6).
+ * every accepted child at once (Board Ready Stage 1, tabs 1–2: while the club asks for friends, each child's card asks
+ * "Who would you like {child} to play with?" under the division line, and the confirmation shows each child's friend
+ * code with Copy). When it doesn't, today's words and no button at all (A6).
  */
 
-type Child = { key: number; firstName: string; lastName: string; dob: string; divisionId: string; jersey: string; position: string; notes: string; more: boolean };
-const blankChild = (key: number): Child => ({ key, firstName: '', lastName: '', dob: '', divisionId: '', jersey: '', position: '', notes: '', more: false });
+type Child = { key: number; firstName: string; lastName: string; dob: string; divisionId: string; jersey: string; position: string; notes: string; more: boolean; friends: FriendDraft[] };
+const blankChild = (key: number): Child => ({ key, firstName: '', lastName: '', dob: '', divisionId: '', jersey: '', position: '', notes: '', more: false, friends: [] });
 const MAX_CHILDREN = 8;
 
 type Result = {
@@ -60,11 +64,14 @@ interface Props {
   today: string;
   /** Where a family's questions go (the no-division-fits card). */
   contact: { email: string | null; phone: string | null };
+  /** Board Ready Stage 1: friends a family can name per child (0: the question is absent). */
+  friendMax: number;
 }
 
 export default function RegisterForm({
-  orgSlug, orgName, seasonSlug, seasonName, seasonDates, waiverText, askEmailConsent, divisions, season, cutoff, today, contact,
+  orgSlug, orgName, seasonSlug, seasonName, seasonDates, waiverText, askEmailConsent, divisions, season, cutoff, today, contact, friendMax,
 }: Props) {
+  const friendKey = useRef(1);
   const orgHref = useOrgHref(orgSlug);
   const bands = hasAgeBands(divisions);
   const [children, setChildren] = useState<Child[]>([blankChild(1)]);
@@ -106,6 +113,8 @@ export default function RegisterForm({
           children: send.map(c => ({
             firstName: c.firstName, lastName: c.lastName, dateOfBirth: c.dob || undefined, divisionId: c.divisionId || undefined,
             jerseyPref: c.jersey || undefined, positionPref: c.position || undefined, notes: c.notes || undefined,
+            // Friends are sent only while their block shows (the division is known).
+            friends: friendMax > 0 && asksFriends(forecast[children.indexOf(c)].kind) ? friendsToSend(c.friends) : undefined,
           })),
           guardianFirstName: guardian.firstName,
           guardianLastName: guardian.lastName,
@@ -249,6 +258,14 @@ export default function RegisterForm({
               </div>
             )}
 
+            {/* Board Ready Stage 1 (tab 1): under the division line, never under "Jersey number, position and notes". */}
+            {friendMax > 0 && (f.kind === 'spot' || f.kind === 'waitlist') && (
+              <FriendFields idPrefix={`c${c.key}`} childName={c.firstName.trim() || `Child ${i + 1}`} division={f.division.name} max={friendMax}
+                friends={c.friends} nextKey={() => friendKey.current++}
+                onChange={next => { setChild(i, { friends: next }); setErrors(prev => Object.fromEntries(Object.entries(prev).filter(([k]) => !k.startsWith(`children.${i}.friends`)))); }}
+                errors={childFriendErrors(errors, i)} />
+            )}
+
             <button type="button" className={styles.linkButton} aria-expanded={c.more} onClick={() => setChild(i, { more: !c.more })}>
               Jersey number, position and notes
             </button>
@@ -388,6 +405,13 @@ export default function RegisterForm({
   );
 }
 
+/** Does a forecast show the friend block? Only once the division is known. */
+const asksFriends = (kind: string) => kind === 'spot' || kind === 'waitlist';
+
+/** One child's friend errors, keyed as the block reads them (`friends.{n}.{field}`). */
+const childFriendErrors = (errors: Record<string, string>, i: number) =>
+  Object.fromEntries(Object.entries(errors).flatMap(([k, v]) => (k.startsWith(`children.${i}.friends`) ? [[k.slice(`children.${i}.`.length), v]] : [])));
+
 /** The moment after Sign up (copy §8): the reference, each child's tag and line, the pay card with the club's words. */
 function Confirmation({ result, seasonName, orgName, statusHref, forecast }: {
   result: Result;
@@ -425,6 +449,13 @@ function Confirmation({ result, seasonName, orgName, statusHref, forecast }: {
               )}
               {c.outcome === 'waitlisted' && was?.kind === 'spot' && (
                 <p className={styles.fitDim}>A spot filled while you were signing up, so {c.firstName} joined the waitlist.</p>
+              )}
+              {/* Board Ready Stage 1 (tab 2): each child's own code, with the same Copy as "Your sign-up". */}
+              {c.friendCode && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <div className={styles.resultHead}><span className={styles.fitDim} style={{ marginTop: 0 }}>{FW.codeLabel}</span><FriendCodeRow code={c.friendCode} childName={c.firstName} /></div>
+                  <p className={styles.codeShare}>{FW.codeShare(c.firstName)}</p>
+                </div>
               )}
             </div>
           );

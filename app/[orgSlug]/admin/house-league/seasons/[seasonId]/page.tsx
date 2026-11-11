@@ -22,6 +22,7 @@ import { useCallback, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Check, ExternalLink, Minus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
 import { ClubSection, EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
@@ -362,7 +363,7 @@ export default function SeasonOverviewPage() {
 
       {/* The season, then how it takes registrations, then the divisions inside it — the order a coach sets it up. */}
       <SeasonBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} />
-      <RegistrationBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} door={regDoor} charges={charges} openSignal={openRegistration} />
+      <RegistrationBlock season={season} canEdit={canRun} orgSlug={orgSlug} onSaved={changed} door={regDoor} charges={charges} openSignal={openRegistration} friendsPlan={hasOrgVenueLibrary(currentOrg?.planId)} />
 
       <DivisionsBlock
         season={season}

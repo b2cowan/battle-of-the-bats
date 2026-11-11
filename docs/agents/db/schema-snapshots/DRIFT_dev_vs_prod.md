@@ -1,23 +1,24 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-10 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-11 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 506 divergence(s)** across dev/prod.
+**⚠️ 558 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 10 | 6 | — |
-| Columns | 176 | 59 | 1 |
-| Indexes | 50 | 26 | 0 |
-| Constraints | 36 | 28 | — |
-| RLS / CHECK | 84 | 26 | 0 (RLS state) |
+| Tables | 11 | 6 | — |
+| Columns | 198 | 59 | 1 |
+| Indexes | 58 | 26 | 0 |
+| Constraints | 44 | 28 | — |
+| RLS / CHECK | 97 | 26 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (10)
+### Only in DEV (11)
 - `bank_check_waiting`
 - `family_calendar_feeds`
 - `family_invitations`
 - `family_invite_stops`
+- `league_friend_requests`
 - `legal_acceptances`
 - `platform_charge_tax_looks`
 - `platform_charge_tax_records`
@@ -34,7 +35,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (176)
+### Only in DEV (198)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -81,10 +82,32 @@
 - `family_links.child_id`
 - `family_links.ended_by`
 - `family_links.invited_as`
+- `league_friend_requests.code_entered`
+- `league_friend_requests.created_at`
+- `league_friend_requests.decided_at`
+- `league_friend_requests.decided_by`
+- `league_friend_requests.id`
+- `league_friend_requests.kept_apart_at`
+- `league_friend_requests.kept_apart_by`
+- `league_friend_requests.mark`
+- `league_friend_requests.matched_registration_id`
+- `league_friend_requests.note`
+- `league_friend_requests.org_id`
+- `league_friend_requests.reason`
+- `league_friend_requests.registration_id`
+- `league_friend_requests.season_id`
+- `league_friend_requests.slot`
+- `league_friend_requests.state`
+- `league_friend_requests.typed_first`
+- `league_friend_requests.typed_last`
+- `league_friend_requests.typed_parent`
+- `league_friend_requests.updated_at`
 - `league_placement_emails.changes`
+- `league_registrations.friend_code`
 - `league_registrations.told_at`
 - `league_registrations.told_team_id`
 - `league_season_notices.skipped_count`
+- `league_seasons.friend_requests_max`
 - `legal_acceptances.accepted_at`
 - `legal_acceptances.box_text`
 - `legal_acceptances.door`
@@ -277,7 +300,7 @@
 - `family_links.rep_team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (50)
+### Only in DEV (58)
 - `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
@@ -304,6 +327,14 @@
 - `family_invite_stops_pkey`
 - `family_links_child_id_idx`
 - `family_links_live_child_uniq`
+- `league_friend_requests_decided_by_idx`
+- `league_friend_requests_kept_apart_by_idx`
+- `league_friend_requests_matched_idx`
+- `league_friend_requests_org_idx`
+- `league_friend_requests_pkey`
+- `league_friend_requests_season_idx`
+- `league_friend_requests_slot_uniq`
+- `league_registrations_friend_code_uniq`
 - `league_registrations_told_team_idx`
 - `legal_acceptances_pkey`
 - `legal_acceptances_user_idx`
@@ -361,7 +392,7 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (36)
+### Only in DEV (44)
 - `bank_check_waiting.bank_check_waiting_added_by_fkey`
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
@@ -382,6 +413,14 @@ _none_
 - `family_invite_stops.family_invite_stops_org_id_fkey`
 - `family_invite_stops.family_invite_stops_pkey`
 - `family_links.family_links_child_id_fkey`
+- `league_friend_requests.league_friend_requests_decided_by_fkey`
+- `league_friend_requests.league_friend_requests_kept_apart_by_fkey`
+- `league_friend_requests.league_friend_requests_matched_registration_id_fkey`
+- `league_friend_requests.league_friend_requests_org_id_fkey`
+- `league_friend_requests.league_friend_requests_pkey`
+- `league_friend_requests.league_friend_requests_registration_id_fkey`
+- `league_friend_requests.league_friend_requests_season_id_fkey`
+- `league_friend_requests.league_friend_requests_slot_uniq`
 - `league_registrations.league_registrations_told_team_fk`
 - `legal_acceptances.legal_acceptances_pkey`
 - `legal_acceptances.legal_acceptances_user_id_fkey`
@@ -433,7 +472,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (84)
+### CHECK only in DEV (97)
 - `bank_check_waiting.bank_check_waiting_added_shape`
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
@@ -449,8 +488,21 @@ _none_
 - `family_links.family_links_ended_by_check`
 - `family_links.family_links_invited_as_check`
 - `family_links.family_links_made_on_entry_ck`
+- `league_friend_requests.league_friend_requests_code_entered_check`
+- `league_friend_requests.league_friend_requests_mark_check`
+- `league_friend_requests.league_friend_requests_named`
+- `league_friend_requests.league_friend_requests_not_self`
+- `league_friend_requests.league_friend_requests_note_check`
+- `league_friend_requests.league_friend_requests_reason_check`
+- `league_friend_requests.league_friend_requests_slot_check`
+- `league_friend_requests.league_friend_requests_state_check`
+- `league_friend_requests.league_friend_requests_typed_first_check`
+- `league_friend_requests.league_friend_requests_typed_last_check`
+- `league_friend_requests.league_friend_requests_typed_parent_check`
 - `league_placement_emails.league_placement_emails_changes_check`
+- `league_registrations.league_registrations_friend_code_check`
 - `league_season_notices.league_season_notices_skipped_count_check`
+- `league_seasons.league_seasons_friend_requests_max_check`
 - `legal_acceptances.legal_acceptances_door_check`
 - `legal_acceptances.legal_acceptances_text_shape`
 - `legal_acceptances.legal_acceptances_version_shape`

@@ -119,14 +119,15 @@ describe('the family’s page opens the whole sign-up', () => {
     assert.match(SIGNUP_STATUS, /\.eq\('signup_ref', anchor\.signup_ref as string\)/);
     assert.match(SIGNUP_STATUS, /q = anchor\.guardian_email \? q\.eq\('guardian_email', anchor\.guardian_email as string\) : q\.is\('guardian_email', null\)/);
     assert.match(DOOR, /const rows = await signupRowsFromAnchor\(anchor\)/);
-    assert.match(LINK_PAGE, /buildSignupStatus\(season, org\.name, link\.rows\)/);
+    // Board Ready Stage 1: the friends maximum rides along; the rows are still only the link's.
+    assert.match(LINK_PAGE, /buildSignupStatus\(season, org\.name, link\.rows, friendMaxFor\(org\.planId, season\.friendRequestsMax\)\)/);
     assert.match(SIGNUP_STATUS, /const registrations = rows\.map\(/);
   });
   it('shows the club’s how-to-pay words only while an accepted child owes something', () => {
     assert.match(SIGNUP_STATUS, /howToPay: owes \? season\.howToPay : null/);
   });
   it('12b: the pay block covers the whole sign-up, so only a link the door opened carries it', () => {
-    assert.match(LINK_PAGE, /link\.ok\s*\? await Promise\.all\(\[buildSignupStatus\(season, org\.name, link\.rows\), buildLeaguePayView\(link\.registrationId, contactEmail\)\]\)/);
+    assert.match(LINK_PAGE, /link\.ok\s*\? await Promise\.all\(\[buildSignupStatus\(season, org\.name, link\.rows, friendMaxFor\(org\.planId, season\.friendRequestsMax\)\), buildLeaguePayView\(link\.registrationId, contactEmail\)\]\)/);
   });
   it('12b: the status page draws no greyed Pay now — THE one pay block while the club takes card payments, none otherwise (A6)', () => {
     assert.doesNotMatch(STATUS, /Online payment isn’t available yet/);

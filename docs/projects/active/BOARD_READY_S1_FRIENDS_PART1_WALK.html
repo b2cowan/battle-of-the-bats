@@ -1,0 +1,426 @@
+<title>Friends At Sign-up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready · Stage 1 friend requests · Part 1, the family's side · Owner QA Ledger §510</span>
+    <h1>A parent can name a child's friends at sign-up</h1>
+    <p class="lead">On a club with League Plus or Club, each child's card on the house-league sign-up form now asks “Who would you like Maya to play with?” under the division line: up to the club's maximum, by name or by the other family's friend code. Each child gets a friend code, shown with Copy on the confirmation screen and on “Your sign-up”, and as text in the confirmation email. A family can change its requests on “Your sign-up” until that child's division has its teams made. The club sets the maximum (None, 1 or 2) on the season's Overview. Four walks, one purpose each. About 25 minutes.</p>
+    <p class="lead">What the registrar does with the requests (the Friend requests view) is Part 2; the draft keeping friends together is Part 3. Neither is in this walk.</p>
+    <p class="lead">Written Nov 11, 2026 against the dev site. Nothing here is real data: the clubs, the children and the families are test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Walk 1</dt><dd><code>league-owner@dev.local</code> · password <code>devpass123</code><br>The owner of <b>Dev League Org</b> (League Plus), season <b>Walk Summer 2027</b> (registration open, no teams made yet).</dd>
+      <dt>Walks 2 and 3</dt><dd><b>Signed out</b> (a private window): you are a family. Use an inbox you can read for the parent's email (a <code>+tag</code> address on your own works), so you can open the confirmation email.</dd>
+      <dt>Walk 4</dt><dd>Signed out again, on <b>UAT Rep Club</b> (Club), season <b>2026 Fall House League</b>, where every division already has its teams made.</dd>
+      <dt>Phone</dt><dd>Steps marked <b>phone</b> use your desk browser's device toolbar at <b>390 px</b> wide.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>No script to run.</b> Walks 2 to 4 make new test sign-ups; that is expected.</li>
+      <li><b>Walk the parts in order, 1 to 4.</b> Walk 3 uses the sign-up you make in walk 2. Each walk opens with a stop check.</li>
+      <li>The drawings these screens were built to: <a href="https://claude.ai/artifact/KxYr8LW6r5yvsUJ7FmvPL8">tabs 1, 2 and 3 (top)</a>.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don't re-do these)</h2>
+    <ul class="plain">
+      <li>The question is absent on every plan without friend requests (Tournament, Tournament Plus, League, a coach's team), whatever the season's setting says; the setting itself is refused there too.</li>
+      <li>Every child gets a code on sign-up, by every route a sign-up is made (the family's form, a staff add, a carry-over). The 404 sign-ups already on dev in live seasons were given one; all 404 pass the form's own typo check. Sign-ups in finished seasons got none.</li>
+      <li>The typo check catches about 98 in 100 single mistyped characters, with no lookup: nothing the form says tells a visitor whether a child or a code is registered.</li>
+      <li>The family's page and its Change answer only with what that family typed: never the name behind a code, never whether it matched.</li>
+      <li>The two privacy lines are word for word as /legal approved them. The names table is readable by the server alone.</li>
+      <li>Typecheck and lint are clean, plus the sign-up, link and family-page tests and two new friend test files.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: does the question sit naturally in the child's card, is the code easy to find and pass on, and does each screen say only what the family needs?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "board-ready-s1-friends-p1-walk-v1";
+  var PAGE = "Board Ready · Stage 1 friend requests · Part 1 · Owner QA Ledger §510";
+  var WALKS = [
+ {
+  "id": "F1",
+  "title": "The club sets the maximum",
+  "job": "Dev League Org · owner · computer",
+  "forText": "The season’s Overview › Registration block has a new “Friend requests” row. The club picks None, 1 or 2 friends per child; None hides the question on the form.",
+  "passes": "The row reads “Up to 2 per child” with the group-of-3 line under it; editing shows “Friends a family can name per child” as a dropdown (None: don’t ask · 1 · 2) that saves as you pick; None removes the question from the form; 1 and 2 change the form’s wording.",
+  "notIn": "The sign-up form itself (walk 2).",
+  "who": "league-owner@dev.local",
+  "where": "localhost:3000/dev-league-org/admin → House league → Walk Summer 2027 → Overview.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <b>Walk Summer 2027<\/b>’s Overview and find the <b>Registration<\/b> block.",
+    "s": "A row <b>Friend requests<\/b> reads <b>Up to 2 per child<\/b>, and under it in smaller type: “Groups in the draft hold at most 3 children, brothers and sisters included.” It sits just above <b>New registrations<\/b>."
+   },
+   {
+    "d": "Press the block’s pencil.",
+    "s": "Above the two checkboxes there is a dropdown <b>Friends a family can name per child<\/b> showing <b>2<\/b>, with the hint “None hides the question on the sign-up form. Groups in the draft hold at most 3 children, brothers and sisters included, so a third friend could never be kept together.”"
+   },
+   {
+    "d": "Pick <b>None: don’t ask<\/b>, then press ✓.",
+    "s": "The save pill shows it saved. The row now reads <b>None: the sign-up form doesn’t ask.<\/b> with no line under it."
+   },
+   {
+    "d": "In a private window, open <code>localhost:3000/dev-league-org/league/walk-summer-2027/register<\/code> and type a date of birth of <b>May 14, 2019<\/b>.",
+    "s": "The U8 line appears under the date of birth. There is <b>no<\/b> “Who would you like … to play with?” question anywhere on the form."
+   },
+   {
+    "d": "Back on the Overview, set it to <b>1<\/b>, then reload the form and type the same date of birth.",
+    "s": "The question is back, and its help line says “Up to 1 friend who is signing up for U8.”"
+   },
+   {
+    "d": "Set it back to <b>2<\/b> for the next walks.",
+    "s": "The row reads <b>Up to 2 per child<\/b> again."
+   }
+  ]
+ },
+ {
+  "id": "F2",
+  "title": "The parent’s question on the form",
+  "job": "Signed out · a family · computer, then phone",
+  "forText": "Inside each child’s card, under the division line: “Who would you like Maya to play with?”, one friend at a time, by name or by friend code.",
+  "passes": "The question appears only once the date of birth finds a division and names it; “+ Add a friend” adds a block with first name, last name and their parent’s name; the code swap works and a mistyped code says so at once; at 2 the add button gives way to “Maya can name up to 2 friends.”; the two privacy lines show once a friend is named; the sign-up goes through.",
+  "notIn": "What happens after Sign up (walk 3).",
+  "who": "Signed out (a private window).",
+  "where": "localhost:3000/dev-league-org/league/walk-summer-2027/register",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open the form. In Child 1 type <b>Maya<\/b> <b>Okafor<\/b>, then a date of birth of <b>May 14, 2019<\/b>.",
+    "s": "Under the U8 line (spots left, price) a hairline, then <b>Who would you like Maya to play with?<\/b>, the help line “Optional. Up to 2 friends who are signing up for U8. The club tries to keep friends together but can’t promise every request.” and a <b>+ Add a friend<\/b> button. Before the date of birth there was no question."
+   },
+   {
+    "d": "Press <b>+ Add a friend<\/b>.",
+    "s": "A block <b>Friend 1<\/b> with a <b>Remove<\/b> link, First name and Last name side by side, <b>Their parent’s name<\/b> (placeholder “Helps the club find them”) and the link “Have a friend code? Enter it instead”. Under the block: <b>+ Add a friend<\/b>, then “Only name a child whose family is happy for you to.” and the shield line “Only the club staff who handle sign-ups see these names, and only to put friends on the same team. They are deleted after the season.”"
+   },
+   {
+    "d": "Type <b>Liam<\/b> <b>Chen<\/b>, parent <b>Grace Chen<\/b>. Press <b>+ Add a friend<\/b> again, then “Have a friend code? Enter it instead” in Friend 2.",
+    "s": "Friend 2 shows one <b>Friend code<\/b> box with “The 6-letter code from the other family’s sign-up page.” and the link “Enter a name instead”. The add button is gone; in its place: “Maya can name up to 2 friends.”"
+   },
+   {
+    "d": "In the code box type <b>K7M 4QA<\/b>.",
+    "s": "As soon as the sixth character is in, the box turns red and says “That code has a typo. Check it with the other family.” Nothing was looked up. (Walk 3 uses a real code.)"
+   },
+   {
+    "d": "Press <b>Remove<\/b> on Friend 2.",
+    "s": "Friend 2 goes; <b>+ Add a friend<\/b> is back."
+   },
+   {
+    "d": "Press <b>+ Add another child<\/b>. Type <b>Theo Okafor<\/b>, born <b>March 3, 2015<\/b>.",
+    "s": "Theo’s card shows the U12 line and its own question, “Who would you like Theo to play with?”, naming U12. Leave Theo with no friends."
+   },
+   {
+    "d": "<b>Phone<\/b> (390 px): look at Maya’s card.",
+    "s": "The friend block stacks: First name, Last name and the parent’s name one under another, each a full-width box; Remove and the code link are easy to tap. Nothing runs off the edge."
+   },
+   {
+    "d": "Back on a computer, fill the parent (your own inbox), tick the waiver and press <b>Sign up 2 children<\/b>.",
+    "s": "The sign-up goes through to the confirmation screen (walk 3 starts there)."
+   }
+  ]
+ },
+ {
+  "id": "F3",
+  "title": "The friend code after sign-up",
+  "job": "Signed out · the same family · computer, phone and your inbox",
+  "forText": "Each child gets a code the moment the sign-up is received: on the confirmation screen, in the email (text, never a link) and on “Your sign-up”, with “Plays with” and Change.",
+  "passes": "Each child shows its own code with Copy; the email carries the neutral sentence with the code as text; “Your sign-up” shows the code, “Plays with Liam Chen”, Change for Maya and “No one named. Add a friend” for Theo; a code entered by another family is accepted and only ever shown as the code.",
+  "notIn": "A division whose teams are made (walk 4). What the registrar sees (Part 2).",
+  "who": "Signed out; your inbox.",
+  "where": "The confirmation screen from walk 2, then the email’s “Your sign-up” button.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: look at the confirmation screen.",
+    "s": "Maya’s and Theo’s cards each end with <b>Friend code<\/b> and a code like <b>K7M 4QP<\/b> (six characters, a space after three) with a <b>Copy<\/b> button, and under it: “If another family wants Maya on their child’s team, they can enter this code on their sign-up.” The two codes differ."
+   },
+   {
+    "d": "Press Maya’s <b>Copy<\/b>.",
+    "s": "It reads <b>Copied<\/b> for two seconds, then <b>Copy<\/b> again. Paste it somewhere: you get the six characters."
+   },
+   {
+    "d": "Open the confirmation email.",
+    "s": "Under the registration details, one line per child: “Maya’s friend code: <b>K7M 4QP<\/b>” and on the next line “If another family wants Maya on their child’s team, they can enter this code on their sign-up.” The code is plain text, not a link. Nothing invites you to share it."
+   },
+   {
+    "d": "Press the email’s <b>Your sign-up<\/b> button.",
+    "s": "Maya’s row: Division U8, Team, Fee, then <b>Friend code<\/b> with Copy, the same sentence, <b>Plays with · Liam Chen<\/b> and a <b>Change<\/b> link. Theo’s row: his own code, then <b>Plays with · No one named. Add a friend<\/b>."
+   },
+   {
+    "d": "On Maya’s row press <b>Change<\/b>, swap Liam to a code, type Theo’s code from his row, and press <b>Save<\/b>.",
+    "s": "It refuses nothing (a brother is a friend too) and saves: “Plays with” now reads <b>Code …<\/b> with Theo’s code, never his name, and “Saved.” shows under it."
+   },
+   {
+    "d": "Press <b>Change<\/b> again and type <b>Maya’s own<\/b> code into the code box. Save.",
+    "s": "The box says “That’s Maya’s own code. Enter a friend’s code instead.” and nothing is saved. Press Cancel."
+   },
+   {
+    "d": "In a new private window, start a new sign-up: <b>Ava Lindqvist<\/b>, born <b>June 2, 2019<\/b>, and enter <b>Maya’s<\/b> code as her friend. Sign up.",
+    "s": "The form never shows a name behind the code; the sign-up goes through. Ava’s own confirmation shows her own code."
+   },
+   {
+    "d": "<b>Phone<\/b> (390 px): open Maya’s “Your sign-up” page again.",
+    "s": "Copy is the bare copy symbol beside the code (no word); everything else reads as on the computer."
+   }
+  ]
+ },
+ {
+  "id": "F4",
+  "title": "Closed once the teams are made",
+  "job": "Signed out · a family · computer",
+  "forText": "A family can change friend requests until their child’s division has its teams made. After that the lines stay as a record, and Change goes.",
+  "passes": "“Your sign-up” in a division with teams made shows the code and “Plays with” as typed, no Change and no Add a friend, and the line “Friend requests closed when the teams were made.”",
+  "notIn": "Making teams (the draft is Part 3).",
+  "who": "Signed out (a private window).",
+  "where": "localhost:3000/uat-rep-club/league/2026-fall-house-league/register",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open the form. Child <b>Noah Patel<\/b>, born <b>April 9, 2015<\/b>.",
+    "s": "The U9 Rookie line shows, with the friend question under it (UAT Rep Club is on Club)."
+   },
+   {
+    "d": "Add a friend <b>Jon Baptiste<\/b>, fill the parent (your inbox), and sign up.",
+    "s": "The confirmation shows Noah’s friend code with Copy, as in walk 3."
+   },
+   {
+    "d": "Open <b>Your sign-up<\/b> from the confirmation’s link.",
+    "s": "Noah’s row: his code with Copy, <b>Plays with · Jon Baptiste<\/b>, <b>no<\/b> Change link, and under it “Friend requests closed when the teams were made.” (U9 Rookie’s teams were made on Oct 28.)"
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "F1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "F1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "F1" }; save(); render();
+  });
+  render();
+})();
+</script>

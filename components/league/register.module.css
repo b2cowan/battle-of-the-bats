@@ -155,3 +155,30 @@ p.checkError {
 .nofitTitle { margin: 0; font-weight: 700; color: var(--club-text); }
 .results { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0; text-align: left; }
 .resultHead { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; color: var(--club-text); }
+
+/* ── Board Ready Stage 1: friend requests (drawing tabs 1–2) ──
+   The question sits in the child's section under the division line, a hairline above it. Friends are hairline blocks
+   inside the section, never nested cards. Type steps only (14 · 16 px). */
+.fq { display: flex; flex-direction: column; gap: 0.6rem; margin: 0.5rem 0; padding-top: 0.85rem; border-top: 1px solid var(--club-line); }
+.fqTitle { margin: 0; font: 600 1rem var(--club-text-face); color: var(--club-text); }
+.fqDim { margin: 0; font-size: 0.875rem; color: var(--club-soft); }
+.friend { display: flex; flex-direction: column; gap: 0.25rem; padding-top: 0.6rem; border-top: 1px solid var(--club-line); }
+.friendHead { display: flex; justify-content: space-between; align-items: center; font: 600 0.875rem var(--club-text-face); color: var(--club-soft); }
+.addFriend { align-self: flex-start; }
+.codeInput { font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; max-width: 12rem; }
+.priv { display: flex; gap: 0.4rem; align-items: flex-start; margin: 0; font-size: 0.875rem; color: var(--club-soft); }
+.privIcon { flex: none; margin-top: 0.15rem; }
+
+/* The code and its Copy: the family Copy row's look — a small secondary button labelled at a desk, the bare symbol at 44 px
+   on a phone. The word holds "Copied"'s width so the button does not jump when it flips. */
+.codeBox { display: inline-flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.codeValue { font: 600 1rem var(--club-text-face); letter-spacing: 0.12em; color: var(--club-text); }
+.codeCopy { gap: 0.5rem; }
+.codeCopy > svg { flex: none; }
+.codeCopyLabel { display: inline-block; min-width: 3.4em; text-align: left; }
+.codeCopy:focus-visible { outline: 2px solid var(--club-ink); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .codeCopy { width: 44px; min-height: 44px; padding: 0; gap: 0; border-color: transparent; background: none; color: var(--club-ink); justify-content: center; }
+  .codeCopyLabel { display: none; }
+}
+.codeShare { margin: 0.35rem 0 0; font-size: 0.875rem; color: var(--club-soft); }

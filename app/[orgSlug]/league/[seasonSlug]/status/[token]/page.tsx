@@ -17,6 +17,7 @@ import { placedOnSignup } from '@/lib/family-home';
 import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
 import card from '../EmailMyLinkForm.module.css';
+import { friendMaxFor } from '@/lib/league-friends';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,7 +57,7 @@ export default async function YourSignupPage({
 
   const link = await openSignupLink(token, { at: { orgId: org.id, seasonId: season.id } });
   const [found, pay] = link.ok
-    ? await Promise.all([buildSignupStatus(season, org.name, link.rows), buildLeaguePayView(link.registrationId, contactEmail)])
+    ? await Promise.all([buildSignupStatus(season, org.name, link.rows, friendMaxFor(org.planId, season.friendRequestsMax)), buildLeaguePayView(link.registrationId, contactEmail)])
     : [null, null];
   // Signed-in family accounts Stage 4a, Part 6.6: the way back to the app, once a child on this sign-up is on a team (tier on only).
   const placed = link.ok ? await placedOnSignup(link.rows, season.status) : [];

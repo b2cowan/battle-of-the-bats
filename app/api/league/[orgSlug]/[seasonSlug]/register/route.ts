@@ -24,6 +24,9 @@ import { readSecondParentEmail, secondParentRefusalWords, SECOND_PARENT_WORDS as
 import { stoppedSecondParentRefusal } from '@/lib/league-second-parent-stop';
 import { went } from '@/lib/league-second-parent-mail';
 import { hasSecondParentStop, withSecondParentStop } from '@/lib/league-second-parent-footer';
+import { friendMaxFor, readFriends, type FriendIn } from '@/lib/league-friends';
+import { readFriendCodes, saveFriendRequests } from '@/lib/league-friends-server';
+import { showFriendCode } from '@/lib/league-friend-code';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +43,10 @@ export const dynamic = 'force-dynamic';
  *      its own outcome (9b·5): accepted, received, waitlisted — or refused as already signed up. No all-or-nothing.
  *   5. One reference ties the children together; one email lists them all; one notice reaches the club's Needs attention.
  *   6. The unticked email-consent line, when ticked, files one consent row for the sign-up (CASL).
+ *   7. Board Ready Stage 1: each child's friends (up to the club's maximum, on a plan with friend requests), checked with
+ *      the rest of the form and stored once the child is placed; a code resolves then. Every child gets a friend code
+ *      (mig 461's trigger), shown on the confirmation and in the email while the club asks for friends. A friend that
+ *      fails to store never fails the sign-up.
  * The email and the notice are AWAITED (each in its own try): the email carries the family's reference and how to pay, and
  * work left running after the response can be dropped on the host (Next after() on Amplify). Neither fails the sign-up.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -60,7 +67,7 @@ function str(v: unknown, max?: number): string | null {
   return max ? t.slice(0, max) : t;
 }
 
-type ChildIn = { firstName: string | null; lastName: string | null; dob: string | null; divisionId: string | null; jersey: string | null; position: string | null; notes: string | null };
+type ChildIn = { firstName: string | null; lastName: string | null; dob: string | null; divisionId: string | null; jersey: string | null; position: string | null; notes: string | null; friends: FriendIn[] };
 
 /** A family's reference: eight characters they can read back, to quote to the club (it opens nothing). */
 function newReference(): string {
@@ -102,10 +109,17 @@ export const POST = withObservability(async (req: Request,
   if (rawChildren.length > MAX_CHILDREN) {
     return NextResponse.json({ error: `You can sign up ${MAX_CHILDREN} children at once. Sign up again for more.` }, { status: 400 });
   }
-  const kids: ChildIn[] = rawChildren.map(c => ({
-    firstName: str(c.firstName, 80), lastName: str(c.lastName, 80), dob: str(c.dateOfBirth), divisionId: str(c.divisionId),
-    jersey: str(c.jerseyPref, 3), position: str(c.positionPref, 60), notes: str(c.notes, 500),
-  }));
+  // 7. Friends: asked only on a plan with friend requests and a season above None.
+  const friendMax = friendMaxFor(org.planId, season.friendRequestsMax);
+  const friendErrors: Record<string, string> = {};
+  const kids: ChildIn[] = rawChildren.map((c, i) => {
+    const read = readFriends(c.friends, friendMax);
+    for (const [k, v] of Object.entries(read.errors)) friendErrors[`children.${i}.${k}`] = v;
+    return {
+      firstName: str(c.firstName, 80), lastName: str(c.lastName, 80), dob: str(c.dateOfBirth), divisionId: str(c.divisionId),
+      jersey: str(c.jerseyPref, 3), position: str(c.positionPref, 60), notes: str(c.notes, 500), friends: read.friends,
+    };
+  });
 
   const guardianFirst = str(body.guardianFirstName, 80);
   const guardianLast  = str(body.guardianLastName, 80);
@@ -122,7 +136,7 @@ export const POST = withObservability(async (req: Request,
   const bands = divisions.some(d => d.bornFromYear != null || d.bornToYear != null);
   const cutoff = cutoffFor(org.birthdayCutoffs, season.sport);
 
-  const errors: Record<string, string> = {};
+  const errors: Record<string, string> = { ...friendErrors };
   const chosen: (typeof divisions[number] | 'nofit')[] = [];
   kids.forEach((k, i) => {
     const at = `children.${i}`;
@@ -196,6 +210,15 @@ export const POST = withObservability(async (req: Request,
       results.push({ ...base, divisionName: d.name, status: 'pending_review', fee, outcome: placed.refusal === 'duplicate' ? 'duplicate' : 'nofit' });
       continue;
     }
+    if (k.friends.length) {
+      try {
+        await saveFriendRequests({ orgId: org.id, seasonId: season.id, registrationId: placed.placed.id, friends: k.friends });
+      } catch (e) {
+        // Never the error object: a constraint error echoes the failing row, which holds a typed child's name (/legal).
+        const err = e as { code?: string; message?: string };
+        console.error('[league-register] saving friend requests failed:', err?.code ?? 'no code', String(err?.message ?? '').slice(0, 80));
+      }
+    }
     results.push({
       ...base, id: placed.placed.id, divisionName: d.name, status: placed.placed.status as Result['status'],
       waitlistPosition: placed.placed.waitlistPosition, fee, outcome: placed.placed.status as Result['outcome'],
@@ -229,8 +252,12 @@ export const POST = withObservability(async (req: Request,
   const [online, pay] = anyAccepted
     ? await Promise.all([leagueMailLink(placedKids[0].id!).then(l => l.online), buildLeaguePayView(placedKids[0].id!, contactEmail)])
     : [null, null];
+  // Each child's friend code, shown only while the club asks for friends (a read that fails shows none).
+  const codes = friendMax > 0 ? await readFriendCodes(placedKids.map(r => r.id!)).catch(() => new Map<string, string | null>()) : new Map<string, string | null>();
+  const codeOf = (id: string | null) => { const c = id ? codes.get(id) : null; return c ? showFriendCode(c) : null; };
   const children: PlacedChild[] = placedKids.map(r => ({
     firstName: r.firstName, lastName: r.lastName, divisionName: r.divisionName, status: r.status, waitlistPosition: r.waitlistPosition, fee: r.fee,
+    friendCode: codeOf(r.id),
   }));
   // The club's face never throws (a face that cannot be read is a plainer email), so both parents' copies share it.
   const face = await systemMailFace(org);
@@ -301,7 +328,7 @@ export const POST = withObservability(async (req: Request,
     signupToken: leaguePayToken(placedKids[0].id!, 0),
     children: results.map(r => ({
       firstName: r.firstName, lastName: r.lastName, outcome: r.outcome, status: r.status, divisionName: r.divisionName,
-      waitlistPosition: r.waitlistPosition, fee: r.fee,
+      waitlistPosition: r.waitlistPosition, fee: r.fee, friendCode: codeOf(r.id),
     })),
     // The old single-child reply, kept for any caller that reads it.
     id: placedKids[0].id, status: placedKids[0].status, waitlistPosition: placedKids[0].waitlistPosition,

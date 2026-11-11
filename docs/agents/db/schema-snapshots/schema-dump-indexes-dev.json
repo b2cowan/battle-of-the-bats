@@ -1505,6 +1505,41 @@
     "indexdef": "CREATE INDEX league_email_log_season_id_idx ON public.league_email_log USING btree (season_id)"
   },
   {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_decided_by_idx",
+    "indexdef": "CREATE INDEX league_friend_requests_decided_by_idx ON public.league_friend_requests USING btree (decided_by) WHERE (decided_by IS NOT NULL)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_kept_apart_by_idx",
+    "indexdef": "CREATE INDEX league_friend_requests_kept_apart_by_idx ON public.league_friend_requests USING btree (kept_apart_by) WHERE (kept_apart_by IS NOT NULL)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_matched_idx",
+    "indexdef": "CREATE INDEX league_friend_requests_matched_idx ON public.league_friend_requests USING btree (matched_registration_id) WHERE (matched_registration_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_org_idx",
+    "indexdef": "CREATE INDEX league_friend_requests_org_idx ON public.league_friend_requests USING btree (org_id)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_friend_requests_pkey ON public.league_friend_requests USING btree (id)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_season_idx",
+    "indexdef": "CREATE INDEX league_friend_requests_season_idx ON public.league_friend_requests USING btree (season_id)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_slot_uniq",
+    "indexdef": "CREATE UNIQUE INDEX league_friend_requests_slot_uniq ON public.league_friend_requests USING btree (registration_id, slot)"
+  },
+  {
     "tablename": "league_game_changes",
     "indexname": "league_game_changes_game_idx",
     "indexdef": "CREATE INDEX league_game_changes_game_idx ON public.league_game_changes USING btree (game_id, created_at)"
@@ -1833,6 +1868,11 @@
     "tablename": "league_registrations",
     "indexname": "league_registrations_division_idx",
     "indexdef": "CREATE INDEX league_registrations_division_idx ON public.league_registrations USING btree (division_id)"
+  },
+  {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_friend_code_uniq",
+    "indexdef": "CREATE UNIQUE INDEX league_registrations_friend_code_uniq ON public.league_registrations USING btree (season_id, friend_code) WHERE (friend_code IS NOT NULL)"
   },
   {
     "tablename": "league_registrations",

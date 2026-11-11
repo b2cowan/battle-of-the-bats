@@ -320,6 +320,24 @@ board's two questions:
     Re-check Québec Law 25 when the first Québec club signs.
   - **Route to `/review` at build:** anonymous free text reaches the Excel/CSV exports. Check formula neutralization in
     the shared table export before the friend columns land.
+  - **Part 1 (the family side + the setting) BUILT 2026-11-11**, to drawing tabs 1, 2, 3 (top): the question in each
+    child's card under the division line, the friend code (check letter, no lookup) on the confirmation, in the email
+    and on "Your sign-up" with Copy, "Plays with" + Change until the division's teams are made, and Overview ›
+    Registration "Friend requests" (None · 1 · 2). Mig **461** applied to **dev** 2026-11-11 (404 live sign-ups given a
+    code, all passing the form's check; prod step in `MANUAL_PROD_STEPS.json`). `/legal` re-check, `/marketing` words
+    pass (5 changes applied), `/docs` (house-league help), `/review` run at the build; its fixes applied: a save is
+    one database transaction (a failed Change can no longer lose a family's set), the own-code message lands on its
+    block, a reopened season gives codes back, a code matches only a live sign-up, the change route logs no row.
+    Left: two simultaneous sign-ups drawing the same new code (about 1 in 33 million) would fail one insert. Walk **§510** (`BOARD_READY_S1_FRIENDS_PART1_WALK.html`).
+    Build decisions (not drawn, owner may overrule): a friend needs a first or a last name (a parent's name alone is
+    refused); a code that matches nobody waits in To confirm with no match; entering the child's own code is refused in
+    words; the friend block shows only once the division is known; the folding of finished friends at the maximum (a
+    "build detail" in tab 1) is not built.
+  - ⛔ **RELEASE GATE (`/legal`, 2026-11-11): Part 1 is NOT promoted to production without Part 2.** The form says the
+    names "are deleted after the season", and the season-finish purge, the 60-day backstop and "Delete request…" ship
+    in Part 2. Promote Parts 1 and 2 together (or drop that sentence, which `/legal` does not recommend). Also before
+    release: the privacy policy draft §5/§9 lines above (route to `/legal`). Re-read "Only the club staff who handle
+    sign-ups see these names" when Part 3 ships: the board must show names only to the Registrations seats.
 
 ### Stage 2 — Group email to coaches and volunteers (item 3)
 - [ ] **Email coaches** composer on the one club send window parts, on the colleague-mail path (reply-to the sender,

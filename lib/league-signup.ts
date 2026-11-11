@@ -54,6 +54,8 @@ export type PlacedChild = {
   waitlistPosition: number | null;
   /** The price recorded at sign-up (null: none set). */
   fee: number | null;
+  /** Board Ready Stage 1 (A10): the child's friend code, shown "K7M 4QP", only while the club asks for friends. */
+  friendCode?: string | null;
 };
 
 /** What an accepted child adds to "To pay". */

@@ -7688,6 +7688,186 @@
         "column_default": "0"
       },
       {
+        "table_name": "league_friend_requests",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 4,
+        "column_name": "registration_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 5,
+        "column_name": "slot",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 6,
+        "column_name": "typed_first",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 7,
+        "column_name": "typed_last",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 8,
+        "column_name": "typed_parent",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 9,
+        "column_name": "code_entered",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 10,
+        "column_name": "state",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'to_confirm'::text"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 11,
+        "column_name": "mark",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 12,
+        "column_name": "matched_registration_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 13,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 14,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 15,
+        "column_name": "decided_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 16,
+        "column_name": "decided_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 17,
+        "column_name": "kept_apart_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 18,
+        "column_name": "kept_apart_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 19,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 20,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "league_game_changes",
         "pos": 1,
         "column_name": "id",
@@ -9443,6 +9623,15 @@
         "column_default": null
       },
       {
+        "table_name": "league_registrations",
+        "pos": 47,
+        "column_name": "friend_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_schedule_emails",
         "pos": 1,
         "column_name": "id",
@@ -9936,6 +10125,15 @@
         "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 30,
+        "column_name": "friend_requests_max",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "2"
       },
       {
         "table_name": "league_slot_uses",
@@ -31662,6 +31860,48 @@
         "constraint_name": "league_email_log_sent_by_fkey"
       },
       {
+        "table_name": "league_friend_requests",
+        "column_name": "decided_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_friend_requests_decided_by_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "kept_apart_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_friend_requests_kept_apart_by_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "matched_registration_id",
+        "foreign_table": "league_registrations",
+        "foreign_column": "id",
+        "constraint_name": "league_friend_requests_matched_registration_id_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_friend_requests_org_id_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "registration_id",
+        "foreign_table": "league_registrations",
+        "foreign_column": "id",
+        "constraint_name": "league_friend_requests_registration_id_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_friend_requests_season_id_fkey"
+      },
+      {
         "table_name": "league_game_changes",
         "column_name": "division_id",
         "foreign_table": "league_divisions",
@@ -37887,6 +38127,41 @@
         "indexdef": "CREATE INDEX league_email_log_season_id_idx ON public.league_email_log USING btree (season_id)"
       },
       {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_decided_by_idx",
+        "indexdef": "CREATE INDEX league_friend_requests_decided_by_idx ON public.league_friend_requests USING btree (decided_by) WHERE (decided_by IS NOT NULL)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_kept_apart_by_idx",
+        "indexdef": "CREATE INDEX league_friend_requests_kept_apart_by_idx ON public.league_friend_requests USING btree (kept_apart_by) WHERE (kept_apart_by IS NOT NULL)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_matched_idx",
+        "indexdef": "CREATE INDEX league_friend_requests_matched_idx ON public.league_friend_requests USING btree (matched_registration_id) WHERE (matched_registration_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_org_idx",
+        "indexdef": "CREATE INDEX league_friend_requests_org_idx ON public.league_friend_requests USING btree (org_id)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_friend_requests_pkey ON public.league_friend_requests USING btree (id)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_season_idx",
+        "indexdef": "CREATE INDEX league_friend_requests_season_idx ON public.league_friend_requests USING btree (season_id)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_slot_uniq",
+        "indexdef": "CREATE UNIQUE INDEX league_friend_requests_slot_uniq ON public.league_friend_requests USING btree (registration_id, slot)"
+      },
+      {
         "tablename": "league_game_changes",
         "indexname": "league_game_changes_game_idx",
         "indexdef": "CREATE INDEX league_game_changes_game_idx ON public.league_game_changes USING btree (game_id, created_at)"
@@ -38215,6 +38490,11 @@
         "tablename": "league_registrations",
         "indexname": "league_registrations_division_idx",
         "indexdef": "CREATE INDEX league_registrations_division_idx ON public.league_registrations USING btree (division_id)"
+      },
+      {
+        "tablename": "league_registrations",
+        "indexname": "league_registrations_friend_code_uniq",
+        "indexdef": "CREATE UNIQUE INDEX league_registrations_friend_code_uniq ON public.league_registrations USING btree (season_id, friend_code) WHERE (friend_code IS NOT NULL)"
       },
       {
         "tablename": "league_registrations",
@@ -43837,6 +44117,78 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_code_entered_check",
+        "check_clause": "((code_entered IS NULL) OR (code_entered ~ '^[2-9A-HJ-NP-Z]{5}[A-HJ-NP-Y]$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_mark_check",
+        "check_clause": "((mark IS NULL) OR (mark = 'different_division'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_named",
+        "check_clause": "(((code_entered IS NOT NULL) AND (typed_first IS NULL) AND (typed_last IS NULL) AND (typed_parent IS NULL)) OR ((code_entered IS NULL) AND ((typed_first IS NOT NULL) OR (typed_last IS NOT NULL))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_not_self",
+        "check_clause": "((matched_registration_id IS NULL) OR (matched_registration_id <> registration_id))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_note_check",
+        "check_clause": "((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 280)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_reason_check",
+        "check_clause": "((reason IS NULL) OR (reason = ANY (ARRAY['different_division'::text, 'other'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_slot_check",
+        "check_clause": "((slot >= 1) AND (slot <= 2))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_state_check",
+        "check_clause": "(state = ANY (ARRAY['to_confirm'::text, 'confirmed'::text, 'not_signed_up'::text, 'cant_honour'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_typed_first_check",
+        "check_clause": "((typed_first IS NULL) OR ((char_length(typed_first) >= 1) AND (char_length(typed_first) <= 80)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_typed_last_check",
+        "check_clause": "((typed_last IS NULL) OR ((char_length(typed_last) >= 1) AND (char_length(typed_last) <= 80)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_typed_parent_check",
+        "check_clause": "((typed_parent IS NULL) OR ((char_length(typed_parent) >= 1) AND (char_length(typed_parent) <= 120)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_friend_requests",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "league_game_changes",
         "detail": "league_game_changes_check",
         "check_clause": "((kind = 'added'::text) = (before IS NULL))"
@@ -44108,6 +44460,12 @@
       {
         "kind": "CHECK",
         "table_name": "league_registrations",
+        "detail": "league_registrations_friend_code_check",
+        "check_clause": "((friend_code IS NULL) OR (friend_code ~ '^[2-9A-HJ-NP-Z]{5}[A-HJ-NP-Y]$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_registrations",
         "detail": "league_registrations_guardian_email_2_check",
         "check_clause": "((guardian_email_2 IS NULL) OR ((guardian_email_2 = lower(btrim(guardian_email_2))) AND (guardian_email_2 <> ''::text) AND (char_length(guardian_email_2) <= 200) AND (guardian_email_2 <> lower(btrim(guardian_email)))))"
       },
@@ -44206,6 +44564,12 @@
         "table_name": "league_season_notices",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_seasons",
+        "detail": "league_seasons_friend_requests_max_check",
+        "check_clause": "(friend_requests_max = ANY (ARRAY[0, 1, 2]))"
       },
       {
         "kind": "CHECK",

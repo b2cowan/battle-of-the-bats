@@ -28202,3 +28202,12 @@ performed over the shared working tree. The original walk result is not claimed 
 **Open owner steps (not part of this walk):** none new. The T6 call (§508) is still open.
 **Result:** owed.
 <!-- /§509 -->
+
+## §510 · Board Ready · Stage 1 friend requests · Part 1, the family's side — **on a club with League Plus or Club, each child's card on the house-league sign-up form asks "Who would you like {child} to play with?" under the division line (up to the club's maximum, by name or by the other family's friend code); each child gets a friend code, shown with Copy on the confirmation and on "Your sign-up" and as text in the confirmation email; a family changes its requests on "Your sign-up" until the division's teams are made; the club sets the maximum (None · 1 · 2) on the season's Overview** · built 2026-11-11 · walk owed
+<!-- §510 -->
+**Walk published 2026-11-11:** https://claude.ai/artifact/2BfsMZ7k3HrkabN3Zo5sM5 (source `docs/projects/active/BOARD_READY_S1_FRIENDS_PART1_WALK.html`, built by `.probe/friends/build-walk.cjs`); 4 walks, 25 checks. Build: Board Ready Stage 1 Part 1 (`BOARD_READY_S1_FRIEND_REQUESTS_BUILD_PROMPT.md`), to the ruled drawings https://claude.ai/artifact/KxYr8LW6r5yvsUJ7FmvPL8 tabs 1, 2 and 3 (top); rulings A2, A5, A8, A10, A11 (plan `BOARD_READY_PLAN.md` §5 Stage 1). Mig 461 applied to dev 2026-11-11.
+**Sign-in:** Dev League Org owner (`league-owner@dev.local` · `devpass123`) for walk 1; signed out (a family) for walks 2–4, on Dev League Org's *Walk Summer 2027* and UAT Rep Club's *2026 Fall House League*. No fixture script; walks 2–4 make test sign-ups.
+**Not walked (proved by the build's tests and probes):** the question absent on every plan without friend requests; a code on every sign-up by every route (404 dev codes backfilled, all passing the form's check); the typo check's rate; the family's page and Change answering only with what the family typed; the two /legal lines verbatim; the names table server-only.
+**Open owner steps (not part of this walk):** ⛔ release gate (`/legal`): Part 1 is not promoted without Part 2 (the purge the form promises). Build decisions listed in the plan's Part 1 note.
+**Result:** owed.
+<!-- /§510 -->

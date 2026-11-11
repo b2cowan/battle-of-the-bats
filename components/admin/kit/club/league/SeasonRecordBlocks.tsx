@@ -10,6 +10,7 @@ import { registrationDay, seasonDates } from '@/lib/house-league-season';
 import { clubDay, registrationDatesRow } from '@/lib/league-registration-state';
 import type { LeagueSeason } from '@/lib/types';
 import { OWING_WORDS } from '@/lib/house-league-money-words';
+import { FRIEND_SETTING_WORDS as FS } from '@/lib/league-friends';
 import s from './LeagueSeason.module.css';
 
 /**
@@ -152,7 +153,7 @@ const quoted = (v: string) => `“${v.length > 60 ? `${v.slice(0, 60).trimEnd()}
  * waitlist moves up on its own (the two switches that moved off Create, S1·a). Reads first, edits whole, saves as you go.
  * Prices live on the divisions now; a season's own price is only what a division with none of its own charges.
  */
-export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, charges, openSignal = 0 }: {
+export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, charges, openSignal = 0, friendsPlan = false }: {
   season: LeagueSeason; canEdit: boolean; orgSlug: string; onSaved: () => void;
   /** Close registration / Reopen until…, when the season offers one (9a·4: it sits on this block). */
   door?: ReactNode;
@@ -160,6 +161,8 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
   charges: boolean;
   /** Bump to open the block for editing (the checklist's "Set dates" and "Add instructions"). */
   openSignal?: number;
+  /** Board Ready Stage 1: the club's plan has friend requests (League Plus, both Club bands). Absent otherwise. */
+  friendsPlan?: boolean;
 }) {
   // A block open for editing closes the moment its season can no longer be edited (finished, or the access changed).
   const [editOpen, setEditing] = useState(false);
@@ -246,6 +249,12 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
               <Sub>{OWING_WORDS.sub}</Sub>
             </Fact>
           )}
+          {friendsPlan && (
+            <Fact label={FS.label}>
+              {FS.value(season.friendRequestsMax)}
+              {season.friendRequestsMax > 0 && <Sub>{FS.sub}</Sub>}
+            </Fact>
+          )}
           <Fact label="New registrations">
             {season.autoApproveUnderCapacity
               ? 'Approved while a division has room. A full division starts a waitlist.'
@@ -309,6 +318,16 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
               {owingBad
                 ? <span className={s.amberText}>{OWING_WORDS.err}</span>
                 : <span id="owing-days-hint" className={ck.hint}>{OWING_WORDS.hint}</span>}
+            </label>
+          )}
+          {friendsPlan && (
+            <label className={ck.field}>
+              <span className={ck.label}>{FS.editLabel}</span>
+              <select className={ck.select} value={String(season.friendRequestsMax)} aria-describedby="friend-max-hint"
+                onChange={e => commit({ friendRequestsMax: Number(e.target.value) })}>
+                {FS.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <span id="friend-max-hint" className={ck.hint}>{FS.hint}</span>
             </label>
           )}
           <label className={repKit.carryRow}>

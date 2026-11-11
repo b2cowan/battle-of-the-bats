@@ -13,6 +13,7 @@ import type { FormDivision } from '@/lib/league-signup';
 import { cutoffFor } from '@/lib/born-years';
 import { seasonDates } from '@/lib/house-league-season';
 import { tournamentToday } from '@/lib/timezone';
+import { friendMaxFor } from '@/lib/league-friends';
 import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
 
@@ -119,6 +120,7 @@ export default async function RegisterPage({
           cutoff={cutoffFor(org.birthdayCutoffs, season.sport)}
           today={tournamentToday()}
           contact={{ email: siteContent?.contactEmail ?? null, phone: null }}
+          friendMax={friendMaxFor(org.planId, season.friendRequestsMax)}
         />
       )}
     </PublicPage>

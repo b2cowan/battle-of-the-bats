@@ -7,6 +7,9 @@ import { registrationOwes } from './league-price';
 import { loadRegistrationMoneyLines } from './league-money-read';
 import { lastPayment, lastRefund, receivedOf, refundedOf } from './league-money';
 import type { LeagueSeason } from './types';
+import { readFriendCodes, readFriendsAsked } from './league-friends-server';
+import { showFriendCode } from './league-friend-code';
+import type { FriendAsked } from './league-friends';
 
 /**
  * WHAT A FAMILY'S "YOUR SIGN-UP" PAGE SHOWS for one sign-up (Club Tier 9b-1 Part 5, 9b-2, Stage 12b). One door reaches
@@ -50,6 +53,13 @@ export interface SignupStatusRegistration {
    * the club's "Coaches on team pages" setting says, which governs public pages only (9c·11) — and the move after publishing.
    */
   team: { name: string | null; coaches: string[]; movedFrom: { team: string; day: string } | null } | null;
+  /**
+   * Board Ready Stage 1 (drawing tab 2): while the club asks for friends, the child's own friend code ("K7M 4QP"), what
+   * the family asked ("Plays with": the name or code typed, never the name behind a code, never a decision), and whether
+   * it can still change (until the child's division has its teams made, A5). Null when the club doesn't ask, or the
+   * child's sign-up has ended.
+   */
+  friends: { code: string | null; asked: FriendAsked[]; open: boolean } | null;
 }
 
 export interface SignupStatus {
@@ -58,6 +68,8 @@ export interface SignupStatus {
   clubName: string;
   reviewFirst: boolean;
   finished: boolean;
+  /** Board Ready Stage 1: friends a family can name per child (0: the club doesn't ask). */
+  friendMax: number;
 }
 
 /** The anchor row a link names, as the one door reads it (it has already checked the club and season). */
@@ -78,13 +90,19 @@ export async function signupRowsFromAnchor(anchor: SignupAnchorRow): Promise<Sig
   return (data ?? []) as unknown as SignupStatusRow[];
 }
 
-export async function buildSignupStatus(season: LeagueSeason, clubName: string, rows: SignupStatusRow[]): Promise<SignupStatus> {
-  const [divisions, lines, teams] = await Promise.all([
+export async function buildSignupStatus(season: LeagueSeason, clubName: string, rows: SignupStatusRow[], friendMax = 0): Promise<SignupStatus> {
+  const finished = season.status === 'completed' || season.status === 'archived';
+  const asks = friendMax > 0 && !finished;
+  const ids = rows.map(r => String(r.id));
+  const [divisions, lines, teams, codes, asked] = await Promise.all([
     getDivisionsForSeason(season.id),
-    loadRegistrationMoneyLines(rows.map(r => String(r.id))),
+    loadRegistrationMoneyLines(ids),
     readTeamFacts(season.id, rows),
+    asks ? readFriendCodes(ids) : null,
+    asks ? readFriendsAsked(ids) : null,
   ]);
   const divisionMap = Object.fromEntries(divisions.map(d => [d.id, d.name]));
+  const teamsMade = new Set(divisions.filter(d => d.teamsPublishedAt).map(d => d.id));
   const registrations = rows.map(r => {
     const fee = registrationOwes({ feeAmount: r.fee_amount != null ? Number(r.fee_amount) : null }, season);
     const mine = lines.get(String(r.id)) ?? [];
@@ -109,6 +127,11 @@ export async function buildSignupStatus(season: LeagueSeason, clubName: string, 
       withdrawRequestedAt: r.withdraw_requested_at ?? null,
       endedAt: r.ended_at ?? null,
       team: r.status === 'active' ? teamOf(r, teams) : null,
+      friends: codes && asked && !ended ? {
+        code: codes.get(String(r.id)) ? showFriendCode(codes.get(String(r.id))!) : null,
+        asked: asked.get(String(r.id)) ?? [],
+        open: !(r.division_id && teamsMade.has(r.division_id)),
+      } : null,
     };
   });
   // The club's how-to-pay words reach the family only once a child is accepted and owes something (9b·9).
@@ -119,7 +142,8 @@ export async function buildSignupStatus(season: LeagueSeason, clubName: string, 
     clubName,
     reviewFirst: !season.autoApproveUnderCapacity,
     // A finished season takes no "Ask to withdraw" (9b-2).
-    finished: season.status === 'completed' || season.status === 'archived',
+    finished,
+    friendMax: asks ? friendMax : 0,
   };
 }
 

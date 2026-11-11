@@ -5,6 +5,7 @@ import { nameList, ordinal, signupHeadline, signupToPay, type PlacedChild } from
 import { dollarsLine } from './house-league-season';
 import { methodInBrackets } from './house-league-money-words';
 import { LEAGUE_PAY_WORDS, SIGNUP_LINK_WORDS } from './league-pay-words';
+import { FRIEND_WORDS } from './league-friends';
 import { SECOND_PARENT_WORDS } from './league-second-parent';
 import { TC_MAIL } from './house-league-team-changes-words';
 import { INVITE_PANEL_SLOT, INVITE_WHO_SLOT, moneyBlock } from './family-invitation-panel';
@@ -1017,6 +1018,9 @@ export function leagueSignupHtml(input: {
     ? `<p>${escapeEmailHtml(nameList(waiting.map(c => c.firstName)))} ${waiting.length === 1 ? 'pays' : 'pay'} nothing unless a spot opens. We’ll email you if one does.</p>` : '';
   const allWaitNote = waiting.length === kids.length ? '<p>You pay nothing unless a spot opens. We’ll email you if one does.</p>' : '';
   const freeNote = accepted.length && free ? '<p>There is nothing to pay: this season is free.</p>' : '';
+  // Board Ready Stage 1 (A10): each child's friend code, as text in the neutral sentence. Never a link, no referral push.
+  const codes = kids.filter(c => c.friendCode).map(c =>
+    `<p style="margin:0.5rem 0 0;color:${WARM_EMAIL.ink};">${escapeEmailHtml(FRIEND_WORDS.emailLead(c.firstName))} <strong style="${DATA_FACE}">${escapeEmailHtml(c.friendCode!)}</strong><br>${escapeEmailHtml(FRIEND_WORDS.codeShare(c.firstName))}</p>`).join('');
 
   return familyNotice(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">${escapeEmailHtml(signupHeadline(kids))}</h2>
@@ -1026,6 +1030,7 @@ export function leagueSignupHtml(input: {
       <p style="${WARM_EMAIL_STYLE.panelLabel}">${panelLabel}</p>
       <p style="margin:0;line-height:1.8;color:${WARM_EMAIL.ink};">${rows}</p>
     </div>
+    ${codes}
     ${accepted.length && !free ? payBlock(toPay, input.howToPay, input.clubName, input.online) : ''}
     ${freeNote}${waitNote}${allWaitNote}
     ${signupButton(input.signupUrl)}

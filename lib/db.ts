@@ -2277,6 +2277,8 @@ export interface LeagueSeasonInput {
   earlyBirdUntil?: string | null;
   howToPay?: string | null;
   askEmailConsent?: boolean;
+  /** Board Ready Stage 1 (mig 461): 0 · 1 · 2. */
+  friendRequestsMax?: number;
   /** 9b·8: owing turns amber after this many days from acceptance (mig 368). */
   owingAmberDays?: number;
 }
@@ -2329,6 +2331,7 @@ function mapLeagueSeason(row: any): LeagueSeason {
     earlyBirdUntil:            row.early_bird_until ?? null,
     howToPay:                  row.how_to_pay ?? null,
     askEmailConsent:           row.ask_email_consent ?? true,
+    friendRequestsMax:         row.friend_requests_max ?? 2,
     owingAmberDays:            row.owing_amber_days ?? 14,
     twiceInADayAllowed:        row.twice_in_a_day_allowed ?? false,
     homeAwayTolerance:         row.home_away_tolerance ?? 1,
@@ -2489,6 +2492,7 @@ export async function updateLeagueSeason(
   if (input.earlyBirdUntil            !== undefined) patch.early_bird_until            = input.earlyBirdUntil;
   if (input.howToPay                  !== undefined) patch.how_to_pay                  = input.howToPay;
   if (input.askEmailConsent           !== undefined) patch.ask_email_consent           = input.askEmailConsent;
+  if (input.friendRequestsMax         !== undefined) patch.friend_requests_max         = input.friendRequestsMax;
   if (input.owingAmberDays            !== undefined) patch.owing_amber_days            = input.owingAmberDays;
   if (input.registrationClosedAt      !== undefined) patch.registration_closed_at      = input.registrationClosedAt;
   if (input.status                    !== undefined) patch.status                      = input.status;

@@ -20,6 +20,7 @@ import YourSignup from '@/app/[orgSlug]/league/[seasonSlug]/status/YourSignup';
 import PublicPage from '@/components/public/PublicPage';
 import frame from '@/components/public/ClubFrame.module.css';
 import kit from '@/components/public/ClubKit.module.css';
+import { friendMaxFor } from '@/lib/league-friends';
 
 /**
  * /family/signup/[registrationId] — "Your sign-up" INSIDE the signed-in app (Signed-in family accounts Stage 4a, Part 6.5;
@@ -63,7 +64,7 @@ export default async function FamilySignupPage({ params }: { params: Promise<{ r
   if (!org || !season) notFound();
   const contactEmail = siteContent?.contactEmail ?? null;
   const [found, pay] = await Promise.all([
-    buildSignupStatus(season, org.name, link.rows),
+    buildSignupStatus(season, org.name, link.rows, friendMaxFor(org.planId, season.friendRequestsMax)),
     buildLeaguePayView(link.registrationId, contactEmail),
   ]);
 

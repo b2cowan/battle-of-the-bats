@@ -974,6 +974,9 @@ export interface LeagueSeason {
   howToPay: string | null;
   /** The form asks the unticked "may email me about future seasons" line (mig 361). */
   askEmailConsent: boolean;
+  /** Board Ready Stage 1 (mig 461, ruling A8): friends a family can name per child, 0 (None: the form asks nothing) · 1 · 2.
+   *  Asked only on a plan with friend requests (`friendRequestsOn`, lib/league-friends.ts). */
+  friendRequestsMax: number;
   /** "Owing" turns amber on Registrations after this many days from acceptance (mig 368, 9b·8; starts at 14). */
   owingAmberDays: number;
   /** Schedule health's rules (mig 412, frame d3): a team may play twice in a day; home and away may differ by this many. */

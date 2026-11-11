@@ -10,6 +10,9 @@ import { ASK_WORDS, methodInBrackets } from '@/lib/house-league-money-words';
 import { LEAGUE_PAY_WORDS as LW, SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 import type { LeaguePayView } from '@/lib/league-pay-view';
 import LeaguePayBlock from '@/components/public/LeaguePayBlock';
+import FriendFields, { FriendCodeRow, friendsToSend, codeHasTypo, type FriendDraft } from '@/components/league/FriendFields';
+import { FRIEND_WORDS as FW, type FriendAsked } from '@/lib/league-friends';
+import reg from '@/components/league/register.module.css';
 
 /**
  * THE FAMILY'S "YOUR SIGN-UP" PAGE (Club Tier Stage 9b-1, Part 5; drawing §5, words HOUSE_LEAGUE_STAGE9B1_COPY.md §9;
@@ -22,6 +25,10 @@ import LeaguePayBlock from '@/components/public/LeaguePayBlock';
  * kept on an ended child — and "Ask to withdraw a child" sends the club a request (nothing changes until the club acts).
  * 12b (owner §0e c): while the club takes card payments the pay block is THE one pay block (Pay by card, receipts, confirming). When it doesn't,
  * the block is today's, word for word, and there is no button at all (A6) — the greyed "Pay now" is gone.
+ * Board Ready Stage 1 (drawing tab 2, rulings A5, A10): while the club asks for friends, each child shows its friend code
+ * with Copy, and "Plays with" one line per friend the family named (the name or code they typed — never the name behind
+ * a code, never whether it was honoured). Change opens the same question as the sign-up form, until the child's
+ * division has its teams made; then the lines stay and "Friend requests closed when the teams were made."
  */
 
 type Registration = {
@@ -42,9 +49,13 @@ type Registration = {
   endedAt: string | null;
   /** 9c: an accepted child's team (name null = not set yet), its coaches, and a move after publishing. */
   team: { name: string | null; coaches: string[]; movedFrom: { team: string; day: string } | null } | null;
+  /** Board Ready Stage 1 (tab 2): the child's friend code, what the family asked, and whether it can still change. */
+  friends: { code: string | null; asked: FriendAsked[]; open: boolean } | null;
 };
 type Found = {
   registrations: Registration[]; howToPay: string | null; clubName: string; reviewFirst: boolean; finished: boolean;
+  /** Board Ready Stage 1: friends a family can name per child (0: the club doesn't ask). */
+  friendMax: number;
   /** The pay block while the club takes card payments; null keeps today's words (A6). */
   pay: LeaguePayView | null;
 };
@@ -57,6 +68,10 @@ const labelStyle: React.CSSProperties = {
 };
 const soft: React.CSSProperties = { fontSize: '0.875rem', color: 'var(--club-soft)', margin: 0 };
 const row: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: '1rem', fontSize: '0.875rem', padding: '0.25rem 0' };
+
+/** Keys for the friend blocks (unique for the page's life; React only needs them distinct within a list). */
+let draftSeq = 1;
+const nextDraftKey = () => draftSeq++;
 
 const ended = (r: Registration) => r.status === 'declined' || r.status === 'withdrawn';
 
@@ -121,6 +136,48 @@ export default function YourSignup({
   const [askState, setAskState] = useState<'idle' | 'sending' | 'error'>('idle');
   const [askError, setAskError] = useState('');
   const [askSent, setAskSent] = useState<string | null>(null);
+
+  // Friend requests (Board Ready Stage 1): one child's question open at a time; a save shows what was asked at once.
+  const [friendsFor, setFriendsFor] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<FriendDraft[]>([]);
+  const [friendErrors, setFriendErrors] = useState<Record<string, string>>({});
+  const [friendState, setFriendState] = useState<'idle' | 'saving' | 'error'>('idle');
+  const [friendError, setFriendError] = useState('');
+  const [askedNow, setAskedNow] = useState<Record<string, FriendAsked[]>>({});
+  const [friendSaved, setFriendSaved] = useState<string | null>(null);
+  const openFriends = (r: Registration) => {
+    const asked = askedNow[r.child] ?? r.friends?.asked ?? [];
+    setDrafts(asked.map(a => ('code' in a
+      ? { key: nextDraftKey(), by: 'code' as const, first: '', last: '', parent: '', code: a.code }
+      : { key: nextDraftKey(), by: 'name' as const, first: a.first ?? '', last: a.last ?? '', parent: a.parent ?? '', code: '' })));
+    if (asked.length === 0) setDrafts([{ key: nextDraftKey(), by: 'name', first: '', last: '', parent: '', code: '' }]);
+    setFriendErrors({});
+    setFriendState('idle');
+    setFriendSaved(null);
+    setFriendsFor(r.child);
+  };
+  async function saveFriends(r: Registration) {
+    if (drafts.some(d => d.by === 'code' && codeHasTypo(d.code))) return;
+    setFriendState('saving');
+    setFriendError('');
+    try {
+      const res = await fetch(`/api/league/${orgSlug}/${seasonSlug}/friends`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, child: r.child, friends: friendsToSend(drafts) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 400 && data.errors) { setFriendErrors(data.errors); setFriendState('idle'); return; }
+      if (!res.ok) { setFriendError(data?.error ?? FW.errGeneric); setFriendState('error'); return; }
+      setAskedNow(m => ({ ...m, [r.child]: (data.asked ?? []) as FriendAsked[] }));
+      setFriendsFor(null);
+      setFriendState('idle');
+      setFriendSaved(r.child);
+    } catch {
+      setFriendError(FW.errGeneric);
+      setFriendState('error');
+    }
+  }
 
   const regs = found.registrations;
   const owed = regs.filter(r => feeLine(r).owing);
@@ -201,6 +258,61 @@ export default function YourSignup({
                   <span style={{ color: 'var(--club-text)', fontWeight: fee.owing ? 700 : 400, textAlign: 'right' }}>{fee.text}</span>
                 </div>
                 {fee.sub && <p style={{ ...soft, textAlign: 'right' }}>{fee.sub}</p>}
+                {r.friends && (() => {
+                  const fr = r.friends;
+                  const asked = askedNow[r.child] ?? fr.asked;
+                  const editing = friendsFor === r.child && fr.open;
+                  return (
+                    <>
+                      {fr.code && (
+                        <>
+                          <div style={{ ...row, alignItems: 'center' }}>
+                            <span style={{ color: 'var(--club-soft)' }}>{FW.codeLabel}</span>
+                            <FriendCodeRow code={fr.code} childName={r.playerFirstName} />
+                          </div>
+                          <p className={reg.codeShare} style={{ marginTop: 0 }}>{FW.codeShare(r.playerFirstName)}</p>
+                        </>
+                      )}
+                      {editing ? (
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <FriendFields idPrefix={`s${r.child}`} childName={r.playerFirstName} division={r.divisionName !== '—' ? r.divisionName : null}
+                            max={found.friendMax} friends={drafts} nextKey={() => nextDraftKey()} errors={friendErrors} headingLevel={3}
+                            onChange={next => { setDrafts(next); setFriendErrors({}); }} />
+                          {friendState === 'error' && <p style={{ fontSize: '0.875rem', color: 'var(--danger)', margin: '0.5rem 0 0' }} role="alert">{friendError}</p>}
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                            <button type="button" className={`${kit.btn} ${kit.btnSecondary}`} onClick={() => setFriendsFor(null)}>{FW.cancel}</button>
+                            <button type="button" className={`${kit.btn} ${kit.btnPrimary}`} disabled={friendState === 'saving'} onClick={() => void saveFriends(r)}>
+                              {friendState === 'saving' ? FW.saving : FW.save}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {asked.length > 0 ? asked.map((a, n) => (
+                            <div key={n} style={row}>
+                              <span style={{ color: 'var(--club-soft)' }}>{n === 0 ? FW.playsWith : ''}</span>
+                              <span style={{ color: 'var(--club-text)', textAlign: 'right' }}>{'code' in a ? FW.codeLine(a.code) : a.name}</span>
+                            </div>
+                          )) : (
+                            <div style={row}>
+                              <span style={{ color: 'var(--club-soft)' }}>{FW.playsWith}</span>
+                              <span style={{ color: 'var(--club-soft)', textAlign: 'right' }}>
+                                {FW.noOne}{fr.open && <> <button type="button" className={reg.linkButton} onClick={() => openFriends(r)}>{FW.addOne}</button></>}
+                              </span>
+                            </div>
+                          )}
+                          {fr.open && asked.length > 0 && (
+                            <div style={{ textAlign: 'right' }}>
+                              <button type="button" className={reg.linkButton} onClick={() => openFriends(r)}>{FW.change}</button>
+                            </div>
+                          )}
+                          {!fr.open && <p style={{ ...soft, marginTop: '0.4rem' }}>{FW.closed}</p>}
+                          {friendSaved === r.child && <p style={{ ...soft, textAlign: 'right' }} role="status">{FW.saved}</p>}
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
                 {(r.withdrawRequestedAt || asked === r.child) && !ended(r) && (
                   <p style={{ ...soft, marginTop: '0.4rem' }}>
                     {ASK_WORDS.childLine(r.playerFirstName, clubDay((r.withdrawRequestedAt ?? new Date().toISOString()).slice(0, 10)))}
