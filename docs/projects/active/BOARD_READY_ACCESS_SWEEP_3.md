@@ -188,7 +188,7 @@ any club's files.
   `team-profile` and the `scores` section already honour the Schedule switch.
 - **Fix:** blank `games` and `standingsByDivision` in those branches when Schedule is hidden.
 - **→ Fixed, W2 fix C, 2026-11-11** (committed `ae474966e` 2026-11-11). Teams sends no games, and no records unless Standings and
-  Schedule are both on. Standings and Playoffs send no round-robin games; **they keep the playoff games, owner call open** (a test
+  Schedule are both on. Standings and Playoffs send no round-robin games; **they keep the playoff games (owner 2026-11-11: go with the recommendation, keep)** (a test
   says hiding Schedule never hides the bracket, and a bracket is those games). Standings tables stay (their own switch). The share
   image keeps its games through a server-only option the HTTP route cannot pass.
 
@@ -201,8 +201,9 @@ any club's files.
   (CASL: an unsubscribe must be easy, which one click on a confirm page still is).
 - **→ Fixed, W2 fix C, 2026-11-11** (committed `ae474966e` 2026-11-11). `/unsubscribe` is now a page that writes nothing; the
   button POSTs to `/api/unsubscribe`. Links already sent keep working. `/legal` reviewed (`CASL_UNSUBSCRIBE_CONFIRM_STEP.md`):
-  wording and a masked family address applied. **Owner question open:** `List-Unsubscribe` / one-click headers (not CASL; no sender
-  sets one today, the new route is ready for it).
+  wording and a masked family address applied. **Follow-up built** (`92f802403` 2026-11-11, owner: go with the recommendations): every mail with an unsubscribe footer
+  now carries `List-Unsubscribe` / `List-Unsubscribe-Post` (RFC 8058) pointing at the new route; a GET there only redirects to the
+  confirm page. Not sent through a real mail provider on dev, so the first live send is the check.
 
 ### 8 · MEDIUM (crosses clubs; low likelihood) — late finding 2026-11-11: two database merge functions answer any signed-in account — **FIXED on dev (mig 464)**
 - Found by the two-step sign-in census (Board Ready two-step, Part 1), not by this sweep, which read routes and pages, not
@@ -244,8 +245,8 @@ any club's files.
 - **Dev seed guard** (`lib/platform-auth.ts:164-195`) has no production check of its own. Defence in depth: the flag is off
   in production and a super admin is required.
 - **W2 fix C (`ae474966e` 2026-11-11) fixed three of the "Also" items below:** `pay/tournament/[id]` (live, un-canceled tournament
-  only, throttled), Overview and News posts aimed at a held-back division, and Rules sending held-back divisions. Left open from
-  that check: rule sections tagged to a held-back division still show to everyone (the same class as the posts).
+  only, throttled), Overview and News posts aimed at a held-back division, and Rules sending held-back divisions. Rule sections
+  tagged to a held-back division were the same class as the posts: **fixed in `92f802403`** (Rules page, feed section, nav count).
 - Also: `pay/tournament/[id]` answers yes/no for any id, unthrottled; family claim doesn't check `email_confirmed_at`
   (defence in depth); members/invite adds an existing account as active with no acceptance (consent call), and fails past
   1,000 platform users; an admin can edit an owner's display name; `request-deletion` puts the reason unescaped into the
