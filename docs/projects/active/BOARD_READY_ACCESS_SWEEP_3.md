@@ -53,7 +53,7 @@ any club's files.
 - **Fix:** require `module_communications` or `send_communications` on the GET, as the POST requires `create_tournaments`.
   Then check whether a capability-less `coach` row should pass `getAuthContextWithScope` at all (see finding 3; one fix
   could close the class).
-- **→ Fixed together with finding 3, W2 fix A, 2026-11-11** (commit hash added on commit). The GET asks the tournaments
+- **→ Fixed together with finding 3, W2 fix A, 2026-11-11** (committed `3d9b1ec13` 2026-11-11). The GET asks the tournaments
   area **and** `post_announcements` or `send_communications`: the Communication screen's own rule (`lib/flip-twins.ts`
   `ADMIN_SCREEN_CAPABILITIES`), not the `module_communications` this line proposed. Staff hold `post_announcements` by
   default, and that proposal would have locked them out of a screen the product says they open. Details and the outcome
@@ -93,7 +93,7 @@ any club's files.
   `getAuthContextWithScope` outright. The Coaches Portal uses its own resolvers, so it doesn't depend on that row passing.
   That would close findings 1 and 3 together. A census of `getAuthContextWithScope` callers with no capability check is
   the first step of the fix.
-- **→ Fixed together with finding 1, W2 fix A, 2026-11-11** (commit hash added on commit).
+- **→ Fixed together with finding 1, W2 fix A, 2026-11-11** (committed `3d9b1ec13` 2026-11-11).
   - **Shape: per route, NOT the shared check.** The census (239 route files) shows coach rows legitimately call two
     admin routes: their own notification preferences on the account page, and the free-time band in the portal. A
     coach given "Run tournaments" holds the tournament bundle as overrides. So the question is the capability, never
