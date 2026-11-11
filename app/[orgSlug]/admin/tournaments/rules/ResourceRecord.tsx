@@ -15,7 +15,7 @@ import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
 import { deleteResource, saveResource, updateResource, uploadResourceFile } from '@/lib/db';
 import { RULES_WORDS as W, deleteResourceQuestion, resourceCaption } from '@/lib/tournament-settings-words';
-import { RESOURCE_MAX_BYTES } from '@/lib/resource-file-storage';
+import { RESOURCE_FILE_ACCEPT, RESOURCE_MAX_BYTES, resourceLinkProblem } from '@/lib/resource-file-storage';
 import type { Resource } from '@/lib/types';
 import styles from './rules.module.css';
 
@@ -59,15 +59,24 @@ export default function ResourceRecord({
 
   // A link needs its address, except a sample's that never had one (it can be renamed before it gets one).
   const needsAddress = creating ? kind === 'link' : !isFile && hasAddress(resource!.url);
+  // A NEW address must be a web address (the server refuses anything else); one the row already holds is left as it stands.
+  // (Any link row — a sample saved as '#' too — not only one that already holds an address.)
+  const isLinkRow = creating ? kind === 'link' : !isFile;
+  const addressBad = isLinkRow && !!url.trim() && url.trim() !== (resource?.url ?? '').trim() && !!resourceLinkProblem(url, '', '');
   const held = !label.trim() ? W.nameHeld
     : needsAddress && !url.trim() ? W.addressHeld
-      : null;
+      : addressBad ? W.addressBad
+        : null;
 
   const write = useCallback(async () => {
     if (!resource) return;
-    await updateResource(resource.id, isFile ? { label: label.trim() } : { label: label.trim(), url: url.trim() || '#' });
+    try {
+      await updateResource(resource.id, isFile ? { label: label.trim() } : { label: label.trim(), url: url.trim() || '#' }, orgSlug);
+    } catch {
+      throw new Error(W.saveFailed);
+    }
     changed.current = true;
-  }, [resource, isFile, label, url]);
+  }, [resource, isFile, label, url, orgSlug]);
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: canWrite && editing && !creating, loading: false, sig: JSON.stringify([label, url]), blocked: editing ? held : null, write, failText: W.saveFailed,
   });
@@ -91,7 +100,7 @@ export default function ResourceRecord({
   const [createError, setCreateError] = useState('');
   async function create() {
     if (busy) return;
-    const mistake = !label.trim() ? W.nameHeld : kind === 'link' && !url.trim() ? W.addressHeld : kind === 'file' && !file ? W.chooseFile : null;
+    const mistake = !label.trim() ? W.nameHeld : kind === 'link' && !url.trim() ? W.addressHeld : kind === 'link' && resourceLinkProblem(url, '', '') ? W.addressBad : kind === 'file' && !file ? W.chooseFile : null;
     if (mistake) { setCreateError(mistake); return; }
     if (kind === 'file' && file && file.size > RESOURCE_MAX_BYTES) { setCreateError(W.fileTooBig); return; }
     setBusy(true);
@@ -103,7 +112,7 @@ export default function ResourceRecord({
         if (!uploaded) { setCreateError(W.uploadFailed); return; }
         address = uploaded;
       }
-      await saveResource({ tournamentId, label: label.trim(), url: address, order });
+      await saveResource({ tournamentId, label: label.trim(), url: address, order }, orgSlug);
       await onChanged();
       onClose();
     } catch {
@@ -163,13 +172,14 @@ export default function ResourceRecord({
         ) : (
           <label className={ck.field} htmlFor="resource-file">
             <span className={ck.label}>{W.file}</span>
-            <input id="resource-file" type="file" className={styles.fileInput}
+            <input id="resource-file" type="file" className={styles.fileInput} accept={RESOURCE_FILE_ACCEPT}
               onChange={e => {
                 const f = e.target.files?.[0] ?? null;
                 setFile(f);
                 if (f && !label.trim()) setLabel(f.name);
                 setCreateError('');
               }} />
+            <p className={ck.hint}>{W.fileHint}</p>
             {file && <p className={ck.hint}>{W.chosen(file.name)}</p>}
           </label>
         )}

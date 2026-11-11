@@ -96,7 +96,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
   function moveResource(from: number, to: number) {
     const next = arrayMove(resources, from, to);
     setResources(next);
-    void runPageSave(() => saveResourceOrder(next.map(r => r.id)), ORDER_WORDS.saveFailed);
+    void runPageSave(() => saveResourceOrder(next.map(r => r.id), orgSlug), ORDER_WORDS.saveFailed);
   }
 
   // ── Samples: add as today, each failure said in the window ──
@@ -105,7 +105,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
     await refresh();
   }
   async function addSampleResource(sample: SampleResource) {
-    await saveResource({ tournamentId: tournament.id, label: sample.label, url: sample.url || '#', order: nextResourceOrder });
+    await saveResource({ tournamentId: tournament.id, label: sample.label, url: sample.url || '#', order: nextResourceOrder }, orgSlug);
     await refresh();
   }
 

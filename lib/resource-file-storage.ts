@@ -21,6 +21,8 @@ export const RESOURCE_BUCKET = 'resources';
  * as a broken form. 9 MB leaves room for the form's own bytes. The other document routes cap at 10 MB for the same reason.
  */
 export const RESOURCE_MAX_BYTES = 9 * 1024 * 1024;
+/** The file picker's filter, matching the types below (a hint to the person; the server still checks). */
+export const RESOURCE_FILE_ACCEPT = '.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx';
 export const RESOURCE_ALLOWED_MIME: readonly string[] = [
   'application/pdf',
   'image/png', 'image/jpeg', 'image/gif', 'image/webp',
@@ -101,4 +103,36 @@ export function mayRemoveKey(key: string, orgId: string, rowCreatedAt?: string |
 /** The two spellings a stored address can carry for one key: as typed, and percent-encoded by the storage client. */
 export function keySpellings(key: string): string[] {
   return [...new Set([key, key.split('/').map(encodeURIComponent).join('/')])];
+}
+
+/**
+ * Whether a link row's name is acceptable: text, not empty, not absurd. Null = fine, otherwise a plain reason.
+ */
+export function resourceLabelProblem(label: unknown): string | null {
+  if (typeof label !== 'string' || !label.trim()) return 'A name is required';
+  if (label.trim().length > 200) return 'The name is too long';
+  return null;
+}
+
+/**
+ * Whether a link row's address is acceptable (W2 fix B follow-up). Allowed: the empty placeholder `#`, a web address
+ * (http or https), or an email link. Anything else (`javascript:`, `data:`, a bare word) is refused, because the public
+ * Rules page renders the address as a link for every visitor. An address that names a file in the rules-file store must be
+ * in the CALLER'S OWN club folder, so a row can never be recorded as owning another club's stored file (the bucket is public-read, so a file's address is reachable by anyone who has it; this keeps a delete from ever being aimed at it). Null = fine, otherwise a plain reason.
+ */
+export function resourceLinkProblem(url: unknown, orgId: string, supabaseUrl: string): string | null {
+  if (typeof url !== 'string') return 'An address is required';
+  const t = url.trim();
+  if (t === '#') return null;
+  if (!t || t.length > 2000) return 'The address is not valid';
+  let parsed: URL;
+  try {
+    parsed = new URL(t);
+  } catch {
+    return 'The address is not valid';
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:' && parsed.protocol !== 'mailto:') return 'The address is not valid';
+  const key = resourceKeyFromUrl(t, supabaseUrl);
+  if (key && !isClubKey(key, orgId)) return 'That file is not this club’s';
+  return null;
 }

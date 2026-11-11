@@ -1531,33 +1531,39 @@ export async function getResources(tournamentId: string, options: ReadOptions & 
   }));
 }
 
-/** A link or a file on the public Rules page. Every write throws on failure (Stage 5, E6: the record's pill says it). */
-export async function saveResource(r: Omit<Resource, 'id'>): Promise<string> {
-  const { data, error } = await authClient().from('resources').insert({
-    tournament_id: r.tournamentId,
-    label: r.label,
-    url: r.url,
-    display_order: r.order
-  }).select('id').single();
-  if (error || !data) throw error ?? new Error('insert');
-  return data.id as string;
+/**
+ * A link or a file on the public Rules page. The SERVER writes the row (`/api/admin/resources`: the club and `post_rules` are
+ * checked there; the browser no longer holds write access to the table). Every write throws on failure (Stage 5, E6: the
+ * record's pill says it).
+ */
+async function resourceRequest(orgSlug: string | undefined, method: 'POST' | 'PATCH', body: unknown): Promise<Response> {
+  const res = await fetch(`/api/admin/resources?orgSlug=${encodeURIComponent(orgSlug ?? '')}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`resources ${method} ${res.status}`);
+  return res;
 }
 
-export async function updateResource(id: string, r: Partial<Resource>): Promise<void> {
-  const updates: Record<string, unknown> = {};
-  if (r.label !== undefined) updates.label = r.label;
-  if (r.url !== undefined) updates.url = r.url;
-  if (r.order !== undefined) updates.display_order = r.order;
-  const { error } = await authClient().from('resources').update(updates).eq('id', id);
-  if (error) throw error;
+export async function saveResource(r: Omit<Resource, 'id'>, orgSlug: string | undefined): Promise<string> {
+  const res = await resourceRequest(orgSlug, 'POST', { tournamentId: r.tournamentId, label: r.label, url: r.url, order: r.order });
+  const data = await res.json().catch(() => null) as { id?: string } | null;
+  if (!data?.id) throw new Error('insert');
+  return data.id;
+}
+
+export async function updateResource(id: string, r: Partial<Resource>, orgSlug: string | undefined): Promise<void> {
+  const body: Record<string, unknown> = { id };
+  if (r.label !== undefined) body.label = r.label;
+  if (r.url !== undefined) body.url = r.url;
+  if (r.order !== undefined) body.order = r.order;
+  await resourceRequest(orgSlug, 'PATCH', body);
 }
 
 /** The links' and files' order (Reorder, or a drag at a desk). */
-export async function saveResourceOrder(ids: string[]): Promise<void> {
-  const client = authClient();
-  const results = await Promise.all(ids.map((id, order) => client.from('resources').update({ display_order: order }).eq('id', id)));
-  const failed = results.find(r => r.error);
-  if (failed?.error) throw failed.error;
+export async function saveResourceOrder(ids: string[], orgSlug: string | undefined): Promise<void> {
+  await resourceRequest(orgSlug, 'PATCH', { ids });
 }
 
 /**

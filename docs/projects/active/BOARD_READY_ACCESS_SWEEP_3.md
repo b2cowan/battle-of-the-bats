@@ -79,6 +79,13 @@ any club's files.
 - **→ Fixed, W2 fix B, 2026-11-11** (committed `b164c707e` 2026-11-11; migration 462 applied to dev; production: code first, then
   462 — registered in `MANUAL_PROD_STEPS.json`, and production state lives in the release-history record). The row writes below
   and the upload-limit owner call are the two open items it leaves.
+- **→ The link rows, fixed too (W2 fix B follow-up, owner yes 2026-11-11; hash on commit; migration 465 applied to dev; production: code first,
+  then 465).** Create, rename/repoint and reorder now go through `POST`/`PATCH /api/admin/resources` (club + `post_rules` + event checked), and
+  465 takes INSERT/UPDATE/DELETE on the table from signed-in accounts. A new address must be http(s), an email link or `#` (a
+  `javascript:` link would run for every visitor), and a file address must be in the caller's own club folder. Proof:
+  `.probe/sweep3-fixB2-prove.mjs` (25 checks: owner/admin work; another club, a coach row, a scorekeeper and a parent are refused;
+  a direct browser write is refused). **Same shape, still open:** the Rules SECTIONS (`rules`, `rule_items`) are written from the
+  browser under the same "member of the club" policy. **Owner call:** fix them the same way (recommended). **Also open (owner call, not a regression):** neither the row route nor the file route refuses writes on a completed (sealed) event, as the old browser path did not; the pool and schedule routes do. **Follow-up audit after migration 465 reaches production:** the query in its prod-steps note lists any old link row with a non-web address.
 - **Found while building the fix (W2 fix B, 2026-11-11) — the link ROWS are not capability-checked.** The `resources`
   TABLE's insert/update/delete policies (`resources_member_*`, mig 009) ask `can_access_tournament(tournament_id)`: the
   caller is a member of the event's club and in scope for it. They do not ask `post_rules`. The Rules screen writes those
@@ -92,7 +99,7 @@ any club's files.
   is an old flat key, and (c) **no other row in any event still names the key**. (c) is what stops a typed link that imitates
   another club's flat-key address from getting that club's file deleted, and it keeps a copied event's shared file alive.
   Old flat files can be removed only by the club whose row is the last to name them.
-- **Owner call · the upload limit drops from 50 MB to 9 MB (found by /review, 2026-11-11).** Uploads now pass through the server,
+- **→ Decided, owner 2026-11-11: keep 9 MB; the Add file form says so** ("A PDF, image, Word or Excel file, up to 9 MB.", and the picker filters to those types). **The upload limit drops from 50 MB to 9 MB (found by /review, 2026-11-11).** Uploads now pass through the server,
   and every `/api/*` request goes through the proxy, which buffers a body only up to 10 MB (Next's `proxyClientMaxBodySize`
   default) and cuts the rest. A 20 MB rulebook would arrive as a broken form. So the route and the screen stop a file over
   9 MB with a plain message ("That file is over 9 MB. Choose a smaller one."). Other document routes cap at 10 MB for the same

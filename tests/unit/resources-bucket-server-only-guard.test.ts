@@ -17,6 +17,7 @@ import path from 'node:path';
 import { filesUnder, readCode, readSource } from './_source-code.ts';
 import {
   isClubKey, keySpellings, mayRemoveKey, resourceKeyFromUrl, resourceObjectPath, cleanResourceFileName,
+  resourceLabelProblem, resourceLinkProblem,
 } from '../../lib/resource-file-storage.ts';
 
 const REPO = path.join(import.meta.dirname, '..', '..');
@@ -110,6 +111,76 @@ describe('the route checks the club and the capability on both verbs', () => {
     assert.deepEqual(missingChecks(post.replace(/hasCapability\([^)]*\)/, 'true')), ['the post_rules capability']);
     assert.deepEqual(missingChecks(post.replace(/requireTournamentInOrg\(/, 'noop(')), ['the event belongs to the club (requireTournamentInOrg)']);
     assert.deepEqual(missingChecks(post.replace('requireOrgSlug: true', 'requireOrgSlug: false')), ['the club (getAuthContextWithScope, org required)']);
+  });
+});
+
+/**
+ * THE LINK ROWS TOO (W2 fix B follow-up). The `resources` TABLE was written from the browser under a policy that asked only
+ * "member of the club, in scope" — a capability-less coach row could rewrite the public Rules page's links. A browser-side
+ * client (anything but the service-role client) must never insert, update, upsert or delete the table.
+ */
+const BROWSER_ROW_WRITE = /(?:authClient\(\)|\bclient|\bsupabase|\bsb)\s*\.from\(\s*['"`]resources['"`]\s*\)\s*\.(?:insert|update|upsert|delete)\b/;
+export function filesWritingRowsFromTheBrowser(files: Record<string, string>): string[] {
+  return Object.entries(files).filter(([, code]) => BROWSER_ROW_WRITE.test(code)).map(([f]) => f);
+}
+
+describe('no client writes the link rows', () => {
+  const files: Record<string, string> = {};
+  for (const dir of ['app', 'components', 'lib']) {
+    for (const ext of ['.ts', '.tsx']) for (const f of filesUnder(dir, ext)) files[f] = readCode(f);
+  }
+  it('finds no browser-side insert, update or delete of the resources table', () => {
+    assert.deepEqual(filesWritingRowsFromTheBrowser(files), []);
+  });
+  it('kill test: a browser write is caught, the service-role client is not', () => {
+    assert.deepEqual(filesWritingRowsFromTheBrowser({ a: "await authClient().from('resources').insert({})" }), ['a']);
+    assert.deepEqual(filesWritingRowsFromTheBrowser({ a: "await client.from('resources').update({ display_order: 1 })" }), ['a']);
+    assert.deepEqual(filesWritingRowsFromTheBrowser({ a: "await supabaseAdmin.from('resources').insert(rows)" }), []);
+    assert.deepEqual(filesWritingRowsFromTheBrowser({ a: "await supabase.from('resources').select('*')" }), []);
+  });
+  it('the row route asks the club and post_rules on both verbs, and checks every row it touches', () => {
+    const code = readCode('app/api/admin/resources/route.ts');
+    assert.match(code, /getAuthContextWithScope\(\{[^}]*requireOrgSlug:\s*true/);
+    assert.match(code, /hasCapability\([^)]*'post_rules'\)/);
+    assert.match(code, /export const POST\b/);
+    assert.match(code, /export const PATCH\b/);
+    assert.equal((code.match(/requireTournamentInOrg\(/g) ?? []).length >= 3, true, 'create, one-row update and reorder each check the event');
+    assert.equal((code.match(/scopeGuard\(/g) ?? []).length >= 3, true);
+    assert.match(code, /resourceLinkProblem\(/);
+    assert.match(code, /resourceLabelProblem\(/);
+  });
+  it('the db helpers call the row route, not the table', () => {
+    const db = readCode('lib/db.ts');
+    assert.match(db, /\/api\/admin\/resources\?orgSlug=/);
+  });
+  it('migration 465 takes the table’s write grants from signed-in accounts and leaves SELECT alone', () => {
+    const f = readdirSync(path.join(REPO, 'supabase/migrations')).find(n => n.startsWith('465_'));
+    assert.ok(f, 'migration 465 exists');
+    const sql = readSource(`supabase/migrations/${f}`).replace(/--.*$/gm, '');
+    assert.match(sql, /revoke insert, update, delete on public\.resources from authenticated/i);
+    assert.doesNotMatch(sql, /revoke[^;]*\bselect\b/i);
+  });
+});
+
+describe('what a link may say', () => {
+  const HOST = 'https://abc.supabase.co';
+  const ORG = '11111111-1111-4111-8111-111111111111';
+  const OTHER = '22222222-2222-4222-8222-222222222222';
+  it('accepts the placeholder, web addresses and email links', () => {
+    for (const u of ['#', 'https://example.com/a', 'http://example.com', 'mailto:rules@example.com']) assert.equal(resourceLinkProblem(u, ORG, HOST), null, u);
+  });
+  it('refuses code, data, bare words and nothing', () => {
+    for (const u of ['javascript:alert(1)', 'data:text/html,x', 'www.example.com', '', '   ', 'ftp://x.com', 5, null]) assert.notEqual(resourceLinkProblem(u, ORG, HOST), null, String(u));
+  });
+  it('a file address must be in the caller’s own club folder', () => {
+    const f = (o: string) => `${HOST}/storage/v1/object/public/resources/${o}/T/x.pdf`;
+    assert.equal(resourceLinkProblem(f(ORG), ORG, HOST), null);
+    assert.notEqual(resourceLinkProblem(f(OTHER), ORG, HOST), null);
+    assert.notEqual(resourceLinkProblem(`${HOST}/storage/v1/object/public/resources/1699-flat.pdf`, ORG, HOST), null, 'a NEW row cannot name an old flat file');
+  });
+  it('a name must be text and not empty', () => {
+    assert.equal(resourceLabelProblem('Rulebook'), null);
+    for (const l of ['', '  ', undefined, 5, 'x'.repeat(201)]) assert.notEqual(resourceLabelProblem(l), null);
   });
 });
 
