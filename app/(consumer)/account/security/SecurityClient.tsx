@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import KitDialog, { DialogCancel } from '@/components/shared/KitDialog';
 import PasswordInput from '@/components/auth/PasswordInput';
+import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import styles from './security.module.css';
 
 export type SecurityView = {
@@ -47,11 +48,19 @@ export default function SecurityClient({ view }: { view: SecurityView }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body ?? {}),
       });
-      const data = await res.json().catch(() => ({})) as { error?: string; othersSignedOut?: boolean };
+      const data = await res.json().catch(() => ({})) as { error?: string; othersSignedOut?: boolean; signedBackIn?: boolean; needsCode?: boolean };
       if (!res.ok) {
         setNotice({ tone: 'bad', text: data.error ?? 'Something went wrong. Try again.' });
         return false;
       }
+      // A new password ends every session; the server signs this device back in. When it could not, or the person
+      // has two-step on (the new session is password-only), the page's own gate takes over after a refresh.
+      if (data.signedBackIn === false) {
+        setNotice({ tone: 'good', text: 'Your password is changed. Sign in again with the new one.' });
+        router.refresh();
+        return true;
+      }
+      if (data.needsCode) router.refresh();
       setNotice({ tone: 'good', text: data.othersSignedOut === false ? `${done} We couldn’t sign out your other devices: use “Sign out everywhere else”.` : done });
       return true;
     } catch {
@@ -88,7 +97,7 @@ export default function SecurityClient({ view }: { view: SecurityView }) {
 
       <section className={styles.card} aria-labelledby="sec-two-step">
         <h3 id="sec-two-step" className={styles.head}>
-          Two-step sign-in
+          <span>Two-step sign-in</span>
           <span className={view.on ? styles.chipOn : styles.chipOff}>{view.on ? 'On' : 'Off'}</span>
         </h3>
         {view.on ? (
@@ -150,6 +159,9 @@ export default function SecurityClient({ view }: { view: SecurityView }) {
         </section>
       )}
 
+      {/* The windows wear the portal's warm palette: it hangs off this marker, and the account page's own shell only
+          carries the --home-* tokens, so without it the window paints in the dark default (the Feedback window's fix). */}
+      <div style={{ display: 'contents' }} {...coachWarmAttr}>
       {ask === 'turnOff' && (
         <KitDialog
           kind="question"
@@ -193,6 +205,7 @@ export default function SecurityClient({ view }: { view: SecurityView }) {
       {ask === 'password' && <ChangePasswordWindow busy={busy} onClose={() => setAsk(null)} onSave={async (current, next) => {
         if (await run('/api/auth/password', { current, next }, 'Your password is changed. Your other devices were signed out.')) setAsk(null);
       }} error={notice?.tone === 'bad' ? notice.text : null} />}
+      </div>
     </div>
   );
 }

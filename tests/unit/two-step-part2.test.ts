@@ -30,7 +30,7 @@ import type { SessionTwoStep } from '../../lib/two-step-session.ts';
 /** Every action that asks for a code, with the first write or link the check must come BEFORE. */
 const FRESH_CODE_DOORS: Record<string, string[]> = {
   'app/api/admin/payouts/route.ts': ['createClubAccount(', 'onboardingLink(row.stripe_account_id', 'dashboardLink(', "update({ disconnected_at: now"],
-  'app/api/admin/members/invite/route.ts': ['auth.admin.listUsers('],
+  'app/api/admin/members/invite/route.ts': ['findAuthUserByEmail(email)'],
   'app/api/admin/members/[memberId]/route.ts': ['.update(update)', "'rep_group_scope_changed'"],
   'app/api/platform-admin/orgs/[id]/transfer-ownership/route.ts': [".update({ role: 'owner' })"],
   'app/api/platform-admin/company-users/route.ts': ['auth.admin.createUser('],
@@ -192,12 +192,19 @@ describe('5 · change password', () => {
     assert.doesNotMatch(route, /\(await createClient\(\)\)\.auth\.signInWithPassword/);
     assert.match(route, /checker\.auth\.signOut\(\{ scope: 'local' \}\)/, 'the check’s own session is left behind');
   });
-  it('the code is asked after the password and before the save; other sessions go after it', () => {
+  it('the code is asked after the password and before the save; this device signs back in, then other sessions go', () => {
     const pw = route.indexOf('checker.auth.signInWithPassword(');
     const fresh = route.indexOf('hasFreshCode(state)');
     const save = route.indexOf('auth.admin.updateUserById(');
+    const back = route.indexOf('supabase.auth.signInWithPassword(');
     const others = route.indexOf("signOut({ scope: 'others' })");
-    assert.ok(pw < fresh && fresh < save && save < others);
+    assert.ok(pw < fresh && fresh < save && save < back && back < others);
+  });
+  it('the admin save ends every session, so this device is signed back in with the NEW password (walk §513 finding)', () => {
+    assert.match(route, /signInWithPassword\(\{ email: user\.email, password: next \}\)/);
+    assert.match(route, /signedBackIn/);
+    // Others are only sent away from a session that exists: a failed sign-back-in must not run it.
+    assert.match(route, /if \(signedBackIn\) \{[\s\S]*scope: 'others'/);
   });
 });
 

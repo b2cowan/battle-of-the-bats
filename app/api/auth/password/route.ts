@@ -17,8 +17,9 @@ const MIN_LENGTH = 8;
  * A password sign-in on the cookie client REPLACES the person's session with a password-only one, so a person with
  * two-step on would land on the code step mid-change. The session that check creates is signed out at once. The new
  * password is saved through the admin door (a two-step account's own password change needs the code level, and the
- * service cannot count our backup codes), then every OTHER session is signed out; this one stays. The service's "secure
- * password change" setting is neither relied on nor changed (no production Auth settings).
+ * service cannot count our backup codes). That save ends every session, this one too, so this device signs back in with
+ * the new password and the others are then signed out. The service's "secure password change" setting is neither
+ * relied on nor changed (no production Auth settings).
  */
 export const POST = withObservability(async (req: Request) => {
   const state = await getSessionTwoStep();
@@ -69,10 +70,22 @@ export const POST = withObservability(async (req: Request) => {
       code: weak ? 'weak_password' : 'not_saved',
     }, { status: weak ? 400 : 502 });
   }
-  let othersSignedOut = true;
+  // ⚠ Saving a password through the admin door ends EVERY session of the person, this device's included (proven on dev
+  // 2026-11-11: the old session reads "Auth session missing" at once). So this device is signed back in with the new
+  // password, on the cookie client, and only then are the others sent away. A two-step person's new session is
+  // password-only, so they are asked for their code once more; that is the safe side (`needsCode`).
+  const supabase = await createClient();
+  let signedBackIn = false;
   try {
-    const { error: outErr } = await (await createClient()).auth.signOut({ scope: 'others' });
-    if (outErr) othersSignedOut = false;
-  } catch { othersSignedOut = false; }
-  return NextResponse.json({ ok: true, othersSignedOut });
+    const { data: back, error: backErr } = await supabase.auth.signInWithPassword({ email: user.email, password: next });
+    signedBackIn = !backErr && !!back?.session;
+  } catch { signedBackIn = false; }
+  let othersSignedOut = true;
+  if (signedBackIn) {
+    try {
+      const { error: outErr } = await supabase.auth.signOut({ scope: 'others' });
+      if (outErr) othersSignedOut = false;
+    } catch { othersSignedOut = false; }
+  }
+  return NextResponse.json({ ok: true, othersSignedOut, signedBackIn, needsCode: signedBackIn && state.hasFactor });
 }, { route: '/api/auth/password' });
