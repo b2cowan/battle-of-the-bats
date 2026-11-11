@@ -26,6 +26,10 @@ What moved here, with its decision IDs:
   registration tax (NOT yet ruled; the platform-reporting question sits in the GST/HST accountant package); **D14** Connect
   account and controller settings; **D15** registration exemptions needing evidence; **D16** who funds refunds and disputes
   after payout; **D22** visiting non-Canadian registration payers (the US half is GST/HST Stage 8).
+  - *Pointer (2026-11-10):* the owner accepted a **product shape for the club's own tax** on its programs in
+    `BOARD_READY_PLAN.md` §9: house-league and camp fees are **Exempt by default with a Taxable switch** (children 14 and
+    under, ETA Sch. V Part VI s.12). It bears on D15's evidence (the age range). It does **not** answer D13's
+    platform-collector question, which stays open here.
 - **The registration-side validation list** (revenue plan §9): pending payments, retries and out-of-order events, partial
   and full refunds, fees, payouts and ledger reconciliation.
 - **Not moved:** tax on the online-payment fee stays in GST/HST Stage 5 (which closes with this plan, not as a trigger); the

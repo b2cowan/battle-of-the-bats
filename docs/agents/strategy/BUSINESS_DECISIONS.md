@@ -8,6 +8,42 @@
 
 ---
 
+### 2026-11-10 — Board Ready: no new price, band or key; security work is on every plan; Stages 1–7 ride League Plus and both Club bands (Decided; planned, nothing built)
+**Status:** **Decided** (owner, 2026-11-10, "agreed", answering the gate recommendation in `docs/projects/active/BOARD_READY_PLAN.md`
+§9 "Gates"). **Planned, nothing built.** **One item still OPEN:** who pays the card fee on a sponsor payment (below).
+**Decision:**
+1. **No new price, band or key** for the Board Ready project.
+2. **Stage 0 is on every plan and never gated** (security fixes, for example two-step sign-in and the contact-email fix; the
+   board security pack and a public Security page). A security fix sold as an upgrade is a trust defect.
+3. **Stages 1–7 ride League Plus and both Club bands** (friend requests, group email to coaches, people and documents with
+   expiry, custom forms, club events, sponsorships, camps and clinics), following the "plan choice follows what an
+   organization runs, never an upgrade lever" rulings (2026-10-08 scheduler, 2026-10-11 permits). The three-plan set already
+   exists in code (the venue-library check), and `/billing` reuses it.
+4. **Stage 4 forms** reuse the existing custom-questions gate (Tournament Plus and up; League Plus and both Club bands pass by
+   rank). The "I have read" consent tick is **never gated**.
+5. **Stage 6 sponsorships:** sponsor *display* stays with the public site module. The owed tournament sponsor-display gate
+   (see 2026-10-27 "One sponsor list per organization") is decided **together with Stage 6**, not now. Tournament-only
+   organizers get display only.
+**Still open (not decided):** who pays the card fee on a sponsor payment. The families-pay default (2026-10-25) does not fit a
+business.
+**Rationale:** `BOARD_READY_PLAN.md` §9 "Gates". Plan choice follows what an organization runs, not a feature an upgrade unlocks.
+**Affects:** gates (Stage 1–7 builds); `PLAN_PRICING_FACTS.md` (inclusions line added 2026-11-10). No pricing copy, no
+`lib/plan-config.ts` change.
+**Handoff:**
+```
+HANDOFF → /billing
+- At each stage's build: reuse the existing three-plan check (League Plus + both Club bands); Stage 4 forms reuse the
+  custom-questions gate; Stage 0 and the consent tick are never gated. No new key.
+HANDOFF → /plan
+- BOARD_READY_PLAN.md §9: gates recorded as ruled 2026-11-10; the sponsor card-fee question and the Stage 6 tournament
+  sponsor-display gate stay open owner questions.
+HANDOFF → /marketing
+- Nothing now. No upsell may present any Stage 1–7 item as a League Plus → Club reason.
+```
+**Supersedes:** nothing. **Relates to:** 2026-10-08 scheduler; 2026-10-11 permits; 2026-10-27 one sponsor list per organization.
+
+---
+
 ### 2026-11-08 — Not offered in Québec for now; checkout declines a Québec billing address (Decided)
 **Status:** **Decided** (owner, 2026-11-08, GST/HST Stage 6 owner sheet, O4 = A, as recommended).
 **Decision:** FieldLogicHQ is **not currently offered to customers in Québec**. The Terms of Service say so, and the product
@@ -793,6 +829,35 @@ HANDOFF → /plan: nothing new; the plan's Stage 4b record carries the build. Wa
   408 after the code is serving) are the owner's.
 ```
 **Supersedes:** Stage 4b Q7 ("in the product only, no email"; plan record, not a log entry).
+
+---
+
+### 2026-10-27 — One sponsor list per organization; each sponsor says where it shows; a club sponsor is not automatically a tournament sponsor (Decided; logged 2026-11-10)
+**Status:** **Decided** (owner, 2026-10-27, Public tournament pages Ask 5, ruled as recommended with the owner's note below).
+**Logged 2026-11-10 (truth-up, found missing by the Board Ready gate review).** The plan gate for tournament sponsor display
+is **owed** (see "Not decided").
+**Decision:**
+1. **One sponsor list per organization, and each sponsor says where it shows:** the club site, and/or chosen tournaments. A
+   club adds a business once and ticks the tournaments it backs; a tournament-only organizer uses the same list for its
+   events only. (A separate per-tournament list was the rejected alternative: it makes a club enter the same business twice.)
+2. **A club sponsor is not automatically a tournament sponsor.**
+3. **Owner's note, 2026-10-27:** sponsors follow branding's logic. The organization can put its sponsors on its tournaments
+   or let its tournament organizers put their own; a tournament organizer not linked to a club gets its own sponsors section.
+**Not decided (stays as the sources mark it):**
+- **Which plans show tournament sponsors:** "an owner + `/strategy` call". The plan only **leans** to following the Tournament
+  Plus branding gate (a free event cannot show even its own host's logo), with a free event's editor showing sponsors locked.
+  **Owed.** Per 2026-11-10 it is decided together with Board Ready Stage 6.
+- The drawing of the choice (where the organization's choice lives, what a tournament organizer sees) is not drawn yet.
+**Rationale:** `docs/projects/active/PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §7 (and the §10 Ask 5 ruling); `memory/design_decisions.md`
+2026-10-27 "Public tournament pages: all seventeen asks ruled as recommended".
+**Affects:** roadmap (the "Side · Sponsors" item of the public tournament pages ladder); gates (owed).
+**Handoff:**
+```
+HANDOFF → /plan
+- Public tournament pages "Side · Sponsors": where-it-shows on each sponsor, the editor control, an org with no club site
+  getting a sponsor list, the Overview strip; the plan gate stays owed to /strategy and rides Board Ready Stage 6.
+```
+**Supersedes:** nothing. **Relates to:** 2026-11-10 Board Ready gates.
 
 ---
 
