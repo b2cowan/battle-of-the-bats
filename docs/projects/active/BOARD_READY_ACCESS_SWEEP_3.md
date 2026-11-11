@@ -223,10 +223,17 @@ any club's files.
 - **Demo sandbox billing:** the demo write block matches a demo club in the URL only, and the billing POSTs name the club in
   the body. An anonymous "See it live" visitor can therefore reach portal, checkout, setup-payment, move, cancel and
   downgrade on the demo clubs. Only `billing/location` refuses. No real data; demo state and Stripe test objects only.
+  **→ Fixed, W2 fix D, `0d424d8bc` 2026-11-11.** One shared refusal in every billing write; review also closed the payouts setup
+  (POST, PATCH) and its Stripe return, which named the club only in the body. A build check sweeps them. `/accounting`: no change to
+  what is charged or reported. Reports separate live from test mode but do not leave out the demo clubs: owner step, look for demo
+  customers or invoices in LIVE Stripe.
 - **Scorekeeper feed** (`app/api/official/[orgSlug]/score/get-score.ts:175-190, 310-312`, re-read): sends game notes, venue
   notes and the **email of whoever submitted each score** to every scorekeeper.
 - **Team pay links** (`lib/team-pay-link.ts`) never expire and can't be revoked per team (the league link has a version). A
   forwarded email shows that team's receipts (card brand and last 4) and can start a payment for that team.
+  **→ Fixed, W2 fix D, `90d2f23b0` 2026-11-11 (mig 467, dev only: apply to prod BEFORE the code).** The team link has a version like
+  the family link; every link already emailed keeps working. Server side only (`replace_pay_link`); the club's "Send a new link"
+  button needs a `/design` session. Review found and fixed: a team paying as the link is replaced is sent on to the current link.
 - **Venue permit file** (`app/api/admin/org/permits/document/route.ts:34-48`, re-read): any non-coach member gets the file,
   which may state the fee that the screens hide from non-money seats. `?teams=1` lists every rep team, ignoring group limits.
 - **Coach revoke of a family link** ends the parent's access to that child on **every** team (the link is child-wide since
@@ -237,13 +244,17 @@ any club's files.
   **→ Fixed, W2 fix C, `ae474966e` 2026-11-11.**
 - **Anonymous feedback form:** the per-address limit keys on a header the caller sets, and the limits are per server
   instance, so the admin inbox can be flooded.
+  **→ Fixed, W2 fix D, `0d424d8bc` 2026-11-11.** Keyed on the address our own edge wrote (CloudFront's, else the last forwarded entry)
+  and a database daily cap (5 per address, 40 anonymous in total, 10 per account). Owner steps: check one real production request's
+  headers before the promote (an extra hop would make every anonymous visitor share one limit); the 40 total can be filled by about
+  eight deliberate addresses to block anonymous feedback for a day (owner call to soften).
 - **Sign-up answers** tell an anonymous caller that an email has a pending invitation, and to which club. Per-instance,
   header-keyed throttles; `account-check` is the same oracle by design.
 - **Rep-team link to a tournament registration** skips the group limit (`admin/teams/rep-team-link`).
 - **Upload paths** take the file name and the browser's file type as sent (rep-team documents, templates). Bounded to the
   club's private bucket.
 - **Dev seed guard** (`lib/platform-auth.ts:164-195`) has no production check of its own. Defence in depth: the flag is off
-  in production and a super admin is required.
+  in production and a super admin is required. **→ Fixed, W2 fix D, `0d424d8bc` 2026-11-11.**
 - **W2 fix C (`ae474966e` 2026-11-11) fixed three of the "Also" items below:** `pay/tournament/[id]` (live, un-canceled tournament
   only, throttled), Overview and News posts aimed at a held-back division, and Rules sending held-back divisions. Rule sections
   tagged to a held-back division were the same class as the posts: **fixed in `92f802403`** (Rules page, feed section, nav count).
@@ -253,6 +264,13 @@ any club's files.
   operator email; `payouts/return` builds its redirect from the request host; one Stripe expiry handler ignores the
   event's account; `weekOf=garbage` returns 500; Overview and News show posts aimed at a held-back division; Rules sends
   held-back divisions' settings.
+- **W2 fix D (`0d424d8bc` 2026-11-11) fixed four more of the "Also" items:** the family claim also checks `email_confirmed_at`;
+  `payouts/return` builds its redirects on a trusted same-host origin; the Stripe "session expired" handler binds the event's account;
+  `request-deletion` escapes the reason (and every field) in the operator email.
+- **Found in W2 fix D's review, owner calls (not fixed):** a "See it live" session can also create real clubs, leagues and teams
+  (`org/create`, `league/create`, `coaches/teams` name no club, so neither the proxy block nor the new refusal sees them; `org/create`
+  also grants the Founding Season comp). A signed-in parent with an unconfirmed email who is refused a family claim sees the generic
+  "didn't go through" message (near-unreachable).
 
 ### Sweep 2's open items, re-checked
 - Public SCHEDULE payload carrying unpublished divisions and notes: **FIXED** (`lib/public-tournament-data.ts:185-209`
