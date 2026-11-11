@@ -40,13 +40,12 @@ import { clubPhoneNav, tournamentSheetTiles } from '@/lib/nav-tiles';
 import {
   clubSheetGroups, isKitLinkActive, isKitLinkActiveAmong, placeGroupHeading, tournamentBarKeys, type KitLink,
 } from '@/lib/admin-kit-nav';
-import { resolveEventPhase } from '@/lib/tournament-phase';
+import { eventPhaseOf } from '@/lib/admin-event-cell';
 import { useAdminKitNav } from './useAdminKitNav';
 import { briefPlaceCount } from './club/ClubBriefProvider';
 import { kitCountText } from '@/lib/admin-kit-nav';
 import { MESSAGES_TAB } from '@/lib/invite-only-words';
 import styles from '@/components/coaches/CoachesBottomNav.module.css';
-import kit from './AdminKitFrame.module.css';
 import { useFeeAlert } from './useFeeAlert';
 
 const badge = (n: number): string => (n > 9 ? '9+' : String(n));
@@ -65,7 +64,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
     calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
   const { currentOrg } = useOrg();
-  const { tournaments, currentTournament, setCurrentTournament } = useTournament();
+  const { currentTournament } = useTournament();
   const worklist = useAdminWorklist();
   const tournamentBar = onTournaments || tournamentOnly;
   // Chat's unread count rides the bar only where Chat is a door (an invite-only event has none, R5).
@@ -88,14 +87,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const setupByKey = new Map(groupItems('setup').map(i => [i.key, i]));
   // The PHASE picks the tabs, read with the header's own rule (the dates, or the first game having started) the way
   // the context strip reads it, so the header, the board and the bar can never disagree (owner, 2026-10-16).
-  const phase = currentTournament
-    ? resolveEventPhase({
-        status: currentTournament.status,
-        startDate: currentTournament.startDate,
-        endDate: currentTournament.endDate,
-        firstGameStarted: Boolean(currentTournament.firstGameStarted),
-      })
-    : 'draft';
+  const phase = currentTournament ? eventPhaseOf(currentTournament).phase : 'draft';
   type TourItem = (typeof tournamentGroups)[number]['items'][number];
   const relabel = (item: TourItem | undefined, label: string, icon?: ElementType): TourItem | undefined =>
     (item ? { ...item, label, ...(icon ? { icon: icon as TourItem['icon'] } : {}) } : undefined);
@@ -265,7 +257,8 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
               <span className={styles.sheetGrab} aria-hidden />
 
               {/* ⚖ ONE MORE-SHEET ORDER FOR EVERY OPERATOR PORTAL (the nav standard's N7, rewritten by navigation Phase 1,
-                  owner 2026-11-09): (1) Notifications — then, in a tournament, its picker (until Phase 3); (2) the tiles;
+                  owner 2026-11-09; item 1 by Phase 3, 2026-11-11): (1) Notifications — no event picker: the bar's small
+                  line changes event; (2) the tiles;
                   (3) the sidebar's groups, under the sidebar's names, in its order, an icon on every row; (4) You — Account,
                   What's new, Home, the other portals you hold (Club · Tournaments · Coaches Portal), Plan & billing;
                   (5) Help, Send feedback, Download app, Sign out. "Club overview" left the top of a tournament's sheet: the
@@ -287,28 +280,10 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
 
               {tournamentBar ? (
                 <>
-                  {tournaments.length > 0 && (
-                    <div className={styles.dropSection}>
-                      <div className={styles.dropSectionLabel}>Current tournament</div>
-                      <div className={kit.switcher}>
-                        {tournaments.length > 1 ? (
-                          <select
-                            className={kit.switcherSelect}
-                            value={currentTournament?.id ?? ''}
-                            onChange={e => { const t = tournaments.find(x => x.id === e.target.value); if (t) setCurrentTournament(t); }}
-                            id="admin-mob-tournament-select"
-                            aria-label="Current tournament"
-                          >
-                            {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}{t.isActive ? ' - Live' : ''}</option>)}
-                          </select>
-                        ) : (
-                          <span className={kit.switcherName}>{currentTournament?.name}</span>
-                        )}
-                      </div>
-                      {/* No "Review launch checklist" row: Dashboard, which holds the checklist, is pinned to the bar in
-                          every phase (owner 2026-10-16), so More never needs a second door to it. */}
-                    </div>
-                  )}
+                  {/* ⚰ No tournament picker here (navigation Phase 3, E5, owner 2026-11-11): the event is changed from the
+                      small line under the bar's page name (`AdminEventSwitchSheet`), so each width has one way to do it. No
+                      "Review launch checklist" row either: Dashboard, which holds the checklist, is pinned to the bar in every
+                      phase (owner 2026-10-16). */}
                   {tourTiles && <MoreSheetTiles tiles={tourTiles.map(sheetTile)} onPick={close} />}
                   {tourMoreGroups.map(group)}
                 </>

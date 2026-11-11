@@ -1,0 +1,456 @@
+<title>The Phone Names The Page</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Navigation across the three portals · Phase 3, the tournament phone · Owner QA Ledger §512</span>
+    <h1>On a phone, the bar names the page; the event line switches events</h1>
+    <p class="lead">On a phone, a tournament page’s bar now says which page you are on (“Divisions”, “Teams”), the same word as the computer’s strip, and the page’s own big title is gone. Under the page’s name, the small line carries the event’s name, its phase chip and an arrow: tap it (or the page’s name) for a list of your events. The More sheet no longer has a “Current tournament” dropdown. The organization’s own screens name themselves with no event line. And, your Nov 11 addition: every row of the event list, on a phone and on a computer, starts with the event’s logo. Six walks, one purpose each. About 25 minutes.</p>
+    <p class="lead">Written Nov 11, 2026 against the dev site. Nothing here is real data: the club, the organization and their events are test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Walks 1, 2, 3 and 5</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code><br>The owner of <b>UAT Rep Club</b> (a club), which runs five tournaments.</dd>
+      <dt>Walk 4</dt><dd><code>uat-owner@uat-test-org.local</code> · <code>UATPassword2026!</code> — the owner of <b>UAT Test Org</b>, a tournament-only organization with two events.</dd>
+      <dt>Walk 6</dt><dd>No sign-in: the tournament demo, from <code>localhost:3000/demos</code>.</dd>
+      <dt>Phone</dt><dd>Steps marked <b>phone</b> use your desk browser’s device toolbar at <b>390 × 844</b> (an iPhone 13 or 14 preset is fine), or a real phone on the same network.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Sign out before each new person, or use a private window per person.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>No script to run.</b> Every step uses the test data as it stands.</li>
+      <li><b>Walk the parts in order, 1 to 6.</b> Each opens with a stop check.</li>
+      <li>The drawings these screens were built to: <a href="https://claude.ai/artifact/S7XXbtLwNeZUjEWXzbUcw4#phase3">tab 16 “Phase 3 gate”</a> and tab 6.</li>
+      <li>Your rulings it was built to: R1 A (no dates on the small line), R2 A widened to the computer’s list too, R3 A (the organization’s screens: no event line), R4 A (the page’s name and the line are one tap target).</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>With scripts off (exactly what the server sends), every page in this walk already shows its final bar — the page’s name, the event line, or none — for the club and the tournament-only organization at 390 wide. Nothing in the bar changes after the page loads.</li>
+      <li>Exactly one title per screen at each width. The tab titles are right (“Divisions – Stripe Walk Invitational – UAT Rep Club – FieldLogicHQ”).</li>
+      <li>The bar is still 53 px tall on a tournament page (it was 53 before); 51 px on the organization’s screens. The tap target over the page’s name and the event line measures 46 px tall.</li>
+      <li>On a touch-emulated phone: the list opens with focus on the event you are in; Escape, the phone’s Back and a tap off the list close it without leaving the page; picking another event closes it and stays on the page; “All tournaments” opens the list of tournaments. The bottom bar stays visible and usable under it.</li>
+      <li>The More sheet has no dropdown and opens on Notifications.</li>
+      <li>The layout check at 390 on Divisions, the Tournaments list, Members and the More sheet: no new findings. Typecheck, lint, spelling, the demos check and 380+ navigation tests pass.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: does the bar read as the page’s name, is the event line obviously the way to switch, and do the logos earn their place in the list?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "nav-phase3-walk-v1";
+  var PAGE = "Navigation across the three portals · Phase 3, the tournament phone · Owner QA Ledger §512";
+  var WALKS = [
+ {
+  "id": "P1",
+  "title": "The bar names the page",
+  "job": "UAT Rep Club · owner · phone, 390 wide",
+  "forText": "A tournament page on a phone: the bar says which page you are on, and the event rides the small line under it.",
+  "passes": "The bar’s first line is the page’s name in the sidebar’s word; the small line is the event’s name, its phase chip and an arrow, with no dates; the page has no big title of its own; its buttons and its “?” keep the right end of its top row, the “?” last; the bar is the same height as before.",
+  "notIn": "The list the line opens (walk 2), the More sheet (walk 3), the organization’s screens (walk 4).",
+  "who": "uat-club-owner@uat-rep-club.local",
+  "where": "localhost:3000/uat-rep-club/admin/tournaments/divisions at 390 wide.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in and open <b>Divisions<\/b> at 390 wide.",
+    "s": "The bar reads <b>Divisions<\/b> in bold, and under it, in small grey letters, the event’s name, a green <b>OPEN<\/b> chip and a small down arrow. No dates on that line. There is <b>no<\/b> big “Divisions” title on the page itself. If the bar says the event’s name in bold, stop and tell me."
+   },
+   {
+    "d": "Look at the page’s top row, under the bar.",
+    "s": "The lime <b>+<\/b> and the round <b>?<\/b> sit at the right end of the row, the “?” last. Nothing else is in the row."
+   },
+   {
+    "d": "Tap <b>Teams<\/b>, then <b>Schedule<\/b>, then <b>Dashboard<\/b> in the bottom bar.",
+    "s": "Each time the bar’s first line changes to that page (“Teams”, “Schedule”, “Dashboard”); the event line under it stays the same. No page shows a second, bigger title."
+   },
+   {
+    "d": "Open <code>…/tournaments/summary<\/code> (a page the sidebar has no row for while the event is not over).",
+    "s": "Here the bar keeps the event’s name in bold, the small line shows only the chip and the arrow, and the page keeps its own “Summary” title. Tell me if this reads wrong to you — it is the one page type that works this way."
+   },
+   {
+    "d": "Back on Divisions, scroll the page down.",
+    "s": "The bar stays put and does not shrink; the page scrolls under it."
+   }
+  ]
+ },
+ {
+  "id": "P2",
+  "title": "The event list on a phone",
+  "job": "UAT Rep Club · owner · phone, 390 wide",
+  "forText": "Tapping the event line opens the list of your events, and picking one keeps you on the same page.",
+  "passes": "The list rises from above the bottom bar with a small “TOURNAMENTS” label and no ×; each row has the event’s logo, its name and “dates · phase”; the event you are in is olive with a check; finished events are at the bottom; “All tournaments” is last; picking another event closes the list and stays on the page; Back, a tap off the list, and picking the same event close it.",
+  "notIn": "The computer’s list (walk 5).",
+  "who": "uat-club-owner@uat-rep-club.local",
+  "where": "localhost:3000/uat-rep-club/admin/tournaments/divisions at 390 wide.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: on Divisions, tap the event’s name under “Divisions”.",
+    "s": "A white sheet rises from just above the bottom bar, with a grey handle, the label <b>TOURNAMENTS<\/b> and no ×. The bottom bar is still visible and not dimmed; the page above the sheet is dimmed. If nothing opens, or the bottom bar is covered, stop and tell me."
+   },
+   {
+    "d": "Read the rows.",
+    "s": "Five events, each row with the club’s round logo, the name in bold and a grey line like “Dec 13–15, 2026 · Open”. The event you are in is olive with a check on the right. The two <b>Completed<\/b> events are at the bottom. <b>All tournaments<\/b>, with a trophy, is last."
+   },
+   {
+    "d": "Do the logos earn their place? (Here every event shows the club’s logo, because none has its own.)",
+    "s": "Your call — tick if you are happy with them; otherwise write what you would change in the notes."
+   },
+   {
+    "d": "Tap <b>UAT Rep Club Invitational 2026<\/b>.",
+    "s": "The sheet closes, you are still on Divisions, and the event line now reads <b>UAT Rep Club Invitational 2026<\/b> with a red <b>GAME DAY<\/b> chip. The divisions shown are that event’s."
+   },
+   {
+    "d": "Tap the bold page name <b>Divisions<\/b> itself (not the line under it).",
+    "s": "The list opens too — the page’s name and the event line are one target."
+   },
+   {
+    "d": "With the list open, use the phone’s Back (or the browser’s back button).",
+    "s": "The list closes and you are still on Divisions — Back does not leave the page."
+   },
+   {
+    "d": "Open it again and tap the dimmed page above the sheet.",
+    "s": "The list closes; nothing on the page was pressed."
+   },
+   {
+    "d": "Open it again and tap <b>All tournaments<\/b>.",
+    "s": "You land on the Tournaments list (walk 4 looks at its bar). Switch back to <b>Stripe Walk Invitational<\/b> from the list afterwards if you like."
+   }
+  ]
+ },
+ {
+  "id": "P3",
+  "title": "The More sheet",
+  "job": "UAT Rep Club · owner · phone, 390 wide",
+  "forText": "More no longer carries a second way to switch events.",
+  "passes": "More opens on Notifications, then the tiles; there is no “Current tournament” label, no dropdown and no “ - Live”.",
+  "notIn": "Everything else in More is unchanged.",
+  "who": "uat-club-owner@uat-rep-club.local",
+  "where": "Any tournament page, at 390 wide.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: on Divisions, tap <b>More<\/b> in the bottom bar.",
+    "s": "The sheet opens on <b>Notifications<\/b>, followed by the tiles. There is <b>no<\/b> “Current tournament” heading and no dropdown. If a dropdown is still there, stop and tell me."
+   },
+   {
+    "d": "Scroll the sheet.",
+    "s": "The groups and the You section are as before; nothing else moved."
+   }
+  ]
+ },
+ {
+  "id": "P4",
+  "title": "The organization’s screens",
+  "job": "UAT Test Org · owner · phone, 390 wide",
+  "forText": "The organization’s own screens name themselves, with no event line, because no event is theirs (R3).",
+  "passes": "The Tournaments list says “Tournaments”, Plan & billing says “Plan & billing”, each with no small line under it and no second title on the page; Settings & access looks exactly as before (its name and its tab row in the bar); an event page still carries the event line.",
+  "notIn": "The club’s own screens — they are unchanged.",
+  "who": "uat-owner@uat-test-org.local",
+  "where": "localhost:3000/uat-test-org/admin/tournaments/manage at 390 wide.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as the UAT Test Org owner and open the Tournaments list.",
+    "s": "The bar reads <b>Tournaments<\/b>, with no small line under it, and the page has no second “Tournaments” title. If the bar says “UAT Test Org”, stop and tell me."
+   },
+   {
+    "d": "Open <code>…/tournaments/settings/subscription<\/code> (Plan &amp; billing).",
+    "s": "The bar reads <b>Plan &amp; billing<\/b>, no line under it, no second title."
+   },
+   {
+    "d": "Open <code>…/tournaments/settings/members<\/code>.",
+    "s": "As before: the bar reads <b>Settings &amp; access<\/b> with its tab row (Members · Payouts · PDF settings · Web address)."
+   },
+   {
+    "d": "Open <code>…/tournaments/divisions<\/code> and tap the event line.",
+    "s": "The bar names <b>Divisions<\/b>; the list holds this organization’s two events, each row starting with its initials (this organization has no logo), and All tournaments."
+   },
+   {
+    "d": "On the organization’s screens, nothing on the screen names the organization any more (you chose this in R3). Does that read right?",
+    "s": "Your call — tick if so; otherwise note it."
+   }
+  ]
+ },
+ {
+  "id": "P5",
+  "title": "Logos in the computer’s list",
+  "job": "UAT Rep Club · owner · computer, 1440 wide",
+  "forText": "Your Nov 11 addition: the computer’s event list carries the logo on every row too, so the two lists match.",
+  "passes": "The list under the sidebar’s event cell shows each event’s logo at the start of its row, the names and lines line up, the trophy for All tournaments sits under the logos, nothing is cut off in the 320 px list.",
+  "notIn": "Anything else on the computer — it is unchanged.",
+  "who": "uat-club-owner@uat-rep-club.local",
+  "where": "localhost:3000/uat-rep-club/admin/tournaments/divisions at full width.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: on a computer, click the event’s cell at the top of the sidebar.",
+    "s": "The list opens under it; every event row starts with the club’s round logo. If the rows have no logos, stop and tell me."
+   },
+   {
+    "d": "Read the list.",
+    "s": "Names and their grey lines line up after the logos; the current event is olive with a check; the trophy for <b>All tournaments<\/b> sits right under the logos, its words lined up with the event names."
+   },
+   {
+    "d": "Use the keyboard: Down and Up arrows, then Escape.",
+    "s": "The arrows move through the rows as before; Escape closes the list and puts you back on the cell."
+   }
+  ]
+ },
+ {
+  "id": "P6",
+  "title": "The demo",
+  "job": "No sign-in · phone, 390 wide",
+  "forText": "The public tournament demo runs the same chrome; a prospect on a phone sees the new bar.",
+  "passes": "The demo’s tournament pages name the page in the bar with the event line under it; the line opens the list; the demo’s own banner and tour still work.",
+  "notIn": "The coach demo (unchanged until Phase 5).",
+  "who": "No sign-in",
+  "where": "localhost:3000/demos at 390 wide.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <code>localhost:3000/demos<\/code> and enter the tournament demo.",
+    "s": "A tournament page opens in the demo; the bar names the page with the event line under it. If the demo will not open, stop and tell me."
+   },
+   {
+    "d": "Tap the event line.",
+    "s": "The list opens with the demo’s events; picking one keeps you on the page."
+   },
+   {
+    "d": "Follow the demo’s tour for a step or two.",
+    "s": "The tour’s steps still point at things on the screen; nothing points at empty space."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "B1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "D1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "B1" }; save(); render();
+  });
+  render();
+})();
+</script>

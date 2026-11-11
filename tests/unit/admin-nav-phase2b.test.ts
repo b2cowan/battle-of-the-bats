@@ -69,7 +69,7 @@ describe('Part B · the strip names the lit row (E2)', () => {
     assert.equal(at('/tournaments/preview/x'), null);
     assert.equal(at('/rep-teams'), null);
   });
-  it('the organization’s screens the strip names on a computer: the list and Plan & billing (P3: the phone keeps the organization)', () => {
+  it('the organization’s screens the chrome names: the list and Plan & billing (the phone bar too since Phase 3, R3)', () => {
     assert.equal(tournamentOrgScreenName(`${B}/tournaments/manage`, B), 'Tournaments');
     assert.equal(tournamentOrgScreenName(`${B}/tournaments/archives`, B), 'Tournaments');
     assert.equal(tournamentOrgScreenName(`${B}/tournaments/settings/subscription`, B), 'Plan & billing');
@@ -80,9 +80,12 @@ describe('Part B · the strip names the lit row (E2)', () => {
     assert.ok(!isTournamentOrgScreen(`${B}/tournaments/settings/notifications`, B));
     assert.ok(!isTournamentOrgScreen(`${B}/tournaments/settings/event`, B));
   });
-  it('the paper title steps aside above 900px only, and a header with no actions draws nothing there (P3, E11)', () => {
+  // ⚖ Navigation Phase 3 (E5, owner 2026-11-11) widened P3's "above 900px only" to both widths: the phone bar names the page
+  // too. Updated deliberately; `admin-nav-phase3.test.ts` holds the one-rule guard.
+  it('the paper title steps aside at both widths, and a header with no actions draws nothing (E5, E11)', () => {
     const css = readCode('components/admin/AdminPageHeader.module.css');
-    assert.match(css, /@media \(min-width: 901px\) \{\s*\.header\[data-desk-named\] \.left \{ display: none; \}\s*\.header\[data-desk-named='empty'\] \{ display: none; \}/);
+    assert.match(css, /\.header\[data-desk-named\] \.left \{ display: none; \}\s*\.header\[data-desk-named='empty'\] \{ display: none; \}/);
+    assert.doesNotMatch(css, /@media[^{]*\{\s*\.header\[data-desk-named/, 'no breakpoint: one rule for both widths');
     const strip = readCode('components/admin/AdminTopStrip.tsx');
     // The facts are the strip's, after the page's name: the dates, then the phase chip.
     assert.ok(strip.indexOf('{deskTitle}') < strip.indexOf('{dates && <span className={own.dates}>{dates}</span>}'));

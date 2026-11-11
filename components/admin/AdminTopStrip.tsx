@@ -68,7 +68,7 @@ function StripPlace() {
   // sidebar's lit row) is the page's `<h1>` here, and the event's facts — its dates and phase — sit at the strip's RIGHT END,
   // before View site, in quiet ink behind a hairline (§0 round 2 /design); they give way first on a narrow window and the
   // page's name never truncates. The cell keeps the event's name alone. The organization's list and Plan & billing are named
-  // here too (no facts: no event is theirs). The phone bar still names the event until Phase 3.
+  // here too (no facts: no event is theirs). The phone bar names the same page (Phase 3), the event on its small line.
   if (deskTitle) {
     return (
       <div className={own.place}>

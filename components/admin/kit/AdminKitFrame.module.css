@@ -115,12 +115,15 @@
 /* ⚖ THE SWITCH LIST (`EventSwitchMenu`): the portal's standard two-line dropdown (`SublinedChoice`'s `convWhat*` list and rows,
    coaches.module.css) at the drawing's 320 (T3). This adds only what that list has no need for: the current event's olive
    name and check, a check centred on the row's two lines, and the "All tournaments" foot under its hairline. */
-.switchRow { align-items: center; color: var(--text-primary); text-decoration: none; }
-.switchText { min-width: 0; }
+.switchRow { align-items: center; gap: 0.6rem; color: var(--text-primary); text-decoration: none; }
+/* ⚖ The tile leads the row (navigation Phase 3, owner 2026-11-11, both widths): the words take the room between it and the check. */
+.switchText { min-width: 0; flex: 1; }
 .switchCurrent { color: var(--home-olive); }
 .switchIcon { flex: none; color: var(--home-olive); }
 /* The foot row: a link, so it is the list's FIRST `a` and `.convWhatOpt:first-of-type` would drop its hairline — put back. */
-.switchAll.switchAll { justify-content: flex-start; gap: 0.5rem; border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12); }
+.switchAll.switchAll { justify-content: flex-start; border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12); }
+/* The trophy sits in a box the tile's width, so "All tournaments" starts where the event names do. */
+.switchAllIcon { flex: none; width: 24px; display: inline-grid; place-items: center; }
 .switchAllText { font-size: var(--type-body); color: var(--text-primary); }
 /* The list is 320 wide and hangs over the page: the sidebar raises its own layer while it is open (the strip's `stripLayer`
    value), so the page's own pinned bands never paint over it. */
@@ -239,42 +242,8 @@
 .groupHeaderActive { color: var(--text-secondary); }
 .groupHeaderText { margin-right: auto; }
 
-/* The tournament switcher of the PHONE's More sheet (`AdminKitBottomNav`) — the coach rail's team switcher
-   (`.teamSwitcherSelect`). The desktop sidebar's native `<select>` went in navigation Phase 2 Part A (the event's cell and
-   its list); the phone's goes in Phase 3. */
-.switcher { display: flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.85rem 0.5rem; }
-.switcherSelect {
-  flex: 1;
-  min-width: 0;
-  background: var(--home-card);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
-  color: var(--text-primary);
-  font-size: var(--type-body);
-  font-weight: 600;
-  padding: 0.4rem 0.55rem;
-  cursor: pointer;
-  /* A long tournament name ends in "…" instead of being clipped mid-letter. */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* The desktop rail is hidden here; this is the phone More sheet's select. */
-@media (max-width: 900px) { .switcherSelect { min-height: var(--tap-min, 44px); } }
-.switcherSelect:focus { outline: none; border-color: var(--home-olive); }
-.switcherSelect option { background: var(--home-card); }
-.switcherName {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--type-body);
-  font-weight: 600;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 0.4rem 0.4rem;
-}
-
+/* ⚰ The phone More sheet's tournament switcher (`.switcher` / `.switcherSelect` / `.switcherName`) went in navigation Phase 3
+   (2026-11-11): the event is changed from the bar's small line (`AdminEventSwitchSheet`), as the sidebar's cell does above 900px. */
 
 /* The foot: the rail's quiet doors — Help, the Coaches Portal, Public site where no program row is it (the nav standard's
    N4). Sign out and Send feedback left it for the account menu (2026-10-17), and the red sign-out row's rules with them. */
@@ -316,7 +285,6 @@
   :global(html[data-sidebar='strip']) .item svg { width: 18px; height: 18px; }
   :global(html[data-sidebar='strip']) .sub,
   :global(html[data-sidebar='strip']) .subLabel,
-  :global(html[data-sidebar='strip']) .switcher,
   :global(html[data-sidebar='strip']) .groupHeader,
   :global(html[data-sidebar='strip']) .chevron { display: none; }
   :global(html[data-sidebar='strip']) .foot { align-items: center; width: 100%; }

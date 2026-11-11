@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { eventSwitchLine, eventTileSource } from '../../lib/admin-event-cell.ts';
+import { eventSwitchLine, eventSwitchOrder, eventTileSource } from '../../lib/admin-event-cell.ts';
 import { readCode, readSource } from './_source-code.ts';
 
 /**
@@ -52,6 +52,32 @@ describe('eventSwitchLine — the dates and the phase word (T3, E12 (2))', () =>
   });
 });
 
+describe('eventSwitchOrder — finished events sink to the foot of the list (2026-11-11)', () => {
+  const today = '2026-11-02';
+  const ev = (name: string, status: string, startDate: string, endDate: string) => ({ name, status, startDate, endDate });
+  const events = [
+    ev('Spring', 'completed', '2026-05-22', '2026-05-24'),
+    ev('Summer', 'completed', '2026-08-14', '2026-08-16'),
+    ev('Invitational', 'active', '2026-11-01', '2026-11-03'),
+    ev('Stripe A', 'active', '2026-12-13', '2026-12-15'),
+    ev('Stripe B', 'active', '2026-12-13', '2026-12-15'),
+  ];
+  it('working events first, completed last, each group keeping its own order', () => {
+    assert.deepEqual(eventSwitchOrder(events, today).map(e => e.name), ['Invitational', 'Stripe A', 'Stripe B', 'Spring', 'Summer']);
+  });
+  it('does not touch the list it was given, and a list with nothing finished is unchanged', () => {
+    const before = events.map(e => e.name);
+    eventSwitchOrder(events, today);
+    assert.deepEqual(events.map(e => e.name), before);
+    assert.deepEqual(eventSwitchOrder(events.slice(2), today).map(e => e.name), ['Invitational', 'Stripe A', 'Stripe B']);
+  });
+  it('the sidebar reads the list through it', () => {
+    // Through the one row builder since navigation Phase 3 (2026-11-11), which the phone's sheet reads too.
+    assert.match(readCode('components/admin/kit/AdminKitRail.tsx'), /eventSwitchRows\(tournaments, currentTournament\.id, currentOrg\)/);
+    assert.match(readCode('lib/admin-event-cell.ts'), /return eventSwitchOrder\(events, today\)\.map\(/);
+  });
+});
+
 describe('the event logo’s shape is stored with the logo (mig 460)', () => {
   it('the upload measures it and the removal clears it', () => {
     const route = readSource('app/api/admin/tournament-logo/route.ts');
@@ -80,7 +106,7 @@ describe('the event’s sidebar (E1, E14, T3, T6)', () => {
     const cell = rail.slice(rail.indexOf('function EventCell('), rail.indexOf('export default function AdminKitRail('));
     assert.match(cell, /<button[\s\S]*aria-haspopup="menu"[\s\S]*<ChevronDown size=\{16\}[\s\S]*<\/button>/);
     assert.match(cell, /eventTileSource\(currentTournament, currentOrg\)/);
-    assert.match(cell, /line: eventSwitchLine\(t\)/);
+    assert.match(cell, /eventSwitchRows\(/);
   });
   it('nothing folds: the tournament headings are labels, and the stored fold choice is gone', () => {
     const tour = rail.slice(rail.indexOf('function TournamentRail('));

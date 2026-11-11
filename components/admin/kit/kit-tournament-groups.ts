@@ -71,7 +71,8 @@ const ORG_ROW_KEYS = new Set(['settings', 'manage']);
  * ⚖ THE EVENT'S SIDEBAR ON A COMPUTER (navigation Phase 2 Part B; E3, T1, T2, owner 2026-11-10): the event's pages only.
  * Settings & access and the Tournaments list are the organization's (a tournament-only organization's own short sidebar, a
  * club's own sidebar), so they leave; the event's own "Your notifications" stays the last row, under Admin. The way to the
- * list from an event is the cell's "All tournaments". PHASE-3: the phone's More sheet keeps `kitTournamentGroups` until then.
+ * list from an event is the cell's "All tournaments". The phone's More sheet keeps `kitTournamentGroups`, whose
+ * rows carry those organization screens: a phone has no sidebar foot (navigation Phase 3 left the sheet's rows as they were).
  */
 export function deskTournamentGroups(groups: readonly TourGroup[]): TourGroup[] {
   return groups

@@ -544,7 +544,40 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   - **Walk §509** (https://claude.ai/artifact/6b4BCkFNxB8RDnWq64cUDs, source `ADMIN_NAV_PHASE2B_WALK.html`): 4 walks, 32 checks after walk 4's rewrite (B4R); **PASSED 32/32 2026-11-11**. **Next:
     Phase 3** (the tournament phone); its prompt is written after this phase lands.
 - **Phase 3 · Tournament phone.** Bar names the page; the small line opens the sheet; More loses its dropdown (N7 item 1
-  rewritten).
+  rewritten). Prompt written 2026-11-11: `ADMIN_NAV_BUILD_PHASE3_PROMPT.md`.
+  - **Gate ruled 2026-11-11** (drawings tab 16 "Phase 3 gate", /design applied before hand-off): **R1 A** the small line is the event's
+    name · phase chip · chevron, no dates (they are the list rows' words; at 390 px dates cut the name first); **R2 A, WIDENED by the
+    owner** — the event's logo tile leads every row of the event list on the phone sheet **and on the computer's sidebar menu** ("the
+    logos down the list would be a nice addition"; accepted knowing an event with no logo of its own repeats the organization's);
+    **R3 A** the organization's own screens (the Tournaments list, a Tournament plan's Plan & billing) name the screen with no event
+    line — a tournament-only organization's name then shows nowhere on those phone screens (option C, its name as plain text, declined);
+    **R4 A** one 44 px target over the page's name and the event line (a tap on "Divisions" opens the list; the bar's old event-name
+    link to the Dashboard went — Dashboard is pinned in the bottom bar in every phase).
+  - **BUILT 2026-11-11.** The bar's first line reads the strip's answer (`useDeskTitle`, one rule at both widths) as the page's `<h1>`;
+    the event door is a `<button>` beside it whose own box reaches up over the name (padding + negative margin, positioned); an event page
+    with no sidebar row (Summary before the event is over) keeps the event's name as a span, a chip-only door and its paper title. The
+    paper title's hide (`data-desk-named`) lost its breakpoint. New `AdminEventSwitchSheet` (SheetFrame menu layer, the bar's sibling,
+    closes past 900 px via `useIsPhoneNav`); rows built once (`eventSwitchRows`) and drawn once (`EventSwitchItems`) for both widths.
+    More sheet: the `<select>`, "Current tournament", " - Live", the single-event span and `.switcher*` CSS deleted; its phase read
+    folded onto `eventPhaseOf`. NAV_STANDARD N7 item 1 rewritten; help article `event-top-strip` updated (/docs).
+  - **Measured (dev, 390 × 844 touch, `.probe/nav-phase3/phone.mjs`):** tournament bar **53.2 px after, 53 px before** (the height did
+    not change; the gate expected it would); organization screens 51.4 px; the door's target 46 px tall (the layout check's tap floor
+    passes on the button's own box). First paint (scripts off) = after load on every page, both org kinds, no swap (the server's
+    bar is 1 px shorter until fonts/scripts settle — no content change). One visible `<h1>` per screen. Tab titles unchanged and
+    right. Sheet: opens on the current event; Escape / Back / tap on the dim close it without leaving the page; picking another event
+    closes it and stays; All tournaments opens the list; sheet foot 72 px above the screen's foot, bottom bar live. More sheet: no
+    select, opens on Notifications. Desktop 1440: the list's rows carry the tile, the trophy aligned under the tiles, 320 px fits.
+  - **Checks:** 384 navigation tests (new `admin-nav-phase3.test.ts`; five guards updated in the open: header-bar ×4, phase2b ×2,
+    kit-nav ×2, event-cell ×2); typecheck, lint, tokens, spelling, demos green; `check:layout` at 390 (Divisions, Tournaments list,
+    Members, the More sheet): no new findings. The full unit suite's 19 failures at the time were all other sessions' files.
+  - **/design** (built vs drawn): no High; applied — focus ring offset off the glyphs, chevron in the line's ink, no tint while open.
+    **/simplify** applied: `useIsPhoneNav` instead of a hand-rolled media query, one `focusCurrentItem`, no phase-word alias; skipped
+    (recorded): renaming `useDeskTitle` (churn while other sessions edit nearby), moving the heading choice into `useAdminPlace`, a
+    SheetFrame-level hide above 900 px. **/review** (standard tier, three lenses — correctness, state/accessibility, blast radius; the layout check at 390 first moved the door's target from a ::before onto the button's own box): FIXED — the open list was remembered per address and could reopen unasked on returning to a page by a path that skipped its close (two lenses). **Recorded (Low/advisory):** a client move into an event before the list has loaded can draw the bar without its event line for a beat (the Part B Low, same cause); a tournament-only organization's own screens on a phone have no way to change event but the Tournaments list (R3 as ruled); closing the list by widening past 900 px leaves focus on the page body; the door's target is sized from the name's 16 px × 1.2 line (re-measure if that type step changes); a dev-only mock billing portal keeps its own heading under Plan & billing (two headings, dev only); phone titles now read the sidebar's word ("Results", not "Results & scoring").
+  - **Walk §512** (source `ADMIN_NAV_PHASE3_WALK.html`): 6 walks — the bar, the event list, the More sheet, the organization's
+    screens, the computer's logos, the demo. Not walked: a person scoped to some events (no such fixture; the list is the tournament
+    context's, which already holds only theirs). **Depends on** the uncommitted 2026-11-11 "finished events last" change
+    (`eventSwitchOrder`) from another session: this phase's commit cannot land before it.
 - **Phase 4 · Coaches Portal desktop.** Sidebar widened to 240 and unfolded (E9, E14); strip split with the word "Coach" and the team's facts at its right end (E7); team cell replacing the `<select>`;
   `CoachTeamHeader` desktop removed; `CoachPageHeader` title/icon tile dropped where the strip names the page, buttons to
   a toolbar row; nested pages' back arrows into the strip; the closed-season page titled "2025 Season" in the strip;

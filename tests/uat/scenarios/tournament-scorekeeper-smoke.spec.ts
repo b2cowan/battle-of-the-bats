@@ -338,7 +338,7 @@ test.describe.serial('Tournament scorekeeper UAT smoke', () => {
 
     await ownerPage.goto(`/${smoke.orgSlug}/admin/tournaments/results`)
     // Navigation Phase 2 Part B (2026-11-10): on a computer the top strip names the page in the sidebar's word ("Results") and
-    // the paper title ("Results & scoring") steps aside; a phone keeps the paper title until Phase 3.
+    // the paper title ("Results & scoring") steps aside; since navigation Phase 3 a phone's bar names the page too.
     await expect(ownerPage.getByRole('heading', { level: 1, name: /^Results( & scoring)?$/ })).toBeVisible({ timeout: 30_000 })
     await expect(ownerPage.getByText(smoke.review.homeTeamName)).toBeVisible({ timeout: 20_000 })
     // Scoring rows expand via the Edit/Enter-score pencil button (the team name is now a plain span).

@@ -320,7 +320,8 @@ describe('the admin kit nav — one model, two navs', () => {
 
   it('the tournament groups are built once — the rail and the bar read them, neither re-filters', () => {
     // ⚖ Navigation Phase 2 Part B (2026-11-10): the computer's rail reads the event's own rows (`deskTournamentGroups`, built
-    // from the same groups in the same hook); the phone's More sheet keeps `tournamentGroups` until Phase 3.
+    // from the same groups in the same hook); the phone's More sheet keeps `tournamentGroups` (its rows carry the organization's
+    // screens: a phone has no sidebar foot; navigation Phase 3 changed the phone's bar, not the sheet's rows).
     for (const [file, groups] of [['components/admin/kit/AdminKitRail.tsx', /deskTournamentGroups/], ['components/admin/kit/AdminKitBottomNav.tsx', /tournamentGroups/]] as const) {
       const code = readCode(file);
       assert.match(code, groups, `${file} must read the shared tournament groups`);
@@ -378,7 +379,8 @@ describe('the admin kit nav — one model, two navs', () => {
     }
     const code = readCode('components/admin/kit/AdminKitBottomNav.tsx');
     assert.match(code, /tournamentBarKeys\(phase\)/, 'the bar reads the one phase rule');
-    assert.match(code, /resolveEventPhase\(\{/, 'the phase is the header’s: the dates, or the first game having started, until the organizer marks it complete');
+    // Folded onto the one phase rule in navigation Phase 3 (2026-11-11): `eventPhaseOf`, which the bar's chip and the list read.
+    assert.match(code, /eventPhaseOf\(currentTournament\)\.phase/, 'the phase is the header’s: the dates, or the first game having started, until the organizer marks it complete');
     assert.doesNotMatch(code, /opsByKey\.get\('check-in'\)/, 'Check-in is never a tab of the bar');
     assert.match(code, /opsByKey\.get\('chat'\) \?\? relabel\(opsByKey\.get\('communication'\), MESSAGES_TAB\)/, 'Messages takes Chat’s place (M6)');
     assert.match(code, /useChatUnread\(tournamentBar && chatInNav\)/, 'no Chat count where Chat is no door');

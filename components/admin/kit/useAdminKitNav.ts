@@ -138,7 +138,8 @@ export function useAdminKitNav() {
   });
   const withHrefs = (list: TourGroup[]) =>
     list.map(g => ({ ...g, items: g.items.map(i => ({ ...i, href: i.href ?? `${base}/tournaments/${i.key}` })) }));
-  // PHASE-3: the phone's More sheet list; the computer reads `deskTournamentGroups` below.
+  // The phone's More sheet list (it keeps the organization's screens as rows: no sidebar foot on a phone); the computer reads
+  // `deskTournamentGroups`.
   const tournamentGroups = withHrefs(groups);
 
   // ⚖ 13i Session B: the club's places in their groups (Organization one place, its pages its tabs), built ONCE — the
@@ -158,11 +159,11 @@ export function useAdminKitNav() {
   // desktop outside the sandbox it is the account menu's Help row (E16), which reads the same answer.
   const helpHref = adminHelpHref(pathname, base);
   // ⚖ THE OTHER PORTALS (E4, navigation Phase 1): one list, the rail's foot and the sheet's You read it.
-  // PHASE-3: the phone's list; delete with the phone twins once the phone bar names the page.
+  // The phone's list (navigation Phase 3 renamed the phone's bar, not the sheet's You doors).
   const portalDoors = kitPortalDoors({ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor: order.door, canUse, coachDoor });
   // The computer's foot: in the event's shell (its pages, and the list in a club) the Club door; in the club, the Tournaments
   // door, which opens an event's Dashboard. An organization's other tournament screens wear the club's own foot. The phone's
-  // More sheet keeps `portalDoors` until Phase 3.
+  // More sheet keeps `portalDoors`.
   const deskPortalDoors = kitPortalDoors({ base, onTournaments: inEvent, tournamentOnly, isCanceled, tournamentsDoor: order.door, canUse, coachDoor });
 
   return {

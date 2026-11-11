@@ -25,6 +25,9 @@ import styles from './kit/AdminKitEventHeader.module.css';
 export type AdminPlaceView = {
   /** The name: the place's, the tournament's, or the organization's. */
   title: string;
+  /** One of the event's own pages, with its event known: `title` is the event's name, and the phone's small line is the
+   *  door to the event sheet (navigation Phase 3). */
+  onEvent: boolean;
   /** The tournament's name is the door to its dashboard. */
   titleHref: string | null;
   /** The name is the page's `<h1>` (the club's Overview, every club place and Phase 3's named screens); elsewhere the paper
@@ -40,6 +43,8 @@ export type AdminPlaceView = {
   /** A tournament's status chip, drawn once here for both headers. On a computer, where the strip names the page
    *  (`useDeskTitle`, navigation Phase 2 Part B), the dates and this chip sit at the strip's right end. */
   phaseChip: ReactNode;
+  /** The chip's word ("Game day"), for a control that must say it in its own name (the phone's event door). */
+  phaseLabel: string | null;
 };
 
 export function useAdminPlace(suspended: boolean): AdminPlaceView {
@@ -78,6 +83,7 @@ export function useAdminPlace(suspended: boolean): AdminPlaceView {
   let dates: string | null = null;
   let titleHref: string | null = null;
   let phaseChip: ReactNode = null;
+  let phaseLabel: string | null = null;
 
   if (onTournament && currentTournament) {
     title = currentTournament.name;
@@ -85,16 +91,17 @@ export function useAdminPlace(suspended: boolean): AdminPlaceView {
     // complete. Past the last day it stays game day even with no game ever started — the organizer marking it complete is
     // the only thing that ends it (the coach site reads the same status). ⚖ The switch list's rows read the same answer
     // (`eventPhaseOf`, E12 (2)), so the strip's facts and the list can never disagree.
-    const { phase, label: phaseLabel, dates: eventDates } = eventPhaseOf(currentTournament);
+    const { phase, label, dates: eventDates } = eventPhaseOf(currentTournament);
     // The phase chip keeps its shipped look: red for a live event, olive while open, quiet otherwise.
     const tone = phase === 'gameday' ? coachKit.chipDanger : phase === 'open' ? coachKit.chipGood : styles.chipNeutral;
     phaseChip = (
       <span className={`${coachKit.chip} ${styles.chip} ${tone}`} data-phase={phase}>
         {phase === 'gameday' && <span className={styles.dot} aria-hidden />}
-        {phaseLabel}
+        {label}
       </span>
     );
     dates = eventDates;
+    phaseLabel = label;
     titleHref = `/${currentOrg?.slug ?? ''}/admin/tournaments/dashboard`;
   } else if (place) {
     title = place.title;
@@ -105,6 +112,7 @@ export function useAdminPlace(suspended: boolean): AdminPlaceView {
 
   return {
     title,
+    onEvent: onTournament,
     titleHref,
     isPageTitle: onOverview || !!place,
     onOverview,
@@ -112,5 +120,6 @@ export function useAdminPlace(suspended: boolean): AdminPlaceView {
     tabbed: place && place.tabs.length > 1 ? place : null,
     dates,
     phaseChip,
+    phaseLabel,
   };
 }

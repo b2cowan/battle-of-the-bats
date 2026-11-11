@@ -1039,7 +1039,8 @@ export function litTournamentRow(pathname: string, base: string, keys: readonly 
 /**
  * ⚖ THE ORGANIZATION'S TOURNAMENT SCREENS THE STRIP NAMES ON A COMPUTER (E2 + E3 + T1, navigation Phase 2 Part B): the
  * Tournaments list (archives goes to it), and Plan & billing on a Tournament plan. Settings & access is a place
- * (`clubPlaceAt`). Null for any other address. The phone keeps naming the organization until Phase 3 (P3).
+ * (`clubPlaceAt`). Null for any other address. Since navigation Phase 3 (2026-11-11) the phone bar names
+ * them too, with no event line under the name (R3).
  */
 export function tournamentOrgScreenName(pathname: string, base: string): string | null {
   const t = `${base}/tournaments`;

@@ -51,7 +51,7 @@ import SidebarLogoTile from '@/components/shared/SidebarLogoTile';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { isKitLinkActive, isKitLinkActiveAmong, kitCountText, litTournamentRow, placeGroupHeading, SETTINGS_ACCESS_TITLE, type KitLink } from '@/lib/admin-kit-nav';
-import { eventSwitchLine, eventTileSource } from '@/lib/admin-event-cell';
+import { eventSwitchRows, eventTileSource } from '@/lib/admin-event-cell';
 import { useAdminKitNav, useTournamentSettingsTabs } from './useAdminKitNav';
 import EventSwitchMenu from './EventSwitchMenu';
 import { briefPlaceCount } from './club/ClubBriefProvider';
@@ -141,7 +141,7 @@ function EventCell({ base }: { base: string }) {
   const { source, aspect } = eventTileSource(currentTournament, currentOrg);
   // Built only while the list is open: the cell re-renders on every page change, and the list is shut nearly always.
   const rows = open
-    ? tournaments.map(t => ({ id: t.id, name: t.name, line: eventSwitchLine(t), current: t.id === currentTournament.id }))
+    ? eventSwitchRows(tournaments, currentTournament.id, currentOrg)
     : [];
   return (
     <>
@@ -176,7 +176,7 @@ export default function AdminKitRail() {
   const nav = useAdminKitNav();
   const {
     base, brief, orgLinks, placeGroups, litPlace, tournamentOnly, isCanceled,
-    // The computer's foot (Part B, T1) — named `portalDoors` here, as the phone's list is in the More sheet (PHASE-3: one list).
+    // The computer's foot (Part B, T1) — named `portalDoors` here, as the phone's list is in the More sheet (its own list: navigation Phase 3 changed the phone's bar, not the sheet's rows).
     inEvent, deskPortalDoors: portalDoors, calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
   const feeAlert = useFeeAlert();

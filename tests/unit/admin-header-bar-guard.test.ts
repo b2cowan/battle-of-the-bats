@@ -44,13 +44,17 @@ describe('the admin bar never shrinks on scroll', () => {
 });
 
 describe('the small line sits under the name (the phone’s; round 4 took it off the desktop)', () => {
-  it('the name comes first, then the line of facts: section · dates · chip', () => {
+  // ⚖ Navigation Phase 3 (owner 2026-11-11, E5 + R1): on an event's page the small line is the event DOOR (its name, the phase
+  // chip, a chevron — no dates, R1); a place keeps its line of facts (section · detail · chip). Updated deliberately.
+  it('the name comes first; under it the event door (a tournament) or the line of facts (a place)', () => {
     const identity = bar.slice(bar.indexOf('className={styles.identity}'));
-    const metaAt = identity.indexOf('className={styles.meta}');
-    assert.ok(metaAt > 0 && identity.indexOf('{nameEl}') < metaAt, 'name above the line');
-    const meta = identity.slice(metaAt);
-    assert.ok(meta.indexOf('{facts.map(') < meta.indexOf('{dates}'), 'section before dates');
-    assert.ok(meta.indexOf('{dates}') < meta.indexOf('{phaseChip}'), 'dates before the chip');
+    const at = (s: string) => { const i = identity.indexOf(s); assert.ok(i >= 0, s); return i; };
+    assert.ok(at('{name}') < at('{eventDoor}') && at('{eventDoor}') < at('className={styles.meta}'), 'name, then the door or the line');
+    const meta = identity.slice(at('className={styles.meta}'));
+    assert.ok(meta.indexOf('{facts.map(') < meta.indexOf('place?.chip &&'), 'section before the chip');
+    const door = bar.slice(bar.indexOf('const eventDoor = onEvent && ('), bar.indexOf('const deskClass'));
+    assert.ok(door.indexOf('{title}') < door.indexOf('{phaseChip}') && door.indexOf('{phaseChip}') < door.indexOf('<ChevronDown'), 'name · chip · chevron');
+    assert.doesNotMatch(door, /dates/, 'R1: the dates are the list rows’ words, not the small line’s');
     assert.doesNotMatch(bar, /eyebrow/i, 'no eyebrow above the name');
   });
 
@@ -73,10 +77,14 @@ describe('the small line sits under the name (the phone’s; round 4 took it off
     assert.match(css, /\.meta > span:not\(\.chip\) \+ span:not\(\.chip\)::before \{\s*content: '·';/);
   });
 
-  it('the tournament name still opens its dashboard, in both headers', () => {
+  // ⚖ Navigation Phase 3 (2026-11-11): the phone bar's first line names the PAGE, and its event line opens the event sheet, so
+  // the bar's event-name link to the Dashboard went (Dashboard is pinned in the bottom bar in every phase). The strip keeps it
+  // where it still names the event (an event page with no sidebar row). Updated deliberately.
+  it('the strip’s event name still opens its dashboard; the phone bar’s name no longer links', () => {
     assert.match(model, /titleHref = `\/\$\{currentOrg\?\.slug \?\? ''\}\/admin\/tournaments\/dashboard`/);
-    assert.match(bar, /<Link href=\{titleHref\} className=\{styles\.nameLink\}/);
     assert.match(strip, /<Link href=\{titleHref\} className=\{own\.nameLink\}/);
+    assert.doesNotMatch(bar, /titleHref|nameLink/);
+    assert.doesNotMatch(css, /\.nameLink/);
   });
 });
 
@@ -202,7 +210,13 @@ describe('desktop: the place in the strip, the bar is the tab band, the club cel
 
   it('one <h1> per width: the strip’s name on desktop, the bar’s on a phone, a link inside a tournament', () => {
     assert.match(model, /isPageTitle: onOverview \|\| !!place,/);
-    assert.match(bar, /const name = isPageTitle\s*\? <h1 className=\{styles\.name\}>\{title\}<\/h1>\s*: <span className=\{styles\.name\}>\{title\}<\/span>;/);
+    // ⚖ Navigation Phase 3 (2026-11-11): where the strip names the page on a computer, the bar names the SAME page on a phone,
+    // as the page's `<h1>` (and the paper's is hidden at both widths). Updated deliberately.
+    assert.match(bar, /const name = deskTitle\s*\? <h1 className=\{styles\.name\}>\{deskTitle\}<\/h1>\s*: isPageTitle\s*\? <h1 className=\{styles\.name\}>\{title\}<\/h1>\s*: <span className=\{styles\.name\}>\{title\}<\/span>;/);
+    // The event door is a button BESIDE the heading, never around it.
+    const door = bar.slice(bar.indexOf('const eventDoor = onEvent && ('), bar.indexOf('const deskClass'));
+    assert.match(door, /<button/);
+    assert.doesNotMatch(door, /<h1|\{name\}/);
     assert.match(strip, /const name = isPageTitle \? <h1 className=\{own\.name\}>\{text\}<\/h1> : <span className=\{own\.name\}>\{text\}<\/span>;/);
     // D2: Overview's strip says "Overview" (the phone's Overview bar still names the club, A3).
     assert.match(strip, /const text = onOverview \? 'Overview' : title;/);
