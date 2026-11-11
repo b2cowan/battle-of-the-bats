@@ -172,6 +172,15 @@
 .multiSelectPickText { display: flex; flex-direction: column; min-width: 0; }
 .multiSelectPickName { font-weight: 600; color: var(--text-primary); }
 .multiSelectPickSub { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); margin-top: 0.05rem; }
+/* A chip at the row's end, on the NAME's line (the season switcher's state pill; drawing 2026-11-11): it lines up with the
+   chosen row's dot, never sits on a line of its own, and is never the part that gets cut. */
+.multiSelectPickTrail { display: flex; flex: none; align-self: flex-start; margin-left: auto; padding-left: 0.75rem; margin-top: 1px; }
+/* `roomy` — a list of two-line rows (`SingleSelectDropdown roomy`). The panel holds about seven of them before it scrolls and
+   is capped at 360px; a name or a sub-line past that is cut with "…" and its trail stays whole. The sheet draws the same cut. */
+.multiSelectPanel.multiSelectRoomy { max-height: 440px; max-width: min(360px, calc(100vw - 32px)); width: max-content; }
+.multiSelectRoomy .multiSelectPickText { flex: 1 1 auto; }
+.multiSelectRoomy .multiSelectPickName,
+.multiSelectRoomy .multiSelectPickSub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── The Date pill (the register strip's FOURTH pill — owner-approved mockup, 2026-08-19) ──
    Extensions of the multiSelect family above: same pill face, but the panel is a single-select

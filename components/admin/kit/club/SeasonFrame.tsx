@@ -11,7 +11,8 @@
  *
  * ⚖ THE SWITCH (owner 2026-11-06, Settle 4): the title's chevron opens the product's shipped pick-one menu — the Year
  * pill's (`SingleSelectDropdown`, `face="chevron"`): its panel on a desk, its sheet on a phone, live seasons first and a
- * finished one marked. A pick keeps the page you are on. Drawn only when there is another season to switch to.
+ * finished one marked by its pill. A pick keeps the page you are on. Drawn only when there is another season to switch to.
+ * Its rows are two lines (name + state pill, then "dates · sport") — see `switchOptions` below.
  *
  * An address under the season that is no tab — a club schedule read from the season's Schedule — is a RECORD page one
  * level down (owner 2026-11-06): it keeps its own back arrow and this frame draws no header or tab row over it. Whether an
@@ -27,12 +28,11 @@ import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import { markTabs, useClubPlaceAt } from '@/components/admin/AdminBarPlace';
-import { seasonGroup, seasonPageHref, seasonSegment, toReviewLabel } from '@/lib/house-league-season';
+import { seasonDates, seasonPageHref, seasonSegment, toReviewLabel } from '@/lib/house-league-season';
 import { useHouseLeagueAccess, useHouseLeagueSeasons } from '../useHouseLeagueSeasons';
 import { WaitingCount } from './money/MoneyKit';
 import PlaceFrame from './PlaceFrame';
 import SeasonStatePill from './SeasonStatePill';
-import { RepChip } from './RepKit';
 
 // ⚖ A PAGE THAT READ ITS SEASON NAMES IT (Admin header bar Phase 2 /review, 2026-11-07). The season list is House league's
 // (`useHouseLeagueSeasons`, its route refuses anyone without House league's read), but a treasurer opens a season's Money
@@ -72,12 +72,16 @@ export default function SeasonFrame({ children }: { children: ReactNode }) {
   const count = season?.pendingReviewCount ?? 0;
   const tabs = markTabs(place.tabs, id => (id === 'registrations' && count > 0 ? <WaitingCount n={count} label={toReviewLabel(count)} /> : null));
 
-  // The switch's rows: live seasons first (the list's own order), a finished one marked in its row only — the title beside
-  // the chevron already names the season on screen, and its pill says where it stands.
+  // ⚖ THE SWITCH'S ROWS ARE TWO LINES (owner 2026-11-11, drawings KsSaWfU1y5xySHdffLTycW, all five asks as recommended): the
+  // season's name with its state pill at the end of the name's line, "dates · sport" beneath. The pill is the SAME one the
+  // title's bar wears (`SeasonStatePill` → `seasonState`), so a row and the bar can never read two words; every row has one,
+  // the chosen season's too (a row with no pill reads as a season with no state). The list is still live seasons first.
+  // A season with no dates says so, as the home's facts line does.
   const switchOptions = seasons.map(s => ({
     id: s.id,
     label: s.name,
-    rowMark: seasonGroup(s) === 'past' ? <RepChip tone="neutral">Finished</RepChip> : undefined,
+    sub: [seasonDates(s) ?? 'Dates not set', s.sport].filter(Boolean).join(' · '),
+    trail: <SeasonStatePill season={s} />,
   }));
   return (
     <PlaceFrame place={{
@@ -90,6 +94,7 @@ export default function SeasonFrame({ children }: { children: ReactNode }) {
           label="Switch season"
           value={season.id}
           options={switchOptions}
+          roomy
           onChange={id => router.push(seasonPageHref(`${league}/seasons/${id}`, seasonSegment(pathname)))}
         />
       ) : undefined,

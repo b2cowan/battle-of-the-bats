@@ -10,6 +10,8 @@ export type FrameSeason = Pick<LeagueSeason, 'id' | 'name' | 'status' | 'seasonS
   | 'registrationOpenAt' | 'registrationCloseAt' | 'registrationClosedAt'> & {
   /** Registrations waiting for review: the amber count on Registrations. */
   pendingReviewCount: number;
+  /** "Softball": the second line of the switcher's rows (dates · sport). */
+  sport?: string;
 };
 
 /**
@@ -37,7 +39,7 @@ async function read(slug: string) {
     // A late answer for an org you have since left must not overwrite this one's list.
     if (store?.slug !== slug || !d) return;
     store.seasons = orderSeasons((d.seasons ?? []).map(({ season: s, pendingReviewCount }) => ({
-      id: s.id, name: s.name, status: s.status, seasonStartDate: s.seasonStartDate ?? null,
+      id: s.id, name: s.name, sport: s.sport, status: s.status, seasonStartDate: s.seasonStartDate ?? null,
       seasonEndDate: s.seasonEndDate ?? null, createdAt: s.createdAt, pendingReviewCount,
       registrationOpenAt: s.registrationOpenAt ?? null, registrationCloseAt: s.registrationCloseAt ?? null, registrationClosedAt: s.registrationClosedAt ?? null,
     })));

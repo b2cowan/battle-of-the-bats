@@ -1,0 +1,556 @@
+<title>Season Switcher Rows</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;600;700&display=swap">
+<style>
+/* Layout: a drawings page in the house layout (sticky numbered tabs, a View row, one section at a time). The document
+   chrome is a cool slate ground on purpose, so the warm product frames read as specimens and not as the page. */
+:root {
+  --doc-bg: #E8ECF1;
+  --doc-surface: #F6F8FB;
+  --doc-fg: #1B2330;
+  --doc-muted: #55607A;
+  --doc-line: #C9D1DE;
+  --doc-accent: #2F4FA8;
+  --doc-accent-soft: rgba(47,79,168,.12);
+  --doc-ok: #1F6B3A;
+  --doc-flag: #9A5A00;
+  --font-doc: "DM Sans", system-ui, sans-serif;
+  --font-product: "Inter", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #12161D; --doc-surface: #1A2029; --doc-fg: #E6EAF2; --doc-muted: #9AA5BB; --doc-line: #2E3744;
+    --doc-accent: #8FA8F0; --doc-accent-soft: rgba(143,168,240,.16); --doc-ok: #6CD08F; --doc-flag: #F0B35A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #12161D; --doc-surface: #1A2029; --doc-fg: #E6EAF2; --doc-muted: #9AA5BB; --doc-line: #2E3744;
+  --doc-accent: #8FA8F0; --doc-accent-soft: rgba(143,168,240,.16); --doc-ok: #6CD08F; --doc-flag: #F0B35A; color-scheme: dark;
+}
+body { background: var(--doc-bg); color: var(--doc-fg); font-family: var(--font-doc); font-size: 15px; line-height: 1.55; }
+* { box-sizing: border-box; }
+.wrap { max-width: 1060px; margin: 0 auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+header.top { padding-block: 22px 14px; }
+header.top h1 { font-size: 26px; line-height: 1.2; margin: 0 0 6px; text-wrap: balance; }
+header.top p { margin: 0; color: var(--doc-muted); max-width: 72ch; }
+.eyebrow { font-family: var(--font-data); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--doc-muted); margin-bottom: 6px; }
+
+/* sticky tabs */
+.stick { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--doc-bg); border-bottom: 1px solid var(--doc-line); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; padding-top: 4px; }
+.tabs button { font: inherit; font-weight: 500; color: var(--doc-muted); background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 14px; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--doc-fg); border-bottom-color: var(--doc-accent); font-weight: 700; }
+.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding-block: 8px; }
+.viewrow .lbl { font-family: var(--font-data); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--doc-muted); margin-right: 8px; }
+/* ONE white track, two options, the chosen one soft (the shipped view switch's look) */
+.seg { display: inline-flex; padding: 3px; gap: 2px; background: #fff; border: 1px solid var(--doc-line); border-radius: 10px; }
+.seg button { font: inherit; font-size: 13px; border: 0; background: none; color: #4A4F5E; padding: 5px 12px; border-radius: 8px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,.14); color: #2E3810; font-weight: 700; }
+
+section.panelx { padding-block: 22px 60px; }
+section.panelx[hidden] { display: none; }
+h2 { font-size: 20px; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-size: 15px; margin: 22px 0 6px; }
+.lead { color: var(--doc-muted); max-width: 76ch; margin: 0 0 18px; }
+.note { background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px 14px; margin: 12px 0; max-width: 80ch; }
+.tag { display: inline-block; font-family: var(--font-data); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; padding: 1px 7px; border-radius: 4px; vertical-align: 1px; }
+.tag.new { background: rgba(31,107,58,.14); color: var(--doc-ok); }
+.tag.rest { background: var(--doc-accent-soft); color: var(--doc-accent); }
+.tag.same { background: rgba(120,130,150,.18); color: var(--doc-muted); }
+.chrome-label { font-family: var(--font-data); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--doc-muted); margin: 18px 0 6px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.scrollx { overflow-x: auto; padding-bottom: 6px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 22px; align-items: start; }
+.cap { font-size: 13px; color: var(--doc-muted); margin-top: 8px; max-width: 60ch; }
+.cap b { color: var(--doc-fg); }
+
+/* ══ THE PRODUCT SPECIMEN — warm tokens as shipped (globals.css warm block); dark is the coach/club dark reading ══ */
+.spec {
+  --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --dim: #615A54;
+  --line: rgba(70,55,30,.12); --line2: rgba(70,55,30,.20);
+  --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --hover: rgba(70,55,30,.06);
+  --ok-ink: #2A5222; --ok-rgb: 52,102,42; --warn-ink: #6B4105; --warn-rgb: 131,80,6;
+  --shadow: 0 8px 24px rgba(36,30,21,.18); --dimmer: rgba(36,30,21,.28);
+  font-family: var(--font-product); font-size: 14px; line-height: 1.6; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--doc-line); border-radius: 6px; position: relative; overflow: visible;
+}
+.spec[data-mode="dark"] {
+  --paper: #0A0A0A; --card: #111827; --ink: #F1F5F9; --ink2: rgba(255,255,255,.70); --dim: rgba(255,255,255,.50);
+  --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.18);
+  --olive: #D9F99D; --olive-soft: rgba(30,58,138,.22); --hover: rgba(255,255,255,.08);
+  --ok-ink: #22C55E; --ok-rgb: 34,197,94; --warn-ink: #F59E0B; --warn-rgb: 245,158,11;
+  --shadow: 0 8px 24px rgba(0,0,0,.55); --dimmer: rgba(0,0,0,.55);
+}
+/* the chip — RepChip as shipped: mono, 10px, 700, uppercase, pill */
+.chip { display: inline-flex; align-items: center; font-family: var(--font-data); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: .14rem .5rem; border-radius: 999px; border: 1px solid var(--line2); color: var(--ink2); background: var(--olive-soft); white-space: nowrap; line-height: 1.4; flex: none; }
+.chip.g { color: var(--ok-ink); background: rgba(var(--ok-rgb), .08); border-color: rgba(var(--ok-rgb), .28); }
+.chip.a { color: var(--warn-ink); background: rgba(var(--warn-rgb), .08); border-color: rgba(var(--warn-rgb), .30); }
+
+/* the bar (desktop) */
+.bar { background: var(--card); border-bottom: 1px solid var(--line); border-radius: 6px 6px 0 0; }
+.bar .r1 { display: flex; align-items: center; gap: 16px; height: 56px; padding: 0 22px; }
+.bar .up { font-weight: 600; color: var(--ink); display: flex; gap: 6px; align-items: center; padding-right: 16px; border-right: 1px solid var(--line); height: 28px; }
+.bar .ttl { font-size: 20px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
+.sw { position: relative; display: inline-flex; }
+.chev { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: var(--ink2); background: var(--hover); }
+.bar .r2 { display: flex; gap: 26px; padding: 0 22px; height: 44px; align-items: stretch; font-weight: 600; color: var(--ink2); overflow: hidden; }
+.bar .r2 span { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.bar .r2 span.on { color: var(--olive); box-shadow: inset 0 -3px 0 var(--olive); }
+.count { font-family: var(--font-data); font-size: 10px; background: var(--warn-ink); color: var(--card); border-radius: 999px; padding: 0 6px; line-height: 16px; }
+.page { padding: 26px 22px 30px; min-height: 200px; border-radius: 0 0 6px 6px; color: var(--ink2); }
+.page .meta { font-size: 12px; color: var(--dim); margin-bottom: 8px; }
+.page .card { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.page .card b { color: var(--ink); font-size: 16px; }
+
+/* the dropdown panel (FilterPill.module.css, as shipped) */
+.panel { position: absolute; z-index: 5; top: calc(100% + 4px); left: -22px; width: max-content; min-width: 190px; max-width: min(360px, calc(100vw - 32px));
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: .4rem; overflow-y: auto; }
+.panel.before { max-height: 320px; }
+.panel.after { max-height: 440px; }
+.pick { display: flex; align-items: center; gap: .5rem; width: 100%; position: relative; text-align: left; font: inherit; color: var(--ink2); background: none; border: 0;
+  padding: .32rem .4rem .32rem 1.35rem; border-radius: 6px; white-space: nowrap; cursor: pointer; }
+.pick:hover { background: var(--hover); }
+.pick.on { color: var(--ink); font-weight: 600; }
+.pick.on::before { content: ""; position: absolute; left: .5rem; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--olive); }
+.pick.subbed { align-items: flex-start; padding-top: .5rem; padding-bottom: .5rem; border-radius: 0; }
+.pick.subbed + .pick.subbed { border-top: 1px solid var(--line); }
+.pick.subbed.on::before { top: calc(.5rem + .8em); transform: none; }
+.pick .txt { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.pick .nm { font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.55; }
+.pick .sb { font-size: 12px; font-weight: 400; color: var(--dim); margin-top: .05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.6; }
+.pick .trail { margin-left: auto; padding-left: .75rem; align-self: flex-start; margin-top: 1px; display: flex; flex: none; }
+.pick .after-name { display: inline-flex; margin-left: .5rem; vertical-align: 1px; }
+.pick .chip.rowmark { margin-left: .5rem; }
+
+/* numbered, clickable markers on the specimen */
+.mk { position: absolute; z-index: 9; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; background: #2F4FA8; color: #fff; font: 700 12px var(--font-data); display: grid; place-items: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.4); padding: 0; }
+.mk:hover { background: #1F3A86; }
+
+/* phone */
+.phone { width: 390px; height: 800px; position: relative; overflow: hidden; border-radius: 22px; border: 1px solid var(--doc-line); }
+.phone .bar { border-radius: 0; padding-top: 10px; }
+.phone .p1 { padding: 0 16px; height: 34px; display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.phone .p2 { padding: 0 16px; display: flex; align-items: center; gap: 4px; min-width: 0; }
+.phone .p2 .ttl { font-size: 18px; overflow: hidden; text-overflow: ellipsis; }
+.phone .p3 { padding: 2px 16px 8px; display: flex; gap: 8px; align-items: center; font-family: var(--font-data); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.phone .bar .r2 { gap: 20px; padding: 0 16px; height: 42px; }
+.dim { position: absolute; inset: 0; background: var(--dimmer); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--card); border-radius: 18px 18px 0 0; padding: 6px 8px 22px; max-height: 75%; display: flex; flex-direction: column; box-shadow: 0 -8px 30px rgba(0,0,0,.25); }
+.sheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--line2); margin: 2px auto 8px; flex: none; }
+.sheet .lab { padding: 0 .6rem 6px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink2); flex: none; }
+.sheet .list { overflow-y: auto; }
+.sheet .pick { min-height: 44px; align-items: center; }
+.sheet .pick.subbed { align-items: flex-start; }
+.ruler { display: flex; align-items: center; gap: 8px; font-family: var(--font-data); font-size: 11px; color: var(--doc-muted); margin-bottom: 6px; }
+.ruler i { display: block; height: 0; border-top: 1px solid var(--doc-muted); flex: 1; max-width: 390px; }
+
+/* tables / review */
+table.st { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.st th { text-align: left; font-family: var(--font-data); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--doc-muted); padding: 6px 10px; border-bottom: 1px solid var(--doc-line); }
+table.st td { padding: 10px; border-bottom: 1px solid var(--doc-line); vertical-align: middle; }
+table.st td .spec { display: inline-block; padding: 8px 12px; border-radius: 8px; }
+.find { border-left: 3px solid var(--doc-line); padding: 4px 0 4px 14px; margin: 14px 0; max-width: 84ch; }
+.find.med { border-left-color: var(--doc-flag); } .find.low { border-left-color: var(--doc-accent); } .find.ok { border-left-color: var(--doc-ok); }
+.find .sev { font-family: var(--font-data); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--doc-muted); }
+.ask { border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-surface); padding: 16px 18px; margin-bottom: 16px; scroll-margin-top: 120px; }
+.ask.flash { outline: 3px solid var(--doc-accent); }
+.ask h3 { margin: 0 0 4px; }
+.ask label { display: flex; gap: 10px; align-items: flex-start; padding: 8px 4px; cursor: pointer; }
+.ask input { margin-top: 5px; }
+.ask .opt-spec { margin: 4px 0 6px 26px; }
+.btn { font: inherit; font-weight: 700; background: var(--doc-accent); color: #fff; border: 0; border-radius: 8px; padding: 9px 16px; cursor: pointer; }
+textarea.out { width: 100%; min-height: 120px; font: 13px var(--font-data); background: var(--doc-surface); color: var(--doc-fg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 10px; }
+@media (max-width: 560px) { .tabs button { padding: 10px 10px; } header.top h1 { font-size: 22px; } }
+@media (prefers-reduced-motion: no-preference) { .ask { transition: outline-color .2s; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">House league · season switcher · drawings, round 1</div>
+    <h1>Season switcher rows</h1>
+    <p>The dropdown beside a house-league season's name gets two-line rows: the season's name with a status pill, and its dates and sport beneath. Drawn from the shipped dropdown and the shipped chip, so what you see is what a build would produce. Season names and dates are sample data.</p>
+  </header>
+</div>
+<div class="stick">
+  <div class="wrap">
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="t1" aria-selected="true">1 · Before and after</button>
+      <button role="tab" data-tab="t2" aria-selected="false">2 · Every state</button>
+      <button role="tab" data-tab="t3" aria-selected="false">3 · Phone</button>
+      <button role="tab" data-tab="t4" aria-selected="false">4 · Edge cases</button>
+      <button role="tab" data-tab="t5" aria-selected="false">5 · Design review</button>
+      <button role="tab" data-tab="t6" aria-selected="false">6 · Asks</button>
+    </div>
+    <div class="viewrow">
+      <span id="showgrp" style="display:inline-flex;align-items:center"><span class="lbl">View</span>
+        <span class="seg" role="group" aria-label="View"><button id="vEvery" aria-pressed="true">Everything</button><button id="vDiff" aria-pressed="false">Show only what differs</button></span></span>
+      <span style="display:inline-flex;align-items:center"><span class="lbl">Look</span>
+        <span class="seg" role="group" aria-label="Look"><button id="lLight" aria-pressed="true">Warm light</button><button id="lDark" aria-pressed="false">Dark</button></span></span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- 1 -->
+<section class="panelx" id="t1">
+  <h2>1 · The whole screen, before and after</h2>
+  <p class="lead">Nothing on the page changes except the list the chevron opens. The title, the status pill in the bar, the tabs and the page underneath are untouched. The numbered dots on the "after" drawing are clickable and jump to the matching ask.</p>
+  <div class="chrome-label"><span>Season page · desktop · admin chrome</span><span class="tag same">UNCHANGED</span> the bar, tabs and page</div>
+  <div class="chrome-label"><span>Before — what ships today</span></div>
+  <div id="beforeFull" class="scrollx"></div>
+  <div id="beforeOnly" class="scrollx" hidden></div>
+  <div class="chrome-label"><span>After</span><span class="tag new">RESTYLED</span> the rows of the list</div>
+  <div id="afterFull" class="scrollx"></div>
+  <div id="afterOnly" class="scrollx" hidden></div>
+  <p class="cap"><b>Reading the after drawing.</b> Every row shows the season's name, its state pill at the end of the name's line, and "dates · sport" underneath. The chosen season keeps its olive dot and a bold name (every name is bold in a two-line list, so the dot tells the chosen one). The list is newest first, as it is today.</p>
+</section>
+
+<!-- 2 -->
+<section class="panelx" id="t2" hidden>
+  <h2>2 · Every state a season can show</h2>
+  <p class="lead">There is one set of words for a house-league season's state. The Seasons home, the season page's header and the phone header already wear it, and the switcher will read from the same rule, so the list and the header can never disagree. No new words are added, and "Live" is not one of them: "Playing now" already says it.</p>
+  <div class="scrollx"><table class="st" id="stateTable"></table></div>
+  <h3>All nine states as rows</h3>
+  <div id="allStates" style="position:relative"></div>
+  <div class="note"><b>Colour.</b> Only two tones carry colour. Green is something happening for families or on the field (registration open, playing now). Amber is something the club should act on (a season past its last day that has not been completed yet). Everything else is the quiet neutral chip. Every state also has words, so colour never carries it alone.</div>
+</section>
+
+<!-- 3 -->
+<section class="panelx" id="t3" hidden>
+  <h2>3 · On a phone</h2>
+  <p class="lead">At 640px and under, the same list opens as the portal's bottom sheet, headed "Switch season", with the same rows. A pick applies at once and keeps the page you are on. Drawn at the real width of a phone.</p>
+  <div class="grid2">
+    <div>
+      <div class="ruler"><span>390 px</span><i></i></div>
+      <div id="phoneNow"></div>
+      <p class="cap"><b>Open this page on your phone</b> and compare against the real width. The rows are 44px tall at a minimum; a two-line row is about 57px, so each is a comfortable tap.</p>
+    </div>
+    <div>
+      <h3 style="margin-top:0">What stays the same on a phone</h3>
+      <p class="cap" style="max-width:none">The pill stays on the name's line at the end of the row. A long name is cut with "…" and the pill is never cut. The bar's own line under the title ("House league" and the current season's pill) is unchanged.</p>
+      <p class="cap" style="max-width:none">All seven sample seasons fit the sheet without scrolling. At 12 seasons the sheet scrolls inside its own list and opens with the chosen season in view (see tab 4).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="panelx" id="t4" hidden>
+  <h2>4 · Edge cases</h2>
+  <p class="lead">The situations a real club will hit.</p>
+  <div class="grid2" id="edges"></div>
+</section>
+
+<!-- 5 -->
+<section class="panelx" id="t5" hidden>
+  <h2>5 · Design review</h2>
+  <p class="lead">Checked against the shipped dropdown, the shipped chip and the standing rulings on lettering, row chips, the phone sheet and the tournament event switcher.</p>
+  <h3>Works well</h3>
+  <div class="find ok"><b>It reuses two shipped parts and invents nothing.</b> The two-line row is the dropdown's existing sub-line row (the club Bank's Account pill); the state is the existing chip with the existing words. No new colour, radius or type size.</div>
+  <div class="find ok"><b>The header and the list match by construction.</b> Both ask the same rule for the state, so a season cannot read "Playing now" in one and "Starts Jun 1" in the other.</div>
+  <div class="find ok"><b>State is a shape and words, not colour alone.</b> The chosen season is told by the dot, the state by its word.</div>
+  <h3>Issues found</h3>
+  <div class="find med"><div class="sev">1 · Medium · panel height</div><b>The panel stops at 320px.</b> A two-line row is about 57px, so that is five and a half rows; the seven sample seasons, including the chosen one, would scroll. Fix: for this list, raise the ceiling to about 440px (seven rows) and open the list with the chosen season in view. Past that the list scrolls inside itself.</div>
+  <div class="find med"><div class="sev">2 · Medium · long names</div><b>The panel has no width limit, and its names never wrap.</b> A long name ("Spring Recreational House League 2027 · North Division") stretches the panel off a narrow window. Fix: cap the panel at 360px (or the window minus its margins), cut the name with "…", and never cut the pill. This is the rule the bar already uses for the season's name.</div>
+  <div class="find low"><div class="sev">3 · Low · same job, two looks</div><b>The tournament switcher and this list now differ.</b> Tournament rows say the phase in words on the second line ("Nov 1–3, 2026 · Game day") with no pill; season rows would carry a pill. They are different controls (the tournament one is the sidebar's event cell with a logo tile), and seasons already have a pill vocabulary with colour that the header wears. Recommendation: keep the pill, because a coloured Ended or Registration open is scannable in a way a word on a line is not. Drawn both ways as ask 1.</div>
+  <div class="find low"><div class="sev">4 · Low · the chosen row repeats the header pill</div><b>The chosen season shows its pill, which the bar also shows.</b> The panel opens over the bar's pill on desktop, so it is covered, and a list where one row has no pill reads as a season with no state. Recommendation: keep it. Drawn both ways as ask 2.</div>
+  <div class="find low"><div class="sev">5 · Low · placement</div><b>The pill sits at the end of the row, on the name's line, not centred.</b> It lines up with the olive dot, and a state chip never sits on a line of its own (the 2026-10-12 row-chip ruling).</div>
+  <h3>Build notes for the builder</h3>
+  <div class="note">One opt-in addition to the shared dropdown: a trailing slot on an option (the row's end, name's line), a taller ceiling, and a width cap. Every other caller renders exactly as it does today. The state words, tones and dates come from the season state rule that the header already uses, never retyped. The dates line is the season overview's own date range, formatted with the stored-date helper. The Finished mark added to the row today is replaced by the pill. Because this changes a shared control, the walk should also open the club's other pickers once.</div>
+</section>
+
+<!-- 6 -->
+<section class="panelx" id="t6" hidden>
+  <h2>6 · Asks</h2>
+  <p class="lead">Five calls. Each is set to my recommendation. Change any, then copy your answers back to me.</p>
+
+  <div class="ask" id="ask1"><h3>1 · The state: a pill, or words on the second line?</h3>
+    <label><input type="radio" name="a1" value="A" checked> <span><b>A · A pill at the end of the row</b> (recommended). It is scannable and reuses the header's pill.</span></label>
+    <div class="opt-spec" id="s1a"></div>
+    <label><input type="radio" name="a1" value="B"> <span><b>B · The state as words on the second line</b>, like the tournament switcher. Quieter, but nothing to scan.</span></label>
+    <div class="opt-spec" id="s1b"></div>
+  </div>
+
+  <div class="ask" id="ask2"><h3>2 · The chosen season's row</h3>
+    <label><input type="radio" name="a2" value="A" checked> <span><b>A · It keeps its pill</b> (recommended). Every row reads the same way.</span></label>
+    <label><input type="radio" name="a2" value="B"> <span><b>B · No pill on the chosen row.</b> The bar already shows it.</span></label>
+  </div>
+
+  <div class="ask" id="ask3"><h3>3 · A season with no dates yet</h3>
+    <label><input type="radio" name="a3" value="A" checked> <span><b>A · "Dates not set · Softball"</b> (recommended). The line is always there, and it says what is missing.</span></label>
+    <label><input type="radio" name="a3" value="B"> <span><b>B · "Softball" alone.</b> Shorter, but the row looks different from its neighbours.</span></label>
+    <div class="opt-spec" id="s3"></div>
+  </div>
+
+  <div class="ask" id="ask4"><h3>4 · The list's height</h3>
+    <label><input type="radio" name="a4" value="A" checked> <span><b>A · Taller for this list</b> (recommended): about seven two-line rows before it scrolls, and it opens with the chosen season in view.</span></label>
+    <label><input type="radio" name="a4" value="B"> <span><b>B · Keep the shipped 320px.</b> Five and a half rows show; the rest scroll.</span></label>
+  </div>
+
+  <div class="ask" id="ask5"><h3>5 · A very long season name</h3>
+    <label><input type="radio" name="a5" value="A" checked> <span><b>A · Cut with "…", panel capped at 360px, pill never cut</b> (recommended). See tab 4.</span></label>
+    <label><input type="radio" name="a5" value="B"> <span><b>B · Let the name wrap to two lines.</b> Rows get uneven heights.</span></label>
+  </div>
+
+  <button class="btn" id="copyBtn">Copy my answers</button>
+  <p class="cap" id="copyMsg" aria-live="polite"></p>
+  <textarea class="out" id="out" readonly aria-label="Your answers"></textarea>
+</section>
+
+</div>
+
+<script>
+(function () {
+  var SEASONS = [
+    { n: "Draft Test 2027", d: null, sp: "Softball", s: ["Getting ready", "n"] },
+    { n: "Dev House League 2027", d: "Jun 1 – Aug 31, 2027", sp: "Softball", s: ["Registration open", "g"] },
+    { n: "Walk Summer 2027", d: "Jun 1 – Aug 31, 2027", sp: "Softball", s: ["Starts Jun 1", "n"] },
+    { n: "test season", d: "Apr 1 – Jun 30, 2027", sp: "Baseball", s: ["Registration closed", "n"] },
+    { n: "Walk Free 2027", d: "Sep 8 – Nov 24, 2027", sp: "Softball", s: ["Opens Jan 15", "n"] },
+    { n: "Dev House League 2026", d: "Jun 1 – Aug 31, 2026", sp: "Softball", s: ["Ended Aug 31", "a"], cur: true },
+    { n: "Dev House League 2025", d: "Jun 2 – Aug 29, 2025", sp: "Softball", s: ["Finished", "n"] }
+  ];
+  var CHEV = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+  var BACK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7M19 12H5"/></svg>';
+  var CUR = SEASONS[5];
+
+  function chip(s, extra) { return '<span class="chip ' + s[1] + (extra ? " " + extra : "") + '">' + s[0] + "</span>"; }
+  function subline(s) { return (s.d || "Dates not set") + (s.sp ? " · " + s.sp : ""); }
+
+  /* variant: before | after | words (state as words) | norow (chosen row has no pill) */
+  function rowHtml(s, v, opts) {
+    opts = opts || {};
+    var on = s.cur ? " on" : "";
+    if (v === "before") {
+      return '<button class="pick' + on + '">' + s.n + (s.s[0] === "Finished" ? chip(["Finished", "n"], "rowmark") : "") + "</button>";
+    }
+    if (v === "words") {
+      var sub = (s.d || "Dates not set") + " · " + s.s[0];
+      return '<button class="pick subbed' + on + '"><span class="txt"><span class="nm">' + s.n + '</span><span class="sb">' + sub + "</span></span></button>";
+    }
+    var sb = opts.noSport ? (s.d || "Dates not set") : subline(s);
+    var trail = (v === "norow" && s.cur) ? "" : '<span class="trail">' + chip(s.s) + "</span>";
+    return '<button class="pick subbed' + on + '"><span class="txt"><span class="nm">' + s.n + '</span><span class="sb">' + sb + "</span></span>" + trail + "</button>";
+  }
+  function panelHtml(list, v, opts) {
+    opts = opts || {};
+    var cls = v === "before" ? "before" : "after";
+    var style = (opts.maxH || opts.flat) ? ' style="' + (opts.flat ? "left:0;top:0;" : "") + (opts.maxH ? "max-height:" + opts.maxH + "px" : "") + '"' : "";
+    return '<div class="panel ' + cls + '"' + style + (opts.id ? ' id="' + opts.id + '"' : "") + ">" + list.map(function (s) { return rowHtml(s, v, opts); }).join("") + "</div>";
+  }
+
+  function desktopFrame(v, mode, withMarkers) {
+    return '<div class="spec" data-mode="' + mode + '" style="width:980px;margin-bottom:14px">' +
+      '<div class="bar"><div class="r1"><span class="up">' + BACK + ' Seasons</span><span class="ttl">Dev House League 2026</span>' +
+      '<span class="sw"><span class="chev">' + CHEV + "</span>" + panelHtml(SEASONS, v, v === "before" ? {} : { maxH: 440 }) + "</span>" +
+      chip(CUR.s) + "</div>" +
+      '<div class="r2"><span class="on">Overview</span><span>Registrations <i class="count">1</i></span><span>Teams &amp; divisions</span><span>Schedule</span><span>Money</span><span>Email families</span></div></div>' +
+      '<div class="page"><div class="meta">Jun 1 – Aug 31, 2026 · Softball</div>The club has not given this season any time yet. It gives each family a place to register and each team a roster.' +
+      '<div class="card"><b>Next step</b><div>Complete the season once its last game is played.</div></div></div>' +
+      "</div>";
+  }
+  function panelOnly(v, mode) {
+    return '<div class="spec" data-mode="' + mode + '" style="width:420px;height:' + (v === "before" ? 260 : 470) + 'px;padding:12px;border-radius:12px"><div style="position:relative;height:100%"><div class="panel ' + (v === "before" ? "before" : "after") + '" style="left:0;top:0;max-height:' + (v === "before" ? 320 : 440) + 'px">' + SEASONS.map(function (s) { return rowHtml(s, v); }).join("") + "</div></div></div>";
+  }
+
+  /* markers placed by measuring the real rows once the frame is in the document */
+  function addMarkers(host) {
+    var panel = host.querySelector(".panel");
+    if (!panel) return;
+    var rows = panel.querySelectorAll(".pick");
+    var wrap = panel.parentNode; /* .sw */
+    var spec = host.querySelector(".spec");
+    var sr = spec.getBoundingClientRect();
+    function mark(n, ask, x, y, label) {
+      var b = document.createElement("button");
+      b.className = "mk"; b.textContent = n; b.setAttribute("data-go", ask); b.setAttribute("aria-label", "Marker " + n + ": " + label); b.title = label;
+      b.style.left = x + "px"; b.style.top = y + "px";
+      spec.appendChild(b);
+    }
+    var pr = panel.getBoundingClientRect();
+    function rowY(i) { var r = rows[i].getBoundingClientRect(); return r.top - sr.top + r.height / 2 - 12; }
+    var x = pr.right - sr.left + 10;
+    mark(1, "ask1", x, rowY(1), "The state pill");
+    mark(3, "ask3", x, rowY(0), "A season with no dates");
+    mark(2, "ask2", x, rowY(5), "The chosen season's row");
+    mark(4, "ask4", x, pr.bottom - sr.top - 34, "The list's height");
+  }
+
+  /* ── tab 1 ── */
+  var mode = "light";
+  function render1() {
+    var m = mode;
+    var bf = document.getElementById("beforeFull"), af = document.getElementById("afterFull");
+    bf.innerHTML = desktopFrame("before", m); af.innerHTML = desktopFrame("after", m);
+    document.getElementById("beforeOnly").innerHTML = panelOnly("before", m);
+    document.getElementById("afterOnly").innerHTML = panelOnly("after", m);
+    bf.querySelector(".spec").style.minHeight = "470px"; af.querySelector(".spec").style.minHeight = "560px";
+  }
+
+  /* ── tab 2 ── */
+  var STATES = [
+    ["Getting ready", "n", "Draft. Not open to anyone yet.", "A new season, before registration opens"],
+    ["Opens Jun 1", "n", "Registration is opened but its open date is still ahead.", "Registration form dates"],
+    ["Registration open", "g", "Registration is open now.", "Registration form dates"],
+    ["Closed Aug 1", "n", "Registration was opened and its close date has passed.", "Registration form dates"],
+    ["Registration closed", "n", "Registration was closed by hand.", "Status"],
+    ["Starts Jun 1", "n", "The season is running but its first day is ahead.", "Season dates"],
+    ["Playing now", "g", "The season is running and today is between its first and last day (the last day included).", "Season dates"],
+    ["Ended Aug 31", "a", "The season is past its last day and has not been completed. The club should complete it.", "Season dates"],
+    ["Finished", "n", "Completed or archived. Read-only from here.", "Status"]
+  ];
+  function render2() {
+    var t = document.getElementById("stateTable");
+    t.innerHTML = "<tr><th>Pill</th><th>Tone</th><th>When a season shows it</th><th>Decided by</th></tr>" +
+      STATES.map(function (s) {
+        var tone = s[1] === "g" ? "Green" : s[1] === "a" ? "Amber" : "Neutral";
+        return '<tr><td><div class="spec" data-mode="' + mode + '">' + chip([s[0], s[1]]) + "</div></td><td>" + tone + "</td><td>" + s[2] + "</td><td>" + s[3] + "</td></tr>";
+      }).join("");
+    var list = STATES.map(function (s, i) {
+      return { n: ["Season A", "Season B", "Season C", "Season D", "Season E", "Season F", "Season G", "Season H", "Season I"][i], d: "Jun 1 – Aug 31, 2027", sp: "Softball", s: [s[0], s[1]], cur: i === 6 };
+    });
+    document.getElementById("allStates").innerHTML = '<div class="spec" data-mode="' + mode + '" style="width:380px;padding:12px;border-radius:12px"><div class="panel after" style="position:static;max-height:none;width:100%">' + list.map(function (s) { return rowHtml(s, "after"); }).join("") + "</div></div>";
+  }
+
+  /* ── tab 3 ── */
+  function render3() {
+    document.getElementById("phoneNow").innerHTML =
+      '<div class="spec phone" data-mode="' + mode + '">' +
+      '<div class="bar"><div class="p1">' + BACK + ' Seasons</div><div class="p2"><span class="ttl">Dev House League 2026</span><span class="chev">' + CHEV + '</span></div>' +
+      '<div class="p3">House league ' + chip(CUR.s) + '</div>' +
+      '<div class="r2"><span class="on">Overview</span><span>Registrations <i class="count">1</i></span><span>Teams &amp; divisions</span><span>Schedule</span></div></div>' +
+      '<div class="page">Jun 1 – Aug 31, 2026 · Softball<div class="card"><b>Next step</b></div></div>' +
+      '<div class="dim"></div><div class="sheet"><div class="grab"></div><div class="lab">Switch season</div><div class="list">' +
+      SEASONS.map(function (s) { return rowHtml(s, "after"); }).join("") + "</div></div></div>";
+  }
+
+  /* ── tab 4 ── */
+  function render4() {
+    var many = [];
+    var nm = ["Fall 2024", "Spring 2025", "Summer 2025", "Fall 2025", "Spring 2026", "Summer 2026"];
+    nm.forEach(function (n, i) { many.push({ n: "House League " + n, d: "Jun 1 – Aug 31, " + (2024 + Math.floor(i / 2)), sp: "Softball", s: ["Finished", "n"] }); });
+    many.push({ n: "House League Spring 2027", d: "Apr 10 – Jun 20, 2027", sp: "Softball", s: ["Registration open", "g"] });
+    many.push({ n: "House League Summer 2027", d: "Jun 1 – Aug 31, 2027", sp: "Softball", s: ["Playing now", "g"], cur: true });
+    many.push({ n: "House League Fall 2027", d: "Sep 8 – Nov 24, 2027", sp: "Softball", s: ["Opens Jan 15", "n"] });
+    many.push({ n: "House League Winter 2027", d: null, sp: "Softball", s: ["Getting ready", "n"] });
+    many.push({ n: "Archive 2023", d: "Jun 1 – Aug 31, 2023", sp: "Softball", s: ["Finished", "n"] });
+    many.push({ n: "Archive 2022", d: "Jun 1 – Aug 31, 2022", sp: "Softball", s: ["Finished", "n"] });
+    var longList = [
+      { n: "Spring Recreational House League 2027 · North Division", d: "Apr 10 – Jun 20, 2027", sp: "Softball", s: ["Registration closed", "n"] },
+      { n: "Dev House League 2026", d: "Jun 1 – Aug 31, 2026", sp: "Softball", s: ["Ended Aug 31", "a"], cur: true }
+    ];
+    var noDates = [
+      { n: "Draft Test 2027", d: null, sp: "Softball", s: ["Getting ready", "n"] },
+      { n: "Fall Clinic", d: null, sp: null, s: ["Getting ready", "n"] },
+      { n: "Dev House League 2026", d: "Jun 1 – Aug 31, 2026", sp: "Softball", s: ["Playing now", "g"], cur: true }
+    ];
+    var two = [
+      { n: "Dev House League 2027", d: "Jun 1 – Aug 31, 2027", sp: "Softball", s: ["Registration open", "g"] },
+      { n: "Dev House League 2026", d: "Jun 1 – Aug 31, 2026", sp: "Softball", s: ["Finished", "n"], cur: true }
+    ];
+    function frame(title, body, h, cap) {
+      return "<div><h3 style='margin-top:0'>" + title + '</h3><div class="spec" data-mode="' + mode + '" style="padding:12px;border-radius:12px;height:' + h + 'px"><div style="position:relative;height:100%">' + body + '</div></div><p class="cap">' + cap + "</p></div>";
+    }
+    function p(list, id) { return panelHtml(list, "after", { maxH: 440, flat: true, id: id }); }
+    document.getElementById("edges").innerHTML =
+      frame("A long name", p(longList, "pLong"), 190, "The panel stops at 360px. The name is cut with “…”; the pill is never cut. (Ask 5.)") +
+      frame("No dates, no sport", p(noDates), 230, "A season without dates says so. A season with no sport shows only the dates line. (Ask 3.)") +
+      frame("Twelve seasons", p(many, "pMany"), 470, "The list scrolls inside itself at about seven rows and opens with the chosen season in view. (Ask 4.)") +
+      frame("Only one other season", p(two), 150, "With a single season there is nothing to switch to, so the chevron is not drawn at all (as today). Two seasons is the smallest list.");
+  }
+
+  /* ── tab 6 mini specimens ── */
+  function render6() {
+    var rows = [SEASONS[1], SEASONS[5]];
+    function mini(v) { return '<div class="spec" data-mode="' + mode + '" style="width:340px;padding:8px;border-radius:10px"><div class="panel after" style="position:static;width:100%;max-height:none">' + rows.map(function (s) { return rowHtml(s, v); }).join("") + "</div></div>"; }
+    document.getElementById("s1a").innerHTML = mini("after");
+    document.getElementById("s1b").innerHTML = mini("words");
+    var nd = [{ n: "Draft Test 2027", d: null, sp: "Softball", s: ["Getting ready", "n"] }];
+    document.getElementById("s3").innerHTML = '<div style="display:flex;gap:12px;flex-wrap:wrap"><div class="spec" data-mode="' + mode + '" style="width:300px;padding:8px;border-radius:10px"><div class="panel after" style="position:static;width:100%;max-height:none">' + rowHtml(nd[0], "after") + '</div></div><div class="spec" data-mode="' + mode + '" style="width:300px;padding:8px;border-radius:10px"><div class="panel after" style="position:static;width:100%;max-height:none">' +
+      '<button class="pick subbed"><span class="txt"><span class="nm">Draft Test 2027</span><span class="sb">Softball</span></span><span class="trail">' + chip(["Getting ready", "n"]) + "</span></button></div></div></div>";
+  }
+
+  /* ── wiring ── */
+  var TABS = ["t1", "t2", "t3", "t4", "t5", "t6"];
+  function renderAll() { render1(); render2(); render3(); render4(); render6(); addMarkers(document.getElementById("afterFull")); fixScroll(); }
+  function fixScroll() {
+    var p = document.getElementById("pMany"); if (!p) return;
+    var cur = p.querySelector(".pick.on"); if (cur) p.scrollTop = Math.max(0, cur.offsetTop - 60);
+  }
+  function showTab(id) {
+    TABS.forEach(function (t) { document.getElementById(t).hidden = t !== id; });
+    var bs = document.querySelectorAll("#tabs button");
+    for (var i = 0; i < bs.length; i++) bs[i].setAttribute("aria-selected", bs[i].getAttribute("data-tab") === id ? "true" : "false");
+    document.getElementById("showgrp").style.display = id === "t1" ? "inline-flex" : "none";
+    if (id === "t1") { addMarkersOnce(); }
+    if (id === "t4") fixScroll();
+    try { history.replaceState(null, "", "#" + id); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  function addMarkersOnce() {
+    var host = document.getElementById("afterFull");
+    host.querySelectorAll(".mk").forEach(function (m) { m.remove(); });
+    addMarkers(host);
+  }
+  document.getElementById("tabs").addEventListener("click", function (e) { var b = e.target.closest("button[data-tab]"); if (b) showTab(b.getAttribute("data-tab")); });
+
+  function setDiff(on) {
+    document.getElementById("vEvery").setAttribute("aria-pressed", on ? "false" : "true");
+    document.getElementById("vDiff").setAttribute("aria-pressed", on ? "true" : "false");
+    document.getElementById("beforeFull").hidden = on; document.getElementById("afterFull").hidden = on;
+    document.getElementById("beforeOnly").hidden = !on; document.getElementById("afterOnly").hidden = !on;
+  }
+  document.getElementById("vEvery").onclick = function () { setDiff(false); addMarkersOnce(); };
+  document.getElementById("vDiff").onclick = function () { setDiff(true); };
+  function setLook(m) {
+    mode = m;
+    document.getElementById("lLight").setAttribute("aria-pressed", m === "light" ? "true" : "false");
+    document.getElementById("lDark").setAttribute("aria-pressed", m === "dark" ? "true" : "false");
+    var diff = document.getElementById("vDiff").getAttribute("aria-pressed") === "true";
+    renderAll(); setDiff(diff);
+  }
+  document.getElementById("lLight").onclick = function () { setLook("light"); };
+  document.getElementById("lDark").onclick = function () { setLook("dark"); };
+
+  /* clickable markers */
+  document.addEventListener("click", function (e) {
+    var m = e.target.closest(".mk"); if (!m) return;
+    showTab("t6");
+    var a = document.getElementById(m.getAttribute("data-go"));
+    if (a) { a.scrollIntoView({ behavior: "smooth", block: "start" }); a.classList.add("flash"); setTimeout(function () { a.classList.remove("flash"); }, 1600); }
+  });
+
+  /* answers */
+  var NAMES = { a1: "1 · State", a2: "2 · Chosen row", a3: "3 · No dates", a4: "4 · Height", a5: "5 · Long names" };
+  var LABEL = {
+    a1: { A: "A · pill at the end of the row", B: "B · words on the second line" },
+    a2: { A: "A · keeps its pill", B: "B · no pill on the chosen row" },
+    a3: { A: "A · Dates not set · sport", B: "B · sport alone" },
+    a4: { A: "A · taller list, opens on chosen season", B: "B · keep 320px" },
+    a5: { A: "A · cut with …, panel capped at 360px", B: "B · wrap to two lines" }
+  };
+  function answers() {
+    var lines = ["Season switcher rows — my answers"];
+    Object.keys(NAMES).forEach(function (k) { var c = document.querySelector('input[name="' + k + '"]:checked'); lines.push(NAMES[k] + ": " + (c ? LABEL[k][c.value] : "—")); });
+    return lines.join("\n");
+  }
+  function refresh() { document.getElementById("out").value = answers(); }
+  document.querySelector("#t6").addEventListener("change", refresh);
+  document.getElementById("copyBtn").onclick = function () {
+    refresh();
+    var out = document.getElementById("out"), msg = document.getElementById("copyMsg");
+    function sel() { out.select(); msg.textContent = "Select and copy the text below."; }
+    try { navigator.clipboard.writeText(out.value).then(function () { msg.textContent = "Copied. Paste it back to me."; }, sel); } catch (e) { sel(); }
+  };
+
+  renderAll(); setDiff(false); refresh();
+  var h = (location.hash || "").replace("#", "");
+  showTab(TABS.indexOf(h) >= 0 ? h : "t1");
+  function remark() { if (!document.getElementById("t1").hidden) addMarkersOnce(); }
+  window.addEventListener("resize", remark);
+  window.addEventListener("load", remark);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(remark);
+})();
+</script>

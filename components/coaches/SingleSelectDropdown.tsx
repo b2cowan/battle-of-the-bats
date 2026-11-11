@@ -52,7 +52,15 @@ export default function SingleSelectDropdown({
   restValue,
   labelSuffix,
   face = 'pill',
+  roomy = false,
 }: {
+  /**
+   * A LIST OF TWO-LINE ROWS (the house-league season switcher, owner 2026-11-11, drawings KsSaWfU1y5xySHdffLTycW):
+   * a sub-line row is ~57px, so the shipped 320px ceiling would scroll seven seasons. `roomy` lifts the panel's ceiling
+   * to 440px, caps its width at 360px (a name is cut with "…", an option's `trail` never is), and opens the panel with
+   * the chosen row in view. The phone's sheet draws the same rows with the same cut. Opt-in; every other caller is unchanged.
+   */
+  roomy?: boolean;
   /**
    * What the closed control LOOKS like. `pill` (every caller but one) is the reporting family's pill. `chevron` is the
    * chevron alone, a 44px square spoken by `label`, set beside a title it switches: a house-league season's name (Club
@@ -73,9 +81,10 @@ export default function SingleSelectDropdown({
    *  pill: the row reads "Any year", the face "Born in: any year"). `group` puts the option under a heading in the panel
    *  (below). `sub` is a SENTENCE under the option's name, in the Record money picker's form (bold name, a quiet line
    *  beneath, a hairline between rows) — the club Bank's Account pill, each account's latest check (owner 2026-11-07).
-   *  A sub-line is words, `detail` a figure: a sentence squeezed to the row's end read as a stray column. All opt-in; no
-   *  portal strip passes one. */
-  options: readonly { id: string; label: string; detail?: string; sub?: string; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; faceLabel?: string; group?: string }[];
+   *  A sub-line is words, `detail` a figure: a sentence squeezed to the row's end read as a stray column. `trail` is a
+   *  CHIP at the row's end, on the NAME's line (only on a `sub` row; the season switcher's state pill, never cut when
+   *  the name is). All opt-in; no portal strip passes one. */
+  options: readonly { id: string; label: string; detail?: string; sub?: string; trail?: ReactNode; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; faceLabel?: string; group?: string }[];
   value: string;
   onChange: (next: string) => void;
   /**
@@ -209,10 +218,13 @@ export default function SingleSelectDropdown({
       }}
     >
       {o.sub != null ? (
-        <span className={styles.multiSelectPickText}>
-          <span className={styles.multiSelectPickName}>{o.label}{o.mark}{o.rowMark}</span>
-          <span className={styles.multiSelectPickSub}>{o.sub}</span>
-        </span>
+        <>
+          <span className={styles.multiSelectPickText}>
+            <span className={styles.multiSelectPickName}>{o.label}{o.mark}{o.rowMark}</span>
+            <span className={styles.multiSelectPickSub}>{o.sub}</span>
+          </span>
+          {o.trail != null && <span className={styles.multiSelectPickTrail}>{o.trail}</span>}
+        </>
       ) : <>{o.label}{o.mark}{o.rowMark}</>}
       {o.detail != null && <span className={styles.multiSelectCount}>{o.detail}</span>}
     </button>
@@ -248,7 +260,18 @@ export default function SingleSelectDropdown({
 
   return (
     <>
-      <details ref={ref} className={`${styles.multiSelect} ${lead ? styles.multiSelectLead : ''}${shrink ? ` ${styles.multiSelectShrink}` : ''}${fill ? ` ${styles.multiSelectFill}` : ''}`}>
+      <details
+        ref={ref}
+        className={`${styles.multiSelect} ${lead ? styles.multiSelectLead : ''}${shrink ? ` ${styles.multiSelectShrink}` : ''}${fill ? ` ${styles.multiSelectFill}` : ''}`}
+        /* A roomy list opens on the chosen row (a long list scrolls inside itself; the season you are on is never below the fold). */
+        onToggle={roomy ? ev => {
+          const d = ev.currentTarget;
+          if (!d.open) return;
+          const panel = d.querySelector<HTMLElement>('[data-pill="panel"]');
+          const on = panel?.querySelector<HTMLElement>('[aria-pressed="true"]');
+          if (panel && on) panel.scrollTop = Math.max(0, on.offsetTop - 60);
+        } : undefined}
+      >
         <summary
           ref={summaryRef}
           data-pill="summary"
@@ -273,7 +296,7 @@ export default function SingleSelectDropdown({
             </>
           )}
         </summary>
-        <div data-pill="panel" className={styles.multiSelectPanel} role="group" aria-label={label}>
+        <div data-pill="panel" className={`${styles.multiSelectPanel}${roomy ? ` ${styles.multiSelectRoomy}` : ''}`} role="group" aria-label={label}>
           {choices}
           {footBlock}
         </div>
@@ -294,7 +317,7 @@ export default function SingleSelectDropdown({
           aria-label={label}
           onClick={ev => { if ((ev.target as HTMLElement).closest('button, a[href]')) setSheetOpen(false); }}
         >
-          <div className={styles.multiSelectSheetList}>
+          <div className={`${styles.multiSelectSheetList}${roomy ? ` ${styles.multiSelectRoomy}` : ''}`}>
             {choicesFor(true)}
             {footBlock}
           </div>

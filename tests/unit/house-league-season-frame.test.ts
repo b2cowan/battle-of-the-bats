@@ -114,6 +114,17 @@ describe('2 · the frame is wired', () => {
     assert.match(frame, /switcher: season && seasons\.length > 1 \? \(/, 'drawn only when there is another season');
     assert.match(frame, /seasonPageHref\(`\$\{league\}\/seasons\/\$\{id\}`, seasonSegment\(pathname\)\)/, 'a pick keeps the page you are on');
   });
+  // ⚖ Owner 2026-11-11 (drawings KsSaWfU1y5xySHdffLTycW): each row is the name with the SAME state pill the bar wears, then
+  // "dates · sport" — so a row and the bar can never read two words, and a season with no dates says so.
+  it('the switch’s rows are two lines: the bar’s own state pill, then dates · sport', () => {
+    const frame = readCode('components/admin/kit/club/SeasonFrame.tsx');
+    assert.match(frame, /trail: <SeasonStatePill season=\{s\} \/>/, 'the row wears the bar’s own pill, never a second set of words');
+    assert.match(frame, /seasonDates\(s\) \?\? 'Dates not set', s\.sport/, 'dates · sport, and "Dates not set" without dates');
+    assert.match(frame, /\broomy\b/, 'seven two-line rows need the taller, width-capped list');
+    assert.doesNotMatch(frame, /rowMark/, 'the old Finished-only mark is replaced by the pill');
+    const css = readCode('components/shared/FilterPill.module.css');
+    assert.match(css, /\.multiSelectPanel\.multiSelectRoomy \{[^}]*max-height: 440px;[^}]*max-width: min\(360px,/);
+  });
   it('the switch’s chevron is a 44 px square at every width', () => {
     const css = readCode('components/shared/FilterPill.module.css');
     assert.match(css, /\.multiSelectChevronFace \{[^}]*width: var\(--tap-min, 44px\); height: var\(--tap-min, 44px\); border: none; background: none;/);
