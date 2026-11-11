@@ -7,6 +7,13 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-11 — A TOURNAMENT-ONLY ORGANIZATION'S SETTINGS & ACCESS IS A ROW IN THE EVENT SIDEBAR'S FOOT, ABOVE PLAN & BILLING (owner, "go ahead with option 1", after not finding it from an event's Dashboard; AMENDS E3 of Part B)
+
+**Decision:** On the event's own pages, a Tournament-plan organization's sidebar foot now starts with a "Settings & access" row (opens the first Settings & access tab the person holds, e.g. Members), then Plan & billing, a hairline, the doors, Collapse. It shows only for someone who holds at least one of its tabs. A club has no such row (its settings are in Organization). The phone's More sheet already had it. The two-click route (the cell, then All tournaments) stays.
+**Rationale:** Part B's E3 took Settings & access out of the event's sidebar and left it two clicks away behind the cell's All tournaments; the owner could not find it from an event's Dashboard.
+**Amends:** E3 (Part B), "no longer a row in the event's sidebar" — it is still not in the event's page groups, it is in the foot.
+**Applies to:** `components/admin/kit/AdminKitRail.tsx` (the foot).
+
 ### 2026-11-10 — THE FOOT'S "TOURNAMENTS" DOOR LEAVES THE CLUB AND LANDS ON AN EVENT'S DASHBOARD; THE LIST IS REACHED FROM THE EVENT SWITCHER'S "ALL TOURNAMENTS" (owner, in conversation, after finding the list was a dead end; AMENDS T1 of the 2026-11-10 Phase 2 gate)
 
 **Decision (as ruled):** (1) The Tournaments door in the sidebar's foot behaves like the Coach and Club doors: it leaves the club admin for the tournament admin and opens the Dashboard of the event it lands on, in the event's own sidebar. (2) The landing event is the one closest to come up, and a remembered choice still wins (built as `closestToComeUp`: Active events first, then Completed, then Draft only when nothing else exists; within that group the one happening now, else the next to start, else one with no dates, else the one that ended most recently; the fallback is never remembered; an organization with no events opens the list with New tournament). Whether a Draft should ever be landed on is the owner's call. (3) The Tournaments list lives inside the tournament admin and wears the tournament admin's sidebar, not the club's. (4) The only way to the list is "All tournaments" at the foot of the event switcher (the cell's dropdown). No second door is added now; one can be added later if a need shows. (5) Housekeeping on the list (Mark complete, Seal, Reuse setup, New tournament, archived and sealed events) is reached the same way.

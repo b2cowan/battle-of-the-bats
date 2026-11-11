@@ -265,7 +265,9 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   short sidebar; a club with no event yet keeps the club's sidebar so New tournament is there; Settings & access, Members, PDF
   settings, Payouts and Plan & billing are untouched (P2); the phone is unchanged (it already lands on the chosen event).
   Replaces T1's "the club's own sidebar on the list, the foot door lights, the strip says Club". Walk: §509 walk 4 rewritten
-  (id `B4R`). Committed 2026-11-11: `f04142d98` (the list window's Open tournament button; one lime on Divisions and Venues) and `9991ad080` (the foot door, the list under the event's sidebar, the landing event). Open: whether the landing rule should prefer the nearest event over the remembered one.
+  (id `B4R`). **Also 2026-11-11 (owner, "option 1"): a Tournament-plan organization's Settings & access is a row in the event
+  sidebar's foot, above Plan & billing** (E3 left it two clicks away behind All tournaments); not for a club, and the phone is
+  unchanged (walks 2 and 3 carry it). Committed 2026-11-11: `f04142d98` (the list window's Open tournament button; one lime on Divisions and Venues) and `9991ad080` (the foot door, the list under the event's sidebar, the landing event). Open: whether the landing rule should prefer the nearest event over the remembered one.
 - **P3 · The phone is unchanged until Phase 3**: titles drop on a computer only; the phone keeps its titles and its event
   bar. One exception: a tournament-only organization's Settings & access tab row shows on a phone as the club's
   Organization tabs already do.

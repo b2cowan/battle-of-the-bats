@@ -28,6 +28,13 @@ describe('Part B · the event’s sidebar on a computer is the event’s pages o
     assert.equal(YOUR_NOTIFICATIONS_ITEM.label, NOTIFY_WORDS.title, 'one name for the row and its page');
     assert.equal(NOTIFY_WORDS.title, 'Your notifications');
   });
+  it('⚖ Settings & access is one click from the event: a foot row above Plan & billing, only where the settings are tournament-side (owner 2026-11-11)', () => {
+    const rail = readCode('components/admin/kit/AdminKitRail.tsx');
+    assert.match(rail, /\{inEvent && settingsAccess && \(/, 'in the event’s shell, when the person holds a settings tab (null for a club and for the sandbox)');
+    const row = rail.indexOf('{inEvent && settingsAccess && (');
+    assert.ok(row > rail.indexOf('<div className={styles.railFoot}>') && row < rail.indexOf('{billingLink && <Link'), 'it is the foot’s first row, above Plan & billing');
+    assert.match(rail, /\(billingLink \|\| isSandbox \|\| \(inEvent && settingsAccess\)\) && portalDoors\.length > 0/, 'the hairline before the doors follows it');
+  });
   it('the demo sandbox has no mute page to show, so its Admin label goes with it', () => {
     const desk = deskTournamentGroups(kitTournamentGroups({ status: 'active', isSandbox: true, role: 'owner', planId: 'tournament_plus' }));
     assert.ok(!keysOf(desk).includes('settings/notifications'));

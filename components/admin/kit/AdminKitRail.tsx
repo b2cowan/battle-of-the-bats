@@ -316,6 +316,14 @@ export default function AdminKitRail() {
       <div className={styles.spacer} />
       <div className={styles.railFoot}>
         <div className={styles.foot}>
+          {/* ⚖ A Tournament plan's Settings & access is one click from the event too (owner 2026-11-11, amending Part B's E3,
+              which left it two clicks away behind the cell's All tournaments): the foot's first row, above Plan & billing.
+              `settingsAccess` is null for a club (its settings are in Organization) and for someone who holds none of its tabs. */}
+          {inEvent && settingsAccess && (
+            <Link href={settingsAccess.href} className={`${styles.item} ${styles.footItem}`}>
+              {settingsAccess.icon && <settingsAccess.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{settingsAccess.label}</span>
+            </Link>
+          )}
           {billingLink && <Link href={billingLink.href} className={`${styles.item} ${styles.footItem}${isKitLinkActive(pathname, billingLink) ? ` ${styles.itemActive}` : ''}`} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
             {billingLink.icon && <billingLink.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{billingLink.label}</span>
             {/* Fee invoice alerts, Part 2: an invoice to pay (amber), an overdue one (red) or a failed plan payment (amber). */}
@@ -326,7 +334,7 @@ export default function AdminKitRail() {
               <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span>
             </Link>
           )}
-          {(billingLink || isSandbox) && portalDoors.length > 0 && <div className={styles.footSep} aria-hidden />}
+          {(billingLink || isSandbox || (inEvent && settingsAccess)) && portalDoors.length > 0 && <div className={styles.footSep} aria-hidden />}
           {/* A door leaves for another portal and never lights: Tournaments opens an event's Dashboard (owner 2026-11-10). */}
           {portalDoors.map(door => (
             <Link key={door.key} href={door.href} className={`${styles.item} ${styles.footItem}`}>

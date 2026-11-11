@@ -200,7 +200,8 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     assert.match(foot, /styles\.footItem/);
     assert.match(foot, /<billingLink\.icon size=\{14\}/);
     assert.match(foot, /\{isSandbox && \(\s*<Link href=\{helpHref\}/, 'Help is the sandbox’s only (the account menu has it elsewhere)');
-    assert.match(foot, /\{\(billingLink \|\| isSandbox\) && portalDoors\.length > 0 && <div className=\{styles\.footSep\} aria-hidden \/>\}/);
+    // ⚖ + Settings & access in the event's shell of a Tournament plan (owner 2026-11-11): the hairline follows whichever rows came first.
+    assert.match(foot, /\{\(billingLink \|\| isSandbox \|\| \(inEvent && settingsAccess\)\) && portalDoors\.length > 0 && <div className=\{styles\.footSep\} aria-hidden \/>\}/);
     assert.match(readCode('components/admin/kit/useAdminKitNav.ts'), /const portalDoors = kitPortalDoors\(\{ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor: order\.door, canUse, coachDoor \}\);/);
     assert.match(readCode(ADMIN_SHEET), /billingLink && <Link[\s\S]*?<billingLink\.icon size=\{17\}/);
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
