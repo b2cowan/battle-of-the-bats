@@ -216,7 +216,7 @@ Build to tab 5 and tab 4, on Part 1's pieces.
 
 ## Part 3 · Opus — the switches, the grace period, the resets
 
-> **BUILT 2026-11-11** (mig 469 on dev; mig 470 the hourly schedule written, its own commit, owner's yes owed); owner walk §515
+> **BUILT + COMMITTED `5a22b498a` 2026-11-11** (mig 469 on dev; mig 470 the hourly schedule `d5f9f7f52`, applied to dev); owner walk §515
 > https://claude.ai/artifact/SU7aZb1LwgmALGTyCfSf5G; coach door drawn + approved
 > https://claude.ai/artifact/EKo6ky1RVPYZzkx7sXyGuA. What was built, the review fixes and four open owner calls:
 > `BOARD_READY_PLAN.md` §5 Stage 0a "Part 3 BUILT". **For Part 4:** the grace emails go where `startTwoStepGrace` writes and

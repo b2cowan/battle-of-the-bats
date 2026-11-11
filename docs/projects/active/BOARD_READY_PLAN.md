@@ -256,8 +256,8 @@ points here, so they aren't tracked twice)
       owners; after a reset a seat that requires it is sent to set-up at the next sign-in, and anyone else simply has it
       off (the email says so); a code from the app or a backup code, typed at sign-in during the wait, cancels an owner
       reset; support gets Hold / Release / Cancel on a waiting reset.
-  - **Part 3 BUILT 2026-11-11** (mig 469 applied to dev; mig 470, the hourly schedule, written, not applied — watched
-    automation, its own commit; owner walk §515 `BOARD_READY_TWO_STEP_PART3_WALK.html`, fixture `.probe/two-step-p3/fixture.mjs`,
+  - **Part 3 BUILT + COMMITTED `5a22b498a` 2026-11-11** (mig 469 applied to dev; mig 470, the hourly schedule, applied to dev on
+    the owner's yes and committed on its own `d5f9f7f52`; owner walk §515 `BOARD_READY_TWO_STEP_PART3_WALK.html`, fixture `.probe/two-step-p3/fixture.mjs`,
     `--undo` after the walk). Coach door drawn and approved the same day (`BOARD_READY_TWO_STEP_COACH_RESET_DRAWINGS.html`,
     A1–A3 as recommended). What was built:
     - **The one reset order** `lib/two-step-reset.ts` (`removeEveryAuthenticator`, now also Part 2's turn off; `resetTwoStep`
