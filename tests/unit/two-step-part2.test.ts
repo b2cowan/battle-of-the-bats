@@ -165,6 +165,25 @@ describe('4 · set up a new phone', () => {
   });
 });
 
+describe('4b · a replacement mark is not carried into the next token (mig 468)', () => {
+  const verify = readCode('app/api/auth/two-step/set-up/verify/route.ts');
+  it('takes a fresh token after the mark is cleared, so the database check stops ignoring the typed code', () => {
+    const cleared = verify.indexOf('[REPLACING_AUTHENTICATOR_FLAG]: false');
+    const refreshed = verify.indexOf('refreshSession()');
+    assert.ok(cleared > 0 && refreshed > cleared, 'the refresh comes after the mark is cleared');
+    assert.ok(verify.includes('if (wasReplacing) await supabase.auth.refreshSession()'));
+  });
+  it('the migration ignores aal2 while the mark is set, in the function the policies call', () => {
+    const sql = readCode('supabase/migrations/468_a_replacing_phone_counts_no_typed_code.sql');
+    const body = sql.slice(sql.indexOf('create or replace function'));
+    const aal2 = body.indexOf("= 'aal2'");
+    const noFactor = body.indexOf('auth.mfa_factors');
+    const mark = body.indexOf("two_step_replacing')::boolean");
+    assert.ok(aal2 > 0 && mark > aal2 && mark < noFactor, 'the aal2 clause carries its own mark test, before the no-authenticator clause');
+    assert.equal(body.split("two_step_replacing')::boolean").length - 1, 2);
+  });
+});
+
 describe('5 · change password', () => {
   const route = readCode('app/api/auth/password/route.ts');
   it('checks the current password on a client that keeps no session, never the session’s own', () => {

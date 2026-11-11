@@ -69,6 +69,10 @@ export const POST = withObservability(async (req: Request) => {
       app_metadata: { ...(state.user.app_metadata ?? {}), [REPLACING_AUTHENTICATOR_FLAG]: false },
     });
   }
+  // The session verified above still carries the replacement mark in its token. The database check (mig 468) ignores a
+  // typed code while that mark is in the token, so take a fresh token now that the mark is gone. Best effort: a failure
+  // here only means the browser's direct reach waits for its next ordinary refresh.
+  if (wasReplacing) await supabase.auth.refreshSession().catch(() => undefined);
   const backupCodes = await createBackupCodes(state.user.id);
   return NextResponse.json({ ok: true, backupCodes, oldRemoved });
 }, { route: '/api/auth/two-step/set-up/verify' });
