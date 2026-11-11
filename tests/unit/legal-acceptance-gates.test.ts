@@ -80,8 +80,9 @@ const WRITES = [
   'createOrganization(', 'createBasicCoachTeam(', 'requireBillingLocation(', 'checkout.sessions.create', 'provision',
   'recordNextSeasonChoice(', 'applyMove(', 'createCardSetupSession(', '.insert(', '.update(', 'Limiter', 'ensureFoundingSeasonCompPeriod(',
 ];
-/** A return before the check may only be a refusal: 401, 403, 400 or the auth helpers' own refusals. */
-const REFUSAL = /\b40[0-9]\b|unauthorized\(\)|\bdenied\b|authorized\.response/;
+/** A return before the check may only be a refusal: 401, 403, 400, the auth helpers' own refusals, or the demo sandbox's
+ *  (`demoRefusal`, the shared billing refusal for the two fictional demo organizers; Board Ready W2 fix D). */
+const REFUSAL = /\b40[0-9]\b|unauthorized\(\)|\bdenied\b|authorized\.response|^demoRefusal$/;
 
 /** Never gated, on purpose: cancelling never waits on the Terms (§18 "If you do not agree, you can cancel"). */
 const NEVER_GATED: Record<string, { methods: string[]; why: string }> = {

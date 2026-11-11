@@ -94,7 +94,7 @@ async function closeOne(r: OpenRow): Promise<boolean> {
   const session = await retrieveCheckout(r.stripe_account_id, r.stripe_checkout_session_id);
   // Completed meanwhile: the landing books it (and flags a team's extra). Still open: Stripe expires it by itself.
   if (session.status !== 'expired') return false;
-  await expireCheckoutSession(r.stripe_checkout_session_id);
+  await expireCheckoutSession(r.stripe_checkout_session_id, r.stripe_account_id);
   return true;
 }
 

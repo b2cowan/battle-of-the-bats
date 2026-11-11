@@ -181,6 +181,15 @@ export async function requireDevToolPlatformAdmin(): Promise<
       response: NextResponse.json({ error: 'Not found' }, { status: 404 }),
     };
   }
+  // Belt and braces, as `requireDevToolUserAuth` below: a production build never runs the dev tools, even if the flag
+  // were set there by mistake (Board Ready sweep 3, small).
+  if (process.env.NODE_ENV === 'production') {
+    return {
+      user: null,
+      role: null,
+      response: NextResponse.json({ error: 'Not found' }, { status: 404 }),
+    };
+  }
 
   const auth = await requirePlatformAdmin();
   if (auth.response) {

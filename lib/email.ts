@@ -1952,13 +1952,13 @@ export function orgDeletionRequestHtml(p: {
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Organization Deletion Request</h2>
     <div style="${warmPanelStyle('secondary', { margin: '1.25rem 0' })}">
       <table style="border-collapse:collapse;width:100%;font-size:0.88rem;line-height:1.5;">
-        ${row('Organization', `<strong>${p.orgName}</strong>`)}
-        ${row('Slug', p.orgSlug)}
-        ${row('Org ID', `<span style="${DATA_FACE}font-size:0.8rem;">${p.orgId}</span>`)}
-        ${row('Owner', p.ownerEmail)}
-        ${row('Plan', p.planLabel)}
-        ${row('Reason', p.reason || '<em>No reason provided</em>')}
-        ${row('Requested at', p.requestedAt)}
+        ${row('Organization', `<strong>${escapeHtml(p.orgName)}</strong>`)}
+        ${row('Slug', escapeHtml(p.orgSlug))}
+        ${row('Org ID', `<span style="${DATA_FACE}font-size:0.8rem;">${escapeHtml(p.orgId)}</span>`)}
+        ${row('Owner', escapeHtml(p.ownerEmail))}
+        ${row('Plan', escapeHtml(p.planLabel))}
+        ${row('Reason', p.reason ? escapeHtml(p.reason) : '<em>No reason provided</em>')}
+        ${row('Requested at', escapeHtml(p.requestedAt))}
       </table>
     </div>
   `);

@@ -1178,10 +1178,11 @@ export async function keepOverpayment(p: { onlinePaymentId: string; reason: stri
   return 'kept';
 }
 
-/** A Checkout Session expired unpaid: the payment closes, so the team can open a new one. */
-export async function expireCheckoutSession(sessionId: string): Promise<void> {
+/** A Checkout Session expired unpaid: the payment closes, so the team can open a new one. Bound to the account the event came
+ *  from, like every sibling here: another connected account's event can never close this club's open payment. */
+export async function expireCheckoutSession(sessionId: string, stripeAccountId: string): Promise<void> {
   await supabaseAdmin.from('online_payments').update({ status: 'expired', updated_at: new Date().toISOString() })
-    .eq('stripe_checkout_session_id', sessionId).eq('status', 'open');
+    .eq('stripe_checkout_session_id', sessionId).eq('stripe_account_id', stripeAccountId).eq('status', 'open');
 }
 
 // ── A refund ────────────────────────────────────────────────────────────────────────────────────

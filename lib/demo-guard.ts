@@ -1,4 +1,4 @@
-import { isDemoOrgSlug, getDemoOrgBySlug, decodePathSegment } from './demo-org';
+import { DEMO_ORGS, isDemoOrgSlug, getDemoOrgBySlug, decodePathSegment } from './demo-org';
 
 /**
  * lib/demo-guard.ts — the central write block for sandbox organizations.
@@ -145,6 +145,24 @@ export function sandboxRejectionResponse(slug?: string | null): Response {
       'Cache-Control': 'no-store',
     },
   });
+}
+
+/**
+ * THE ONE REFUSAL EVERY BILLING WRITE CALLS (Board Ready W2 fix D). The billing POSTs (`app/api/billing/**`) name their club in
+ * the BODY, so the chokepoint above cannot see it, and the demo organizer holds the billing power: a "See it live" visitor
+ * could open the portal, start a checkout, add a card, move, cancel or downgrade a public demo club. The honest invariant is
+ * about the ACTOR (the same one `app/api/events/league` keeps): the demo organizer's session must never change billing,
+ * whatever it names in a body.
+ *
+ * Pass whoever the route just authenticated. Returns the 403 to send back (carrying that sandbox's own "start your own…"
+ * copy), or null for everyone else. `tests/unit/demo-sandbox-write-guard.test.ts` fails the build when a billing route that
+ * writes does not call this — a new billing POST cannot ship open.
+ */
+export function demoBillingRefusal(user: { email?: string | null } | null | undefined): Response | null {
+  const email = user?.email?.trim().toLowerCase();
+  if (!email) return null;
+  const demo = DEMO_ORGS.find(org => org.organizerEmail === email);
+  return demo ? sandboxRejectionResponse(demo.slug) : null;
 }
 
 /**

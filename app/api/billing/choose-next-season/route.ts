@@ -1,4 +1,5 @@
 import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth';
+import { demoBillingRefusal } from '@/lib/demo-guard';
 import { foundingCompAppliesToPlan } from '@/lib/founding-season';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { ensureStripeCustomer, recordNextSeasonChoice, getOrgBillingFacts } from '@/lib/billing-setup';
@@ -54,6 +55,9 @@ export const POST = withObservability(async (req: Request) => {
   const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
   const auth = await getAuthContext(orgSlug ? { orgSlug, allowSuspendedOrg: true } : { allowSuspendedOrg: true });
   if (!auth) return unauthorized();
+  // The sandboxes run the real product and the demo organizer holds the billing power (one shared refusal: lib/demo-guard.ts).
+  const demoRefusal = demoBillingRefusal(auth.user);
+  if (demoRefusal) return demoRefusal;
   // Billing is owner-only — enforced server-side; the UI also hides the control.
   const denied = await requireCapability(auth, 'billing');
   if (denied) return denied;

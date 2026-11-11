@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   shouldBlockSandboxWrite, demoOrgSlugFromRequest, isWriteMethod,
-  assertNotDemoOrg, sandboxRejectionResponse, SANDBOX_REJECTION_BODY,
+  assertNotDemoOrg, sandboxRejectionResponse, SANDBOX_REJECTION_BODY, demoBillingRefusal,
 } from '../../lib/demo-guard.ts';
 import { DEMO_ORGS, isDemoOrgSlug, isDemoOrganizerEmail, getDemoOrgByKind } from '../../lib/demo-org.ts';
 
@@ -261,8 +261,7 @@ describe('the body-identified guard (public writes the proxy cannot see)', () =>
    */
   const ACTOR_IDENTIFIED_WRITES = [
     'app/api/events/league/route.ts',
-    // GST/HST Stage 1: the save names its org only in the body, and the demo organizer holds the billing power.
-    'app/api/billing/location/route.ts',
+    // The billing writes are a family of their own, swept route by route below ("every billing write refuses the demo organizer").
   ] as const;
 
   for (const routeFile of ACTOR_IDENTIFIED_WRITES) {
@@ -300,4 +299,136 @@ describe('the body-identified guard (public writes the proxy cannot see)', () =>
       );
     });
   }
+});
+
+describe('billing writes and the demo organizer (Board Ready W2 fix D)', () => {
+  /**
+   * The billing POSTs name their club in the BODY, so the proxy's URL match cannot see them, and the demo organizer holds the
+   * billing power: a "See it live" visitor could reach portal, checkout, add-a-card, move, cancel and downgrade on a public
+   * demo club (Stripe test objects and demo state only, but real calls). ONE shared refusal, `demoBillingRefusal`, is what
+   * every billing write calls. This sweeps `app/api/billing/**` so a billing route written next year fails the build until
+   * it refuses — the same default-closed property the proxy gives every other write.
+   *
+   * The two lists below are DECISION POINTS: a route joins one only by a deliberate call, with its reason.
+   */
+  const READ_ONLY_POSTS: Record<string, string> = {
+    'move/preview': 'a POST only because it carries a body: it prices a move and changes nothing',
+    'downgrade/preflight': 'a POST only because it carries a body: it reports what a downgrade would remove and changes nothing',
+  };
+  const SIGNED_BY_STRIPE: Record<string, string> = {
+    webhook: 'Stripe calls it, verified by the webhook signature: no signed-in actor exists to be a demo organizer',
+  };
+
+  async function billingRoutes(): Promise<string[]> {
+    const { readdir } = await import('node:fs/promises');
+    const root = new URL('../../app/api/billing/', import.meta.url);
+    const out: string[] = [];
+    async function walk(dir: URL, prefix: string): Promise<void> {
+      for (const entry of await readdir(dir, { withFileTypes: true })) {
+        if (entry.isDirectory()) await walk(new URL(`${entry.name}/`, dir), `${prefix}${entry.name}/`);
+        else if (entry.name === 'route.ts') out.push(prefix.slice(0, -1));
+      }
+    }
+    await walk(root, '');
+    return out.sort();
+  }
+
+  test('there are billing routes to sweep (the sweep itself is not empty)', async () => {
+    const routes = await billingRoutes();
+    assert.ok(routes.length >= 15, `found ${routes.length}`);
+    for (const name of [...Object.keys(READ_ONLY_POSTS), ...Object.keys(SIGNED_BY_STRIPE)]) {
+      assert.ok(routes.includes(name), `${name} is listed as an exception but is not a billing route any more — drop the entry`);
+    }
+  });
+
+  /** Money routes OUTSIDE app/api/billing that also name their club only in the body (the Stripe Connect payouts setup). */
+  const BODY_NAMED_MONEY_ROUTES = [
+    'app/api/admin/payouts/route.ts',
+    'app/api/admin/payouts/return/route.ts',
+  ] as const;
+
+  /** The source without its comments, so a mention in prose can never count as a refusal. */
+  function code(src: string): string {
+    return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\s\/\/ .*$/gm, '');
+  }
+  /** The first thing a handler may do that changes something or talks to Stripe. */
+  const SIDE_EFFECT = /\b(supabaseAdmin|stripe|createCheckout|onboardingLink|syncPayoutsAccount)\b|\.(?:insert|update|delete|upsert)\(/;
+
+  /** One failure line per write handler that does not refuse the demo organizer BEFORE it can change anything. */
+  function refusalFailures(file: string, source: string): string[] {
+    const src = code(source);
+    const failures: string[] = [];
+    if (/export\s*\{[^}]*\b(?:POST|PUT|PATCH|DELETE)\b/.test(src)) {
+      failures.push(`${file} exports a write handler in a form this sweep cannot read — declare it as "export const POST = …"`);
+    }
+    const starts = [...src.matchAll(/export (?:const|async function|function) (POST|PUT|PATCH|DELETE)\b/g)];
+    starts.forEach((m, i) => {
+      const body = src.slice(m.index!, i + 1 < starts.length ? starts[i + 1].index : undefined);
+      const at = body.search(/\bdemoBillingRefusal\(/);
+      if (at < 0) return failures.push(`${file}: ${m[1]} never calls demoBillingRefusal`);
+      if (!/if \(demoRefusal\) return demoRefusal;|if \(demoBillingRefusal\(/.test(body)) failures.push(`${file}: ${m[1]} calls demoBillingRefusal but does not return its answer`);
+      const effect = body.search(SIDE_EFFECT);
+      if (effect >= 0 && effect < at) failures.push(`${file}: ${m[1]} changes something or asks Stripe before it refuses the demo organizer`);
+    });
+    return failures;
+  }
+
+  test('every billing write refuses the demo organizer — returned, and before it can change anything', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const failures: string[] = [];
+    for (const route of await billingRoutes()) {
+      if (route in READ_ONLY_POSTS || route in SIGNED_BY_STRIPE) continue;
+      const file = `app/api/billing/${route}/route.ts`;
+      failures.push(...refusalFailures(file, await readFile(new URL(`../../${file}`, import.meta.url), 'utf8')));
+    }
+    for (const file of BODY_NAMED_MONEY_ROUTES) {
+      const source = await readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
+      failures.push(...refusalFailures(file, source));
+      // The payouts return is a GET (the proxy lets reads through) that still asks Stripe and writes the account back.
+      if (file.endsWith('return/route.ts')) assert.match(code(source), /demoBillingRefusal\(ctx\.user\)/, `${file} must refuse the demo organizer`);
+    }
+    assert.deepEqual(failures, [], 'every write must call demoBillingRefusal(<the signed-in user>) and return it right after it authenticates');
+  });
+
+  test('the sweep itself bites: it rejects a late, an unreturned, a commented-out and a missing refusal', () => {
+    const ok = 'export const POST = async () => {\n  const a = await getAuthContext();\n  const demoRefusal = demoBillingRefusal(a.user);\n  if (demoRefusal) return demoRefusal;\n  await supabaseAdmin.from("x").insert({});\n};\n';
+    assert.deepEqual(refusalFailures('ok.ts', ok), []);
+    assert.equal(refusalFailures('late.ts', 'export const POST = async () => {\n  await stripe.thing();\n  const demoRefusal = demoBillingRefusal(u);\n  if (demoRefusal) return demoRefusal;\n};\n').length, 1);
+    assert.equal(refusalFailures('unreturned.ts', 'export const POST = async () => {\n  const demoRefusal = demoBillingRefusal(u);\n  await supabaseAdmin.from("x").insert({});\n};\n').length, 1);
+    assert.equal(refusalFailures('comment.ts', 'export const POST = async () => {\n  // demoBillingRefusal(u) goes here\n  await supabaseAdmin.from("x").insert({});\n};\n').length, 1);
+    assert.equal(refusalFailures('async.ts', 'export async function PUT() {\n  await supabaseAdmin.from("x").update({});\n}\n').length, 1);
+    assert.equal(refusalFailures('named.ts', 'const POST = () => null;\nexport { POST };\n').length, 1);
+    // Two handlers: the second must refuse on its own.
+    assert.equal(refusalFailures('two.ts', ok + 'export const DELETE = async () => {\n  await supabaseAdmin.from("x").delete();\n};\n').length, 1);
+  });
+
+  test('no billing route keeps its own ad-hoc demo check any more (one shared refusal)', async () => {
+    const { readFile } = await import('node:fs/promises');
+    for (const route of await billingRoutes()) {
+      const source = await readFile(new URL(`../../app/api/billing/${route}/route.ts`, import.meta.url), 'utf8');
+      assert.ok(!source.includes('isDemoOrganizerEmail'), `app/api/billing/${route}/route.ts — call demoBillingRefusal instead`);
+    }
+  });
+
+  test("the refusal is the sandbox 403, in that sandbox's own words, for each demo organizer", async () => {
+    for (const org of DEMO_ORGS) {
+      const res = demoBillingRefusal({ email: org.organizerEmail });
+      assert.ok(res, `${org.slug} organizer must be refused`);
+      assert.equal(res!.status, 403);
+      assert.equal(res!.headers.get('X-Sandbox-Blocked'), '1');
+      const body = await res!.json();
+      assert.equal(body.sandbox, true);
+      assert.match(body.message, org.kind === 'coach' ? /start your own team/ : /start your own tournament/);
+    }
+    // Case and spaces do not dodge it.
+    assert.ok(demoBillingRefusal({ email: `  ${DEMO_ORGS[0].organizerEmail.toUpperCase()} ` }));
+  });
+
+  test('everyone else passes untouched', () => {
+    assert.equal(demoBillingRefusal({ email: 'owner@a-real-club.ca' }), null);
+    assert.equal(demoBillingRefusal({ email: null }), null);
+    assert.equal(demoBillingRefusal({}), null);
+    assert.equal(demoBillingRefusal(null), null);
+    assert.equal(demoBillingRefusal(undefined), null);
+  });
 });

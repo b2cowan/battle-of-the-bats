@@ -660,6 +660,8 @@ export type AcceptResult =
   | { kind: 'joined'; orgId: string; childIds: string[]; userId?: string }
   | { kind: 'mismatch'; maskedEmail: string }
   | { kind: 'consent_required' }
+  /** The signed-in account has not confirmed its email: a matching address alone is not proof it is the parent's (defence in depth). */
+  | { kind: 'email_unconfirmed' }
   | { kind: 'state'; state: Exclude<InvitationState, 'open'> };
 
 /**
@@ -669,7 +671,9 @@ export type AcceptResult =
  * condition 4, and marks the invitation used — claimed FIRST, so one invitation is used once.
  */
 export async function acceptInvitation(params: {
-  token: string; userId: string; userEmail: string | null; consentIp: string | null;
+  token: string; userId: string; userEmail: string | null;
+  /** The account's `email_confirmed_at`: the address must be one the account has proven it can read, not just one it typed. */
+  emailConfirmedAt: string | null | undefined; consentIp: string | null;
   guardianBox: boolean; consentBox: boolean;
 }): Promise<AcceptResult> {
   assertGuardianTier();
@@ -677,6 +681,7 @@ export async function acceptInvitation(params: {
   const state = invitationState(inv ? asRow(inv) : null, new Date().toISOString(), params.userId);
   if (!inv || state !== 'open') return { kind: 'state', state: state === 'open' ? 'no_longer_works' : state };
   if (!emailMatches(inv.email, params.userEmail)) return { kind: 'mismatch', maskedEmail: maskEmail(inv.email) };
+  if (!params.emailConfirmedAt) return { kind: 'email_unconfirmed' };
   if (params.guardianBox !== true || params.consentBox !== true) return { kind: 'consent_required' };
 
   const { connect, province } = await connectablesOf(inv);
@@ -781,7 +786,8 @@ export async function acceptWithNewAccount(params: {
   const userId = data.user.id;
   try {
     const result = await acceptInvitation({
-      token: params.token, userId, userEmail: inv.email, consentIp: params.consentIp,
+      token: params.token, userId, userEmail: inv.email, emailConfirmedAt: data.user.email_confirmed_at,
+      consentIp: params.consentIp,
       guardianBox: params.guardianBox, consentBox: params.consentBox,
     });
     // Lost the claim to another request: nothing was written for this account, so it goes again.

@@ -1,7 +1,6 @@
 import { getAuthContext, getAuthenticatedUser, requireCapability, unauthorized } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
-import { sandboxRejectionResponse } from '@/lib/demo-guard';
+import { demoBillingRefusal } from '@/lib/demo-guard';
 import {
   billingAddressFromBody,
   billingBuyerOf,
@@ -59,9 +58,10 @@ export const PUT = withObservability(async (req: Request) => {
   );
   if (!resolved.ok) return resolved.response;
   // The sandboxes run the real product and the demo organizer holds the billing power: a visitor must not save an address
-  // onto the public demo club. This route names its org only in the body, so the proxy cannot see it (pinned in
-  // tests/unit/demo-sandbox-write-guard.test.ts, ACTOR_IDENTIFIED_WRITES).
-  if (isDemoOrganizerEmail(resolved.email)) return sandboxRejectionResponse();
+  // onto the public demo club. This route names its org only in the body, so the proxy cannot see it (the shared refusal;
+  // pinned for every billing write in tests/unit/demo-sandbox-write-guard.test.ts).
+  const demoRefusal = demoBillingRefusal({ email: resolved.email });
+  if (demoRefusal) return demoRefusal;
   const result = await saveBillingLocation(resolved.buyer, billingAddressFromBody(body) ?? {});
   if (!result.ok) return saveRefusalResponse(result);
   return Response.json({ location: result.location });

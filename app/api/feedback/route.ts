@@ -6,6 +6,8 @@ import { scrubEmails } from '@/lib/observability/redact'; // scrubEmails is NOT 
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email';
 import { feedbackAdminNotifyHtml, feedbackConfirmationHtml } from '@/lib/feedback-email';
 import { validateFeedbackInput, isThrottled } from '@/lib/feedback-shared';
+import { trustedClientIp } from '@/lib/trusted-client-ip';
+import { feedbackOverDailyCap } from '@/lib/feedback-daily-cap';
 
 // In-app bug/feature/feedback ingestion for ALL personas (admin, coach, scorekeeper, anonymous).
 // Node runtime so it can use supabaseAdmin (feedback_submissions is RLS-enabled, no policies →
@@ -24,12 +26,6 @@ const userLast = new Map<string, number>();
 const ipLast = new Map<string, number>();
 let globalWindowStart = 0;
 let globalCount = 0;
-
-function clientIp(req: NextRequest): string {
-  const fwd = req.headers.get('x-forwarded-for');
-  if (fwd) return fwd.split(',')[0]!.trim();
-  return req.headers.get('x-real-ip') ?? 'unknown';
-}
 
 // Drop the single oldest entry instead of clearing (a clear() would reset every key's timer).
 function evictOldest(map: Map<string, number>): void {
@@ -63,7 +59,8 @@ export const POST = withObservability(async (req: NextRequest) => {
   let user = auth?.user ?? null;
   if (!user) user = await getAuthenticatedUser().catch(() => null); // org-less Basic coach still gets attribution
 
-  const ip = clientIp(req);
+  // The address our own edge saw, never the first entry of a header the caller can start (see trustedClientIp).
+  const ip = trustedClientIp(req);
 
   // Per-persona rate limit: signed-in 1/hr by user id; anonymous 1/5min by IP.
   if (user) {
@@ -91,6 +88,9 @@ export const POST = withObservability(async (req: NextRequest) => {
   const validation = validateFeedbackInput(parsed);
   if (!validation.ok) return NextResponse.json({ error: validation.error }, { status: 400 });
   const { type, category, title, body, context } = validation.value;
+
+  // The database-backed daily cap: the in-memory limits above are per server instance, this one is seen by all of them.
+  if (await feedbackOverDailyCap({ userId: user?.id ?? null, ip })) return throttled();
 
   // Commit the rate-limit slot only now that we're accepting the write.
   globalCount += 1;

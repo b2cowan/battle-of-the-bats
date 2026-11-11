@@ -72,7 +72,7 @@ export const POST = withObservability(async (req: Request,
     if (termsRefusal) return termsRefusal;
     await recordDoorAcceptance(user, 'family_accept', body);
   }
-  const outcome = await acceptInvitation({ token, userId: user.id, userEmail: user.email, consentIp, ...boxes });
+  const outcome = await acceptInvitation({ token, userId: user.id, userEmail: user.email, emailConfirmedAt: user.email_confirmed_at, consentIp, ...boxes });
   if (outcome.kind === 'mismatch') {
     return NextResponse.json({ error: 'another_email', maskedEmail: outcome.maskedEmail }, { status: 409 });
   }
@@ -81,6 +81,8 @@ export const POST = withObservability(async (req: Request,
 
 function answer(outcome: Exclude<AcceptResult, { kind: 'mismatch' }>) {
   if (outcome.kind === 'consent_required') return NextResponse.json({ error: 'consent_required' }, { status: 400 });
+  // Defence in depth: an account that never confirmed its address cannot connect children on the strength of a typed match.
+  if (outcome.kind === 'email_unconfirmed') return NextResponse.json({ error: 'email_unconfirmed' }, { status: 403 });
   // One shape per drawn state; a dead invitation says only which of D / E / F it is, never why.
   if (outcome.kind === 'state') return NextResponse.json({ error: outcome.state }, { status: 404 });
   return NextResponse.json({ ok: true, next: `${FAMILY_HOME_PATH}?joined=1` });

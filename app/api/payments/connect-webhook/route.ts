@@ -76,7 +76,7 @@ export const POST = withObservability(async (req: Request) => {
         break;
       }
       case 'checkout.session.expired': {
-        await expireCheckoutSession((event.data.object as Stripe.Checkout.Session).id);
+        await expireCheckoutSession((event.data.object as Stripe.Checkout.Session).id, account);
         break;
       }
       case 'refund.created':
