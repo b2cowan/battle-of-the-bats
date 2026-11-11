@@ -216,6 +216,13 @@ Build to tab 5 and tab 4, on Part 1's pieces.
 
 ## Part 3 · Opus — the switches, the grace period, the resets
 
+> **BUILT 2026-11-11** (mig 469 on dev; mig 470 the hourly schedule written, its own commit, owner's yes owed); owner walk §515
+> https://claude.ai/artifact/SU7aZb1LwgmALGTyCfSf5G; coach door drawn + approved
+> https://claude.ai/artifact/EKo6ky1RVPYZzkx7sXyGuA. What was built, the review fixes and four open owner calls:
+> `BOARD_READY_PLAN.md` §5 Stage 0a "Part 3 BUILT". **For Part 4:** the grace emails go where `startTwoStepGrace` writes and
+> where a switch is turned on; the Members column reads `twoStepFactsFor` (lib/two-step-reset.ts); Help must say an admin opens
+> Settings for its two-step card; the /legal policy lines are in `TWO_STEP_SIGNIN_PRIVACY.md` § Part 3.
+
 > **Starts after Part 2 is committed (owner, 2026-11-11).** Turning a switch off and the club's reset ask for the
 > owner's or admin's code through **Part 2's one "type your code again" window**: use it, don't build another. The
 > lost-phone screen's club version is waiting on your reset door: change Part 2's chooser to show it, and walk it.

@@ -22,11 +22,13 @@
  * It writes only a volunteer's two job keys (`withVolunteerJob`); a volunteer always keeps one job.
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronRight, Mail, PauseCircle, RotateCcw } from 'lucide-react';
+import { ChevronRight, KeyRound, Mail, PauseCircle, RotateCcw } from 'lucide-react';
 import { whatTheyCanOpen, describeAccessChange, familiesBarredFor, roleLabel, type ProgramAccess } from '@/lib/member-access';
 import { ROLE_DEFAULTS, type Capability } from '@/lib/roles';
 import type { Organization, OrgRole } from '@/lib/types';
-import { formatInOrgZone } from '@/lib/timezone';
+import { formatInOrgZone, formatStoredDate } from '@/lib/timezone';
+import { TWO_STEP_FRESH_CODE } from '@/lib/code-again';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import KitDialog from './KitDialog';
 import PageNotice, { refusalNotice } from './PageNotice';
 import { RecordAction, RecordDelete } from './RepKit';
@@ -61,7 +63,9 @@ const TOURNAMENT_CONTROLS: { cap: Capability; label: string }[] = [
 ];
 
 type Refusal = { text: string; seat?: boolean };
-type Ask = 'suspend' | 'remove' | null;
+type Ask = 'suspend' | 'remove' | 'resetTwoStep' | null;
+/** Two-step sign-in (Board Ready, Part 3): on / off and since when, and which door (lib/two-step-club-reset.ts). */
+type TwoStepLine = { on: boolean; since: string | null; door: 'none' | 'support' | 'own_first' | 'club' };
 /** `accountKept`: the server's one answer (lib/member-account-keep.ts) — the same one Remove acts on, never re-decided here. */
 type RemoveImpact = {
   tournamentCount: number; divisionCount: number; otherOrgCount: number; coachingAssignmentCount: number; basicCoachTeamCount: number;
@@ -125,6 +129,7 @@ export default function ManageMemberDialog({
   const [acting, setActing] = useState(false);
   const [impact, setImpact] = useState<RemoveImpact | null>(null);
   const [impactFailed, setImpactFailed] = useState(false);
+  const [twoStep, setTwoStep] = useState<TwoStepLine | null>(null);
 
   // The saved answer and the draft's answer, from the ONE computation the gates use.
   const saved = useMemo(() => new Map(member.access.map(a => [a.module, a.canOpen])), [member.access]);
@@ -156,6 +161,19 @@ export default function ManageMemberDialog({
     : jobChanged && job ? withVolunteerJob(member.capabilities, job) : undefined;
   const groupsChanged = canScopeGroups && !sameSet(groupIds, member.repGroupIds);
   const assignmentsChanged = canScopeTournaments && !sameSet(assignments, member.assignedTournamentIds);
+
+  // Two-step sign-in (Board Ready, Part 3; drawings tab 6): owners and admins see on / off and the reset door. Read once,
+  // when the window opens; never for an invite (no account has joined yet).
+  const seesTwoStep = (viewerRole === 'owner' || viewerRole === 'admin') && member.status !== 'invited' && Boolean(member.userId);
+  useEffect(() => {
+    if (!seesTwoStep) return;
+    let stale = false;
+    fetch(`/api/admin/members/${member.id}/two-step${orgQuery}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: TwoStepLine | null) => { if (!stale) setTwoStep(d); })
+      .catch(() => { if (!stale) setTwoStep(null); });
+    return () => { stale = true; };
+  }, [seesTwoStep, member.id, orgQuery]);
 
   // The removal warning names what the person keeps and loses (J4-036), read when the question opens.
   useEffect(() => {
@@ -274,6 +292,25 @@ export default function ManageMemberDialog({
     }
   }
 
+  async function resetTwoStep() {
+    setActing(true);
+    setRefusal(null);
+    try {
+      const res = await fetch(`/api/admin/members/${member.id}/two-step${orgQuery}`, { method: 'POST' });
+      const d = await res.json().catch(() => ({})) as { error?: string; code?: string };
+      setAsk(null);
+      // The one window asked for the viewer's code and they said no: nothing changed.
+      if (res.status === 401 && d.code === TWO_STEP_FRESH_CODE) { setRefusal({ text: 'Nothing changed. Resetting someone’s two-step sign-in needs your code.' }); return; }
+      if (!res.ok) { setRefusal({ text: d.error ?? 'It wasn’t reset. Try again.' }); return; }
+      setTwoStep({ on: false, since: null, door: 'none' });
+      const them = first === 'They' ? 'them' : first;
+      await onChanged(`${possessive(name)} two-step sign-in was reset. We’ve emailed ${them}.`, false);
+      setDone(`${possessive(name)} two-step sign-in was reset, and ${first === 'They' ? 'they were' : `${first} was`} signed out everywhere.`);
+    } finally {
+      setActing(false);
+    }
+  }
+
   async function resend() {
     setActing(true);
     setRefusal(null);
@@ -308,7 +345,9 @@ export default function ManageMemberDialog({
   const reinstateDoor = viewerIsOwner && !targetIsOwner && member.status === 'suspended';
   const resendDoor = canManage && member.status === 'invited';
   const removeDoor = canManage && !targetIsOwner && !isSelf;
-  const doors = (suspendDoor || reinstateDoor || resendDoor || removeDoor) && (
+  // A reset can be redone by setting it up again, so it is RecordAction's ink (tab 6); the rule is the server's.
+  const resetTwoStepDoor = twoStep?.door === 'club';
+  const doors = (suspendDoor || reinstateDoor || resendDoor || resetTwoStepDoor || removeDoor) && (
     <div className={styles.recordEnd}>
       {suspendDoor && (
         <RecordAction icon={<PauseCircle size={13} aria-hidden />} onClick={() => setAsk('suspend')} disabled={saving || acting}>
@@ -323,6 +362,11 @@ export default function ManageMemberDialog({
       {resendDoor && (
         <RecordAction icon={<Mail size={13} aria-hidden />} onClick={() => void resend()} disabled={saving || acting}>
           Resend invite
+        </RecordAction>
+      )}
+      {resetTwoStepDoor && (
+        <RecordAction icon={<KeyRound size={13} aria-hidden />} onClick={() => setAsk('resetTwoStep')} disabled={saving || acting}>
+          Reset two-step sign-in…
         </RecordAction>
       )}
       {removeDoor && (
@@ -503,8 +547,50 @@ export default function ManageMemberDialog({
           </div>
         )}
 
+        {twoStep && (
+          <div className={ck.field}>
+            <span className={ck.label}>Two-step sign-in</span>
+            <p className={styles.readValue}>{twoStep.on ? (twoStep.since ? `On since ${formatStoredDate(twoStep.since)}` : 'On') : 'Off'}</p>
+            {twoStep.door === 'own_first' && (
+              <p className={ck.hint}>
+                To reset it, turn on two-step sign-in for your own account first.{' '}
+                <a href="/account/security">Open Sign-in &amp; security</a>
+              </p>
+            )}
+            {twoStep.door === 'support' && (
+              <p className={ck.hint}>
+                Only FieldLogicHQ support can reset this one. {first === 'They' ? 'They email' : `${first} emails`} {FIELDLOGICHQ_CONTACT_EMAIL} from
+                {' '}their account’s address.
+              </p>
+            )}
+          </div>
+        )}
+
         {doors}
       </KitDialog>
+
+      {ask === 'resetTwoStep' && (
+        <KitDialog
+          kind="question"
+          title={`Reset ${possessive(first === 'They' ? name : first)} two-step sign-in?`}
+          onClose={() => setAsk(null)}
+          busy={acting}
+          footer={
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setAsk(null)} disabled={acting}>Cancel</button>
+              <button type="button" className="btn btn-danger" onClick={() => void resetTwoStep()} disabled={acting} data-autofocus="" id="kit-manage-reset-two-step">
+                {acting ? 'Resetting…' : 'Reset two-step'}
+              </button>
+            </>
+          }
+        >
+          <p>
+            {possessive(first === 'They' ? name : first)} authenticator app and backup codes stop working, and {first === 'They' ? 'they are' : `${first} is`} signed
+            out everywhere. Next time {first === 'They' ? 'they sign' : `${first} signs`} in with their password, they set up two-step sign-in again.
+          </p>
+          <p>We’ll email {first === 'They' ? 'them' : first} to say you did this. It’s recorded in the audit log.</p>
+        </KitDialog>
+      )}
 
       {ask === 'suspend' && (
         <KitDialog

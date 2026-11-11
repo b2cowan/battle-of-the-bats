@@ -11,6 +11,7 @@ import { clubModuleUserIds } from './club-money-notify';
 import { clearSettled } from './needs-attention';
 import type { ConsumerHomeCoachInvite } from './home-following';
 import type { Organization } from './types';
+import { startTwoStepGrace } from './two-step-grace';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
@@ -604,6 +605,10 @@ async function acceptInviteRow(
       .eq('id', existingMember.id);
   }
   // (any other existing membership — a real role, or an active one — is left entirely as-is.)
+  // Two-step (Board Ready, Part 3): a new coach seat in a club that already requires it for coaches — their own 14 days.
+  if (!existingMember || (existingMember.role === 'coach' && existingMember.status === 'invited')) {
+    await startTwoStepGrace(userId, row.org_id, 'coach');
+  }
 
   // 2) TEAM MEMBERSHIP (M1, 2026-08-16) — the access truth; the live season's record row is
   //    projected by addStaffMember. A head coach who accepts their own invite is already an

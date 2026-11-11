@@ -48,6 +48,8 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/two-step-rule.ts': ['identity', "plan_id names the portal stub only (isTeamWorkspaceOrg): a coach's own team workspace is never a two-step seat"],
   'lib/two-step-requirements.ts': ['identity', "selects plan_id only for isTeamWorkspaceOrg (the two-step rule's workspace test)"],
   'lib/two-step-lost-phone.ts': ['identity', "selects plan_id only for isTeamWorkspaceOrg: a coach's own team gets the support version of Lost your phone?"],
+  'lib/two-step-grace.ts': ['identity', "selects plan_id only for the two-step rule's isTeamWorkspaceOrg test: a coach's own team is never a covered seat"],
+  'lib/two-step-support-reset.ts': ['identity', "selects plan_id only for isTeamWorkspaceOrg: a coach's own team workspace is not a club support's reset tells"],
   'lib/db.ts': ['door', 'getOrganizationBySlug builds the org, then calls the door; createOrganization writes them; the sweep reads status through the door'],
   'lib/server-organizations.ts': ['door', 'getOrganizationBySlugForServer builds the org, then calls the door'],
   // ── through the door ──

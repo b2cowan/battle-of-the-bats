@@ -16,6 +16,7 @@ import type { OrgRole } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { requireFreshCode } from '@/lib/two-step-fresh';
+import { startTwoStepGrace } from '@/lib/two-step-grace';
 import { findAuthUserByEmail } from '@/lib/auth-account-lookup';
 
 function getActionLink(data: unknown) {
@@ -152,6 +153,8 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     await writeOrgAudit(org.id, user.id, existingUser.id, 'member_invited', { email, role, ...(job ? { purpose: job } : {}) });
+    // Two-step (Board Ready, Part 3): added straight to a seat the club already requires — their own 14 days from today.
+    await startTwoStepGrace(existingUser.id, org.id, role);
 
     // ⚖ Both arrival paths end on the role's home (Stage 13b B3): the link lands where the row just written sends them, by the
     // resolver sign-in and the accept page use. It always names THIS club (a bare sign-in sends a member of several clubs to

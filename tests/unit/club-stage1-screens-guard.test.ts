@@ -187,7 +187,9 @@ describe('the hub — a door only where it opens', () => {
   // owner ("Ask Morgan Ellis"); for anyone else they go, with the section when it would hold only locks. The full role
   // table is tests/unit/club-stage13a-doors-guard.test.ts.
   it('owner-only areas show as locked rows for an admin, never as links', () => {
-    assert.match(hub, /\{showsLockedRows && \(canManageBilling \? \['Settings'\] : \['Plan & billing', 'Settings'\]\)\.map\(label => \(\s*<div key=\{label\}/);
+    // Settings is an admin's door since Board Ready two-step Part 3 (its two-step card, read-only; ruled 2026-11-11).
+    assert.match(hub, /\{showsLockedRows && !canManageBilling && \['Plan & billing'\]\.map\(label => \(\s*<div key=\{label\}/);
+    assert.match(hub, /\{showsLockedRows && <Link href=\{`\$\{base\}\/org\/settings`\}/);
     assert.match(hub, /canManageBilling && <Link href=\{`\$\{base\}\/org\/billing`\}/);
     assert.match(hub, /NOT_YOURS_WORDS\.askChip\(/);
   });

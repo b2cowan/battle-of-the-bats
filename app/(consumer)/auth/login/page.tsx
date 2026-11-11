@@ -12,15 +12,38 @@ import ResendLink from '@/components/auth/ResendLink';
 import { EmailField, PasswordField, StartColumn, StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
 import LoadingState from '@/components/shared/LoadingState';
 import TwoStepCodeStep from '@/components/auth/TwoStepCodeStep';
+import { twoStepStepUrl } from '@/lib/two-step-paths';
 
 /** Where this session stands on two-step sign-in (the server's answer; it knows a backup-code session too). */
-async function readTwoStepStatus(): Promise<{ hasFactor?: boolean; passed?: boolean; email?: string | null } | null> {
+type TwoStepStatus = {
+  hasFactor?: boolean;
+  passed?: boolean;
+  email?: string | null;
+  requiredBy?: { kind: 'staff' | 'club'; state?: 'grace' | 'required' }[];
+};
+
+async function readTwoStepStatus(): Promise<TwoStepStatus | null> {
   try {
     const res = await fetch('/api/auth/two-step/status');
     return res.ok ? await res.json() : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * ⚖ A CLUB THAT REQUIRES IT (Board Ready · two-step sign-in, Part 3; drawings tab 8 "After the password"). A person with
+ * two-step OFF whose club switch covers their seat sees the club's screen after the password: during the 14 days the
+ * reminder ("Remind me next time"), after them "Set up two-step sign-in to continue". Only HERE, on the one shared
+ * sign-in page: the other doors sign a person in mid-task (an invite, a registration), and the server's own check still
+ * sends a required seat to set-up from any of them. Null = go on to `dest`.
+ */
+async function clubSetUpStep(dest: string): Promise<string | null> {
+  if (dest.startsWith('/auth/two-step')) return null; // already on its way there
+  const status = await readTwoStepStatus();
+  if (!status || status.hasFactor || !status.passed) return null;
+  if (!(status.requiredBy ?? []).some(r => r.kind === 'club')) return null;
+  return twoStepStepUrl('set_up', dest, { why: 'club' });
 }
 
 /**
@@ -190,6 +213,8 @@ function LoginForm() {
       // resolveLoginDestination.
       const dest = await resolveLoginDestination(searchParams.get('next'));
       try { sessionStorage.removeItem(NEXT_ONCE_KEY); } catch { /* ignore */ }
+      const club = await clubSetUpStep(dest);
+      if (club) { window.location.assign(club); return; }
       router.push(dest);
       router.refresh();
     }

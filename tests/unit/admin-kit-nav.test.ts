@@ -81,7 +81,8 @@ describe("the admin kit nav — today's gates", () => {
     const teamLinks = kitOrgLinks({ base: BASE, role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: false, isTeamWorkspace: true });
     assert.equal(teamLinks.find(link => link.key === 'org/members')?.label, 'Staff & access');
     assert.equal(teamLinks.find(link => link.key === 'org/members')?.href, `${BASE}/org/members`);
-    assert.deepEqual(labels('admin'), ['Members', 'Venue library', 'PDF settings']);
+    // An admin reaches Settings for its two-step card alone, read-only (Board Ready two-step, Part 3, ruled 2026-11-11).
+    assert.deepEqual(labels('admin'), ['Members', 'Settings', 'Venue library', 'PDF settings']);
     assert.deepEqual(labels('treasurer'), ['Members', 'Venue library']);
     assert.deepEqual(labels('owner', true), [], 'billing is in the foot, never Organization');
   });
@@ -97,7 +98,8 @@ describe("the admin kit nav — today's gates", () => {
     // The locked "Owner only" rows (Club Stage 1 specimens 2–3, J10-016) left the rail and the phone's
     // More sheet: three of an admin's five Organization rows were permanently dead. The hub's
     // Organization section still says whose they are (club-stage1-screens-guard).
-    const owner = ['Audit log', 'Settings'];
+    // Settings left this list 2026-11-11 (Board Ready two-step, Part 3): an admin reads its two-step card, read-only.
+    const owner = ['Audit log'];
     const adminDoors = kitOrgLinks({ base: BASE, role: 'admin', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true }).map(l => l.label);
     for (const label of owner) assert.ok(!adminDoors.includes(label), `${label} is the owner's — not listed for an admin`);
     const ownerDoors = kitOrgLinks({ base: BASE, role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true }).map(l => l.label);

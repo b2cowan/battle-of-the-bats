@@ -80,6 +80,12 @@ const TARGET_BY_ACTION: Record<string, Target> = {
   delete_user_note: PEOPLE,
   confirm_email: PEOPLE,
   revoke_sessions: PEOPLE,
+  two_step_reset_requested: PEOPLE,
+  two_step_reset_confirmed: PEOPLE,
+  two_step_reset_held: PEOPLE,
+  two_step_reset_released: PEOPLE,
+  two_step_reset_cancelled: PEOPLE,
+  two_step_reset_run: PEOPLE,
 };
 
 /**

@@ -506,6 +506,13 @@ const PERSON_ACTIONS: Record<string, { title: string; sub?: string }> = {
   ban_user: { title: 'Banned' },
   unban_user: { title: 'Ban lifted' },
   update_user: { title: 'Name or email changed' },
+  // Board Ready two-step, Part 3: support's reset of someone's two-step, from the request to the run.
+  two_step_reset_requested: { title: 'Two-step reset asked for' },
+  two_step_reset_confirmed: { title: 'Two-step reset confirmed by them' },
+  two_step_reset_held: { title: 'Two-step reset held' },
+  two_step_reset_released: { title: 'Two-step reset hold released' },
+  two_step_reset_cancelled: { title: 'Two-step reset cancelled' },
+  two_step_reset_run: { title: 'Two-step sign-in reset' },
 };
 
 /**

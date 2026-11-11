@@ -1,10 +1,10 @@
 {
   "generated": "2026-11-11",
-  "total": 612,
+  "total": 618,
   "counts": {
     "tables": 21,
-    "columns": 290,
-    "indexes": 91,
+    "columns": 294,
+    "indexes": 93,
     "constraints": 82,
     "rls": 128
   },
@@ -1394,7 +1394,23 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:two_step_owner_resets.cancelled_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.club_notice_count",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:two_step_owner_resets.completed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.confirm_expires_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.confirm_token_hash",
       "sig": ""
     },
     {
@@ -2258,7 +2274,15 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:two_step_owner_resets_one_open_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:two_step_owner_resets_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:two_step_owner_resets_token_idx",
       "sig": ""
     },
     {

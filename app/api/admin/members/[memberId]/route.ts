@@ -16,6 +16,7 @@ import { withObservability } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { FAMILIES_GRANT_REFUSAL } from '@/lib/families-words';
 import { requireFreshCode } from '@/lib/two-step-fresh';
+import { roleChangeStartsGrace, startTwoStepGrace } from '@/lib/two-step-grace';
 
 const VALID_CAPABILITIES = new Set<string>(ALL_CAPABILITY_KEYS);
 
@@ -514,6 +515,17 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Two-step (Board Ready, Part 3): an ACTIVE member who begins holding a seat the club already requires — moved under a
+  // different switch (a coach made treasurer), or reinstated — gets their own 14 days from today. An invited member's
+  // start is written when they accept.
+  const resultingStatus = (update.status as string | undefined) ?? (target.status as string);
+  if (resultingStatus === 'active' && (
+    (roleChanging && roleChangeStartsGrace(target.role as string, update.role as string))
+    || (hasStatusUpdate && update.status === 'active' && target.status === 'suspended')
+  )) {
+    await startTwoStepGrace(target.user_id, org.id, resultingRole);
   }
 
   // Audit log — one row per logical change type. AWAITED (lib/org-audit.ts): these were `void` inserts,

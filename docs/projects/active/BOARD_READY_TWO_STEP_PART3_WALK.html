@@ -1,0 +1,496 @@
+<title>Club Switches Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready · two-step sign-in · Part 3, the switches, the 14 days, the resets · Owner QA Ledger §515</span>
+    <h1>The club’s switches, and who can reset a lost phone</h1>
+    <p class="lead">A club’s owner can now require two-step sign-in for the board and, separately, for coaches (Organization › Settings); an admin reads the switches. Each person covered gets 14 days, with a reminder at sign-in, then setting it up comes first. The club’s owner or an admin can reset a member’s two-step (Members) or a coach’s (the team’s staff page), but only when that account reaches nothing beyond the club. Support resets an owner with a confirmation email, a notice to the club’s other admins, and a 24-hour wait that a real code cancels. Six walks, one purpose each. About 50 minutes; you need an authenticator app on your phone and the <b>fieldlogichq@gmail.com</b> inbox.</p>
+    <p class="lead">Not in this walk: the Members column, the Overview notices, the two 14-day emails, help and the policies (Part 4). The words on every screen and email are drafts for Part 4’s copy pass.</p>
+    <p class="lead">Written Nov 11, 2026 against the dev site. Every account here is a dev test account.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running). Every password is <code>devpass123</code>.</dd>
+      <dt>Walks 1, 3, 4</dt><dd><code>club-owner@dev.local</code> — the owner of <b>Dev Club Org</b>; two-step is on (your phone).</dd>
+      <dt>Walk 1</dt><dd><code>j10-club-admin@dev.local</code> — an admin of Dev Club Org; two-step on. Add its key to your app: <code>DOFBW2NGHPCJOE7SBQ3BRXGSZXQTZLGD</code></dd>
+      <dt>Walk 2</dt><dd><code>p3-registrar@dev.local</code> (a registrar, two-step off) and <code>p3-late@dev.local</code> (a coach of Dev Club · Association Org, whose coach requirement went on 20 days ago).</dd>
+      <dt>Walk 3</dt><dd><code>p3-treasurer@dev.local</code> (reaches another club) and <code>p3-coach-solo@dev.local</code> — only their passwords are needed.</dd>
+      <dt>Walks 5, 6</dt><dd><code>support@dev.local</code> (staff), and <code>fieldlogichq+p3owner@gmail.com</code> (Pat Owner, an owner of Dev Tournament+ Org) whose other admin is <code>fieldlogichq+p3admin@gmail.com</code>. Both reach the fieldlogichq@gmail.com inbox. Pat’s key, if you want it: <code>MPQZWWEGRLWWNA7FSUIGGBWIVE4FFNSZ</code></dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins and keys. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>In order.</b> Walk 1 turns the board’s requirement on, and walks 2 and 3 need it on. Walk 6 needs walk 5 done.</li>
+      <li>On dev a support reset waits <b>3 minutes</b> instead of 24 hours (a dev-only setting that production never reads), and the hourly job does not reach your computer: press <b>Run it now</b> when it is due.</li>
+      <li>A window asking for your code may appear before a reset or a switch turned off, whenever your last code is over 15 minutes old. That is Part 2’s one window; type the code and the press finishes by itself.</li>
+      <li>When you are done I switch the requirements off again and take the fixture’s two-step off (one command). The drawings: <a href="https://claude.ai/artifact/5b956A7svYzjzmZhZUfnkc">tabs 6, 7 and 8</a>, and the coach door you approved: <a href="https://claude.ai/artifact/EKo6ky1RVPYZzkx7sXyGuA">coach reset drawings</a>.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>Who a club may reset, as a rule: owners and admins only, never themselves or the owner, only when two-step is on, and only when the account reaches no other organization (a seat anywhere else in any status, their own Coaches Portal team, a house-league team in another club, a family link to another club). Checked against every fixture before this page was written. “Lost your phone?” uses the same rule.</li>
+      <li>A reset signs the person out first, then takes two-step off in an order that leaves it ON if anything fails part-way; the club’s reset asks for your code before it starts; a deliberate swap of either order is caught by the build.</li>
+      <li>Turning a requirement on needs the owner’s own two-step; turning it off asks for the code before anything is saved and emails the club’s other owners, admins and treasurer.</li>
+      <li>A person’s own 14 days start at every place a covered seat begins (an invite accepted, added directly, a role change into a covered seat, reinstated, ownership handed over, a coach’s invite accepted, a team moving into the club), and only when the club already requires it.</li>
+      <li>Support’s run claims a reset before it acts, so two runs, a hold or a cancel can never reset twice; the link’s token is stored only as a hash and works once, for 3 days; a backup code at sign-in cancels a waiting reset too.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: do the switches read as a decision the owner makes once, does the reminder feel passable and the “after” screen fair, is the reset door quiet enough, and does support’s path feel safe to an owner reading the emails?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "board-ready-two-step-p3-walk-v1";
+  var PAGE = "Board Ready · two-step sign-in · Part 3 · Owner QA Ledger §515";
+  var WALKS = [
+ {
+  "id": "B1",
+  "title": "The club’s two switches",
+  "job": "club-owner@dev.local · owner · computer",
+  "forText": "The owner decides whether the club requires two-step sign-in, for the board and, separately, for coaches. Turning one off asks for the owner’s code and tells the other admins, so a stolen owner password can’t quietly remove it. An admin can read the switches but not change them.",
+  "passes": "Organization › Settings has a Two-step sign-in card with two switches, both off; turning on the board’s shows when it went on and when everyone’s 14 days end; turning it off asks first (and for a code when your last one is over 15 minutes old) and sends the other admins an email; both changes are lines in the Audit log; an admin sees the card read-only and no other Settings card.",
+  "notIn": "What a covered person sees at sign-in (walk 2). The Overview prompt and the Members column (Part 4).",
+  "who": "club-owner@dev.local · devpass123, then j10-club-admin@dev.local · devpass123",
+  "where": "localhost:3000/dev-club-org/admin/org/settings",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as <b>club-owner@dev.local<\/b> (type your code) and open <b>Organization › Settings<\/b>.",
+    "s": "Below “When birthdays count from”, a new card <b>Two-step sign-in<\/b>: “Anyone can turn on two-step sign-in for their own account. You can also make it required.” Two switch rows, both off: <b>Require it for the board<\/b> (“Owner, admins, treasurer, registrars and league admins. They get 14 days to set it up.”) and <b>Also require it for coaches<\/b> (“Every coach on your club’s teams. They get 14 days to set it up.”)."
+   },
+   {
+    "d": "Turn <b>Require it for the board<\/b> on.",
+    "s": "It switches on at once, no question. The line under it now reads “Owner, admins, treasurer, registrars and league admins. On since Nov 11. Everyone already in a seat has until Nov 25; anyone new gets 14 days.”"
+   },
+   {
+    "d": "Open <b>Organization › Audit log<\/b>.",
+    "s": "A new top row: <b>you<\/b> · “Two-step sign-in required for the board” · — (no person)."
+   },
+   {
+    "d": "Leave it ON for walks 2 and 3. Sign out, and sign in as <b>j10-club-admin@dev.local<\/b> (an admin). It asks for a code: add the key <code>DOFBW2NGHPCJOE7SBQ3BRXGSZXQTZLGD<\/code> to your authenticator app first (“Enter a setup key”, time-based), then type its code.",
+    "s": "You reach the club."
+   },
+   {
+    "d": "Open <b>Organization<\/b> and look at its tabs, then open <b>Settings<\/b>.",
+    "s": "Settings is now one of the admin’s tabs (it was not before). The page shows ONLY the Two-step sign-in card, with “Only the owner changes this.”; both switches are greyed and can’t be pressed. No name, web address, birthdays, payouts or delete cards."
+   },
+   {
+    "d": "Open the club’s <b>Overview<\/b>.",
+    "s": "In its Organization section, <b>Settings<\/b> is an open row (“Two-step sign-in, read-only”), not a locked one. Plan &amp; billing is still a locked row naming the owner."
+   }
+  ]
+ },
+ {
+  "id": "B2",
+  "title": "The 14 days, at sign-in",
+  "job": "p3-registrar@dev.local (in their 14 days) · p3-late@dev.local (past them) · computer",
+  "forText": "Each person a switch covers gets 14 days. During them, the password is followed by a reminder they can pass. After them, setting it up comes first and only that club waits; someone with somewhere else to go can go there.",
+  "passes": "During: “Your club now asks for two-step sign-in”, the club’s name and the seat, Set it up now and “Remind me next time (14 days left)”, which takes you in. After: “Set up two-step sign-in to continue”, Set it up now and “Go to my other teams instead”, which opens Home. Nothing starts setting up until you press Set it up now.",
+  "notIn": "A person given a covered seat later gets their own 14 days from the day they join (proved by tests at each place a seat begins).",
+  "who": "p3-registrar@dev.local · devpass123, then p3-late@dev.local · devpass123",
+  "where": "localhost:3000/auth/login",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: with the board switch ON (walk 1), sign out and sign in as <b>p3-registrar@dev.local<\/b> (a registrar in Dev Club Org; two-step is off).",
+    "s": "After the password, a screen in the sign-in column: <b>Your club now asks for two-step sign-in<\/b> · “Dev Club Org requires it for registrars. It takes about two minutes.” A lime <b>Set it up now<\/b> and, under it, <b>Remind me next time (14 days left)<\/b>. No QR code yet."
+   },
+   {
+    "d": "Press <b>Remind me next time (14 days left)<\/b>.",
+    "s": "You land where a sign-in normally takes this person (the club). Nothing was set up."
+   },
+   {
+    "d": "Sign out and sign in as <b>p3-registrar@dev.local<\/b> again.",
+    "s": "The same reminder again: it shows at every sign-in during the 14 days."
+   },
+   {
+    "stop": true,
+    "d": "Stop check: sign out and sign in as <b>p3-late@dev.local<\/b> (a coach in Dev Club · Association Org, whose coach requirement went on 20 days ago; also a volunteer elsewhere; two-step off).",
+    "s": "<b>Set up two-step sign-in to continue<\/b> · “Dev Club · Association Org requires it for coaches. Until it’s set up, the club’s pages wait.” <b>Set it up now<\/b>, and <b>Go to my other teams instead<\/b>. No “Remind me”."
+   },
+   {
+    "d": "Press <b>Go to my other teams instead<\/b>.",
+    "s": "Home (your places). The other club is there and opens normally."
+   }
+  ]
+ },
+ {
+  "id": "B3",
+  "title": "The club resets a member",
+  "job": "club-owner@dev.local · owner · computer",
+  "forText": "A member who lost their phone with no backup codes asks the club. The owner or an admin resets it from the member’s Manage window, but only when the member’s account reaches nothing beyond this club; otherwise one line points to support, with no reason given.",
+  "passes": "The Manage window shows “Two-step sign-in · On since …” and a quiet “Reset two-step sign-in…” beside Suspend and Remove; it asks first in the drawn words; after it, the line reads Off, the door is gone, and the Audit log names you, the reset and the person. A member who reaches another club gets the one support line and no door. A member with two-step off gets Off and no door. The member’s Lost your phone? screen says “Ask your club” for the first and “Email us” for the second.",
+  "notIn": "The reset email’s words (lib text, drafts for Part 4’s copy pass; the Emails tab in walk 5 shows it was sent).",
+  "who": "club-owner@dev.local · devpass123",
+  "where": "localhost:3000/dev-club-org/admin/org/members",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: as <b>club-owner@dev.local<\/b>, open <b>Members<\/b> and press <b>Manage<\/b> on <b>j10-club-admin@dev.local<\/b>.",
+    "s": "The Manage window. At the end of the body, above the doors: <b>Two-step sign-in<\/b> · “On since Nov 11, 2026”. The doors row: Suspend…, <b>Reset two-step sign-in…<\/b> (a key, ink, not red), Remove…."
+   },
+   {
+    "d": "Press <b>Reset two-step sign-in…<\/b>.",
+    "s": "A question on top: “Reset j10’s two-step sign-in?” (or the person’s name) — “… authenticator app and backup codes stop working, and … is signed out everywhere. Next time … signs in with their password, they set up two-step sign-in again.” and “We’ll email … to say you did this. It’s recorded in the audit log.” Cancel, and a red <b>Reset two-step<\/b>."
+   },
+   {
+    "d": "Press <b>Reset two-step<\/b>. If your own last code was over 15 minutes ago, the one “type your code” window asks first: type it.",
+    "s": "A green notice: “…’s two-step sign-in was reset, and … was signed out everywhere.” The line now reads <b>Off<\/b> and the Reset door is gone."
+   },
+   {
+    "d": "Open <b>Audit log<\/b>.",
+    "s": "Top row: <b>you<\/b> · “Reset two-step sign-in” · <b>j10-club-admin<\/b>."
+   },
+   {
+    "d": "Back in Members, press <b>Manage<\/b> on <b>Tess Treasurer<\/b> (p3-treasurer@dev.local).",
+    "s": "Two-step sign-in · On since Nov 11, 2026, and under it: “Only FieldLogicHQ support can reset this one. Tess emails hello@fieldlogichq.ca from their account’s address.” No Reset door. Nothing says why."
+   },
+   {
+    "d": "Press <b>Manage<\/b> on <b>Rae Registrar<\/b> (p3-registrar@dev.local).",
+    "s": "Two-step sign-in · <b>Off<\/b>, and no Reset door."
+   },
+   {
+    "stop": true,
+    "d": "Stop check: sign out. Sign in as <b>p3-coach-solo@dev.local<\/b> with the password only, and on the code step press <b>Lost your phone?<\/b> (you don’t need its code).",
+    "s": "“Use a backup code”, then <b>No codes? Ask your club<\/b> (“Your club’s owner or an admin can reset your two-step sign-in…”) and <b>Are you the club’s owner?<\/b> with the support address. No club named."
+   },
+   {
+    "d": "Use a different account; sign in as <b>p3-treasurer@dev.local<\/b> with the password only, and press <b>Lost your phone?<\/b>.",
+    "s": "“Use a backup code”, then <b>No codes? Email us<\/b> with the support address and “We confirm by email and reset it 24 hours later.” No “Ask your club”."
+   }
+  ]
+ },
+ {
+  "id": "B4",
+  "title": "A coach’s reset, on the team’s staff page",
+  "job": "club-owner@dev.local · owner · computer",
+  "forText": "Coaches aren’t managed in Members, so their door is in the coach’s window on the team’s staff page, as drawn and approved. Same rule, same words.",
+  "passes": "Cody Solo’s window shows “Two-step sign-in · On since …” and a quiet Reset two-step sign-in… at the end of the body; Remove stays red in the footer; the question and the result match walk 3. Casey Elsewhere’s window has the support line and no door.",
+  "notIn": "A head coach in the Coaches Portal gets no reset door (ruled, A2).",
+  "who": "club-owner@dev.local · devpass123",
+  "where": "localhost:3000/dev-club-org/admin › Rep teams › Dev Rep U15 › Coaches",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: as <b>club-owner@dev.local<\/b>, open <b>Rep teams<\/b>, the team <b>Dev Rep U15<\/b>, its coaches, and press <b>Cody Solo<\/b>.",
+    "s": "The coach’s window as shipped (Their role, What they can open, red Remove at the left of the footer, Done), plus at the end of the body a <b>Two-step sign-in<\/b> box (“On since Nov 11, 2026”) and under it <b>Reset two-step sign-in…<\/b> with a key."
+   },
+   {
+    "d": "Press <b>Reset two-step sign-in…<\/b>, then <b>Reset two-step<\/b> (type your code if the window asks).",
+    "s": "The question first (“Reset Cody’s two-step sign-in?”, the two sentences, Cancel and red Reset two-step). After: the window is back, the box reads <b>Off<\/b>, the door is gone, and a line says “Cody Solo’s two-step sign-in was reset. We’ve emailed Cody.”"
+   },
+   {
+    "d": "Close it and press <b>Casey Elsewhere<\/b>.",
+    "s": "The box reads “On since Nov 11, 2026” with “Only FieldLogicHQ support can reset this one. Casey emails hello@fieldlogichq.ca from their account’s address.” No door."
+   }
+  ]
+ },
+ {
+  "id": "B5",
+  "title": "Support resets an owner",
+  "job": "support@dev.local · staff · computer, plus the fieldlogichq@gmail.com inbox",
+  "forText": "The owner is the one person no one in the club can reset. Support writes the record, the owner confirms from their own inbox, the club’s other admins are told and can stop it, and nothing happens for 24 hours (3 minutes on dev, a dev-only setting).",
+  "passes": "The Account tab shows two-step’s state and a Reset two-step sign-in door; its window names the club the owner owns and needs How and Why; the confirmation email arrives with one button; the page confirms only on a press; the other admin gets the notice with no link and a reply address; the record shows the wait, Hold and Release work; after the wait Run it now resets it, the owner gets the reset email, and the Story lists each step.",
+  "notIn": "The hourly schedule itself (the database job is a separate step for production; on dev you press Run it now).",
+  "who": "support@dev.local · devpass123",
+  "where": "localhost:3000/platform-admin › People",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as <b>support@dev.local<\/b>, open <b>People<\/b>, find <b>fieldlogichq+p3owner@gmail.com<\/b> (Pat Owner) and open its <b>Account<\/b> tab.",
+    "s": "A new fact: <b>Two-step sign-in<\/b> · “On since Nov 11, 2026 · 0 backup codes left”. The doors: Sign out everywhere, <b>Reset two-step sign-in<\/b>, Ban this person, Delete this person."
+   },
+   {
+    "d": "Press <b>Reset two-step sign-in<\/b>.",
+    "s": "The console’s record window: “Pat owns <b>Dev Tournament+ Org<\/b>, so no one in the club can reset this. Pat gets an email to confirm. When Pat confirms, the club’s other admins and treasurer are emailed, and the reset happens 24 hours later.” A select <b>How did Pat ask?<\/b> (Email from this account’s address · Phone call… · Something else), a required <b>Why<\/b>, “Nothing changes until Pat confirms.” at the left, Cancel and <b>Send confirmation<\/b> (greyed until Why is filled)."
+   },
+   {
+    "d": "Write a Why, press <b>Send confirmation<\/b> (type your code if the window asks).",
+    "s": "A green notice “A confirmation email went to fieldlogichq+p3owner@gmail.com…”. An amber callout: “Two-step reset waiting. Waiting for Pat to confirm from … (the link works until Nov 14).” with Hold the reset and Cancel the reset. The Reset door is gone."
+   },
+   {
+    "stop": true,
+    "d": "Stop check: in the <b>fieldlogichq@gmail.com<\/b> inbox, open “Confirm the reset of your two-step sign-in” (to +p3owner).",
+    "s": "One lime button <b>Confirm the reset<\/b>; “Once you confirm, we tell Dev Tournament+ Org’s other admins and treasurer, and the reset happens 24 hours later. Signing in with a code from your app, or a backup code, during that time cancels it.”; what to do if you didn’t ask; “The button works until …”."
+   },
+   {
+    "d": "Press <b>Confirm the reset<\/b>; on the page that opens, read it, then press its <b>Confirm the reset<\/b> button.",
+    "s": "Opening the page changed nothing (the button does it). After the press: <b>The reset is confirmed<\/b> · “Your two-step sign-in will be reset on November 11 at …” (3 minutes from now on dev), “Found your phone? Sign in with a code from your app before then, and the reset is cancelled.”"
+   },
+   {
+    "d": "In the inbox, open “Two-step sign-in for Dev Tournament+ Org’s owner will be reset” (to +p3admin). Press Reply.",
+    "s": "“Pat Owner asked FieldLogicHQ support to reset their two-step sign-in. It will be reset on November 11 at ….” The hold sentence, “This email has no link on purpose…”. No link, no reason. Reply goes to <b>hello@fieldlogichq.ca<\/b>."
+   },
+   {
+    "d": "Back on Pat’s record, reload. Press <b>Hold the reset<\/b> (with a Why), then <b>Release the hold<\/b> (with a Why; type your code if asked).",
+    "s": "Waiting: “Pat confirmed Nov 11, …. It happens Nov 11, …. Signing in with a code cancels it.” After Hold: “Held by support@dev.local …: it won’t run until the hold is released.” and Release the hold; after Release: back to waiting."
+   },
+   {
+    "d": "When the time has passed (3 minutes after confirming), reload and press <b>Run it now<\/b>, Why, confirm.",
+    "s": "“The reset ran.” The fact reads <b>Off<\/b>; a caption “Two-step sign-in was last reset by support on Nov 11.”; the Reset door does not show (it is off)."
+   },
+   {
+    "d": "In the inbox: “Your two-step sign-in was reset” (to +p3owner). Then on Pat’s record open the <b>Story<\/b> tab.",
+    "s": "The email: “FieldLogicHQ support reset your two-step sign-in, as you asked and confirmed.”, what stopped working, how to turn it back on, “This email has no link on purpose.” The Story lists Two-step reset asked for, …confirmed by them, …held, …hold released, Two-step sign-in reset."
+   }
+  ]
+ },
+ {
+  "id": "B6",
+  "title": "A real code cancels a waiting reset",
+  "job": "fieldlogichq+p3owner@gmail.com and support@dev.local · computer",
+  "forText": "If someone else talked support into a reset, the real owner still has their phone: signing in with a code during the wait cancels it.",
+  "passes": "With a reset confirmed and waiting, Pat signs in with a code; Pat’s record then shows no waiting reset and says the last one was cancelled because they signed in with a code; nothing was reset.",
+  "notIn": "",
+  "who": "fieldlogichq+p3owner@gmail.com · devpass123, then support@dev.local · devpass123",
+  "where": "localhost:3000/auth/login",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as <b>fieldlogichq+p3owner@gmail.com<\/b> (two-step is off after walk 5) and turn it on from <b>Account › Sign-in &amp; security<\/b> with your phone.",
+    "s": "Two-step sign-in is on (Part 2’s screens)."
+   },
+   {
+    "d": "As <b>support@dev.local<\/b>, on Pat’s record start a reset again (Send confirmation), and confirm it from the new email and page.",
+    "s": "The record shows “Two-step reset waiting. Pat confirmed …”."
+   },
+   {
+    "d": "Within the 3 minutes, sign out and sign in as <b>fieldlogichq+p3owner@gmail.com<\/b> with the password and <b>the code from your app<\/b>.",
+    "s": "A normal sign-in. Nothing on screen mentions the reset."
+   },
+   {
+    "d": "As <b>support@dev.local<\/b>, reload Pat’s record › Account.",
+    "s": "No waiting callout. A caption: “The last support reset was cancelled on Nov 11: they signed in with a code.” Two-step still reads On. The Story shows “Two-step reset cancelled”."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "B1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "B1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "B1" }; save(); render();
+  });
+  render();
+})();
+</script>

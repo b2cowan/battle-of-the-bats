@@ -46,6 +46,8 @@ describe('each Customer users action checks before it acts', () => {
     ['revoke-sessions', 'await fetch('],
     ['confirm-email', 'supabaseAdmin.auth.admin.updateUserById('],
     ['reset', 'supabaseAdmin.auth.admin.generateLink('],
+    // Board Ready two-step, Part 3: support's reset of someone's two-step (the record, the confirmation link, hold / cancel).
+    ['two-step-reset', 'startSupportReset('],
   ];
   for (const [name, act] of cases) {
     it(name, () => {

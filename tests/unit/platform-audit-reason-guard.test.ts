@@ -33,6 +33,7 @@ const NO_REASON_FILES: Record<string, string> = {
   'app/api/platform-admin/stripe-fees-daily/route.ts': 'product job (scheduler sweep: 12d-1 Part 4, the online-payments daily job)',
   'app/api/platform-admin/portal-free-time-daily/route.ts': 'product job (scheduler sweep: Stage 4b, the free-time reminder emails)',
   'app/api/platform-admin/billing-drift-daily/route.ts': 'product job (scheduler sweep: Plans & pricing Stage 0 Part 11, the read-only daily comparison with Stripe)',
+  'app/api/platform-admin/two-step-resets-hourly/route.ts': 'product job (scheduler tick: Board Ready two-step Part 3, the waiting support resets; each run row carries its request’s reason)',
   'app/api/platform-admin/orgs/[id]/online-payments/player/route.ts': 'a logged READ, not a decision: opening a disputed payment’s child or team (Club Tier 12d-2, words §6.1 `pa.player.logged`); the opening is the record',
   'app/api/platform-admin/orgs/[id]/money/stripe-fees/[feeId]/retry/route.ts': 'work tool: re-runs the product’s own billing of a Stripe fee that failed (12d-1 Part 4); the amount and the decision are the product’s, and the fee’s stored error is the reason',
   'app/api/platform-admin/metrics/snapshot/route.ts': 'product job (a person presses run)',
@@ -59,6 +60,10 @@ const NO_REASON_FILES: Record<string, string> = {
 const NO_REASON_ACTIONS: Record<string, string> = {
   create_catalog_change_request: 'work tool: the request IS the proposal (its approval carries the change note)',
   update_catalog_change_request_status: 'work tool: triage status of a request',
+  // Board Ready two-step, Part 3: not staff decisions. The PERSON confirmed the reset support asked for (the request row
+  // carries support's reason); a sign-in with a real code cancelled it (the product's own rule).
+  two_step_reset_confirmed: 'the person’s own press on the confirmation link; support’s reason is on the request row',
+  two_step_reset_cancelled: 'the product cancelled it: the person signed in with a real code (a staff cancel carries its reason)',
 };
 
 /** Every writer call: the file, its text from the opening paren to the matching close. */

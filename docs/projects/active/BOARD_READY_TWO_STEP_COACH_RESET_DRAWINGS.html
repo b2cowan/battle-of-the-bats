@@ -1,0 +1,439 @@
+<title>Coach Reset Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the house drawings layout (same as the approved Two-Step Sign-In page): sticky tab row, a View row on the one tab that compares, one section at a time. Specimens wear the product's warm skin. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --ok: #2E6B3A; --ok-soft: #E2F0E4; --warn: #8A5A00;
+  --warn-soft: #F7ECD4; --bad: #A2321F; --bad-soft: #F6E0DA;
+  --doc-sans: 'Inter', system-ui, sans-serif; --doc-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1280px; margin: 0 auto; }
+header.doc { padding-block: 22px 10px; }
+header.doc h1 { font: 700 30px/1.1 var(--doc-display); letter-spacing: .01em; margin: 0 0 6px; text-wrap: balance; }
+header.doc p { margin: 0; color: var(--muted); max-width: 82ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); overflow-x: auto; white-space: nowrap; }
+nav.tabs button { font: 600 14px var(--doc-sans); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 13px 12px 11px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+nav.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+section.panel { display: none; } section.panel.on { display: block; }
+h2 { font: 700 24px/1.15 var(--doc-display); margin: 18px 0 6px; letter-spacing: .01em; text-wrap: balance; }
+h3 { font: 650 16px/1.3 var(--doc-sans); margin: 22px 0 6px; }
+p, li { max-width: 82ch; } .muted { color: var(--muted); }
+.lede { font-size: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card h3 { margin-top: 0; }
+.card ul { margin: 6px 0 0; padding-left: 18px; }
+.tag { display: inline-block; font: 600 11px/1 var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; vertical-align: 2px; }
+.t-new { background: var(--accent-soft); color: var(--accent); } .t-chg { background: var(--warn-soft); color: var(--warn); } .t-same { background: var(--line); color: var(--muted); }
+.tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+table.cmp { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13.5px; }
+table.cmp th { font: 700 12px var(--doc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+table.cmp td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.cmp td:first-child { font-weight: 650; width: 200px; }
+table.cmp tr.band td { background: var(--bg); font: 700 12px var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.req { color: var(--bad); font-weight: 650; } .off { color: var(--accent); font-weight: 650; }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); }
+.spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.row2 { display: flex; gap: 22px; align-items: flex-start; width: max-content; }
+.stack { display: flex; flex-direction: column; gap: 22px; width: max-content; }
+.lbl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.lbl.after { color: var(--accent); }
+.mk { min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 2px solid transparent; background: var(--mark); color: var(--mark-ink); font: 700 11px/18px var(--doc-mono); text-align: center; cursor: pointer; display: inline-block; vertical-align: 1px; margin-right: 4px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; } .ask p { margin: 4px 0; } .ask ul { margin: 4px 0; padding-left: 18px; }
+.rec { font-weight: 650; color: var(--accent); }
+.push { border-left: 3px solid var(--mark); padding: 2px 0 2px 10px; margin: 8px 0; }
+.build { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; }
+body.only-diff .same { opacity: .22; filter: grayscale(1); }
+@media (prefers-reduced-motion: no-preference) { .ask { transition: outline-color .3s; } }
+
+/* ───────── PRODUCT SPECIMEN (the warm skin as shipped; fixed colours in both document themes). Type ladder 32/24/16/14/12. ───────── */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #615A54; --line: rgba(70,55,30,.12);
+  --line2: rgba(70,55,30,.24); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --amber-soft: #F4E7CF; --red: #B03A22; --red-soft: #F9E3DE;
+  position: relative; background: var(--paper); color: var(--ink); font: 400 14px/1.45 'Inter', sans-serif;
+  border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.12); flex: none; padding: 16px; }
+.fr * { box-sizing: border-box; }
+.fr.w1200 { width: 1200px; } .fr.w960 { width: 960px; } .fr.w720 { width: 720px; } .fr.w560 { width: 560px; } .fr.w390 { width: 390px; padding: 12px; }
+.fr p { margin: 0; max-width: none; }
+.fr svg { flex: none; }
+.fr .chrome { font: 600 10px 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); margin: -4px 0 10px; }
+/* The start column (AccountForm): 420px centred, no card, display heading over a hairline, 48px fields, one lime. */
+.fr .col { width: 100%; max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.fr .shead { text-align: center; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.fr .shead h4 { margin: 4px 0 8px; font: 700 32px/1.05 'Barlow Condensed', sans-serif; }
+.fr .shead p { color: var(--ink3); font-size: 16px; }
+.fr .shead p strong { color: var(--ink); font-weight: 600; }
+/* StartSteps: one step line under the heading, single-noun labels, finished steps at full strength. */
+.fr .ssteps { display: flex; justify-content: center; gap: 6px; margin: 0 0 10px; font-size: 12px; color: var(--ink3); }
+.fr .ssteps span.done, .fr .ssteps span.cur { color: var(--ink); font-weight: 600; }
+.fr .ssteps i { font-style: normal; opacity: .5; }
+.fr .fld { display: flex; flex-direction: column; gap: 6px; }
+.fr .fld label { font-weight: 600; color: var(--ink2); font-size: 14px; }
+.fr .inp { height: 48px; border: 1px solid var(--line2); border-radius: 10px; background: var(--white); padding: 0 14px; display: flex; align-items: center; font-size: 16px; color: var(--ink); }
+.fr .inp.code { font-variant-numeric: tabular-nums; letter-spacing: .24em; }
+.fr .inp.focus { border-color: var(--olive); box-shadow: 0 0 0 3px rgba(87,101,30,.16); }
+.fr .inp .ph { color: var(--ink3); opacity: .75; letter-spacing: normal; }
+.fr .hint { color: var(--ink3); font-size: 14px; }
+.fr .lead { display: flex; flex-direction: column; gap: 6px; }
+.fr .lead b { font-size: 16px; }
+.fr .primary { min-height: 48px; border-radius: 10px; background: var(--lime); border: 0; font: 700 16px 'Inter'; color: var(--ink); display: flex; align-items: center; justify-content: center; }
+.fr .secondary { min-height: 48px; border-radius: 10px; background: var(--white); border: 1px solid var(--line2); font: 700 16px 'Inter'; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.fr .textbtn { min-height: 44px; display: flex; align-items: center; justify-content: center; color: var(--ink3); text-decoration: underline; text-underline-offset: 3px; }
+.fr .flink { color: var(--olive); font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
+.fr .forgot { display: flex; justify-content: flex-end; margin-top: -6px; }
+/* footSplit: rule above, one link at each end, 44px. StartFoot legal: the fine print under it. */
+.fr .fsplit { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 4px; }
+.fr .sfoot { border-top: 1px solid var(--line); padding-top: 4px; text-align: center; color: var(--ink3); }
+.fr .sfoot .legal { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+.fr .note { background: var(--white); border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 8px; padding: 12px 14px; }
+.fr .note.err { border-left-color: var(--red); }
+.fr .note b { display: block; font-size: 16px; margin-bottom: 2px; }
+.fr .qr { width: 156px; height: 156px; background: var(--white); border: 1px solid var(--line2); border-radius: 8px; padding: 10px; }
+/* Mono for recorded codes is a proposed named exception (ask D): 0/O and 1/I must not be confused. */
+.fr .key { font: 500 14px 'IBM Plex Mono', monospace; letter-spacing: .06em; background: var(--white); border: 1px dashed var(--line2); border-radius: 8px; padding: 8px 10px; display: inline-flex; gap: 10px; align-items: center; }
+.fr .key em { font: 600 14px 'Inter'; color: var(--olive); font-style: normal; }
+.fr .codes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; background: var(--white); border: 1px solid var(--line2); border-radius: 10px; padding: 14px 18px; font: 500 16px 'IBM Plex Mono', monospace; letter-spacing: .05em; }
+/* TermsTickRow: native 18px checkbox, accent olive, 44px row. */
+.fr .tick { display: flex; gap: 10px; align-items: center; min-height: 44px; }
+.fr .tick input { width: 18px; height: 18px; accent-color: #57651E; margin: 0; flex: none; }
+.fr .btnrow { display: flex; gap: 10px; } .fr .btnrow > * { flex: 1; }
+/* Admin kit pieces (the club admin and platform admin wear the same kit). */
+.fr .btn { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 6px; font: 600 14px 'Inter'; background: var(--white); color: var(--ink); border: 1px solid var(--line2); white-space: nowrap; }
+.fr .btn.lime { background: var(--lime); border-color: transparent; }
+.fr .btn.danger { background: var(--red); color: #fff; border-color: transparent; }
+.fr .btn.sm { height: 28px; padding: 0 10px; font-size: 12px; }
+.fr .phead { display: flex; align-items: flex-end; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.fr .phead .eb { font: 600 10px 'IBM Plex Mono'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); }
+.fr .phead h4 { margin: 2px 0 0; font: 700 24px 'Barlow Condensed', sans-serif; }
+.fr .eye { font: 600 10px 'IBM Plex Mono'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); margin: 0 0 8px; display: block; }
+.fr .sp { flex: 1; }
+.fr .tf { background: var(--white); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.fr table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.fr th { font: 700 12px 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.fr td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.fr tr:last-child td { border-bottom: 0; }
+.fr td small { display: block; color: var(--ink3); font-size: 12px; }
+.fr .chip { display: inline-block; font: 600 10px 'IBM Plex Mono'; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--ink3); background: #EFEBE2; white-space: nowrap; vertical-align: 1px; }
+.fr .chip.amber { color: var(--amber); background: var(--amber-soft); border-color: rgba(131,80,6,.3); }
+.fr .chip.good { color: var(--olive); background: var(--olive-soft); border-color: rgba(87,101,30,.3); }
+.fr .newcol { background: rgba(31,95,107,.07); }
+.fr .dim { color: var(--ink3); }
+.fr .newline { outline: 2px dashed rgba(31,95,107,.6); outline-offset: 1px; border-radius: 3px; }
+.fr .coachlist { margin-top: 14px; }
+.fr .crow { display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin-top: 6px; }
+.fr .crow .t { flex: 1; } .fr .crow .t small { display: block; color: var(--ink3); font-size: 12px; }
+.fr .scrim { position: absolute; inset: 0; background: rgba(36,30,21,.38); border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.fr .dlg { background: var(--white); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.28); width: 100%; max-width: 460px; overflow: hidden; }
+.fr .dlg .dh { padding: 16px 18px 4px; font: 700 16px/1.25 'Inter'; display: flex; gap: 10px; }
+.fr .dlg .dh small { display: block; font: 400 12px 'Inter'; color: var(--ink2); margin-top: 3px; }
+.fr .dlg .dh .x { margin-left: auto; color: var(--ink3); font-weight: 400; font-size: 20px; line-height: 1; }
+.fr .dlg .db { padding: 10px 18px 14px; display: flex; flex-direction: column; gap: 10px; }
+.fr .dlg .db p { color: var(--ink2); }
+.fr .dlg .df { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line2); background: #FBF9F4; }
+.fr .dlg .df .l { margin-right: auto; font-size: 12px; color: var(--ink3); max-width: 280px; }
+.fr .kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; font-size: 14px; }
+.fr .kv dt { color: var(--ink3); } .fr .kv dd { margin: 0; }
+.fr .more { color: var(--ink3); font-size: 12px; border: 1px dashed var(--line2); border-radius: 6px; padding: 10px; text-align: center; }
+/* RecordAction / RecordDelete: icon + words at body size, no rule above; delete red with a trash icon. */
+.fr .doors { display: flex; flex-wrap: wrap; gap: 4px 20px; padding-top: 4px; }
+.fr .door { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font: 600 14px 'Inter'; color: var(--ink2); }
+.fr .door.red { color: var(--red); }
+.fr .door.olive { color: var(--olive); font-weight: 650; }
+.fr .door.new { outline: 2px dashed rgba(31,95,107,.6); outline-offset: 2px; border-radius: 4px; padding: 0 4px; }
+.fr .co { --tone: #C98A12; display: flex; gap: 10px; align-items: center; padding: 12px 16px; border-radius: 8px; background: var(--white); border: 1px solid var(--line); border-left: 3px solid var(--tone); }
+.fr .co .tx { flex: 1; min-width: 0; }
+.fr .co .tx small { display: block; font-size: 12px; color: var(--ink2); margin-top: 2px; }
+/* Account page (the consumer warm page): 248px rail; white 14px-radius cards with a soft shadow; 44-52px white buttons. */
+.fr .acc { display: grid; grid-template-columns: 248px 1fr; gap: 28px; }
+.fr .rail { display: flex; flex-direction: column; gap: 2px; }
+.fr .rail a { display: flex; gap: 10px; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--ink2); font-weight: 500; text-decoration: none; }
+.fr .rail a.on { background: var(--white); color: var(--ink); font-weight: 650; box-shadow: 0 0 0 1px var(--line); }
+.fr .rail a.newrow { outline: 2px dashed rgba(31,95,107,.6); outline-offset: -2px; }
+.fr .ico { width: 17px; height: 17px; border: 1.6px solid currentColor; border-radius: 4px; flex: none; opacity: .8; }
+.fr .ico.olive { color: var(--olive); opacity: 1; }
+.fr .acctitle { margin: 0 0 4px; font: 700 24px 'Inter'; }
+.fr .pane { margin: 0 0 14px; font: 700 17px 'Inter'; color: var(--ink2); }
+.fr .sec { background: var(--white); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 1px 3px rgba(70,55,30,.08); padding: 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.fr .sec h6 { margin: 0; font: 700 16px 'Inter'; display: flex; gap: 8px; align-items: center; }
+.fr .sec .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.fr .sec .fine { font-size: 12px; color: var(--ink3); }
+.fr .abtn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; border-radius: 14px; background: var(--white); border: 1px solid var(--line2); font: 600 14px 'Inter'; color: var(--ink); }
+.fr .abtn.lime { background: var(--lime); border-color: transparent; font-weight: 700; }
+.fr .abtn.full { width: 100%; }
+.fr .rows { display: flex; flex-direction: column; gap: 8px; }
+.fr .prow { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 12px 16px; background: var(--white); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 1px 3px rgba(70,55,30,.08); }
+.fr .prow .t { flex: 1; } .fr .prow .t small { display: block; color: var(--ink3); font-size: 12px; }
+.fr .chev { color: var(--ink3); }
+.fr .sel { height: 36px; border: 1px solid var(--line2); border-radius: 6px; background: var(--white); padding: 0 10px; display: flex; align-items: center; justify-content: space-between; }
+.fr .ta { min-height: 64px; border: 1px solid var(--line2); border-radius: 6px; background: var(--white); padding: 8px 10px; color: var(--ink2); }
+.fr .ptabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.fr .ptabs span { padding: 8px 0; color: var(--ink3); font-weight: 600; }
+.fr .ptabs span.on { color: var(--ink); border-bottom: 2px solid var(--olive); }
+.fr .band { font: 600 10px 'IBM Plex Mono'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); }
+.fr .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+.fr .facts div { display: flex; flex-direction: column; gap: 3px; }
+
+/* ───────── Added for this page: the coach person window (KitDialog form), facts block, footer with Remove at the start ───────── */
+.fr .dlg .dh .deb { display: block; font: 600 11px 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); margin-bottom: 3px; }
+.fr .dlg .dh .nm { font: 700 20px/1.2 'Inter', sans-serif; }
+.fr .dlg .df .rm { margin-right: auto; }
+.fr .dlg .df .lead-sp { flex: 1; }
+.fr .fb { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.45; color: var(--ink2); }
+.fr .fb .fl { display: block; font: 700 11px 'IBM Plex Mono', monospace; letter-spacing: .09em; text-transform: uppercase; color: var(--ink2); margin-bottom: 4px; }
+.fr .fb .sub { display: block; margin-top: 4px; font-size: 12px; color: var(--ink3); }
+.fr .door .key-ic { flex: none; }
+.fr .backdrop { opacity: .55; pointer-events: none; }
+.fr .toast { background: #241E15; color: #FFF; border-radius: 8px; padding: 10px 14px; font-size: 14px; display: inline-block; }
+.fr .newbox { outline: 2px dashed rgba(31,95,107,.6); outline-offset: 2px; border-radius: 8px; }
+.sidecard { max-width: 560px; }
+.when li { margin: 3px 0; }
+.stage .row2.wrapish { width: max-content; }
+.answer { border: 1px dashed var(--line); border-radius: 8px; padding: 8px 12px; margin-top: 8px; color: var(--muted); font-size: 14px; }
+body.only-diff .same .newbox, body.only-diff .same.newbox { outline: 0; }
+.viewrow[hidden] { display: none; }
+</style>
+
+<div class="wrap">
+<header class="doc">
+  <h1>Coach Reset Drawings</h1>
+  <p>Board Ready, two-step sign-in, Part 3, ask A. A club&rsquo;s owner or admin can reset a coach&rsquo;s two-step sign-in (their authenticator app) from the person window on the team&rsquo;s staff page, because coaches are not managed in Members. It is the same door the Members window already has, with the same words. Drawn from the shipped coach person window. Nothing here is built. The numbered markers open the matching ask.</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" aria-selected="true" data-tab="t1">1 · The person window</button>
+  <button role="tab" aria-selected="false" data-tab="t2">2 · Only support can reset</button>
+  <button role="tab" aria-selected="false" data-tab="t3">3 · The question</button>
+  <button role="tab" aria-selected="false" data-tab="t4">4 · Asks</button>
+</nav>
+
+<div class="viewrow" id="viewrow">
+  <span>View</span>
+  <span class="seg" role="group" aria-label="View">
+    <button type="button" id="vAll" aria-pressed="true">Everything</button>
+    <button type="button" id="vDiff" aria-pressed="false">Show only what differs</button>
+  </span>
+  <span>Dimmed areas are the same before and after.</span>
+</div>
+
+<!-- ═════════ 1 · THE PERSON WINDOW ═════════ -->
+<section class="panel on" id="t1">
+  <h2>The coach&rsquo;s person window gains one fact and one door</h2>
+  <p class="lede">Rep teams › U13 AAA Thunder › Coaches. The club&rsquo;s owner or admin opens a coach and sees whether two-step sign-in is on. If it is, one door at the end of the body resets it. Remove stays exactly where it ships.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-chg">Restyled</span> Whole window, before and after</b><span>Desktop, true size (560px). Use View › Show only what differs. Two things are new, both below &ldquo;What they can open&rdquo;. Nothing above them moves.</span></div>
+    <div class="stage"><div class="row2">
+
+      <div><div class="lbl">Before (shipped)</div>
+      <div class="fr w560" style="min-height:430px"><div class="chrome">Club admin · Rep teams · Coaches · Leah Fournier</div>
+        <div class="scrim" style="position:relative;inset:auto;min-height:400px;background:none;padding:0">
+          <div class="dlg" style="max-width:none">
+            <div class="dh"><div><span class="deb">U13 AAA Thunder</span><span class="nm">Leah Fournier</span><small>leah.f@example.com · Head coach since Sep 3, 2025</small></div><span class="x">×</span></div>
+            <div class="db">
+              <div class="fb"><span class="fl">Their role</span>Head coach</div>
+              <div class="fb"><span class="fl">What they can open</span>Everything in U13 AAA Thunder&rsquo;s Coaches Portal, including its staff page and its tryouts.</div>
+            </div>
+            <div class="df"><span class="btn danger rm">Remove</span><span class="btn">Done</span></div>
+          </div>
+        </div>
+      </div></div>
+
+      <div><div class="lbl after">After</div>
+      <div class="fr w560" style="min-height:430px"><div class="chrome">Club admin · Rep teams · Coaches · Leah Fournier</div>
+        <div class="scrim" style="position:relative;inset:auto;min-height:400px;background:none;padding:0">
+          <div class="dlg" style="max-width:none">
+            <div class="dh same"><div><span class="deb">U13 AAA Thunder</span><span class="nm">Leah Fournier</span><small>leah.f@example.com · Head coach since Sep 3, 2025</small></div><span class="x">×</span></div>
+            <div class="db">
+              <div class="fb same"><span class="fl">Their role</span>Head coach</div>
+              <div class="fb same"><span class="fl">What they can open</span>Everything in U13 AAA Thunder&rsquo;s Coaches Portal, including its staff page and its tryouts.</div>
+              <div class="fb newbox"><span class="fl"><span class="tag t-new">New</span> <button class="mk" data-ask="3" aria-label="Open ask 3">3</button>Two-step sign-in</span>On since Nov 12, 2026</div>
+              <div class="doors newbox" style="padding:6px 8px">
+                <span class="door"><button class="mk" data-ask="1" aria-label="Open ask 1">1</button><button class="mk" data-ask="2" aria-label="Open ask 2">2</button><svg class="key-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>Reset two-step sign-in…</span>
+              </div>
+            </div>
+            <div class="df same"><span class="btn danger rm">Remove</span><span class="btn">Done</span></div>
+          </div>
+        </div>
+      </div></div>
+
+    </div></div>
+    <p class="build">Build notes: <i>CoachPersonDialog</i> is a <i>KitDialog</i> form with the facts boxes you see (<i>repKit.facts</i>). The new box reads the same status the Members window reads, so the words match: &ldquo;On since Nov 12, 2026&rdquo;, or &ldquo;Off&rdquo; for a coach who has not turned it on. The door is the same <i>RecordAction</i> (ink, icon and words at body size, no rule above) with a key icon. It sits at the end of the body because the 10-19 ruling puts rare doors there. It is the only door in the body, since Remove lives in the footer, so the body does not read as a menu. Remove keeps its red button at the start of the footer. The door is absent when the viewer cannot write, as Remove is.</p>
+  </div>
+</section>
+
+<!-- ═════════ 2 · ONLY SUPPORT CAN RESET ═════════ -->
+<section class="panel" id="t2">
+  <h2>When the club can&rsquo;t reset it: no door, one line</h2>
+  <p class="lede">Some coaches&rsquo; accounts reach more than this club. A club should not be able to sign someone out of a place it does not run, so the window shows no door and says who can help. It gives no reason. Leah and support are told why.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="3" aria-label="Open ask 3">3</button>The support-only variant</b><span>Same window. The facts box keeps &ldquo;On since&rdquo; and gains one line. The door is gone. Remove is unchanged.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560" style="min-height:420px"><div class="chrome">Club admin · Rep teams · Coaches · Leah Fournier</div>
+        <div class="scrim" style="position:relative;inset:auto;min-height:390px;background:none;padding:0">
+          <div class="dlg" style="max-width:none">
+            <div class="dh"><div><span class="deb">U13 AAA Thunder</span><span class="nm">Leah Fournier</span><small>leah.f@example.com · Head coach since Sep 3, 2025</small></div><span class="x">×</span></div>
+            <div class="db">
+              <div class="fb"><span class="fl">Their role</span>Head coach</div>
+              <div class="fb"><span class="fl">What they can open</span>Everything in U13 AAA Thunder&rsquo;s Coaches Portal, including its staff page and its tryouts.</div>
+              <div class="fb newbox"><span class="fl">Two-step sign-in</span>On since Nov 12, 2026<span class="sub">Only FieldLogicHQ support can reset this one. Leah emails hello@fieldlogichq.ca from their account&rsquo;s address.</span></div>
+            </div>
+            <div class="df"><span class="btn danger rm">Remove</span><span class="btn">Done</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card sidecard">
+        <h3>When this shows instead of the door</h3>
+        <p>When the coach&rsquo;s account reaches anywhere beyond this club:</p>
+        <ul class="when">
+          <li>a seat in another organization, in any status (active, invited or suspended)</li>
+          <li>their own team in the Coaches Portal, free or paid</li>
+          <li>coaching a house-league team in another club</li>
+          <li>a family link to another club</li>
+          <li>FieldLogicHQ staff, and the demo accounts</li>
+        </ul>
+        <p class="muted" style="margin-top:10px"><b>Expect this to be common for coaches.</b> Many run their own team in the Coaches Portal as well as coaching here. So most coach resets will go to support, and the door will appear for the minority whose account is only this club&rsquo;s. That is the safe default: a reset signs the person out everywhere, so a club may only do it where &ldquo;everywhere&rdquo; is its own.</p>
+        <p class="muted" style="margin-top:10px">The line never says which of these applies. A club does not learn what else a coach does.</p>
+      </div>
+    </div></div>
+    <p class="build">Build notes: the same <i>door</i> value the Members window reads (<code>club</code>, <code>support</code> or <code>none</code>), now also computed for a coach&rsquo;s membership. The sentence is the one Members shows, with the support address from <i>FIELDLOGICHQ_CONTACT_EMAIL</i> (hello@fieldlogichq.ca). A coach with two-step off sees &ldquo;Off&rdquo; and no line. The rule already built for Members counts their own Coaches Portal team (free or paid) and a house-league coaching seat elsewhere as &ldquo;reaches another place&rdquo;, so a coach is judged by the same rule, unchanged.</p>
+  </div>
+</section>
+
+<!-- ═════════ 3 · THE QUESTION ═════════ -->
+<section class="panel" id="t3">
+  <h2>It asks first, with the same words as Members</h2>
+  <p class="lede">The door opens a question window on top of the person window. The red button is the only red on the screen besides Remove, and the window says what happens to Leah in two sentences.</p>
+  <div class="spec">
+    <div class="cap"><b><span class="tag t-new">New</span> <button class="mk" data-ask="1" aria-label="Open ask 1">1</button>The question, on top of the person window</b><span>A <i>KitDialog</i> question window. Cancel is outline, Reset two-step is red.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560" style="min-height:470px"><div class="chrome">Club admin · Rep teams · Coaches · Leah Fournier</div>
+        <div class="backdrop">
+          <div class="dlg" style="max-width:none">
+            <div class="dh"><div><span class="deb">U13 AAA Thunder</span><span class="nm">Leah Fournier</span><small>leah.f@example.com · Head coach since Sep 3, 2025</small></div><span class="x">×</span></div>
+            <div class="db">
+              <div class="fb"><span class="fl">Their role</span>Head coach</div>
+              <div class="fb"><span class="fl">What they can open</span>Everything in U13 AAA Thunder&rsquo;s Coaches Portal, including its staff page and its tryouts.</div>
+              <div class="fb"><span class="fl">Two-step sign-in</span>On since Nov 12, 2026</div>
+              <div class="doors"><span class="door">Reset two-step sign-in…</span></div>
+            </div>
+            <div class="df"><span class="btn danger rm">Remove</span><span class="btn">Done</span></div>
+          </div>
+        </div>
+        <div class="scrim">
+          <div class="dlg" style="max-width:420px">
+            <div class="dh">Reset Leah&rsquo;s two-step sign-in?</div>
+            <div class="db">
+              <p>Leah&rsquo;s authenticator app and backup codes stop working, and Leah is signed out everywhere. Next time Leah signs in with their password, they set up two-step sign-in again.</p>
+              <p>We&rsquo;ll email Leah to say you did this. It&rsquo;s recorded in the audit log.</p>
+            </div>
+            <div class="df"><span class="sp"></span><span class="btn">Cancel</span><span class="btn danger">Reset two-step</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack" style="width:auto;max-width:460px">
+        <div class="card">
+          <h3>If your own code is asked for first</h3>
+          <p>The product has one &ldquo;type your code again&rdquo; window. If the admin&rsquo;s own last code was more than 15 minutes ago (say 3:10 p.m. and it is now 3:40 p.m.), pressing Reset two-step opens it first. Not drawn here: it is the shipped window from the Account page.</p>
+          <p class="muted" style="margin-top:8px">If they cancel it, nothing changes and the person window says: &ldquo;Nothing changed. Resetting someone&rsquo;s two-step sign-in needs your code.&rdquo;</p>
+        </div>
+        <div class="card">
+          <h3>After it works</h3>
+          <p>The question closes, the window shows Two-step sign-in as &ldquo;Off&rdquo;, the door is gone, and the page says:</p>
+          <p style="margin-top:8px"><span class="fr" style="display:inline-block;padding:0;background:none;box-shadow:none"><span class="toast">Leah Fournier&rsquo;s two-step sign-in was reset. We&rsquo;ve emailed Leah.</span></span></p>
+          <p class="muted" style="margin-top:8px">The audit line reads &ldquo;Kim Patel reset Leah Fournier&rsquo;s two-step sign-in.&rdquo;</p>
+        </div>
+      </div>
+    </div></div>
+    <p class="build">Build notes: the question is the same component and sentences as Members (<i>ManageMemberDialog</i>, <code>ask === 'resetTwoStep'</code>), with the coach&rsquo;s first name. The reset would need its own coach route, checking the club&rsquo;s owner or admin role on the server, and it emails the coach. A coach reset must never reach a person the club does not fully own (tab 2).</p>
+  </div>
+</section>
+
+<!-- ═════════ 4 · ASKS ═════════ -->
+<section class="panel" id="t4">
+  <h2>Asks</h2>
+  <p class="lede">Three questions. Each has a recommendation and room for your answer.</p>
+
+  <div class="ask" id="ask1"><h3>A1 · Where does the door sit?</h3>
+    <p>On the Members window it ends the body, as a quiet ink door beside Suspend and Remove. In the coach window there is nothing else in the body to sit beside, and Remove lives in the footer.</p>
+    <ul>
+      <li><b>At the end of the body, as an ink door.</b> It matches the 10-19 ruling that rare doors end the body, and it looks the same in both windows.</li>
+      <li><b>In the footer beside Remove.</b> It would put a second destructive-looking action next to a red button, and it would make a rare door as loud as Remove.</li>
+    </ul>
+    <p class="rec">Recommended: at the end of the body, as an ink door (as drawn).</p>
+    <div class="answer">Your answer:</div></div>
+
+  <div class="ask" id="ask2"><h3>A2 · Who sees the door?</h3>
+    <p>The staff page already lets only the club&rsquo;s owner and admins write. A head coach in the Coaches Portal sees their own staff page too, and that is a different door.</p>
+    <ul>
+      <li><b>The club&rsquo;s owner and admins only.</b> The door shows only to someone who can already remove the coach.</li>
+      <li><b>Also a head coach, for their assistants.</b> Convenient, but the authenticator is the person&rsquo;s own, and a reset signs them out everywhere. A club decides that, not a teammate.</li>
+    </ul>
+    <p class="rec">Recommended: owners and admins only. A head coach in the Coaches Portal gets no reset door.</p>
+    <div class="answer">Your answer:</div></div>
+
+  <div class="ask" id="ask3"><h3>A3 · When is the door absent?</h3>
+    <p>Three cases, and what the window says in each.</p>
+    <ul>
+      <li><b>The coach has two-step off:</b> the window says &ldquo;Off&rdquo;, no door (there is nothing to reset).</li>
+      <li><b>It is yourself:</b> no door (use a backup code, as in Members).</li>
+      <li><b>Only support can reset it</b> (the account reaches another place, tab 2): no door, and one line, with no reason given to the club.</li>
+    </ul>
+    <p class="rec">Recommended: all three, as drawn. Expect the third to cover most coaches, because many have their own team.</p>
+    <div class="answer">Your answer:</div></div>
+</section>
+</div>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('nav.tabs button');
+  var panels = document.querySelectorAll('section.panel');
+  var viewrow = document.getElementById('viewrow');
+  var compareTab = 't1';
+  var vAll = document.getElementById('vAll'), vDiff = document.getElementById('vDiff');
+  function setView(diff) {
+    vAll.setAttribute('aria-pressed', diff ? 'false' : 'true');
+    vDiff.setAttribute('aria-pressed', diff ? 'true' : 'false');
+    document.body.classList.toggle('only-diff', diff);
+  }
+  function show(id, keepScroll) {
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === id ? 'true' : 'false'); });
+    panels.forEach(function (p) { p.classList.toggle('on', p.id === id); });
+    viewrow.hidden = id !== compareTab;
+    if (id !== compareTab) document.body.classList.remove('only-diff');
+    else document.body.classList.toggle('only-diff', vDiff.getAttribute('aria-pressed') === 'true');
+    if (!keepScroll) window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); }); });
+  vAll.addEventListener('click', function () { setView(false); });
+  vDiff.addEventListener('click', function () { setView(true); });
+  document.querySelectorAll('.mk[data-ask]').forEach(function (m) {
+    m.addEventListener('click', function () {
+      show('t4', true);
+      var a = document.getElementById('ask' + m.dataset.ask);
+      if (a) { a.scrollIntoView({ block: 'center' }); a.classList.add('flash'); setTimeout(function () { a.classList.remove('flash'); }, 1400); }
+    });
+  });
+})();
+</script>

@@ -3,6 +3,7 @@ import { withObservability } from '@/lib/observability';
 import { getSessionTwoStep } from '@/lib/api-auth';
 import { backupCodesLeft, redeemBackupCode } from '@/lib/two-step-codes';
 import { FixedWindowRateLimiter } from '@/lib/rate-limit';
+import { cancelResetsOnProof } from '@/lib/two-step-support-reset';
 
 const MINUTE = 60_000;
 /** A backup code is 40 bits; ten tries in fifteen minutes per person keeps guessing hopeless. */
@@ -26,5 +27,7 @@ export const POST = withObservability(async (req: Request) => {
   if (!ok) {
     return NextResponse.json({ error: 'That backup code didn’t work. Each code works once.', code: 'wrong_code' }, { status: 400 });
   }
+  // A real proof: a support reset waiting for this person is cancelled (Part 3, tab 7), on the server, not on the browser's word.
+  await cancelResetsOnProof(state.user.id).catch(() => 0);
   return NextResponse.json({ ok: true, left: await backupCodesLeft(state.user.id) });
 }, { route: '/api/auth/two-step/backup-code' });

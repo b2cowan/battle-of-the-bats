@@ -24,6 +24,15 @@ import { Field, StartFoot, StartHead, accountForm } from './AccountForm';
 type Mode = 'code' | 'backup' | 'afterBackup' | 'lostPhone';
 type LostPhone = { version: 'club' | 'support'; supportEmail: string } | 'loading' | 'failed';
 
+/**
+ * A code was accepted: our server hears of it (Part 3, tab 7 — signing in with a real code cancels a waiting support reset;
+ * the route reads the session's own proof). Best effort: it never holds up the sign-in.
+ */
+async function tellProved(): Promise<void> {
+  // Not awaited by the sign-in (keepalive outlives the navigation that follows): it never holds the next page up.
+  try { void fetch('/api/auth/two-step/proved', { method: 'POST', keepalive: true }).catch(() => {}); } catch { /* the sign-in goes on */ }
+}
+
 export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccount, showDifferentAccount = true, offerNewPhone = true }: {
   email: string | null;
   /** Where the person was going; carried into "Set up my new phone" and new backup codes. */
@@ -81,6 +90,7 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
         setBusy(false);
         return;
       }
+      await tellProved();
       await onDone();
     } catch {
       setError('unavailable');
@@ -105,6 +115,7 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
         return;
       }
       setLeft(data.left ?? 0);
+      await tellProved();
       setMode('afterBackup');
       setBusy(false);
     } catch {

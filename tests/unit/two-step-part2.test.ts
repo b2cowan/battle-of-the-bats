@@ -37,7 +37,7 @@ const FRESH_CODE_DOORS: Record<string, string[]> = {
   'app/api/platform-admin/company-users/[id]/route.ts': ['updatePlatformUser(id'],
   'app/api/auth/two-step/backup-codes/route.ts': ['createBackupCodes('],
   'app/api/auth/two-step/set-up/start/route.ts': ['auth.admin.updateUserById(', 'deleteFactor('],
-  'app/api/auth/two-step/turn-off/route.ts': ['auth.admin.updateUserById('],
+  'app/api/auth/two-step/turn-off/route.ts': ['removeEveryAuthenticator(user.id)'],
   'app/api/auth/password/route.ts': ['auth.admin.updateUserById('],
 };
 
@@ -97,7 +97,9 @@ describe('2 · the rule', () => {
 });
 
 /** Turn off's order: mark → remove every authenticator → confirm none → clear the mark → backup codes. */
-function turnOffOrderHolds(code: string): boolean {
+function turnOffOrderHolds(full: string): boolean {
+  // The main sequence starts at the mark's write; the failure path above it (Part 3 /review) has its own removal.
+  const code = full.slice(Math.max(0, full.indexOf('const { error: markErr }')));
   const mark = code.indexOf('[REPLACING_AUTHENTICATOR_FLAG]: true');
   const del = code.indexOf('deleteFactor(');
   const confirm = code.indexOf('(after?.factors ?? []).length > 0');
@@ -108,28 +110,33 @@ function turnOffOrderHolds(code: string): boolean {
 
 describe('3 · turn off', () => {
   const route = readCode('app/api/auth/two-step/turn-off/route.ts');
+  // The order lives once, shared with the club's reset and support's owner reset (Part 3).
+  const order = readCode('lib/two-step-reset.ts');
 
   it('a password-only session is refused before anything else', () => {
     const first = route.indexOf('if (!state?.passed)');
-    assert.ok(first > 0 && first < route.indexOf('updateUserById'), 'a session that has not typed the code reaches the write');
+    assert.ok(first > 0 && first < route.indexOf('removeEveryAuthenticator('), 'a session that has not typed the code reaches the write');
   });
   it('any covered seat (staff; a club seat, grace included) is refused', () => {
     assert.match(route, /requirements\.reasons\.length > 0/);
-    assert.ok(route.indexOf('requirements.reasons.length > 0') < route.indexOf('updateUserById'));
+    assert.ok(route.indexOf('requirements.reasons.length > 0') < route.indexOf('removeEveryAuthenticator('));
   });
-  it('the order leaves two-step ON if it fails part-way', () => assert.equal(turnOffOrderHolds(route), true));
+  it('the order leaves two-step ON if it fails part-way', () => {
+    assert.equal(turnOffOrderHolds(order), true);
+    assert.ok(route.includes('if (!(await removeEveryAuthenticator(user.id)))'), 'turn off must use the one order and stop when it fails');
+  });
   it('mutants: each swap of the order is caught', () => {
-    const swapMarkAndDelete = route
+    const swapMarkAndDelete = order
       .replace('[REPLACING_AUTHENTICATOR_FLAG]: true', '@@MARK@@')
       .replace(/deleteFactor\(/, '[REPLACING_AUTHENTICATOR_FLAG]: true')
       .replace('@@MARK@@', 'deleteFactor(');
     assert.equal(turnOffOrderHolds(swapMarkAndDelete), false);
-    const codesFirst = route
+    const codesFirst = order
       .replace("from('two_step_backup_codes').delete()", '@@CODES@@')
       .replace('[REPLACING_AUTHENTICATOR_FLAG]: true', "from('two_step_backup_codes').delete()")
       .replace('@@CODES@@', '[REPLACING_AUTHENTICATOR_FLAG]: true');
     assert.equal(turnOffOrderHolds(codesFirst), false);
-    assert.equal(turnOffOrderHolds(route.replace('(after?.factors ?? []).length > 0', 'false')), false);
+    assert.equal(turnOffOrderHolds(order.replace('(after?.factors ?? []).length > 0', 'false')), false);
   });
 });
 
@@ -251,13 +258,17 @@ describe('7 · keyed backup-code hashes', () => {
 });
 
 describe('8 · lost your phone', () => {
-  it('everyone gets the support version until Part 3 builds the club’s reset', async () => {
-    assert.equal(CLUB_RESET_DOOR_BUILT, false);
-    assert.equal(await lostPhoneVersion('00000000-0000-0000-0000-000000000000'), 'support');
+  it('the club version is live since Part 3 built the club’s reset, and reads the door’s own rule', async () => {
+    assert.equal(CLUB_RESET_DOOR_BUILT, true);
+    // With the door switched off, everyone gets the support version (the Part 2 behaviour, kept as the fallback).
+    assert.equal(await lostPhoneVersion('00000000-0000-0000-0000-000000000000', null, false), 'support');
+    const chooser = readCode('lib/two-step-lost-phone.ts');
+    assert.match(chooser, /accountReachesAnotherPlace\(userId, orgId\)/);
+    assert.match(chooser, /accountIsClubResettable\(email\)/);
   });
   it('the screen asks for the version, and never names a club', () => {
     const route = readCode('app/api/auth/two-step/lost-phone/route.ts');
-    assert.match(route, /version: await lostPhoneVersion\(state\.user\.id\)/);
+    assert.match(route, /version: await lostPhoneVersion\(state\.user\.id, state\.user\.email\)/);
     assert.doesNotMatch(route, /orgName|organizations\(/);
   });
 });

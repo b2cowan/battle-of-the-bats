@@ -17,14 +17,21 @@
  * the club invites starts on the portal's assistant preset, and the head coach adjusts it on the
  * team's Staff page — the club's server takes no grants (session 1).
  */
-import { useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertTriangle, KeyRound } from 'lucide-react';
 import KitDialog from './KitDialog';
 import ck from './ClubKit.module.css';
-import { Callout, repKit } from './RepKit';
+// The member record's rare-door row (the same door as Members' Manage window, Board Ready two-step Part 3).
+import memberStyles from './Members.module.css';
+import { Callout, RecordAction, repKit } from './RepKit';
+import { TWO_STEP_FRESH_CODE } from '@/lib/code-again';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import { STAFF_KIND_COPY } from '@/lib/coach-capabilities';
 import { formatStoredDate } from '@/lib/timezone';
 import { joinWithAnd, possessive } from '@/lib/utils';
+
+/** Two-step sign-in on the coach's window (Board Ready, Part 3; ask A, drawn and approved 2026-11-11). */
+type CoachTwoStep = { on: boolean; since: string | null; door: 'none' | 'support' | 'own_first' | 'club' };
 
 export interface ClubStaffRow {
   membershipId: string;
@@ -134,11 +141,46 @@ export function CoachPersonDialog({
   onRemoved: (name: string, teamHasHeadCoach: boolean) => void;
 }) {
   const [asking, setAsking] = useState(false);
+  const [askingReset, setAskingReset] = useState(false);
+  const [twoStep, setTwoStep] = useState<CoachTwoStep | null>(null);
+  const [resetNotice, setResetNotice] = useState('');
   const [lastHead, setLastHead] = useState(isOnlyHeadCoach);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const who = person.name || person.email || 'This coach';
   const first = who.split(' ')[0];
+
+  // The club's owner and admins (the page's writers) see on / off and the door; read once, when the window opens.
+  const twoStepUrl = `/api/admin/rep-teams/teams/${teamId}/coaches/${person.membershipId}/two-step?orgSlug=${encodeURIComponent(orgSlug)}`;
+  useEffect(() => {
+    if (!canWrite) return;
+    let stale = false;
+    fetch(twoStepUrl)
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: CoachTwoStep | null) => { if (!stale) setTwoStep(d); })
+      .catch(() => { if (!stale) setTwoStep(null); });
+    return () => { stale = true; };
+  }, [canWrite, twoStepUrl]);
+
+  async function resetTwoStep() {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const res = await fetch(twoStepUrl, { method: 'POST' });
+      const data = await res.json().catch(() => ({})) as { error?: string; code?: string };
+      setAskingReset(false);
+      // The one window asked for the viewer's code and they said no: nothing changed.
+      if (res.status === 401 && data.code === TWO_STEP_FRESH_CODE) { setError('Nothing changed. Resetting someone’s two-step sign-in needs your code.'); return; }
+      if (!res.ok) { setError(data.error ?? 'It wasn’t reset. Try again.'); return; }
+      setTwoStep({ on: false, since: null, door: 'none' });
+      setResetNotice(`${possessive(who)} two-step sign-in was reset. We’ve emailed ${first}.`);
+    } catch {
+      setError('Could not reach the server. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function remove() {
     if (busy) return;
@@ -167,11 +209,11 @@ export function CoachPersonDialog({
         kind="question"
         eyebrow={teamName}
         title={`Remove ${who} from ${teamName}?`}
-        onClose={() => setAsking(false)}
+        onClose={() => { setAsking(false); setError(''); }}
         busy={busy}
         footer={
           <>
-            <button type="button" className="btn btn-outline" onClick={() => setAsking(false)} disabled={busy}>Keep them</button>
+            <button type="button" className="btn btn-outline" onClick={() => { setAsking(false); setError(''); }} disabled={busy}>Keep them</button>
             <button type="button" className="btn btn-danger" onClick={remove} disabled={busy}>{busy ? 'Removing…' : 'Remove'}</button>
           </>
         }
@@ -190,6 +232,32 @@ export function CoachPersonDialog({
     );
   }
 
+  if (askingReset) {
+    return (
+      <KitDialog
+        kind="question"
+        eyebrow={teamName}
+        title={`Reset ${possessive(first)} two-step sign-in?`}
+        onClose={() => { setAskingReset(false); setError(''); }}
+        busy={busy}
+        footer={
+          <>
+            <button type="button" className="btn btn-outline" onClick={() => { setAskingReset(false); setError(''); }} disabled={busy}>Cancel</button>
+            <button type="button" className="btn btn-danger" onClick={resetTwoStep} disabled={busy} data-autofocus="" id="coach-reset-two-step">
+              {busy ? 'Resetting…' : 'Reset two-step'}
+            </button>
+          </>
+        }
+      >
+        <p>
+          {possessive(first)} authenticator app and backup codes stop working, and {first} is signed out everywhere. Next time
+          {' '}{first} signs in with their password, they set up two-step sign-in again.
+        </p>
+        <p>We’ll email {first} to say you did this. It’s recorded in the audit log.</p>
+      </KitDialog>
+    );
+  }
+
   const isHead = person.coachRole === 'head_coach';
   return (
     <KitDialog
@@ -199,7 +267,7 @@ export function CoachPersonDialog({
       identity={[person.name && person.email ? person.email : null, `${person.kindWord} since ${formatStoredDate(person.since)}`].filter(Boolean).join(' · ')}
       onClose={onClose}
       footerStart={canWrite ? (
-        <button type="button" className="btn btn-danger" onClick={() => setAsking(true)}>Remove</button>
+        <button type="button" className="btn btn-danger" onClick={() => { setError(''); setAsking(true); }}>Remove</button>
       ) : undefined}
       footer={<button type="button" className="btn btn-outline" onClick={onClose}>Done</button>}
     >
@@ -216,6 +284,32 @@ export function CoachPersonDialog({
             : 'The team’s everyday tools — nothing sensitive (no money, family contacts or notes).'}
         {!isHead && ' The head coach sets this on the team’s Staff page.'}
       </div>
+      {resetNotice && <p className={ck.hint} role="status">{resetNotice}</p>}
+      {error && !asking && <p className={repKit.formError} role="alert">{error}</p>}
+      {twoStep && (
+        <div className={`${repKit.facts} ${repKit.factsNext}`}>
+          <span className={repKit.factsLabel}>Two-step sign-in</span>
+          {twoStep.on ? (twoStep.since ? `On since ${formatStoredDate(twoStep.since)}` : 'On') : 'Off'}
+          {twoStep.door === 'own_first' && (
+            <span className={ck.hint} style={{ display: 'block', marginTop: 4 }}>
+              To reset it, turn on two-step sign-in for your own account first.{' '}
+              <a href="/account/security">Open Sign-in &amp; security</a>
+            </span>
+          )}
+          {twoStep.door === 'support' && (
+            <span className={ck.hint} style={{ display: 'block', marginTop: 4 }}>
+              Only FieldLogicHQ support can reset this one. {first} emails {FIELDLOGICHQ_CONTACT_EMAIL} from their account’s address.
+            </span>
+          )}
+        </div>
+      )}
+      {twoStep?.door === 'club' && (
+        <div className={memberStyles.recordEnd}>
+          <RecordAction icon={<KeyRound size={13} aria-hidden />} onClick={() => { setError(''); setResetNotice(''); setAskingReset(true); }} disabled={busy}>
+            Reset two-step sign-in…
+          </RecordAction>
+        </div>
+      )}
     </KitDialog>
   );
 }

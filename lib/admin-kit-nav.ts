@@ -406,7 +406,8 @@ export function kitOrgLinks({
     // H08 (Club Tier Stage 1): the audit log gets its rail row now that its page works (A04, fixed
     // Stage 0; redrawn Stage 1 specimen 11). Owner-only, as the page and its route are.
     !isCanceled && role === 'owner' && { key: 'org/audit', label: 'Audit log', href: `${o}/members/audit`, icon: ScrollText },
-    !isCanceled && role === 'owner' && { key: 'org/settings', label: 'Settings', href: `${o}/settings`, exact: true, icon: Settings },
+    // An admin reaches Settings for its two-step card alone, read-only (Board Ready two-step, Part 3, ruled 2026-11-11).
+    !isCanceled && (role === 'owner' || role === 'admin') && { key: 'org/settings', label: 'Settings', href: `${o}/settings`, exact: true, icon: Settings },
     !isCanceled && hasVenueLibrary && { key: 'org/venues', label: 'Venue library', href: `${o}/venues`, icon: MapPin },
     !isCanceled && canOpenPdfSettings(role) && { key: 'org/pdf', label: 'PDF settings', href: `${o}/settings/pdf`, icon: FileText },
   ];

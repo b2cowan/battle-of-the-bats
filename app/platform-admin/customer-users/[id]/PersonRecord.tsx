@@ -17,6 +17,7 @@ import type { StoryEntry } from '@/lib/platform-story-view';
 import { consoleClock, consoleDate } from '@/lib/console-dates';
 import { rememberConsoleRecent } from '@/lib/console-recent';
 import { humanize } from '@/lib/platform-labels';
+import { possessive } from '@/lib/utils';
 import { roleEmailLabel, roleLabel } from '@/lib/member-access';
 import { errorOf, sendJson } from '../../console-fetch';
 import { personStatusChip } from '../../chips';
@@ -44,7 +45,22 @@ export type PersonRecordProps = {
 };
 
 type Tab = 'story' | 'clubs' | 'portal' | 'account' | 'emails';
-type Window = 'save' | 'discard' | 'reset' | 'note' | 'confirm' | 'signOut' | 'ban' | 'unban' | 'delete' | 'give' | null;
+type Window = 'save' | 'discard' | 'reset' | 'note' | 'confirm' | 'signOut' | 'ban' | 'unban' | 'delete' | 'give'
+  | 'twoStepReset' | 'twoStepHold' | 'twoStepRelease' | 'twoStepCancel' | 'twoStepRun' | null;
+
+/** Two-step sign-in on the Account tab (Board Ready, Part 3; drawings tab 7): the fact, the clubs owned, a waiting reset. */
+type TwoStepView = {
+  on: boolean;
+  since: string | null;
+  backupCodesLeft: number;
+  ownedClubs: { id: string; name: string }[];
+  waiting: null | {
+    requestedAt: string; confirmedAt: string | null; runsAt: string | null; heldAt: string | null; heldBy: string | null;
+    askedBy: string; clubNoticeCount: number | null; linkExpiresAt: string | null;
+  };
+  last: null | { completedAt: string | null; cancelledAt: string | null; cancelledBy: string | null };
+  askedHow: Record<string, string>;
+};
 
 /** One call; null when it went through, else the server's sentence. */
 async function post(url: string, method: string, body: unknown): Promise<string | null> {
@@ -64,10 +80,24 @@ export default function PersonRecord({ person, clubs, story, emails, coachesPort
 
   useEffect(() => { rememberConsoleRecent({ kind: 'person', id: person.id, title: person.email }); }, [person.id, person.email]);
 
+  const [twoStep, setTwoStep] = useState<TwoStepView | null | 'failed'>(null);
+  const [askedHow, setAskedHow] = useState('email_from_account');
+  const [twoStepTick, setTwoStepTick] = useState(0);
+  useEffect(() => {
+    let stale = false;
+    fetch(`/api/platform-admin/users/${person.id}/two-step-reset`)
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error())))
+      .then((d: TwoStepView) => { if (!stale) setTwoStep(d); })
+      .catch(() => { if (!stale) setTwoStep('failed'); });
+    return () => { stale = true; };
+  }, [person.id, twoStepTick]);
+  const ts = twoStep && twoStep !== 'failed' ? twoStep : null;
+  const whoFirst = person.name?.trim().split(/\s+/)[0] || person.email;
+
   const api = `/api/platform-admin/users/${person.id}`;
   const nameChanged = form.name.trim() !== (person.name ?? '');
   const emailChanged = form.email.trim().toLowerCase() !== person.email;
-  const done = (message: string | null = null) => { setWin(null); setNotice(message); router.refresh(); };
+  const done = (message: string | null = null) => { setWin(null); setNotice(message); setTwoStepTick(t => t + 1); router.refresh(); };
 
   const toggleEdit = () => {
     if (!editing) { setForm({ name: person.name ?? '', email: person.email }); setNotice(null); setEditing(true); return; }
@@ -233,11 +263,54 @@ export default function PersonRecord({ person, clubs, story, emails, coachesPort
                   {person.status === 'banned' && (
                     <div className={styles.fact}><span className={kit.bandLabel}>Banned</span><span className={styles.factValue}>Cannot sign in</span></div>
                   )}
+                  <div className={styles.fact}>
+                    <span className={kit.bandLabel}>Two-step sign-in</span>
+                    <span className={styles.factValue}>
+                      {twoStep === 'failed' ? 'Could not be read'
+                        : !ts ? '…'
+                          : ts.on
+                            ? `On${ts.since ? ` since ${consoleDate(ts.since)}` : ''} · ${ts.backupCodesLeft} backup code${ts.backupCodesLeft === 1 ? '' : 's'} left`
+                            : 'Off'}
+                    </span>
+                  </div>
                 </div>
               </div>
+              {ts?.waiting && (
+                <div className={`${kit.callout} ${kit.calloutWarn}`}>
+                  <span>
+                    <strong>Two-step reset waiting.</strong>{' '}
+                    {ts.waiting.confirmedAt && ts.waiting.runsAt
+                      ? <>{whoFirst} confirmed {consoleDate(ts.waiting.confirmedAt)}, {consoleClock(ts.waiting.confirmedAt)}. It happens {consoleDate(ts.waiting.runsAt)}, {consoleClock(ts.waiting.runsAt)}. Signing in with a code cancels it.</>
+                      : <>Waiting for {whoFirst} to confirm from {person.email}{ts.waiting.linkExpiresAt ? <> (the link works until {consoleDate(ts.waiting.linkExpiresAt)})</> : null}.</>}
+                    {ts.waiting.heldAt && <> <strong>Held</strong> by {ts.waiting.heldBy ?? 'support'} on {consoleDate(ts.waiting.heldAt)}: it won’t run until the hold is released.</>}
+                    {ts.waiting.confirmedAt && ts.waiting.clubNoticeCount === 0 && ts.ownedClubs.length > 0 && <> No club notice was sent: the club has no other admin or treasurer.</>}
+                  </span>
+                  {can.support && (
+                    <span className={kit.calloutEnd}>
+                      {ts.waiting.heldAt
+                        ? <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={() => setWin('twoStepRelease')}>Release the hold</button>
+                        : <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={() => setWin('twoStepHold')}>Hold the reset</button>}
+                      {!ts.waiting.heldAt && ts.waiting.runsAt && Date.parse(ts.waiting.runsAt) <= Date.now() && (
+                        <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={() => setWin('twoStepRun')}>Run it now</button>
+                      )}
+                      <button type="button" className={styles.redDoor} onClick={() => setWin('twoStepCancel')}>Cancel the reset</button>
+                    </span>
+                  )}
+                </div>
+              )}
+              {ts && !ts.waiting && ts.last && (
+                <p className={kit.caption}>
+                  {ts.last.completedAt
+                    ? <>Two-step sign-in was last reset by support on {consoleDate(ts.last.completedAt)}.</>
+                    : ts.last.cancelledAt
+                      ? <>The last support reset was cancelled on {consoleDate(ts.last.cancelledAt)}{ts.last.cancelledBy === 'signed_in_with_code' ? ': they signed in with a code' : ts.last.cancelledBy === 'email_not_sent' ? ': the confirmation email didn’t send' : ts.last.cancelledBy === 'link_expired' ? ': they never confirmed, and the link expired' : ''}.</>
+                      : null}
+                </p>
+              )}
               {(can.support || can.delete) && (
                 <div className={styles.rareDoors}>
                   {can.support && <button type="button" className={kit.door} onClick={() => setWin('signOut')}>Sign out everywhere</button>}
+                  {can.support && ts?.on && !ts.waiting && <button type="button" className={kit.door} onClick={() => setWin('twoStepReset')}>Reset two-step sign-in</button>}
                   {can.support && (person.status === 'banned'
                     ? <button type="button" className={kit.door} onClick={() => setWin('unban')}>Lift the ban</button>
                     : <button type="button" className={styles.redDoor} onClick={() => setWin('ban')}>Ban this person</button>)}
@@ -335,6 +408,69 @@ export default function PersonRecord({ person, clubs, story, emails, coachesPort
           sentence={<><strong>{person.email}</strong> can sign in again.</>}
           confirmLabel="Lift the ban"
           onConfirm={async reason => { const f = await post(`${api}/ban`, 'POST', { action: 'unban', reason }); if (f) return f; done(); return null; }}
+          onClose={() => setWin(null)}
+        />
+      )}
+      {win === 'twoStepReset' && ts && (
+        <RecordWindow
+          title={`Reset two-step sign-in for ${person.email}`}
+          sentence={ts.ownedClubs.length > 0
+            ? <>{whoFirst} owns <strong>{ts.ownedClubs.map(c => c.name).join(', ')}</strong>, so no one in the club can reset this. {whoFirst} gets an email to confirm. When {whoFirst} confirms, the club’s other admins and treasurer are emailed, and the reset happens 24 hours later.</>
+            : <>{whoFirst} gets an email at <strong>{person.email}</strong> to confirm. When {whoFirst} confirms, the reset happens 24 hours later.</>}
+          footNote={<>Nothing changes until {whoFirst} confirms.</>}
+          confirmLabel="Send confirmation"
+          onConfirm={async reason => {
+            const f = await post(`${api}/two-step-reset`, 'POST', { action: 'start', askedHow, reason });
+            if (f) return f;
+            done(`A confirmation email went to ${person.email}. Nothing changes until ${whoFirst} confirms.`);
+            return null;
+          }}
+          onClose={() => setWin(null)}
+        >
+          <label className={kit.fieldGroup}>
+            <span className={kit.label}>How did {whoFirst} ask?</span>
+            <select className={kit.field} value={askedHow} onChange={e => setAskedHow(e.target.value)}>
+              {Object.entries(ts.askedHow).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+            </select>
+          </label>
+        </RecordWindow>
+      )}
+      {win === 'twoStepHold' && (
+        <RecordWindow
+          title={`Hold the two-step reset for ${person.email}`}
+          sentence={<>The reset waits until the hold is released. Use it when one of the club’s admins wrote back, until you’ve checked with {whoFirst}.</>}
+          confirmLabel="Hold the reset"
+          onConfirm={async reason => { const f = await post(`${api}/two-step-reset`, 'POST', { action: 'hold', reason }); if (f) return f; done('The reset is held.'); return null; }}
+          onClose={() => setWin(null)}
+        />
+      )}
+      {win === 'twoStepRelease' && (
+        <RecordWindow
+          title={`Release the hold on ${person.email}`}
+          sentence={<>The reset goes ahead at its time, or within the hour if that time has passed.</>}
+          confirmLabel="Release the hold"
+          onConfirm={async reason => { const f = await post(`${api}/two-step-reset`, 'POST', { action: 'release', reason }); if (f) return f; done('The hold is released.'); return null; }}
+          onClose={() => setWin(null)}
+        />
+      )}
+      {win === 'twoStepCancel' && (
+        <RecordWindow
+          title={`Cancel the two-step reset for ${person.email}`}
+          sentence={<>The reset won’t happen. {possessive(whoFirst)} two-step sign-in stays as it is. To reset it later, start again.</>}
+          cancelLabel="Keep it"
+          confirmLabel="Cancel the reset"
+          danger
+          onConfirm={async reason => { const f = await post(`${api}/two-step-reset`, 'POST', { action: 'cancel', reason }); if (f) return f; done('The reset is cancelled.'); return null; }}
+          onClose={() => setWin(null)}
+        />
+      )}
+      {win === 'twoStepRun' && (
+        <RecordWindow
+          title={`Run the due two-step reset for ${person.email}`}
+          sentence={<>{possessive(whoFirst)} reset is due, so it runs now instead of on the hour. {whoFirst} is signed out everywhere, their authenticator app and backup codes stop working, and they’re emailed.</>}
+          confirmLabel="Run it now"
+          danger
+          onConfirm={async reason => { const f = await post(`${api}/two-step-reset`, 'POST', { action: 'run', reason }); if (f) return f; done('The reset ran.'); return null; }}
           onClose={() => setWin(null)}
         />
       )}

@@ -13,5 +13,5 @@ export const GET = withObservability(async () => {
   const state = await getSessionTwoStep();
   if (!state) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
   if (!state.hasFactor) return NextResponse.json({ error: 'Two-step sign-in isn’t on for this account.' }, { status: 409 });
-  return NextResponse.json({ version: await lostPhoneVersion(state.user.id), supportEmail: FIELDLOGICHQ_CONTACT_EMAIL });
+  return NextResponse.json({ version: await lostPhoneVersion(state.user.id, state.user.email), supportEmail: FIELDLOGICHQ_CONTACT_EMAIL });
 }, { route: '/api/auth/two-step/lost-phone' });

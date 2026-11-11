@@ -18,6 +18,9 @@ const ACTION_LABELS: Record<string, string> = {
   capabilities_changed: 'Capabilities updated',
   member_suspended:     'Suspended',
   member_reinstated:    'Reinstated',
+  two_step_reset:           'Two-step sign-in reset',
+  two_step_requirement_on:  'Two-step sign-in required',
+  two_step_requirement_off: 'Two-step sign-in no longer required',
 };
 
 function summarizePayload(action: string, payload: Record<string, unknown> | null): string {

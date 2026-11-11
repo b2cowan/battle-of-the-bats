@@ -159,12 +159,14 @@ describe('2 · the sender: a kind on every send (Q8, T13, T24)', () => {
     for (const [kind, e] of Object.entries(EMAIL_KINDS)) {
       assert.equal(isLoggedKind(kind as EmailKind), e.klass === 'account' || e.klass === 'registration', kind);
     }
-    assert.equal(LOGGED_EMAIL_KINDS.length, 46, 'the 37 kinds the owner approved (G1) plus Free time ending (owner 2026-10-28) plus the six emails of a cancel that waits (Plans end at renewal, Part C) plus the two of a move to the free plan that waits (Stage 2 Part C)');
+    assert.equal(LOGGED_EMAIL_KINDS.length, 50, 'the 37 kinds the owner approved (G1) plus Free time ending (owner 2026-10-28) plus the six emails of a cancel that waits (Plans end at renewal, Part C) plus the two of a move to the free plan that waits (Stage 2 Part C) plus the four two-step emails of Board Ready Part 3 (owner 2026-11-11: reset, requirement off, owner-reset confirm and club notice)');
     assert.equal(isLoggedKind('league_signup'), false, "a league sign-up names a child: it is the club's email, never ours");
     assert.equal(isLoggedKind('ops_alert'), false);
     assert.deepEqual([...STORY_EMAIL_KINDS].sort(), [
       'club_coach_invite', 'coach_access_reminder', 'feedback_reply', 'house_league_coach_invite', 'org_invite',
       'password_reset', 'signup_verification', 'staff_invite', 'team_invitation',
+      // Board Ready two-step, Part 3: the owner-reset confirmation carries a link, like the others here.
+      'two_step_owner_reset_confirm',
     ]);
   });
   it('a label is fixed words: no placeholder, no name, and an unknown key reads as "Email"', () => {

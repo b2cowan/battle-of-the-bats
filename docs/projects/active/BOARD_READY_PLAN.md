@@ -242,6 +242,63 @@ points here, so they aren't tracked twice)
       5. A team registration whose existing-account sign-in needs a code leaves the form (the 409 path); the person returns
          to an empty form. Rare. Recommended: accept for now.
       6. Staff "sign in again" accepts only the app's code, never a backup code.
+  - **Part 3 (the switches, the grace period, the resets) — rulings at the UX summary (owner 2026-11-11, all four as
+    recommended):**
+    - **admins see the switches read-only:** an admin gets the Settings tab with ONLY the two-step card (read-only, "only
+      the owner changes this"); every other Settings card stays owner-only;
+    - **"reaches no other organization" = any live tie:** a seat in another organization (any status: invited, active,
+      suspended), a Coaches Portal team of their own (free or paid), coaching a house-league team in another club, or a
+      family link to another club (anything but declined / revoked). Unsure = support resets it;
+    - **a coach's reset door is drawn now** (the club's team staff page person window), built in Part 3 after the owner's yes;
+    - **the owner-reset job runs every hour**, so "24 hours" is 24 to 25.
+    - Session calls (stated in the summary, not objected to): one new migration (the job's schedule and the confirmation
+      link's stored hash; a scheduled job cannot exist without one); the turn-off email also reaches the club's other
+      owners; after a reset a seat that requires it is sent to set-up at the next sign-in, and anyone else simply has it
+      off (the email says so); a code from the app or a backup code, typed at sign-in during the wait, cancels an owner
+      reset; support gets Hold / Release / Cancel on a waiting reset.
+  - **Part 3 BUILT 2026-11-11** (mig 469 applied to dev; mig 470, the hourly schedule, written, not applied — watched
+    automation, its own commit; owner walk §515 `BOARD_READY_TWO_STEP_PART3_WALK.html`, fixture `.probe/two-step-p3/fixture.mjs`,
+    `--undo` after the walk). Coach door drawn and approved the same day (`BOARD_READY_TWO_STEP_COACH_RESET_DRAWINGS.html`,
+    A1–A3 as recommended). What was built:
+    - **The one reset order** `lib/two-step-reset.ts` (`removeEveryAuthenticator`, now also Part 2's turn off; `resetTwoStep`
+      = signed out → removed → signed out again). **The club's rule** `lib/two-step-club-reset.ts` (`clubResetDoorRule`,
+      `accountReachesAnotherPlace` = any live tie, fails toward support), read by the Members door, the coach door and "Lost
+      your phone?" (`CLUB_RESET_DOOR_BUILT = true`). **The club's run** `lib/two-step-club-reset-run.ts` (rule again → the
+      viewer's fresh code → reset → club audit line → email).
+    - **Switches:** Settings card `TwoStepRequirementCard`, route `/api/admin/org-settings/two-step` (owner changes; admin
+      reads, and gets the Settings tab and an open hub row for this card alone; ON needs the owner's own two-step; OFF asks the
+      code and emails the club's other owners, admins and treasurer; audit lines `two_step_requirement_on/off`).
+    - **Grace:** `lib/two-step-grace.ts` written at every place a covered seat begins (7 sites, test SEAT_STARTS); the login
+      page sends a covered person with two-step off to the set-up page's club screen (`why=club`; the gate adds `why=required`):
+      during the 14 days "Remind me next time (N days left)", after them "Go to my other teams instead" when the status
+      route's `elsewhere` says so.
+    - **Support's reset** `lib/two-step-support-reset.ts`: person record › Account (fact, door, record window with How/Why,
+      waiting callout with Hold / Release / Cancel / Run it now), confirmation page + POST route (token hashed, 3 days),
+      the club notice (no link, Reply-To the contact address), the 24 hours (dev-only `TWO_STEP_RESET_WAIT_MINUTES`, set to 3
+      in `.env.local`), the hourly job route, cancel on a real code (the code step's call, the backup-code route, the sign-in
+      landing). Audit lines person-level (org null, club in the value) so they show on the person's Story. Mig 469:
+      `organization_id` nullable (support also resets a person who owns no club, as "Lost your phone?" already promises),
+      token hash, expiry, club notice count, cancelled_by, one open reset per person.
+    - **`/review` (high-risk, 4 lenses) found and fixed:** the hourly run CLAIMS a row before resetting (two runs, a hold or a
+      cancel could reset twice or a held one); a failed removal never clears the mark for an authenticator that was not the
+      person's own before it began; the coach door's seat read fails closed; Release asks for staff's code; a team moving in
+      gives grace only to staff newly seated; a re-pressed confirmation re-sends an unfinished club notice; an expired
+      unconfirmed request no longer blocks a new one; staff in a club's 14 days no longer loop on "Remind me"; the set-up page
+      never returns to itself; the hub's locked Settings row for an admin; Story titles and audit doors; stale errors in the
+      coach window; the card's "has until" wording.
+    - **`/legal` (light):** no CASL blocker; must-fix applied (the club notice's "reply" had no Reply-To); Part 4 lines in
+      `docs/agents/legal/TWO_STEP_SIGNIN_PRIVACY.md` § Part 3.
+    - **Open owner calls from Part 3:**
+      1. ~~An owner or admin whose own two-step is off can reset others / turn a requirement off with the password alone~~
+         **RULED 2026-11-11 (owner, as recommended) and BUILT:** both reset doors show "To reset it, turn on two-step sign-in
+         for your own account first" (`own_first` in `clubResetDoorRule`; the run refuses it before asking a code), and the
+         switch route needs the owner's own two-step to turn a requirement on OR off.
+      2. **Mig 470 (the hourly schedule)** — **owner yes 2026-11-11: applied to dev, its own commit**; on production after mig
+         469 and the code (MANUAL_PROD_STEPS).
+      3. **The contact address is the reset's hold line:** confirm `hello@fieldlogichq.ca` is read daily while a reset waits.
+      4. Noted, not fixed: the support-only line tells an admin the account reaches *somewhere* else (accepted by the ask 3
+         ruling); the club's audit line is written after the reset (support's is before); a super admin can start a support
+         reset on a staff account; Help still says an admin can't open Settings (Part 4 `/docs`).
   - **Build outline:**
     - server enforcement in the helpers above;
     - pages route a password-only session in a required seat to the code or set-up step;

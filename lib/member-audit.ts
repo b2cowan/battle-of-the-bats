@@ -9,7 +9,8 @@ import { HELPING_WITH } from './volunteer-words';
  * writes the sentence, the screen shows it.
  *
  * The log records what it records today — member changes, nothing wider (specimen 11: no filters,
- * no search, no logins, money or settings; widening what it logs is a separate decision).
+ * no search, no logins, money or settings; widening what it logs is a separate decision). One widening
+ * was ruled: the two-step switches (Board Ready, owner 2026-11-10), because they decide who may sign in.
  */
 
 /** The member changes the board's log shows (the route's `?scope=members`). */
@@ -21,6 +22,10 @@ export const MEMBER_AUDIT_ACTIONS = [
   'member_suspended',
   'member_reinstated',
   'rep_group_scope_changed',
+  // Two-step sign-in (Board Ready, Part 3; owner ruling 2026-11-10: every switch change is a club audit line).
+  'two_step_reset',
+  'two_step_requirement_on',
+  'two_step_requirement_off',
 ] as const;
 
 const PROGRAM_LABEL: Partial<Record<string, string>> = Object.fromEntries(
@@ -115,6 +120,12 @@ export function auditChangeSentence(action: string, payload: Record<string, unkn
       return 'Reinstated';
     case 'rep_group_scope_changed':
       return 'Rep teams groups changed';
+    case 'two_step_reset':
+      return 'Reset two-step sign-in';
+    case 'two_step_requirement_on':
+      return p.which === 'coaches' ? 'Two-step sign-in required for coaches' : 'Two-step sign-in required for the board';
+    case 'two_step_requirement_off':
+      return p.which === 'coaches' ? 'Two-step sign-in no longer required for coaches' : 'Two-step sign-in no longer required for the board';
     default:
       return action;
   }

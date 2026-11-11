@@ -38,6 +38,11 @@ export const EMAIL_KINDS = {
   org_member_removed:                   { klass: 'account', label: 'Access removed' },
   org_member_suspended:                 { klass: 'account', label: 'Access suspended' },
   org_member_access_changed:            { klass: 'account', label: 'Access changed' },
+  // ── account: two-step sign-in (Board Ready, Part 3) ─────────────────────────
+  two_step_reset:                       { klass: 'account', label: 'Two-step sign-in reset' },
+  two_step_requirement_off:             { klass: 'account', label: 'Two-step requirement turned off' },
+  two_step_owner_reset_confirm:         { klass: 'account', label: 'Owner two-step reset: confirm', story: true },
+  two_step_owner_reset_notice:          { klass: 'account', label: 'Owner two-step reset: club notice' },
   // ── account: plan and billing ──────────────────────────────────────────────
   basic_team_welcome:                   { klass: 'account', label: 'Team page ready' },
   team_workspace_welcome:               { klass: 'account', label: 'Coaches Portal welcome' },

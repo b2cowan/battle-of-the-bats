@@ -10,6 +10,9 @@
  * What stays here is what changes the club everywhere, not only on its site: its NAME and its WEB ADDRESS (changing it
  * breaks every link families saved), with the one Save and its unsaved-changes guard; a door card to Public site for
  * the owner who comes here out of habit; and the deletion request.
+ *
+ * ⚖ TWO-STEP SIGN-IN (Board Ready, Part 3; ruled 2026-11-11): the club's two switches have a card here, and an ADMIN
+ * reaches Settings for that card alone, read-only. Every other card stays the owner's.
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -24,6 +27,7 @@ import { stepOf } from '@/components/coaches/backStep';
 import KitDialog from './KitDialog';
 import BirthdayCutoffCard, { loadBirthdayCutoffs, type CardData } from './BirthdayCutoffCard';
 import PayoutsCard, { loadPayouts, type PayoutsView } from './PayoutsCard';
+import TwoStepRequirementCard, { loadTwoStepSwitches, type TwoStepSwitches } from './TwoStepRequirementCard';
 import PaymentsEndingSection from './PaymentsEndingSection';
 import type { EndingSection } from '@/lib/online-payment-endings';
 import PageNotice, { useNotice } from './PageNotice';
@@ -50,6 +54,8 @@ export default function SettingsKit() {
   const [cutoffData, setCutoffData] = useState<CardData | null>(null);
   // Payouts (Club Tier Stage 12a): null while online payments aren't offered here — the card then stays away.
   const [payouts, setPayouts] = useState<PayoutsView | null>(null);
+  const [twoStep, setTwoStep] = useState<TwoStepSwitches | null>(null);
+  const [twoStepLoaded, setTwoStepLoaded] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [name, setName] = useState('');
   const [urlSlug, setUrlSlug] = useState('');
@@ -74,20 +80,28 @@ export default function SettingsKit() {
   }
 
   useEffect(() => {
-    if (!orgQuery) return;
+    if (!orgQuery || !userRole) return;
     let stale = false;
-    // The birthdays and Payouts cards read with the settings and the page waits for all three, so every card shows at once.
+    // An admin reads only the two-step card (ruled 2026-11-11); nothing else on this page is theirs.
+    if (userRole === 'admin') {
+      loadTwoStepSwitches(orgQuery).then(t => { if (!stale) { setTwoStep(t); setTwoStepLoaded(true); } });
+      return () => { stale = true; };
+    }
+    if (userRole !== 'owner') return;
+    // The birthdays, two-step and Payouts cards read with the settings and the page waits for all of them, so every card
+    // shows at once.
     Promise.all([
       fetch(`/api/admin/org-settings${orgQuery}`).then(r => (r.ok ? r.json() : Promise.reject(new Error()))),
       loadBirthdayCutoffs(orgQuery),
       loadPayouts(slug),
+      loadTwoStepSwitches(orgQuery),
     ])
-      .then(([d, cutoffs, payoutsView]: [OrgSettings, CardData | null, PayoutsView | null]) => {
-        if (!stale) { adopt(d); setCutoffData(cutoffs); setPayouts(payoutsView); }
+      .then(([d, cutoffs, payoutsView, twoStepView]: [OrgSettings, CardData | null, PayoutsView | null, TwoStepSwitches | null]) => {
+        if (!stale) { adopt(d); setCutoffData(cutoffs); setPayouts(payoutsView); setTwoStep(twoStepView); setTwoStepLoaded(true); }
       })
       .catch(() => { if (!stale) setLoadFailed(true); });
     return () => { stale = true; };
-  }, [orgQuery, slug]);
+  }, [orgQuery, slug, userRole]);
 
   useEffect(() => {
     if (!orgQuery) return;
@@ -162,6 +176,22 @@ export default function SettingsKit() {
   if (loading || !currentOrg || !userRole) return <LoadingState label="Loading the settings…" />;
 
   // ⚖ Ask 6 = A (Club Tier Stage 13a, F-A5-9): the ONE "not yours" screen, the owner's-only voice.
+  // An admin: the two-step card alone, read-only (Board Ready, Part 3).
+  if (userRole === 'admin') {
+    return (
+      <div className={`${ck.page} ${styles.narrow}`}>
+        <TabPageHeader eyebrow="Organization" title="Settings" />
+        {!twoStepLoaded ? <LoadingState label="Loading the settings…" /> : twoStep ? (
+          <TwoStepRequirementCard orgQuery={orgQuery} initial={twoStep} />
+        ) : (
+          <div className={`${ck.notice} ${ck.noticeBad}`} role="alert">
+            <AlertTriangle size={15} aria-hidden />
+            <div className={ck.noticeBody}>The settings didn’t load. Refresh the page to try again.</div>
+          </div>
+        )}
+      </div>
+    );
+  }
   if (userRole !== 'owner') return <NotYours page="settings" />;
 
   async function patch(body: Record<string, unknown>): Promise<{ ok: boolean; data: Record<string, unknown> }> {
@@ -283,6 +313,9 @@ export default function SettingsKit() {
 
           {/* ── When birthdays count from (Club Tier Stage 4c-2): saves by itself through the pill, apart from the Save above ── */}
           <BirthdayCutoffCard orgQuery={orgQuery} initial={cutoffData} />
+
+          {/* ── Two-step sign-in (Board Ready, Part 3): the club's two switches; saves by itself ── */}
+          <TwoStepRequirementCard orgQuery={orgQuery} initial={twoStep} />
 
           {/* ── Your public site: a door (Public site builder, 2026-10-21) — what families see moved there. Only on a plan
                with the site (Public tournament pages 1a, owner 2026-11-02): on Tournament Plus it opened to a load failure. ── */}

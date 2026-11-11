@@ -37,6 +37,7 @@ import {
 import type { OrgPlan, Organization } from './types';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import type { TeamWorkspace } from './team-workspace-entitlements';
+import { startTwoStepGrace } from './two-step-grace';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -595,6 +596,16 @@ export async function approveTeamMove(input: {
     return { ok: false, status: 400, error: REFUSAL.confirmMismatch, code: 'confirm_mismatch' };
   }
 
+  // Two-step (Board Ready, Part 3): who on the staff ALREADY holds an active seat in the club, read before the move. Only the
+  // others take a new seat now, and only they get their own 14 days (/review: an admin who coaches the team must not get a
+  // fresh grace period by the team moving in).
+  const staffBefore = await listActiveStaffUserIds(link.rep_team_id).catch(() => [] as string[]);
+  const { data: seatedRows } = staffBefore.length
+    ? await supabaseAdmin.from('organization_members').select('user_id')
+      .eq('organization_id', club.id).eq('status', 'active').in('user_id', staffBefore)
+    : { data: [] as { user_id: string }[] };
+  const alreadySeated = new Set((seatedRows ?? []).map(r => r.user_id as string));
+
   const { data, error } = await supabaseAdmin.rpc('move_team_into_club', {
     p_link_id: link.id,
     p_approving_side: side,
@@ -658,6 +669,9 @@ export async function approveTeamMove(input: {
   // The team's staff are in the club now: their bell lives there.
   const teamName = moved.teamName ?? 'Your team';
   const staffIds = await listActiveStaffUserIds(link.rep_team_id).catch(() => [] as string[]);
+  // Two-step (Board Ready, Part 3): the staff took coach seats in the club just now — in a club that already requires it
+  // for coaches, each gets their own 14 days.
+  await Promise.all(staffIds.filter(uid => !alreadySeated.has(uid)).map(uid => startTwoStepGrace(uid, club.id, 'coach')));
   await bell({
     orgId: club.id,
     eventType: 'team_move_answered',

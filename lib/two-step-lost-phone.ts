@@ -1,27 +1,31 @@
 import { supabaseAdmin } from './supabase-admin';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
+import { accountIsClubResettable, accountReachesAnotherPlace } from './two-step-club-reset';
 
 /**
- * "LOST YOUR PHONE?" — which version the person sees (Board Ready · two-step sign-in, Part 2; drawings tab 4). Decided by
- * the account's seats AFTER the password matched, so the screen never tells a stranger anything; and even then it never
- * names the club or anyone in it.
+ * "LOST YOUR PHONE?" — which version the person sees (Board Ready · two-step sign-in, Parts 2 and 3; drawings tab 4).
+ * Decided by the account's seats AFTER the password matched, so the screen never tells a stranger anything; and even then
+ * it never names the club or anyone in it.
  *
- *   club     a seat in exactly one organization (not a coach's own team): "Ask your club" (its owner or an admin can
- *            reset it, ask 3), plus "Are you the club's owner?" (support, with the 24-hour wait)
- *   support  everyone else: a coach's own team, a parent, an account in more than one organization (a club resets only
- *            people whose account reaches no other organization)
+ *   club     the club's reset can reach this account: a seat in exactly one organization (not a coach's own team), and
+ *            nothing beyond it (lib/two-step-club-reset.ts, the SAME rule the club's door applies). "Ask your club", plus
+ *            "Are you the club's owner?" (support, with the 24-hour wait) — the owner reads the same screen, so it says
+ *            nothing about which seat this account holds.
+ *   support  everyone else: a coach's own team, a parent, an account that reaches another organization, platform staff.
  *
- * ⚠ ONE PLACE PART 3 CHANGES: the club version points at Part 3's reset door, which does not exist yet. Until it does,
- * everyone gets the support version (`CLUB_RESET_DOOR_BUILT`). Part 3 flips it, and refines "reaches no other
- * organization" to the rule its reset applies, so the screen and the door can never disagree.
+ * The club's door exists since Part 3 (`CLUB_RESET_DOOR_BUILT`), so the club version is live.
  */
-export const CLUB_RESET_DOOR_BUILT = false;
+export const CLUB_RESET_DOOR_BUILT = true;
 
 export type LostPhoneVersion = 'club' | 'support';
 
 type Row = { organization_id: string; organizations: { account_kind: string | null; plan_id: string | null } | null };
 
-export async function lostPhoneVersion(userId: string, doorBuilt: boolean = CLUB_RESET_DOOR_BUILT): Promise<LostPhoneVersion> {
+export async function lostPhoneVersion(
+  userId: string,
+  email: string | null | undefined,
+  doorBuilt: boolean = CLUB_RESET_DOOR_BUILT,
+): Promise<LostPhoneVersion> {
   if (!doorBuilt) return 'support';
   const { data, error } = await supabaseAdmin
     .from('organization_members')
@@ -32,7 +36,11 @@ export async function lostPhoneVersion(userId: string, doorBuilt: boolean = CLUB
   if (error) return 'support';
   const orgs = new Map((data ?? []).map(r => [r.organization_id, r.organizations]));
   if (orgs.size !== 1) return 'support';
-  const [org] = [...orgs.values()];
+  const [[orgId, org]] = [...orgs.entries()];
   if (!org || isTeamWorkspaceOrg({ accountKind: org.account_kind, planId: org.plan_id })) return 'support';
-  return 'club';
+  const [resettable, elsewhere] = await Promise.all([
+    accountIsClubResettable(email),
+    accountReachesAnotherPlace(userId, orgId),
+  ]);
+  return resettable && !elsewhere ? 'club' : 'support';
 }

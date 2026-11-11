@@ -21,6 +21,13 @@ import styles from './two-step.module.css';
  *   Done          "Your other devices were signed out" is true: the sign-in service does it when two-step is turned on
  *
  * "Not now" is absent once something requires it (staff; a club past its 14 days).
+ *
+ * ⚖ A CLUB'S SCREEN FIRST (Part 3; drawings tab 8 "After the password"). Arriving from sign-in (`?why=club`) or from the
+ * server's check (`?why=required`), a person a club's switch covers sees the club's screen before the set-up starts:
+ *   during the 14 days   "Your club now asks for two-step sign-in" · Set it up now · Remind me next time (N days left)
+ *   after them           "Set up two-step sign-in to continue" · Set it up now · Go to my other teams instead (only when
+ *                        they have somewhere else to go: `elsewhere` from the status route)
+ * Reached from Account › Sign-in & security there is no `why`, so the set-up starts at once, as before.
  */
 
 type Status = {
@@ -31,7 +38,17 @@ type Status = {
   isDemo?: boolean;
   requiredNow?: boolean;
   replacing?: boolean;
+  requiredBy?: { kind: 'staff' | 'club'; orgName?: string; role?: string; state?: 'grace' | 'required'; until?: string | null }[];
+  elsewhere?: boolean;
 };
+
+/** "Milton Minor Ball requires it for treasurers." — the seat in the club's words. */
+const ROLE_PLURAL: Record<string, string> = {
+  owner: 'its owner', admin: 'admins', treasurer: 'treasurers', league_admin: 'league admins', league_registrar: 'registrars',
+  coach: 'coaches',
+};
+
+type ClubScreen = { kind: 'club'; past: boolean; orgName: string; who: string; daysLeft: number; elsewhere: boolean };
 
 /** `adding`: a new phone set up beside the old one (the session typed the app's code); verify removes the old one. */
 type Enrolment = { factorId: string; qrCode: string; secret: string; uri: string; adding?: boolean };
@@ -43,13 +60,36 @@ type Screen =
   | { kind: 'confirmCodes' }
   | { kind: 'scan'; enrolment: Enrolment }
   | { kind: 'codes'; codes: string[]; fresh: boolean }
-  | { kind: 'done' };
+  | { kind: 'done' }
+  | ClubScreen;
 
 const STEP_LABELS = ['Scan', 'Backup codes', 'Done'] as const;
 
 /** "JBSWY3DPEHPK3PXP" → "JBSW Y3DP EHPK 3PXP", easier to type into an app. */
 function groupKey(secret: string): string {
   return secret.replace(/(.{4})/g, '$1 ').trim();
+}
+
+/** The club's screen for this person, or null when no club covers them (staff alone, or nothing). */
+function clubScreenFor(s: Status, now: number = Date.now()): ClubScreen | null {
+  const clubs = (s.requiredBy ?? []).filter(r => r.kind === 'club' && r.orgName);
+  if (clubs.length === 0) return null;
+  // A club past its 14 days speaks first: it is the one holding the person back.
+  const past = clubs.find(r => r.state === 'required');
+  // Required by something with no grace (platform staff) while the club is still in its 14 days: "Remind me" would only
+  // come straight back here (/review of Part 3), so the set-up starts as it does for staff.
+  if (!past && s.requiredNow) return null;
+  const r = past ?? clubs.reduce((a, b) => (Date.parse(a.until ?? '') <= Date.parse(b.until ?? '') ? a : b));
+  const untilMs = r.until ? Date.parse(r.until) : NaN;
+  const daysLeft = Number.isFinite(untilMs) ? Math.max(1, Math.ceil((untilMs - now) / 86_400_000)) : 1;
+  return {
+    kind: 'club',
+    past: Boolean(past),
+    orgName: r.orgName ?? 'Your club',
+    who: ROLE_PLURAL[r.role ?? ''] ?? 'your role',
+    daysLeft,
+    elsewhere: s.elsewhere === true,
+  };
 }
 
 function usePhoneLayout(): boolean {
@@ -69,6 +109,7 @@ function SetUp() {
   const next = safeNextPath(searchParams.get('next'), null);
   const replace = searchParams.get('replace') === '1';
   const newCodesOnly = searchParams.get('step') === 'codes';
+  const why = searchParams.get('why');
   const phone = usePhoneLayout();
 
   const [screen, setScreen] = useState<Screen>({ kind: 'loading' });
@@ -87,12 +128,37 @@ function SetUp() {
   const goOn = useCallback(async () => {
     // Where the person was going; with no `next`, the same place a sign-in would land them. A full load, so the browser
     // starts fresh on the session the set-up just upgraded.
-    let dest = next;
+    // Never back to this page itself (a sign-in that began here would bring the person straight back; /review of Part 3).
+    let dest = next && !next.startsWith('/auth/two-step') ? next : null;
     if (!dest) {
       try { dest = (await (await fetch('/api/auth/destination')).json()).destination ?? '/discover'; } catch { dest = '/discover'; }
     }
     window.location.assign(dest ?? '/discover');
   }, [next]);
+
+  /** The set-up itself: a fresh authenticator to scan. */
+  const begin = useCallback(async () => {
+    setScreen({ kind: 'loading' });
+    const res = await fetch('/api/auth/two-step/set-up/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ replace }),
+    });
+    const data = await res.json().catch(() => ({})) as Partial<Enrolment> & { code?: string };
+    // A new phone needs a code from the last 15 minutes: the one window asked (and sent this again). Reaching here with
+    // the refusal means the person said no in the window.
+    if (res.status === 401 && data.code === TWO_STEP_FRESH_CODE) {
+      setScreen({ kind: 'refused', title: 'A code comes first', body: 'Setting up a new phone asks for a code from your authenticator app, or a backup code. Nothing has changed.' });
+      return;
+    }
+    if (!res.ok || !data.factorId) {
+      setScreen(data.code === 'already_on'
+        ? { kind: 'refused', title: 'Two-step sign-in is already on', body: 'Signing in asks for a code from your app.' }
+        : { kind: 'refused', title: 'We couldn’t start the set-up', body: 'Try again in a moment.' });
+      return;
+    }
+    setScreen({ kind: 'scan', enrolment: data as Enrolment });
+  }, [replace]);
 
   useEffect(() => {
     if (started.current) return;
@@ -119,27 +185,13 @@ function SetUp() {
         setScreen({ kind: 'refused', title: 'Two-step sign-in is already on', body: 'Signing in asks for a code from your app.' });
         return;
       }
-      const res = await fetch('/api/auth/two-step/set-up/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ replace }),
-      });
-      const data = await res.json().catch(() => ({})) as Partial<Enrolment> & { code?: string };
-      // A new phone needs a code from the last 15 minutes: the one window asked (and sent this again). Reaching here with
-      // the refusal means the person said no in the window.
-      if (res.status === 401 && data.code === TWO_STEP_FRESH_CODE) {
-        setScreen({ kind: 'refused', title: 'A code comes first', body: 'Setting up a new phone asks for a code from your authenticator app, or a backup code. Nothing has changed.' });
-        return;
-      }
-      if (!res.ok || !data.factorId) {
-        setScreen(data.code === 'already_on'
-          ? { kind: 'refused', title: 'Two-step sign-in is already on', body: 'Signing in asks for a code from your app.' }
-          : { kind: 'refused', title: 'We couldn’t start the set-up', body: 'Try again in a moment.' });
-        return;
-      }
-      setScreen({ kind: 'scan', enrolment: data as Enrolment });
+      // A club's screen first (tab 8), when sign-in or the server's check sent the person here.
+      const club = why && !replace && !s.replacing ? clubScreenFor(s) : null;
+      if (club) { setScreen(club); return; }
+      await begin();
     })();
-  }, [newCodesOnly, replace]);
+  }, [newCodesOnly, replace, why, begin]);
+
 
   async function makeNewCodes() {
     setBusy(true);
@@ -201,6 +253,33 @@ function SetUp() {
   const notNow = !status?.requiredNow && !replace && !status?.replacing;
 
   if (screen.kind === 'loading') return <StartColumn><LoadingState label="Loading…" /></StartColumn>;
+
+  if (screen.kind === 'club') {
+    return (
+      <StartColumn>
+        <StartHead
+          title={screen.past ? 'Set up two-step sign-in to continue' : 'Your club now asks for two-step sign-in'}
+          sub={screen.past
+            ? `${screen.orgName} requires it for ${screen.who}. Until it’s set up, the club’s pages wait.`
+            : `${screen.orgName} requires it for ${screen.who}. It takes about two minutes.`}
+        />
+        <div className={accountForm.form}>
+          <button type="button" className={accountForm.primary} onClick={() => void begin()} id="two-step-club-set-up">Set it up now</button>
+          {screen.past ? (
+            screen.elsewhere && (
+              <button type="button" className={accountForm.textBtn} onClick={() => window.location.assign('/discover')} id="two-step-club-elsewhere">
+                Go to my other teams instead
+              </button>
+            )
+          ) : (
+            <button type="button" className={accountForm.textBtn} onClick={goOn} id="two-step-club-later">
+              Remind me next time ({screen.daysLeft} {screen.daysLeft === 1 ? 'day' : 'days'} left)
+            </button>
+          )}
+        </div>
+      </StartColumn>
+    );
+  }
 
   if (screen.kind === 'confirmCodes') {
     return (

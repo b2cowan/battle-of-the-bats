@@ -5,6 +5,25 @@ import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { twoStepRequirementsFor } from '@/lib/two-step-requirements';
 import { backupCodesLeft } from '@/lib/two-step-codes';
 import { isReplacingAuthenticator } from '@/lib/two-step-session';
+import { filterWorkspaceContexts, getUserAccessContexts } from '@/lib/user-contexts';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+
+/**
+ * "Go to my other teams instead" (Part 3, tab 8): only for a person with somewhere to go that no club is holding back —
+ * a workspace outside the clubs that require it now, or the family app.
+ */
+async function hasPlaceOutside(user: { id: string; email?: string | null }, heldSlugs: Set<string>): Promise<boolean> {
+  if (heldSlugs.size === 0) return false;
+  try {
+    const contexts = filterWorkspaceContexts(await getUserAccessContexts({ id: user.id, email: user.email ?? '' }));
+    if (contexts.some(c => !c.orgSlug || !heldSlugs.has(c.orgSlug))) return true;
+    const { count } = await supabaseAdmin.from('family_links').select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id).eq('status', 'verified');
+    return (count ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Where this session stands on two-step sign-in (Board Ready · two-step sign-in, Part 1): the sign-in page's code step,
@@ -31,8 +50,11 @@ export const GET = withObservability(async () => {
     twoStepRequirementsFor(state.user),
     state.hasFactor ? backupCodesLeft(state.user.id) : Promise.resolve(0),
   ]);
+  const held = new Set(requirements.reasons.flatMap(r => (r.kind === 'club' && r.requirement.kind === 'required' ? [r.orgSlug] : [])));
   return NextResponse.json({
     ...base,
+    /** A place to go that no club is holding back (only asked when a club holds one). */
+    elsewhere: state.hasFactor ? false : await hasPlaceOutside(state.user, held),
     viaBackupCode: state.viaBackupCode,
     /** Replacing a lost phone: the old authenticator is gone and the new one not finished. */
     replacing: isReplacingAuthenticator(state.user),

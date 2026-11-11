@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 import { requireFreshCode } from '@/lib/two-step-fresh';
+import { roleChangeStartsGrace, startTwoStepGrace } from '@/lib/two-step-grace';
 
 type MemberRow = {
   user_id: string;
@@ -73,6 +74,11 @@ export const POST = withObservability(async (req: NextRequest,
 
   if (promoteError) {
     return NextResponse.json({ error: promoteError.message }, { status: 500 });
+  }
+
+  // Two-step (Board Ready, Part 3): an active member moved under the board's switch from outside it gets their own 14 days.
+  if (newOwnerMember.status === 'active' && roleChangeStartsGrace(newOwnerMember.role, 'owner')) {
+    await startTwoStepGrace(newOwnerUserId, id, 'owner');
   }
 
   // Demote all previous owners to admin.

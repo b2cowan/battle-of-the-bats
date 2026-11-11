@@ -9,6 +9,7 @@ import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { accountDoorRefusal, checkAcceptance, recordDoorAcceptance } from '@/lib/legal-acceptance';
 import { getSignedInUser } from '@/lib/two-step-session';
+import { startTwoStepGrace } from '@/lib/two-step-grace';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -172,6 +173,9 @@ export const POST = withObservability(async (req: Request) => {
     // is already saved), never asks for a new password, and never moves on as if it had worked.
     return captureAndJson(error, { error: 'We couldn’t add you just now. Try again.', code: 'join_failed' }, 500);
   }
+
+  // Two-step (Board Ready, Part 3): a seat the club already requires gets its own 14 days from today.
+  await startTwoStepGrace(user.id, member.organization_id, member.role);
 
   const orgSlug = orgSlugFromRelation(member.organizations);
   // J10-011: land where this role starts — the same resolver sign-in uses — not a hard-coded /admin.

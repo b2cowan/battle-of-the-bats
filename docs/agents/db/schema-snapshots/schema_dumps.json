@@ -30490,7 +30490,7 @@
         "column_name": "organization_id",
         "data_type": "uuid",
         "udt_name": "uuid",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -30589,6 +30589,42 @@
         "column_name": "completed_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 14,
+        "column_name": "confirm_token_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 15,
+        "column_name": "confirm_expires_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 16,
+        "column_name": "club_notice_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 17,
+        "column_name": "cancelled_by",
+        "data_type": "text",
+        "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -43038,8 +43074,18 @@
       },
       {
         "tablename": "two_step_owner_resets",
+        "indexname": "two_step_owner_resets_one_open_idx",
+        "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_one_open_idx ON public.two_step_owner_resets USING btree (user_id) WHERE ((completed_at IS NULL) AND (cancelled_at IS NULL))"
+      },
+      {
+        "tablename": "two_step_owner_resets",
         "indexname": "two_step_owner_resets_pkey",
         "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_pkey ON public.two_step_owner_resets USING btree (id)"
+      },
+      {
+        "tablename": "two_step_owner_resets",
+        "indexname": "two_step_owner_resets_token_idx",
+        "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_token_idx ON public.two_step_owner_resets USING btree (confirm_token_hash) WHERE (confirm_token_hash IS NOT NULL)"
       },
       {
         "tablename": "two_step_owner_resets",

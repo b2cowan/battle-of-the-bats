@@ -6086,8 +6086,18 @@
   },
   {
     "tablename": "two_step_owner_resets",
+    "indexname": "two_step_owner_resets_one_open_idx",
+    "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_one_open_idx ON public.two_step_owner_resets USING btree (user_id) WHERE ((completed_at IS NULL) AND (cancelled_at IS NULL))"
+  },
+  {
+    "tablename": "two_step_owner_resets",
     "indexname": "two_step_owner_resets_pkey",
     "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_pkey ON public.two_step_owner_resets USING btree (id)"
+  },
+  {
+    "tablename": "two_step_owner_resets",
+    "indexname": "two_step_owner_resets_token_idx",
+    "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_token_idx ON public.two_step_owner_resets USING btree (confirm_token_hash) WHERE (confirm_token_hash IS NOT NULL)"
   },
   {
     "tablename": "two_step_owner_resets",

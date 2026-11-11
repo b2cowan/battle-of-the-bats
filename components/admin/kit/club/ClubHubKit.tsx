@@ -508,7 +508,11 @@ export default function ClubHubKit() {
             {canManageBilling && <Link href={`${base}/org/billing`} className={ck.row}>
               <span className={ck.rowMain}><span className={ck.rowTitle}>Plan &amp; billing</span></span>
             </Link>}
-            {showsLockedRows && (canManageBilling ? ['Settings'] : ['Plan & billing', 'Settings']).map(label => (
+            {/* An admin opens Settings for its two-step card alone, read-only (Board Ready two-step, Part 3, 2026-11-11). */}
+            {showsLockedRows && <Link href={`${base}/org/settings`} className={ck.row}>
+              <span className={ck.rowMain}><span className={ck.rowTitle}>Settings</span><span className={ck.rowSub}>Two-step sign-in, read-only</span></span>
+            </Link>}
+            {showsLockedRows && !canManageBilling && ['Plan & billing'].map(label => (
               <div key={label} className={`${ck.row} ${ck.rowLocked}`} aria-label={NOT_YOURS_WORDS.lockedRowLabel(label)}>
                 <span className={ck.rowMain}><span className={`${ck.rowTitle} ${ck.muted}`}>{label}</span></span>
                 <span className={ck.rowEnd}><span className={ck.chip}><Lock size={11} aria-hidden /> {NOT_YOURS_WORDS.askChip(boardOwnerName(board))}</span></span>

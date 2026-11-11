@@ -28,7 +28,8 @@ export class TwoStepRequiredError extends HttpError {
     super(need === 'code' ? 'Two-step sign-in: type your code' : 'Two-step sign-in: set it up first');
     this.name = 'TwoStepRequiredError';
     this.need = need;
-    this.destination = twoStepStepUrl(need, next);
+    // `why=required`: the set-up page opens on the club's "set it up to continue" screen when a club is the reason (Part 3).
+    this.destination = twoStepStepUrl(need, next, need === 'set_up' ? { why: 'required' } : {});
     this.digest = `NEXT_REDIRECT;replace;${this.destination};307;`;
   }
 

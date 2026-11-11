@@ -51,6 +51,7 @@ export const NOT_YOURS_PAGES: Record<NotYoursPage, PageWords> = {
   seasonMoney: { title: 'Season money', what: 'It’s the season’s fees: who has paid, who owes, and refunds.', who: 'grant' },
   seasonEmails: { title: 'Season email', what: 'It’s where the season’s families are emailed, and what was sent.', who: 'leagueDesk' },
   pdfSettings: { title: 'PDF settings', what: 'It sets the header, logo and footer on every PDF the club exports.', who: 'ownerOrAdmin' },
+  // An ADMIN opens Settings for its two-step card (Board Ready two-step, Part 3); every other card there stays the owner's.
   settings: { title: 'Settings', what: 'It holds the club’s name, web address, contact email and logo.', who: 'owner' },
   billing: { title: PLAN_BILLING_TITLE, what: 'It holds the club’s plan, its subscription and how it’s paid.', who: 'owner' },
   auditLog: { title: 'Audit log', what: 'It records who changed what on the club’s board.', who: 'owner' },

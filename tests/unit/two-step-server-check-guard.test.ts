@@ -111,7 +111,7 @@ describe('2 · the shared helpers apply the rule', () => {
     assert.equal(err.status, 401);
     assert.equal(err.body().code, 'two_step_set_up');
     assert.ok(isRedirectError(err), 'a page that throws it must redirect, never show an error');
-    assert.equal(err.destination, '/auth/two-step?next=%2Fmilton%2Fadmin%2Ffamilies%3Fx%3D1');
+    assert.equal(err.destination, '/auth/two-step?why=required&next=%2Fmilton%2Fadmin%2Ffamilies%3Fx%3D1', 'why=required opens the club’s screen first (Part 3)');
     assert.equal(new TwoStepRequiredError('code', 'https://evil.example').destination, '/auth/login?step=code', 'an outside next is dropped');
   });
 });

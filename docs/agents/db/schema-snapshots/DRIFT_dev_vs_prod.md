@@ -2,13 +2,13 @@
 
 **Generated:** 2026-11-11 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 612 divergence(s)** across dev/prod.
+**⚠️ 618 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 15 | 6 | — |
-| Columns | 230 | 59 | 1 |
-| Indexes | 65 | 26 | 0 |
+| Columns | 234 | 59 | 1 |
+| Indexes | 67 | 26 | 0 |
 | Constraints | 54 | 28 | — |
 | RLS / CHECK | 98 | 26 | 0 (RLS state) |
 
@@ -39,7 +39,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (230)
+### Only in DEV (234)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -257,7 +257,11 @@
 - `two_step_owner_resets.asked_by`
 - `two_step_owner_resets.asked_how`
 - `two_step_owner_resets.cancelled_at`
+- `two_step_owner_resets.cancelled_by`
+- `two_step_owner_resets.club_notice_count`
 - `two_step_owner_resets.completed_at`
+- `two_step_owner_resets.confirm_expires_at`
+- `two_step_owner_resets.confirm_token_hash`
 - `two_step_owner_resets.confirmed_at`
 - `two_step_owner_resets.held_at`
 - `two_step_owner_resets.held_by`
@@ -336,7 +340,7 @@
 - `family_links.rep_team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (65)
+### Only in DEV (67)
 - `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
@@ -399,7 +403,9 @@
 - `two_step_backup_codes_user_idx`
 - `two_step_code_uses_pkey`
 - `two_step_grace_pkey`
+- `two_step_owner_resets_one_open_idx`
 - `two_step_owner_resets_pkey`
+- `two_step_owner_resets_token_idx`
 - `two_step_owner_resets_waiting_idx`
 - `user_hidden_workspaces_pkey`
 

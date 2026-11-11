@@ -6,6 +6,7 @@ import { checkCrossOrgJoin, crossOrgJoinRefusalForInvitee } from '@/lib/org-memb
 import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { getSignedInUser } from '@/lib/two-step-session';
+import { startTwoStepGrace } from '@/lib/two-step-grace';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -112,6 +113,9 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   if (error) {
     return captureAndJson(error, { error: error.message }, 500);
   }
+
+  // Two-step (Board Ready, Part 3): a seat the club already requires gets its own 14 days from today.
+  await startTwoStepGrace(user.id, member.organization_id, member.role);
 
   const orgSlug = orgSlugFromRelation(member.organizations);
   return NextResponse.json({

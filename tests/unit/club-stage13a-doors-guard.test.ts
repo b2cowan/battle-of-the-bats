@@ -165,7 +165,8 @@ describe('A2 · Organization lists the doors the person holds, as its tabs', () 
   it('role × tab, Club plan', () => {
     assert.deepEqual(tabsFor('owner'), ['Members', 'Audit log', 'Settings', 'Venue library', 'PDF settings'],
       'F-O1-15: the owner keeps the Audit log; no Tournaments, no Plan & billing (Ask 4 B: the foot)');
-    assert.deepEqual(tabsFor('admin'), ['Members', 'Venue library', 'PDF settings']);
+    // Settings for its two-step card alone, read-only (Board Ready two-step, Part 3, ruled 2026-11-11).
+    assert.deepEqual(tabsFor('admin'), ['Members', 'Settings', 'Venue library', 'PDF settings']);
     assert.deepEqual(tabsFor('league_admin'), ['Members', 'Venue library'], 'F-NAV-7: no Tournaments into a failing tournament admin');
     assert.deepEqual(tabsFor('league_registrar'), ['The board', 'Venue library'], 'F-NAV-8: no Members tab that refuses them; the board in its place (R1)');
     assert.deepEqual(tabsFor('treasurer'), ['Members', 'Venue library']);
@@ -197,7 +198,9 @@ describe('A3 · the Overview’s Organization section', () => {
   it('locked rows are an admin’s only; the section shows only when it holds a door, or the reader is an admin', () => {
     assert.match(hub, /const showsLockedRows = userRole === 'admin' && currentOrg\.planId !== 'tournament';/);
     assert.match(hub, /\{!isOwner && \(canSeeMembers \|\| showsLockedRows\) && \(/);
-    assert.match(hub, /\{showsLockedRows && \(canManageBilling \? \['Settings'\] : \['Plan & billing', 'Settings'\]\)\.map\(label => \(\s*<div key=\{label\}/);
+    // Settings is an admin's door since Board Ready two-step Part 3 (its two-step card, read-only; ruled 2026-11-11).
+    assert.match(hub, /\{showsLockedRows && !canManageBilling && \['Plan & billing'\]\.map\(label => \(\s*<div key=\{label\}/);
+    assert.match(hub, /\{showsLockedRows && <Link href=\{`\$\{base\}\/org\/settings`\}/);
   });
 
   it('the chip names the owner, from the words file', () => {
