@@ -9,7 +9,7 @@ actually shipped. The order is set by dependency and rework risk, never by calen
 | Step | What | Kind | Prompt | State |
 |---|---|---|---|---|
 | 1 | Third access sweep: what leaks today, plus the seat-by-seat "who sees what" table | report-only | `BOARD_READY_W1_ACCESS_SWEEP_PROMPT.md` | written 2026-11-10 |
-| 2 | Friend requests in the house-league draft | drawings + asks | `BOARD_READY_W1_FRIEND_REQUESTS_PROMPT.md` | written 2026-11-10 |
+| 2 | Friend requests in the house-league draft | drawings + asks | `BOARD_READY_W1_FRIEND_REQUESTS_PROMPT.md` | **drawn 2026-11-10** (round 2 after `/design` + `/legal`): https://claude.ai/artifact/KxYr8LW6r5yvsUJ7FmvPL8 (round 3 adds tidier board rows); **all asks A1–A15 RULED 2026-11-10** as recommended; build prompt next (plan §5 Stage 1) |
 | 3 | Two-step sign-in | drawings + decisions | `BOARD_READY_W1_TWO_STEP_SIGNIN_PROMPT.md` | written 2026-11-10 |
 
 The three can run at the same time. Only step 1 runs probes, on dev only, and none of them writes product code. The

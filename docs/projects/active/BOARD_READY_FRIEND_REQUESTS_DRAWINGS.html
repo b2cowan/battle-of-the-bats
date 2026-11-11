@@ -1,0 +1,1181 @@
+<title>Friend Requests Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: sticky section tabs, one section at a time, a View switch where a tab compares before/after; product frames drawn at true size on a cool striped stage so they read as specimens. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --ok: #2E6B3A; --ok-soft: #E2F0E4; --warn: #8A5A00;
+  --warn-soft: #F7ECD4;
+  --doc-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; --doc-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { padding-block: 20px 10px; }
+header.top h1 { margin: 0; font: 700 1.5rem/1.15 var(--doc-display); letter-spacing: .01em; text-wrap: balance; }
+header.top p { margin: 4px 0 0; color: var(--muted); max-width: 78ch; }
+.tabbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; padding-top: 6px; }
+.tab { appearance: none; border: 0; background: none; color: var(--muted); font: 600 13.5px var(--doc-sans); padding: 10px 12px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--mark); }
+.tab:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.viewrow .vl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+main { padding-block: 4px 72px; }
+h2.sec { margin: 6px 0 4px; font: 700 1.3rem/1.2 var(--doc-display); text-wrap: balance; }
+.lede { margin: 0 0 14px; color: var(--muted); max-width: 80ch; }
+p { max-width: 80ch; }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); }
+.spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow-x: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.row2 { display: flex; gap: 22px; align-items: flex-start; width: max-content; }
+.lbl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.lbl.after { color: var(--accent); }
+.tag { display: inline-block; font: 600 10.5px/1 var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; vertical-align: 2px; }
+.t-new { background: var(--accent-soft); color: var(--accent); } .t-chg { background: var(--warn-soft); color: var(--warn); } .t-same { background: var(--line); color: var(--muted); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px; margin-top: 12px; }
+.note { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; font-size: 14px; }
+.note h3 { margin: 0 0 6px; font: 650 14.5px var(--doc-sans); }
+.note p { margin: 0 0 8px; } .note p:last-child { margin: 0; }
+.note ul { margin: 4px 0 0; padding-left: 18px; } .note li { margin: 3px 0; }
+.build { font-size: 13px; color: var(--muted); }
+.mk { min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 0; background: var(--mark); color: var(--mark-ink); font: 700 11px/22px var(--doc-mono); text-align: center; cursor: pointer; display: inline-block; vertical-align: 1px; margin: 0 3px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; max-width: 900px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; font: 650 15px var(--doc-sans); }
+.ask p { margin: 4px 0; }
+.rec { font-weight: 650; color: var(--accent); }
+.ruled { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--ok); border-radius: 8px; padding: 12px 16px; margin: 0 0 16px; max-width: 900px; font-size: 14px; }
+.ruled ul { margin: 4px 0 0; padding-left: 18px; }
+.widen { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--mark); border-radius: 8px; padding: 12px 16px; margin: 0 0 16px; max-width: 900px; font-size: 14px; }
+.widen p { margin: 0 0 6px; } .widen p:last-child { margin: 0; }
+body[data-view="diff"] .same { opacity: .22; filter: grayscale(1); }
+
+/* ── Family frame: the club's public sign-up look (light in both themes, as the product is) ── */
+.pub { --g: #F5F3EF; --w: #FFFFFF; --ln: #E6E1D8; --fld: #CDC7BD; --tx: #1C1A20; --sf: #5D5964; --fill: #4A1568; --ok: #2D6A2A; --okbg: #E3F1DF; --danger: #B3261E;
+  background: var(--g); color: var(--tx); border: 1px solid #9FB0C7; border-radius: 12px; overflow: hidden; font: 16px/1.45 'Inter', system-ui, sans-serif; box-shadow: 0 4px 18px rgba(20,30,60,.12); }
+.pub.d { width: 720px; } .pub.p { width: 390px; }
+.pub * { box-sizing: border-box; }
+.pub .band { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--fill); color: #fff; }
+.pub .band b { font: 700 1.25rem/1.1 'Barlow Condensed', 'Arial Narrow', sans-serif; }
+.pub .logo { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff; background: radial-gradient(circle at 35% 35%, #8E4BB8, #2C0C42); flex: none; }
+.pub .col { width: 640px; max-width: 100%; margin: 0 auto; padding: 20px 0 28px; display: flex; flex-direction: column; gap: 20px; }
+.pub.p .col { padding: 16px 16px 24px; }
+.pub .back { font-size: .875rem; font-weight: 600; color: var(--fill); }
+.pub h1 { margin: 0; font: 700 1.9rem/1.1 'Barlow Condensed', 'Arial Narrow', sans-serif; }
+.pub .sect { background: var(--w); border: 1px solid var(--ln); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+.pub.p .sect { padding: 16px; }
+.pub .st { display: flex; justify-content: space-between; align-items: baseline; font: 700 12px 'Inter'; letter-spacing: .06em; text-transform: uppercase; color: var(--sf); }
+.pub .st a { text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--fill); font-weight: 600; }
+.pub .fr2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.pub.p .fr2 { grid-template-columns: 1fr; }
+.pub .f { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.pub .f > span { font-size: 14px; font-weight: 600; }
+.pub .req { color: var(--danger); }
+.pub .in { height: 44px; border: 1px solid var(--fld); border-radius: 6px; background: #fff; padding: 0 12px; display: flex; align-items: center; font-size: 15px; color: var(--tx); }
+.pub .in.ph { color: #9A94A0; }
+.pub .in.code { font: 600 16px 'IBM Plex Mono', monospace; letter-spacing: .12em; }
+.pub .hint { font-size: 13.5px; color: var(--sf); margin: 0; }
+.pub .fc { font-size: 14px; color: var(--ok); font-weight: 600; }
+.pub .tog { font-size: 14.5px; font-weight: 600; color: var(--fill); text-decoration: underline; text-underline-offset: 3px; }
+.pub .fq { border-top: 1px solid var(--ln); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.pub .fq h4 { margin: 0; font: 600 16px 'Inter'; }
+.pub .friend { border: 1px solid var(--ln); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; background: #FCFBF9; }
+.pub .friend .fh { display: flex; justify-content: space-between; align-items: center; font: 600 13px 'Inter'; color: var(--sf); }
+.pub .x { width: 32px; height: 32px; display: grid; place-items: center; color: var(--sf); }
+.pub.p .x { width: 44px; height: 44px; margin: -8px -10px -8px 0; }
+.pub .sw { font-size: 14px; font-weight: 600; color: var(--fill); }
+.pub .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 18px; border-radius: 8px; font: 600 15px 'Inter'; align-self: flex-start; }
+.pub .btn.sec { background: var(--w); color: var(--tx); border: 1px solid var(--fld); }
+.pub .btn.sm { min-height: 34px; padding: 0 12px; font-size: 14px; }
+.pub .cap2 { font-size: 14px; color: var(--sf); }
+.pub .priv { font-size: 13px; color: var(--sf); display: flex; gap: 6px; align-items: flex-start; }
+.pub .kid { border-top: 1px solid var(--ln); padding: 14px 0; display: flex; flex-direction: column; gap: 8px; }
+.pub .kid:first-child { border-top: 0; padding-top: 0; }
+.pub .kh { display: flex; justify-content: space-between; align-items: center; }
+.pub .kh b { font-size: 16px; }
+.pub .chip { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 999px; color: var(--ok); background: var(--okbg); }
+.pub .lv { display: grid; grid-template-columns: 150px 1fr; gap: 4px 12px; font-size: 15px; align-items: center; }
+.pub.p .lv { grid-template-columns: 110px 1fr; }
+.pub .lv dt { color: var(--sf); font-size: 14px; } .pub .lv dd { margin: 0; min-width: 0; }
+.pub .codebox { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pub .codeval { font: 600 17px 'IBM Plex Mono', monospace; letter-spacing: .14em; }
+.pub .iconbtn { width: 44px; height: 44px; display: grid; place-items: center; color: var(--tx); margin: -10px 0; }
+.pub .foot { border-top: 1px solid var(--ln); padding-top: 12px; font-size: 13px; color: var(--sf); }
+.pub .ref { font-size: 15px; } .pub .ref b { font-family: 'IBM Plex Mono', monospace; }
+.pub .listbox { background: var(--w); border: 1px solid var(--ln); border-radius: 8px; padding: 16px 20px; }
+.pub .mut { color: var(--sf); }
+
+/* ── Admin frame: the club admin kit (light in both themes, as the product is) ── */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #776D5D; --ln: rgba(70,55,30,.12);
+  --ln2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --amber-soft: #F4E7CF; --red: #B23A26; --red-soft: #F9E3DE; --blue-soft: #E6EEF8;
+  background: var(--paper); color: var(--ink); border: 1px solid #9FB0C7; border-radius: 10px; font: 14px/1.45 'Inter', system-ui, sans-serif; position: relative; box-shadow: 0 4px 18px rgba(20,30,60,.10); }
+.fr * { box-sizing: border-box; }
+.fr.w1040 { width: 1040px; } .fr.w860 { width: 860px; } .fr.w560 { width: 560px; } .fr.w440 { width: 440px; } .fr.w390 { width: 390px; }
+.fr svg { flex: none; display: block; }
+.fr .chrome { padding: 14px 20px 0; border-bottom: 1px solid var(--ln2); background: var(--paper); border-radius: 10px 10px 0 0; }
+.fr .eyb { font: 600 11px 'IBM Plex Mono'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); }
+.fr .ttl { font: 700 22px/1.2 'Barlow Condensed', 'Arial Narrow', sans-serif; margin: 2px 0 10px; }
+.fr .stabs { display: flex; gap: 20px; font-weight: 600; color: var(--ink2); font-size: 14px; overflow: hidden; }
+.fr .stabs span { padding: 0 0 10px; border-bottom: 3px solid transparent; white-space: nowrap; }
+.fr .stabs span.on { color: var(--ink); border-bottom-color: var(--olive); }
+.fr .bd { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+.fr .tb { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fr .sp { flex: 1; }
+.fr .vs { display: inline-flex; background: var(--white); border: 1px solid var(--ln2); border-radius: 999px; padding: 3px; gap: 2px; }
+.fr .vs span { padding: 5px 11px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--ink2); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.fr .vs span.on { background: var(--olive-soft); color: var(--ink); }
+.fr .ct { font: 500 12px 'IBM Plex Mono'; color: var(--ink3); }
+.fr .amb { display: inline-flex; min-width: 22px; justify-content: center; padding: 1px 7px; border-radius: 999px; background: var(--amber-soft); color: var(--amber); font: 600 11.5px 'IBM Plex Mono'; border: 1px solid rgba(131,80,6,.3); }
+.fr .lead { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(87,101,30,.35); background: var(--olive-soft); color: #3F5A1B; font-weight: 600; font-size: 13.5px; white-space: nowrap; }
+.fr .search { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--ln2); background: var(--white); color: var(--ink3); width: 230px; font-size: 13.5px; }
+.fr .btn { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 6px; font: 600 13.5px 'Inter'; background: var(--white); color: var(--ink); border: 1px solid var(--ln2); white-space: nowrap; }
+.fr .btn.lime { background: var(--lime); border-color: transparent; }
+.fr .btn.sm { height: 30px; padding: 0 10px; font-size: 13px; }
+.fr .btn.quiet { border-color: transparent; background: none; color: var(--ink2); text-decoration: underline; text-underline-offset: 3px; padding: 0 4px; }
+.fr .btn.t44 { height: 44px; }
+.fr .glyph { width: 30px; height: 30px; display: grid; place-items: center; color: var(--ink2); border-radius: 6px; }
+.fr .intro { margin: 0; font-size: 13.5px; color: var(--ink2); }
+.fr table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--ln2); border-radius: 8px; overflow: hidden; }
+.fr th { font: 700 12.5px 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--ln2); background: var(--white); white-space: nowrap; }
+.fr td { padding: 9px 10px; border-bottom: 1px solid var(--ln); vertical-align: middle; font-size: 14px; }
+.fr td small { display: block; color: var(--ink3); font-size: 12.5px; }
+.fr tr.bandrow td { background: var(--olive-soft); font-weight: 700; font-size: 13px; padding: 7px 10px; }
+.fr tr.bandrow td .ct { margin-left: 6px; }
+.fr .tick { width: 16px; height: 16px; border: 1.5px solid var(--ln2); border-radius: 4px; background: #fff; display: inline-block; }
+.fr .tick.on { background: var(--olive); border-color: var(--olive); position: relative; }
+.fr .tick.on::after { content: ""; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.fr .asked { font-style: normal; }
+.fr .q { color: var(--ink2); }
+.fr .chip { font: 600 10px 'IBM Plex Mono'; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid; white-space: nowrap; display: inline-block; vertical-align: 1px; }
+.fr .chip.code { color: var(--olive); background: var(--olive-soft); border-color: rgba(87,101,30,.3); }
+.fr .chip.both { color: #2F5C8A; background: var(--blue-soft); border-color: rgba(47,92,138,.3); }
+.fr .chip.div { color: var(--amber); background: var(--amber-soft); border-color: rgba(131,80,6,.3); }
+.fr .chip.off { color: var(--ink3); background: #EFEBE2; border-color: var(--ln2); }
+.fr .res { font-weight: 600; } .fr .res.ok { color: #2E6B3A; } .fr .res.no { color: var(--red); }
+.fr .chev { color: var(--ink3); }
+.fr .pager { display: flex; justify-content: flex-end; gap: 10px; align-items: center; font-size: 13px; color: var(--ink2); }
+.fr .bulk { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--ink); color: #fff; border-radius: 8px; font-size: 13.5px; }
+.fr .bulk .btn { background: transparent; color: #fff; border-color: rgba(255,255,255,.35); }
+.fr .co { --tone: #C98A12; display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: 8px; background: var(--white); border: 1px solid var(--ln); border-left: 3px solid var(--tone); font-size: 13.5px; }
+.fr .co.info { --tone: #3A6FB0; }
+.fr .co b { display: block; }
+.fr .empty { background: var(--white); border: 1px solid var(--ln2); border-radius: 8px; padding: 28px 20px; text-align: center; color: var(--ink2); }
+.fr .empty b { display: block; color: var(--ink); font-size: 15px; margin-bottom: 4px; }
+/* record block */
+.fr .blk { background: var(--white); border: 1px solid var(--ln2); border-radius: 8px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.fr .blk .bh { display: flex; align-items: center; gap: 8px; }
+.fr .blk .bh h4 { margin: 0; font: 700 16px 'Inter'; flex: 1; }
+.fr .kv { display: grid; grid-template-columns: 210px 1fr; gap: 8px 16px; font-size: 14px; }
+.fr .kv dt { color: var(--ink2); } .fr .kv dd { margin: 0; }
+.fr .kv .nw { background: rgba(218,242,124,.28); outline: 2px dashed rgba(87,101,30,.45); outline-offset: 3px; border-radius: 3px; }
+.fr .fld { display: flex; flex-direction: column; gap: 5px; }
+.fr .fld > span { font-weight: 600; font-size: 13.5px; }
+.fr .dd { height: 36px; width: 220px; border: 1px solid var(--ln2); border-radius: 6px; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 14px; }
+.fr .hint { font-size: 12.5px; color: var(--ink2); margin: 0; max-width: 60ch; }
+.fr .menu { background: #fff; border: 1px solid var(--ln2); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.14); padding: 6px; width: 240px; font-size: 14px; }
+.fr .menu div { padding: 7px 10px; border-radius: 5px; display: flex; justify-content: space-between; gap: 8px; }
+.fr .menu div.hl { background: var(--olive-soft); }
+.fr .menu .mh { font: 600 11px 'IBM Plex Mono'; letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); padding: 6px 10px 2px; }
+/* dialog */
+.fr .dlg { background: var(--white); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.22); overflow: hidden; border: 1px solid var(--ln2); }
+.fr .dlg .dh { padding: 16px 18px 6px; }
+.fr .dlg .dh b { display: block; font: 700 17px/1.25 'Inter'; }
+.fr .dlg .db { padding: 6px 18px 14px; display: flex; flex-direction: column; gap: 10px; }
+.fr .dlg .df { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--ln2); background: #FBF9F4; }
+.fr .dlg .df .l { margin-right: auto; font-size: 13px; color: var(--ink2); }
+.fr .facts { display: grid; grid-template-columns: 110px 1fr; gap: 6px 14px; font-size: 13.5px; margin: 0; }
+.fr .facts dt { color: var(--ink3); font-weight: 600; } .fr .facts dd { margin: 0; }
+.fr .switches { border: 1px solid var(--ln2); border-radius: 8px; }
+.fr .swrow { display: flex; gap: 14px; align-items: flex-start; padding: 12px 14px; }
+.fr .swrow + .swrow { border-top: 1px solid var(--ln); }
+.fr .swrow > div { flex: 1; } .fr .swrow b { display: block; font-size: 14px; } .fr .swrow small { color: var(--ink2); font-size: 12.5px; display: block; }
+.fr .sw { width: 38px; height: 22px; border-radius: 11px; background: var(--olive); position: relative; flex: none; margin-top: 2px; }
+.fr .sw::after { content: ""; position: absolute; right: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+.fr .radio { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--ln2); border-radius: 8px; }
+.fr .radio.on { border-color: var(--olive); background: var(--olive-soft); }
+.fr .radio .rd { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--ln2); background: #fff; flex: none; margin-top: 2px; }
+.fr .radio.on .rd { border: 5px solid var(--olive); }
+.fr .radio small { display: block; color: var(--ink3); font-size: 12.5px; }
+.fr .radio.dim { opacity: .6; }
+/* board */
+.fr .board { display: flex; gap: 14px; align-items: flex-start; }
+.fr .pool { flex: 0 0 344px; background: var(--white); border: 1px solid var(--ln2); border-radius: 10px; padding: 12px 0 4px; }
+.fr .ph { display: flex; align-items: center; gap: 8px; padding: 0 12px 10px; }
+.fr .ph b { font: 700 15px 'Inter'; }
+.fr .pill { display: inline-flex; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--ln2); font: 600 12px 'IBM Plex Mono'; color: var(--ink2); }
+.fr .ptb { display: flex; gap: 6px; padding: 0 12px 10px; flex-wrap: wrap; }
+.fr .ptb .search { width: 100%; }
+.fr .teams { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; min-width: 0; }
+.fr .tc { border: 1px solid var(--ln2); border-radius: 10px; padding: 12px 0 4px; background: var(--white); }
+.fr .tc .th { padding: 0 12px 8px; }
+.fr .tc .th b { font: 700 14px 'Inter'; display: flex; align-items: center; gap: 7px; }
+.fr .tc .th small { font-size: 12.5px; color: var(--ink2); }
+.fr .dotc { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.fr .kid { display: grid; grid-template-columns: 26px 1fr auto 34px 22px; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; border-top: 1px solid var(--ln); font-size: 14px; }
+.fr .kid .rt { width: 24px; height: 24px; border-radius: 5px; background: var(--olive); color: #fff; display: grid; place-items: center; font: 700 12px 'Inter'; }
+.fr .kid .nm { font-weight: 600; min-width: 0; overflow-wrap: anywhere; line-height: 1.3; padding-block: 4px; }
+.fr .kid .age { color: var(--ink3); font: 400 12px 'IBM Plex Mono'; text-align: right; }
+.fr .kid .marks { display: flex; gap: 4px; }
+.fr .mark { height: 24px; display: inline-flex; align-items: center; gap: 3px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--ln2); color: var(--ink2); font: 600 12px 'Inter'; background: #fff; }
+.fr .mark.on { box-shadow: 0 0 0 2px var(--olive); color: var(--ink); }
+.fr .mark.fnd { border-color: rgba(87,101,30,.45); color: #3F5A1B; }
+.fr .kid.lit { background: var(--olive-soft); box-shadow: inset 3px 0 0 var(--olive); }
+.fr .pop { background: #fff; border: 1px solid var(--ln2); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.18); width: 330px; overflow: hidden; }
+.fr .pop .pt { padding: 12px 14px 6px; font-weight: 700; font-size: 14px; }
+.fr .pop .pr { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 14px; border-top: 1px solid var(--ln); font-size: 13.5px; align-items: center; }
+.fr .pop .pr small { grid-column: 1 / -1; color: var(--ink3); font-size: 12.5px; }
+.fr .pop .pf { padding: 8px 14px 10px; border-top: 1px solid var(--ln); font-size: 12px; color: var(--ink3); }
+.fr .pop a, .fr a.lk { color: var(--olive); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+/* phone admin */
+.fr.w390 .bd { padding: 12px; }
+.fr .pcard { background: var(--white); border: 1px solid var(--ln2); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.fr .pcard .top2 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.fr .pcard .top2 b { font-size: 15px; }
+.fr .pcard .acts { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.fr .pcard .acts .btn { flex: 1; justify-content: center; height: 44px; }
+.fr .pcard .acts .glyph { width: 44px; height: 44px; }
+.fr .ptools { display: flex; gap: 8px; }
+.fr .ptools .lead { flex: 1; justify-content: space-between; height: 44px; }
+.fr .ptools .glyph { width: 44px; height: 44px; border: 1px solid var(--ln2); background: #fff; }
+.fr .xhdr { display: grid; grid-template-columns: repeat(4, max-content); }
+.colgrid { overflow-x: auto; }
+.colgrid table { border-collapse: collapse; background: var(--card); font-size: 13px; }
+.colgrid th, .colgrid td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; white-space: nowrap; }
+.colgrid th { font: 600 12px var(--doc-mono); }
+.colgrid th.nw, .colgrid td.nw { background: var(--accent-soft); }
+.colgrid th.pv::after { content: " *"; color: var(--mark); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+/* ── Round 2: shipped-component looks (from the /design pass) ── */
+.pub .fit { padding: 10px 13px; border-left: 3px solid var(--fill); background: var(--w); border-radius: 0 8px 8px 0; font-size: 14px; font-weight: 600; }
+.pub .rm { font-size: 14.5px; font-weight: 600; color: var(--fill); text-decoration: underline; text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
+.pub .friend { border: 0; border-top: 1px solid var(--ln); border-radius: 0; padding: 12px 0 0; background: none; }
+.pub .friend .fh { min-height: 24px; }
+.pub .care { font-size: 13.5px; color: var(--sf); margin: 0; }
+.fr .rowact { height: 30px; display: inline-flex; align-items: center; padding: 0 11px; border-radius: 6px; border: 1px solid rgba(87,101,30,.55); color: var(--olive); background: #fff; font: 700 13px 'Inter'; white-space: nowrap; }
+.fr .bulk { background: var(--olive-soft); color: var(--ink); border: 1px solid rgba(87,101,30,.25); }
+.fr .bulk .btn { background: #fff; color: var(--ink); border-color: var(--ln2); }
+.fr .light { font: 500 12px 'IBM Plex Mono'; color: var(--ink3); }
+.fr .xg { position: absolute; top: 14px; right: 14px; color: var(--ink2); }
+.fr .dlg { position: relative; }
+.fr .dlg .dh { padding-right: 44px; }
+.fr .menu .cb { display: flex; justify-content: flex-start; gap: 9px; align-items: center; }
+.fr .menu .cb .ct { margin-left: auto; }
+.fr .bx { width: 15px; height: 15px; border: 1.5px solid var(--ln2); border-radius: 3px; background: #fff; flex: none; position: relative; }
+.fr .bx.on { background: var(--olive); border-color: var(--olive); }
+.fr .bx.on::after { content: ""; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.fr .mark { border: 0; background: transparent; padding: 0 5px; }
+.fr .mark.fnd { color: #3F5A1B; }
+.fr .mark.on { box-shadow: 0 0 0 1.5px var(--olive); background: var(--olive-soft); }
+.fr .mark.owe { color: var(--amber); font-weight: 700; }
+.fr .kh { display: grid; grid-template-columns: 26px 1fr auto 34px 22px; gap: 8px; padding: 0 12px 4px; font: 700 11.5px 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); }
+.fr .kh .r { text-align: right; }
+.fr .sortdir { width: 26px; height: 30px; display: grid; place-items: center; color: var(--ink2); }
+.fr.w390 .kid { min-height: 52px; grid-template-columns: 26px 1fr auto 30px 32px; }
+.fr.w390 .mark { height: 32px; }
+.fr .recH { font: 700 13px 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); margin: 6px 0 0; }
+.fr .recH.nw { color: var(--olive); }
+.fr .steps { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+.fr .steps span { height: 26px; padding: 0 8px; border: 1px solid var(--ln2); border-radius: 6px; display: inline-flex; align-items: center; font: 600 12px 'Inter'; color: var(--ink2); background: #fff; }
+.fr .plist { background: var(--white); border: 1px solid var(--ln2); border-radius: 10px; }
+.fr .prow { display: grid; grid-template-columns: 22px 1fr 44px; gap: 4px 8px; padding: 12px 10px 12px 12px; border-top: 1px solid var(--ln); align-items: start; }
+.fr .prow:first-child { border-top: 0; }
+.fr .prow .tick { margin-top: 3px; }
+.fr .prow .glyph { width: 44px; height: 44px; margin: -12px -6px -8px 0; }
+.fr .prow .low { grid-column: 2 / 3; display: flex; gap: 8px; margin-top: 6px; }
+.fr .prow .low .rowact { height: 44px; padding: 0 14px; }
+.fr .pband { padding: 7px 12px; background: var(--olive-soft); font: 700 12.5px 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: .06em; text-transform: uppercase; border-top: 1px solid var(--ln); }
+.fr .pband:first-child { border-top: 0; border-radius: 10px 10px 0 0; }
+.fr .vrow { display: flex; gap: 6px; overflow: hidden; white-space: nowrap; }
+.fr .vrow .vs { flex: none; }
+.fr .ptools .ib { width: 44px; height: 44px; border: 1px solid var(--ln2); background: #fff; border-radius: 6px; display: grid; place-items: center; color: var(--ink2); flex: none; }
+.fr .sheet { margin: 10px -12px -12px; background: var(--white); border-radius: 14px 14px 8px 8px; border-top: 1px solid var(--ln2); box-shadow: 0 -8px 24px rgba(0,0,0,.14); padding: 8px 0 12px; }
+.fr .sheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--ln2); margin: 0 auto 8px; }
+.fr .more { color: var(--ink2); font-size: 13px; }
+.legalbox { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; padding: 12px 16px; margin: 0 0 16px; max-width: 900px; font-size: 14px; }
+.legalbox ul { margin: 4px 0 0; padding-left: 18px; } .legalbox li { margin: 3px 0; }
+
+/* 5b · tidier rows */
+.fr .rk { display: grid; align-items: center; column-gap: 8px; min-height: 40px; padding: 4px 12px; border-top: 1px solid var(--ln); font-size: 14px; }
+.fr .rk.hd { min-height: 28px; font: 700 11.5px "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); border-top: 1px solid var(--ln2); }
+.fr .rk0 { grid-template-columns: 30px minmax(0,1fr) auto 30px 22px; }
+.fr .rkA { grid-template-columns: 30px minmax(0,1fr) 30px 30px 30px 30px 30px 22px; }
+.fr .rkB { grid-template-columns: 30px minmax(0,1fr) 62px 30px 30px 30px 22px; }
+.fr .rk.ph { min-height: 52px; grid-template-columns: 30px minmax(0,1fr) 66px 32px 32px 26px 32px; }
+.fr .rk.ph.hd { min-height: 28px; }
+.fr .rk .rt { width: 24px; height: 24px; border-radius: 5px; background: var(--olive); color: #fff; display: grid; place-items: center; font: 700 12px Inter; }
+.fr .rk .nm2 { font-weight: 650; min-width: 0; overflow-wrap: anywhere; line-height: 1.3; }
+.fr .rk .age { color: var(--ink3); font: 400 12px "IBM Plex Mono"; text-align: right; }
+.fr .rk .r { text-align: right; }
+.fr .rk .dots { color: var(--ink2); display: grid; place-items: center; }
+.fr .rk .mk0 { display: flex; gap: 2px; }
+.fr .rk .pl { display: flex; justify-content: center; align-items: center; color: var(--ink2); }
+.fr .rk .pl.w { justify-content: flex-start; }
+.fr .rk .mark.tg { color: var(--ink2); }
+.fr .rk .mark.apart { color: var(--amber); background: var(--amber-soft); }
+.fr .rk.lit2 { background: var(--olive-soft); box-shadow: inset 3px 0 0 var(--olive); }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+  </defs>
+</svg>
+
+<header class="top"><div class="wrap">
+  <h1>Friend requests in the house-league draft</h1>
+  <p>Board Ready, Stage 1. Parents name friends at sign-up, the registrar confirms each one against this season's sign-ups, and the draft keeps confirmed friends together in groups of up to 3. Example data, made up for the drawing: Milton Bats Softball Association, 2027 Summer House League, the U9 division. Every frame is drawn at true size. Open this page on a phone to judge the phone frames.</p>
+</div></header>
+
+<div class="tabbar"><div class="wrap">
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-ask" data-tab="ask">1 · The parent's question</button>
+    <button class="tab" role="tab" id="t-code" data-tab="code">2 · The friend code</button>
+    <button class="tab" role="tab" id="t-set" data-tab="set">3 · The club's settings</button>
+    <button class="tab" role="tab" id="t-queue" data-tab="queue">4 · Friend requests queue</button>
+    <button class="tab" role="tab" id="t-draft" data-tab="draft">5 · The draft</button>
+    <button class="tab" role="tab" id="t-rows" data-tab="rows">5b · Tidier rows</button>
+    <button class="tab" role="tab" id="t-after" data-tab="after">6 · After the draft</button>
+    <button class="tab" role="tab" id="t-list" data-tab="list">7 · List and export</button>
+    <button class="tab" role="tab" id="t-asks" data-tab="asks">8 · Asks</button>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <div class="viewrow" id="viewrow">
+    <span class="vl" id="viewlabel">View</span>
+    <div class="seg" role="group" aria-labelledby="viewlabel">
+      <button type="button" data-view="all" aria-pressed="true">Everything</button>
+      <button type="button" data-view="diff" aria-pressed="false">Show only what differs</button>
+    </div>
+    <span>Dims what is unchanged from today, on the tabs that draw a before and after.</span>
+  </div>
+
+<main>
+<!-- ═══════════════════════ 1 · THE PARENT’S QUESTION ═══════════════════════ -->
+<section id="p-ask" role="tabpanel" aria-labelledby="t-ask" hidden>
+  <h2 class="sec">1 · The parent’s question, inside each child’s card</h2>
+  <p class="lede">The question sits in each child’s card, directly under the division line. By then the form already knows the child’s division, so the help line can name it (“friends signing up for U9”). Nothing the parent types is checked against other families. The form never says whether a named child has signed up, and never shows another child’s details.</p>
+
+  <div class="spec">
+    <div class="cap"><b>Whole child card · desktop, 640 column</b><span>Today on the left. Proposed on the right, with two friends named: one by name, one by code.</span></div>
+    <div class="stage"><div class="row2">
+      <div>
+        <div class="lbl">Today <span class="tag t-same">unchanged</span></div>
+        <div class="pub d same"><div class="band"><span class="logo"></span><b>Milton Bats Softball Association</b></div>
+          <div class="col">
+            <div class="sect">
+              <div class="st">Child 1</div>
+              <div class="fr2"><label class="f"><span>First name <span class="req">*</span></span><span class="in">Maya</span></label><label class="f"><span>Last name <span class="req">*</span></span><span class="in">Okafor</span></label></div>
+              <label class="f"><span>Date of birth <span class="req">*</span></span><span class="in">May 14, 2018</span></label>
+              <div class="fit">U9 · born 2018 to 2019 · 6 spots left · $185 early bird</div>
+              <span class="tog">Jersey number, position and notes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="lbl after">Proposed <span class="tag t-new">new block</span></div>
+        <div class="pub d"><div class="band same"><span class="logo"></span><b>Milton Bats Softball Association</b></div>
+          <div class="col">
+            <div class="sect">
+              <div class="st same">Child 1</div>
+              <div class="fr2 same"><label class="f"><span>First name <span class="req">*</span></span><span class="in">Maya</span></label><label class="f"><span>Last name <span class="req">*</span></span><span class="in">Okafor</span></label></div>
+              <label class="f same"><span>Date of birth <span class="req">*</span></span><span class="in">May 14, 2018</span></label>
+              <div class="fit same">U9 · born 2018 to 2019 · 6 spots left · $185 early bird</div>
+              <div class="fq">
+                <h4>Who would you like Maya to play with? <button class="mk" data-ask="a8" title="Ask A8">A8</button></h4>
+                <p class="hint">Optional. Up to 2 friends who are signing up for U9. The club tries to keep friends together but can’t promise every request. <button class="mk" data-ask="a2" title="Ask A2">A2</button></p>
+                <div class="friend">
+                  <div class="fh">Friend 1 <span class="rm" aria-label="Remove friend 1">Remove</span></div>
+                  <div class="fr2"><label class="f"><span>First name</span><span class="in">Liam</span></label><label class="f"><span>Last name</span><span class="in">Chen</span></label></div>
+                  <label class="f"><span>Their parent’s name</span><span class="in">Grace Chen</span></label>
+                  <span class="sw">Have a friend code? Enter it instead</span>
+                </div>
+                <div class="friend">
+                  <div class="fh">Friend 2 <span class="rm" aria-label="Remove friend 2">Remove</span></div>
+                  <label class="f"><span>Friend code</span><span class="in code">W8P 2LC</span></label>
+                  <p class="hint">The 6-letter code from the other family’s sign-up page.</p>
+                  <span class="sw">Enter a name instead</span>
+                </div>
+                <div class="cap2">Maya can name up to 2 friends.</div>
+                <p class="care">Only name a child whose family is happy for you to.</p>
+                <div class="priv"><svg width="15" height="15" style="margin-top:2px"><use href="#i-shield"/></svg><span>Only the club staff who handle sign-ups see these names, and only to put friends on the same team. They are deleted after the season. <button class="mk" data-ask="a12">A12</button></span></div>
+              </div>
+              <span class="tog same">Jersey number, position and notes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>The three states · phone, 390</b><span>Cut to the friend block. The child’s name, date of birth and division line sit above it, as on desktop.</span></div>
+    <div class="stage"><div class="row2">
+      <div>
+        <div class="lbl after">Empty</div>
+        <div class="pub p"><div class="col">
+          <div class="sect">
+            <div class="fit">U9 · born 2018 to 2019 · 6 spots left</div>
+            <div class="fq">
+              <h4>Who would you like Maya to play with?</h4>
+              <p class="hint">Optional. Up to 2 friends who are signing up for U9. The club tries to keep friends together but can’t promise every request.</p>
+              <span class="btn sec">+ Add a friend</span>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <div class="lbl after">One friend, by name</div>
+        <div class="pub p"><div class="col">
+          <div class="sect">
+            <div class="fq" style="border-top:0;padding-top:0">
+              <h4>Who would you like Maya to play with?</h4>
+              <p class="hint">Optional. Up to 2 friends who are signing up for U9. The club tries to keep friends together but can’t promise every request.</p>
+              <div class="friend">
+                <div class="fh">Friend 1 <span class="rm" aria-label="Remove friend 1">Remove</span></div>
+                <label class="f"><span>First name</span><span class="in">Liam</span></label>
+                <label class="f"><span>Last name</span><span class="in">Chen</span></label>
+                <label class="f"><span>Their parent’s name</span><span class="in ph">Helps the club find them</span></label>
+                <span class="sw">Have a friend code? Enter it instead</span>
+              </div>
+              <span class="btn sec">+ Add a friend</span>
+              <p class="care">Only name a child whose family is happy for you to.</p>
+              <div class="priv"><svg width="15" height="15" style="margin-top:2px"><use href="#i-shield"/></svg><span>Only the club staff who handle sign-ups see these names, and only to put friends on the same team. They are deleted after the season.</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <div class="lbl after">At the maximum</div>
+        <div class="pub p"><div class="col">
+          <div class="sect">
+            <div class="fq" style="border-top:0;padding-top:0">
+              <h4>Who would you like Maya to play with?</h4>
+              <div class="friend">
+                <div class="fh">Friend 1 <span class="rm">Remove</span></div>
+                <div><b>Liam Chen</b> <span class="mut" style="font-size:14px">· parent Grace Chen</span></div>
+              </div>
+              <div class="friend">
+                <div class="fh">Friend 2 <span class="rm">Remove</span></div>
+                <div class="codeval" style="font-size:16px">W8P 2LC <span class="mut" style="font:400 13px Inter;letter-spacing:0">friend code</span></div>
+              </div>
+              <div class="cap2">Maya can name up to 2 friends.</div>
+              <p class="care">Only name a child whose family is happy for you to.</p>
+              <div class="priv"><svg width="15" height="15" style="margin-top:2px"><use href="#i-shield"/></svg><span>Only the club staff who handle sign-ups see these names, and only to put friends on the same team. They are deleted after the season.</span></div>
+            </div>
+          </div>
+        </div></div>
+        <p class="build" style="max-width:390px">At the maximum, finished friends fold to one line each, and a tap opens one again. Whether they fold is a build detail, not an ask.</p>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><h3>Why under the division line</h3><p>The form already works out the child’s division as the parent types the birth date. Placing the question after that line lets the help text say “signing up for U9”, which heads off most cross-division requests without the form checking anyone.</p><p>It is not hidden under “Jersey number, position and notes”. A request the parent can’t find ends up in the notes box, which the draft can’t read.</p></div>
+    <div class="note"><h3>What is never shown back</h3><ul><li>Whether a named child has signed up.</li><li>Which division a named child is in.</li><li>The name behind a friend code. A typed code shows only as the code.</li></ul><p>Each of these would let an anonymous visitor test whether a child is registered with the club.</p></div>
+    <div class="note"><h3>The friend code field</h3><p>Six characters, grouped 3 + 3, with no 0, O, 1 or I. The sixth is a check letter, so the form catches a typo (“That code has a typo. Check it with the other family.”) without looking anything up.</p><p class="build">Build: the form’s own inputs, its “Remove” word link (as on Child 2) and its secondary button (as “+ Add another child”). Friends are hairline blocks inside the child’s section, never nested cards.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ 2 · THE FRIEND CODE ═══════════════════════ -->
+<section id="p-code" role="tabpanel" aria-labelledby="t-code" hidden>
+  <h2 class="sec">2 · The friend code on “Your sign-up”</h2>
+  <p class="lede">Each child gets a code the moment the sign-up is received. It appears as text on the “Your sign-up” page the family already has. We send nothing new. The family passes it on however they like: a text message, school pickup, a group chat. Copy puts it on the clipboard, and that is all it does. Brothers and sisters each get their own code, because requests are per child.</p>
+
+  <div class="spec">
+    <div class="cap"><b>Your sign-up · desktop, 640 column</b><span>Maya’s row with the new lines; her brother Theo below, unchanged except for his code.</span></div>
+    <div class="stage"><div class="row2">
+      <div>
+        <div class="lbl after">Proposed</div>
+        <div class="pub d"><div class="band same"><span class="logo"></span><b>Milton Bats Softball Association</b></div>
+          <div class="col">
+            <span class="back same">← Back to 2027 Summer House League</span>
+            <div class="same"><h1>Your sign-up</h1><div class="mut">2027 Summer House League</div></div>
+            <div class="ref same">Reference: <b>HL-4Q7M2K</b> · quote it if you contact the club</div>
+            <div class="listbox">
+              <div class="kid">
+                <div class="kh same"><b>Maya</b><span class="chip">Accepted</span></div>
+                <dl class="lv">
+                  <dt class="same">Division</dt><dd class="same">U9</dd>
+                  <dt class="same">Team</dt><dd class="same">Not set yet</dd>
+                  <dt class="same">Fee</dt><dd class="same">$185 · paid May 2</dd>
+                  <dt>Friend code</dt><dd><span class="codebox"><span class="codeval">K7M 4QP</span><span class="btn sec sm"><svg width="16" height="16"><use href="#i-copy"/></svg>Copy</span></span></dd>
+                  <dt></dt><dd class="hint">If another family wants Maya on their child’s team, they can enter this code on their sign-up.</dd>
+                  <dt>Plays with</dt><dd>Liam Chen</dd>
+                  <dt></dt><dd>Code W8P 2LC</dd>
+                  <dt></dt><dd><span class="tog" style="font-size:14px">Change</span> <button class="mk" data-ask="a5" title="Ask A5">A5</button></dd>
+                </dl>
+              </div>
+              <div class="kid">
+                <div class="kh same"><b>Theo</b><span class="chip">Accepted</span></div>
+                <dl class="lv">
+                  <dt class="same">Division</dt><dd class="same">U11</dd>
+                  <dt class="same">Team</dt><dd class="same">Not set yet</dd>
+                  <dt>Friend code</dt><dd><span class="codebox"><span class="codeval">W3T 9KD</span><span class="btn sec sm"><svg width="16" height="16"><use href="#i-copy"/></svg>Copy</span></span></dd>
+                  <dt>Plays with</dt><dd class="mut">No one named. <span class="tog" style="font-size:14px">Add a friend</span></dd>
+                </dl>
+              </div>
+            </div>
+            <div class="foot same">Anyone with this link can open this page. If it has been shared, ask the club to send you a new one.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="lbl after">Phone, 390 · Copy is the symbol alone</div>
+        <div class="pub p"><div class="col">
+          <div class="listbox" style="padding:14px 16px">
+            <div class="kid">
+              <div class="kh"><b>Maya</b><span class="chip">Accepted</span></div>
+              <dl class="lv">
+                <dt>Division</dt><dd>U9</dd>
+                <dt>Team</dt><dd>Not set yet</dd>
+                <dt>Friend code</dt><dd><span class="codebox"><span class="codeval">K7M 4QP</span><span class="iconbtn" aria-label="Copy Maya’s friend code"><svg width="20" height="20"><use href="#i-copy"/></svg></span></span></dd>
+              </dl>
+              <p class="hint">If another family wants Maya on their child’s team, they can enter this code on their sign-up.</p>
+              <dl class="lv"><dt>Plays with</dt><dd>Liam Chen</dd><dt></dt><dd>Code W8P 2LC</dd></dl>
+              <span class="tog" style="font-size:14px">Change</span>
+            </div>
+          </div>
+        </div></div>
+        <div class="lbl after" style="margin-top:16px">After the teams are made</div>
+        <div class="pub p"><div class="col" style="padding-block:12px">
+          <div class="listbox" style="padding:14px 16px">
+            <dl class="lv"><dt>Team</dt><dd>Red · coach Marcus Ferreira</dd><dt>Plays with</dt><dd>Liam Chen</dd><dt></dt><dd>Code W8P 2LC</dd></dl>
+            <p class="hint" style="margin-top:6px">Friend requests closed when the teams were made.</p>
+          </div>
+        </div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><h3>“Plays with” shows only what this family asked</h3><p>Each friend is one line: the name the family typed, or the code they typed. Never the name behind a code, never whether the registrar confirmed it, never “honoured”. That is the owner’s ruling: parents get no honoured or not-honoured message.</p><p>When the teams are made the lines stay, as a record of what they asked, and the Change link goes.</p></div>
+    <div class="note"><h3>Where else the code appears</h3><p>The confirmation screen after “Sign up” shows each child’s code under the child’s card, with the same Copy.</p><p>The confirmation email could carry it too, as text, not a link, in the same neutral sentence. <button class="mk" data-ask="a10">A10</button></p><p>The signed-in family app shows the same “Your sign-up” page, so it gets the code with no extra work.</p></div>
+    <div class="note"><h3>Why a code is safe to hand around</h3><p>Whoever holds a code learns nothing from it, because entering it on the form shows no name. It only links two children for the registrar, and only when entered on a sign-up in the same season.</p><p class="build">Build: the family Copy row’s look (secondary small button; Copy, then “Copied” for two seconds; the bare 44px symbol at phone width), on the shared copy-to-clipboard hook.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ 3 · SETTINGS ═══════════════════════ -->
+<section id="p-set" role="tabpanel" aria-labelledby="t-set" hidden>
+  <h2 class="sec">3 · The club’s settings, in the two places settings already live</h2>
+  <div class="widen"><p><b>Correction to the brief.</b> The prompt asked for a “season’s house-league settings” screen, with the new switch “beside Families together”. Neither exists as described. A season’s settings are the blocks on its Overview tab, and “Keep families together” is not a stored setting. It is a switch inside the <i>Run the draft</i> window, on by default, shown only when a division has brothers and sisters.</p><p>So the <b>maximum per child</b> goes in the Overview’s Registration block, because it changes the sign-up form. The <b>Keep friends together</b> switch goes in the draft window beside Keep families together, because it changes one draft. <button class="mk" data-ask="a9">A9</button></p></div>
+
+  <div class="spec">
+    <div class="cap"><b>Overview › Registration block · desktop</b><span>Reads first, edits whole (pencil ↔ ✓). Only the new row is drawn; the block’s other rows are unchanged.</span></div>
+    <div class="stage"><div class="row2">
+      <div>
+        <div class="lbl after">Read view</div>
+        <div class="fr w560"><div class="bd">
+          <div class="blk">
+            <div class="bh"><h4>Registration</h4><span class="glyph"><svg width="16" height="16"><use href="#i-pencil"/></svg></span></div>
+            <dl class="kv">
+              <dt class="same">…</dt><dd class="same" style="color:#776D5D">Registration dates · Early bird · Waiver · Email consent · How to pay</dd>
+              <dt><span class="nw">Friend requests</span></dt><dd><span class="nw">Up to 2 per child</span><br><small style="color:#776D5D">Groups in the draft hold at most 3 children, brothers and sisters included.</small></dd>
+              <dt class="same">…</dt><dd class="same" style="color:#776D5D">New registrations · Waitlist</dd>
+            </dl>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <div class="lbl after">Edit view · the new field</div>
+        <div class="fr w440"><div class="bd">
+          <div class="blk">
+            <div class="bh"><h4>Registration</h4><span class="glyph"><svg width="16" height="16"><use href="#i-check"/></svg></span></div>
+            <div class="fld"><span>Friends a family can name per child</span>
+              <span class="dd">2 <svg width="16" height="16"><use href="#i-down"/></svg></span>
+              <p class="hint">None hides the question on the sign-up form. Groups in the draft hold at most 3 children, brothers and sisters included, so a third friend could never be kept together. <button class="mk" data-ask="a1">A1</button><button class="mk" data-ask="a8">A8</button></p>
+            </div>
+          </div>
+          <div class="menu" style="margin-top:-4px">
+            <div>None: don’t ask</div><div>1</div><div class="hl">2 <svg width="15" height="15"><use href="#i-check"/></svg></div>
+          </div>
+        </div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>Teams &amp; draft › Run the draft for U9 · the window</b><span>Today’s window, every fact row kept, with one new fact row and one new switch.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560" style="background:transparent;border:0;box-shadow:none">
+        <div class="dlg">
+          <span class="xg" aria-label="Close"><svg width="16" height="16"><use href="#i-x"/></svg></span>
+          <div class="dh same"><b>Run the draft for U9</b></div>
+          <div class="db">
+            <dl class="facts">
+              <dt class="same">Players</dt><dd class="same">72 accepted. Every accepted player holds their spot.</dd>
+              <dt class="same">Not drafted</dt><dd class="same">Nobody to review and nobody on the waitlist.</dd>
+              <dt class="same">Teams</dt><dd class="same">Red 12 · Blue 12 · Gold 12 · Green 12 · White 12 · Black 12</dd>
+              <dt class="same">Locked</dt><dd class="same">2 locked: they stay on their team and count toward its average.</dd>
+              <dt class="same">Ratings</dt><dd class="same">All 72 rated</dd>
+              <dt><span style="background:rgba(218,242,124,.35);padding:0 3px">Friends</span></dt><dd>31 confirmed requests make 19 groups. 2 can’t be kept: the group would pass 3 children. 6 are still to confirm and are left out. <a class="lk">Open friend requests</a></dd>
+              <dt>How it deals</dt><dd>Families and friends first, then everyone else, strongest first, and the order reverses each round. Then single players swap teams where that evens out the averages. Ties and the first pick are drawn at random.</dd>
+            </dl>
+            <div class="switches">
+              <div class="swrow same"><div><b>Keep families together</b><small>Brothers and sisters signed up under one parent email go to the same team. Locked players stay where they are.</small></div><span class="sw"></span></div>
+              <div class="swrow"><div><b>Keep friends together</b><small>Confirmed friend requests go to the same team, in groups of up to 3 children with brothers and sisters. Locked players stay where they are.</small></div><span class="sw"></span></div>
+            </div>
+          </div>
+          <div class="df same"><span class="l">Nothing is sent. Families hear when you publish.</span><span class="btn">Cancel</span><span class="btn lime">Run the draft</span></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+  <div class="notes">
+    <div class="note"><h3>Warn, never block</h3><p>Requests still to confirm don’t stop the draft. The Friends row says how many and links to them, the way “Not drafted” already links to Registrations. The convenor chooses. This follows the plan’s “warn, never block” ruling (Q4).</p></div>
+    <div class="note"><h3>When the switch appears</h3><p>Like Keep families together, the friends switch shows only when the division has at least one confirmed request. Otherwise it is absent, not greyed out. It is on by default, and the choice holds for the visit, so Draft again uses it.</p></div>
+    <div class="note"><h3>The cap is stated, not set</h3><p>“Groups of up to 3” is printed in both places, so nobody is surprised by it. Whether the club can change it is ask A1. This drawing shows it fixed.</p><p class="build">Build: SwitchButton from the switch rows (as Keep families together); the kit’s single-select; the block’s pencil ↔ ✓, as on the other Overview blocks.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ 4 · QUEUE ═══════════════════════ -->
+<section id="p-queue" role="tabpanel" aria-labelledby="t-queue" hidden>
+  <h2 class="sec">4 · The registrar’s Friend requests queue</h2>
+  <p class="lede">A fifth view on Registrations, after To review, Active, Waitlist and Ended. <button class="mk" data-ask="a13">A13</button> One row per request: who asked, what the parent typed, and the best match among this season’s sign-ups. The row’s one button is the likely answer, and the rest sit behind ⋯. Clicking the row opens the request with every match. This is the Registrations list’s own row recipe (one row action, then ⋯), not a new one. When both families asked for each other, the pair is one row and one decision.</p>
+
+  <div class="spec">
+    <div class="cap"><b>Registrations › Friend requests · 120 requests, before the draft · desktop 1040</b><span>Bands by state; the first rows of “To confirm” shown.</span></div>
+    <div class="stage">
+      <div class="fr w1040">
+        <div class="chrome"><div class="eyb">2027 Summer House League</div><div class="ttl">Registrations</div>
+          <div class="stabs"><span>Overview</span><span class="on">Registrations</span><span>Teams &amp; draft</span><span>Schedule</span><span>Standings</span><span>Money</span><span>Email families</span></div></div>
+        <div class="bd">
+          <div class="tb">
+            <span class="vs"><span>To review <span class="amb">4</span></span><span>Active <span class="light">118</span></span><span>Waitlist <span class="light">6</span></span><span>Ended <span class="light">3</span></span><span class="on">Friend requests <span class="amb">49</span></span></span>
+            <span class="lead">All divisions <svg width="14" height="14"><use href="#i-down"/></svg></span>
+            <span class="sp"></span>
+            <span class="search"><svg width="15" height="15"><use href="#i-search"/></svg>Search players or friends</span>
+            <span class="btn"><svg width="15" height="15"><use href="#i-filter"/></svg>Filter <svg width="13" height="13"><use href="#i-down"/></svg></span>
+            <span class="btn"><svg width="15" height="15"><use href="#i-down"/></svg>Export</span>
+          </div>
+          <table>
+            <thead><tr><th style="width:34px"><span class="tick"></span></th><th>Player</th><th>Asked to play with</th><th>Best match this season</th><th style="width:130px"></th><th style="width:40px"></th></tr></thead>
+            <tbody>
+              <tr class="bandrow"><td colspan="6">To confirm <span class="ct">49</span></td></tr>
+              <tr><td><span class="tick"></span></td><td><b>Maya Okafor ⇄ Liam Chen</b><small>U9 · both families asked</small></td><td>“Liam Chen”, parent “Grace Chen”<small>and “Maya Okafor”</small></td><td><span class="chip both">Both asked</span><small>Same names · Liam’s parent matches</small></td><td><span class="rowact">Confirm</span></td><td><span class="glyph"><svg width="16" height="16"><use href="#i-more"/></svg></span></td></tr>
+              <tr><td><span class="tick"></span></td><td><b>Noah Patel</b><small>U9 · signed up Mar 6</small></td><td>“Jon Baptiste”<small>no parent named</small></td><td><b>Jonathan Baptiste</b> · U9<small>Similar first name · same last name · 1 other match</small></td><td><span class="rowact">Confirm</span></td><td><span class="glyph"><svg width="16" height="16"><use href="#i-more"/></svg></span></td></tr>
+              <tr><td><span class="tick"></span></td><td><b>Ethan Roy</b><small>U9 · signed up Mar 9</small></td><td>“Max”<small>no last name · parent “Ryan”</small></td><td class="q">3 possible matches<small>Max Delaney · Maxwell Tran · Max Kowalski</small></td><td><span class="rowact">Pick one…</span></td><td><span class="glyph"><svg width="16" height="16"><use href="#i-more"/></svg></span></td></tr>
+              <tr><td><span class="tick"></span></td><td><b>Ava Lindqvist</b><small>U11 · signed up Mar 2</small></td><td>“Sophie Moreau”<small>parent “Claire Moreau”</small></td><td><b>Sophie Moreau</b> · U9 <span class="chip div">Different division</span><small>Same name · parent matches</small></td><td><span class="rowact">Can’t honour</span></td><td><span class="glyph"><svg width="16" height="16"><use href="#i-more"/></svg></span></td></tr>
+              <tr><td><span class="tick"></span></td><td><b>Lucas Ferreira</b><small>U9 · signed up Mar 11</small></td><td>“Owen Bains”<small>parent “Harjit”</small></td><td class="q">No one by that name has signed up<small>Checked every division</small></td><td><span class="rowact">Not signed up</span></td><td><span class="glyph"><svg width="16" height="16"><use href="#i-more"/></svg></span></td></tr>
+              <tr><td></td><td colspan="5" class="more">… 44 more</td></tr>
+              <tr class="bandrow"><td colspan="6">Confirmed <span class="ct">64</span></td></tr>
+              <tr><td><span class="tick"></span></td><td><b>Zoe Chen</b><small>U9 · signed up Mar 3</small></td><td>Code R2X 8HN</td><td><b>Harper Singh</b> · U9 <span class="chip code">Code match</span><small>Confirmed when entered</small></td><td class="q">Confirmed</td><td><span class="glyph"><svg width="16" height="16"><use href="#i-more"/></svg></span></td></tr>
+              <tr><td></td><td colspan="5" class="more">… 63 more</td></tr>
+              <tr class="bandrow"><td colspan="6">Closed <span class="ct">7</span></td></tr>
+              <tr><td><span class="tick"></span></td><td><b>Isla Grant</b><small>U13 · signed up Mar 8</small></td><td>“Ruby T”</td><td class="q">Not signed up<small>Marked by Kelly Barrett, Mar 12</small></td><td class="q">Closed</td><td><span class="glyph"><svg width="16" height="16"><use href="#i-more"/></svg></span></td></tr>
+            </tbody>
+          </table>
+          <p class="intro" style="font-size:12.5px;color:#776D5D">Each request is what a parent typed. Nothing is kept together in the draft until you confirm it. Code matches arrive confirmed. FieldLogicHQ deletes friend requests after the season; a file you export is yours to delete.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>The pieces around the list</b><span>Filter, the ⋯ menu, selected rows, the request window (Pick one, Pick another), Can’t honour, empty.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w390" style="background:transparent;border:0;box-shadow:none;display:flex;flex-direction:column;gap:14px;width:260px">
+        <div><div class="lbl after">Filter</div>
+          <div class="menu"><div class="mh">Show only</div><div class="cb"><span class="bx on"></span>Code match <span class="ct">22</span></div><div class="cb"><span class="bx"></span>Both asked <span class="ct">34</span></div><div class="cb"><span class="bx"></span>No match found <span class="ct">9</span></div><div class="cb"><span class="bx"></span>Different division <span class="ct">4</span></div><div style="border-top:1px solid rgba(70,55,30,.12);margin-top:4px;color:#776D5D">Clear filter</div></div></div>
+        <div><div class="lbl after">⋯ on a row</div>
+          <div class="menu"><div>Pick another…</div><div>Not signed up</div><div>Can’t honour…</div><div>Open Maya’s registration</div><div style="border-top:1px solid rgba(70,55,30,.12);margin-top:4px">Delete request…</div></div></div>
+        <div><div class="lbl after">Selected rows</div>
+          <div class="bulk">12 selected <span class="btn sm">Confirm best match</span><span style="flex:1"></span><span class="btn quiet sm">Clear</span></div></div>
+      </div>
+      <div><div class="lbl after">Request window · from the row, or Pick one…</div>
+        <div class="fr w440" style="background:transparent;border:0;box-shadow:none">
+          <div class="dlg">
+            <span class="xg" aria-label="Close"><svg width="16" height="16"><use href="#i-x"/></svg></span>
+            <div class="dh"><span class="eyb">Friend request · U9</span><b>Ethan Roy asked to play with “Max”</b><small style="color:#4A4235">Parent’s name given: “Ryan”. Signed up Mar 9 by Dana Roy.</small></div>
+            <div class="db">
+              <div style="font-weight:600;font-size:13.5px">Who did they mean?</div>
+              <div class="radio on"><span class="rd"></span><div><b>Max Delaney</b> · U9<small>Parent Ryan Delaney · first name matches · parent matches</small></div></div>
+              <div class="radio"><span class="rd"></span><div><b>Maxwell Tran</b> · U9<small>Parent Linh Tran · first name is similar</small></div></div>
+              <div class="radio dim"><span class="rd"></span><div><b>Max Kowalski</b> · U11<small>Different division · can’t be kept together</small></div></div>
+              <span class="search" style="width:100%"><svg width="15" height="15"><use href="#i-search"/></svg>Someone else? Search this season’s sign-ups</span>
+            </div>
+            <div class="df"><span class="l">Confirming keeps Ethan and Max together in the draft when the group has room.</span><span class="btn">Cancel</span><span class="btn lime">Confirm</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div><div class="lbl after">Can’t honour…</div>
+          <div class="fr w390" style="background:transparent;border:0;box-shadow:none"><div class="dlg">
+            <span class="xg" aria-label="Close"><svg width="16" height="16"><use href="#i-x"/></svg></span>
+            <div class="dh"><b>Can’t honour Ava’s request?</b><small style="color:#4A4235">Ava Lindqvist asked for Sophie Moreau.</small></div>
+            <div class="db">
+              <div class="fld"><span>Why</span><span class="dd" style="width:100%">Different division <svg width="16" height="16"><use href="#i-down"/></svg></span></div>
+              <p class="hint">Only people who can open Registrations see this. The family is not told.</p>
+            </div>
+            <div class="df"><span class="btn">Cancel</span><span class="btn">Can’t honour</span></div>
+          </div></div>
+          <p class="build" style="max-width:390px">Reasons: Different division (filled in when the match is in another division), or Other, with a short note. A decline takes an outlined button, so this window has no lime.</p>
+        </div>
+        <div><div class="lbl after">Empty</div>
+          <div class="fr w390" style="background:transparent;border:0;box-shadow:none"><div class="empty"><b>No friend requests yet</b>They appear here as families sign up and name friends.</div></div>
+          <p class="build" style="max-width:390px">When the club’s maximum is None, the Friend requests view is absent from the switch, not an empty page.</p>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>Phone, 390</b><span>The views take their own row and scroll sideways, as on Registrations today. One frame, hairlined rows, the row action in the row’s low line.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w390">
+        <div class="bd">
+          <div class="vrow"><span class="vs"><span>Active <span class="light">118</span></span><span>Waitlist <span class="light">6</span></span><span>Ended <span class="light">3</span></span><span class="on">Friend requests <span class="amb">49</span></span></span></div>
+          <div class="ptools"><span class="lead" style="flex:1;justify-content:space-between;height:44px">All divisions <svg width="14" height="14"><use href="#i-down"/></svg></span><span class="ib"><svg width="18" height="18"><use href="#i-search"/></svg></span><span class="ib"><svg width="18" height="18"><use href="#i-filter"/></svg></span><span class="ib"><svg width="18" height="18"><use href="#i-down"/></svg></span></div>
+          <div class="plist">
+            <div class="pband">To confirm · 49</div>
+            <div class="prow"><span class="tick"></span><div><b>Maya Okafor ⇄ Liam Chen</b><br><small style="color:#776D5D">U9 · both families asked · same names</small><div><span class="chip both">Both asked</span></div></div><span class="glyph"><svg width="18" height="18"><use href="#i-more"/></svg></span><div class="low"><span class="rowact">Confirm</span></div></div>
+            <div class="prow"><span class="tick"></span><div><b>Ethan Roy</b> <span style="color:#776D5D">· U9</span><br>Asked for “Max” <small style="color:#776D5D">· parent “Ryan”</small><br><small style="color:#776D5D">3 possible matches</small></div><span class="glyph"><svg width="18" height="18"><use href="#i-more"/></svg></span><div class="low"><span class="rowact">Pick one…</span></div></div>
+            <div class="prow"><span class="tick"></span><div><b>Lucas Ferreira</b> <span style="color:#776D5D">· U9</span><br>Asked for “Owen Bains”<br><small style="color:#776D5D">No one by that name has signed up</small></div><span class="glyph"><svg width="18" height="18"><use href="#i-more"/></svg></span><div class="low"><span class="rowact">Not signed up</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><h3>How a match is found</h3><ul><li>Only this season’s sign-ups. Same division first. A match in another division shows only as “Different division”.</li><li>Names are compared ignoring capitals, accents, hyphens and apostrophes (José = Jose, O’Brien = OBrien). Today’s matcher ignores capitals only, so it needs widening.</li><li>A first name that starts the other (“Jon”, “Jonathan”) counts as similar.</li><li>The parent’s name, when given, ranks the matches and is shown as the reason.</li></ul><p>A match never confirms itself. Even Both asked waits for Confirm.</p></div>
+    <div class="note"><h3>The two marks</h3><p><b>Code match</b>: the other family’s code was entered. It is exact, so it arrives in Confirmed. The registrar can still undo it from ⋯.</p><p><b>Both asked</b>: each family typed the other child’s name. It is the strongest name match, so the pair is one row at the top and one Confirm covers both. A code covers the other direction too: if Liam’s family typed Maya’s name and Maya’s family entered Liam’s code, both requests read Confirmed.</p></div>
+    <div class="note"><h3>120 requests, and deleting one</h3><p>The registrar who did this in Excel works down “To confirm”. Selecting rows and choosing “Confirm best match” confirms a whole page at once, still as the registrar’s own decision. Rows with no single best match (Pick one…, Not signed up, Can’t honour) are left out of it.</p><p><b>Delete request…</b> in ⋯ removes one request completely. That is how the club answers a family who asks to have a name removed.</p><p class="build">Build: ViewSwitch, DivisionPicker, toolbar search, FilterMenu, ExportMenu, RowAction + RowMenu, BulkBar, KitDialog and ClubRowList, all as on Registrations today.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ 5 · THE DRAFT ═══════════════════════ -->
+<section id="p-draft" role="tabpanel" aria-labelledby="t-draft" hidden>
+  <h2 class="sec">5 · The draft board: friends work the way siblings do today</h2>
+  <p class="lede">Confirmed friends become keep-together groups, on the same machinery Keep families together already uses. On the board, a friend mark (a handshake and a count) sits beside the sibling mark. Opening it lights up the group, exactly as the family mark does. “Has a friend request” joins the pool’s Show only filter. The convenor splits a group from the player’s ⋯ menu.</p>
+
+  <div class="spec">
+    <div class="cap"><b>Teams &amp; draft · U9 · desktop 1040</b><span>Today on top. Proposed below, with Maya’s mark open and her group lit across Red and Blue.</span></div>
+    <div class="stage" style="display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div class="lbl">Today <span class="tag t-same">unchanged</span></div>
+        <div class="fr w1040 same"><div class="bd">
+          <div class="board">
+            <div class="pool"><div class="ph"><b>Not on a team</b><span class="pill">4</span></div>
+              <div class="ptb"><span class="search"><svg width="15" height="15"><use href="#i-search"/></svg>Search players or parents</span><span class="btn sm"><svg width="14" height="14"><use href="#i-filter"/></svg>Filter <svg width="12" height="12"><use href="#i-down"/></svg></span><span class="lead" style="height:30px">Sort: Last name <svg width="13" height="13"><use href="#i-down"/></svg></span><span class="sortdir">↑</span></div>
+              <div class="kh"><span></span><span>Player</span><span></span><span class="r">Age</span><span></span></div>
+              <div class="kid"><span class="rt">4</span><span class="nm">Noah Patel</span><span class="marks"></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+              <div class="kid"><span class="rt">3</span><span class="nm">Ethan Roy</span><span class="marks"><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span></span><span class="age">9</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+              <div class="kid"><span class="rt">3</span><span class="nm">Nora Bell</span><span class="marks"><span class="mark"><svg width="14" height="14"><use href="#i-users"/></svg>2</span><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span><span class="mark owe">$</span></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+            </div>
+            <div class="teams">
+              <div class="tc"><div class="th"><b><span class="dotc" style="background:#C0392B"></span>Red</b><small>Marcus Ferreira · 3 players · avg 3.3</small></div>
+                <div class="kh"><span></span><span>Player</span><span></span><span class="r">Age</span><span></span></div>
+                <div class="kid"><span class="rt">4</span><span class="nm">Maya Okafor</span><span class="marks"></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+                <div class="kid"><span class="rt">3</span><span class="nm">Liam Chen</span><span class="marks"></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+                <div class="kid"><span class="rt">3</span><span class="nm">Jonathan Baptiste</span><span class="marks"></span><span class="age">9</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+              </div>
+              <div class="tc"><div class="th"><b><span class="dotc" style="background:#2F5C8A"></span>Blue</b><small>Harjit Bains · 2 players · avg 3.0</small></div>
+                <div class="kh"><span></span><span>Player</span><span></span><span class="r">Age</span><span></span></div>
+                <div class="kid"><span class="rt">3</span><span class="nm">Harper Singh</span><span class="marks"></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+                <div class="kid"><span class="rt">3</span><span class="nm">Zoe Chen</span><span class="marks"></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <div class="lbl after">Proposed <span class="tag t-new">friend mark · filter · split in ⋯</span></div>
+        <div class="fr w1040"><div class="bd">
+          <div class="board">
+            <div class="pool"><div class="ph same"><b>Not on a team</b><span class="pill">4</span></div>
+              <div class="ptb same"><span class="search"><svg width="15" height="15"><use href="#i-search"/></svg>Search players or parents</span><span class="btn sm"><svg width="14" height="14"><use href="#i-filter"/></svg>Filter <svg width="12" height="12"><use href="#i-down"/></svg></span><span class="lead" style="height:30px">Sort: Last name <svg width="13" height="13"><use href="#i-down"/></svg></span><span class="sortdir">↑</span></div>
+              <div class="kh same"><span></span><span>Player</span><span></span><span class="r">Age</span><span></span></div>
+              <div class="kid"><span class="rt">4</span><span class="nm">Noah Patel</span><span class="marks"><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+              <div class="kid same"><span class="rt">3</span><span class="nm">Ethan Roy</span><span class="marks"><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span></span><span class="age">9</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+              <div class="kid"><span class="rt">3</span><span class="nm">Nora Bell</span><span class="marks"><span class="mark"><svg width="14" height="14"><use href="#i-users"/></svg>2</span><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span><span class="mark owe">$</span></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+              <div style="padding:12px">
+                <div class="menu" style="width:100%"><div class="mh">Show only</div><div class="cb same"><span class="bx"></span>Not rated <span class="ct">3</span></div><div class="cb same"><span class="bx"></span>Has player notes <span class="ct">5</span></div><div class="cb same"><span class="bx"></span>Owing <span class="ct">2</span></div><div class="cb same"><span class="bx"></span>Has a sibling in this division <span class="ct">8</span></div><div class="cb"><span class="bx on"></span>Has a friend request <span class="ct">31</span></div><div class="same" style="border-top:1px solid rgba(70,55,30,.12);margin-top:4px;color:#776D5D">Clear filter</div></div>
+              </div>
+            </div>
+            <div class="teams" style="position:relative">
+              <div class="tc"><div class="th same"><b><span class="dotc" style="background:#C0392B"></span>Red</b><small>Marcus Ferreira · 3 players · avg 3.3</small></div>
+                <div class="kh same"><span></span><span>Player</span><span></span><span class="r">Age</span><span></span></div>
+                <div class="kid lit"><span class="rt">4</span><span class="nm">Maya Okafor</span><span class="marks"><span class="mark fnd on"><svg width="14" height="14"><use href="#i-hand"/></svg>2</span></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+                <div class="kid lit"><span class="rt">3</span><span class="nm">Liam Chen</span><span class="marks"><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+                <div class="kid same"><span class="rt">3</span><span class="nm">Jonathan Baptiste</span><span class="marks"><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span></span><span class="age">9</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+              </div>
+              <div class="tc"><div class="th same"><b><span class="dotc" style="background:#2F5C8A"></span>Blue</b><small>Harjit Bains · 2 players · avg 3.0</small></div>
+                <div class="kh same"><span></span><span>Player</span><span></span><span class="r">Age</span><span></span></div>
+                <div class="kid"><span class="rt">3</span><span class="nm">Harper Singh</span><span class="marks"><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+                <div class="kid lit"><span class="rt">3</span><span class="nm">Zoe Chen</span><span class="marks"><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span></span><span class="age">8</span><span class="glyph"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+              </div>
+              <div class="pop" style="position:absolute;left:150px;top:92px;z-index:2">
+                <div class="pt">Maya Okafor · 2 friend requests</div>
+                <div class="pr"><span><a>Liam Chen</a> · Red</span><span class="res ok">Together</span><small>Both asked · confirmed Mar 12</small></div>
+                <div class="pr"><span><a>Zoe Chen</a> · Blue</span><span class="res no">Kept apart</span><small>By Kelly Barrett, May 3</small></div>
+                <div class="pf">Highlighted on the board · click a name to go to it</div>
+              </div>
+              <div class="menu" style="position:absolute;left:300px;top:250px;z-index:2;width:250px">
+                <div class="same">Move to…</div><div class="same">Lock to this team</div><div class="hl">Keep apart from a friend…</div><div>Keep together with Zoe again</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>Phone, 390 · Red opened, Maya’s friend mark tapped</b><span>Rows are 52px with 32px marks, as the phone board ships; the popover opens as a sheet.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w390" style="overflow:hidden">
+        <div class="bd">
+          <div style="font-weight:600;color:#57651E;font-size:14px;min-height:44px;display:flex;align-items:center">‹ All teams</div>
+          <div class="tc"><div class="th"><b><span class="dotc" style="background:#C0392B"></span>Red</b><small>Marcus Ferreira · 3 players · avg 3.3</small></div>
+            <div class="kid lit"><span class="rt">4</span><span class="nm">Maya Okafor</span><span class="marks"><span class="mark fnd on"><svg width="14" height="14"><use href="#i-hand"/></svg>2</span></span><span class="age">8</span><span class="glyph" style="width:32px;height:44px"><svg width="16" height="16"><use href="#i-more"/></svg></span></div>
+            <div class="kid lit"><span class="rt">3</span><span class="nm">Liam Chen</span><span class="marks"><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span></span><span class="age">8</span><span class="glyph" style="width:32px;height:44px"><svg width="16" height="16"><use href="#i-more"/></svg></span></div>
+          </div>
+          <div class="sheet"><div class="grab"></div>
+            <div class="pop" style="width:auto;border:0;box-shadow:none">
+              <div class="pt">Maya Okafor · 2 friend requests</div>
+              <div class="pr" style="min-height:52px"><span><a>Liam Chen</a> · Red</span><span class="res ok">Together</span></div>
+              <div class="pr" style="min-height:52px"><span><a>Zoe Chen</a> · Blue</span><span class="res no">Kept apart</span></div>
+              <div class="pf">Highlighted on the board · tap a name to go to it</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><h3>Splitting a group</h3><p>The player’s ⋯ menu gets “Keep apart from a friend…”, which asks which friend. The draft and Draft again then treat that request as split, and it reads <i>Not honoured · kept apart by {name}</i>. “Keep together with {friend} again” undoes it. A split is a decision about the draft, so it belongs on the board, not in the queue. The popover only lists names, as the family popover does.</p><p>Moving a player by hand splits nothing. The request reads Not honoured until the player moves back.</p></div>
+    <div class="note"><h3>Groups and the cap of 3</h3><ul><li>A group is every child joined by confirmed requests, plus their brothers and sisters.</li><li>A group that would pass 3 keeps its strongest links: Both asked first, then code matches, then the earliest confirmed. The rest read <i>Not honoured · the group would pass 3</i>. <button class="mk" data-ask="a7">A7</button></li><li>The cap never splits brothers and sisters. A family of three has no room for a friend. <button class="mk" data-ask="a6">A6</button></li></ul></div>
+    <div class="note"><h3>Who sees the marks</h3><p>The friend mark, its popover and the filter show only to people who can open Registrations, the same rule as the family note (ruling A8). Anyone else running the board still gets the groups kept together, without seeing who asked for whom. <button class="mk" data-ask="a11">A11</button></p><p class="build">Build: the sibling mark’s button, popover (SheetFrame on a phone) and lit row; the lucide Handshake icon; FilterMenu’s Show only group; CoachToolbarMenu for ⋯.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ 5b · TIDIER ROWS ═══════════════════════ -->
+<section id="p-rows" role="tabpanel" aria-labelledby="t-rows" hidden>
+  <h2 class="sec">5b · A tidier player row, now that a row can carry four marks</h2>
+  <p class="lede">Your question from round 1: with family, friends, notes and money, the marks pile up in whatever order a row happens to have them, so nothing lines up down a team. Three ways to draw the same Red team, each at the board’s true card width. The board shows two team cards across at every width and the screen stops at 1200px, so a card is about 390px wide. The cramped card in tab 5 was my drawing, not the product.</p>
+
+  <div class="widen"><p><b>Two corrections before the options.</b> <b>The number is a rating, not a rank.</b> 1 is newest to the sport and 5 is among the strongest, so “RK” would read backwards: a reader expects rank 1 to be the best. The drawings head it <b>RTG</b>, and hovering it says “Rating: 1 is newest to the sport, 5 among the strongest”. <button class="mk" data-ask="a15">A15</button></p><p><b>Names never cut off on the real board.</b> A long name wraps onto a second line, which also works on a phone, where there is no hover. My drawing cut names off with “…”. The options below keep the wrap, so a full-name hover isn’t needed. Everything is still readable at a glance, and the player’s full name also heads their ⋯ window and the move sheet.</p></div>
+
+  <div class="spec">
+    <div class="cap"><b>Red · desktop card at true width (390)</b><span>The same seven players three ways. Nora Bell is the worst case: a brother (Theo), a friend (Noah), a note and money owing.</span></div>
+    <div class="stage"><div class="row2">
+      <div>
+        <div class="lbl">Round 2 · marks where they fall</div>
+        <div class="fr" style="width:390px"><div class="tc" style="border:0;border-radius:10px">
+          <div class="th"><b><span class="dotc" style="background:#C0392B"></span>Red</b><small>Marcus Ferreira · 7 players · avg 3.3</small></div>
+          <div class="rk rk0 hd"><span>RTG</span><span>Player</span><span></span><span class="r">Age</span><span></span></div>
+          <div class="rk rk0"><span class="rt">4</span><span class="nm2">Maya Okafor</span><span class="mk0"><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>2</span></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rk0"><span class="rt">3</span><span class="nm2">Liam Chen</span><span class="mk0"><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rk0"><span class="rt">3</span><span class="nm2">Jonathan Baptiste</span><span class="mk0"><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span></span><span class="age">9</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rk0"><span class="rt">3</span><span class="nm2">Nora Bell</span><span class="mk0"><span class="mark"><svg width="14" height="14"><use href="#i-users"/></svg>2</span><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span><span class="mark owe">$</span></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rk0"><span class="rt">2</span><span class="nm2">Theo Bell</span><span class="mk0"><span class="mark"><svg width="14" height="14"><use href="#i-users"/></svg>2</span></span><span class="age">7</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rk0"><span class="rt">5</span><span class="nm2">Christopher Abernathy-Lindqvist</span><span class="mk0"><span class="mark owe">$</span></span><span class="age">9</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rk0"><span class="rt">3</span><span class="nm2">Noah Patel</span><span class="mk0"><span class="mark fnd"><svg width="14" height="14"><use href="#i-hand"/></svg>1</span></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+        </div></div>
+        <p class="build" style="max-width:390px">Each mark sits wherever the row has room. To see who owes, the eye has to search every row.</p>
+      </div>
+
+      <div>
+        <div class="lbl after">A · Every mark in its own place</div>
+        <div class="fr" style="width:390px"><div class="tc" style="border:0;border-radius:10px">
+          <div class="th"><b><span class="dotc" style="background:#C0392B"></span>Red</b><small>Marcus Ferreira · 7 players · avg 3.3</small></div>
+          <div class="rk rkA hd"><span title="Rating: 1 is newest to the sport, 5 among the strongest">RTG</span><span>Player</span><span class="pl" title="Family"><svg width="13" height="13"><use href="#i-users"/></svg></span><span class="pl" title="Friends"><svg width="13" height="13"><use href="#i-hand"/></svg></span><span class="pl" title="Note"><svg width="13" height="13"><use href="#i-note"/></svg></span><span class="pl" title="Owing">$</span><span class="r">Age</span><span></span></div>
+          <div class="rk rkA"><span class="rt">4</span><span class="nm2">Maya Okafor</span><span class="pl"></span><span class="pl"><span class="mark fnd">2</span></span><span class="pl"></span><span class="pl"></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkA"><span class="rt">3</span><span class="nm2">Liam Chen</span><span class="pl"></span><span class="pl"><span class="mark fnd">1</span></span><span class="pl"></span><span class="pl"></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkA"><span class="rt">3</span><span class="nm2">Jonathan Baptiste</span><span class="pl"></span><span class="pl"><span class="mark fnd">1</span></span><span class="pl"><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span></span><span class="pl"></span><span class="age">9</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkA"><span class="rt">3</span><span class="nm2">Nora Bell</span><span class="pl"><span class="mark">2</span></span><span class="pl"><span class="mark fnd">1</span></span><span class="pl"><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span></span><span class="pl"><span class="mark owe">$</span></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkA"><span class="rt">2</span><span class="nm2">Theo Bell</span><span class="pl"><span class="mark">2</span></span><span class="pl"></span><span class="pl"></span><span class="pl"></span><span class="age">7</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkA"><span class="rt">5</span><span class="nm2">Christopher Abernathy-Lindqvist</span><span class="pl"></span><span class="pl"></span><span class="pl"></span><span class="pl"><span class="mark owe">$</span></span><span class="age">9</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkA"><span class="rt">3</span><span class="nm2">Noah Patel</span><span class="pl"></span><span class="pl"><span class="mark fnd">1</span></span><span class="pl"></span><span class="pl"></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+        </div></div>
+        <p class="build" style="max-width:390px">Four narrow columns, each headed by its symbol, empty when a player has nothing there. “Who owes?” is one glance down one column. The rows carry the count only; the symbol is said once, in the heading.</p>
+      </div>
+
+      <div>
+        <div class="lbl after">B · One “Together” place, then note and money <span class="tag t-new">recommended</span></div>
+        <div class="fr" style="width:390px"><div class="tc" style="border:0;border-radius:10px">
+          <div class="th"><b><span class="dotc" style="background:#C0392B"></span>Red</b><small>Marcus Ferreira · 7 players · avg 3.3</small></div>
+          <div class="rk rkB hd"><span title="Rating: 1 is newest to the sport, 5 among the strongest">RTG</span><span>Player</span><span class="pl w" title="Together: family and friends">Together</span><span class="pl" title="Note"><svg width="13" height="13"><use href="#i-note"/></svg></span><span class="pl" title="Owing">$</span><span class="r">Age</span><span></span></div>
+          <div class="rk rkB lit2"><span class="rt">4</span><span class="nm2">Maya Okafor</span><span class="pl w"><span class="mark tg apart"><svg width="14" height="14"><use href="#i-users"/></svg>1 of 2</span></span><span class="pl"></span><span class="pl"></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkB lit2"><span class="rt">3</span><span class="nm2">Liam Chen</span><span class="pl w"><span class="mark tg"><svg width="14" height="14"><use href="#i-users"/></svg>1</span></span><span class="pl"></span><span class="pl"></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkB"><span class="rt">3</span><span class="nm2">Jonathan Baptiste</span><span class="pl w"><span class="mark tg apart"><svg width="14" height="14"><use href="#i-users"/></svg>0 of 1</span></span><span class="pl"><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span></span><span class="pl"></span><span class="age">9</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkB"><span class="rt">3</span><span class="nm2">Nora Bell</span><span class="pl w"><span class="mark tg"><svg width="14" height="14"><use href="#i-users"/></svg>2</span></span><span class="pl"><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span></span><span class="pl"><span class="mark owe">$</span></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkB"><span class="rt">2</span><span class="nm2">Theo Bell</span><span class="pl w"><span class="mark tg"><svg width="14" height="14"><use href="#i-users"/></svg>2</span></span><span class="pl"></span><span class="pl"></span><span class="age">7</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkB"><span class="rt">5</span><span class="nm2">Christopher Abernathy-Lindqvist</span><span class="pl w"></span><span class="pl"></span><span class="pl"><span class="mark owe">$</span></span><span class="age">9</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkB"><span class="rt">3</span><span class="nm2">Noah Patel</span><span class="pl w"><span class="mark tg"><svg width="14" height="14"><use href="#i-users"/></svg>2</span></span><span class="pl"></span><span class="pl"></span><span class="age">8</span><span class="dots"><svg width="14" height="14"><use href="#i-more"/></svg></span></div>
+        </div></div>
+        <p class="build" style="max-width:390px">Brothers, sisters and confirmed friends are one thing to the draft: a group, capped at 3 together. So they are one place. The count is how many of the player’s group are on this team. It turns amber, “1 of 2”, when someone they should be with is somewhere else, which is the only case a convenor has to act on.</p>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>B on a phone (390) · Red opened, Maya’s Together mark tapped</b><span>52px rows, 32px marks, as the phone board ships. The sheet lists family and friends separately.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w390" style="overflow:hidden"><div class="bd">
+        <div class="tc"><div class="th"><b><span class="dotc" style="background:#C0392B"></span>Red</b><small>Marcus Ferreira · 7 players · avg 3.3</small></div>
+          <div class="rk rkB ph hd"><span>RTG</span><span>Player</span><span class="pl w">Together</span><span class="pl"><svg width="13" height="13"><use href="#i-note"/></svg></span><span class="pl">$</span><span class="r">Age</span><span></span></div>
+          <div class="rk rkB ph lit2"><span class="rt">4</span><span class="nm2">Maya Okafor</span><span class="pl w"><span class="mark tg apart on"><svg width="14" height="14"><use href="#i-users"/></svg>1 of 2</span></span><span class="pl"></span><span class="pl"></span><span class="age">8</span><span class="dots"><svg width="16" height="16"><use href="#i-more"/></svg></span></div>
+          <div class="rk rkB ph"><span class="rt">3</span><span class="nm2">Nora Bell</span><span class="pl w"><span class="mark tg"><svg width="14" height="14"><use href="#i-users"/></svg>2</span></span><span class="pl"><span class="mark"><svg width="14" height="14"><use href="#i-note"/></svg></span></span><span class="pl"><span class="mark owe">$</span></span><span class="age">8</span><span class="dots"><svg width="16" height="16"><use href="#i-more"/></svg></span></div>
+        </div>
+        <div class="sheet"><div class="grab"></div>
+          <div class="pop" style="width:auto;border:0;box-shadow:none">
+            <div class="pt">Maya Okafor · together with 1 of 2</div>
+            <div class="pr" style="min-height:52px"><span><a>Liam Chen</a> · Red · friend</span><span class="res ok">Together</span></div>
+            <div class="pr" style="min-height:52px"><span><a>Zoe Chen</a> · Blue · friend</span><span class="res no">Kept apart</span></div>
+            <div class="pf">Highlighted on the board · tap a name to go to it</div>
+          </div>
+        </div>
+      </div></div>
+    </div></div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><h3>What B changes beyond the row</h3><ul><li>Today’s family mark becomes the Together mark: same symbol, same popover and lit rows, now listing family and friends together, each labelled.</li><li>The filter keeps both “Has a sibling in this division” and “Has a friend request”, so either can still be found on its own.</li><li>The board’s other second-line states (Locked, Moved by you, Not told) are unchanged.</li></ul></div>
+    <div class="note"><h3>Why B over A</h3><p>A is tidy but still asks the convenor to read two numbers that mean the same thing to the draft. B answers the question the convenor actually has, “is anyone separated from who they should be with?”, in one amber mark. It also leaves the name a little more room.</p><p>A is the safer choice if you want friends visibly distinct from family at a glance. <button class="mk" data-ask="a14">A14</button></p></div>
+    <div class="note"><h3>Who sees what</h3><p>Rating, notes and the Together count for friends follow today’s rights: RTG only for people who see ratings, and notes and friends only for people who can open Registrations. A place a reader can’t see is absent, not empty, so their row closes up.</p><p class="build">Build: the row’s columns already come from the reader’s rights; this adds one fixed place per mark kind and a heading row symbol for each.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ 6 · AFTER THE DRAFT ═══════════════════════ -->
+<section id="p-after" role="tabpanel" aria-labelledby="t-after" hidden>
+  <h2 class="sec">6 · After the draft: every request reads Honoured or Not honoured, with the reason</h2>
+  <p class="lede">Once a division’s draft has run, the Friend requests view swaps its bands for the result. The result is read from the teams as they stand now, not frozen at the draft: move a player by hand and the line changes. Only people who can open Registrations see it. Parents get no message.</p>
+
+  <div class="spec">
+    <div class="cap"><b>Registrations › Friend requests · U9, after the draft · desktop 1040</b><span>Not honoured first, because those are the ones a registrar may want to fix by hand.</span></div>
+    <div class="stage">
+      <div class="fr w1040"><div class="bd">
+        <div class="tb">
+          <span class="vs"><span>To review</span><span>Active <span class="light">72</span></span><span>Waitlist <span class="light">3</span></span><span>Ended <span class="light">1</span></span><span class="on">Friend requests</span></span>
+          <span class="lead">U9 <svg width="14" height="14"><use href="#i-down"/></svg></span>
+          <span class="sp"></span>
+          <span class="search"><svg width="15" height="15"><use href="#i-search"/></svg>Search players or friends</span>
+          <span class="btn"><svg width="15" height="15"><use href="#i-filter"/></svg>Filter <svg width="13" height="13"><use href="#i-down"/></svg></span>
+          <span class="btn"><svg width="15" height="15"><use href="#i-down"/></svg>Export</span>
+        </div>
+        <table>
+          <thead><tr><th>Player</th><th>Asked to play with</th><th>Matched to</th><th>In the draft</th><th style="width:30px"></th></tr></thead>
+          <tbody>
+            <tr class="bandrow"><td colspan="5">Not honoured <span class="ct">9</span></td></tr>
+            <tr><td><b>Maya Okafor</b><small>Red</small></td><td>Code W8P 2LC</td><td>Zoe Chen · Blue</td><td><span class="res no">Not honoured</span><small>Kept apart by Kelly Barrett, May 3</small></td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td><b>Ella Brooks</b><small>Gold</small></td><td>“Mia Santos”</td><td>Mia Santos · White</td><td><span class="res no">Not honoured</span><small>The group would pass 3 children</small></td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td><b>Ben Osei</b><small>Green</small></td><td>“Leo Park”</td><td>Leo Park · Black</td><td><span class="res no">Not honoured</span><small>Leo is locked to Black</small></td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td><b>Chloe Dubé</b><small>Red</small></td><td>“Aria Khan”</td><td>Aria Khan</td><td><span class="res no">Not honoured</span><small>Aria withdrew May 9</small></td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td><b>Owen Mills</b><small>Blue</small></td><td>“Sam Wu”</td><td>Sam Wu · Gold</td><td><span class="res no">Not honoured</span><small>Moved by hand after the draft</small></td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td><b>Ruby Tran</b><small>White</small></td><td>“Nora Bell”</td><td>Nora Bell · Green</td><td><span class="res no">Not honoured</span><small>Confirmed after the draft</small></td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td><b>Lucas Ferreira</b><small>Blue</small></td><td>“Owen Bains”</td><td class="q">—</td><td><span class="res no">Not honoured</span><small>Not signed up</small></td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td colspan="5" class="more">… 2 more</td></tr>
+            <tr class="bandrow"><td colspan="5">Honoured <span class="ct">22</span></td></tr>
+            <tr><td><b>Maya Okafor</b><small>Red</small></td><td>“Liam Chen”</td><td>Liam Chen · Red</td><td><span class="res ok">Honoured</span><small>Both on Red</small></td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td><b>Zoe Chen</b><small>Blue</small></td><td>Code R2X 8HN</td><td>Harper Singh · Blue</td><td><span class="res ok">Honoured</span><small>Both on Blue</small></td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td colspan="5" class="more">… 20 more</td></tr>
+          </tbody>
+        </table>
+        <p class="intro" style="font-size:12.5px;color:#776D5D">Read from the teams as they stand now. 22 of 31 honoured.</p>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>The registration’s own record window</b><span>A new section after Details, listing what this child asked and who asked for this child.</span></div>
+    <div class="stage"><div class="row2">
+      <div class="fr w560" style="background:transparent;border:0;box-shadow:none"><div class="dlg">
+        <span class="xg" aria-label="Close"><svg width="16" height="16"><use href="#i-x"/></svg></span>
+        <div class="dh same"><span class="eyb">2027 Summer House League · U9</span><b>Maya Okafor <span class="steps"><span>‹ Previous</span><span>Next ›</span></span></b><small style="color:#4A4235">Active</small></div>
+        <div class="db">
+          <div class="recH same">Details</div>
+          <div class="same" style="color:#776D5D;font-size:13px">Division, Team, Guardian, Email … Player notes, Notes (unchanged)</div>
+          <div class="recH nw">Friend requests</div>
+          <dl class="facts" style="grid-template-columns:140px 1fr">
+            <dt>Asked for</dt><dd>“Liam Chen” (parent “Grace Chen”) → Liam Chen · <span class="res ok">Honoured</span>, both on Red</dd>
+            <dt></dt><dd>Code W8P 2LC → Zoe Chen · <span class="res no">Not honoured</span>, kept apart by Kelly Barrett</dd>
+            <dt>Asked for Maya</dt><dd>Liam Chen’s family</dd>
+          </dl>
+          <a class="lk" style="font-size:13px">Open in Friend requests</a>
+          <div class="recH same">Fee · History · What you can do</div>
+        </div>
+      </div></div>
+    </div></div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><h3>Every reason, in one list</h3><ul>
+      <li><b>Both on {team}</b>: honoured.</li>
+      <li><b>The group would pass 3 children</b></li>
+      <li><b>Different division</b> (marked Can’t honour)</li>
+      <li><b>{Friend} is locked to {team}</b></li>
+      <li><b>{Friend} withdrew {day}</b></li>
+      <li><b>Kept apart by {person}</b></li>
+      <li><b>Moved by hand after the draft</b></li>
+      <li><b>Confirmed after the draft</b></li>
+      <li><b>Not signed up</b>, or <b>Can’t honour · {note}</b></li>
+      <li><b>Not confirmed before the draft</b></li>
+    </ul></div>
+    <div class="note"><h3>A withdrawal or a late change</h3><p>Nothing re-deals by itself. If the friend withdraws, the request reads <i>{Friend} withdrew {day}</i>. A request confirmed after the draft reads <i>Confirmed after the draft</i> until the convenor moves one of the two by hand, then it flips to Honoured. <button class="mk" data-ask="a3">A3</button></p></div>
+    <div class="note"><h3>Where the waiting count goes</h3><p>Once a division has drafted, its requests leave the amber count. Not honoured is a record, not a to-do. The count stays only for requests still to confirm.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ 7 · LIST AND EXPORT ═══════════════════════ -->
+<section id="p-list" role="tabpanel" aria-labelledby="t-list" hidden>
+  <h2 class="sec">7 · The registrations list and the exports</h2>
+  <p class="lede">The registrations table keeps its columns. A status is said once, and the Friend requests view is where requests are said. The list gains one Flags filter, “Has a friend request”. The registrations export gains two name-free columns. Friend names go only into the Friend requests view’s own export, never into the file that already holds guardian contacts and medical notes.</p>
+
+  <div class="spec">
+    <div class="cap"><b>Registrations export · Excel and CSV columns</b><span>Shaded = new. Starred = only in “Excel with contact details”, as today.</span></div>
+    <div class="colgrid"><table>
+      <tr><th>First Name</th><th>Last Name</th><th>Division</th><th class="pv">Date of Birth</th><th class="pv">Guardian Name</th><th class="pv">Guardian Email</th><th>…</th><th class="pv">Player Notes</th><th class="pv">Admin Notes</th><th class="nw">Friend Requests</th><th class="nw">Friends Honoured</th></tr>
+      <tr><td>Maya</td><td>Okafor</td><td>U9</td><td>2018-05-14</td><td>Ada Okafor</td><td>ada@…</td><td>…</td><td></td><td></td><td class="nw">2</td><td class="nw">1 of 2</td></tr>
+    </table></div>
+    <p class="build">At None there are no friend columns. PDF: unchanged.</p>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>Friend requests view · its own Export</b><span>The registrar’s old spreadsheet as a file: one row per request, children’s names only.</span></div>
+    <div class="colgrid"><table>
+      <tr><th class="nw">Player</th><th class="nw">Division</th><th class="nw">Team</th><th class="nw">Asked To Play With</th><th class="nw">Code</th><th class="nw">Matched To</th><th class="nw">Mark</th><th class="nw">State</th><th class="nw">In The Draft</th><th class="nw">Reason</th><th class="nw">Decided By</th></tr>
+      <tr><td>Ella Brooks</td><td>U9</td><td>Gold</td><td>Mia Santos</td><td></td><td>Mia Santos</td><td>Both asked</td><td>Confirmed</td><td>Not honoured</td><td>The group would pass 3 children</td><td>Kelly Barrett</td></tr>
+    </table></div>
+    <p class="build">No parent names and no contact details. The typed parent’s name is a matching aid only, so it stays on the screen. Excel and CSV, behind the seat that opens Registrations and the League Plus export gate, as the registrations export is. Typed text from an anonymous form is written so a spreadsheet can’t read it as a formula.</p>
+  </div>
+
+  <div class="notes">
+    <div class="note"><h3>Import: there is nothing to map into</h3><p>House league has no registration import today, from TeamSnap or from any file. “Add registration” adds one child by hand. So there is no column to map a friend request into. <button class="mk" data-ask="a4">A4</button></p></div>
+    <div class="note"><h3>Formatting check (portal standard)</h3><ul><li>Headings in the display face, uppercase, secondary ink. The name is the row’s target, with one chevron column, only where a row opens.</li><li>One row action per row (the Registrations recipe: olive outline), the rest behind ⋯. No links inside cells.</li><li>Groups as band rows with their counts in words. A “… N more” row, as the list ships. No summary strip repeating the bands.</li><li>Waiting counts as the amber pill: To review and Friend requests. The other views’ counts are the lighter ink, and a zero is not drawn.</li><li>One lime per window (Confirm, Run the draft). A decline is outlined. The toolbar has no lime.</li></ul></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ 8 · ASKS ═══════════════════════ -->
+<section id="p-asks" role="tabpanel" aria-labelledby="t-asks" hidden>
+  <h2 class="sec">8 · Asks</h2>
+  <div class="ruled" style="border-left-color:var(--mark)"><b>RULED 2026-11-10: every ask below, as recommended.</b> Owner: “i agree with the recommendations in the mockups, i like your proposal in 5b as well.” That covers A12’s single trigger (not the earlier 30-day option), A13 with its four drawn-in design proposals, A14 option B and A15 “RTG”. These drawings are the build’s source of truth.</div>
+  <div class="ruled"><b>Already ruled, drawn as ruled (2026-11-10)</b><ul>
+    <li>The club sets the maximum friends per child; the default is 2.</li>
+    <li>Admins see Honoured / Not honoured, with the reason, after the draft. Parents get no message, see only what they asked, and never another child’s details.</li>
+    <li>The largest keep-together group is 3 children, siblings counted.</li>
+    <li>A name match is a suggestion the registrar confirms. A friend code is the exact path. No new links to families.</li>
+  </ul></div>
+  <div class="legalbox"><b>What the /legal review changed in these drawings</b><ul>
+    <li>The form’s privacy line now says what is true. More than one seat sees the names, and deletion has a defined trigger (A12), which the stage must build. Nothing deletes on its own today.</li>
+    <li>A caution line: “Only name a child whose family is happy for you to.” A typed name can belong to a child who is not a member, and that family is never told.</li>
+    <li>One audience rule everywhere: the seats that can open Registrations (A11).</li>
+    <li>“Delete request…” in ⋯, so the club can answer a family that asks to have a name removed.</li>
+    <li>Friend names are kept out of the contact-details export; the Friend requests export carries children’s names only.</li>
+    <li>For the build: typed names are used only for team placement. No outreach to a family that hasn’t signed up, and a name never feeds the families or people lists. Requests belong to the season’s sign-up, not to the child’s cross-season record, so deleting them is clean.</li>
+    <li>For a lawyer, if you choose: reading a non-member child’s name as indirect collection, and the exact notice wording. Québec’s Law 25 is re-checked when the first Québec club signs.</li>
+  </ul></div>
+
+  <div class="ask" id="a1"><h3>A1 · Can the club change the group cap of 3, the way it sets the maximum?</h3>
+    <p><span class="rec">Recommend: no, fixed at 3 for the first release.</span> The cap protects team balance; its only job is to stop friend chains from swallowing a team. A club that raises it to 5 gets teams that come out uneven, and the draft window then explains why every time. A setting can be added later at no cost, but taking one away from a club that uses it is costly. The cap is printed in the settings and in the draft window, so it is never a surprise.</p></div>
+
+  <div class="ask" id="a2"><h3>A2 · A request for a child in another division: allowed at sign-up, or refused there?</h3>
+    <p><span class="rec">Recommend: allowed at sign-up. It arrives in the queue marked “Different division”, with Can’t honour as the row’s action.</span> Refusing it at sign-up would mean the anonymous form telling a stranger that a named child is registered in another division. Instead, the form names the child’s own division in its help line (“friends who are signing up for U9”), which heads off most of these.</p></div>
+
+  <div class="ask" id="a3"><h3>A3 · When a requested friend withdraws, or a request changes after the draft, what does the registrar see?</h3>
+    <p><span class="rec">Recommend: the result is read live from the teams, and nothing re-deals by itself.</span> A withdrawal reads “{Friend} withdrew {day}”. A request confirmed after the draft reads “Confirmed after the draft” until the convenor moves a player by hand, and then it flips to Honoured. Families can’t change requests once their division’s teams are made (A5), so there are no late edits from families.</p></div>
+
+  <div class="ask" id="a4"><h3>A4 · Do friend requests import from a TeamSnap or CSV registration export?</h3>
+    <p><span class="rec">Re-framed: there is no house-league registration import to add a column to.</span> The prospect club moves off TeamSnap by taking next season’s sign-ups on our form, where the question lives. If a registration import is ever built, a “Plays with” column should land in this same queue as typed names: suggestions, never confirmed. Recommend recording that as a rule for any future import, and not building an import for this stage.</p></div>
+
+  <div class="ask" id="a5"><h3>A5 · New: can a parent add or change friend requests after signing up, on “Your sign-up”?</h3>
+    <p><span class="rec">Recommend: yes, until that child’s division has its teams made.</span> The family that signs up first can’t enter a code that doesn’t exist yet, so without this the code only ever works one way. “Your sign-up” already lets a family ask to withdraw, so a small change form fits there. Once the teams are made, the Change link goes and the page says “Friend requests closed when the teams were made.”</p></div>
+
+  <div class="ask" id="a6"><h3>A6 · New: does the cap of 3 ever split brothers and sisters?</h3>
+    <p><span class="rec">Recommend: never.</span> Keep families together already keeps a family whole, whatever its size. The cap limits only friends joining a group: a family of three has no room for a friend, and a family of two has room for one.</p></div>
+
+  <div class="ask" id="a7"><h3>A7 · New: when a chain of requests would pass 3, which links are kept?</h3>
+    <p><span class="rec">Recommend: Both asked first, then code matches, then the earliest confirmed.</span> A request both families made is the strongest signal. The rest read “Not honoured · the group would pass 3 children”, so the registrar can see them and fix one by hand.</p></div>
+
+  <div class="ask" id="a8"><h3>A8 · New: what choices does the maximum offer?</h3>
+    <p><span class="rec">Recommend: None (don’t ask) · 1 · 2.</span> With a group cap of 3, a child plus 3 friends is a group of 4, so a third friend could never be kept together. Offering 3 would invite requests the draft can never honour. If A1 goes the other way (a club-set cap), the maximum’s choices follow the cap.</p></div>
+
+  <div class="ask" id="a9"><h3>A9 · New: the friends switch goes in the draft window, not a stored setting. Agreed?</h3>
+    <p><span class="rec">Recommend: yes.</span> The brief imagined a settings screen with Families together on it. In the product, Keep families together is a switch in the Run the draft window, and Keep friends together belongs beside it. The one stored setting is the maximum per child, because it changes the sign-up form.</p></div>
+
+  <div class="ask" id="a10"><h3>A10 · New: does the confirmation email carry each child’s friend code, as text?</h3>
+    <p><span class="rec">Recommend: yes, as text, never a link, in a neutral sentence: “If another family wants {child} on their child’s team, they can enter this code on their sign-up.”</span> That is the moment the family is thinking about it, and a parent can forward an email easily. /legal finds it transactional under CASL as long as it carries no “tell a friend” push. A sent email is outside the season-end deletion, which is acceptable because a code reveals no name.</p></div>
+
+  <div class="ask" id="a11"><h3>A11 · New: who sees friend requests?</h3>
+    <p><span class="rec">Recommend: the same seats as family notes, the people who can open Registrations (ruling A8), on every surface: the queue, the record, the board marks, the after-draft result and the export.</span> A typed name can be a child who isn’t a member at all. The draft still keeps groups together for whoever runs it. Only the marks and the names are held back.</p></div>
+
+  <div class="ask" id="a12"><h3>A12 · New: when are requests deleted?</h3>
+    <p><span class="rec">Recommend: when the club marks the season finished, or 60 days after its last day if it never does. The deletion is built in this stage, because the form promises it.</span> “Registration closed” can’t be the trigger. It comes before the draft. Some seasons also sit past their last day without being marked finished. Typed names, codes, matches and keep-together groups go together. The export is the club’s own copy, and the Friend requests screen says so.</p>
+    <p>Option /legal raised: delete the typed names and parent names sooner, 30 days after the division’s teams are made, keeping only a name-free Honoured / Not honoured until the season ends. More private, but the registrar loses the “what did they type?” column once the season is under way. Recommend the single trigger above. Say if you want the earlier one.</p></div>
+
+  <div class="ask" id="a13"><h3>A13 · New, from the /design review: Friend requests as a fifth view on Registrations, with its own amber count?</h3>
+    <p><span class="rec">Recommend: yes.</span> The four-view switch was ruled for four views of one list (13i Ask 6), and requests are a different record. But a registrar does this work while working through sign-ups, the switch already scrolls on a phone, and a separate door would be one more place to look. It carries the amber waiting count beside To review’s, and it is absent when the club asks for no friends.</p>
+    <p>The same review’s other proposals are drawn in, for your yes: a Both asked pair is one row and one Confirm; Can’t honour is an outlined button, not lime; the split moved from popover buttons to the player’s ⋯ menu; the parent’s name stays off the export.</p></div>
+
+  <div class="ask" id="a14"><h3>A14 · New, from your round-1 note: how should a player row lay out its marks?</h3>
+    <p><span class="rec">Recommend B: one “Together” place (family and confirmed friends), then note, then money, each in a fixed place headed by its symbol, and amber when someone in the group is on another team.</span> To the draft, family and friends are the same thing, a group capped at 3, and the only case a convenor acts on is a separated group. A gives every mark kind its own column and keeps friends visibly distinct from family. It is the choice if that distinction matters more to you than one signal. Either way the marks line up down a team, and the card is wide enough at its real size (about 390px, two cards across).</p></div>
+
+  <div class="ask" id="a15"><h3>A15 · New: a heading over the rating column?</h3>
+    <p><span class="rec">Recommend “RTG”, with a hover that says “Rating: 1 is newest to the sport, 5 among the strongest”.</span> “RK” reads as rank, where 1 is best, and here 5 is strongest. A full-name hover isn’t needed, because names wrap rather than cut off on the real board (my drawing cut them off). The heading shows only to people who see ratings, as the column does today.</p></div>
+</section>
+</main>
+</div>
+
+<script>
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var compare = { ask: 1, code: 1, set: 1, draft: 1, after: 1 };
+  function show(name, noHash) {
+    if (!document.getElementById('p-' + name)) name = 'ask';
+    tabs.forEach(function (t) { var on = t.dataset.tab === name; t.setAttribute('aria-selected', on ? 'true' : 'false'); document.getElementById('p-' + t.dataset.tab).hidden = !on; });
+    document.getElementById('viewrow').hidden = !compare[name];
+    if (!noHash) { try { history.replaceState(null, '', '#' + name); } catch (e) {} }
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.tab); window.scrollTo(0, 0); }); });
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      document.body.dataset.view = b.dataset.view;
+    });
+  });
+  document.querySelectorAll('.mk').forEach(function (m) {
+    m.addEventListener('click', function () {
+      show('asks');
+      var el = document.getElementById(m.dataset.ask);
+      if (el) { el.scrollIntoView({ block: 'start' }); el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1600); }
+    });
+  });
+  var h = (location.hash || '').replace('#', '');
+  show(h || 'ask', true);
+  window.addEventListener('hashchange', function () { show((location.hash || '').replace('#', ''), true); });
+})();
+</script>

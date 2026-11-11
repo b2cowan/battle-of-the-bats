@@ -41,3 +41,6 @@ is the owner's marked priority among the new modules.
 - Every volunteer's documents, and which are due or expired, show on one screen.
 - A sponsor pays through the link with no admin re-keying.
 - A camp fills from the club site.
+
+**Where it stands (2026-11-10):** friend requests are drawn (parent's question, friend code, registrar's queue, draft
+board, after-draft results), with 15 owner asks, all ruled 2026-11-10 as recommended; the build prompt is next (plan §5 Stage 1).

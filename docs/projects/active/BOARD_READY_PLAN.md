@@ -167,6 +167,51 @@ board's two questions:
   parent sees only what they asked for, and never another child's details.
 - [ ] Migration first (request rows + code), then `docs/agents/db/DATA_DICTIONARY.md` + `npm run refresh:snapshots`.
 - [ ] `/legal`: a parent typing another child's name, and how long requests are kept (purge at season end).
+  **Done 2026-11-10 at the drawing session** (findings below, applied to the drawings).
+- **Drawings (2026-11-10, round 2 after `/design` + `/legal`):** https://claude.ai/artifact/KxYr8LW6r5yvsUJ7FmvPL8
+  (source `BOARD_READY_FRIEND_REQUESTS_DRAWINGS.html`). Eight tabs: the parent's question, the friend code, the
+  settings, the Friend requests queue, the draft board, tidier board rows (5b), after the draft, list + export, asks.
+  **ALL ASKS RULED 2026-11-10** — owner: *"i agree with the recommendations in the mockups, i like your proposal in 5b
+  as well"*. Every ask A1–A15 is ruled as the drawing recommends: A12 the single trigger, not the earlier 30-day
+  option; A13 including the four `/design` proposals drawn in; A14 option B. **The drawings as published (version 3)
+  are the build's source of truth.** Agreement is not a go to build: the build prompt comes next, and the build starts
+  on the owner's go.
+  - **Corrections to this stage, found reading the code:** (1) "Families together" is **not a stored setting**. It is a
+    switch in the *Run the draft* window, on by default, shown only when a division has siblings. So the maximum per
+    child goes in the Overview's Registration block, and *Keep friends together* sits beside it in the draft window
+    (ask A9). (2) **No house-league registration import exists**, from TeamSnap or any file, so there is no column to
+    map (ask A4). (3) Today's name matcher only lower-cases. Friend suggestions need accents, hyphens and apostrophes
+    ignored, and a first-name prefix treated as similar. (4) The draft has **no group-size cap** today; a family unit
+    is placed whole whatever its size.
+  - **Asks, with the drawing's recommendation:** A1 group cap fixed at 3 (not club-set); A2 cross-division requests
+    allowed at sign-up, shown as "Different division" in the queue (refusing at sign-up would tell an anonymous visitor
+    a named child is registered); A3 the result is read live from the teams and nothing re-deals; A4 re-framed, no
+    import to map into; A5 families may change requests on "Your sign-up" until their division's teams are made; A6
+    the cap never splits siblings; A7 links kept by Both asked, then code, then earliest confirmed; A8 the maximum
+    offers None / 1 / 2; A9 the switch lives in the draft window; A10 the code goes in the confirmation email as text;
+    A11 requests are seen only by seats that can open Registrations, on every surface; A12 delete when the season is
+    marked finished, or 60 days after its last day, with the purge built in this stage; A13 Friend requests is a fifth
+    Registrations view with its own amber count (plus four `/design` proposals drawn in for a yes). Added in round 3
+    from the owner's note on the crowded board rows (tab 5b): A14 the marks get fixed places in the row, with family and
+    friends merged into one "Together" place that turns amber when the group is split (option B; A = one place per
+    mark kind); A15 the rating column is headed "RTG", not "RK", because it is a 1–5 rating where 5 is strongest. Names
+    already wrap on the real board, so no full-name hover is needed.
+  - **`/legal` findings (2026-11-10, applied to the drawings):** the club is responsible for the typed names and
+    FieldLogicHQ is its service provider. A non-member child's name is the weakest point (indirect collection), so add
+    a caution line on the form. The in-form privacy line must not over-promise: more than one seat sees the names, and
+    **nothing purges automatically today**, so the purge ships with this stage or the promise changes. Add a "Delete
+    request" action so the club can answer an erasure request. Keep friend names out of "Excel with contact details".
+    A code in the confirmation email is transactional if it is neutral and carries no referral push.
+  - **Build rules from `/legal`:** typed names are used only for placement (no outreach to a "Not signed up" family,
+    never fed into families, people or prospect lists). Requests hang on the season's registration, not the child's
+    cross-season record. Matched links and keep-together groups are deleted with the request.
+  - **Doc follow-ups (`/legal` to write when asked):** privacy policy draft §5 (friend names + code; the club decides,
+    we process) and §9 (the retention row, only once the purge ships); `LEGAL_FACTS.md` (typed non-member names
+    beside the second parent's email); club data-processing terms (the club chooses the feature, uses names only for
+    placement, owns any export). Lawyer, if the owner chooses: the indirect-collection reading and the notice wording.
+    Re-check Québec Law 25 when the first Québec club signs.
+  - **Route to `/review` at build:** anonymous free text reaches the Excel/CSV exports. Check formula neutralization in
+    the shared table export before the friend columns land.
 
 ### Stage 2 — Group email to coaches and volunteers (item 3)
 - [ ] **Email coaches** composer on the one club send window parts, on the colleague-mail path (reply-to the sender,
@@ -273,8 +318,8 @@ board's two questions:
 - [x] **Q3 Friend requests** — RULED 2026-11-10: the club sets the maximum per child, default 2; admins see honoured /
   not honoured after the draft; parents get no such message.
 - [x] **Q3b** — RULED 2026-11-10 ("agree with your recommendations"): the largest keep-together group is 3 children,
-  siblings counted. *Not ruled:* the recommendation also offered "or club-set like the maximum". Ask at the Stage 1
-  drawing whether the club can change it.
+  siblings counted. ~~*Not ruled:* whether the club can change it.~~ **Ruled at the Stage 1 drawing 2026-11-10 (A1):
+  fixed at 3, not club-set.**
 - [x] **Q4 Missing document** — RULED 2026-11-10: **warn, never block**.
 - [ ] **Q5 Penetration test:** still open (no recommendation was made). Recommend deciding once 0a is done, when the pack is ready.
 - [x] **Q6 Gates** — RULED 2026-11-10 ("agreed"): §9 as written; `/strategy` logs it.
