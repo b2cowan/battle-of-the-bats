@@ -53,6 +53,12 @@ frontend:
         # console variables (owner 2026-11-10, for the prospect demo on staging). Production has no value, so the line writes
         # an empty one and the family app stays off. Without this line the console value never reaches the runtime.
         - echo "GUARDIAN_TIER_ENABLED=$GUARDIAN_TIER_ENABLED" >> .env.production
+        # Two-step sign-in backup codes (Board Ready Part 2): the secret that keys each stored backup-code hash, so a copy of the
+        # database alone cannot be searched for the codes. The VALUE lives only in the console (its own per branch, at least 32
+        # characters, kept somewhere safe); this line just carries it to the runtime. Unset or shorter than 32 ⇒ new codes fall
+        # back to the older unkeyed hash and the server logs a warning; nothing breaks. Once codes are keyed, changing or losing
+        # the value stops those codes working until the person makes new ones.
+        - echo "TWO_STEP_CODE_KEY=$TWO_STEP_CODE_KEY" >> .env.production
         # A club's own web address (Club Tier 4e): the app asks Amplify to serve the club's domain. The app id and the branch
         # come from the build's own AWS_APP_ID / AWS_BRANCH (`master` on master, `dev` on dev), so no console variable needs a
         # per-branch override and none can be forgotten at a promote. Only the two keys are console variables (all branches,
