@@ -48,7 +48,7 @@
 
 ## Part 1 · Opus — the foundation
 
-> **BUILT 2026-11-11, committed `7c8f092ab` 2026-11-11** (mig 464 on its own, `6b19b5aca`) (migs 463 + 464 applied to dev; walk §511 owed). What was built, the census
+> **BUILT 2026-11-11, committed `7c8f092ab` 2026-11-11** (mig 464 on its own, `6b19b5aca`) (migs 463 + 464 applied to dev; walk §511 ✅ 24/24 2026-11-11). What was built, the census
 > correction (twelve sign-in doors) and six open owner calls: `BOARD_READY_PLAN.md` §5 Stage 0a "Part 1 (the foundation)".
 > Parts 2 and 3 can start once Part 1 is committed.
 
