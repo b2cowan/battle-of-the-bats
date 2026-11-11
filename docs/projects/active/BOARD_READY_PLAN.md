@@ -320,7 +320,7 @@ board's two questions:
     Re-check Québec Law 25 when the first Québec club signs.
   - **Route to `/review` at build:** anonymous free text reaches the Excel/CSV exports. Check formula neutralization in
     the shared table export before the friend columns land.
-  - **Part 1 (the family side + the setting) BUILT 2026-11-11**, to drawing tabs 1, 2, 3 (top): the question in each
+  - **Part 1 (the family side + the setting) BUILT 2026-11-11, committed `9269b5eab` 2026-11-11**, to drawing tabs 1, 2, 3 (top): the question in each
     child's card under the division line, the friend code (check letter, no lookup) on the confirmation, in the email
     and on "Your sign-up" with Copy, "Plays with" + Change until the division's teams are made, and Overview ›
     Registration "Friend requests" (None · 1 · 2). Mig **461** applied to **dev** 2026-11-11 (404 live sign-ups given a
