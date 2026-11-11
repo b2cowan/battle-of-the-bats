@@ -1,10 +1,11 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from './supabase-admin';
-import { getAuthenticatedUser } from './api-auth';
+import { getAuthenticatedUser, getSessionTwoStep } from './api-auth';
+import { platformStaffTwoStepRequired, requiredSeatNeed } from './two-step-rule';
+import { TwoStepRequiredError } from './two-step-gate';
 import { canViewPlatformArea, canWritePlatformArea, hasPlatformPower, type PlatformArea, type PlatformPower } from './platform-areas';
 
 export type PlatformRole = 'super_admin' | 'support' | 'billing' | 'product' | 'growth' | 'read_only';
@@ -56,19 +57,15 @@ export async function isPlatformAdminEmail(email: string): Promise<boolean> {
   return (await getDbPlatformRole(email)) !== null;
 }
 
+/**
+ * The staff session, or null. ⚖ PLATFORM STAFF ALWAYS USE TWO-STEP, with no grace period (Board Ready · two-step sign-in,
+ * owner ruling 2026-11-10): one stolen password here opens every customer. A staff session without it throws
+ * TwoStepRequiredError — the set-up step in a page, a 401 in a route — and one whose last code is over 30 days old is
+ * sent to type it again. On dev only, TWO_STEP_STAFF_REQUIRED=off lifts it for seeds and probes (lib/two-step-rule.ts).
+ */
 export async function getPlatformAdminContext(): Promise<PlatformAuthContext | null> {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll() {},
-      },
-    }
-  );
-  const { data: { user } } = await supabase.auth.getUser();
+  const state = await getSessionTwoStep();
+  const user = state?.passed ? state.user : null;
   if (!user?.email) return null;
   // ⚖ A STAFF ACCOUNT MUST HAVE A CONFIRMED EMAIL (Support console Stage 2; found by the Find security review). The
   // check below trusts the session's email, so an account created with a staff address and never confirmed would pass as
@@ -77,12 +74,25 @@ export async function getPlatformAdminContext(): Promise<PlatformAuthContext | n
   // (2026-10-25).
   if (!user.email_confirmed_at) return null;
 
-  if (isBootstrapAdmin(user.email)) {
-    return { user, role: 'super_admin', isBootstrapAdmin: true };
-  }
+  const bootstrap = isBootstrapAdmin(user.email);
+  const role: PlatformRole | null = bootstrap ? 'super_admin' : await getDbPlatformRole(user.email);
+  if (!role) return null;
 
-  const role = await getDbPlatformRole(user.email);
-  return role ? { user, role, isBootstrapAdmin: false } : null;
+  if (state && platformStaffTwoStepRequired()) {
+    const need = requiredSeatNeed(state);
+    if (need) throw new TwoStepRequiredError(need, await staffReturnPath());
+  }
+  return { user, role, isBootstrapAdmin: bootstrap };
+}
+
+/** Where a staff page sent to the code or set-up step returns: the page asked for, else the console's front. */
+async function staffReturnPath(): Promise<string> {
+  try {
+    const h = await headers();
+    const path = h.get('x-pathname');
+    if (path && path.startsWith('/platform-admin')) return path + (h.get('x-search') ?? '');
+  } catch { /* not in a request */ }
+  return '/platform-admin';
 }
 
 /**

@@ -21,6 +21,7 @@ import PublicPage from '@/components/public/PublicPage';
 import frame from '@/components/public/ClubFrame.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 import { friendMaxFor } from '@/lib/league-friends';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * /family/signup/[registrationId] — "Your sign-up" INSIDE the signed-in app (Signed-in family accounts Stage 4a, Part 6.5;
@@ -46,7 +47,7 @@ export default async function FamilySignupPage({ params }: { params: Promise<{ r
   if (!GUARDIAN_TIER_ENABLED) notFound();
   const { registrationId } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user) notFound();
 
   const mine = await familySignupFor(user.id, registrationId);

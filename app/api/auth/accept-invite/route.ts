@@ -8,6 +8,7 @@ import { invitationSender } from '@/lib/member-names';
 import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { accountDoorRefusal, checkAcceptance, recordDoorAcceptance } from '@/lib/legal-acceptance';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -23,7 +24,7 @@ async function getAuthenticatedUser() {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   return user;
 }
 

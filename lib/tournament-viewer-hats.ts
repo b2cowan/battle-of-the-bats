@@ -11,6 +11,7 @@ import { coachTeamPath, COACHES_TOURNAMENTS_PATH, portalTournamentRecordPath } f
 import { getUserDisplayName, getUserInitials } from './user-display';
 import { allowedAdminScreens } from './flip-twins';
 import { officialHome } from './volunteer-jobs';
+import { getSignedInUser } from './two-step-session';
 
 /**
  * lib/tournament-viewer-hats.ts — Phase 3 "one-home connective tissue."
@@ -164,7 +165,7 @@ export async function getTournamentViewer(params: {
   tournamentId: string;
 }): Promise<TournamentViewer | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.email) return null;
   // Platform staff are not fans/coaches — no chip (mirrors the coach surfaces).
   if (await isPlatformAdminEmail(user.email)) return null;

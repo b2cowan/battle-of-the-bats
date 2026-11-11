@@ -17,6 +17,7 @@ import { recordLegalAcceptance } from './helpers/legal-acceptance';
 import { supabaseAdmin } from '../../lib/supabase-admin';
 import { findAuthUserByEmail } from '../../lib/auth-account-lookup';
 import { currentVersion } from '../../lib/legal-documents';
+import { UAT_TWO_STEP_EMAIL, enrolKnownAuthenticator, ensureTwoStepAccount, freshTotpCode, saveTwoStepKey } from './helpers/two-step';
 
 // Defer env validation to test runtime so `playwright --list` works without .env.local
 let _env: ReturnType<typeof loadUATEnv> | null = null;
@@ -59,10 +60,19 @@ async function loginPlatformAdmin(
   password: string,
   savePath: string,
 ) {
+  // ⚖ Staff always use two-step sign-in (Board Ready, Part 1): a fresh authenticator for this run, its key kept for the
+  // specs that sign the staff account in again, then the real code step.
+  const secret = await enrolKnownAuthenticator(email, password);
+  saveTwoStepKey(email, { secret });
+
   await page.goto('/platform-admin/login');
   await page.locator('#pl-email').fill(email);
   await page.locator('#pl-password').fill(password);
   await page.locator('button[type="submit"]').click();
+
+  await page.locator('#two-step-code').waitFor({ timeout: 45_000 });
+  await page.locator('#two-step-code').fill(await freshTotpCode(secret));
+  await page.locator('#two-step-submit').click();
 
   // Wait for signIn + platform_users DB check + Next.js redirect to fully resolve.
   // The layout does a Supabase query before redirecting, so this can take several seconds.
@@ -82,6 +92,14 @@ setup('authenticate: platform-admin', async ({ page }) => {
   const savePath = path.join(__dirname, '.auth/platform-admin.json');
   await loginPlatformAdmin(page, env().platformAdmin.email, env().platformAdmin.password, savePath);
   console.log(`  ✓ platform-admin session saved → ${savePath}`);
+});
+
+// The dedicated two-step account (tab 9): its spec walks the code step; setup only gives it a password and a known key.
+setup('prepare: two-step account', async () => {
+  const password = await ensureTwoStepAccount();
+  const secret = await enrolKnownAuthenticator(UAT_TWO_STEP_EMAIL, password);
+  saveTwoStepKey(UAT_TWO_STEP_EMAIL, { secret, password });
+  console.log(`  ✓ two-step account ready → ${UAT_TWO_STEP_EMAIL}`);
 });
 
 setup('authenticate: org-owner', async ({ page }) => {

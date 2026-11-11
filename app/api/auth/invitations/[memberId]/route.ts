@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { checkCrossOrgJoin, crossOrgJoinRefusalForInvitee } from '@/lib/org-membership-policy';
 import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { withObservability, captureAndJson } from '@/lib/observability';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -18,7 +19,7 @@ async function getAuthenticatedUser() {
       },
     }
   );
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   return user;
 }
 

@@ -282,7 +282,7 @@ describe('the start forms', () => {
     // address: first-look-stage2b-signin.test.ts pins its URL)
     assert.match(form, /router\.push\(accountExistsSignInHref\(nextStep, emailNorm\)\);/);
     // on localhost every door's page renders its own step 2 at the same address (Run a tournament's too, since Ask 6)
-    assert.match(form, /const \{ error: signInErr \} = await signIn\(emailNorm, password\);[\s\S]{0,260}?router\.refresh\(\);\s*\}/);
+    assert.match(form, /const \{ error: signInErr, handedOff \} = await signIn\(emailNorm, password\);[\s\S]{0,360}?router\.refresh\(\);\s*\}/);
     // the invited branch keeps its words
     assert.match(form, /You don&apos;t need to create an organization — just accept your invitation to get started\./);
     assert.match(form, /'Email me my invitation link'/);
@@ -318,7 +318,8 @@ describe('the start forms', () => {
   });
   it('the step line is the register page’s step bar, and not a control', () => {
     const steps = readCode('components/auth/StartSteps.tsx');
-    assert.match(steps, /<ol className=\{styles\.steps\} aria-label="Sign-up steps"/);
+    assert.match(steps, /<ol className=\{styles\.steps\} aria-label=\{ariaLabel\}/);
+    assert.match(steps, /ariaLabel = 'Sign-up steps'/);
     assert.doesNotMatch(steps, /<(button|a)\b/, 'no step is clickable');
     assert.match(form, /import StartSteps from '@\/components\/auth\/StartSteps';/);
     assert.match(readCode('components/auth/StartSteps.module.css'), /\.stepNum \{[^}]*width: 24px;[^}]*height: 24px;/);

@@ -507,7 +507,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     setStepBusy(true);
     try {
       const { signIn } = await import('@/lib/auth');
-      const { error } = await signIn(form.email.trim().toLowerCase(), form.password);
+      const { error, handedOff } = await signIn(form.email.trim().toLowerCase(), form.password);
+      if (handedOff) return; // two-step is on: the code step returns here, signed in
       if (error) {
         setStepError(signInErrorCopy(error, SIGN_IN_OVERRIDES));
         return;
@@ -758,7 +759,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         if (signupRes.status === 409) {
           // An account exists after all (made between Step 1 and Submit, or Step 1's answer was
           // stale) — treat the password as a sign-in to it, as the form always has.
-          const { error: signInErr } = await signIn(emailNorm, form.password);
+          const { error: signInErr, handedOff } = await signIn(emailNorm, form.password);
+          if (handedOff) return; // two-step is on: the code step returns here, signed in
           if (signInErr === 'email_not_confirmed') {
             // The account is waiting for its email — "wrong password" would be false (the sign-in only reports a
             // waiting account once the password matched). Register and send a fresh link, as the verify branch does.
@@ -823,7 +825,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
             await registerForWaitingAccount(emailNorm);
             return;
           }
-          const { error: signInErr } = await signIn(emailNorm, form.password);
+          const { error: signInErr, handedOff } = await signIn(emailNorm, form.password);
+          if (handedOff) return; // a brand-new account has no code; kept so every door reads the same
           if (signInErr) {
             // A4.3: the old copy ("Account created, but sign-in failed — sign in to finish")
             // read as "you're nearly done", but /api/register has NOT run at this point: the

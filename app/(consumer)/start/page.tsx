@@ -14,6 +14,7 @@ import { isCoachesPortalPurchasable } from '@/lib/plan-gating-server';
 import { COACH_DOOR_HREF, coachStartDoor } from '@/lib/start-menu';
 import { isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_YEAR_LABEL } from '@/lib/plan-config';
 import styles from './start.module.css';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 export const metadata: Metadata = {
   title: 'Get started — FieldLogicHQ',
@@ -122,7 +123,7 @@ export default async function StartPage() {
   // Staff use /platform-admin — keep them out of the operator on-ramp (defense-in-depth;
   // the create child routes also guard).
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (user?.email && (await isPlatformAdminEmail(user.email))) {
     redirect('/platform-admin');
   }

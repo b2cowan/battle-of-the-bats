@@ -14,6 +14,7 @@ import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { clearStartDoor } from '@/lib/start-door-server';
 import { slugifyOrgName } from '@/lib/utils';
 import { requireAcceptance } from '@/lib/legal-acceptance';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 // Abuse controls (Phase 6.6): blunt scripted mass-creation of free workspaces before the beta flag
 // is turned on for real users. Best-effort, per-Lambda-instance (no external store wired). Legit use
@@ -61,7 +62,7 @@ export const POST = withObservability(async (req: Request) => {
   let orgId: string | null = null;
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getSignedInUser(supabase);
     if (!user?.id || !user.email) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }

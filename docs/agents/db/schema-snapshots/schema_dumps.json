@@ -15230,6 +15230,42 @@
         "column_default": null
       },
       {
+        "table_name": "organizations",
+        "pos": 51,
+        "column_name": "two_step_board_required_since",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 52,
+        "column_name": "two_step_coaches_required_since",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 53,
+        "column_name": "two_step_prompt_closed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 54,
+        "column_name": "is_test_organization",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
         "table_name": "pitch_decks",
         "pos": 1,
         "column_name": "id",
@@ -30305,6 +30341,240 @@
         "column_default": null
       },
       {
+        "table_name": "two_step_backup_codes",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 2,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 3,
+        "column_name": "salt",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 4,
+        "column_name": "code_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 6,
+        "column_name": "used_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 7,
+        "column_name": "used_session_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_code_uses",
+        "pos": 1,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_code_uses",
+        "pos": 2,
+        "column_name": "code_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_code_uses",
+        "pos": 3,
+        "column_name": "used_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "two_step_grace",
+        "pos": 1,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_grace",
+        "pos": 2,
+        "column_name": "organization_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_grace",
+        "pos": 3,
+        "column_name": "starts_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 2,
+        "column_name": "organization_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 3,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 4,
+        "column_name": "asked_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 5,
+        "column_name": "asked_how",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 6,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 7,
+        "column_name": "requested_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 8,
+        "column_name": "confirmed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 9,
+        "column_name": "runs_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 10,
+        "column_name": "held_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 11,
+        "column_name": "held_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 12,
+        "column_name": "cancelled_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 13,
+        "column_name": "completed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "user_hidden_workspaces",
         "pos": 1,
         "column_name": "user_id",
@@ -36564,6 +36834,48 @@
         "constraint_name": "tournaments_org_id_fkey"
       },
       {
+        "table_name": "two_step_backup_codes",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "two_step_backup_codes_user_id_fkey"
+      },
+      {
+        "table_name": "two_step_code_uses",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "two_step_code_uses_user_id_fkey"
+      },
+      {
+        "table_name": "two_step_grace",
+        "column_name": "organization_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "two_step_grace_organization_id_fkey"
+      },
+      {
+        "table_name": "two_step_grace",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "two_step_grace_user_id_fkey"
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "column_name": "organization_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "two_step_owner_resets_organization_id_fkey"
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "two_step_owner_resets_user_id_fkey"
+      },
+      {
         "table_name": "user_hidden_workspaces",
         "column_name": "organization_id",
         "foreign_table": "organizations",
@@ -42682,6 +42994,41 @@
         "indexdef": "CREATE UNIQUE INDEX tournaments_pkey ON public.tournaments USING btree (id)"
       },
       {
+        "tablename": "two_step_backup_codes",
+        "indexname": "two_step_backup_codes_pkey",
+        "indexdef": "CREATE UNIQUE INDEX two_step_backup_codes_pkey ON public.two_step_backup_codes USING btree (id)"
+      },
+      {
+        "tablename": "two_step_backup_codes",
+        "indexname": "two_step_backup_codes_session_idx",
+        "indexdef": "CREATE INDEX two_step_backup_codes_session_idx ON public.two_step_backup_codes USING btree (user_id, used_session_id) WHERE (used_session_id IS NOT NULL)"
+      },
+      {
+        "tablename": "two_step_backup_codes",
+        "indexname": "two_step_backup_codes_user_idx",
+        "indexdef": "CREATE INDEX two_step_backup_codes_user_idx ON public.two_step_backup_codes USING btree (user_id) WHERE (used_at IS NULL)"
+      },
+      {
+        "tablename": "two_step_code_uses",
+        "indexname": "two_step_code_uses_pkey",
+        "indexdef": "CREATE UNIQUE INDEX two_step_code_uses_pkey ON public.two_step_code_uses USING btree (user_id, code_hash)"
+      },
+      {
+        "tablename": "two_step_grace",
+        "indexname": "two_step_grace_pkey",
+        "indexdef": "CREATE UNIQUE INDEX two_step_grace_pkey ON public.two_step_grace USING btree (user_id, organization_id)"
+      },
+      {
+        "tablename": "two_step_owner_resets",
+        "indexname": "two_step_owner_resets_pkey",
+        "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_pkey ON public.two_step_owner_resets USING btree (id)"
+      },
+      {
+        "tablename": "two_step_owner_resets",
+        "indexname": "two_step_owner_resets_waiting_idx",
+        "indexdef": "CREATE INDEX two_step_owner_resets_waiting_idx ON public.two_step_owner_resets USING btree (runs_at) WHERE ((completed_at IS NULL) AND (cancelled_at IS NULL))"
+      },
+      {
         "tablename": "user_hidden_workspaces",
         "indexname": "user_hidden_workspaces_pkey",
         "indexdef": "CREATE UNIQUE INDEX user_hidden_workspaces_pkey ON public.user_hidden_workspaces USING btree (user_id, organization_id)"
@@ -48534,6 +48881,30 @@
       {
         "kind": "RLS",
         "table_name": "tournaments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "two_step_backup_codes",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "two_step_code_uses",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "two_step_grace",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "two_step_owner_resets",
         "detail": "ENABLED",
         "check_clause": null
       },

@@ -9,6 +9,7 @@ import { resolveFamilyRecapAvailability } from '@/lib/family-recap';
 import { getVerifiedLinkForUserTeam } from '@/lib/family-access';
 import { assemblePlayerSeasonRecap } from '@/lib/rep-player-season-recap';
 import { recordRecapView } from '@/lib/family-engagement';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * /family/teams/[teamId]/recap — a guardian's own child's season recap (Chunk D 3.2, S7).
@@ -44,7 +45,7 @@ export default async function FamilyRecapPage({ params }: { params: Promise<{ te
   const { teamId } = await params;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   if (!user) {
     return (

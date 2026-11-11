@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-11-10 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-11 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-11-10
+# DB Schema Reference — 2026-11-11
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -93,6 +93,10 @@ id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capac
 id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, sent_by (uuid) NOT NULL, sent_at, subject NOT NULL, scope NOT NULL, audience NOT NULL, count_sent (integer), count_skipped (integer)
 - Indexes: league_email_log_org_id_idx, league_email_log_season_id_idx
 
+### league_friend_requests
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, registration_id (uuid) → league_registrations.id NOT NULL, slot NOT NULL, typed_first, typed_last, typed_parent, code_entered, state, mark, matched_registration_id (uuid) → league_registrations.id, reason, note, decided_by (uuid), decided_at, kept_apart_by (uuid), kept_apart_at, created_at, updated_at
+- Indexes: league_friend_requests_decided_by_idx, league_friend_requests_kept_apart_by_idx, league_friend_requests_matched_idx, league_friend_requests_org_idx, league_friend_requests_season_idx, league_friend_requests_slot_uniq
+
 ### league_game_changes
 id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id NOT NULL, game_id (uuid) → league_games.id NOT NULL, kind NOT NULL, before (jsonb), after (jsonb) NOT NULL, source, created_at, sent_at, notice_id (uuid) → league_season_notices.id
 - Indexes: league_game_changes_game_idx, league_game_changes_held_idx, league_game_changes_notice_idx, league_game_changes_org_idx, league_game_changes_season_idx
@@ -142,8 +146,8 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → lea
 - Indexes: league_registration_price_changes_org_idx, league_registration_price_changes_refund_idx, league_registration_price_changes_reg_idx, league_registration_price_changes_season_idx
 
 ### league_registrations
-id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_jersey_pref, player_position_pref, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, waitlist_position (integer), team_id (uuid) → league_teams.id, registration_fee_paid (boolean), fee_entry_id (uuid), admin_notes, source, registered_at, updated_at, org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id, waiver_accepted_at, signup_ref, signup_position, fee_amount (numeric), accepted_at, ended_at, spot_released (boolean), end_money, end_money_reason, withdraw_requested_at, withdraw_request_note, pay_link_sent_at, team_locked_at, draft_team_id (uuid) → league_teams.id, previous_team_id (uuid) → league_teams.id, team_changed_at, link_version (integer), link_replaced_at, guardian_email_2, child_id (uuid) → org_children.id NOT NULL, told_team_id (uuid) → league_teams.id, told_at
-- Indexes: league_registrations_child_idx, league_registrations_division_idx, league_registrations_guardian_idx, league_registrations_org_id_idx, league_registrations_person_id_idx, league_registrations_season_idx, league_registrations_signup_ref_idx, league_registrations_status_idx, league_registrations_team_id_idx, league_registrations_told_team_idx
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_jersey_pref, player_position_pref, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, waitlist_position (integer), team_id (uuid) → league_teams.id, registration_fee_paid (boolean), fee_entry_id (uuid), admin_notes, source, registered_at, updated_at, org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id, waiver_accepted_at, signup_ref, signup_position, fee_amount (numeric), accepted_at, ended_at, spot_released (boolean), end_money, end_money_reason, withdraw_requested_at, withdraw_request_note, pay_link_sent_at, team_locked_at, draft_team_id (uuid) → league_teams.id, previous_team_id (uuid) → league_teams.id, team_changed_at, link_version (integer), link_replaced_at, guardian_email_2, child_id (uuid) → org_children.id NOT NULL, told_team_id (uuid) → league_teams.id, told_at, friend_code
+- Indexes: league_registrations_child_idx, league_registrations_division_idx, league_registrations_friend_code_uniq, league_registrations_guardian_idx, league_registrations_org_id_idx, league_registrations_person_id_idx, league_registrations_season_idx, league_registrations_signup_ref_idx, league_registrations_status_idx, league_registrations_team_id_idx, league_registrations_told_team_idx
 
 ### league_schedule_emails
 id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, notice_id (uuid) → league_season_notices.id NOT NULL, guardian_email NOT NULL, registration_ids NOT NULL, status, created_at, updated_at
@@ -158,7 +162,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → lea
 - Indexes: league_season_notices_division_idx, league_season_notices_org_idx, league_season_notices_season_idx, league_season_notices_send_idx
 
 ### league_seasons
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days, finished_at, twice_in_a_day_allowed (boolean), home_away_tolerance, started_from (jsonb)
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days, finished_at, twice_in_a_day_allowed (boolean), home_away_tolerance, started_from (jsonb), friend_requests_max
 - Indexes: league_seasons_org_id_slug_key
 
 ### league_slot_uses
@@ -599,7 +603,7 @@ id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) 
 - Indexes: organization_members_invited_email_idx, organization_members_organization_id_user_id_key
 
 ### organizations
-id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb), coach_names_policy, subscription_amount_cents (integer), subscription_currency, tournament_look_policy, logo_aspect
+id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb), coach_names_policy, subscription_amount_cents (integer), subscription_currency, tournament_look_policy, logo_aspect, two_step_board_required_since, two_step_coaches_required_since, two_step_prompt_closed_at, is_test_organization (boolean)
 - Indexes: idx_organizations_email_opt_out, organizations_slug_key
 
 ## Module: Platform Admin
@@ -1096,6 +1100,20 @@ id (uuid), team_id (uuid) → teams.id NOT NULL, tournament_id (uuid) → tourna
 id (uuid), team_id (uuid) → teams.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, amount (numeric) NOT NULL, paid_on, label, method, entry_id (uuid) → accounting_entries.id, status, removed_at, removed_by (uuid), created_by (uuid), created_at, updated_at, ordinal (bigint) NOT NULL, online_payment_id (uuid) → online_payments.id, refunded_amount (numeric)
 - Indexes: tournament_team_payments_entry_idx, tournament_team_payments_online_payment_key, tournament_team_payments_org_idx, tournament_team_payments_team_idx, tournament_team_payments_tournament_idx
 
+### two_step_backup_codes
+id (uuid), user_id (uuid) NOT NULL, salt NOT NULL, code_hash NOT NULL, created_at, used_at, used_session_id (uuid)
+- Indexes: two_step_backup_codes_session_idx, two_step_backup_codes_user_idx
+
+### two_step_code_uses
+user_id (uuid) NOT NULL, code_hash NOT NULL, used_at
+
+### two_step_grace
+user_id (uuid) NOT NULL, organization_id (uuid) → organizations.id NOT NULL, starts_at
+
+### two_step_owner_resets
+id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) NOT NULL, asked_by NOT NULL, asked_how NOT NULL, reason NOT NULL, requested_at, confirmed_at, runs_at, held_at, held_by, cancelled_at, completed_at
+- Indexes: two_step_owner_resets_waiting_idx
+
 ### user_hidden_workspaces
 user_id (uuid) NOT NULL, organization_id (uuid) → organizations.id NOT NULL, hidden_at
 
@@ -1112,10 +1130,10 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **272 tables** across 10 modules.
+Total: **277 tables** across 10 modules.
 
 - Tournament: 17 tables
-- League: 23 tables
+- League: 24 tables
 - Rep Teams: 76 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
@@ -1123,4 +1141,4 @@ Total: **272 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 32 tables
 - CRM / Leads: 6 tables
-- Other: 90 tables
+- Other: 94 tables

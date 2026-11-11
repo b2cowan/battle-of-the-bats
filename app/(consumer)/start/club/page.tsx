@@ -6,6 +6,7 @@ import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import styles from '../start.module.css';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 export const metadata: Metadata = {
   title: 'Explore Club — FieldLogicHQ',
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
  */
 export default async function StartClubPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (user?.email && (await isPlatformAdminEmail(user.email))) {
     redirect('/platform-admin');
   }

@@ -32,6 +32,7 @@ import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
 import { tournamentToday } from '@/lib/timezone';
 import shared from '../../coaches-portal.module.css';
 import styles from './team.module.css';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 type RouteParams = { params: Promise<{ basicTeamId: string }> };
 
@@ -57,7 +58,7 @@ export async function generateMetadata({ params }: RouteParams) {
   // Ownership-gated: never emit a team name in <title> for a non-owner / signed-out
   // request (the page body is gated, but metadata runs independently of it).
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.id) return { title: 'Your Team' };
   // Staff/platform-admins are not coaches — never resolve a team name for them (mirrors the
   // roster API guard so the page and APIs can't drift on who counts as an owner).
@@ -70,7 +71,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
   const { basicTeamId } = await params;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   if (!user?.email) {
     redirect(`/auth/login?next=${coachTeamPath(basicTeamId)}`);

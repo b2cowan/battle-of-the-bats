@@ -5,6 +5,7 @@ import { accountNameOf, FAMILY_HOME_PATH, inspectInvitation } from '@/lib/family
 import { createClient } from '@/lib/supabase-server';
 import { checkAcceptance } from '@/lib/legal-acceptance';
 import ClaimClient from './ClaimClient';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * /family/claim/[token] — the invitation's accept page (Signed-in family accounts Stage 4a, Part 4; drawing tab 2).
@@ -29,7 +30,7 @@ export default async function FamilyClaimPage({ params }: { params: Promise<{ to
   if (!GUARDIAN_TIER_ENABLED) notFound();
   const { token } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   const [view, acceptance] = await Promise.all([
     inspectInvitation(token, user
       ? { id: user.id, email: user.email ?? null, name: accountNameOf(user.user_metadata) }

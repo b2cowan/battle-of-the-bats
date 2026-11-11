@@ -122,6 +122,7 @@ const orgFields = {
   is_public: true,              // its public pages ARE the fan half of the demo
   is_discoverable: false,       // hygiene — never listed in /discover
   theme_preset: 'platform',
+  is_test_organization: true, // a test organization: no two-step requirement applies here (mig 463)
 };
 
 let org = (await db.from('organizations').select('*').eq('slug', ORG_SLUG).maybeSingle()).data;

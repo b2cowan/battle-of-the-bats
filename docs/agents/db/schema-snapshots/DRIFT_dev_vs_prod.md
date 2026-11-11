@@ -2,18 +2,18 @@
 
 **Generated:** 2026-11-11 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 558 divergence(s)** across dev/prod.
+**⚠️ 609 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 11 | 6 | — |
-| Columns | 198 | 59 | 1 |
-| Indexes | 58 | 26 | 0 |
-| Constraints | 44 | 28 | — |
+| Tables | 15 | 6 | — |
+| Columns | 228 | 59 | 1 |
+| Indexes | 65 | 26 | 0 |
+| Constraints | 54 | 28 | — |
 | RLS / CHECK | 97 | 26 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (11)
+### Only in DEV (15)
 - `bank_check_waiting`
 - `family_calendar_feeds`
 - `family_invitations`
@@ -24,6 +24,10 @@
 - `platform_charge_tax_records`
 - `platform_credit_note_tax_records`
 - `second_parent_stops`
+- `two_step_backup_codes`
+- `two_step_code_uses`
+- `two_step_grace`
+- `two_step_owner_resets`
 - `user_hidden_workspaces`
 
 ### Only in PROD (6)
@@ -35,7 +39,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (198)
+### Only in DEV (228)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -120,7 +124,11 @@
 - `org_children.emergency_contact_phone`
 - `org_children.medical_notes`
 - `org_public_site_content.mailing_address`
+- `organizations.is_test_organization`
 - `organizations.logo_aspect`
+- `organizations.two_step_board_required_since`
+- `organizations.two_step_coaches_required_since`
+- `organizations.two_step_prompt_closed_at`
 - `platform_charge_tax_looks.after_id`
 - `platform_charge_tax_looks.id`
 - `platform_charge_tax_looks.livemode`
@@ -231,6 +239,32 @@
 - `second_parent_stops.source`
 - `second_parent_stops.stopped_at`
 - `tournaments.logo_aspect`
+- `two_step_backup_codes.code_hash`
+- `two_step_backup_codes.created_at`
+- `two_step_backup_codes.id`
+- `two_step_backup_codes.salt`
+- `two_step_backup_codes.used_at`
+- `two_step_backup_codes.used_session_id`
+- `two_step_backup_codes.user_id`
+- `two_step_code_uses.code_hash`
+- `two_step_code_uses.used_at`
+- `two_step_code_uses.user_id`
+- `two_step_grace.organization_id`
+- `two_step_grace.starts_at`
+- `two_step_grace.user_id`
+- `two_step_owner_resets.asked_by`
+- `two_step_owner_resets.asked_how`
+- `two_step_owner_resets.cancelled_at`
+- `two_step_owner_resets.completed_at`
+- `two_step_owner_resets.confirmed_at`
+- `two_step_owner_resets.held_at`
+- `two_step_owner_resets.held_by`
+- `two_step_owner_resets.id`
+- `two_step_owner_resets.organization_id`
+- `two_step_owner_resets.reason`
+- `two_step_owner_resets.requested_at`
+- `two_step_owner_resets.runs_at`
+- `two_step_owner_resets.user_id`
 - `user_hidden_workspaces.hidden_at`
 - `user_hidden_workspaces.organization_id`
 - `user_hidden_workspaces.user_id`
@@ -300,7 +334,7 @@
 - `family_links.rep_team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (58)
+### Only in DEV (65)
 - `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
@@ -358,6 +392,13 @@
 - `second_parent_stops_org_email_uniq`
 - `second_parent_stops_pkey`
 - `second_parent_stops_registration_ids_idx`
+- `two_step_backup_codes_pkey`
+- `two_step_backup_codes_session_idx`
+- `two_step_backup_codes_user_idx`
+- `two_step_code_uses_pkey`
+- `two_step_grace_pkey`
+- `two_step_owner_resets_pkey`
+- `two_step_owner_resets_waiting_idx`
 - `user_hidden_workspaces_pkey`
 
 ### Only in PROD (26)
@@ -392,7 +433,7 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (44)
+### Only in DEV (54)
 - `bank_check_waiting.bank_check_waiting_added_by_fkey`
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
@@ -434,6 +475,16 @@ _none_
 - `rep_roster_players.rep_roster_players_health_confirmed_by_fkey`
 - `second_parent_stops.second_parent_stops_org_id_fkey`
 - `second_parent_stops.second_parent_stops_pkey`
+- `two_step_backup_codes.two_step_backup_codes_pkey`
+- `two_step_backup_codes.two_step_backup_codes_user_id_fkey`
+- `two_step_code_uses.two_step_code_uses_pkey`
+- `two_step_code_uses.two_step_code_uses_user_id_fkey`
+- `two_step_grace.two_step_grace_organization_id_fkey`
+- `two_step_grace.two_step_grace_pkey`
+- `two_step_grace.two_step_grace_user_id_fkey`
+- `two_step_owner_resets.two_step_owner_resets_organization_id_fkey`
+- `two_step_owner_resets.two_step_owner_resets_pkey`
+- `two_step_owner_resets.two_step_owner_resets_user_id_fkey`
 - `user_hidden_workspaces.user_hidden_workspaces_organization_id_fkey`
 - `user_hidden_workspaces.user_hidden_workspaces_pkey`
 - `user_hidden_workspaces.user_hidden_workspaces_user_id_fkey`

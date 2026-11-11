@@ -4,6 +4,7 @@ import { withObservability } from '@/lib/observability';
 import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 import { readFamilyHome } from '@/lib/family-home';
 import { endFamilyLink } from '@/lib/family-invitation';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * "Leave {child}'s team" (Signed-in family accounts Stage 4a, Part 6.2; ruling 7; /legal draft (e)). Ends ONLY this account's
@@ -15,7 +16,7 @@ export const POST = withObservability(async (_req: Request, { params }: { params
   if (!GUARDIAN_TIER_ENABLED) return NextResponse.json({ error: 'not_found' }, { status: 404 });
   const { childId } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const child = (await readFamilyHome(user.id)).children.find(c => c.childId === childId);

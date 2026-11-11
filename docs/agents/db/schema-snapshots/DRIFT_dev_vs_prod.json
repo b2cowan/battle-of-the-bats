@@ -1,11 +1,11 @@
 {
   "generated": "2026-11-11",
-  "total": 558,
+  "total": 609,
   "counts": {
-    "tables": 17,
-    "columns": 258,
-    "indexes": 84,
-    "constraints": 72,
+    "tables": 21,
+    "columns": 288,
+    "indexes": 91,
+    "constraints": 82,
     "rls": 127
   },
   "items": [
@@ -858,7 +858,23 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:organizations.is_test_organization",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:organizations.logo_aspect",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.two_step_board_required_since",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.two_step_coaches_required_since",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.two_step_prompt_closed_at",
       "sig": ""
     },
     {
@@ -1302,6 +1318,110 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:two_step_backup_codes.code_hash",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_backup_codes.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_backup_codes.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_backup_codes.salt",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_backup_codes.used_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_backup_codes.used_session_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_backup_codes.user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_code_uses.code_hash",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_code_uses.used_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_code_uses.user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_grace.organization_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_grace.starts_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_grace.user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.asked_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.asked_how",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.cancelled_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.completed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.confirmed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.held_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.held_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.organization_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.requested_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.runs_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_owner_resets.user_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:user_hidden_workspaces.hidden_at",
       "sig": ""
     },
@@ -1714,6 +1834,46 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:two_step_backup_codes.two_step_backup_codes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:two_step_backup_codes.two_step_backup_codes_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:two_step_code_uses.two_step_code_uses_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:two_step_code_uses.two_step_code_uses_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:two_step_grace.two_step_grace_organization_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:two_step_grace.two_step_grace_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:two_step_grace.two_step_grace_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:two_step_owner_resets.two_step_owner_resets_organization_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:two_step_owner_resets.two_step_owner_resets_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:two_step_owner_resets.two_step_owner_resets_user_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:user_hidden_workspaces.user_hidden_workspaces_organization_id_fkey",
       "sig": ""
     },
@@ -2066,6 +2226,34 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:two_step_backup_codes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:two_step_backup_codes_session_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:two_step_backup_codes_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:two_step_code_uses_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:two_step_grace_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:two_step_owner_resets_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:two_step_owner_resets_waiting_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:user_hidden_workspaces_pkey",
       "sig": ""
     },
@@ -2211,6 +2399,22 @@
     },
     {
       "key": "table:only-dev:second_parent_stops",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:two_step_backup_codes",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:two_step_code_uses",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:two_step_grace",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:two_step_owner_resets",
       "sig": ""
     },
     {

@@ -414,6 +414,7 @@ head(`Building ${ORG_NAME} (${ORG_SLUG})`);
 const org = await one('org', db.from('organizations').insert({
   name: ORG_NAME, slug: ORG_SLUG, plan_id: 'club', subscription_status: 'active', account_kind: 'organization',
   is_public: true, is_discoverable: false, theme_preset: 'platform', internal_notes: MARKER,
+  is_test_organization: true, // a test organization: no two-step requirement applies here (mig 463)
   // 9999 is what a real Club checkout writes; the column's default of 1 would cap the club at ONE tournament.
   tournament_limit: 9999, team_limit: 15, onboarding_completed_at: nowIso,
   // Club Tier Stage 3c: a September fiscal year (a club with nothing yet just takes the month).
@@ -1048,6 +1049,7 @@ async function buildCalendarClub() {
     ok('old calendar club deleted (its sign-in kept; it is re-used)');
   }
   const calOrg = await one('calendar club', db.from('organizations').insert({
+    is_test_organization: true, // a test organization: no two-step requirement applies here (mig 463)
     name: CAL_NAME, slug: CAL_SLUG, plan_id: 'club', subscription_status: 'active', account_kind: 'organization',
     is_public: false, is_discoverable: false, theme_preset: 'platform', internal_notes: CAL_MARKER,
     tournament_limit: 9999, team_limit: 15, onboarding_completed_at: nowIso,
@@ -1593,6 +1595,7 @@ async function buildRepOnlyClub() {
   }
 
   const club = await one('rep-only club', db.from('organizations').insert({
+    is_test_organization: true, // a test organization: no two-step requirement applies here (mig 463)
     name: REP_ONLY_NAME, slug: REP_ONLY_SLUG, plan_id: 'club', subscription_status: 'active', account_kind: 'organization',
     // Discoverable, so the home's Follow button (in About the club) shows: it follows the same gate a follow write checks.
     is_public: true, is_discoverable: true, theme_preset: 'platform', theme_primary: '#1F3A5F', theme_accent: '#E8B33A',

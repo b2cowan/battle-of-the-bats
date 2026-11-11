@@ -2,6 +2,7 @@ import { createClient } from './supabase-browser';
 import { getCurrentPushEndpoint, detachAccountPushOnSignOut } from './push-client';
 import { clearConsoleRecent } from './console-recent';
 import { browserDraftStore, clearAllDrafts } from './bank-check-draft';
+import { twoStepStepUrl } from './two-step-paths';
 
 const AUTH_TIMEOUT_MS = 15000;
 
@@ -20,14 +21,31 @@ function raceTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
   ]);
 }
 
+/**
+ * What a password sign-in answered.
+ *   - `error`: the failure's code (null on success).
+ *   - `needsCode`: the password matched and this account has two-step on, so the code comes next. Only with
+ *     `codeStep: 'here'` (the shared sign-in page shows the step itself).
+ *   - `handedOff`: same, and the browser is already on its way to the shared code step. The caller stops: whatever it
+ *     meant to do next would be refused until the code is typed, and the code step returns the person to `next`.
+ */
+export type SignInResult = { error: string | null; needsCode?: boolean; handedOff?: boolean };
+
+/**
+ * THE ONE PASSWORD SIGN-IN in the browser (twelve doors call it). ⚖ Two-step sign-in (Board Ready, Part 1, tab 3): when
+ * the account has two-step on, the password alone is not a sign-in. Every door hands off to the code step on the one
+ * shared sign-in page rather than growing a code field of its own; `next` (default: this page) is where the person
+ * returns after the code. The server refuses the password-only session meanwhile (lib/two-step-session.ts).
+ */
 export async function signIn(
   email: string,
-  password: string
-): Promise<{ error: string | null }> {
+  password: string,
+  opts: { codeStep?: 'here'; next?: string } = {},
+): Promise<SignInResult> {
   let error: unknown;
+  const supabase = createClient();
 
   try {
-    const supabase = createClient();
     const result = await Promise.race([
       supabase.auth.signInWithPassword({ email, password }),
       timeoutError(),
@@ -38,7 +56,20 @@ export async function signIn(
     return { error: message === 'auth_timeout' ? 'auth_timeout' : 'network_error' };
   }
 
-  if (!error) return { error: null };
+  if (!error) {
+    const { data: level } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    // Also an account replacing a lost phone (its old authenticator gone, the new one not finished): two-step stays on, and
+    // the code step's backup code is the way in (lib/two-step-session.ts, REPLACING_AUTHENTICATOR_FLAG).
+    const { data: { session } } = await supabase.auth.getSession();
+    const replacing = (session?.user?.app_metadata as Record<string, unknown> | undefined)?.two_step_replacing === true;
+    if ((level?.currentLevel === 'aal1' && level.nextLevel === 'aal2') || replacing) {
+      if (opts.codeStep === 'here') return { error: null, needsCode: true };
+      const back = opts.next ?? `${window.location.pathname}${window.location.search}`;
+      window.location.assign(twoStepStepUrl('code', back));
+      return { error: null, handedOff: true };
+    }
+    return { error: null };
+  }
 
   const authError = error as { code?: string; message?: string };
   const message = authError.message ?? '';

@@ -5,12 +5,13 @@ import { createClient } from '@/lib/supabase-server';
 import { getUserAccessContexts } from '@/lib/user-contexts';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
 import styles from '../coaches-portal.module.css';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 export const metadata = { title: 'Coaches Portal - Team Workspaces' };
 
 export default async function CoachesTeamWorkspacesPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   if (!user?.email) {
     redirect('/auth/login?next=/coaches/teams');

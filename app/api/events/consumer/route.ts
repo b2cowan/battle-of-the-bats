@@ -5,6 +5,7 @@ import { writePlatformEvent, type PlatformEventType } from '@/lib/platform-event
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { withObservability } from '@/lib/observability';
 import { CONSUMER_CLIENT_EVENTS } from '@/lib/consumer-events-client';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 export const runtime = 'nodejs';
 
@@ -47,7 +48,7 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   const isStaff = user?.email ? await isPlatformAdminEmail(user.email) : false;
   // Staff never enter product metrics — accept-and-drop (202), never leak auth state via status.
   if (isStaff) return NextResponse.json({ ok: true }, { status: 202 });

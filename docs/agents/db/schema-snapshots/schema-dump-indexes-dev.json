@@ -6060,6 +6060,41 @@
     "indexdef": "CREATE UNIQUE INDEX tournaments_pkey ON public.tournaments USING btree (id)"
   },
   {
+    "tablename": "two_step_backup_codes",
+    "indexname": "two_step_backup_codes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX two_step_backup_codes_pkey ON public.two_step_backup_codes USING btree (id)"
+  },
+  {
+    "tablename": "two_step_backup_codes",
+    "indexname": "two_step_backup_codes_session_idx",
+    "indexdef": "CREATE INDEX two_step_backup_codes_session_idx ON public.two_step_backup_codes USING btree (user_id, used_session_id) WHERE (used_session_id IS NOT NULL)"
+  },
+  {
+    "tablename": "two_step_backup_codes",
+    "indexname": "two_step_backup_codes_user_idx",
+    "indexdef": "CREATE INDEX two_step_backup_codes_user_idx ON public.two_step_backup_codes USING btree (user_id) WHERE (used_at IS NULL)"
+  },
+  {
+    "tablename": "two_step_code_uses",
+    "indexname": "two_step_code_uses_pkey",
+    "indexdef": "CREATE UNIQUE INDEX two_step_code_uses_pkey ON public.two_step_code_uses USING btree (user_id, code_hash)"
+  },
+  {
+    "tablename": "two_step_grace",
+    "indexname": "two_step_grace_pkey",
+    "indexdef": "CREATE UNIQUE INDEX two_step_grace_pkey ON public.two_step_grace USING btree (user_id, organization_id)"
+  },
+  {
+    "tablename": "two_step_owner_resets",
+    "indexname": "two_step_owner_resets_pkey",
+    "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_pkey ON public.two_step_owner_resets USING btree (id)"
+  },
+  {
+    "tablename": "two_step_owner_resets",
+    "indexname": "two_step_owner_resets_waiting_idx",
+    "indexdef": "CREATE INDEX two_step_owner_resets_waiting_idx ON public.two_step_owner_resets USING btree (runs_at) WHERE ((completed_at IS NULL) AND (cancelled_at IS NULL))"
+  },
+  {
     "tablename": "user_hidden_workspaces",
     "indexname": "user_hidden_workspaces_pkey",
     "indexdef": "CREATE UNIQUE INDEX user_hidden_workspaces_pkey ON public.user_hidden_workspaces USING btree (user_id, organization_id)"

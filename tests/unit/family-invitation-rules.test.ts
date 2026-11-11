@@ -184,7 +184,7 @@ describe('Part 3 — an invitation’s state, and the email it is for', () => {
   });
   it('the token never signs anyone in: the accept path reads the session, never creates one from the token', () => {
     const route = readCode('app/api/family/claim/[token]/route.ts');
-    assert.match(route, /supabase\.auth\.getUser\(\)/);
+    assert.match(route, /getSignedInUser\(supabase\)/);
     assert.doesNotMatch(route, /signIn|setSession|generateLink|verifyOtp/);
     assert.doesNotMatch(readCode('lib/family-invitation.ts'), /signIn|setSession|generateLink|verifyOtp/);
   });

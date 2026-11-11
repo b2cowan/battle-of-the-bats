@@ -17,6 +17,7 @@ import {
 } from '@/lib/coaches-portal-routes';
 import { excludeActivePremiumUpgrades } from '@/lib/coach-team-page';
 import styles from './coaches-portal.module.css';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 export const metadata = { title: 'Coaches Portal' };
 
@@ -27,7 +28,7 @@ function teamMeta(team: BasicCoachTeam): string {
 
 export default async function CoachesPortalPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   if (!user?.email) {
     redirect(`/auth/login?next=/coaches`);

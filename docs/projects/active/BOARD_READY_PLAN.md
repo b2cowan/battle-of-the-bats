@@ -187,8 +187,61 @@ points here, so they aren't tracked twice)
     - assurance level and methods are in the session token;
     - recovery codes are **experimental**, and there is no "remember this device";
     - verifying an enrolment signs out other sessions;
-    - **not documented, verify on dev before building:** that a session refresh keeps the code level; the hosted
-      limit on factors per person; clean-up of half-finished set-ups.
+    - ~~not documented, verify on dev before building~~ **Proven on dev 2026-11-11 (Part 1 Step 0, throwaway users,
+      deleted after; probes `.probe/mfa-step0*.mjs`, not committed):**
+      - **a refresh keeps the code level.** Three refreshes (same client, a fresh client holding only the refresh token,
+        again) all stayed `aal2`, and the `amr` `totp` timestamp **did not move**, so the 30-day re-ask and the
+        15-minute check can both read "when the code was last typed" from the session token. Typing a code again later
+        moves it (it is the latest verify). A new password sign-in is `aal1` with `nextLevel aal2`.
+      - **verifying a set-up signs out every other session immediately**: the other device's unexpired access token is
+        refused by `getUser` ("Auth session missing") and its refresh token is gone. A sign-in code (a challenge, not a
+        set-up) signs nobody out. So "your other devices were signed out" is true, and a server check that calls
+        `getUser` sees it at once; one that only decodes the token would not until it expires (≤1 hour).
+      - **limit: 10 authenticators per person, counting half-finished ones** (`too_many_enrolled_mfa_factors`, whose
+        message wrongly says "verified"). Ten abandoned set-ups block an eleventh, including a real one.
+      - **half-finished set-ups are swept by the service only when the person starts a new one, and only those older
+        than about 5 minutes.** So we still clear the person's own unverified ones on each new attempt (an `aal1`
+        session may remove an unverified one; admin delete works too).
+      - **friendly names must be unique per person, and "no name" counts as one name**: a second unnamed set-up fails
+        `mfa_factor_name_conflict`. Name each attempt, or clear first.
+      - **a password-only session, once a code is on, cannot**: start a new set-up, remove the authenticator, change the
+        password, or change the email (all "AAL2 required"). A stolen password alone cannot turn it off.
+      - **⚠ the same code is accepted twice within its 30-second window** (no replay record). Harmless at sign-in
+        (both are the person's), but the five "ask for a code" actions and backup codes must not rely on the service
+        for one-time use; our backup codes are marked used by us.
+  - **Part 1 (the foundation) BUILT 2026-11-11, commit owed; owner walk §511 owed** (`BOARD_READY_TWO_STEP_PART1_WALK.html`).
+    Rulings in the session (owner 2026-11-11): the database also requires the code (asked: yes); the merge-function defect
+    fixed in its own commit (yes); dev requires two-step for staff like production, `TWO_STEP_STAFF_REQUIRED=off` the dev-only
+    opt-out (yes). What was built, and where it differs from the outline:
+    - **One server check.** Every server "who is signed in" goes through `lib/two-step-session.ts` (`getSignedInUser` /
+      `readSessionTwoStep`); ~50 direct `getUser` calls were moved onto it, and `tests/unit/two-step-server-check-guard.test.ts`
+      fails the build on any other session read (allow-list: the platform password clock for a staff account with no
+      authenticator, and the demo doors' "whose session is this", which gates nothing). Kill-tested, 18 mutants.
+    - **The rule** is `lib/two-step-rule.ts`; a club seat is checked in `getAuthContext` (only that club's routes and pages
+      wait; personal routes such as notifications stay open, by design), staff in `getPlatformAdminContext`. A refusal is a 401
+      `two_step_code` / `two_step_set_up` in a route and a redirect to the code or set-up step in a page.
+    - **Census correction:** twelve places sign a person in with a password, not six; all twelve hand off through `signIn()`.
+    - **Widened (ruled):** mig 463 puts a RESTRICTIVE `two_step_passed` policy on every table `authenticated` can reach (15)
+      and `storage.objects`; mig 464 closes the two merge functions (sweep 3 finding 8).
+    - **Lost phone:** a backup code lets that session in; "Set up my new phone" removes the old authenticator (the service
+      will not add a second one to a password-level session) and marks the account `two_step_replacing` in `app_metadata`
+      until the new one is verified, so two-step never silently turns off mid-way (/review finding).
+    - **Not built here (later parts):** the Account section, "Lost your phone?" (the code step shows no link until Part 2),
+      the switches' screen, the grace screens and emails, Members, Overview. A password reset asks for the code first; a
+      reset let in by a backup code is saved by our server.
+    - **Open owner calls from the build** (none blocks the walk):
+      1. The code step's guessing limit is the sign-in service's own (a stolen password can call it directly); our code
+         cannot add one without a production Auth setting, which this project does not change. Accept, or look at the
+         service's MFA rate-limit setting later.
+      2. Someone holding the password of an account with two-step OFF could turn it on and lock the owner out (true of a
+         password change today too). Recommended: a "two-step sign-in was turned on" email to the account (Part 4, `/legal`).
+      3. Backup codes are salted, not keyed, hashes (`/legal`: "one-way (hashed)" wording, not "secure"). A keyed hash needs a
+         new server secret on production. Recommended: later, with Part 2's new-codes action.
+      4. A page already open when a 30-day re-ask comes due gets plain refusals until it is reloaded. Recommended: Part 2
+         adds one shared client handler for the `two_step_*` refusal.
+      5. A team registration whose existing-account sign-in needs a code leaves the form (the 409 path); the person returns
+         to an empty form. Rare. Recommended: accept for now.
+      6. Staff "sign in again" accepts only the app's code, never a backup code.
   - **Build outline:**
     - server enforcement in the helpers above;
     - pages route a password-only session in a required seat to the code or set-up step;

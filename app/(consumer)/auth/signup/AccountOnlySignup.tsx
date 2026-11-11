@@ -105,7 +105,8 @@ function AccountOnlyForm() {
       return;
     }
 
-    const { error: signInErr } = await signIn(email, password);
+    const { error: signInErr, handedOff } = await signIn(email, password, { next: safeNext ?? '/discover' });
+    if (handedOff) return; // two-step is on: the code step finishes the sign-in, then goes where this would have
     if (signInErr) {
       setError(signInErrorCopy(signInErr)); // the one set of sign-in words, never the raw code
       setLoading(false);

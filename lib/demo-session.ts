@@ -28,6 +28,17 @@ import { SANDBOX_MARKER_COOKIE, SANDBOX_MARKER_MAX_AGE_SECONDS } from './sandbox
  */
 
 /**
+ * Remove every authenticator from a shared demo account (two-step sign-in can never be on for one, tab 9). Best effort: a
+ * failure here must not stop the demo opening, and the account normally has none, so the list is the only call.
+ */
+async function clearDemoAuthenticators(userId: string): Promise<void> {
+  try {
+    const { data } = await supabaseAdmin.auth.admin.mfa.listFactors({ userId });
+    for (const f of data?.factors ?? []) await supabaseAdmin.auth.admin.mfa.deleteFactor({ userId, id: f.id });
+  } catch { /* the demo still opens */ }
+}
+
+/**
  * Write the demo organizer's session cookies onto `response`.
  * @throws if the address is not on the allow-list, or if the session cannot be established.
  */
@@ -51,6 +62,12 @@ export async function attachDemoSession(
     secure: process.env.NODE_ENV === 'production',
     maxAge: SANDBOX_MARKER_MAX_AGE_SECONDS,
   });
+
+  // ⚖ Two-step sign-in (Board Ready, tab 9): set-up is refused for the shared demo accounts on our screens, but a visitor
+  // could still enrol an authenticator by calling the sign-in service directly — which would sign out every other visitor
+  // and put a code step in front of the next. So every new demo visit first clears any authenticator off the shared
+  // account: the worst case is one visitor briefly disrupting the others, and the demo heals itself (below, once the
+  // link names the account).
 
   const sessionWriter = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -82,6 +99,7 @@ export async function attachDemoSession(
     if (linkError || !tokenHash) {
       throw new Error(linkError?.message ?? 'generateLink returned no hashed_token');
     }
+    if (attempt === 0 && link.user?.id) await clearDemoAuthenticators(link.user.id);
     const { error: verifyError } = await sessionWriter.auth.verifyOtp({
       token_hash: tokenHash,
       type: 'magiclink',

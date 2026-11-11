@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { getDemoOrgByKind } from '@/lib/demo-org';
 import { SEE_IT_LIVE_COACHES_PATH, COACH_SWITCH_ENDPOINT } from '@/lib/sandbox-door';
 import styles from '../../switch/switch.module.css';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * The coach demo's confirm screen — the twin of `/see-it-live/switch` (read that page's docblock;
@@ -44,7 +45,7 @@ export default async function CoachSandboxSwitchPage() {
       },
     },
   );
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   // Nobody signed in → nothing to warn about; the door walks them straight in.
   if (!user) redirect(SEE_IT_LIVE_COACHES_PATH);

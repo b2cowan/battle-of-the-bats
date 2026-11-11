@@ -11,6 +11,7 @@ import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 // The home page's one absolute title; its description is the site's own (words doc items 1 and 4).
 export const metadata = marketingMetadata({ title: 'FieldLogicHQ: less admin, more sport', absolute: true, path: '/' });
@@ -276,7 +277,7 @@ export default async function HomePage({
   const { source } = await searchParams;
   if (source === 'pwa') {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getSignedInUser(supabase);
     if (user?.email) {
       redirect(await getAuthDestination());
     }

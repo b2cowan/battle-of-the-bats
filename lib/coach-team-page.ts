@@ -6,6 +6,7 @@ import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
 import { coachTeamPath } from '@/lib/coaches-portal-routes';
 import type { BasicCoachTeam } from '@/lib/basic-coach-teams';
 import { portalsInForce, workspacesInForce } from '@/lib/portal-in-force-server';
+import { getSignedInUser } from './two-step-session';
 
 /*
  * Is a Premium portal LIVE — the coach's home rather than history? The one question
@@ -81,7 +82,7 @@ export async function resolveCoachTeamPage(
   subPath = '',
 ): Promise<{ userId: string; email: string; team: BasicCoachTeam }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   if (!user?.email) {
     redirect(`/auth/login?next=${coachTeamPath(basicTeamId)}${subPath}`);

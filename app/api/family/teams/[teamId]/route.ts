@@ -4,6 +4,7 @@ import { withObservability } from '@/lib/observability';
 import { getEnabledFamilyOrg, getVerifiedLinkForUserTeam } from '@/lib/family-access';
 import { getFamilyTeamView } from '@/lib/family-view';
 import { resolveGuardianPayloadForLink } from '@/lib/family-guardian-view';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * A connected family's view of one team.
@@ -22,7 +23,7 @@ export const GET = withObservability(async (req: Request,
   const { teamId } = await params;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const link = await getVerifiedLinkForUserTeam(user.id, teamId);

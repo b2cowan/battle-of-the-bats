@@ -12,6 +12,7 @@ import { SECOND_PARENT_WORDS } from '@/lib/league-second-parent';
 import { FAMILY_HOME_PATH } from '@/lib/family-invitation-panel';
 import { FAMILY_HOME_WORDS as W } from '@/lib/family-home-words';
 import LeaveButton from './LeaveButton';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * /family/children/[childId] — "Connected to {child}", under Manage (Signed-in family accounts Stage 4a, Part 6.2; drawing 5.1).
@@ -32,7 +33,7 @@ export default async function FamilyChildPage({ params }: { params: Promise<{ ch
   if (!GUARDIAN_TIER_ENABLED) notFound();
   const { childId } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user) notFound();
 
   const read = await readConnectedAdults(user.id, childId);

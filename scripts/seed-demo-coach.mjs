@@ -192,6 +192,7 @@ const orgFields = {
   is_public: false,
   is_discoverable: false,
   theme_preset: 'platform',
+  is_test_organization: true, // a test organization: no two-step requirement applies here (mig 463)
 };
 
 let org = (await db.from('organizations').select('id').eq('slug', demoOrg.slug).maybeSingle()).data;

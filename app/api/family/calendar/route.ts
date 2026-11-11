@@ -5,6 +5,7 @@ import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 import { getFamilyReach } from '@/lib/family-access';
 import { makeFamilyFeed, stopFamilyFeed } from '@/lib/family-calendar';
 import { canonicalAppOrigin } from '@/lib/app-origin';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * The parent's ONE calendar address (Signed-in family accounts Stage 4a, Part 7; ruling 6): `{ action: 'make' }` (Make my link;
@@ -14,7 +15,7 @@ import { canonicalAppOrigin } from '@/lib/app-origin';
 export const POST = withObservability(async (req: Request) => {
   if (!GUARDIAN_TIER_ENABLED) return NextResponse.json({ error: 'not_found' }, { status: 404 });
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const body = (await req.json().catch(() => null)) as { action?: unknown } | null;

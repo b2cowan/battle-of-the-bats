@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cache } from 'react';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { supabaseAdmin } from './supabase-admin';
 import type { Organization, OrgPlan, OrgRole } from './types';
 import type { User } from '@supabase/supabase-js';
@@ -16,6 +16,9 @@ import { GROUP_UNSCOPED_ROLES } from './member-access';
 import { storedCutoffs } from './born-years';
 import { sanitizeCoachNamesPolicy } from './coach-names-policy';
 import { sanitizeTournamentLookPolicy } from './tournament-look';
+import { readSessionTwoStep, type SessionTwoStep } from './two-step-session';
+import { requiredSeatNeed, seatTwoStepRequirement, type OrgTwoStepFacts, type SeatRequirement } from './two-step-rule';
+import { TwoStepRequiredError } from './two-step-gate';
 
 export interface AuthContext {
   user: User;
@@ -102,16 +105,18 @@ type AuthOrgRow = {
   theme_font?: string | null;
   theme_card_style?: string | null;
   hero_banner_url?: string | null;
-};
+} & OrgTwoStepFacts;
 
 type AuthMemberOrgRow = {
   /** 'invited' | 'active' — suspended rows never reach here (filtered in the query). */
   status?: string | null;
+  /** The seat, for the two-step rule (an accepted row's role is the seat it holds). */
+  role?: string | null;
   organizations: AuthOrgRow | null;
 };
 
 /**
- * The session's user, or null.
+ * The session's user (getAuthenticatedUser, below), or null.
  *
  * ⚠ REQUEST-CACHED. `getAuthContext` calls this as its first step, so any caller that ALSO needs
  * the raw user in the same request (the coaches layout, which must tell "no session" apart from
@@ -122,8 +127,12 @@ type AuthMemberOrgRow = {
  * Note: route handlers that call this outside a React render scope simply get no dedup — never
  * different data. The invite routes that call an identically-named helper twice per handler define
  * their OWN local copy and are unaffected either way.
+ *
+ * getSessionTwoStep: the session's two-step facts (lib/two-step-session.ts), REQUEST-CACHED like the user below. Null = nobody signed in.
+ * The seat checks in getAuthContext read it; so do the account and sign-in routes that must see a session which has
+ * not typed its code yet (the code step itself, a backup code).
  */
-export const getAuthenticatedUser = cache(async (): Promise<User | null> => {
+export const getSessionTwoStep = cache(async (): Promise<SessionTwoStep | null> => {
   assertSafeSupabaseServerEnvironment('API user auth Supabase client');
 
   const cookieStore = await cookies();
@@ -138,9 +147,59 @@ export const getAuthenticatedUser = cache(async (): Promise<User | null> => {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
-  return user ?? null;
+  return readSessionTwoStep(supabase);
 });
+
+/**
+ * The session's user, or null — null too when the person has two-step on and this session has not typed the code
+ * (Board Ready · two-step sign-in: a password alone opens nothing).
+ */
+export const getAuthenticatedUser = cache(async (): Promise<User | null> => {
+  const state = await getSessionTwoStep();
+  return state?.passed ? state.user : null;
+});
+
+/** The path the request is for (the proxy's own x-pathname / x-search), so a page sent to the code step comes back. */
+async function requestPathForReturn(): Promise<string | null> {
+  try {
+    const h = await headers();
+    const path = h.get('x-pathname');
+    if (!path || path.startsWith('/api/')) return null;
+    return path + (h.get('x-search') ?? '');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * ⚖ A REQUIRED SEAT (Board Ready · two-step sign-in, Part 1). When this org's switch covers the person's accepted seat
+ * and its 14 days have passed, the session must have two-step on, and a code typed in the last 30 days. Otherwise this
+ * throws TwoStepRequiredError: a 401 in a route, a redirect to the code or set-up step in a page. Only THIS org's screens
+ * wait; the person's other places stay open (drawings tab 8). Test organizations and a coach's own team workspace never
+ * require it (lib/two-step-rule.ts).
+ */
+async function assertTwoStepForSeat(orgRow: OrgTwoStepFacts & { id: string }, membership: AuthMemberOrgRow, state: SessionTwoStep) {
+  const userId = state.user.id;
+  if (membership.status !== 'active') return;
+  const covered = seatTwoStepRequirement(orgRow, membership.role, null);
+  if (covered.kind === 'none') return;
+  // The person's own start in this club (a seat accepted after the switch, Part 3) can only move the deadline later.
+  let req: SeatRequirement = covered;
+  if (covered.kind === 'required') {
+    const { data: grace } = await supabaseAdmin
+      .from('two_step_grace')
+      .select('starts_at')
+      .eq('user_id', userId)
+      .eq('organization_id', orgRow.id)
+      .maybeSingle();
+    if (grace?.starts_at) req = seatTwoStepRequirement(orgRow, membership.role, grace.starts_at as string);
+  }
+  if (req.kind !== 'required') return;
+  // The SAME session read the caller resolved the user from (cache() does not dedupe in a route handler, and a second
+  // read that failed must never skip the requirement).
+  const need = requiredSeatNeed(state);
+  if (need) throw new TwoStepRequiredError(need, await requestPathForReturn());
+}
 
 /**
  * Deterministic "home" org for the orgless fallback (decision 2026-06-19). Prefers a real
@@ -171,14 +230,15 @@ function pickHomeMembership(rows: AuthMemberOrgRow[]): AuthMemberOrgRow | undefi
  * Use in all /api/admin/* route handlers before touching the database.
  */
 export async function getAuthContext(options: AuthContextOptions = {}): Promise<AuthContext | null> {
-  const user = await getAuthenticatedUser();
-  if (!user) return null;
+  const state = await getSessionTwoStep();
+  const user = state?.passed ? state.user : null;
+  if (!state || !user) return null;
 
   // Use admin client — anon client can't read organization_members under RLS
   // Suspended members are treated as unauthenticated — all routes return 401.
   const { data: memberData } = await supabaseAdmin
     .from('organization_members')
-    .select('status, organizations(*)')
+    .select('status, role, organizations(*)')
     .eq('user_id', user.id)
     .neq('status', 'suspended')
     .returns<AuthMemberOrgRow[]>();
@@ -196,6 +256,8 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
 
   const orgRow = membership?.organizations;
   if (!orgRow) return null;
+
+  await assertTwoStepForSeat(orgRow, membership, state);
 
   const org: Organization = {
     id: orgRow.id,

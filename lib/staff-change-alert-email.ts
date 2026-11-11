@@ -18,6 +18,8 @@ type Common = {
   /** When the change ran, and when this session last proved the password (ISO). */
   at: string;
   passwordAt: string;
+  /** What that proof was (Board Ready two-step: staff type a CODE; a dev account with no authenticator, the password). */
+  proof?: 'code' | 'password';
   reason: string | null;
 };
 
@@ -137,7 +139,7 @@ export function staffChangeAlertEmail(a: StaffChangeAlert): { subject: string; h
     lines.push('Customers on the old price keep it.');
   }
   lines.push(`Reason: ${esc(a.reason ?? 'Not recorded')}`);
-  lines.push(`Password last entered at ${consoleClock(a.passwordAt)}.`);
+  lines.push(`${a.proof === 'code' ? 'Code last typed' : 'Password last entered'} at ${consoleClock(a.passwordAt)}.`);
   if (stripeLine) lines.push(stripeLine);
 
   const html = warmEmailDocument([

@@ -11,6 +11,17 @@ import { SIGN_IN_REASON, signInErrorCopy } from '@/lib/auth-errors';
 import ResendLink from '@/components/auth/ResendLink';
 import { EmailField, PasswordField, StartColumn, StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
 import LoadingState from '@/components/shared/LoadingState';
+import TwoStepCodeStep from '@/components/auth/TwoStepCodeStep';
+
+/** Where this session stands on two-step sign-in (the server's answer; it knows a backup-code session too). */
+async function readTwoStepStatus(): Promise<{ hasFactor?: boolean; passed?: boolean; email?: string | null } | null> {
+  try {
+    const res = await fetch('/api/auth/two-step/status');
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Resolve the post-login destination. Honors `next` ONLY when it is a same-origin
@@ -93,6 +104,9 @@ function LoginForm() {
   const [waitingEmail, setWaitingEmail] = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  // Two-step sign-in (Board Ready, tab 3): the password matched for an account with two-step on, or the page was opened
+  // on its code step (a layout asked for the code again). The same page, a second step.
+  const [twoStep, setTwoStep] = useState<{ email: string | null } | null>(null);
 
   // J8-018: already-authenticated guard. If a signed-in user lands on /auth/login (e.g. a layout
   // redirected them here with a `next` they can't access), forward them to a safe destination
@@ -126,6 +140,15 @@ function LoginForm() {
           if (active) setCheckingAuth(false);
           return;
         }
+        // Signed in with the password but not the code yet (or sent back here to type it again after 30 days): the code
+        // step, never a forward the server would refuse.
+        const twoStepStatus = await readTwoStepStatus();
+        if (!active) return;
+        if (twoStepStatus?.hasFactor && (!twoStepStatus.passed || searchParams.get('step') === 'code')) {
+          setTwoStep({ email: twoStepStatus.email ?? user.email ?? null });
+          setCheckingAuth(false);
+          return;
+        }
         const dest = await resolveLoginDestination(consumeNextOnce(searchParams.get('next')));
         if (active) router.replace(dest);
         return;
@@ -135,12 +158,28 @@ function LoginForm() {
     return () => { active = false; };
   }, [router, searchParams]);
 
+  // After the code (or "I still have it"): where the password alone would have gone.
+  async function finishTwoStep() {
+    // A door that handed off here (?step=code) is promised its page back, a workspace or not (a family mid-sign-up, a
+    // follow, a team sign-up): /review 2026-11-11. A plain sign-in keeps the usual safe-destination rule.
+    const handedOffTo = searchParams.get('step') === 'code' ? safeNextPath(searchParams.get('next'), null) : null;
+    const dest = handedOffTo ?? await resolveLoginDestination(searchParams.get('next'));
+    try { sessionStorage.removeItem(NEXT_ONCE_KEY); } catch { /* ignore */ }
+    router.push(dest);
+    router.refresh();
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setWaitingEmail(null);
     setLoading(true);
-    const { error: err } = await signIn(email, password);
+    const { error: err, needsCode } = await signIn(email, password, { codeStep: 'here' });
+    if (needsCode) {
+      setTwoStep({ email: email.trim().toLowerCase() });
+      setLoading(false);
+      return;
+    }
     if (err) {
       setError(err);
       if (err === 'email_not_confirmed') setWaitingEmail(email.trim().toLowerCase());
@@ -167,6 +206,19 @@ function LoginForm() {
 
   if (checkingAuth) {
     return LOADING;
+  }
+
+  if (twoStep) {
+    return (
+      <StartColumn>
+        <TwoStepCodeStep
+          email={twoStep.email}
+          next={next}
+          onDone={finishTwoStep}
+          onDifferentAccount={() => { setTwoStep(null); setPassword(''); setEmail(''); }}
+        />
+      </StartColumn>
+    );
   }
 
   return (

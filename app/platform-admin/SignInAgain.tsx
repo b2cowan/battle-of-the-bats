@@ -3,29 +3,40 @@
 import { useCallback, useId, useRef, useState, type ReactNode } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import KitDialog, { DialogCancel } from '@/components/shared/KitDialog';
-import { SIGN_IN_AGAIN_CODE, SIGN_IN_AGAIN_WORDS as W, type SignInAgainRefusal } from '@/lib/sign-in-again';
+import { SIGN_IN_AGAIN_CODE, SIGN_IN_AGAIN_WORDS as W, type SignInAgainMethod, type SignInAgainRefusal } from '@/lib/sign-in-again';
 import kit from './console.module.css';
 import styles from './sign-in-again.module.css';
 
 /** What the window says for one door (tabs 3 and 4): its title, the sentence naming the change, the button, the foot. */
 export type SignInAgainAsk = { title: string; lead: string; confirm: string; foot: string };
 
-const REFUSALS = new Set<SignInAgainRefusal>(['wrong_password', 'too_many_tries', 'not_checked']);
+const REFUSALS = new Set<SignInAgainRefusal>(['wrong_password', 'wrong_code', 'too_many_tries', 'not_checked']);
 
-/** Whether a gated route answered "sign in again" (401 with the code), read from a copy so the caller can still read it. */
-async function asksToSignInAgain(res: Response): Promise<boolean> {
-  if (res.status !== 401) return false;
-  const body = await res.clone().json().catch(() => null) as { code?: unknown } | null;
-  return body?.code === SIGN_IN_AGAIN_CODE;
+/**
+ * Whether a gated route answered "sign in again" (401 with the code), read from a copy so the caller can still read it,
+ * and what to ask for: the CODE (staff have two-step on), or the password for a dev account with no authenticator.
+ */
+async function asksToSignInAgain(res: Response): Promise<SignInAgainMethod | null> {
+  if (res.status !== 401) return null;
+  const body = await res.clone().json().catch(() => null) as { code?: unknown; method?: unknown } | null;
+  if (body?.code !== SIGN_IN_AGAIN_CODE) return null;
+  return body.method === 'password' ? 'password' : 'code';
 }
 
 /**
- * SIGN IN AGAIN (Stage 0, Part 10, tab 2): the product's small question window with one password field. It opens only
+ * SIGN IN AGAIN (Stage 0, Part 10, tab 2): the product's small question window with one field: the authenticator CODE
+ * (staff always use two-step sign-in, Board Ready Part 1), or the password for a dev account with no authenticator. It opens only
  * when the server answers "sign in again" to the press; once the password is accepted it closes and the same request goes
  * again once, with no second press (Ask 4). Cancel, Escape or a tap outside means no, and nothing runs. While it checks,
  * the window holds. A wrong password keeps it open with the text selected, so typing again replaces it.
  */
-function SignInAgainWindow({ ask, email, onDone }: { ask: SignInAgainAsk; email: string; onDone: (accepted: boolean) => void }) {
+function SignInAgainWindow({ ask, email, method, onDone }: {
+  ask: SignInAgainAsk;
+  email: string;
+  method: SignInAgainMethod;
+  onDone: (accepted: boolean) => void;
+}) {
+  const isCode = method === 'code';
   const id = useId();
   const fieldRef = useRef<HTMLInputElement>(null);
   const [password, setPassword] = useState('');
@@ -42,7 +53,7 @@ function SignInAgainWindow({ ask, email, onDone }: { ask: SignInAgainAsk; email:
       const res = await fetch('/api/platform-admin/sign-in-again', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify(isCode ? { code: password } : { password }),
       });
       if (res.ok) outcome = null;
       else {
@@ -53,11 +64,12 @@ function SignInAgainWindow({ ask, email, onDone }: { ask: SignInAgainAsk; email:
     if (outcome === null) { onDone(true); return; }
     setBusy(false);
     setRefusal(outcome);
-    if (outcome === 'wrong_password') window.requestAnimationFrame(() => fieldRef.current?.select());
+    if (outcome === 'wrong_password' || outcome === 'wrong_code') window.requestAnimationFrame(() => fieldRef.current?.select());
   }
 
   // A wait or a failed check replaces the sentence (tab 2, frames 3 and 4); a wrong password is a red line under the field.
   const wait = refusal === 'too_many_tries' ? W.tooManyTries : refusal === 'not_checked' ? W.notChecked : null;
+  const wrong = refusal === 'wrong_password' || refusal === 'wrong_code';
   return (
     <KitDialog
       kind="question"
@@ -78,29 +90,46 @@ function SignInAgainWindow({ ask, email, onDone }: { ask: SignInAgainAsk; email:
         {wait ? <p className={`${kit.callout} ${kit.calloutWarn}`} role="alert">{wait}</p> : <p className={styles.lead}>{ask.lead}</p>}
         <form id={id} onSubmit={event => { event.preventDefault(); void check(); }}>
           <label className={kit.fieldGroup} htmlFor={`${id}-pw`}>
-            <span className={kit.label}>{W.password}<span className={kit.req} aria-hidden="true"> *</span></span>
-            <span className={styles.pwWrap}>
+            <span className={kit.label}>{isCode ? W.code : W.password}<span className={kit.req} aria-hidden="true"> *</span></span>
+            {isCode ? (
+              // The authenticator's code: one numeric field with the one-time-code fill (two-step sign-in, tab 3).
               <input
                 ref={fieldRef}
                 id={`${id}-pw`}
-                type={show ? 'text' : 'password'}
                 className={kit.field}
                 value={password}
-                onChange={event => setPassword(event.target.value)}
-                // The current password, so a password manager offers it (tab 7, the honest limit).
-                autoComplete="current-password"
+                onChange={event => setPassword(event.target.value.replace(/[^\d\s]/g, '').slice(0, 7))}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="6-digit code"
                 required
-                aria-invalid={refusal === 'wrong_password' || undefined}
-                aria-describedby={refusal === 'wrong_password' ? `${id}-wrong` : undefined}
+                aria-invalid={wrong || undefined}
+                aria-describedby={wrong ? `${id}-wrong` : undefined}
               />
-              {/* The product's eye (`components/auth/PasswordInput`): one name, pressed or not. That field wears the
-                  public pages' tokens, so the console keeps its own look here. */}
-              <button type="button" className={styles.pwToggle} onClick={() => setShow(value => !value)}
-                aria-label="Show password" aria-pressed={show} aria-controls={`${id}-pw`} disabled={busy}>
-                {show ? <EyeOff size={15} aria-hidden /> : <Eye size={15} aria-hidden />}
-              </button>
-            </span>
-            {refusal === 'wrong_password' && <span id={`${id}-wrong`} className={kit.fieldError} role="alert">{W.wrongPassword}</span>}
+            ) : (
+              <span className={styles.pwWrap}>
+                <input
+                  ref={fieldRef}
+                  id={`${id}-pw`}
+                  type={show ? 'text' : 'password'}
+                  className={kit.field}
+                  value={password}
+                  onChange={event => setPassword(event.target.value)}
+                  // The current password, so a password manager offers it (tab 7, the honest limit).
+                  autoComplete="current-password"
+                  required
+                  aria-invalid={wrong || undefined}
+                  aria-describedby={wrong ? `${id}-wrong` : undefined}
+                />
+                {/* The product's eye (`components/auth/PasswordInput`): one name, pressed or not. That field wears the
+                    public pages' tokens, so the console keeps its own look here. */}
+                <button type="button" className={styles.pwToggle} onClick={() => setShow(value => !value)}
+                  aria-label="Show password" aria-pressed={show} aria-controls={`${id}-pw`} disabled={busy}>
+                  {show ? <EyeOff size={15} aria-hidden /> : <Eye size={15} aria-hidden />}
+                </button>
+              </span>
+            )}
+            {wrong && <span id={`${id}-wrong`} className={kit.fieldError} role="alert">{isCode ? W.wrongCode : W.wrongPassword}</span>}
           </label>
         </form>
       </div>
@@ -121,20 +150,21 @@ export function useSignInAgain(email: string): {
   /** "The email to the owner could not be sent…": render it under the finish notice. */
   ownerNotice: ReactNode;
 } {
-  const [pending, setPending] = useState<{ ask: SignInAgainAsk; resolve: (accepted: boolean) => void } | null>(null);
+  const [pending, setPending] = useState<{ ask: SignInAgainAsk; method: SignInAgainMethod; resolve: (accepted: boolean) => void } | null>(null);
   const [ownerNotEmailed, setOwnerNotEmailed] = useState(false);
   // One question at a time: a second ask answers the first one "no", so no caller waits forever.
   const answerRef = useRef<((accepted: boolean) => void) | null>(null);
   const send = useCallback(async (run: () => Promise<Response>, ask: SignInAgainAsk) => {
     setOwnerNotEmailed(false);
     const first = await run();
-    if (!(await asksToSignInAgain(first))) return first;
+    const method = await asksToSignInAgain(first);
+    if (!method) return first;
     answerRef.current?.(false);
     let answer: ((accepted: boolean) => void) | null = null;
     const accepted = await new Promise<boolean>(resolve => {
       answer = resolve;
       answerRef.current = resolve;
-      setPending({ ask, resolve });
+      setPending({ ask, method, resolve });
     });
     // Only this ask's own window closes: a newer one, which answered this "no", stays open.
     if (answerRef.current === answer) {
@@ -147,7 +177,7 @@ export function useSignInAgain(email: string): {
     setOwnerNotEmailed(answer.ownerEmailed === false);
     return answer.ownerEmailed === true ? ` ${W.ownerEmailed}` : '';
   }, []);
-  const window = pending ? <SignInAgainWindow ask={pending.ask} email={email} onDone={pending.resolve} /> : null;
+  const window = pending ? <SignInAgainWindow ask={pending.ask} email={email} method={pending.method} onDone={pending.resolve} /> : null;
   const ownerNotice = ownerNotEmailed
     ? <div className={`${kit.callout} ${kit.calloutWarn}`} role="status">{W.ownerNotEmailed}</div>
     : null;

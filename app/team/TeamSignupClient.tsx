@@ -289,6 +289,7 @@ export default function TeamSignupClient({
         }
       }
       const signin = await signIn(email, password);
+      if (signin.handedOff) return; // two-step is on: the code step finishes the sign-in and returns here
       if (signin.error === 'email_not_confirmed') {
         // A waiting account: the check-your-email block, with Send the link again (V3), rather than a dead end.
         setPassword('');

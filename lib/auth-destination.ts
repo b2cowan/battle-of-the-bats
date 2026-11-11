@@ -2,6 +2,7 @@ import { createClient } from './supabase-server';
 import { isPlatformAdminEmail } from './platform-auth';
 import { getUserAccessContexts, findSuspendedMembershipOrg, filterWorkspaceContexts } from './user-contexts';
 import { reconcilePendingInvitesForUser, listPendingInvitesForUser } from './invite-reconciliation';
+import { getSignedInUser } from './two-step-session';
 
 export type { MemberRow, OrgRelation } from './user-contexts';
 export { getDestinationForMembership } from './user-contexts';
@@ -39,7 +40,7 @@ export interface AuthDestinationDetail {
  */
 export async function getAuthDestinationDetail(): Promise<AuthDestinationDetail> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   if (!user?.email) {
     return { destination: '/auth/login', hasWorkspace: false };

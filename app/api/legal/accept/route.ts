@@ -4,6 +4,7 @@ import { withObservability } from '@/lib/observability';
 import { recordAcceptance } from '@/lib/legal-acceptance';
 import { ACCEPTANCE_WORDS, ACCEPT_ROUTE_DOORS, termsDoorFrom } from '@/lib/legal-acceptance-rules';
 import { currentVersion } from '@/lib/legal-documents';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * The sign-in screen's tick (GST/HST Stage 6 step 6.3, Chunk B, ruling R3) and the purchase window's (Chunk C, door
@@ -19,7 +20,7 @@ export const POST = withObservability(async (req: Request) => {
   if (currentVersion('terms') === null) return NextResponse.json({ error: 'not_found' }, { status: 404 });
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user) return NextResponse.json({ error: 'sign_in_required' }, { status: 401 });
 
   const body = await req.json().catch(() => ({})) as { termsVersion?: unknown; door?: unknown };

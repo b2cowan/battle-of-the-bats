@@ -4,21 +4,42 @@ import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from './supabase-server';
 import { writePlatformAuditLog } from './platform-audit';
+import { getSessionTwoStep } from './api-auth';
+import { verifyAuthenticatorCode } from './two-step-codes';
 import {
-  SIGN_IN_AGAIN_AUDIT, SIGN_IN_AGAIN_CODE, SIGN_IN_AGAIN_WORDS,
-  isFreshPassword, passwordEnteredAt, type SignInAgainRefusal,
+  SIGN_IN_AGAIN_AUDIT, SIGN_IN_AGAIN_CODE, SIGN_IN_AGAIN_MINUTES, SIGN_IN_AGAIN_WORDS,
+  isFreshPassword, passwordEnteredAt, type SignInAgainMethod, type SignInAgainRefusal,
 } from './sign-in-again';
 
 /**
  * The server half of SIGN IN AGAIN (Stage 0, Part 10; the rule and the clock are in `lib/sign-in-again.ts`).
  *
+ * ⚖ TWO-STEP SIGN-IN (Board Ready, Part 1): staff always have two-step on, so the window asks for the CODE, and the clock
+ * reads when this session last typed one. It used to check the password by a fresh password sign-in that replaced the
+ * session — under two-step that would drop a staff session back to password-only. The password path stays for the one
+ * case with no authenticator: dev with TWO_STEP_STAFF_REQUIRED=off (seeds and probes).
+ *
  * `requireFreshSignIn` is the gate. A route calls it AFTER its own checks (count, reason, the price's Stripe check) and
- * before its first write, so nobody types a password only to be refused (Ask 13c). It answers 401 with the
- * `sign_in_again` code, which the screen turns into the window. `tests/unit/sign-in-again.test.ts` holds where.
+ * before its first write, so nobody types a code only to be refused (Ask 13c). It answers 401 with the `sign_in_again`
+ * code and the `method` to ask for, which the screen turns into the window. `tests/unit/sign-in-again.test.ts` holds where.
  */
 export async function requireFreshSignIn(user: User): Promise<
-  { passwordAt: Date; response: null } | { passwordAt: null; response: NextResponse }
+  { passwordAt: Date; proof: SignInAgainMethod; response: null } | { passwordAt: null; proof: null; response: NextResponse }
 > {
+  const refuse = (method: SignInAgainMethod) => ({
+    passwordAt: null,
+    proof: null,
+    response: NextResponse.json({ error: SIGN_IN_AGAIN_WORDS.refusal, code: SIGN_IN_AGAIN_CODE, method }, { status: 401 }),
+  });
+
+  const state = await getSessionTwoStep();
+  if (state && state.user.id === user.id && state.hasFactor) {
+    const at = state.passed ? state.provedAt : null;
+    const age = at === null ? Infinity : Date.now() - at;
+    if (at === null || age < 0 || age > SIGN_IN_AGAIN_MINUTES * 60_000) return refuse('code');
+    return { passwordAt: new Date(at), proof: 'code', response: null };
+  }
+
   const cookieStore = await cookies();
   // Read-only, as the platform context's own client is: the gate never writes a session.
   const supabase = createServerClient(
@@ -31,22 +52,45 @@ export async function requireFreshSignIn(user: User): Promise<
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
   const enteredAt = claims && claims.sub === user.id ? passwordEnteredAt(claims.amr) : null;
-  if (!isFreshPassword(enteredAt, Date.now())) {
-    return {
-      passwordAt: null,
-      response: NextResponse.json({ error: SIGN_IN_AGAIN_WORDS.refusal, code: SIGN_IN_AGAIN_CODE }, { status: 401 }),
-    };
-  }
-  return { passwordAt: new Date(enteredAt!), response: null };
+  if (!isFreshPassword(enteredAt, Date.now())) return refuse('password');
+  return { passwordAt: new Date(enteredAt!), proof: 'password', response: null };
 }
 
 const CHECK_TIMEOUT_MS = 15_000;
 
 /**
- * The window's password, checked as THIS staff member (the address is the session's, never the request's), by a fresh
- * password sign-in whose session replaces the browser's — so the request sent again carries a session that just proved
- * the password. Each wrong try is written to the audit log, with no email (Ask 7); the sign-in service sets the
- * "too many tries" wait, in our words (tab 2, note 6).
+ * The window's CODE, checked for THIS staff member on the server (the session's own authenticator; the sign-in service
+ * makes the session "password and code" again, with a new time). A code already accepted once is refused: the service
+ * would take it twice in its window. Each wrong try is written to the audit log, with no email (Ask 7).
+ */
+export async function checkCodeAgain(user: User, code: string): Promise<{ ok: true } | { ok: false; refusal: SignInAgainRefusal }> {
+  const email = user.email!;
+  try {
+    const supabase = await createClient();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const result = await Promise.race([
+      verifyAuthenticatorCode(supabase, user.id, code),
+      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('timeout')), CHECK_TIMEOUT_MS); }),
+    ]).finally(() => clearTimeout(timer));
+    if (result.ok) {
+      await writePlatformAuditLog(email, null, SIGN_IN_AGAIN_AUDIT.signedIn);
+      return { ok: true };
+    }
+    if (result.reason === 'wrong_code' || result.reason === 'reused_code') {
+      await writePlatformAuditLog(email, null, SIGN_IN_AGAIN_AUDIT.wrongCode);
+      return { ok: false, refusal: 'wrong_code' };
+    }
+    return { ok: false, refusal: 'not_checked' };
+  } catch {
+    return { ok: false, refusal: 'not_checked' };
+  }
+}
+
+/**
+ * The window's password — ONLY for a staff member with no authenticator (dev with the staff requirement off), checked as
+ * THIS staff member (the address is the session's, never the request's), by a fresh password sign-in whose session
+ * replaces the browser's, so the request sent again carries a session that just proved the password. Each wrong try is
+ * written to the audit log, with no email (Ask 7); the sign-in service sets the "too many tries" wait, in our words.
  */
 export async function checkPasswordAgain(user: User, password: string): Promise<{ ok: true } | { ok: false; refusal: SignInAgainRefusal }> {
   const email = user.email!;

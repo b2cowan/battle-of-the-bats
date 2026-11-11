@@ -10,6 +10,7 @@ import { decodePathSegment } from './lib/demo-org';
 import { isOwnHost } from './lib/own-hosts';
 import { clubHostResponse } from './lib/club-host-response';
 import { RESERVED_ORG_SLUGS } from './lib/reserved-slugs';
+import { getSignedInUser } from './lib/two-step-session';
 
 /**
  * The org sections this file bounces an unauthenticated visitor out of (see the guards below).
@@ -258,8 +259,10 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Refresh the session if expired - required to keep Server Components in sync
-  const { data: { user } } = await supabase.auth.getUser();
+  // Refresh the session if expired - required to keep Server Components in sync. A person with two-step on whose session
+  // has not typed the code counts as signed OUT here (lib/two-step-session.ts), so a protected page sends them to sign-in,
+  // which opens on its code step.
+  const user = await getSignedInUser(supabase);
 
   // Protect /[orgSlug]/admin/* routes - second path segment must be 'admin'
   const isOrgAdmin = segments.length >= 2 && segments[1] === 'admin';

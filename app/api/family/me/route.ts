@@ -4,6 +4,7 @@ import { withObservability } from '@/lib/observability';
 import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 import { FAMILY_HOME_PATH } from '@/lib/family-invitation-panel';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * Does this account get the "Your family" row in the shared account menu? (Signed-in family accounts Stage 4a, Part 6.7;
@@ -13,7 +14,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 export const GET = withObservability(async () => {
   if (!GUARDIAN_TIER_ENABLED) return NextResponse.json({ error: 'not_found' }, { status: 404 });
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user) return NextResponse.json({ error: 'not_found' }, { status: 404 });
   const { data, error } = await supabaseAdmin.from('family_links')
     .select('id').eq('user_id', user.id).eq('status', 'verified').limit(1);

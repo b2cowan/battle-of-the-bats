@@ -110,6 +110,7 @@ let { data: org } = await db.from('organizations').select('id, slug').eq('slug',
 if (!org) {
   const ins = await db.from('organizations').insert({
     name: 'QA Families Fixture (throwaway)', slug: ORG_SLUG,
+    is_test_organization: true, // a test organization: no two-step requirement applies here (mig 463)
     plan_id: 'club', subscription_status: 'active',
     is_public: false, is_discoverable: false,
     internal_notes: 'Families Book P2 chunk A — the messy fixture club. Safe to wipe.',

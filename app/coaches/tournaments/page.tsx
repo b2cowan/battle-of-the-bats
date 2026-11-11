@@ -14,12 +14,13 @@ import { attachTournamentFinishes } from '@/lib/coach-tournament-finish';
 import CoachTournamentRows from '@/components/coaches/CoachTournamentRows';
 import styles from './tournaments.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 export const metadata = { title: 'Tournaments - Coaches Portal' };
 
 export default async function CoachTournamentRecordsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   if (!user?.email) {
     redirect(`/auth/login?next=${COACHES_TOURNAMENTS_PATH}`);

@@ -7,10 +7,13 @@ import { expiredResetLinkHref } from '@/lib/auth-errors';
 import { PasswordField, StartColumn, StartHead, accountForm } from '@/components/auth/AccountForm';
 import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import LoadingState from '@/components/shared/LoadingState';
+import TwoStepCodeStep from '@/components/auth/TwoStepCodeStep';
 
 // A fifth state, 'error', was declared and never set; a save the provider refuses is the ready form with its notice
 // (The first look 2c).
-type PageState = 'waiting' | 'ready' | 'expired' | 'success';
+// 'code': the link signed the person in with the password's level only, and two-step is on for them; a reset never skips
+// the code (Board Ready · two-step sign-in, tab 3), and the sign-in service refuses a new password until it is typed.
+type PageState = 'waiting' | 'code' | 'ready' | 'expired' | 'success';
 
 /** The one loading line while the link is read, and while a link that cannot be used is on its way to the forgot screen. */
 const LOADING = <StartColumn><LoadingState label="Loading password reset…" /></StartColumn>;
@@ -35,6 +38,22 @@ function saveFailure(code: string | undefined): ReactNode {
   }
 }
 
+/** The new password, saved by our server for a reset a backup code let through (the error shape updateUser has). */
+async function saveAfterBackupCode(password: string): Promise<{ error: { code?: string; name?: string } | null }> {
+  try {
+    const res = await fetch('/api/auth/two-step/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (res.ok) return { error: null };
+    const data = await res.json().catch(() => ({})) as { code?: string };
+    return { error: { code: data.code ?? (res.status === 401 ? 'session_expired' : 'unknown') } };
+  } catch {
+    return { error: { code: 'network_error' } };
+  }
+}
+
 /** CHOOSE A NEW PASSWORD (The first look 2c, U4 screens 5–6). */
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -42,6 +61,36 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [failure, setFailure] = useState<ReactNode>(null);
+  // A backup code (not the app) let this reset through: the sign-in service still calls the session password-only, so
+  // the new password is saved by our server, which checked that code.
+  const [viaBackupCode, setViaBackupCode] = useState(false);
+  const [codeEmail, setCodeEmail] = useState<string | null>(null);
+  // The new-password form waits until the two-step question is answered, so it never shows and then flips (/review).
+  const [twoStepChecked, setTwoStepChecked] = useState(false);
+
+  // Ready to type a new password — unless two-step is on and this session has not typed the code yet. The server answers
+  // (it knows a backup code, and an account replacing its phone, which the browser cannot see).
+  useEffect(() => {
+    if (pageState !== 'ready' || twoStepChecked) return;
+    let active = true;
+    (async () => {
+      let needsCode = false;
+      try {
+        const st = await (await fetch('/api/auth/two-step/status')).json() as { hasFactor?: boolean; passed?: boolean; viaBackupCode?: boolean; email?: string | null };
+        if (!active) return;
+        if (st.hasFactor && !st.passed) { needsCode = true; setCodeEmail(st.email ?? null); }
+        else setViaBackupCode(!!st.viaBackupCode);
+      } catch {
+        // Unreadable: the browser's own answer (a code is on and this session has not typed it).
+        const { data: level } = await createClient().auth.mfa.getAuthenticatorAssuranceLevel();
+        needsCode = level?.currentLevel === 'aal1' && level.nextLevel === 'aal2';
+      }
+      if (!active) return;
+      if (needsCode) setPageState('code');
+      else setTwoStepChecked(true);
+    })();
+    return () => { active = false; };
+  }, [pageState, twoStepChecked]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -110,7 +159,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
     setFailure(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = viaBackupCode ? await saveAfterBackupCode(password) : await supabase.auth.updateUser({ password });
     if (error) {
       if (error.name === 'AuthSessionMissingError' || SESSION_GONE.has(error.code ?? '')) {
         setPageState('expired');
@@ -163,7 +212,27 @@ export default function ResetPasswordPage() {
     );
   }
 
-  if (pageState !== 'ready') return LOADING;
+  if (pageState === 'code') {
+    return (
+      <StartColumn>
+        <TwoStepCodeStep
+          email={codeEmail}
+          next={null}
+          showDifferentAccount={false}
+          offerNewPhone={false}
+          onDone={async () => {
+            // The app's code made the session "password and code"; a backup code left it to our server.
+            const { data: level } = await createClient().auth.mfa.getAuthenticatorAssuranceLevel();
+            setViaBackupCode(level?.currentLevel !== 'aal2');
+            setTwoStepChecked(true);
+            setPageState('ready');
+          }}
+        />
+      </StartColumn>
+    );
+  }
+
+  if (pageState !== 'ready' || !twoStepChecked) return LOADING;
 
   return (
     <StartColumn>

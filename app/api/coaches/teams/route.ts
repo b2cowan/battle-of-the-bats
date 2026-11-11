@@ -7,6 +7,7 @@ import { basicCoachTeamWelcomeHtml, sendEmail, SITE_URL } from '@/lib/email';
 import { withObservability } from '@/lib/observability';
 import { clearStartDoor } from '@/lib/start-door-server';
 import { requireAcceptance } from '@/lib/legal-acceptance';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -18,7 +19,7 @@ function cleanText(value: unknown, maxLength: number): string {
 
 async function requireCoachUser() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.id || !user.email) return null;
   // FieldLogicHQ staff are NOT coaches — never let a platform-admin session create a
   // public-facing coach team (mirrors the guard on /api/coaches/basic-teams).

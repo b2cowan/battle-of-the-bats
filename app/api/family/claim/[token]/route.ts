@@ -11,6 +11,7 @@ import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 import { acceptInvitation, acceptWithNewAccount, FAMILY_HOME_PATH, type AcceptResult } from '@/lib/family-invitation';
 import { clientIpFrom } from '@/lib/rate-limit';
 import { accountDoorRefusal, checkAcceptance, recordDoorAcceptance } from '@/lib/legal-acceptance';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * Accept an invitation to join a child's team (Signed-in family accounts Stage 4a, Part 4; the rules are lib/family-invitation.ts).
@@ -62,7 +63,7 @@ export const POST = withObservability(async (req: Request,
   }
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.email) return NextResponse.json({ error: 'sign_in_required' }, { status: 401 });
   // The third box for an account that has not agreed yet (5h). An account that has, sends none and is never asked; one signed
   // in on this page with its password learns it here, and the page then shows the box. Off while the legal pages are off.

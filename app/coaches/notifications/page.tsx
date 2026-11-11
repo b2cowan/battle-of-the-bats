@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { COACHES_NOTIFICATIONS_PATH } from '@/lib/coaches-portal-routes';
 import CoachNotificationsPage from '@/components/coaches/CoachNotificationsPage';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 export const metadata = { title: 'Notifications - Coaches Portal' };
 
@@ -14,7 +15,7 @@ export const metadata = { title: 'Notifications - Coaches Portal' };
  */
 export default async function FreeCoachNotificationsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.email) redirect(`/auth/login?next=${COACHES_NOTIFICATIONS_PATH}`);
   return <CoachNotificationsPage free />;
 }

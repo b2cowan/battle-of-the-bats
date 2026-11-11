@@ -4,6 +4,7 @@ import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { findSuspendedMembershipOrg, getUserAccessContexts } from '@/lib/user-contexts';
 import SignOutButton from './SignOutButton';
 import SystemScreen from '@/components/shared/SystemScreen';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +28,7 @@ export const dynamic = 'force-dynamic';
  */
 export default async function SuspendedPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.email) redirect('/auth/login');
 
   // If the user has any active workspace, they're not locked out — don't show a suspended wall.

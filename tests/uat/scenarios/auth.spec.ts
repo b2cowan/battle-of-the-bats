@@ -7,6 +7,7 @@
 
 import { test, expect } from '../helpers/fixtures';
 import { loadUATEnv, type UATEnv } from '../helpers/types';
+import { freshTotpCode, twoStepKeyFor } from '../helpers/two-step';
 
 // Lazy — resolved at test runtime, not at module parse time (allows `playwright --list` without .env.local)
 let _env: UATEnv | null = null;
@@ -60,12 +61,16 @@ test.describe('Auth / platform-admin login page', () => {
     await expect(anonPage).toHaveURL(/\/platform-admin\/login/);
   });
 
-  test('platform-admin login redirects to dashboard', async ({ anonPage }) => {
+  test('platform-admin login asks for the code, then reaches the dashboard', async ({ anonPage }) => {
     await anonPage.goto('/platform-admin/login');
     await anonPage.locator('#pl-email').fill(env().platformAdmin.email);
     await anonPage.locator('#pl-password').fill(env().platformAdmin.password);
     await anonPage.locator('button[type="submit"]').click();
-    await expect(anonPage).toHaveURL(/\/platform-admin(?!\/login)/, { timeout: 10_000 });
+    // Staff always use two-step sign-in: the password alone lands on the code step (Board Ready, Part 1).
+    await expect(anonPage.locator('#two-step-code')).toBeVisible({ timeout: 15_000 });
+    await anonPage.locator('#two-step-code').fill(await freshTotpCode(twoStepKeyFor(env().platformAdmin.email).secret));
+    await anonPage.locator('#two-step-submit').click();
+    await expect(anonPage).toHaveURL(/\/platform-admin(?!\/login)/, { timeout: 15_000 });
   });
 });
 

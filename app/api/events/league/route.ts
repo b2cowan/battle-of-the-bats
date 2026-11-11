@@ -7,6 +7,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { FixedWindowRateLimiter } from '@/lib/rate-limit';
 import { withObservability } from '@/lib/observability';
 import type { LeagueClientEvent } from '@/lib/league-events-client';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 export const runtime = 'nodejs';
 
@@ -22,7 +23,7 @@ const eventLimiter = new FixedWindowRateLimiter(60_000, 40);
 
 export const POST = withObservability(async (req: Request) => {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   // No user / staff / SANDBOX session → silently accept-and-drop (202). Instrumentation is
   // fire-and-forget; the client never reacts to the response, so we don't leak auth state via
   // status codes.

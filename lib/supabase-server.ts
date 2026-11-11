@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { assertSafeSupabaseServerEnvironment } from './supabase-safety';
 import { isSupabaseAuthCookieName } from './sandbox-exit-rule';
+import { getSignedInUser } from './two-step-session';
 
 export async function createClient() {
   assertSafeSupabaseServerEnvironment('Supabase server client');
@@ -42,8 +43,8 @@ export async function createClient() {
  */
 export const getAuthUserCached = cache(async () => {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+  // Null too when two-step is on and this session has not typed the code (lib/two-step-session.ts).
+  return getSignedInUser(supabase);
 });
 
 /**

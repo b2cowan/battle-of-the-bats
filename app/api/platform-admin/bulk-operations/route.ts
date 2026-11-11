@@ -397,6 +397,7 @@ export const POST = withObservability(async (req: Request) => {
           actor: auth.user.email!,
           at: completedAt,
           passwordAt: fresh.passwordAt.toISOString(),
+          proof: fresh.proof,
           reason,
           bulkOperationId: operation.id,
           accounts: orgs.length,

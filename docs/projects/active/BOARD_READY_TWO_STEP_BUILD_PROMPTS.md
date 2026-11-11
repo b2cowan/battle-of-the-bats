@@ -48,6 +48,21 @@
 
 ## Part 1 · Opus — the foundation
 
+> **BUILT 2026-11-11, commit owed** (migs 463 + 464 applied to dev; walk §511 owed). What was built, the census
+> correction (twelve sign-in doors) and six open owner calls: `BOARD_READY_PLAN.md` §5 Stage 0a "Part 1 (the foundation)".
+> Parts 2 and 3 can start once Part 1 is committed.
+
+> **Step 0 DONE 2026-11-11** (both facts hold; results in `BOARD_READY_PLAN.md` §5 Stage 0a, "Sign-in service
+> facts"). A session picking up Part 1 **starts at Step 1**. Before Step 1, confirm Wave 2 Fix A is committed
+> (`git log` on `lib/api-auth.ts`) and read what it changed there: the census starts from the helpers as Fix A left
+> them. Build on Step 0's findings:
+> - read "when the code was last typed" from the session token's `amr` `totp` timestamp; refreshes don't move it;
+> - clear the person's own half-finished set-ups on each new attempt (10-per-person limit counts them; the service
+>   sweeps only those older than about 5 minutes) and give each attempt a unique name;
+> - the service accepts a code twice within its window, so the "typed a code in the last 15 minutes" check and
+>   backup codes keep their own one-time record;
+> - the server check calls `getUser` (it sees a signed-out session at once); never decode the token alone.
+
 **Step 0 · prove the two undocumented facts on dev, before any design is built on them.** Report them; if either
 fails, stop and bring the owner a revised shape.
 1. Does a session that passed the code stay at that level after the sign-in service refreshes it? Test it with a dev

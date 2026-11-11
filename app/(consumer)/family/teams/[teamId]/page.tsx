@@ -18,6 +18,7 @@ import { FAMILY_HOME_PATH } from '@/lib/family-invitation-panel';
 import { FAMILY_HOME_WORDS as W } from '@/lib/family-home-words';
 import FamilyCalendarCard from '../../_parts/FamilyCalendarCard';
 import { FamilyFoot, SignupRow } from '../../_parts/FamilyRows';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * /family/teams/[teamId] — a connected parent's view of one of their children's teams, either kind (Signed-in family accounts
@@ -71,7 +72,7 @@ export default async function FamilyTeamPage({ params, searchParams }: {
   const [{ teamId }, { joined }] = await Promise.all([params, searchParams]);
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user) {
     return (
       <Quiet

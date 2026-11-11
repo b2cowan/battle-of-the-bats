@@ -11,6 +11,7 @@ import { portalsInForce } from '@/lib/portal-in-force-server';
 import type { Organization } from '@/lib/types';
 import { COACHES_HELP_PATH, COACHES_TEAM_PATH, COACHES_TOURNAMENTS_PATH, portalTournamentRecordPath } from '@/lib/coaches-portal-routes';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 type RouteParams = {
   params: Promise<{ teamId: string }>;
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: RouteParams) {
   // title must NOT expose it to a viewer who can't access the registration — fall back to a
   // generic title (the record body itself stays gated by canUserAccessTournamentRegistration).
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.email) return { title: 'Tournament Record' };
 
   const access = await canUserAccessTournamentRegistration({
@@ -42,7 +43,7 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
   const { welcome } = (await searchParams) ?? {};
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   if (!user?.email) {
     redirect(`/auth/login?next=${COACHES_TOURNAMENTS_PATH}/${teamId}`);

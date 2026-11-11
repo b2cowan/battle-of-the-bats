@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { listPendingInvitesForUser, reconcilePendingInvitesForUser, withInvitationDetails } from '@/lib/invite-reconciliation';
 import { withObservability } from '@/lib/observability';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -16,7 +17,7 @@ async function getAuthenticatedUser() {
       },
     }
   );
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   return user;
 }
 

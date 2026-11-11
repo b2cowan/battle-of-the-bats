@@ -209,7 +209,8 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
     // Verification off (localhost): the account is ready at once, so sign in and let the server render step 2 at this
     // same address (every door's two steps live at one address since Run a tournament's intro folded in, Ask 6).
     const { signIn } = await import('@/lib/auth');
-    const { error: signInErr } = await signIn(emailNorm, password);
+    const { error: signInErr, handedOff } = await signIn(emailNorm, password);
+    if (handedOff) return; // two-step is on: the code step finishes the sign-in and returns here
     if (signInErr) {
       setError('Account created but sign-in failed. Try signing in from the login page.');
       setLoading(false);

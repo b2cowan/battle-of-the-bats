@@ -4,6 +4,7 @@ import { getFollowedTeamsForUser, getFollowedTournamentsForUser, getFollowedOrgs
 import { getFollowFeed } from '@/lib/follow-feed';
 import { getWholeEventFollowCards, getOrgFollowRollups } from '@/lib/entity-follow-status';
 import FollowingList from '@/components/consumer/FollowingList';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 // Auth-dependent (account follows) + device-personal — dynamic, never indexed.
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 
 export default async function FollowingPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   const signedIn = !!user?.email;
 
   const [accountFollows, followedTournaments, followedOrgs, followedRepTeams] = signedIn

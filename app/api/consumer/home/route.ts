@@ -26,6 +26,7 @@ import { readStartDoor } from '@/lib/start-door';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-owned';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 const EMPTY: ConsumerHomePayload = {
   signedIn: false,
@@ -41,7 +42,7 @@ const EMPTY: ConsumerHomePayload = {
 
 export const GET = withObservability(async () => {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.email) return NextResponse.json(EMPTY, { headers: { 'Cache-Control': 'no-store' } });
 
   // Reconcile pending invites onto this identity so a self-registered invitee's orphaned

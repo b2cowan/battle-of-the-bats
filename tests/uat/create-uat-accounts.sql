@@ -84,6 +84,11 @@ SET internal_notes = '[UAT_PROTECTED] UAT test org - club plan. Do not wipe.',
     subscription_status = 'active'
 WHERE slug = 'uat-club-org';
 
+-- Every UAT org is a test organization: no two-step sign-in requirement ever applies in one (Board Ready, mig 463).
+UPDATE organizations
+SET is_test_organization = true
+WHERE internal_notes LIKE '%[UAT_PROTECTED]%' AND is_test_organization = false;
+
 
 -- ================================================================
 -- STEP 2: Auth users

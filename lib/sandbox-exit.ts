@@ -63,6 +63,9 @@ export async function currentSessionUser(
       },
     },
   );
+  // ⚖ WHOSE session this is, not whether it passed two-step (Board Ready two-step, /review 2026-11-11). It gates nothing:
+  // the demo doors ask it "may I replace this?", and a real person halfway through the code step must read as SOMEBODY,
+  // or a demo press would silently overwrite their session. So it reads the session itself, on the guard's allow-list.
   const { data: { user } } = await reader.auth.getUser();
   if (!user) return null;
   return { id: user.id, email: user.email?.trim().toLowerCase() ?? null };

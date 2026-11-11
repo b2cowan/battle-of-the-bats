@@ -139,7 +139,10 @@ function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
       if (data.requiresEmailVerification) { setStage('check-email'); return; }
       // Dev / no-verification: the account exists but the browser has no session yet — sign in,
       // then land back where they were following along.
-      try { await signIn(email.trim(), password); } catch { /* fall through to redirect anyway */ }
+      try {
+        // Two-step on: the code step finishes the sign-in and returns here; the follow is kept on the next try.
+        if ((await signIn(email.trim(), password)).handedOff) return;
+      } catch { /* fall through to redirect anyway */ }
       // The nudge promised "keep this follow" — attach the team that triggered it to the
       // fresh account (conversion sweep C2; THIS entry point only, the general claim flow
       // stays explicit). The shared mirror is keepalive'd, so it survives the redirect

@@ -7,6 +7,10 @@
  * a Production Stripe price request. Not Submit, not a Test request, not plan availability or trial days, and never a
  * one-customer action (Ask 10). A later door joins by the same rule (Campaigns "Send now" is drawn on its own, Ask 11).
  *
+ * ⚖ TWO-STEP (Board Ready, Part 1, 2026-11-11): staff always use two-step sign-in, so "the password again" is now THE CODE
+ * again, and the clock reads when this session last typed one (the amr totp entry, or one of our backup codes). The password
+ * words below remain for the dev-only staff account with no authenticator.
+ *
  * ⚖ THE CLOCK (Ask 3): 10 minutes from the last time THIS SESSION proved the password (a sign-in or this window), read
  * from the session's own sign-in record (the JWT's `amr` password entry), never the account's `last_sign_in_at`: that is
  * shared by every session on the account, so a copied session would pass the moment its owner signed in anywhere else.
@@ -31,8 +35,14 @@ export const BULK_MAX_ACCOUNTS = 100;
 /** The code a gated route answers with, so the screen knows to open the window rather than show an error. */
 export const SIGN_IN_AGAIN_CODE = 'sign_in_again';
 
-/** Why the window's password was not accepted: the route's `code`. */
-export type SignInAgainRefusal = 'wrong_password' | 'too_many_tries' | 'not_checked';
+/** Why the window's code (or password) was not accepted: the route's `code`. */
+export type SignInAgainRefusal = 'wrong_password' | 'wrong_code' | 'too_many_tries' | 'not_checked';
+
+/**
+ * What the window asks for (Board Ready · two-step sign-in, Part 1): the CODE, because staff always have two-step on; the
+ * password only for a staff account with no authenticator (dev with TWO_STEP_STAFF_REQUIRED=off). The gate's 401 says which.
+ */
+export type SignInAgainMethod = 'code' | 'password';
 
 /**
  * When this session last proved the password, in ms since the epoch, from the session's `amr` claim — or null when it
@@ -65,7 +75,7 @@ export const SIGN_IN_AGAIN_WORDS = {
   bulkConfirm: 'Sign in and run',
   bulkFoot: 'You get an email after it runs.',
   bulkLead: (accounts: number) =>
-    `This changes ${pluralize(accounts, 'account')} at once, and your password was last entered more than ${SIGN_IN_AGAIN_MINUTES} minutes ago. The change runs as soon as it is accepted.`,
+    `This changes ${pluralize(accounts, 'account')} at once, and your code was last typed more than ${SIGN_IN_AGAIN_MINUTES} minutes ago. The change runs as soon as it is accepted.`,
   priceTitle: 'Sign in again to switch this price',
   priceConfirm: 'Sign in and switch',
   priceFoot: 'You get an email after it is switched.',
@@ -74,17 +84,19 @@ export const SIGN_IN_AGAIN_WORDS = {
   priceLead: (who: string, priceId: string | null, amount: string | null) => (priceId
     ? `From now on, new ${who} customers are charged ${priceId}${amount ? ` (${amount})` : ''}.`
     : `From now on, new customers cannot buy ${who} until a price is set.`)
-    + ' Customers on today’s price keep it. The switch is made as soon as your password is accepted.',
+    + ' Customers on today’s price keep it. The switch is made as soon as your code is accepted.',
   checking: 'Checking…',
   password: 'Password',
+  code: 'Code',
   wrongPassword: 'That password doesn’t match. Nothing was changed.',
+  wrongCode: 'That code didn’t work. Nothing was changed. Type the one showing now.',
   tooManyTries: 'Too many tries. Wait a minute, then try again. Nothing was changed.',
-  notChecked: 'Your password could not be checked just now. Nothing was changed. Try again in a moment.',
+  notChecked: 'That could not be checked just now. Nothing was changed. Try again in a moment.',
   /** What a gated route says if the screen ever shows it as an error (an old tab, a script). */
   refusal: 'Sign in again to continue. Nothing was changed.',
   /** The fixed sentences each screen shows beforehand, always (Ask 6). */
-  bulkWarning: `Asks for your password if it was last entered more than ${SIGN_IN_AGAIN_MINUTES} minutes ago. The owner gets an email after it runs.`,
-  priceWarning: `A Production price: asks for your password if it was last entered more than ${SIGN_IN_AGAIN_MINUTES} minutes ago, then emails the owner.`,
+  bulkWarning: `Asks for your code if it was last typed more than ${SIGN_IN_AGAIN_MINUTES} minutes ago. The owner gets an email after it runs.`,
+  priceWarning: `A Production price: asks for your code if it was last typed more than ${SIGN_IN_AGAIN_MINUTES} minutes ago, then emails the owner.`,
   /** The finish notice's last sentence (tabs 3 and 4; Ask 9). */
   ownerEmailed: 'The owner was emailed.',
   ownerNotEmailed: 'The email to the owner could not be sent. The change stands, and the audit log has it.',
@@ -94,5 +106,6 @@ export const SIGN_IN_AGAIN_WORDS = {
 export const SIGN_IN_AGAIN_AUDIT = {
   signedIn: 'signed_in_again',
   wrongPassword: 'sign_in_again_wrong_password',
+  wrongCode: 'sign_in_again_wrong_code',
   ownerEmailNotSent: 'owner_email_not_sent',
 } as const;

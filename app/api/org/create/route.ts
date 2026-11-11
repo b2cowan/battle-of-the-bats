@@ -12,6 +12,7 @@ import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { slugifyOrgName } from '@/lib/utils';
 import { requireAcceptance } from '@/lib/legal-acceptance';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 async function isSlugAvailable(slug: string) {
   // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
@@ -42,7 +43,7 @@ export const POST = withObservability(async (req: Request) => {
   let orgId: string | null = null;
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getSignedInUser(supabase);
     if (!user?.id || !user.email) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }

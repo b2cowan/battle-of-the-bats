@@ -5,6 +5,7 @@ import { canOpenTournaments, canWriteMoney, isMoneyRedactedForTeam } from '@/lib
 import { registrationBelongsToRepTeam, tournamentEntryNames, tournamentEntryTabTitle } from '@/lib/coach-registration-access';
 import { CoachTournamentRecordHeader } from '@/components/coaches/CoachTournamentRecordParts';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 type RouteParams = {
   params: Promise<{ orgSlug: string; teamId: string; registrationId: string }>;
@@ -14,7 +15,7 @@ type RouteParams = {
 export async function generateMetadata({ params }: RouteParams) {
   const { orgSlug, teamId, registrationId } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   const org = user ? await getOrganizationBySlug(orgSlug) : null;
   const assignment = org?.id && user ? (await getCoachingAssignmentsForUser(org.id, user.id)).find(a => a.teamId === teamId) : undefined;
   if (!assignment || !canOpenTournaments(assignment.capabilities) || !(await registrationBelongsToRepTeam(registrationId, teamId))) {
@@ -27,7 +28,7 @@ export default async function PremiumCoachTournamentRecordPage({ params }: Route
   const { orgSlug, teamId, registrationId } = await params;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.email) {
     redirect(`/auth/login?next=/${orgSlug}/coaches/teams/${teamId}/tournaments/${registrationId}`);
   }

@@ -29,7 +29,7 @@ const NO_REASON = new Set([
   // Plans & pricing Stage 2 Part 4: the Renewals export (a work tool; the entry is its own record).
   'export_renewals',
   // Stage 0 Part 10: sign in again and the owner's email. Each sits beside the change that carries the reason.
-  'signed_in_again', 'sign_in_again_wrong_password', 'owner_email_not_sent',
+  'signed_in_again', 'sign_in_again_wrong_password', 'sign_in_again_wrong_code', 'owner_email_not_sent',
 ]);
 
 /**

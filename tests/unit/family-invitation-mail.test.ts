@@ -242,7 +242,8 @@ describe('Part 4 — the accept page', () => {
     for (const f of files) assert.ok(!/signInWithPassword|setSession|verifyOtp|generateLink|exchangeCodeForSession/.test(readCode(f)), f);
     // The page's own sign-in is the parent's password, in the browser — never the token.
     const CLIENT = readCode('app/(consumer)/family/claim/[token]/ClaimClient.tsx');
-    for (const m of CLIENT.matchAll(/signIn\(([^)]*)\)/g)) assert.equal(m[1], 'email, password');
+    // The parent's own email and password, never the token (a two-step hand-off may add where to go next).
+    for (const m of CLIENT.matchAll(/signIn\(([^)]*)\)/g)) assert.match(m[1], /^email, password(, \{ next: [^}]*)?$/);
   });
 
   it('ruling 15: a new account is created confirmed ONLY after every refusal was checked, and removed again if the join loses', () => {

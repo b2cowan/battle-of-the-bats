@@ -12570,6 +12570,126 @@
     "update_rule": null
   },
   {
+    "table_name": "two_step_backup_codes",
+    "constraint_name": "two_step_backup_codes_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_backup_codes",
+    "constraint_name": "two_step_backup_codes_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "two_step_code_uses",
+    "constraint_name": "two_step_code_uses_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_code_uses",
+    "constraint_name": "two_step_code_uses_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "code_hash",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_code_uses",
+    "constraint_name": "two_step_code_uses_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "two_step_grace",
+    "constraint_name": "two_step_grace_organization_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "organization_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "two_step_grace",
+    "constraint_name": "two_step_grace_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_grace",
+    "constraint_name": "two_step_grace_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "organization_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_grace",
+    "constraint_name": "two_step_grace_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "constraint_name": "two_step_owner_resets_organization_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "organization_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "constraint_name": "two_step_owner_resets_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "constraint_name": "two_step_owner_resets_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "user_hidden_workspaces",
     "constraint_name": "user_hidden_workspaces_organization_id_fkey",
     "constraint_type": "FOREIGN KEY",

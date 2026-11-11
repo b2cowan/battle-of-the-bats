@@ -1,0 +1,106 @@
+/* Two-step set-up (Board Ready · two-step sign-in, drawings tab 2): the sign-in page's own column, so it reads as the step
+   after the password, not a settings form. Only what the start column has no piece for lives here. */
+
+/* The numbered instructions, in the body face. */
+.steps {
+  margin: 0;
+  padding: 0 0 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--home-ink);
+}
+.steps strong { font-weight: 600; }
+.steps span { color: var(--home-dim); }
+
+/* The QR code on white, framed like a field. */
+.qr {
+  align-self: center;
+  width: 184px;
+  height: 184px;
+  padding: 8px;
+  background: var(--white-fixed); /* a QR code scans on white in either theme */
+  border: 1px solid var(--home-field-edge);
+  border-radius: 10px;
+}
+.qr img { width: 100%; height: 100%; display: block; }
+
+/* The key and the backup codes: the data face (a named exception for recorded codes, design ask D). */
+.keyRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  color: var(--home-dim);
+}
+.key {
+  font-family: var(--font-data); /* type-ok: data (a recorded code, design ask D) */
+  font-size: var(--type-body);
+  letter-spacing: 0.04em;
+  color: var(--home-ink);
+  overflow-wrap: anywhere;
+}
+.copy {
+  min-height: 44px;
+  padding: 0 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--home-olive);
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.codes {
+  margin: 0;
+  padding: 0.875rem 1rem;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+  background: var(--home-card);
+  border: 1px solid var(--home-field-edge);
+  border-radius: 10px;
+}
+.codes li {
+  font-family: var(--font-data); /* type-ok: data (a recorded code, design ask D) */
+  font-size: var(--type-heading);
+  letter-spacing: 0.06em;
+  color: var(--home-ink);
+  text-align: center;
+}
+
+.codeActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+/* "I've saved my backup codes…": a 44px tick row. */
+.tick {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  min-height: 44px;
+  padding-top: 0.625rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--home-ink);
+  cursor: pointer;
+}
+.tick input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  accent-color: var(--home-olive);
+}

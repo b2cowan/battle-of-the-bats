@@ -15,6 +15,7 @@ import { findTeamEntriesInTournament, markTeamsAlreadyInTournament } from '@/lib
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { nameFromAccountMetadata } from '@/lib/db';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -36,7 +37,7 @@ async function tournamentOfEntry(registrationId: string): Promise<string | null>
 
 async function requireCoachUser() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.id || !user.email) return null;
   // FieldLogicHQ staff are NOT coaches. Never expose a platform-admin session as a
   // coach identity: this endpoint feeds the public register form's email prefill, the

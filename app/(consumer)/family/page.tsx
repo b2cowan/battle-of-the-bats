@@ -13,6 +13,7 @@ import { scheduleDayLabel, scheduleRowTitle, scheduleTimeLabel } from '@/lib/fam
 import { FAMILY_HOME_WORDS as W, nameList } from '@/lib/family-home-words';
 import FamilyCalendarCard from './_parts/FamilyCalendarCard';
 import { SignupRow } from './_parts/FamilyRows';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * /family — "Your family" (Signed-in family accounts Stage 4a, Part 6.1; drawing 3.3, 3.4 and 5.3). The list, shown when the
@@ -35,7 +36,7 @@ export default async function FamilyHomePage({ searchParams }: { searchParams: P
   if (!GUARDIAN_TIER_ENABLED) notFound();
   const { joined } = await searchParams;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   if (!user) {
     return (

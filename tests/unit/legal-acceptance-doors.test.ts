@@ -227,7 +227,7 @@ const EXEMPT_FILES: Record<string, string> = {
   'app/see-it-live/switch/page.tsx': 'the demo door — the demo accounts are exempt',
   'app/see-it-live/coaches/switch/page.tsx': 'the demo door — the demo accounts are exempt',
 };
-const RESOLVES_USER = /getAuthUserCached|getAuthContextWithRole|getCoachPortalAuth|getPlatformAdminContext|getAuthenticatedUser|\.getUser\(/;
+const RESOLVES_USER = /getAuthUserCached|getAuthContextWithRole|getCoachPortalAuth|getPlatformAdminContext|getAuthenticatedUser|getSignedInUser|\.getUser\(/;
 
 describe('the shell census (B3): every signed-in layout and page is under the screen, or exempt with its reason', () => {
   const layouts = SOURCE.filter(f => f.startsWith('app/') && /\/layout\.tsx$/.test(f));
@@ -530,6 +530,8 @@ async function postAccept(env: Record<string, string>, body: unknown, { user = {
   const h = legalHarness();
   const load = billingTestLoader({
     '@/lib/supabase-server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user } }) } }) },
+    // The route reads the session through the two-step check (Board Ready, Part 1); this account has two-step off.
+    '@/lib/two-step-session': { getSignedInUser: async () => user },
     '@/lib/observability': { withObservability: (fn: unknown) => fn },
     '@/lib/legal-acceptance': h.load('lib/legal-acceptance.ts'),
   });

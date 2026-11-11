@@ -7,14 +7,16 @@ import styles from './StartSteps.module.css';
  * second half rather than a repeat. Not a control. Single-noun labels, so three steps fit a phone on one line; finished
  * steps at full strength. A screen reader hears "Step 1 of 2: Account".
  */
-export default function StartSteps({ current, labels: steps }: {
+export default function StartSteps({ current, labels: steps, ariaLabel = 'Sign-up steps' }: {
   current: number;
+  /** What a screen reader calls the line (two-step set-up: 'Set-up steps'). */
+  ariaLabel?: string;
   /** Every step's one-noun label, in order. */
   labels: readonly string[];
 }) {
   return (
     // role="list": the steps are unstyled, and Safari drops list semantics from an unstyled list.
-    <ol className={styles.steps} aria-label="Sign-up steps" data-count={steps.length} role="list">
+    <ol className={styles.steps} aria-label={ariaLabel} data-count={steps.length} role="list">
       {steps.map((label, i) => {
         const n = i + 1;
         const done = n < current;

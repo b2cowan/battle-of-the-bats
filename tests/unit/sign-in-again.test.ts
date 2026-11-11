@@ -49,7 +49,7 @@ describe('1 · the clock', () => {
     assert.match(SIGN_IN_AGAIN_WORDS.bulkLead(1), /^This changes 1 account at once/);
     assert.equal(
       SIGN_IN_AGAIN_WORDS.priceLead('Club annual', 'price_1Nx', '$660.00 a year'),
-      'From now on, new Club annual customers are charged price_1Nx ($660.00 a year). Customers on today’s price keep it. The switch is made as soon as your password is accepted.',
+      'From now on, new Club annual customers are charged price_1Nx ($660.00 a year). Customers on today’s price keep it. The switch is made as soon as your code is accepted.',
     );
     assert.doesNotMatch(SIGN_IN_AGAIN_WORDS.priceLead('Club annual', 'price_1Nx', null), /\(/, 'no amount is guessed');
   });
@@ -95,6 +95,18 @@ describe('3 · the window checks the signed-in staff member', () => {
     const check = functionBody(readCode('lib/platform-sign-in-again.ts'), 'checkPasswordAgain');
     assert.match(check, /const email = user\.email!/);
     assert.match(check, /result\.data\.user\?\.id === user\.id/, 'a sign-in as anyone else is never accepted');
+  });
+
+  it('two-step on (every staff account): the window checks the CODE, and never a password that would replace the session', () => {
+    const route = readCode('app/api/platform-admin/sign-in-again/route.ts');
+    const codeBranch = route.indexOf('if (state?.hasFactor)');
+    assert.ok(codeBranch > 0, 'the route no longer asks a staff member with two-step for the code');
+    assert.ok(codeBranch < route.indexOf('checkPasswordAgain('), 'the code is decided before any password is checked');
+    assert.match(route.slice(codeBranch, route.indexOf('checkPasswordAgain(')), /return result\.ok \?/);
+    assert.match(route, /checkCodeAgain\(auth\.user, code\)/);
+    const gate = functionBody(readCode('lib/platform-sign-in-again.ts'), 'requireFreshSignIn');
+    assert.ok(gate.indexOf('state.hasFactor') < gate.indexOf('getClaims'), 'the code clock comes first');
+    assert.match(gate, /refuse\('code'\)/);
   });
 
   it('the gate reads the session’s own sign-in record, verified, never the account-wide last sign-in', () => {

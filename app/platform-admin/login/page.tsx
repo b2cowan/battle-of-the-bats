@@ -8,6 +8,7 @@ import styles from './platform-login.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
 import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import { clearConsoleRecent } from '@/lib/console-recent';
+import { twoStepStepUrl } from '@/lib/two-step-paths';
 
 
 function LoginForm() {
@@ -31,11 +32,27 @@ function LoginForm() {
   // Find's Recent never outlives a sign-out, however the session ended (Support console Stage 2, threat T8).
   useEffect(() => { clearConsoleRecent(); }, []);
 
+  // A staff session that has the password but not yet the code (the console sent it here) goes straight on to the code
+  // step, rather than being asked for the password a second time (Board Ready · two-step sign-in, tab 3).
+  useEffect(() => {
+    let active = true;
+    fetch('/api/auth/two-step/status')
+      .then(r => r.json())
+      .then((s: { signedIn?: boolean; hasFactor?: boolean; passed?: boolean }) => {
+        if (active && s.signedIn && s.hasFactor && !s.passed) {
+          window.location.assign(twoStepStepUrl('code', searchParams.get('next') ?? '/platform-admin'));
+        }
+      })
+      .catch(() => { /* the form stays: signing in again hands off the same way */ });
+    return () => { active = false; };
+  }, [searchParams]);
+
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const { error: err } = await signIn(email, password);
+    const { error: err, handedOff } = await signIn(email, password, { next: searchParams.get('next') ?? '/platform-admin' });
+    if (handedOff) return; // staff always use two-step: the code step finishes the sign-in
     if (err) {
       // The one set of sign-in words (lib/auth-errors), the same as every customer sign-in (owner 2026-10-20).
       setError(signInErrorCopy(err));

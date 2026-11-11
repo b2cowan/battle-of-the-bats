@@ -28211,3 +28211,12 @@ performed over the shared working tree. The original walk result is not claimed 
 **Open owner steps (not part of this walk):** ⛔ release gate (`/legal`): Part 1 is not promoted without Part 2 (the purge the form promises). Build decisions listed in the plan's Part 1 note.
 **Result:** owed.
 <!-- /§510 -->
+
+## §511 · Board Ready · two-step sign-in · Part 1, the foundation — **anyone can turn on two-step sign-in and FieldLogicHQ staff must: after the password, the same sign-in page asks for the 6-digit code from an authenticator app; setting it up is three screens (scan, save ten backup codes, done; a phone gets "Open in authenticator app"); a backup code gets you in once and offers to set up a new phone; staff "sign in again" asks for the code; the demos refuse set-up** · built 2026-11-11 · walk owed
+<!-- §511 -->
+**Walk published 2026-11-11:** https://claude.ai/artifact/Sa5HAC2F2Z8AQSnj6GQkHU (source `docs/projects/active/BOARD_READY_TWO_STEP_PART1_WALK.html` built by `.probe/two-step-walk/build-walk.cjs`); 4 walks, 24 checks. UAT: the two-step spec and the sign-in spec, 25/25 on dev 2026-11-11. Build: `BOARD_READY_TWO_STEP_BUILD_PROMPTS.md` Part 1, to the ruled drawings https://claude.ai/artifact/5b956A7svYzjzmZhZUfnkc tabs 2, 3 and 9; rulings in `BOARD_READY_PLAN.md` §5 Stage 0a (2026-11-10, and three on 2026-11-11). Migs 463 + 464 applied to dev 2026-11-11.
+**Sign-in:** `support@dev.local` · `devpass123` (staff, walk 1); `coach@dev.local` · `devpass123` (walks 2–3); signed out on the tournament demo (walk 4). Needs an authenticator app on the owner's phone. Both accounts keep two-step on afterwards.
+**Not walked (proved by the build's tests and probes):** a password alone opens nothing on the server or straight from the database (guard test + 18 mutants; dev probes A–F and the lost-phone probe, all as expected); every one of twelve sign-in doors hands off; a club's required seat refused until set up, open inside its 14 days and in a test organization, other places open; staff refused until set up; a backup code works once; the third sweep's probe unchanged.
+**Open owner steps (not part of this walk):** six build calls in the plan's Part 1 note (the service's own code-guessing limit; an email when two-step is turned on; keyed backup-code hashes; open pages after a 30-day re-ask; the team-registration hand-off; backup codes at staff sign-in-again). Prod: migs 463 (before the code) and 464 (any time).
+**Result:** owed.
+<!-- /§511 -->

@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { getDemoOrgByKind } from '@/lib/demo-org';
 import { SEE_IT_LIVE_PATH, SANDBOX_SWITCH_ENDPOINT } from '@/lib/sandbox-door';
 import styles from './switch.module.css';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /**
  * The confirm screen — the only thing the sandbox door ever asks anybody, and it asks it of a
@@ -51,7 +52,7 @@ export default async function SandboxSwitchPage() {
       },
     },
   );
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
 
   // Nobody is signed in, so there is nothing to warn about — send them through the door proper,
   // which will walk them straight into the demo with no screen at all. Keyed on the SESSION, not

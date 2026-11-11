@@ -14,13 +14,14 @@ import TeamSectionShell from '@/components/coaches/TeamSectionShell';
 import { Trophy } from 'lucide-react';
 import styles from './tournaments.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 type RouteParams = { params: Promise<{ basicTeamId: string }> };
 
 export async function generateMetadata({ params }: RouteParams) {
   const { basicTeamId } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.id || (user.email && (await isPlatformAdminEmail(user.email)))) return { title: 'Tournaments' };
   const team = await getBasicCoachTeamForUser({ userId: user.id, basicCoachTeamId: basicTeamId });
   return { title: team ? `${team.name} — Tournaments` : 'Tournaments' };

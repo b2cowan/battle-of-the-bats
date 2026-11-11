@@ -181,6 +181,76 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 <!-- dict:col:organizations.fiscal_first_month -->
 **`fiscal_first_month`** (smallint, NOT NULL, default 1; CHECK 1–12; **mig 318**, Club Tier Stage 3c) — the month the club's FISCAL YEAR starts (1 = January, the default: a club reads calendar years until it sets one). The years themselves are `org_fiscal_years` rows, made when something needs one; a year with no row is worked out from the rows and this month (`club_fiscal_year_ensure`; [lib/club-fiscal-year.ts](../../../lib/club-fiscal-year.ts) `fiscalYearOf`, its pure twin). ⚠ **Changed ONLY by `club_fiscal_first_month_set`** (one step, refused after the club's first close): a year that has begun keeps its months, the NEXT year is the short one, and plan lines dated past its end move (split by their dates). A deferred constraint trigger (`organizations_fiscal_first_month_chain`) holds the newest year row to end the month before it. _Reads:_ `loadFiscalSetting` ([lib/club-fiscal-year-server.ts](../../../lib/club-fiscal-year-server.ts)). Not on the `Organization` type.
 
+<!-- dict:col:organizations.two_step_board_required_since -->
+<!-- dict:col:organizations.two_step_coaches_required_since -->
+**`two_step_board_required_since` / `two_step_coaches_required_since`** (timestamptz, nullable; **mig 463**, Board Ready · two-step sign-in) — the club's two owner-only switches. **NULL = off** (the default for both); **a time = required since then**, and that time starts each covered person's 14-day grace. "Board" covers owner, admin, treasurer, league_admin, league_registrar; "coaches" covers `coach`. The one rule that reads them is `seatTwoStepRequirement` ([lib/two-step-rule.ts](../../../lib/two-step-rule.ts)), applied per request by `getAuthContext` ([lib/api-auth.ts](../../../lib/api-auth.ts)) and across a person's seats by `twoStepRequirementsFor` ([lib/two-step-requirements.ts](../../../lib/two-step-requirements.ts)). ⚠ Ignored in a test organization and in a coach's own team workspace (`account_kind='team_workspace'`). _Writes:_ none in the product yet (Part 3 builds the switches' screen: owner-only, needs the owner's own two-step on, turning off asks for a code and emails the other admins; every change a club audit line). Not on the `Organization` type (the row is read with `*`).
+
+<!-- dict:col:organizations.two_step_prompt_closed_at -->
+**`two_step_prompt_closed_at`** (timestamptz, nullable; **mig 463**) — when the owner closed the one-time Overview prompt "your club can require two-step sign-in"; NULL = not closed. Read and written by Part 4.
+
+<!-- dict:col:organizations.is_test_organization -->
+**`is_test_organization`** (bool, NOT NULL, default false; **mig 463**) — the **test organization exemption**: no two-step requirement ever applies in it, so the demos, seeds and probes keep signing in. Set by mig 463 on both public demos, the Milton prospect demo, every UAT org (`[UAT_PROTECTED]`/`[PROSPECT_DEMO]` notes) and the fixture clubs, and by every seed that creates one (`seed-demo-*`, `seed-club-fixture`, `seed-prospect-demo`, `seed-families-fixture`, `tests/uat/create-uat-accounts.sql`). Platform admin sets it otherwise. It exempts the **club's** requirement only: platform staff still need two-step everywhere, and a person who has turned it on is still asked at every sign-in.
+
+---
+
+## Two-step sign-in (mig 463) — `two_step_backup_codes` + `two_step_code_uses` + `two_step_grace` + `two_step_owner_resets`
+<!-- dict:table:two_step_backup_codes -->
+<!-- dict:table:two_step_code_uses -->
+<!-- dict:table:two_step_grace -->
+<!-- dict:table:two_step_owner_resets -->
+
+**Purpose:** what our server keeps for two-step sign-in (Board Ready, plan `BOARD_READY_PLAN.md` §5 Stage 0a). The authenticator itself is the sign-in service's (`auth.mfa_factors`); these are the parts it does not do. **All four are service role only** (RLS on, no policies, nothing granted to anon/authenticated).
+
+**Gotchas (read first):**
+1. **A backup code is only ever a hash.** `code_hash` = sha-256 of `salt:CODE` (per-code salt; a code is 8 characters from a 31-letter alphabet, 40 bits). The ten are shown ONCE (`createBackupCodes`, [lib/two-step-codes.ts](../../../lib/two-step-codes.ts)) and never again.
+2. **A used backup code keeps working for the session it let in.** `used_session_id` is that session's token `session_id`; our server ([lib/two-step-session.ts](../../../lib/two-step-session.ts)) and the database (`public.session_passed_two_step()`) both accept that session although the sign-in service still calls it password-only (`aal1`). So a new set of codes deletes only the UNUSED rows.
+3. **`two_step_code_uses` exists because the sign-in service accepts the same code twice** in its 30-second window (proven on dev 2026-11-11). Every code our server checks (set-up, sign in again, Part 2's five actions) is recorded here hashed with the person's id and refused a second time; rows older than 5 minutes are deleted on the next write.
+
+**`two_step_backup_codes`** (`id` uuid default `gen_random_uuid()`):
+<!-- dict:col:two_step_backup_codes.id -->
+<!-- dict:col:two_step_backup_codes.user_id -->
+<!-- dict:col:two_step_backup_codes.salt -->
+<!-- dict:col:two_step_backup_codes.code_hash -->
+<!-- dict:col:two_step_backup_codes.created_at -->
+<!-- dict:col:two_step_backup_codes.used_at -->
+<!-- dict:col:two_step_backup_codes.used_session_id -->
+`user_id` (uuid NOT NULL, FK `auth.users` ON DELETE CASCADE) · `salt` (text NOT NULL) · `code_hash` (text NOT NULL) · `created_at` (timestamptz NOT NULL default now()) · `used_at` (timestamptz, NULL = unused) · `used_session_id` (uuid, the session it let in). Indexes `two_step_backup_codes_user_idx (user_id) WHERE used_at IS NULL` (the unused set), `two_step_backup_codes_session_idx (user_id, used_session_id) WHERE used_session_id IS NOT NULL` (the per-request "did a backup code let this session in" read). _Writes:_ `createBackupCodes`, `redeemBackupCode` (conditional on `used_at IS NULL`, so two tabs cannot both use one). _Reads:_ `readSessionTwoStep` (REST, from the proxy too), `backupCodesLeft`, `session_passed_two_step()`.
+
+**`two_step_code_uses`** (PK `(user_id, code_hash)`):
+<!-- dict:col:two_step_code_uses.user_id -->
+<!-- dict:col:two_step_code_uses.code_hash -->
+<!-- dict:col:two_step_code_uses.used_at -->
+`user_id` (uuid NOT NULL, FK `auth.users` ON DELETE CASCADE) · `code_hash` (text NOT NULL, sha-256 of `user_id:code`) · `used_at` (timestamptz NOT NULL default now()). _Writes/reads:_ `recordCodeUse`.
+
+**`two_step_grace`** (PK `(user_id, organization_id)`):
+<!-- dict:col:two_step_grace.user_id -->
+<!-- dict:col:two_step_grace.organization_id -->
+<!-- dict:col:two_step_grace.starts_at -->
+`user_id` (uuid, FK `auth.users` CASCADE) · `organization_id` (uuid, FK `organizations` CASCADE) · `starts_at` (timestamptz NOT NULL default now()) — a person's OWN grace start in a club that already required two-step when they accepted a seat; the later of it and the switch's time counts. _Reads:_ `getAuthContext` (only for a covered seat past the switch's 14 days), `twoStepRequirementsFor`. _Writes:_ Part 3 (seat acceptance).
+
+**`two_step_owner_resets`** (`id` uuid default `gen_random_uuid()`):
+<!-- dict:col:two_step_owner_resets.id -->
+<!-- dict:col:two_step_owner_resets.organization_id -->
+<!-- dict:col:two_step_owner_resets.user_id -->
+<!-- dict:col:two_step_owner_resets.asked_by -->
+<!-- dict:col:two_step_owner_resets.asked_how -->
+<!-- dict:col:two_step_owner_resets.reason -->
+<!-- dict:col:two_step_owner_resets.requested_at -->
+<!-- dict:col:two_step_owner_resets.confirmed_at -->
+<!-- dict:col:two_step_owner_resets.runs_at -->
+<!-- dict:col:two_step_owner_resets.held_at -->
+<!-- dict:col:two_step_owner_resets.held_by -->
+<!-- dict:col:two_step_owner_resets.cancelled_at -->
+<!-- dict:col:two_step_owner_resets.completed_at -->
+A support reset of a club OWNER's two-step, waiting its 24 hours (drawings tab 7): `organization_id`, `user_id` (the owner), `asked_by` (the support staff address), `asked_how`, `reason` (all NOT NULL) · `requested_at` (default now()) · `confirmed_at` (the owner's confirmation link) · `runs_at` (confirmed + 24 h) · `held_at`/`held_by` (an admin replied to hold it) · `cancelled_at` (the owner signed in with the real code) · `completed_at`. Index `two_step_owner_resets_waiting_idx (runs_at) WHERE completed_at IS NULL AND cancelled_at IS NULL`. _Writes/reads:_ Part 3 (support console + the timed job; idempotent, refuses a held or cancelled row). The platform audit line is written first.
+
+### Functions & policies (not tables — not coverage-checked)
+- **`public.session_passed_two_step()`** (SECURITY DEFINER, STABLE, `search_path ''`; EXECUTE to anon/authenticated/service_role) — the DATABASE half of the rule: true when nobody is signed in, when the token is `aal2`, when the person has no verified factor AND is not replacing a lost phone (`app_metadata.two_step_replacing`), or when one of their backup codes recorded this token's `session_id`. Keep in step with `readSessionTwoStep`.
+- **`public.two_step_backup_codes_replace(p_user uuid, p_rows jsonb)`** (SECURITY DEFINER, service_role only) — a new set of ten in ONE step under a per-person advisory lock: the unused codes go, the new hashed rows arrive. Called by `createBackupCodes`.
+- **`auth.users.app_metadata.two_step_replacing`** (bool, service-role written; not a column of ours) — set by `set-up/start` when a lost phone's authenticator is removed, cleared (false) by `set-up/verify` when the new one is on. While true, two-step counts as ON for the account (server and database), so a password alone is refused mid-replacement.
+- **Policy `two_step_passed`** — RESTRICTIVE, `FOR ALL TO authenticated`, `USING/WITH CHECK ((select public.session_passed_two_step()))`, on **every public table `authenticated` holds a table or column privilege on** (found by its grants in mig 463: the chat tables, `notifications`, `games`, `teams`, `org_venues`, `org_venue_facilities`, `rules`, `rule_items`, `resources`, `venue_facilities`, `schedule_facility_lanes`) and on `storage.objects`. ⚠ A table later GRANTed to `authenticated` gets no such policy by itself: re-run mig 463's loop (or add the policy) in that migration.
+- **mig 464** revoked EXECUTE on `merge_rep_team_tags` / `merge_rep_team_award_types` from `authenticated` (SECURITY DEFINER, no caller check; the app calls them only through the service role). A later `CREATE OR REPLACE` keeps that; a migration that re-grants them would reopen it.
+
 ---
 
 ## `organization_members`

@@ -282,7 +282,8 @@ function JoinForm() {
     }
 
     const { signIn } = await import('@/lib/auth');
-    const { error: signInErr } = await signIn(email.trim().toLowerCase(), password);
+    const { error: signInErr, handedOff } = await signIn(email.trim().toLowerCase(), password);
+    if (handedOff) return; // two-step is on: the code step finishes the sign-in and returns here
     if (signInErr) {
       setError('Account created but sign-in failed. Try signing in from the login page.');
       setLoading(false);

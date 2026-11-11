@@ -186,6 +186,7 @@ if (!ORG) {
     is_public: true, is_discoverable: false, tournament_limit: 9999, team_limit: 40, onboarding_completed_at: nowIso,
     theme_preset: cfg.branding.themePreset, theme_primary: cfg.branding.themePrimary, theme_accent: cfg.branding.themeAccent,
     internal_notes: cfg.marker,
+    is_test_organization: true, // a test organization: no two-step requirement applies here (mig 463)
   }).select('id').single());
   ORG = org.id;
   ok(`organization created ${ORG}`);

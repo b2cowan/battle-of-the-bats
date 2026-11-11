@@ -20,6 +20,7 @@ import { createClient } from '@/lib/supabase-server';
 import { withObservability } from '@/lib/observability';
 import { getScoresFeedForUser, getScoresFeedForDeviceFollows } from '@/lib/scores-feed';
 import type { ScoresPayload } from '@/lib/scores-view';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 const NO_STORE = { 'Cache-Control': 'no-store' };
 const MAX_FEED_TEAMS = 100; // sanity cap — mirrors /api/consumer/follows/feed
@@ -28,7 +29,7 @@ const EMPTY: ScoresPayload = { signedIn: false, today: '', events: [], games: []
 
 export const GET = withObservability(async () => {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.email) return NextResponse.json(EMPTY, { headers: NO_STORE });
 
   const payload = await getScoresFeedForUser({ id: user.id, email: user.email });

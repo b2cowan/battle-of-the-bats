@@ -11,6 +11,8 @@ import { filesUnder, readCode } from './_source-code.ts';
 /** [file, how many LegalFootLinks it must render] — the doors the census lists. */
 const FOOT_DOORS: Array<[string, number]> = [
   ['app/(consumer)/auth/login/page.tsx', 1],
+  // The two-step code step (Board Ready, Part 1): a sign-in door, a state of the login page.
+  ['components/auth/TwoStepCodeStep.tsx', 1],
   ['app/(consumer)/auth/signup/AccountOnlySignup.tsx', 1],
   ['app/(consumer)/start/StartDoorForm.tsx', 3],
   ['app/team/TeamSignupClient.tsx', 3],

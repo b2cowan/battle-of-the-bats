@@ -206,12 +206,14 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
         const { res, data } = await post(`/api/family/claim/${token}`, { mode: 'new', email, password, guardianBox, consentBox, ...terms.fields });
         if (!res.ok) return refused(res.status, data);
         // The account exists and has joined; this signs the browser in to it, then opens the family page.
-        await signIn(email, password);
+        const created = await signIn(email, password, { next: String(data.next ?? '/family') });
+        if (created.handedOff) return; // two-step is on: the code step goes on to the same place
         window.location.href = String(data.next ?? '/family');
         return;
       }
       if (!signedIn) {
-        const { error: signInError } = await signIn(email, password);
+        const { error: signInError, handedOff } = await signIn(email, password);
+        if (handedOff) return; // two-step is on: the code step returns here, signed in, to finish the claim
         if (signInError) return setError(signInErrorCopy(signInError));
       }
       const { res, data } = await post(`/api/family/claim/${token}`, { guardianBox, consentBox, ...(showTerms ? terms.fields : {}) });

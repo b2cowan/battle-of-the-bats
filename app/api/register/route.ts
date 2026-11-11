@@ -40,6 +40,7 @@ import {
   findDuplicateTournamentTeam,
   findTeamEntriesInTournament,
 } from '@/lib/team-registration-duplicates';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 const REGISTRATION_FILES_BUCKET = 'tournament-registration-files';
 const MAX_REGISTRATION_FILE_BYTES = 10 * 1024 * 1024;
@@ -266,7 +267,7 @@ export const POST = withObservability(async (req: NextRequest) => {
 
     let signedInCoach: { id: string; email: string } | null = null;
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getSignedInUser(supabase);
     if (user?.id && user.email) {
       signedInCoach = { id: user.id, email: user.email.toLowerCase() };
     }

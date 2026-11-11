@@ -196,6 +196,7 @@ async function applyStripePriceUpdateProposal(
       alreadyCurrent?: boolean;
       /** A Production switch only: when this session last proved the password (Part 10). */
       passwordAt?: Date;
+      proof?: 'code' | 'password';
     }
   | { ok: false; response: NextResponse }
 > {
@@ -301,10 +302,12 @@ async function applyStripePriceUpdateProposal(
   // — after the request's own checks above (so nobody types it only to be refused, Ask 13c) and before its row is
   // written. A Test price charges nobody and does not ask (Ask 1).
   let passwordAt: Date | undefined;
+  let proof: 'code' | 'password' | undefined;
   if (current.environment === 'live') {
     const fresh = await requireFreshSignIn(actor);
     if (fresh.response) return { ok: false, response: fresh.response };
     passwordAt = fresh.passwordAt;
+    proof = fresh.proof;
   }
 
   // Stage 0 Part 9: switching a live price slot changes what new customers are charged: its row first, or no switch.
@@ -373,7 +376,7 @@ async function applyStripePriceUpdateProposal(
     },
   );
 
-  return { ok: true, stripePrice: updatedPrice, stripeValidation, passwordAt };
+  return { ok: true, stripePrice: updatedPrice, stripeValidation, passwordAt, proof };
 }
 
 async function applyPlanGatingUpdateProposal(
@@ -749,6 +752,7 @@ export const PATCH = withObservability(async (req: Request) => {
         actor: auth.user.email!,
         at: new Date().toISOString(),
         passwordAt: appliedStripePrice.passwordAt.toISOString(),
+        proof: appliedStripePrice.proof,
         reason: stripePriceProposal.changeNote,
         changeRequestId: current.id,
         slot: `${planLabel(stripePriceProposal.planId)} ${stripePriceProposal.billingCycle}`,

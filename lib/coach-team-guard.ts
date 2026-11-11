@@ -5,6 +5,7 @@ import { userOwnsBasicCoachTeam, findLinkedBasicTeamForRegistration } from '@/li
 import { findRepTeamAccessForRegistration } from '@/lib/coach-registration-access';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getActivePremiumPortal } from '@/lib/coach-team-page';
+import { getSignedInUser } from './two-step-session';
 
 /**
  * The two-layer auth gate for org-less Basic-coach-team APIs (the master-roster routes and any
@@ -24,7 +25,7 @@ export type CoachTeamGuardResult =
 
 export async function requireBasicCoachTeamOwner(basicCoachTeamId: string): Promise<CoachTeamGuardResult> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.id || !user.email) return { ok: false, status: 401 };
   // FieldLogicHQ staff are NOT coaches — a platform-admin session is never a team owner.
   if (await isPlatformAdminEmail(user.email)) return { ok: false, status: 401 };
@@ -93,7 +94,7 @@ export type CoachRegistrationGuardResult =
 
 export async function requireCoachRegistrationAccess(registrationId: string): Promise<CoachRegistrationGuardResult> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.id || !user.email) return { ok: false, status: 401 };
   if (await isPlatformAdminEmail(user.email)) return { ok: false, status: 401 };
   const basicCoachTeamId = await findLinkedBasicTeamForRegistration(user.id, registrationId);

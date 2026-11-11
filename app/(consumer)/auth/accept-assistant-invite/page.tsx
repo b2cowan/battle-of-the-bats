@@ -118,7 +118,8 @@ function AcceptForm() {
       return;
     }
     const { signIn } = await import('@/lib/auth');
-    const { error: signInErr } = await signIn(email, password);
+    const { error: signInErr, handedOff } = await signIn(email, password);
+    if (handedOff) return; // two-step is on: the code step finishes the sign-in and returns here
     if (signInErr) { setError('Account created, but sign-in failed. Sign in from the login page.'); setBusy(false); return; }
     await acceptForSignedInUser();
   }
