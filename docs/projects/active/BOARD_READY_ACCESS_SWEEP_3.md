@@ -79,8 +79,8 @@ any club's files.
 - **→ Fixed, W2 fix B, 2026-11-11** (committed `b164c707e` 2026-11-11; migration 462 applied to dev; production: code first, then
   462 — registered in `MANUAL_PROD_STEPS.json`, and production state lives in the release-history record). The row writes below
   and the upload-limit owner call are the two open items it leaves.
-- **→ The link rows, fixed too (W2 fix B follow-up, owner yes 2026-11-11; hash on commit; migration 465 applied to dev; production: code first,
-  then 465).** Create, rename/repoint and reorder now go through `POST`/`PATCH /api/admin/resources` (club + `post_rules` + event checked), and
+- **→ The link rows, fixed too (W2 fix B follow-up, owner yes 2026-11-11; committed `ad978ce6b` 2026-11-11; migration 465 applied to dev; production: code first,
+  then 465; production state lives in the release-history record).** Create, rename/repoint and reorder now go through `POST`/`PATCH /api/admin/resources` (club + `post_rules` + event checked), and
   465 takes INSERT/UPDATE/DELETE on the table from signed-in accounts. A new address must be http(s), an email link or `#` (a
   `javascript:` link would run for every visitor), and a file address must be in the caller's own club folder. Proof:
   `.probe/sweep3-fixB2-prove.mjs` (25 checks: owner/admin work; another club, a coach row, a scorekeeper and a parent are refused;
