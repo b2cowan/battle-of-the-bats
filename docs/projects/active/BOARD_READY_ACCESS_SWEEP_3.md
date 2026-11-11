@@ -170,7 +170,7 @@ any club's files.
   `?target=roster` always works; `?target=registrations` only when the tryout isn't blind.
 - **Who:** an assistant coach whose head coach switched on Development but not roster privacy. **Fix (recommended in sweep
   2):** redact unless `rosterPii`. The existing TODO owner-call line stands.
-- **⚖ Ruled, owner 2026-11-11: redact unless `rosterPii`, keep the match working. Built on dev (W2 fix E), awaiting the owner's yes to commit.**
+- **⚖ Ruled, owner 2026-11-11: redact unless `rosterPii`, keep the match working. Committed `d8a6bb4c0` 2026-11-11 (W2 fix E).**
   The prior side's guardian names, email and the child's birth date come back null with `contactHidden: true`; the compare card then says
   they are shown to coaches with roster privacy instead of "no birth date on file". Matching still runs on the full identities.
   Probe (`.probe/sweep3-fixE-prove.mjs`): head coach sees all four fields; the Development assistant gets the same pair, none of them.
@@ -186,7 +186,7 @@ any club's files.
   `manage_registrations`.
 - **Fix (recommended):** the export and `admin_notes` need `manage_registrations`, or record that staff should read them.
 - **⚖ Ruled, owner 2026-11-11: the export and the private admin notes need Manage registrations; staff keep the team list.** Built on dev
-  (W2 fix E), awaiting the owner's yes to commit. The rule is one helper (`canManageRegistrations`: `manage_registrations` or
+  (W2 fix E), committed `d8a6bb4c0`. The rule is one helper (`canManageRegistrations`: `manage_registrations` or
   `create_tournaments`, as import allows). **Correction to the finding:** the export file never carried admin notes; the notes were on the
   screen reads. The export route now refuses staff; `/api/registrations` **and `/api/admin/teams`** (found by /review: the schedule,
   bracket and Teams screens read it, and it returned the notes too) blank `admin_notes`; the Teams screen hides the Export menu and the
@@ -241,7 +241,7 @@ any club's files.
   customers or invoices in LIVE Stripe.
 - **Scorekeeper feed** (`app/api/official/[orgSlug]/score/get-score.ts:175-190, 310-312`, re-read): sends game notes, venue
   notes and the **email of whoever submitted each score** to every scorekeeper.
-  **→ Fixed on dev, W2 fix E 2026-11-11 (awaiting the owner's yes to commit).** The feed stops sending game notes, venue notes and the
+  **→ Fixed, W2 fix E `d8a6bb4c0` 2026-11-11 (committed `d8a6bb4c0`).** The feed stops sending game notes, venue notes and the
   submitter's id and email; the scorekeeper screen drew none of them. Probe with planted values: absent for the scorekeeper and the owner.
 - **Team pay links** (`lib/team-pay-link.ts`) never expire and can't be revoked per team (the league link has a version). A
   forwarded email shows that team's receipts (card brand and last 4) and can start a payment for that team.
@@ -250,7 +250,7 @@ any club's files.
   button needs a `/design` session. Review found and fixed: a team paying as the link is replaced is sent on to the current link.
 - **Venue permit file** (`app/api/admin/org/permits/document/route.ts:34-48`, re-read): any non-coach member gets the file,
   which may state the fee that the screens hide from non-money seats. `?teams=1` lists every rep team, ignoring group limits.
-  **→ Fixed on dev, W2 fix E.** The file opens for the Venue library's savers (owner, admin, league admin, "Run tournaments") and the
+  **→ Fixed, W2 fix E `d8a6bb4c0`.** The file opens for the Venue library's savers (owner, admin, league admin, "Run tournaments") and the
   Accounting seat; others see the file's name as plain text. `?teams=1` lists only the member's team groups. Probe: owner, admin, league
   admin, treasurer admitted; league registrar 403; a group-limited member sees only their 4 of 8 teams.
   Left open (review, Low): the file's **name and size** still show to every reader (a file named with the fee would leak it); a permit held
@@ -258,13 +258,13 @@ any club's files.
   against their groups was not traced.
 - **Coach revoke of a family link** ends the parent's access to that child on **every** team (the link is child-wide since
   mig 453), not just the coach's own team.
-  **→ Wording route, W2 fix E (built on dev).** Per-team ending would need a new per-team table (the link has no team since mig 453), so
+  **→ Wording route, W2 fix E (committed `d8a6bb4c0`).** Per-team ending would need a new per-team table (the link has no team since mig 453), so
   Remove now opens a confirm window: "This ends {parent}'s connection to {child} on every team, rep and house league, not only this one.
   Their calendar feed stops too, and they won't be invited again on their own." (before, Remove was immediate). Stock coach confirm window;
   `/design` has not looked at it. Nothing a parent reads changes, so no `/legal` pass.
 - **House-league registrations search** escapes only `%` and `_`, so commas can add `.or()` conditions. Still bounded to the
   season, by a caller who can read all of it.
-  **→ Fixed on dev, W2 fix E.** `, ( ) " .` become the single-character wildcard (a dotted email still finds itself); backslashes are escaped.
+  **→ Fixed, W2 fix E `d8a6bb4c0`.** `, ( ) " .` become the single-character wildcard (a dotted email still finds itself); backslashes are escaped.
   Probe: a comma-carrying hostile search returns 0 rows, not everyone.
 - **Draft season name** shows on the public register and status pages (every other public league page answers 404).
   **→ Fixed, W2 fix C, `ae474966e` 2026-11-11.**
@@ -277,7 +277,7 @@ any club's files.
 - **Sign-up answers** tell an anonymous caller that an email has a pending invitation, and to which club. Per-instance,
   header-keyed throttles; `account-check` is the same oracle by design.
 - **Rep-team link to a tournament registration** skips the group limit (`admin/teams/rep-team-link`).
-  **→ Fixed on dev, W2 fix E.** Link, unlink and the list honour the member's team groups. **/review found and fixed:** a link save
+  **→ Fixed, W2 fix E `d8a6bb4c0`.** Link, unlink and the list honour the member's team groups. **/review found and fixed:** a link save
   REPLACES the registration's existing link, so a limited member could destroy a link to an out-of-group team they could not see; the
   save now also checks the link it would replace. Probe: Junior/Senior link, unlink and replace all behave.
 - **Upload paths** take the file name and the browser's file type as sent (rep-team documents, templates). Bounded to the
@@ -288,7 +288,7 @@ any club's files.
   only, throttled), Overview and News posts aimed at a held-back division, and Rules sending held-back divisions. Rule sections
   tagged to a held-back division were the same class as the posts: **fixed in `92f802403`** (Rules page, feed section, nav count).
 - Also: `pay/tournament/[id]` answers yes/no for any id, unthrottled;
-- **W2 fix E (2026-11-11, built on dev) on the "Also" members items:** an admin can no longer edit an owner row's name or title (the
+- **W2 fix E (2026-11-11, committed `d8a6bb4c0`) on the "Also" members items:** an admin can no longer edit an owner row's name or title (the
   Manage window shows them locked); `members/invite` looks an account up across every page and fails closed. **⚖ Owner consent call, recorded
   and NOT changed:** the invite's existing-account branch adds the person as an *active* member with no acceptance. Lead noticed, not fixed:
   `GET /api/admin/members` also reads only the first 1,000 platform users, so past that the list would show blank names and emails. family claim doesn't check `email_confirmed_at`
