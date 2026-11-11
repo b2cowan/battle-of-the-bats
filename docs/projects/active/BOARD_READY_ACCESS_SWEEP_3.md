@@ -84,7 +84,7 @@ any club's files.
   465 takes INSERT/UPDATE/DELETE on the table from signed-in accounts. A new address must be http(s), an email link or `#` (a
   `javascript:` link would run for every visitor), and a file address must be in the caller's own club folder. Proof:
   `.probe/sweep3-fixB2-prove.mjs` (25 checks: owner/admin work; another club, a coach row, a scorekeeper and a parent are refused;
-  a direct browser write is refused). **Same shape, fixed in the third step (owner yes 2026-11-11; hash on commit; migration 466 applied to
+  a direct browser write is refused). **Same shape, fixed in the third step (owner yes 2026-11-11; committed `551bd4f82`; migration 466 applied to
   dev; production: code first, then 466):** the Rules SECTIONS (`rules`, `rule_items`) were written from the browser under the
   same "member of the club" policy. They now go through `POST`/`PUT`/`PATCH`/`DELETE /api/admin/rules` (club + `post_rules` +
   the event of every row; a section's divisions must be the same event's, which the browser path never asked; the icon must be
