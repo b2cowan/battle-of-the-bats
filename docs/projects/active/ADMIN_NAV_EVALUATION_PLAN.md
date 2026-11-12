@@ -768,6 +768,53 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
 - **Phase 6 · Words, help, demos, sweep, walk.** NAV_STANDARD rewritten (N7 item 1, N11, exceptions, the cell);
   `memory/design_decisions.md` entry; help articles (`/docs`); demo tour anchors (the build fails if one vanishes);
   `check:layout --changed` on the touched screens, the full sweep on staging; one closing walk.
+  - **Words done 2026-11-12 (Sonnet; no code, no screen changed). Gate answers (owner 2026-11-12):** start the words now with
+    walk §519 not yet walked; the closing walk goes ahead once §519 has a result, **the page top row noted as a known open
+    item** (it is not drawn); **the tournament admin and the club move their "?" into the strip (computer) and the bar
+    (phone) — YES**, recorded as ruled and **built as its own phase**, not here.
+  - **NAV_STANDARD rewritten whole** (`docs/agents/design/NAV_STANDARD.md`): one row per rule N1–N12 in the present tense,
+    each with its reason, its ruling date and the guard that holds it; every "until Phase N" clause gone; the free portal's
+    exceptions (E13) and the house-league exception (13a Ask 8) kept. **Where the old text and the code disagreed, the code
+    won and the page now says what it does:** the sidebar foot is NOT pinned (the guard has said so since 2026-11-09; the
+    page said pinned); every group with a row wears its heading, a lone row too (owner 2026-11-09; the page kept a blank line);
+    Tournaments is never an "Also on your plan" row and the foot door shows in a club hosted or not (owner 2026-11-11);
+    Settings & access is a foot row in the event on a Tournament plan (owner 2026-11-11, it was missing); the view-only eye and
+    the folded-heading pill exist only in the support console (the page gave them to the club); Sign out and Send feedback are
+    in the account menu on a computer and the More sheet's foot on a phone; the strip word "Coach" shows on a Premium team's
+    pages only (elsewhere and in the free portal it says "Coaches Portal"); the tournament admin draws its own "?" in the page
+    header, the club draws none; a tablet (641–900) wears the phone chrome; the console has a Find box; the icon dictionary
+    gained seven rows for icons already in use (Club door, Plan & billing, Settings, House league, Families, Practice plans,
+    Help). The N7 line "carries **no event picker** (navigation Phase 3" stays as a ruling anchor because
+    `admin-nav-phase3.test.ts` pins it.
+  - **Help articles** (`coaches.tsx`, `tournaments.tsx`, `org.tsx`; the other session's `org.tsx` hunks left alone): the
+    closed-season answer and the "where did my team go" answer no longer say a phone's More menu holds the team list (the bar's
+    small line does) or that "the whole menu still opens" a finished season (it is one page, Season's End); the "Past seasons
+    list" is gone from the carry-over sentence (it was removed); Insights is in the Progress group, not Season (three
+    sentences); the tournament "Find your way around an event" section no longer says Settings & access left the event
+    sidebar or that the More sheet has a Tournaments row; the record-page back arrow sits in the top strip / bar, not "the
+    header". Section ids and anchors unchanged. Left as wording only: "the Progress menu" for a sidebar group (loose, not
+    wrong), the free portal's phone sentences (E13, out of scope). Checks: lint ✓, spelling ✓, `measure:help` ✓ (the edited
+    section back under 350 words).
+  - **Demos:** `check:demos` ✓ (2 presentable). The tour words describe no navigation that changed. Handed to `/demos`: the
+    in-product tour card "Your season, as it happens" is eyebrowed "Season" but names Insights, which sits under "Progress"
+    (the Progress group has no card); `workspace-labels.ts` still says the Coaches Portal's "Coach" "waits for its own strip
+    (Phase 4)" (checked); the demo helper also found two stale code comments in `lib/sandbox-chrome.ts` and
+    `SandboxChrome.tsx` ("the coach's own menu", "the sidebar's own dropdown" — found by a helper, not opened). None is
+    customer-visible; not changed here (no code in this phase).
+  - **Checks:** the nine navigation guards pass after the rewrite (nav-standard 42/42, coach-nav-phase4 21, coach-nav-phase5 12,
+    coach-band-phase4b 12, admin-header-bar 24, sidebar-strip 22, admin-nav-phase2b 19, admin-nav-phase3 15, admin-kit-nav
+    192). `npm test` / `verify:changed` fail only in files this phase did not touch (home's waiting workspace, billing words,
+    practice plans' phone head, the possessive words, the Stage 6 walk summary, a Premium schedule form, and the
+    workspace-flip guard — which lists four files that read the Coaches Portal tag without a stated reason, two of them
+    admin-navigation files, `DeskNamedPage.tsx` and `kit-tournament-groups.ts`: a reason is owed by whoever owns the flip). One "plus applicable taxes" literal in
+    `coaches.tsx` is committed already and is not from this phase. The direct verifier also stops on an ESLint configuration error
+    (missing "react-hooks" plugin) on a file outside this phase.
+  - **Owed, in order:** (1) walk §519 (Phase 5) gets a result; (2) the page top-row review is drawn (Opus session) — the
+    owner chose to walk first and carry it as open; (3) the closing walk is built from `.probe/nav-phase5/build-walk.cjs`
+    (one person who is club owner, tournament admin and coach; needs a dev sign-in holding all three) and published with its
+    ledger §; (4) the "?" move for the tournament admin and the club (ruled yes 2026-11-12) is its own phase; (5) the full sweep
+    on staging at the next release (not deployed for it). Phase 5's open owner calls (Game day chip colour, the lone "+" row, a
+    live team's Season's End title, the team sheet's season-only rows) go into the walk's open list unchanged.
 - **Owner review owed (logged 2026-11-11, after the Phase 4 gate): the page's top row in the tournament admin and the Coaches
   Portal.** With the paper titles gone, the row that is left (the page's buttons and the "?") takes too much room for what it
   holds now that everything on its left is gone; on about twenty coach pages it is a full row for a lone "?" (C1). The owner
