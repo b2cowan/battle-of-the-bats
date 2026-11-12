@@ -367,7 +367,7 @@ points here, so they aren't tracked twice)
     - Session calls (stated in the summary, not objected to): the column, the phone line, the coaching-staff words and the
       export column are for owners and admins only (a treasurer or registrar who can open Members does not get them); a seat
       no switch covers (staff, volunteers) reads only On or Off.
-  - **Part 4 BUILT 2026-11-12, commit owed (owner's yes), walk §520 owed** https://claude.ai/artifact/Rm73xYcDckZZzuPWv5c18b
+  - **Part 4 BUILT + COMMITTED `24e5b9e45` 2026-11-12 (mig 475 applied to dev; prod BEFORE the code), walk §520 owed** https://claude.ai/artifact/Rm73xYcDckZZzuPWv5c18b
     (`BOARD_READY_TWO_STEP_PART4_WALK.html`, built by `.probe/two-step-p4/build-walk.cjs`; fixture `.probe/two-step-p4/fixture.mjs`
     prompt | members | run-job | code | undo). Mig 475 applied to dev (prod BEFORE the code; MANUAL_PROD_STEPS). What was built:
     - **One read of the club's own people** `public.people_sign_in_facts(uuid[])` (mig 475, server key only) → `lib/two-step-club-status.ts`

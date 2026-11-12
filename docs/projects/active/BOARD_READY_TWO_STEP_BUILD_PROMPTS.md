@@ -264,7 +264,7 @@ Build to tabs 6, 7 and 8.
 
 ## Part 4 · Sonnet — what the club sees, and the words
 
-> **BUILT 2026-11-12 (run on Opus), commit owed; mig 475 applied to dev; owner walk §520 owed**
+> **BUILT + COMMITTED `24e5b9e45` 2026-11-12 (run on Opus); mig 475 applied to dev; owner walk §520 owed**
 > https://claude.ai/artifact/Rm73xYcDckZZzuPWv5c18b. Rulings at the UX summary (five emails, the club's own people read, the
 > 3-day email on the hourly job, one notice spot), what was built, the review fixes and five open owner calls:
 > `BOARD_READY_PLAN.md` §5 Stage 0a "Part 4 BUILT".
