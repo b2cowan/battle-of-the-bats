@@ -148,7 +148,7 @@ export default function ClubHubKit() {
   const [arrivedFromUpgrade] = useState(() => isInPlaceReturn(params));
   const { currentOrg, userRole, userCapabilities, canOpen, loading } = useOrg();
   usePageTitle('Overview');
-  const { base, programs, alsoOnPlan, permitsLink } = useAdminKitNav();
+  const { base, programs, alsoOnPlan, quietTournaments, permitsLink } = useAdminKitNav();
   const { status, brief, reload, outside } = useClubBrief();
   // The locked-programs note says which plans are closed from the LIVE gate (BUSINESS_DECISIONS 2026-09-28).
   const gating = usePlanGating();
@@ -449,14 +449,15 @@ export default function ClubHubKit() {
               <Icon size={14} aria-hidden />House league: not running ·{' '}
               {canRunLeague ? <Link href={p.href} className={ck.link}>Start a season</Link> : board ? seasonStarterShort(board) : null}
             </span>
-          ) : p.key === 'tournaments' ? (
-            <span key={p.key} className={ck.quietItem}>
-              {/* The same rule (A5): "Run a tournament" only to someone who may create one (`create_tournaments`). */}
-              <Icon size={14} aria-hidden />Tournaments: none yet ·{' '}
-              {canCreateTournaments ? <Link href={p.href} className={ck.link}>Run a tournament</Link> : NOT_YOURS_WORDS.tournamentStarterShort}
-            </span>
           ) : null;
         })}
+        {quietTournaments && (
+          <span className={ck.quietItem}>
+            {/* The same rule (A5): "Run a tournament" only to someone who may create one (`create_tournaments`). */}
+            <Trophy size={14} aria-hidden />Tournaments: none yet ·{' '}
+            {canCreateTournaments ? <Link href={quietTournaments.href} className={ck.link}>Run a tournament</Link> : NOT_YOURS_WORDS.tournamentStarterShort}
+          </span>
+        )}
         {isOwner && (
           <span className={ck.quietItem}>
             <Building2 size={14} aria-hidden />

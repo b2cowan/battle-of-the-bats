@@ -144,7 +144,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   "title": "The bar names the page",
   "job": "UAT Rep Club · owner · phone, 390 wide",
   "forText": "A tournament page on a phone: the bar says which page you are on, and the event rides the small line under it.",
-  "passes": "The bar’s first line is the page’s name in the sidebar’s word; the small line is the event’s name, its phase chip and an arrow, with no dates; the page has no big title of its own; its buttons and its “?” keep the right end of its top row, the “?” last; the bar is the same height as before.",
+  "passes": "The bar’s first line is the page’s name in the sidebar’s word; the small line is the event’s name and its phase chip, with the small down arrow at the right end of that line, in the globe’s column, and no dates; the page has no big title of its own; its buttons and its “?” keep the right end of its top row, the “?” last; the bar is the same height as before.",
   "notIn": "The list the line opens (walk 2), the More sheet (walk 3), the organization’s screens (walk 4).",
   "who": "uat-club-owner@uat-rep-club.local",
   "where": "localhost:3000/uat-rep-club/admin/tournaments/divisions at 390 wide.",
@@ -152,7 +152,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    {
     "stop": true,
     "d": "Stop check: sign in and open <b>Divisions<\/b> at 390 wide.",
-    "s": "The bar reads <b>Divisions<\/b> in bold, and under it, in small grey letters, the event’s name, a green <b>OPEN<\/b> chip and a small down arrow. No dates on that line. There is <b>no<\/b> big “Divisions” title on the page itself. If the bar says the event’s name in bold, stop and tell me."
+    "s": "The bar reads <b>Divisions<\/b> in bold, and under it, in small grey letters, the event’s name and a green <b>OPEN<\/b> chip. The small down arrow sits at the right end of that same small line, in the globe’s column. No dates on that line. There is <b>no<\/b> big “Divisions” title on the page itself. If the bar says the event’s name in bold, stop and tell me."
    },
    {
     "d": "Look at the page’s top row, under the bar.",
@@ -163,8 +163,8 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
     "s": "Each time the bar’s first line changes to that page (“Teams”, “Schedule”, “Dashboard”); the event line under it stays the same. No page shows a second, bigger title."
    },
    {
-    "d": "Open <code>…/tournaments/summary<\/code> (a page the sidebar has no row for while the event is not over).",
-    "s": "Here the bar keeps the event’s name in bold, the small line shows only the chip and the arrow, and the page keeps its own “Summary” title. Tell me if this reads wrong to you — it is the one page type that works this way."
+    "d": "Open <code>localhost:3000/uat-rep-club/admin/tournaments/summary<\/code> (a page the sidebar has no row for while the event is not over).",
+    "s": "Here the bar keeps the event’s name in bold, the small line shows only the chip (the arrow is at the right end of that line, as on every event page), and the page keeps its own “Summary” title. Tell me if this reads wrong to you — it is the one page type that works this way."
    },
    {
     "d": "Back on Divisions, scroll the page down.",
@@ -254,15 +254,15 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
     "s": "The bar reads <b>Tournaments<\/b>, with no small line under it, and the page has no second “Tournaments” title. If the bar says “UAT Test Org”, stop and tell me."
    },
    {
-    "d": "Open <code>…/tournaments/settings/subscription<\/code> (Plan &amp; billing).",
+    "d": "Open <code>localhost:3000/uat-test-org/admin/tournaments/settings/subscription<\/code> (Plan &amp; billing).",
     "s": "The bar reads <b>Plan &amp; billing<\/b>, no line under it, no second title."
    },
    {
-    "d": "Open <code>…/tournaments/settings/members<\/code>.",
+    "d": "Open <code>localhost:3000/uat-test-org/admin/tournaments/settings/members<\/code>.",
     "s": "As before: the bar reads <b>Settings &amp; access<\/b> with its tab row (Members · Payouts · PDF settings · Web address)."
    },
    {
-    "d": "Open <code>…/tournaments/divisions<\/code> and tap the event line.",
+    "d": "Open <code>localhost:3000/uat-test-org/admin/tournaments/divisions<\/code> and tap the event line.",
     "s": "The bar names <b>Divisions<\/b>; the list holds this organization’s two events, each row starting with its initials (this organization has no logo), and All tournaments."
    },
    {

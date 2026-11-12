@@ -223,15 +223,24 @@ export function personOnlyProgram(canUse: (capability: Capability) => boolean): 
  * ⚖ E4 (navigation Phase 1, owner 2026-11-09): Tournaments is a PORTAL door, not a place — a row that swaps the whole
  * sidebar sits in the sidebar's foot (and the phone's More → You), beside the Coaches Portal. So once the club hosts a
  * tournament it leaves the lead (the Programs group AND the phone bar's and tiles' fill, N10) and `door` is true. Two
- * keep it where it was: the tournament director (`tournamentsIsRow`, E15 — it leads as a row, as house league does for a
- * registrar), and a club with no current tournament (it is not in the lead: it stays the quiet "Also on your plan" row).
+ * keeps it where it was: the tournament director (`tournamentsIsRow`, E15 — it leads as a row, as house league does for a
+ * registrar).
+ * ⚖ ONE PLACE, BEFORE AND AFTER THE FIRST TOURNAMENT (owner 2026-11-11, amending E4): the door is there whether or not the
+ * club has hosted anything. It used to wait in the middle of the rail as "Also on your plan" until the first tournament, then
+ * jump to the foot — the nav changed under the person for no reason they could see, and they went to the same place. A
+ * club with none yet reaches the tournaments list (create one) through the same door; the Overview keeps its quiet
+ * "Tournaments: none yet · Run a tournament" line (`quietTournaments` in the nav hook).
  */
 export function clubTournamentsDoor(
   order: { lead: AdminProgramKey[]; also: AdminProgramKey[] },
   tournamentsIsRow: boolean,
 ): { lead: AdminProgramKey[]; also: AdminProgramKey[]; door: boolean } {
-  if (tournamentsIsRow || !order.lead.includes('tournaments')) return { ...order, door: false };
-  return { lead: order.lead.filter(key => key !== 'tournaments'), also: order.also, door: true };
+  if (tournamentsIsRow) return { ...order, door: false };
+  return {
+    lead: order.lead.filter(key => key !== 'tournaments'),
+    also: order.also.filter(key => key !== 'tournaments'),
+    door: true,
+  };
 }
 
 /**
@@ -977,7 +986,8 @@ export function isTournamentListPath(pathname: string, base: string): boolean {
  * ⚖ THE EVENT'S SHELL (owner 2026-11-10, amending Part B's T1): the event heads the sidebar, the strip says "Events", and the
  * foot offers the Club door. It is on the event's own pages, AND on the Tournaments list in a CLUB that has an event to
  * show — the list is the tournament admin's, reached by the switcher's "All tournaments". A tournament-only organization keeps
- * its own short sidebar on the list (it has Settings & access beside it), and a club with no event yet keeps the club's.
+ * its own short sidebar on the list (it has Settings & access beside it). A club with no event yet wears the shell too (owner
+ * 2026-11-11, amending 2026-11-10): the foot's Tournaments door must not change what it does after the first tournament.
  * `isTournamentOrgScreen` still decides what shows an event's dates and chip and what the tab title names: the list shows
  * neither, though the event heads the sidebar.
  * ⚖ A TOURNAMENT-ONLY ORGANIZATION'S SETTINGS & ACCESS AND PLAN & BILLING KEEP THE EVENT'S SIDEBAR (owner 2026-11-11, amending
@@ -987,8 +997,10 @@ export function isTournamentListPath(pathname: string, base: string): boolean {
  */
 export function isTournamentEventShell(pathname: string, base: string, { tournamentOnly, hasEvent }: { tournamentOnly: boolean; hasEvent: boolean }): boolean {
   if (isTournamentEventPath(pathname, base)) return true;
-  if (!hasEvent) return false;
+  // ⚖ A club's list wears the shell with or without an event (owner 2026-11-11): the Tournaments door must behave the same
+  // before and after the first tournament. With no event the sidebar is the club's cell, the list's one row and the Club door.
   if (isTournamentListPath(pathname, base)) return !tournamentOnly;
+  if (!hasEvent) return false;
   return tournamentOnly && isTournamentOrgScreen(pathname, base);
 }
 

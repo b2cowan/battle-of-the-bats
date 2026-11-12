@@ -63,6 +63,16 @@ describe('Phase 3 · the small line is the event door (R1, R3, R4, T6)', () => {
     // Translucent: the pressed box lies OVER the page's name.
     assert.match(barCss, /\.eventDoor:active \{ background: color-mix\(in srgb, var\(--home-olive\) 10%, transparent\); \}/);
   });
+  it('the chevron is always at the bar’s right end beside the globe, still inside the one door button (owner 2026-11-11)', () => {
+    const chev = barCss.slice(barCss.indexOf('.doorChevron {'), barCss.indexOf('}', barCss.indexOf('.doorChevron {')));
+    assert.match(chev, /position: absolute;/);
+    assert.match(chev, /right: 0;/);
+    assert.match(chev, /bottom: 4px;/, 'on the small line’s own row (bottom right), not floating between the two lines');
+    assert.doesNotMatch(chev, /top:/);
+    assert.match(barCss, /\.identity:has\(> \.eventDoor\) \{ padding-right: 1\.25rem; \}/, 'a gutter, so no name runs under the glyph');
+    assert.match(barCss, /\.identity:has\(> \.eventDoor\) > \.eventDoor \{ width: calc\(100% \+ 1\.25rem\); padding-right: 1\.25rem; \}/, 'a tap on the glyph is a tap on the door, and the words and chip stop short of it');
+    assert.match(door, /<ChevronDown size=\{14\} aria-hidden className=\{styles\.doorChevron\} \/>/);
+  });
   it('R3: the organization’s screens draw no small line (no event is theirs)', () => {
     // The line is the door (event pages) or a place's facts; the dates and the chip are no longer place facts.
     assert.match(bar, /const hasMeta = Boolean\(facts\.length \|\| place\?\.detail \|\| place\?\.chip\);/);

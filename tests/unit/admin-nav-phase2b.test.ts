@@ -143,7 +143,7 @@ describe('Part B · a club’s organization screens (T1, P2)', () => {
     assert.ok(shell('/tournaments/manage', false, true), 'the list, in a club with an event');
     assert.ok(shell('/tournaments/archives', false, true), 'its old Past tournaments address');
     assert.ok(shell('/tournaments/dashboard', false, false), 'the event’s own pages, always');
-    assert.ok(!shell('/tournaments/manage', false, false), 'a club with no event yet keeps the club’s sidebar (New tournament)');
+    assert.ok(shell('/tournaments/manage', false, false), 'a club with no event yet wears the shell too: the door behaves the same before and after the first tournament (owner 2026-11-11)');
     assert.ok(!shell('/tournaments/manage', true, true), 'a tournament-only organization keeps its own short sidebar on the list');
     assert.ok(!shell('/tournaments/settings/subscription', false, true), 'Plan & billing stays the organization’s');
     assert.ok(!shell('/tournaments/settings/members', false, true), 'so does Members');

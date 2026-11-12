@@ -225,10 +225,10 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
       base: '/o/admin', onTournaments: false, tournamentOnly: false, isCanceled: false, tournamentsDoor: true, canUse: () => true,
       coachDoor: { show: false, href: '' }, ...o,
     }).map(d => d.key);
-    assert.deepEqual(doors({}), ['tournaments'], 'at the club, once it hosts one');
+    assert.deepEqual(doors({}), ['tournaments'], 'at the club, hosted or not (owner 2026-11-11)');
     assert.deepEqual(doors({ coachDoor: coach }), ['tournaments', 'coaches-portal'], 'one order');
     assert.deepEqual(doors({ onTournaments: true, coachDoor: coach }), ['club', 'coaches-portal'], 'inside the event: never a Tournaments door');
-    assert.deepEqual(doors({ tournamentsDoor: false }), [], 'no current tournament, or the director (whose row it is)');
+    assert.deepEqual(doors({ tournamentsDoor: false }), [], 'the director (whose row it is)');
     assert.deepEqual(doors({ canUse: c => c !== 'module_tournaments' }), [], 'only for someone who can open it');
     assert.deepEqual(doors({ tournamentOnly: true, onTournaments: true, coachDoor: coach }), ['coaches-portal'], 'a tournament-only org has no club');
     assert.deepEqual(doors({ isCanceled: true, onTournaments: true }), [], 'a cancelled club');
@@ -242,7 +242,7 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     assert.match(hook, /const navPrograms = kitPrograms\(\{ base, canUse, order: order\.lead \}\);/);
     assert.match(hook, /programs: navPrograms, alsoOnPlan, organization: kitOrgPlace/, 'the sidebar’s places');
     assert.match(readCode(ADMIN_SHEET), /programs: isCanceled \? \[\] : navPrograms, alsoOnPlan,/, 'the phone’s fill');
-    assert.match(readCode('components/admin/kit/club/ClubHubKit.tsx'), /const \{ base, programs, alsoOnPlan, permitsLink \} = useAdminKitNav\(\);/, 'the hub’s cards');
+    assert.match(readCode('components/admin/kit/club/ClubHubKit.tsx'), /const \{ base, programs, alsoOnPlan, quietTournaments, permitsLink \} = useAdminKitNav\(\);/, 'the hub’s cards and its quiet Tournaments line');
   });
 
   // ⚖ ONE HELP DOOR PER SCREEN (E16, owner 2026-11-09): on a desktop the account menu's row, on a phone the More sheet's

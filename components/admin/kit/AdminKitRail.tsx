@@ -185,7 +185,7 @@ export default function AdminKitRail() {
   // ⚖ In the event's shell with an event to show, the event heads the sidebar (Phase 2) — its own pages, and the Tournaments
   // list in a club (owner 2026-11-10); everywhere else — the organization's Settings & access and Plan & billing included
   // (Part B, E3) — the club or the organization does.
-  const { currentTournament } = useTournament();
+  const { currentTournament, loading: eventsLoading } = useTournament();
   const eventHeads = inEvent && !!currentTournament;
   // A Tournament-plan organization's Settings & access (E3): its row shows only for someone who holds one of its tabs, opens
   // the first of them straight away (no stop at the door), and lights on every one.
@@ -264,7 +264,11 @@ export default function AdminKitRail() {
         )}
 
         {inEvent ? (
-          <TournamentRail />
+          // ⚖ No event yet (owner 2026-11-11): every event row would dead-end, so the shell shows the one real place — the list
+          // — and the foot's Club door. While the events are still being read, the event's own rows, as before.
+          currentTournament || eventsLoading
+            ? <TournamentRail />
+            : <RailRow href={tournamentsList.href} label={tournamentsList.label} active icon={Trophy} />
         ) : (
           <>
             {/* ⚖ The club's places, in their groups (13i Ask 5 = A). Every group with a row wears its heading, over one row

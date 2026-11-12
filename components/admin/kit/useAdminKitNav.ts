@@ -114,6 +114,9 @@ export function useAdminKitNav() {
   const programs = kitPrograms({ base, canUse, order: runOrder.lead });
   const navPrograms = kitPrograms({ base, canUse, order: order.lead });
   const alsoOnPlan = kitPrograms({ base, canUse, order: order.also });
+  // The Overview's quiet "Tournaments: none yet" line. Tournaments is never in `alsoOnPlan` (the foot's door is its one place,
+  // owner 2026-11-11), so the hub reads this instead: set only for a club that has not hosted one, and only if it can open it.
+  const quietTournaments = kitPrograms({ base, canUse, order: runOrder.also.filter(key => key === 'tournaments') })[0] ?? null;
   // ⚖ D8 (Club Stage 1): "tournament-only" is a fact about the PLAN, never the person — the same
   // helper the hub, today's sidebar and the post-login resolver call, so a club's staff member is
   // not tournament-only here while being a club member there.
@@ -178,6 +181,7 @@ export function useAdminKitNav() {
     /** The sidebar's and the phone's programs: `programs` less a hosted Tournaments, which is a portal door (E4). */
     navPrograms,
     alsoOnPlan,
+    quietTournaments,
     brief: club.brief,
     tournamentOnly,
     /** A one-team workspace (Organization's frame leaves its staff page as it was — Club Tier Stage 13i, Ask 9). */

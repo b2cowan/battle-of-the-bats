@@ -439,8 +439,8 @@ describe('13i · the club sidebar lists places only', () => {
     assert.deepEqual(owner, [['programs', ['rep-teams', 'house-league']], ['club', ['accounting', 'families', 'public-site', 'org']]], 'a hosted Tournaments is the foot’s door, not a place');
     assert.equal(clubNavFor('owner', RUNS_BOTH).tournamentsDoor, true);
     const notYet = clubNavFor('owner', RUNS_NEITHER).groups.map(g => [g.key, g.places.map(p => p.key)]);
-    assert.deepEqual(notYet, [['programs', ['rep-teams']], ['also', ['house-league', 'tournaments']], ['club', ['accounting', 'families', 'public-site', 'org']]]);
-    assert.equal(clubNavFor('owner', RUNS_NEITHER).tournamentsDoor, false, 'no current tournament: the quiet row stays, no foot door');
+    assert.deepEqual(notYet, [['programs', ['rep-teams']], ['also', ['house-league']], ['club', ['accounting', 'families', 'public-site', 'org']]], 'Tournaments is never a row in the middle');
+    assert.equal(clubNavFor('owner', RUNS_NEITHER).tournamentsDoor, true, 'one place before and after the first tournament (owner 2026-11-11): the foot door');
   });
 
   // ⚖ E15 (navigation Phase 1, owner 2026-11-09): the tournament director — a person whose only program is tournaments,

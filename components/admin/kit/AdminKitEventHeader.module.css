@@ -95,8 +95,23 @@
 .eventDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 /* Pressed: the list rows' own olive tint — translucent, because the box lies OVER the name. */
 .eventDoor:active { background: color-mix(in srgb, var(--home-olive) 10%, transparent); }
-/* The line's own ink, as drawn. */
-.doorChevron { flex: none; margin-left: -0.2rem; color: inherit; }
+/* ⚖ THE CHEVRON LIVES AT THE BAR'S RIGHT, ON THE SMALL LINE (owner 2026-11-11, walk of Phase 3): on every event page, whatever
+   the small line holds (a long name, a chip, nothing but the chip), the arrow is in the same spot — the right end of the
+   identity column, on the small line's own row (bottom right, under the globe's column), so it reads as that line's arrow.
+   (Centred on the two lines it floated beside the page's name and looked orphaned, owner's look 2026-11-11.) It is still the
+   door button's child (one control, one tap target): the column keeps a gutter on its right (`:has`, below) so the page's name
+   and the event's name never run under the glyph, and the button's box is widened over that gutter so a tap on the glyph is
+   a tap on the door. The 4px is the box's own bottom padding, which hangs below the line. */
+.doorChevron {
+  position: absolute;
+  bottom: 4px;
+  right: 0;
+  color: inherit;
+}
+.identity:has(> .eventDoor) { padding-right: 1.25rem; }
+/* The words and the chip stop short of the glyph (the box is wider than the line by exactly the glyph's lane), so the event's
+   name gives way first and the chip never lies under the arrow. */
+.identity:has(> .eventDoor) > .eventDoor { width: calc(100% + 1.25rem); padding-right: 1.25rem; }
 @media (hover: hover) {
   .eventDoor:hover .doorName, .eventDoor:hover .doorChevron { color: var(--text-primary); }
 }

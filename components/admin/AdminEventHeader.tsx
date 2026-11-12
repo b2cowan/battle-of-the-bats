@@ -30,8 +30,8 @@
  *
  * ⚖ THE TOURNAMENT PHONE NAMES THE PAGE (navigation Phase 3, E5 + R1–R4, owner 2026-11-11). On an event's own page the
  * bar's first line is the page — the sidebar's lit row, in its words, the SAME answer the strip gives on a computer
- * (`useDeskTitle`, one rule for both widths) — and the event rides the small line under it: its name, its phase chip and a
- * chevron (R1: no dates there; they are in the list's rows). The small line is the door to the event sheet
+ * (`useDeskTitle`, one rule for both widths) — and the event rides the small line under it: its name, its phase chip, and
+ * a chevron that always sits at the right end of that line (R1: no dates there; they are in the list's rows). The small line is the door to the event sheet
  * (`AdminEventSwitchSheet`), and its 44px target is the name and the line together (R4): the bar keeps its height, and a tap
  * on the page's name opens the list too. On the organization's own tournament screens (the Tournaments list, a Tournament
  * plan's Plan & billing) the bar names the screen and has no small line (R3: no event is theirs). The More sheet's picker
