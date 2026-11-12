@@ -39,7 +39,8 @@ describe('1. the strip names the page (E6, C4, C8)', () => {
   });
 
   it('a page with no row keeps its own title (null)', () => {
-    assert.equal(coachDeskTitleAt(`${BASE}/game/e1`, none, BASE, liveRows, null), null);
+    // (The game page was this case until navigation Phase 5 — F7 put it one level down from the Schedule.)
+    assert.equal(coachDeskTitleAt(`${BASE}/attendance`, none, BASE, liveRows, null), null);
     // A live team's season page is not in its sidebar.
     assert.equal(coachDeskTitleAt(`${BASE}/season-end`, none, BASE, liveRows, null), null);
   });
@@ -201,13 +202,14 @@ describe('4. the chrome', () => {
     assert.match(css, /\.pageHeaderStd\[data-desk-drill='empty'\] \{ display: none; \}/);
   });
 
-  it('exactly one <h1> per width: the strip’s for a named page, the record’s (portaled by its header) one level down; the paper title hides above 900', () => {
+  it('exactly one <h1> per width: the strip’s for a named page, the record’s (portaled by its header) one level down; the paper title hides at EVERY width (Phase 5)', () => {
     assert.equal(strip.match(/<h1\b/g)?.length, 1);
     assert.match(strip, /\{title\?\.kind === 'name' && <h1/);
     const css = readCode('app/[orgSlug]/coaches/coaches.module.css');
-    const desk = css.slice(css.indexOf('.pageHeaderStd[data-desk-named] .pageHeaderLeft'));
-    assert.match(desk, /^\.pageHeaderStd\[data-desk-named\] \.pageHeaderLeft \{ display: none; \}/);
-    assert.match(css, /@media \(min-width: 901px\) \{[^}]*\.pageHeaderStd\[data-desk-named\] \{ justify-content: flex-end; \}\s*\.pageHeaderStd\[data-desk-named\] \.pageHeaderLeft/);
+    // ⚖ Navigation Phase 5 (E8, owner 2026-11-12): the phone's bar names the page too, so the paper title's hide is no longer a
+    // computer's only — it stands OUTSIDE any width block, directly before the phone's empty-row rule.
+    assert.match(css, /\n\.pageHeaderStd\[data-desk-named\] \{ justify-content: flex-end; \}\n\.pageHeaderStd\[data-desk-named\] \.pageHeaderLeft \{ display: none; \}\n/);
+    assert.match(css, /@media \(max-width: 900px\) \{\n  \.pageHeaderStd\[data-phone-row='empty'\] \{ display: none; \}/);
     const header = readCode('components/coaches/CoachPageHeader.tsx');
     assert.match(header, /data-desk-named=\{deskNamed \? \(deskRowHas \? 'actions' : 'empty'\) : undefined\}/,'Phase 4b (owner 2026-11-12): a HOSTED "?" is the strip’s, so it no longer keeps a row alone; an unhosted page still does');
   });
@@ -216,7 +218,8 @@ describe('4. the chrome', () => {
     const css = readCode('app/[orgSlug]/coaches/coaches.module.css');
     assert.match(css, /@media \(min-width: 901px\) \{\s*\.teamHeader \{ display: none; \}\s*\}/);
     const bar = readCode('components/coaches/CoachTeamHeader.tsx');
-    assert.match(bar, /const canSwitch = isPhoneNav && assignments\.length \+ closedAssignments\.length > 1;/);
+    // Teams counted as the sidebar's cell counts them (Phase 5): a team mid-rollover is one team, and offers no switcher of one.
+    assert.match(bar, /const canSwitch = isPhoneNav && coachTeamRoster\(assignments, closedAssignments\)\.teamCount > 1;/);
     assert.match(bar, /<CoachTeamSwitchSheet/);
   });
 

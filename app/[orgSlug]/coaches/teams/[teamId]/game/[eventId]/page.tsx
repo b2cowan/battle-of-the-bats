@@ -40,7 +40,7 @@
  */
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Check, Circle, Undo2, X } from 'lucide-react';
+import { Check, Circle, Undo2, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { hasNonMoneyRecordAccess } from '@/lib/coach-capabilities';
 import { getSportPack, surfaceLabel, DEFAULT_SPORT } from '@/lib/sports';
@@ -992,24 +992,15 @@ export default function CoachGameConsolePage({
     ?? deriveGameResult(teamScore, oppScore);
 
   // ── Render ────────────────────────────────────────────────────────────────────────────────
-  /** The recap's and the error state's way back — inside `.gdBar`, which the LIVE screen no
-   *  longer renders. The word is the destination now, not the page it happens to live on; at
-   *  phone width the stylesheet drops it and the accessible name carries the detail. */
-  const backLink = (
-    <Link
-      href={`${base}/schedule?event=${eventId}`}
-      className={styles.gdBack}
-      aria-label="Back to this game on the schedule"
-    >
-      <ArrowLeft size={15} aria-hidden /> <span className={styles.gdBackWord}>Back</span>
-    </Link>
-  );
+  // ⚖ NO WAY BACK OF ITS OWN (navigation Phase 5, F7, owner 2026-11-12): the page is one level down from the Schedule
+  // (`coachDrillBack`), so the bar on a phone and the strip on a computer carry "← Schedule" — back to this game on the
+  // schedule — on the live screen, the recap and the error state alike. The console's own arrow (the head line's
+  // `.gdBackBtn`, the recap bar's and the error state's `.gdBack`) went with it: one way back per screen.
 
   if (loading) return <div className={styles.page}><div className={styles.loadingState}>Loading the game…</div></div>;
   if (loadError || !event || !data) {
     return (
       <div className={styles.page}>
-        {backLink}
         <CoachEmptyState
           quiet
           icon={<Circle size={22} />}
@@ -1151,7 +1142,6 @@ export default function CoachGameConsolePage({
       <div className={styles.page}>
         <div className={styles.gdPage} data-field-floor>
           <div className={styles.gdBar}>
-            {backLink}
             <b>Game recap</b>
             <span className={styles.gdBarNote}>Read-only</span>
           </div>
@@ -1259,13 +1249,6 @@ export default function CoachGameConsolePage({
             in two grammars, and it was the fourth chip's worth of room that did it. */}
         <div className={styles.gdCard}>
           <div className={styles.gdMatch}>
-            <Link
-              href={`${base}/schedule?event=${eventId}`}
-              className={styles.gdBackBtn}
-              aria-label="Back to this game on the schedule"
-            >
-              <ArrowLeft size={17} aria-hidden />
-            </Link>
             {opponentDoor ? (
               // The Scouting book door (rider): the opponent's name opens your book as a sheet.
               // Kept as the CONTEXTUAL route now that the footer carries a door you can see

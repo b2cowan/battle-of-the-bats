@@ -1034,8 +1034,9 @@ describe('coach page headers — what the actions slot may hold', () => {
       'which is the two-homes drift the 2026-08-25 ruling closed.',
     );
     const masthead = readFileSync(TEAM_MASTHEAD, 'utf8');
+    // (Navigation Phase 5, F3 A: the bar keeps the "?" and holds its width until a page's topic arrives — `reserve`.)
     assert.ok(
-      masthead.includes('<CoachPageHelpSlot />'),
+      masthead.includes('<CoachPageHelpSlot reserve />'),
       'The masthead stopped rendering the published "?". A page publishing to a host that draws nothing ' +
       'has no help at all.',
     );

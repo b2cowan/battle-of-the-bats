@@ -63,8 +63,12 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   chips into the strip's slot (`recordSlot`) and keeps only its buttons and "?" (`data-desk-drill='record'`). Until the slot
  *   exists, or when the title is not text (the player page's phone button), it keeps its own title and drops only its arrow and
  *   its icon tile (`data-desk-drill`). The answer is the strip's own (`useCoachDeskTitle`) — one rule, never decided twice. Because
- *   the team bar is the phone's only (≤900), the "?" a page publishes to it is also drawn HERE, above 900. The scouting
- *   reminder sits right under this row on a computer (`CoachDeskNudge`, C3). The phone is exactly as it was (Phase 5).
+ *   the team bar is the phone's only (≤900), the "?" a page publishes is drawn by the strip above 900 and by the bar at 900
+ *   and below — never here while hosted. The scouting reminder sits right under this row on a computer (`CoachDeskNudge`, C3).
+ * ⚖ ON A PHONE THE BAR NAMES THE PAGE TOO (navigation Phase 5, E8, F1, owner 2026-11-12): a named page's paper title hides at
+ *   EVERY width, and the header keeps only the phone's own buttons (`data-phone-row`; nothing at all when it has none). One
+ *   level down the bar carries the way back, so this header drops its own arrow on a phone and KEEPS its title, chips and
+ *   switcher (the player's name is a button that opens the player switcher) — the record's title is the phone's `<h1>`.
  *   No call site changes: the mechanism is this component's.
  *
  * CoachModalHeader is this component's older sibling for modals; pages went years without the
@@ -180,9 +184,9 @@ export default function CoachPageHeader({
    * Giving an error state a page header is a separate decision about what a failed screen looks
    * like, and was deliberately NOT taken here (spread ruling §7: "no unrelated header tidying").
    *
-   * ⚠ Also still separate, and still correct: the exempt FIELD surfaces (`.gdBack` on the game
-   * bench console, `.ppRunBackLink` in practice run mode) and `.recordBackLink` on the free
-   * tournament record — a shell with no page header of its own. None of these are drill-ins.
+   * ⚠ Also still separate, and still correct: the exempt FIELD surface (`.ppRunBackLink` in practice run mode) and
+   * `.recordBackLink` on the free tournament record — a shell with no page header of its own. None of these are drill-ins.
+   * (The game bench console's `.gdBack` went in navigation Phase 5, F7: its way back is the bar's and the strip's now.)
    *
    * ⚠ On a phone the label drops and the arrow stands alone — house rule 3, "words → symbols".
    * The accessible name keeps the destination either way.
@@ -215,6 +219,13 @@ export default function CoachPageHeader({
   const helpOnRow = showHelp && !helpHosted;
   // Whether the computer's top row has any content: buttons the page shows above 900, or an unhosted "?".
   const deskRowHas = (!!actions && !actionsPhoneOnly) || helpOnRow;
+  // ⚖ ON A PHONE THE BAR NAMES THE PAGE TOO (navigation Phase 5, E8, owner 2026-11-12), so a named page's header keeps only its
+  // buttons there as well — the ones each width shows. At 900 and below every action shows (`actionsPhoneOnly` buttons are
+  // the phone's); `actionsPhoneHidden` drops them only at 640 and below (`.pageHeaderActionsWideOnly`), so a tablet keeps
+  // them (/review 2026-11-12: a view-only coach's Money import row went missing at 768). With none, the header draws
+  // nothing at that width (`data-phone-row`: 'empty' at 900 and below, 'tablet' at 640 and below).
+  const tabletRowHas = !!actions || helpOnRow;
+  const phoneRowHas = (!!actions && !actionsPhoneHidden) || helpOnRow;
   // One level down on a computer the strip names the RECORD too: this header's title and chips are drawn there (portaled into
   // the strip's slot) and its own copy hides in CSS. Only once the slot exists — until then (the server's paint, a phone) the
   // header keeps its own title, so a page is never left unnamed.
@@ -235,6 +246,7 @@ export default function CoachPageHeader({
       className={`${styles.pageHeader} ${styles.pageHeaderStd}${nested ? ` ${styles.pageHeaderNested}` : ''}${actionsPhoneInTitleRow ? ` ${styles.pageHeaderActionsCorner}` : ''}`}
       data-desk-named={deskNamed ? (deskRowHas ? 'actions' : 'empty') : undefined}
       data-desk-drill={deskDrill ? (deskRecord ? (deskRowHas ? 'record' : 'empty') : '') : undefined}
+      data-phone-row={deskNamed ? (!tabletRowHas ? 'empty' : !phoneRowHas ? 'tablet' : undefined) : undefined}
     >
       <div className={styles.pageHeaderLeft}>
         {backTo && (

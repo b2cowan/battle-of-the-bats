@@ -16,9 +16,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
-import { useCoaches, resolveLiveSeason } from '@/lib/coaches-context';
+import { useCoaches } from '@/lib/coaches-context';
 import { isSidebarStrip } from '@/lib/sidebar-strip';
-import { teamHref, teamSwitchGroups, teamTile } from '@/lib/coach-team-tile';
+import { coachTeamRoster, teamHref, teamSwitchGroups, teamTile } from '@/lib/coach-team-tile';
 import SidebarLogoTile from '@/components/shared/SidebarLogoTile';
 import SidebarMenu from '@/components/shared/SidebarMenu';
 import strip from '@/components/shared/SidebarStrip.module.css';
@@ -54,18 +54,14 @@ export default function CoachTeamCell({ orgSlug, currentTeamId }: { orgSlug: str
     if (open) setOpen(false);
   }
 
-  // A team mid-rollover holds two live seasons: it is ONE team, on the season the portal reads (`resolveLiveSeason`).
-  const liveOf = (id: string) => {
-    const season = resolveLiveSeason(assignments, id);
-    return season ? assignments.find(a => a.teamId === id && a.programYearId === season.programYearId) ?? null : null;
-  };
-  const live = currentTeamId ? liveOf(currentTeamId) : null;
+  // A team mid-rollover holds two live seasons: it is ONE team (`coachTeamRoster` — the phone's switcher counts the same way).
+  const roster = coachTeamRoster(assignments, closedAssignments);
+  const live = currentTeamId ? roster.liveOf(currentTeamId) : null;
   const team = live ?? closedAssignments.find(a => a.teamId === currentTeamId) ?? null;
   if (!team) return null;
   const name = team.teamName;
   const tile = teamTile(orgSlug, team);
-  const liveIds = [...new Set(assignments.map(a => a.teamId))];
-  const multi = liveIds.length + closedAssignments.length > 1;
+  const multi = roster.teamCount > 1;
   const tileEl = <SidebarLogoTile source={tile.source} aspect={tile.aspect} color={tile.color} name={name} />;
 
   if (!multi) {
@@ -83,7 +79,7 @@ export default function CoachTeamCell({ orgSlug, currentTeamId }: { orgSlug: str
 
   // Built only while the list is open: the cell re-renders on every page change, and the list is shut nearly always.
   const groups = open
-    ? teamSwitchGroups(orgSlug, liveIds.map(liveOf).filter((a): a is NonNullable<typeof a> => !!a), closedAssignments, team.teamId)
+    ? teamSwitchGroups(orgSlug, roster.live, closedAssignments, team.teamId)
     : [];
   return (
     <>

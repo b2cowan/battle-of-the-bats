@@ -2,76 +2,61 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { resolveLiveSeason, resolveClosedSeason } from '@/lib/coach-season-view';
-import { mastheadSeasonLabel } from '@/lib/coach-season-label';
-import { formatRecord } from '@/lib/coach-season-record';
-import {
-  mastheadWhen,
-  type MastheadGameDayConsole, type MastheadStatus, type MastheadRecord, type MastheadScoutingNudge,
-} from '@/lib/coach-masthead-status';
-import { eventWord } from '@/lib/coach-schedule-vocab';
+import { coachStripFacts, stripRecord } from '@/lib/coach-strip-facts';
+import type { MastheadGameDayConsole, MastheadStatus, MastheadRecord, MastheadScoutingNudge } from '@/lib/coach-masthead-status';
+import { coachTeamRoster } from '@/lib/coach-team-tile';
 import { formatInOrgZone } from '@/lib/timezone';
 import { useCoachNudgeDismiss } from '@/components/coaches/useCoachNudgeDismiss';
 import { CoachPageHelpSlot } from '@/components/coaches/CoachPageHelpSlot';
+import { useCoachDeskTitle } from '@/components/coaches/CoachDeskTitle';
 import CoachTeamSwitchSheet from '@/components/coaches/CoachTeamSwitchSheet';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
-import type { RepEventType } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
- * The pinned TEAM MASTHEAD (desktop shell D2 — Option A, owner-picked 2026-08-02 after two
- * rejected shapes; mockup section 08 is the spec).
+ * THE PHONE'S BAR (900px and below; above 900 it draws nothing — the strip names the page there, the sidebar's cell names
+ * the team, CSS at 900/901, never a width read in script).
  *
- * Admin's event header is the recipe: identity with HIERARCHY (quiet eyebrow → one confident
- * name → a mono meta line), not a single line of same-weight fragments. The two rejected
- * shapes each failed one way: an identity strip stuttered a standalone team's name three
- * times; a mirrored page title read as a thin echo of the h1 below it. The masthead repeats
- * the sidebar's identity exactly as admin's repeats its switcher — hierarchy is what makes
- * that presence rather than noise.
+ * ⚖ THE BAR NAMES THE PAGE (navigation Phase 5, E8 + F1–F8, owner 2026-11-12; the tournament phone's grammar since Phase 3).
+ *   - The first line is the page's name from the ONE rule the computer's strip reads (`useCoachDeskTitle` →
+ *     `coachDeskTitleAt`): the sidebar's lit row, in the sidebar's words, as the page's `<h1>`; the closed season's page
+ *     names its season ("2025 Season"). The page's paper title hides at every width (`data-desk-named`), so no screen
+ *     names itself twice.
+ *   - ONE LEVEL DOWN (F1) a 44px arrow leads back and the line names where it goes ("← Roster"), from `coachDrillBack` —
+ *     the address alone, so the server's first paint is the last. The record keeps its own name, chips and switcher at
+ *     the top of the page (the player's name is a button that opens the player switcher; a record that loads late would
+ *     otherwise arrive late in the bar), and that title stays the page's `<h1>`.
+ *   - THE SMALL LINE (F2) is the team, then ONE chip when the season is not everyday — Draft, Game day, Complete — then the
+ *     record. Game day and Complete replace the record (E7, the computer's rule). The words come from `coachStripFacts`,
+ *     the strip's own rule, so a phone and a computer never disagree about the season. On a tablet (641–900, F6) the
+ *     line also carries the club and the season, and the status keeps the bar's right end (Next / Game day with the
+ *     bench door / Complete with the final record) — nothing a tablet showed before is lost.
+ *   - With two or more teams the name and the line together are ONE 44px target (the tournament phone's R4) that opens
+ *     `CoachTeamSwitchSheet`; the chevron sits at the identity column's right end on the line's own row. One team: plain
+ *     text, nothing to tap (E8).
+ *   - THE "?" STAYS AT THE BAR'S RIGHT END (F3 A, owner 2026-11-12 — replacing the 4b record's "moves into the More
+ *     sheet's Help row" on purpose): the page's panel is one tap away in the fixed chrome, as the strip's "?" is on a
+ *     computer, and More → Help stays the full guide, as the account menu's Help is. One rule at both widths.
  *
- * - ⚠ TWO LINES, NOT THREE, since 2026-08-18 (header vertical-space pass, direction B). The
- *   club's name was its own eyebrow ABOVE the team name; it is now the first segment of the
- *   meta line BELOW it. Nothing left the bar — the club is still named on every team page,
- *   which is the promise made when it left the sidebar in the 2026-08-17 slimdown — but the
- *   hierarchy is two levels now (one confident name over one quiet line) rather than three.
- *   This is what fixed the 98px finished-season phone bar, where "Complete" and the final
- *   record were being pushed onto a third line. Org name arrives as a SERVER prop (never from
- *   client org-context — the default-org gotcha mislabeled multi-org coaches), and a standalone
- *   team workspace renders no club segment at all, so its name still appears exactly once.
- * - Meta line: club · season · record. The season is the YEAR ("2026 season") — never
- *   programYearName, which often embeds the team's name (a third of the original stutter). A
- *   team whose working season has FINISHED shows a "Complete" chip here — PRESENTATIONAL, and
- *   since 2026-08-16 the ONLY place the portal says so: the page-title chip that used to repeat
- *   it was the season switcher wearing a label, and it died with the archive as a place
- *   (P2, Design A).
- * - A2 (2026-08-02): the record and the one status that matters today join that line —
- *   "2026 season · 12–4–1 · Game day — Lions, 6:30 p.m." A quiet week adds nothing, and a
- *   finished season shows its own final record instead of a status. Both arrive as PROPS from
- *   the team layout's single SSR feed; this component never fetches.
- * - Sticky against the viewport below the fixed top strip (the document is the portal's one
- *   real scroll container); publishes --coach-header-h; THE BAR NEVER CHANGES SHAPE UNDER SCROLL,
- *   at any width (desktop: owner ruling 2026-08-19; phone and tablet: phone re-evaluation stage 1
- *   · B2, owner ruling 2026-09-21 — see the note where the collapse effect used to be).
- * - ON A PHONE (≤640) IT IS ONE 36px LINE ON EVERY SCREEN — name · record · "?" — the Overview
- *   included (stage 1 · B2 = "B, one line everywhere"). The Overview's club · season line is not
- *   lost: it renders as an UNPINNED page line directly under the bar, same words, same place at
- *   rest, and scrolls away with the page instead of snapping. See `teamHeaderPageLine`.
- * - THE TEAM NAME IS THE SWITCHER'S DOOR ON A PHONE (stage 1 · B1): with two or more teams it
- *   renders as a button with a chevron and opens `CoachTeamSwitchSheet` — the More sheet's own
- *   rows, moved. One team: plain text.
- * - ⚖ THE PHONE'S ONLY SINCE NAVIGATION PHASE 4 (E6, owner 2026-11-09): above 900 it draws nothing (coaches.module.css
- *   `.teamHeader` at min-width 901). On a computer the strip names the page and carries these facts at its right end
- *   (`CoachStripFacts`, one feed — `loadCoachTeamMasthead`), the sidebar's team cell names and switches the team, the "?"
- *   is the page's top row's, and the scouting reminder sits under that row (`CoachDeskNudge`). Phase 5 retires the rest.
+ * ⚖ THE 2026-09-21 RULE THAT SURVIVES: THE BAR NEVER CHANGES SHAPE UNDER SCROLL, at any width. Its reason (phone
+ *   re-evaluation stage 1 · B2): the old two-line bar SNAPPED 59→36 under the thumb — a 23px jump, twice per pass — and the
+ *   collapsed form hid the "?". This bar is two lines from the first frame and stays two lines. ⚠ Do not re-propose a
+ *   scroll collapse as a space saving (desktop 2026-08-19, phone 2026-09-21: rejected on sight both times). The one-line
+ *   name · record form B2 chose is retired by E8 on purpose (the bar names the page now; the team is on its small line).
+ *
+ * - Sticky against the viewport (the document is the portal's one scroll container); publishes `--coach-header-h` (a
+ *   ResizeObserver on the bar, onto `<main>`). The pinned rows under it — the register's toolbar, the band rooms' tab row,
+ *   the player's tabs, the lineup builder's stepper — read that one value, so a taller bar moves none of them by hand.
+ * - The club's name and the team's facts arrive as SERVER props from the team layout's one feed (`loadCoachTeamMasthead`);
+ *   never from client org-context (the default-org gotcha mislabelled multi-org coaches). A standalone team names no club.
+ * - The Overview's club · season strip stays (F5): an UNPINNED line directly under the bar on a phone, the one place a phone
+ *   names the club (`teamHeaderPageLine`). The game-week scouting reminder stays an attached row under the bar.
+ * - Over an open chat room (≤640) the bar does not render: the room header is the identity there.
+ * - ⚠ NO "PUBLIC SITE" DOOR (owner ruling 2026-10-06): it opened the CLUB's home page, an exit wearing the ⇄ glyph.
  * - Mounted by the TEAM layout, so it exists only under /teams/{teamId}.
- * - ⚠ NO "PUBLIC SITE" DOOR (owner ruling 2026-10-06). The masthead carried a ⇄ "Public site" pill
- *   from D2 (2026-08-01) until then. It opened the CLUB's home page — a place the club admin runs and
- *   a coach can neither change nor needs — so it was an exit wearing the ⇄ glyph, which the nav
- *   grammar reserves for the other side of the SAME place. Do not re-add it. The flips a coach does
- *   use are about their own team and stay where that team is: the tournament record's ⇄ pill and
- *   the ⇄ Fan view links open the event their team is playing in.
  */
 function CoachTeamHeaderInner({
   teamId,
@@ -96,38 +81,28 @@ function CoachTeamHeaderInner({
   gameDayConsole: MastheadGameDayConsole | null;
 }) {
   const { assignments, closedAssignments } = useCoaches();
+  const { title: desk } = useCoachDeskTitle();
   const headerRef = useRef<HTMLElement>(null);
-  // ONE IDENTITY LINE ON A PHONE (stage 0 · A2, 2026-09-20; extended to the Overview by stage 1 · B2,
-  // 2026-09-21). Two facts about the page under the bar, read from the address: is this the team's
-  // Overview (which gets the unpinned club · season page line under the bar), and is this an open
-  // chat room (no masthead at ≤640 — the room header is the identity there). Both are CSS classes
-  // gated at ≤640 in the stylesheet, never a JS media query, so the server and the first client
-  // frame agree.
+  // Two facts about the page under the bar, read from the address: the team's Overview (which keeps the unpinned club ·
+  // season strip under the bar) and an open chat room (no bar at ≤640). Both are CSS classes gated in the stylesheet,
+  // never a JS media query, so the server and the first client frame agree.
   const pathname = usePathname() ?? '';
   const onOverview = /\/coaches\/teams\/[^/]+\/?$/.test(pathname);
   const onChat = /\/coaches\/teams\/[^/]+\/chat(?:\/|$)/.test(pathname);
-  // The switcher (stage 1 · B1): a phone-only door on the team name, offered only when there is
-  // somewhere to switch TO. `useIsPhoneNav` defaults to true so the server renders the button and a
-  // desktop swaps it for plain text after mount — the chevron is display:none above 900, so the
-  // swap moves nothing. The sheet frame answers the sheet's keys (Sheet Frame step 5): a tap outside
-  // it, its dim and the name (the name stays a toggle), Escape and the phone's Back close it, focus
-  // goes home to the name. Before step 5 this header answered them and stood no back step, so on a
-  // phone Back with the sheet open left the page.
-  // The sheet remembers the ADDRESS it was opened on rather than a boolean: a switch is a
-  // navigation, and the sheet closes with the address (as More does) with no effect to write —
-  // the derived `switchOpen` is simply false on the next page.
+  // The switcher: offered only when there is somewhere to switch TO. `useIsPhoneNav` defaults to true so the server renders
+  // the button; the whole bar is display:none above 900, so a computer's swap to plain text moves nothing. The sheet frame
+  // answers the sheet's keys (a tap outside, its dim, Escape, the phone's Back), and focus goes home to the line. The sheet
+  // remembers the ADDRESS it was opened on rather than a boolean: a switch is a navigation, and the sheet closes with it.
   const isPhoneNav = useIsPhoneNav();
   const [switchOpenAt, setSwitchOpenAt] = useState<string | null>(null);
   const switchOpen = switchOpenAt === pathname;
   const switchButtonRef = useRef<HTMLButtonElement>(null);
   const closeSwitch = () => setSwitchOpenAt(null);
-  // Once per GAME, on-device (the portal's one dismiss idiom) — a new game week mints a new
-  // event id, so the nudge returns for the next opponent without any expiry bookkeeping.
-  // Called unconditionally (rules of hooks); the placeholder key is never written.
+  // Once per GAME, on-device (the portal's one dismiss idiom). Called unconditionally (rules of hooks).
   const nudgeDismiss = useCoachNudgeDismiss(teamId, `scouting_book:${scoutingNudge?.eventId ?? 'none'}`);
 
-  // Publish the bar's real height for stacked sticky elements; clean up when the bar leaves
-  // (team → hub navigation) so a stale value can't offset anything.
+  // Publish the bar's real height for the pinned rows under it; clean up when the bar leaves (team → hub navigation) so a
+  // stale value can't offset anything.
   useEffect(() => {
     const el = headerRef.current;
     const scroller = el?.closest('main');
@@ -142,195 +117,169 @@ function CoachTeamHeaderInner({
     };
   }, [teamId]);
 
-  // ⚠⚠ THE SCROLL COLLAPSE IS GONE AT EVERY WIDTH — DO NOT RE-PROPOSE IT AS A SPACE SAVING.
-  // Two rulings, one reason. DESKTOP (2026-08-19): a collapse was built, measured (−34px of pinned
-  // chrome), passed review, and the owner rejected it on sight — "you can leave this header as is
-  // when scrolling"; the identity bar staying put is worth more than the pixels. PHONE + TABLET
-  // (2026-09-21, phone re-evaluation stage 1 · B2 — the owner asked for the Overview's thinning
-  // two-line bar on every screen and chose the opposite once both were drawn at true size): what
-  // lived here was a threshold toggle with hysteresis (collapse past 64px of scroll, expand under
-  // 12), so the bar did not shrink, it SNAPPED 59→36 — a 23px content jump under the thumb, twice
-  // per pass — and the collapsed form hid the whole right slot including the "?". The space that
-  // survives came from making the bar smaller (one line, stage 0 · A2), not from chrome that
-  // vanishes and returns. The focus-repair effect that lived beside it (a collapse could hide the
-  // control that had focus) went with it: nothing hides on scroll any more.
   const live = assignments.find(a => a.teamId === teamId) ?? null;
   const closed = closedAssignments.find(a => a.teamId === teamId) ?? null;
   const teamName = live?.teamName ?? closed?.teamName ?? null;
   if (!teamName) return null;
-  // The More sheet's own condition for showing the switcher (a switch needs a second team). Phone
-  // only — the desktop's switcher is the sidebar's select.
-  const canSwitch = isPhoneNav && assignments.length + closedAssignments.length > 1;
-  // `/{orgSlug}/coaches` — read off the address, not off client org-context (the default-org
-  // gotcha in the docblock: a multi-org coach's context org is not always the one on screen).
-  const coachesBase = pathname.slice(0, pathname.indexOf('/coaches') + '/coaches'.length);
+  // A switch needs a second TEAM, counted as the sidebar's team cell counts them (`coachTeamRoster`: a team mid-rollover is
+  // one team, and offers no switcher of one). Phone only — the computer's switcher is the sidebar's team cell.
+  const canSwitch = isPhoneNav && coachTeamRoster(assignments, closedAssignments).teamCount > 1;
+  // A viewport crossing 900 unmounts the sheet with the door; forget it was open, so turning the tablet back does not reopen
+  // it unasked (/review 2026-11-12). Set during render, the portal's idiom for state that follows a prop.
+  if (!canSwitch && switchOpenAt !== null) setSwitchOpenAt(null);
+  // The org's slug — read off the address, not off client org-context (the default-org gotcha above).
+  const orgSlug = pathname.split('/')[1] ?? '';
 
-  // The season the masthead is describing: the LIVE one, or the newest closed one when the team
-  // has none. Both come from the shared resolvers so the header cannot name a different season
-  // from the page under it.
+  // The season the bar describes: the LIVE one, or the newest closed one when the team has none — the shared resolvers, so
+  // the bar cannot name a different season from the page under it. ⚠ No live season = the portal is ONE page (CLAUDE.md).
   const liveSeason = resolveLiveSeason(assignments, teamId);
   const closedSeason = resolveClosedSeason(assignments, closedAssignments, teamId);
   const season = liveSeason ?? closedSeason;
-  /**
-   * ⚠ The team has NO LIVE SEASON, which since 2026-08-18 means its portal is one page. The chip
-   * below is the masthead's half of saying so — the only place a finished season is named — and it
-   * is keyed on the RESOLVERS rather than on a flag the season carries, because the flag
-   * (`isReadOnly`) is gone with the twenty-nine read-only branches it existed to drive.
-   */
   const seasonFinished = !liveSeason && !!closedSeason;
-  const year = season?.programYearYear ?? null;
-  // Page-header ruling 2026-08-11: the masthead owns the season, so no page subtitle ever
-  // restates it. Resolves HERE, client-side, for the season on screen. An org's NAMED season
-  // ("Fall Ball 2026", "2026 Season") renders verbatim (team-name prefix stripped — the stutter
-  // the old year-only rule guarded against); a bare-year name keeps the classic "{year} season".
-  // This supersedes the "never programYearName" half of the meta-line rule in the docblock above.
-  //
-  // Role badge removed 2026-09-11 (owner ruling): it only ever showed the binary permission
-  // tier (Head Coach / Assistant Coach), never the staff title (Treasurer, Manager, Helper) a
-  // coach is actually invited as, which read as flatly wrong for anyone but a plain assistant.
-  // A person already knows what they were invited as on a given team; what they need on screen
-  // is what they can DO here, which the nav and page controls already show by simply not
-  // rendering what a role can't reach.
-  const seasonText = mastheadSeasonLabel(season?.programYearName, teamName, year);
-  // The record OF THE SEASON ON SCREEN — an archive gets its own frozen final tally, never the
-  // live season's. Absent from the map means no decided game yet, which renders as nothing: a
-  // record of 0–0 is not a record, it is a season that hasn't started.
-  const record = season ? records[season.programYearId] ?? null : null;
-  // Only speak for the season this status was actually computed for. A team mid-rollover can hold
-  // two live seasons, and the server (which cannot see `?year=`) always builds the feed for the
-  // default one — saying nothing beats describing the wrong season's game day (/review 2026-08-02).
-  const status = season?.programYearId === statusYearId ? rawStatus : null;
+  // ONE rule for the team's words at both widths: the strip's (F2).
+  const facts = coachStripFacts({
+    teamName, orgName, isTeamWorkspace, season, seasonFinished, records, status: rawStatus, statusYearId, gameDayConsole,
+  });
+  const s = facts.status;
+  const gameDay = s?.kind === 'game_day';
+  // The live record, in the strip's words (none for 0-0). The strip drops it on game day (E7) and the phone does too (the
+  // word's width flag below), but the tablet keeps it beside its status, as it always did — so on game day it is read again.
+  const record = facts.record ?? (gameDay && season ? stripRecord(records[season.programYearId]) : null);
 
-  // Game-Day Mode (P1): inside the live window the status line becomes the door to the bench
-  // console — gated on the SAME status it decorates, and on the very event it names, so it can
-  // never link a different game than the words describe. Outside the window it is plain text
-  // again, absent rather than disabled. ONE copy of the line; only the wrapper changes.
-  const consoleHref = status?.kind === 'game_day' && gameDayConsole?.eventId === status.event.id
-    ? gameDayConsole.href
-    : null;
-  const gameDayLine = status?.kind === 'game_day' ? (
+  // Game-Day Mode (P1): on a tablet the game-day status is the door to the bench console inside the live window (the facts
+  // rule gates `benchHref` on the very event the status names). ONE copy of the line; only the wrapper changes.
+  const gameDayLine = s?.kind === 'game_day' ? (
     <>
       <span className={styles.teamHeaderToday}>Game day</span>
       <span className={styles.teamHeaderStack}>
-        <span className={styles.teamHeaderStackKey}>{gameDayWho(status.event)}</span>
+        <span className={styles.teamHeaderStackKey}>{s.who ?? 'Game day'}</span>
         <span className={styles.teamHeaderStackValue}>
-          {mastheadWhen(status.event.startsAt, status.daysAway).time}
-          {consoleHref ? ' · Open the bench ›' : ''}
+          {s.time}
+          {s.benchHref ? ' · Open the bench ›' : ''}
         </span>
       </span>
     </>
   ) : null;
+  // The scouting reminder speaks only for the season the status was computed for (the facts rule's own gate).
+  const status = season?.programYearId === statusYearId ? rawStatus : null;
+
+  // ── The two lines ──
+  // The name: the page's (an <h1>), the way back's (one level down), or — on an address no row lights, which today is only
+  // a redirect on its way — the team's own name, with the line then starting at the club.
+  const back = desk?.kind === 'back' ? desk : null;
+  const named = desk?.kind === 'name' ? desk.name : null;
+  const name = named !== null
+    ? <h1 className={styles.teamBarName}>{named}</h1>
+    : <span className={styles.teamBarName}>{back ? back.label : teamName}</span>;
+  // The small line's words. Every word shows on a tablet; the club and the season (and the record on game day) are a
+  // tablet's only. The dot is drawn before every word but the first one a width shows — the first word on a tablet (CSS
+  // `:first-child`), the first phone word on a phone (`data-lead-phone`) — so a hidden word never strands a dot.
+  type Word = { key: string; text: string; tabletOnly?: boolean; strong?: boolean };
+  const words: Word[] = [
+    ...(desk ? [{ key: 'team', text: teamName }] : []),
+    ...(facts.club ? [{ key: 'club', text: facts.club, tabletOnly: true }] : []),
+    ...(facts.season && !seasonFinished ? [{ key: 'season', text: facts.season, tabletOnly: true }] : []),
+    ...(record ? [{ key: 'record', text: record, tabletOnly: gameDay, strong: true }] : []),
+  ];
+  const phoneLead = words.find(w => !w.tabletOnly)?.key;
+  // The chips: Draft at both widths; Game day and Complete on a phone only — on a tablet the status at the bar's right end
+  // already says them (with the bench door and the final record).
+  const chip = (cls: string) => `${styles.teamBarChip} ${cls}`;
+  const chips = (
+    <>
+      {facts.state && <span className={chip(styles.seasonChip)}>{facts.state}</span>}
+      {gameDay && <span className={chip(styles.teamHeaderToday)} data-phone-only>Game day</span>}
+      {seasonFinished && <span className={chip(styles.seasonChip)} data-phone-only>Complete</span>}
+    </>
+  );
+  const lineWords = words.map(w => (
+    <span
+      key={w.key}
+      className={`${styles.teamBarWord}${w.strong ? ` ${styles.teamHeaderRecord}` : ''}`}
+      data-lead-phone={w.key === phoneLead || undefined}
+      data-tablet-only={w.tabletOnly || undefined}
+    >
+      {w.text}
+    </span>
+  ));
+  // Words first, then the chips (a chip never carries a dot): "14U AA · 3-2-1", "14U AA [GAME DAY]", "16U AA [COMPLETE]".
+  const line = <>{lineWords}{chips}</>;
 
   return (
     <>
-    {/* role="banner": a <header> nested in <main> gets NO implicit landmark; admin's event
-        header sets this explicitly for the identical mount position (AdminEventHeader:137). */}
+    {/* role="banner": a <header> nested in <main> gets NO implicit landmark; admin's event header sets it the same way. */}
     <header
       ref={headerRef}
       role="banner"
-      /* -1: never in the tab order; focusable so a script (or a future control) can land here. It was
-         the landing spot for keyboard focus when the collapse hid a control — the collapse is gone. */
       tabIndex={-1}
-      className={`${styles.teamHeader} ${styles.teamHeaderPhoneRest}${onChat ? ` ${styles.teamHeaderPhoneChat}` : ''}`}
+      className={`${styles.teamHeader}${onChat ? ` ${styles.teamHeaderPhoneChat}` : ''}`}
     >
       <div className={styles.teamHeaderRow}>
-        <div className={styles.teamHeaderLeft}>
-          {/* The name — and, on a phone with somewhere to switch to, the switcher's door (stage 1 · B1).
-              The chevron sits OUTSIDE the truncating span so a long name loses its tail, never its
-              chevron; the button keeps the "?"'s 44px tap trick (a 4px overhang above and below the
-              36px line — the bar does not grow). */}
-          <span className={styles.teamHeaderNameRow}>
-            {canSwitch ? (
-              <button
-                ref={switchButtonRef}
-                type="button"
-                className={styles.teamHeaderSwitch}
-                aria-haspopup="menu"
-                aria-expanded={switchOpen}
-                aria-controls={switchOpen ? 'coach-team-sheet' : undefined}
-                title="Switch team"
-                onClick={() => setSwitchOpenAt(o => (o === pathname ? null : pathname))}
-              >
-                <span className={styles.teamHeaderName}>{teamName}</span>
-                <ChevronDown size={16} aria-hidden className={styles.teamHeaderSwitchChevron} />
-              </button>
-            ) : (
-              <span className={styles.teamHeaderName}>{teamName}</span>
-            )}
-          </span>
-          <div className={styles.teamHeaderMeta}>
-            {/* The club, FIRST segment of the meta line (2026-08-18, direction B — it used to be
-                its own eyebrow line above the name). Still absent on a standalone team workspace:
-                its only possible value there is "Coaches Portal", which the top strip already says
-                beside the wordmark, so the bar would be a carbon copy of its own chrome. A club's
-                name IS information, and since the 2026-08-17 slimdown this is the ONLY place the
-                club is named — which is why B MOVED it rather than dropping it.
-                ⚠ It joins the same sibling list as the season and the record, so the dot separator
-                (drawn between siblings, never punctuated into a string) still cannot orphan a dot
-                when this segment is absent. */}
-            {!isTeamWorkspace && <span>{orgName}</span>}
-            {seasonText && <span>{seasonText}</span>}
-            {/* An archive's record is stated on the right, beside its Complete chip. */}
-            {!seasonFinished && record && (
-              <span className={styles.teamHeaderRecord}>{formatRecord(record)}</span>
-            )}
-          </div>
+        {back && (
+          <>
+            <Link href={back.href} className={styles.teamBarBack} aria-label={`Back to ${back.label}`}>
+              <ArrowLeft size={18} aria-hidden />
+            </Link>
+            <span className={styles.teamBarBackRule} aria-hidden />
+          </>
+        )}
+        <div className={`${styles.teamBarIdentity}${canSwitch ? ` ${styles.teamBarIdentityDoor}` : ''}`}>
+          {name}
+          {canSwitch ? (
+            /* ONE 44px target over the name and this line (R4): the button's own box reaches up over the name (a top
+               padding the size of the name's line, given back by a negative margin) and 4px below the line, so the bar
+               keeps its height and a tap anywhere on the two lines opens Your teams. Positioned, so it lies over the name;
+               the <h1> stays outside the button. */
+            <button
+              ref={switchButtonRef}
+              type="button"
+              className={`${styles.teamBarLine} ${styles.teamHeaderSwitch}`}
+              aria-haspopup="menu"
+              aria-expanded={switchOpen}
+              aria-controls={switchOpen ? 'coach-team-sheet' : undefined}
+              onClick={() => setSwitchOpenAt(o => (o === pathname ? null : pathname))}
+            >
+              {/* The button is named by what it shows — the team, its chip and its record — then what it does, so a screen
+                  reader hears the season's facts and voice control can say the visible words (WCAG 2.5.3; /review
+                  2026-11-12: an aria-label had replaced them). */}
+              {line}
+              <span className="sr-only">, switch team</span>
+              <ChevronDown size={14} aria-hidden className={styles.teamHeaderSwitchChevron} />
+            </button>
+          ) : (
+            <div className={styles.teamBarLine}>{line}</div>
+          )}
         </div>
 
-        {/* The right slot — identity left, live status right, admin's event-header pattern. It holds
-            the one thing that changes day to day, which is also what stops a standalone team's bar
-            being 70% empty space. Same slot in every season state: game day, next up, or Complete. */}
-        <div className={styles.teamHeaderRight}>
-          {/* ⚠ THE STATUS DOES NOT RENDER AT PHONE WIDTH — owner ruling 2026-08-24, game day
-              included. This wrapper is `display: contents` above 640 (so the chip/stack stay
-              direct flex children of the row and desktop is byte-identical) and `display: none`
-              below it. It exists for ONE reason: the help "?" beneath is chrome, not a fact, and
-              hiding `.teamHeaderRight` wholesale would have taken it too — the kind of thing a
-              width rule removes silently. See `.teamHeaderStatus` for why the slot is removed
-              rather than shrunk, and where the bench console's other phone doors are. */}
-          <span className={styles.teamHeaderStatus}>
-            {seasonFinished ? (
-              <>
-                {/* Presentational, and the ONE place a finished season is named (see docblock). No
-                    status on a season that has ended: it has no next thing, and nothing live may be
-                    read for it. */}
-                <span className={styles.seasonChip}>Complete</span>
-                {record && <span className={styles.teamHeaderStat}>Final {formatRecord(record)}</span>}
-              </>
-            ) : gameDayLine ? (
-              consoleHref
-                ? <Link href={consoleHref} className={styles.teamHeaderConsoleLink}>{gameDayLine}</Link>
-                : gameDayLine
-            ) : status ? (
-              <span className={styles.teamHeaderStack}>
-                <span className={styles.teamHeaderStackKey}>Next</span>
-                <span className={styles.teamHeaderStackValue}>{nextLabel(status)}</span>
-              </span>
-            ) : null}
-          </span>
+        {/* The tablet's status (641–900): game day, next up, or Complete with the final record. ⚠ NOT ON A PHONE (owner
+            ruling 2026-08-24, game day included): its game-day door cut to "6:30 p.m. · O…" at 390, and a door that ends in
+            an ellipsis is not a door. The phone's small line carries the Game day / Complete CHIP instead (F2, 2026-11-12),
+            which is a fact, not a door; the bench keeps its two phone doors (the Schedule's game row, the Overview's card). */}
+        <span className={styles.teamHeaderStatus}>
+          {s?.kind === 'complete' ? (
+            <>
+              <span className={styles.seasonChip}>Complete</span>
+              {s.finalRecord && <span className={styles.teamHeaderStat}>Final {s.finalRecord}</span>}
+            </>
+          ) : s?.kind === 'game_day' ? (
+            s.benchHref
+              ? <Link href={s.benchHref} className={styles.teamHeaderConsoleLink}>{gameDayLine}</Link>
+              : gameDayLine
+          ) : s?.kind === 'next' ? (
+            <span className={styles.teamHeaderStack}>
+              <span className={styles.teamHeaderStackKey}>Next</span>
+              <span className={styles.teamHeaderStackValue}>{s.when}</span>
+            </span>
+          ) : null}
+        </span>
 
-          {/* The page's help "?" — moved out of the page-title band 2026-08-25 (owner ruling;
-              `COACH_PAGE_TITLE_BAND_PLAN.md` §5). It is drawn LAST, after the status stack, so the
-              2026-08-11 clause — "its own slot, always LAST, top-right at every width" — reads
-              literally rather than approximately.
-
-              ⚠ OUTSIDE `.teamHeaderStatus` on purpose. That wrapper is `display: none` at ≤640
-              (the 2026-08-24 status ruling); the "?" is not a status and must survive there.
-              ⚠ It STAYS through scroll at every width since stage 1 · B2 (2026-09-21) — the phone
-              collapse that used to fold it is gone, so "help stops scrolling away" is true on a
-              phone now as well as on a desktop.
-              ⚠ Renders nothing until a page publishes: a screen with no help topic leaves this
-              corner empty rather than offering a door onto nothing. */}
-          <CoachPageHelpSlot />
-        </div>
+        {/* The page's "?" — LAST, at the bar's right end, through scroll (F3 A). Its width is held while nothing is
+            published, so the line does not re-cut when a page's help arrives after hydration. */}
+        <CoachPageHelpSlot reserve />
       </div>
 
-      {/* Game-week book nudge (Scouting book P2, mockup Stage 6; re-anchored into the sticky bar
-          2026-08-11): an attached row, not a floating card in page flow beneath it. Gated on the
-          SAME `status` the bar renders from, so it can never speak for an archive or a mismatched
-          ?year= season — and only for the very game the status names. When the status is already
-          the Game-day line, that line has named the opponent and "today" already, so the row
-          leads with the one new fact instead of repeating them. */}
+      {/* Game-week book nudge (Scouting book P2): an attached row of the pinned bar, gated on the SAME status the bar renders
+          from and only for the very game the status names. */}
       {status && scoutingNudge && scoutingNudge.eventId === status.event.id && !nudgeDismiss.dismissed && (
         <div className={styles.teamHeaderNudge}>
           <Link href={scoutingNudge.href} className={styles.teamHeaderNudgeLink}>
@@ -357,17 +306,12 @@ function CoachTeamHeaderInner({
         </div>
       )}
     </header>
-    {/* THE TEAM SHEET (stage 1 · B1) — rendered as a SIBLING of the header, never inside it. The
-        header is a stacking context (`z-index: 40`), and a fixed sheet inside it would sit under
-        anything the page paints above 40 — the autosave pill (250), the console's own sheet — so
-        the scrim could not cover them and an error pill could intercept a tap on the sheet's corner
-        (/review 2026-09-21). Out here the sheet frame's own z-index (260: over the pill, under the
-        bar) decides; its dim and sheet are fixed, so they add no box to `.coachesMain`. Gated on
-        `canSwitch` as well as `switchOpen`: a viewport crossing 900 while the sheet is open swaps the
-        button for plain text, and the sheet must go with it rather than stay open with no trigger. */}
+    {/* THE TEAM SHEET — a SIBLING of the header, never inside it: the header is a stacking context (z-index 40), and a fixed
+        sheet inside it would sit under anything the page paints above 40 (the autosave pill at 250). Gated on `canSwitch`
+        too: a viewport crossing 900 while the sheet is open swaps the button away, and the sheet goes with it. */}
     {canSwitch && switchOpen && (
       <CoachTeamSwitchSheet
-        base={coachesBase}
+        orgSlug={orgSlug}
         currentTeamId={teamId}
         assignments={assignments}
         closedAssignments={closedAssignments}
@@ -375,22 +319,14 @@ function CoachTeamHeaderInner({
         opener={switchButtonRef}
       />
     )}
-    {/* THE OVERVIEW'S PAGE LINE (stage 1 · B2 = B, owner ruling 2026-09-21). On a phone the bar
-        above is one line on every screen, so the club and the season — the Overview's own second
-        line since 2026-08-18, and the ONLY place a phone names the club since the 2026-08-17
-        slimdown — move here: an UNPINNED line directly under the bar, same words, same place at
-        rest, scrolling away with the page. Rendered on the Overview only and `display: none`
-        above 640, where the bar's own meta line still carries both (so no width shows them twice).
-        ⚠ A SIBLING of the sticky header, never inside it: the layout's ResizeObserver measures
-        `headerRef` for `--coach-header-h`, and this line must not count as pinned chrome. The
-        fragment keeps the header a DIRECT child of `.coachesMain` (its sticky pin and its
-        padding-cancelling margins depend on that — see the team layout's note). The dot separator
-        is drawn between siblings, as the meta line draws it, so a standalone team (no club) reads
-        "2026 Season" with no orphan dot. */}
-    {onOverview && (seasonText || !isTeamWorkspace) && (
+    {/* THE OVERVIEW'S CLUB · SEASON STRIP (stage 1 · B2, kept by F5): on a phone the one place the club is named — an
+        UNPINNED line directly under the bar, scrolling away with the page. Overview only, `display: none` above 640 (the
+        tablet's small line carries both). ⚠ A SIBLING of the sticky header, never inside it: the ResizeObserver measures
+        the header for `--coach-header-h`, and this line must not count as pinned chrome. */}
+    {onOverview && (facts.season || !isTeamWorkspace) && (
       <div className={styles.teamHeaderPageLine} data-team-page-line>
         {!isTeamWorkspace && <span>{orgName}</span>}
-        {seasonText && <span>{seasonText}</span>}
+        {facts.season && <span>{facts.season}</span>}
       </div>
     )}
     </>
@@ -404,27 +340,4 @@ function nudgeDay(startsAt: string, daysAway: number): string {
   return formatInOrgZone(startsAt, { weekday: 'long' });
 }
 
-/**
- * The status copy (A2). Copy lives HERE and selection lives in `coach-masthead-status` — the
- * Chunk I split, so the tested part stays the part that can be wrong.
- *
- * Sport-neutral by rule: "Game day", never "first pitch"; a league game and a tournament game are
- * both a "game". A game names its opponent when it has one and falls back to the event's own name
- * (which is how a mirrored tournament game reads), so the slot never renders an empty label.
- */
-function gameDayWho(event: NonNullable<MastheadStatus>['event']): string {
-  return event.opponent?.trim() || event.name?.trim() || 'Game day';
-}
-
-function nextLabel(status: NonNullable<MastheadStatus>): string {
-  const { day, time } = mastheadWhen(status.event.startsAt, status.daysAway);
-  const word = eventWord({ eventType: status.event.eventType as RepEventType, isScrimmage: status.event.isScrimmage });
-  return `${day} ${time} ${word}`;
-}
-
-/**
- * ⚠ The Suspense boundary that wrapped this is GONE with the `?year=` read (P2, 2026-08-16).
- * `useSearchParams()` forces one on any component rendered from a layout, and this component's
- * only reason to call it was resolving which season the coach had dialled to. There is no dial.
- */
 export default CoachTeamHeaderInner;

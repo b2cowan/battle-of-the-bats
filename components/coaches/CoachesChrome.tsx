@@ -59,8 +59,8 @@ export default function CoachesChrome({
 
   // ⚖ THE BAND under the strip (navigation Phase 4b, R1, owner 2026-11-11). A room that has tabs holds the band's 45px open by
   // ADDRESS (`coachBandAt` — so the server's paint already has it and the tabs arrive into room already made); its tab bar
-  // portals itself into the slot (`HubTabBar band`, `HubBandSlot`). Above 900 only — CSS hides the slot and zeroes
-  // `--coach-band-h` on a phone, which keeps its tab row in the page exactly as it was (Phase 5). A bar with nothing to show
+  // portals itself into the slot (`HubTabBar band`, `HubBandSlot`) above 900. On a phone the slot is an empty, unstyled div
+  // and the tab row stays in the page, pinned under the team bar by the same `--coach-band-h` (navigation Phase 5, F4). A bar with nothing to show
   // (a row of one tab) gives the band back (`reportEmpty`) so a coach is never left an empty strip.
   const teamId = coachTeamIdIn(pathname);
   const bandRoom = !!teamId && coachBandAt(pathname, `/${orgSlug}/coaches/teams/${teamId}`);

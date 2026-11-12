@@ -1,0 +1,623 @@
+<title>Coach Phone Bar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: the house drawing page (2026-10-28) — a document on a cool slate ground, sticky section tabs, a View row
+   (Everything / Show only what differs · True size / Fit to width); product specimens in the product's own warm skin. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --ok: #2E6B3A; --ok-soft: #E2F0E4; --warn: #8A5A00;
+  --warn-soft: #F7ECD4; --bad: #A2321F; --bad-soft: #F6E0DA;
+  --doc-sans: 'Inter', system-ui, sans-serif; --doc-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1520px; margin: 0 auto; }
+header.doc { padding-block: 22px 10px; }
+header.doc h1 { font: 700 30px/1.1 var(--doc-display); letter-spacing: .01em; margin: 0 0 6px; text-wrap: balance; }
+header.doc p { margin: 0; color: var(--muted); max-width: 82ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); overflow-x: auto; white-space: nowrap; }
+nav.tabs button { font: 600 14px var(--doc-sans); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 13px 12px 11px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+section.panel { display: none; } section.panel.on { display: block; }
+h2 { font: 700 24px/1.15 var(--doc-display); margin: 18px 0 6px; letter-spacing: .01em; text-wrap: balance; }
+h3 { font: 650 16px/1.3 var(--doc-sans); margin: 22px 0 6px; }
+p, li { max-width: 84ch; } .muted { color: var(--muted); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card h3 { margin-top: 0; }
+.tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin: 10px 0 18px; }
+table.t { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.t th { font: 700 12px var(--doc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+table.t td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t td.n { text-align: right; white-space: nowrap; font-family: var(--doc-mono); font-size: 12.5px; }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); } .spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.pair { display: flex; gap: 22px; align-items: flex-start; width: max-content; transform-origin: 0 0; }
+.pair > div > .lbl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; max-width: 390px; }
+.pair > div > .lbl.after { color: var(--accent); }
+.pair > div > .lbl.ref { color: var(--warn); }
+.mk { position: absolute; z-index: 30; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 2px solid #fff; background: var(--mark); color: var(--mark-ink); font: 700 11px/18px var(--doc-mono); text-align: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.mk.inl { position: static; display: inline-block; border-color: transparent; vertical-align: 1px; margin-right: 6px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; } .ask ol { margin: 6px 0 0; padding-left: 22px; } .ask li { margin: 4px 0; }
+.ask .why { font-size: 14px; color: var(--muted); margin: 8px 0 0; }
+.rec { font-weight: 650; color: var(--accent); }
+.flag { border-left: 3px solid var(--warn); padding: 8px 12px; background: var(--warn-soft); border-radius: 0 8px 8px 0; margin: 10px 0; max-width: 84ch; }
+.tasks li { margin: 5px 0; }
+@media (prefers-reduced-motion: no-preference) { .ask { transition: outline-color .3s; } }
+
+/* ───────── PRODUCT SPECIMEN — the warm skin as shipped (fixed colours in both document themes) ───────── */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #776D5D; --ln: rgba(70,55,30,.12);
+  --ln2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --amber-soft: #F4E7CF; --red: #B23A26; --red-soft: #F9E3DE;
+  position: relative; overflow: hidden; background: var(--paper); color: var(--ink); font: 400 14px/1.4 'Inter', sans-serif;
+  border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.12); flex: none; }
+.fr * { box-sizing: border-box; }
+.fr .grid { position: absolute; inset: 0; background-image: linear-gradient(var(--ln) 1px, transparent 1px), linear-gradient(90deg, var(--ln) 1px, transparent 1px); background-size: 40px 40px; opacity: .45; pointer-events: none; }
+.fr svg { flex: none; display: block; }
+/* the phone bar — before: today's ONE 36px line (name ▾ · record … "?") */
+.b0 { position: absolute; top: 0; left: 0; right: 0; height: 37px; background: var(--white); border-bottom: 1px solid var(--ln2); display: flex; align-items: center; padding-left: 16px; z-index: 4; }
+.b0 b { font: 700 14px 'Inter'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.b0 .ch { margin: 0 8px 0 4px; color: var(--ink2); }
+.b0 .rec { font: 700 11px 'IBM Plex Mono'; color: var(--ink2); white-space: nowrap; }
+.g44 { width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink2); flex: none; }
+.b0 .g44 { margin: -4px 0 -4px auto; }
+/* the phone bar — after: AdminKitEventHeader's measure (16px bold name, 2px, an 11px mono small line), 53px */
+.b1 { position: absolute; top: 0; left: 0; right: 0; background: var(--white); border-bottom: 1px solid var(--ln2); z-index: 4; }
+.b1 .r { display: flex; align-items: center; min-height: 52px; padding: 7px 4px 7px 16px; gap: 6px; }
+.b1 .t { min-width: 0; flex: 1; position: relative; }
+.b1 .t.lane { padding-right: 20px; }
+.b1 .t .chv { position: absolute; right: 0; bottom: 0; color: var(--ink2); display: inline-flex; }
+.b1 .t b { display: block; font: 700 16px/19px 'Inter'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.b1 .t small { display: flex; align-items: center; gap: 5px; margin-top: 2px; font: 400 11px/14px 'IBM Plex Mono'; color: var(--ink2); white-space: nowrap; min-width: 0; }
+.b1 .t small .tn { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.b1 .t small .dot { opacity: .45; flex: none; }
+.b1 .t small .fx { flex: none; }
+.b1 .t small svg { color: var(--ink2); }
+.b1 .bk { width: 44px; height: 44px; display: grid; place-items: center; margin-left: -12px; color: var(--ink2); flex: none; }
+.b1 .rule { width: 1px; align-self: stretch; margin: 2px 6px 2px 0; background: var(--ln); flex: none; }
+.b1 .st { flex: none; text-align: right; font: 600 12px/1.3 'Inter'; color: var(--ink); white-space: nowrap; padding-right: 2px; }
+.b1 .st i { display: block; font: 700 9px 'Inter'; letter-spacing: .12em; color: var(--ink3); font-style: normal; }
+.chip { font: 600 10px/1 'IBM Plex Mono'; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid; white-space: nowrap; flex: none; }
+.chip.ok { color: var(--olive); background: var(--olive-soft); border-color: rgba(87,101,30,.3); }
+.chip.live { color: var(--red); background: var(--red-soft); border-color: rgba(178,58,38,.35); }
+.chip.nt { color: var(--ink2); background: #F1EEE6; border-color: var(--ln2); }
+.nudge { display: flex; align-items: center; gap: 8px; padding: 0 4px 0 16px; height: 34px; border-top: 1px solid var(--ln); font: 500 12.5px 'Inter'; color: var(--olive); }
+.nudge span { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* tabs */
+.tabs-r { display: flex; align-items: flex-end; height: 45px; background: var(--white); border-bottom: 1px solid var(--ln2); padding-left: 6px; white-space: nowrap; overflow: hidden; position: relative; }
+.tabs-r.pin { position: absolute; left: 0; right: 0; z-index: 3; }
+.tabs-r span { height: 44px; padding: 0 11px; display: flex; align-items: center; font: 600 14px 'Inter'; color: var(--ink2); border-bottom: 2px solid transparent; flex: none; }
+.tabs-r span.on { color: var(--olive); border-bottom-color: var(--olive); }
+.tabs-r .more { position: absolute; right: 0; top: 0; bottom: 0; width: 56px; display: grid; place-items: center end; padding-right: 6px; background: linear-gradient(90deg, rgba(255,255,255,0), #fff 40%); color: var(--ink2); }
+/* bottom bar */
+.bnav { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; background: var(--white); border-top: 1px solid var(--ln2); display: flex; z-index: 4; }
+.bnav .it { flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 9px; gap: 5px; font: 700 10px 'Inter'; color: var(--ink2); }
+.bnav .it .pill { width: 46px; height: 30px; border-radius: 15px; display: grid; place-items: center; }
+.bnav .it.on { color: var(--olive); } .bnav .it.on .pill { background: var(--olive-soft); }
+/* page */
+.pb { position: absolute; left: 0; right: 0; bottom: 72px; padding: 0 16px; overflow: hidden; }
+.ph { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.ph h4 { margin: 0; font: 700 20px 'Inter'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ph .it { width: 34px; height: 34px; border-radius: 9px; background: var(--olive-soft); border: 1px solid rgba(87,101,30,.25); display: grid; place-items: center; color: var(--olive); flex: none; }
+.ph .act { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.btn { height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; border-radius: 6px; font: 600 14px 'Inter'; background: var(--white); border: 1px solid var(--ln2); white-space: nowrap; }
+.btn.sq { width: 44px; padding: 0; } .btn.lime { background: var(--lime); border-color: transparent; }
+.btn.pillb { border-radius: 999px; background: var(--olive-soft); }
+.qh { width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink2); }
+.vsw { display: inline-flex; background: var(--white); border: 1px solid var(--ln2); border-radius: 999px; padding: 3px; }
+.vsw span { font: 600 13px 'Inter'; padding: 0 16px; height: 38px; display: flex; align-items: center; border-radius: 999px; color: var(--ink2); }
+.vsw span.on { background: var(--olive-soft); color: var(--ink); }
+.pageline { display: flex; gap: 6px; font: 400 11px/14px 'IBM Plex Mono'; color: var(--ink3); padding: 9px 0 0; }
+.pcard { background: var(--white); border: 1px solid var(--ln2); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+.pcard b { display: block; font: 600 15px 'Inter'; } .pcard small { color: var(--ink3); font-size: 13px; }
+.pcard .k { font: 700 10px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); }
+.pcard .big { font: 700 22px 'Inter'; }
+.lcard { background: var(--white); border: 1px solid var(--ln2); border-left: 3px solid #3E6B2E; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; }
+.lcard .h { display: flex; justify-content: space-between; font: 700 10px 'Inter'; letter-spacing: .08em; color: var(--ink2); text-transform: uppercase; }
+.lcard b { display: block; font: 700 15px 'Inter'; margin: 8px 0 4px; }
+.lcard .kv { display: flex; justify-content: space-between; margin-top: 4px; } .lcard .kv span:first-child { font: 700 10px 'Inter'; letter-spacing: .08em; color: var(--ink2); text-transform: uppercase; }
+.ltool { position: absolute; left: 0; right: 0; background: var(--paper); padding: 6px 16px 14px; z-index: 3; border-bottom: 1px solid var(--ln); }
+.ltool .r1, .ltool .r2 { display: flex; align-items: center; gap: 8px; } .ltool .r2 { margin-top: 10px; justify-content: space-between; font: 500 14px 'Inter'; }
+.tbl { background: var(--white); border: 1px solid var(--ln2); border-radius: 8px; overflow: hidden; }
+.tbl .hd, .tbl .tr { display: grid; grid-template-columns: 40px 1fr 1fr; align-items: center; padding: 0 14px; gap: 10px; }
+.tbl .hd { height: 34px; font: 700 11px 'Barlow Condensed'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); border-bottom: 1px solid var(--ln2); }
+.tbl .tr { height: 44px; border-bottom: 1px solid var(--ln); }
+.tbl .tr u { text-decoration-color: rgba(36,30,21,.35); text-underline-offset: 3px; font-weight: 600; }
+/* the sheet (SheetFrame's menu layer: a small-capitals label, 38px grab line, on the bar; dim stops at the bar) */
+.scrim { position: absolute; left: 0; right: 0; top: 0; bottom: 72px; background: rgba(20,16,10,.38); z-index: 8; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 72px; background: var(--white); border-radius: 18px 18px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.25); z-index: 9; padding: 6px 8px 10px; }
+.sheet .grab { width: 38px; height: 4px; border-radius: 2px; background: var(--ln2); margin: 4px auto 10px; }
+.sheet .lab { font: 700 13px 'Barlow Condensed'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); padding: 0 10px; margin: 0 0 4px; }
+.sheet .grp { font: 700 11px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); padding: 12px 10px 4px; }
+.srow { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 10px; border-radius: 8px; font: 600 15px 'Inter'; }
+.srow + .srow { box-shadow: inset 0 1px 0 var(--ln); border-radius: 0 0 8px 8px; }
+.srow .q { margin-left: auto; flex: none; font: 600 11px 'IBM Plex Mono'; color: var(--ink3); }
+.sq10 { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.srow.on { background: var(--olive-soft); color: var(--olive); }
+.srow .sub { display: block; font: 400 12px/16px 'Inter'; color: var(--ink3); }
+.srow .tx { flex: 1; min-width: 0; } .srow .tx > span:first-child { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srow .ck { color: var(--olive); }
+.sq12 { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.tile { width: 24px; height: 24px; border-radius: 6px; flex: none; display: grid; place-items: center; overflow: hidden; font: 700 10px/1 'Inter'; }
+.tile.ini { background: #fff; box-shadow: inset 0 0 0 1px var(--ln2); color: var(--ink); }
+.tile.img { background: #fff; box-shadow: inset 0 0 0 1px var(--ln2); } .tile.img svg { width: 100%; height: 100%; }
+.mrow { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 10px; font: 500 15px 'Inter'; border-radius: 8px; }
+.mrow.hl { background: var(--olive-soft); box-shadow: inset 3px 0 0 #B5470F; }
+.mgrid { display: grid; grid-template-columns: 1fr 1fr; }
+.mdiv { height: 1px; background: var(--ln); margin: 6px 6px; }
+/* annotations */
+.hit { position: absolute; border: 1.5px dashed #B5470F; border-radius: 6px; z-index: 25; cursor: pointer; background: none; padding: 0; }
+.hit:hover { background: rgba(181,71,15,.06); }
+.hit span { position: absolute; left: 4px; bottom: -21px; font: 600 9px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 3px; white-space: nowrap; }
+.meas { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px dashed #B5470F; z-index: 26; pointer-events: none; }
+.meas span { position: absolute; right: 6px; top: 2px; font: 600 9.5px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 3px; white-space: nowrap; }
+.band { position: absolute; left: 0; width: 10px; z-index: 27; background: rgba(181,71,15,.22); border-right: 2px solid #B5470F; cursor: pointer; padding: 0; border-top: 0; border-bottom: 0; border-left: 0; }
+.glance { background: var(--white); border: 1px solid var(--ln2); border-radius: 8px; overflow: hidden; }
+.glance div { display: flex; align-items: center; height: 45px; padding: 0 14px; border-bottom: 1px solid var(--ln); font: 600 14px 'Inter'; gap: 8px; }
+.glance div span { margin-left: auto; font: 500 13px 'Inter'; color: var(--ink2); }
+.gcap { font: 700 11px 'Inter'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); margin: 0 0 8px; }
+.pstrip { margin: 0 -16px; background: var(--white); border-bottom: 1px solid var(--ln2); font: 400 11px/14px 'IBM Plex Mono'; color: var(--ink3); padding: 4px 16px 5px; display: flex; gap: 6px; }
+.ptile4 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.ptile4 div { border: 1px solid var(--ln2); border-radius: 8px; padding: 9px 11px; font-size: 12px; color: var(--ink3); }
+.ptile4 b { display: block; font: 700 15px 'Inter'; color: var(--ink); margin: 3px 0 1px; }
+.ptile4 i { font: 700 9.5px 'IBM Plex Mono'; letter-spacing: .08em; font-style: normal; color: var(--ink2); }
+.illus { position: absolute; left: 16px; right: 16px; z-index: 6; font: 600 10px 'IBM Plex Mono'; color: #B5470F; text-align: center; }
+#pop { position: fixed; z-index: 50; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(520px, calc(100vw - 32px)); max-height: 70vh; overflow: auto; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.28); padding: 4px 16px 14px; }
+#pop .x { position: sticky; top: 0; float: right; margin: 6px -8px 0 0; width: 36px; height: 36px; border: 0; background: var(--card); color: var(--muted); font-size: 20px; cursor: pointer; border-radius: 8px; }
+#pop .ask { border: 0; padding: 8px 0 0; margin: 0; }
+.ghost { border: 1px dashed var(--ln2); border-radius: 8px; padding: 14px; color: var(--ink3); font-size: 13px; background: rgba(255,255,255,.5); }
+body.only-diff .fr .same { opacity: .16; }
+body.only-diff .fr .grid { opacity: .12; }
+</style>
+
+<div class="wrap">
+  <header class="doc">
+    <h1>The Coaches Portal on a phone: the bar names the page</h1>
+    <p>Navigation Phase 5, the gate (2026-11-12). Today the phone's bar names the team and every page repeats its own title below it. Here the bar names the page, the team rides the small line and opens Your teams, as the tournament phone has since Phase 3. Every screen is drawn whole at 390 × 844, at true size, from the shipped parts and the numbers measured on the dev server today. The orange markers open the ask they belong to.</p>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
+  <div class="viewrow">
+    <span>View</span>
+    <span class="seg" role="group" aria-label="View"><button type="button" id="v-all" aria-pressed="true">Everything</button><button type="button" id="v-diff" aria-pressed="false">Show only what differs</button></span>
+    <span>Size</span>
+    <span class="seg" role="group" aria-label="Size"><button type="button" id="s-true" aria-pressed="true">True size</button><button type="button" id="s-fit" aria-pressed="false">Fit to width</button></span>
+  </div>
+  <main id="panels"></main>
+</div>
+
+<script>
+(function () {
+'use strict';
+var P = {
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+  cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  notebook: '<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4M2 6h4M2 10h4M2 14h4M2 18h4M18.4 2.6a2.17 2.17 0 0 1 3 3L16 11l-4 1 1-4Z"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>',
+  down: '<path d="m6 9 6 6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>', left: '<path d="m12 19-7-7 7-7M19 12H5"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>', dl: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  ul: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>', archive: '<rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/>',
+  dollar: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>', bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  user: '<circle cx="12" cy="7" r="4"/><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>', msg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>', spark: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/>',
+  house: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .71-1.53l7-6a2 2 0 0 1 2.58 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>', shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>', globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/>',
+  trend: '<path d="m22 7-8.5 8.5-5-5L2 17M16 7h6v6"/>', bars: '<path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>', listord: '<path d="M10 6h11M10 12h11M10 18h11M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>',
+  clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>', usercog: '<circle cx="10" cy="7" r="4"/><path d="M10.3 15H7a4 4 0 0 0-4 4v2"/><circle cx="18" cy="18" r="3"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>', chevl: '<path d="m15 18-6-6 6-6"/>', filter: '<path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>', dots: '<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>'
+};
+function I(n, s, w) { return '<svg width="' + (s || 14) + '" height="' + (s || 14) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[n] + '</svg>'; }
+function mk(id, x, y) { return '<button type="button" class="mk" data-go="' + id + '" style="left:' + x + 'px;top:' + y + 'px" aria-label="Open ask ' + id + '">' + id + '</button>'; }
+function frame(w, h, inner) { return '<div class="fr" style="width:' + w + 'px;height:' + h + 'px"><div class="grid"></div>' + inner + '</div>'; }
+function pair(items) {
+  return '<div class="stage"><div class="pair">' + items.map(function (x) { return '<div><div class="lbl ' + (x[2] || '') + '">' + x[0] + '</div>' + x[1] + '</div>'; }).join('') + '</div></div>';
+}
+function spec(title, note, body) { return '<div class="spec"><div class="cap"><b>' + title + '</b>' + (note ? '<span>' + note + '</span>' : '') + '</div>' + body + '</div>'; }
+
+/* ── fiction ── */
+var TEAM = '14U AA', CLUB = 'Lakeshore Minor Baseball', REC = '3-2-1', SEASON = '2026 Season';
+var LONGTEAM = 'Lakeshore Minor Baseball 14U AA Blue Jays';
+var CHIP = { draft: '<span class="chip nt">Draft</span>', gd: '<span class="chip live">Game day</span>', done: '<span class="chip ok">Complete</span>' };
+
+/* ── the bars ── */
+function bar0(o) { /* today: one 36px line */
+  o = o || {};
+  return '<div class="b0 ' + (o.cls || '') + '"><b>' + (o.team || TEAM) + '</b>' + (o.chev === false ? '<span style="width:8px"></span>' : '<span class="ch">' + I('down', 16) + '</span>') +
+    (o.rec === '' ? '' : '<span class="rec">' + (o.rec || REC) + '</span>') + (o.help === false ? '' : '<span class="g44">' + I('help', 20, 1.8) + '</span>') + '</div>';
+}
+/* after: the page's name over the small line (team · chip · record ▾); a 44px back door one level down; the "?" at the end (ask F3 A) */
+function line(o) {
+  var parts = '<span class="tn">' + (o.team || TEAM) + '</span>';
+  if (o.extra) parts += o.extra;
+  if (o.chip) parts += o.chip;
+  if (o.rec !== '' && !o.chip || o.recWithChip) parts += '<span class="dot">·</span><span class="fx">' + (o.rec || REC) + '</span>';
+  return parts;
+}
+function bar1(o) {
+  o = o || {};
+  var inner = '<div class="r">' + (o.back ? '<span class="bk">' + I('left', 18) + '</span><span class="rule"></span>' : '') +
+    '<div class="t' + (o.chev === false ? '' : ' lane') + '"><b>' + o.name + '</b><small>' + line(o) + '</small>' + (o.chev === false ? '' : '<span class="chv">' + I('down', 14) + '</span>') + '</div>' +
+    (o.status ? '<span class="st">' + o.status + '</span>' : '') +
+    (o.help === false ? '' : '<span class="g44">' + I('help', 20, 1.8) + '</span>') + '</div>' +
+    (o.nudge ? '<div class="nudge"><span>You play Northside Saturday — 4 observations in the book ›</span><span class="g44" style="width:34px;height:34px">' + I('x', 13) + '</span></div>' : '');
+  return '<div class="b1 ' + (o.cls || '') + '">' + inner + '</div>' +
+    (o.hit ? '<button type="button" class="hit" data-go="F2" aria-label="The team target: ask F2" style="left:' + (o.back ? 52 : 8) + 'px;top:4px;width:' + (o.hitW || (o.help === false ? 330 : 280)) + 'px;height:44px"><span>44px · opens Your teams</span></button>' : '') + (o.marks || '');
+}
+var BAR1H = 53;
+function bnav(on, closed) {
+  var items = closed ? [['archive', 'Season’s End'], ['more', 'More']] : [['grid', 'Overview'], ['cal', 'Schedule'], ['notebook', 'Practices'], ['users', 'Roster'], ['more', 'More']];
+  return '<div class="bnav same">' + items.map(function (x) { return '<div class="it' + (x[1] === on ? ' on' : '') + '"><span class="pill">' + I(x[0], 22, x[1] === on ? 2.4 : 1.8) + '</span>' + x[1] + '</div>'; }).join('') + '</div>';
+}
+function tabsRow(names, on, top, pin, cls, from) {
+  if (from) names = names.slice(from);
+  return '<div class="tabs-r' + (pin ? ' pin' : '') + ' ' + (cls || '') + '" style="' + (pin ? 'top:' + top + 'px' : '') + (from ? ';padding-left:44px' : '') + '">' + (from ? '<span style="position:absolute;left:0;top:0;bottom:0;width:44px;padding:0;justify-content:center;border:0;background:linear-gradient(270deg,rgba(255,255,255,0),#fff 45%)">' + I('chevl', 18) + '</span>' : '') + names.map(function (n) { return '<span class="' + (n === on ? 'on' : '') + '">' + n + '</span>'; }).join('') + '<span class="more">' + I('right', 18) + '</span></div>';
+}
+var MONEY_TABS = ['Overview', 'Budget', 'Player dues', 'Fundraising', 'Ledger', 'Club', 'Budget vs. Actual'];
+var INS_TABS = ['Dashboard', 'Results', 'Attendance', 'Playing time', 'Development', 'Awards', 'Scouting book'];
+function body(top, html, cls, foot) { return '<div class="pb ' + (cls || '') + '" style="top:' + top + 'px' + (foot === 0 ? ';bottom:0' : '') + '">' + html + '</div>'; }
+function paperHead(icon, title, acts, chips) {
+  return '<div class="ph chgb" style="margin:16px 0 14px"><span class="it">' + I(icon, 18) + '</span><h4>' + title + '</h4>' + (chips || '') + '<span class="act">' + (acts || '') + '</span></div>';
+}
+function actRow(acts) { return '<div class="ph" style="margin:14px 0 12px"><span class="act">' + acts + '</span></div>'; }
+var SQ = function (n, lime) { return '<span class="btn sq' + (lime ? ' lime' : '') + '">' + I(n, 18) + '</span>'; };
+
+/* ── page bodies (drawn from the shipped screens, 2026-11-12 probe shots) ── */
+var ROSTER_NAMES = ['Avery Brooks', 'Blake Chen', 'Casey Diaz', 'Devon Ellis', 'Emerson Fox', 'Frankie Gill', 'Gray Hall', 'Harper Ito', 'Indigo Jay', 'Jules Kane', 'Kai Lowe', 'Logan Moss', 'Morgan Nye'];
+function rosterRest() {
+  return '<div class="same"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="vsw"><span class="on">List</span><span>Depth chart</span></span><span style="margin-left:auto">' + SQ('dl') + '</span></div>' +
+    '<div class="tbl"><div class="hd"><span>#</span><span>Player</span><span>Positions</span></div>' + ROSTER_NAMES.map(function (n, i) { return '<div class="tr"><span>' + (i + 1) + '</span><span><u>' + n + '</u></span><span>' + ['P', 'SS', 'C', 'CF', '3B', '1B', 'LF', '2B', 'RF', 'P', 'C', 'SS', 'OF'][i] + '</span></div>'; }).join('') + '</div></div>';
+}
+var STRIP = function (season) { return '<div class="pstrip"><span>' + CLUB + '</span><span style="opacity:.45">·</span><span>' + (season || SEASON) + '</span></div>'; };
+function overviewRest() {
+  return '<div class="same"><div class="gcap">Your team at a glance</div><div class="glance">' +
+    [['Roster', '13 players'], ['Next up', 'Sun 9:30 a.m. practice'], ['Record', '3-2-1'], ['Tournaments', 'Winter Indoor · Dec 12'], ['Money', 'Cash on hand $2,995.00'], ['Attendance', '92% this month']].map(function (r) { return '<div>' + r[0] + '<span>' + r[1] + '</span>' + I('right', 14) + '</div>'; }).join('') + '</div></div>';
+}
+function moneyCards() {
+  return '<div class="same">' +
+    '<div class="pcard"><span class="k">Bills settled</span><div class="big">$1,944.00 <small>of $3,733.00</small></div><small>1 overdue</small></div>' +
+    '<div class="pcard"><span class="k">Cash on hand</span><div class="big">$2,995.00</div><small>Bank check Nov 2 · matched</small></div>' +
+    '<div class="pcard"><span class="k">Player dues</span><b>11 of 13 families paid</b><small>$740.00 still owed</small></div>' +
+    '<div class="pcard"><span class="k">Next 30 days</span><b>Tournament entry, Winter Indoor</b><small>Due Dec 1 · $450.00</small></div>' +
+    '<div class="pcard"><span class="k">Fundraising</span><b>Bottle drive · $612.00</b><small>Goal $800.00</small></div>' +
+    '<div class="pcard"><span class="k">Budget</span><b>On plan</b><small>Spent $3,210.00 of $6,400.00</small></div></div>';
+}
+function ledgerTool(top) {
+  return '<div class="ltool same" style="top:' + top + 'px;height:128px"><div class="r1"><span class="btn pillb" style="padding:0 14px">View <b style="margin-left:4px">Timeline</b>' + I('down', 14) + '</span>' + SQ('more') + '<span class="btn">' + I('plus', 16) + 'Add a bill</span>' + SQ('plus', 1) + '</div>' +
+    '<div class="r2"><span class="btn" style="font-weight:500">Filter ' + I('down', 14) + '</span><span>Cash on hand <b style="color:#3E6B2E">$2,995.00</b></span></div></div>';
+}
+function ledgerCards() {
+  var rows = [['Oct 17', 'Installment #2', 'Casey Diaz', 'Player dues', 'Money in', '$589.00', '$2,400.00', 1], ['Oct 19', 'Team share of indoor time', 'Paid to the club', 'Club', 'Money out', '$150.00', '$2,250.00'], ['Oct 19', 'Tournament entry, Fall Classic', 'Approved by the club', 'Tournaments', 'Money in', '$240.00', '$2,490.00'], ['Oct 22', 'Bottle drive deposit', 'Fundraising', 'Fundraising', 'Money in', '$312.00', '$2,802.00'], ['Oct 25', 'Umpire fees', 'Paid at the field', 'Game costs', 'Money out', '$90.00', '$2,712.00']];
+  return '<div class="same">' + rows.map(function (r) { return '<div class="lcard" style="' + (r[7] ? 'border-left-color:#B23A26' : '') + '"><div class="h"><span>Date</span><span style="text-transform:none;letter-spacing:0;font:400 13px Inter;display:flex;gap:6px;align-items:center">' + r[0] + I('right', 13) + '</span></div><b>' + r[1] + (r[7] ? ' <span class="chip nt" style="text-transform:none;letter-spacing:0;font:600 11px Inter">Overdue · 26d</span>' : '') + '</b><span style="color:#776D5D">' + r[2] + '</span><div class="kv"><span>Category</span><span>' + r[3] + '</span></div><div class="kv"><span>' + r[4] + '</span><span>' + r[5] + '</span></div><div class="kv"><span>Balance</span><span>' + r[6] + '</span></div></div>'; }).join('') + '</div>';
+}
+/* the player page: an arrow, a rule, the role tile, the name with its switcher (shipped); proposed: the arrow moves to the bar */
+function playerHead(withBack) {
+  return '<div class="ph chgb" style="margin:14px 0 12px">' + (withBack ? '<span class="qh" style="margin-left:-12px">' + I('left', 18) + '</span><span style="width:1px;height:30px;background:rgba(70,55,30,.2)"></span>' : '') +
+    '<span class="it">' + I('users', 18) + '</span><h4 style="display:flex;align-items:center;gap:4px">Devon Ellis' + I('down', 16) + '</h4></div>';
+}
+function kvRow(k, v) { return '<div style="display:flex;justify-content:space-between;margin-top:10px;font-size:13px"><span style="font:700 10px Inter;letter-spacing:.08em;color:#4A4235">' + k + '</span><span>' + v + '</span></div>'; }
+function playerRest() {
+  return '<div class="same"><div class="pcard"><small>With the 14U AA 2025 · 2026</small><div style="display:flex;gap:18px;font:600 13px Inter;margin-top:6px"><span>CF · LF</span><span>Age 13</span></div>' +
+    '<div class="ptile4"><div><i>DUES</i><b>Paid in full</b>$590.00 · Oct 3</div><div><i>ATTENDANCE</i><b>93%</b>14 recorded</div><div><i>FAMILY</i><b>Dana Ellis</b>dana.ellis@example.com</div><div><i>AWARDS</i><b>1</b>this season</div></div></div>' +
+    '<div class="tabs-r" style="margin:6px -16px 12px;padding-left:6px;background:none"><span class="on">Details</span><span>Season</span><span>Skills</span><span>Notes</span><span>Family</span></div>' +
+    '<div class="pcard"><b>Player</b>' + kvRow('NAME', 'Devon Ellis') + kvRow('JERSEY #', '12') + kvRow('POSITIONS', 'Best CF, LF') + '</div></div>';
+}
+function gameRest() {
+  return '<div class="same"><div class="pcard" style="margin-top:14px"><b style="font-size:18px">vs Northside Bears <span class="chip live" style="vertical-align:2px">Live</span></b><small>Diamond 1 · Arrive 5:30 p.m. · Home kit</small></div>' +
+    '<div class="pcard" style="display:flex;align-items:center;justify-content:space-between"><span class="btn sq">' + I('chevl', 18) + '</span><b style="font-size:13px;letter-spacing:.1em">INNING 1 OF 6</b><span class="btn sq">' + I('right', 18) + '</span></div>' +
+    '<div class="pcard"><span class="k">In the field</span><b>P Avery · C Casey · 1B Frankie</b><small>2B Harper · SS Blake · 3B Emerson</small></div>' +
+    '<div class="pcard"><span class="k">Batting next</span><b>1 Devon · 2 Blake · 3 Avery</b></div>' +
+    '<div class="pcard"><span class="k">Pitch count</span><b>Avery · 18</b><small>Rest day after 35</small></div></div>';
+}
+function seasonEndRest() {
+  return '<div class="same"><div class="pcard" style="margin-top:16px"><b style="font-size:16px">Season Wrapped</b><small>2025 · 14-9-2 · 3rd of 8 · 22 games · 31 practices</small></div>' +
+    ['Results', 'Roster', 'Practices', 'Money'].map(function (x) { return '<div class="pcard" style="display:flex;justify-content:space-between;align-items:center"><b>' + x + '</b>' + I('down', 14) + '</div>'; }).join('') +
+    '<div class="pcard" style="display:flex;justify-content:space-between;align-items:center"><b>Compare seasons</b>' + I('right', 14) + '</div></div>';
+}
+var ILLUS = function (y) { return '<div class="illus" style="top:' + y + 'px">the page’s own content: illustrative, unchanged by this phase</div>'; };
+
+/* ── screens ── */
+var S = {};
+// Phase 3's bar on a tournament page, redrawn from the build's screenshot
+S.p3 = frame(390, 844,
+  '<div class="b1"><div class="r"><div class="t lane"><b>Divisions</b><small><span class="tn">Lakeshore Fall Classic 2026</span><span class="chip ok">Open</span></small><span class="chv">' + I('down', 14) + '</span></div><span class="g44">' + I('globe', 22, 1.8) + '</span></div></div>' +
+  body(BAR1H, actRow(SQ('plus', 1) + '<span class="qh">' + I('help', 20, 1.8) + '</span>') + '<div class="same">' + [['11U', 'registration open · 2 pools', '8 of 8 · full'], ['13U', 'registration open · 2 pools', '6 of 8'], ['15U', 'registration open', '10 of 8 · full']].map(function (d) { return '<div class="pcard" style="display:flex;align-items:center;margin-bottom:0;border-radius:0"><span><b>' + d[0] + '</b><small>' + d[1] + '</small></span><span style="margin-left:auto;display:flex;gap:8px;align-items:center">' + d[2] + I('right', 14) + '</span></div>'; }).join('') + '</div>') +
+  '<div class="bnav same">' + [['grid', 'Dashboard'], ['users', 'Teams'], ['cal', 'Schedule'], ['mail', 'Messages'], ['more', 'More']].map(function (x) { return '<div class="it' + (x[1] === 'More' ? ' on' : '') + '"><span class="pill">' + I(x[0], 22, 1.8) + '</span>' + x[1] + '</div>'; }).join('') + '</div>');
+
+S.rosterB = frame(390, 844, bar0() + body(37, paperHead('users', 'Roster', SQ('plus', 1)) + rosterRest()) + bnav('Roster'));
+S.rosterA = frame(390, 844, bar1({ name: 'Roster', hit: 1, marks: mk('F2', 150, 76) + mk('F3', 290, 60) }) + body(BAR1H, actRow(SQ('plus', 1)) + rosterRest()) + bnav('Roster'));
+
+S.overB = frame(390, 844, bar0() + body(37, STRIP() + paperHead('grid', 'Overview', '') + overviewRest()) + bnav('Overview'));
+S.overA = frame(390, 844, bar1({ name: 'Overview', marks: mk('F5', 330, 54) }) + body(BAR1H, STRIP() + '<div style="height:16px"></div>' + overviewRest()) + bnav('Overview'));
+S.overDraftB = frame(390, 300, bar0({ rec: '' }) + body(37, STRIP('2027 Season') + paperHead('grid', 'Overview', '', '<span class="chip nt">Draft</span>'), '', 0));
+S.overDraftA = frame(390, 300, bar1({ name: 'Overview', chip: CHIP.draft, rec: '' }) + body(BAR1H, STRIP('2027 Season') + '<div style="height:16px"></div><div class="gcap">Your team at a glance</div>', '', 0));
+
+S.moneyB = frame(390, 844, bar0() + body(37, paperHead('dollar', 'Money', SQ('ul') + SQ('plus', 1)) + tabsRow(MONEY_TABS, 'Overview', 0, false, 'same') + '<div style="height:14px"></div>' + moneyCards()) + bnav('More'));
+S.moneyA = frame(390, 844, bar1({ name: 'Money' }) + tabsRow(MONEY_TABS, 'Overview', BAR1H, true) + body(BAR1H + 45, actRow(SQ('ul') + SQ('plus', 1)) + moneyCards()) + bnav('More') + mk('F4', 14, 110));
+var BAND = function (h, ask) { return '<button type="button" class="band" data-go="' + (ask || 'F4') + '" aria-label="What is pinned: ask ' + (ask || 'F4') + '" style="top:0;height:' + h + 'px"></button>'; };
+S.moneyScrollB = frame(390, 844, bar0() + body(37, '<div style="margin-top:-260px">' + moneyCards() + moneyCards() + '</div>') + bnav('More') + BAND(37));
+S.moneyScrollA = frame(390, 844, bar1({ name: 'Money' }) + tabsRow(MONEY_TABS, 'Overview', BAR1H, true) + body(BAR1H + 45, '<div style="margin-top:-200px">' + moneyCards() + moneyCards() + '</div>') + bnav('More') + BAND(98));
+S.moneyScrollC = frame(390, 844, bar1({ name: 'Money' }) + body(BAR1H, '<div style="margin-top:-240px">' + moneyCards() + moneyCards() + '</div>') + bnav('More') + BAND(53));
+
+S.ledgerB = frame(390, 844, bar0() + ledgerTool(37) + body(165, '<div style="margin-top:-40px">' + ledgerCards() + '</div>') + bnav('More') + BAND(165));
+S.ledgerA = frame(390, 844, bar1({ name: 'Money' }) + tabsRow(MONEY_TABS, 'Ledger', BAR1H, true, '', 2) + ledgerTool(BAR1H + 45) + body(226, '<div style="margin-top:-40px">' + ledgerCards() + '</div>') + bnav('More') + BAND(226));
+S.ledgerC = frame(390, 844, bar1({ name: 'Money' }) + ledgerTool(BAR1H) + body(181, '<div style="margin-top:-40px">' + ledgerCards() + '</div>') + bnav('More') + BAND(181));
+
+S.insA = frame(390, 520, bar1({ name: 'Insights' }) + tabsRow(INS_TABS, 'Attendance', BAR1H, true) + body(BAR1H + 45, '<div style="height:12px"></div><div class="same"><div class="pcard"><span class="k">Attendance</span><div class="big">92%</div><small>This month · 13 players</small></div><div class="pcard"><b>Missed most</b><small>Kai Lowe · 3 of 12</small></div><div class="pcard"><b>Perfect</b><small>9 players</small></div></div>', '', 0));
+
+S.playerB = frame(390, 844, bar0({ help: false }) + body(37, playerHead(true) + playerRest()) + bnav('Roster'));
+S.playerA = frame(390, 844, bar1({ name: 'Roster', back: 1, help: false, hit: 1, hitW: 330, marks: mk('F1', 300, 66) }) + body(BAR1H, playerHead(false) + playerRest()) + bnav('Roster'));
+S.gameB = frame(390, 844, bar0({ help: false }) + body(37, gameRest()) + bnav('Schedule'));
+S.gameA = frame(390, 844, bar1({ name: 'Schedule', back: 1, help: false, chip: CHIP.gd, hit: 1, hitW: 330, marks: mk('F7', 360, 58) }) + body(BAR1H, gameRest()) + bnav('Schedule'));
+S.endB = frame(390, 844, bar0({ team: '16U AA', rec: '' }) + body(37, paperHead('trophy', '2025 Season', '') + '<div class="same" style="display:flex;gap:10px;align-items:center;color:#4A4235;margin-left:30px"><span style="width:7px;height:7px;border-radius:50%;background:#776D5D"></span>Wrapping up the season…</div>') + bnav('Season’s End', true));
+S.endA = frame(390, 844, bar1({ name: '2025 Season', team: '16U AA', chip: CHIP.done }) + body(BAR1H, seasonEndRest()) + ILLUS(58) + bnav('Season’s End', true));
+
+/* long names, one team (cropped to the bar) */
+function crop(h, inner) { return frame(390, h || 64, inner); }
+S.longPageB = crop(130, bar0({ team: '16U AA', rec: '' }) + body(37, paperHead('trophy', 'Lakeshore Fall Ball 2025 Season (U14 Rep)', ''), '', 0));
+S.longPageA = crop(130, bar1({ name: 'Lakeshore Fall Ball 2025 Season (U14 Rep)', team: '16U AA', chip: CHIP.done }));
+S.longTeamB = crop(64, bar0({ team: LONGTEAM }));
+S.longTeamA = crop(64, bar1({ name: 'Roster', team: LONGTEAM }));
+S.longTeamGd = crop(64, bar1({ name: 'Roster', team: LONGTEAM, chip: CHIP.gd }));
+S.oneB = crop(64, bar0({ chev: false }));
+S.oneA = crop(64, bar1({ name: 'Roster', chev: false }));
+S.lines = [
+  ['Everyday', bar1({ name: 'Roster' })],
+  ['No game decided yet (0-0 says nothing)', bar1({ name: 'Roster', rec: '' })],
+  ['A season in Draft (C5: was a badge on the Overview’s title)', bar1({ name: 'Roster', chip: CHIP.draft, rec: '' })],
+  ['Game day (E7: the chip replaces the record)', bar1({ name: 'Roster', chip: CHIP.gd })],
+  ['Between seasons, on its one page', bar1({ name: '2025 Season', team: '16U AA', chip: CHIP.done })],
+  ['One team: plain text, no chevron, nothing to tap (E8)', bar1({ name: 'Roster', chev: false })],
+  ['Game week: the scouting reminder stays attached under the bar, as today (it is cut at 390 today as well)', bar1({ name: 'Roster', nudge: 1 })]
+];
+
+/* the "?" (F3) */
+function moreSheet(hlHelp) {
+  var row = function (i, t, cls) { return '<div class="mrow ' + (cls || '') + '">' + I(i, 18) + '<span>' + t + '</span></div>'; };
+  return '<div class="scrim"></div><div class="sheet" style="max-height:700px"><div class="grab"></div>' + row('bell', 'Notifications', 'same') +
+    '<div class="mdiv"></div><div class="mgrid same">' + row('notebook', 'Practice plans') + row('listord', 'Lineups') + row('trophy', 'Tournaments') + row('trend', 'Skills & goals') + row('bars', 'Insights') + row('dollar', 'Money') + row('mail', 'Email families') + row('clip', 'Tryouts') + row('usercog', 'Staff') + row('file', 'Documents') + row('gear', 'Settings') + '</div>' +
+    '<div class="mdiv"></div><div class="mgrid same">' + row('user', 'Account') + row('spark', 'What’s new') + row('house', 'Home') + row('shield', 'Club') + row('card', 'Plan & billing') + '</div>' +
+    '<div class="mdiv"></div><div class="mgrid">' + row('help', 'Help', hlHelp ? 'hl' : 'same') + row('msg', 'Send feedback', 'same') + row('dl', 'Download app', 'same') + '<div class="mrow same" style="color:#B23A26">' + I('logout', 18) + 'Sign out</div></div></div>';
+}
+S.helpA = frame(390, 844, bar1({ name: 'Roster' }) + '<button type="button" class="hit" data-go="F3" aria-label="The page’s help: ask F3" style="left:342px;top:4px;width:44px;height:44px"><span style="left:auto;right:0">the page’s panel</span></button>' + body(BAR1H, actRow(SQ('plus', 1)) + rosterRest()) + bnav('Roster'));
+S.helpAmore = frame(390, 844, bar1({ name: 'Roster' }) + body(BAR1H, actRow(SQ('plus', 1)) + rosterRest()) + bnav('More') + moreSheet(false));
+S.helpB = frame(390, 844, bar1({ name: 'Roster', help: false }) + body(BAR1H, actRow(SQ('plus', 1)) + rosterRest()) + bnav('More') + moreSheet(true) + mk('F3', 186, 676));
+S.helpNone = frame(390, 300, bar1({ name: 'Roster', back: 1, help: false }) + body(BAR1H, playerHead(false), '', 0));
+
+/* Your teams (F8): today = the shipped sheet (§228: no check, the tint says "you are here"; a closed team's season name trails) */
+var CREST = '<svg viewBox="0 0 40 40"><path d="M20 3 35 8v11c0 9-6.5 15-15 18C11.5 34 5 28 5 19V8z" fill="#2C6E49"/><text x="20" y="25" font-family="Arial Black, Arial, sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">14</text></svg>';
+function sheetB() {
+  var r = function (c, n, on, q) { return '<div class="srow' + (on ? ' on' : '') + '"><span class="sq10" style="background:' + c + '"></span><span class="tx"><span>' + n + '</span></span>' + (q ? '<span class="q">' + q + '</span>' : '') + '</div>'; };
+  return '<div class="scrim"></div><div class="sheet"><div class="grab"></div><div class="lab">Your teams</div>' + r('#2C6E49', TEAM, 1) + r('#6E2C8C', '11U AA') + r('#1F4E79', '12U A') + r('#8C2F39', '16U AA', 0, '2025 Season') + '</div>';
+}
+function sheetA() {
+  var r = function (tile, n, sub, on) { return '<div class="srow' + (on ? ' on' : '') + '">' + tile + '<span class="tx"><span>' + n + '</span><span class="sub">' + sub + '</span></span></div>'; };
+  return '<div class="scrim"></div><div class="sheet"><div class="grab"></div><div class="lab">Your teams</div>' +
+    r('<span class="tile img">' + CREST + '</span>', TEAM, '2026 Season · 3-2-1', 1) +
+    r('<span class="tile" style="background:#6E2C8C;color:#fff">11U</span>', '11U AA', '2026 Season · 5-0') +
+    r('<span class="tile ini">12A</span>', '12U A', '2027 Season · Draft') +
+    '<div class="grp">No live season</div>' + r('<span class="tile" style="background:#8C2F39;color:#fff">16U</span>', '16U AA', '2025 Season') + '</div>';
+}
+S.sheetB = frame(390, 844, bar0() + body(37, paperHead('users', 'Roster', SQ('plus', 1)) + rosterRest()) + bnav('Roster') + sheetB());
+S.sheetA = frame(390, 844, bar1({ name: 'Roster' }) + body(BAR1H, actRow(SQ('plus', 1)) + rosterRest()) + bnav('Roster') + sheetA() + mk('F8', 356, 418));
+
+/* tablet (F6) — 768 wide, cropped to the top 280px */
+function tabB() {
+  return frame(768, 280, '<div class="b1" style="height:55px"><div class="r" style="min-height:54px"><div class="t"><b style="display:flex;align-items:center;gap:4px;font-size:16px">' + TEAM + I('down', 16) + '</b><small><span>' + CLUB + '</span><span class="dot">·</span><span>' + SEASON + '</span><span class="dot">·</span><span style="font-weight:700">' + REC + '</span></small></div><span class="st"><i>NEXT</i>Sun 9:30 a.m. practice</span><span class="g44">' + I('help', 20, 1.8) + '</span></div></div>' +
+    body(55, paperHead('users', 'Roster', '<span class="btn lime">' + I('plus', 16) + 'Add Player</span><span class="btn">' + I('ul', 16) + 'Import</span>') + '<div class="same" style="display:flex;align-items:center"><span class="vsw"><span class="on">List</span><span>Depth chart</span></span><span class="btn" style="margin-left:auto">' + I('dl', 16) + 'Export</span></div>', '', 0));
+}
+function tabA() {
+  return frame(768, 280, bar1({ name: 'Roster', extra: '<span class="dot">·</span><span class="fx">' + CLUB + '</span><span class="dot">·</span><span class="fx">' + SEASON + '</span>', status: '<i>NEXT</i>Sun 9:30 a.m. practice', hit: 1, hitW: 470, marks: mk('F6', 560, 58) }) +
+    body(BAR1H, actRow('<span class="btn lime">' + I('plus', 16) + 'Add Player</span><span class="btn">' + I('ul', 16) + 'Import</span>') + '<div class="same" style="display:flex;align-items:center"><span class="vsw"><span class="on">List</span><span>Depth chart</span></span><span class="btn" style="margin-left:auto">' + I('dl', 16) + 'Export</span></div>', '', 0));
+}
+S.tabB = tabB(); S.tabA = tabA();
+
+/* ── asks ── */
+var ASKS = [
+  ['F1', 'One level down: what the bar says', 'The rule the computer’s strip already reads says the way back ("Roster") one level down, and the record’s own name ("Devon Ellis") follows it there. On a phone the player’s name is a button that opens the player switcher, so moving that name into the bar would mean rebuilding the switcher. Several records also load after the page opens, so their names arrive late.',
+    ['<span class="rec">A 44px back arrow at the bar’s left. The bar names the place one level up ("Roster") over the team’s small line. The record keeps its name, chips and switcher at the top of the page.</span> Recommended: the bar is right in the server’s first paint (the address alone says "Roster"), the switcher keeps working, and no name is said twice. The tournament phone’s back bar has the same shape.',
+     'The bar names the record ("← Devon Ellis") and the page loses its title. The player switcher has to move into the bar, and the name arrives after load on the record pages that load late, which breaks the first-paint gate.']],
+  ['F2', 'What rides the small line', 'E8 says the team and its record. The computer’s strip says club · season · Draft · record · one status. A 390px line has room for about 45 mono characters beside the chevron. Today’s phone shows only the record, because the status was ruled off the phone on 2026-08-24. The reason then was that the game-day link was cut to "6:30 p.m. · O…", and a cut link is unusable. A chip with no link is not that case.',
+    ['<span class="rec">The team, then one chip when the season is not everyday (Draft · Game day · Complete), then the record. Game day and Complete replace the record, as on the computer (E7). The words come from the computer’s rule, so there is no second copy of it.</span> Recommended: the Overview’s Draft badge needs a home once the paper title goes, and Game day is the one status worth a glance on a phone.',
+     'The team and the record only (E8 as written). Draft then shows nowhere on a phone, and game day stays silent.',
+     'Add the season too ("14U AA · 2026 Season · 3-2-1"). It costs about 14 characters, which a long team name loses first.']],
+  ['F3', 'Where the "?" lives on a phone', 'Phase 4b recorded the direction "the phone’s help door moves into the More sheet’s Help row, which opens the page’s panel". Here is what the code says about that. The panel is a full-screen modal on a phone. The More sheet is a plain menu that closes on any tap outside it. So the Help row has to close the sheet first and then open the panel. On a page with no help it opens the full guide in a new tab, so the same row does two different things depending on the page. The foot row is shared with the free portal and the tournament admin’s bottom bar, so all three would change or need a switch. Today the "?" appears after the page loads, in space held for it (no jump), and the computer’s strip does the same.',
+    ['<span class="rec">A: the "?" stays at the bar’s right end and opens this page’s panel; More → Help stays the full guide.</span> Recommended. It is the computer’s arrangement exactly (the "?" in the fixed top chrome; the menu’s Help row is the full guide), so one sentence covers both widths. Help stays one tap away and never scrolls off. If you like the strip after the walk, the tournament and club phones would move their "?" into their own bars the same way.',
+     'B: no "?" in the bar; More → Help opens this page’s panel (the 4b direction). Help moves two taps away, behind More. The row does two different things depending on the page, and the shared foot row needs a switch. The one real gain: nothing in the bar arrives after load.',
+     'C: both. That is two doors to the same panel, which "one door" rules out.']],
+  ['F4', 'Tabs on a phone (R6)', 'The computer pins Money’s and Insights’ tabs in a band under the strip. Measured at 390 × 844: the phone’s tab row is 45px, the bottom bar 72px, the Ledger’s pinned toolbar 128px, and the new bar about 53px. The player page already pins its tabs under today’s bar on a phone (built, walked).',
+    ['<span class="rec">Pin the tab row under the bar on the five rooms with tabs (Money, Insights, Skills & goals, Lineups, Practice plans), the same rule as the computer. The sideways scroll, the › cue and the current tab kept in view all stay.</span> Recommended: with the bar saying "Money", the pinned row is what says "Ledger" once you scroll, and it keeps the other six tabs one tap away. Cost: 45px on those rooms only. The Ledger is the worst case at 35% of the screen pinned (226px top + 72px bottom), against 28% today and 30% on the 768-high computer.',
+     'Leave the tabs in the page on a phone. The Ledger stays at 30% pinned, but this reverses the sentence "the phone follows with the same rule" (R6), and once you scroll nothing on screen says which tab you are on.']],
+  ['F5', 'The Overview’s club · season line', 'Since 2026-09-21 the Overview shows the club and the season as a line under the bar that scrolls away. It is the only place a phone names the club. With the paper title gone it becomes the Overview’s first line.',
+    ['<span class="rec">Keep it, Overview only, unpinned, as today.</span> Recommended: the club stays named once on a phone and costs nothing pinned.',
+     'Drop it: a phone never names the club or the season.']],
+  ['F6', 'The tablet, 641 to 900 wide', 'This range wears the phone’s shell (bottom bar, More sheet). Today its bar is 55px on two lines: the team over club · season · record, with the status (Next / Game day / Complete) and the "?" at the right end.',
+    ['<span class="rec">The same bar as the phone. The small line also carries the club and the season, because there is room, and the status keeps its place at the right end.</span> Recommended: nothing a tablet shows today is lost, and the bar has one shape below 901.',
+     'Exactly the phone’s bar. The tablet loses the club, the season and the status line.']],
+  ['F7', 'The game page', 'The game page (the bench console) is in no sidebar row and in no one-level-down entry, so neither the strip nor a phone bar can name it, and the page has no heading of its own (measured: no <h1> at any width).',
+    ['<span class="rec">Add it to the one-level-down table: back to Schedule. The computer’s strip gains "← Schedule" from the same table.</span> Recommended: one rule names the page at both widths, and the console has a way back.',
+     'Leave it: the bar keeps naming the team on that one page.']],
+  ['F8', 'The Your teams sheet’s rows', 'The prompt says the sheet already has the crest tiles. It does not: the phone’s sheet draws a colour square and the name, and only the computer’s team list uses the crest → colour → initials tile, the season line and the Draft label.',
+    ['<span class="rec">Use the computer list’s rows, one source: the tile (E10), the name, "season · record" or "· Draft", and a No live season group. Picking a live team goes to its Overview; a closed one goes to its season page (unchanged).</span> Recommended: E10 asked for the tile, and one list with one set of rows is the standard.',
+     'Add the tile only and keep today’s row words.']]
+];
+function asksHTML() {
+  return ASKS.map(function (a) {
+    return '<div class="ask" id="ask-' + a[0] + '"><h3><span class="mk inl">' + a[0] + '</span>' + a[1] + '</h3><p class="why">' + a[2] + '</p><ol type="A">' + a[3].map(function (o) { return '<li>' + o + '</li>'; }).join('') + '</ol></div>';
+  }).join('');
+}
+
+/* ── panels ── */
+var PANELS = [
+  ['summary', 'Summary', function () {
+    return '<h2>What changes on a phone</h2>' +
+      '<div class="cols"><div class="card"><h3>The bar names the page</h3><p>The first line is the page’s name, from the same rule the computer’s strip reads: "Roster", "Money", "2025 Season". One level down, a 44px arrow leads back and the bar names the place it goes back to. The page’s own title row goes on every page; its buttons stay.</p></div>' +
+      '<div class="card"><h3>The team rides the small line</h3><p>"14U AA · 3-2-1 ▾", with a Draft, Game day or Complete chip when the season is not everyday. With two or more teams the name and the line together are one 44px target that opens Your teams. With one team it is plain text.</p></div>' +
+      '<div class="card"><h3>Your teams shows the crest</h3><p>The sheet’s rows become the computer list’s rows: the team’s crest (else its colour, else its initials), the season and record, Draft, and a No live season group.</p></div>' +
+      '<div class="card"><h3>Tabs pin under the bar</h3><p>On Money, Insights, Skills & goals, Lineups and Practice plans the tab row stays under the bar as you scroll, as it does on the computer.</p></div>' +
+      '<div class="card"><h3>Help: one tap, top right</h3><p>Recommended to stay where it is, at the bar’s right end, opening the page’s panel; More → Help stays the full guide. This differs from the direction recorded in 4b, and F3 explains why.</p></div>' +
+      '<div class="card"><h3>What does not change</h3><p>The bottom bar, the More sheet’s order and its one door for a closed season, the chat room (no bar inside a room), the scouting reminder under the bar, the free Coaches Portal and the computer.</p></div></div>' +
+      '<div class="flag"><b>Push-back, out loud.</b> E8 is right on its merits, and doing less than it says would be wrong. The 09-21 one-line bar fixed a bar that <i>snapped</i> from 59px to 36px under the thumb and hid the "?" while scrolling. The new bar never changes shape, so that reason still holds and is kept. The bar grows 16px (37 → 53). Pages with no buttons get 34 to 50px back from the title row they lose; pages with buttons keep a 44px button row and come out about 16px lower. My disagreements are F3 (keep the "?" in the bar instead of moving it into More) and F8 (the sheet has no crest today; the prompt assumed it did).</div>' +
+      '<h2>The eight asks</h2>' + asksHTML() +
+      '<h2>Who sees what</h2><p>Every coach role sees the same bar; it shows what the sidebar would light for them. A head coach of one standalone team sees no chevron. A club coach with several teams, or a team between seasons beside a live one, gets the switcher. A team with no live season still has one door: the bar names its season, the bottom bar shows Season’s End and More, and the More sheet holds no live tools.</p>' +
+      '<h2>Task list, once ruled</h2><ol class="tasks">' +
+      '<li>The phone bar reads the computer’s page-name rule; it is an <code>&lt;h1&gt;</code> on a named page and a back link one level down; the team, chip and record line come from the computer’s facts rule (F1, F2).</li>' +
+      '<li>The paper title hides at every width when the bar names the page (widen the computer-only rule); the "phone keeps the whole header" wording goes.</li>' +
+      '<li>The 44px team target over the name and the line (2+ teams only); the 641–900 additions (F6).</li>' +
+      '<li>The "?" per F3; Your teams rows from the computer’s list (F8); the game page joins the one-level-down table if F7 = A.</li>' +
+      '<li>Tabs pinned under the bar on the five rooms (F4): the band height and the tab row follow the bar on a phone; every pinned element measured flush.</li>' +
+      '<li>Guards updated in the open (the phase-4 heading test, the band test’s "computer only", the header and sheet guards), plus new ones: one rule names the page at both widths, one <code>&lt;h1&gt;</code> per width, one "?" door per width.</li>' +
+      '<li>Checks, first paint with scripts off, /design, /simplify, /review, /docs, the owner walk, the records.</li></ol>';
+  }],
+  ['bar', 'The bar', function () {
+    return '<h2>Whole screens: today, proposed, and the tournament phone beside them</h2><p class="muted">Today’s team bar is 37px (measured). The proposed bar uses Phase 3’s measure, 53px (measured 53.2px at that build). The dashed box is the 44px team target.</p>' +
+      spec('Roster: a plain page', 'The title row goes; the + stays in the page’s top row.', pair([['Phase 3’s tournament bar, redrawn', S.p3, 'ref'], ['Today', S.rosterB], ['Proposed', S.rosterA, 'after']])) +
+      spec('Overview', 'The paper title goes; the club · season line stays under the bar (F5).', pair([['Today', S.overB], ['Proposed', S.overA, 'after']])) +
+      spec('Overview, a season in Draft', 'C5: the Draft badge leaves the title for the small line.', pair([['Today · cropped', S.overDraftB], ['Proposed · cropped', S.overDraftA, 'after']])) +
+      spec('Money: a page with tabs', 'Tabs pinned under the bar (F4 A); the page’s buttons stay in its top row.', pair([['Today', S.moneyB], ['Proposed', S.moneyA, 'after']])) +
+      spec('A player: one level down', 'The bar names the way back; the player keeps the name and switcher on the page (F1).', pair([['Today', S.playerB], ['Proposed', S.playerA, 'after']])) +
+      spec('A game (the bench console)', 'Today nothing names it; proposed: back to Schedule, and game day on the small line (F7, F2).', pair([['Today', S.gameB], ['Proposed', S.gameA, 'after']])) +
+      spec('A team between seasons: one door', 'The bar names the season (the strip’s rule, C8); bottom bar: Season’s End and More.', pair([['Today', S.endB], ['Proposed', S.endA, 'after']])) +
+      spec('A long page name', 'Cut with "…" on one line; the bar never grows a line.', pair([['Today · cropped', S.longPageB], ['Proposed · cropped to the bar', S.longPageA, 'after']])) +
+      spec('A long team name', 'The team’s name gives way first; the chip, the record and the chevron stay whole.', pair([['Today · cropped to the bar', S.longTeamB], ['Proposed · cropped', S.longTeamA, 'after'], ['Proposed, game day · cropped', S.longTeamGd, 'after']])) +
+      spec('One team (standalone): nothing to switch to', 'No chevron and no target (E8).', pair([['Today · cropped to the bar', S.oneB], ['Proposed · cropped', S.oneA, 'after']])) +
+      '<p class="muted">A crest never shows in the bar on a phone (E10: only in the Your teams sheet), so a team with a crest and one without have the same bar.</p>';
+  }],
+  ['line', 'The small line', function () {
+    return '<h2>Every state of the small line (F2 A)</h2><p class="muted">Cropped to the bar, 390 wide, true size. The words come from the computer strip’s rule, so a phone and a computer never disagree about the season’s state.</p>' +
+      '<div class="stage"><div class="pair" style="flex-direction:column">' + S.lines.map(function (l) { return '<div><div class="lbl">' + l[0] + '</div>' + crop(l[1].indexOf('nudge') > -1 ? 98 : 64, l[1]) + '</div>'; }).join('') + '</div></div>';
+  }],
+  ['help', 'The “?”', function () {
+    return '<h2>Where the “?” lives on a phone (F3)</h2>' +
+      spec('A · in the bar (recommended)', 'The page’s panel is one tap away in the fixed chrome; More → Help stays the full guide, as the account menu’s Help does on a computer.', pair([['A · the bar’s "?"', S.helpA, 'after'], ['A · More → Help: unchanged (the full guide, new tab)', S.helpAmore]])) +
+      spec('B · in the More sheet (the 4b direction)', 'The bar’s right end is empty. Help (highlighted) closes the sheet, then opens this page’s panel, or the full guide in a new tab on a page with no help. The row looks the same either way.', pair([['B', S.helpB, 'after']])) +
+      spec('A page that publishes no help (the player page today)', 'Under A the corner stays empty; nothing points at nothing.', pair([['A', S.helpNone, 'after']])) +
+      '<div class="tablewrap"><table class="t"><thead><tr><th>Portal</th><th>Computer</th><th>Phone today</th><th>Phone with F3 A</th><th>Phone with F3 B</th></tr></thead><tbody>' +
+      '<tr><td>Coaches Portal</td><td>The strip, beside the bell (4b)</td><td>The bar’s right end</td><td>The bar’s right end</td><td>More → Help</td></tr>' +
+      '<tr><td>Tournament admin</td><td>Last in the page’s top row (E11)</td><td>Last in the page’s top row</td><td colspan="2">Unchanged now; moves to its bar (A) or More (B) only if you like the coach result after the walk</td></tr>' +
+      '<tr><td>Club</td><td>Last in the page’s top row (E11)</td><td>Last in the page’s top row</td><td colspan="2">Same</td></tr></tbody></table></div>';
+  }],
+  ['tabs', 'Tabs', function () {
+    return '<h2>Tabs on a phone (F4)</h2><p class="muted">The orange bar at the left marks what is pinned. Measured: tab row 45px, Ledger toolbar 128px, bottom bar 72px, bar 37px today / about 53px proposed.</p>' +
+      spec('Money, scrolled', 'Pinned: today 37px; A 98px (bar + tabs); B 53px.', pair([['Today', S.moneyScrollB], ['F4 A · pinned', S.moneyScrollA, 'after'], ['F4 B · in the page', S.moneyScrollC, 'after']])) +
+      spec('The Ledger, scrolled: the worst case', 'Pinned (the orange bar at the left): today 165px + the bottom bar = 28%; A 226px = 35%; B 181px = 30%. The Ledger’s own toolbar (128px) pins at every width; it is the Ledger’s business, not this phase’s.', pair([['Today', S.ledgerB], ['F4 A · pinned', S.ledgerA, 'after'], ['F4 B · in the page', S.ledgerC, 'after']])) +
+      spec('Insights: 7 tabs overflow a 390 row', 'The row scrolls sideways with its › cue and keeps the current tab in view, as today.', pair([['F4 A', S.insA, 'after']])) +
+      '<div class="tablewrap"><table class="t"><thead><tr><th>Screen (390 × 844)</th><th>Today</th><th>F4 A · pinned</th><th>F4 B · in the page</th><th>Computer (4b, 768 high)</th></tr></thead><tbody>' +
+      '<tr><td>Ledger: pinned top + bottom bar</td><td class="n">165 + 72 = 237px · 28%</td><td class="n">226 + 72 = 298px · 35%</td><td class="n">181 + 72 = 253px · 30%</td><td class="n">230px · 29.9%</td></tr>' +
+      '<tr><td>Money Overview, Insights, the other tabbed rooms</td><td class="n">37 + 72 = 109px · 13%</td><td class="n">98 + 72 = 170px · 20%</td><td class="n">53 + 72 = 125px · 15%</td><td class="n">93px · 12%</td></tr>' +
+      '<tr><td>Every other page</td><td class="n">109px · 13%</td><td class="n">125px · 15%</td><td class="n">125px · 15%</td><td class="n">48px · 6%</td></tr></tbody></table></div>' +
+      '<p class="muted">In Safari with its own bars showing, the page is about 660px tall rather than 844, so each share is larger (the Ledger under A: about 45%). The ranking does not change.</p>';
+  }],
+  ['teams', 'Your teams', function () {
+    return '<h2>The Your teams sheet (F8)</h2><p class="muted">Opened from the bar’s team line. Same frame as today (a small-capitals label, the grab line, sitting on the bottom bar with the bar lit). Escape, Back and a tap on the dim close it, and focus returns to the line.</p>' +
+      spec('Several teams, one between seasons', '', pair([['Today', S.sheetB], ['Proposed', S.sheetA, 'after']]));
+  }],
+  ['tablet', 'Tablet', function () {
+    return '<h2>641 to 900 wide (F6)</h2><p class="muted">768 wide, the top 260px. This range wears the phone’s shell: bottom bar, More sheet, no sidebar.</p>' +
+      spec('Roster at 768', 'Today 55px on two lines; proposed about 53px, the same two lines as the phone, with the club, the season and the status kept. The proposed small line is one target (dashed).', '<div class="stage"><div class="pair" style="flex-direction:column"><div><div class="lbl">Today · cropped to the top 280px</div>' + S.tabB + '</div><div><div class="lbl after">Proposed · cropped</div>' + S.tabA + '</div></div></div>');
+  }],
+  ['measure', 'Measures', function () {
+    return '<h2>Measured today (dev server, 2026-11-12, touch-emulated)</h2>' +
+      '<div class="tablewrap"><table class="t"><thead><tr><th>State</th><th>Bar today</th><th>Bar proposed</th><th>First paint (scripts off)</th><th>Visible headings today</th></tr></thead><tbody>' +
+      '<tr><td>Overview, Money, Roster, Lineups, Schedule, Insights (390)</td><td class="n">37px</td><td class="n">≈ 53px</td><td>Bar right; the "?" arrives after load into held space</td><td>One: the paper title</td></tr>' +
+      '<tr><td>A player (390)</td><td class="n">37px</td><td class="n">≈ 53px</td><td>No heading until the record loads (known, client-loaded)</td><td>One after load</td></tr>' +
+      '<tr><td>Lineup builder, a plan template (390)</td><td class="n">37px</td><td class="n">≈ 53px</td><td>Paper title "Lineup" / "Template" swaps to the record’s name after load (known)</td><td>One</td></tr>' +
+      '<tr><td>A game (390)</td><td class="n">37px</td><td class="n">≈ 53px</td><td>No heading at all</td><td>None</td></tr>' +
+      '<tr><td>A team between seasons (390)</td><td class="n">37px</td><td class="n">≈ 53px</td><td>Right</td><td>One</td></tr>' +
+      '<tr><td>A club coach’s team (390)</td><td class="n">37px</td><td class="n">≈ 53px</td><td>The Overview’s setup chip arrives after load (known)</td><td>One</td></tr>' +
+      '<tr><td>The demo (390)</td><td class="n">37px under the demo’s 139px banner</td><td class="n">≈ 53px under it</td><td>Right</td><td>One</td></tr>' +
+      '<tr><td>Tablet (768)</td><td class="n">55px</td><td class="n">≈ 53px</td><td>Right</td><td>One</td></tr></tbody></table></div>' +
+      '<h3>The bar’s height and what sits under it</h3><p>The bar publishes its own height as it renders (a size watcher on the bar, not a fixed number), and everything pinned under it reads that one value. So a 53px bar moves them all without touching any of them. Today it is unset in the server’s first paint, so the build adds a 53px default for phones so pinned rows sit right before scripts run.</p>' +
+      '<div class="tablewrap"><table class="t"><thead><tr><th>Pinned under the bar on a phone</th><th>Reads the bar’s height</th><th>Reads the tab band</th><th>Proposed</th></tr></thead><tbody>' +
+      '<tr><td>The Ledger’s toolbar</td><td>Yes</td><td>Yes</td><td>Sits under the tabs (F4 A), measured flush</td></tr>' +
+      '<tr><td>The Ledger’s column heads (641–900; a phone shows cards)</td><td>Yes</td><td>Yes</td><td>Same</td></tr>' +
+      '<tr><td>The player page’s tabs (dock once scrolled past)</td><td>Yes</td><td>No (not a band room)</td><td>Unchanged, under a 53px bar</td></tr>' +
+      '<tr><td>The lineup builder’s inning stepper (≤640)</td><td>Yes</td><td>No (a drill-in)</td><td>Unchanged</td></tr>' +
+      '<tr><td>The schedule’s column height (≤640)</td><td>Yes</td><td>No</td><td>Unchanged</td></tr>' +
+      '<tr><td>A section a link jumps to</td><td>Yes</td><td>Yes</td><td>Lands under the tabs</td></tr>' +
+      '<tr><td>The chat room (no bar inside a room)</td><td>Yes (0 in a room)</td><td>No</td><td>Unchanged</td></tr>' +
+      '<tr><td>The practice-plan editor’s footer and docked library</td><td>No / computer only</td><td>No</td><td>Unaffected</td></tr></tbody></table></div>' +
+      '<h3>One heading per width</h3><p>On a computer the strip’s name is the page’s heading and the bar is not drawn. On a phone the strip is not drawn and the bar’s name becomes the heading. The paper title hides at both widths. One level down (F1 A) the bar’s line is a link back, and the record’s own title stays the heading. That matches the computer until the record reaches the strip. Today the bar’s team name is not a heading, and the paper title is the only one on a phone.</p>' +
+      '<h3>Browser tab title</h3><p>Every coach page’s browser tab reads the club’s name ("UAT Rep Club | FieldLogicHQ") at every width, not the page. That is outside this phase; noted for Phase 6.</p>';
+  }]
+];
+
+/* ── wiring ── */
+var tabs = document.getElementById('tabs'), panels = document.getElementById('panels');
+PANELS.forEach(function (p, i) {
+  var b = document.createElement('button'); b.type = 'button'; b.role = 'tab'; b.id = 't-' + p[0]; b.textContent = p[1];
+  b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', i === 0 ? 'true' : 'false'); b.setAttribute('aria-controls', 'p-' + p[0]);
+  tabs.appendChild(b);
+  var s = document.createElement('section'); s.className = 'panel' + (i === 0 ? ' on' : ''); s.id = 'p-' + p[0]; s.setAttribute('role', 'tabpanel'); s.setAttribute('aria-labelledby', 't-' + p[0]);
+  s.innerHTML = p[2](); panels.appendChild(s);
+});
+function show(id) {
+  PANELS.forEach(function (p) {
+    var on = p[0] === id;
+    document.getElementById('t-' + p[0]).setAttribute('aria-selected', on ? 'true' : 'false');
+    document.getElementById('p-' + p[0]).classList.toggle('on', on);
+  });
+  try { localStorage.setItem('cpb-tab', id); } catch (e) {}
+  fit();
+}
+tabs.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) show(b.id.slice(2)); });
+var start = (location.hash || '').slice(1);
+if (!PANELS.some(function (p) { return p[0] === start; })) { try { start = localStorage.getItem('cpb-tab') || 'summary'; } catch (e) { start = 'summary'; } }
+if (PANELS.some(function (p) { return p[0] === start; })) show(start);
+var pop = document.createElement('div'); pop.id = 'pop'; pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'The ask'); document.body.appendChild(pop);
+var popFrom = null;
+function closePop() { pop.hidden = true; if (popFrom) popFrom.focus(); popFrom = null; }
+document.addEventListener('click', function (e) {
+  if (e.target.closest('#pop .x')) { closePop(); return; }
+  var m = e.target.closest('[data-go]'); if (!m || m.closest('#pop')) return;
+  var src = document.getElementById('ask-' + m.getAttribute('data-go')); if (!src) return;
+  if (m.closest('#p-summary')) { src.scrollIntoView({ behavior: 'smooth', block: 'start' }); src.classList.add('flash'); setTimeout(function () { src.classList.remove('flash'); }, 1600); return; }
+  popFrom = m; pop.innerHTML = '<button type="button" class="x" aria-label="Close">×</button>' + src.outerHTML.replace(/ id="ask-[^"]*"/, '');
+  pop.hidden = false; pop.querySelector('.x').focus();
+});
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.hidden) closePop(); });
+function seg(a, b, fn) {
+  var A = document.getElementById(a), B = document.getElementById(b);
+  A.addEventListener('click', function () { A.setAttribute('aria-pressed', 'true'); B.setAttribute('aria-pressed', 'false'); fn(false); });
+  B.addEventListener('click', function () { B.setAttribute('aria-pressed', 'true'); A.setAttribute('aria-pressed', 'false'); fn(true); });
+}
+seg('v-all', 'v-diff', function (on) { document.body.classList.toggle('only-diff', on); });
+var fitOn = false;
+function fit() {
+  document.querySelectorAll('section.panel.on .pair').forEach(function (p) {
+    p.style.transform = ''; p.parentElement.style.height = '';
+    if (!fitOn) return;
+    var w = p.parentElement.clientWidth - 28, need = p.scrollWidth;
+    if (need > w) { var k = w / need; p.style.transform = 'scale(' + k + ')'; p.parentElement.style.height = (p.scrollHeight * k + 28) + 'px'; }
+  });
+}
+seg('s-true', 's-fit', function (on) { fitOn = on; fit(); });
+window.addEventListener('resize', fit);
+})();
+</script>

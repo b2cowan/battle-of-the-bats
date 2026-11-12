@@ -38,8 +38,9 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * docblock records what that costs when it is allowed to run for a year. Same lesson, one level
  * down.
  *
- * `.gdBack` (game bench console) and `.ppRunBackLink` (practice run mode) stay separate on
- * purpose — those are field surfaces with their own chrome, listed exempt in the ruling.
+ * `.ppRunBackLink` (practice run mode) stays separate on purpose — a field surface with its own chrome, listed exempt in
+ * the ruling. (The game bench console's `.gdBack` was the other until navigation Phase 5, F7: the page is one level down
+ * from the Schedule now, so the bar and the strip carry its way back.)
  */
 export default function CoachBackLink({
   href,

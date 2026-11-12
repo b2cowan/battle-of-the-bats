@@ -10,6 +10,8 @@
 import { logoFitsTile } from './logo-aspect';
 import { pickInk, relativeLuminance } from './color-contrast';
 import { mastheadSeasonLabel } from './coach-season-label';
+import { resolveLiveSeason } from './coach-season-view';
+import type { CoachingAssignment, ClosedCoachingAssignment } from './db';
 
 /** A team's door: its Overview, or — with no live season — its season's page, its one door (CLAUDE.md; C6). */
 export function teamHref(orgSlug: string, teamId: string, closed: boolean): string {
@@ -74,6 +76,24 @@ export function teamSwitchGroups(
     { label: 'Your teams', rows: live.map(t => row(t, false)) },
     { label: 'No live season', rows: closed.map(t => row(t, true)) },
   ].filter(g => g.rows.length);
+}
+
+/**
+ * ⚖ A TEAM IS COUNTED ONCE (one rule for the sidebar's team cell, the phone bar's switcher and the phone's Your teams sheet;
+ * navigation Phase 5): a team mid-rollover holds two live seasons and is ONE team, on the season the portal reads
+ * (`resolveLiveSeason`). `liveOf` is that team's live assignment; `live` is one per team; `teamCount` adds the teams with no
+ * live season — a switcher is offered only when it is above 1.
+ */
+export function coachTeamRoster(
+  assignments: CoachingAssignment[],
+  closed: readonly ClosedCoachingAssignment[],
+): { liveOf: (teamId: string) => CoachingAssignment | null; live: CoachingAssignment[]; teamCount: number } {
+  const liveOf = (teamId: string): CoachingAssignment | null => {
+    const season = resolveLiveSeason(assignments, teamId);
+    return season ? assignments.find(a => a.teamId === teamId && a.programYearId === season.programYearId) ?? null : null;
+  };
+  const liveIds = [...new Set(assignments.map(a => a.teamId))];
+  return { liveOf, live: liveIds.map(liveOf).filter((a): a is CoachingAssignment => !!a), teamCount: liveIds.length + closed.length };
 }
 
 /** The tile for one team, from the facts the coach's team list carries. */

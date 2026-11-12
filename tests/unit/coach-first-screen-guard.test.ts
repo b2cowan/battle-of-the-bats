@@ -54,22 +54,27 @@ describe('B1 — the team name is the switcher\'s door', () => {
   const nav = stripComments(readSource(NAV));
   const sheet = stripComments(readSource(SHEET));
 
+  // ⚖ Since navigation Phase 5 (E8, owner 2026-11-12) the door is the bar's SMALL LINE — the team's name under the page's name,
+  // one 44px target over both lines — rather than a team name heading the bar. B1's decisions stand: one switcher per width, a
+  // door only with somewhere to go, the More sheet's row density.
   it('the masthead offers the button only with somewhere to switch to, and only below the nav breakpoint', () => {
-    assert.match(masthead, /const canSwitch = isPhoneNav && assignments\.length \+ closedAssignments\.length > 1;/,
-      'the More sheet\'s own condition (2+ teams), gated on the phone nav — a one-team coach and a desktop see plain text');
-    assert.match(masthead, /aria-haspopup="menu"/, 'the name is a real popup button');
+    assert.match(masthead, /const canSwitch = isPhoneNav && coachTeamRoster\(assignments, closedAssignments\)\.teamCount > 1;/,
+      'a second TEAM (counted as the sidebar\'s cell counts them), gated on the phone nav — a one-team coach and a desktop see plain text');
+    assert.match(masthead, /aria-haspopup="menu"/, 'the line is a real popup button');
     assert.ok(masthead.includes('<CoachTeamSwitchSheet'), 'the button opens the team sheet');
   });
 
-  it('the sheet\'s rows are the More sheet\'s rows, not a second copy', () => {
+  it('the sheet\'s rows are the More sheet\'s rows, not a second copy — with the computer list\'s words (F8)', () => {
     // Sheet Frame step 2 (2026-10-05): the container, dim, label and focus hand-back are `SheetFrame`'s, held
     // by `sheet-frame-guard.test.ts`; this guard keeps B1's own decisions about the rows.
     assert.ok(sheet.includes("from './CoachesBottomNav.module.css'"), 'one row stylesheet — the nav module\'s');
-    for (const cls of ['sheet.dropItem', 'sheet.dropActive', 'sheet.dropItemMeta']) {
+    for (const cls of ['sheet.dropItem', 'sheet.dropActive', 'sheet.dropItemName', 'sheet.dropItemLine']) {
       assert.ok(sheet.includes(cls), `the rows draw with the nav module\'s \`${cls.slice(6)}\``);
     }
-    assert.ok(sheet.includes("aria-current={active ? 'true' : undefined}"), 'the current team is marked, not linked as a door');
-    assert.ok(sheet.includes('/season-end'), 'a team with no live season opens Season\'s End');
+    assert.ok(sheet.includes('teamSwitchGroups('), 'the rows are the computer list\'s (one source for both widths)');
+    assert.ok(sheet.includes('<SidebarLogoTile'), 'each row leads with the team\'s tile — crest, colour, initials (E10)');
+    assert.ok(sheet.includes("aria-current={row.current ? 'true' : undefined}"), 'the current team is marked, not linked as a door');
+    assert.ok(!/<Check\b/.test(sheet), 'tinted, never checked (owner, §228 walk 2026-09-24)');
     assert.ok(!sheet.includes('useOverlayOpen'), 'the sheet is drawn ABOVE the bar and must not hide it');
   });
 
@@ -89,13 +94,17 @@ describe('B2 — the bar never changes shape under scroll', () => {
     assert.ok(!/\.teamHeaderCollapsed\b/.test(styles), 'the collapsed form has no rules left in the stylesheet');
   });
 
-  it('the rest form applies on every screen, the Overview included', () => {
-    assert.match(masthead, /className=\{`\$\{styles\.teamHeader\} \$\{styles\.teamHeaderPhoneRest\}/,
-      'teamHeaderPhoneRest is unconditional — no Overview exception');
+  // ⚖ The one-line rest form B2 chose is retired by E8 on purpose (navigation Phase 5, owner 2026-11-12): the bar is two lines —
+  // the page's name over the team's line — on every screen from the first frame, and B2's reason survives whole: one form,
+  // the Overview included, never changed by scroll.
+  it('one form on every screen, the Overview included', () => {
+    assert.match(masthead, /className=\{`\$\{styles\.teamHeader\}\$\{onChat \? ` \$\{styles\.teamHeaderPhoneChat\}` : ''\}`\}/,
+      'the bar\'s class depends on nothing but an open chat room — no Overview exception, no scroll state');
+    assert.ok(!masthead.includes('teamHeaderPhoneRest'), 'the retired one-line form is gone, not left as a second shape');
   });
 
   it('the Overview\'s club · season line is an unpinned sibling of the sticky header', () => {
-    assert.match(masthead, /\{onOverview && \(seasonText \|\| !isTeamWorkspace\) && \(\s*<div className=\{styles\.teamHeaderPageLine\} data-team-page-line>/,
+    assert.match(masthead, /\{onOverview && \(facts\.season \|\| !isTeamWorkspace\) && \(\s*<div className=\{styles\.teamHeaderPageLine\} data-team-page-line>/,
       'rendered on the Overview only, outside the <header>');
     const headerClose = masthead.indexOf('</header>');
     const pageLine = masthead.indexOf('styles.teamHeaderPageLine');

@@ -724,6 +724,47 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   unmatchable by the baseline, not in this change's reach — unproved). **Owner calls open:** none new; the Practice-plans room for a coach with
   no library collapses its reserved band once after load (accepted).
 - **Phase 5 · Coaches Portal phone.** Bar names the page; the team on the small line opens `CoachTeamSwitchSheet`.
+  - **BUILT 2026-11-12** (walk §519 https://claude.ai/artifact/3B4TgDuuJirmLGzToQLoQS, 8 walks / 32 checks; commit owed with
+    the owner's yes). F7 amended at the build (owner): the game console's own back arrow (`.gdBackBtn`, the recap's and the
+    error state's `.gdBack`) is removed — the bar's / strip's "← Schedule" (`coachDrillBack` game → `/schedule?event=`) is the
+    one way back. Built: `CoachTeamHeader` reads `useCoachDeskTitle` (an `<h1>` on a named page, a back arrow + label one level
+    down), the small line from `coachStripFacts` (team · Draft / Game day / Complete chip · record; tablet adds club · season and
+    keeps the status at the right, read from `facts.status`), one 44px door (the tournament bar's R4 recipe) with 2+ teams
+    (`coachTeamRoster`, now shared with `CoachTeamCell` — a team mid-rollover counts once); `CoachTeamSwitchSheet` rows from
+    `teamSwitchGroups` (tile, season words, "No live season" via `SheetLabel`, tinted never checked); the paper title hides at
+    every width (`data-desk-named`), `data-phone-row` ('empty' ≤900 / 'tablet' ≤640) drops a header with nothing to show at
+    that width, the drill-in's own arrow hides at every width; the "?" stays (`CoachPageHelpSlot reserve`); `--coach-band-h`
+    45px at every width and `HubTabBar`'s in-page row sticky under the bar ≤900 (full bleed by a border-image outset — the
+    negative-margin form spilled 16px at the layout check); `--coach-bar-h` 53px is the bar's floor and the first paint's
+    `--coach-header-h` stand-in. `CoachDeskTitle` names nothing for a team the coach is not on (/review). Guards: new
+    `coach-nav-phase5.test.ts`; updated in the open: `coach-nav-phase4` (the named hide at every width; the game is no longer
+    a null title), `coach-first-screen-guard` (B1's door is the small line; B2's one-line form retired, its reason kept),
+    `sheet-frame-guard`-compatible label, `coach-band-phase4b` (the height at every width; the phone's sticky row; the "?"
+    stays), `coach-page-actions-guard` (`reserve`). NAV_STANDARD N7 / N11 / N12 corrected; `memory/design_decisions.md`
+    2026-11-12 records the 09-21 reason kept; help `coaches.tsx` "Getting around" → the bar, "On a phone" (bar, switching, tabs).
+    **Measured** (dev, touch, 390 × 844 and 768): bar 53.2 px on every page (was 37 / 55), first paint = after load, the
+    `--coach-header-h` 53 px in the server's paint; one visible `<h1>` per screen (the game page has none, as before); tabs pin
+    53–98; the Ledger's toolbar 98–226 (226 + 72 = 35%); the builder's stepper at 53; the player's tabs dock at 53; the sheet:
+    Escape returns focus to the line, Back closes without leaving, a dim tap closes; tablet chevron ~26 px after its line.
+    Checks: typecheck ✓, guards ✓, spelling ✓, demos ✓, lint (no errors), `check:layout` 9 screens at 390 no new findings;
+    the full `npm test` has failures in other sessions' areas only (signup, billing, club, payments, support console, practice
+    plans' arrival words). /design (drawings + built), /simplify, /review (3 lenses) applied. **Owner calls, open:** the Game
+    day chip is the portal's olive (the drawing drew red); a lone "+" row remains on pages with buttons (the computer's top-row
+    review, owed); a live team's Season's End page is in no sidebar row, so the bar names the team and the page keeps its
+    title (the computer's rule too); the sheet's rows show season words only (the team list carries no other team's record).
+  - **Gate RULED 2026-11-12: F1–F8 all A, as recommended (owner: "all as recommended").** F3 A keeps the phone's "?" in
+    the bar and More → Help stays the full guide — this REPLACES the 4b record's "the phone's help door moves into the More
+    sheet's Help row" on purpose (one rule at both widths: the "?" in the fixed top chrome, the menu's Help = the guide).
+  - **Gate drawn 2026-11-12** — https://claude.ai/artifact/Xej4haYGxUs7RtWWMTFbq2 (source
+    `COACH_PHONE_BAR_DRAWINGS.html`; /design pass applied). Measured today at 390 × 844: team bar 37 px (768: 55 px),
+    bottom bar 72, phone tab row 45, the Ledger's pinned toolbar 128; the "?" arrives after load (published in an effect)
+    into held space; the game page has no heading at any width; the phone's Your teams sheet does NOT use the crest tile
+    (only the desktop cell does). Recommendations: F1 one level down the bar names the way back, the record keeps its name
+    and switcher in the page; F2 small line = team · state chip (Draft / Game day / Complete, from `coachStripFacts`) ·
+    record; **F3 keep the "?" in the bar (disagrees with the 4b direction "into the More sheet's Help row")**; F4 pin the
+    tabs under the bar (Ledger 35 % pinned); F5 keep the Overview's club · season strip; F6 one bar ≤ 900, the tablet's
+    line adds club · season and keeps the status; F7 the game page joins `coachDrillBack` (back to Schedule); F8 the
+    sheet's rows from `teamSwitchGroups` / `teamTile`.
 - **Phase 6 · Words, help, demos, sweep, walk.** NAV_STANDARD rewritten (N7 item 1, N11, exceptions, the cell);
   `memory/design_decisions.md` entry; help articles (`/docs`); demo tour anchors (the build fails if one vanishes);
   `check:layout --changed` on the touched screens, the full sweep on staging; one closing walk.

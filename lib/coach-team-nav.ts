@@ -163,6 +163,9 @@ export function coachDrillBack(pathname: string, params: Params, teamBase: strin
   if (a === 'development' && b === 'sessions' && c && seg.length === 3) return { href: skillsAndGoalsHref(teamBase, 'sessions'), label: 'Skills & goals' };
   if (a === 'tournaments' && b && seg.length === 2) return { href: `${teamBase}/tournaments`, label: 'Tournaments' };
   if (a === 'tryouts' && b === 'history' && seg.length === 2) return { href: `${teamBase}/tryouts`, label: 'Tryouts' };
+  // ⚖ The game page (the bench console) is one level down from the Schedule (navigation Phase 5, F7, owner 2026-11-12): back
+  // to this game on the schedule, as the console's own arrow went (it was removed with this entry: one way back per screen).
+  if (a === 'game' && b && seg.length === 2) return { href: `${teamBase}/schedule?event=${encodeURIComponent(b)}`, label: 'Schedule' };
   return null;
 }
 

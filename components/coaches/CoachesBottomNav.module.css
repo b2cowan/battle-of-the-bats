@@ -318,6 +318,13 @@
     font-family: var(--font-data);
   }
   .dropItem:has(.dropItemMeta) .dropChevron { margin-left: 0; }
+  /* The team sheet's two-line row (navigation Phase 5, F8): the computer list's words — the name, then the season's words
+     ("2026 Season", "2027 Season · Draft") under it, quiet; the name ellipsizes, the line too. */
+  .dropItemText { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 0.05rem; }
+  .dropItemLine {
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary);
+  }
 
   .dropDivider {
     height: 1px;

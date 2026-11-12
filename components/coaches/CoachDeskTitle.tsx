@@ -7,7 +7,8 @@
  * strip and the lit row cannot disagree.
  *
  * Every input is known on the server (the address, its search, the coach's team list), so the server's first paint is
- * the last. Which header shows is CSS at 900/901 — the phone keeps its team bar and its paper titles (Phase 5).
+ * the last. Which header shows is CSS at 900/901 — the strip above 900, the phone's team bar at 900 and below (navigation
+ * Phase 5, E8: the bar names the page from this same answer, and the paper title hides at every width).
  */
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -49,6 +50,9 @@ export function CoachDeskTitleProvider({ orgSlug, children }: { orgSlug: string;
     if (!teamId) return { teamId: null, title: null, recordSlot: null };
     const live = resolveLiveSeason(assignments, teamId);
     const closed = resolveClosedSeason(assignments, closedAssignments, teamId);
+    // A team the coach is not on (or not yet loaded) names nothing: the page keeps its own title, and the bar — which draws
+    // nothing without the team — never leaves a phone page with no heading at all (/review 2026-11-12).
+    if (!live && !closed) return { teamId, title: null, recordSlot };
     const finished = !live && !!closed;
     const rows = coachNavGroupsFor((live ?? closed)?.capabilities, finished).flatMap(g => g.items);
     const seasonName = finished ? mastheadSeasonLabel(closed?.programYearName, closed?.teamName, closed?.programYearYear ?? null) : null;

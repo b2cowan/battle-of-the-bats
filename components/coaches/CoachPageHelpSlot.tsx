@@ -35,10 +35,11 @@ import stripStyles from './CoachTopStrip.module.css';
  * the 50px row a lone "?" took. ONE publisher, TWO ends: the page header publishes its topic once, and BOTH the phone's team
  * bar (`CoachPageHelpSlot`, ≤900) and the strip (`CoachStripHelp`, above 900) read the ONE entry, held by
  * `CoachStripHelpProvider` (mounted by the shell, outside the team layout where the strip is); the team layout's provider only
- * marks a page `hosted` and hands `publish` down. A hosted page header draws NO "?" of its own, at any width. The phone is
- * unchanged this phase; its single help door moves to the More sheet in Phase 5 (owner 2026-11-12, recorded in the plan).
- * ⚠ Still true: the account menu keeps its own Help row (the full guide, in a new tab) — a different door from this one,
- * which opens the in-page drawer at this screen's section.
+ * marks a page `hosted` and hands `publish` down. A hosted page header draws NO "?" of its own, at any width.
+ * ⚖ THE PHONE KEEPS ITS "?" IN THE BAR (navigation Phase 5, F3 A, owner 2026-11-12 — replacing the 4b record's "moves into
+ * the More sheet's Help row" on purpose): one rule at both widths, the page's "?" in the fixed top chrome. The More sheet's
+ * Help row and the account menu's Help row stay the full guide (in a new tab) — a different door from this one, which
+ * opens the in-page drawer at this screen's section.
  *
  * ⚠ **A PAGE WITHOUT A HOST KEEPS DRAWING ITS OWN "?" — the fallback is the default context value,
  * not a branch anyone has to remember.** `hosted` is false everywhere the provider is not mounted
@@ -132,12 +133,14 @@ export function useCoachPageHelp(help: HelpRequest | null, label?: string): bool
 }
 
 /**
- * The masthead's end of the channel. Renders nothing until a page publishes — a screen with no help
- * topic leaves the corner empty rather than showing a "?" that opens the drawer at nothing.
+ * The phone bar's end of the channel (F3 A, owner 2026-11-12: the "?" stays at the bar's right end, More → Help stays the
+ * full guide). Renders nothing until a page publishes — a screen with no help topic leaves the corner empty rather than
+ * showing a "?" that opens the drawer at nothing. `reserve` holds the door's width meanwhile (the strip's `reserve`), so the
+ * bar's two lines do not re-cut when a page's help arrives after hydration.
  */
-export function CoachPageHelpSlot() {
+export function CoachPageHelpSlot({ reserve = false }: { reserve?: boolean } = {}) {
   const entry = useContext(StripHelpEntryContext);
-  if (!entry) return null;
+  if (!entry) return reserve ? <span className={styles.teamHeaderHelpSpacer} aria-hidden /> : null;
   return (
     <span className={styles.teamHeaderHelp}>
       <HelpButton iconOnly label={entry.req.label} help={entry.req} />

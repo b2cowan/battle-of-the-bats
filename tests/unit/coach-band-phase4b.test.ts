@@ -34,14 +34,16 @@ describe('the band is reserved by the address (R1, R5)', () => {
 
 describe('one height, read everywhere it must be (R4)', () => {
   const css = readCode('app/[orgSlug]/coaches/coaches.module.css');
-  it('the band height is declared once, at 45px, above 900 only: 0 on a page without tabs and on a phone', () => {
+  // ⚖ AT EVERY WIDTH since navigation Phase 5 (F4, owner 2026-11-12 — R6's "the phone follows with the same rule"): a phone's
+  // tab row pins under the bar, and what docks under it adds the same one height. The SLOT stays a computer's only.
+  it('the band height is declared once, at 45px, at every width: 0 on a page without tabs; the slot is a computer’s only', () => {
     assert.equal((css.match(/--coach-band-h:\s*45px/g) ?? []).length, 1);
     assert.match(css, /--coach-band-h: 0px;\s*display: flex;/, 'zero by default on the shell');
     const at = css.indexOf('.coachesShell[data-coach-band] { --coach-band-h: 45px; }');
     assert.ok(at > 0);
-    assert.match(css.slice(Math.max(0, at - 600), at), /@media \(min-width: 901px\) \{\s*(?:\/\*[\s\S]*?\*\/\s*)?$/, 'inside the computer-only block');
+    assert.match(css.slice(at), /^\.coachesShell\[data-coach-band\] \{ --coach-band-h: 45px; \}\n\n@media \(min-width: 901px\) \{/, 'outside any width block, directly before the computer’s slot');
     assert.match(css.slice(at), /\.bandSlot \{\s*position: sticky;\s*top: var\(--coach-topstrip-top, 0px\);[\s\S]*?height: var\(--coach-band-h\);/);
-    assert.doesNotMatch(css, /\.coachesShell\[data-coach-band\] \{ --coach-band-h: 0px; \}/, 'a phone never gets the height, so nothing resets it');
+    assert.doesNotMatch(css, /\.coachesShell\[data-coach-band\] \{ --coach-band-h: 0px; \}/, 'nothing resets it per width');
   });
   it('the register and the section deep-link margin dock under the band; --coach-header-h is not redefined', () => {
     const panel = readCode(`${T}accounting/expenses/panel.tsx`);
@@ -85,19 +87,24 @@ describe('which tab bars wear the band (R5)', () => {
     }
     assert.doesNotMatch(readCode('components/admin/AdminEventHeader.tsx'), /\bband\b[^=]*HubTabBar|<HubTabBar[^>]*\bband\b/);
   });
-  it('the band CSS is above 900 only, and the in-page copy is hidden only where a shell marked a band', () => {
+  it('the docked band is above 900; below it the in-page row pins under the bar (Phase 5, F4) — only where a shell marked a band', () => {
     const css = readCode('components/shared/HubTabBar.module.css');
     const block = css.slice(css.lastIndexOf('@media (min-width: 901px)'));
     assert.match(block, /@media \(min-width: 901px\) \{\s*\.bandDocked \{/);
     assert.match(block, /:global\(\[data-coach-band\]\) \.bandPending \{ display: none; \}/);
+    const phone = css.slice(css.lastIndexOf('@media (max-width: 900px)'));
+    assert.match(phone, /@media \(max-width: 900px\) \{\s*:global\(\[data-coach-band\]\) \.bandPending \{\s*position: sticky;\s*top: calc\(var\(--coach-topstrip-top, 0px\) \+ var\(--coach-header-h, 0px\)\);/,
+      'the phone’s row pins directly under the bar, by the bar’s own published height');
+    assert.match(phone, /height: var\(--coach-band-h, 45px\);/, 'the one height everything docking under it adds');
     assert.doesNotMatch(css, /NEVER STICKY|never sticky \(reversed/i, 'the 2026-08-19 note is superseded and gone');
   });
 });
 
 /**
  * THE PAGE'S "?" LIVES IN THE STRIP, BESIDE THE BELL (owner 2026-11-12; reverses the 2026-07-31 "not CoachTopStrip" boundary on purpose).
- * One publisher (the page header), two ends: the phone's team bar (unchanged until Phase 5, which moves the phone's single help
- * door to the More sheet) and the strip above 900. A page outside the team layout still draws its own.
+ * One publisher (the page header), two ends: the phone's team bar (where it STAYS — navigation Phase 5, F3 A, owner 2026-11-12,
+ * replacing the 4b record's "moves to the More sheet" on purpose) and the strip above 900. A page outside the team layout still
+ * draws its own.
  */
 describe('the "?" in the strip (owner 2026-11-12)', () => {
   const slot = readCode('components/coaches/CoachPageHelpSlot.tsx');
@@ -112,7 +119,7 @@ describe('the "?" in the strip (owner 2026-11-12)', () => {
     assert.equal((slot.match(/useState<Entry>/g) ?? []).length, 1, 'one state machine, not two');
     assert.match(slot, /prev\?\.id === id \? null : prev/, 'clearing only while the entry is still the publisher’s');
     assert.ok(slot.includes('hosted: false'), 'the fallback is the default context value');
-    assert.match(slot, /export function CoachPageHelpSlot\(\) \{\s*const entry = useContext\(StripHelpEntryContext\);/, 'the phone’s bar reads the same entry');
+    assert.match(slot, /export function CoachPageHelpSlot\(\{ reserve = false \}: \{ reserve\?: boolean \} = \{\}\) \{\s*const entry = useContext\(StripHelpEntryContext\);/, 'the phone’s bar reads the same entry');
     assert.match(readCode('components/coaches/CoachesChrome.tsx'), /<CoachStripHelpProvider>[\s\S]*<\/CoachStripHelpProvider>/);
   });
 
@@ -127,8 +134,8 @@ describe('the "?" in the strip (owner 2026-11-12)', () => {
     assert.match(header, /const helpOnRow = showHelp && !helpHosted;/);
     assert.match(header, /\{helpOnRow && \(\s*<span className=\{styles\.pageHeaderHelp\}>/, 'the own-"?" fallback survives: drawn only when unhosted, never rendered-and-hidden');
     assert.doesNotMatch(css, /pageHeaderHelpDesk/, 'the hide-it class is gone');
-    // The phone’s own end is untouched: the team bar still draws the published "?".
-    assert.ok(readCode('components/coaches/CoachTeamHeader.tsx').includes('<CoachPageHelpSlot />'));
+    // The phone’s own end: the team bar draws the published "?" (F3 A), holding its width until it arrives.
+    assert.ok(readCode('components/coaches/CoachTeamHeader.tsx').includes('<CoachPageHelpSlot reserve />'));
   });
 });
 
