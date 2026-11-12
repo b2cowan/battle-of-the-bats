@@ -6,6 +6,8 @@ import { getLeagueSeasonById } from '@/lib/db';
 import { divisionInSeason } from '@/lib/league-season-scope';
 import { readBoardNotes, readDivisionBoard, readDivisionTabs } from '@/lib/house-league-teams';
 import { getRatings } from '@/lib/house-league-ratings';
+import { friendRequestsOn } from '@/lib/league-friends';
+import { readDivisionFriendLinks, type DivisionFriends } from '@/lib/league-friend-queue-server';
 import { withObservability } from '@/lib/observability';
 
 /**
@@ -42,5 +44,12 @@ export const GET = withObservability(async (req: Request,
   if (board && !houseLeagueRefusal(ctx, 'read')) {
     notes = await readBoardNotes(seasonId, board.division.id);
   }
-  return NextResponse.json({ tabs, board, ...(ratings ? { ratings } : {}), ...(notes ? { notes } : {}) });
+  // Board Ready Stage 1 Part 3 (A11): the confirmed friend links, the requests still to confirm and who asked — ids only,
+  // never a typed name — for the same reader as the notes, on a season that takes friend requests. A reader the gate
+  // refuses gets no `friends` key at all; the draft still keeps their groups together.
+  let friends: DivisionFriends | undefined;
+  if (board && friendRequestsOn(ctx!.org.planId, season.friendRequestsMax) && !houseLeagueRefusal(ctx, 'read')) {
+    friends = await readDivisionFriendLinks(ctx!.org.id, seasonId, board.division.id);
+  }
+  return NextResponse.json({ tabs, board, ...(ratings ? { ratings } : {}), ...(notes ? { notes } : {}), ...(friends ? { friends } : {}) });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/teams-board' });

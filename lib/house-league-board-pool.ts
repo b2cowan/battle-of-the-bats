@@ -1,3 +1,6 @@
+import { keepTogetherGroups, type LinkOutcome } from './house-league-draft';
+import type { DivisionLink } from './league-friend-draft';
+
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * THE DRAFT BOARD'S POOL TOOLS AND FAMILIES (HOUSE_LEAGUE_DRAFT_BOARD_AT_SCALE, rulings A3–A6). Pure and client-safe:
@@ -52,13 +55,15 @@ export function matchesSearch(p: PoolPlayer, query: string): boolean {
   return words.every(w => hay.includes(w));
 }
 
-export type PoolFilter = 'notRated' | 'notes' | 'owing' | 'sibling';
+export type PoolFilter = 'notRated' | 'notes' | 'owing' | 'sibling' | 'friend';
 
 export interface PoolFacts {
   ratings: ReadonlyMap<string, number>;
   /** Present only for a reader who can open registrations (A8); absent, the Notes option is absent too. */
   notes: Readonly<Record<string, string>> | null;
   families: ReadonlyMap<string, readonly unknown[]>;
+  /** Board Ready Stage 1 Part 3: the children whose family named a friend — present only for a reader of Registrations (A11). */
+  friends?: ReadonlySet<string> | null;
 }
 
 export function hasFilter(p: PoolPlayer, f: PoolFilter, facts: PoolFacts): boolean {
@@ -67,6 +72,7 @@ export function hasFilter(p: PoolPlayer, f: PoolFilter, facts: PoolFacts): boole
     case 'notes': return !!facts.notes?.[p.id];
     case 'owing': return p.owes != null;
     case 'sibling': { const key = householdKey(p.guardianEmail); return !!key && facts.families.has(key); }
+    case 'friend': return !!facts.friends?.has(p.id);
   }
 }
 
@@ -77,7 +83,7 @@ export function narrowPool<P extends PoolPlayer>(pool: readonly P[], query: stri
 
 /** How many of the pool each option would show, at the row's end (A4). */
 export function filterCounts(pool: readonly PoolPlayer[], options: readonly PoolFilter[], facts: PoolFacts): Record<PoolFilter, number> {
-  const out = { notRated: 0, notes: 0, owing: 0, sibling: 0 } as Record<PoolFilter, number>;
+  const out = { notRated: 0, notes: 0, owing: 0, sibling: 0, friend: 0 } as Record<PoolFilter, number>;
   for (const f of options) out[f] = pool.filter(p => hasFilter(p, f, facts)).length;
   return out;
 }
@@ -140,4 +146,55 @@ export function sortPool<P extends PoolPlayer>(
       || nameOf(a).localeCompare(nameOf(b), 'en-CA')
       || (homeOf(a) < homeOf(b) ? -1 : homeOf(a) > homeOf(b) ? 1 : 0))
     || byName(a, b));
+}
+
+// ── TOGETHER (Board Ready Stage 1 Part 3; drawing 5b option B, ruling A14) ─────────────────────────────────────────
+
+export interface TogetherPerson {
+  id: string;
+  /** A brother or sister (one parent email), or a friend — a confirmed one, or the friend of someone in the group. */
+  kind: 'family' | 'friend';
+  /** The player's own link to this friend, when they asked or were asked (null for family, or a friend's friend). */
+  link: DivisionLink | null;
+  /** What the draft would do with that link today: the board reads the same groups the draft deals. */
+  outcome: LinkOutcome | null;
+}
+
+export interface TogetherPlayer {
+  id: string;
+  teamId: string | null;
+  locked: boolean;
+  guardianEmail: string;
+}
+
+/**
+ * Who each child is to be kept with: their group (brothers and sisters, plus the friends the draft keeps with them, at
+ * most 3 children) and every friend they have a confirmed link to, kept or not — so a friend kept apart, or over the
+ * cap, still shows, in amber, on the player who asked. Without links (a reader who can't open Registrations, or a
+ * season with no friend requests) it is the family alone, as the family mark was.
+ */
+export function togetherOf<P extends TogetherPlayer>(players: readonly P[], teamIds: readonly string[], links: readonly DivisionLink[] | null): Map<string, TogetherPerson[]> {
+  const draftPlayers = players.map(p => ({ id: p.id, rating: null, lockedTeamId: p.locked ? p.teamId : null, household: p.guardianEmail }));
+  const groups = keepTogetherGroups(draftPlayers, teamIds, { together: true, friends: links ?? [] });
+  const home = new Map(players.map(p => [p.id, householdKey(p.guardianEmail)]));
+  const out = new Map<string, TogetherPerson[]>();
+  for (const p of players) {
+    const mine = home.get(p.id);
+    const people = new Map<string, TogetherPerson>();
+    for (const id of groups.groupOf.get(p.id)!.ids) {
+      if (id === p.id) continue;
+      people.set(id, { id, kind: mine && home.get(id) === mine ? 'family' : 'friend', link: null, outcome: null });
+    }
+    // Every brother and sister in the division, even one a lock put on another team (the family mark's own rule).
+    if (mine) for (const k of players) if (k.id !== p.id && home.get(k.id) === mine && !people.has(k.id)) people.set(k.id, { id: k.id, kind: 'family', link: null, outcome: null });
+    for (const l of links ?? []) {
+      if (l.a !== p.id && l.b !== p.id) continue;
+      const other = l.a === p.id ? l.b : l.a;
+      if (!home.has(other)) continue;
+      const kind = mine && home.get(other) === mine ? 'family' : 'friend';
+      people.set(other, { id: other, kind, link: l, outcome: groups.links.get(l.id) ?? null });
+    }
+    if (people.size) out.set(p.id, [...people.values()]);
+  }
+  return out;
 }

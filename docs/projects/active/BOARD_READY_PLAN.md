@@ -535,6 +535,43 @@ board's two questions:
     club data-processing terms. The drawings and Part 1's walk quote the old form line.
   - ⛔ **RELEASE GATE (2026-11-11, with Part 2): Parts 1 and 2 go to production in ONE promote**, migs 461 → 471 → 472
     in that order; Part 1 alone still breaks the form's promise.
+  - **Part 3 (the draft + the board rows) BUILT 2026-11-12**, to drawing tabs 3 (bottom), 5, 5b and 6: the engine
+    (`lib/house-league-draft.ts` `keepTogetherGroups`: household ∪ confirmed links, cap 3, A7 order, siblings never split,
+    locks win, a kept-apart pair never joined even through a shared friend; `evenOut` still moves singles only); each
+    request's draft outcome stored with the deal (**mig 473**: `league_friend_requests.draft_outcome` kept · over_cap ·
+    locked · apart · off, written inside `league_division_draft_apply`, cleared by clear and by every registrar decision;
+    applied to **dev** 2026-11-12, prod step in `MANUAL_PROD_STEPS.json`); the Run the draft window's Friends row, "Keep
+    friends together" (only with a confirmed request, on by default, held for the visit) and How it deals; the board's
+    option B rows for every club (RTG · Player · Together · Note · $ · Age · ⋯, places headed by symbol, absent not empty;
+    Together = family + confirmed friends, amber "x of n"; its window lists both, labelled), "Has a friend request" in the
+    pool filter, ⋯ "Keep apart from a friend…" / "Keep together with {friend} again"; the after-draft result in Friend
+    requests (Not honoured first, every tab-6 reason, live, `lib/league-friend-draft.ts` `friendResult`), the record's
+    Friend requests section, the view's file carrying the result. Friend data reaches the board only behind the
+    registrations read (the guard test extended); the draft route reads links and returns none. `/legal` re-check (no
+    blocker; the form sentence holds: the 'read' seats are owner, admin, league admin, registrar and members granted
+    House league), `/marketing` words pass (6 changes), `/docs` (the draft guide's "Keep friends together", a draft FAQ,
+    the board article's Together and RTG, two Registrations topics), `/review` (high-risk; fixed: a kept-apart pair joined
+    through a shared friend; then the "apart" outcome, so an undone split reads "Kept apart in the draft"; the phone grid
+    tightened). Walk **§518** (https://claude.ai/artifact/LLFzexk8mG9RZZPmk1R9MK), fixture `.probe/friends/part3-walk-fixture.sql`
+    after Part 2's.
+    Build decisions (not drawn, owner may overrule): the result shows only when ONE division is picked (All divisions
+    keeps the queue's bands); result rows keep their ⋯ instead of the drawn chevron, so Delete request… stays reachable;
+    three reasons beyond tab 6's list ("{child} wasn’t in the draft", "{child} isn’t on a team", "Drafted with Keep friends
+    together off") and "Kept apart in the draft"; the Together count is the others in the group on this team (plain when
+    all are, amber "x of n" when not; in the pool, the group's size); the Together window's third status "Apart"; the
+    after-draft view keeps the amber count as it was (requests still to confirm); keep-apart works before and after
+    publishing.
+    Owner calls (open): (1) the form's "only to put friends on the same team" is literally narrower than "Keep apart"
+    (same data, same purpose; `/legal`: keep it and say "team placement" in the policy, or reword to "only to decide which
+    team they play on"); (2) a field hint on Can't honour's note ("Don't record anything about a family's circumstances",
+    `/legal`); (3) the after-draft reasons show the registrar a lock and a hand move, which the board keeps to the runners
+    (9c·2a) — drawn and ruled in tab 6, built as drawn.
+    Left (review, low): the board read loads the season's registrations and requests on every load (two queries, no N+1);
+    a registrar's decision landing between the draft's read and its write can have its cleared outcome overwritten (the
+    fingerprint does not cover friend requests); the 361 px phone row is unrendered (walk §518 Q8 checks it).
+    **Doc follow-ups due before the Parts 1–3 promote (`/legal`):** privacy policy draft §5/§9 friend-request lines (none
+    today); club data-processing terms. `/legal` wrote `docs/agents/legal/FRIEND_REQUESTS_PRIVACY.md`.
+  - ⛔ **RELEASE ORDER (Part 3):** mig 473 after 461/471/472 and BEFORE Part 3's code (its reads select `draft_outcome`).
 
 ### Stage 2 — Group email to coaches and volunteers (item 3)
 - [ ] **Email coaches** composer on the one club send window parts, on the colleague-mail path (reply-to the sender,

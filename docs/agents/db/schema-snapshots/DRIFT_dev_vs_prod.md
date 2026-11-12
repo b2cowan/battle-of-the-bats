@@ -1,16 +1,16 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-11 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-12 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 618 divergence(s)** across dev/prod.
+**⚠️ 620 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 15 | 6 | — |
-| Columns | 234 | 59 | 1 |
+| Columns | 235 | 59 | 1 |
 | Indexes | 67 | 26 | 0 |
 | Constraints | 54 | 28 | — |
-| RLS / CHECK | 98 | 26 | 0 (RLS state) |
+| RLS / CHECK | 99 | 26 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (15)
@@ -39,7 +39,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (234)
+### Only in DEV (235)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -90,6 +90,7 @@
 - `league_friend_requests.created_at`
 - `league_friend_requests.decided_at`
 - `league_friend_requests.decided_by`
+- `league_friend_requests.draft_outcome`
 - `league_friend_requests.id`
 - `league_friend_requests.kept_apart_at`
 - `league_friend_requests.kept_apart_by`
@@ -531,7 +532,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (98)
+### CHECK only in DEV (99)
 - `bank_check_waiting.bank_check_waiting_added_shape`
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
@@ -548,6 +549,7 @@ _none_
 - `family_links.family_links_invited_as_check`
 - `family_links.family_links_made_on_entry_ck`
 - `league_friend_requests.league_friend_requests_code_entered_check`
+- `league_friend_requests.league_friend_requests_draft_outcome_check`
 - `league_friend_requests.league_friend_requests_mark_check`
 - `league_friend_requests.league_friend_requests_named`
 - `league_friend_requests.league_friend_requests_not_self`

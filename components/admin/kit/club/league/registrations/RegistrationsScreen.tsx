@@ -74,7 +74,8 @@ import WhoseWindow from './WhoseWindow';
 import type { MenuItem } from './RowMenu';
 import { exportCsv, exportPdf, exportXlsx, type ExportRow } from './registrationsExport';
 import FriendRequestsView from './FriendRequestsView';
-import { buildQueue, friendTallies, honouredText, toConfirmCount, FRIEND_QUEUE_WORDS, type FriendsRead } from '@/lib/league-friend-queue';
+import { askedText, buildQueue, friendTallies, honouredText, requestLines, toConfirmCount, FRIEND_QUEUE_WORDS, type FriendPlacement, type FriendsRead } from '@/lib/league-friend-queue';
+import { divisionDrafted, friendResult, FRIEND_RESULT_WORDS } from '@/lib/league-friend-draft';
 import css from './Registrations.module.css';
 
 /** A list longer than this draws its first rows and "… n more". */
@@ -173,7 +174,7 @@ export default function RegistrationsScreen() {
       })));
     }
     // An extra never takes the list down: a failed friends read keeps the last one (or none).
-    if (friendsRes?.ok) setFriends({ on: !!friendsRes.data.on, requests: friendsRes.data.requests ?? [] });
+    if (friendsRes?.ok) setFriends({ on: !!friendsRes.data.on, requests: friendsRes.data.requests ?? [], placement: friendsRes.data.placement ?? {} });
     if (withTeams) setTeams((teamsRes?.ok ? teamsRes.data.teams ?? [] : []).map(t => ({ id: t.id, name: t.name, divisionId: t.divisionId })));
     setRead({
       registrations: regsRes.data.registrations ?? [], money: regsRes.data.money ?? {},
@@ -193,6 +194,7 @@ export default function RegistrationsScreen() {
   const queue = useMemo(() => (friends?.on ? buildQueue(friends.requests, regs) : []), [friends, regs]);
   const tallies = useMemo(() => (friends?.on ? friendTallies(friends.requests, regs, queue) : new Map<string, { asked: number; honoured: number | null }>()), [friends, regs, queue]);
   const hasFriend = useCallback((r: LeagueRegistration) => (tallies.get(r.id)?.asked ?? 0) > 0, [tallies]);
+  const placement = useMemo<FriendPlacement>(() => friends?.placement ?? {}, [friends]);
   const today = read?.today ?? '';
   const rights: RegRights = useMemo(() => ({
     register: !!access?.register, takeFees: !!access?.takeFees, run: !!access?.run, email: !!access?.email,
@@ -209,6 +211,42 @@ export default function RegistrationsScreen() {
   }, [read]);
   const divisionName = useCallback((id: string | null) => (id ? divisions.find(d => d.id === id)?.name ?? null : null), [divisions]);
   const teamName = useCallback((id: string | null) => (id ? teams.find(t => t.id === id)?.name ?? null : null), [teams]);
+
+  /**
+   * The record's Friend requests section (Part 3, tab 6): what this child's family asked, each with its result once the
+   * division has drafted (its queue state before), and the families who asked for this child (a confirmed or code match
+   * only: a name suggestion is not a fact). Absent when there is nothing on either side.
+   */
+  function friendRecord(reg: LeagueRegistration) {
+    if (!friendsOn) return null;
+    const R = FRIEND_RESULT_WORDS;
+    const all = requestLines(queue);
+    const drafted = divisionDrafted(reg.divisionId, regs, placement);
+    const asked = all.filter(l => l.asker.id === reg.id).map(line => {
+      const { q, match } = line;
+      const named = match && (line.confirmed || q.matchedRegistrationId) ? playerName(match) : '—';
+      const parent = q.typedParent ? ` ${R.record.parent(q.typedParent)}` : '';
+      let state: string;
+      if (drafted) {
+        const res = friendResult(line, { placement, teamName, day: v => regDay(v, today) });
+        state = `${res.honoured ? FRIEND_QUEUE_WORDS.honoured : FRIEND_QUEUE_WORDS.notHonoured} · ${res.why}`;
+      } else {
+        state = q.state === 'not_signed_up' ? FRIEND_QUEUE_WORDS.notSignedUpWord
+          : q.state === 'cant_honour' ? FRIEND_QUEUE_WORDS.cantHonourWord(q.reason, q.note)
+            : line.confirmed ? R.record.confirmed : R.record.toConfirm;
+      }
+      return `${askedText(q)}${parent} → ${named} · ${state}`;
+    });
+    const askedFor = all
+      .filter(l => l.asker.id !== reg.id && l.match?.id === reg.id && (l.confirmed || !!l.q.matchedRegistrationId))
+      .map(l => R.record.family(playerName(l.asker)));
+    if (asked.length === 0 && askedFor.length === 0) return null;
+    return {
+      asked,
+      askedFor: [...new Set(askedFor)],
+      onOpen: () => { setOpenId(null); setScope(reg.divisionId ?? ''); router.push(`${base}?tab=friends`, { scroll: false }); },
+    };
+  }
 
   const scoped = useMemo(() => (scope ? regs.filter(r => r.divisionId === scope) : regs), [regs, scope]);
   const counts = useMemo(() => {
@@ -675,6 +713,7 @@ export default function RegistrationsScreen() {
           scope={scope}
           onScope={setScope}
           regs={regs}
+          placement={placement}
           divisionName={divisionName}
           teamName={teamName}
           today={today}
@@ -845,6 +884,7 @@ export default function RegistrationsScreen() {
           onNote={key => void statusOne(openReg, key)}
           onClose={() => { setOpenId(null); setFeeFocus(null); }}
           cardRefunds={refundsOf(openReg.id)}
+          friends={friendRecord(openReg)}
           dispute={read?.disputes?.[openReg.id] ?? null}
           orgSlug={orgSlug}
           canDesk={rights.takeFees}

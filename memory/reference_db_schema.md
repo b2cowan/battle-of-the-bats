@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-11-11 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-12 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-11-11
+# DB Schema Reference — 2026-11-12
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -94,7 +94,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → lea
 - Indexes: league_email_log_org_id_idx, league_email_log_season_id_idx
 
 ### league_friend_requests
-id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, registration_id (uuid) → league_registrations.id NOT NULL, slot NOT NULL, typed_first, typed_last, typed_parent, code_entered, state, mark, matched_registration_id (uuid) → league_registrations.id, reason, note, decided_by (uuid), decided_at, kept_apart_by (uuid), kept_apart_at, created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, registration_id (uuid) → league_registrations.id NOT NULL, slot NOT NULL, typed_first, typed_last, typed_parent, code_entered, state, mark, matched_registration_id (uuid) → league_registrations.id, reason, note, decided_by (uuid), decided_at, kept_apart_by (uuid), kept_apart_at, created_at, updated_at, draft_outcome
 - Indexes: league_friend_requests_decided_by_idx, league_friend_requests_kept_apart_by_idx, league_friend_requests_matched_idx, league_friend_requests_org_idx, league_friend_requests_season_idx, league_friend_requests_slot_uniq
 
 ### league_game_changes

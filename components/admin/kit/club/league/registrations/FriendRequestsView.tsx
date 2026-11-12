@@ -7,10 +7,14 @@
  * the row opens the request with every match. The toolbar has no lime: the division, search, Filter (Show only) and
  * Export (the view's own file, children's names only).
  *
+ * AFTER THE DRAFT (Part 3; drawing tab 6, A3): once the division picked has drafted, the bands become the result — Not
+ * honoured first (the ones a registrar may want to fix by hand), then Honoured — each request with its reason, read from
+ * the teams as they stand now. Every row still opens the request and keeps its ⋯ (Delete request… must stay reachable).
+ *
  * WHO MAY: the screen mounts this only for a reader of Registrations (A11), on a season that takes friend requests.
  * Deciding is the desk's `register` right; without it every decision is absent (a reader reads).
  */
-import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { RepChip, RowAction, repKit, ClubRowList, ClubRowBand, EmptyCard, Callout } from '@/components/admin/kit/club/RepKit';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
@@ -26,9 +30,10 @@ import { FormError, jsonInit, moneyFetch, refusalText } from '../../money/MoneyK
 import { BULK_WORDS, REGS_WORDS } from '@/lib/house-league-money-words';
 import { playerName, regDay } from '@/lib/house-league-registrations';
 import {
-  askedPhrase, askedSub, askedText, friendFold, reasonOf, BANDS, FRIEND_QUEUE_WORDS,
-  type Band, type CantHonourReason, type QueueMark, type QueueRow,
+  askedPhrase, askedSub, askedText, friendFold, reasonOf, requestLines, BANDS, FRIEND_QUEUE_WORDS,
+  type Band, type CantHonourReason, type FriendPlacement, type QueueMark, type QueueRow,
 } from '@/lib/league-friend-queue';
+import { friendResult, FRIEND_RESULT_WORDS, type FriendResult, type ResultLine } from '@/lib/league-friend-draft';
 import type { LeagueRegistration, OrgPlan } from '@/lib/types';
 import CantHonourWindow from './CantHonourWindow';
 import FriendRequestWindow from './FriendRequestWindow';
@@ -36,6 +41,7 @@ import { exportFriendsCsv, exportFriendsXlsx } from './friendRequestsExport';
 import css from './Registrations.module.css';
 
 const W = FRIEND_QUEUE_WORDS;
+const R = FRIEND_RESULT_WORDS;
 const PAGE = 50;
 const MARKS: readonly QueueMark[] = ['code', 'bothAsked', 'noMatch', 'differentDivision'];
 
@@ -52,7 +58,7 @@ type Act =
   | { kind: 'delete'; row: QueueRow; index: number };
 
 export default function FriendRequestsView({
-  viewSwitch, rows, divisions, scope, onScope, regs, divisionName, teamName, today, canDecide, isPhone,
+  viewSwitch, rows, divisions, scope, onScope, regs, placement, divisionName, teamName, today, canDecide, isPhone,
   orgQuery, seasonId, orgSlug, planId, freeFloor, onChanged, onOpenRegistration, say,
 }: {
   /** The Registrations view switch, drawn first in this view's toolbar. */
@@ -63,6 +69,8 @@ export default function FriendRequestsView({
   scope: string;
   onScope: (id: string) => void;
   regs: readonly LeagueRegistration[];
+  /** Where the draft dealt each child and the locks (Part 3): a drafted division reads its result. */
+  placement: FriendPlacement;
   divisionName: (id: string | null) => string | null;
   teamName: (id: string | null) => string | null;
   today: string;
@@ -84,6 +92,7 @@ export default function FriendRequestsView({
   const [act, setAct] = useState<Act | null>(null);
   const [busy, setBusy] = useState<ReadonlySet<string>>(new Set());
   const [result, setResult] = useState<string | null>(null);
+  const [shownResult, setShownResult] = useState({ no: PAGE, yes: PAGE });
   const searchField = useToolbarSearch({ value: query, onChange: q => { setQuery(q); setSelected(new Set()); }, label: W.search });
 
   // ── Narrowing ─────────────────────────────────────────────────────────────────────────────────
@@ -107,6 +116,17 @@ export default function FriendRequestsView({
     for (const r of rows) if (r.band === 'toConfirm' && r.asker.divisionId) m.set(r.asker.divisionId, (m.get(r.asker.divisionId) ?? 0) + 1);
     return m;
   }, [rows]);
+
+  // ── After the draft (tab 6) ───────────────────────────────────────────────────────────────────
+  const draftedDivisions = useMemo(
+    () => new Set(regs.filter(r => r.status === 'active' && r.divisionId && placement[r.id]?.dealt).map(r => r.divisionId!)),
+    [regs, placement],
+  );
+  const resultOf = useCallback((line: ResultLine): FriendResult | null => (line.asker.divisionId && draftedDivisions.has(line.asker.divisionId)
+    ? friendResult(line, { placement, teamName, day: v => regDay(v, today) }) : null), [draftedDivisions, placement, teamName, today]);
+  const drafted = !!scope && draftedDivisions.has(scope);
+  const results = useMemo(() => (drafted ? requestLines(listed).map(line => ({ line, result: resultOf(line)! })) : []), [drafted, listed, resultOf]);
+  const resultBands = { no: results.filter(r => !r.result.honoured), yes: results.filter(r => r.result.honoured) };
 
   // ── Deciding ──────────────────────────────────────────────────────────────────────────────────
   async function decide(d: Decision, keys: readonly string[]): Promise<string | null> {
@@ -354,6 +374,90 @@ export default function FriendRequestsView({
     );
   }
 
+  // The result (tab 6): one row per request, Not honoured first. The match column names the team as it stands.
+  const matchedTo = (line: ResultLine) => (line.match && (line.confirmed || line.q.matchedRegistrationId)
+    ? W.matchLine(playerName(line.match), line.match.teamId ? teamName(line.match.teamId) : null) : null);
+  const moreResults = (k: 'no' | 'yes', hidden: number) => (
+    <button type="button" className={css.moreRow} onClick={() => setShownResult(v => ({ ...v, [k]: v[k] + PAGE }))}>{W.more(hidden)}</button>
+  );
+  const resultKeys = (['no', 'yes'] as const).filter(k => resultBands[k].length > 0);
+
+  function resultTable() {
+    const cols = 5;
+    return (
+      <div className={repKit.tableFrame}>
+        <table className={repKit.table}>
+          <thead>
+            <tr>
+              <th scope="col">{R.col.player}</th>
+              <th scope="col">{R.col.asked}</th>
+              <th scope="col">{R.col.matched}</th>
+              <th scope="col">{R.col.inDraft}</th>
+              <th scope="col"><span className={repKit.srOnly}>{W.col.actions}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {resultKeys.map(k => {
+              const list = resultBands[k];
+              const hidden = Math.max(0, list.length - shownResult[k]);
+              return [
+                <tr key={`band-${k}`} className={repKit.band}><td colSpan={cols}>{k === 'no' ? R.band.notHonoured : R.band.honoured} · {list.length}</td></tr>,
+                ...list.slice(0, shownResult[k]).map(({ line, result: res }) => {
+                  const matched = matchedTo(line);
+                  return (
+                    <tr key={line.q.id} className={repKit.rowOpens}
+                      onClick={() => { if (window.getSelection()?.toString()) return; setAct({ kind: 'pick', row: line.row }); }}>
+                      <td>
+                        <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} aria-haspopup="dialog"
+                          onClick={e => { e.stopPropagation(); setAct({ kind: 'pick', row: line.row }); }}>{playerName(line.asker)}</button>
+                        <span className={repKit.cellSub}>{teamName(line.asker.teamId) ?? ''}</span>
+                      </td>
+                      <td>{askedText(line.q)}</td>
+                      <td className={matched ? undefined : repKit.dim}>{matched ?? '—'}</td>
+                      <td>
+                        <RepChip tone={res.honoured ? 'neutral' : 'warn'}>{res.honoured ? W.honoured : W.notHonoured}</RepChip>
+                        <span className={repKit.cellSub}>{res.why}</span>
+                      </td>
+                      <td className={css.actionsCol} onClick={e => e.stopPropagation()}>
+                        <span className={css.actions}>{rowMenu(line.row)}</span>
+                      </td>
+                    </tr>
+                  );
+                }),
+                ...(hidden > 0 ? [<tr key={`more-${k}`}><td colSpan={cols}>{moreResults(k, hidden)}</td></tr>] : []),
+              ];
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  function resultPhone() {
+    return (
+      <ClubRowList label={W.view}>
+        {resultKeys.flatMap(k => {
+          const list = resultBands[k];
+          const hidden = Math.max(0, list.length - shownResult[k]);
+          return [
+            <ClubRowBand key={`band-${k}`} count={list.length}>{k === 'no' ? R.band.notHonoured : R.band.honoured}</ClubRowBand>,
+            ...list.slice(0, shownResult[k]).map(({ line, result: res }) => (
+              <li key={line.q.id} className={`${repKit.rowItem} ${css.pRow}`} data-row-list-row>
+                <button type="button" className={css.pMain} aria-haspopup="dialog" onClick={() => setAct({ kind: 'pick', row: line.row })}>
+                  <span className={css.pName}>{playerName(line.asker)}</span>
+                  <span className={css.pDetail}>{[teamName(line.asker.teamId), W.askedFor(askedText(line.q)), matchedTo(line)].filter(Boolean).join(' · ')}</span>
+                  <span className={css.pSub}>{res.honoured ? W.honoured : W.notHonoured} · {res.why}</span>
+                </button>
+                <span className={css.pMore}>{rowMenu(line.row)}</span>
+              </li>
+            )),
+            ...(hidden > 0 ? [<li key={`more-${k}`} className={repKit.rowItem} data-row-list-row>{moreResults(k, hidden)}</li>] : []),
+          ];
+        })}
+      </ClubRowList>
+    );
+  }
+
   function phoneList() {
     return (
       <ClubRowList label={W.view}>
@@ -404,7 +508,7 @@ export default function FriendRequestsView({
       : picks.size ? <EmptyCard title={W.emptyFilter} action={<button type="button" className="btn btn-outline" onClick={resetFilter}>{REGS_WORDS.filterClear}</button>} />
         : <EmptyCard title={W.emptyDivision} />;
 
-  const exportArgs = { rows: listed, orgSlug, divisionName, teamName };
+  const exportArgs = { rows: listed, orgSlug, divisionName, teamName, resultOf };
   const picked = selectedRows.length;
 
   return (
@@ -456,7 +560,8 @@ export default function FriendRequestsView({
 
       {listed.length === 0 ? empty : (
         <>
-          {isPhone ? phoneList() : deskTable()}
+          {drafted ? (isPhone ? resultPhone() : resultTable()) : isPhone ? phoneList() : deskTable()}
+          {drafted && <p className={repKit.notes}>{R.foot(resultBands.yes.length, results.length)}</p>}
           <p className={repKit.notes}>{W.foot}</p>
         </>
       )}

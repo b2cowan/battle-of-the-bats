@@ -300,11 +300,14 @@ export type DivisionRefusal = 'finished' | 'published' | 'changed';
 
 export async function applyDraft(
   orgId: string, seasonId: string, divisionId: string, fingerprint: string, deal: ReadonlyMap<string, string>,
+  /** Board Ready Stage 1 Part 3 (mig 473): what the deal did with each friend request, landed in the same transaction. */
+  friends: { ids: readonly string[]; outcomes: readonly string[] } = { ids: [], outcomes: [] },
 ): Promise<DivisionRefusal | null> {
   const regs = [...deal.keys()];
   const { data, error } = await supabaseAdmin.rpc('league_division_draft_apply', {
     p_org: orgId, p_season: seasonId, p_division: divisionId, p_fingerprint: fingerprint,
     p_regs: regs, p_teams: regs.map(r => deal.get(r)!),
+    p_friend_ids: [...friends.ids], p_friend_outcomes: [...friends.outcomes],
   });
   if (error) throw new Error(`The draft didn't save: ${error.message}`);
   return (data as DivisionRefusal | null) ?? null;

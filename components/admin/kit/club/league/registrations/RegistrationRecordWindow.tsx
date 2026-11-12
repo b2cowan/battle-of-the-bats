@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 /**
  * A REGISTRATION'S RECORD (Club Tier Stage 9b-2, Part 3): the whole row opens it, on a phone and at a desk. It READS first
  * (design decisions: "a record reads first, edits whole") — and nothing on a registration is typed here, so it has no
@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
  */
 import KitDialog, { type KitStep } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
+import { FRIEND_RESULT_WORDS } from '@/lib/league-friend-draft';
 import { Facts } from '../../money/MoneyKit';
 import { REG_RECORD_WORDS as W, REGS_WORDS } from '@/lib/house-league-money-words';
 import { formatLeagueMoney, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
@@ -88,6 +89,7 @@ function SecondParentFact({ reg, onSave, status }: {
 export default function RegistrationRecordWindow({
   model, season, seasonName, teamName, lines, changes, today, showFee, statusWord, steps, onPick, onNote, onClose,
   cardRefunds = [], dispute = null, orgSlug = '', canDesk = false, isPhone = false, focus = null, onAnotherWay, onSecondEmail = null, onFamily = null,
+  friends = null,
 }: {
   model: RegRowModel;
   season: RegsSeason;
@@ -120,6 +122,12 @@ export default function RegistrationRecordWindow({
   onSecondEmail?: ((value: string) => Promise<string | null>) | null;
   /** Stage 4a (Part 8.1): Send again and Remove a parent, for anyone who can change registrations (null otherwise). */
   onFamily?: FamilyAppActions | null;
+  /**
+   * Board Ready Stage 1 Part 3 (drawing tab 6): what this child's family asked and who asked for this child, each line
+   * already worded (with its result once the division has drafted). Null on a season without friend requests, or for a
+   * child nobody named and who named nobody: the section is absent.
+   */
+  friends?: { asked: readonly ReactNode[]; askedFor: readonly string[]; onOpen: () => void } | null;
 }) {
   const reg: LeagueRegistration = model.reg;
   const got = receivedOf(lines);
@@ -183,6 +191,17 @@ export default function RegistrationRecordWindow({
         <h3 className={css.recordHead}>{W.details}</h3>
         <Facts rows={details} />
       </section>
+
+      {friends && (
+        <section className={css.recordSection}>
+          <h3 className={css.recordHead}>{FRIEND_RESULT_WORDS.record.title}</h3>
+          <Facts rows={[
+            ...(friends.asked.length ? [[FRIEND_RESULT_WORDS.record.askedFor, <>{friends.asked.map((line, i) => <span key={i} className={css.recordLine}>{line}</span>)}</>] as const] : []),
+            ...(friends.askedFor.length ? [[FRIEND_RESULT_WORDS.record.askedForChild(reg.playerFirstName), friends.askedFor.join(' · ')] as const] : []),
+          ]} />
+          <button type="button" className={`${ck.link} ${css.recordLink}`} onClick={friends.onOpen}>{FRIEND_RESULT_WORDS.record.open}</button>
+        </section>
+      )}
 
       {showFee && (
         <section className={css.recordSection} ref={feeRef}>

@@ -53,6 +53,8 @@ export const TEAMS_WORDS = {
     notRated: 'Not rated',
     // "Has player notes" and "Owing" are Registrations' own options (one spelling).
     sibling: 'Has a sibling in this division',
+    // Registrations' own option (one spelling), only for a reader who can open Registrations (A11).
+    friend: 'Has a friend request',
     sort: 'Sort',
     sortBy: { last: 'Last name', rating: 'Rating', age: 'Age', family: 'Family' },
     // What the one arrow beside Sort does, per sort: [as it opens, reversed]. The arrow carries no words of its own.
@@ -65,18 +67,43 @@ export const TEAMS_WORDS = {
     sortOrderAria: (order: string) => `Order: ${order}. Reverse it`,
     noMatch: 'Nobody here matches.',
   },
-  col: { player: 'Player', age: 'Age' },
+  // The row's fixed places (5b option B, A14/A15), each headed by its symbol; the hovers name them.
+  col: {
+    player: 'Player', age: 'Age', rating: 'RTG', ratingHint: 'Rating: 1 is newest to the sport, 5 among the strongest',
+    together: 'Together', togetherHint: 'Together: family and friends', note: 'Note', owing: 'Owing',
+  },
   mark: {
     owingAria: (amount: string) => `${amount} owing`,
     owingLine: (amount: string) => `${amount} owing.`,
     owingAct: 'Record a payment on',
     owingLink: 'Registrations',
-    familyAria: (last: string, n: number) => `Where ${last ? `the ${last} family’s` : 'this family’s'} ${n} children are`,
-    familyTitle: (last: string, n: number, division: string) => `${last ? `The ${last} family` : 'This family'} · ${n} children in ${division}`,
     familyFoot: (isPhone: boolean) => `Highlighted on the board · ${isPhone ? 'tap' : 'click'} a name to go to it`,
     noteAria: (first: string) => `Note from ${possessive(first)} family`,
     noteTitle: (name: string) => `${name} · note from the family`,
     noteFoot: 'Written at sign-up · anyone who can open Registrations sees it',
+    // Together (5b option B): family and confirmed friends, one place. The count is how many of the player's group are on
+    // this team; "1 of 2", amber, when someone they are to be with is somewhere else.
+    togetherCount: (here: number, all: number, split: boolean) => (split ? `${here} of ${all}` : String(all)),
+    togetherAria: (name: string, here: number, all: number, onTeam: boolean) =>
+      onTeam ? `${name}: ${here} of ${all} family and friends on the same team` : `${name} isn’t on a team; ${all} family and friends to keep together`,
+    togetherTitle: (name: string, here: number, all: number, onTeam: boolean) =>
+      onTeam ? `${name} · ${here} of ${all} family and friends on the same team` : `${name} · a group of ${all + 1}`,
+    kind: { family: 'family', friend: 'friend' },
+    status: { together: 'Together', apart: 'Apart', keptApart: 'Kept apart' },
+    linkConfirmed: (day: string, bothAsked: boolean, code: boolean) => `${bothAsked ? 'Both asked · ' : code ? 'Code match · ' : ''}confirmed ${day}`,
+    linkKeptApart: (who: string | null, day: string) => (who ? `By ${who}, ${day}` : day),
+    linkOverCap: 'The group would pass 3 children',
+    linkLocked: 'Locked to different teams',
+  },
+  // "Keep apart from a friend…" (tab 5): a decision about the draft, so it lives on the board, not in the queue.
+  apart: {
+    menu: 'Keep apart from a friend…',
+    again: (friend: string) => `Keep together with ${friend} again`,
+    title: (first: string) => `Keep ${first} apart from…`,
+    body: 'The draft and Draft again won’t put the two on one team. Moving a player by hand still works. Families aren’t told.',
+    go: 'Keep apart',
+    working: 'Saving…',
+    pick: 'Pick a friend.',
   },
   drawer: {
     steps: 'Steps',
@@ -174,6 +201,27 @@ export const TEAMS_WORDS = {
     familiesLine: 'Brothers and sisters signed up under one parent email go to the same team. Locked players stay where they are.',
     teamsLineFamilies: (sizes: readonly number[]) =>
       `Sizes ${nameList(sizes.map(String))}: keeping families together, the teams can’t come out even. Turn it off to deal each child on their own.`,
+    // Friends together (Board Ready Stage 1 Part 3, drawing tab 3 bottom; A9): the switch shows only when the division has a
+    // confirmed request; on by default; the choice holds for the visit, so Draft again uses it.
+    friends: 'Friends',
+    friendsLine: (f: { confirmed: number; groups: number; overCap: number; locked: number; apart: number; waiting: number }) => [
+      `${f.confirmed} confirmed ${f.confirmed === 1 ? 'request makes' : 'requests make'} ${f.groups} ${f.groups === 1 ? 'group' : 'groups'}.`,
+      f.overCap ? `${f.overCap} can’t be kept: the group would pass 3 children.` : null,
+      f.locked ? `${f.locked} can’t be kept: the children are locked to different teams.` : null,
+      f.apart ? `${f.apart} ${f.apart === 1 ? 'is' : 'are'} kept apart.` : null,
+      f.waiting ? `${f.waiting} ${f.waiting === 1 ? 'is' : 'are'} still to confirm and ${f.waiting === 1 ? 'is' : 'are'} left out.` : null,
+    ].filter(Boolean).join(' '),
+    friendsWaitingOnly: (n: number) => `No confirmed requests yet. ${n} ${n === 1 ? 'is' : 'are'} still to confirm and ${n === 1 ? 'is' : 'are'} left out.`,
+    friendsLink: 'Open friend requests',
+    friendsSwitch: 'Keep friends together',
+    friendsSwitchLine: 'Confirmed friend requests go to the same team, in groups of up to 3 children with brothers and sisters. Locked players stay where they are.',
+    howLineBoth: 'Families and friends first, then everyone else, strongest first, and the order reverses each round. Then single players swap teams where that evens out the averages. Ties and the first pick are drawn at random.',
+    howLineFriends: 'Friends first, then everyone else, strongest first, and the order reverses each round. Then single players swap teams where that evens out the averages. Ties and the first pick are drawn at random.',
+    // Names only the switches the window shows: a division with no brothers or sisters has the friends switch alone.
+    teamsLineGroups: (sizes: readonly number[], families: boolean) =>
+      `Sizes ${nameList(sizes.map(String))}: keeping groups together, the teams can’t come out even. ${families
+        ? 'Turn off Keep families together and Keep friends together to deal each child on their own.'
+        : 'Turn off Keep friends together to deal each child on their own.'}`,
     howLineFamilies:'Families first, then everyone else, strongest first, and the order reverses each round. Then single players swap teams where that evens out the averages. Ties and the first pick are drawn at random.',
     foot: 'Nothing is sent. Families hear when you publish.',
     button: 'Run the draft',

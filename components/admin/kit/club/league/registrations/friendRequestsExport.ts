@@ -11,22 +11,30 @@ import { formulaSafe } from '@/lib/export/formula-safe';
 import { playerName } from '@/lib/house-league-registrations';
 import { showFriendCode } from '@/lib/league-friend-code';
 import { requestLines, FRIEND_QUEUE_WORDS as W, type QueueRow } from '@/lib/league-friend-queue';
+import type { FriendResult, ResultLine } from '@/lib/league-friend-draft';
+
+/** Part 3: a drafted division's live result for one request (tab 6), or null before that division's draft. */
+type ResultOf = (line: ResultLine) => FriendResult | null;
 
 const HEAD = [W.fileCols.player, W.fileCols.division, W.fileCols.team, W.fileCols.asked, W.fileCols.code, W.fileCols.matched,
   W.fileCols.mark, W.fileCols.state, W.fileCols.inDraft, W.fileCols.reason, W.fileCols.decidedBy];
 
-function lines(rows: readonly QueueRow[], divisionName: (id: string | null) => string | null, teamName: (id: string | null) => string | null, forCsv: boolean): string[][] {
-  return requestLines(rows).map(({ q, row, asker, match, confirmed }) => {
+function lines(rows: readonly QueueRow[], divisionName: (id: string | null) => string | null, teamName: (id: string | null) => string | null, forCsv: boolean, resultOf?: ResultOf): string[][] {
+  return requestLines(rows).map(line => {
+    const { q, row, asker, match, confirmed } = line;
     const typed = q.code ? '' : [q.typedFirst, q.typedLast].filter(Boolean).join(' ');
     // A mark belongs to the request it describes: Code match only on the line whose family entered a code.
     const marks = [...row.marks].filter(m => m !== 'code' || !!q.code).map(m => W.mark[m]).join(', ');
     const state = confirmed ? W.fileState.confirmed : W.fileState[q.state === 'to_confirm' ? 'toConfirm' : q.state];
     const team = teamName(asker.teamId);
     const honoured = confirmed && !!asker.teamId && !!match?.teamId && match.teamId === asker.teamId;
-    const inDraft = !asker.teamId ? '' : honoured ? W.honoured : W.notHonoured;
-    const reason = q.state === 'not_signed_up' ? W.notSignedUpWord
-      : q.state === 'cant_honour' ? W.cantHonourWord(q.reason, q.note)
-        : honoured && team ? `Both on ${team}` : '';
+    // After the division's draft (Part 3), the result and its reason are the screen's own (tab 6), read live.
+    const result = resultOf?.(line) ?? null;
+    const inDraft = result ? (result.honoured ? W.honoured : W.notHonoured) : !asker.teamId ? '' : honoured ? W.honoured : W.notHonoured;
+    const reason = result ? result.why
+      : q.state === 'not_signed_up' ? W.notSignedUpWord
+        : q.state === 'cant_honour' ? W.cantHonourWord(q.reason, q.note)
+          : honoured && team ? `Both on ${team}` : '';
     const cells = [
       playerName(asker), divisionName(asker.divisionId) ?? '', team ?? '', typed, q.code ? showFriendCode(q.code) : '',
       match && (confirmed || q.matchedRegistrationId) ? playerName(match) : '',
@@ -39,16 +47,16 @@ function lines(rows: readonly QueueRow[], divisionName: (id: string | null) => s
 
 export async function exportFriendsXlsx(p: {
   rows: readonly QueueRow[]; orgSlug: string | undefined;
-  divisionName: (id: string | null) => string | null; teamName: (id: string | null) => string | null;
+  divisionName: (id: string | null) => string | null; teamName: (id: string | null) => string | null; resultOf?: ResultOf;
 }) {
   if (!p.rows.length) return;
-  await downloadXLSX(buildFilename({ org: p.orgSlug, dataset: 'friend-requests' }, 'xlsx'), HEAD, lines(p.rows, p.divisionName, p.teamName, false), 'Friend requests');
+  await downloadXLSX(buildFilename({ org: p.orgSlug, dataset: 'friend-requests' }, 'xlsx'), HEAD, lines(p.rows, p.divisionName, p.teamName, false, p.resultOf), 'Friend requests');
 }
 
 export function exportFriendsCsv(p: {
   rows: readonly QueueRow[]; orgSlug: string | undefined;
-  divisionName: (id: string | null) => string | null; teamName: (id: string | null) => string | null;
+  divisionName: (id: string | null) => string | null; teamName: (id: string | null) => string | null; resultOf?: ResultOf;
 }) {
   if (!p.rows.length) return;
-  downloadCSVBlob(buildFilename({ org: p.orgSlug, dataset: 'friend-requests' }, 'csv'), generateCSV(HEAD, lines(p.rows, p.divisionName, p.teamName, true)));
+  downloadCSVBlob(buildFilename({ org: p.orgSlug, dataset: 'friend-requests' }, 'csv'), generateCSV(HEAD, lines(p.rows, p.divisionName, p.teamName, true, p.resultOf)));
 }

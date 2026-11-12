@@ -34,12 +34,39 @@ export interface DraftPlayer {
 export interface DraftOptions {
   /** Families together (A7): a household's children in this division go to one team. Absent or false: today's deal. */
   together?: boolean;
+  /**
+   * Friends together (Board Ready Stage 1 Part 3): the confirmed friend links of this division. Absent or empty: no
+   * friend is kept with another. A link naming a child who is not in `players` is ignored and gets no outcome.
+   */
+  friends?: readonly FriendLink[];
 }
+
+/** One confirmed friend request between two children of the division (a Both asked pair is ONE link). */
+export interface FriendLink {
+  /** The key the outcome is reported under (the route uses the requests' ids). */
+  id: string;
+  a: string;
+  b: string;
+  /** Each family asked for the other child: kept first (A7). */
+  bothAsked: boolean;
+  /** A friend code matched: kept next (A7). */
+  code: boolean;
+  /** When it was confirmed (ISO): the earliest is kept next (A7). */
+  confirmedAt: string;
+  /** "Keep apart from a friend…" on the board: never joined, by the draft or Draft again. */
+  apart: boolean;
+}
+
+/** What the deal did with a link: kept in one group · the group would pass 3 · the two are locked to different teams · kept apart. */
+export type LinkOutcome = 'kept' | 'overCap' | 'locked' | 'apart';
+
+/** The most children in one keep-together group, brothers and sisters counted (A1, fixed). */
+export const GROUP_MOST = 3;
 
 export type DraftRefusal = 'noTeams' | 'noPlayers' | 'tooFew' | 'lockedFull';
 
 export type DraftResult =
-  | { ok: true; deal: Map<string, string> }
+  | { ok: true; deal: Map<string, string>; links: Map<string, LinkOutcome> }
   | { ok: false; refusal: DraftRefusal };
 
 export const ratingOf = (p: { rating: number | null }): number => p.rating ?? NOT_RATED_COUNTS_AS;
@@ -78,11 +105,15 @@ export function draftRefusal(players: readonly DraftPlayer[], teamIds: readonly 
 export function runDraft(players: readonly DraftPlayer[], teamIds: readonly string[], seed: number, options: DraftOptions = {}): DraftResult {
   const refusal = draftRefusal(players, teamIds);
   if (refusal) return { ok: false, refusal };
-  // Families together, only when there is a family to keep together: otherwise the deal below, untouched — so the
-  // switch off (or a division with no brothers and sisters) deals exactly as before A7, seed for seed.
-  if (options.together) {
-    const units = familyUnits(players, teamIds);
-    if (units) return { ok: true, deal: dealUnits(units, teamIds, seed) };
+  // Families and friends together, only when there is a group to keep together: otherwise the deal below, untouched —
+  // so both switches off (or a division with no brothers, sisters or kept friends) deals exactly as before A7, seed
+  // for seed.
+  let links = new Map<string, LinkOutcome>();
+  if (options.together || options.friends?.length) {
+    const groups = keepTogetherGroups(players, teamIds, options);
+    links = groups.links;
+    const plan = unitPlan(players, teamIds, groups.units);
+    if (plan) return { ok: true, deal: dealUnits(plan, teamIds, seed), links };
   }
   const random = seededRandom(seed);
   const teams = new Set(teamIds);
@@ -121,7 +152,7 @@ export function runDraft(players: readonly DraftPlayer[], teamIds: readonly stri
     size.set(team, size.get(team)! + 1);
     total.set(team, total.get(team)! + ratingOf(player));
   }
-  return { ok: true, deal };
+  return { ok: true, deal, links };
 }
 
 /**
@@ -140,30 +171,97 @@ export function runDraft(players: readonly DraftPlayer[], teamIds: readonly stri
 interface DraftUnit { ids: string[]; rating: number }
 interface FamilyPlan { placed: Map<string, string>; size: Map<string, number>; total: Map<string, number>; families: DraftUnit[]; singles: DraftUnit[] }
 
+const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 const householdOf = (p: DraftPlayer) => (p.household ?? '').trim().toLowerCase() || null;
 
-/** The units to deal, or null when no household has two children to keep together (then the deal is today's). */
-function familyUnits(players: readonly DraftPlayer[], teamIds: readonly string[]): FamilyPlan | null {
+/**
+ * ── FRIENDS TOGETHER (Board Ready Stage 1 Part 3; rulings A1, A6, A7, A9; drawings tabs 5, 5b) ──────────────────────
+ * A keep-together group is a household (with Keep families together on) joined by confirmed friend links:
+ *   1. The households first, exactly as families together builds them: a household with locks on ONE team is one group
+ *      on that team; locks on two or more teams win, and its unlocked children are a group of their own. Brothers and
+ *      sisters are never split by the cap (A6): a family of three is a group with no room for a friend.
+ *   2. Then each link, strongest first (A7): Both asked, then a code match, then the earliest confirmed (ties by id, so
+ *      the same links always give the same groups, whatever the seed). A link joins the two groups unless it was kept
+ *      apart on the board, the two are locked to different teams (locks win, as for families), or the joined group would
+ *      pass 3 children. Two children already in one group are kept.
+ * The groups are then dealt as families are (dealt first, biggest first; a group with a lock goes to that lock's team),
+ * and evening out moves single players only — never a group.
+ */
+export interface KeepGroup {
+  /** The children, in the order the players came in. */
+  ids: string[];
+  /** The team a lock pins the group to, or null. */
+  team: string | null;
+}
+
+/** Every child's group, and what each link came to. Pure: the board reads the same groups the draft deals. */
+export function keepTogetherGroups(
+  players: readonly DraftPlayer[], teamIds: readonly string[], options: DraftOptions = {},
+): { units: KeepGroup[]; groupOf: Map<string, KeepGroup>; links: Map<string, LinkOutcome> } {
   const teams = new Set(teamIds);
+  const lockedTo = (p: DraftPlayer) => (p.lockedTeamId && teams.has(p.lockedTeamId) ? p.lockedTeamId : null);
+  const at = new Map(players.map((p, i) => [p.id, i]));
+  const groupOf = new Map<string, KeepGroup>();
+  const make = (list: readonly DraftPlayer[], team: string | null) => {
+    const g: KeepGroup = { ids: list.map(p => p.id), team };
+    for (const p of list) groupOf.set(p.id, g);
+  };
+  const byHome = new Map<string, DraftPlayer[]>();
+  if (options.together) {
+    for (const p of players) {
+      const home = householdOf(p);
+      if (!home) continue;
+      const list = byHome.get(home);
+      if (list) list.push(p); else byHome.set(home, [p]);
+    }
+  }
+  for (const p of players) {
+    if (groupOf.has(p.id)) continue;
+    const home = options.together ? householdOf(p) : null;
+    const kin = home ? byHome.get(home)! : [p];
+    const lockTeams = new Set(kin.map(lockedTo).filter((t): t is string => !!t));
+    if (lockTeams.size === 1) { make(kin, [...lockTeams][0]); continue; }
+    for (const k of kin) if (lockedTo(k)) make([k], lockedTo(k));
+    const free = kin.filter(k => !lockedTo(k));
+    if (free.length) make(free, null);
+  }
+
+  const links = new Map<string, LinkOutcome>();
+  const order = (options.friends ?? [])
+    .filter(l => l.a !== l.b && at.has(l.a) && at.has(l.b))
+    .slice()
+    .sort((x, y) => Number(y.bothAsked) - Number(x.bothAsked) || Number(y.code) - Number(x.code)
+      || (x.confirmedAt < y.confirmedAt ? -1 : x.confirmedAt > y.confirmedAt ? 1 : 0) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
+  // "Keep apart" must hold through a mutual friend too: a link that would put a kept-apart pair into one group is not made.
+  const apartPairs = new Set((options.friends ?? []).filter(l => l.apart).map(l => pairKey(l.a, l.b)));
+  const splitsApart = (ga: KeepGroup, gb: KeepGroup) => ga.ids.some(x => gb.ids.some(y => apartPairs.has(pairKey(x, y))));
+  for (const l of order) {
+    const ga = groupOf.get(l.a)!, gb = groupOf.get(l.b)!;
+    if (l.apart) { links.set(l.id, 'apart'); continue; }
+    if (ga === gb) { links.set(l.id, 'kept'); continue; }
+    if (splitsApart(ga, gb)) { links.set(l.id, 'apart'); continue; }
+    if (ga.team && gb.team && ga.team !== gb.team) { links.set(l.id, 'locked'); continue; }
+    if (ga.ids.length + gb.ids.length > GROUP_MOST) { links.set(l.id, 'overCap'); continue; }
+    const joined: KeepGroup = { ids: [...ga.ids, ...gb.ids].sort((x, y) => at.get(x)! - at.get(y)!), team: ga.team ?? gb.team };
+    for (const id of joined.ids) groupOf.set(id, joined);
+    links.set(l.id, 'kept');
+  }
+  return { units: [...new Set(groupOf.values())], groupOf, links };
+}
+
+/** The units to deal, or null when no group has two children to keep together (then the deal is today's). */
+function unitPlan(players: readonly DraftPlayer[], teamIds: readonly string[], groups: readonly KeepGroup[]): FamilyPlan | null {
+  const teams = new Set(teamIds);
+  const lockedTo = (p: DraftPlayer) => (p.lockedTeamId && teams.has(p.lockedTeamId) ? p.lockedTeamId : null);
+  const byId = new Map(players.map(p => [p.id, p]));
+  const at = new Map(players.map((p, i) => [p.id, i]));
+  // Something to keep together: a free group of two or more, or an unlocked child pinned by a group's lock. A lone
+  // unlocked child of a family locked across two teams has nobody to follow, so it deals as before.
+  const keeps = (g: KeepGroup) => (g.team ? g.ids.some(id => !lockedTo(byId.get(id)!)) : g.ids.length >= 2);
+  if (!groups.some(keeps)) return null;
+
   const size = new Map<string, number>(teamIds.map(t => [t, 0]));
   const total = new Map<string, number>(teamIds.map(t => [t, 0]));
-  const lockedTo = (p: DraftPlayer) => (p.lockedTeamId && teams.has(p.lockedTeamId) ? p.lockedTeamId : null);
-  const byHome = new Map<string, DraftPlayer[]>();
-  for (const p of players) {
-    const home = householdOf(p);
-    if (!home) continue;
-    const list = byHome.get(home);
-    if (list) list.push(p); else byHome.set(home, [p]);
-  }
-  // Something to keep together: two unlocked children, or one unlocked child whose family is locked to ONE team. A lone
-  // unlocked child of a family locked across two teams has nobody to follow, so it deals as before.
-  const keeps = (list: readonly DraftPlayer[]) => {
-    const free = list.filter(p => !lockedTo(p)).length;
-    const lockTeams = new Set(list.map(lockedTo).filter(Boolean)).size;
-    return free >= 2 || (free === 1 && lockTeams === 1);
-  };
-  if (![...byHome.values()].some(keeps)) return null;
-
   const add = (team: string, p: DraftPlayer) => {
     size.set(team, size.get(team)! + 1);
     total.set(team, total.get(team)! + ratingOf(p));
@@ -171,25 +269,17 @@ function familyUnits(players: readonly DraftPlayer[], teamIds: readonly string[]
   const placed = new Map<string, string>();
   const families: DraftUnit[] = [];
   const singles: DraftUnit[] = [];
-  const unit = (list: readonly DraftPlayer[]): DraftUnit => ({ ids: list.map(p => p.id), rating: list.reduce((s, p) => s + ratingOf(p), 0) });
-  const seen = new Set<string>();
-  for (const p of players) {
-    const team = lockedTo(p);
-    if (team) { add(team, p); continue; }
-    if (seen.has(p.id)) continue;
-    const home = householdOf(p);
-    const kin = home ? byHome.get(home)! : [p];
-    const free = kin.filter(k => !lockedTo(k));
-    for (const k of free) seen.add(k.id);
-    const lockTeams = new Set(kin.map(lockedTo).filter((t): t is string => !!t));
-    if (lockTeams.size === 1) {
-      const [team1] = lockTeams;
-      for (const k of free) { placed.set(k.id, team1); add(team1, k); }
-    } else if (free.length >= 2) {
-      families.push(unit(free));
-    } else {
-      singles.push(unit(free));
+  // Families before A7 were listed in the order their first child came in; groups keep that order, so a division with
+  // no kept friend deals exactly as families together did, seed for seed.
+  const first = (g: KeepGroup) => Math.min(...g.ids.map(id => at.get(id)!));
+  for (const g of [...groups].sort((x, y) => first(x) - first(y))) {
+    const list = g.ids.map(id => byId.get(id)!);
+    if (g.team) {
+      for (const p of list) { if (!lockedTo(p)) placed.set(p.id, g.team); add(g.team, p); }
+      continue;
     }
+    const unit: DraftUnit = { ids: g.ids, rating: list.reduce((s, p) => s + ratingOf(p), 0) };
+    (g.ids.length >= 2 ? families : singles).push(unit);
   }
   return { placed, size, total, families, singles };
 }

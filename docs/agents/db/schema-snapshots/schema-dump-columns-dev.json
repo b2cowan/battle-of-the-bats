@@ -7866,6 +7866,15 @@
     "ordinal_position": 20
   },
   {
+    "table_name": "league_friend_requests",
+    "column_name": "draft_outcome",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
     "table_name": "league_game_changes",
     "column_name": "id",
     "data_type": "uuid",

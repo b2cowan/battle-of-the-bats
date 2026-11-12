@@ -3,13 +3,13 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById } from '@/lib/db';
 import { friendRequestsOn } from '@/lib/league-friends';
-import { decideFriendRequests, readSeasonFriendRequests, type FriendDecision } from '@/lib/league-friend-queue-server';
+import { decideFriendRequests, readFriendPlacement, readSeasonFriendRequests, type FriendDecision } from '@/lib/league-friend-queue-server';
 import { withObservability } from '@/lib/observability';
 
 /**
  * THE REGISTRAR'S FRIEND REQUESTS (Board Ready Stage 1 Part 2; drawing tab 4).
  *
- *   GET  — the season's requests, read behind the SAME action as the registrations list (A11: the seats that can open
+ *   GET  — the season's requests (and, Part 3, the draft's placement of each child), read behind the SAME action as the registrations list (A11: the seats that can open
  *          Registrations; tests/unit/house-league-friends-guard.test.ts). `on: false` and no rows when the plan has no
  *          friend requests or the season asks for none (the view is absent, not empty).
  *   POST — one decision: confirm · notSignedUp · cantHonour · reopen · delete. The registrations desk's right
@@ -36,8 +36,9 @@ export const GET = withObservability(async (req: Request,
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
   if (!friendRequestsOn(ctx!.org.planId, season.friendRequestsMax)) return NextResponse.json({ on: false, requests: [] });
-  const requests = await readSeasonFriendRequests(ctx!.org.id, seasonId);
-  return NextResponse.json({ on: true, requests });
+  // Part 3: where the draft dealt each child and the locks, so a drafted division reads Honoured / Not honoured (tab 6).
+  const [requests, placement] = await Promise.all([readSeasonFriendRequests(ctx!.org.id, seasonId), readFriendPlacement(ctx!.org.id, seasonId)]);
+  return NextResponse.json({ on: true, requests, placement });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/friends' });
 
 /** The body read into one decision, or null when it is not one. */

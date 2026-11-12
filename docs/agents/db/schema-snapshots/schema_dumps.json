@@ -7868,6 +7868,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "league_friend_requests",
+        "pos": 21,
+        "column_name": "draft_outcome",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_game_changes",
         "pos": 1,
         "column_name": "id",
@@ -44531,6 +44540,12 @@
         "table_name": "league_friend_requests",
         "detail": "league_friend_requests_code_entered_check",
         "check_clause": "((code_entered IS NULL) OR (code_entered ~ '^[2-9A-HJ-NP-Z]{5}[A-HJ-NP-Y]$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_draft_outcome_check",
+        "check_clause": "((draft_outcome IS NULL) OR (draft_outcome = ANY (ARRAY['kept'::text, 'over_cap'::text, 'locked'::text, 'apart'::text, 'off'::text])))"
       },
       {
         "kind": "CHECK",

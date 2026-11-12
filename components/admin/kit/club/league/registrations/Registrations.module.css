@@ -332,3 +332,9 @@
 .friendMatch { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
 /* A match in another division, in the request window: drawn, dimmed, never picked (A2: that is Can't honour). */
 .choice[data-dim] { opacity: 0.6; cursor: default; }
+
+/* The record's Friend requests section (Board Ready Stage 1 Part 3, tab 6): one line per request, then the door. */
+.recordLine { display: block; }
+.recordLine + .recordLine { margin-top: 0.2rem; }
+.recordLink { align-self: flex-start; min-height: 32px; padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
+@media (max-width: 640px) { .recordLink { min-height: 44px; } }

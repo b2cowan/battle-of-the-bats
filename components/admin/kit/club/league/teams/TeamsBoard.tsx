@@ -15,8 +15,16 @@
  * Only the people who run the league see a rating, a lock or "Moved by you" (9c·2a, copy §13); the registrar reads the
  * board with no buttons. A note reaches the board only for a reader who can open registrations (A8): the board renders
  * the mark only when the read carried the note.
+ *
+ * THE ROW'S FIXED PLACES (Board Ready Stage 1 Part 3; drawing 5b option B, rulings A14, A15 — for EVERY club, with or
+ * without friend requests): RTG · Player · Together · Note · $ · Age · ⋯, each place headed by its symbol, so a mark
+ * lines up down a team. Together is family and confirmed friends in one place: the count is how many of the player's
+ * group are on this team, amber "1 of 2" when someone they are to be with is elsewhere. A place the reader can't see is
+ * absent, not empty: RTG for the people who see ratings, Note for a reader of Registrations, the friends inside Together
+ * for a reader of Registrations (A11 — anyone else still sees the family). A player's ⋯ holds "Keep apart from a
+ * friend…" and "Keep together with {friend} again".
  */
-import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import {
   DndContext, DragOverlay, MouseSensor, TouchSensor, rectIntersection, useDraggable, useDroppable, useSensor, useSensors,
@@ -37,8 +45,9 @@ import { REGS_WORDS } from '@/lib/house-league-money-words';
 import { TC_CHIP } from '@/lib/house-league-team-changes-words';
 import { TEAMS_WORDS as W } from '@/lib/house-league-teams-screen-words';
 import {
-  familiesOf, filterCounts, householdKey, narrowPool, sortPool, type PoolFilter, type PoolSort,
+  familiesOf, filterCounts, narrowPool, sortPool, togetherOf, type PoolFilter, type PoolSort, type TogetherPerson,
 } from '@/lib/house-league-board-pool';
+import type { DivisionFriends } from '@/lib/league-friend-draft';
 import { dayOf, type BoardLeft, type BoardPlayer, type BoardTeam } from './api';
 import css from './Teams.module.css';
 
@@ -49,7 +58,7 @@ export interface BoardRights {
   seeRatings: boolean;
 }
 
-export interface PlayerMenuItem { key: 'move' | 'lock' | 'unlock' | 'putBack'; label: string }
+export interface PlayerMenuItem { key: 'move' | 'lock' | 'unlock' | 'putBack' | 'apart' | `together:${string}`; label: string }
 
 export interface BoardProps {
   teams: readonly BoardTeam[];
@@ -57,6 +66,8 @@ export interface BoardProps {
   ratings: ReadonlyMap<string, number>;
   /** The families' sign-up notes — present only for a reader who can open registrations (A8). */
   notes: Readonly<Record<string, string>> | null;
+  /** The division's confirmed friend links and who asked — present only for a reader who can open registrations (A11). */
+  friends: DivisionFriends | null;
   left: readonly BoardLeft[];
   published: boolean;
   rights: BoardRights;
@@ -71,31 +82,50 @@ export interface BoardProps {
   onOpenTeam: (teamId: string, how?: 'edit' | 'coach' | 'delete') => void;
 }
 
-/** What the rows share beyond the board's props: the families, the lit household and how to reach a child. */
+/** The lit group: whose Together window is open (or who was gone to), and every child it lights. */
+interface Lit { key: string; ids: ReadonlySet<string> }
+
+/** What the rows share beyond the board's props: who each child is kept with, the lit group and how to reach a child. */
 interface RowKit {
-  families: ReadonlyMap<string, readonly BoardPlayer[]>;
-  /** The household lit up: while its family window is open, and after "go to" a name until the next mark is pressed. */
-  lit: string | null;
-  setLit: (key: string | null) => void;
+  together: ReadonlyMap<string, readonly TogetherPerson[]>;
+  byId: ReadonlyMap<string, BoardPlayer>;
+  /** The group lit up: while its Together window is open, and after "go to" a name until the next mark is pressed. */
+  lit: Lit | null;
+  setLit: (lit: Lit | null) => void;
   goTo: (playerId: string) => void;
 }
 
 const isMoved = (p: BoardPlayer, published: boolean) => !published && !!p.draftTeamId && p.teamId !== p.draftTeamId;
 const rowId = (id: string) => `board-player-${id}`;
 
-/** A player's ⋯ items: only what this player and these rights allow (absent beats disabled). */
-export function playerMenu(p: BoardPlayer, published: boolean, rights: BoardRights, teamName: (id: string | null) => string): PlayerMenuItem[] {
+/**
+ * A player's ⋯ items: only what this player and these rights allow (absent beats disabled). The friend items only for a
+ * reader the read gave friends to (A11): Keep apart while a confirmed friend is still kept with them, and Keep together
+ * again for each friend kept apart.
+ */
+export function playerMenu(
+  p: BoardPlayer, published: boolean, rights: BoardRights, teamName: (id: string | null) => string,
+  friends: readonly TogetherPerson[] = [], nameOf: (id: string) => string = () => '',
+): PlayerMenuItem[] {
   if (!rights.run) return [];
   const items: PlayerMenuItem[] = [{ key: 'move', label: W.kid.moveTo }];
   if (!published && p.teamId) items.push(p.locked ? { key: 'unlock', label: 'Unlock' } : { key: 'lock', label: 'Lock to this team' });
   if (isMoved(p, published) && p.draftTeamId) items.push({ key: 'putBack', label: W.kid.putBack(teamName(p.draftTeamId)) });
+  const linked = friends.filter(f => f.link);
+  if (linked.some(f => !f.link!.apart)) items.push({ key: 'apart', label: W.apart.menu });
+  for (const f of linked) if (f.link!.apart) items.push({ key: `together:${f.id}`, label: W.apart.again(nameOf(f.id)) });
   return items;
 }
 
-/** The row's columns (A2): the Rating column only for a reader who sees ratings, the ⋯ only for one who runs the league. */
-function columns(rights: BoardRights): CSSProperties {
-  const cols = [rights.seeRatings && 'var(--col-rating)', 'minmax(0, 1fr)', 'auto', 'var(--col-age)', rights.run && 'var(--col-more)']
-    .filter(Boolean).join(' ');
+/**
+ * The row's places (A2; 5b option B): RTG only for a reader who sees ratings, Note only for a reader the read gave notes
+ * to, the ⋯ only for one who runs the league. Together and $ are everyone's.
+ */
+function columns(rights: BoardRights, notes: boolean): CSSProperties {
+  const cols = [
+    rights.seeRatings && 'var(--col-rating)', 'minmax(0, 1fr)', 'var(--col-together)', notes && 'var(--col-mark)',
+    'var(--col-mark)', 'var(--col-age)', rights.run && 'var(--col-more)',
+  ].filter(Boolean).join(' ');
   return { '--cols': cols } as CSSProperties;
 }
 
@@ -107,14 +137,18 @@ function RatingChip({ rating }: { rating: number | null }) {
   );
 }
 
-/** The column headings, in the table recipe (A2); the same grid as the rows beneath them. */
-function ColHead({ rights }: { rights: BoardRights }) {
+/**
+ * The column headings, in the table recipe (A2); the same grid as the rows beneath them. Each mark's place is headed by
+ * its symbol (5b option B), and the hover names it: RTG (A15: a rating, 5 strongest — "RK" would read backwards).
+ */
+function ColHead({ rights, notes }: { rights: BoardRights; notes: boolean }) {
   return (
     <div className={css.colHead} aria-hidden>
-      {/* No heading word over the chips: the column is only as wide as a chip (owner, 2026-10-26); each chip names itself. */}
-      {rights.seeRatings && <span />}
+      {rights.seeRatings && <span title={W.col.ratingHint}>{W.col.rating}</span>}
       <span>{W.col.player}</span>
-      <span />
+      <span className={css.place} title={W.col.togetherHint}>{W.col.together}</span>
+      {notes && <span className={css.place} title={W.col.note}><FileText size={13} /></span>}
+      <span className={css.place} title={W.col.owing}>$</span>
       <span className={css.right}>{W.col.age}</span>
       {rights.run && <span />}
     </div>
@@ -174,41 +208,75 @@ function MarkButton({ label, title, glyph, className, pressed, isPhone, onOpen, 
   );
 }
 
-function Marks({ p, props, kit }: { p: BoardPlayer; props: BoardProps; kit: RowKit }) {
-  const key = householdKey(p.guardianEmail);
-  const family = key ? kit.families.get(key) : undefined;
-  const note = props.notes?.[p.id];
-  if (!family && !note && p.owes == null) return <span />;
-  const last = p.guardianLastName.trim();
-  const amount = p.owes != null ? formatLeagueMoney(p.owes) : '';
+/** One person's line in the Together window: Together on one team, Kept apart on the board, or Apart. */
+function personStatus(p: BoardPlayer, other: BoardPlayer, person: TogetherPerson): { word: string; ok: boolean } {
+  if (p.teamId && other.teamId === p.teamId) return { word: W.mark.status.together, ok: true };
+  if (person.link?.apart) return { word: W.mark.status.keptApart, ok: false };
+  return { word: W.mark.status.apart, ok: false };
+}
+
+/** The friend line's quiet sub (desk only, as tab 5 draws it): how it was confirmed, who kept it apart, or why it can't be kept. */
+function personSub(person: TogetherPerson): string | null {
+  const l = person.link;
+  if (!l || person.kind === 'family') return null;
+  if (l.apart) return W.mark.linkKeptApart(l.keptApartBy, l.keptApartAt ? dayOf(l.keptApartAt) : '');
+  if (person.outcome === 'overCap') return W.mark.linkOverCap;
+  if (person.outcome === 'locked') return W.mark.linkLocked;
+  return W.mark.linkConfirmed(dayOf(l.confirmedAt), l.bothAsked, l.code);
+}
+
+/** Together (5b option B): family and confirmed friends in one place; amber when someone in the group is elsewhere. */
+function TogetherPlace({ p, props, kit }: { p: BoardPlayer; props: BoardProps; kit: RowKit }) {
+  const people = (kit.together.get(p.id) ?? []).filter(x => kit.byId.has(x.id));
+  if (people.length === 0) return <span className={css.place} />;
+  const name = `${p.firstName} ${p.lastName}`;
+  const onTeam = !!p.teamId;
+  const here = onTeam ? people.filter(x => kit.byId.get(x.id)!.teamId === p.teamId).length : people.length;
+  const split = onTeam && here < people.length;
+  const lit = { key: p.id, ids: new Set([p.id, ...people.map(x => x.id)]) };
   return (
-    <span className={css.marks}>
-      {family && key && (
-        <MarkButton
-          label={W.mark.familyAria(last, family.length)}
-          title={W.mark.familyTitle(last, family.length, props.divisionName)}
-          glyph={<><Users size={14} aria-hidden />{family.length}</>}
-          className=""
-          pressed={kit.lit === key}
-          isPhone={props.isPhone}
-          onOpen={() => kit.setLit(key)}
-          onDismiss={() => kit.setLit(null)}
-          foot={W.mark.familyFoot(props.isPhone)}
-        >
-          {close => (
-            <ul className={css.popList}>
-              {family.map(child => (
-                <li key={child.id}>
-                  <button type="button" className={css.popName} onClick={() => { close(); kit.goTo(child.id); }}>
-                    {child.firstName} {child.lastName}
-                  </button>
-                  <span className={css.popWhere}>{props.teamName(child.teamId)}</span>
+    <span className={css.place}>
+      <MarkButton
+        label={W.mark.togetherAria(name, here, people.length, onTeam)}
+        title={W.mark.togetherTitle(name, here, people.length, onTeam)}
+        glyph={<><Users size={14} aria-hidden />{W.mark.togetherCount(here, people.length, split)}</>}
+        className={split ? css.markApart : ''}
+        pressed={kit.lit?.key === p.id}
+        isPhone={props.isPhone}
+        onOpen={() => kit.setLit(lit)}
+        onDismiss={() => kit.setLit(null)}
+        foot={W.mark.familyFoot(props.isPhone)}
+      >
+        {close => (
+          <ul className={css.popList}>
+            {people.map(person => {
+              const other = kit.byId.get(person.id)!;
+              const status = onTeam ? personStatus(p, other, person) : null;
+              const sub = props.isPhone ? null : personSub(person);
+              return (
+                <li key={person.id}>
+                  <span className={css.popWho}>
+                    <button type="button" className={css.popName} onClick={() => { close(); kit.goTo(person.id); }}>
+                      {other.firstName} {other.lastName}
+                    </button>
+                    <span className={css.popWhere}> · {props.teamName(other.teamId)} · {W.mark.kind[person.kind]}</span>
+                    {sub && <span className={css.popSub}>{sub}</span>}
+                  </span>
+                  {status ? <span className={`${css.popStatus}${status.ok ? '' : ` ${css.popStatusApart}`}`}>{status.word}</span> : <span />}
                 </li>
-              ))}
-            </ul>
-          )}
-        </MarkButton>
-      )}
+              );
+            })}
+          </ul>
+        )}
+      </MarkButton>
+    </span>
+  );
+}
+
+function NotePlace({ p, props }: { p: BoardPlayer; props: BoardProps }) {
+  const note = props.notes?.[p.id];
+  return (
+    <span className={css.place}>
       {note && (
         <MarkButton
           label={W.mark.noteAria(p.firstName)}
@@ -221,6 +289,14 @@ function Marks({ p, props, kit }: { p: BoardPlayer; props: BoardProps; kit: RowK
           {() => <p className={css.popQuote}>“{note}”</p>}
         </MarkButton>
       )}
+    </span>
+  );
+}
+
+function OwingPlace({ p, props }: { p: BoardPlayer; props: BoardProps }) {
+  const amount = p.owes != null ? formatLeagueMoney(p.owes) : '';
+  return (
+    <span className={css.place}>
       {p.owes != null && (
         <MarkButton
           label={W.mark.owingAria(amount)}
@@ -245,10 +321,11 @@ function PlayerRow({ p, props, kit, overlay = false }: { p: BoardPlayer; props: 
   const rating = ratings.get(p.id) ?? null;
   const moved = rights.run && isMoved(p, published);
   const locked = rights.run && p.locked && !published;
-  const items = playerMenu(p, published, rights, teamName);
+  const friends = props.friends ? (kit.together.get(p.id) ?? []).filter(x => x.kind === 'friend' && kit.byId.has(x.id)) : [];
+  const nameOf = (id: string) => { const k = kit.byId.get(id); return k ? `${k.firstName} ${k.lastName}` : ''; };
+  const items = playerMenu(p, published, rights, teamName, friends, nameOf);
   const name = `${p.firstName} ${p.lastName}`;
-  const key = householdKey(p.guardianEmail);
-  const lit = !!key && kit.lit === key;
+  const lit = !!kit.lit?.ids.has(p.id);
   // TC·6: a small amber chip with words on a child whose family has not been told their team (never on a team card).
   const notTold = rights.run && p.untold;
   const hasState = locked || notTold || !!p.askedToWithdrawAt || (moved && !!p.draftTeamId);
@@ -256,7 +333,9 @@ function PlayerRow({ p, props, kit, overlay = false }: { p: BoardPlayer; props: 
     <div id={overlay ? undefined : rowId(p.id)} className={`${css.kid}${moved ? ` ${css.kidMoved}` : ''}${lit ? ` ${css.kidLit}` : ''}`}>
       {rights.seeRatings && <RatingChip rating={rating} />}
       <span className={css.kidName}>{name}</span>
-      <Marks p={p} props={props} kit={kit} />
+      <TogetherPlace p={p} props={props} kit={kit} />
+      {props.notes && <NotePlace p={p} props={props} />}
+      <OwingPlace p={p} props={props} />
       <span className={css.age}><span aria-hidden>{p.age ?? '–'}</span><span className={css.srOnly}>{W.kid.age(p.age)}</span></span>
       {rights.run && (items.length > 0 ? (
         <CoachToolbarMenu
@@ -363,17 +442,20 @@ function usePoolTools(props: BoardProps, pool: readonly BoardPlayer[], families:
     setWasEmpty(empty);
     if (empty) { setQuery(''); setPicks([]); }
   }
-  const facts = { ratings: props.ratings, notes: props.notes, families };
+  const askedFriend = props.friends ? new Set(props.friends.asked) : null;
+  const facts = { ratings: props.ratings, notes: props.notes, families, friends: askedFriend };
   // Absent beats disabled: Not rated only for a reader who sees ratings; Has player notes only when a family wrote one.
   const offer: PoolFilter[] = [
     ...(props.rights.seeRatings ? ['notRated' as const] : []),
     ...(props.notes && Object.keys(props.notes).length > 0 ? ['notes' as const] : []),
     'owing', 'sibling',
+    // A11: only for a reader the read gave friends to, and only when a family in the division named one.
+    ...(askedFriend && askedFriend.size > 0 ? ['friend' as const] : []),
   ];
   // A tick whose option has gone (no notes now) counts nowhere: not in the list, the button or the count.
   const picks = rawPicks.filter(p => offer.includes(p));
   const counts = filterCounts(pool, offer, facts);
-  const label: Record<PoolFilter, string> = { notRated: W.pool.notRated, notes: REGS_WORDS.filterNotes, owing: REGS_WORDS.filterOwing, sibling: W.pool.sibling };
+  const label: Record<PoolFilter, string> = { notRated: W.pool.notRated, notes: REGS_WORDS.filterNotes, owing: REGS_WORDS.filterOwing, sibling: W.pool.sibling, friend: W.pool.friend };
   const shown = sortPool(narrowPool(pool, query, picks, facts), sort, props.ratings, { reverse, households: families });
   const sorts: { id: PoolSort; label: string }[] = [
     { id: 'last', label: W.pool.sortBy.last },
@@ -434,6 +516,14 @@ const AUTO_SCROLL = { threshold: { x: 0.2, y: 0.1 } };
 const scrollToRow = (id: string) => window.requestAnimationFrame(() =>
   document.getElementById(rowId(id))?.scrollIntoView({ block: 'center', behavior: 'smooth' }));
 
+/** Who each child is kept with, from the board's one read (the same groups the draft deals), and each child by id. */
+function useTogether(props: BoardProps): Pick<RowKit, 'together' | 'byId'> {
+  const { players, teams, friends } = props;
+  const together = useMemo(() => togetherOf(players, teams.map(t => t.id), friends?.links ?? null), [players, teams, friends]);
+  const byId = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
+  return { together, byId };
+}
+
 function DeskBoard(props: BoardProps) {
   // A mouse drags after 5px; a finger on a touch-width desk board (a tablet) holds first, so a swipe still scrolls the
   // pool's list (the house's hold-and-drag on touch).
@@ -442,13 +532,13 @@ function DeskBoard(props: BoardProps) {
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
   );
   const [dragId, setDragId] = useState<string | null>(null);
-  const [lit, setLit] = useState<string | null>(null);
+  const [lit, setLit] = useState<Lit | null>(null);
   const { teams, players, rights } = props;
   const pool = players.filter(p => !p.teamId);
   const families = familiesOf(players);
   const tools = usePoolTools(props, pool, families);
   const kit: RowKit = {
-    families, lit, setLit,
+    ...useTogether(props), lit, setLit,
     goTo: id => { tools.reveal(id); scrollToRow(id); },
   };
   const row = (p: BoardPlayer) => (rights.run
@@ -467,7 +557,7 @@ function DeskBoard(props: BoardProps) {
   return (
     <DndContext sensors={sensors} collisionDetection={stickyAware} autoScroll={AUTO_SCROLL}
       onDragStart={(e: DragStartEvent) => setDragId(String(e.active.id))} onDragEnd={onEnd} onDragCancel={() => setDragId(null)}>
-      <div className={`${css.board}${folded ? ` ${css.boardFolded}` : ''}`} style={columns(rights)}>
+      <div className={`${css.board}${folded ? ` ${css.boardFolded}` : ''}`} style={columns(rights, !!props.notes)}>
         {folded ? (
           <DropCard id="pool" className={css.poolBar} enabled={rights.run} label={W.pool.title}>
             <b>{W.pool.folded}</b> · {W.pool.foldedCount(players.length)}
@@ -484,7 +574,7 @@ function DeskBoard(props: BoardProps) {
             </div>
             <div className={css.poolList}>
               {/* Inside the list (sticky at its top), so the list's scrollbar narrows the headings as it does the rows. */}
-              <ColHead rights={rights} />
+              <ColHead rights={rights} notes={!!props.notes} />
               {tools.shown.length === 0 ? <p className={css.poolEmpty}>{W.pool.noMatch}</p> : tools.shown.map(row)}
             </div>
             {props.published && <p className={css.poolFoot}>{W.pool.hint}</p>}
@@ -498,27 +588,27 @@ function DeskBoard(props: BoardProps) {
                 <TeamHead team={team} members={members} props={props} />
                 {members.length === 0
                   ? <div className={css.emptyDrop}>{rights.run ? W.card.empty : W.pool.empty}</div>
-                  : <div className={css.kids}><ColHead rights={rights} />{members.map(row)}</div>}
+                  : <div className={css.kids}><ColHead rights={rights} notes={!!props.notes} />{members.map(row)}</div>}
                 <LeftLines team={team} props={props} />
               </DropCard>
             );
           })}
         </div>
       </div>
-      <DragOverlay>{dragging ? <div className={css.overlay} style={columns(rights)}><PlayerRow p={dragging} props={props} kit={kit} overlay /></div> : null}</DragOverlay>
+      <DragOverlay>{dragging ? <div className={css.overlay} style={columns(rights, !!props.notes)}><PlayerRow p={dragging} props={props} kit={kit} overlay /></div> : null}</DragOverlay>
     </DndContext>
   );
 }
 
 function PhoneBoard(props: BoardProps) {
   const [open, setOpen] = useState<string | null>(null);
-  const [lit, setLit] = useState<string | null>(null);
+  const [lit, setLit] = useState<Lit | null>(null);
   const { teams, players } = props;
   const pool = players.filter(p => !p.teamId);
   const families = familiesOf(players);
   const tools = usePoolTools(props, pool, families);
   const kit: RowKit = {
-    families, lit, setLit,
+    ...useTogether(props), lit, setLit,
     // A child on another team is in another group: open it, then bring the row into view.
     goTo: id => {
       const p = players.find(x => x.id === id);
@@ -533,7 +623,7 @@ function PhoneBoard(props: BoardProps) {
   if (open === 'pool' || team) {
     const members = team ? players.filter(p => p.teamId === team.id) : tools.shown;
     return (
-      <div className={css.phoneTeam} style={columns(props.rights)}>
+      <div className={css.phoneTeam} style={columns(props.rights, !!props.notes)}>
         <button type="button" className={css.backBtn} onClick={() => setOpen(null)}>
           <ChevronLeft size={18} aria-hidden />{W.back}
         </button>
@@ -549,7 +639,7 @@ function PhoneBoard(props: BoardProps) {
           )}
           {members.length === 0
             ? <p className={css.quiet}>{team ? W.card.empty : pool.length > 0 ? W.pool.noMatch : W.pool.empty}</p>
-            : <div className={css.kids}>{members.map(p => <PlayerRow key={p.id} p={p} props={props} kit={kit} />)}</div>}
+            : <div className={css.kids}><ColHead rights={props.rights} notes={!!props.notes} />{members.map(p => <PlayerRow key={p.id} p={p} props={props} kit={kit} />)}</div>}
           {team && <LeftLines team={team} props={props} />}
         </section>
       </div>

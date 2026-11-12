@@ -47,10 +47,21 @@ export interface FriendRequest {
   decidedBy: string | null;
   decidedAt: string | null;
   createdAt: string;
+  /** Part 3: "Keep apart from a friend…" on the board — who (by name) and when; null when not kept apart. */
+  keptApartBy?: string | null;
+  keptApartAt?: string | null;
+  /** Part 3: what the last draft of the division did with it (mig 473); null when it was part of no draft. */
+  draftOutcome?: DraftOutcome | null;
 }
 
+/** What a draft did with a request (mig 473): kept · the group would pass 3 · locked to different teams · kept apart · switch off. */
+export type DraftOutcome = 'kept' | 'over_cap' | 'locked' | 'apart' | 'off';
+
+/** Where the draft dealt each child and whether they are locked — the after-draft result's reasons read it (Part 3). */
+export type FriendPlacement = Record<string, { dealt: string | null; locked: boolean }>;
+
 /** What the GET returns. `on` is false when the plan has no friend requests or the season asks for none. */
-export interface FriendsRead { on: boolean; requests: FriendRequest[] }
+export interface FriendsRead { on: boolean; requests: FriendRequest[]; placement?: FriendPlacement }
 
 // ── The normaliser ──────────────────────────────────────────────────────────────────────────────────
 

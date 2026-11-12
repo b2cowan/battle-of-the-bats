@@ -5,7 +5,7 @@
 
 /* The player row's column sizes (A2), on the screen so every row reads them: the board, a phone's open group, and the
    drag's floating copy, which renders outside the board. */
-.screen { min-width: 0; --col-rating: 26px; --col-age: 34px; --col-more: 36px; }
+.screen { min-width: 0; --col-rating: 30px; --col-age: 34px; --col-more: 36px; --col-together: 76px; --col-mark: 28px; }
 /* Under the season's tab row (Club Tier Stage 13i), so it no longer tucks up under a page title of its own. */
 .headSub { margin: 0 0 1rem; font-size: var(--type-support); color: var(--text-secondary); }
 
@@ -290,8 +290,7 @@
 .lockBadge { display: inline-flex; align-items: center; gap: 0.2rem; font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-/* ── A row's marks (A6 family · A8 note · A9 owing): each a button that opens its small window on click ── */
-.marks { display: inline-flex; align-items: center; gap: 2px; }
+/* ── A row's marks (Together · A8 note · A9 owing), each in its own place: a button that opens its small window on click ── */
 .markWrap { display: inline-flex; }
 .mark {
   display: inline-flex;
@@ -315,6 +314,12 @@
 .mark:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
 .markOn { background: var(--home-olive-soft); color: var(--text-primary); box-shadow: 0 0 0 1.5px var(--home-olive); }
 .markOwe, .markOwe:hover { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.12); }
+/* Together split (5b option B): someone the player is to be with is on another team — the one case to act on. */
+.markApart, .markApart:hover { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.12); }
+.markApart.markOn { box-shadow: 0 0 0 1.5px var(--warning); }
+/* A mark's fixed place in the row (5b option B): the mark sits at its start, so a column of them lines up. */
+.place { display: inline-flex; align-items: center; min-width: 0; }
+.colHead .place { color: var(--text-secondary); }
 .pop {
   z-index: 30;
   display: flex;
@@ -350,6 +355,12 @@
   cursor: pointer;
 }
 .popWhere { align-self: center; color: var(--text-secondary); text-align: right; }
+/* Together's lines: the name and where they are, a quiet sub under it at a desk, and the status at the end. */
+.popWho { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 4px; min-width: 0; }
+.popWho .popWhere { text-align: left; }
+.popSub { flex-basis: 100%; font-size: var(--type-support); color: var(--text-tertiary); }
+.popStatus { align-self: center; font-size: var(--type-support); font-weight: 650; color: var(--home-olive); white-space: nowrap; }
+.popStatusApart { color: var(--badge-warning-ink); }
 .movedTag {
   flex: 0 0 auto;
   padding: 0.15rem 0.5rem;
@@ -535,13 +546,17 @@
 }
 /* A touch width (a tablet gets the desk board): every row and its ⋯ clear the 44px floor. */
 @media (max-width: 768px) {
-  .screen { --col-more: 44px; }
+  .screen { --col-more: 44px; --col-mark: 32px; }
   .kid { min-height: 44px; }
   .more.more { width: 44px; height: 44px; }
   .mark { min-width: 32px; height: 32px; }
 }
 @media (max-width: 640px) {
-  .screen { --col-age: 30px; }
+  /* 5b on a phone: seven places in a ~330px card. Narrower RTG and Together places and a tighter gap leave the name the
+     most room the 32px marks and the 44px ⋯ allow (/review 2026-11-12); a long name wraps, as it always has. */
+  .screen { --col-age: 30px; --col-rating: 24px; --col-together: 64px; }
+  .colHead, .kid { column-gap: 4px; padding-left: 10px; }
+  .colHead .place { white-space: nowrap; }
   .kid { min-height: 52px; padding-right: 0; }
   .poolTools { flex-wrap: nowrap; }
   .panel { padding: 1rem; }
@@ -599,3 +614,8 @@
   /* A touch width: the per-family button is its own 44px row. */
   .tcToggle { flex: 1 0 100%; display: flex; align-items: center; min-height: 44px; }
 }
+
+/* "Keep apart from a friend…" (Board Ready Stage 1 Part 3, tab 5): one radio row per friend, the tap floor on a phone. */
+.apartChoices { margin: 0 0 0.75rem; padding: 0; border: 0; }
+.apartChoice { display: flex; align-items: center; gap: 0.6rem; min-height: 36px; color: var(--text-primary); cursor: pointer; }
+@media (max-width: 640px) { .apartChoice { min-height: 44px; } }

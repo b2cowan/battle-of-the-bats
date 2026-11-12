@@ -47,6 +47,7 @@ import { TC_BANNER, TC_PICKER, TC_PILL, TC_SKIP } from '@/lib/house-league-team-
 import { formatTime } from '@/lib/utils';
 import { utcToZonedInputs } from '@/lib/timezone';
 import { exportTeamsXlsx } from './teamsExport';
+import KeepApartWindow from './KeepApartWindow';
 import css from './Teams.module.css';
 
 type Act =
@@ -56,6 +57,7 @@ type Act =
   | { kind: 'create' }
   | { kind: 'team'; teamId: string; how?: 'edit' | 'coach' | 'delete' }
   | { kind: 'move'; playerId: string }
+  | { kind: 'apart'; playerId: string }
   | { kind: 'tell' }
   | { kind: 'skipAll' }
   | { kind: 'clear' };
@@ -103,6 +105,8 @@ export default function TeamsScreen() {
   const [resending, setResending] = useState(false);
   // Families together (A7): on by default, and the last choice holds for the visit so Draft again honours it.
   const [together, setTogether] = useState(true);
+  // Friends together (Board Ready Stage 1 Part 3, A9): the same — on by default, held for the visit.
+  const [keepFriends, setKeepFriends] = useState(true);
   // This visit's presses of Hide/Show steps, a division each; a division not pressed yet reads what the browser kept.
   const [stepsPressed, setStepsPressed] = useState<Record<string, boolean>>({});
   const stepsClosedFor = (divisionId: string) => stepsPressed[divisionId] ?? readStepsClosed(divisionId);
@@ -195,7 +199,18 @@ export default function TeamsScreen() {
     setAct(null);
     reload();
   }
+  // "Keep apart from a friend…" and its undo (tab 5): the next draft reads them; nothing moves now.
+  async function keepApart(player: BoardPlayer, friendId: string, apart: boolean): Promise<string | null> {
+    const r = await send(routes.draft, 'POST', { action: apart ? 'keepApart' : 'keepTogether', divisionId: division.id, a: player.id, b: friendId });
+    reload();
+    return r.ok ? null : r.error;
+  }
   function onMenu(player: BoardPlayer, key: PlayerMenuItem['key']) {
+    if (key === 'apart') { setAct({ kind: 'apart', playerId: player.id }); return; }
+    if (key.startsWith('together:')) {
+      void keepApart(player, key.slice('together:'.length), false).then(error => { if (error) setNotice(error); });
+      return;
+    }
     if (key === 'move') setAct({ kind: 'move', playerId: player.id });
     else if (key === 'lock') void lock(player, true);
     else if (key === 'unlock') void lock(player, false);
@@ -289,6 +304,14 @@ export default function TeamsScreen() {
   const unsent = board.emails.unsent;
 
   const playerFor = act?.kind === 'move' ? findPlayer(act.playerId) : null;
+  const apartFor = act?.kind === 'apart' ? findPlayer(act.playerId) : null;
+  // The friends a split can still take: the confirmed links not kept apart, between children on this board.
+  const apartFriends = apartFor && read.friends
+    ? read.friends.links.filter(l => !l.apart && (l.a === apartFor.id || l.b === apartFor.id)).flatMap(l => {
+      const other = findPlayer(l.a === apartFor.id ? l.b : l.a);
+      return other ? [{ id: other.id, name: `${other.firstName} ${other.lastName}`, where: teamName(other.teamId) }] : [];
+    })
+    : [];
   const teamFor = act?.kind === 'team' ? board.teams.find(t => t.id === act.teamId) ?? null : null;
 
   return (
@@ -385,6 +408,7 @@ export default function TeamsScreen() {
             players={players}
             ratings={ratings}
             notes={read.notes ?? null}
+            friends={read.friends ?? null}
             divisionName={division.name}
             paymentsHref={`${base}/registrations?tab=active`}
             left={board.left}
@@ -409,7 +433,9 @@ export default function TeamsScreen() {
           onClose={() => { setAct(null); reload(); }} />
       )}
       {act?.kind === 'draft' && (
-        <DraftWindow board={board} ratings={ratings} again={act.again} together={together} onTogether={setTogether} routes={routes} registrationsHref={registrationsHref}
+        <DraftWindow board={board} ratings={ratings} again={act.again} together={together} onTogether={setTogether}
+          friends={read.friends ?? null} keepFriends={keepFriends} onKeepFriends={setKeepFriends} friendsHref={`${base}/registrations?tab=friends`}
+          routes={routes} registrationsHref={registrationsHref}
           onDone={() => { setAct(null); reload(); }} onClose={() => { setAct(null); reload(); }} />
       )}
       {act?.kind === 'publish' && (
@@ -430,6 +456,10 @@ export default function TeamsScreen() {
         <MoveSheet player={playerFor} teams={board.teams} players={players} ratings={ratings} seeRatings={rights.seeRatings}
           divisionName={division.name} published={published}
           onPick={teamId => void place(playerFor, teamId)} onLock={locked => void lock(playerFor, locked)} onClose={() => setAct(null)} />
+      )}
+      {apartFor && rights.run && apartFriends.length > 0 && (
+        <KeepApartWindow first={apartFor.firstName} friends={apartFriends} onClose={() => setAct(null)}
+          onSave={async friendId => { const error = await keepApart(apartFor, friendId, true); if (!error) setAct(null); return error; }} />
       )}
       {act?.kind === 'tell' && rights.run && (
         <TeamChangesWindow divisionId={division.id} divisionName={division.name} seasonName={season.name} routes={routes} isPhone={isPhone}

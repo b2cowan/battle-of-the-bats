@@ -1,0 +1,566 @@
+<title>Friends In The Draft</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready · Stage 1 friend requests · Part 3, the draft · Owner QA Ledger §518</span>
+    <h1>The draft keeps friends together</h1>
+    <p class="lead">Confirmed friend requests now shape the draft. The <b>Run the draft</b> window says what it will do with them and has a <b>Keep friends together</b> switch beside Keep families together. The draft keeps friends on one team in groups of up to 3 children, brothers and sisters counted. Every club’s board gets tidier rows: <b>RTG · Player · Together · Note · $ · Age · ⋯</b>. Together joins family and friends in one count, which turns amber when someone is split off. A player’s ⋯ can keep two friends apart. After the draft, Registrations › Friend requests reads <b>Not honoured</b> and <b>Honoured</b> with the reason, live from the teams, and a registration’s record lists its friend requests.</p>
+    <p class="lead">Written Nov 12, 2026 against the dev site. Nothing here is real data: every child and family is test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Every walk</dt><dd><code>league-owner@dev.local</code> · password <code>devpass123</code><br>The owner of <b>Dev League Org</b> (League Plus), season <b>Walk Summer 2027</b>, division <b>U8</b>.</dd>
+      <dt>Teams &amp; draft</dt><dd><code>localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/teams</code></dd>
+      <dt>Friend requests</dt><dd><code>localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/registrations?tab=friends</code></dd>
+      <dt>Phone</dt><dd>Walk 8 uses your desk browser’s device toolbar at <b>390 px</b>, then <b>361 px</b>.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>The test division is ready</b>: U8 has teams Red, Blue and Gold, 23 rated children, two families (the Bells, and the Kims, a family of three), Ben locked to Red and Leo locked to Gold, 10 confirmed friend requests and 2 still to confirm. To start over at any point, ask me to re-run the walk fixtures (Part 2’s, then Part 3’s).</li>
+      <li><b>Walk the parts in order, 1 to 8.</b> Walks 2, 4 and 6 change the teams; the walks after them read what they left. Which team a group lands on is drawn at random, so the steps name groups, not teams.</li>
+      <li>The drawings these screens were built to: <a href="https://claude.ai/artifact/KxYr8LW6r5yvsUJ7FmvPL8">tabs 3 (bottom), 5, 5b and 6</a>.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li><b>The draft’s rules.</b> Groups of at most 3 with brothers and sisters, kept in the order Both asked, then a code match, then the earliest confirmed; a family of three has no room; locks win; two children kept apart are never joined, not even through a friend they share (a review finding, fixed); evening out never moves a group; the same draw gives the same teams; a division with no friend requests deals exactly as before. 64 unit tests.</li>
+      <li><b>The database.</b> What the draft did with each request lands in the same step as the teams. “Take all players off teams” clears it, and finishing the season deletes it with the requests (rehearsed on dev and rolled back). Code already on production keeps working with the new step.</li>
+      <li><b>Who sees friends.</b> The board’s friend marks, names and filter reach only the people who can open Registrations: owner, admin, league admin, registrar, and anyone the club gives House league to. The draft keeps groups together for anyone who runs it and sends no names back. Build-checked, and the legal re-check agreed.</li>
+      <li>The reasons after the draft, and the record’s lines, are unit-tested against tab 6’s list. Typecheck is clean, and a code review and the legal, words and help passes ran, with their findings fixed or listed in the plan.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment. Do the tidier rows read at a glance? Does amber point at the only rows that need you? Does the result say why in words a registrar would use?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+<script>
+(function () {
+  "use strict";
+  var KEY = "board-ready-s1-friends-p3-walk-v1";
+  var PAGE = "Board Ready · Stage 1 friend requests · Part 3 · Owner QA Ledger §518";
+  var WALKS = [
+  {
+   "id": "Q1",
+   "title": "The board’s tidier rows, before the draft",
+   "job": "Dev League Org · owner · computer",
+   "forText": "Every club’s board now has fixed places in each row: RTG · Player · Together · Note · $ · Age · ⋯. Together is family and confirmed friends in one place.",
+   "passes": "Each mark sits in its own column down the list; RTG names itself on hover; Together lists family and friends, labelled; the pool filter offers “Has a friend request”.",
+   "notIn": "Running the draft (walk 2).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/teams",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: open Walk Summer 2027 › <b>Teams &amp; draft</b> and pick the <b>U8</b> division.",
+     "s": "Three team cards, <b>Red</b>, <b>Blue</b>, <b>Gold</b>, with no coach. <b>Ben Osei</b> is on Red and <b>Leo Park</b> on Gold, each with <b>Locked</b> under the name. Everyone else (21) is under <b>Not on a team</b>."
+    },
+    {
+     "d": "Read the column headings over the Not on a team list. Hover <b>RTG</b>.",
+     "s": "Headings read <b>RTG · Player · Together · (note symbol) · $ · Age</b>. Hovering RTG says “Rating: 1 is newest to the sport, 5 among the strongest”. Note: the note column shows only when a family in the division wrote a sign-up note; if none did, it is absent, not an empty column."
+    },
+    {
+     "d": "Scroll the list. Look down the Together column.",
+     "s": "Every Together mark lines up in one column (a people symbol and a number), never beside the name. Nobody is amber yet: nobody is on a team, so nobody is split."
+    },
+    {
+     "d": "Click <b>Nora Bell</b>’s Together mark.",
+     "s": "A small window: “Nora Bell · a group of 3”. Two lines: <b>Theo Bell</b> · Not on a team · family, and <b>Noah Patel</b> · Not on a team · friend, with a quiet “The group would pass 3 children” under Noah. Nora, Theo and Noah light up in the list."
+    },
+    {
+     "d": "Click <b>Kai Kim</b>’s Together mark.",
+     "s": "“Kai Kim · a group of 4”: <b>Mina Kim</b> and <b>Jun Kim</b> (family), <b>Ella Brooks</b> (friend, “The group would pass 3 children”). A family of three has no room for a friend."
+    },
+    {
+     "d": "Click a name in that window (say <b>Ella Brooks</b>).",
+     "s": "The window closes and the list scrolls to Ella, still lit."
+    },
+    {
+     "d": "Open <b>Filter</b> on the Not on a team list.",
+     "s": "Show only lists Not rated · Owing (if any) · Has a sibling in this division · <b>Has a friend request</b>, each with a count. Ticking Has a friend request narrows the list to the children whose family named a friend; Clear filter brings everyone back."
+    }
+   ]
+  },
+  {
+   "id": "Q2",
+   "title": "The Run the draft window",
+   "job": "Dev League Org · owner · computer",
+   "forText": "A Friends line says what the draft will do with the confirmed requests, and Keep friends together sits beside Keep families together.",
+   "passes": "The Friends line’s numbers match; both switches show, on; How it deals names families and friends; turning a switch off changes the line; the link opens Friend requests.",
+   "notIn": "The teams it deals (walk 3).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/teams",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: on U8, press <b>Run the draft</b>.",
+     "s": "The window “Run the draft for U8”. Its facts read Players · Not drafted · Teams · Locked (2) · Ratings (all rated) · <b>Friends</b> · How it deals."
+    },
+    {
+     "d": "Read the <b>Friends</b> line.",
+     "s": "“10 confirmed requests make 4 groups. 2 can’t be kept: the group would pass 3 children. 1 can’t be kept: the children are locked to different teams. 2 are still to confirm and are left out.” then the link <b>Open friend requests</b>."
+    },
+    {
+     "d": "Read <b>How it deals</b> and the two switches under the facts.",
+     "s": "“Families and friends first, then everyone else, strongest first, and the order reverses each round. Then single players swap teams where that evens out the averages. Ties and the first pick are drawn at random.” Two switches, both on: <b>Keep families together</b> and <b>Keep friends together</b> (“Confirmed friend requests go to the same team, in groups of up to 3 children with brothers and sisters. Locked players stay where they are.”)."
+    },
+    {
+     "d": "Turn <b>Keep friends together</b> off, then on again.",
+     "s": "Off: How it deals reads “Families first, …”. On: back to “Families and friends first, …”. Nothing else in the window moves."
+    },
+    {
+     "d": "Middle-click (or Ctrl-click) <b>Open friend requests</b>.",
+     "s": "A new tab opens on Registrations › Friend requests. Close it and come back."
+    },
+    {
+     "d": "Press <b>Run the draft</b>.",
+     "s": "The window closes, the players are dealt across Red, Blue and Gold, and Not on a team folds to “Everyone is on a team”."
+    }
+   ]
+  },
+  {
+   "id": "Q3",
+   "title": "The board after the draft",
+   "job": "Dev League Org · owner · computer",
+   "forText": "Confirmed friends are on one team, in groups of up to 3 with brothers and sisters. Together turns amber when someone a child is to be with is on another team.",
+   "passes": "Every kept group shares a team; the amber marks are exactly the requests the draft couldn’t keep; each window says why.",
+   "notIn": "Splitting a group (walk 4).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/teams",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: look at the three cards.",
+     "s": "Ben Osei is still on Red and Leo Park still on Gold (locked). Sizes are as even as the groups allow."
+    },
+    {
+     "d": "Find <b>Maya Okafor</b>, <b>Liam Chen</b> and <b>Sam Wu</b>.",
+     "s": "All three on one team. Each one’s Together mark is a plain <b>2</b> (not amber)."
+    },
+    {
+     "d": "Find the other kept pairs: <b>Zoe Chen</b> + <b>Harper Singh</b>, <b>Owen Mills</b> + <b>Mia Santos</b>, <b>Noah Patel</b> + <b>Jonathan Baptiste</b>, and the families <b>Nora</b> + <b>Theo Bell</b>, <b>Kai</b> + <b>Mina</b> + <b>Jun Kim</b>.",
+     "s": "Each pair, and each family, shares a team."
+    },
+    {
+     "d": "Look at <b>Ben Osei</b>’s Together mark (Red). Click it.",
+     "s": "Amber <b>0 of 1</b>. The window: “Ben Osei · together with 0 of 1”; <b>Leo Park</b> · Gold · friend, in amber <b>Apart</b>, with “Locked to different teams” under it."
+    },
+    {
+     "d": "Look at <b>Ella Brooks</b>’ mark, and <b>Nora Bell</b>’s.",
+     "s": "Ella: amber <b>0 of 1</b> unless she happened to land with Kai (then a plain 1); her window says “The group would pass 3 children” under Kai. Nora: amber <b>1 of 2</b> (Theo with her, Noah elsewhere) unless Noah happened to land on her team."
+    },
+    {
+     "d": "Look at the line above the cards.",
+     "s": "No “Moved by hand” count yet (nobody has been moved)."
+    }
+   ]
+  },
+  {
+   "id": "Q4",
+   "title": "Keep apart from a friend, and Draft again",
+   "job": "Dev League Org · owner · computer",
+   "forText": "A player’s ⋯ has “Keep apart from a friend…”. The draft and Draft again then never put those two together; “Keep together with {friend} again” undoes it.",
+   "passes": "The window asks which friend; the split holds through Draft again; the undo is on the ⋯ after.",
+   "notIn": "The result in Registrations (walk 5).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/teams",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: open <b>Maya Okafor</b>’s ⋯.",
+     "s": "Move to… · Lock to this team · <b>Keep apart from a friend…</b>."
+    },
+    {
+     "d": "Press <b>Keep apart from a friend…</b>.",
+     "s": "A window “Keep Maya apart from…” with two choices, <b>Liam Chen</b> · (team) and <b>Sam Wu</b> · (team), nothing picked, and the line “The draft and Draft again won’t put the two on one team. Moving a player by hand still works. Families aren’t told.” Its button is outlined, not lime."
+    },
+    {
+     "d": "Press <b>Keep apart</b> with nothing picked.",
+     "s": "“Pick a friend.” and nothing saves."
+    },
+    {
+     "d": "Pick <b>Sam Wu</b> and press <b>Keep apart</b>.",
+     "s": "The window closes. Nothing moves yet: Sam is still on Maya’s team. Maya’s Together window lists Sam as <b>Together</b> (they are on one team), with “By {your name}, Nov 12” under him."
+    },
+    {
+     "d": "Press <b>Draft again</b>, then <b>Draft again</b> in its window.",
+     "s": "The teams are dealt again. Sam is now on a different team from Maya. Maya’s mark is amber <b>1 of 2</b>, and her window lists Sam as <b>Kept apart</b>. Liam is still with Maya."
+    },
+    {
+     "d": "Open Maya’s ⋯ again.",
+     "s": "<b>Keep apart from a friend…</b> (Liam is still kept with her) and <b>Keep together with Sam Wu again</b>."
+    },
+    {
+     "d": "Leave the split in place for walk 5.",
+     "s": "(Nothing to see.)"
+    }
+   ]
+  },
+  {
+   "id": "Q5",
+   "title": "Friend requests after the draft",
+   "job": "Dev League Org · owner · computer",
+   "forText": "Once a division has drafted, its Friend requests read Not honoured (first) and Honoured, each with the reason, read from the teams as they stand.",
+   "passes": "Picking U8 swaps the bands for the result; every reason matches the teams; All divisions brings the queue back.",
+   "notIn": "Changing the teams (walk 6).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/registrations?tab=friends",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: open Registrations › <b>Friend requests</b> and pick <b>U8</b> in the division picker.",
+     "s": "Heads read <b>Player · Asked to play with · Matched to · In the draft</b>. The bands read <b>Not honoured</b> first, then <b>Honoured</b>. Each player’s team is under their name."
+    },
+    {
+     "d": "Read the Not honoured band.",
+     "s": "<b>Maya Okafor</b> “Sam Wu” → Sam Wu · (team), Not honoured, “Kept apart by {your name}, Nov 12”. <b>Ben Osei</b> “Leo Park” → Leo Park · Gold, “Leo is locked to Gold”. <b>Ella Brooks</b> “Kai Kim” and <b>Nora Bell</b> “Noah Patel”, “The group would pass 3 children” (unless they landed together, then they are under Honoured). <b>Ethan Roy</b> “Max” and <b>Lucas Ferreira</b> “Owen Bains”, “Not confirmed before the draft”."
+    },
+    {
+     "d": "Read the Honoured band.",
+     "s": "Maya → Liam and Liam → Maya, Zoe (Code …) → Harper and Harper → Zoe, Noah → Jonathan, Owen → Mia: each <b>Honoured</b>, “Both on {team}”."
+    },
+    {
+     "d": "Read the lines under the table.",
+     "s": "“Read from the teams as they stand now. {h} of {n} honoured.”, then the view’s usual line about deletion."
+    },
+    {
+     "d": "Click any row.",
+     "s": "The request window opens, as it did before the draft. Close it."
+    },
+    {
+     "d": "Open a row’s ⋯.",
+     "s": "The same items as before the draft, Delete request… last."
+    },
+    {
+     "d": "Pick <b>All divisions</b>.",
+     "s": "The view goes back to To confirm · Confirmed · Closed for every division (the result shows only with one division picked)."
+    }
+   ]
+  },
+  {
+   "id": "Q6",
+   "title": "The result is live, and the record says it",
+   "job": "Dev League Org · owner · computer",
+   "forText": "Nothing re-deals by itself: move a child by hand and the line changes; confirm a request after the draft and it says so. A registration’s record lists its friend requests.",
+   "passes": "Moved by hand and Confirmed after the draft appear as the teams change; the record’s Friend requests section matches the view.",
+   "notIn": "Phones (walk 8).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/teams",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: on Teams &amp; draft › U8, move <b>Mia Santos</b> to another team (drag, or her ⋯ › Move to…).",
+     "s": "Mia moves; “Moved by you” shows under her name. Owen Mills’ Together mark turns amber <b>0 of 1</b>."
+    },
+    {
+     "d": "Go to Registrations › Friend requests › U8.",
+     "s": "<b>Owen Mills</b> “Mia Santos” is now under Not honoured: “Moved by hand after the draft”."
+    },
+    {
+     "d": "Click <b>Ethan Roy</b>’s row, pick <b>Max Delaney</b>, press <b>Confirm</b>.",
+     "s": "Ethan → Max reads “Confirmed after the draft” (or Honoured, “Both on …”, if the draft happened to put them together)."
+    },
+    {
+     "d": "Back on the board, put Mia back (her “Moved by you” tag › Put back on …).",
+     "s": "In Friend requests, Owen → Mia is Honoured again."
+    },
+    {
+     "d": "Open the Active view and click <b>Maya Okafor</b>’s row to open her record.",
+     "s": "After Details, a <b>Friend requests</b> section: “Asked for” with two lines, “Liam Chen” (parent “Grace Chen”) → Liam Chen · Honoured · Both on … and “Sam Wu” → Sam Wu · Not honoured · Kept apart by …; then “Asked for Maya” · Liam Chen’s family; then the link <b>Open in Friend requests</b>."
+    },
+    {
+     "d": "Press <b>Open in Friend requests</b>.",
+     "s": "The record closes and Friend requests opens with U8 picked."
+    }
+   ]
+  },
+  {
+   "id": "Q7",
+   "title": "The view’s own file",
+   "job": "Dev League Org · owner · computer",
+   "forText": "The Friend requests file’s In The Draft and Reason columns carry the same result as the screen.",
+   "passes": "The file matches the screen row for row; still children’s names only.",
+   "notIn": "“Excel with contact details” (unchanged from Part 2).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/registrations?tab=friends",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: with U8 picked, open <b>Export</b> › Excel.",
+     "s": "A file downloads."
+    },
+    {
+     "d": "Open it and read In The Draft and Reason.",
+     "s": "Each row: <b>Honoured</b> with “Both on {team}”, or <b>Not honoured</b> with the same reason the screen shows (Kept apart by …, Leo is locked to Gold, The group would pass 3 children, Not confirmed before the draft, Confirmed after the draft)."
+    },
+    {
+     "d": "Look for a parent’s name or an email.",
+     "s": "None: children’s names only."
+    }
+   ]
+  },
+  {
+   "id": "Q8",
+   "title": "On a phone",
+   "job": "Dev League Org · owner · phone (390 px, then 361 px)",
+   "forText": "The phone board keeps the same places in each row, with 52 px rows and 32 px marks; a mark’s window rises as a sheet.",
+   "passes": "Nothing overflows the card at 390 or 361; names wrap, never cut; the Together sheet lists family and friends; the draft window’s switches stack.",
+   "notIn": "The computer (walks 1 to 7).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/teams",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: device toolbar at <b>390 px</b>, Teams &amp; draft › U8, open <b>Red</b>.",
+     "s": "“‹ All teams”, Red’s card, a heading row RTG · Player · Together · (note) · $ · Age, and the rows."
+    },
+    {
+     "d": "Look at a long name (for example <b>Jonathan Baptiste</b>) and at Maya’s row.",
+     "s": "The name wraps onto a second line inside its column; the marks stay in their columns; the ⋯ is at the row’s end; nothing runs off the card."
+    },
+    {
+     "d": "Switch the toolbar to <b>361 px</b> and look again.",
+     "s": "Still no sideways scroll and no overlap. If a name is squeezed to a word a line, say so: this width is the one the review could not render."
+    },
+    {
+     "d": "Tap a Together mark (Maya’s).",
+     "s": "A sheet rises: “Maya Okafor · together with …”, each person with team · family/friend and the status (Together / Kept apart / Apart), no sub-lines. Tapping a name closes the sheet and opens that child’s team."
+    },
+    {
+     "d": "Back to All teams; press <b>Draft again</b> and look at the window, then Cancel.",
+     "s": "The two switches stack under the text and each is easy to tap."
+    },
+    {
+     "d": "At 390 px, open Registrations › Friend requests › U8.",
+     "s": "Rows read the player, then “Team · Asked for … · Matched to”, then “Honoured · Both on …” or “Not honoured · {reason}”, under Not honoured and Honoured bands."
+    }
+   ]
+  }
+ ];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "Q1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "F1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "F1" }; save(); render();
+  });
+  render();
+})();
+</script>

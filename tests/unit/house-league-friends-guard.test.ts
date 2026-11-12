@@ -22,6 +22,8 @@ const FRIENDS_ROUTE = 'app/api/admin/house-league/seasons/[seasonId]/friends/rou
 const REG_LIST = 'app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts';
 const REG_EXPORT = 'components/admin/kit/club/league/registrations/registrationsExport.ts';
 const FRIEND_EXPORT = 'components/admin/kit/club/league/registrations/friendRequestsExport.ts';
+const BOARD_ROUTE = 'app/api/admin/house-league/seasons/[seasonId]/teams-board/route.ts';
+const DRAFT_ROUTE = 'app/api/admin/house-league/seasons/[seasonId]/draft/route.ts';
 
 /** The action a route's handler refuses through first: `houseLeagueRefusal(ctx, '<action>')`, bounded at the next export. */
 function actionOf(rel: string, handler: 'GET' | 'POST'): string {
@@ -48,6 +50,11 @@ describe('1 · the registrar’s read has one caller', () => {
       .filter(f => f !== SERVER && /\breadSeasonFriendRequests\b/.test(readCode(f)));
     assert.deepEqual(callers, [FRIENDS_ROUTE]);
   });
+  it('Part 3: only the board and the draft routes read a division’s links', () => {
+    const callers = [...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx'), ...filesUnder('lib', '.ts'), ...filesUnder('components', '.tsx')]
+      .filter(f => f !== SERVER && /\breadDivisionFriendLinks\b/.test(readCode(f)));
+    assert.deepEqual(callers.sort(), [BOARD_ROUTE, DRAFT_ROUTE].sort());
+  });
   it('the read is the season’s own, in the org', () => {
     const code = readCode(SERVER);
     const body = code.slice(code.indexOf('export async function readSeasonFriendRequests'));
@@ -68,6 +75,31 @@ describe('2 · the same gate as the registrations list', () => {
   });
 });
 
+describe('2b · Part 3: the board shows friends only to a reader of Registrations; the draft returns none', () => {
+  it('the board route reads the links only inside a refusal check on the registrations list’s action', () => {
+    const code = readCode(BOARD_ROUTE);
+    const m = /if \(board && friendRequestsOn\(ctx!\.org\.planId, season\.friendRequestsMax\) && !houseLeagueRefusal\(ctx, '(\w+)'\)\) \{\s*friends = await readDivisionFriendLinks\(/.exec(code);
+    assert.ok(m, 'the board route reads friend links without its registrations gate in front of the call');
+    assert.equal(m![1], actionOf(REG_LIST, 'GET'), 'the board’s friends gate and the registrations read have come apart');
+    assert.equal((code.match(/readDivisionFriendLinks\(/g) ?? []).length, 1, 'a second friends read in the board route');
+    assert.match(code, /\.\.\.\(friends \? \{ friends \} : \{\}\)/, 'a refused reader must get no friends key at all');
+  });
+  it('the draft route keeps groups for anyone who runs it, and sends no link back', () => {
+    const code = readCode(DRAFT_ROUTE);
+    // Every response the route writes is a refusal or { ok: true }: never the links, never a name.
+    for (const m of code.matchAll(/NextResponse\.json\(\{([^}]*)\}/g)) {
+      // A key (or shorthand) naming friend data, never the words of a refusal.
+      assert.doesNotMatch(m[1], /\b(links|friends|requests|groups)\s*[:,]|\b(links|friends|requests|groups)\s*$|typed/i, `the draft route answers with ${m[1]}`);
+    }
+    assert.match(code, /houseLeagueRefusal\(ctx, 'read', season\)/, 'Keep apart is not behind the registrations read');
+  });
+  it('the links carry ids, never a typed name', () => {
+    const draft = readCode('lib/league-friend-draft.ts');
+    const body = draft.slice(draft.indexOf('export function divisionLinks')).split('\nexport ')[0];
+    assert.doesNotMatch(body, /typedFirst|typedLast|typedParent/);
+  });
+});
+
 describe('3 · friend names stay out of the contact-details file', () => {
   const reg = readCode(REG_EXPORT);
   it('the registrations export adds only the two name-free columns', () => {
@@ -78,7 +110,8 @@ describe('3 · friend names stay out of the contact-details file', () => {
   it('every CSV cell of both files is written formula-safe (an Excel cell is stored as text and never runs)', () => {
     assert.match(reg, /generateCSV\(serializeHeaders\(colsFor\(rows\)\), serializeRows\(source\(rows\), colsFor\(rows\)\)\.map\(formulaSafeRow\)\)/);
     assert.match(readCode(FRIEND_EXPORT), /forCsv \? cells\.map\(v => String\(formulaSafe\(v\)\)\) : cells/);
-    assert.match(readCode(FRIEND_EXPORT), /generateCSV\(HEAD, lines\(p\.rows, p\.divisionName, p\.teamName, true\)\)/);
+    // Part 3 passes the live result as a fifth argument; the CSV flag (true) is what makes every cell formula-safe.
+    assert.match(readCode(FRIEND_EXPORT), /generateCSV\(HEAD, lines\(p\.rows, p\.divisionName, p\.teamName, true(, p\.resultOf)?\)\)/);
   });
   it('the friend requests file carries no parent name and no contact', () => {
     assert.doesNotMatch(readCode(FRIEND_EXPORT), /typedParent|guardian/i);

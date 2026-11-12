@@ -8,6 +8,7 @@ import { MONEY_REFUSAL } from '@/lib/house-league-money-words';
 import { clubDay } from '@/lib/league-registration-state';
 import { orgDayKey } from '@/lib/timezone';
 import type { DivisionBoard, DivisionTab } from '@/lib/house-league-teams';
+import type { DivisionFriends } from '@/lib/league-friend-draft';
 
 export type { BoardCoach, BoardLeft, BoardPlayer, BoardTeam, DivisionBoard, DivisionTab } from '@/lib/house-league-teams';
 
@@ -18,6 +19,9 @@ export interface BoardRead {
   ratings?: Record<string, number>;
   /** The families' sign-up notes: present only for a reader who can open registrations (A8). */
   notes?: Record<string, string>;
+  /** Board Ready Stage 1 Part 3: the division's confirmed friend links, ids only — present only for a reader who can
+   *  open registrations, on a season that takes friend requests (A11). */
+  friends?: DivisionFriends;
 }
 
 export type Sent<T = Record<string, unknown>> =

@@ -1,12 +1,12 @@
 {
-  "generated": "2026-11-11",
-  "total": 618,
+  "generated": "2026-11-12",
+  "total": 620,
   "counts": {
     "tables": 21,
-    "columns": 294,
+    "columns": 295,
     "indexes": 93,
     "constraints": 82,
-    "rls": 128
+    "rls": 129
   },
   "items": [
     {
@@ -87,6 +87,10 @@
     },
     {
       "key": "check:only-dev:league_friend_requests.league_friend_requests_code_entered_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_friend_requests.league_friend_requests_draft_outcome_check",
       "sig": ""
     },
     {
@@ -723,6 +727,10 @@
     },
     {
       "key": "column:only-dev:league_friend_requests.decided_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_friend_requests.draft_outcome",
       "sig": ""
     },
     {

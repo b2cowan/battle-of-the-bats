@@ -45,7 +45,8 @@ describe('search (A3)', () => {
 describe('filter (A4)', () => {
   it('ticks are any-of, and counts are over the whole pool', () => {
     assert.deepEqual(narrowPool(pool, '', ['owing', 'notes'], facts()).map(p => p.id), ['c', 'e']);
-    assert.deepEqual(filterCounts(pool, ['notRated', 'notes', 'owing', 'sibling'], facts()), { notRated: 3, notes: 1, owing: 1, sibling: 2 });
+    // Board Ready Stage 1 Part 3 added "Has a friend request": an option not offered counts 0.
+    assert.deepEqual(filterCounts(pool, ['notRated', 'notes', 'owing', 'sibling'], facts()), { notRated: 3, notes: 1, owing: 1, sibling: 2, friend: 0 });
   });
   it('a reader with no notes gets no Notes match', () => {
     assert.deepEqual(narrowPool(pool, '', ['notes'], facts({ notes: null })), []);
