@@ -39,5 +39,5 @@ export default function PracticePlansTabs({
         ]
       : []),
   ];
-  return <HubTabBar tabs={tabs} activeId={active} ariaLabel="Practice plans views" />;
+  return <HubTabBar tabs={tabs} activeId={active} ariaLabel="Practice plans views" band />;
 }

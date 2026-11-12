@@ -278,7 +278,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
         actionsPhoneInTitleRow
       />
 
-      <HubTabBar tabs={tabs} activeId={section} ariaLabel="Skills and Goals views" />
+      <HubTabBar tabs={tabs} activeId={section} ariaLabel="Skills and Goals views" band />
 
       {error && <p className={styles.errorText} role="alert">{error}</p>}
       {loading ? (

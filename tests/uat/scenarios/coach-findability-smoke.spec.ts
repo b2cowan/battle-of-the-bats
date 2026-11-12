@@ -177,6 +177,8 @@ async function signIn(page: Page, email: string) {
 
 const base = () => `/${ORG_SLUG}/coaches/teams/${repTeamId}`;
 const main = (page: Page) => page.locator('main[class*="coachesMain"]');
+// The page's "?" (navigation Phase 4b, owner 2026-11-12): on a computer a hosted team page's help lives in the top STRIP, beside the bell (outside <main>); on a phone it is the team bar's, inside <main>; an unhosted page draws its own in <main>. Role button, so the sidebar's "Help" LINK can never satisfy it.
+const pageHelp = (page: Page) => main(page).getByRole('button', { name: /^Help/i }).or(page.locator('[class*="stripHelp"]').getByRole('button', { name: /^Help/i })).filter({ visible: true });
 
 async function open(page: Page, url: string) {
   await page.goto(url);
@@ -325,7 +327,7 @@ test.describe('P1 #17 — every nav destination carries help', () => {
     for (const href of doors) {
       await open(page, href);
       // Scoped to the content area so the sidebar's own "Help" link can never satisfy this.
-      const help = main(page).getByRole('button', { name: /^Help/i }).first();
+      const help = pageHelp(page).first();
       await expect(help, `${href} is a nav destination and must carry a help icon`)
         .toBeVisible({ timeout: 30_000 });
     }
@@ -335,7 +337,7 @@ test.describe('P1 #17 — every nav destination carries help', () => {
     test(`the closed-season door ${path} carries a help trigger`, async ({ page }) => {
       await signIn(page, HEAD_EMAIL);
       await open(page, `${base()}${path}`);
-      const help = main(page).getByRole('button', { name: /^Help/i }).first();
+      const help = pageHelp(page).first();
       await expect(help, `${path} is a closed season's nav destination and must carry a help icon`)
         .toBeVisible({ timeout: 30_000 });
     });
@@ -346,7 +348,7 @@ test.describe('P1 #17 — every nav destination carries help', () => {
     // Settings is the strongest case: its guide did not exist before this chunk, so an unwritten
     // guide would render a drawer with a heading and nothing under it.
     await open(page, `${base()}/settings`);
-    await main(page).getByRole('button', { name: /^Help/i }).first().click();
+    await pageHelp(page).first().click();
 
     const drawer = page.getByRole('dialog');
     await expect(drawer).toBeVisible({ timeout: 15_000 });
@@ -407,7 +409,7 @@ test.describe('the read-only assistant sees, never acts', () => {
     // class that has bitten three chunks running.
     await signIn(page, ASSIST_EMAIL);
     await open(page, `${base()}/history?section=attendance`);
-    await expect(main(page).getByRole('button', { name: /^Help/i })).toBeVisible({ timeout: 30_000 });
+    await expect(pageHelp(page)).toBeVisible({ timeout: 30_000 });
 
     await open(page, `/${ORG_SLUG}/coaches/notifications`);
     await expect(main(page).getByRole('button', { name: /delete|remove|send/i })).toHaveCount(0);

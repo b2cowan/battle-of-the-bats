@@ -401,6 +401,8 @@ const betweenApi = () => `/api/coaches/${ORG_SLUG}/teams/${betweenTeamId}`;
 const rolled = () => `/${ORG_SLUG}/coaches/teams/${rolledTeamId}`;
 const rolledApi = () => `/api/coaches/${ORG_SLUG}/teams/${rolledTeamId}`;
 const main = (page: Page) => page.locator('main[class*="coachesMain"]');
+// The page's "?" (navigation Phase 4b, owner 2026-11-12): on a computer a hosted team page's help lives in the top STRIP, beside the bell (outside <main>); on a phone it is the team bar's, inside <main>; an unhosted page draws its own in <main>. Role button, so the sidebar's "Help" LINK can never satisfy it.
+const pageHelp = (page: Page) => main(page).getByRole('button', { name: /^Help/i }).or(page.locator('[class*="stripHelp"]').getByRole('button', { name: /^Help/i })).filter({ visible: true });
 
 async function open(page: Page, url: string) {
   await page.goto(url);
@@ -928,7 +930,7 @@ test.describe('every door a between-seasons team opens carries help', () => {
     for (const href of doors) {
       await open(page, href);
       // Scoped to the content area so the sidebar's own "Help" link can never satisfy this.
-      const help = main(page).getByRole('button', { name: /^Help/i }).first();
+      const help = pageHelp(page).first();
       await expect(help, `${href} is a nav door and must carry a help icon`)
         .toBeVisible({ timeout: 30_000 });
     }

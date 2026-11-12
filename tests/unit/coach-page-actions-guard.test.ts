@@ -92,6 +92,8 @@ const TAG = '<CoachPageHeader';
 /** Every prop `CoachPageHeader` accepts. A parse that yields anything else has desynchronised. */
 const KNOWN_PROPS = new Set([
   'icon', 'title', 'titleChips', 'actions', 'actionsPhoneHidden', 'actionsPhoneInTitleRow',
+  // Phase 4b (owner 2026-11-12): the actions are a phone's only (Schedule) — the computer's row is then empty.
+  'actionsPhoneOnly',
   'help', 'helpLabel', 'variant',
   /* ⚖ THE WAY UP, in the header's leading corner, mirroring the help "?" at the trailing one.
      The pilot ENDED on 2026-08-26 (owner ruled the spread after walking the commitment screen):
@@ -1043,7 +1045,9 @@ describe('coach page headers — what the actions slot may hold', () => {
     // width outside a host, and above 900 inside one (the team bar that hosts it is the phone's only). Hosted, it is
     // hidden at 900 and below, where the bar draws it: still one "?" per width.
     assert.ok(
-      /const showHelp = !!help && !nested;/.test(header) && /helpHosted \? ` \$\{styles\.pageHeaderHelpDesk\}` : ''/.test(header),
+      // Phase 4b (owner 2026-11-12, updated deliberately): a hosted "?" is the strip's (above 900) or the team bar's (900 and
+      // below), so the header renders its own ONLY when unhosted — not rendered-and-hidden.
+      /const showHelp = !!help && !nested;/.test(header) && /const helpOnRow = showHelp && !helpHosted;/.test(header) && /\{helpOnRow && \(/.test(header),
       'CoachPageHeader lost its own-"?" fallback. Pages outside the team layout (Link Organization, and ' +
       'the layout\'s own no-auth early return) would silently lose their help button.',
     );

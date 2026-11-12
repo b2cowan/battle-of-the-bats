@@ -28,6 +28,13 @@ feels like one app.
   the same way on a phone and a computer. A closed season still opens on its one page.
 - Nothing changes about who can open what.
 
+## Added 2026-11-11 — Phase 4b: the coach pages' tabs stay put
+RULED 2026-11-11: on a computer, a coach page with tabs (Money, Insights, Lineups, Practice plans, Skills & goals) keeps its
+tabs in a band pinned under the top strip, exactly as the club admin does; the page's buttons stay in the page below it.
+The "?" no longer takes a row of its own: it sits at the right end of the page's first heading (last in the buttons row where
+a page has buttons). The owner wants help in the same place in all three portals and will decide that after walking this one. Benefit: a coach deep in a long Money or Insights page can
+change section without scrolling back up. Risk to rule on: Money's tabs were deliberately un-pinned in August for consistency.
+
 ## Priority
 After the Admin header bar project (closed 2026-11-09). The first build step fixes a real defect found by the audit: a
 tournament page names the club for a moment before the tournament loads.

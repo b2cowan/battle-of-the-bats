@@ -585,6 +585,7 @@ export default function CoachesInsightsPage({
         tabs={visibleTabs.map(t => ({ id: t.id, label: t.label, href: sectionHref(t.id) }))}
         activeId={effectiveSection}
         ariaLabel="Reports"
+        band
       />
 
       {effectiveSection === 'dashboard' && (

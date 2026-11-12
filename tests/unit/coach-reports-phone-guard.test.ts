@@ -128,7 +128,9 @@ describe('R3 — the tab you are on is in view; R3b — one spelling', () => {
     assert.match(rule, /row\.scrollTo\(\{ left: row\.scrollLeft \+ delta, behavior: 'instant' \}\)/);
     assert.doesNotMatch(rule, /scrollIntoView/, 'scrollIntoView also scrolls the page when the row is off screen');
     assert.doesNotMatch(tabBar, /scrollIntoView/, 'scrollIntoView also scrolls the page when the row is off screen');
-    assert.match(tabBar, /useActiveTabInView\(barRef, 48, \[activeId, tabsKey, remeasureKey\]\);/, 're-checked when the caller says the row width moved');
+    // Updated deliberately (navigation Phase 4b, /review 2026-11-12): `dock` joins the keys — docking into the band REBUILDS the <nav>, so the
+    // scroll must re-attach to the new one. The 48 is the arrow + fade inset on each EDGE of the row (not the strip's height): the band does not change it.
+    assert.match(tabBar, /useActiveTabInView\(barRef, 48, \[activeId, tabsKey, remeasureKey, dock\]\);/, 're-checked when the caller says the row width moved, or the row docks');
   });
   it('"Playing time" — the tab says what the page\'s own finding chips say', () => {
     assert.match(hub, /\{ id: 'playing-time', label: 'Playing time',/);

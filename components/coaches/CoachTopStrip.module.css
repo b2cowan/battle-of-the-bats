@@ -182,3 +182,22 @@
   /* Nothing left but a door, or nothing at all: no hairline over an empty end. */
   .teamFacts:not(:has(.factsGameDay)) { display: none; }
 }
+
+/* ⚖ One level down: the record's name and chips (portaled in by the page's header) sit in the place row as if they were its own
+   children — the slot draws nothing of itself, so an empty slot (the record still loading) costs no gap. */
+.recordSlot { display: contents; }
+
+/* ⚖ THE PAGE'S "?" IN THE STRIP (navigation Phase 4b, owner 2026-11-12): the shared HelpButton, dressed as one of the strip's doors —
+   the door's own size and quiet ink, the same hover. The button's class is a single selector, so this wins by being under the wrapper. */
+.stripHelp { display: inline-flex; align-items: center; }
+.stripHelp > button {
+  width: var(--icon-door-size);
+  height: var(--icon-door-size);
+  min-height: var(--icon-door-size);
+  border-radius: var(--icon-door-radius);
+  color: var(--text-tertiary);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.stripHelp > button:hover { color: var(--text-primary); background: var(--home-olive-soft, rgba(255, 255, 255, 0.06)); }
+/* The door's width, held while no page has published a topic (a team's pages only — `CoachStripHelp reserve`). */
+.stripHelpSpacer { flex: none; width: var(--icon-door-size); height: var(--icon-door-size); }

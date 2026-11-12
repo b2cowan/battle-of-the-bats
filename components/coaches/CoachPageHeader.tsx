@@ -1,7 +1,9 @@
 'use client';
 import type { ComponentType, ReactNode } from 'react';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import { ArrowLeft } from 'lucide-react';
+import strip from '@/components/admin/AdminTopStrip.module.css';
 import HelpButton from '@/components/help/HelpButton';
 import { useCoachPageHelp } from '@/components/coaches/CoachPageHelpSlot';
 import { useCoachDeskTitle } from '@/components/coaches/CoachDeskTitle';
@@ -56,9 +58,11 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   pages above 900 the strip carries the page's name (the sidebar's lit row), so this header drops its icon tile and its
  *   title (`data-desk-named`, CSS — the server's first paint is already right) and keeps its actions as the page's top
  *   row with the "?" LAST at its right end; a page with only its "?" keeps a row holding the "?" alone (C1); a header
- *   with no actions and no "?" draws nothing there. ONE LEVEL DOWN (C4) the strip carries the way back, so this header
- *   keeps the RECORD's own title, its chips and its buttons and drops only its arrow and its icon tile
- *   (`data-desk-drill`). The answer is the strip's own (`useCoachDeskTitle`) — one rule, never decided twice. Because
+ *   with no actions and no "?" draws nothing there. ONE LEVEL DOWN (C4, AMENDED 2026-11-11) the strip carries the way back AND
+ *   the record's name and chips, as the club's record pages do ("← Families │ Avery Test"): this header PORTALS its title and
+ *   chips into the strip's slot (`recordSlot`) and keeps only its buttons and "?" (`data-desk-drill='record'`). Until the slot
+ *   exists, or when the title is not text (the player page's phone button), it keeps its own title and drops only its arrow and
+ *   its icon tile (`data-desk-drill`). The answer is the strip's own (`useCoachDeskTitle`) — one rule, never decided twice. Because
  *   the team bar is the phone's only (≤900), the "?" a page publishes to it is also drawn HERE, above 900. The scouting
  *   reminder sits right under this row on a computer (`CoachDeskNudge`, C3). The phone is exactly as it was (Phase 5).
  *   No call site changes: the mechanism is this component's.
@@ -73,6 +77,7 @@ export default function CoachPageHeader({
   actions,
   actionsPhoneHidden,
   actionsPhoneInTitleRow,
+  actionsPhoneOnly,
   help,
   helpLabel,
   variant = 'standard',
@@ -109,6 +114,13 @@ export default function CoachPageHeader({
    * with `actionsPhoneHidden` (which wins — no actions, no corner).
    */
   actionsPhoneInTitleRow?: boolean;
+  /**
+   * ⚖ THE ACTIONS ARE A PHONE'S ONLY (navigation Phase 4b, owner 2026-11-12): the page draws them for a phone and shows its computer form
+   * elsewhere (Schedule: the view menu and the create are the title row's glyphs at ≤640; the toolbar below is the computer's). Above
+   * 900 the header then has no actions, so with the "?" in the strip its top row is EMPTY and draws nothing — without this it kept
+   * a 0-height row and 16px of margin. Affects only the computer's row (`data-desk-*`); the phone is exactly as it was.
+   */
+  actionsPhoneOnly?: boolean;
   /** Help drawer request → the iconOnly "?" in its fixed corner slot. */
   help?: HelpRequest;
   /** The page name the help drawer opens under (falls back to the request's own label). */
@@ -186,7 +198,7 @@ export default function CoachPageHeader({
      (nested is one line under a header that already carries this screen's), so they publish null —
      but a hook behind the `embedded` early return below is the classic ordering crash. */
   const helpHosted = useCoachPageHelp(help && !nested && variant !== 'embedded' ? help : null, helpLabel);
-  const { title: desk } = useCoachDeskTitle();
+  const { title: desk, recordSlot } = useCoachDeskTitle();
   if (variant === 'embedded') {
     return actions ? (
       <div className={`${styles.pageHeader} ${styles.pageHeaderStd}`}>
@@ -198,12 +210,31 @@ export default function CoachPageHeader({
   const deskNamed = !nested && desk?.kind === 'name';
   const deskDrill = !nested && desk?.kind === 'back';
   const showHelp = !!help && !nested;
+  // ⚖ Hosted, the "?" is NOT this row's at any width (navigation Phase 4b, owner 2026-11-12): the team bar draws it on a phone, the
+  // strip above 900. So a hosted "?" alone no longer keeps a row; an unhosted page (outside the team layout) still draws its own.
+  const helpOnRow = showHelp && !helpHosted;
+  // Whether the computer's top row has any content: buttons the page shows above 900, or an unhosted "?".
+  const deskRowHas = (!!actions && !actionsPhoneOnly) || helpOnRow;
+  // One level down on a computer the strip names the RECORD too: this header's title and chips are drawn there (portaled into
+  // the strip's slot) and its own copy hides in CSS. Only once the slot exists — until then (the server's paint, a phone) the
+  // header keeps its own title, so a page is never left unnamed.
+  // ⚠ A TEXT TITLE ONLY: the player page's phone title is a button owning a ref and a sheet's state — a second copy of it in
+  // the (hidden) strip would steal that ref. On a computer every drill-in's title is text.
+  const deskRecord = deskDrill && !!recordSlot && typeof title === 'string';
   return (
     <>
+    {deskRecord && createPortal(
+      <>
+        <span className={strip.backRule} aria-hidden />
+        <h1 className={strip.name}>{title}</h1>
+        {titleChips && <span className={strip.chip}>{titleChips}</span>}
+      </>,
+      recordSlot,
+    )}
     <div
       className={`${styles.pageHeader} ${styles.pageHeaderStd}${nested ? ` ${styles.pageHeaderNested}` : ''}${actionsPhoneInTitleRow ? ` ${styles.pageHeaderActionsCorner}` : ''}`}
-      data-desk-named={deskNamed ? (actions || showHelp ? 'actions' : 'empty') : undefined}
-      data-desk-drill={deskDrill ? '' : undefined}
+      data-desk-named={deskNamed ? (deskRowHas ? 'actions' : 'empty') : undefined}
+      data-desk-drill={deskDrill ? (deskRecord ? (deskRowHas ? 'record' : 'empty') : '') : undefined}
     >
       <div className={styles.pageHeaderLeft}>
         {backTo && (
@@ -238,10 +269,10 @@ export default function CoachPageHeader({
       {/* `!nested` is the doc above made true rather than merely stated: a nested header sits one
           line under a header that already carries this screen's "?", and two of them would be two
           doors to the same drawer.
-          Hosted (inside the team layout, the 2026-08-25 move), the team bar draws the "?" on a phone and this copy hides
-          there; above 900 the bar is gone, so this row draws it, last (E11, navigation Phase 4). One "?" per width. */}
-      {showHelp && (
-        <span className={`${styles.pageHeaderHelp}${helpHosted ? ` ${styles.pageHeaderHelpDesk}` : ''}`}>
+          Hosted (inside the team layout, the 2026-08-25 move), the team bar draws the "?" on a phone and the STRIP above 900
+          (owner 2026-11-12, navigation Phase 4b), so this copy hides at every width. Unhosted, it is the row's, last. One "?" per width. */}
+      {helpOnRow && (
+        <span className={styles.pageHeaderHelp}>
           <HelpButton iconOnly label={helpLabel} help={help} />
         </span>
       )}

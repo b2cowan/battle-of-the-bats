@@ -1,0 +1,515 @@
+<title>Coach Tabs And Help</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Navigation across the three portals · Phase 4b, the Coaches Portal’s tabs and help · Owner QA Ledger §517</span>
+    <h1>On a computer, tabs stay pinned under the strip, and the “?” moves up beside the bell</h1>
+    <p class="lead">On a computer, every Coaches Portal page that has tabs (Money, Insights, Skills &amp; goals, Lineups, Practice plans) keeps them in a slim band directly under the top strip, full width, so they stay put as you scroll. The page’s buttons (Record, Import, Add player) stay in the page, below the band. The page’s help “?” moves into the top strip, between the bell and your account button, so a page with no buttons no longer spends a row on it. The phone is unchanged.</p>
+    <p class="lead">Written Nov 12, 2026 against the dev site. Nothing here is real data: the clubs, the teams and their games are test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; restart the dev server first: this build added a file)</dd>
+      <dt>Walks 1 to 6, 9</dt><dd><code>uat-coach@uat-test-org.local</code> · password <code>UATPassword2026!</code> — opens at <code>localhost:3000/uat-rep-club/coaches</code>. <b>UAT Test Team</b> is live (it has Money, Insights, Lineups, Practice plans and Skills &amp; goals); <b>UAT Between Seasons</b> is closed.</dd>
+      <dt>Walk 7</dt><dd>No sign-in: <code>localhost:3000/riverdale-ridge/coaches</code> (the coach demo).</dd>
+      <dt>Walk 8</dt><dd>The same coach, in your desk browser’s device toolbar at <b>390 × 844</b>.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Use a private window per person.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>No script to run.</b> Every step uses the test data as it stands. Use a full-size browser window (about 1440 wide, 900 high) unless a step says otherwise.</li>
+      <li><b>Walk the parts in order, 1 to 9.</b> Each opens with a stop check.</li>
+      <li>The drawings these screens were built to: <a href="https://claude.ai/artifact/VkSTdrAUv9Rbgbwu4gYiun">the tabs and top row</a> (the band) and <a href="https://claude.ai/artifact/YW35riPNZWMSUaxdSp6ksH">where the “?” goes</a> (tab 3, the strip beside the bell).</li>
+      <li>Your rulings it was built to: the band is the club’s own, tabs alone, with the buttons staying in the page; the Ledger may pin 230 px; the player page’s tabs dock instead of joining the band; and the “?” goes in the strip beside the bell, on pages with buttons too. It reverses the 2026-07-31 rule that kept the strip for exits.</li>
+      <li>This replaces older walk checks that look for the “?” in a page’s top row on a computer, or a tab row that scrolls away.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>The measured numbers at 1440 × 900: the band sits at 48 to 93 on all five pages; the Ledger’s toolbar pins at 93 and its column heads at 197 (230 in all); the “?” sits between the bell and the account button, centred in the strip, with no overlap at 1440, 1366, 1280 and 1100.</li>
+      <li>The phone is measured unchanged: the tabs stay in the page, the strip and band are hidden, and the team bar still draws the “?”. No sideways scroll on any of the five pages at 390.</li>
+      <li>One “?” visible at a time on every team page; the help panel opens from the strip and closes on Escape.</li>
+      <li>The tab row’s arrows and “current tab in view” still work once the row is in the band (a narrow window of 920 to 960 wide is the case that mattered).</li>
+      <li>The layout check on 13 touched coach screens at 361, 768 and 1440: no new findings from this change.</li>
+      <li>Not walked, for want of a fixture: a coach with no Money access (the band stays as plain empty space on that wall), and a coach with no practice library (the band collapses once after load).</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: do the tabs feel like part of the page’s frame, does the Ledger still leave enough room to read, and is the “?” easy to find where it now lives?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "nav-phase4b-walk-v1";
+  var PAGE = "Navigation across the three portals · Phase 4b, the Coaches Portal’s tabs and help · Owner QA Ledger §517";
+  var WALKS = [
+ {
+  "id": "B1",
+  "title": "The tabs stay put",
+  "job": "UAT coach · computer, 1440 wide",
+  "forText": "On a page with tabs, the tab row is a band under the top strip that does not scroll away.",
+  "passes": "A thin band, the width of the page area, sits right under the strip with the tabs in it, and stays there when you scroll. The page’s own buttons (Record, Import) are still in the page, below it.",
+  "notIn": "The Ledger’s own pinned rows (walk 2), narrow windows (walk 4) and the player page (walk 5).",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "localhost:3000/uat-rep-club/coaches, UAT Test Team",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: sign in as <code>uat-coach@uat-test-org.local<\/code> and open <b>Money<\/b>.",
+    "s": "The tabs (Overview, Budget, Player dues, Fundraising, Ledger, Club, Budget vs. Actual) are in a band right under the strip, with a thin line under it. <b>Record<\/b> and <b>Import<\/b> are in the page below the band. If the tabs are still inside the page, stop and tell me."
+   },
+   {
+    "d": "Click through two or three Money tabs.",
+    "s": "The band does not move or flicker; the lit tab changes."
+   },
+   {
+    "d": "Open <b>Insights<\/b>.",
+    "s": "Its tabs are in the same band, in the same place, and the first thing on the page starts right under it."
+   },
+   {
+    "d": "Open <b>Skills &amp; goals<\/b>, then <b>Lineups<\/b>.",
+    "s": "Each has its tabs in the band (three, then two)."
+   },
+   {
+    "d": "Open <b>Practice plans<\/b> and scroll down the page.",
+    "s": "The four tabs stay in the band while the plans scroll under it. Nothing shows through the band."
+   },
+   {
+    "d": "Click a practice plan, then use Back.",
+    "s": "The plan (one level down) has no band: the strip shows the way back. Back returns to the tabs in the band."
+   }
+  ]
+ },
+ {
+  "id": "B2",
+  "title": "The Ledger, and a link into a section",
+  "job": "UAT coach · computer, 1440 × 900, then 1366 × 768",
+  "forText": "The Ledger pins its own toolbar and column heads. With the band they stack under it: about a quarter of the screen.",
+  "passes": "Scrolled, the Ledger shows the strip, the band, the toolbar, then the column heads, in that order, with the rows reading under them. At 768 high about 540 px is left for rows.",
+  "notIn": "The Ledger’s toolbar itself (a separate piece of work).",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "Money › Ledger",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <b>Money<\/b> and click <b>Ledger<\/b>. Scroll down a long way.",
+    "s": "From the top of the screen you see the strip (48), the band (45), the toolbar (104), then the column heads (33), all pinned. Nothing overlaps; no row shows between them."
+   },
+   {
+    "d": "Make the window 1366 × 768 (the device toolbar works) and scroll the Ledger again.",
+    "s": "The pinned stack is 230 px of 768 (about 30%). Is that too much? Tell me if the Ledger feels cramped — this is the cost you accepted."
+   },
+   {
+    "d": "Click into the table and press Tab through the rows.",
+    "s": "I made the band itself safe for keyboard focus (a focused row is scrolled clear of the strip and the band). Tell me if a row you tab to is ever hidden under the Ledger’s toolbar or column heads: that part I have not checked."
+   },
+   {
+    "d": "Open <code>localhost:3000/uat-rep-club/coaches/teams/&lt;team&gt;/accounting?section=ledger<\/code> from the address bar (take the team’s id from the address you were on).",
+    "s": "It opens on the Ledger with its tab lit in the band."
+   }
+  ]
+ },
+ {
+  "id": "B3",
+  "title": "The “?” beside the bell",
+  "job": "UAT coach · computer, 1440 wide",
+  "forText": "The page’s help “?” is in the top strip, between the bell and your account button.",
+  "passes": "The strip’s right end reads: bell, “?”, account, Workspaces. The “?” opens a help panel about the page you are on. A page that had only a “?” in its top row now has no top row, so its content starts higher.",
+  "notIn": "A page outside a team (walk 6) and the phone (walk 8).",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "a team’s pages",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <b>Documents<\/b>.",
+    "s": "The “?” is in the strip between the bell and your account button. There is <b>no<\/b> row above the first heading holding a “?”: the first heading starts right under the strip. If a “?” is still in the page, stop and tell me."
+   },
+   {
+    "d": "Click the “?”.",
+    "s": "A panel opens beside the page titled “Documents”. Press Escape: it closes."
+   },
+   {
+    "d": "Open <b>Insights<\/b>, then click the “?” again.",
+    "s": "The panel is titled “Insights”: it follows the page."
+   },
+   {
+    "d": "Open <b>Money<\/b> and <b>Roster<\/b>.",
+    "s": "Their buttons (Record, Import; Add player, Import) are still in a row in the page and <b>no “?” is in that row<\/b>: the “?” is in the strip."
+   },
+   {
+    "d": "Open <b>Schedule<\/b>.",
+    "s": "Its toolbar starts right under the strip: no empty row above it."
+   },
+   {
+    "d": "Open the account menu (the person icon) and look for Help.",
+    "s": "“Help” is still there. It opens the full guide in a new tab, a different thing from the strip’s “?”. Tell me if two help doors this close to each other confuse you."
+   },
+   {
+    "d": "Move between a page with help and one without (Overview, then Documents).",
+    "s": "The bell and the account button do not slide sideways when you move."
+   }
+  ]
+ },
+ {
+  "id": "B4",
+  "title": "Narrower windows",
+  "job": "UAT coach · 1366, 1280, 1100, 920 wide",
+  "forText": "The strip and the band still work when the window is not wide.",
+  "passes": "At 1366 and 1280 nothing in the strip overlaps. At 1100 the team’s quiet words give way, the “?” stays. In the band, a long row of tabs scrolls with an arrow, never off the edge.",
+  "notIn": "Wider than 1440 and any phone width.",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "Money and Insights",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: make the window 1280 wide and open <b>Money<\/b>.",
+    "s": "The strip reads cleanly (bell, “?”, account, Workspaces) and all seven tabs fit the band."
+   },
+   {
+    "d": "Make the window 1100 wide.",
+    "s": "The strip’s club and season words give way; the “?” and account stay. The tabs still fit."
+   },
+   {
+    "d": "Make the window about 920 wide and open <b>Insights<\/b> with the last tab (Scouting book) lit.",
+    "s": "A left arrow appears in the band, and the lit tab is in view, not cut off. Click the arrow: the row scrolls."
+   }
+  ]
+ },
+ {
+  "id": "B5",
+  "title": "A player page",
+  "job": "UAT coach · computer, 1440 wide",
+  "forText": "A player’s tabs sit under their summary, and dock under the strip once you scroll past it.",
+  "passes": "Their five tabs stay where they were; scrolling takes them up to the strip and holds them there. They are not in the band.",
+  "notIn": "The player’s tab contents.",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "Roster › a player",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <b>Roster<\/b> and click a player.",
+    "s": "The page opens with the player’s summary (chips and tiles) and the tab row under it. There is <b>no<\/b> band under the strip on this page."
+   },
+   {
+    "d": "Scroll down.",
+    "s": "The tab row rises under the strip and stays there as the tab’s content scrolls under it."
+   },
+   {
+    "d": "Scroll back up.",
+    "s": "The tabs go back under the summary."
+   }
+  ]
+ },
+ {
+  "id": "B6",
+  "title": "Pages that keep their own “?”",
+  "job": "UAT coach · computer, 1440 wide",
+  "forText": "Pages outside a team have no strip “?” and still draw theirs in the page.",
+  "passes": "Plan &amp; billing, Notifications and Link organization show a “?” in their own page header, exactly as before.",
+  "notIn": "The tournament admin and the club (unchanged: whether they follow is for after you walk this).",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "localhost:3000/uat-rep-club/coaches/billing, /notifications, /link-org",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <code>localhost:3000/uat-rep-club/coaches/billing<\/code>.",
+    "s": "There is a “?” in the page’s own header and none in the strip."
+   },
+   {
+    "d": "Open <code>/uat-rep-club/coaches/notifications<\/code>.",
+    "s": "The “?” is in the page header beside the settings gear."
+   }
+  ]
+ },
+ {
+  "id": "B7",
+  "title": "The coach demo",
+  "job": "No sign-in · computer, 1440 wide",
+  "forText": "The demo has the same band and the same “?”, below its banner.",
+  "passes": "The demo banner sits at the very top; the strip, the band and the “?” follow it with no gap or overlap.",
+  "notIn": "The demo’s story and data.",
+  "who": "no sign-in",
+  "where": "localhost:3000/riverdale-ridge/coaches",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <code>localhost:3000/riverdale-ridge/coaches<\/code> and go to <b>Money<\/b>.",
+    "s": "The demo banner is on top, the strip under it, the band under the strip with the tabs. Scroll: the band stays under the strip, not under the banner."
+   },
+   {
+    "d": "Open <b>Practice plans<\/b> and click the “?”.",
+    "s": "A help panel opens for the page. (The demo hides the account menu, so the “?” is the only help door here.)"
+   }
+  ]
+ },
+ {
+  "id": "B8",
+  "title": "The phone is unchanged",
+  "job": "UAT coach · 390 × 844",
+  "forText": "On a phone nothing moves: tabs in the page, “?” in the team bar. (The phone’s one-help-door change is the next phase.)",
+  "passes": "Money, Insights and Practice plans show their tabs in the page, scrolling with it, no band. The “?” is in the team bar at the top. No sideways scroll.",
+  "notIn": "Moving Help into the More sheet (Phase 5).",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "a team’s pages at 390 × 844",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: set the window to 390 × 844 and open <b>Money<\/b>.",
+    "s": "The team bar is at the top with the “?”; the tab row is in the page and scrolls with it. There is no band."
+   },
+   {
+    "d": "Open <b>Insights<\/b> and tap the “?”.",
+    "s": "The help panel opens for Insights."
+   },
+   {
+    "d": "Tap <b>More<\/b> and look for Help.",
+    "s": "Help is at the foot of the sheet and opens the full guide in a new tab, as before."
+   }
+  ]
+ },
+ {
+  "id": "B9",
+  "title": "A closed season",
+  "job": "UAT coach · computer",
+  "forText": "A closed season is one page, with no tabs and no band.",
+  "passes": "The closed team’s page has no band under the strip; the strip still names the season.",
+  "notIn": "The page’s content (shelves).",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "UAT Between Seasons",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: switch to <b>UAT Between Seasons<\/b> from the team cell.",
+    "s": "You land on its one closed-season page: no band, no tabs. The strip carries the season’s name."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "B1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "D1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "B1" }; save(); render();
+  });
+  render();
+})();
+</script>

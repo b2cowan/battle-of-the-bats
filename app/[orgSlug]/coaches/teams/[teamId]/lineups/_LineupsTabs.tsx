@@ -20,5 +20,5 @@ export default function LineupsTabs({ base, active }: { base: string; active: Li
     { id: 'games', label: 'Games', href: lineupsHref(base) },
     { id: 'templates', label: 'Templates', href: lineupsHref(base, 'templates') },
   ];
-  return <HubTabBar tabs={tabs} activeId={active} ariaLabel="Lineups views" />;
+  return <HubTabBar tabs={tabs} activeId={active} ariaLabel="Lineups views" band />;
 }

@@ -1,0 +1,374 @@
+<title>Coach help anchors</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: a cool slate document ground; product specimens are framed in the product's warm skin at TRUE SIZE (1440 wide).
+   Sticky tab row, a View row under it, one section at a time, the last tab holds the asks. Navigation Phase 4b. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --ok: #2E6B3A; --ok-soft: #E2F0E4; --warn: #8A5A00;
+  --warn-soft: #F7ECD4; --bad: #A2321F; --bad-soft: #F6E0DA;
+  --doc-sans: 'Inter', system-ui, sans-serif; --doc-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1520px; margin: 0 auto; }
+header.doc { padding-block: 22px 10px; }
+header.doc h1 { font: 700 30px/1.1 var(--doc-display); letter-spacing: .01em; margin: 0 0 6px; text-wrap: balance; }
+header.doc p { margin: 0 0 6px; color: var(--muted); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); overflow-x: auto; white-space: nowrap; }
+nav.tabs button { font: 600 14px var(--doc-sans); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 13px 12px 11px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+nav.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+section.panel { display: none; } section.panel.on { display: block; }
+h2 { font: 700 24px/1.15 var(--doc-display); margin: 18px 0 6px; letter-spacing: .01em; text-wrap: balance; }
+h3 { font: 650 16px/1.3 var(--doc-sans); margin: 22px 0 6px; }
+p, li { max-width: 84ch; } .muted { color: var(--muted); }
+.lede { font-size: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card h3 { margin-top: 0; }
+.card ul { margin: 6px 0 0; padding-left: 20px; }
+.tag { display: inline-block; font: 600 11px/1 var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; vertical-align: 2px; }
+.t-new { background: var(--accent-soft); color: var(--accent); } .t-chg { background: var(--warn-soft); color: var(--warn); } .t-same { background: var(--line); color: var(--muted); }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); }
+.spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.fitbox { position: relative; }
+.fitwrap { transform-origin: 0 0; width: max-content; position: relative; }
+.mk { position: absolute; z-index: 30; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 2px solid #fff; background: var(--mark); color: var(--mark-ink); font: 700 11px/18px var(--doc-mono); text-align: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.mk.inl { position: static; display: inline-block; border-color: transparent; vertical-align: 1px; margin-right: 4px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; } .ask ol { margin: 6px 0 0; padding-left: 22px; } .ask li { margin: 3px 0; }
+.rec { font-weight: 650; color: var(--accent); }
+.tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+table.cmp { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.cmp th { font: 700 12px var(--doc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+table.cmp td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.cmp td:first-child { font-weight: 650; }
+.key { display: inline-block; font: 600 11px var(--doc-mono); padding: 2px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.ref { display: inline-block; width: 120px; height: 45px; background: var(--card); border: 1.5px dashed var(--mark); vertical-align: middle; margin-inline: 6px; border-radius: 3px; }
+
+/* ───── PRODUCT SPECIMEN: the warm skin as shipped, fixed colours in both document themes ───── */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #776D5D; --line: rgba(70,55,30,.12);
+  --line2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --amber-soft: #F4E7CF; --red: #B23A26; --red-soft: #F9E3DE; --tint: #ECEADF;
+  position: relative; overflow: hidden; background: var(--paper); color: var(--ink); font: 400 14px/1.4 'Inter', sans-serif;
+  border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.12); flex: none; }
+.fr * { box-sizing: border-box; }
+.fr .grid { position: absolute; inset: 0; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 40px 40px; opacity: .45; pointer-events: none; }
+.fr svg { flex: none; display: block; }
+.strip { position: absolute; top: 0; left: 0; right: 0; height: 48px; background: var(--white); border-bottom: 1px solid var(--line2); display: flex; align-items: center; z-index: 6; }
+.strip .lcell { height: 100%; display: flex; align-items: center; gap: 12px; padding-left: 20px; border-right: 1px solid var(--line); flex: none; width: 240px; }
+.wm { display: flex; align-items: center; gap: 6px; font: 700 15px 'Inter'; letter-spacing: -.01em; }
+.wm i { width: 15px; height: 17px; background: var(--olive); clip-path: polygon(0 0,100% 0,100% 28%,35% 28%,35% 45%,85% 45%,85% 70%,35% 70%,35% 100%,0 100%); }
+.wm em { font-style: normal; color: var(--olive); }
+.pword { font: 700 10px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); padding-left: 12px; border-left: 1px solid var(--line2); line-height: 14px; }
+.place { display: flex; align-items: center; gap: 10px; padding-left: 32px; min-width: 0; flex: 1; }
+.place .nm { font: 700 16px 'Inter'; white-space: nowrap; flex: none; }
+.pfx { margin-left: auto; display: flex; align-items: center; gap: 8px; font: 500 12px "Inter"; color: var(--ink2); white-space: nowrap; padding: 0 16px; margin-right: 6px; border-right: 1px solid var(--line2); height: 22px; }
+.pfx i { font-style: normal; font: 700 9px "Inter"; letter-spacing: .12em; color: var(--ink3); }
+.rgroup { display: flex; align-items: center; gap: 10px; padding-right: 16px; flex: none; }
+.ibtn { width: 34px; height: 34px; display: grid; place-items: center; color: var(--ink2); position: relative; }
+.badge { position: absolute; top: 2px; right: 0; background: var(--red); color: #fff; font: 700 9px/14px 'Inter'; padding: 0 4px; border-radius: 7px; }
+.wsp { display: inline-flex; align-items: center; gap: 5px; font: 650 12px 'Inter'; padding: 6px 10px; border-radius: 999px; border: 1.5px solid #9DBB3A; }
+.side { position: absolute; top: 48px; left: 0; bottom: 0; width: 240px; background: var(--white); border-right: 1px solid var(--line2); display: flex; flex-direction: column; z-index: 4; overflow: hidden; }
+.cell { height: 45px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 20px; border-bottom: 1px solid var(--line2); flex: none; }
+.tile { width: 24px; height: 24px; border-radius: 6px; background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--line2); color: var(--ink); font: 700 10px 'Inter'; display: grid; place-items: center; flex: none; }
+.cell b { font: 700 14px/17px 'Inter'; flex: 1; white-space: nowrap; }
+.chev { width: 16px; display: grid; place-items: center; color: var(--ink2); flex: none; }
+.rows { flex: 1; overflow: hidden; padding-top: 6px; display: flex; flex-direction: column; }
+.row { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 20px; color: var(--ink2); font: 400 14px 'Inter'; white-space: nowrap; flex: none; }
+.row.lit { background: var(--tint); color: var(--olive); font-weight: 600; }
+.lab { font: 700 11px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); padding: 12px 20px 6px; flex: none; }
+.main { position: absolute; left: 240px; top: 48px; right: 0; bottom: 0; overflow: hidden; z-index: 1; }
+.pa { position: absolute; left: 32px; right: 32px; }
+.btn { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 6px; font: 600 14px 'Inter'; background: var(--white); border: 1px solid var(--line2); white-space: nowrap; }
+.btn.lime { background: var(--lime); border-color: transparent; }
+.qhelp { width: 34px; height: 34px; display: grid; place-items: center; color: var(--ink2); }
+.acts { display: flex; gap: 8px; align-items: center; justify-content: flex-end; height: 34px; }
+.ctabs { display: flex; gap: 2.4px; height: 45px; border-bottom: 1px solid rgba(70,55,30,.15); overflow: hidden; }
+.tab { height: 44px; padding: 0 13.6px; display: flex; align-items: center; font: 600 14px 'Inter'; color: var(--ink2); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.on { color: var(--olive); border-bottom-color: var(--olive); }
+.band { position: absolute; left: 240px; right: 0; top: 48px; height: 45px; background: var(--white); border-bottom: 1px solid var(--line2); display: flex; align-items: flex-end; padding-left: 18px; z-index: 5; }
+.band .acts { margin-left: auto; align-self: center; padding-right: 32px; }
+.psticky { position: absolute; left: 272px; right: 32px; top: 48px; height: 51px; background: var(--paper); z-index: 5; padding-bottom: 6px; }
+.mcard { position: absolute; background: var(--white); border: 1px solid var(--line2); border-radius: 8px; padding: 16px 18px; overflow: hidden; }
+.mcard .k { font: 600 10px 'IBM Plex Mono'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); }
+.mcard .big { font: 600 26px/32px 'Inter'; letter-spacing: -.01em; margin-top: 4px; color: var(--olive); }
+.mcard .big small { font: 400 13px 'Inter'; color: var(--ink2); letter-spacing: 0; margin-left: 4px; }
+.mcard .bar { height: 10px; border-radius: 2px; background: #E7E4DA; margin: 10px 0 8px; position: relative; overflow: hidden; }
+.mcard .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--olive); }
+.mcard .bar b { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, #B23A26 0 3px, #E7B3A9 3px 6px); }
+.mcard .ln { font-size: 12.5px; color: var(--ink2); margin-top: 4px; }
+.mcard .go { position: absolute; left: 18px; bottom: 14px; font: 650 13px 'Inter'; color: var(--olive); }
+.mcard .nr { display: flex; align-items: center; justify-content: space-between; height: 44px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.mcard .nr b { font-weight: 600; } .mcard .nr em { font-style: normal; font: 600 14px 'Inter'; color: var(--red); }
+.rtool { position: absolute; left: 272px; right: 32px; height: 104px; background: var(--paper); z-index: 4; }
+.rtool .r1 { display: flex; align-items: center; gap: 8px; height: 46px; }
+.rtool .chipv { white-space: nowrap; font: 500 13px 'Inter'; border: 1px solid var(--line2); background: #ECEADF; border-radius: 999px; padding: 4px 12px; }
+.rtool .r2 { display: flex; align-items: center; gap: 8px; height: 40px; margin-top: 8px; }
+.rtool .fl { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid var(--line2); background: var(--white); border-radius: 6px; font: 400 13.5px 'Inter'; }
+.rtool .cash { margin-left: auto; font: 500 14px 'Inter'; } .rtool .cash b { color: var(--olive); font-weight: 650; }
+.thead { position: absolute; left: 272px; right: 32px; height: 33px; background: var(--white); border-bottom: 1px solid var(--line2); display: grid; grid-template-columns: 70px 1fr 140px 120px 120px 100px 20px; align-items: center; padding: 0 12px 0 10px; font: 700 11px 'Barlow Condensed'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); z-index: 4; }
+.lrows { position: absolute; left: 272px; right: 32px; background: var(--white); }
+.lr { height: 26.7px; display: grid; grid-template-columns: 70px 1fr 140px 120px 120px 100px 20px; align-items: center; padding: 0 12px 0 10px; font-size: 13px; border-bottom: 1px solid var(--line); border-left: 2px solid #4B6B1E; }
+.lr i { font-style: normal; font: 500 10px 'Inter'; border: 1px solid var(--line2); border-radius: 999px; padding: 0 6px; margin-left: 6px; color: var(--ink2); }
+.dim { color: var(--ink3); }
+.sec { font: 700 11px 'IBM Plex Mono'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); }
+.docbox { position: absolute; background: var(--white); border: 1px solid var(--line2); border-radius: 8px; padding: 16px 18px; }
+.docbox h5 { margin: 0 0 4px; font: 650 15px 'Inter'; } .docbox p { margin: 0; font-size: 13px; color: var(--ink3); }
+.meet { position: absolute; z-index: 7; border-left: 1.5px dashed #B5470F; width: 0; pointer-events: none; }
+.meet span { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font: 600 10px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 2px; white-space: nowrap; }
+body.only-diff .fr .same { opacity: .16; }
+body.only-diff .fr .grid { opacity: .15; }
+</style>
+
+<div class="wrap">
+  <header class="doc">
+    <h1>Where the &ldquo;?&rdquo; goes, page by page</h1>
+    <p>Navigation, phase 4b, step 4a. You ruled R3: on a page with no buttons the &ldquo;?&rdquo; moves to the right end of the page&rsquo;s first heading, so its row disappears. A read of the code found that wording assumed every page has a first heading, and many do not. Below: one real page per shape, drawn 1440 wide (the top of the screen, with the band built), and what I recommend. Nothing is wired until you answer the rulings on the last tab.</p>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
+  <div class="viewrow" id="viewrow">
+    <span>View</span>
+    <span class="seg" role="group" aria-label="View"><button type="button" id="v-all" aria-pressed="true">Everything</button><button type="button" id="v-diff" aria-pressed="false">Show only what differs</button></span>
+    <span>Size</span>
+    <span class="seg" role="group" aria-label="Size"><button type="button" id="s-true" aria-pressed="true">True size</button><button type="button" id="s-fit" aria-pressed="false">Fit to width</button></span>
+    <span>Open this on a computer; every frame is drawn at the real 1440-wide screen.</span>
+  </div>
+  <main id="panels"></main>
+</div>
+
+<script>
+(function () {
+'use strict';
+var P = {
+  down: '<path d="m6 9 6 6 6-6"/>', plus: '<path d="M5 12h14M12 5v14"/>', ul: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  dl: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  user: '<circle cx="12" cy="7" r="4"/><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+  cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  notebook: '<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4M2 6h4M2 10h4M2 14h4M2 18h4"/>',
+  listord: '<path d="M10 6h11M10 12h11M10 18h11M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  trend: '<path d="m22 7-8.5 8.5-5-5L2 17M16 7h6v6"/>', bars: '<path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>',
+  dollar: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',
+  clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  usercog: '<circle cx="10" cy="7" r="4"/><path d="M10.3 15H7a4 4 0 0 0-4 4v2"/><circle cx="18" cy="18" r="3"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  panel: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>', right: '<path d="m9 18 6-6-6-6"/>'
+};
+function I(n, s, w) { return '<svg width="' + (s || 14) + '" height="' + (s || 14) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[n] + '</svg>'; }
+function mk(id, x, y) { return '<button type="button" class="mk" data-go="' + id + '" style="left:' + x + 'px;top:' + y + 'px" aria-label="Open ruling ' + id + '">' + id + '</button>'; }
+
+/* ── the coach shell, as shipped (strip 48, sidebar 240) ── */
+function strip(name) {
+  return '<div class="strip same"><div class="lcell"><span class="wm"><i></i><span>FieldLogic<em>HQ</em></span></span><span class="pword">Coach</span></div>' +
+    '<div class="place"><span class="nm">' + name + '</span><span class="pfx">UAT Rep Club &nbsp;&middot;&nbsp; 2026 Season &nbsp;&middot;&nbsp; 3-2-1 <i>NEXT</i> Sun 9:30 a.m. practice</span></div>' +
+    '<div class="rgroup"><span class="ibtn">' + I('bell', 16) + '<span class="badge">9+</span></span><span class="ibtn">' + I('user', 17) + '</span><span class="wsp">Workspaces ' + I('down', 13) + '</span></div></div>';
+}
+function side(lit) {
+  var L = [['i', 'grid', 'Overview'], ['l', 'Season'], ['i', 'cal', 'Schedule'], ['i', 'notebook', 'Practice plans'], ['i', 'listord', 'Lineups'], ['i', 'trophy', 'Tournaments'],
+    ['l', 'Progress'], ['i', 'trend', 'Skills &amp; goals'], ['i', 'bars', 'Insights'], ['l', 'Money'], ['i', 'dollar', 'Money'], ['l', 'Communication'], ['i', 'mail', 'Email families'],
+    ['l', 'Team'], ['i', 'users', 'Roster'], ['i', 'clip', 'Tryouts'], ['i', 'usercog', 'Staff'], ['i', 'file', 'Documents'], ['i', 'gear', 'Settings']];
+  return '<div class="side same"><div class="cell"><span class="tile">UT</span><b>UAT Test Team</b><span class="chev">' + I('down', 16) + '</span></div><div class="rows">' +
+    L.map(function (r) { return r[0] === 'l' ? '<div class="lab">' + r[1] + '</div>' : '<div class="row' + (r[2] === lit ? ' lit' : '') + '">' + I(r[1], 14) + '<span>' + r[2] + '</span></div>'; }).join('') + '</div></div>';
+}
+function frame(h, name, lit, inner, marks) {
+  return '<div class="fr" style="width:1440px;height:' + h + 'px" data-w="1440" data-h="' + h + '"><div class="grid"></div>' + strip(name) + side(lit) + '<div class="main"></div>' + inner + (marks || '') + '</div>';
+}
+/* absolute helpers in FRAME coordinates (y from the top of the screen, x from the left) */
+function box(y, h, cls, html, x1, x2, style) { return '<div class="' + cls + '" style="position:absolute;z-index:2;top:' + y + 'px;' + (h ? 'height:' + h + 'px;' : '') + 'left:' + (x1 === undefined ? 272 : x1) + 'px;right:' + (x2 === undefined ? 32 : x2) + 'px;' + (style || '') + '">' + html + '</div>'; }
+var BTN_REC = '<span class="btn lime">' + I('plus', 14) + 'Record</span>', BTN_IMP = '<span class="btn">' + I('ul', 14) + 'Import ' + I('down', 13) + '</span>', HELP = '<span class="qhelp">' + I('help', 20, 1.8) + '</span>';
+var MONEY_TABS = ['Overview', 'Budget', 'Player dues', 'Fundraising', 'Ledger', 'Club', 'Budget vs. Actual'];
+function tabs(list, on) { return list.map(function (t) { return '<span class="tab' + (t === on ? ' on' : '') + '">' + t + '</span>'; }).join(''); }
+function meet(x, y1, y2, label) { return '<div class="meet" style="left:' + (x + 4) + 'px;top:' + y1 + 'px;height:' + (y2 - y1) + 'px"><span>' + String(label).replace(/[^0-9]/g, '') + '</span></div>'; }
+
+
+/* ── specimens: the page column is x 272–1408; strip 48; the built band is 48–93 where a room has tabs ── */
+var S = {};
+var SAMPLE = ' (sample names)';
+/* a section label over a table, the shipped Documents markup: a small caps label (18px line), 16px, then the table */
+function tbl(y, rows) {
+  var h = '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.4fr 90px 90px;height:33px;align-items:center;padding:0 12px;border-bottom:1px solid var(--line2);font:700 11px \'Barlow Condensed\';letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)"><span>Name</span><span>Type</span><span>Signed</span><span>File</span><span>Size</span><span></span></div>';
+  var r = rows.map(function (a) { return '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.4fr 90px 90px;height:44px;align-items:center;padding:0 12px;border-bottom:1px solid var(--line);font-size:13px"><b style="font-weight:600">' + a[0] + '</b><span><i style="font-style:normal;font:500 11px Inter;border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--ink2)">' + a[1] + '</i></span><span class="dim">Once</span><span class="dim">' + a[2] + '</span><span class="dim">' + a[3] + '</span><span style="text-align:right;color:var(--olive);font-weight:600">Download</span></div>'; }).join('');
+  return box(y, 33 + 44 * rows.length, 'x', h + r, 272, 32, 'background:var(--white);border:1px solid var(--line2);border-radius:8px;overflow:hidden');
+}
+var LBL = function (t) { return '<span style="font:700 12.5px Inter;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);line-height:18px">' + t + '</span>'; };
+var ORG = [['Player waiver', 'Waiver', 'waiver-2026.pdf', '84 KB'], ['Medical consent', 'Consent', 'medical.pdf', '61 KB']];
+var TEAM = [['Travel itinerary', 'Handout', 'travel.pdf', '112 KB']];
+/* mode: 'row' = today (the "?" row above), 'anchor' = the "?" ends the first label, 'gutter' = the "?" in the padding above */
+function docsPage(mode) {
+  var y0 = mode === 'row' ? 130 : 80, out = '';
+  if (mode === 'row') out += box(80, 34, 'acts', HELP);
+  var labelH = mode === 'anchor' ? 34 : 18;
+  out += box(y0, labelH, 'x', '<div style="display:flex;align-items:center;justify-content:space-between;height:' + labelH + 'px">' + LBL('Org-Wide Templates') + (mode === 'anchor' ? HELP : '') + '</div>');
+  var t1 = y0 + labelH + 16;
+  out += tbl(t1, ORG);
+  var l2 = t1 + 33 + 88 + 24;
+  out += box(l2, 18, 'x', LBL('Team Templates')) + tbl(l2 + 34, TEAM);
+  return out;
+}
+S.docsToday = function (h) { return frame(h, 'Documents', 'Documents', docsPage('row'), meet(262, 80, 114, 'row 34') + meet(262, 114, 130, '16') + mk('H1', 1290, 86)); };
+S.docsAnchor = function (h) { return frame(h, 'Documents', 'Documents', docsPage('anchor'), meet(262, 80, 114, 'label row 34') + mk('H1', 1290, 86)); };
+/* Tournaments, with entries: a band head inside the list frame */
+function listbox(y, label, rows, helpHtml) {
+  var r = rows.map(function (t) { return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:44px;border-bottom:1px solid var(--line);font-size:13.5px"><b style="font-weight:600">' + t[0] + '</b><span class="dim">' + t[1] + '</span></div>'; }).join('');
+  return box(y, 40 + 44 * rows.length, 'x', '<div style="display:flex;align-items:center;justify-content:space-between;height:40px;padding:0 16px;border-bottom:1px solid var(--line2);background:#F4F1E8"><span class="sec">' + label + '</span>' + (helpHtml ? '<span style="margin-right:-12px">' + helpHtml + '</span>' : '') + '</div>' + r, 272, 32, 'background:var(--white);border:1px solid var(--line2);border-radius:8px;overflow:hidden');
+}
+var TROWS = [['Spring Showdown · Apr 18–20', 'Registered'], ['Harbour Classic · May 2–4', 'Registered'], ['Valley Cup · May 23–25', 'Waitlist']];
+S.tournToday = function (h) { return frame(h, 'Tournaments', 'Tournaments', box(80, 34, 'acts', HELP) + listbox(130, 'Coming up', TROWS), meet(262, 80, 114, 'row 34') + meet(262, 114, 130, '16') + mk('H1', 1290, 86)); };
+S.tournAnchor = function (h) { return frame(h, 'Tournaments', 'Tournaments', listbox(80, 'Coming up', TROWS, HELP), meet(262, 48, 80, '32') + mk('H1', 1290, 52)); };
+/* tab-led, content untitled: Insights, Dashboard */
+var INS_TABS = ['Dashboard', 'Results', 'Attendance', 'Playing time', 'Skills', 'Awards', 'Scouting book'];
+function insBand() { return '<div class="band" style="padding-left:18px"><div class="ctabs" style="border-bottom:0;height:44px">' + tabs(INS_TABS, 'Dashboard') + '</div></div>'; }
+function tiles(top) {
+  var t = [['Record', '9–3'], ['Form', 'W W L W W'], ['Runs for', '71'], ['Runs against', '38'], ['Run diff', '+33']];
+  return t.map(function (a, i) { return '<div class="mcard" style="left:' + (272 + i * 228) + 'px;top:' + top + 'px;width:216px;height:96px;z-index:2;padding:12px 14px"><div class="k">' + a[0] + '</div><div class="big" style="font-size:22px;line-height:28px">' + a[1] + '</div></div>'; }).join('') +
+    '<div class="mcard" style="left:272px;top:' + (top + 112) + 'px;width:1136px;height:150px;z-index:2"><div class="k">Season momentum</div><div class="ln" style="margin-top:50px;color:var(--ink3)">(trend chart)</div></div>';
+}
+S.insToday = function (h) { return frame(h, 'Insights', 'Insights', insBand() + box(125, 34, 'acts', HELP) + tiles(175), meet(262, 93, 125, '32') + meet(262, 125, 159, 'row 34') + meet(262, 159, 175, '16') + mk('H3', 1290, 131)); };
+S.insBare = function (h) { return frame(h, 'Insights', 'Insights', insBand() + tiles(125), meet(262, 93, 125, '32') + mk('H3', 1290, 99)); };
+/* a sentence first: Email families — the shipped paragraph (it wraps to two lines at the 1136px column) */
+function ann(y) {
+  var p = '<p style="margin:0;font-size:14px;line-height:21px;color:var(--ink2)">One email to every family at once — a rain-out, a time change, what to bring on Saturday. It goes to the guardian emails already on your roster, so there&rsquo;s no second list to keep, and every send is logged with who received it.</p>';
+  return box(y, 42, 'x', p) + box(y + 58, 150, 'docbox', '<h5>New announcement</h5><p>Subject</p><div style="height:34px;border:1px solid var(--line2);border-radius:6px;margin:6px 0 10px;background:#fff"></div><p>Message</p>', 272, 32);
+}
+S.annToday = function (h) { return frame(h, 'Email families', 'Email families', box(80, 34, 'acts', HELP) + ann(130), meet(262, 80, 114, 'row 34') + meet(262, 114, 130, '16') + mk('H4', 1290, 86)); };
+/* the gutter: the "?" in the 32px of page padding above the first row, at the page column's right end */
+function gut(y) { return '<div style="position:absolute;z-index:3;top:' + y + 'px;right:32px;height:32px;display:flex;align-items:center"><span style="width:32px;height:32px;display:grid;place-items:center;color:var(--ink2)">' + I('help', 20, 1.8) + '</span></div>'; }
+S.docsGutter = function (h) { return frame(h, 'Documents', 'Documents', gut(48) + docsPage('gutter'), meet(262, 48, 80, '32') + mk('G', 1290, 52)); };
+S.insGutter = function (h) { return frame(h, 'Insights', 'Insights', insBand() + gut(93) + tiles(125), meet(262, 93, 125, '32') + mk('G', 1290, 99)); };
+/* the strip option (owner's suggestion): the "?" in the strip's right group, right after the bell, at the strip's real 30px door size */
+function inStrip(html) { return html.replace('<span class="ibtn">' + I('user', 17) + '</span>', '<span class="ibtn" style="width:30px;color:var(--ink2)">' + I('help', 18, 1.8) + '</span><span class="ibtn">' + I('user', 17) + '</span>'); }
+S.docsStrip = function (h) { return inStrip(frame(h, 'Documents', 'Documents', docsPage('gutter'), mk('S', 1186, 54))); };
+S.insStrip = function (h) { return inStrip(frame(h, 'Insights', 'Insights', insBand() + tiles(125), mk('S', 1186, 54))); };
+var MTABS = ['Overview', 'Budget', 'Player dues', 'Fundraising', 'Ledger', 'Club', 'Budget vs. Actual'];
+function mband() { return '<div class="band"><div class="ctabs" style="border-bottom:0;height:44px">' + tabs(MTABS, 'Overview') + '</div></div>'; }
+S.moneyGutter = function (h) { return frame(h, 'Money', 'Money', mband() + gut(93) + box(125, 34, 'acts', BTN_REC + BTN_IMP), mk('G', 1290, 99)); };
+S.moneyStrip = function (h) { return inStrip(frame(h, 'Money', 'Money', mband() + box(125, 34, 'acts', BTN_REC + BTN_IMP), mk('S', 1186, 54))); };
+S.moneyRuled = function (h) { return frame(h, 'Money', 'Money', mband() + box(125, 34, 'acts', BTN_REC + BTN_IMP + HELP), mk('G', 1130, 131)); };
+
+function stage(html, w, h) { return '<div class="stage"><div class="fitbox" data-w="' + w + '" data-h="' + h + '"><div class="fitwrap">' + html + '</div></div></div>'; }
+function spec(title, note, html, h) { return '<div class="spec"><div class="cap"><b>' + title + '</b><span>' + note + '</span></div>' + stage(html, 1440, h) + '</div>'; }
+function tagged(t, kind) { return '<span class="tag t-' + kind + '">' + t + '</span> '; }
+function ref(id) { return '<button type="button" class="mk inl" data-go="' + id + '">' + id + '</button>'; }
+
+var TABS = [];
+TABS.push({ id: 'census', label: '1 · What the pages open with', html: function () {
+  return '<h2>The first thing under the header is different on almost every page</h2>' +
+    '<p class="lede">Of 45 page-header call sites, <b>29 carry no buttons</b>, so on a computer they draw a row that holds only the &ldquo;?&rdquo; (about 22 distinct pages: the extras are the loading and &ldquo;not available to you&rdquo; versions of the same page). What each opens with:</p>' +
+    '<div class="tablewrap"><table class="cmp"><thead><tr><th>Shape</th><th>Pages</th><th>The &ldquo;?&rdquo; at the right end of its first heading</th></tr></thead><tbody>' +
+    '<tr><td>1 · A full-width label or band over a list or table</td><td>Tournaments (with entries), Documents. Drawn.</td><td>Clean. Where the label is bare text (Documents) the row grows from 18 to 34px, so the page wins back 34px, not 50</td></tr>' +
+    '<tr><td>2 · A card first</td><td>Billing (plan card), Season-end (Wrapped card), Settings (coverage card, only when the club has one). Not drawn: I have not yet drawn them from their real markup.</td><td>Inside a card, as help for that card. Billing&rsquo;s card corner already holds a status chip</td></tr>' +
+    '<tr><td>3 · Tabs, then untitled content</td><td>Insights (seven tabs), Lineups, Practice plans. Drawn: Insights.</td><td>Nothing to hang it on. Insights opens on stat tiles, and each of its seven tabs opens differently</td></tr>' +
+    '<tr><td>4 · A sentence, a gate, or only a loading line</td><td>Email families, Tournaments with none, every gate, every first load. Drawn: Email families.</td><td>No heading exists. Many pages also draw no header at all while loading</td></tr>' +
+    '<tr><td>5 · A record page</td><td>A game&rsquo;s lineup, a practice plan, a session, an opponent: the strip already carries the title, so the header is a row with a &ldquo;?&rdquo; alone. Not drawn.</td><td>No heading of its own above the record&rsquo;s content</td></tr></tbody></table></div>' +
+    '<h3>What this means for R3</h3>' +
+    '<p>R3 works cleanly on shape 1 and not at all on shapes 3, 4 and 5. Where there is no heading the page keeps its row, the fallback the ruling already allowed, so the saving is real on a few pages and the &ldquo;?&rdquo; would sit in a different place depending on the page. That also collides with a standing ruling (2026-08-11 and 2026-08-25): the &ldquo;?&rdquo; is page chrome, <b>always last, top right, one findable home</b>. An anchor inside a list or a card is a different place on every page. The next tab draws one page per shape; the tab after draws two ways to keep one corner.</p>';
+} });
+
+TABS.push({ id: 'shapes', label: '2 · Four shapes, drawn', html: function () {
+  return '<h2>One page per shape: today, and with the &ldquo;?&rdquo; at its first heading</h2>' +
+    '<p class="lede">1440 wide, the top of the screen, the band as built. Sample data where a page&rsquo;s data is not the point' + SAMPLE + '.</p>' +
+    '<h3>Shape 1 · Tournaments: a band heads the list ' + ref('H1') + '</h3>' +
+    spec('Today', 'a row of its own at y 80, the list starts at y 130', S.tournToday(330), 330) +
+    spec(tagged('With an anchor', 'new') + 'the &ldquo;?&rdquo; ends the &ldquo;Coming up&rdquo; head', 'list starts at y 80: the full 50px back, since the head is already 40px tall', S.tournAnchor(330), 330) +
+    '<h3>Shape 1 · Documents: two labelled tables (the shipped page: no cards) ' + ref('H1') + '</h3>' +
+    spec('Today', 'row at y 80, the first label at y 130, its table at y 164', S.docsToday(360), 360) +
+    spec(tagged('With an anchor', 'new') + 'the &ldquo;?&rdquo; ends the first label&rsquo;s row', 'the table starts at y 130: 34px back, not 50, because the 34px &ldquo;?&rdquo; makes that label&rsquo;s row 34px tall instead of 18', S.docsAnchor(360), 360) +
+    '<h3>Shape 3 · Insights: tabs, then untitled content ' + ref('H3') + '</h3>' +
+    spec('As ruled (R1, the row kept)', 'band 93, gap 32, the row at y 125, tiles at y 175. Also Lineups and Practice plans.', S.insToday(400), 400) +
+    spec(tagged('R3 as written', 'chg') + 'no row, tiles at y 125: where does the &ldquo;?&rdquo; go?', 'Nothing here is a heading. One would have to be invented per tab: seven for Insights, two for Lineups, four for Practice plans.', S.insBare(400), 400) +
+    '<h3>Shape 4 · Email families: a paragraph opens the page ' + ref('H4') + '</h3>' +
+    spec('Today (no anchor exists)', 'the opening paragraph is not a heading; the row stays. The same for every gate and loading state.', S.annToday(330), 330) +
+    '<p class="muted">Shape 2 (a card first) and shape 5 (a record page) are not drawn: they are described on the first tab. Both would keep the row under my recommendation, so drawing them first would not change the ruling.</p>';
+} });
+
+TABS.push({ id: 'gutter', label: '3 · Strip or gutter', html: function () {
+  return '<h2>Two ways to keep one corner for the &ldquo;?&rdquo; on every page</h2>' +
+    '<p class="lede">Anchors give a different place on each shape (tab 2). Both of these give <b>one place, top right, on every page</b>, with no per-page work: the strip beside the bell, which is your suggestion, and the page&rsquo;s own padding. ' + ref('S') + '</p>' +
+    '<h3>A · In the strip, beside the bell ' + ref('S') + '</h3>' +
+    spec(tagged('Strip', 'new') + 'Documents', 'the &ldquo;?&rdquo; sits between the bell and the account button, at the strip&rsquo;s own 30px door size. The page row is gone: the table starts at y 114, 50px back.', S.docsStrip(360), 360) +
+    spec(tagged('Strip', 'new') + 'Insights', 'tiles at y 125, the saving R3 promised on the tabbed pages, with the strip (not the page) holding the &ldquo;?&rdquo;', S.insStrip(400), 400) +
+    spec(tagged('Strip', 'new') + 'Money (a page with buttons)', 'the same corner on a page with buttons too: the buttons row keeps Record and Import alone. No height change here.', S.moneyStrip(250), 250) +
+    '<div class="cols"><div class="card"><h3>Why it is strong</h3><ul><li><b>Always on screen.</b> The strip is fixed, so help does not scroll away on a long page (the gutter&rsquo;s does).</li><li><b>One corner on every page</b>, with buttons or without, in a loading state or behind a &ldquo;not available to you&rdquo; wall. Nothing to anchor.</li><li>The same place on every page keeps the 2026-08-11 clause (&ldquo;always last, top right, one findable home&rdquo;) better than anything else here.</li></ul></div>' +
+    '<div class="card"><h3>What it costs</h3><ul><li><b>It reverses the 2026-07-31 ruling</b>, which kept the strip for doors that leave the place you are in and said a &ldquo;?&rdquo; is not an exit. That is a boundary, not a harm: the chat icon it was drawn against was removed as a duplicate door.</li><li><b>A second help door ~30px from the first.</b> The account menu already has a Help row (it opens the full guide in a new tab); the strip&rsquo;s &ldquo;?&rdquo; opens the in-page drawer at this screen&rsquo;s section. Different doors, but near each other.</li><li><b>Not measured:</b> the strip&rsquo;s right end at 1100 wide, where the team&rsquo;s facts, the Game day chip, the bench link, the bell, the account button and the Workspaces pill already share it.</li><li>The page still has to hand its help topic up to the strip (the phone already does this to the team bar). A page that has not loaded yet shows no &ldquo;?&rdquo;, as today.</li></ul></div></div>' +
+    '<h3>B · In the page&rsquo;s own top padding (the gutter) ' + ref('G') + '</h3>' +
+    '<p>Every page has 32px of empty padding between the strip (or the band) and its first row; a 32px &ldquo;?&rdquo; fits in it, at the right end of the column.</p>' +
+    spec(tagged('Gutter', 'new') + 'Documents', 'the table starts at y 114, 50px back', S.docsGutter(360), 360) +
+    spec(tagged('Gutter', 'new') + 'Insights', 'tiles at y 125, the &ldquo;?&rdquo; in the gutter under the band', S.insGutter(400), 400) +
+    spec(tagged('Gutter', 'new') + 'Money (a page with buttons)', 'the &ldquo;?&rdquo; leaves the buttons row', S.moneyGutter(250), 250) +
+    spec('Money as R3 ruled', 'the &ldquo;?&rdquo; stays last in the buttons row where a page has buttons (also today)', S.moneyRuled(250), 250) +
+    '<div class="card"><h3>What the gutter costs, and what is not yet checked</h3><ul><li>The &ldquo;?&rdquo; scrolls away with the page, and touches the content below it unless it draws smaller (the tap area can stay 34px).</li><li>The shell would draw it, not the page header.</li><li><b>Not yet checked:</b> pages that already drop the padding (a docked builder, a full-bleed sheet), and where the scouting-book reminder, which sits under the header row now, would go.</li></ul></div>' +
+    '<div class="card" style="margin-top:12px"><h3>What does not change in either</h3><p>On a phone nothing changes: the team bar draws the &ldquo;?&rdquo; there. The tournament admin and the club are untouched; whether they follow is decided after you walk this. Height saved is on the no-button pages only: a page with buttons keeps its row either way.</p></div>';
+} });
+
+TABS.push({ id: 'asks', label: '4 · Rulings', html: function () {
+  function ask(id, t, qs, rec) { return '<div class="ask" id="ask-' + id + '"><h3><span class="mk inl" style="pointer-events:none">' + id + '</span>' + t + '</h3><ol>' + qs.map(function (q) { return '<li>' + q + '</li>'; }).join('') + '</ol><p class="rec" style="margin:8px 0 0">' + rec + '</p></div>'; }
+  return '<h2>Rulings</h2><p class="muted">Recommended first in each list. Nothing is wired until these are answered. The band itself is built and does not depend on them.</p>' +
+    ask('S', 'Where does the &ldquo;?&rdquo; live on a computer, on every page?', ['<b>In the strip, beside the bell</b> &mdash; your suggestion: one corner, fixed, on every page with or without buttons (reverses the 2026-07-31 strip ruling on purpose)', '<b>The gutter</b> &mdash; top right in the page&rsquo;s own padding, drawn by the shell: one corner, scrolls with the page', '<b>Anchors where one is clean</b> &mdash; R3 as worded: Tournaments and Documents adopt it, every other page keeps its row', '<b>Keep every row</b> &mdash; nothing moves'], 'Recommend the strip. On merit it beats the gutter: it stays on screen while a page scrolls, works in loading and wall states, needs no per-page anchor, and keeps the 2026-08-11 &ldquo;one home, top right&rdquo; clause. Its cost is real but small: it reverses a boundary the 2026-07-31 ruling drew against a different icon, and it puts a second help door about 30px from the account menu&rsquo;s Help row. Before building I would measure the strip&rsquo;s right end at 1100 wide. Pages with buttons would take it too, so the buttons row keeps only its buttons (R3 had kept the &ldquo;?&rdquo; last in that row). If you take the gutter or anchors instead, say whether pages with buttons keep the &ldquo;?&rdquo; last in their row.') +
+    ask('H1', 'Only if you chose anchors: shape 1 (Tournaments, Documents)', ['Move the &ldquo;?&rdquo; to the right end of the label or band', 'Keep the row'], 'Yes, if anchors.') +
+    '<p class="muted">Not asked: shapes 2 to 5 keep their row under anchors or keep-every-row, and take the strip or the gutter with everything else.</p>';
+} });
+
+/* ── mount ── */
+var tabsEl = document.getElementById('tabs'), panels = document.getElementById('panels'), cur = null;
+TABS.forEach(function (t) {
+  var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.id = 'tab-' + t.id; b.textContent = t.label; b.setAttribute('aria-selected', 'false'); b.addEventListener('click', function () { show(t.id, true); }); tabsEl.appendChild(b);
+  var s = document.createElement('section'); s.className = 'panel'; s.id = 'p-' + t.id; s.setAttribute('role', 'tabpanel'); panels.appendChild(s); t.el = s; t.built = false;
+});
+function show(id, push) {
+  TABS.forEach(function (t) {
+    var on = t.id === id; t.el.classList.toggle('on', on); document.getElementById('tab-' + t.id).setAttribute('aria-selected', on ? 'true' : 'false');
+    if (on && !t.built) { t.el.innerHTML = t.html(); t.built = true; }
+  });
+  cur = id; if (push) { try { history.replaceState(null, '', '#' + id); } catch (e) { /* hash only */ } }
+  fit(); window.scrollTo(0, 0);
+}
+var fitMode = false;
+function fit() {
+  document.querySelectorAll('.fitbox').forEach(function (b) {
+    var w = +b.getAttribute('data-w'), h = +b.getAttribute('data-h'), wrap = b.firstChild, st = b.parentNode;
+    var k = fitMode ? Math.min(1, (st.clientWidth - 28) / w) : 1;
+    wrap.style.transform = k < 1 ? 'scale(' + k + ')' : ''; b.style.width = (w * k) + 'px'; b.style.height = (h * k) + 'px';
+  });
+}
+function setBtn(a, b, on) { document.getElementById(a).setAttribute('aria-pressed', on ? 'true' : 'false'); document.getElementById(b).setAttribute('aria-pressed', on ? 'false' : 'true'); }
+document.getElementById('v-all').addEventListener('click', function () { document.body.classList.remove('only-diff'); setBtn('v-all', 'v-diff', true); });
+document.getElementById('v-diff').addEventListener('click', function () { document.body.classList.add('only-diff'); setBtn('v-diff', 'v-all', true); });
+document.getElementById('s-true').addEventListener('click', function () { fitMode = false; setBtn('s-true', 's-fit', true); fit(); });
+document.getElementById('s-fit').addEventListener('click', function () { fitMode = true; setBtn('s-fit', 's-true', true); fit(); });
+window.addEventListener('resize', fit);
+document.addEventListener('click', function (e) {
+  var g = e.target.closest && e.target.closest('[data-go]'); if (!g) return;
+  show('asks', true); var a = document.getElementById('ask-' + g.getAttribute('data-go'));
+  if (a) { a.scrollIntoView({ block: 'center' }); a.classList.add('flash'); setTimeout(function () { a.classList.remove('flash'); }, 1600); }
+});
+window.addEventListener('hashchange', function () { var h = (location.hash || '').replace('#', ''); if (TABS.some(function (t) { return t.id === h; })) show(h, false); });
+var start = (location.hash || '').replace('#', ''); show(TABS.some(function (t) { return t.id === start; }) ? start : 'census', false);
+})();
+</script>

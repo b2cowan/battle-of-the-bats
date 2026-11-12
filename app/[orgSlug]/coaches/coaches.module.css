@@ -516,6 +516,11 @@
      padding can't reach a sticky/fixed element's `top`. Adding the term here too would
      double-count the banner and open a gap under the strip (caught 2026-08-11 review). */
   --coach-topstrip-top: calc(var(--coach-topstrip-h) + var(--sandbox-chrome-h, 0px));
+  /* ⚖ THE BAND'S HEIGHT, 0 unless this address has one (navigation Phase 4b, R1, owner 2026-11-11). A room with tabs pins them in a
+     band directly under the strip on a computer; everything that docks under the strip adds this to its base — the register's
+     toolbar and column heads, the section deep-link margin. ⚠ Added, never folded into `--coach-header-h` (the team bar's own
+     measured height, pinned verbatim by the lineup guard). Zero on a page without tabs and on a phone (below). */
+  --coach-band-h: 0px;
   display: flex;
   min-height: 100vh;
   padding-top: var(--coach-topstrip-h);
@@ -568,6 +573,33 @@
      consumer constrains it either — the game-day button row, `.stickyActionBar`'s one consumer,
      is DOCKED here and leaves the flow, and modal footers scroll inside their own overlay.) */
   .coachesMain { padding: 1rem var(--coach-gutter) 2rem; }
+}
+
+@media (min-width: 901px) {
+  /* The one declaration of the band's height: the shell marks itself when the address has a band (CoachesChrome). A phone keeps its
+     tab row in the page (Phase 5 gives it the same rule), so above 900 only: below it the height stays 0 and the slot, an empty
+     div, takes no room. */
+  .coachesShell[data-coach-band] { --coach-band-h: 45px; }
+
+  /* ⚖ THE BAND (navigation Phase 4b, R1): an empty slot the page's tab bar is portaled into (`HubTabBar band`) — the club's
+     own band, tabs alone: pinned under the strip, full width from the sidebar's edge to the right edge (negative margins cancel
+     the container's padding, as the team masthead does), an opaque ground so nothing shows through, the club's bottom rule. The
+     margin below restores the page's 2rem, so the first row of content begins 32px under it. */
+  .bandSlot {
+    position: sticky;
+    top: var(--coach-topstrip-top, 0px);
+    z-index: 60; /* with the strip's dropdowns (60), below the strip (80) and every sheet */
+    box-sizing: border-box;
+    height: var(--coach-band-h);
+    margin: -2rem -2rem 2rem;
+    background-color: var(--pitch-black);
+    background-image: linear-gradient(var(--card-bg), var(--card-bg));
+    border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.08));
+  }
+  /* ⚠ AN EMPTY BAND DRAWS NOTHING (/review 2026-11-12): the room is held open by address, so until a page's bar arrives — loading,
+     or a wall the page shows INSTEAD of tabs ("not available to you", team not found) — the slot is 45px of plain page, not a
+     blank bordered strip. The ground and the rule come with the bar. */
+  .bandSlot:not(:has(> *)) { background: none; border-bottom: 0; }
 }
 
 /* ── Focused reading surface (the help guide) ────────────────────────────────
@@ -1272,7 +1304,7 @@
   border-radius: var(--radius);
   /* A ?section= deep-link scrolls the section to the viewport top — under the pinned
      chrome without this margin. */
-  scroll-margin-top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px) + 0.5rem);
+  scroll-margin-top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px) + var(--coach-band-h, 0px) + 0.5rem);
 }
 .collapseSummary {
   display: flex;
@@ -1488,8 +1520,9 @@
 
 /* ⚖ ON A COMPUTER THE STRIP NAMES THE PAGE (navigation Phase 4, E6, E11, C1, C4; tab 17 — `CoachPageHeader`'s note). Above
    900 a named page's header keeps only its top row — its actions, then the "?" last (C1: a row holding the "?" alone when
-   that is all it has); with nothing to show it draws nothing. One level down the record keeps its own title, chips and
-   buttons, and drops its arrow and icon tile (the strip carries the way back). A "?" the team bar draws on a phone is this
+   that is all it has); with nothing to show it draws nothing. One level down the strip carries the way back AND the record's
+   name and chips (2026-11-11 — see the 'record' rule below); until the strip has them the header keeps its own title and
+   drops only its arrow and icon tile. A "?" the team bar draws on a phone is this
    row's above 900 (the bar is the phone's only). The phone is exactly as it was. */
 @media (min-width: 901px) {
   /* With the title gone the row is the actions and the "?": packed to the right end, so a "?" alone sits there too (C1). */
@@ -1499,11 +1532,13 @@
   .pageHeaderStd[data-desk-drill] .pageHeaderBack,
   .pageHeaderStd[data-desk-drill] .pageHeaderBackRule,
   .pageHeaderStd[data-desk-drill] .headerIcon { display: none; }
+  /* ⚖ ONE LEVEL DOWN THE STRIP NAMES THE RECORD TOO (owner 2026-11-11, reversing C4's "the page keeps the record's title"):
+     once the header has portaled its title and chips into the strip, its own copy goes, and it keeps what the club's record
+     pages keep — its buttons and the "?" as the page's top row (nothing at all when it has neither). */
+  .pageHeaderStd[data-desk-drill='record'] { justify-content: flex-end; }
+  .pageHeaderStd[data-desk-drill='record'] .pageHeaderLeft { display: none; }
+  .pageHeaderStd[data-desk-drill='empty'] { display: none; }
 }
-@media (max-width: 900px) {
-  .pageHeaderHelpDesk { display: none; }
-}
-
 /* ⚖ THE SCOUTING REMINDER UNDER THE PAGE'S TOP ROW (navigation Phase 4, C3; tab 17): a slim notice, the bar's words and ×,
    scrolling with the page. A computer's only — on a phone the team bar keeps its own row. */
 .deskNudge {

@@ -754,6 +754,8 @@ export default function PlayerDetailPage({
         tabs={tabs.map(t => ({ id: t.id, label: t.label, short: t.short, href: tabHref(t.id) }))}
         activeId={tab}
         ariaLabel="Player record"
+        /* Under the glance block, so it cannot be the band: it docks under the strip once scrolled past (R5, 2026-11-11). */
+        sticky
       />
 
       {/* ── DETAILS: the record. The form for the head coach above 640; the RECORD for everyone

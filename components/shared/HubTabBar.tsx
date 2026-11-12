@@ -3,6 +3,9 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useActiveTabInView } from '@/lib/use-active-tab-in-view';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
+import { useBandEmptyReport, useHubBandSlot } from './HubBandSlot';
 import styles from './HubTabBar.module.css';
 
 /**
@@ -55,6 +58,7 @@ export default function HubTabBar<Id extends string>({
   remeasureKey,
   sticky,
   inBar,
+  band,
 }: {
   tabs: readonly HubTab<Id>[];
   activeId: Id;
@@ -67,10 +71,10 @@ export default function HubTabBar<Id extends string>({
    */
   remeasureKey?: unknown;
   /**
-   * ⚠ OPT-IN, DEFAULT FALSE — this component is shared with the Insights reports hub (`/history`),
-   * and pinning is a Money-register-specific fix for a long, scrollable book. Insights' tab row is
-   * untouched unless it opts in on its own; do not flip the default (reading-order ruling, follow-up
-   * to P3).
+   * ⚠ OPT-IN, DEFAULT FALSE — the row DOCKS under the strip once scrolled past (the player page's tabs sit under its glance
+   * block, so they pin only after it has gone). Every coach page whose tabs lead the page uses `band` instead (navigation
+   * Phase 4b, R1; the 2026-08-19 "never sticky" ruling is superseded — all of them pin, so "one tab pinned, six not" cannot
+   * arise). Do not flip the default.
    */
   sticky?: boolean;
   /**
@@ -80,6 +84,16 @@ export default function HubTabBar<Id extends string>({
    * rows never do, and must look exactly as they did.
    */
   inBar?: boolean;
+  /**
+   * ⚖ OPT-IN, DEFAULT FALSE — THE COACHES PORTAL'S BAND (navigation Phase 4b, R1, owner 2026-11-11; supersedes the 2026-08-19
+   * "never sticky" note on Money). On a computer a coach page with tabs keeps them pinned in a 45px band directly under the
+   * strip, full width, tabs alone — the club's own pattern. The row is PORTALED into the shell's band (`HubBandSlot`) when
+   * the shell offers one and the viewport is a computer; on a phone, or in a shell with no band, it renders in place, exactly
+   * as it always did. EVERY coach tab bar that is not a view switch sets it, so "one tab pinned, six not" cannot arise.
+   * ⚠ NOT `inBar`: that is the club's header-embedded look and its guard says no coach page uses it. The player page does not
+   * set this either — its tabs sit under a glance block and use `sticky` (they dock under the strip once scrolled past).
+   */
+  band?: boolean;
   /* ⚠ NO ACTION SLOT — tried for one day (money centralization P1, per mockup 05's drawing) and
      REMOVED by owner ruling 2026-08-23: on a phone the button crowded the strip down to two
      visible tabs, and a control that belongs to the PAGE was scaling with the tab row. Hub-wide
@@ -104,6 +118,14 @@ export default function HubTabBar<Id extends string>({
    * measurement depends on. Fixing it here rather than asking each caller to `useMemo` is
    * deliberate: a caller that forgets is silently slower, and there is no test that would notice.
    */
+  // The band (opt-in): where this row docks. Declared BEFORE the two effects below because they key on it: docking swaps the in-page
+  // row for a portal, which REBUILDS the <nav>, so the observer, the scroll listener and the active-tab scroll must re-attach to the new
+  // one (a bar that fits docked still needs its arrows at 901–1000 wide — /review 2026-11-12). Hooks stay before the early return.
+  const bandSlot = useHubBandSlot();
+  const desktop = !useIsPhoneNav(); // the portal's one 900/901 split; the server answers "phone", so the first paint is the page's own row
+  useBandEmptyReport(bandSlot, !!band, tabs.length < 2);
+  const dock = band && desktop ? bandSlot?.el : null;
+  const docked = !!dock;
   const tabsKey = tabs.map(t => `${t.id}:${t.label}`).join('|');
   useEffect(() => {
     const el = barRef.current;
@@ -117,7 +139,7 @@ export default function HubTabBar<Id extends string>({
     ro.observe(el);
     el.addEventListener('scroll', measure, { passive: true });
     return () => { ro.disconnect(); el.removeEventListener('scroll', measure); };
-  }, [tabsKey, remeasureKey]);
+  }, [tabsKey, remeasureKey, dock]);
 
   /**
    * ⚠⚠ **THE TAB YOU ARE ON IS IN VIEW** (coaching from a phone · stage 6 · R3, owner 2026-09-24). The row
@@ -129,7 +151,7 @@ export default function HubTabBar<Id extends string>({
    * this much of each edge. `remeasureKey` too (/review, 2026-09-24): it is the caller's signal that the row's
    * usable WIDTH moved without the tabs changing (the Money hub's summary landing).
    */
-  useActiveTabInView(barRef, 48, [activeId, tabsKey, remeasureKey]);
+  useActiveTabInView(barRef, 48, [activeId, tabsKey, remeasureKey, dock]);
 
   // A row of ONE tab is not navigation. The Practice plans room drops its two library tabs for a
   // coach the libraries would refuse (stage 0, D5), and a lone "Practices" tab would be a row that
@@ -143,15 +165,9 @@ export default function HubTabBar<Id extends string>({
     el.scrollBy({ left: dir * Math.max(160, el.clientWidth * 0.6), behavior: 'smooth' });
   }
 
-  return (
+  const bar = (
     <div
-      className={`${styles.wrap} ${sticky ? styles.sticky : ''}${inBar ? ` ${styles.inBar}` : ''}`}
-      /* ⚠ A STABLE ID, ONLY WHEN STICKY — the register's own sticky zone measures this element's
-         real rendered height (fonts/zoom/content all vary the estimate) rather than trusting a
-         guessed CSS constant, which is what let content peek through a gap between the two sticky
-         layers on the actual page. Safe as a page-wide singleton: only one HubTabBar renders at
-         a time, and only Money's Transactions tab ever sets `sticky`. */
-      id={sticky ? 'coach-tabbar-sticky' : undefined}
+      className={`${styles.wrap} ${sticky ? styles.sticky : ''}${inBar ? ` ${styles.inBar}` : ''}${band ? ` ${docked ? styles.bandDocked : styles.bandPending}` : ''}`}
     >
       {scroll.left && (
         <button
@@ -199,4 +215,5 @@ export default function HubTabBar<Id extends string>({
       )}
     </div>
   );
+  return dock ? createPortal(bar, dock) : bar;
 }

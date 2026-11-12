@@ -62,25 +62,32 @@ import AccountMenu from '@/components/shared/AccountMenu';
 import { useRoleSummary } from '@/lib/use-role-summary';
 import { useOrg } from '@/lib/org-context';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { useCoachDeskTitle } from './CoachDeskTitle';
+import { useCoachDeskTitle, useCoachRecordSlotRef } from './CoachDeskTitle';
+import { CoachStripHelp } from './CoachPageHelpSlot';
 import own from '@/components/admin/AdminTopStrip.module.css';
 import styles from './CoachTopStrip.module.css';
 
 /**
  * ⚖ THE PAGE, OVER THE PAGE (navigation Phase 4, E6, C4; drawings tab 17): the page's name — the sidebar's lit row, the
- * page's `<h1>` on a computer — or, one level down, the way back ("← Roster", the page keeping its record's title); then
+ * page's `<h1>` on a computer — or, one level down, the way back and the record ("← Roster │ Avery Test", the name arriving from the page's header); then
  * the team's facts at the right end (`CoachStripFacts`, rendered on the server by the `@stripFacts` slot).
  */
 function CoachStripPlace({ facts }: { facts: ReactNode }) {
   const { title } = useCoachDeskTitle();
+  const recordSlot = useCoachRecordSlotRef();
   return (
     <div className={own.place}>
       {title?.kind === 'name' && <h1 className={`${own.name} ${own.pageName}`}>{title.name}</h1>}
       {title?.kind === 'back' && (
-        <Link href={title.href} className={own.back} aria-label={`Back to ${title.label}`}>
-          <ArrowLeft size={15} aria-hidden />
-          <span>{title.label}</span>
-        </Link>
+        <>
+          <Link href={title.href} className={own.back} aria-label={`Back to ${title.label}`}>
+            <ArrowLeft size={15} aria-hidden />
+            <span>{title.label}</span>
+          </Link>
+          {/* ⚖ The record's own name and chips arrive HERE, from the page's header (a portal — see `recordSlot` in
+              CoachDeskTitle). Empty until the page has loaded its record: the arrow is all the address can say. */}
+          <div ref={recordSlot} className={styles.recordSlot} />
+        </>
       )}
       {facts}
     </div>
@@ -138,6 +145,9 @@ export default function CoachTopStrip({ wall = false, free = false, facts = null
             settingsHref={`/account/notifications?focus=coach-${currentOrg.slug}&back=${back}`}
           />
         )}
+        {/* ⚖ THE PAGE'S "?" (owner 2026-11-12, navigation Phase 4b — reverses the 2026-07-31 boundary on purpose): beside the bell, in
+            the strip's own door size, drawn only once a page has published a help topic. Not on a wall or the free portal (no host). */}
+        {!wall && !free && <CoachStripHelp reserve={split} />}
         {!inSandbox && (
           <AccountMenu
             warm

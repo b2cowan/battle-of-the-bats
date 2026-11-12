@@ -186,7 +186,22 @@ describe('4. the chrome', () => {
     assert.match(readCode('components/coaches/CoachPortalShell.tsx'), /<CoachTopStrip free \/>/);
   });
 
-  it('exactly one <h1> per width: the strip’s for a named page, the page’s own one level down; the paper title hides above 900', () => {
+  it('one level down the strip names the RECORD too (owner 2026-11-11, reversing C4): the header portals its title + chips into the strip’s slot and hides its own copy above 900', () => {
+    const strip = readCode('components/coaches/CoachTopStrip.tsx');
+    const header = readCode('components/coaches/CoachPageHeader.tsx');
+    const css = readCode('app/[orgSlug]/coaches/coaches.module.css');
+    // The strip draws an EMPTY slot after the arrow; it never learns the record's name itself (a drill-in loads it after the page opens).
+    assert.match(strip, /<div ref=\{recordSlot\} className=\{styles\.recordSlot\} \/>/);
+    assert.match(readCode('components/coaches/CoachDeskTitle.tsx'), /recordSlot: HTMLElement \| null/);
+    // The header draws into it only once the slot exists, so a server paint or a free portal keeps the page's own title.
+    assert.match(header, /const deskRecord = deskDrill && !!recordSlot && typeof title === 'string';/);
+    assert.match(header, /createPortal\(/);
+    assert.match(header, /data-desk-drill=\{deskDrill \? \(deskRecord \? \(deskRowHas \? 'record' : 'empty'\) : ''\) : undefined\}/);
+    assert.match(css, /@media \(min-width: 901px\) \{[\s\S]*\.pageHeaderStd\[data-desk-drill='record'\] \.pageHeaderLeft \{ display: none; \}/);
+    assert.match(css, /\.pageHeaderStd\[data-desk-drill='empty'\] \{ display: none; \}/);
+  });
+
+  it('exactly one <h1> per width: the strip’s for a named page, the record’s (portaled by its header) one level down; the paper title hides above 900', () => {
     assert.equal(strip.match(/<h1\b/g)?.length, 1);
     assert.match(strip, /\{title\?\.kind === 'name' && <h1/);
     const css = readCode('app/[orgSlug]/coaches/coaches.module.css');
@@ -194,7 +209,7 @@ describe('4. the chrome', () => {
     assert.match(desk, /^\.pageHeaderStd\[data-desk-named\] \.pageHeaderLeft \{ display: none; \}/);
     assert.match(css, /@media \(min-width: 901px\) \{[^}]*\.pageHeaderStd\[data-desk-named\] \{ justify-content: flex-end; \}\s*\.pageHeaderStd\[data-desk-named\] \.pageHeaderLeft/);
     const header = readCode('components/coaches/CoachPageHeader.tsx');
-    assert.match(header, /data-desk-named=\{deskNamed \? \(actions \|\| showHelp \? 'actions' : 'empty'\) : undefined\}/, 'C1: a "?" alone keeps its row; nothing → nothing');
+    assert.match(header, /data-desk-named=\{deskNamed \? \(deskRowHas \? 'actions' : 'empty'\) : undefined\}/,'Phase 4b (owner 2026-11-12): a HOSTED "?" is the strip’s, so it no longer keeps a row alone; an unhosted page still does');
   });
 
   it('the team bar is the phone’s only: it draws nothing above 900, and the phone keeps its switch sheet', () => {

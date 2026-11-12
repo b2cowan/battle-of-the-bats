@@ -126,9 +126,10 @@ type Params = { get(name: string): string | null };
 
 /**
  * ⚖ ONE LEVEL DOWN, THE STRIP CARRIES THE WAY BACK (C4, owner 2026-11-11): the arrow and where it goes, in today's words,
- * from ONE table — the page keeps the record's own title, its chips and its buttons (a drill-in loads its record after
- * the page opens, so a record's name in the strip could not be right on the first paint; the address always knows where
- * back goes). A drill-in that was opened FROM somewhere (`?return=`, the lineup builder's and the player page's doors)
+ * from ONE table. ⚖ AMENDED THE SAME DAY: the record's name and chips ALSO live in the strip now (the club's record pages
+ * do) — but they are not in this table: a drill-in loads its record after the page opens, so the address cannot know them.
+ * The page's header portals them into the strip once it has them (`recordSlot`, CoachDeskTitle); the address supplies only
+ * where back goes. A drill-in that was opened FROM somewhere (`?return=`, the lineup builder's and the player page's doors)
  * goes back there, named as the page names it today (`returnLabel`). Null when the address is not one level down.
  */
 export function coachDrillBack(pathname: string, params: Params, teamBase: string): { href: string; label: string } | null {
@@ -189,4 +190,20 @@ export function isCoachNavItemLit(pathname: string, teamBase: string, href: stri
   const full = `${teamBase}${href}`;
   if (href === '') return pathname === full || pathname === `${full}/`;
   return pathname === full || pathname.startsWith(`${full}/`);
+}
+
+/**
+ * ⚖ THE BAND IS RESERVED BY THE ADDRESS (navigation Phase 4b, R1, owner 2026-11-11). On a computer a coach page that has a
+ * tab bar keeps it pinned in a band directly under the strip (the club's own pattern, standard §3 item 4). The five rooms
+ * that have tab bars — Money, Insights, Skills & goals, Lineups, Practice plans — answer on the ROOM's address alone (their
+ * tabs are `?section=`, never another path), so the shell can hold the band's 45px open before the page has loaded and its
+ * tabs arrive into room already made: a tabbed route never shifts when its tabs show up (the club's Phase 0 lesson, "no flash").
+ * ⚠ Every other address is false: the drill-ins (`practice/{plan}`, `lineups/{game}` …) have no tabs, and the player page
+ * keeps its tabs in the page (they dock under the strip once scrolled past — HubTabBar's `sticky`, not the band).
+ */
+const BAND_ROOMS = new Set(['accounting', 'history', 'development', 'lineups', 'practice']);
+export function coachBandAt(pathname: string, teamBase: string): boolean {
+  if (!pathname.startsWith(`${teamBase}/`)) return false;
+  const seg = pathname.slice(teamBase.length + 1).split('/').filter(Boolean);
+  return seg.length === 1 && BAND_ROOMS.has(seg[0]);
 }

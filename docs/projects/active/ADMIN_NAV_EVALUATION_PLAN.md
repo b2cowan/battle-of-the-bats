@@ -666,10 +666,63 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
     `verify-changed`'s ESLint config is broken (the `react-hooks` plugin is missing); token, old-look and index-coverage flags on
     others' files; a `statItem` dead class; the workspace-flip census lists others' files.
   - **Walk §514** (https://claude.ai/artifact/7ium3Z1NFePTBbMTcLUSXS, source `ADMIN_NAV_PHASE4_WALK.html`): 8 walks — the team cell
-    and list, the strip, the top row and "?", a drill-in, a closed season, the folded rail, the demo, the phone — **owed**.
+    and list, the strip, the top row and "?", a drill-in, a closed season, the folded rail, the demo, the phone — **PASSED 33/33 2026-11-11, no findings**.
   - **Owed at the promote, with the owner's yes (record; not run):** `node scripts/backfill-team-crest-aspect.mjs --prod`, then
     `--prod --write`. No migration. **Owner calls:** crest facts as real columns (a migration); the two top-row Mediums above (fold
     into the queued top-row review).
+- **Phase 4b · Coaches Portal tabs + top row (added 2026-11-11, owner ask after the §514 walk passed 33/33).** The club pins a
+  place's tabs in a band under the strip (standard §3 item 4: "tabs pinned in the band where a place has pages"); the Coaches
+  Portal's tab bars (Money, Insights, History, Lineups, Practice plans …) sit inside the page body and scroll away, so the
+  standard is not yet met there. No earlier phase owned it: Phases 1–4 changed the sidebar and the strip, Phase 5 is the phone
+  bar, Phase 6 is words and the walk. **One drawing session covers both this and the queued top-row review below, because the
+  pinned tab band and the "?" row compete for the same space.** Open point for the owner: Money's tab bar was set to NEVER
+  sticky on 2026-08-19 (one tab pinned, six not = inconsistent chrome). Pinning every tab bar the same way does not bring that
+  problem back, so the plan treats it as superseded by the standard — to be ruled, not assumed. Ordered BEFORE Phase 5: the
+  phone bar has the same question and would otherwise be redrawn. Gate: drawings, then rulings, then build.
+  **Drawings DRAWN 2026-11-11** (a separate artifact, not tab 18 of the older one: https://claude.ai/artifact/VkSTdrAUv9Rbgbwu4gYiun,
+  source `COACH_TABS_TOPROW_DRAWINGS.html`; six tabs, measured at 1440 × 900 on dev): rulings **R1–R6 owed**. Measured: four tabbed
+  pages stack 32 + 34 + 16 + 45 + 22 = 149px of chrome above the first content (content at y 197); five of seven pages carry a
+  34px row holding only a "?". Option A (a 45px band under the strip with tabs + page buttons + "?") puts content at y 125; pinned
+  chrome is 93px (A is new: the club's own band is tabs only, which is option B). The Ledger's own pins (toolbar 104 + heads 33) go
+  from 185px to 230px pinned. Recommended: A, and the lone "?" on tab-less pages at the right end of the page's first heading
+  (option 2). A first recommendation of the "?" in the strip was WITHDRAWN after /design: the 2026-07-31 ruling (memory
+  `design_decisions.md` ~5382) holds the strip to leave-this-place doors, says a "?" is not an exit and not to re-propose the strip
+  for contextual help; Help has since moved into the account menu, so the strip would be a second help door. **Not built. /design
+  review DONE 2026-11-11 (two Highs fixed in the drawings: the withdrawn strip recommendation, A labelled new; Mediums fixed except
+  a 1280 frame, given as numbers).**
+  **⚖ RULED 2026-11-11 (owner, R1–R6):** **R1 = B, the club's own band** — tabs alone pinned under the strip on every coach page that has
+  tabs, the page's buttons stay in the page below it (A, the new buttons-in-the-band pattern, NOT taken). **R2 = nothing rides the band's
+  right end** (follows from R1). **R3 = option 2** — the "?" sits at the right end of the page's first heading/row, so the "?"-only row
+  disappears; where a page has buttons the "?" stays last in that row as today. This does NOT reverse the 2026-07-31 ruling (help stays
+  on the page, never the strip); what changes is the "?" no longer gets a row of its own. **Owner direction: help's place should be the
+  same in all three portals; start in the Coaches Portal, and if he likes it after the walk, bring the tournament admin and the club
+  over — a cross-portal help review, not built now.** **R4 = accept** the Ledger pinning 230px (check at 768px high before the walk).
+  **R5 = as written** (Money 7, Insights 7, Lineups 2, Practice plans 4, Skills & goals 3; the player page's tabs stay under the glance block and dock under the
+  strip once scrolled past; Tryouts stages and the editors' view switches stay). **R6 = before Phase 5; the phone follows with the same
+  rule in Phase 5.** Net at rest: content 22px higher on the four tabbed pages from the band alone, plus about 50px on every page whose
+  row held only a "?" (content to y 80 on a tab-less page; to y 125 + the band on a tabbed one). **Build prompt written 2026-11-11:
+  `ADMIN_NAV_BUILD_PHASE4B_PROMPT.md` (Opus; a band-mechanism spike with a recommended shell-owned slot, a stop for the owner's yes on the "?" anchors before wiring ~20 pages).**
+  **⚖ R3 REVISED 2026-11-12 (owner: "i agree with your recommendations", on https://claude.ai/artifact/YW35riPNZWMSUaxdSp6ksH).** A code survey found most pages have no first heading
+  to hang the "?" on (tabbed pages open on tiles or lists; Email families on a paragraph; every gate and first load has none), so R3's anchors
+  would give a different place per page. **The "?" lives in the top strip, between the bell and the account button, on every team page, pages
+  with buttons too** (the buttons row keeps only its buttons). **This REVERSES the 2026-07-31 "not CoachTopStrip" boundary on purpose.**
+  The account menu's Help row stays the full guide (new tab). **The phone:** its single help door moves into the More sheet's Help row,
+  which will open the page's panel (today it opens the full guide) — **Phase 5**, not built here (R6). The tournament admin and the club
+  follow only if the owner likes it after walking the Coaches Portal.
+  **BUILT 2026-11-12 (walk https://claude.ai/artifact/2GSDgxgwjVsyUq3uqD3v2D, ledger §517; commit owed).** The band: a shell-owned slot reserved by the address (`coachBandAt`, five
+  rooms), the page's tab bar portaled into it above 900 (`HubTabBar band`, `HubBandSlot`), `--coach-band-h` (one declaration, 0 on a
+  page without tabs and on a phone) added to the register's base and the section deep-link margin. The "?": one publisher (the page header),
+  one entry held by `CoachStripHelpProvider`, read by the strip and by the phone's team bar; a hosted header draws none; `actionsPhoneOnly`
+  keeps Schedule's phone-only glyphs from leaving an empty row. Measured at 1440 × 900 on dev: band 48–93 full width on all five rooms; the
+  Ledger pins toolbar 93 and column heads 197 = **230px (29.9% of 768)**; first content y 175 on a tabbed page with a buttons row, 125 without
+  one, 80 on a tab-less page; the "?" between the bell and the account button with no overlap at 1440 / 1366 / 1280 / 1100; the phone unchanged
+  (tabs in the page, team bar "?", no sideways scroll). /design (drawings, twice), /simplify, /review (a High fixed: the docked bar's arrows
+  re-attach), /docs (13 sentences in the Premium guide, keywords, NAV_STANDARD N11 + new N12) and the demo check done. **Owed:** the walk; the
+  commit (exact hunks only — CoachPageHeader, CoachTopStrip, CoachDeskTitle, coach-team-nav, coaches.module.css and coach-nav-phase4.test.ts
+  also carry another session's record-slot hunks); two stale Money help pictures to re-capture from the demo world; `coach-findability-smoke`
+  and `coach-membership-smoke` now find the "?" in the strip (not run); the Schedule layout-check note (a 2px spill on a clock-stamped span,
+  unmatchable by the baseline, not in this change's reach — unproved). **Owner calls open:** none new; the Practice-plans room for a coach with
+  no library collapses its reserved band once after load (accepted).
 - **Phase 5 · Coaches Portal phone.** Bar names the page; the team on the small line opens `CoachTeamSwitchSheet`.
 - **Phase 6 · Words, help, demos, sweep, walk.** NAV_STANDARD rewritten (N7 item 1, N11, exceptions, the cell);
   `memory/design_decisions.md` entry; help articles (`/docs`); demo tour anchors (the build fails if one vanishes);

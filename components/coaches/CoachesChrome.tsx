@@ -1,11 +1,15 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import CoachTopStrip from './CoachTopStrip';
 import CoachesSidebar from './CoachesSidebar';
 import CoachesBottomNav from './CoachesBottomNav';
 import { CoachDeskTitleProvider } from './CoachDeskTitle';
+import { CoachStripHelpProvider } from './CoachPageHelpSlot';
+import { HubBandContext } from '@/components/shared/HubBandSlot';
+import { coachBandAt } from '@/lib/coach-team-nav';
+import { coachTeamIdIn } from '@/lib/coach-nav-visibility';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -53,6 +57,33 @@ export default function CoachesChrome({
   }, [needsWallRequest, pathname]);
   const isHelp = pathname.includes('/coaches/help');
 
+  // ⚖ THE BAND under the strip (navigation Phase 4b, R1, owner 2026-11-11). A room that has tabs holds the band's 45px open by
+  // ADDRESS (`coachBandAt` — so the server's paint already has it and the tabs arrive into room already made); its tab bar
+  // portals itself into the slot (`HubTabBar band`, `HubBandSlot`). Above 900 only — CSS hides the slot and zeroes
+  // `--coach-band-h` on a phone, which keeps its tab row in the page exactly as it was (Phase 5). A bar with nothing to show
+  // (a row of one tab) gives the band back (`reportEmpty`) so a coach is never left an empty strip.
+  const teamId = coachTeamIdIn(pathname);
+  const bandRoom = !!teamId && coachBandAt(pathname, `/${orgSlug}/coaches/teams/${teamId}`);
+  const [bandEl, setBandEl] = useState<HTMLElement | null>(null);
+  const [bandEmpty, setBandEmpty] = useState(false); // the bar's own cleanup clears it when it leaves
+  const bandOn = bandRoom && !bandEmpty;
+  const band = useMemo(() => ({ el: bandEl, reportEmpty: setBandEmpty }), [bandEl]);
+  // Keyboard focus and in-page jumps must never land UNDER the strip and the band: the document is the scroller, so the
+  // padding is set on it, from the band's real pinned bottom (a custom property on the shell would not reach the root).
+  useEffect(() => {
+    if (!bandEl) return;
+    const root = document.documentElement;
+    const prev = root.style.scrollPaddingTop;
+    const set = () => {
+      const h = bandEl.offsetHeight;
+      root.style.scrollPaddingTop = h ? `${Math.round((parseFloat(getComputedStyle(bandEl).top) || 0) + h + 8)}px` : prev;
+    };
+    // Fires once on observe and again only when the band's size changes (the 0 ↔ 45 flip at 900) — no window resize listener.
+    const ro = new ResizeObserver(set);
+    ro.observe(bandEl);
+    return () => { ro.disconnect(); root.style.scrollPaddingTop = prev; };
+  }, [bandEl]);
+
   // Layouts persist on client navigation. Do not mount another page beneath a zero-team billing
   // exception; ask the server for that destination, where the original walls still run first.
   if (needsWallRequest) return null;
@@ -73,7 +104,9 @@ export default function CoachesChrome({
   return (
     // ⚖ The strip names the page from ONE answer the page headers read too (navigation Phase 4, `CoachDeskTitle`).
     <CoachDeskTitleProvider orgSlug={orgSlug}>
-      <div className={styles.coachesShell}>
+      <HubBandContext.Provider value={band}>
+      <CoachStripHelpProvider>
+      <div className={styles.coachesShell} data-coach-band={bandOn ? '' : undefined}>
         {/* Stage H.1 (Nav Unification, D2 ratified 2026-07-31): the operator frame strip —
             desktop-only fixed top bar (wordmark → Home, account · Workspaces) in the portal's
             own warm/dark skin. NO chat door and no bell: chat is a section of the work for an
@@ -86,9 +119,14 @@ export default function CoachesChrome({
             that is the first place `teamId` exists server-side. It still renders as the first
             child of this <main>: that layout returns a fragment, which the masthead's sticky
             pin + padding-cancelling negative margins depend on. */}
-        <main className={styles.coachesMain}>{children}</main>
+        <main className={styles.coachesMain}>
+          {bandOn && <div ref={setBandEl} className={styles.bandSlot} />}
+          {children}
+        </main>
       </div>
       <CoachesBottomNav />
+      </CoachStripHelpProvider>
+      </HubBandContext.Provider>
     </CoachDeskTitleProvider>
   );
 }

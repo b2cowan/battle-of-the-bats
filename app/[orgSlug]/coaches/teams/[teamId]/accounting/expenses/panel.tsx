@@ -1173,7 +1173,9 @@ function MoneyRecordsPanel({
      already measured live by CoachTeamHeader itself and published onto this panel's `<main>`
      ancestor — no new measurement needed, just the right variable name). Both default to 0px so a
      page with no masthead (or before it mounts) doesn't lose the offset entirely. */
-  const registerStickyBase = 'calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px))';
+  /* ⚖ + THE BAND (`--coach-band-h`, navigation Phase 4b, R1): Money's tab bar is pinned under the strip on a computer, so the toolbar
+     and the column heads dock under IT — strip 48, band 45, toolbar, heads. 0 on a phone and on a page without one. */
+  const registerStickyBase = 'calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px) + var(--coach-band-h, 0px))';
   /* ⚖ The read window a row opens when it is not the coach's to edit here (Ledger Parity D3): a row another
      tab wrote, or — for someone who cannot enter money — a row the team recorded. One at a time. */
   const [readRow, setReadRow] = useState<RegisterBookRow | null>(null);

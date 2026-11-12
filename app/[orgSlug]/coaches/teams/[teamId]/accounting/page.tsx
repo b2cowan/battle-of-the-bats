@@ -596,13 +596,11 @@ export default function CoachesAccountingPage({
             activeId={effectiveSection}
             ariaLabel="Money"
             remeasureKey={summary}
-            /* ⚠ NEVER STICKY (reversed 2026-08-19, reading-order ruling follow-up) — this bar is
-               shared chrome across all seven Money tabs, and pinning it only on Transactions made
-               the ONE piece of navigation that's supposed to behave identically everywhere freeze
-               on exactly one tab and nowhere else — a bigger, more visible inconsistency than the
-               register's own toolbar earning a pin for being the one long, scrollable tab. The
-               register keeps its own sticky filter row and column headers; this bar no longer
-               opts in for any tab. See HubTabBar's own `sticky` prop doc. */
+            /* ⚖ THE BAND (navigation Phase 4b, R1, owner 2026-11-11 — supersedes the 2026-08-19 "never sticky" note, which
+               ruled against pinning this bar on ONE tab of seven). Every coach tab bar pins the same way now, in the band
+               under the strip on a computer, so that inconsistency cannot arise; the register still pins its own toolbar and
+               column heads UNDER the band (`--coach-band-h`). See HubTabBar's `band` prop doc. */
+            band
           />
 
           {/* Overview forks by stage, but no longer by SHAPE: an operating season gets the

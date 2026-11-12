@@ -1,0 +1,399 @@
+<title>Coach Tabs and Top Row</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: a cool slate document ground; product specimens are framed in the product's warm skin at TRUE SIZE (1440 wide).
+   Sticky tab row, a View row under it, one section at a time, the last tab holds the asks. Navigation Phase 4b. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --ok: #2E6B3A; --ok-soft: #E2F0E4; --warn: #8A5A00;
+  --warn-soft: #F7ECD4; --bad: #A2321F; --bad-soft: #F6E0DA;
+  --doc-sans: 'Inter', system-ui, sans-serif; --doc-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1520px; margin: 0 auto; }
+header.doc { padding-block: 22px 10px; }
+header.doc h1 { font: 700 30px/1.1 var(--doc-display); letter-spacing: .01em; margin: 0 0 6px; text-wrap: balance; }
+header.doc p { margin: 0 0 6px; color: var(--muted); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); overflow-x: auto; white-space: nowrap; }
+nav.tabs button { font: 600 14px var(--doc-sans); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 13px 12px 11px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+nav.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+section.panel { display: none; } section.panel.on { display: block; }
+h2 { font: 700 24px/1.15 var(--doc-display); margin: 18px 0 6px; letter-spacing: .01em; text-wrap: balance; }
+h3 { font: 650 16px/1.3 var(--doc-sans); margin: 22px 0 6px; }
+p, li { max-width: 84ch; } .muted { color: var(--muted); }
+.lede { font-size: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card h3 { margin-top: 0; }
+.card ul { margin: 6px 0 0; padding-left: 20px; }
+.tag { display: inline-block; font: 600 11px/1 var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; vertical-align: 2px; }
+.t-new { background: var(--accent-soft); color: var(--accent); } .t-chg { background: var(--warn-soft); color: var(--warn); } .t-same { background: var(--line); color: var(--muted); }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); }
+.spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.fitbox { position: relative; }
+.fitwrap { transform-origin: 0 0; width: max-content; position: relative; }
+.mk { position: absolute; z-index: 30; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 2px solid #fff; background: var(--mark); color: var(--mark-ink); font: 700 11px/18px var(--doc-mono); text-align: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.mk.inl { position: static; display: inline-block; border-color: transparent; vertical-align: 1px; margin-right: 4px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; } .ask ol { margin: 6px 0 0; padding-left: 22px; } .ask li { margin: 3px 0; }
+.rec { font-weight: 650; color: var(--accent); }
+.tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+table.cmp { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.cmp th { font: 700 12px var(--doc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+table.cmp td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.cmp td:first-child { font-weight: 650; }
+.key { display: inline-block; font: 600 11px var(--doc-mono); padding: 2px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.ref { display: inline-block; width: 120px; height: 45px; background: var(--card); border: 1.5px dashed var(--mark); vertical-align: middle; margin-inline: 6px; border-radius: 3px; }
+
+/* ───── PRODUCT SPECIMEN: the warm skin as shipped, fixed colours in both document themes ───── */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #776D5D; --line: rgba(70,55,30,.12);
+  --line2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --amber-soft: #F4E7CF; --red: #B23A26; --red-soft: #F9E3DE; --tint: #ECEADF;
+  position: relative; overflow: hidden; background: var(--paper); color: var(--ink); font: 400 14px/1.4 'Inter', sans-serif;
+  border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.12); flex: none; }
+.fr * { box-sizing: border-box; }
+.fr .grid { position: absolute; inset: 0; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 40px 40px; opacity: .45; pointer-events: none; }
+.fr svg { flex: none; display: block; }
+.strip { position: absolute; top: 0; left: 0; right: 0; height: 48px; background: var(--white); border-bottom: 1px solid var(--line2); display: flex; align-items: center; z-index: 6; }
+.strip .lcell { height: 100%; display: flex; align-items: center; gap: 12px; padding-left: 20px; border-right: 1px solid var(--line); flex: none; width: 240px; }
+.wm { display: flex; align-items: center; gap: 6px; font: 700 15px 'Inter'; letter-spacing: -.01em; }
+.wm i { width: 15px; height: 17px; background: var(--olive); clip-path: polygon(0 0,100% 0,100% 28%,35% 28%,35% 45%,85% 45%,85% 70%,35% 70%,35% 100%,0 100%); }
+.wm em { font-style: normal; color: var(--olive); }
+.pword { font: 700 10px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); padding-left: 12px; border-left: 1px solid var(--line2); line-height: 14px; }
+.place { display: flex; align-items: center; gap: 10px; padding-left: 32px; min-width: 0; flex: 1; }
+.place .nm { font: 700 16px 'Inter'; white-space: nowrap; flex: none; }
+.pfx { margin-left: auto; display: flex; align-items: center; gap: 8px; font: 500 12px "Inter"; color: var(--ink2); white-space: nowrap; padding: 0 16px; margin-right: 6px; border-right: 1px solid var(--line2); height: 22px; }
+.pfx i { font-style: normal; font: 700 9px "Inter"; letter-spacing: .12em; color: var(--ink3); }
+.rgroup { display: flex; align-items: center; gap: 10px; padding-right: 16px; flex: none; }
+.ibtn { width: 34px; height: 34px; display: grid; place-items: center; color: var(--ink2); position: relative; }
+.badge { position: absolute; top: 2px; right: 0; background: var(--red); color: #fff; font: 700 9px/14px 'Inter'; padding: 0 4px; border-radius: 7px; }
+.wsp { display: inline-flex; align-items: center; gap: 5px; font: 650 12px 'Inter'; padding: 6px 10px; border-radius: 999px; border: 1.5px solid #9DBB3A; }
+.side { position: absolute; top: 48px; left: 0; bottom: 0; width: 240px; background: var(--white); border-right: 1px solid var(--line2); display: flex; flex-direction: column; z-index: 4; overflow: hidden; }
+.cell { height: 45px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 20px; border-bottom: 1px solid var(--line2); flex: none; }
+.tile { width: 24px; height: 24px; border-radius: 6px; background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--line2); color: var(--ink); font: 700 10px 'Inter'; display: grid; place-items: center; flex: none; }
+.cell b { font: 700 14px/17px 'Inter'; flex: 1; white-space: nowrap; }
+.chev { width: 16px; display: grid; place-items: center; color: var(--ink2); flex: none; }
+.rows { flex: 1; overflow: hidden; padding-top: 6px; display: flex; flex-direction: column; }
+.row { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 20px; color: var(--ink2); font: 400 14px 'Inter'; white-space: nowrap; flex: none; }
+.row.lit { background: var(--tint); color: var(--olive); font-weight: 600; }
+.lab { font: 700 11px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); padding: 12px 20px 6px; flex: none; }
+.main { position: absolute; left: 240px; top: 48px; right: 0; bottom: 0; overflow: hidden; z-index: 1; }
+.pa { position: absolute; left: 32px; right: 32px; }
+.btn { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 6px; font: 600 14px 'Inter'; background: var(--white); border: 1px solid var(--line2); white-space: nowrap; }
+.btn.lime { background: var(--lime); border-color: transparent; }
+.qhelp { width: 34px; height: 34px; display: grid; place-items: center; color: var(--ink2); }
+.acts { display: flex; gap: 8px; align-items: center; justify-content: flex-end; height: 34px; }
+.ctabs { display: flex; gap: 2.4px; height: 45px; border-bottom: 1px solid rgba(70,55,30,.15); overflow: hidden; }
+.tab { height: 44px; padding: 0 13.6px; display: flex; align-items: center; font: 600 14px 'Inter'; color: var(--ink2); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.on { color: var(--olive); border-bottom-color: var(--olive); }
+.band { position: absolute; left: 240px; right: 0; top: 48px; height: 45px; background: var(--white); border-bottom: 1px solid var(--line2); display: flex; align-items: flex-end; padding-left: 18px; z-index: 5; }
+.band .acts { margin-left: auto; align-self: center; padding-right: 32px; }
+.psticky { position: absolute; left: 272px; right: 32px; top: 48px; height: 51px; background: var(--paper); z-index: 5; padding-bottom: 6px; }
+.mcard { position: absolute; background: var(--white); border: 1px solid var(--line2); border-radius: 8px; padding: 16px 18px; overflow: hidden; }
+.mcard .k { font: 600 10px 'IBM Plex Mono'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); }
+.mcard .big { font: 600 26px/32px 'Inter'; letter-spacing: -.01em; margin-top: 4px; color: var(--olive); }
+.mcard .big small { font: 400 13px 'Inter'; color: var(--ink2); letter-spacing: 0; margin-left: 4px; }
+.mcard .bar { height: 10px; border-radius: 2px; background: #E7E4DA; margin: 10px 0 8px; position: relative; overflow: hidden; }
+.mcard .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--olive); }
+.mcard .bar b { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, #B23A26 0 3px, #E7B3A9 3px 6px); }
+.mcard .ln { font-size: 12.5px; color: var(--ink2); margin-top: 4px; }
+.mcard .go { position: absolute; left: 18px; bottom: 14px; font: 650 13px 'Inter'; color: var(--olive); }
+.mcard .nr { display: flex; align-items: center; justify-content: space-between; height: 44px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.mcard .nr b { font-weight: 600; } .mcard .nr em { font-style: normal; font: 600 14px 'Inter'; color: var(--red); }
+.rtool { position: absolute; left: 272px; right: 32px; height: 104px; background: var(--paper); z-index: 4; }
+.rtool .r1 { display: flex; align-items: center; gap: 8px; height: 46px; }
+.rtool .chipv { white-space: nowrap; font: 500 13px 'Inter'; border: 1px solid var(--line2); background: #ECEADF; border-radius: 999px; padding: 4px 12px; }
+.rtool .r2 { display: flex; align-items: center; gap: 8px; height: 40px; margin-top: 8px; }
+.rtool .fl { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid var(--line2); background: var(--white); border-radius: 6px; font: 400 13.5px 'Inter'; }
+.rtool .cash { margin-left: auto; font: 500 14px 'Inter'; } .rtool .cash b { color: var(--olive); font-weight: 650; }
+.thead { position: absolute; left: 272px; right: 32px; height: 33px; background: var(--white); border-bottom: 1px solid var(--line2); display: grid; grid-template-columns: 70px 1fr 140px 120px 120px 100px 20px; align-items: center; padding: 0 12px 0 10px; font: 700 11px 'Barlow Condensed'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); z-index: 4; }
+.lrows { position: absolute; left: 272px; right: 32px; background: var(--white); }
+.lr { height: 26.7px; display: grid; grid-template-columns: 70px 1fr 140px 120px 120px 100px 20px; align-items: center; padding: 0 12px 0 10px; font-size: 13px; border-bottom: 1px solid var(--line); border-left: 2px solid #4B6B1E; }
+.lr i { font-style: normal; font: 500 10px 'Inter'; border: 1px solid var(--line2); border-radius: 999px; padding: 0 6px; margin-left: 6px; color: var(--ink2); }
+.dim { color: var(--ink3); }
+.sec { font: 700 11px 'IBM Plex Mono'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); }
+.docbox { position: absolute; background: var(--white); border: 1px solid var(--line2); border-radius: 8px; padding: 16px 18px; }
+.docbox h5 { margin: 0 0 4px; font: 650 15px 'Inter'; } .docbox p { margin: 0; font-size: 13px; color: var(--ink3); }
+.meet { position: absolute; z-index: 7; border-left: 1.5px dashed #B5470F; width: 0; pointer-events: none; }
+.meet span { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font: 600 10px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 2px; white-space: nowrap; }
+body.only-diff .fr .same { opacity: .16; }
+body.only-diff .fr .grid { opacity: .15; }
+</style>
+
+<div class="wrap">
+  <header class="doc">
+    <h1>Coach tabs and top row</h1>
+    <p>Navigation, phase 4b. After the sidebar and strip were rebuilt, the Coaches Portal&rsquo;s own tab bars (Money, Insights, Lineups, Practice plans) still scroll away with the page, and the row of buttons and &ldquo;?&rdquo; above them takes a full line. Every number below was measured on the dev server at 1440 &times; 900 as the UAT coach on UAT Test Team, 2026-11-11. Orange markers open the ruling they belong to.</p>
+    <p><b>Ruled 2026-11-11:</b> R1 option B (the club&rsquo;s own band, buttons stay below) &middot; R2 nothing in the band&rsquo;s right end &middot; R3 option 2 (the &ldquo;?&rdquo; at the right end of the page&rsquo;s first heading; same place across portals later, after the walk) &middot; R4 accept the Ledger&rsquo;s 230px &middot; R5 as written &middot; R6 before Phase 5. Option A was not taken.</p>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
+  <div class="viewrow" id="viewrow">
+    <span>View</span>
+    <span class="seg" role="group" aria-label="View"><button type="button" id="v-all" aria-pressed="true">Everything</button><button type="button" id="v-diff" aria-pressed="false">Show only what differs</button></span>
+    <span>Size</span>
+    <span class="seg" role="group" aria-label="Size"><button type="button" id="s-true" aria-pressed="true">True size</button><button type="button" id="s-fit" aria-pressed="false">Fit to width</button></span>
+    <span>Open this on a computer; every frame is drawn at the real 1440-wide screen.</span>
+  </div>
+  <main id="panels"></main>
+</div>
+
+<script>
+(function () {
+'use strict';
+var P = {
+  down: '<path d="m6 9 6 6 6-6"/>', plus: '<path d="M5 12h14M12 5v14"/>', ul: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  dl: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  user: '<circle cx="12" cy="7" r="4"/><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+  cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  notebook: '<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4M2 6h4M2 10h4M2 14h4M2 18h4"/>',
+  listord: '<path d="M10 6h11M10 12h11M10 18h11M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  trend: '<path d="m22 7-8.5 8.5-5-5L2 17M16 7h6v6"/>', bars: '<path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>',
+  dollar: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',
+  clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  usercog: '<circle cx="10" cy="7" r="4"/><path d="M10.3 15H7a4 4 0 0 0-4 4v2"/><circle cx="18" cy="18" r="3"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  panel: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>', right: '<path d="m9 18 6-6-6-6"/>'
+};
+function I(n, s, w) { return '<svg width="' + (s || 14) + '" height="' + (s || 14) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[n] + '</svg>'; }
+function mk(id, x, y) { return '<button type="button" class="mk" data-go="' + id + '" style="left:' + x + 'px;top:' + y + 'px" aria-label="Open ruling ' + id + '">' + id + '</button>'; }
+
+/* ── the coach shell, as shipped (strip 48, sidebar 240) ── */
+function strip(name) {
+  return '<div class="strip same"><div class="lcell"><span class="wm"><i></i><span>FieldLogic<em>HQ</em></span></span><span class="pword">Coach</span></div>' +
+    '<div class="place"><span class="nm">' + name + '</span><span class="pfx">UAT Rep Club &nbsp;&middot;&nbsp; 2026 Season &nbsp;&middot;&nbsp; 3-2-1 <i>NEXT</i> Sun 9:30 a.m. practice</span></div>' +
+    '<div class="rgroup"><span class="ibtn">' + I('bell', 16) + '<span class="badge">9+</span></span><span class="ibtn">' + I('user', 17) + '</span><span class="wsp">Workspaces ' + I('down', 13) + '</span></div></div>';
+}
+function side(lit) {
+  var L = [['i', 'grid', 'Overview'], ['l', 'Season'], ['i', 'cal', 'Schedule'], ['i', 'notebook', 'Practice plans'], ['i', 'listord', 'Lineups'], ['i', 'trophy', 'Tournaments'],
+    ['l', 'Progress'], ['i', 'trend', 'Skills &amp; goals'], ['i', 'bars', 'Insights'], ['l', 'Money'], ['i', 'dollar', 'Money'], ['l', 'Communication'], ['i', 'mail', 'Email families'],
+    ['l', 'Team'], ['i', 'users', 'Roster'], ['i', 'clip', 'Tryouts'], ['i', 'usercog', 'Staff'], ['i', 'file', 'Documents'], ['i', 'gear', 'Settings']];
+  return '<div class="side same"><div class="cell"><span class="tile">UT</span><b>UAT Test Team</b><span class="chev">' + I('down', 16) + '</span></div><div class="rows">' +
+    L.map(function (r) { return r[0] === 'l' ? '<div class="lab">' + r[1] + '</div>' : '<div class="row' + (r[2] === lit ? ' lit' : '') + '">' + I(r[1], 14) + '<span>' + r[2] + '</span></div>'; }).join('') + '</div></div>';
+}
+function frame(h, name, lit, inner, marks) {
+  return '<div class="fr" style="width:1440px;height:' + h + 'px" data-w="1440" data-h="' + h + '"><div class="grid"></div>' + strip(name) + side(lit) + '<div class="main"></div>' + inner + (marks || '') + '</div>';
+}
+/* absolute helpers in FRAME coordinates (y from the top of the screen, x from the left) */
+function box(y, h, cls, html, x1, x2, style) { return '<div class="' + cls + '" style="position:absolute;z-index:2;top:' + y + 'px;' + (h ? 'height:' + h + 'px;' : '') + 'left:' + (x1 === undefined ? 272 : x1) + 'px;right:' + (x2 === undefined ? 32 : x2) + 'px;' + (style || '') + '">' + html + '</div>'; }
+var BTN_REC = '<span class="btn lime">' + I('plus', 14) + 'Record</span>', BTN_IMP = '<span class="btn">' + I('ul', 14) + 'Import ' + I('down', 13) + '</span>', HELP = '<span class="qhelp">' + I('help', 20, 1.8) + '</span>';
+var MONEY_TABS = ['Overview', 'Budget', 'Player dues', 'Fundraising', 'Ledger', 'Club', 'Budget vs. Actual'];
+function tabs(list, on) { return list.map(function (t) { return '<span class="tab' + (t === on ? ' on' : '') + '">' + t + '</span>'; }).join(''); }
+function meet(x, y1, y2, label) { return '<div class="meet" style="left:' + (x + 4) + 'px;top:' + y1 + 'px;height:' + (y2 - y1) + 'px"><span>' + String(label).replace(/[^0-9]/g, '') + '</span></div>'; }
+
+/* the Money overview cards; top = frame y of the first card row */
+function moneyCards(top) {
+  var c1 = '<div class="mcard" style="left:272px;top:' + top + 'px;width:369px;height:296px;z-index:2"><div class="k">Bills settled</div><div class="big">$1,944.00<small>of $3,733.00 &middot; 52%</small></div><div class="bar"><i style="width:46%"></i><b style="left:46%;width:32%"></b></div><div class="ln">$1,944.00 settled &nbsp; $1,214.00 overdue</div><div class="ln">$575.00 to come</div><div class="go">Player dues &rarr;</div></div>';
+  var c2 = '<div class="mcard" style="left:655px;top:' + top + 'px;width:369px;height:296px;z-index:2"><div class="k">Cash on hand</div><div class="big">$2,995.00</div><div class="ln">IN &nbsp;$5,105.00</div><div class="ln">OUT &nbsp;$2,610.00</div><div class="ln" style="margin-top:14px">Bank: checked through Nov 6, 2026</div><div class="go">Ledger &rarr;</div></div>';
+  var c3 = '<div class="mcard" style="left:1039px;top:' + top + 'px;width:369px;height:296px;z-index:2"><div class="k">Budget</div><div class="big">$11,170.00<small>headroom</small></div><div class="ln" style="margin-top:12px">Spending &nbsp; $2,430.00 of $13,600.00</div><div class="ln">Player dues &nbsp; $1,944.00 of $3,733.00</div><div class="ln">Fundraising &nbsp; $1,940.00 of $2,550.00</div><div class="go">Budget &rarr; &nbsp; Budget vs. Actual &rarr;</div></div>';
+  var d1 = '<div class="mcard" style="left:272px;top:' + (top + 310) + 'px;width:748px;height:380px;z-index:2"><div class="k">Next 30 days</div>' +
+    ['Sep 17 &nbsp; Casey Test|$625.00', 'Oct 1 &nbsp; Diamond permit &mdash; fall block|$275.00', 'Oct 1 &nbsp; Winter dome &middot; Sundays|$972.00', 'Oct 8 &nbsp; Scorekeeping tablet|$310.00', 'Oct 17 &nbsp; Casey Test|$589.00'].map(function (s) { var a = s.split('|'); return '<div class="nr"><b>' + a[0] + '</b><em>' + a[1] + '</em></div>'; }).join('') + '</div>';
+  var d2 = '<div class="mcard" style="left:1035px;top:' + (top + 310) + 'px;width:373px;height:380px;z-index:2"><div class="k">More in Money</div>' +
+    ['Fundraisers|$1,440.00 raised', 'Sponsorships|$500.00 in', 'Club|$5,025.00 outstanding', 'Budget|$13,600.00 set', 'Budget vs. Actual|$11,170.00 headroom'].map(function (s) { var a = s.split('|'); return '<div class="nr"><b>' + a[0] + '</b><span class="dim">' + a[1] + '</span></div>'; }).join('') + '</div>';
+  return c1 + c2 + c3 + d1 + d2;
+}
+/* the Ledger register: toolbar pinned at tbTop (104 tall), column heads right under it, then rows */
+function ledger(tbTop) {
+  var tb = '<div class="rtool" style="top:' + tbTop + 'px"><div class="r1"><span class="chipv">View &nbsp;<b>Timeline</b> ' + I('down', 12) + '</span><span style="margin-left:auto" class="acts"><span class="btn">' + I('dl', 14) + 'Export</span><span class="btn">&middot;&middot;&middot; Tools ' + I('down', 13) + '</span><span class="btn">' + I('plus', 14) + 'Add a bill</span>' + BTN_REC + '</span></div>' +
+    '<div class="r2"><span class="fl">Type ' + I('down', 12) + '</span><span class="fl">Status ' + I('down', 12) + '</span><span class="fl">Category ' + I('down', 12) + '</span><span class="fl">Item ' + I('down', 12) + '</span><span class="fl">Date ' + I('down', 12) + '</span><span class="fl">Tags ' + I('down', 12) + '</span><span class="cash">Cash on hand <b>$2,995.00</b></span></div></div>';
+  var th = '<div class="thead" style="top:' + (tbTop + 104) + 'px"><span>Date</span><span>What</span><span>Category</span><span>Item</span><span style="text-align:right">Money in</span><span style="text-align:right">Balance</span><span></span></div>';
+  var rows = '', n = [16, 4, 2, 14, 24, 15, 1, 12, 7, 3, 5, 13, 21, 19, 8, 9, 23, 17, 11, 25, 20, 10, 22, 18, 6], bal = 2755;
+  for (var i = 0; i < 25; i++) { rows += '<div class="lr"><span>Nov 6</span><span>Concession float ' + n[i] + ' of 25<i>Income</i></span><span class="dim">&mdash;</span><span class="dim">&mdash;</span><span style="text-align:right">$10.00</span><span style="text-align:right">$' + (bal + i * 10).toLocaleString('en-US') + '.00</span><span class="dim">&rsaquo;</span></div>'; }
+  return tb + th + '<div class="lrows" style="top:' + (tbTop + 137) + 'px">' + rows + '</div>';
+}
+
+/* ── the specimens ── */
+var S = {};
+/* Money Overview, scroll 0 */
+S.moneyToday = function (h) {
+  var inner = box(80, 34, 'acts', BTN_REC + BTN_IMP + HELP) + box(130, 45, 'ctabs', tabs(MONEY_TABS, 'Overview')) + moneyCards(197.4);
+  return frame(h, 'Money', 'Money', inner,
+    meet(262, 48, 80, '32') + meet(262, 80, 114, 'row 34') + meet(262, 114, 130, '16') + meet(262, 130, 175, 'tabs 45') + meet(262, 175, 197, '22') + mk('R1', 1060, 142) + mk('R2', 1290, 55));
+};
+S.moneyA = function (h) {
+  var band = '<div class="band"><div class="ctabs" style="border-bottom:0;height:44px">' + tabs(MONEY_TABS, 'Overview') + '</div><div class="acts">' + BTN_REC + BTN_IMP + HELP + '</div></div>';
+  return frame(h, 'Money', 'Money', band + moneyCards(125),
+    meet(262, 48, 93, 'band 45') + meet(262, 93, 125, '32') + mk('R1', 1060, 56) + mk('R2', 1290, 98));
+};
+S.moneyB = function (h) {
+  var band = '<div class="band"><div class="ctabs" style="border-bottom:0;height:44px">' + tabs(MONEY_TABS, 'Overview') + '</div></div>';
+  return frame(h, 'Money', 'Money', band + box(125, 34, 'acts', BTN_REC + BTN_IMP + HELP) + moneyCards(175),
+    meet(262, 48, 93, 'band 45') + meet(262, 93, 125, '32') + meet(262, 125, 159, 'row 34') + meet(262, 159, 175, '16') + mk('R2', 1290, 98));
+};
+S.moneyC = function (h) {
+  var cards = moneyCards(197.4 - 340);
+  var sticky = '<div class="psticky"><div class="ctabs">' + tabs(MONEY_TABS, 'Overview') + '</div></div>';
+  return frame(h, 'Money', 'Money', cards + sticky, meet(262, 48, 99, 'tabs 51') + mk('R1', 1100, 58));
+};
+S.moneyScrolled = function (h) { /* today, scrolled 340: nothing of the tabs is left */
+  return frame(h, 'Money', 'Money', moneyCards(197.4 - 340), mk('R1', 700, 110));
+};
+/* Ledger scrolled 523 */
+S.ledgerToday = function (h) {
+  return frame(h, 'Money', 'Money', ledger(48), meet(262, 48, 152, 'toolbar 104') + meet(262, 152, 185, 'heads 33') + mk('R4', 1414, 156));
+};
+S.ledgerA = function (h) {
+  var band = '<div class="band"><div class="ctabs" style="border-bottom:0;height:44px">' + tabs(MONEY_TABS, 'Ledger') + '</div><div class="acts">' + HELP + '</div></div>';
+  return frame(h, 'Money', 'Money', ledger(93) + band, meet(262, 48, 93, 'band 45') + meet(262, 93, 197, 'toolbar 104') + meet(262, 197, 230, 'heads 33') + mk('R4', 1414, 201));
+};
+/* Documents: a page with a lone "?" and no tabs */
+var DOCS = box(130, 150, 'docbox', '<h5>Org-wide templates</h5><p>Documents your club has shared with every team.</p>', 272, 760) + box(130, 150, 'docbox', '<h5>Team documents</h5><p>Waivers, medical forms and handouts for this team.</p>', 700, 32);
+S.docsToday = function (h) {
+  return frame(h, 'Documents', 'Documents', box(80, 34, 'acts', HELP) + DOCS, meet(262, 80, 114, 'row 34') + meet(262, 114, 130, '16') + mk('R3', 1338, 86));
+};
+S.docsStrip = function (h) {
+  var s = frame(h, 'Documents', 'Documents', box(80, 150, 'docbox', '<h5>Org-wide templates</h5><p>Documents your club has shared with every team.</p>', 272, 760) + box(80, 150, 'docbox', '<h5>Team documents</h5><p>Waivers, medical forms and handouts for this team.</p>', 700, 32), mk('R3', 1296, 54));
+  /* the "?" sits in the strip's right group, between the bell and the account button */
+  return s.replace('<span class="ibtn">' + I('user', 17) + '</span>', '<span class="ibtn" style="width:30px;color:var(--ink3)">' + I('help', 18, 1.8) + '</span><span class="ibtn">' + I('user', 17) + '</span>');
+};
+S.docsFirst = function (h) {
+  var help = '<div style="position:absolute;z-index:3;top:84px;right:36px">' + HELP + '</div>';
+  return frame(h, 'Documents', 'Documents', box(80, 150, 'docbox', '<h5>Org-wide templates</h5><p>Documents your club has shared with every team.</p>', 272, 760) + box(80, 150, 'docbox', '<h5>Team documents</h5><p>Waivers, medical forms and handouts for this team.</p>', 700, 32) + help, mk('R3', 1300, 90));
+};
+
+/* ── stage + panel plumbing ── */
+function stage(html, w, h) { return '<div class="stage"><div class="fitbox" data-w="' + w + '" data-h="' + h + '"><div class="fitwrap">' + html + '</div></div></div>'; }
+function spec(title, note, html, h) { return '<div class="spec"><div class="cap"><b>' + title + '</b><span>' + note + '</span></div>' + stage(html, 1440, h) + '</div>'; }
+function tagged(t, kind) { return '<span class="tag t-' + kind + '">' + t + '</span> '; }
+function ref(id) { return '<button type="button" class="mk inl" data-go="' + id + '">' + id + '</button>'; }
+
+var TABS = [];
+TABS.push({ id: 'today', label: '1 · Today, measured', html: function () {
+  return '<h2>Four pages stack three rows of chrome above the content</h2>' +
+    '<p class="lede">On Money, Insights, Lineups and Practice plans the page&rsquo;s buttons row, then the tab bar, then a gap, sit between the strip and the first real content. The first card starts <b>149px under the strip</b>. Nothing in the page is pinned except the 48px strip, and scrolling takes the tabs away with the page.</p>' +
+    spec('Money, Overview, scroll 0', 'the real stack: 32 + 34 + 16 + 45 + 22 = 149px, content at y 197', S.moneyToday(330), 330) +
+    '<div class="tablewrap"><table class="cmp"><thead><tr><th>Page</th><th>Row at y 80 holds</th><th>Tabs</th><th>First content at</th><th>Scrolled</th></tr></thead><tbody>' +
+    '<tr><td>Money</td><td>Record, Import, ?</td><td>7 (6 when not linked to a club)</td><td>197</td><td>Tabs gone after about 90px</td></tr>' +
+    '<tr><td>Insights</td><td>a lone ?</td><td>up to 7, by what the coach may see</td><td>197</td><td>page does not scroll at 900 tall</td></tr>' +
+    '<tr><td>Lineups</td><td>a lone ?</td><td>Games, Templates</td><td>197</td><td>page does not scroll at 900 tall</td></tr>' +
+    '<tr><td>Practice plans</td><td>a lone ?</td><td>Practices, Templates, Circuits, Drills</td><td>197</td><td>tabs gone</td></tr>' +
+    '<tr><td>Roster</td><td>Add player, Import, ?</td><td>none</td><td>130</td><td>does not scroll</td></tr>' +
+    '<tr><td>Documents</td><td>a lone ?</td><td>none</td><td>130</td><td>does not scroll</td></tr>' +
+    '<tr><td>Schedule</td><td>a lone ? (its buttons sit in the toolbar below)</td><td>none</td><td>130</td><td>barely scrolls</td></tr></tbody></table></div>' +
+    '<h3>The question is wider than &ldquo;pin the tabs&rdquo;</h3>' +
+    '<p>Pinning only matters on a page that scrolls, and today that is Money (the Ledger above all) and Practice plans. Most coach pages fit one screen. The bigger and more certain gain is the <b>vertical space at rest</b>: 72px back on the four tabbed pages, about 50px back on pages that carry only a lone &ldquo;?&rdquo;. Pinning comes with the same rework, so the two are decided together. The cost of pinning is 45px of the screen that no longer scrolls, which the next tab draws.</p>' +
+    '<h3>The Ledger already pins its own rows</h3>' +
+    spec('Money, Ledger, scrolled down', 'the page row and tabs are gone; the register keeps its toolbar and column heads: 137px of chrome under the strip', S.ledgerToday(420), 420);
+} });
+
+TABS.push({ id: 'band', label: '2 · The band', html: function () {
+  return '<h2>Pin the tabs in a band under the strip, the club&rsquo;s way</h2>' +
+    '<p class="lede">The club admin keeps a place&rsquo;s tabs in a 45px band directly under the strip, full width from the sidebar&rsquo;s edge, so they never leave. Three ways to give the Coaches Portal the same, drawn on Money, scrolled to the top.</p>' +
+    spec(tagged('Option A', 'new') + 'New, beyond the club: tabs, the page&rsquo;s buttons and the &ldquo;?&rdquo; share one band', 'content at y 125, pinned 93px. The club&rsquo;s band holds tabs only and leaves its buttons in the page; this puts the buttons in the band too. A page with no tabs keeps its row.', S.moneyA(300), 300) +
+    spec(tagged('Option B', 'chg') + 'The club&rsquo;s own band: tabs alone, the row of buttons stays under it', 'content at y 175, pinned 93px. The buttons scroll away and the lone ? row stays on every tabbed page.', S.moneyB(300), 300) +
+    spec(tagged('Option C', 'same') + 'The tab bar sticks in the page column (what exists today, switched on)', 'drawn scrolled 340px, the only state where it differs. At rest it is identical to today (the 149px stack). Pinned 99px, paper background, inside the 1136px column; unlike the club band.', S.moneyC(300), 300) +
+    '<div class="cols"><div class="card"><h3>What each one costs</h3><ul>' +
+    '<li><b>A</b> builds a new band for the coach shell, handed its tabs and buttons by each page, the way the strip already gets the page name. Most work and the biggest gain, and it is a pattern the club does not have.</li>' +
+    '<li><b>B</b> is the club&rsquo;s exact pattern. Smaller change to each page, but the lone &ldquo;?&rdquo; row stays on Insights, Lineups and Practice plans, which is the thing you flagged.</li>' +
+    '<li><b>Leave it</b> is also open. The tabs keep scrolling away.</li></ul></div>' +
+    '<div class="card"><h3>The August ruling this touches</h3><p>On 2026-08-19 Money&rsquo;s tabs were made never-sticky because they were pinned on one of seven tabs and not the others. The club&rsquo;s rule since is that pinned tabs are every place or none. A, B and C each pin <b>every</b> tab on <b>every</b> coach page, which is what that rule asks for. ' + ref('R1') + '</p></div></div>';
+} });
+
+TABS.push({ id: 'whole', label: '3 · Whole screen', html: function () {
+  return '<h2>The whole screen, before and after</h2>' +
+    '<p class="lede">What the thing the page is for does with the change. Option A is drawn; B differs by 50px.</p>' +
+    spec('Money, Overview, at rest: today', 'first card row at y 197, second row starts at 507', S.moneyToday(900), 900) +
+    spec('Money, Overview, at rest: option A', 'first card row at y 125 (72px higher), second row at 435; the buttons and the ? are in the band', S.moneyA(900), 900) +
+    '<h3>Where pinning costs something: the Ledger</h3>' +
+    '<p>Today the Ledger, scrolled, pins 185px (strip 48, toolbar 104, column heads 33). With a band it pins 230px, which is a quarter of a 900px screen and 30% of a 768px laptop. This is the one screen where pinning is not free. The band&rsquo;s right end here shows only the &ldquo;?&rdquo;, because the Ledger&rsquo;s own toolbar already carries Record and Add a bill. What the band carries on this tab is a build detail, not a ruling. ' + ref('R4') + '</p>' +
+    spec('Money, Ledger, scrolled: today', 'strip + toolbar + column heads = 185px', S.ledgerToday(900), 900) +
+    spec('Money, Ledger, scrolled: option A', 'strip + band + toolbar + column heads = 230px; the tabs are one click away at any scroll', S.ledgerA(900), 900);
+} });
+
+TABS.push({ id: 'help', label: '4 · The lone “?”', html: function () {
+  return '<h2>Where the &ldquo;?&rdquo; lives on a page with no buttons and no tabs</h2>' +
+    '<p class="lede">Five of seven pages measured carry a full 34px row, plus a 16px gap, that holds only a &ldquo;?&rdquo;. On a tabbed page option A puts it at the band&rsquo;s right end. A page without tabs needs its own answer. Drawn on Documents.</p>' +
+    spec('Today', 'a row of its own: 50px of the screen for one 34px button', S.docsToday(300), 300) +
+    spec(tagged('Option 1', 'chg') + 'The &ldquo;?&rdquo; moves into the strip, beside the bell (needs a reversal)', 'content starts at y 80, 50px higher, no per-page work. Drawn at the strip&rsquo;s real 30px door size in its one ink.', S.docsStrip(300), 300) +
+    spec(tagged('Option 2', 'new') + 'The &ldquo;?&rdquo; sits at the right end of the page&rsquo;s first heading', 'content starts at y 80, the same 50px higher. The &ldquo;?&rdquo; stays on the page. Each of about twenty pages has to give it a home.', S.docsFirst(300), 300) +
+    '<div class="cols"><div class="card"><h3>Why option 1 needs a reversal</h3><p>On 2026-07-31 the strip was ruled to hold only doors that leave the place you are in, and a &ldquo;?&rdquo; is not an exit. The same ruling said not to re-propose the strip for contextual help. One of its two reasons has weakened, since Help later moved into the account menu. That makes option 1 a <b>second</b> help door about 30px from the first, which is the other half of the reason. I first recommended option 1 on the belief that the reason was lost. It was not, and I withdraw that.</p></div>' +
+    '<div class="card"><h3>My read</h3><p>Option 2 keeps help where that ruling put it and wins back the same 50px, at the price of per-page work. A corner overlay would cost no height but would cover the top-right of whatever each page puts there, so every page would still have to reserve the corner. Pages with real buttons in the row (Money, Roster) keep that row under every option. ' + ref('R3') + '</p></div></div>';
+} });
+
+TABS.push({ id: 'else', label: '5 · What else moves', html: function () {
+  return '<h2>What else has to be handled when the tabs pin</h2>' +
+    '<div class="cols">' +
+    '<div class="card"><h3>The Ledger&rsquo;s own pins</h3><p>The register stacks its toolbar and column heads under the strip by a fixed distance. They have to stack under the band as well. One published height, the way the club does it. Same for the deep-link scroll margin that makes <span class="key">?section=</span> links land below the chrome.</p></div>' +
+    '<div class="card"><h3>The player page</h3><p>Its tabs sit under a glance block of chips and four tiles. Hoisting them into the band puts them above that block; keeping them where they are and docking under the strip once scrolled past is the other way. ' + ref('R5') + '</p></div>' +
+    '<div class="card"><h3>Not tab bars, so not moved</h3><p>Tryouts&rsquo; four stages, the Lineup / Playing time switch, the practice-plan editor switches and the session page chips are steps and view switches inside a task, not the places of a page. I would leave them. ' + ref('R5') + '</p></div>' +
+    '<div class="card"><h3>Narrower screens, focus and the demo</h3><p>The seven Money tabs are about 665px wide and Record, Import and the &ldquo;?&rdquo; about 290px. In the band that is 975px, which fits the 1040px band at 1280 wide with 65px spare and does not fit at 1100. Where it does not fit, the buttons keep their place and the tabs scroll with their arrows, as they do now. Keyboard focus must not land under the 93px pinned stack (a scroll offset, like the deep-link margin). The demo banner shifts the band down by its own height. The band&rsquo;s Record and &ldquo;?&rdquo; are 34px, the accepted desktop size, beside 44px tabs.</p></div>' +
+    '<div class="card"><h3>The phone</h3><p>Not in this change. The phone&rsquo;s team bar is its own piece (Phase 5). The same rule, tabs pinned in the bar, would follow there. ' + ref('R6') + '</p></div>' +
+    '<div class="card"><h3>Untouched</h3><p>The free (non-Premium) portal keeps its own shell. A closed season is one page with no tabs. Who can open what does not change. Nothing is stored differently.</p></div>' +
+    '<div class="card"><h3>Guards that retire on purpose</h3><p>One build check says the coach pages must not use the club&rsquo;s in-bar tab row; another pins the header&rsquo;s &ldquo;?&rdquo; row. They are rewritten with the build, the same way Phase 4 rewrote the strip&rsquo;s.</p></div></div>';
+} });
+
+TABS.push({ id: 'asks', label: '6 · Rulings', html: function () {
+  function ask(id, t, qs, rec) { return '<div class="ask" id="ask-' + id + '"><h3><span class="mk inl" style="pointer-events:none">' + id + '</span>' + t + '</h3><ol>' + qs.map(function (q) { return '<li>' + q + '</li>'; }).join('') + '</ol><p class="rec" style="margin:8px 0 0">' + rec + '</p></div>'; }
+  return '<h2>Rulings</h2><p class="muted">Recommended first in each list. Nothing is built until these are ruled.</p>' +
+    ask('R1', 'Do the Coaches Portal tab bars pin, and how?', ['<b>A</b> &mdash; a band under the strip carrying tabs, the page&rsquo;s buttons and the &ldquo;?&rdquo; (new: the club&rsquo;s band is tabs only)', '<b>B</b> &mdash; the club&rsquo;s own band, tabs only; the buttons row stays under it', '<b>C</b> &mdash; stick the existing bar in the page column', '<b>D</b> &mdash; leave the tabs scrolling'], 'Recommend A, knowing it is a new pattern. B is the club&rsquo;s exact pattern but leaves the lone &ldquo;?&rdquo; row on three tabbed pages and gives back only 22px. A gives back 72px. Either supersedes the 2026-08-19 never-sticky call, because every tab bar pins, not one.') +
+    ask('R2', 'What rides the band&rsquo;s right end?', ['The page&rsquo;s buttons (Record, Import) and the &ldquo;?&rdquo;', 'The &ldquo;?&rdquo; only; the buttons stay a scrolling row (this is B)'], 'Recommend the first: the buttons are page-level, and a pinned Record is useful from any scroll position.') +
+    ask('R3', 'Where does the &ldquo;?&rdquo; live on a page with no buttons and no tabs?', ['<b>2</b> &mdash; at the right end of the page&rsquo;s first heading, per page', '<b>1</b> &mdash; in the strip beside the bell (reverses the 2026-07-31 ruling and adds a second help door)', '<b>3</b> &mdash; keep its own row'], 'Recommend 2. It keeps help where the 2026-07-31 ruling put it and wins back the same 50px. Option 1 is the cheaper build but needs you to reverse that ruling on purpose.') +
+    ask('R4', 'Accept the Ledger pinning 230px instead of 185px?', ['Yes. Check it at 768px high before the walk', 'No. The Ledger&rsquo;s toolbar gets slimmer on a computer first'], 'Recommend yes. It is the cost of the same rule the club follows, and the toolbar is a separate piece of work.') +
+    ask('R5', 'Scope: which tab-like controls get the band?', ['The tab bars on Money (7), Insights (7, the same screen as History), Lineups (2) and Practice plans (4), and Skills &amp; goals (3, not yet measured)', 'The player page&rsquo;s tabs stay under the glance block and dock under the strip once scrolled past', 'Tryouts stages and the editors&rsquo; view switches stay where they are'], 'Recommend all three as written.') +
+    ask('R6', 'Order and the phone', ['Do this before Phase 5 (the phone bar), so the phone is drawn once', 'The phone follows with the same rule in Phase 5'], 'Recommend both.');
+} });
+
+/* ── mount ── */
+var tabsEl = document.getElementById('tabs'), panels = document.getElementById('panels'), cur = null;
+TABS.forEach(function (t) {
+  var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.id = 'tab-' + t.id; b.textContent = t.label; b.setAttribute('aria-selected', 'false'); b.addEventListener('click', function () { show(t.id, true); }); tabsEl.appendChild(b);
+  var s = document.createElement('section'); s.className = 'panel'; s.id = 'p-' + t.id; s.setAttribute('role', 'tabpanel'); panels.appendChild(s); t.el = s; t.built = false;
+});
+function show(id, push) {
+  TABS.forEach(function (t) {
+    var on = t.id === id; t.el.classList.toggle('on', on); document.getElementById('tab-' + t.id).setAttribute('aria-selected', on ? 'true' : 'false');
+    if (on && !t.built) { t.el.innerHTML = t.html(); t.built = true; }
+  });
+  cur = id; if (push) { try { history.replaceState(null, '', '#' + id); } catch (e) { /* hash only */ } }
+  fit(); window.scrollTo(0, 0);
+}
+var fitMode = false;
+function fit() {
+  document.querySelectorAll('.fitbox').forEach(function (b) {
+    var w = +b.getAttribute('data-w'), h = +b.getAttribute('data-h'), wrap = b.firstChild, st = b.parentNode;
+    var k = fitMode ? Math.min(1, (st.clientWidth - 28) / w) : 1;
+    wrap.style.transform = k < 1 ? 'scale(' + k + ')' : ''; b.style.width = (w * k) + 'px'; b.style.height = (h * k) + 'px';
+  });
+}
+function setBtn(a, b, on) { document.getElementById(a).setAttribute('aria-pressed', on ? 'true' : 'false'); document.getElementById(b).setAttribute('aria-pressed', on ? 'false' : 'true'); }
+document.getElementById('v-all').addEventListener('click', function () { document.body.classList.remove('only-diff'); setBtn('v-all', 'v-diff', true); });
+document.getElementById('v-diff').addEventListener('click', function () { document.body.classList.add('only-diff'); setBtn('v-diff', 'v-all', true); });
+document.getElementById('s-true').addEventListener('click', function () { fitMode = false; setBtn('s-true', 's-fit', true); fit(); });
+document.getElementById('s-fit').addEventListener('click', function () { fitMode = true; setBtn('s-fit', 's-true', true); fit(); });
+window.addEventListener('resize', fit);
+document.addEventListener('click', function (e) {
+  var g = e.target.closest && e.target.closest('[data-go]'); if (!g) return;
+  show('asks', true); var a = document.getElementById('ask-' + g.getAttribute('data-go'));
+  if (a) { a.scrollIntoView({ block: 'center' }); a.classList.add('flash'); setTimeout(function () { a.classList.remove('flash'); }, 1600); }
+});
+window.addEventListener('hashchange', function () { var h = (location.hash || '').replace('#', ''); if (TABS.some(function (t) { return t.id === h; })) show(h, false); });
+var start = (location.hash || '').replace('#', ''); show(TABS.some(function (t) { return t.id === start; }) ? start : 'today', false);
+})();
+</script>

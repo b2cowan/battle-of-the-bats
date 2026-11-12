@@ -908,6 +908,8 @@ export default function CoachesSchedulePage({
            drops (the create gates itself on `canAddEvents`; `actionsPhoneHidden` would take the
            view menu with it). */
         actionsPhoneInTitleRow
+        /* The view menu and the create are the PHONE's glyphs (the toolbar below is the computer's): above 900 the row is empty. */
+        actionsPhoneOnly
         helpLabel="Schedule"
         help={scheduleHelpRequest}
       />

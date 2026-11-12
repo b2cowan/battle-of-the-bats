@@ -26,17 +26,12 @@
    margins — rendered 8px tall, far under the 44px tap floor. Caught by check:layout. */
 .wrap { position: relative; margin: 0.9rem 0 1.4rem; }
 
-/* ⚠ OPT-IN, AND CURRENTLY UNUSED (reading-order ruling, follow-up to P3 — reversed 2026-08-19).
-   The register briefly set CoachTabBar's `sticky` prop for the Money hub's Transactions tab, but
-   pinning this SHARED nav bar on exactly one of its seven tabs made the one piece of chrome
-   meant to behave identically everywhere freeze on a single tab and nowhere else — a bigger,
-   more visible inconsistency than the register's own toolbar earning a pin for being the one
-   long, scrollable tab. The register now pins only its own toolbar and column headers; this bar
-   pins on no tab today. Left in place as real, documented opt-in infrastructure (shared with
-   Insights' `/history`, per CoachTabBar's own prop doc) for a future screen that genuinely needs
-   it — not dead code, just not currently exercised.
+/* ⚠ OPT-IN — THE PLAYER PAGE'S TABS (navigation Phase 4b, R5, owner 2026-11-11). They sit under a glance block of chips and
+   tiles, so they cannot be the band; they stay where they are and DOCK under the strip once scrolled past. (Every other coach
+   tab bar uses `band`, below. The 2026-08-19 "never sticky" ruling — one tab pinned, six not — is superseded: nothing is
+   pinned on some tabs and not others any more.)
 
-   If it's ever wired up again: docks under the fixed FieldLogicHQ strip AND the team masthead
+   Docks under the fixed FieldLogicHQ strip AND the team masthead
    above it — `--coach-topstrip-top` (this shell's fixed top bar, `.coachesShell`) plus
    `--coach-header-h` (the masthead's own live-measured height, published by `CoachTeamHeader`
    onto the page's `<main>` ancestor). ⚠⚠ NOT `--coach-top-strip` — that variable belongs to a
@@ -180,4 +175,22 @@
      fit more tabs on screen — but this strip already scrolls, with arrow affordances on both
      edges, so fitting more was never its job. */
   .tab { padding: 0.5rem 0.6rem; }
+}
+
+/* ── THE COACHES PORTAL'S BAND (`band`, navigation Phase 4b, R1, owner 2026-11-11) ───────────────────────────────────
+   A coach page's tabs are pinned in a band directly under the strip, full width, tabs alone. The SHELL draws the band
+   (an empty slot, `.bandSlot` in the portal's sheet: its height, ground, bottom rule and pin) and the bar is portaled into
+   it on a computer; this block only dresses the row for living there. ⚠ ABOVE 900 ONLY, and only for the docked copy: on a
+   phone, and in any shell without a band, the row is exactly what it always was (these rules do not reach it).
+   ⚠ NOT `.inBar`: that is the club's header-embedded look, opt-in for the club alone, and its guard says no coach page uses
+   it. The first tab's label lines up with the page's own left edge (the portal's 2rem gutter less the tab's padding). */
+@media (min-width: 901px) {
+  .bandDocked { margin: 0; height: 100%; box-sizing: border-box; padding-inline: calc(2rem - 0.85rem); }
+  .bandDocked .bar { border-bottom: 0; }
+  /* The arrows paint the band's ground, the card tone — one layer, as the club's bar. */
+  .bandDocked .scrollLeft { background: linear-gradient(to right, var(--card-bg) 55%, transparent); }
+  .bandDocked .scrollRight { background: linear-gradient(to left, var(--card-bg) 55%, transparent); }
+  /* The in-page copy a shell with a band has already given up on (the server's paint, before the tabs find their band):
+     hidden rather than flashed in the old place. A shell with NO band never sets the attribute, so its bar stays. */
+  :global([data-coach-band]) .bandPending { display: none; }
 }
