@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
+import { signOutEverywhere } from '@/lib/two-step-reset';
 import { personActionContext, personAuditValue } from '@/lib/platform-person-action';
 
 /** Sign a person out everywhere (the person record's Account tab; through the one front door, Support console Stage 2). */
@@ -11,20 +12,9 @@ export const POST = withObservability(async (req: NextRequest,
   if (ctx.response) return ctx.response;
   const { auth, person, reason } = ctx.action;
 
-  // GoTrue admin DELETE /sessions endpoint — invalidates all sessions for this user.
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users/${id}/sessions`,
-    {
-      method: 'DELETE',
-      headers: {
-        apikey:        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
-      },
-    },
-  );
-  if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    console.error('[platform-admin] revoke-sessions error:', response.status, text);
+  // The one sign-out-everywhere (mig 474's function). The sign-in service's own admin DELETE /sessions route does not
+  // exist, so this door answered "could not be signed out" for everyone until 2026-11-12.
+  if (!(await signOutEverywhere(id))) {
     return NextResponse.json({ error: 'They could not be signed out.' }, { status: 500 });
   }
 

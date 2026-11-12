@@ -67,20 +67,22 @@ export async function removeEveryAuthenticator(userId: string): Promise<boolean>
 }
 
 /**
- * Sign a person out on every device (the sign-in service's admin "sessions" endpoint, the support console's own
- * "Sign out everywhere" door). True when the service said yes.
+ * Sign a person out on every device (the support console's own "Sign out everywhere" door too). True when every session
+ * is gone — including when none was open.
+ *
+ * ⚠ Through `sign_out_everywhere` (mig 474), NOT the sign-in service's admin `DELETE /users/{id}/sessions`: that route
+ * does not exist in the service (it answers "404 page not found" for a real account), so for a long time this returned
+ * false for everyone and no reset ever ran (found walking Part 3 step 4, 2026-11-12).
  */
 export async function signOutEverywhere(userId: string): Promise<boolean> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key || !/^[0-9a-f-]{36}$/i.test(userId)) return false;
+  if (!/^[0-9a-f-]{36}$/i.test(userId)) return false;
   try {
-    const res = await fetch(`${url}/auth/v1/admin/users/${userId}/sessions`, {
-      method: 'DELETE',
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
-      signal: AbortSignal.timeout(8000),
-    });
-    return res.ok;
+    const { error } = await supabaseAdmin.rpc('sign_out_everywhere', { p_user_id: userId });
+    if (error) {
+      console.error('[two-step-reset] sign_out_everywhere failed:', error.message);
+      return false;
+    }
+    return true;
   } catch {
     return false;
   }

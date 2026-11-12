@@ -21,7 +21,7 @@
  * their job — Manage shows the invite's own "Helping with", and whoever may invite may change it.
  * It writes only a volunteer's two job keys (`withVolunteerJob`); a volunteer always keeps one job.
  */
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChevronRight, KeyRound, Mail, PauseCircle, RotateCcw } from 'lucide-react';
 import { whatTheyCanOpen, describeAccessChange, familiesBarredFor, roleLabel, type ProgramAccess } from '@/lib/member-access';
 import { ROLE_DEFAULTS, type Capability } from '@/lib/roles';
@@ -124,7 +124,10 @@ export default function ManageMemberDialog({
   const [groupIds, setGroupIds] = useState<string[]>(() => [...member.repGroupIds]);
   const [saving, setSaving] = useState(false);
   const [refusal, setRefusal] = useState<Refusal | null>(null);
-  const [done, setDone] = useState<string | null>(null);
+  // A refusal from an action asked in its own question window shows INSIDE that window (never behind it, where a tall
+  // Manage window leaves it scrolled out of sight): the question stays open so the person can read it and try again.
+  const [askRefusal, setAskRefusal] = useState<Refusal | null>(null);
+  const noticeRef = useRef<HTMLDivElement | null>(null);
   const [ask, setAsk] = useState<Ask>(null);
   const [acting, setActing] = useState(false);
   const [impact, setImpact] = useState<RemoveImpact | null>(null);
@@ -205,7 +208,6 @@ export default function ManageMemberDialog({
 
   async function save() {
     setRefusal(null);
-    setDone(null);
     const body: Record<string, unknown> = {};
     if (canChangeRole && roleChanged) body.role = role;
     if (titleChanged) body.title = title.trim() || null;
@@ -256,9 +258,23 @@ export default function ManageMemberDialog({
     }
   }
 
+  const closeAsk = () => { setAsk(null); setAskRefusal(null); };
+
+  /** Where a refusal shows: inside the question that was asked, else at the top of the window (scrolled into view). */
+  function refuse(r: Refusal) {
+    if (ask) setAskRefusal(r);
+    else setRefusal(r);
+  }
+
+  // A refusal at the top of a tall window may be scrolled out of sight: bring it into view once it is drawn.
+  useEffect(() => {
+    if (refusal) noticeRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [refusal]);
+
   async function setStatus(status: 'active' | 'suspended') {
     setActing(true);
     setRefusal(null);
+    setAskRefusal(null);
     try {
       const res = await fetch(`/api/admin/members/${member.id}${orgQuery}`, {
         method: 'PATCH',
@@ -266,15 +282,17 @@ export default function ManageMemberDialog({
         body: JSON.stringify({ status }),
       });
       const d = await res.json().catch(() => ({})) as { error?: string };
+      if (!res.ok) { refuse({ text: d.error ?? 'That didn’t go through. Try again.' }); return; }
+      // The action is done: the window closes and the page says so (no Save / Cancel left behind to misread).
       setAsk(null);
-      if (!res.ok) { setRefusal({ text: d.error ?? 'That didn’t go through. Try again.' }); return; }
       await onChanged(
         status === 'suspended'
           ? `${name} is suspended. We’ve emailed ${first === 'They' ? 'them' : first} to say their access is paused.`
           : `${name} is reinstated.`,
-        false,
+        true,
       );
-      setDone(status === 'suspended' ? `${name} is suspended.` : `${name} is reinstated.`);
+    } catch {
+      refuse({ text: 'Could not reach the server. Nothing changed. Try again.' });
     } finally {
       setActing(false);
     }
@@ -282,11 +300,14 @@ export default function ManageMemberDialog({
 
   async function remove() {
     setActing(true);
+    setAskRefusal(null);
     try {
       const res = await fetch(`/api/admin/members/${member.id}${orgQuery}`, { method: 'DELETE' });
       const d = await res.json().catch(() => ({})) as { error?: string };
-      if (!res.ok) { setAsk(null); setRefusal({ text: d.error ?? 'They weren’t removed. Try again.' }); return; }
+      if (!res.ok) { refuse({ text: d.error ?? 'They weren’t removed. Try again.' }); return; }
       await onChanged(`${name} was removed from the ${noun}.`, true);
+    } catch {
+      refuse({ text: 'Could not reach the server. Nothing changed. Try again.' });
     } finally {
       setActing(false);
     }
@@ -295,17 +316,19 @@ export default function ManageMemberDialog({
   async function resetTwoStep() {
     setActing(true);
     setRefusal(null);
+    setAskRefusal(null);
     try {
       const res = await fetch(`/api/admin/members/${member.id}/two-step${orgQuery}`, { method: 'POST' });
       const d = await res.json().catch(() => ({})) as { error?: string; code?: string };
-      setAsk(null);
       // The one window asked for the viewer's code and they said no: nothing changed.
-      if (res.status === 401 && d.code === TWO_STEP_FRESH_CODE) { setRefusal({ text: 'Nothing changed. Resetting someone’s two-step sign-in needs your code.' }); return; }
-      if (!res.ok) { setRefusal({ text: d.error ?? 'It wasn’t reset. Try again.' }); return; }
+      if (res.status === 401 && d.code === TWO_STEP_FRESH_CODE) { refuse({ text: 'Nothing changed. Resetting someone’s two-step sign-in needs your code.' }); return; }
+      if (!res.ok) { refuse({ text: d.error ?? 'It wasn’t reset. Try again.' }); return; }
       setTwoStep({ on: false, since: null, door: 'none' });
+      setAsk(null);
       const them = first === 'They' ? 'them' : first;
-      await onChanged(`${possessive(name)} two-step sign-in was reset. We’ve emailed ${them}.`, false);
-      setDone(`${possessive(name)} two-step sign-in was reset, and ${first === 'They' ? 'they were' : `${first} was`} signed out everywhere.`);
+      await onChanged(`${possessive(name)} two-step sign-in was reset, and ${first === 'They' ? 'they were' : `${first} was`} signed out everywhere. We’ve emailed ${them}.`, true);
+    } catch {
+      refuse({ text: 'Could not reach the server. Nothing changed. Try again.' });
     } finally {
       setActing(false);
     }
@@ -317,10 +340,11 @@ export default function ManageMemberDialog({
     try {
       const res = await fetch(`/api/admin/members/${member.id}/reinvite${orgQuery}`, { method: 'POST' });
       const d = await res.json().catch(() => ({})) as { error?: string };
-      if (!res.ok) { setRefusal({ text: d.error ?? 'The invite didn’t go out. Try again.' }); return; }
-      // The resend refreshes the invitation's date, which the list shows — read it again.
-      await onChanged(null, false);
-      setDone(`Invite resent to ${member.email}. The setup link expires in 24 hours, so ask them to accept it today.`);
+      if (!res.ok) { refuse({ text: d.error ?? 'The invite didn’t go out. Try again.' }); return; }
+      // The resend refreshes the invitation's date, which the list shows — read it again, and close with the page's notice.
+      await onChanged(`Invite resent to ${member.email}. The setup link expires in 24 hours, so ask them to accept it today.`, true);
+    } catch {
+      refuse({ text: 'Could not reach the server. Nothing changed. Try again.' });
     } finally {
       setActing(false);
     }
@@ -385,18 +409,17 @@ export default function ManageMemberDialog({
         title={`Manage ${name}`}
         identity={identity}
         onClose={onClose}
-        busy={saving}
+        busy={saving || acting}
         footer={
           <>
-            <button type="button" className="btn btn-outline" onClick={onClose} disabled={saving}>Cancel</button>
+            <button type="button" className="btn btn-outline" onClick={onClose} disabled={saving || acting}>Cancel</button>
             <button type="button" className="btn btn-lime" onClick={() => void save()} disabled={saving || acting}>
               {saving ? 'Saving…' : 'Save'}
             </button>
           </>
         }
       >
-        {refusal && <PageNotice notice={refusalNotice(refusal, billingHref)} />}
-        {done && <PageNotice notice={{ tone: 'good', text: done }} />}
+        {refusal && <div ref={noticeRef}><PageNotice notice={refusalNotice(refusal, billingHref)} /></div>}
 
         {targetIsOwner ? (
           <p className={ck.hint}>Ownership can’t be changed here. Contact support if the organization’s owner needs to change.</p>
@@ -573,11 +596,11 @@ export default function ManageMemberDialog({
         <KitDialog
           kind="question"
           title={`Reset ${possessive(first === 'They' ? name : first)} two-step sign-in?`}
-          onClose={() => setAsk(null)}
+          onClose={closeAsk}
           busy={acting}
           footer={
             <>
-              <button type="button" className="btn btn-outline" onClick={() => setAsk(null)} disabled={acting}>Cancel</button>
+              <button type="button" className="btn btn-outline" onClick={closeAsk} disabled={acting}>Cancel</button>
               <button type="button" className="btn btn-danger" onClick={() => void resetTwoStep()} disabled={acting} data-autofocus="" id="kit-manage-reset-two-step">
                 {acting ? 'Resetting…' : 'Reset two-step'}
               </button>
@@ -589,6 +612,7 @@ export default function ManageMemberDialog({
             out everywhere. Next time {first === 'They' ? 'they sign' : `${first} signs`} in with their password, they set up two-step sign-in again.
           </p>
           <p>We’ll email {first === 'They' ? 'them' : first} to say you did this. It’s recorded in the audit log.</p>
+          {askRefusal && <PageNotice notice={refusalNotice(askRefusal, billingHref)} />}
         </KitDialog>
       )}
 
@@ -596,11 +620,11 @@ export default function ManageMemberDialog({
         <KitDialog
           kind="question"
           title={`Suspend ${name}?`}
-          onClose={() => setAsk(null)}
+          onClose={closeAsk}
           busy={acting}
           footer={
             <>
-              <button type="button" className="btn btn-outline" onClick={() => setAsk(null)} disabled={acting}>Cancel</button>
+              <button type="button" className="btn btn-outline" onClick={closeAsk} disabled={acting}>Cancel</button>
               <button type="button" className="btn btn-danger" onClick={() => void setStatus('suspended')} disabled={acting} data-autofocus="">
                 {acting ? 'Suspending…' : `Suspend ${first === 'They' ? 'them' : first}`}
               </button>
@@ -611,6 +635,7 @@ export default function ManageMemberDialog({
             {first === 'They' ? 'They' : first} won’t be able to sign in to {org.name} until you reinstate them. Their role
             and access are kept. We’ll email {first === 'They' ? 'them' : first} to say their access is paused.
           </p>
+          {askRefusal && <PageNotice notice={refusalNotice(askRefusal, billingHref)} />}
         </KitDialog>
       )}
 
@@ -618,11 +643,11 @@ export default function ManageMemberDialog({
         <KitDialog
           kind="question"
           title={`Remove ${name}?`}
-          onClose={() => setAsk(null)}
+          onClose={closeAsk}
           busy={acting}
           footer={
             <>
-              <button type="button" className="btn btn-outline" onClick={() => setAsk(null)} disabled={acting}>Cancel</button>
+              <button type="button" className="btn btn-outline" onClick={closeAsk} disabled={acting}>Cancel</button>
               <button type="button" className="btn btn-danger" onClick={() => void remove()} disabled={acting || !impact} data-autofocus="">
                 {acting ? 'Removing…' : 'Remove'}
               </button>
@@ -659,6 +684,7 @@ export default function ManageMemberDialog({
               )}
             </>
           )}
+          {askRefusal && <PageNotice notice={refusalNotice(askRefusal, billingHref)} />}
         </KitDialog>
       )}
     </>

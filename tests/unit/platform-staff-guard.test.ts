@@ -43,7 +43,7 @@ describe('each Customer users action checks before it acts', () => {
   const cases: Array<[string, string]> = [
     ['update', 'supabaseAdmin.auth.admin.updateUserById('],
     ['ban', 'supabaseAdmin.auth.admin.updateUserById('],
-    ['revoke-sessions', 'await fetch('],
+    ['revoke-sessions', 'await signOutEverywhere('],
     ['confirm-email', 'supabaseAdmin.auth.admin.updateUserById('],
     ['reset', 'supabaseAdmin.auth.admin.generateLink('],
     // Board Ready two-step, Part 3: support's reset of someone's two-step (the record, the confirmation link, hold / cancel).
