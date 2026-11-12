@@ -1,0 +1,511 @@
+<title>The Friend Requests Queue</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready · Stage 1 friend requests · Part 2, the registrar · Owner QA Ledger §516</span>
+    <h1>The registrar confirms who plays with whom</h1>
+    <p class="lead">A season's Registrations gains a fifth view, <b>Friend requests</b>, with its own amber count. Each row is one request: who asked, what the parent typed, and the best match this season, with the likely answer as the row's one button and the rest behind ⋯. Two families who named each other are one row and one Confirm. The registrations list gains a “Has a friend request” filter and two name-free export columns, the view has its own file, and the season's Complete window now says friend requests and codes are deleted.</p>
+    <p class="lead">Keeping friends together in the draft, the board marks and Honoured / Not honoured are Part 3. Not in this walk.</p>
+    <p class="lead">Written Nov 11, 2026 against the dev site. Nothing here is real data: every child and family is test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Every walk</dt><dd><code>league-owner@dev.local</code> · password <code>devpass123</code><br>The owner of <b>Dev League Org</b> (League Plus), season <b>Walk Summer 2027</b> (registration open, no teams made).</dd>
+      <dt>The page</dt><dd><code>localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/registrations?tab=friends</code></dd>
+      <dt>Phone</dt><dd>Walk 6 uses your desk browser's device toolbar at <b>390 px</b> wide.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>The test requests are already in place</b>: 13 test children in Walk Summer 2027 (U8 and U10) and 9 requests, one of each kind the drawing shows. To start over at any point, ask me to re-run the walk fixture (it puts every request back as it was).</li>
+      <li><b>Walk the parts in order, 1 to 7.</b> Walks 3 and 4 change the requests; walks 5 and 6 read what they left. Each walk opens with a stop check.</li>
+      <li>The drawings these screens were built to: <a href="https://claude.ai/artifact/KxYr8LW6r5yvsUJ7FmvPL8">tab 4 (the queue) and tab 7 (list and export)</a>.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don't re-do these)</h2>
+    <ul class="plain">
+      <li><b>The deletion works.</b> On dev, marking a season Complete (rehearsed and rolled back) took its friend requests from 1 to 0 and its friend codes from 4 to 0, in the same step that erases ratings. The nightly cleanup also sweeps any season 60 days past its last day. A season with no end date counts a year from its start. A family saving at the moment the season is completed stores nothing.</li>
+      <li><b>Who reads and who decides.</b> Only the people who can open Registrations get the requests at all. Only those who work registrations can decide, and never on a finished season. Every decision is checked against this club and this season. A match must be a live sign-up in the asking child's own division.</li>
+      <li><b>The matching rules</b> (capitals, accents, hyphens and apostrophes ignored; “Jon” similar to “Jonathan”; a first name alone never makes a single best match or a pair; a loose first name in another division is Not signed up), and every row of this fixture landing where the drawing puts it, are unit-tested.</li>
+      <li><b>Files.</b> Friend names never reach “Excel with contact details”. The CSVs are written so a cell can't run as a formula. Excel files are left as typed (a phone “+1 519…” stays as it is).</li>
+      <li>Typecheck, lint and the guard tests are clean. A four-lens code review ran, and its findings are fixed.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: does each row's one button feel like the obvious answer, do the windows say only what the registrar needs, and does the view stay quiet beside the other four?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "board-ready-s1-friends-p2-walk-v1";
+  var PAGE = "Board Ready · Stage 1 friend requests · Part 2 · Owner QA Ledger §516";
+  var WALKS = [
+  {
+   "id": "Q1",
+   "title": "The fifth view at a glance",
+   "job": "Dev League Org · owner · computer",
+   "forText": "Registrations shows To review · Active · Waitlist · Ended · Friend requests. The fifth view lists every request in three bands, with the likely answer as each row’s one button.",
+   "passes": "The view sits last in the switch with an amber 5; the bands read To confirm · 5, Confirmed · 2, Closed · 1; each row says what the drawing says; the line under the table names the deletion.",
+   "notIn": "Pressing anything (walks 3 and 4).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/registrations?tab=friends",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: open Walk Summer 2027 › Registrations and look at the view switch.",
+     "s": "Five views: <b>To review</b> · <b>Active</b> · <b>Waitlist</b> · <b>Ended</b> · <b>Friend requests</b>, the last with an amber <b>5</b>. Only To review (when it has any) and Friend requests are amber."
+    },
+    {
+     "d": "Press <b>Friend requests</b>.",
+     "s": "The address ends <code>?tab=friends</code>. The table heads read <b>Player · Asked to play with · Best match this season</b>, and the first band reads <b>To confirm · 5</b>."
+    },
+    {
+     "d": "Read the first row.",
+     "s": "<b>Maya Okafor ⇄ Liam Chen</b> / “U8 · both families asked”; asked “Liam Chen”, parent “Grace Chen” / and “Maya Okafor”; match column the chip <b>Both asked</b> over “Same names”; one button <b>Confirm</b>."
+    },
+    {
+     "d": "Read the next four rows.",
+     "s": "<b>Noah Patel</b> → “Jon Baptiste” / “no parent named”, match <b>Jonathan Baptiste · U8</b> / “Similar first name · same last name”, button <b>Confirm</b>. <b>Ethan Roy</b> → “Max”, “no last name · parent “Ryan””, muted “2 possible matches” / Max Delaney · Maxwell Tran, button <b>Pick one…</b>. <b>Ava Lindqvist</b> (U10) → “Sophie Moreau”, match <b>Sophie Moreau · U8</b> with an amber <b>Different division</b> chip, button <b>Can’t honour</b>. <b>Lucas Ferreira</b> → “Owen Bains”, muted “No one by that name has signed up” / “Checked every division”, button <b>Not signed up</b>."
+    },
+    {
+     "d": "Read the Confirmed band.",
+     "s": "<b>Confirmed · 2</b>: <b>Zoe Chen</b> asked “Code …” with match <b>Harper Singh · U8</b>, chip <b>Code match</b>, “Confirmed when entered”; <b>Harper Singh</b> asked “Zoe Chen”, match <b>Zoe Chen · U8</b> with <b>Both asked</b>, “Zoe’s family entered this child’s friend code”. Both rows say a muted <b>Confirmed</b>, not a button."
+    },
+    {
+     "d": "Read the Closed band and the line under the table.",
+     "s": "<b>Closed · 1</b>: <b>Isla Grant</b> → “Ruby T”, muted “Not signed up” / “Marked by …, Nov 10”. Under the table: “Each request is what a parent typed. Nothing is kept together in the draft until you confirm it. Code matches arrive confirmed. FieldLogicHQ deletes friend requests after the season; a file you export is yours to keep private and to delete.”"
+    }
+   ]
+  },
+  {
+   "id": "Q2",
+   "title": "Finding a request",
+   "job": "Dev League Org · owner · computer",
+   "forText": "The toolbar has no lime: the division, Search players or friends, Filter (Show only) and Export.",
+   "passes": "The division narrows the rows and the amber count; search finds a child by either name or by the typed friend; Show only narrows by mark with counts; the filter line names what is on.",
+   "notIn": "The file itself (walk 5).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/registrations?tab=friends",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: look at the toolbar.",
+     "s": "Left to right: the view switch, <b>All divisions</b>, then at the right the search field, <b>Filter</b>, <b>Export</b>. No lime button."
+    },
+    {
+     "d": "Pick <b>U10</b> in the division picker.",
+     "s": "Only <b>Ava Lindqvist</b> is left (To confirm · 1), and the Friend requests amber count reads <b>1</b>. Switch back to <b>All divisions</b>."
+    },
+    {
+     "d": "Type <b>baptiste</b> in the search.",
+     "s": "Only Noah Patel’s row (his friend is Jonathan Baptiste). Clear it, then type <b>okafor</b>: the Maya ⇄ Liam row."
+    },
+    {
+     "d": "Open <b>Filter</b>.",
+     "s": "A <b>Show only</b> group with tick boxes and counts: <b>Code match 1</b>, <b>Both asked 2</b>, <b>No match found 1</b>, <b>Different division 1</b>, and <b>Clear filter</b>."
+    },
+    {
+     "d": "Tick <b>Different division</b>.",
+     "s": "Only Ava’s row. A line under the toolbar names the filter. Press <b>Clear filter</b>."
+    }
+   ]
+  },
+  {
+   "id": "Q3",
+   "title": "Confirm best match for a page",
+   "job": "Dev League Org · owner · computer",
+   "forText": "Ticking To confirm rows offers “Confirm best match”. Rows with no single best match are left in To confirm, and the result says so.",
+   "passes": "Only To confirm rows have a tick box; the bar reads “2 selected · Confirm best match · Clear”; one is confirmed and one stays with a sentence that says why.",
+   "notIn": "The one-at-a-time windows (walk 4).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/registrations?tab=friends",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: look at the tick column.",
+     "s": "To confirm rows have a tick box; Confirmed and Closed rows have none."
+    },
+    {
+     "d": "Tick <b>Noah Patel</b> and <b>Ethan Roy</b>.",
+     "s": "A bar under the toolbar: <b>2 selected</b> · <b>Confirm best match</b> (outlined) · and a quiet <b>Clear</b> at the right."
+    },
+    {
+     "d": "Press <b>Confirm best match</b>.",
+     "s": "An amber note: “1 friend request confirmed. 1 had no single best match and was left in To confirm.” Noah moves to Confirmed (“Confirmed by …, today”). Ethan stays in To confirm, still ticked; the bar reads <b>1 selected</b>. The amber count is now <b>4</b>."
+    },
+    {
+     "d": "Press <b>Clear</b>, then dismiss the note.",
+     "s": "No row is ticked; the bar is gone."
+    }
+   ]
+  },
+  {
+   "id": "Q4",
+   "title": "One request at a time",
+   "job": "Dev League Org · owner · computer",
+   "forText": "Each row’s button, its ⋯ menu, the request window (every match, with the reason), the Can’t honour window (outlined, no lime), Not signed up, Move back to To confirm and Delete request….",
+   "passes": "Every press does what its words say, says so in a short notice, and moves the row to the right band; the windows hold one lime at most.",
+   "notIn": "Bulk (walk 3).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/registrations?tab=friends",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: on <b>Ethan Roy</b> press <b>Pick one…</b>.",
+     "s": "A window: eyebrow “Friend request · U8”, title “Ethan Roy asked to play with “Max””, the line “Parent’s name given: “Ryan”. Signed up … by Dana Roy.”, then <b>Who did they mean?</b> with <b>Max Delaney · U8</b> picked (“Parent Ryan Delaney · First name matches · parent matches”), <b>Maxwell Tran · U8</b>, and a dimmed <b>Max Kowalski · U10</b> “Different division · can’t be kept together” that can’t be picked. Below: “Someone else? Search this division’s sign-ups”. Foot: “Confirming keeps Ethan and Max together in the draft when the group has room.” and a lime <b>Confirm</b>."
+    },
+    {
+     "d": "Type <b>sop</b> in the search box.",
+     "s": "Sophie Moreau · U8 joins the choices. Pick <b>Max Delaney</b> again and press <b>Confirm</b>."
+    },
+    {
+     "d": "Read the notice.",
+     "s": "“Ethan and Max are confirmed. The draft keeps them together when the group has room.” Ethan moves to Confirmed."
+    },
+    {
+     "d": "On the <b>Maya ⇄ Liam</b> row press <b>Confirm</b>.",
+     "s": "One press: the pair moves to Confirmed as one row (Maya ⇄ Liam, chip Both asked). The amber count drops by one, not two."
+    },
+    {
+     "d": "On <b>Ava Lindqvist</b> press <b>Can’t honour</b>.",
+     "s": "A small window: “Can’t honour Ava’s request?”, “Ava Lindqvist asked for Sophie Moreau.”, <b>Why</b> showing <b>Different division</b>, the hint “Only people who can open Registrations see this. The family is not told.” Buttons <b>Cancel</b> and an OUTLINED <b>Can’t honour</b>: no lime."
+    },
+    {
+     "d": "Change Why to <b>Other</b>, press Can’t honour with the note empty, then type <b>Needs a carpool</b> and press it again.",
+     "s": "The first press says “Add a short note.” The second closes; Ava moves to Closed reading “Can’t honour · Needs a carpool” / “Marked by …”."
+    },
+    {
+     "d": "On <b>Lucas Ferreira</b> press <b>Not signed up</b>.",
+     "s": "“Marked Not signed up.” Lucas moves to Closed. To confirm is now empty and the Friend requests view has no amber count."
+    },
+    {
+     "d": "On <b>Isla Grant</b> (Closed) open <b>⋯</b>.",
+     "s": "<b>Move back to To confirm</b>, <b>Open Isla’s registration</b>, a divider, <b>Delete request…</b>."
+    },
+    {
+     "d": "Press <b>Move back to To confirm</b>.",
+     "s": "“Moved back to To confirm.” Isla is back in To confirm with “Ruby T” and button <b>Not signed up</b>; the amber count is 1."
+    },
+    {
+     "d": "On Isla’s row open <b>⋯</b> › <b>Delete request…</b>.",
+     "s": "A window “Delete Isla’s friend request?” saying “This permanently removes Isla’s request for “Ruby T” and its match. It can’t be undone. If a family asks to have a child’s name removed, delete every request that names that child. The family is not told.” Buttons <b>Keep request</b> and a red <b>Delete request</b>."
+    },
+    {
+     "d": "Press <b>Delete request</b>.",
+     "s": "“Friend request deleted.” Isla’s row is gone."
+    },
+    {
+     "d": "On <b>Noah Patel</b> (Confirmed) open <b>⋯</b> › <b>Open Noah’s registration</b>.",
+     "s": "The view switches to <b>Active</b> and Noah’s registration record opens. Close it, go back to Friend requests, and open it again the same way: it opens again."
+    }
+   ]
+  },
+  {
+   "id": "Q5",
+   "title": "The list’s filter and the files",
+   "job": "Dev League Org · owner · computer",
+   "forText": "The registrations list gains a Flags filter, “Has a friend request”, and two name-free export columns. The Friend requests view has its own file: one row per request, children’s names only.",
+   "passes": "The flag lists exactly the children whose family named a friend; Excel and CSV gain Friend Requests and Friends Honoured (no names, blank until teams are made); the view’s file has the 11 drawn columns and no parent names.",
+   "notIn": "PDF (unchanged).",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/registrations?tab=active",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: on <b>Active</b> open <b>Filter</b>.",
+     "s": "Under Flags, a new choice <b>Has a friend request</b> with a count."
+    },
+    {
+     "d": "Tick it.",
+     "s": "The list shows only the children whose family named a friend (Maya, Liam, Noah, Ethan, Ava, Lucas, Harper, Zoe). Clear the filter."
+    },
+    {
+     "d": "Export › <b>Excel with contact details</b>, open the file.",
+     "s": "The last two columns are <b>Friend Requests</b> (“1” on those children, “0” on the rest) and <b>Friends Honoured</b> (blank: no teams yet). No column holds a friend’s or a parent’s typed name. Every value shows as typed: no cell starts with an added apostrophe."
+    },
+    {
+     "d": "Export › CSV, open it.",
+     "s": "The same two columns at the end; no contact columns (as before)."
+    },
+    {
+     "d": "Go to <b>Friend requests</b>, Export › Excel.",
+     "s": "One row per request with the heads <b>Player · Division · Team · Asked To Play With · Code · Matched To · Mark · State · In The Draft · Reason · Decided By</b>. Children’s names only: no parent’s name, no email, no phone. Maya’s and Liam’s are two rows, each reading Both asked · Confirmed."
+    }
+   ]
+  },
+  {
+   "id": "Q6",
+   "title": "On a phone",
+   "job": "Dev League Org · owner · phone (390 px)",
+   "forText": "The views take their own row and scroll sideways; one framed list with band rows; the row action on the row’s low line.",
+   "passes": "Nothing runs off the screen; each row shows the child, what was asked and the match, the ⋯ as a symbol, and the action under them.",
+   "notIn": "Anything already walked at a desk.",
+   "who": "league-owner@dev.local",
+   "where": "localhost:3000/dev-league-org/admin/house-league/seasons/a0ddb823-b886-4f42-aaa0-be11261d4e5d/registrations?tab=friends at 390 px",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: switch the device toolbar to 390 px and reload.",
+     "s": "The view switch is its own row and scrolls sideways to show <b>Friend requests</b>; the toolbar row below has the division picker and square search, filter and export buttons."
+    },
+    {
+     "d": "Read a row.",
+     "s": "The child’s name, a line like “U8 · Asked for “Max” · parent “Ryan”” (or the pair’s “U8 · both families asked”), the match line, the ⋯ symbol at the right, and the action button on its own low line when there is one."
+    },
+    {
+     "d": "Open a row’s <b>⋯</b>.",
+     "s": "A sheet from the bottom headed by the child, with the same items as at a desk."
+    }
+   ]
+  },
+  {
+   "id": "Q7",
+   "title": "The season’s Complete window says so",
+   "job": "Dev League Org · owner · computer",
+   "forText": "Marking the season complete deletes every friend request and friend code. The Complete window says so; the Reopen window says they don’t come back and families get new codes.",
+   "passes": "The Complete window lists “Friend requests and friend codes are deleted.” right under “Player ratings are erased.”",
+   "notIn": "Completing a season for real (proved on the database). The Complete step is offered only on a running season, so this walk reads it on the dev club’s 2026 season.",
+   "who": "league-owner@dev.local",
+   "where": "Dev House League 2026 (the dev club’s running season) › Overview",
+   "steps": [
+    {
+     "stop": true,
+     "d": "Stop check: open <b>Dev House League 2026</b> (running) and press <b>Complete season</b>.",
+     "s": "The window “Complete Dev House League 2026?” lists what changes, ending “Player ratings are erased.”, then <b>Friend requests and friend codes are deleted.</b>, then “Families are not emailed.”"
+    },
+    {
+     "d": "Press <b>Cancel</b>.",
+     "s": "Nothing changed: the season is still running."
+    }
+   ]
+  }
+ ];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "F1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "F1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "F1" }; save(); render();
+  });
+  render();
+})();
+</script>

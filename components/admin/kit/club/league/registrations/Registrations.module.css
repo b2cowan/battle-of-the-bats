@@ -323,3 +323,9 @@
 
 /* ── Signed-in family accounts Stage 4a (Part 8.1): one status under each address, on its own line ── */
 .familyStatus { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin-top: 0.3rem; }
+
+/* ── Friend requests (Board Ready Stage 1 Part 2; drawing tab 4) ── */
+/* The match cell's lead: the name and its chips on one wrapping line. */
+.friendMatch { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+/* A match in another division, in the request window: drawn, dimmed, never picked (A2: that is Can't honour). */
+.choice[data-dim] { opacity: 0.6; cursor: default; }

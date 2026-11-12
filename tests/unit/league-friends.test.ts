@@ -68,7 +68,7 @@ describe('friend requests: what a family sends', () => {
 describe('friend requests: the /legal words are verbatim', () => {
   it('the form’s two lines', () => {
     assert.equal(FRIEND_WORDS.care, 'Only name a child whose family is happy for you to.');
-    assert.equal(FRIEND_WORDS.privacy, 'Only the club staff who handle sign-ups see these names, and only to put friends on the same team. They are deleted after the season.');
+    assert.equal(FRIEND_WORDS.privacy, 'Only the club staff who work on sign-ups and teams see these names, and only to put friends on the same team. They are deleted after the season.');
   });
 });
 

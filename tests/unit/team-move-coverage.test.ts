@@ -131,6 +131,7 @@ const STAYS: Record<string, string> = {
   league_team_practices_told: 'house league (what a team’s families were told of its practices, 9d-3 mig 415)',
   league_practice_tells: 'house league (what one practice-times send told a team, 9d-3 mig 415)',
   league_practice_emails: 'house league (a household’s practice-times email, 9d-3 mig 415)',
+  league_friend_requests: 'house league (a family’s friend request for one season’s sign-up, Board Ready Stage 1 mig 461)',
   // ── Org-level setup a Coaches Portal does not use ────────────────────────────────────────────
   org_budget_lines: 'the club-side org budget (a Coaches Portal has none); moved rows that pointed at one are cleared',
   org_fiscal_years: 'the club’s fiscal years (mig 318) — the years its own plan and books are closed by; a team’s money runs on seasons, never fiscal years, so a Coaches Portal has none to move',

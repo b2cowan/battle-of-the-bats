@@ -5,7 +5,8 @@
  * modals, rebuilt once:
  *
  *   the head      — "Registrations" under the season's name, + Add registration (absent on a finished season);
- *   the tabs      — To review (the amber count) · Active · Waitlist · Ended, in the address (`?tab=`);
+ *   the tabs      — To review (the amber count) · Active · Waitlist · Ended, in the address (`?tab=`), and Friend requests
+ *                   (Board Ready Stage 1 Part 2, drawing tab 4: its own amber count; absent at None or off the plan);
  *   the toolbar   — the division, Search, Filter (Fee), and Export (one button, Excel first);
  *   the list      — a table at a desk, one framed row a child on a phone, the money on every row (the Fee cell is read from
  *                   the one money function, `feeState`), ONE primary action a row and the rest behind ⋯;
@@ -19,7 +20,7 @@
  * received, Undo, Correct the price, refunds; OPEN on a finished season), `run` (Move division; the registrar does not see
  * it), `email`. A control the member cannot use is not drawn.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { kitCountText } from '@/lib/admin-kit-nav';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
@@ -72,6 +73,8 @@ import UndoWindow from './UndoWindow';
 import WhoseWindow from './WhoseWindow';
 import type { MenuItem } from './RowMenu';
 import { exportCsv, exportPdf, exportXlsx, type ExportRow } from './registrationsExport';
+import FriendRequestsView from './FriendRequestsView';
+import { buildQueue, friendTallies, honouredText, toConfirmCount, FRIEND_QUEUE_WORDS, type FriendsRead } from '@/lib/league-friend-queue';
 import css from './Registrations.module.css';
 
 /** A list longer than this draws its first rows and "… n more". */
@@ -121,6 +124,8 @@ export default function RegistrationsScreen() {
   const [teams, setTeams] = useState<TeamLite[]>([]);
   const [read, setRead] = useState<RegsRead | null>(null);
   const [failed, setFailed] = useState<'missing' | 'error' | null>(null);
+  // Board Ready Stage 1 Part 2: the season's friend requests (A11: read behind the same check as the list).
+  const [friends, setFriends] = useState<FriendsRead | null>(null);
 
   // Who may (the one house-league gate): a finished season locks the registrations and keeps the fee (Q16).
   // Reading comes from the member alone (so the first read can start); every control comes from the SEASON-AWARE answer,
@@ -147,10 +152,11 @@ export default function RegistrationsScreen() {
   const load = useCallback(async ({ season: withSeason = true, teams: withTeams = true }: LoadScope = {}) => {
     if (!orgSlug || !seasonId) return;
     const current = beginRead();
-    const [seasonRes, regsRes, teamsRes] = await Promise.all([
+    const [seasonRes, regsRes, teamsRes, friendsRes] = await Promise.all([
       withSeason ? moneyFetch<{ season?: RegsSeason & Record<string, unknown>; divisions?: RegsDivision[] }>(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`).catch(() => null) : null,
       moneyFetch<RegsRead>(`/api/admin/house-league/seasons/${seasonId}/registrations${orgQuery}`).catch(() => null),
       withTeams ? moneyFetch<{ teams?: TeamLite[] }>(`/api/admin/house-league/seasons/${seasonId}/teams${orgQuery}`).catch(() => null) : null,
+      moneyFetch<FriendsRead>(`/api/admin/house-league/seasons/${seasonId}/friends${orgQuery}`).catch(() => null),
     ]);
     if (!current()) return;
     if (seasonRes?.status === 404) { setFailed('missing'); return; }
@@ -166,6 +172,8 @@ export default function RegistrationsScreen() {
         heldCount: d.heldCount ?? 0, waitlistCount: d.waitlistCount ?? 0,
       })));
     }
+    // An extra never takes the list down: a failed friends read keeps the last one (or none).
+    if (friendsRes?.ok) setFriends({ on: !!friendsRes.data.on, requests: friendsRes.data.requests ?? [] });
     if (withTeams) setTeams((teamsRes?.ok ? teamsRes.data.teams ?? [] : []).map(t => ({ id: t.id, name: t.name, divisionId: t.divisionId })));
     setRead({
       registrations: regsRes.data.registrations ?? [], money: regsRes.data.money ?? {},
@@ -181,6 +189,10 @@ export default function RegistrationsScreen() {
   // ── Derived ────────────────────────────────────────────────────────────────────────────────────
   const regs = useMemo(() => read?.registrations ?? [], [read]);
   const regById = useMemo(() => new Map(regs.map(r => [r.id, r])), [regs]);
+  const friendsOn = !!friends?.on;
+  const queue = useMemo(() => (friends?.on ? buildQueue(friends.requests, regs) : []), [friends, regs]);
+  const tallies = useMemo(() => (friends?.on ? friendTallies(friends.requests, regs, queue) : new Map<string, { asked: number; honoured: number | null }>()), [friends, regs, queue]);
+  const hasFriend = useCallback((r: LeagueRegistration) => (tallies.get(r.id)?.asked ?? 0) > 0, [tallies]);
   const today = read?.today ?? '';
   const rights: RegRights = useMemo(() => ({
     register: !!access?.register, takeFees: !!access?.takeFees, run: !!access?.run, email: !!access?.email,
@@ -230,6 +242,10 @@ export default function RegistrationsScreen() {
   if (whoseId && seenWhose !== whoseId) { setSeenWhose(whoseId); setWhoseOpen(whoseId); }
   const asked = search.get('tab') ?? (linked ? regTab(linked.status) : null);
   const tab: RegTab = isRegTab(asked) ? asked : landed ?? firstLanding;
+  // The fifth view is not a registration status: it is its own address, and absent when the season asks for no friends.
+  const friendsView = friendsOn && asked === 'friends';
+  const [seenFriends, setSeenFriends] = useState(friendsView);
+  if (seenFriends !== friendsView) { setSeenFriends(friendsView); setSelected(new Set()); setShown(PAGE); setNotes({}); }
   // A tab link changes the address only; the page keeps its state, so what belonged to the old tab is dropped here (the
   // React way to follow a value: adjusted during render, so the stale tab never paints).
   const [seenTab, setSeenTab] = useState(tab);
@@ -246,8 +262,8 @@ export default function RegistrationsScreen() {
   // Active tab's): a hidden pick filters nothing.
   const scopeTeams = useMemo(() => (scope ? teams.filter(t => t.divisionId === scope) : []), [teams, scope]);
   const offer = useMemo(
-    () => regFilterOffer(tab, { charges, payLinks: !!read?.payLinks, teamIds: scopeTeams.map(t => t.id) }),
-    [tab, charges, read?.payLinks, scopeTeams],
+    () => regFilterOffer(tab, { charges, payLinks: !!read?.payLinks, teamIds: scopeTeams.map(t => t.id), friends: friendsOn }),
+    [tab, charges, read?.payLinks, scopeTeams, friendsOn],
   );
   const activePicks: RegFilterPicks = useMemo(() => {
     const only = (g: RegFilterGroup) => new Set([...picks[g]].filter(k => offer[g].includes(k)));
@@ -256,11 +272,11 @@ export default function RegistrationsScreen() {
   const filterOn = activePicks.team.size + activePicks.fee.size + activePicks.flags.size > 0;
   const searchedTab = useMemo(() => scoped.filter(r => regTab(r.status) === tab && matchesSearch(r, query)), [scoped, tab, query]);
   const tabRegs = useMemo(() => {
-    const list = searchedTab.filter(r => !filterOn || matchesPicks(activePicks, r, fees.get(r.id)!.state, undefined, !!fees.get(r.id)!.chip));
+    const list = searchedTab.filter(r => !filterOn || matchesPicks(activePicks, r, fees.get(r.id)!.state, undefined, !!fees.get(r.id)!.chip, hasFriend(r)));
     if (tab === 'waitlist') return list.sort((a, b) => (a.waitlistPosition ?? 9999) - (b.waitlistPosition ?? 9999));
     if (tab === 'ended') return list.sort((a, b) => Date.parse(b.endedAt ?? b.updatedAt) - Date.parse(a.endedAt ?? a.updatedAt));
     return list;
-  }, [searchedTab, tab, filterOn, fees, activePicks]);
+  }, [searchedTab, tab, filterOn, fees, activePicks, hasFriend]);
 
   const bulkKeys = useMemo(() => bulkActions(tab, rights, charges), [tab, rights, charges]);
   const selectable = bulkKeys.length > 0;
@@ -595,7 +611,12 @@ export default function RegistrationsScreen() {
   // ── Export ─────────────────────────────────────────────────────────────────────────────────────
   const exportRows: ExportRow[] = tabRegs.map(reg => {
     const f = fees.get(reg.id);
-    return { reg, division: divisionName(reg.divisionId) ?? '', fee: f?.alert?.text ?? f?.chip?.text ?? f?.primary ?? '' };
+    const t = tallies.get(reg.id);
+    return {
+      reg, division: divisionName(reg.divisionId) ?? '', fee: f?.alert?.text ?? f?.chip?.text ?? f?.primary ?? '',
+      // Board Ready Stage 1 Part 2 (tab 7): two name-free columns, only on a season that takes friend requests.
+      ...(friendsOn ? { friends: { requests: t?.asked ?? 0, honoured: honouredText(t) } } : {}),
+    };
   });
   const freeFloor = !!currentOrg && isFreeFloorLeague(currentOrg);
 
@@ -619,24 +640,70 @@ export default function RegistrationsScreen() {
   // Waitlist · Ended are four views of one list, so they are the toolbar's left-hand view choice under the season's own tab
   // row. Only To review's count is amber; the others are the lighter ink. Each view keeps its own address (`?tab=`), so
   // Back, a bookmark and a notification's link land on the same view.
-  const views = REG_TABS.map(id => ({
-    id,
-    label: REGS_WORDS.tab[id],
-    mark: counts[id] > 0
-      ? (id === 'review'
-        ? <span className={frame.count} aria-label={REGS_WORDS.reviewAria(counts[id])}>{kitCountText(counts[id])}</span>
-        : <span className={css.tabCount}>{counts[id]}</span>)
-      : undefined,
-  }));
+  // Board Ready Stage 1 Part 2 (A13): Friend requests carries its own amber count (the rows still to confirm, in the
+  // division picked, as the other counts are). A zero is not drawn. Absent at None or off the plan.
+  const friendsWaiting = toConfirmCount(scope ? queue.filter(r => r.asker.divisionId === scope) : queue);
+  const views: { id: string; label: string; mark?: ReactNode }[] = [
+    ...REG_TABS.map(id => ({
+      id,
+      label: REGS_WORDS.tab[id],
+      mark: counts[id] > 0
+        ? (id === 'review'
+          ? <span className={frame.count} aria-label={REGS_WORDS.reviewAria(counts[id])}>{kitCountText(counts[id])}</span>
+          : <span className={css.tabCount}>{counts[id]}</span>)
+        : undefined,
+    })),
+    ...(friendsOn ? [{
+      id: 'friends',
+      label: FRIEND_QUEUE_WORDS.view,
+      mark: friendsWaiting > 0 ? <span className={frame.count} aria-label={FRIEND_QUEUE_WORDS.viewAria(friendsWaiting)}>{kitCountText(friendsWaiting)}</span> : undefined,
+    }] : []),
+  ];
+  const viewSwitch = (
+    <div className={css.views}>
+      <ViewSwitch views={views} value={friendsView ? 'friends' : tab} label={REGS_WORDS.tabsLabel} onChange={id => router.push(`${base}?tab=${id}`, { scroll: false })} />
+    </div>
+  );
+
+  if (friendsView) {
+    return (
+      <div className={`${repKit.page} ${repKit.moneyFrame} ${css.screen}`}>
+        <FriendRequestsView
+          viewSwitch={viewSwitch}
+          rows={queue}
+          divisions={divisions}
+          scope={scope}
+          onScope={setScope}
+          regs={regs}
+          divisionName={divisionName}
+          teamName={teamName}
+          today={today}
+          canDecide={!!access?.register}
+          isPhone={isPhone}
+          orgQuery={orgQuery}
+          seasonId={seasonId}
+          orgSlug={orgSlug}
+          planId={currentOrg?.planId}
+          freeFloor={freeFloor}
+          onChanged={() => load({ season: false, teams: false })}
+          // The child's record, on the child's own view (opened here, not through the one-time ?reg= link, which opens a
+          // child once per visit: /review 2026-11-11).
+          onOpenRegistration={id => { const r = regById.get(id); if (!r) return; setOpenId(id); router.push(`${base}?tab=${regTab(r.status)}`, { scroll: false }); }}
+          say={say}
+        />
+        {notice && <NoticePill key={notice} message={notice} onDone={() => setNotice(null)} />}
+      </div>
+    );
+  }
 
   // ── The Filter: Team · Fee · Flags, each choice counted given the other groups' ticks ──────────────────
-  const filterCounts = regFilterCounts(searchedTab, r => fees.get(r.id)!.state, activePicks, offer, r => !!fees.get(r.id)?.chip);
+  const filterCounts = regFilterCounts(searchedTab, r => fees.get(r.id)!.state, activePicks, offer, r => !!fees.get(r.id)?.chip, hasFriend);
   const W = REGS_WORDS;
   const optionWord: Record<RegFilterGroup, (k: string) => string> = {
     team: k => (k === NOT_PLACED ? W.notPlaced : scopeTeams.find(t => t.id === k)?.name ?? k),
     fee: k => (k === 'owing' ? W.filterOwing : k === 'received' ? W.filterReceived : W.filterRefunded),
     flags: k => (k === 'asked' ? W.filterAsked : k === 'late' ? W.filterLate(season.owingAmberDays)
-      : k === 'noPayLink' ? W.filterNoPayLink : W.filterNotes),
+      : k === 'noPayLink' ? W.filterNoPayLink : k === 'friend' ? FRIEND_QUEUE_WORDS.flag : W.filterNotes),
   };
   const toggle = (g: RegFilterGroup, k: string) => {
     setPicks(prev => {
@@ -673,9 +740,7 @@ export default function RegistrationsScreen() {
   return (
     <div className={`${repKit.page} ${repKit.moneyFrame} ${css.screen}`} data-selecting={picked > 0 || undefined}>
       <div className={`${tb.toolbar} ${css.toolbarWrap}`}>
-        <div className={css.views}>
-          <ViewSwitch views={views} value={tab} label={REGS_WORDS.tabsLabel} onChange={id => router.push(`${base}?tab=${id}`, { scroll: false })} />
-        </div>
+        {viewSwitch}
         <DivisionPicker
           divisions={[{ id: '', name: REGS_WORDS.scopeAll, waiting: 0 }, ...divisions.map(d => ({ id: d.id, name: d.name, waiting: reviewByDivision.get(d.id) ?? 0 }))]}
           value={scope}

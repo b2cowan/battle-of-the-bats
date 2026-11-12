@@ -65,6 +65,8 @@ export type MoveFacts = {
    * paid plan, or when the slot is free).
    */
   reopen?: { newer: string[]; blockedBy: { name: string; status: string } | null };
+  /** The season takes friend requests (Board Ready Stage 1 Part 2, A12): the finish deletes them, and says so. */
+  friendRequests?: boolean;
 };
 
 export type MoveWords = {
@@ -190,6 +192,8 @@ export function moveWords(move: StatusMove, f: MoveFacts, today: string = tourna
           'Your public site lists it under Past seasons, and its schedule and standings stay up.',
           // The finish erases them (mig 377's trigger, 9c·2b); 9f·7 says so where it happens.
           'Player ratings are erased.',
+          // Board Ready Stage 1 Part 2 (A12; mig 471 in the same trigger): the form promises families this.
+          ...(f.friendRequests ? ['Friend requests and friend codes are deleted.'] : []),
           NOT_EMAILED,
         ],
         looseEnds: [...ahead, ...(end ? [end] : [])],
@@ -219,6 +223,7 @@ export function moveWords(move: StatusMove, f: MoveFacts, today: string = tourna
             ? `Your public site lists it as ${shown.label} until you complete it again.`
             : `Your public site lists it as ${shown.label}.`,
           'Player ratings were erased when it finished. They don’t come back.',
+          ...(f.friendRequests ? ['Friend requests were deleted too. Families get new friend codes.'] : []),
           ...newerSentence(f.reopen?.newer ?? []),
           NOT_EMAILED,
         ],

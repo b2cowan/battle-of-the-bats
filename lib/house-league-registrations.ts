@@ -460,7 +460,7 @@ export function matchesFee(fee: FeeState, picks: ReadonlySet<string>, clearing =
 
 export type RegFilterGroup = 'team' | 'fee' | 'flags';
 export type RegFilterPicks = Readonly<Record<RegFilterGroup, ReadonlySet<string>>>;
-export type RegFlag = 'asked' | 'late' | 'noPayLink' | 'notes';
+export type RegFlag = 'asked' | 'late' | 'noPayLink' | 'notes' | 'friend';
 /** The Team group's first row: a child on no team. Any other Team key is a team's id. */
 export const NOT_PLACED = 'notPlaced';
 export const NO_PICKS: RegFilterPicks = { team: new Set(), fee: new Set(), flags: new Set() };
@@ -470,7 +470,7 @@ export const NO_PICKS: RegFilterPicks = { team: new Set(), fee: new Set(), flags
  * only once a division is picked — every age group has its own Blue Jays. Fee and the two money flags need a season that
  * charges; "Pay link not sent" also needs the club to take cards. A group with no options is absent.
  */
-export function regFilterOffer(tab: RegTab, o: { charges: boolean; payLinks: boolean; teamIds: readonly string[] }): Record<RegFilterGroup, string[]> {
+export function regFilterOffer(tab: RegTab, o: { charges: boolean; payLinks: boolean; teamIds: readonly string[]; friends?: boolean }): Record<RegFilterGroup, string[]> {
   return {
     team: tab === 'active' ? [NOT_PLACED, ...o.teamIds] : [],
     fee: o.charges ? ['owing', 'received', ...(tab === 'ended' ? ['refunded'] : [])] : [],
@@ -479,33 +479,36 @@ export function regFilterOffer(tab: RegTab, o: { charges: boolean; payLinks: boo
       ...(tab === 'active' && o.charges ? ['late'] : []),
       ...(tab === 'active' && o.charges && o.payLinks ? ['noPayLink'] : []),
       ...(tab !== 'ended' ? ['notes'] : []),
+      // Board Ready Stage 1 Part 2 (drawing tab 7): the season takes friend requests.
+      ...(tab !== 'ended' && o.friends ? ['friend'] : []),
     ],
   };
 }
 
 /** A row's flags. "Late" is the row's own amber (owing, past the season's days); a pay link counts once it was ever sent. */
-export function regFlags(r: LeagueRegistration, fee: FeeState, clearing = false): Set<RegFlag> {
+export function regFlags(r: LeagueRegistration, fee: FeeState, clearing = false, friend = false): Set<RegFlag> {
   const f = new Set<RegFlag>();
   if (isOpenReg(r) && r.withdrawRequestedAt) f.add('asked');
   // 12c Part 6: a bank debit on its way is never late, and needs no pay link (the row offers neither).
   if (!clearing && fee.kind === 'owing' && fee.late) f.add('late');
   if (!clearing && isOwing(fee) && !r.payLinkSentAt) f.add('noPayLink');
   if (r.playerNotes?.trim()) f.add('notes');
+  if (friend) f.add('friend');
   return f;
 }
 
 /** One group's test on one row. Several picks in a group widen it (any of them); no picks admit everything. */
-export function matchesGroup(group: RegFilterGroup, picks: ReadonlySet<string>, r: LeagueRegistration, fee: FeeState, clearing = false): boolean {
+export function matchesGroup(group: RegFilterGroup, picks: ReadonlySet<string>, r: LeagueRegistration, fee: FeeState, clearing = false, friend = false): boolean {
   if (picks.size === 0) return true;
   if (group === 'fee') return matchesFee(fee, picks, clearing);
   if (group === 'team') return picks.has(r.teamId ?? NOT_PLACED);
-  const flags = regFlags(r, fee, clearing);
+  const flags = regFlags(r, fee, clearing, friend);
   return [...picks].some(k => flags.has(k as RegFlag));
 }
 
 /** Every group but `except` (the counts' base: what ticking a choice would list, given the OTHER groups' ticks). */
-export function matchesPicks(picks: RegFilterPicks, r: LeagueRegistration, fee: FeeState, except?: RegFilterGroup, clearing = false): boolean {
-  return (['team', 'fee', 'flags'] as const).every(g => g === except || matchesGroup(g, picks[g], r, fee, clearing));
+export function matchesPicks(picks: RegFilterPicks, r: LeagueRegistration, fee: FeeState, except?: RegFilterGroup, clearing = false, friend = false): boolean {
+  return (['team', 'fee', 'flags'] as const).every(g => g === except || matchesGroup(g, picks[g], r, fee, clearing, friend));
 }
 
 /** Each offered choice's count: the rows ticking it would list, given the other groups' ticks (Filter Counts D5). */
@@ -513,6 +516,8 @@ export function regFilterCounts(
   rows: readonly LeagueRegistration[], stateOf: (r: LeagueRegistration) => FeeState, picks: RegFilterPicks,
   offer: Record<RegFilterGroup, readonly string[]>,
   clearingOf: (r: LeagueRegistration) => boolean = () => false,
+  /** The family named a friend for this child (Board Ready Stage 1 Part 2). */
+  friendOf: (r: LeagueRegistration) => boolean = () => false,
 ): Record<RegFilterGroup, Map<string, number>> {
   const out = { team: new Map<string, number>(), fee: new Map<string, number>(), flags: new Map<string, number>() };
   for (const g of ['team', 'fee', 'flags'] as const) {
@@ -520,8 +525,9 @@ export function regFilterCounts(
     for (const r of rows) {
       const fee = stateOf(r);
       const clearing = clearingOf(r);
-      if (!matchesPicks(picks, r, fee, g, clearing)) continue;
-      for (const k of offer[g]) if (matchesGroup(g, new Set([k]), r, fee, clearing)) out[g].set(k, out[g].get(k)! + 1);
+      const friend = friendOf(r);
+      if (!matchesPicks(picks, r, fee, g, clearing, friend)) continue;
+      for (const k of offer[g]) if (matchesGroup(g, new Set([k]), r, fee, clearing, friend)) out[g].set(k, out[g].get(k)! + 1);
     }
   }
   return out;

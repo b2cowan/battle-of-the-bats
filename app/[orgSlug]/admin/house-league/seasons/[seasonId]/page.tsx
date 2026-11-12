@@ -23,6 +23,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Check, ExternalLink, Minus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import { friendRequestsOn } from '@/lib/league-friends';
 import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
 import { ClubSection, EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
@@ -185,6 +186,7 @@ export default function SeasonOverviewPage() {
     waitlistCount: summary.waitlistCount,
     unpaidFeeCount: summary.unpaidFeeCount,
     reopen: detail.reopen,
+    friendRequests: friendRequestsOn(currentOrg?.planId, season.friendRequestsMax),
   };
   const teams = divisions.reduce((n, d) => n + d.teamCount, 0);
 

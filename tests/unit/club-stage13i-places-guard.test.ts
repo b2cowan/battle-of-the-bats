@@ -89,7 +89,8 @@ describe('2 · each place draws THE shared tab row, from the model', () => {
   it('no page shows two tab rows: Registrations’ views are the view switch, Teams & draft’s divisions the picker', () => {
     const regs = readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx');
     assert.doesNotMatch(regs, /HubTabBar/);
-    assert.match(regs, /<ViewSwitch views=\{views\} value=\{tab\}/);
+    // Board Ready Stage 1 Part 2: the fifth view (Friend requests) is not a registration status, so it is named beside the tab.
+    assert.match(regs, /<ViewSwitch views=\{views\} value=\{(friendsView \? 'friends' : )?tab\}/);
     assert.match(regs, /router\.push\(`\$\{base\}\?tab=\$\{id\}`/, 'each view keeps its own address');
     const teams = readCode('components/admin/kit/club/league/teams/TeamsScreen.tsx');
     assert.doesNotMatch(teams, /HubTabBar/);

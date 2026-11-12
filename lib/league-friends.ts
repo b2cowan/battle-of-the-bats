@@ -115,7 +115,9 @@ export const FRIEND_WORDS = {
   tooMany: (max: number) => `You can name up to ${max === 1 ? '1 friend' : `${max} friends`}.`,
   /** /legal (2026-11-10), verbatim from the drawing. */
   care: 'Only name a child whose family is happy for you to.',
-  privacy: 'Only the club staff who handle sign-ups see these names, and only to put friends on the same team. They are deleted after the season.',
+  // /legal re-check 2026-11-11 (Part 2): the seats that read these are the ones that work sign-ups AND teams (A11), so
+  // the line says both; it never names fewer people than can see the names.
+  privacy: 'Only the club staff who work on sign-ups and teams see these names, and only to put friends on the same team. They are deleted after the season.',
   parentLine: (parent: string) => `parent ${parent}`,
   codeWord: 'friend code',
   // "Your sign-up" and the confirmation (tab 2)

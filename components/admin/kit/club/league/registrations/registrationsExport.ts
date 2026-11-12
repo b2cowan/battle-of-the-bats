@@ -3,6 +3,14 @@
  * screen is the list in the file — this tab, this search, this filter — and the Fee column says what the screen's Fee cell
  * says (it used to say Yes or No from a tick that no longer exists). The register on paper prints nothing private: no date
  * of birth, guardian name, email, phone or notes (a PDF is the copy that gets printed and left on a table).
+ *
+ * Board Ready Stage 1 Part 2 (drawing tab 7): a season that takes friend requests adds two NAME-FREE columns, "Friend
+ * Requests" (how many the family named) and "Friends Honoured" ("1 of 2", read from the teams as they stand), to the
+ * Excel and the CSV alike. Friend NAMES never go in these files, least of all "Excel with contact details" (/legal): they
+ * go only in the Friend requests view's own export. ⚠ Every CSV cell is written formula-safe: the names, notes and
+ * preferences come from an anonymous public form, and a value that starts with "=" must never run when the CSV is opened
+ * in Excel (lib/export/formula-safe.ts). The Excel file stores every value as text, which never runs, so it is left as
+ * typed: an apostrophe there would show (a guardian phone "+1 519…"; /review 2026-11-11).
  */
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, buildFilename, serializeRows, serializeHeaders,
@@ -11,10 +19,16 @@ import {
 import { orgDayKey } from '@/lib/timezone';
 import { endedKind, guardianName, playerName, type RegTab } from '@/lib/house-league-registrations';
 import { REGS_WORDS } from '@/lib/house-league-money-words';
+import { formulaSafeRow } from '@/lib/export/formula-safe';
+import { FRIEND_QUEUE_WORDS } from '@/lib/league-friend-queue';
 import { pluralize } from '@/lib/utils';
 import type { LeagueRegistration } from '@/lib/types';
 
-export interface ExportRow { reg: LeagueRegistration; division: string; fee: string }
+export interface ExportRow {
+  reg: LeagueRegistration; division: string; fee: string;
+  /** Present only on a season that takes friend requests: the two name-free columns' values. */
+  friends?: { requests: number; honoured: string };
+}
 
 const COLS: ExportColumnDef[] = [
   { label: 'First Name',     key: 'playerFirstName',   format: 'text' },
@@ -35,6 +49,14 @@ const COLS: ExportColumnDef[] = [
   { label: 'Admin Notes',    key: 'adminNotes',        format: 'text', sensitive: true },
 ];
 
+const FRIEND_COLS: ExportColumnDef[] = [
+  { label: FRIEND_QUEUE_WORDS.exportCols.requests, key: 'friendRequests', format: 'text' },
+  { label: FRIEND_QUEUE_WORDS.exportCols.honoured, key: 'friendsHonoured', format: 'text' },
+];
+
+/** The file's columns: the two friend columns only when the season takes friend requests (at None, none). */
+const colsFor = (rows: readonly ExportRow[]) => (rows.some(r => r.friends) ? [...COLS, ...FRIEND_COLS] : COLS);
+
 const PDF_COLS: ExportColumnDef[] = [
   { label: 'Player',     key: 'player',       format: 'text' },
   { label: 'Registered', key: 'registeredAt', format: 'date' },
@@ -53,7 +75,7 @@ function statusWord(r: LeagueRegistration): string {
 }
 
 function source(rows: readonly ExportRow[]) {
-  return rows.map(({ reg: r, division, fee }) => ({
+  return rows.map(({ reg: r, division, fee, friends }) => ({
     playerFirstName: r.playerFirstName,
     playerLastName: r.playerLastName,
     division,
@@ -69,6 +91,8 @@ function source(rows: readonly ExportRow[]) {
     positionPref: r.playerPositionPref ?? '',
     playerNotes: r.playerNotes ?? '',
     adminNotes: r.adminNotes ?? '',
+    friendRequests: friends ? String(friends.requests) : '',
+    friendsHonoured: friends?.honoured ?? '',
   }));
 }
 
@@ -76,14 +100,14 @@ export async function exportXlsx(rows: readonly ExportRow[], orgSlug: string | u
   if (!rows.length) return;
   await downloadXLSX(
     buildFilename({ org: orgSlug, dataset: withContacts ? 'registrations-with-contacts' : 'registrations', scope }, 'xlsx'),
-    serializeHeaders(COLS, withContacts), serializeRows(source(rows), COLS, withContacts), 'Registrations',
+    serializeHeaders(colsFor(rows), withContacts), serializeRows(source(rows), colsFor(rows), withContacts), 'Registrations',
   );
 }
 
 export function exportCsv(rows: readonly ExportRow[], orgSlug: string | undefined, scope: RegTab) {
   downloadCSVBlob(
     buildFilename({ org: orgSlug, dataset: 'registrations', scope }, 'csv'),
-    generateCSV(serializeHeaders(COLS), serializeRows(source(rows), COLS)),
+    generateCSV(serializeHeaders(colsFor(rows)), serializeRows(source(rows), colsFor(rows)).map(formulaSafeRow)),
   );
 }
 
