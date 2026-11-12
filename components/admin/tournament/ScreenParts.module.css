@@ -20,7 +20,9 @@
   color: var(--text-primary);
 }
 .recordText { margin: 0 0 0.6rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
-.recordActions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+/* align-items: center — a button's one-line hint (Open tournament · "Teams, schedule…") sits level with the button's label, not
+   stretched to the button's height with its text hugging the top edge. */
+.recordActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
 
 /* A plain worded button inside a record (Reject, Resend the access link, See who it reached) — the
    drawing's ink, not olive: the olive is a row's one worded action, the lime a screen's one main one. */
