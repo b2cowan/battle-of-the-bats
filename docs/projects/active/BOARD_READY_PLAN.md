@@ -312,7 +312,7 @@ points here, so they aren't tracked twice)
       off (the email says so); a code from the app or a backup code, typed at sign-in during the wait, cancels an owner
       reset; support gets Hold / Release / Cancel on a waiting reset.
   - **Part 3 BUILT + COMMITTED `5a22b498a` 2026-11-11** (mig 469 applied to dev; mig 470, the hourly schedule, applied to dev on
-    the owner's yes and committed on its own `d5f9f7f52`; owner walk §515 `BOARD_READY_TWO_STEP_PART3_WALK.html`, fixture `.probe/two-step-p3/fixture.mjs`,
+    the owner's yes and committed on its own `d5f9f7f52`; owner walk §515 PASSED 35/35 2026-11-12 `BOARD_READY_TWO_STEP_PART3_WALK.html`, fixture `.probe/two-step-p3/fixture.mjs`,
     `--undo` after the walk). Coach door drawn and approved the same day (`BOARD_READY_TWO_STEP_COACH_RESET_DRAWINGS.html`,
     A1–A3 as recommended). What was built:
     - **The one reset order** `lib/two-step-reset.ts` (`removeEveryAuthenticator`, now also Part 2's turn off; `resetTwoStep`
@@ -367,7 +367,7 @@ points here, so they aren't tracked twice)
     - Session calls (stated in the summary, not objected to): the column, the phone line, the coaching-staff words and the
       export column are for owners and admins only (a treasurer or registrar who can open Members does not get them); a seat
       no switch covers (staff, volunteers) reads only On or Off.
-  - **Part 4 BUILT + COMMITTED `24e5b9e45` 2026-11-12 (mig 475 applied to dev; prod BEFORE the code), walk §520 owed** https://claude.ai/artifact/Rm73xYcDckZZzuPWv5c18b
+  - **Part 4 BUILT + COMMITTED `24e5b9e45` 2026-11-12 (mig 475 applied to dev; prod BEFORE the code), walk §520 ✅ 29/29 2026-11-12** https://claude.ai/artifact/Rm73xYcDckZZzuPWv5c18b
     (`BOARD_READY_TWO_STEP_PART4_WALK.html`, built by `.probe/two-step-p4/build-walk.cjs`; fixture `.probe/two-step-p4/fixture.mjs`
     prompt | members | run-job | code | undo). Mig 475 applied to dev (prod BEFORE the code; MANUAL_PROD_STEPS). What was built:
     - **One read of the club's own people** `public.people_sign_in_facts(uuid[])` (mig 475, server key only) → `lib/two-step-club-status.ts`

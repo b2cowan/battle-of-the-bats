@@ -216,7 +216,7 @@ Build to tab 5 and tab 4, on Part 1's pieces.
 
 ## Part 3 · Opus — the switches, the grace period, the resets
 
-> **BUILT + COMMITTED `5a22b498a` 2026-11-11** (mig 469 on dev; mig 470 the hourly schedule `d5f9f7f52`, applied to dev); owner walk §515
+> **BUILT + COMMITTED `5a22b498a` 2026-11-11** (mig 469 on dev; mig 470 the hourly schedule `d5f9f7f52`, applied to dev); owner walk §515 PASSED 35/35 2026-11-12
 > https://claude.ai/artifact/SU7aZb1LwgmALGTyCfSf5G; coach door drawn + approved
 > https://claude.ai/artifact/EKo6ky1RVPYZzkx7sXyGuA. What was built, the review fixes and four open owner calls:
 > `BOARD_READY_PLAN.md` §5 Stage 0a "Part 3 BUILT". **For Part 4:** the grace emails go where `startTwoStepGrace` writes and
@@ -264,7 +264,7 @@ Build to tabs 6, 7 and 8.
 
 ## Part 4 · Sonnet — what the club sees, and the words
 
-> **BUILT + COMMITTED `24e5b9e45` 2026-11-12 (run on Opus); mig 475 applied to dev; owner walk §520 owed**
+> **BUILT + COMMITTED `24e5b9e45` 2026-11-12 (run on Opus); mig 475 applied to dev; owner walk §520 ✅ 29/29 2026-11-12**
 > https://claude.ai/artifact/Rm73xYcDckZZzuPWv5c18b. Rulings at the UX summary (five emails, the club's own people read, the
 > 3-day email on the hourly job, one notice spot), what was built, the review fixes and five open owner calls:
 > `BOARD_READY_PLAN.md` §5 Stage 0a "Part 4 BUILT".
