@@ -30,11 +30,20 @@ type DeskTitle = {
    * header then keeps its own title, so nothing is ever unnamed.
    */
   recordSlot: HTMLElement | null;
+  /**
+   * ⚖ THE PHONE'S BAR NAMES THE RECORD TOO (owner, 2026-11-12: "the arrow is the only thing representing back and the bar always
+   * names the place you are in"). The team bar's first line, one level down, is an empty slot the page's header PORTALS its title
+   * into (`CoachBarName`) — the strip's `recordSlot`, for the phone. A second slot, not the strip's: both bars are in the DOM at
+   * every width (CSS hides one), and one element cannot be two portal targets. Null until the bar mounts it.
+   */
+  barSlot: HTMLElement | null;
 };
 
-const Ctx = createContext<DeskTitle>({ teamId: null, title: null, recordSlot: null });
+const Ctx = createContext<DeskTitle>({ teamId: null, title: null, recordSlot: null, barSlot: null });
 /** The strip's ref callback for the slot — a state setter, so it is stable and never re-runs the strip's own effects. */
 const SlotRef = createContext<(el: HTMLElement | null) => void>(() => {});
+/** The team bar's ref callback for its own slot (the phone's), the same way. */
+const BarSlotRef = createContext<(el: HTMLElement | null) => void>(() => {});
 
 export function CoachDeskTitleProvider({ orgSlug, children }: { orgSlug: string; children: ReactNode }) {
   const pathname = usePathname() ?? '';
@@ -46,23 +55,26 @@ export function CoachDeskTitleProvider({ orgSlug, children }: { orgSlug: string;
   const from = params?.get('from') ?? null;
   const year = params?.get('year') ?? null;
   const [recordSlot, setRecordSlot] = useState<HTMLElement | null>(null);
+  const [barSlot, setBarSlot] = useState<HTMLElement | null>(null);
   const value = useMemo<DeskTitle>(() => {
-    if (!teamId) return { teamId: null, title: null, recordSlot: null };
+    if (!teamId) return { teamId: null, title: null, recordSlot: null, barSlot: null };
     const live = resolveLiveSeason(assignments, teamId);
     const closed = resolveClosedSeason(assignments, closedAssignments, teamId);
     // A team the coach is not on (or not yet loaded) names nothing: the page keeps its own title, and the bar — which draws
     // nothing without the team — never leaves a phone page with no heading at all (/review 2026-11-12).
-    if (!live && !closed) return { teamId, title: null, recordSlot };
+    if (!live && !closed) return { teamId, title: null, recordSlot, barSlot };
     const finished = !live && !!closed;
     const rows = coachNavGroupsFor((live ?? closed)?.capabilities, finished).flatMap(g => g.items);
     const seasonName = finished ? mastheadSeasonLabel(closed?.programYearName, closed?.teamName, closed?.programYearYear ?? null) : null;
     const words: Record<string, string | null> = { return: ret, from, year };
     const title = coachDeskTitleAt(pathname, { get: k => words[k] ?? null }, `/${orgSlug}/coaches/teams/${teamId}`, rows, seasonName);
-    return { teamId, title, recordSlot };
-  }, [teamId, assignments, closedAssignments, pathname, ret, from, year, orgSlug, recordSlot]);
+    return { teamId, title, recordSlot, barSlot };
+  }, [teamId, assignments, closedAssignments, pathname, ret, from, year, orgSlug, recordSlot, barSlot]);
   return (
     <SlotRef.Provider value={setRecordSlot}>
-      <Ctx.Provider value={value}>{children}</Ctx.Provider>
+      <BarSlotRef.Provider value={setBarSlot}>
+        <Ctx.Provider value={value}>{children}</Ctx.Provider>
+      </BarSlotRef.Provider>
     </SlotRef.Provider>
   );
 }
@@ -74,4 +86,9 @@ export function useCoachDeskTitle(): DeskTitle {
 /** The strip's end of the record slot: `<div ref={useCoachRecordSlotRef()} />`. */
 export function useCoachRecordSlotRef(): (el: HTMLElement | null) => void {
   return useContext(SlotRef);
+}
+
+/** The team bar's end of the phone's record slot: `<div ref={useCoachBarSlotRef()} />`. */
+export function useCoachBarSlotRef(): (el: HTMLElement | null) => void {
+  return useContext(BarSlotRef);
 }

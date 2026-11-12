@@ -53,22 +53,24 @@ describe('1. the strip names the page (E6, C4, C8)', () => {
 
   it('C4: one level down, the way back in today’s words, from one table', () => {
     const back = (p: string, q = '') => coachDrillBack(`${BASE}${p}`, new URLSearchParams(q), BASE);
-    assert.deepEqual(back('/history/opponents/hawks'), { href: `${BASE}/history?section=scouting`, label: 'All opponents' });
-    assert.deepEqual(back('/roster/p1'), { href: `${BASE}/roster`, label: 'Roster' });
-    assert.deepEqual(back('/lineups/templates/x'), { href: `${BASE}/lineups?section=templates`, label: 'Templates' });
-    assert.deepEqual(back('/lineups/e1'), { href: `${BASE}/lineups`, label: 'All lineups' });
-    assert.deepEqual(back('/practice/templates/x'), { href: `${BASE}/practice?section=templates`, label: 'Templates' });
-    assert.deepEqual(back('/practice/circuits/x'), { href: `${BASE}/practice?section=circuits`, label: 'Circuits' });
-    assert.deepEqual(back('/practice/e1'), { href: `${BASE}/practice`, label: 'Practice plans' });
-    assert.deepEqual(back('/development/sessions/s1'), { href: `${BASE}/development?section=sessions`, label: 'Skills & goals' });
-    assert.deepEqual(back('/tournaments/r1'), { href: `${BASE}/tournaments`, label: 'Tournaments' });
-    assert.deepEqual(back('/tryouts/history'), { href: `${BASE}/tryouts`, label: 'Tryouts' });
+    // `here` is the KIND of place the bar says until the page names the record (owner 2026-11-12) — never the list left behind.
+    assert.deepEqual(back('/history/opponents/hawks'), { href: `${BASE}/history?section=scouting`, label: 'All opponents', here: 'Opponent' });
+    assert.deepEqual(back('/roster/p1'), { href: `${BASE}/roster`, label: 'Roster', here: 'Player' });
+    assert.deepEqual(back('/lineups/templates/x'), { href: `${BASE}/lineups?section=templates`, label: 'Templates', here: 'Template' });
+    assert.deepEqual(back('/lineups/e1'), { href: `${BASE}/lineups`, label: 'All lineups', here: 'Lineup' });
+    assert.deepEqual(back('/practice/templates/x'), { href: `${BASE}/practice?section=templates`, label: 'Templates', here: 'Template' });
+    assert.deepEqual(back('/practice/circuits/x'), { href: `${BASE}/practice?section=circuits`, label: 'Circuits', here: 'Circuit' });
+    assert.deepEqual(back('/practice/e1'), { href: `${BASE}/practice`, label: 'Practice plans', here: 'Practice' });
+    assert.deepEqual(back('/development/sessions/s1'), { href: `${BASE}/development?section=sessions`, label: 'Skills & goals', here: 'Session' });
+    assert.deepEqual(back('/tournaments/r1'), { href: `${BASE}/tournaments`, label: 'Tournaments', here: 'Tournament' });
+    assert.deepEqual(back('/tryouts/history'), { href: `${BASE}/tryouts`, label: 'Tryouts', here: 'Tryout history' });
     assert.equal(back('/roster/p1/development/handout')?.label, 'Player');
-    assert.deepEqual(back('/history/development/practices/e1', 'from=season-end&year=2025'), { href: `${BASE}/season-end?year=2025`, label: "Season's End" });
+    assert.equal(back('/roster/p1/development/handout')?.here, 'Handout');
+    assert.deepEqual(back('/history/development/practices/e1', 'from=season-end&year=2025'), { href: `${BASE}/season-end?year=2025`, label: "Season's End", here: 'Practice' });
     assert.equal(back('/history/development/practices/e1')?.label, 'Practice review');
     // A drill-in opened from somewhere goes back there, named as today; a foreign or unnamed return is ignored.
-    assert.deepEqual(back('/lineups/e1', `return=${encodeURIComponent(`${BASE}/schedule?event=e1`)}`), { href: `${BASE}/schedule?event=e1`, label: 'The game' });
-    assert.deepEqual(back('/roster/p1', 'return=%2Fother%2Fcoaches'), { href: `${BASE}/roster`, label: 'Roster' });
+    assert.deepEqual(back('/lineups/e1', `return=${encodeURIComponent(`${BASE}/schedule?event=e1`)}`), { href: `${BASE}/schedule?event=e1`, label: 'The game', here: 'Lineup' });
+    assert.deepEqual(back('/roster/p1', 'return=%2Fother%2Fcoaches'), { href: `${BASE}/roster`, label: 'Roster', here: 'Player' });
     // Hub pages and the run mode are not one level down.
     for (const p of ['/practice', '/practice/e1/run', '/lineups', '/history', '/roster']) assert.equal(back(p), null, p);
     // …and the drill-in wins over the lit row it sits under.
@@ -219,7 +221,7 @@ describe('4. the chrome', () => {
     assert.match(css, /@media \(min-width: 901px\) \{\s*\.teamHeader \{ display: none; \}\s*\}/);
     const bar = readCode('components/coaches/CoachTeamHeader.tsx');
     // Teams counted as the sidebar's cell counts them (Phase 5): a team mid-rollover is one team, and offers no switcher of one.
-    assert.match(bar, /const canSwitch = isPhoneNav && coachTeamRoster\(assignments, closedAssignments\)\.teamCount > 1;/);
+    assert.match(bar, /const canSwitch = isPhoneNav && desk\?\.kind !== 'back' && coachTeamRoster\(assignments, closedAssignments\)\.teamCount > 1;/);
     assert.match(bar, /<CoachTeamSwitchSheet/);
   });
 

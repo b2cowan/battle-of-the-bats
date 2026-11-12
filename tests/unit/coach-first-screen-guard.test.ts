@@ -58,8 +58,8 @@ describe('B1 — the team name is the switcher\'s door', () => {
   // one 44px target over both lines — rather than a team name heading the bar. B1's decisions stand: one switcher per width, a
   // door only with somewhere to go, the More sheet's row density.
   it('the masthead offers the button only with somewhere to switch to, and only below the nav breakpoint', () => {
-    assert.match(masthead, /const canSwitch = isPhoneNav && coachTeamRoster\(assignments, closedAssignments\)\.teamCount > 1;/,
-      'a second TEAM (counted as the sidebar\'s cell counts them), gated on the phone nav — a one-team coach and a desktop see plain text');
+    assert.match(masthead, /const canSwitch = isPhoneNav && desk\?\.kind !== 'back' && coachTeamRoster\(assignments, closedAssignments\)\.teamCount > 1;/,
+      'a second TEAM (counted as the sidebar\'s cell counts them), gated on the phone nav — a one-team coach and a desktop see plain text; and never one level down, where the name is the record\'s (owner 2026-11-12)');
     assert.match(masthead, /aria-haspopup="menu"/, 'the line is a real popup button');
     assert.ok(masthead.includes('<CoachTeamSwitchSheet'), 'the button opens the team sheet');
   });

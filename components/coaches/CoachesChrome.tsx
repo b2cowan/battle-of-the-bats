@@ -59,15 +59,19 @@ export default function CoachesChrome({
 
   // ⚖ THE BAND under the strip (navigation Phase 4b, R1, owner 2026-11-11). A room that has tabs holds the band's 45px open by
   // ADDRESS (`coachBandAt` — so the server's paint already has it and the tabs arrive into room already made); its tab bar
-  // portals itself into the slot (`HubTabBar band`, `HubBandSlot`) above 900. On a phone the slot is an empty, unstyled div
-  // and the tab row stays in the page, pinned under the team bar by the same `--coach-band-h` (navigation Phase 5, F4). A bar with nothing to show
+  // portals itself into the slot (`HubTabBar band`, `HubBandSlot`) above 900. On a phone this slot is an empty, unstyled div and the
+  // row docks into the phone's own band instead, drawn under the team bar (`bandSlotPhone`, `CoachTeamHeader`; owner 2026-11-12:
+  // flush, just like the computer), pinned by the same `--coach-band-h` (navigation Phase 5, F4). A bar with nothing to show
   // (a row of one tab) gives the band back (`reportEmpty`) so a coach is never left an empty strip.
   const teamId = coachTeamIdIn(pathname);
   const bandRoom = !!teamId && coachBandAt(pathname, `/${orgSlug}/coaches/teams/${teamId}`);
   const [bandEl, setBandEl] = useState<HTMLElement | null>(null);
   const [bandEmpty, setBandEmpty] = useState(false); // the bar's own cleanup clears it when it leaves
   const bandOn = bandRoom && !bandEmpty;
-  const band = useMemo(() => ({ el: bandEl, reportEmpty: setBandEmpty }), [bandEl]);
+  const [phoneEl, setPhoneEl] = useState<HTMLElement | null>(null); // the phone's band, drawn under the team bar (CoachTeamHeader)
+  // The phone's slot is offered only while this address has a band (the slot itself is display:none otherwise) — a bar docked into
+  // a hidden slot would vanish, so without a band it renders in place, exactly as the computer's does.
+  const band = useMemo(() => ({ el: bandEl, reportEmpty: setBandEmpty, phoneEl: bandOn ? phoneEl : null, setPhoneEl }), [bandEl, phoneEl, bandOn]);
   // Keyboard focus and in-page jumps must never land UNDER the strip and the band: the document is the scroller, so the
   // padding is set on it, from the band's real pinned bottom (a custom property on the shell would not reach the root).
   useEffect(() => {

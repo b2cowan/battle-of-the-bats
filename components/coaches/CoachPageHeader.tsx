@@ -8,6 +8,7 @@ import HelpButton from '@/components/help/HelpButton';
 import { useCoachPageHelp } from '@/components/coaches/CoachPageHelpSlot';
 import { useCoachDeskTitle } from '@/components/coaches/CoachDeskTitle';
 import CoachDeskNudge from '@/components/coaches/CoachDeskNudge';
+import CoachBarName, { useCoachBarNameSlot } from '@/components/coaches/CoachBarName';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -203,6 +204,7 @@ export default function CoachPageHeader({
      but a hook behind the `embedded` early return below is the classic ordering crash. */
   const helpHosted = useCoachPageHelp(help && !nested && variant !== 'embedded' ? help : null, helpLabel);
   const { title: desk, recordSlot } = useCoachDeskTitle();
+  const barSlot = useCoachBarNameSlot(); // the phone's bar slot, one level down — a hook, so above the early return
   if (variant === 'embedded') {
     return actions ? (
       <div className={`${styles.pageHeader} ${styles.pageHeaderStd}`}>
@@ -232,8 +234,14 @@ export default function CoachPageHeader({
   // ⚠ A TEXT TITLE ONLY: the player page's phone title is a button owning a ref and a sheet's state — a second copy of it in
   // the (hidden) strip would steal that ref. On a computer every drill-in's title is text.
   const deskRecord = deskDrill && !!recordSlot && typeof title === 'string';
+  // ⚖ ON A PHONE THE BAR NAMES THE RECORD TOO (owner, 2026-11-12: "the arrow is the only thing representing back and the bar always
+  // names the place you are in"): once the bar's slot exists the title and chips are drawn THERE (a portal of the page's own
+  // elements — the player's switcher button included, its ref and sheet state stay this page's) and are NOT rendered here, so the
+  // paper title hides, the row keeps only the page's buttons, and nothing is named twice. Until then the header keeps its own.
+  const barNames = deskDrill && !!barSlot;
   return (
     <>
+    {barNames && <CoachBarName title={title} chips={titleChips} />}
     {deskRecord && createPortal(
       <>
         <span className={strip.backRule} aria-hidden />
@@ -246,7 +254,8 @@ export default function CoachPageHeader({
       className={`${styles.pageHeader} ${styles.pageHeaderStd}${nested ? ` ${styles.pageHeaderNested}` : ''}${actionsPhoneInTitleRow ? ` ${styles.pageHeaderActionsCorner}` : ''}`}
       data-desk-named={deskNamed ? (deskRowHas ? 'actions' : 'empty') : undefined}
       data-desk-drill={deskDrill ? (deskRecord ? (deskRowHas ? 'record' : 'empty') : '') : undefined}
-      data-phone-row={deskNamed ? (!tabletRowHas ? 'empty' : !phoneRowHas ? 'tablet' : undefined) : undefined}
+      data-phone-row={deskNamed || barNames ? (!tabletRowHas ? 'empty' : !phoneRowHas ? 'tablet' : undefined) : undefined}
+      data-phone-record={barNames || undefined}
     >
       <div className={styles.pageHeaderLeft}>
         {backTo && (
@@ -259,19 +268,21 @@ export default function CoachPageHeader({
             <span className={styles.pageHeaderBackRule} aria-hidden />
           </>
         )}
-        {Icon && (
+        {!barNames && Icon && (
           <div className={`${styles.headerIcon}${nested ? ` ${styles.headerIconNested}` : ''}`}>
             <Icon size={nested ? 15 : 18} />
           </div>
         )}
-        <div className={styles.pageTitleWrap}>
-          {nested ? (
-            <h2 className={`${styles.pageTitle} ${styles.pageTitleNested}`}>{title}</h2>
-          ) : (
-            <h1 className={styles.pageTitle}>{title}</h1>
-          )}
-          {titleChips}
-        </div>
+        {!barNames && (
+          <div className={styles.pageTitleWrap}>
+            {nested ? (
+              <h2 className={`${styles.pageTitle} ${styles.pageTitleNested}`}>{title}</h2>
+            ) : (
+              <h1 className={styles.pageTitle}>{title}</h1>
+            )}
+            {titleChips}
+          </div>
+        )}
       </div>
       {actions && (
         <div className={`${styles.pageHeaderActions}${actionsPhoneHidden ? ` ${styles.pageHeaderActionsWideOnly}` : ''}`}>

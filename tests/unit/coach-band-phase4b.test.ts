@@ -10,7 +10,8 @@ import { coachBandAt } from '../../lib/coach-team-nav.ts';
  *   1. the band is reserved by the ADDRESS, for exactly the five rooms that have tab bars (never a drill-in, never the player page);
  *   2. the band's height has ONE declaration and is read by everything that docks under the strip;
  *   3. every coach tab bar named in R5 sets `band`, the player page sets `sticky`, and no coach page uses the club's `inBar`;
- *   4. the phone keeps its tab row in the page (the band is display:none and its height 0 at 900 and below).
+ *   4. the phone has its own band, directly under the team bar (owner 2026-11-12, "always flush, just like the desktop"): the tab
+ *      row docks there at every width, above the page's own button row, and never sits in the page.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 const BASE = '/falcons/coaches/teams/t1';
@@ -34,15 +35,18 @@ describe('the band is reserved by the address (R1, R5)', () => {
 
 describe('one height, read everywhere it must be (R4)', () => {
   const css = readCode('app/[orgSlug]/coaches/coaches.module.css');
-  // ⚖ AT EVERY WIDTH since navigation Phase 5 (F4, owner 2026-11-12 — R6's "the phone follows with the same rule"): a phone's
-  // tab row pins under the bar, and what docks under it adds the same one height. The SLOT stays a computer's only.
-  it('the band height is declared once, at 45px, at every width: 0 on a page without tabs; the slot is a computer’s only', () => {
+  // ⚖ AT EVERY WIDTH since navigation Phase 5 (F4, owner 2026-11-12): a phone's tab row pins under the bar, and what docks under it
+  // adds the same one height. Since the same day the phone has its own slot (`.bandSlotPhone`), asserted below.
+  it('the band height is declared once, at 45px, at every width: 0 on a page without tabs', () => {
     assert.equal((css.match(/--coach-band-h:\s*45px/g) ?? []).length, 1);
     assert.match(css, /--coach-band-h: 0px;\s*display: flex;/, 'zero by default on the shell');
     const at = css.indexOf('.coachesShell[data-coach-band] { --coach-band-h: 45px; }');
     assert.ok(at > 0);
     assert.match(css.slice(at), /^\.coachesShell\[data-coach-band\] \{ --coach-band-h: 45px; \}\n\n@media \(min-width: 901px\) \{/, 'outside any width block, directly before the computer’s slot');
     assert.match(css.slice(at), /\.bandSlot \{\s*position: sticky;\s*top: var\(--coach-topstrip-top, 0px\);[\s\S]*?height: var\(--coach-band-h\);/);
+    // The phone's slot: under the bar by the bar's own published height, the one band height, display:none unless the shell has a band.
+    assert.match(css, /\.bandSlotPhone \{ display: none; \}/);
+    assert.match(css, /\.coachesShell\[data-coach-band\] \.bandSlotPhone \{\s*display: block;\s*position: sticky;\s*top: calc\(var\(--coach-topstrip-top, 0px\) \+ var\(--coach-header-h, 0px\)\);[\s\S]*?height: var\(--coach-band-h\);\s*margin: -1rem calc\(-1 \* var\(--coach-gutter\)\) 1rem;/);
     assert.doesNotMatch(css, /\.coachesShell\[data-coach-band\] \{ --coach-band-h: 0px; \}/, 'nothing resets it per width');
   });
   it('the register and the section deep-link margin dock under the band; --coach-header-h is not redefined', () => {
@@ -58,18 +62,23 @@ describe('one height, read everywhere it must be (R4)', () => {
     assert.match(chrome, /<div ref=\{setBandEl\} className=\{styles\.bandSlot\} \/>/);
     assert.match(chrome, /scrollPaddingTop/, 'keyboard focus never lands under the stack');
   });
+  it('the phone’s slot is drawn by the team bar’s component, directly under the bar, and offered only while the address has a band', () => {
+    const header = readCode('components/coaches/CoachTeamHeader.tsx');
+    assert.match(header, /<\/header>\s*(?:\{\s*\}\s*)?<div ref=\{bandSlot\?\.setPhoneEl\} className=\{styles\.bandSlotPhone\} \/>/, 'a sibling right after the bar, never inside it (the observer measures the bar alone)');
+    assert.match(readCode('components/coaches/CoachesChrome.tsx'), /phoneEl: bandOn \? phoneEl : null/, 'a bar docked into a hidden slot would vanish');
+  });
 });
 
 describe('which tab bars wear the band (R5)', () => {
   const bar = readCode('components/shared/HubTabBar.tsx');
   it('the band is a new opt-in prop, not the club’s inBar, and renders once (portal or in place)', () => {
     assert.match(bar, /band\?: boolean;/);
-    assert.match(bar, /const dock = band && desktop \? bandSlot\?\.el : null;/);
+    assert.match(bar, /const dock = band \? \(desktop \? bandSlot\?\.el : bandSlot\?\.phoneEl\) \?\? null : null;/, 'both widths dock');
     assert.match(bar, /return dock \? createPortal\(bar, dock\) : bar;/);
     // Docking REBUILDS the <nav> (inline row -> portal), so the measuring effect and the active-tab scroll must key on where it docks.
     assert.match(bar, /\}, \[tabsKey, remeasureKey, dock\]\);/);
     assert.match(bar, /useActiveTabInView\(barRef, 48, \[activeId, tabsKey, remeasureKey, dock\]\);/);
-    assert.ok(bar.indexOf('const dock = band && desktop') < bar.indexOf('const tabsKey'), 'the dock is known before the effects that key on it');
+    assert.ok(bar.indexOf('const dock = band ?') < bar.indexOf('const tabsKey'), 'the dock is known before the effects that key on it');
     assert.match(bar, /useBandEmptyReport\(bandSlot, !!band, tabs\.length < 2\);/, 'a bar of one tab gives the band back');
   });
   it('Money, Insights, Skills & goals, Lineups and Practice plans set band; the player page docks with sticky', () => {
@@ -87,15 +96,11 @@ describe('which tab bars wear the band (R5)', () => {
     }
     assert.doesNotMatch(readCode('components/admin/AdminEventHeader.tsx'), /\bband\b[^=]*HubTabBar|<HubTabBar[^>]*\bband\b/);
   });
-  it('the docked band is above 900; below it the in-page row pins under the bar (Phase 5, F4) — only where a shell marked a band', () => {
+  it('the docked row is dressed at every width, and the in-page copy is hidden at every width — only where a shell marked a band', () => {
     const css = readCode('components/shared/HubTabBar.module.css');
-    const block = css.slice(css.lastIndexOf('@media (min-width: 901px)'));
-    assert.match(block, /@media \(min-width: 901px\) \{\s*\.bandDocked \{/);
-    assert.match(block, /:global\(\[data-coach-band\]\) \.bandPending \{ display: none; \}/);
-    const phone = css.slice(css.lastIndexOf('@media (max-width: 900px)'));
-    assert.match(phone, /@media \(max-width: 900px\) \{\s*:global\(\[data-coach-band\]\) \.bandPending \{\s*position: sticky;\s*top: calc\(var\(--coach-topstrip-top, 0px\) \+ var\(--coach-header-h, 0px\)\);/,
-      'the phone’s row pins directly under the bar, by the bar’s own published height');
-    assert.match(phone, /height: var\(--coach-band-h, 45px\);/, 'the one height everything docking under it adds');
+    assert.match(css, /\n\.bandDocked \{ margin: 0; height: 100%; box-sizing: border-box; padding-inline: calc\(var\(--coach-gutter, 2rem\) - 0\.85rem\); \}/);
+    assert.match(css, /\n:global\(\[data-coach-band\]\) \.bandPending \{ display: none; \}/);
+    assert.doesNotMatch(css, /\.bandPending \{\s*position: sticky/, 'no sticky in-page row on a phone any more: the phone docks too');
     assert.doesNotMatch(css, /NEVER STICKY|never sticky \(reversed/i, 'the 2026-08-19 note is superseded and gone');
   });
 });

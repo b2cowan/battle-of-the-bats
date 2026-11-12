@@ -119,7 +119,7 @@ export const COACH_NAV_ITEMS: CoachNavItem[] = [SEASON_END_ITEM, ...TEAM_NAV_GRO
 /** What the strip says over the page (navigation Phase 4): the page's name, or — one level down — the way back. */
 export type CoachDeskTitle =
   | { kind: 'name'; name: string }
-  | { kind: 'back'; href: string; label: string }
+  | { kind: 'back'; href: string; label: string; here: string }
   | null;
 
 type Params = { get(name: string): string | null };
@@ -132,40 +132,46 @@ type Params = { get(name: string): string | null };
  * where back goes. A drill-in that was opened FROM somewhere (`?return=`, the lineup builder's and the player page's doors)
  * goes back there, named as the page names it today (`returnLabel`). Null when the address is not one level down.
  */
-export function coachDrillBack(pathname: string, params: Params, teamBase: string): { href: string; label: string } | null {
+export function coachDrillBack(
+  pathname: string, params: Params, teamBase: string,
+): { href: string; label: string; here: string } | null {
   if (!pathname.startsWith(`${teamBase}/`)) return null;
   const seg = pathname.slice(teamBase.length + 1).split('/').filter(Boolean);
   const [a, b, c, d] = seg;
   const returnTo = safeReturnPath(params.get('return'), teamBase);
-  const returned = (fallback: { href: string; label: string }) => {
+  /* ⚖ `here` IS THE KIND OF PLACE, NOT ITS NAME (owner, 2026-11-12: "the arrow is the only thing representing back and the bar always
+     names the place you are in"). The bar's first line is the record's own name, which only the page knows once it loads
+     (`CoachBarName`); until then — and on a state the page never names (a wall, a failed load) — it says what KIND of place this is
+     ("Lineup", "Player"), from the address alone, so the server's first paint is never blank and never names the place you LEFT. */
+  const returned = (fallback: { href: string; label: string }, here: string) => {
     const label = returnLabel(returnTo, teamBase);
-    return returnTo && label ? { href: returnTo, label } : fallback;
+    return { ...(returnTo && label ? { href: returnTo, label } : fallback), here };
   };
-  if (a === 'history' && b === 'opponents' && c && seg.length === 3) return { href: insightsSectionHref(teamBase, 'scouting'), label: 'All opponents' };
+  if (a === 'history' && b === 'opponents' && c && seg.length === 3) return { href: insightsSectionHref(teamBase, 'scouting'), label: 'All opponents', here: 'Opponent' };
   if (a === 'history' && b === 'development' && c === 'practices' && d && seg.length === 4) {
     if (params.get('from') === 'season-end') {
       const year = params.get('year');
-      return { href: `${teamBase}/season-end${year ? `?year=${encodeURIComponent(year)}` : ''}`, label: SEASON_END_LABEL };
+      return { href: `${teamBase}/season-end${year ? `?year=${encodeURIComponent(year)}` : ''}`, label: SEASON_END_LABEL, here: 'Practice' };
     }
-    return { href: insightsSectionHref(teamBase, 'development'), label: 'Practice review' };
+    return { href: insightsSectionHref(teamBase, 'development'), label: 'Practice review', here: 'Practice' };
   }
   if (a === 'roster' && b && c === 'development' && d === 'handout' && seg.length === 4) {
     // The one way back that names a person today (the player): the strip says "Player" (C4).
-    return returnTo ? { href: returnTo, label: returnLabel(returnTo, teamBase) ?? 'Player' }
-      : { href: playerDevelopmentHref(teamBase, b, { view: 'goals' }), label: 'Player' };
+    return returnTo ? { href: returnTo, label: returnLabel(returnTo, teamBase) ?? 'Player', here: 'Handout' }
+      : { href: playerDevelopmentHref(teamBase, b, { view: 'goals' }), label: 'Player', here: 'Handout' };
   }
-  if (a === 'roster' && b && seg.length === 2) return returned({ href: `${teamBase}/roster`, label: 'Roster' });
-  if (a === 'lineups' && b === 'templates' && c && seg.length === 3) return { href: lineupsHref(teamBase, 'templates'), label: 'Templates' };
-  if (a === 'lineups' && b && b !== 'templates' && seg.length === 2) return returned({ href: `${teamBase}/lineups`, label: 'All lineups' });
-  if (a === 'practice' && b === 'templates' && c && seg.length === 3) return { href: practicePlansHref(teamBase, 'templates'), label: 'Templates' };
-  if (a === 'practice' && b === 'circuits' && c && seg.length === 3) return { href: practicePlansHref(teamBase, 'circuits'), label: 'Circuits' };
-  if (a === 'practice' && b && b !== 'templates' && b !== 'circuits' && seg.length === 2) return { href: `${teamBase}/practice`, label: 'Practice plans' };
-  if (a === 'development' && b === 'sessions' && c && seg.length === 3) return { href: skillsAndGoalsHref(teamBase, 'sessions'), label: 'Skills & goals' };
-  if (a === 'tournaments' && b && seg.length === 2) return { href: `${teamBase}/tournaments`, label: 'Tournaments' };
-  if (a === 'tryouts' && b === 'history' && seg.length === 2) return { href: `${teamBase}/tryouts`, label: 'Tryouts' };
+  if (a === 'roster' && b && seg.length === 2) return returned({ href: `${teamBase}/roster`, label: 'Roster' }, 'Player');
+  if (a === 'lineups' && b === 'templates' && c && seg.length === 3) return { href: lineupsHref(teamBase, 'templates'), label: 'Templates', here: 'Template' };
+  if (a === 'lineups' && b && b !== 'templates' && seg.length === 2) return returned({ href: `${teamBase}/lineups`, label: 'All lineups' }, 'Lineup');
+  if (a === 'practice' && b === 'templates' && c && seg.length === 3) return { href: practicePlansHref(teamBase, 'templates'), label: 'Templates', here: 'Template' };
+  if (a === 'practice' && b === 'circuits' && c && seg.length === 3) return { href: practicePlansHref(teamBase, 'circuits'), label: 'Circuits', here: 'Circuit' };
+  if (a === 'practice' && b && b !== 'templates' && b !== 'circuits' && seg.length === 2) return { href: `${teamBase}/practice`, label: 'Practice plans', here: 'Practice' };
+  if (a === 'development' && b === 'sessions' && c && seg.length === 3) return { href: skillsAndGoalsHref(teamBase, 'sessions'), label: 'Skills & goals', here: 'Session' };
+  if (a === 'tournaments' && b && seg.length === 2) return { href: `${teamBase}/tournaments`, label: 'Tournaments', here: 'Tournament' };
+  if (a === 'tryouts' && b === 'history' && seg.length === 2) return { href: `${teamBase}/tryouts`, label: 'Tryouts', here: 'Tryout history' };
   // ⚖ The game page (the bench console) is one level down from the Schedule (navigation Phase 5, F7, owner 2026-11-12): back
   // to this game on the schedule, as the console's own arrow went (it was removed with this entry: one way back per screen).
-  if (a === 'game' && b && seg.length === 2) return { href: `${teamBase}/schedule?event=${encodeURIComponent(b)}`, label: 'Schedule' };
+  if (a === 'game' && b && seg.length === 2) return { href: `${teamBase}/schedule?event=${encodeURIComponent(b)}`, label: 'Schedule', here: 'Game' };
   return null;
 }
 
@@ -196,8 +202,9 @@ export function isCoachNavItemLit(pathname: string, teamBase: string, href: stri
 }
 
 /**
- * ⚖ THE BAND IS RESERVED BY THE ADDRESS (navigation Phase 4b, R1, owner 2026-11-11). On a computer a coach page that has a
- * tab bar keeps it pinned in a band directly under the strip (the club's own pattern, standard §3 item 4). The five rooms
+ * ⚖ THE BAND IS RESERVED BY THE ADDRESS (navigation Phase 4b, R1, owner 2026-11-11). A coach page that has a tab bar keeps
+ * it pinned in a band directly under the strip on a computer (the club's own pattern, standard N11) and directly under the
+ * team bar on a phone (owner 2026-11-12). The five rooms
  * that have tab bars — Money, Insights, Skills & goals, Lineups, Practice plans — answer on the ROOM's address alone (their
  * tabs are `?section=`, never another path), so the shell can hold the band's 45px open before the page has loaded and its
  * tabs arrive into room already made: a tabbed route never shifts when its tabs show up (the club's Phase 0 lesson, "no flash").

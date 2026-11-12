@@ -177,41 +177,24 @@
   .tab { padding: 0.5rem 0.6rem; }
 }
 
-/* ── THE COACHES PORTAL'S BAND (`band`, navigation Phase 4b, R1, owner 2026-11-11) ───────────────────────────────────
-   A coach page's tabs are pinned in a band directly under the strip, full width, tabs alone. The SHELL draws the band
-   (an empty slot, `.bandSlot` in the portal's sheet: its height, ground, bottom rule and pin) and the bar is portaled into
-   it on a computer; this block only dresses the row for living there. ⚠ ABOVE 900 ONLY, and only for the docked copy: on a
-   phone, and in any shell without a band, the row is exactly what it always was (these rules do not reach it).
-   ⚠ NOT `.inBar`: that is the club's header-embedded look, opt-in for the club alone, and its guard says no coach page uses
-   it. The first tab's label lines up with the page's own left edge (the portal's 2rem gutter less the tab's padding). */
-@media (min-width: 901px) {
-  .bandDocked { margin: 0; height: 100%; box-sizing: border-box; padding-inline: calc(2rem - 0.85rem); }
-  .bandDocked .bar { border-bottom: 0; }
-  /* The arrows paint the band's ground, the card tone — one layer, as the club's bar. */
-  .bandDocked .scrollLeft { background: linear-gradient(to right, var(--card-bg) 55%, transparent); }
-  .bandDocked .scrollRight { background: linear-gradient(to left, var(--card-bg) 55%, transparent); }
-  /* The in-page copy a shell with a band has already given up on (the server's paint, before the tabs find their band):
-     hidden rather than flashed in the old place. A shell with NO band never sets the attribute, so its bar stays. */
-  :global([data-coach-band]) .bandPending { display: none; }
+/* ── THE COACHES PORTAL'S BAND (`band`, navigation Phase 4b, R1, owner 2026-11-11; the phone joined it 2026-11-12) ──────────────
+   A coach page's tabs are pinned in a band directly under the chrome, full width, tabs alone. The SHELL draws the band (an empty
+   slot: its height, ground, bottom rule and pin) and the bar is portaled into it — `.bandSlot` under the strip on a computer,
+   `.bandSlotPhone` directly under the team bar on a phone (owner, 2026-11-12: "these should always be flush, just like the desktop").
+   This block only dresses the row for living there, at EVERY width; in a shell without a band the row is exactly what it always
+   was (these rules do not reach it). ⚠ NOT `.inBar`: that is the club's header-embedded look, opt-in for the club alone, and its
+   guard says no coach page uses it. The first tab's label lines up with the page's own left edge (the portal's gutter — 2rem on a
+   computer, `--coach-gutter` on a phone — less the tab's padding). */
+.bandDocked { margin: 0; height: 100%; box-sizing: border-box; padding-inline: calc(var(--coach-gutter, 2rem) - 0.85rem); }
+/* At 640 and below the tab's own padding is 0.6rem, not 0.85rem (the rule above), so the first label would land 4px inside the gutter. */
+@media (max-width: 640px) {
+  .bandDocked { padding-inline: calc(var(--coach-gutter, 1rem) - 0.6rem); }
 }
-/* ⚖ ON A PHONE THE SAME RULE (navigation Phase 5, F4, owner 2026-11-12 — R6's "the phone follows with the same rule"): the row
-   stays in the page (no slot to dock in, and a portal would move it after load) and PINS directly under the team bar once
-   scrolled to it — the player page's `sticky`, dressed as the band: full bleed across the page's gutter, the card ground, the
-   band's bottom rule, the band's one height (`--coach-band-h`, which everything docking under it adds). CSS only, so the
-   server's paint is already right. The sideways scroll, its arrows and the current tab kept in view are the row's own. */
-@media (max-width: 900px) {
-  :global([data-coach-band]) .bandPending {
-    position: sticky;
-    top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px));
-    z-index: 35; /* under the team bar (40) and every sheet; over the page's rows and the register's toolbar's ground */
-    box-sizing: border-box;
-    height: var(--coach-band-h, 45px);
-    /* Full bleed WITHOUT widening the box: the card ground and the band's bottom rule are a border image reaching out over the
-       page's gutter — an outset paints, it never lays out, so nothing spills sideways (the layout check's content-overflow
-       caught the first form, negative margins, spilling 16px on Money, Insights and Lineups). */
-    border-image: linear-gradient(to bottom, var(--card-bg) calc(100% - 1px), var(--home-line) calc(100% - 1px)) 0 fill / 0 / 0 var(--coach-gutter, 1rem);
-  }
-  :global([data-coach-band]) .bandPending .bar { height: 100%; border-bottom: 0; }
-  :global([data-coach-band]) .bandPending .scrollLeft { background: linear-gradient(to right, var(--card-bg) 55%, transparent); }
-  :global([data-coach-band]) .bandPending .scrollRight { background: linear-gradient(to left, var(--card-bg) 55%, transparent); }
-}
+.bandDocked .bar { border-bottom: 0; }
+/* The arrows paint the band's ground, the card tone — one layer, as the club's bar. */
+.bandDocked .scrollLeft { background: linear-gradient(to right, var(--card-bg) 55%, transparent); }
+.bandDocked .scrollRight { background: linear-gradient(to left, var(--card-bg) 55%, transparent); }
+/* The in-page copy a shell with a band has already given up on (the server's paint, before the tabs find their band):
+   hidden rather than flashed in the old place — at every width now, a phone included. A shell with NO band never sets the
+   attribute, so its bar stays. */
+:global([data-coach-band]) .bandPending { display: none; }

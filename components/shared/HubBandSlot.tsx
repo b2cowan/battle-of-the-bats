@@ -13,6 +13,14 @@ export interface HubBandSlot {
   el: HTMLElement | null;
   /** The bar reports whether it has nothing to show (a row of one tab is not navigation): the shell then gives the band back. */
   reportEmpty: (empty: boolean) => void;
+  /**
+   * ⚖ THE PHONE'S BAND (owner, 2026-11-12: "these should always be flush, just like the desktop"). A phone's band is a second slot,
+   * drawn by the team bar's own component directly UNDER the bar (the computer's `el` is the shell's, above the page, and is
+   * display:none at 900 and below). Both are empty until a bar docks; the bar picks by width.
+   */
+  phoneEl: HTMLElement | null;
+  /** The team bar's phone slot registers itself here. */
+  setPhoneEl: (el: HTMLElement | null) => void;
 }
 
 export const HubBandContext = createContext<HubBandSlot | null>(null);

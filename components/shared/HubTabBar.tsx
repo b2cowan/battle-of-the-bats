@@ -86,10 +86,11 @@ export default function HubTabBar<Id extends string>({
   inBar?: boolean;
   /**
    * ⚖ OPT-IN, DEFAULT FALSE — THE COACHES PORTAL'S BAND (navigation Phase 4b, R1, owner 2026-11-11; supersedes the 2026-08-19
-   * "never sticky" note on Money). On a computer a coach page with tabs keeps them pinned in a 45px band directly under the
-   * strip, full width, tabs alone — the club's own pattern. The row is PORTALED into the shell's band (`HubBandSlot`) when
-   * the shell offers one and the viewport is a computer; on a phone, or in a shell with no band, it renders in place, exactly
-   * as it always did. EVERY coach tab bar that is not a view switch sets it, so "one tab pinned, six not" cannot arise.
+   * "never sticky" note on Money). A coach page with tabs keeps them pinned in a 45px band, full width, tabs alone — under the
+   * strip on a computer (the club's own pattern), directly under the team bar on a phone (owner 2026-11-12: "always flush, just
+   * like the desktop"). The row is PORTALED into the shell's band (`HubBandSlot`: `el` on a computer, `phoneEl` on a phone) when
+   * the shell offers one; in a shell with no band it renders in place, exactly as it always did. EVERY coach tab bar that is
+   * not a view switch sets it, so "one tab pinned, six not" cannot arise.
    * ⚠ NOT `inBar`: that is the club's header-embedded look and its guard says no coach page uses it. The player page does not
    * set this either — its tabs sit under a glance block and use `sticky` (they dock under the strip once scrolled past).
    */
@@ -122,9 +123,11 @@ export default function HubTabBar<Id extends string>({
   // row for a portal, which REBUILDS the <nav>, so the observer, the scroll listener and the active-tab scroll must re-attach to the new
   // one (a bar that fits docked still needs its arrows at 901–1000 wide — /review 2026-11-12). Hooks stay before the early return.
   const bandSlot = useHubBandSlot();
-  const desktop = !useIsPhoneNav(); // the portal's one 900/901 split; the server answers "phone", so the first paint is the page's own row
+  const desktop = !useIsPhoneNav(); // the portal's one 900/901 split; the server answers "phone", so the first paint holds the phone's band
   useBandEmptyReport(bandSlot, !!band, tabs.length < 2);
-  const dock = band && desktop ? bandSlot?.el : null;
+  // ⚖ BOTH WIDTHS DOCK (owner, 2026-11-12: "always flush, just like the desktop"): the computer's band under the strip, the
+  // phone's directly under the team bar. The in-page row is only ever the first paint's, and a shell with no band keeps it.
+  const dock = band ? (desktop ? bandSlot?.el : bandSlot?.phoneEl) ?? null : null;
   const docked = !!dock;
   const tabsKey = tabs.map(t => `${t.id}:${t.label}`).join('|');
   useEffect(() => {

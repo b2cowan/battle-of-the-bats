@@ -575,9 +575,33 @@
   .coachesMain { padding: 1rem var(--coach-gutter) 2rem; }
 }
 
+/* ⚖ THE PHONE'S BAND (owner, 2026-11-12: "these should always be flush, just like the desktop"). `CoachTeamHeader` draws this empty
+   slot directly UNDER the team bar, and a room's tab row (`HubTabBar band`) docks into it — so on a phone the tabs sit flush under
+   the bar, above the page's own buttons (Record, Start session, New template), exactly as the computer's band sits above them. It
+   replaced a sticky in-page row, which sat wherever the header's button row left it (a 16px gap on Practice plans, the row dropped
+   BELOW Money's Record button). Pinned under the bar by the bar's own published height; the margin cancels the bar's 1rem under
+   itself, and the 1rem below restores the page's breathing room. Display:none unless this address has a band, so a room with no
+   tabs gains nothing; an empty band (loading, a wall shown instead of tabs) draws nothing, as the computer's does. */
+.bandSlotPhone { display: none; }
+@media (max-width: 900px) {
+  .coachesShell[data-coach-band] .bandSlotPhone {
+    display: block;
+    position: sticky;
+    top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px));
+    z-index: 35; /* under the team bar (40) and every sheet; over the page's rows and the register's toolbar's ground */
+    box-sizing: border-box;
+    height: var(--coach-band-h);
+    margin: -1rem calc(-1 * var(--coach-gutter)) 1rem;
+    background-color: var(--pitch-black);
+    background-image: linear-gradient(var(--card-bg), var(--card-bg));
+    border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.08));
+  }
+  .coachesShell[data-coach-band] .bandSlotPhone:not(:has(> *)) { background: none; border-bottom: 0; }
+}
+
 /* The one declaration of the band's height: the shell marks itself when the address has a band (CoachesChrome). ⚖ AT EVERY
    WIDTH since navigation Phase 5 (F4, owner 2026-11-12, R6's "the phone follows with the same rule"): on a phone the room's
-   tab row pins directly under the bar (`HubTabBar`'s phone band, sticky in the page), and everything that docks under it —
+   tab row docks in `.bandSlotPhone` (above) directly under the bar and pins there, and everything that docks under it —
    the register's toolbar, a section a link jumps to — adds this height as it does on a computer. The slot below is a
    computer's only: on a phone it is an empty, unstyled div and takes no room. */
 .coachesShell[data-coach-band] { --coach-band-h: 45px; }
@@ -720,6 +744,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* ⚖ ONE LEVEL DOWN THE FIRST LINE IS THE RECORD'S NAME (owner, 2026-11-12: "the arrow is the only thing representing back and the
+   bar always names the place you are in"). `.teamBarSlot` is where the page's header portals its title (and chips) — `CoachBarName`;
+   the page's own <h1> carries `.teamBarName`, so it looks as a named page's does. `.teamBarHere` is the stand-in until then: the KIND
+   of place from the address ("Lineup"), gone the moment the slot has content, and an empty slot draws nothing. */
+.teamBarSlot { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.teamBarSlot:empty { display: none; }
+.teamBarSlot:not(:empty) + .teamBarHere { display: none; }
+.teamBarSlot > .teamBarName { flex: 0 1 auto; }
+/* A chip the page hands over (the opponent's record) must not grow the bar: it would sit at the body's 1.6 line height and its own
+   padding, ~10px taller than the 53px floor — the small line's chips (`.teamBarLine .teamBarChip`) pin theirs the same way
+   (/review 2026-11-12). */
+.teamBarSlot > :not(.teamBarName) { flex: none; line-height: 1; padding-block: 0.05rem; }
+/* A player's name is the switcher BUTTON (the page's own element, portaled whole): its 44px box overhangs the line as it did under
+   the page title (the bar's line is 1.2em, the title's 1.1em), so the heading stops clipping, and the name cuts with "…" inside. */
+.teamBarSlot > .teamBarName:has(> button) { overflow: visible; }
+.teamBarSlot > .teamBarName > button { margin-block: calc((1.2em - var(--tap-min, 44px)) / 2); }
+.teamBarSlot > .teamBarName > button > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The small line (F2): the masthead's meta voice — the data face at the label step, normal weight, the 11px/1.3 line (left
    to inherit the body's, the tournament bar stood 2px taller). The team's name gives way first; the record and the chips
    never do. */
@@ -1399,12 +1440,17 @@
 .pageHeaderStd[data-desk-drill] .pageHeaderBackRule { display: none; }
 @media (max-width: 900px) {
   .pageHeaderStd[data-phone-row='empty'] { display: none; }
+  /* ⚖ ONE LEVEL DOWN THE BAR HOLDS THE RECORD'S NAME (owner, 2026-11-12): the header drew no title (`data-phone-record`), so it is
+     the page's buttons alone, packed to the right end — as a named page's. */
+  .pageHeaderStd[data-phone-record] { justify-content: flex-end; }
+  .pageHeaderStd[data-phone-record] .pageHeaderLeft { display: none; }
 }
 @media (max-width: 640px) {
   /* Buttons a phone drops (`actionsPhoneHidden`) leave a tablet its row and a phone none. */
   .pageHeaderStd[data-phone-row='tablet'] { display: none; }
   /* The phone grid puts the actions on a second row under the title; with no title they ARE the first row. */
-  .pageHeaderStd[data-desk-named] .pageHeaderActions { grid-row: 1; }
+  .pageHeaderStd[data-desk-named] .pageHeaderActions,
+  .pageHeaderStd[data-phone-record] .pageHeaderActions { grid-row: 1; }
 }
 @media (min-width: 901px) {
   .pageHeaderStd[data-desk-named='empty'] { display: none; }

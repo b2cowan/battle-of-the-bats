@@ -724,8 +724,7 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   unmatchable by the baseline, not in this change's reach — unproved). **Owner calls open:** none new; the Practice-plans room for a coach with
   no library collapses its reserved band once after load (accepted).
 - **Phase 5 · Coaches Portal phone.** Bar names the page; the team on the small line opens `CoachTeamSwitchSheet`.
-  - **BUILT 2026-11-12** (walk §519 https://claude.ai/artifact/3B4TgDuuJirmLGzToQLoQS, 8 walks / 32 checks; commit owed with
-    the owner's yes). F7 amended at the build (owner): the game console's own back arrow (`.gdBackBtn`, the recap's and the
+  - **BUILT 2026-11-12, committed `768ef37a3`; walk §519 PASSED 32/32 2026-11-12, no findings** (https://claude.ai/artifact/3B4TgDuuJirmLGzToQLoQS, 8 walks / 32 checks; P1·3 and P4·5 superseded by Phase 5b). F7 amended at the build (owner): the game console's own back arrow (`.gdBackBtn`, the recap's and the
     error state's `.gdBack`) is removed — the bar's / strip's "← Schedule" (`coachDrillBack` game → `/schedule?event=`) is the
     one way back. Built: `CoachTeamHeader` reads `useCoachDeskTitle` (an `<h1>` on a named page, a back arrow + label one level
     down), the small line from `coachStripFacts` (team · Draft / Game day / Complete chip · record; tablet adds club · season and
@@ -765,6 +764,35 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
     tabs under the bar (Ledger 35 % pinned); F5 keep the Overview's club · season strip; F6 one bar ≤ 900, the tablet's
     line adds club · season and keeps the status; F7 the game page joins `coachDrillBack` (back to Schedule); F8 the
     sheet's rows from `teamSwitchGroups` / `teamTile`.
+- **Phase 5b · One level down, the bar names the record — and the player page joins the tab rule.** ⚖ **RULED 2026-11-12
+  (owner, during walk §519, from two screenshots of the player page at 1440 and 400; "yes record it").** Not built; nothing
+  drawn yet. **The drawing prompt is written AFTER the owner finishes walk §519** (his sequencing) — §519 PASSED 32/32 2026-11-12; drawing prompt `ADMIN_NAV_BUILD_PHASE5B_DRAWING_PROMPT.md` written 2026-11-12. **Points 4 and 5 were built 2026-11-12 by another session** from the owner's ruling there ("the arrow is the only thing representing back and the bar always names the place you are in") — NAV_STANDARD **N13 · One level down** (`CoachBarName`, no team door one level down) and the phone's own band (N11); commit state lives in that session's record. **The drawing prompt is therefore scoped to points 1–3, the player page itself** (tabs to the top, the summary into Details, the computer's name ▾ switcher), and opens by checking that N13 is committed.
+  - **Why it came up:** the player page was carved out of the 4b tab rule on purpose (R5, 2026-11-11: its tabs stay under the
+    glance block and dock once scrolled past). Since Phase 4 the computer's strip names the player, so the page's own top row
+    holds only the "Switch player" dropdown, alone at the right; the tabs sit ~300 px lower than every other tabbed room. On the
+    phone (Phase 5 F1) the bar names the way back ("← Roster") while the page keeps the name + its ▾ — the name a row down, and
+    with 2+ teams a second ▾ on the bar's team line.
+  - **Ruled (reverses R5's player-page carve-out, the 2026-09-13 hub F10 "the glance card is the index on every tab", and Phase 5
+    F1's "one level down the bar names the way back, the record keeps its name and switcher in the page"):**
+    1. **The player's tabs go to the top like the other tabbed rooms** — the band on a computer, pinned under the bar on a phone,
+       from rest (not "dock once scrolled past").
+    2. **The glance block (the chips line and the four tiles) moves into the Details tab only.** F10's reason survives: Details is
+       the landing tab, so the mid-season answer is still the first thing seen.
+    3. **The player switcher is the player's name with a ▾, in the top chrome at every width** — the strip on a computer (the
+       floating dropdown row goes), the bar on a phone (the in-page name row goes). Not removed: player-to-player is a real flow.
+    4. **On a phone, one level down, the bar names the RECORD, not the way back** — "← │ Avery Test ▾" — bringing the phone in
+       line with the computer's 2026-11-11 "one level down, the strip names the record too". **For every drill-in** (player,
+       game, lineup, practice plan), not the player page alone.
+    5. **One chevron per bar, beside the thing it switches.** On a team page the team line keeps its ▾ (unchanged). **One level
+       down the team line is plain words** (every drill-in, so it is one rule); the only ▾ is the record's own switcher where it
+       has one (the player today). Accepted trade: on a phone, changing team from a drill-in is one extra tap (back first); the
+       computer is unaffected (the sidebar cell).
+  - **The drawing must show:** a long player name in the phone bar (names wrap, never clip — stage 4 · E5), so the bar's height
+    on that case; the Details tab with the glance block under the pinned tabs; a game / lineup / plan drill-in on the phone; the
+    computer's strip with the name ▾ open; a single-team coach. /design before hand-off.
+  - **Walk §519:** two of its checks describe what this reverses — "tap a player: the bar names Roster, the name ▾ is still in the
+    page" and "the player's tabs dock under the bar once you pass them". The owner marks them superseded by 5b rather than walking
+    them; everything else in §519 stands. The Phase 6 closing walk covers 5b, and NAV_STANDARD gets the drill-in line then.
 - **Phase 6 · Words, help, demos, sweep, walk.** NAV_STANDARD rewritten (N7 item 1, N11, exceptions, the cell);
   `memory/design_decisions.md` entry; help articles (`/docs`); demo tour anchors (the build fails if one vanishes);
   `check:layout --changed` on the touched screens, the full sweep on staging; one closing walk.

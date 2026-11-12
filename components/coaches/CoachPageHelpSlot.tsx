@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -84,7 +85,19 @@ export function CoachStripHelpProvider({ children }: { children: ReactNode }) {
  */
 export function CoachStripHelp({ reserve = false }: { reserve?: boolean }) {
   const entry = useContext(StripHelpEntryContext);
-  if (!entry) return reserve ? <span className={stripStyles.stripHelpSpacer} aria-hidden /> : null;
+  // ⚠ THE HELD WIDTH IS A LOADING STATE, NOT A PERMANENT GAP (owner 2026-11-12: a page with no help topic — a player's page — left a
+  // door-sized hole between the bell and the account button). The spacer stands only until the page has had its turn to publish:
+  // pages publish in an effect in the same commit as this one, so one short tick later "no entry" really means "no topic here"
+  // and the width is given back. Keyed to the address, so each new page gets its own chance and the bell still does not slide
+  // while a page's help is on its way.
+  const pathname = usePathname() ?? '';
+  const [settledFor, setSettledFor] = useState<string | null>(null);
+  useEffect(() => {
+    if (!reserve) return;
+    const t = setTimeout(() => setSettledFor(pathname), 120);
+    return () => clearTimeout(t);
+  }, [reserve, pathname]);
+  if (!entry) return reserve && settledFor !== pathname ? <span className={stripStyles.stripHelpSpacer} aria-hidden /> : null;
   return (
     <span className={stripStyles.stripHelp}>
       <HelpButton iconOnly label={entry.req.label} help={entry.req} />

@@ -11,9 +11,10 @@ import { coachTeamRoster } from '@/lib/coach-team-tile';
 import { formatInOrgZone } from '@/lib/timezone';
 import { useCoachNudgeDismiss } from '@/components/coaches/useCoachNudgeDismiss';
 import { CoachPageHelpSlot } from '@/components/coaches/CoachPageHelpSlot';
-import { useCoachDeskTitle } from '@/components/coaches/CoachDeskTitle';
+import { useCoachBarSlotRef, useCoachDeskTitle } from '@/components/coaches/CoachDeskTitle';
 import CoachTeamSwitchSheet from '@/components/coaches/CoachTeamSwitchSheet';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
+import { useHubBandSlot } from '@/components/shared/HubBandSlot';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -82,6 +83,8 @@ function CoachTeamHeaderInner({
 }) {
   const { assignments, closedAssignments } = useCoaches();
   const { title: desk } = useCoachDeskTitle();
+  const bandSlot = useHubBandSlot();
+  const barSlotRef = useCoachBarSlotRef();
   const headerRef = useRef<HTMLElement>(null);
   // Two facts about the page under the bar, read from the address: the team's Overview (which keeps the unpinned club ·
   // season strip under the bar) and an open chat room (no bar at ≤640). Both are CSS classes gated in the stylesheet,
@@ -120,10 +123,14 @@ function CoachTeamHeaderInner({
   const live = assignments.find(a => a.teamId === teamId) ?? null;
   const closed = closedAssignments.find(a => a.teamId === teamId) ?? null;
   const teamName = live?.teamName ?? closed?.teamName ?? null;
-  if (!teamName) return null;
+  // No team yet (assignments not loaded): no bar — but the phone's band slot is still offered, because the shell hides a banded
+  // room's in-page tab row at every width and a row with nowhere to dock would never appear (/review 2026-11-12).
+  if (!teamName) return <div ref={bandSlot?.setPhoneEl} className={styles.bandSlotPhone} />;
   // A switch needs a second TEAM, counted as the sidebar's team cell counts them (`coachTeamRoster`: a team mid-rollover is
   // one team, and offers no switcher of one). Phone only — the computer's switcher is the sidebar's team cell.
-  const canSwitch = isPhoneNav && coachTeamRoster(assignments, closedAssignments).teamCount > 1;
+  // ⚠ NOT ONE LEVEL DOWN (owner, 2026-11-12): the name there is the record's — a player's name is itself a switcher button — and a
+  // team door laid over it would cover that button. A record belongs to its team; the arrow leads back to the room, which has the door.
+  const canSwitch = isPhoneNav && desk?.kind !== 'back' && coachTeamRoster(assignments, closedAssignments).teamCount > 1;
   // A viewport crossing 900 unmounts the sheet with the door; forget it was open, so turning the tablet back does not reopen
   // it unasked (/review 2026-11-12). Set during render, the portal's idiom for state that follows a prop.
   if (!canSwitch && switchOpenAt !== null) setSwitchOpenAt(null);
@@ -168,9 +175,19 @@ function CoachTeamHeaderInner({
   // a redirect on its way — the team's own name, with the line then starting at the club.
   const back = desk?.kind === 'back' ? desk : null;
   const named = desk?.kind === 'name' ? desk.name : null;
+  // ⚖ ONE LEVEL DOWN THE NAME IS THE RECORD'S (owner, 2026-11-12: the arrow is the only back; the bar always names the place you are
+  // in): an empty slot the page's header portals its title into (`CoachBarName`), and — until a page fills it — the KIND of place
+  // from the address ("Lineup", never the list you left). Not a heading: the page's portaled title is the <h1>.
   const name = named !== null
     ? <h1 className={styles.teamBarName}>{named}</h1>
-    : <span className={styles.teamBarName}>{back ? back.label : teamName}</span>;
+    : back
+      ? (
+        <>
+          <div ref={barSlotRef} className={styles.teamBarSlot} />
+          <span className={`${styles.teamBarName} ${styles.teamBarHere}`}>{back.here}</span>
+        </>
+      )
+      : <span className={styles.teamBarName}>{teamName}</span>;
   // The small line's words. Every word shows on a tablet; the club and the season (and the record on game day) are a
   // tablet's only. The dot is drawn before every word but the first one a width shows — the first word on a tablet (CSS
   // `:first-child`), the first phone word on a phone (`data-lead-phone`) — so a hidden word never strands a dot.
@@ -306,6 +323,10 @@ function CoachTeamHeaderInner({
         </div>
       )}
     </header>
+    {/* ⚖ THE PHONE'S BAND (owner, 2026-11-12: "always flush, just like the desktop"): an empty slot directly UNDER the bar that a
+        room's tab row docks into (`HubTabBar band`). A SIBLING of the header (the observer measures the header alone for
+        `--coach-header-h`), and `display: none` unless the shell has a band for this address. */}
+    <div ref={bandSlot?.setPhoneEl} className={styles.bandSlotPhone} />
     {/* THE TEAM SHEET — a SIBLING of the header, never inside it: the header is a stacking context (z-index 40), and a fixed
         sheet inside it would sit under anything the page paints above 40 (the autosave pill at 250). Gated on `canSwitch`
         too: a viewport crossing 900 while the sheet is open swaps the button away, and the sheet goes with it. */}

@@ -72,6 +72,7 @@ import { GAME_MOMENT_MAX, sortMomentsNewestFirst } from '@/lib/coach-game-moment
 import { formatInOrgZone } from '@/lib/timezone';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachBarName from '@/components/coaches/CoachBarName';
 import { formatStoredClock } from '@/lib/utils';
 import { arrivalIsAfterStartAt, arrivalNoteSuffix } from '@/lib/coach-arrival';
 import styles from '../../../../coaches.module.css';
@@ -1140,6 +1141,7 @@ export default function CoachGameConsolePage({
     const fieldCounts = new Map(analysis.fairPlay.map(f => [f.playerId, f.onField]));
     return (
       <div className={styles.page}>
+        <CoachBarName title={matchupTitle} />
         <div className={styles.gdPage} data-field-floor>
           <div className={styles.gdBar}>
             <b>Game recap</b>
@@ -1232,6 +1234,9 @@ export default function CoachGameConsolePage({
 
   return (
     <div className={styles.page}>
+      {/* ⚖ The bar names the game (owner, 2026-11-12: the arrow is the only back; the bar always names the place you are in) — this
+          page has no standard header, so it fills the bar's slot itself. The matchup card below stays: it is the scoreboard's head. */}
+      <CoachBarName title={matchupTitle} />
       {/* data-field-floor (owner 2026-09-20, stage 0 · A4): read standing up — nothing under 12px
           inside, the position at 14; the sweep's `field-floor` rule holds it. */}
       <div className={styles.gdPage} data-field-floor>
