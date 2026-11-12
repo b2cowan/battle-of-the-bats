@@ -1,0 +1,287 @@
+<title>Friend Requests Pair Row</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: sticky tab row → View switch (tab 2) → fixed-width product specimens (true size) on a cool document ground, so the cream frames read as specimens. */
+:root {
+  --doc-bg: #E8ECEF;
+  --doc-card: #FFFFFF;
+  --doc-ink: #1E252B;
+  --doc-soft: #4B5660;
+  --doc-line: #CBD3D9;
+  --doc-accent: #2F5D8A;
+  --doc-new: #1F6B3A;
+  --doc-new-bg: #DDF0E3;
+  --doc-old: #8A4B14;
+  --doc-old-bg: #F6E6D2;
+  --doc-hi: #FFE98A;
+  --doc-mk-ink: #FFFFFF;
+  --font-doc: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+
+  /* Product specimen tokens — the shipped warm portal, fixed in both themes (copied from globals.css / RepKit.module.css). */
+  --sp-paper: #F8F4ED;
+  --sp-card: #FFFFFF;
+  --sp-ink: #241E15;
+  --sp-ink-soft: #4A4235;
+  --sp-dim: #615A54; /* --home-dim, the caption ink (--text-tertiary) */
+  --sp-line: rgba(70, 55, 30, 0.12);
+  --sp-line-strong: rgba(70, 55, 30, 0.20);
+  --sp-olive: #57651E;
+  --sp-olive-soft: rgba(87, 101, 30, 0.10);
+  --sp-warn-ink: #8A5A00;
+  --sp-warn-bg: rgba(200, 140, 0, 0.10);
+  --sp-warn-line: rgba(200, 140, 0, 0.30);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #14191D; --doc-card: #1D242A; --doc-ink: #E6ECF0; --doc-soft: #A5B1BA; --doc-line: #35404A;
+    --doc-accent: #7FB2E3; --doc-new: #7BD39A; --doc-new-bg: #17331F; --doc-old: #E9B27A; --doc-old-bg: #3A2A15; --doc-hi: #6B5A12; --doc-mk-ink: #0B1A28;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #14191D; --doc-card: #1D242A; --doc-ink: #E6ECF0; --doc-soft: #A5B1BA; --doc-line: #35404A;
+  --doc-accent: #7FB2E3; --doc-new: #7BD39A; --doc-new-bg: #17331F; --doc-old: #E9B27A; --doc-old-bg: #3A2A15; --doc-hi: #6B5A12; --doc-mk-ink: #0B1A28;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-doc); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--doc-card); }
+.wrap { max-width: 1240px; margin: 0 auto; }
+
+/* Sticky tabs */
+.tabbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--doc-card); border-bottom: 1px solid var(--doc-line);
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+.tabbar-in { max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 4px; padding-top: 10px; }
+.tab { font: inherit; font-weight: 600; font-size: 14px; color: var(--doc-soft); background: none; border: 0; border-bottom: 3px solid transparent; padding: 8px 14px 9px; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--doc-ink); border-bottom-color: var(--doc-accent); }
+.tab:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+
+h1 { font-size: 22px; line-height: 1.25; margin: 22px 0 4px; text-wrap: balance; }
+h2 { font-size: 17px; margin: 26px 0 6px; text-wrap: balance; }
+.lede { color: var(--doc-soft); max-width: 70ch; margin: 0 0 14px; }
+.panel[hidden] { display: none; }
+
+/* View switch: ONE white track, two options (shipped pattern) */
+.viewrow { display: flex; align-items: center; gap: 10px; margin: 14px 0 6px; }
+.viewrow span { font: 600 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--doc-soft); }
+.seg { display: inline-flex; background: #fff; border: 1px solid #CBD3D9; border-radius: 999px; padding: 3px; }
+.seg button { font: inherit; font-size: 13px; font-weight: 600; color: #4B5660; background: transparent; border: 0; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #57651E; color: #fff; }
+
+/* Specimen block */
+.spec { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; margin: 14px 0; overflow: hidden; }
+.spec-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; padding: 12px 16px; border-bottom: 1px solid var(--doc-line); }
+.spec-h b { font-size: 15px; }
+.spec-h small { color: var(--doc-soft); }
+.tag { font: 600 11px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; }
+.tag.now { background: var(--doc-old-bg); color: var(--doc-old); }
+.tag.new { background: var(--doc-new-bg); color: var(--doc-new); }
+.stage { background: #D9DEE2; padding: 16px; overflow-x: auto; }
+.frame-label { font: 600 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: #4B5660; margin: 0 0 8px; }
+.notes { padding: 12px 16px 14px; display: grid; gap: 8px; }
+.note { display: flex; gap: 10px; align-items: flex-start; padding: 6px 8px; border-radius: 8px; border: 1px solid transparent; }
+.note.on { background: var(--doc-hi); border-color: var(--doc-line); }
+.note p { margin: 0; }
+.mk { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-accent); color: var(--doc-mk-ink); font: 700 12px/22px var(--font-doc); text-align: center; padding: 0; cursor: pointer; }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; }
+.card p, .card li { color: var(--doc-ink); }
+.card ul { margin: 6px 0 0; padding-left: 18px; }
+
+/* ── Product specimen: the Friend requests table, from the shipped RepKit table ── */
+.pf { min-width: 1120px; width: 1120px; font-family: var(--font-doc); color: var(--sp-ink); }
+.tf { background: var(--sp-card); border: 1px solid var(--sp-line); border-radius: 8px; overflow: hidden; }
+.pf table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.pf th { text-align: left; padding: .42rem 1rem; font: 700 12px var(--font-doc); letter-spacing: .05em; text-transform: uppercase; color: var(--sp-ink-soft); background: var(--sp-card); border-bottom: 1px solid var(--sp-line-strong); white-space: nowrap; }
+.pf td { padding: .42rem 1rem; font-size: 14px; border-bottom: 1px solid var(--sp-line); vertical-align: middle; }
+.pf tr:has(.sub) > td { padding-top: .7rem; padding-bottom: .7rem; }
+.pf tbody tr:last-child > td { border-bottom: 0; }
+.pf tr.band > td { padding: .4rem 1rem; font: 700 12px var(--font-doc); letter-spacing: .05em; text-transform: uppercase; color: var(--sp-ink-soft); background: var(--sp-paper); border-bottom: 1px solid var(--sp-line); }
+.pf .name { font-weight: 650; }
+.pf .sub { display: block; margin-top: .1rem; font-size: 12px; color: var(--sp-dim); }
+.pf .dim { color: var(--sp-dim); }
+.pf .tick { width: 52px; }
+.pf .act { width: 190px; text-align: right; white-space: nowrap; }
+.pf .box { display: inline-block; width: 22px; height: 22px; border: 1.5px solid var(--sp-line-strong); border-radius: 5px; background: #fff; vertical-align: middle; }
+.pf .btn { display: inline-flex; align-items: center; min-height: 38px; padding: 0 .8rem; border: 1px solid rgba(87,101,30,.45); border-radius: 8px; background: var(--sp-card); color: var(--sp-olive); font-weight: 700; font-size: 14px; }
+.pf .btn.ink { color: var(--sp-ink-soft); border-color: var(--sp-line-strong); }
+.pf .more { display: inline-block; width: 34px; text-align: center; color: var(--sp-dim); font-weight: 700; letter-spacing: 1px; }
+.pf .chip { display: inline-flex; font: 700 10px/1.4 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: .14rem .5rem; border-radius: 999px; border: 1px solid var(--sp-line-strong); color: var(--sp-ink-soft); background: var(--sp-olive-soft); white-space: nowrap; vertical-align: 1px; margin-left: .35rem; }
+.pf .chip.first { margin-left: 0; }
+.pf .chip.warn { color: var(--sp-warn-ink); background: var(--sp-warn-bg); border-color: var(--sp-warn-line); }
+.pf .chg { background: rgba(255, 214, 0, .26); box-shadow: -4px 0 0 rgba(255, 214, 0, .26), 4px 0 0 rgba(255, 214, 0, .26); border-radius: 3px; }
+.pf .gone { text-decoration: line-through; text-decoration-color: rgba(138, 75, 20, .7); }
+.pf tr.same { transition: opacity .15s; }
+.diffonly .pf tr.same > td { opacity: .22; }
+.pf .mk { position: relative; top: -1px; margin: -5px 0 -5px 6px; width: 18px; height: 18px; font-size: 11px; line-height: 18px; vertical-align: middle; }
+.sample { font-size: 12.5px; color: var(--doc-soft); margin: 8px 0 0; }
+</style>
+
+<div class="wrap">
+  <h1>Friend requests: the “Both asked” row</h1>
+  <p class="lede">The first row in To confirm is built differently from every other row. Below: what it looks like today, my proposed fix, and a fuller alternative. All drawn at true size (the table frame is 1120px wide, like the real screen; scroll sideways on a small window). The fix touches one row, so the third tab shows the whole list before and after.</p>
+
+  <div class="tabbar"><div class="tabbar-in" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="t-pair-row" aria-controls="p-pair-row" aria-selected="true" data-tab="pair-row">1 · The pair row</button>
+    <button class="tab" role="tab" id="t-whole-screen" aria-controls="p-whole-screen" aria-selected="false" data-tab="whole-screen">2 · Whole list, before and after</button>
+    <button class="tab" role="tab" id="t-asks" aria-controls="p-asks" aria-selected="false" data-tab="asks">3 · Asks</button>
+  </div></div>
+
+  <section class="panel" id="p-pair-row" role="tabpanel" aria-labelledby="t-pair-row">
+    <h2>One row, three ways</h2>
+    <p class="lede">Yellow marks what changed from today. Tap a numbered dot to find its note.</p>
+    <div id="s-pair"></div>
+  </section>
+
+  <section class="panel" id="p-whole-screen" role="tabpanel" aria-labelledby="t-whole-screen" hidden>
+    <h2>The whole To confirm list</h2>
+    <p class="lede">Same five rows from your screenshot. Only the first row changes, and it stays two lines tall, so nothing else on the screen moves.</p>
+    <div class="viewrow"><span>View</span>
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" id="v-all" aria-pressed="true">Everything</button>
+        <button type="button" id="v-diff" aria-pressed="false">Show only what differs</button>
+      </div>
+    </div>
+    <div id="s-whole"></div>
+  </section>
+
+  <section class="panel" id="p-asks" role="tabpanel" aria-labelledby="t-asks" hidden>
+    <h2>What I need from you</h2>
+    <div class="cols">
+      <div class="card"><h3>1 · Which version?</h3>
+        <p><b>A</b> is my recommendation: the pair row follows the same two-line shape as every other row, and the parents are read from the match column and the detail window.</p>
+        <p><b>B</b> keeps every parent on screen but makes this one row a line taller than its neighbours.</p></div>
+      <div class="card"><h3>2 · Drop “both families asked” under the name?</h3>
+        <p>The pill in the match column already says it, and the ⇄ arrow shows it. Yes keeps the name cell as plain as the rest (“U8”).</p></div>
+      <div class="card"><h3>3 · Phone</h3>
+        <p>On a phone the pair row reads its detail line from the name cell, then the pill and match reason beneath. After the change that line says just “U8” and the pill still says Both asked. I have not drawn it; say so if you want it drawn.</p></div>
+      <div class="card"><h3>What does not change</h3>
+        <ul><li>The Confirm button and what it does (one decision covers both requests).</li><li>The match column, the pill, every other row.</li><li>The request window, which still lists each parent’s name.</li></ul></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var NOTE = {
+    now: [
+      [1, `Under the name: “both families asked” is said here, again by the pill, and again by the arrow.`],
+      [2, `The parent is tacked onto the top line after a comma. Every other row puts the parent on the grey line below.`],
+      [3, `The grey line holds the second request instead of a parent. Its parent is not shown at all.`]
+    ],
+    a: [
+      [1, `Name cell: just the division, like “U8” on the other rows. The pill and the arrow already say both asked.`],
+      [2, `Top line: only what the family typed, in quotes, like every other row.`],
+      [3, `Grey line: the other family’s request, in the same slot the parent usually sits. The parent is still in the match column (“Liam’s parent matches”) and in the request window.`]
+    ],
+    b: [
+      [1, `Name cell: same as A.`],
+      [2, `Top line: only the typed name, like every other row.`],
+      [3, `Grey lines: each request gets its own grey line, with its parent or “no parent named”. Every fact stays on screen; the row is one line taller than its neighbours.`]
+    ]
+  };
+
+  function mk(v, n, on) { return on ? `<button type="button" class="mk" data-v="${v}" data-n="${n}" aria-label="Note ${n}">${n}</button>` : ``; }
+
+  function pairRow(v, markers) {
+    var sub1 = v === `now` ? `U8 · both families asked` : `U8`;
+    // Markers sit INSIDE the line they annotate, so they never add a line to the row (the drawing's row height must be the real one).
+    var asked;
+    if (v === `now`) {
+      asked = `“Liam Chen”<span class="chg gone">, parent “Grace Chen”</span>${mk(v,2,markers)}<span class="sub">and “Maya Okafor”${mk(v,3,markers)}</span>`;
+    } else if (v === `a`) {
+      asked = `“Liam Chen”${mk(v,2,markers)}<span class="sub">and “Maya Okafor”${mk(v,3,markers)}</span>`;
+    } else {
+      asked = `“Liam Chen”${mk(v,2,markers)}<span class="sub chg">parent “Grace Chen”</span><span class="sub chg">and “Maya Okafor” · no parent named${mk(v,3,markers)}</span>`;
+    }
+    var nameSub = `<span class="sub"><span class="chg">${sub1}</span>${mk(v,1,markers)}</span>`;
+    return `<tr class="${v === `now` ? `` : `chgrow`}"><td class="tick"><span class="box"></span></td>
+      <td><span class="name">Maya Okafor ⇄ Liam Chen</span>${nameSub}</td>
+      <td>${asked}</td>
+      <td><span class="chip first">Both asked</span><span class="sub">Same names · Liam’s parent matches</span></td>
+      <td class="act"><span class="btn">Confirm</span> <span class="more">•••</span></td></tr>`;
+  }
+
+  function otherRows() {
+    function r(n, s, a, as, m, ms, mdim, btn, ink, chipw) {
+      return `<tr class="same"><td class="tick"><span class="box"></span></td>
+        <td><span class="name">${n}</span><span class="sub">${s}</span></td>
+        <td>${a}<span class="sub">${as}</span></td>
+        <td><span class="${mdim ? `dim` : ``}">${m}</span>${chipw || ``}<span class="sub">${ms}</span></td>
+        <td class="act"><span class="btn${ink ? ` ink` : ``}">${btn}</span> <span class="more">•••</span></td></tr>`;
+    }
+    return r(`Noah Patel`, `U8 · signed up Oct 31`, `“Jon Baptiste”`, `no parent named`, `Jonathan Baptiste · U8`, `Similar first name · same last name`, false, `Confirm`, false)
+      + r(`Ethan Roy`, `U8 · signed up Nov 2`, `“Max”`, `no last name · parent “Ryan”`, `2 possible matches`, `Max Delaney · Maxwell Tran`, true, `Pick one…`, false)
+      + r(`Ava Lindqvist`, `U10 · signed up Nov 10`, `“Sophie Moreau”`, `parent “Claire Moreau”`, `Sophie Moreau · U8`, `Same name · parent matches`, false, `Can’t honour`, true, `<span class="chip warn">Different division</span>`)
+      + r(`Lucas Ferreira`, `U8 · signed up Nov 5`, `“Owen Bains”`, `parent “Harjit”`, `No one by that name has signed up`, `Checked every division`, true, `Not signed up`, true);
+  }
+
+  function table(v, markers, withOthers) {
+    return `<div class="pf"><div class="tf"><table>
+      <colgroup><col style="width:52px"><col style="width:270px"><col style="width:330px"><col><col style="width:190px"></colgroup>
+      <thead><tr><th class="tick"><span class="box"></span></th><th>Player</th><th>Asked to play with</th><th>Best match this season</th><th></th></tr></thead>
+      <tbody><tr class="band"><td colspan="5">To confirm · ${withOthers ? 5 : 1}</td></tr>
+      ${pairRow(v, markers)}${withOthers ? otherRows() : ``}</tbody></table></div></div>`;
+  }
+
+  function spec(v, title, sub, tagCls, tagTxt, row) {
+    var notes = NOTE[v].map(function (n) { return `<div class="note" data-note="${v}-${n[0]}"><button type="button" class="mk" data-v="${v}" data-n="${n[0]}" aria-label="Note ${n[0]}">${n[0]}</button><p>${n[1]}</p></div>`; }).join(``);
+    return `<div class="spec"><div class="spec-h"><span class="tag ${tagCls}">${tagTxt}</span><b>${title}</b><small>${sub}</small></div>
+      <div class="stage"><p class="frame-label">Club admin · Registrations · Friend requests · desktop</p>${row}</div>
+      <div class="notes">${notes}</div></div>`;
+  }
+
+  document.getElementById(`s-pair`).innerHTML =
+    spec(`now`, `Today`, `Row height: two lines`, `now`, `Today`, table(`now`, true, false))
+    + spec(`a`, `A · Same shape as every other row (recommended)`, `Row height: two lines, same as today (about 65px)`, `new`, `New`, table(`a`, true, false))
+    + spec(`b`, `B · Keep every fact on screen`, `Row height: three lines, one taller than its neighbours`, `new`, `New`, table(`b`, true, false))
+    + `<p class="sample">The second family’s “no parent named” is the existing wording for a request with no parent; real rows will show whatever that family typed.</p>`;
+
+  function whole(label, v, tagCls, tagTxt) {
+    return `<div class="spec"><div class="spec-h"><span class="tag ${tagCls}">${tagTxt}</span><b>${label}</b></div><div class="stage"><p class="frame-label">Club admin · Registrations · Friend requests · desktop</p>${table(v, false, true)}</div></div>`;
+  }
+  var wholeEl = document.getElementById(`s-whole`);
+  wholeEl.innerHTML = whole(`Today`, `now`, `now`, `Today`) + whole(`After, version A (recommended)`, `a`, `new`, `New`);
+
+  // Tabs
+  var names = [`pair-row`, `whole-screen`, `asks`];
+  function show(name) {
+    if (names.indexOf(name) < 0) name = `pair-row`;
+    names.forEach(function (n) {
+      var on = n === name;
+      document.getElementById(`p-` + n).hidden = !on;
+      var t = document.getElementById(`t-` + n); t.setAttribute(`aria-selected`, on ? `true` : `false`);
+    });
+    try { history.replaceState(null, ``, `#` + name); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll(`.tab`).forEach(function (t) { t.addEventListener(`click`, function () { show(t.getAttribute(`data-tab`)); }); });
+  window.addEventListener(`hashchange`, function () { show((location.hash || ``).slice(1)); });
+  show((location.hash || ``).slice(1));
+
+  // View switch
+  function setView(diff) {
+    wholeEl.classList.toggle(`diffonly`, diff);
+    document.getElementById(`v-all`).setAttribute(`aria-pressed`, diff ? `false` : `true`);
+    document.getElementById(`v-diff`).setAttribute(`aria-pressed`, diff ? `true` : `false`);
+  }
+  document.getElementById(`v-all`).addEventListener(`click`, function () { setView(false); });
+  document.getElementById(`v-diff`).addEventListener(`click`, function () { setView(true); });
+
+  // Clickable markers
+  document.getElementById(`s-pair`).addEventListener(`click`, function (e) {
+    var b = e.target.closest(`.mk`); if (!b) return;
+    var key = b.getAttribute(`data-v`) + `-` + b.getAttribute(`data-n`);
+    document.querySelectorAll(`.note`).forEach(function (n) { n.classList.toggle(`on`, n.getAttribute(`data-note`) === key); });
+    var tgt = document.querySelector(`.note[data-note="${key}"]`); if (tgt) tgt.scrollIntoView({ block: `nearest`, behavior: `smooth` });
+  });
+})();
+</script>

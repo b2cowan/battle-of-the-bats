@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DateInput from '@/components/shared/DateInput';
 import { CheckCircle } from 'lucide-react';
 import { useOrgHref } from '@/lib/use-public-pathname';
@@ -148,6 +148,11 @@ export default function RegisterForm({
       setSubmitting(false);
     }
   }
+
+  // The confirmation replaces a long form: start it at the top rather than wherever the submit button was.
+  useEffect(() => {
+    if (result) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [result]);
 
   if (result) return <Confirmation result={result} seasonName={seasonName} orgName={orgName} statusHref={orgHref(result.signupToken ? `/league/${seasonSlug}/status/${result.signupToken}` : `/league/${seasonSlug}/status`)} forecast={children.map((c, i) => ({ name: c.firstName, kind: forecast[i].kind }))} />;
 

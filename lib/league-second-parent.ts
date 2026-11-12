@@ -93,7 +93,7 @@ export const SECOND_PARENT_WORDS = {
     /** The record window's line where a stopped address was (Stage 3b, O3): nobody is emailed, the registrar can see it. */
     stopped: (date: string) => `Stopped by the address owner, ${date}`,
     /** Under the edit box: a staff edit sends nothing (shipped behaviour, build prompt Part 5). */
-    editHint: 'Applies to every child in this sign-up. Nothing is emailed when you change it.',
+    editHint: 'Applies to every child in this sign-up. Nothing is emailed.',
   },
 } as const;
 

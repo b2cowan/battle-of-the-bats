@@ -350,7 +350,8 @@ export const FRIEND_QUEUE_WORDS = {
   stateWord: { confirmed: 'Confirmed', closed: 'Closed' },
   signedUp: (division: string | null, day: string) => [division, `signed up ${day}`].filter(Boolean).join(' · '),
   pairName: (a: string, b: string) => `${a} ⇄ ${b}`,
-  pairSub: (division: string | null) => [division, 'both families asked'].filter(Boolean).join(' · '),
+  // Just the division, like every other row: the Both asked chip (and the ⇄) already say both families asked.
+  pairSub: (division: string | null) => division ?? '',
   pairAsked: (a: string) => `and ${a}`,
   codeLine: (code: string) => `Code ${code}`,
   noLast: 'no last name',

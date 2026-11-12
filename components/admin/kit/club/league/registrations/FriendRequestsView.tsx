@@ -210,8 +210,9 @@ export default function FriendRequestsView({
 
   function askedCell(row: QueueRow): { lead: string; sub: string | null } {
     if (row.partner) {
-      const a = row.requests[0];
-      return { lead: [askedText(a), a.typedParent ? W.parentTyped(a.typedParent) : null].filter(Boolean).join(', '), sub: W.pairAsked(askedText(row.requests[1])) };
+      // Same shape as every other row: what the family typed on top, the next line quiet. The parent is read from the
+      // match column ("Liam's parent matches") and the request window, so it is not put on this line.
+      return { lead: askedText(row.requests[0]), sub: W.pairAsked(askedText(row.requests[1])) };
     }
     return { lead: askedText(row.requests[0]), sub: askedSub(row.requests[0]) };
   }

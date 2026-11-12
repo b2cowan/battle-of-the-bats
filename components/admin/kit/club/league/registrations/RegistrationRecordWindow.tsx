@@ -59,6 +59,7 @@ function SecondParentFact({ reg, onSave, status }: {
   if (!editing) {
     return (
       <>
+        {reg.guardianEmail2 && status}
         {shown}
         {onSave && (
           <button type="button" className={`${ck.link} ${css.secondDoor}`}
@@ -66,7 +67,6 @@ function SecondParentFact({ reg, onSave, status }: {
             {reg.guardianEmail2 ? SP.change : SP.add}
           </button>
         )}
-        {reg.guardianEmail2 && status}
       </>
     );
   }
@@ -79,7 +79,7 @@ function SecondParentFact({ reg, onSave, status }: {
         <button type="button" className="btn btn-outline" disabled={saving} onClick={() => { setEditing(false); setError(null); }}>{SP.cancel}</button>
         <button type="button" className="btn btn-lime" disabled={saving} onClick={() => void save()}>{SP.save}</button>
       </span>
-      <span className={ck.hint}>{SP.editHint}</span>
+      <span className={`${ck.hint} ${css.secondHint}`}>{SP.editHint}</span>
       {error && <span className={repKit.formError} role="alert">{error}</span>}
     </>
   );
@@ -136,7 +136,7 @@ export default function RegistrationRecordWindow({
     reg.status === 'waitlisted' && reg.waitlistPosition != null ? [F.position, REGS_WORDS.waitingPosition(reg.waitlistPosition)] as const : null,
     [F.guardian, model.guardian] as const,
     [F.email, reg.guardianEmail.trim()
-      ? <>{reg.guardianEmail}<FamilyAppStatusLine status={reg.familyApp?.first} which="first" today={today} actions={onFamily} /></>
+      ? <><FamilyAppStatusLine status={reg.familyApp?.first} which="first" today={today} actions={onFamily} />{reg.guardianEmail}</>
       : REGS_WORDS.noEmail] as const,
     // Signed-in family accounts Stage 3 (ask 6): under Email, a dash when none; the desk adds or changes it here.
     [SP.row, <SecondParentFact key="second" reg={reg} onSave={onSecondEmail}

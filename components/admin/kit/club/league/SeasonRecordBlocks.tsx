@@ -323,7 +323,7 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
           {friendsPlan && (
             <label className={ck.field}>
               <span className={ck.label}>{FS.editLabel}</span>
-              <select className={ck.select} value={String(season.friendRequestsMax)} aria-describedby="friend-max-hint"
+              <select className={`${ck.select} ${s.fitSelect}`} value={String(season.friendRequestsMax)} aria-describedby="friend-max-hint"
                 onChange={e => commit({ friendRequestsMax: Number(e.target.value) })}>
                 {FS.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
