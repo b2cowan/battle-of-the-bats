@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import CodeAgainWindow, { type CodeAgainCheck } from './CodeAgainWindow';
+import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import {
   CODE_AGAIN_REFUSALS, CODE_AGAIN_ROUTE, CODE_AGAIN_WORDS as W, TWO_STEP_FRESH_CODE, TWO_STEP_SET_UP_REFUSAL,
   type CodeAgainProof, type CodeAgainRefusal,
@@ -147,6 +149,24 @@ async function checkProof(proof: CodeAgainProof): Promise<CodeAgainCheck> {
   return { ok: false, refusal: code ?? 'not_checked' };
 }
 
+/**
+ * ⚠ THE WINDOW WEARS THE THEME OF THE SCREEN IT OPENED OVER. This provider is mounted in the ROOT layout, a sibling of
+ * every portal, so no theme marker reaches it: left where it is, the window read the page's base colours — the old dark
+ * navy and lime — over a warm admin or coaches screen (owner, 2026-11-12, the Manage-member window). The warm / dark
+ * palette and the admin kit's rules hang off the shell's marker, so the window is drawn INSIDE the open shell (the admin's
+ * and the volunteer shells' `[data-admin-kit]`, else the coaches portal's `[data-coach-warm-enabled]`). The lookup is
+ * limited to the page's `<main>`: every shell lives in it, while the help, feedback and notification panels carry the same
+ * coach marker on a wrapper OUTSIDE it, and a window drawn into one of those would vanish when the panel closed. Where
+ * no shell is open (a public page, the family app, the account pages) it carries the coach marker itself, as the feedback
+ * window does, so the person's Warm / Dark setting still decides. Guarded:
+ * `tests/unit/code-again-theme-guard.test.ts`. Read at the moment the window opens, never on first render (no hydration).
+ */
+function InTheme({ children }: { children: ReactNode }) {
+  const host = document.querySelector('#main-content [data-admin-kit]') ?? document.querySelector('#main-content [data-coach-warm-enabled]');
+  if (host) return createPortal(children, host);
+  return <div style={{ display: 'contents' }} {...coachWarmAttr}>{children}</div>;
+}
+
 export default function CodeAgainProvider() {
   const [pending, setPending] = useState<Pending | null>(null);
   const pendingRef = useRef<Pending | null>(null);
@@ -186,27 +206,31 @@ export default function CodeAgainProvider() {
   return (
     <>
       {pending && (
-        <CodeAgainWindow
-          title={pending.kind === 'fresh' ? W.freshTitle : W.reaskTitle}
-          lead={pending.kind === 'fresh' ? W.freshLead : W.reaskLead}
-          confirm={W.confirm}
-          check={checkProof}
-          onDone={finish}
-        />
+        <InTheme>
+          <CodeAgainWindow
+            title={pending.kind === 'fresh' ? W.freshTitle : W.reaskTitle}
+            lead={pending.kind === 'fresh' ? W.freshLead : W.reaskLead}
+            confirm={W.confirm}
+            check={checkProof}
+            onDone={finish}
+          />
+        </InTheme>
       )}
       {setUpAt && (
-        <div className={styles.setUpNotice} role="status">
-          <span>{W.setUpNotice}</span>
-          <Link href={setUpAt} onClick={() => setSetUpAt(null)}>{W.setUpLink}</Link>
-          <button
-            type="button"
-            className={styles.setUpClose}
-            onClick={() => { page().__flhqCodeAgainSetUpClosedAt = Date.now(); setSetUpAt(null); }}
-            aria-label="Close"
-          >
-            ×
-          </button>
-        </div>
+        <InTheme>
+          <div className={styles.setUpNotice} role="status">
+            <span>{W.setUpNotice}</span>
+            <Link href={setUpAt} onClick={() => setSetUpAt(null)}>{W.setUpLink}</Link>
+            <button
+              type="button"
+              className={styles.setUpClose}
+              onClick={() => { page().__flhqCodeAgainSetUpClosedAt = Date.now(); setSetUpAt(null); }}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+        </InTheme>
       )}
     </>
   );
