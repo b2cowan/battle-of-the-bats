@@ -498,6 +498,38 @@ board's two questions:
     in Part 2. Promote Parts 1 and 2 together (or drop that sentence, which `/legal` does not recommend). Also before
     release: the privacy policy draft §5/§9 lines above (route to `/legal`). Re-read "Only the club staff who handle
     sign-ups see these names" when Part 3 ships: the board must show names only to the Registrations seats.
+  - **Part 2 (the registrar + the deletion) BUILT + COMMITTED `f291a8bb1` 2026-11-11 (nightly job mig 472 `3628b51a1`)**, to drawing tab 4 and tab 7's export half: the
+    fifth Registrations view **Friend requests** (amber count of rows to confirm; absent at None or off the plan), bands
+    To confirm · Confirmed · Closed, the row recipe (one row action: Confirm · Pick one… · Can't honour · Not signed up; the
+    rest behind ⋯: Pick another…, Not signed up, Can't honour…, Move back to To confirm, Open {first}'s registration,
+    Delete request…), a Both asked pair as one row and one Confirm, a code covering the other direction, Confirm best
+    match, the request window (every match with its reason, the other division dimmed, a search of the division's
+    sign-ups), the Can't honour window (outlined), the toolbar (division, search, Show only, Export), phone rows, the
+    registrations Flags filter "Has a friend request", the two name-free export columns, the view's own file (children's
+    names only), and the deletion. Matching runs on read with a new normaliser (`lib/league-friend-queue.ts`;
+    `normName` untouched). Migs **471** (the finish trigger deletes requests and clears codes, the 60-day backstop, the
+    family save refuses a finished season) + **472** (the nightly job) applied to **dev** 2026-11-11; prod steps in
+    `MANUAL_PROD_STEPS.json`; ⚠ 472 is watched automation (its own commit). `/legal` re-check (1 should-fix applied: a
+    season with no end date counts a year from its start, else from its creation; the form's line now reads "Only the club
+    staff who work on sign-ups and teams see these names…", since the seats that read them run teams too; the Delete
+    confirm says it is permanent), `/marketing` words pass (applied), `/docs` (two Registrations articles), `/review`
+    (four lenses; fixed: a pair needs a confident match on both sides and one division, a code whose child withdrew offers
+    no Confirm, a loose first name elsewhere is Not signed up, covered requests count in Friends Honoured, stale ticks,
+    the record reopening, the finish/save race, the backstop sweeps finished seasons, strict ids, CSV-only formula
+    safety (an Excel cell is text; an apostrophe there showed on "+1 …" phones)). Walk **§516** (https://claude.ai/artifact/LEdqsZtJFgVw4NqqQH34bb).
+    Build decisions (not drawn, owner may overrule): Confirmed and Closed rows keep a ⋯ with **Move back to To confirm**
+    (the drawing's "undo it from ⋯"); **Delete request…** asks first ("Delete {first}'s friend request?", Keep request /
+    Delete request); a withdrawn or declined child's requests leave the queue and its count (kept until the deletion);
+    the finish confirm's line "Friend requests and friend codes are deleted." and the reopen's "Friend requests were
+    deleted too. Families get new friend codes." (neither drawn); the backstop's no-end-date fallback (a year after the
+    start, else after creation); a confirmed request whose friend later withdrew stays in Confirmed reading
+    "{first} withdrew {day}". Left (review, low): a multi-row decision is one update per request, not one transaction
+    (a failure part-way leaves a pair half confirmed, fixed by pressing again); the friends read runs on every reload.
+    **Doc follow-ups now due (`/legal`, when asked):** privacy policy draft §5/§9/§11 (friend names, retention: on
+    finish or 60 days after the last day, backups roll off; erasure through the club's Delete), `LEGAL_FACTS.md`, the
+    club data-processing terms. The drawings and Part 1's walk quote the old form line.
+  - ⛔ **RELEASE GATE (2026-11-11, with Part 2): Parts 1 and 2 go to production in ONE promote**, migs 461 → 471 → 472
+    in that order; Part 1 alone still breaks the form's promise.
 
 ### Stage 2 — Group email to coaches and volunteers (item 3)
 - [ ] **Email coaches** composer on the one club send window parts, on the colleague-mail path (reply-to the sender,
