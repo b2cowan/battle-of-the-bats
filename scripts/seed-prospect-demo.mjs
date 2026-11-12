@@ -292,6 +292,7 @@ ok(`deleted ${before.filter(([t]) => !KEEP.has(t)).reduce((s, [, n]) => s + n, 0
 head('Season, divisions, teams');
 const S = cfg.season;
 const season = await one('season', db.from('league_seasons').insert({
+  ...(S.id ? { id: S.id } : {}),
   org_id: ORG, name: S.name, slug: S.slug, sport: cfg.sport, status: 'registration_open', description: S.description,
   registration_fee: S.baseFee, auto_approve_under_capacity: true, auto_promote_waitlist: false,
   // The app stores these as the wall-clock time typed, with a literal Z (CreateLeagueSeasonDialog), and reads the first 16
@@ -425,11 +426,12 @@ const schedule = await one('club schedule', db.from('club_schedules').insert({
   created_by: ADMIN, updated_by: ADMIN,
 }).select('id').single());
 const slotRows = [];
-function addSlot(venueName, facilityName, day, start, end, use) {
+function addSlot(venueName, facilityName, day, start, end, use, blockId = null) {
   const v = venues[venueName];
   if (!v?.houseLeague) die('slot', { message: `${venueName} is not a house-league venue — house league never books there` });
+  if (!v.fac[facilityName]) die('slot', { message: `${venueName} has no "${facilityName}"` });
   const id = crypto.randomUUID();
-  slotRows.push({ id, org_id: ORG, schedule_id: schedule.id, org_venue_id: v.id, facility_id: v.fac[facilityName], starts_at: torontoInstant(day, start), ends_at: torontoInstant(day, end), use, venue: venueName, facility: facilityName });
+  slotRows.push({ id, org_id: ORG, schedule_id: schedule.id, org_venue_id: v.id, facility_id: v.fac[facilityName], block_id: blockId, starts_at: torontoInstant(day, start), ends_at: torontoInstant(day, end), use, venue: venueName, facility: facilityName });
   return id;
 }
 const addMin = (t, m) => { const [h, mi] = t.split(':').map(Number); const total = h * 60 + mi + m; return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`; };
@@ -452,12 +454,28 @@ for (let k = 0; k < u15.saturdays; k++) {
   const slotId = addSlot(u15.venue, u15.facility, day, u15.start, addMin(u15.start, u15.slotMinutes), { div: 'U15', kind: 'games' });
   games.push({ div: 'U15', k, g: 0, home: k % 2, away: (k + 1) % 2, day, start: u15.start, minutes: u15.gameMinutes, slotId, venue: u15.venue, facility: u15.facility });
 }
-// Field time offered to house league and not yet given to a division (what the U9 walk gives out).
+// Field time offered to house league and not yet given to a division (what the U9 walk gives out). One block of the
+// club's schedule per park and weekday, so each is its own row in House league's time (ISO weekdays: 2 = Tue, 6 = Sat).
 let openCount = 0;
-for (let w = 0; w < SC.open.saturdays; w++) for (const row of SC.open.saturdayRows) { addSlot(row.venue, row.facility, addDays(SAT0, 7 * w), row.start, row.end, null); openCount++; }
-for (let w = 0; w < SC.open.weeknights; w++) for (const row of SC.open.weeknightRows) { addSlot(row.venue, row.facility, onOrAfter(addDays(SAT0, 7 * w + 1), row.dow), row.start, row.end, null); openCount++; }
+const blockRows = SC.open.blocks.map((b, i) => {
+  const v = venues[b.venue];
+  if (!v?.houseLeague) die('block', { message: `${b.venue} is not a house-league venue — house league never books there` });
+  return { id: crypto.randomUUID(), org_id: ORG, schedule_id: schedule.id, org_venue_id: v.id, weekdays: [b.dow], start_time: `${b.start}:00`, end_time: `${b.end}:00`, sort_order: i };
+});
+await insertAll('org_time_blocks', blockRows, 'id');
+SC.open.blocks.forEach((b, i) => {
+  const weeks = b.dow === 6 ? SC.open.saturdays : SC.open.weeknights;
+  const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const step = b.slotMinutes ?? (toMin(b.end) - toMin(b.start));
+  for (let w = 0; w < weeks; w++) {
+    const day = b.dow === 6 ? addDays(SAT0, 7 * w) : onOrAfter(addDays(SAT0, 7 * w + 1), b.dow);
+    for (const fac of b.facilities) for (let t = b.start; toMin(t) + step <= toMin(b.end); t = addMin(t, step)) {
+      addSlot(b.venue, fac, day, t, addMin(t, step), null, blockRows[i].id); openCount++;
+    }
+  }
+});
 
-await insertAll('club_schedule_slots', slotRows.map(s => ({ id: s.id, org_id: s.org_id, schedule_id: s.schedule_id, org_venue_id: s.org_venue_id, facility_id: s.facility_id, starts_at: s.starts_at, ends_at: s.ends_at })), 'id');
+await insertAll('club_schedule_slots', slotRows.map(s => ({ id: s.id, org_id: s.org_id, schedule_id: s.schedule_id, org_venue_id: s.org_venue_id, facility_id: s.facility_id, block_id: s.block_id, starts_at: s.starts_at, ends_at: s.ends_at })), 'id');
 await insertAll('club_schedule_slot_programs', slotRows.map(s => ({ slot_id: s.id, org_id: ORG, program: 'house_league' })), 'slot_id');
 await insertAll('league_slot_uses', slotRows.filter(s => s.use).map(s => ({ slot_id: s.id, org_id: ORG, season_id: SEASON, division_id: DIV[s.use.div], kind: s.use.kind, created_by: ADMIN })), 'slot_id');
 ok(`club schedule "${SC.name}" (final): ${slotRows.length} slots on house-league diamonds — ${slotRows.filter(s => s.use).length} given to U11/U15 games, ${openCount} offered and not yet given (Saturdays heavy, some weeknights); none on Sherwood Park`);

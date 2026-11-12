@@ -2,6 +2,14 @@
 
 Status: Phase A built and run on dev 2026-11-10 (committed 9ca8c679d; sign-ups auto-approve under capacity; password only in .env.local) · Parent: `PROSPECT_DEMO_PROGRAM_PLAN.md` (P1, P4c) · Brief: `MILTON_DEMO_WORLD_PM_BRIEF.md`
 Playbook (walkthrough): the "House League Demo Playbook" Artifact (republished from this plan's §6).
+Prospect handout (only what he sees — no reset, scripts, gaps or staging steps): `MILTON_DEMO_PROSPECT_WALK.html`, published as
+https://claude.ai/artifact/NqFaetSngvqWEdJQ6u5A4T. Keep it in step with the playbook's five walks + four on-call. It links straight
+into the season's admin tabs: the season is rebuilt under a FIXED id (`season.id` in the config, 2026-11-10), so those links survive
+every reset — change the id only together with the run sheet. (This retires §7 limit (c) for the season; team ids still change.)
+Walk 4 = U9 games AND practices (2026-11-10): the open field time is six club-schedule BLOCKS (`schedule.open.blocks`), one per park
+and weekday, so House league's time shows each as its own "Give it to" row. Saturday blocks are cut into 90-minute slots (the
+generator makes a game the length of a slot); Sam Sherritt's Tuesday holds two diamonds, so it alone seats U9's 4 teams once a week.
+Telling families their practice times and Publish schedule both need U9's teams published (Walk 2) — the seed leaves U9 undrafted.
 
 ## 0. Rulings this plan stands on
 - Prospect = **Milton Bats Softball Association** (owner 2026-11-10). A **non-demo, writable** Club-plan org on the **dev** database

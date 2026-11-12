@@ -1,0 +1,515 @@
+<title>Your House League, Walked Through</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a game-day lineup card. One column; each walk is a numbered row: what happens, ONE place to start, click-through steps, what to look for. */
+:root{
+  --bg:#f4f5f2; --card:#ffffff; --ink:#18221e; --muted:#5a6862; --line:#d9dfda;
+  --accent:#1f6b4a; --accent-soft:#e3efe8; --chip:#eef1ee;
+  --w-phone:#7a3e9d; --w-phone-bg:#f1e7f6;
+  --w-admin:#1f5fa8; --w-admin-bg:#e3ecf8;
+  --w-owner:#8a4b0f; --w-owner-bg:#f8ebdc;
+  --w-coach:#1f6b4a; --w-coach-bg:#e1efe7;
+  --w-public:#4d5a55; --w-public-bg:#e9ecea;
+  --display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111714; --card:#18201c; --ink:#e5ece7; --muted:#9fb1a8; --line:#2d3a34;
+  --accent:#72d0a1; --accent-soft:#1d332a; --chip:#202b26;
+  --w-phone:#d3a6ec; --w-phone-bg:#33223d;
+  --w-admin:#9cc2f2; --w-admin-bg:#1c2a3d;
+  --w-owner:#f0b878; --w-owner-bg:#3a2a18;
+  --w-coach:#7fd8a8; --w-coach-bg:#1d332a;
+  --w-public:#c2ccc7; --w-public-bg:#2a322e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111714; --card:#18201c; --ink:#e5ece7; --muted:#9fb1a8; --line:#2d3a34;
+  --accent:#72d0a1; --accent-soft:#1d332a; --chip:#202b26;
+  --w-phone:#d3a6ec; --w-phone-bg:#33223d;
+  --w-admin:#9cc2f2; --w-admin-bg:#1c2a3d;
+  --w-owner:#f0b878; --w-owner-bg:#3a2a18;
+  --w-coach:#7fd8a8; --w-coach-bg:#1d332a;
+  --w-public:#c2ccc7; --w-public-bg:#2a322e; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
+.wrap{max-width:820px;margin:0 auto;display:grid;gap:28px}
+h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:2.3rem;font-weight:700}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.3rem;font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+header{padding-top:36px;display:grid;gap:10px}
+.eyebrow{font-family:var(--display);text-transform:uppercase;letter-spacing:.12em;font-size:.82rem;font-weight:600;color:var(--accent)}
+.lede{max-width:62ch;color:var(--muted)}
+section{display:grid;gap:14px}
+
+/* window chips */
+.win{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;border-radius:999px;padding:1px 10px;white-space:nowrap;vertical-align:1px}
+.win::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.w-phone{color:var(--w-phone);background:var(--w-phone-bg)}
+.w-admin{color:var(--w-admin);background:var(--w-admin-bg)}
+.w-owner{color:var(--w-owner);background:var(--w-owner-bg)}
+.w-coach{color:var(--w-coach);background:var(--w-coach-bg)}
+.w-public{color:var(--w-public);background:var(--w-public-bg)}
+
+.setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.setup div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:6px;align-content:start;min-width:0}
+.setup div .win{justify-self:start}
+.setup span.d{color:var(--muted);font-size:.93rem}
+
+/* phone cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.qcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:12px;align-content:start;min-width:0}
+.qcard .win{justify-self:start}
+.qcard h3{font-size:1.35rem}
+/* QR codes stay black on white in both themes: phone cameras need the contrast. */
+.qr{background:#ffffff;border-radius:8px;padding:12px;justify-self:center;line-height:0}
+.qr img,.qr canvas{width:190px;height:190px;max-width:100%}
+.qurl{font-family:var(--mono);font-size:.74rem;color:var(--muted);overflow-wrap:anywhere}
+.hint{font-size:.85rem;color:var(--muted)}
+.login{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px}
+.lrow{display:flex;gap:8px;align-items:center;min-width:0}
+.lrow label{font-size:.8rem;color:var(--muted);width:68px;flex:none}
+.lrow code,.lrow input{flex:1;min-width:0;font-family:var(--mono);font-size:.82rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;overflow-wrap:anywhere}
+
+/* buttons */
+button{font:inherit;font-size:.8rem;font-weight:600;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:5px;padding:4px 9px;cursor:pointer;flex:none}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* reset box */
+.presenter{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:12px}
+.presenter h2{font-size:1.2rem}
+.cmds{display:grid;gap:10px}
+.cmd{display:grid;gap:4px}
+.cmd .what{font-size:.93rem}
+
+/* the one address to start from */
+.url{display:flex;gap:6px;align-items:center;min-width:0}
+.url code{font-family:var(--mono);font-size:.8rem;background:var(--chip);border:1px solid var(--line);border-radius:5px;padding:3px 7px;overflow-x:auto;white-space:nowrap;min-width:0;flex:1 1 auto;user-select:all}
+.start{display:grid;gap:6px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.start-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.label{font-family:var(--display);text-transform:uppercase;letter-spacing:.1em;font-size:.78rem;color:var(--muted);font-weight:600}
+
+/* walks */
+.order{display:grid;gap:12px;list-style:none;margin:0;padding:0}
+.walk{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:grid;grid-template-columns:auto 1fr;gap:12px 16px;min-width:0;scroll-margin-top:16px}
+.walk .n{font-family:var(--display);font-weight:700;font-size:2.1rem;line-height:1;color:var(--accent);min-width:1.3em;grid-column:1;grid-row:1}
+.walk > *:not(.n){grid-column:2}
+.walk.bookend{background:transparent;border-style:dashed}
+.walk.bookend .n{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;padding-top:6px}
+.walk > div,.walk > ol{min-width:0}
+.k{display:inline-block;font-size:.88em;font-weight:600;background:var(--chip);border:1px solid var(--line);border-radius:5px;padding:0 6px}
+.steps{margin:0;padding-left:1.3em;display:grid;gap:6px}
+.phase{display:grid;gap:6px;min-width:0}
+.look{background:var(--accent-soft);border-radius:8px;padding:10px 12px;display:grid;gap:4px}
+.look b{font-family:var(--display);text-transform:uppercase;letter-spacing:.1em;font-size:.78rem;color:var(--accent)}
+.look ul{margin:0;padding-left:1.15em;display:grid;gap:3px}
+.starts b{font-weight:600}
+
+.extras{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.extras div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:6px;align-content:start;min-width:0}
+.extras h3{font-size:1.1rem}
+.extras p{font-size:.95rem}
+.extras .benefit{color:var(--accent);font-weight:600;font-size:.92rem}
+.extras a{color:var(--accent);font-size:.9rem;font-weight:600;text-decoration:none}
+.extras a:hover,.extras a:focus-visible{text-decoration:underline}
+footer{border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:.93rem}
+@media (max-width:560px){
+  h1{font-size:1.9rem}
+  .walk{grid-template-columns:1fr}
+  .walk .n,.walk > *:not(.n){grid-column:1;grid-row:auto}
+}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">FieldLogicHQ · house league demo for Milton Bats</span>
+  <h1>Your house league, walked through</h1>
+  <p class="lede">We set up a practice club that mirrors yours: U7 to U15, house-league games at Sam Sherritt, Lions Park and Kinsmen Park, and Sherwood Park kept for rep. The families are made up. Each division sits at a different point in the season, so we can show a full year in one sitting by following one pretend child from sign-up to a rained-out Saturday.</p>
+</header>
+
+<section aria-labelledby="who">
+  <h2 id="who">What's on the table</h2>
+  <div class="setup">
+    <div><span class="win w-phone">Phone</span><span class="d">You, as a parent signing up a child</span></div>
+    <div><span class="win w-admin">League admin window</span><span class="d">The house-league administrator's view</span></div>
+    <div><span class="win w-owner">Owner window</span><span class="d">The club president's view</span></div>
+    <div><span class="win w-coach">Coach window</span><span class="d">A U11 house-league coach</span></div>
+    <div><span class="win w-public">Public window</span><span class="d">What anyone sees without signing in</span></div>
+  </div>
+  <p class="muted">Each walk starts in one place. From there it's all clicking through the app. A coloured label marks each time the walk moves to another window.</p>
+</section>
+
+<section aria-labelledby="scan">
+  <h2 id="scan">Pick up your phone</h2>
+  <div class="cards">
+    <article class="qcard">
+      <span class="win w-phone">As a parent</span>
+      <h3>Sign up a player</h3>
+      <div class="qr" id="qr-signup" role="img" aria-label="QR code: house league sign-up"></div>
+      <p>Sign up a pretend child for <b>U9</b>. Use <b>your own email</b>, and the confirmation and every email after it come to your phone.</p>
+      <span class="qurl" data-qurl="signup"></span>
+    </article>
+
+    <article class="qcard">
+      <span class="win w-admin">As the league admin</span>
+      <h3>Rain at 7 a.m. Saturday</h3>
+      <div class="qr" id="qr-admin" role="img" aria-label="QR code: league admin sign-in"></div>
+      <p>Open the <b>2027 season</b>, go to <b>Schedule</b> and call off Saturday's games. Families hear by email.</p>
+      <p class="hint"><b>Skip the typing:</b> double-click <b>Milton phone sign-in</b> on the desktop for a code that signs the phone straight in. Use this card only if that doesn't work.</p>
+      <div class="login">
+        <div class="lrow"><label for="admin-email">Email</label><code id="admin-email">b2cowan+hladmin@gmail.com</code><button type="button" data-copy="admin-email">Copy</button></div>
+        <div class="lrow"><label for="admin-pass">Password</label><input id="admin-pass" type="password" autocomplete="off" placeholder="type it once"><button type="button" id="reveal">Show</button></div>
+        <span class="hint">The password stays in this browser only. It is not saved in the page.</span>
+      </div>
+      <span class="qurl" data-qurl="admin"></span>
+    </article>
+
+    <article class="qcard">
+      <span class="win w-public">As anyone</span>
+      <h3>The club's page</h3>
+      <div class="qr" id="qr-club" role="img" aria-label="QR code: Milton Bats public page"></div>
+      <p>What families find before they ever sign in: the season, the schedule, the standings and the way to register.</p>
+      <span class="qurl" data-qurl="club"></span>
+    </article>
+
+    <article class="qcard">
+      <span class="win w-public">As anyone</span>
+      <h3>The standings</h3>
+      <div class="qr" id="qr-standings" role="img" aria-label="QR code: public standings"></div>
+      <p>The public standings, with the tie-break rules spelled out. Used in the coach scores walk.</p>
+      <span class="qurl" data-qurl="standings"></span>
+    </article>
+  </div>
+</section>
+
+<section class="presenter" aria-labelledby="reset">
+  <h2 id="reset">Reset the club</h2>
+  <p class="muted">Paste into a PowerShell window on the laptop. It puts the whole club back to the starting point, ready for the walk below. Logins, the club's look and every address on this page keep working. Emails already sent stay sent.</p>
+  <div class="cmds">
+    <div class="cmd"><span class="what">Reset, with games around today.</span>
+      <div class="url"><code>cd C:\Users\b2cow\Documents\tournament-website; npm run demo:milton:reset</code><button type="button">Copy</button></div></div>
+    <div class="cmd"><span class="what">Reset for a different demo day. Change the date first. It must be within 35 days before or 60 days after today.</span>
+      <div class="url"><code>cd C:\Users\b2cow\Documents\tournament-website; npm run demo:milton:reset -- --demo-day 2026-11-14</code><button type="button">Copy</button></div></div>
+    <div class="cmd"><span class="what">Open the Owner, League admin, Coach and Public windows, each already signed in.</span>
+      <div class="url"><code>cd C:\Users\b2cow\Documents\tournament-website; .\scripts\milton-demo-windows.ps1</code><button type="button">Copy</button></div></div>
+  </div>
+</section>
+
+<section aria-labelledby="walks">
+  <h2 id="walks">The walk, in order</h2>
+  <ol class="order">
+    <li class="walk bookend" id="w-start">
+      <span class="n">Start</span>
+      <div><h3>Your club's own sign-up page</h3></div>
+      <div><p>On your phone: the club's public page with the season and each division's open spots. On the laptop: the season's home, with registrations, teams, schedule, standings, money and family email all in one place.</p></div>
+      <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-admin">League admin window</span></div>
+        <div class="url"><code data-path="/milton-bats/admin/house-league/seasons/{season}"></code><button type="button">Copy</button></div></div>
+      <ol class="steps">
+        <li><span class="win w-phone">Phone</span> Scan <b>The club's page</b> card. Look over the season and the division cards.</li>
+        <li><span class="win w-admin">League admin window</span> Walk the season's tabs: <span class="k">Registrations</span> <span class="k">Teams &amp; draft</span> <span class="k">Schedule</span> <span class="k">Standings</span> <span class="k">Money</span> <span class="k">Email families</span>.</li>
+      </ol>
+    </li>
+
+    <li class="walk" id="w-1">
+      <span class="n">1</span>
+      <div><h3>From sign-up to the club's books</h3></div>
+      <div><p>First, a look at the league as it stands: who's registered and where the money is. Then you sign up a pretend U9 child on your phone and pay with a test card. Back on the laptop, you follow that one sign-up through the registrations, the season's money and the club's books.</p></div>
+      <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-admin">League admin window</span></div>
+        <p>Click the season's <span class="k">Registrations</span> tab.</p></div>
+      <div class="phase"><span class="label">Before: the league today</span>
+        <ol class="steps">
+          <li>Pick U9. Note how many players are Active and how many spots are left.</li>
+          <li><span class="k">Money</span> tab: note Owed, Received and Still owing.</li>
+          <li><span class="win w-owner">Owner window</span> The club home: "The club today" and what the club is owed. Then <span class="k">Accounting</span>, <span class="k">Ledger</span>: the house league fees line.</li>
+        </ol></div>
+      <div class="phase"><span class="label">The sign-up</span>
+        <ol class="steps" start="4">
+          <li><span class="win w-phone">Phone</span> Scan the <b>Sign up a player</b> card, then <span class="k">Register now</span>.</li>
+          <li>Add a child born in 2018 or 2019 (the division picks itself), then the parent. Tick the waiver and <span class="k">Sign up</span>.</li>
+          <li><span class="k">Pay by card</span> with 4242 4242 4242 4242, any future date, any 3 digits. The phone shows "You're signed up" with a reference, and the confirmation email arrives.</li>
+        </ol></div>
+      <div class="phase"><span class="label">After: follow the new registrant</span>
+        <ol class="steps" start="7">
+          <li><span class="win w-admin">League admin window</span> Back on <span class="k">Registrations</span>, refresh. The new child is under Active, paid, and U9 has one more player.</li>
+          <li>While you're there, switch to U13, which is full. In <span class="k">To review</span>, tick three and <span class="k">Approve</span>. In <span class="k">Waitlist</span>, <span class="k">Promote</span> one family, and they're emailed that a spot opened.</li>
+          <li><span class="k">Money</span> tab: Received has gone up by the fee. The payment is under <span class="k">Every line</span>.</li>
+          <li><span class="win w-owner">Owner window</span> Refresh the club home: the figures have moved. Then <span class="k">Ledger</span>: the payment is in the house league fees line.</li>
+        </ol></div>
+      <div class="look"><b>Look for</b><ul>
+        <li>The right division is picked from the birth year. Nobody sorts kids by hand.</li>
+        <li>The before and after: one sign-up moves the registrations, the season's money and the club's books, with no export or re-typing.</li>
+        <li>The president sees what's owed and what's waiting without asking you for a spreadsheet.</li>
+      </ul></div>
+    </li>
+
+    <li class="walk" id="w-2">
+      <span class="n">2</span>
+      <div><h3>Rate, draft and publish U9 teams</h3></div>
+      <div><p>You rate a few players 1 to 5, including your pretend child. You run the draft with siblings kept together, then run it again with that turned off to see the difference. You drag one player to another team, then publish. Families and coaches each get an email.</p></div>
+      <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-admin">League admin window</span></div>
+        <div class="url"><code data-path="/milton-bats/admin/house-league/seasons/{season}/teams"></code><button type="button">Copy</button></div></div>
+      <ol class="steps">
+        <li>Pick U9. <span class="k">Rate players</span>: rate your pretend child and a few others (the 1 to 5 keys work too).</li>
+        <li><span class="k">Run the draft</span> with <span class="k">Keep families together</span> on. Run it again with it off to see siblings split.</li>
+        <li>Drag one player to another team.</li>
+        <li><span class="k">Publish teams</span>, then <span class="k">Publish and email</span>.</li>
+        <li><span class="win w-phone">Phone</span> Open the email: "The teams are set".</li>
+      </ol>
+      <div class="look"><b>Look for</b><ul>
+        <li>Balanced teams in one click, with siblings together when you want them together.</li>
+        <li>You can still adjust by hand before anything goes out.</li>
+        <li>Nothing is sent until you publish. Then every family and coach hears at once.</li>
+      </ul></div>
+    </li>
+
+    <li class="walk" id="w-3">
+      <span class="n">3</span>
+      <div><h3>Change a team after it's published</h3></div>
+      <div><p>In U15, where families already know their teams, you move a player. The change saves right away and emails nobody. A banner counts the families who haven't been told. You review the list, preview the email, leave one family off and send the rest.</p></div>
+      <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-admin">League admin window</span></div>
+        <p>Stay on <span class="k">Teams &amp; draft</span> from Walk 2 and pick U15.</p></div>
+      <ol class="steps">
+        <li>Move one player to the other team. The banner appears: families haven't been told.</li>
+        <li><span class="k">Review and email</span>. Open <span class="k">See an example email</span>.</li>
+        <li>Choose <span class="k">Don't email this family</span> on one, then send the rest.</li>
+      </ol>
+      <div class="look"><b>Look for</b><ul>
+        <li>You can fix a roster midweek without families getting surprise emails.</li>
+        <li>You choose who hears, and each household gets one email even with two kids moved.</li>
+        <li>Move a player and move them back, and nobody is told anything.</li>
+      </ul></div>
+    </li>
+
+    <li class="walk" id="w-4">
+      <span class="n">4</span>
+      <div><h3>U9's games and practices, from the club's diamonds to published</h3></div>
+      <div><p>The club has already given house league its field time. You hand U9 a Saturday morning for games and a Tuesday evening for practices. Practices go out to the teams in one step, and families are told their practice times. Then you generate the games, check the schedule's health and publish. Games and practices sit together on one schedule.</p></div>
+      <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-admin">League admin window</span></div>
+        <p>Click the <span class="k">Schedule</span> tab and pick U9 in <span class="k">Division</span>. U9's teams must be published (Walk 2) before families can be told anything.</p></div>
+      <div class="phase"><span class="label">Give U9 its time</span>
+        <ol class="steps">
+          <li><span class="k">Tools</span>, then <span class="k">House league's time</span>. Each park's Saturdays and each weeknight is its own row.</li>
+          <li>On the Sam Sherritt Saturday-morning row, <span class="k">Give it to</span>, then "U9 games".</li>
+          <li>On the Sam Sherritt Tuesday-evening row, <span class="k">Give it to</span>, then "U9 practice time". Then <span class="k">Done</span>.</li>
+        </ol></div>
+      <div class="phase"><span class="label">Practices</span>
+        <ol class="steps" start="4">
+          <li><span class="k">Tools</span>, then <span class="k">Practice time</span>. Leave 60 minutes, 1 team at once, 1 a week. It reads "Every team gets 1 practice a week." Then <span class="k">Hand out practices</span>.</li>
+          <li>"Tell the families their practice times" opens by itself. Choose <span class="k">Send to</span> the families.</li>
+        </ol></div>
+      <div class="phase"><span class="label">Games, then publish</span>
+        <ol class="steps" start="6">
+          <li><span class="k">Tools</span>, then <span class="k">Generate games</span>. U9's Saturday time is already there. <span class="k">Next: match-ups</span>, leave <span class="k">Once</span>, then <span class="k">Check the games</span> and <span class="k">Save 6 games</span>.</li>
+          <li>Open the schedule health button: games, home and away, byes and clashes. Switch to <span class="k">Week</span> to see games and practices together.</li>
+          <li><span class="k">Publish schedule</span>, then <span class="k">Publish</span>.</li>
+          <li><span class="win w-phone">Phone</span> Two emails: the practice times, then the team's schedule is up.</li>
+        </ol></div>
+      <div class="look"><b>Look for</b><ul>
+        <li>Games and practices both come from the club's real fields, shared with rep teams, so nothing is double-booked.</li>
+        <li>One step hands every team a fair practice slot, taking turns at the early and late times.</li>
+        <li>Nothing reaches families until you send it. They get the practice times, then the game schedule, one email each.</li>
+      </ul></div>
+    </li>
+
+    <li class="walk" id="w-5">
+      <span class="n">5</span>
+      <div><h3>Rainout Saturday</h3></div>
+      <div><p>You pick the coming Saturday, postpone every game across the divisions and add a short note for families. One click postpones the games and emails the families. The games wait in a "needs a new date" list. We also run it once without emailing, to show you can undo it before anyone is told.</p></div>
+      <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-admin">League admin window</span></div>
+        <p>Stay on <span class="k">Schedule</span> from Walk 4.</p></div>
+      <ol class="steps">
+        <li><span class="k">Rainout</span>. Pick the coming Saturday.</li>
+        <li><span class="k">Postpone them</span>, all divisions, with <span class="k">Email the families now</span> ticked.</li>
+        <li>Add a line such as "Fields are closed. New dates to come." and confirm.</li>
+        <li><span class="win w-phone">Phone</span> Open the email: the team's games changed.</li>
+        <li><span class="win w-admin">League admin window</span> The games wait under "Needs a new date". Run Rainout again with the email box unticked, then <span class="k">Put all back</span>.</li>
+      </ol>
+      <div class="look"><b>Look for</b><ul>
+        <li>One decision covers every game that day.</li>
+        <li>Each household gets one email, not one per game.</li>
+        <li>Nothing goes out until you mean it, and you can put everything back.</li>
+      </ul></div>
+    </li>
+
+    <li class="walk bookend" id="w-end">
+      <span class="n">End</span>
+      <div><h3>Back to the president's view</h3></div>
+      <div><p>The club home now has your season's money in it. The same club account also runs the rep teams and the tournament.</p></div>
+      <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-owner">Owner window</span></div>
+        <p>Refresh the club home.</p></div>
+    </li>
+  </ol>
+</section>
+
+<section aria-labelledby="more">
+  <h2 id="more">Ask to see any of these</h2>
+  <p class="muted">Each takes a few minutes. Ask whenever one comes up. The full steps for each are at the bottom of this page.</p>
+  <div class="extras">
+    <div>
+      <h3>Unpaid fees</h3>
+      <p>U13's list of families still owing, how long each has owed, plus refunds and corrected prices.</p>
+      <p class="benefit">Who owes, and for how long, at a glance.</p>
+      <a href="#d-fees">Step by step ↓</a>
+    </div>
+    <div>
+      <h3>Coaches enter scores</h3>
+      <p>A coach enters a U11 score from their own login. You confirm or correct it, and the public standings update themselves.</p>
+      <p class="benefit">No more Sunday-night score emails.</p>
+      <a href="#d-scores">Step by step ↓</a>
+    </div>
+    <div>
+      <h3>A registrar without a shared login</h3>
+      <p>Invite a registrar who handles sign-ups, fees, refunds and family email, but can't see player ratings.</p>
+      <p class="benefit">Hand off work safely.</p>
+      <a href="#d-registrar">Step by step ↓</a>
+    </div>
+    <div>
+      <h3>Email families, with a record</h3>
+      <p>Send a note to one division, then see the club-wide log of what went out, to whom, and who it reached.</p>
+      <p class="benefit">"Did we tell the U9 parents?" answered in one click.</p>
+      <a href="#d-email">Step by step ↓</a>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="detail">
+  <h2 id="detail">The extra walks, step by step</h2>
+
+  <article class="walk" id="d-fees">
+    <span class="n">A</span>
+    <div><h3>Unpaid fees</h3></div>
+    <div class="starts"><p><b>Where it starts:</b> U13 is full. About a third of families still owe, some for longer than others. One family's price was corrected, one was refunded and one fee was cancelled.</p></div>
+    <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-admin">League admin window</span></div>
+      <p>Click the season's <span class="k">Money</span> tab.</p></div>
+    <ol class="steps">
+      <li><span class="k">Still owing</span>: each family shows how many days they've owed. Anyone past the club's limit turns amber.</li>
+      <li><span class="k">Refunds</span>: the refunded family and why.</li>
+      <li><span class="k">Every line</span>: each charge, payment, correction and cancellation in one list.</li>
+    </ol>
+    <div class="look"><b>Look for</b><ul>
+      <li>Who owes, and for how long, without a spreadsheet.</li>
+      <li>Corrections and refunds stay on the record instead of being typed over.</li>
+    </ul></div>
+  </article>
+
+  <article class="walk" id="d-scores">
+    <span class="n">B</span>
+    <div><h3>Coaches enter scores, standings keep themselves</h3></div>
+    <div class="starts"><p><b>Where it starts:</b> U11's teams and schedule are published and earlier games are scored. Two scores are waiting to be checked: one a coach entered, and one the other team flagged.</p></div>
+    <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-coach">Coach window</span></div>
+      <p>It opens on the coach's start page. Click the U11 Diamondbacks.</p></div>
+    <ol class="steps">
+      <li><span class="k">Enter the score</span> on an upcoming game, then <span class="k">Save the score</span>.</li>
+      <li><span class="win w-admin">League admin window</span> <span class="k">Schedule</span> tab, then <span class="k">Scores to check</span>. One is "Coach entered", one is "Reported".</li>
+      <li>Keep one score and <span class="k">Correct the score</span> on the other.</li>
+      <li><span class="win w-phone">Phone</span> Scan <b>The standings</b> card. The tie-break rules sit under the table.</li>
+    </ol>
+    <div class="look"><b>Look for</b><ul>
+      <li>Coaches enter their own scores, so you aren't collecting them by email.</li>
+      <li>If a coach disputes a score, you make the call.</li>
+      <li>Families see standings that update themselves, and the tie-breaks are explained.</li>
+    </ul></div>
+  </article>
+
+  <article class="walk" id="d-registrar">
+    <span class="n">C</span>
+    <div><h3>A registrar without a shared login</h3></div>
+    <div class="starts"><p><b>Where it starts:</b> The club has an owner, a house-league administrator and a coach. Nobody has the registrar role yet.</p></div>
+    <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-owner">Owner window</span></div>
+      <p>In the sidebar, <span class="k">Organization</span>, then <span class="k">Members</span>.</p></div>
+    <ol class="steps">
+      <li><span class="k">Invite</span>. Enter b2cowan+registrar@gmail.com and set the role to <span class="k">League registrar</span>.</li>
+      <li><span class="k">Send invite</span>. The invitation arrives by email.</li>
+      <li>Open "What each role can open" to compare the roles side by side.</li>
+    </ol>
+    <div class="look"><b>Look for</b><ul>
+      <li>A registrar handles sign-ups, fees, refunds and family email.</li>
+      <li>They never see player ratings, and they can't move a child to another division.</li>
+      <li>A treasurer can read the money and nothing else.</li>
+    </ul></div>
+  </article>
+
+  <article class="walk" id="d-email">
+    <span class="n">D</span>
+    <div><h3>Email families, with a record of who was told</h3></div>
+    <div class="starts"><p><b>Where it starts:</b> By this point the walks above have sent the team, schedule and rainout emails, so the log already has entries.</p></div>
+    <div class="start"><div class="start-head"><span class="label">Start here</span><span class="win w-admin">League admin window</span></div>
+      <p>Click the season's <span class="k">Email families</span> tab.</p></div>
+    <ol class="steps">
+      <li>Start a new email. Choose "A division", pick U9, write a short note and send it. The send button shows how many families it will reach.</li>
+      <li><span class="win w-owner">Owner window</span> In the sidebar, <span class="k">Families</span>, then <span class="k">Emails</span>. Each email shows when it was sent, its subject, who it went to, who sent it and how many it reached.</li>
+    </ol>
+    <div class="look"><b>Look for</b><ul>
+      <li>"Did we tell the U9 parents?" is answered in one click.</li>
+      <li>Each season allows up to three typed emails a day, so families aren't buried. Schedule and rainout notices don't count toward that limit.</li>
+    </ul></div>
+  </article>
+</section>
+
+<footer>The families, children and payments in this practice club are made up. Card payments use a test card, so no money moves.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  var BASE = "https://dev.fieldlogichq.ca";
+  // The demo's reset rebuilds the season under this same id every time, so these addresses never go stale.
+  var SEASON = "6d1f0a52-3c4e-4b8a-9f2e-27a1b0c0d927";
+
+  // Phone cards: QR codes point only at addresses that survive a reset.
+  var QURLS = {
+    signup: BASE + "/milton-bats/league/2027-summer-house-league/register",
+    admin: BASE + "/auth/login?next=" + encodeURIComponent("/milton-bats/admin/house-league"),
+    club: BASE + "/milton-bats",
+    standings: BASE + "/milton-bats/league/2027-summer-house-league/standings"
+  };
+  Object.keys(QURLS).forEach(function(key){
+    var el = document.getElementById("qr-" + key);
+    try {
+      new QRCode(el, { text: QURLS[key], width: 400, height: 400, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    } catch (e) {
+      el.textContent = "QR code did not load. Open the link below instead.";
+      el.style.lineHeight = "1.4";
+    }
+  });
+  document.querySelectorAll("[data-qurl]").forEach(function(el){ el.textContent = QURLS[el.getAttribute("data-qurl")].replace("https://", ""); });
+
+  // Start-here addresses.
+  document.querySelectorAll("code[data-path]").forEach(function(c){
+    c.textContent = BASE + c.getAttribute("data-path").replace("{season}", SEASON);
+  });
+
+  function selectText(el){
+    try { var r = document.createRange(); r.selectNodeContents(el); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {}
+  }
+  function copyFrom(btn, el){
+    var done = function(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); };
+    var fail = function(){ selectText(el); btn.textContent = "Press Ctrl+C"; setTimeout(function(){ btn.textContent = "Copy"; }, 2000); };
+    try { navigator.clipboard.writeText(el.textContent).then(done, fail); } catch (e) { fail(); }
+  }
+  document.querySelectorAll(".url button").forEach(function(btn){
+    btn.addEventListener("click", function(){ copyFrom(btn, btn.parentNode.querySelector("code")); });
+  });
+  document.querySelectorAll("[data-copy]").forEach(function(btn){
+    btn.addEventListener("click", function(){ copyFrom(btn, document.getElementById(btn.getAttribute("data-copy"))); });
+  });
+
+  // Password: remembered in this browser only.
+  var pass = document.getElementById("admin-pass");
+  var PASS_KEY = "milton-admin-pass";
+  try { pass.value = localStorage.getItem(PASS_KEY) || ""; } catch (e) {}
+  pass.addEventListener("input", function(){ try { localStorage.setItem(PASS_KEY, pass.value); } catch (e) {} });
+  var reveal = document.getElementById("reveal");
+  reveal.addEventListener("click", function(){
+    var show = pass.type === "password";
+    pass.type = show ? "text" : "password";
+    reveal.textContent = show ? "Hide" : "Show";
+  });
+})();
+</script>

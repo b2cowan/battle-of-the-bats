@@ -58,6 +58,9 @@ export default {
   ],
 
   season: {
+    /** Fixed so the season's admin addresses survive every reset (the presenter's run sheet links to them). The reset deletes
+     *  every season of this club before it rebuilds, so re-using the id is safe. Change it only together with the run sheet. */
+    id: '6d1f0a52-3c4e-4b8a-9f2e-27a1b0c0d927',
     name: '2027 Summer House League',
     slug: '2027-summer-house-league',
     description: 'House league softball for Milton players. Saturday-morning games, weeknight practices, and a team to play with all summer.',
@@ -115,22 +118,22 @@ export default {
     pastSaturdays: 5,
     u11: { venue: 'Sam Sherritt Park', facility: 'Diamond 1', start: '09:00', gameMinutes: 90, slotMinutes: 180, saturdays: 12 },
     u15: { venue: 'Lions Park', facility: 'Diamond 1', start: '12:30', gameMinutes: 90, slotMinutes: 150, pastSaturdays: 2, saturdays: 7 },
-    /** Field time offered to house league and not yet given to a division. Saturdays heavy, some weeknights. */
+    /** Field time offered to house league and not yet given to a division (Walk 4 gives it to U9).
+     *  Each entry is one BLOCK of the club's schedule, so House league's time shows it as its own row with its own
+     *  "Give it to": one click hands a park's Saturdays to "U9 games", another a park's Tuesdays to "U9 practice time".
+     *  Saturday blocks are cut into game-length slots, because the generator makes each game the length of a slot.
+     *  Weeknight blocks are one slot per diamond; the practice hand-out cuts them into practices (60 minutes by default).
+     *  Sam Sherritt's Tuesday holds two diamonds, so it alone gives U9's 4 teams a practice a week (6 seats). */
     open: {
       saturdays: 8,
-      saturdayRows: [
-        { venue: 'Sam Sherritt Park', facility: 'Diamond 2', start: '09:00', end: '12:00' },
-        { venue: 'Sam Sherritt Park', facility: 'Diamond 3', start: '09:00', end: '12:00' },
-        { venue: 'Lions Park', facility: 'Diamond 2', start: '09:00', end: '12:00' },
-        { venue: 'Lions Park', facility: 'Diamond 3', start: '09:00', end: '12:00' },
-        { venue: 'Kinsmen Park', facility: 'Diamond 1', start: '13:00', end: '16:00' },
-        { venue: 'Kinsmen Park', facility: 'Diamond 2', start: '13:00', end: '16:00' },
-      ],
       weeknights: 8,
-      weeknightRows: [
-        { dow: 2, venue: 'Sam Sherritt Park', facility: 'Diamond 1', start: '18:00', end: '21:00' },
-        { dow: 3, venue: 'Lions Park', facility: 'Diamond 1', start: '18:00', end: '21:00' },
-        { dow: 4, venue: 'Kinsmen Park', facility: 'Diamond 1', start: '18:00', end: '21:00' },
+      blocks: [
+        { dow: 6, venue: 'Sam Sherritt Park', facilities: ['Diamond 2', 'Diamond 3'], start: '09:00', end: '12:00', slotMinutes: 90 },
+        { dow: 6, venue: 'Lions Park', facilities: ['Diamond 2', 'Diamond 3'], start: '09:00', end: '12:00', slotMinutes: 90 },
+        { dow: 6, venue: 'Kinsmen Park', facilities: ['Diamond 1', 'Diamond 2'], start: '13:00', end: '16:00', slotMinutes: 90 },
+        { dow: 2, venue: 'Sam Sherritt Park', facilities: ['Diamond 1', 'Diamond 2'], start: '18:00', end: '21:00' },
+        { dow: 3, venue: 'Lions Park', facilities: ['Diamond 1'], start: '18:00', end: '21:00' },
+        { dow: 4, venue: 'Kinsmen Park', facilities: ['Diamond 1'], start: '18:00', end: '21:00' },
       ],
     },
   },
