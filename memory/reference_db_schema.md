@@ -60,7 +60,7 @@ id (uuid), tournament_id (uuid) → tournaments.id, title NOT NULL, display_orde
 - Indexes: rules_tournament_id_idx
 
 ### teams
-id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, name NOT NULL, coach, email, status, payment_status, registered_at, admin_notes, pool_id (uuid) → pools.id, deposit_paid (numeric), total_paid (numeric), waitlist_position (integer), slot_id (uuid) → pool_slots.id, check_in_status, checked_in_at, checked_in_by_user_id (uuid), checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes, seed (integer), coach_email, fee_book_baseline (numeric), fee_changed_by (uuid), pay_link_sent_at, entry_lowered (numeric)
+id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, name NOT NULL, coach, email, status, payment_status, registered_at, admin_notes, pool_id (uuid) → pools.id, deposit_paid (numeric), total_paid (numeric), waitlist_position (integer), slot_id (uuid) → pool_slots.id, check_in_status, checked_in_at, checked_in_by_user_id (uuid), checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes, seed (integer), coach_email, fee_book_baseline (numeric), fee_changed_by (uuid), pay_link_sent_at, entry_lowered (numeric), link_version (integer), link_replaced_at
 - Indexes: idx_teams_slot_id, teams_division_id_idx, teams_pool_id_idx, teams_tournament_id_idx
 
 ### tournament_archives
@@ -1111,8 +1111,8 @@ user_id (uuid) NOT NULL, code_hash NOT NULL, used_at
 user_id (uuid) NOT NULL, organization_id (uuid) → organizations.id NOT NULL, starts_at
 
 ### two_step_owner_resets
-id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) NOT NULL, asked_by NOT NULL, asked_how NOT NULL, reason NOT NULL, requested_at, confirmed_at, runs_at, held_at, held_by, cancelled_at, completed_at
-- Indexes: two_step_owner_resets_waiting_idx
+id (uuid), organization_id (uuid) → organizations.id, user_id (uuid) NOT NULL, asked_by NOT NULL, asked_how NOT NULL, reason NOT NULL, requested_at, confirmed_at, runs_at, held_at, held_by, cancelled_at, completed_at, confirm_token_hash, confirm_expires_at, club_notice_count (integer), cancelled_by
+- Indexes: two_step_owner_resets_one_open_idx, two_step_owner_resets_token_idx, two_step_owner_resets_waiting_idx
 
 ### user_hidden_workspaces
 user_id (uuid) NOT NULL, organization_id (uuid) → organizations.id NOT NULL, hidden_at

@@ -141,7 +141,7 @@ Return each one with the routes behind it.
 
 ## Part 2 · Opus — your account
 
-> **BUILT 2026-11-11, commit owed (the owner's yes); walk §513 owed.** What was built, the review's Part 1 fix and two
+> **BUILT + COMMITTED `0a0ee533d` 2026-11-11; walk §513 ✅ 28/28 2026-11-11.** What was built, the review's Part 1 fix and two
 > open owner calls (the database half of that fix; the production secret's deploy line): `BOARD_READY_PLAN.md` §5 Stage 0a
 > "Part 2". **For Part 3:** the window is `components/shared/CodeAgainWindow.tsx`, opened by any route that returns
 > `freshCodeRefusal()` (`lib/two-step-fresh.ts`) — the reset and the switches call `requireFreshCode()` after their own
@@ -223,7 +223,7 @@ Build to tab 5 and tab 4, on Part 1's pieces.
 > where a switch is turned on; the Members column reads `twoStepFactsFor` (lib/two-step-reset.ts); Help must say an admin opens
 > Settings for its two-step card; the /legal policy lines are in `TWO_STEP_SIGNIN_PRIVACY.md` § Part 3.
 
-> **Starts after Part 2 is committed (owner, 2026-11-11).** Turning a switch off and the club's reset ask for the
+> **Part 2 is committed (`0a0ee533d`, walk §513 ✅ 28/28; its change-password fix `c346793b2`).** Starts after Part 2 is committed (owner, 2026-11-11). Turning a switch off and the club's reset ask for the
 > owner's or admin's code through **Part 2's one "type your code again" window**: use it, don't build another. The
 > lost-phone screen's club version is waiting on your reset door: change Part 2's chooser to show it, and walk it.
 
