@@ -535,7 +535,7 @@ board's two questions:
     club data-processing terms. The drawings and Part 1's walk quote the old form line.
   - ⛔ **RELEASE GATE (2026-11-11, with Part 2): Parts 1 and 2 go to production in ONE promote**, migs 461 → 471 → 472
     in that order; Part 1 alone still breaks the form's promise.
-  - **Part 3 (the draft + the board rows) BUILT 2026-11-12**, to drawing tabs 3 (bottom), 5, 5b and 6: the engine
+  - **Part 3 (the draft + the board rows) BUILT + COMMITTED `06a2b17f1` 2026-11-12**, to drawing tabs 3 (bottom), 5, 5b and 6: the engine
     (`lib/house-league-draft.ts` `keepTogetherGroups`: household ∪ confirmed links, cap 3, A7 order, siblings never split,
     locks win, a kept-apart pair never joined even through a shared friend; `evenOut` still moves singles only); each
     request's draft outcome stored with the deal (**mig 473**: `league_friend_requests.draft_outcome` kept · over_cap ·
