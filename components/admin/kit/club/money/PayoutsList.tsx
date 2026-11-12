@@ -13,7 +13,7 @@
  * A payout that didn't arrive is info for everyone but the person who set up payouts (the fix is theirs, words §3.2); for
  * them it is an amber pill that opens Stripe. A manual payout says Stripe lists automatic ones only.
  */
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import DateRangeDropdown from '@/components/coaches/DateRangeDropdown';
@@ -182,6 +182,12 @@ export default function PayoutsList({ orgSlug }: { orgSlug: string }) {
 /** The status: a chip, the quiet count beside Paid, and a payout that didn't arrive (words §3.2). */
 function StatusCell({ p, read, orgSlug }: { p: PayoutRow; read: Read; orgSlug: string }) {
   const [opening, setOpening] = useState(false);
+  // Back from Stripe: the page returns from the browser's cache with the pill still "Opening Stripe…".
+  useEffect(() => {
+    const restore = (event: PageTransitionEvent) => { if (event.persisted) setOpening(false); };
+    window.addEventListener('pageshow', restore);
+    return () => window.removeEventListener('pageshow', restore);
+  }, []);
   if (p.status === 'on_its_way') return <RepChip tone="info">{W.status.on_its_way}</RepChip>;
   if (p.status === 'paid') {
     return (

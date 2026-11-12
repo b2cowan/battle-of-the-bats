@@ -37,6 +37,8 @@ function payoutsHarness(t: TestContext, home: 'club' | 'tournament', state: Payo
       return slots[at] as { current: T };
     },
     useCallback<T>(callback: T) { return callback; },
+    // The card's "back from Stripe" listener (pageshow) is an effect; the harness runs click handlers, not effects.
+    useEffect() {},
   };
   const initial: PayoutsView = {
     state, isOwner: true, testMode: true, rateLabel: '3%', example: { baseCents: 10000, feeCents: 300 },

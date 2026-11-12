@@ -73,6 +73,13 @@ export default function DisputeBlock({ d, orgSlug, team, isPhone = false }: {
   const pastDue = disputeChip(d) === 'notAnswered';
   const amber = d.youAnswer;
 
+  // Back from Stripe: the page returns from the browser's cache with the button still "Opening Stripe…".
+  useEffect(() => {
+    const restore = (event: PageTransitionEvent) => { if (event.persisted) setOpening(false); };
+    window.addEventListener('pageshow', restore);
+    return () => window.removeEventListener('pageshow', restore);
+  }, []);
+
   async function answer() {
     setOpening(true);
     setOpenFailed(false);

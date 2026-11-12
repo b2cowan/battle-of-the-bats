@@ -121,6 +121,15 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
 
   const reload = useCallback(async () => { setView(await loadPayouts(orgSlug)); }, [orgSlug]);
 
+  // Back from Stripe: the browser restores this page from its cache with "Opening Stripe…" still on. Clear it.
+  useEffect(() => {
+    const restore = (event: PageTransitionEvent) => {
+      if (event.persisted) { openingRef.current = false; setOpening(false); }
+    };
+    window.addEventListener('pageshow', restore);
+    return () => window.removeEventListener('pageshow', restore);
+  }, []);
+
   if (!view) return null;
   const { state, isOwner } = view;
 
@@ -488,6 +497,14 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
   const inFlight = useRef(false);
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  // Back from Stripe: the page returns from the browser's cache with the window still "Opening Stripe…". Free it.
+  useEffect(() => {
+    const restore = (event: PageTransitionEvent) => {
+      if (event.persisted) { inFlight.current = false; setBusy(false); }
+    };
+    window.addEventListener('pageshow', restore);
+    return () => window.removeEventListener('pageshow', restore);
+  }, []);
 
   async function go() {
     if (inFlight.current || !alive.current) return;

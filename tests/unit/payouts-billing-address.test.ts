@@ -276,7 +276,7 @@ function cardHarness(options: { location: unknown; connectAnswers: Array<{ statu
   const connectAnswers = [...options.connectAnswers];
   const previousFetch = globalThis.fetch;
   const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
-  Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { assign: (url: string) => assigned.push(url), reload() {} } } });
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { assign: (url: string) => assigned.push(url), reload() {} }, addEventListener() {}, removeEventListener() {} } });
   globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
     const endpoint = String(input);
     const method = init?.method ?? 'GET';
