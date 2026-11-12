@@ -583,7 +583,7 @@ export default function ManageMemberDialog({
             {twoStep.door === 'support' && (
               <p className={ck.hint}>
                 Only FieldLogicHQ support can reset this one. {first === 'They' ? 'They email' : `${first} emails`} {FIELDLOGICHQ_CONTACT_EMAIL} from
-                {' '}their account’s address.
+                {' '}the address they sign in with.
               </p>
             )}
           </div>

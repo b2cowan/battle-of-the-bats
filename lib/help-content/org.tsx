@@ -49,7 +49,7 @@ const orgHelp: HelpPageContent = {
       heading: 'Roles explained — who can do what',
       summary: 'What each role can open, at a glance, then Owner, Admin, Treasurer, Staff, League admin, League registrar, Coach, and Volunteer one by one.',
       keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'team manager', 'coach', 'volunteer', 'scorekeeper', 'gate', 'helping with', 'what each role can open', 'role guide', 'plan & billing', 'billing', 'audit log', 'families', 'who can finalize scores', 'change a final score'],
-      searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar rep club no registrar team manager forms documents coach scorekeeper capabilities grant revoke org settings plan and billing subscription owner controls what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows volunteer helping with scoring the gate both field scores check-in',
+      searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar rep club no registrar team manager forms documents coach scorekeeper capabilities grant revoke org settings plan and billing subscription owner controls what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows volunteer helping with scoring the gate both field scores check-in settings two-step sign-in card admin reads it only the owner changes this',
       content: (
         <p>Every member of your organization holds one of these roles, and the role decides what they can open. Owners can grant or remove individual programs for any member from <strong>Members → Manage</strong>.</p>
       ),
@@ -80,11 +80,12 @@ const orgHelp: HelpPageContent = {
                   <tr><th scope="row">House league · Tournaments</th><td>✓</td><td>✓</td><td>—</td><td>game day</td><td>the house league</td><td>registrations, fees &amp; Email families</td><td>scores &amp; gate</td><td>—</td></tr>
                   <tr><th scope="row">Families</th><td>✓</td><td>if you turn it on</td><td>if you turn it on</td><td>—</td><td>if you turn it on</td><td>if you turn it on</td><td>—</td><td>—</td></tr>
                   <tr><th scope="row">Members</th><td>✓</td><td>✓</td><td>view</td><td>—</td><td>view</td><td>—</td><td>—</td><td>—</td></tr>
-                  <tr><th scope="row">Plan &amp; billing (default access) · Settings · Audit log</th><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                  <tr><th scope="row">Plan &amp; billing (default access) · Audit log</th><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                  <tr><th scope="row">Settings</th><td>✓</td><td>the Two-step sign-in card, to read</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
                 </tbody>
               </table>
               <p><strong>✓</strong> is full access; a shorter answer is the exact slice that role gets — &ldquo;view&rdquo; opens a program read-only, and &ldquo;if you turn it on&rdquo; means the owner has to grant it by hand (Families is never on by default for anyone but the owner, and it can&rsquo;t be given to a member limited to some Rep teams groups: a family&rsquo;s record spans every team its children play on). A row only appears on your own organization once your plan includes that program.</p>
-              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It opens <strong>Families</strong> only when the owner grants that access. <strong>Plan &amp; billing</strong>, Settings and the audit log stay with the owner and can&rsquo;t be handed out. The menu lists only what you can open. An admin can still change the club&rsquo;s logo, colours, type and banner in <strong>Public site</strong>; only the owner turns the site on or off.</p>
+              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It opens <strong>Families</strong> only when the owner grants that access. <strong>Plan &amp; billing</strong> and the audit log stay with the owner and can&rsquo;t be handed out. An admin opens <strong>Settings</strong> to read the <strong>Two-step sign-in</strong> card, and nothing else there: every other Settings card is the owner&rsquo;s. The menu lists only what you can open. An admin can still change the club&rsquo;s logo, colours, type and banner in <strong>Public site</strong>; only the owner turns the site on or off.</p>
             </>
           ),
         },
@@ -95,7 +96,7 @@ const orgHelp: HelpPageContent = {
             <>
               <ul>
                 <li><strong>Owner</strong> — Full access. Only the owner can open Plan &amp; billing, change Settings, or cancel or reduce the plan. Assigned at org creation; ownership can&rsquo;t be transferred through the admin panel.</li>
-                <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and the public site&rsquo;s look (logo, colours, type and banner, in <strong>Public site</strong>). Cannot turn the public site on or off, or open Settings or the audit log. Families needs the owner&rsquo;s explicit grant; Plan &amp; billing stays with the owner.</li>
+                <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and the public site&rsquo;s look (logo, colours, type and banner, in <strong>Public site</strong>). Cannot turn the public site on or off, or open the audit log. Opens Settings only to read the <strong>Two-step sign-in</strong> card; every other Settings card is the owner&rsquo;s, and so is changing that one. Sees each member&rsquo;s two-step sign-in on Members and can reset it (see <a href="#two-step-sign-in">Two-step sign-in</a>). Families needs the owner&rsquo;s explicit grant; Plan &amp; billing stays with the owner.</li>
                 <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, what the club bills its teams, and the teams’ payment requests. Can see the team names money is allocated to, without a Rep teams door of their own.</li>
                 <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot finalize scores or change a result that&rsquo;s already final, create tournaments, manage registrations, or send communications.</li>
                 <li><strong>League admin</strong> — Runs the house league: seasons, registrations, fees, teams, schedules, and Email families. Can view the member list.</li>
@@ -216,8 +217,8 @@ const orgHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to fix member access problems',
       summary: 'Troubleshoot missing pages, locked buttons, pending invites, suspended users, and module access.',
-      keywords: ['member cannot access', 'missing page', 'permission', 'suspended', 'pending invite', 'module access', 'what they can open', 'chip', 'role default', 'turn on', 'turn off', 'one save', 'coach staff page', 'volunteer no access', 'volunteer cannot score', 'helping with'],
-      searchText: 'member cannot access missing page locked button permission role capability suspended pending invite resend module not enabled plan and billing subscription seat limit what they can open chip role default turn on turn off consequence sentence one save emailed what changed suspend confirm remove confirm coaching staff staff page',
+      keywords: ['member cannot access', 'missing page', 'permission', 'suspended', 'pending invite', 'module access', 'what they can open', 'chip', 'role default', 'turn on', 'turn off', 'one save', 'coach staff page', 'volunteer no access', 'volunteer cannot score', 'helping with', 'lost phone', 'code screen', 'two-step'],
+      searchText: 'member lost phone stuck at the code screen two-step reset cannot access missing page locked button permission role capability suspended pending invite resend module not enabled plan and billing subscription seat limit what they can open chip role default turn on turn off consequence sentence one save emailed what changed suspend confirm remove confirm coaching staff staff page',
       links: [
         { label: 'Members', href: '../org/members' },
         { label: 'Plan & billing', href: '../org/billing' },
@@ -519,8 +520,8 @@ const orgHelp: HelpPageContent = {
     },
     {
       heading: 'Inviting and managing members',
-      keywords: ['seat limit', 'staff seats', 'volunteers free', 'scorekeepers free', 'free plan no volunteers', 'officials free', 'do volunteers count', 'do scorekeepers count', 'invite member', 'manage member', 'resend invite', 'helping with', 'staff kit'],
-      searchText: 'seat limit staff seats how many seats do volunteers scorekeepers count toward limit officials free seats free tournament 3 seats upgrade invite member manage role restrict tournaments helping with change a volunteer job resend pending invite export member list staff kit volunteer links qr codes',
+      keywords: ['two-step column', 'reset two-step', 'not set up', 'seat limit', 'staff seats', 'volunteers free', 'scorekeepers free', 'free plan no volunteers', 'officials free', 'do volunteers count', 'do scorekeepers count', 'invite member', 'manage member', 'resend invite', 'helping with', 'staff kit'],
+      searchText: 'two-step column on off not set up amber reset two-step sign-in lost phone owners and admins only export two-step column seat limit staff seats how many seats do volunteers scorekeepers count toward limit officials free seats free tournament 3 seats upgrade invite member manage role restrict tournaments helping with change a volunteer job resend pending invite export member list staff kit volunteer links qr codes',
       content: (
         <>
           <p>Go to <strong>Members</strong> and click <strong>Invite</strong>. Enter the person's email and choose their role (none is chosen for you). They'll receive an invitation email that says what the role opens, with a link to accept and set up their account.</p>
@@ -531,13 +532,175 @@ const orgHelp: HelpPageContent = {
             <li>Grant or revoke individual capabilities beyond their role defaults</li>
             <li>For a volunteer, change what they&rsquo;re <strong>Helping with</strong> (Scoring, The gate, or Both), which takes the place of the list of programs</li>
             <li>Suspend or reinstate their access</li>
+            <li>Reset their two-step sign-in, when they&rsquo;ve lost their phone and their backup codes (owners and admins; see <a href="#two-step-sign-in">Two-step sign-in</a>)</li>
           </ul>
+          <p>Owners and admins also see a <strong>Two-step</strong> column on Members: <strong>On</strong>, <strong>Off</strong>, or an amber <strong>Not set up</strong> for a person whose role the club requires it for and who hasn&rsquo;t yet. Treasurers and registrars don&rsquo;t see it. <strong>Export</strong> adds a <strong>Two-Step</strong> column to match.</p>
           <p>To resend an invitation to someone who hasn't accepted yet, open <strong>Manage</strong> on their row and choose <strong>Resend invite</strong>. Someone who hasn&rsquo;t accepted yet shows as <strong>Invited</strong> on their row.</p>
           <p><strong>Volunteer links</strong> (Tournament Plus and above; the free Tournament plan has no Staff kit): each tournament&rsquo;s <strong>Staff kit</strong> holds a QR code and a link for each job, Scorekeeper and Gate, and prints them on one page for the volunteer table. To try the volunteers&rsquo; screens yourself, use <strong>Scorekeeper</strong> on Results &amp; scoring or <strong>Gate view</strong> on Check-in.</p>
           <p><strong>Seat limits:</strong> Your plan's seat limit counts admins and staff only — <strong>volunteers (Tournament Plus and above) never count toward it</strong>, so bring as many as your event needs. The free Tournament plan includes three seats (you and up to two staff) and has no volunteers: you and your staff enter the scores. If you're near the limit, a banner appears on the Members page with an upgrade link. Paid plans have unlimited staff seats.</p>
           <p>You can <strong>export</strong> your member list (Excel or CSV) from the Members page for your own records.</p>
         </>
       ),
+    },
+    {
+      id: 'two-step-sign-in',
+      heading: 'Two-step sign-in',
+      summary: 'A 6-digit code from an authenticator app after your password: turning it on, backup codes, a lost phone, the emails you get, and how a club owner requires it, tracks it and resets it.',
+      keywords: ['two-step', 'two-step sign-in', '2FA', 'two-factor', 'two factor authentication', 'MFA', 'multi-factor', 'authenticator', 'authenticator app', 'Google Authenticator', 'Microsoft Authenticator', 'backup codes', 'backup code', 'lost phone', 'new phone', 'replaced my phone', 'code', 'type your code again', 'locked out', 'cant sign in', 'reset two-step', 'reset someones two-step', 'require two-step', 'require it for the board', 'also require it for coaches', '14 days', 'set it up now', 'remind me next time', 'who still needs to set up', 'not set up', 'two-step column', 'change password', 'sign out everywhere', 'sign out everywhere else', 'sign-in and security', 'security', 'turn off two-step', 'password changed email', 'stolen password'],
+      searchText: 'two-step sign-in two step 2fa two-factor two factor authentication mfa multi-factor authenticator app google authenticator microsoft authenticator 1password passwords app iphone scan qr code type the key open in authenticator app 6-digit code codes change every 30 seconds enter your code use a backup code ten backup codes shown once copy download keep somewhere other than your phone i have saved my backup codes new backup codes the codes you saved stop working codes left account menu account sign-in and security turn on two-step sign-in turn off two-step sign-in cannot turn off required for your role no text messages no emailed codes your other devices were signed out sign out everywhere else change password save password type your code to continue type your code to keep going fresh code 15 minutes payout or bank details adding an owner or admin resetting someones two-step turning your own off getting new backup codes setting up a new phone every 30 days on this device lost your phone use a backup code set up my new phone i still have my phone continue no codes ask your club owner or an admin can reset only fieldlogichq support can reset support resets it after a confirmation email wait 24 hours sign in with a real code cancels it other owners admins and treasurer are told locked out cannot sign in the emails you get now requires two-step sign-in 3 days left to set up two-step sign-in two-step sign-in is now on moved to a new phone two-step sign-in is now off your fieldlogichq password was changed your two-step sign-in was reset no longer requires two-step sign-in no link in the email forgot your password write to support from the address you sign in with organization settings two-step sign-in require it for the board owner admins treasurers registrars league admins also require it for coaches owner must have it on first on since everyone already in these roles has until anyone new gets 14 days your club now requires two-step sign-in set it up now remind me next time days left set up two-step sign-in to continue go to my other teams instead other teams and places stay open only that clubs pages wait stop requiring it people who have it keep it admin reads the card only the owner changes this members two-step column on off not set up days left amber invitation dash phone line coaching staff row export two-step column only owners and admins see it never treasurers or registrars never the board tab overview card your club can require two-step sign-in for the board open settings close people still need to set up two-step sign-in open members earliest deadline reset two-step sign-in manage window never for yourself never the owner only when it is on only when the account is used only for this club turn on your own first audit log records every change and every reset',
+      content: (
+        <p>Two-step sign-in asks for a 6-digit code from an authenticator app on your phone after your password, so a stolen password isn&rsquo;t enough to sign in as you. Anyone can turn it on for their own account, and a club can require it for its board and its coaches. The first four answers are for everyone; the last three are for a club&rsquo;s owner and admins.</p>
+      ),
+      subtopics: [
+        {
+          id: 'two-step-sign-in-t-turn-on',
+          title: 'Turning it on, and saving your backup codes',
+          content: (
+            <>
+              <p>It&rsquo;s off until you turn it on. It uses an authenticator app only: no text messages, no emailed codes.</p>
+              <HelpSteps>
+                <li>Open your account menu, choose <strong>Account</strong>, then <strong>Sign-in &amp; security</strong>.</li>
+                <li>Under <strong>Two-step sign-in</strong>, press <strong>Turn on two-step sign-in</strong>.</li>
+                <li>On a computer, open an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, 1Password, or the Passwords app on an iPhone) and scan the QR code. On a phone, press <strong>Open in authenticator app</strong>; if no app opens, copy the key into it.</li>
+                <li>Type the 6 digits the app shows and press <strong>Turn on two-step sign-in</strong>.</li>
+                <li>Save your ten backup codes with <strong>Copy</strong> or <strong>Download</strong>, somewhere other than your phone. They&rsquo;re shown once.</li>
+                <li>Tick the box and press <strong>Done</strong>. Your other devices are signed out, so sign in on them again with a code.</li>
+              </HelpSteps>
+              <p>Each backup code works once. The card on <strong>Sign-in &amp; security</strong> counts how many are left, and <strong>New backup codes</strong> gives you ten more and stops the old ones working. <strong>Turn off</strong> is on the same card, and it isn&rsquo;t there while a club requires two-step sign-in for a role you hold.</p>
+            </>
+          ),
+        },
+        {
+          id: 'two-step-sign-in-t-sign-in',
+          title: 'Signing in, and when it asks for your code again',
+          content: (
+            <>
+              <p>After your password, <strong>Enter your code</strong> asks for the 6-digit code from your authenticator app. The codes change every 30 seconds, so type the one showing now, then press <strong>Sign in</strong>. Too many wrong tries and it asks you to wait a few minutes.</p>
+              <p>Two things ask for a code again:</p>
+              <ul>
+                <li><strong>Every 30 days, if a club requires it</strong> for a role you hold. The window reads <em>Type your code to keep going</em>.</li>
+                <li><strong>Five actions, if you last typed a code more than 15 minutes ago</strong>: changing payout or bank details, adding an owner or an admin, resetting someone&rsquo;s two-step sign-in, turning your own off, and getting new backup codes or setting up a new phone. The window reads <em>Type your code to continue</em>. Press <strong>Continue</strong> and the action carries on.</li>
+              </ul>
+              <HelpNote variant="info" title="Changing your password">On <strong>Sign-in &amp; security</strong>, <strong>Change password</strong> signs your other devices out. Sign in on them again with the new password and a code.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'two-step-sign-in-t-lost-phone',
+          title: 'Lost or replaced your phone',
+          content: (
+            <>
+              <p><strong>If you saved your backup codes:</strong></p>
+              <HelpSteps>
+                <li>On the code screen, press <strong>Use a backup code</strong>, type one, and press <strong>Sign in</strong>.</li>
+                <li>The next screen says how many codes are left. Press <strong>Set up my new phone</strong> and follow the set-up from the first answer above.</li>
+              </HelpSteps>
+              <p>Replacing a phone you still have works the same way from <strong>Sign-in &amp; security</strong>: press <strong>Set up a new phone</strong>. It asks for a code first.</p>
+              <p><strong>If you have no codes</strong>, press <strong>Lost your phone?</strong> on the code screen. It tells you who can reset it:</p>
+              <ul>
+                <li><strong>Your club&rsquo;s owner or an admin</strong>, when your account is used only for that club. They reset it, and you sign in with your password and set it up on the new phone.</li>
+                <li><strong>FieldLogicHQ support</strong>, when your account is used in more than one place or you own the club. Email the support address on the screen, from the address you sign in with. We confirm by email and reset it 24 hours later. Signing in with a real code or a backup code during that time cancels the reset. For a club owner, we also tell the club&rsquo;s other owners, admins and treasurer.</li>
+              </ul>
+              <p>After a reset, your next sign-in sends you to set it up again if a club requires it for your role. Otherwise it&rsquo;s simply off.</p>
+            </>
+          ),
+        },
+        {
+          id: 'two-step-sign-in-t-emails',
+          title: 'The emails you get',
+          content: (
+            <>
+              <ul>
+                <li><strong>&ldquo;&hellip; now requires two-step sign-in&rdquo;</strong> when your 14 days start, and a reminder, <strong>&ldquo;3 days left to set up two-step sign-in&hellip;&rdquo;</strong>, 3 days before they end.</li>
+                <li><strong>&ldquo;Two-step sign-in is now on&rdquo;</strong> (or <strong>&ldquo;moved to a new phone&rdquo;</strong>) and <strong>&ldquo;Two-step sign-in is now off&rdquo;</strong>, to you, whenever either happens.</li>
+                <li><strong>&ldquo;Your FieldLogicHQ password was changed&rdquo;</strong>, after <strong>Change password</strong> or a password saved after a backup code.</li>
+                <li><strong>&ldquo;Your two-step sign-in was reset&rdquo;</strong>, when a club&rsquo;s owner or admin resets it.</li>
+                <li><strong>&ldquo;&hellip; no longer requires two-step sign-in&rdquo;</strong>, to the club&rsquo;s other owners, admins and treasurer, when the owner turns a requirement off.</li>
+              </ul>
+              <HelpNote variant="warning" title="An email you didn’t expect">None of these emails has a link, on purpose. If one surprises you, go to the sign-in page, press <strong>Forgot your password?</strong> and choose a new password. Then write to support from the address you sign in with.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'two-step-sign-in-t-require',
+          title: 'Requiring it for your club (owner)',
+          content: (
+            <>
+              <p>Open <strong>Organization &rsaquo; Settings</strong> and find the <strong>Two-step sign-in</strong> card. It has two switches, both off:</p>
+              <HelpDefs>
+                <HelpDef term="Require it for the board">Your owner, admins, treasurers, registrars and league admins.</HelpDef>
+                <HelpDef term="Also require it for coaches">Every coach on your club&rsquo;s teams.</HelpDef>
+              </HelpDefs>
+              <p>Only the owner changes them, and only once the owner has two-step sign-in on: the card says <em>Turn on two-step sign-in for your own account first</em> and links to <strong>Sign-in &amp; security</strong>. An admin sees the same card to read, with <em>Only the owner changes this.</em> Every other Settings card stays the owner&rsquo;s.</p>
+              <p><strong>Everyone gets 14 days.</strong> They&rsquo;re counted from the day you turn the requirement on, or from the day someone accepts a role in a club that already requires it. The card shows <em>On since&hellip;</em> and when the first 14 days end. Signing in during them shows <em>Your club now requires two-step sign-in</em> with <strong>Set it up now</strong> and <strong>Remind me next time</strong>. After them, <em>Set up two-step sign-in to continue</em> comes first, and only your club&rsquo;s pages wait. The person&rsquo;s other teams and places stay open, with <strong>Go to my other teams instead</strong>. People in a role you require type a code again every 30 days, and can&rsquo;t turn two-step sign-in off while it&rsquo;s required.</p>
+              <p><strong>Turning a switch off</strong> asks <em>Stop requiring two-step sign-in&hellip;?</em> first, then asks for your code if you last typed one more than 15 minutes ago. People who have it keep it. We email your club&rsquo;s other owners, admins and treasurer. Every change is a line in the audit log.</p>
+            </>
+          ),
+        },
+        {
+          id: 'two-step-sign-in-t-who-still',
+          title: 'Who still needs to set it up (owner and admins)',
+          content: (
+            <>
+              <p>Only your club&rsquo;s owner and admins see any of this. Treasurers and registrars don&rsquo;t, and the board list under <strong>The board</strong> doesn&rsquo;t show it either.</p>
+              <HelpDefs>
+                <HelpDef term="Members">A <strong>Two-step</strong> column reads <strong>On</strong>, <strong>Off</strong>, <strong>Not set up &middot; 9 days left</strong> (amber, while the person&rsquo;s days run), <strong>Not set up</strong> (amber, once they&rsquo;ve passed) or a dash for an invitation. On a phone it&rsquo;s a line on each row. Coaching staff rows carry the same words, such as <em>Two-step off</em>. <strong>Export</strong> adds a <strong>Two-Step</strong> column.</HelpDef>
+                <HelpDef term="Overview, for the owner">Once, a card reads <em>Your club can require two-step sign-in for the board</em>, with <strong>Open Settings</strong> and a &times;. It closes for good when you press either, or turn a requirement on.</HelpDef>
+                <HelpDef term="Overview, while a requirement is on">Owners and admins see <em>N people still need to set up two-step sign-in</em>, naming up to three people and the earliest deadline, with <strong>Open Members</strong>. It has no &times; and leaves when the last person sets it up.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'two-step-sign-in-t-reset',
+          title: 'Resetting someone’s two-step sign-in (owner and admins)',
+          content: (
+            <>
+              <p>When a member has lost their phone and their backup codes, reset it for them.</p>
+              <HelpSteps>
+                <li>Go to <strong>Members</strong> and press <strong>Manage</strong> on their row. For a coach, open the team&rsquo;s <strong>Coaches</strong> page under <strong>Rep teams</strong> and open the person.</li>
+                <li>Under <strong>Two-step sign-in</strong>, which reads <em>On since&hellip;</em>, press <strong>Reset two-step sign-in&hellip;</strong>.</li>
+                <li>Read the question and press <strong>Reset two-step</strong>. If you last typed a code more than 15 minutes ago, the window asks for yours first.</li>
+              </HelpSteps>
+              <p>Their authenticator app and backup codes stop working and they&rsquo;re signed out everywhere. We email them, and it&rsquo;s a line in the audit log. Next time they sign in with their password, they set it up again if their role requires it. Otherwise it&rsquo;s simply off.</p>
+              <HelpNote variant="info" title="When the button isn’t there">There&rsquo;s no reset for yourself or for the club&rsquo;s owner, or when it&rsquo;s off. If the person&rsquo;s account is used anywhere besides your club, the window says <em>Only FieldLogicHQ support can reset this one</em>, and they write to support from the address they sign in with. And you need your own two-step sign-in on first: the window links to <strong>Sign-in &amp; security</strong>.</HelpNote>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-two-step-lost-phone',
+          question: 'I lost my phone — how do I sign in?',
+          answerText: 'Use a backup code. On the code screen press Use a backup code, type one of the ten you saved, and press Sign in. Then press Set up my new phone. No backup codes? Press Lost your phone? on the code screen. If your account is used only for one club, that club\'s owner or an admin can reset your two-step sign-in. If you own the club, or your account is used in more than one place, write to FieldLogicHQ support from the address you sign in with. We confirm by email and reset it 24 hours later. Signing in with a real code or a backup code during that time cancels the reset.',
+          keywords: ['lost phone', 'new phone', 'broke my phone', 'lost my authenticator', 'no backup codes', 'locked out', 'cant sign in', 'two-step'],
+          popular: true,
+          answer: (
+            <>
+              <p><strong>Use a backup code.</strong> On the code screen press <strong>Use a backup code</strong>, type one of the ten you saved, and press <strong>Sign in</strong>. Then press <strong>Set up my new phone</strong>.</p>
+              <p>No backup codes? Press <strong>Lost your phone?</strong> on the code screen. If your account is used only for one club, that club&rsquo;s owner or an admin can reset your two-step sign-in. If you own the club, or your account is used in more than one place, write to FieldLogicHQ support from the address you sign in with. We confirm by email and reset it 24 hours later; signing in with a real code or a backup code during that time cancels the reset.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-two-step-turn-off',
+          question: 'Can I turn two-step sign-in off?',
+          answerText: 'Yes, unless a club requires it for a role you hold. Open your account menu, choose Account, then Sign-in & security, and press Turn off. It asks for a code first, and we email you to say it is off. If a club requires it, the card says Required for your role, so it can not be turned off. The owner can stop requiring it in Organization, Settings.',
+          keywords: ['turn off two-step', 'disable two-step', 'remove two-step', 'cant turn off', 'required for your role', 'stop requiring'],
+          answer: (
+            <p>Yes, unless a club requires it for a role you hold. Open your account menu, choose <strong>Account</strong>, then <strong>Sign-in &amp; security</strong>, and press <strong>Turn off</strong>. It asks for a code first, and we email you to say it&rsquo;s off. If a club requires it, the card says <em>Required for your role</em> and there is no <strong>Turn off</strong>. The club&rsquo;s owner can stop requiring it in <strong>Organization &rsaquo; Settings</strong>.</p>
+          ),
+        },
+        {
+          id: 'faq-two-step-cant-reset',
+          question: 'Why can’t I reset someone’s two-step sign-in?',
+          answerText: 'Only a club\'s owner or an admin can, and only when two-step sign-in is on for that person. There is no reset for yourself or for the club\'s owner. If the person\'s account is used anywhere besides your club, the window says Only FieldLogicHQ support can reset this one, because the authenticator is theirs, not the club\'s. You also need your own two-step sign-in turned on first.',
+          keywords: ['cant reset two-step', 'no reset button', 'reset two-step missing', 'only fieldlogichq support can reset this one', 'turn on your own first', 'reset coach two-step'],
+          answer: (
+            <p>Only a club&rsquo;s owner or an admin can, and only when two-step sign-in is on for that person. There&rsquo;s no reset for yourself or for the club&rsquo;s owner. If the person&rsquo;s account is used anywhere besides your club, the window says <em>Only FieldLogicHQ support can reset this one</em>, because the authenticator is theirs, not the club&rsquo;s. You also need your own two-step sign-in on first.</p>
+          ),
+        },
+      ],
     },
     {
       id: 'notifications-audit',
@@ -1305,10 +1468,10 @@ const orgHelp: HelpPageContent = {
       id: 'settings',
       heading: 'Settings and your web address',
       summary: 'The owner-only Settings page: your organization’s name, web address, Payouts for online payments, and account deletion. Your public site’s logo, colours, type and switch are in Public site.',
-      keywords: ['settings', 'payouts', 'online payments', 'families pay by card', 'house league pay by card', 'families and teams pay it', 'stripe', 'processing fee', 'bank debit', 'bank debit rate', 'card rate', 'returned bank debit', 'returned bank debit fee', 'web address', 'org slug', 'url slug', 'organization details', 'delete organization', 'open public site', 'public site switch', 'listed in the directory', 'online offline', 'public site editor', 'turn off public site', 'take site offline', 'site isn’t available', 'team pages offline', 'tryouts offline', 'tournament pages stay up', 'logo', 'colours', 'branding', 'where did branding go', 'birthdays count from', 'birthday cut-off', 'cut-off date', 'birth year', 'born', 'age', 'age group', 'january 1', 'september 1', 'payments terms', 'new payments terms', 'read and agree', 'payouts tab', 'bank statement', 'leaving online payments'],
-      searchText: 'payments terms agreed by read the terms new payments terms to agree to read and agree payouts tab match a payout to the bank statement reconcile payouts to your bank leaving online payments disconnect downgrade cancel delete payouts card settings payouts let teams pay online families pay by card house league registration fees families and teams pay it the club pays it stripe connect processing fee who pays it refund policy payouts go to receipts say rows edit pencil check mark disconnect payouts bank debit both rates per card payment per bank debit bank debits still clearing returned bank debit line next fieldlogichq invoice card dispute fee card issued outside your country card from another country foreign card extra fee invoice of its own stripe fees passed on every club owner only org settings owner only organization details name web address url slug org slug change redirect save button delete organization account deletion danger zone your public site door card open public site its logo colours type and whether it is online are set in public site branding logo stock logo colours hero banner banner photo font type moved to public site look visibility card style tournament branding page public site switch online offline listed in the directory discover directory take the club offline what goes offline every club page home teams team pages tryouts tryout sign up league archives team calendars subscribed calendars go empty tournament pages stay up this club’s site isn’t available site isnt available coaches sharing note when birthdays count from per sport month day dropdown default january 1 count softball birthdays from keep january 1 change every team and house-league division shows its birth years re-read one birth year show none until you set it again born sep 1 2013 aug 31 2015 age cut-off birth years owner only',
+      keywords: ['settings', 'two-step sign-in', 'require two-step', 'admin settings', 'payouts', 'online payments', 'families pay by card', 'house league pay by card', 'families and teams pay it', 'stripe', 'processing fee', 'bank debit', 'bank debit rate', 'card rate', 'returned bank debit', 'returned bank debit fee', 'web address', 'org slug', 'url slug', 'organization details', 'delete organization', 'open public site', 'public site switch', 'listed in the directory', 'online offline', 'public site editor', 'turn off public site', 'take site offline', 'site isn’t available', 'team pages offline', 'tryouts offline', 'tournament pages stay up', 'logo', 'colours', 'branding', 'where did branding go', 'birthdays count from', 'birthday cut-off', 'cut-off date', 'birth year', 'born', 'age', 'age group', 'january 1', 'september 1', 'payments terms', 'new payments terms', 'read and agree', 'payouts tab', 'bank statement', 'leaving online payments'],
+      searchText: 'two-step sign-in card require it for the board also require it for coaches admin opens settings to read the two-step card only the owner changes this payments terms agreed by read the terms new payments terms to agree to read and agree payouts tab match a payout to the bank statement reconcile payouts to your bank leaving online payments disconnect downgrade cancel delete payouts card settings payouts let teams pay online families pay by card house league registration fees families and teams pay it the club pays it stripe connect processing fee who pays it refund policy payouts go to receipts say rows edit pencil check mark disconnect payouts bank debit both rates per card payment per bank debit bank debits still clearing returned bank debit line next fieldlogichq invoice card dispute fee card issued outside your country card from another country foreign card extra fee invoice of its own stripe fees passed on every club owner only org settings owner only organization details name web address url slug org slug change redirect save button delete organization account deletion danger zone your public site door card open public site its logo colours type and whether it is online are set in public site branding logo stock logo colours hero banner banner photo font type moved to public site look visibility card style tournament branding page public site switch online offline listed in the directory discover directory take the club offline what goes offline every club page home teams team pages tryouts tryout sign up league archives team calendars subscribed calendars go empty tournament pages stay up this club’s site isn’t available site isnt available coaches sharing note when birthdays count from per sport month day dropdown default january 1 count softball birthdays from keep january 1 change every team and house-league division shows its birth years re-read one birth year show none until you set it again born sep 1 2013 aug 31 2015 age cut-off birth years owner only',
       content: (
-        <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It holds <strong>Organization details</strong> (your organization&rsquo;s name and web address), <strong>When birthdays count from</strong>, a card that points to <strong>Public site</strong>, <strong>Payouts</strong> (letting teams pay online by card), and <strong>Delete organization</strong>. Your public site&rsquo;s logo, colours, type, banner and on/off switch are set in <strong>Public site</strong>, not here.</p>
+        <p>The <strong>Settings</strong> page is <strong>owner-only</strong>, with one exception: an admin opens it to read the <strong>Two-step sign-in</strong> card, and sees nothing else. It holds <strong>Organization details</strong> (your organization&rsquo;s name and web address), <strong>When birthdays count from</strong>, a card that points to <strong>Public site</strong>, <strong>Payouts</strong> (letting teams pay online by card), <strong>Two-step sign-in</strong> (making it required; see <a href="#two-step-sign-in">Two-step sign-in</a>), and <strong>Delete organization</strong>. Your public site&rsquo;s logo, colours, type, banner and on/off switch are set in <strong>Public site</strong>, not here.</p>
       ),
       subtopics: [
         {

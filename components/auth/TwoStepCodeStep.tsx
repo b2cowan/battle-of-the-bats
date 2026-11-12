@@ -179,7 +179,7 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
         <button type="button" className={accountForm.textBtn} onClick={() => void copyAddress(address)} aria-label={`Copy ${address}`}>
           <strong>{address}</strong>
         </button>
-        {copied ? ' (copied)' : ''} from this account’s address.
+        {copied ? ' (copied)' : ''} from the address you sign in with.
       </>
     ) : null;
     return (
@@ -189,7 +189,7 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
           <div>
             <strong>Use a backup code</strong>
             <p className={accountForm.hint}>
-              You saved ten when you set up two-step sign-in.{club ? ' One gets you in, and then you can set up your new phone.' : ''}
+              You saved ten when you set up two-step sign-in. One gets you in, and then you can set up your new phone.
             </p>
           </div>
           <button type="button" className={accountForm.secondary} onClick={() => { setMode('backup'); setError(null); }}>
@@ -212,8 +212,8 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
               <div>
                 <strong>Are you the club’s owner?</strong>
                 <p className={accountForm.hint}>
-                  {emailUs} We confirm by email, tell your club’s other admins and treasurer that you asked, and reset it 24 hours
-                  later.
+                  {emailUs} We confirm by email, tell your club’s other owners, admins and treasurer that you asked, and reset it 24 hours
+                  later. Then you sign in with your password and set up your new phone.
                 </p>
               </div>
             </>
@@ -221,7 +221,7 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
             <div>
               <strong>No codes? Email us</strong>
               <p className={accountForm.hint}>
-                {emailUs} We confirm by email and reset it 24 hours later.
+                {emailUs} We confirm by email and reset it 24 hours later. Then you sign in with your password and set up your new phone.
               </p>
             </div>
           )}
@@ -247,8 +247,8 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
         />
         <div className={accountForm.form}>
           <div className={accountForm.callout}>
-            <strong>Do you still have your authenticator app?</strong>{' '}
-            If your phone is lost or replaced, set up the new one now.
+            <strong>Lost or replaced your phone?</strong>{' '}
+            Set up the new one now, so you’re not locked out next time.
           </div>
           {offerNewPhone ? (
             <>
@@ -256,7 +256,7 @@ export default function TwoStepCodeStep({ email, next, onDone, onDifferentAccoun
                 Set up my new phone
               </a>
               <button type="button" className={accountForm.secondary} onClick={() => onDone()} id="two-step-continue">
-                I still have it, continue
+                I still have my phone, continue
               </button>
               <a className={accountForm.textBtn} href={twoStepStepUrl('set_up', next, { step: 'codes' })}>
                 Get new backup codes

@@ -89,7 +89,7 @@ export default function SecurityClient({ view }: { view: SecurityView }) {
       {view.graceNotice && (
         <div className={styles.callout} role="status">
           <strong>{view.graceNotice.lead}</strong>
-          <span>Set it up by {view.graceNotice.by}. After that you’ll set it up when you sign in.</span>
+          <span>Set it up by {view.graceNotice.by}. After that, you’ll be asked to set it up before you can open the club’s pages.</span>
         </div>
       )}
 
@@ -243,7 +243,7 @@ function ChangePasswordWindow({ busy, onClose, onSave, error }: {
         <label className={styles.field} htmlFor={`${id}-next`}>
           <span className={styles.label}>New password</span>
           <PasswordInput id={`${id}-next`} className={styles.input} value={next} onChange={e => setNext(e.target.value)} autoComplete="new-password" minLength={8} required />
-          <span className={styles.fine}>At least 8 characters. Signing out your other devices comes with it.</span>
+          <span className={styles.fine}>At least 8 characters. Saving signs out your other devices.</span>
         </label>
       </form>
     </KitDialog>

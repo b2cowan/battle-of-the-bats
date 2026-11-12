@@ -1,5 +1,6 @@
 import type { OrgRole } from '@/lib/types';
 import type { MemberSection, ProgramAccess } from '@/lib/member-access';
+import type { MemberTwoStep } from '@/lib/two-step-club-status';
 
 /** One row of GET /api/admin/members (session 1 added `section` + `access`). */
 export interface KitMember {
@@ -18,6 +19,26 @@ export interface KitMember {
   repGroupIds: string[];
   section: MemberSection;
   access: ProgramAccess[];
+  /**
+   * Board Ready two-step, Part 4: present only when the viewer is the club's owner or an admin (the column is theirs
+   * alone, never The board tab). null = an invitation, or a state the server could not read ("—").
+   */
+  twoStep?: MemberTwoStep | null;
+}
+
+/** "On", "Off", "Not set up · 9 days left", "Not set up" (ask E: past the deadline stays amber, no count). */
+export function twoStepWords(s: MemberTwoStep): string {
+  switch (s.state) {
+    case 'on': return 'On';
+    case 'off': return 'Off';
+    case 'not_set_up': return `Not set up · ${s.daysLeft} ${s.daysLeft === 1 ? 'day' : 'days'} left`;
+    case 'overdue': return 'Not set up';
+  }
+}
+
+/** The amber states: a seat the club requires that has not set it up. */
+export function twoStepIsWaiting(s: MemberTwoStep | null | undefined): boolean {
+  return s?.state === 'not_set_up' || s?.state === 'overdue';
 }
 
 /** One role of GET /api/admin/members/roles — the list the invite and role-change routes accept. */

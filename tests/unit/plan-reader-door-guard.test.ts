@@ -50,6 +50,9 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/two-step-lost-phone.ts': ['identity', "selects plan_id only for isTeamWorkspaceOrg: a coach's own team gets the support version of Lost your phone?"],
   'lib/two-step-grace.ts': ['identity', "selects plan_id only for the two-step rule's isTeamWorkspaceOrg test: a coach's own team is never a covered seat"],
   'lib/two-step-support-reset.ts': ['identity', "selects plan_id only for isTeamWorkspaceOrg: a coach's own team workspace is not a club support's reset tells"],
+  'lib/two-step-club-status.ts': ['identity', "selects plan_id only for the two-step rule's isTeamWorkspaceOrg test (Part 4: the Members column and the Overview reminder)"],
+  'lib/two-step-grace-emails.ts': ['identity', "selects plan_id only for the two-step rule's isTeamWorkspaceOrg test: a coach's own team is never emailed a grace period"],
+  'app/api/admin/org-settings/two-step/overview/route.ts': ['identity', "reads plan_id only for isTeamWorkspaceOrg: a coach's own team workspace gets no two-step Overview notice"],
   'lib/db.ts': ['door', 'getOrganizationBySlug builds the org, then calls the door; createOrganization writes them; the sweep reads status through the door'],
   'lib/server-organizations.ts': ['door', 'getOrganizationBySlugForServer builds the org, then calls the door'],
   // ── through the door ──

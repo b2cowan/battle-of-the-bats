@@ -139,6 +139,7 @@ export default function AdminHelpHubPage() {
         ...(isClub ? [{ label: 'Set up your club', href: `${helpBase}/org#recipe-set-up-your-club` }] : []),
         { label: 'Invite members and choose roles', href: `${helpBase}/org#recipe-invite-member` },
         { label: 'Fix a member access issue', href: `${helpBase}/org#recipe-fix-member-access` },
+        { label: 'Require two-step sign-in', href: `${helpBase}/org#two-step-sign-in` },
         { label: 'Turn on included modules', href: `${helpBase}/org#recipe-enable-modules` },
         // Club Tier Stage 4c-1: the club runs its own site, where the plan carries it.
         ...(canPublicSite ? [{ label: 'Run your public site', href: `${helpBase}/org#public-site-editor` }] : []),

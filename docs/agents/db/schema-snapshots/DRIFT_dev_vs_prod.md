@@ -2,12 +2,12 @@
 
 **Generated:** 2026-11-12 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 620 divergence(s)** across dev/prod.
+**⚠️ 622 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 15 | 6 | — |
-| Columns | 235 | 59 | 1 |
+| Columns | 237 | 59 | 1 |
 | Indexes | 67 | 26 | 0 |
 | Constraints | 54 | 28 | — |
 | RLS / CHECK | 99 | 26 | 0 (RLS state) |
@@ -39,7 +39,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (235)
+### Only in DEV (237)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -253,6 +253,8 @@
 - `two_step_code_uses.used_at`
 - `two_step_code_uses.user_id`
 - `two_step_grace.organization_id`
+- `two_step_grace.reminder_sent_for`
+- `two_step_grace.start_email_for`
 - `two_step_grace.starts_at`
 - `two_step_grace.user_id`
 - `two_step_owner_resets.asked_by`

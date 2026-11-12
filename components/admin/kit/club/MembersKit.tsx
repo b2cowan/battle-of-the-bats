@@ -39,7 +39,10 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import { kit } from '@/components/coaches/kit';
 import { useClubBrief } from './ClubBriefProvider';
 import { accessSummary, accessShort, overrideChips } from './member-summary';
-import { boardOrder, memberName, type KitMember, type AssignableRoleOption, type TournamentOption, type RepGroupOption } from './members-types';
+import {
+  boardOrder, memberName, twoStepIsWaiting, twoStepWords,
+  type KitMember, type AssignableRoleOption, type TournamentOption, type RepGroupOption,
+} from './members-types';
 import InviteMemberDialog from './InviteMemberDialog';
 import PageNotice, { useNotice } from './PageNotice';
 import ManageMemberDialog from './ManageMemberDialog';
@@ -57,6 +60,8 @@ const EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Last Sign In', key: 'lastSignIn',   format: 'text' },
   { label: 'Invited',      key: 'invitedAt',    format: 'text' },
 ];
+/** Board Ready two-step, Part 4: the export gains the column only where the screen shows it (owners and admins). */
+const EXPORT_TWO_STEP_COL: ExportColumnDef = { label: 'Two-Step', key: 'twoStep', format: 'text' };
 const STATUS_WORD = { invited: 'Invited', active: 'Active', suspended: 'Suspended' } as const;
 
 /** "Today" or "Sep 24" — the org's calendar day, never the reader's. */
@@ -180,22 +185,46 @@ export default function MembersKit() {
     return canManage && !isSelf;
   };
 
+  // Board Ready two-step, Part 4 (ask 6): the server sends the state only to the club's owners and admins, so the column,
+  // the phone line, the coaching-staff words and the export column follow what came back, never a guess from the role.
+  const twoStepShown = members.some(m => m.twoStep !== undefined);
+  const exportCols = twoStepShown
+    ? [...EXPORT_COLS.slice(0, 4), EXPORT_TWO_STEP_COL, ...EXPORT_COLS.slice(4)]
+    : EXPORT_COLS;
+
   function exportRows() {
     return members.map(m => ({
       displayName: m.displayName ?? '',
       email: m.email,
       roleLabel: roleLabel(m.role),
       statusLabel: STATUS_WORD[m.status],
+      twoStep: m.twoStep ? twoStepWords(m.twoStep) : '—',
       lastSignIn: m.lastSignIn ? formatStoredDate(m.lastSignIn) : '—',
       invitedAt: formatStoredDate(m.invitedAt),
     }));
   }
   const handleExportXLSX = () => downloadXLSX(
     buildFilename({ org: slug, dataset: 'members' }, 'xlsx'),
-    serializeHeaders(EXPORT_COLS), serializeRows(exportRows(), EXPORT_COLS), 'Members');
+    serializeHeaders(exportCols), serializeRows(exportRows(), exportCols), 'Members');
   const handleExportCSV = () => downloadCSVBlob(
     buildFilename({ org: slug, dataset: 'members' }, 'csv'),
-    generateCSV(serializeHeaders(EXPORT_COLS), serializeRows(exportRows(), EXPORT_COLS)));
+    generateCSV(serializeHeaders(exportCols), serializeRows(exportRows(), exportCols)));
+
+  /** The Two-step cell: plain On / Off, the amber chip for a required seat not set up, "—" for an invitation. */
+  const twoStepCell = (m: KitMember) => {
+    if (!m.twoStep) return <span className={ck.cellSub}>—</span>;
+    return twoStepIsWaiting(m.twoStep)
+      ? <span className={`${ck.chip} ${ck.chipWarn}`}>{twoStepWords(m.twoStep)}</span>
+      : twoStepWords(m.twoStep);
+  };
+
+  /** The phone row's and the coaching-staff row's words: "Two-step on", "Two-step not set up · 9 days". */
+  const twoStepPhrase = (m: KitMember) => {
+    if (!m.twoStep) return null;
+    const words = twoStepWords(m.twoStep);
+    const text = `Two-step ${words.charAt(0).toLowerCase()}${words.slice(1)}`;
+    return twoStepIsWaiting(m.twoStep) ? <span className={styles.twoStepWaiting}>{text}</span> : text;
+  };
 
   const personCell = (m: KitMember) => {
     const isSelf = m.userId === user?.id;
@@ -240,6 +269,7 @@ export default function MembersKit() {
               <th scope="col">Role</th>
               <th scope="col">What they can open</th>
               <th scope="col">Status</th>
+              {twoStepShown && <th scope="col">Two-step</th>}
               <th scope="col">Last sign-in</th>
               <th scope="col"><span className={styles.srOnly}>Actions</span></th>
             </tr>
@@ -259,6 +289,7 @@ export default function MembersKit() {
                 <td>{roleLabel(m.role)}</td>
                 <td>{canOpenCell(m)}</td>
                 <td>{statusCell(m)}</td>
+                {twoStepShown && <td>{twoStepCell(m)}</td>}
                 <td>{m.status === 'invited' ? '—' : dayLabel(m.lastSignIn)}</td>
                 <td className={ck.actions}>
                   {canManageRow(m) && (
@@ -278,6 +309,7 @@ export default function MembersKit() {
           const line = m.status === 'invited'
             ? `${roleLabel(m.role)} · invited ${dayLabel(m.invitedAt)}`
             : `${roleLabel(m.role)} · ${accessShort(m.role, m.access, m.capabilities)}${overrideChips(m.access).map(c => ` ${c.text}`).join('')}`;
+          const twoStep = m.status === 'invited' ? null : twoStepPhrase(m);
           const body = (
             <>
               <span className={ck.rowMain}>
@@ -286,7 +318,7 @@ export default function MembersKit() {
                   {isSelf && <span className={ck.chip}>You</span>}
                   {m.status === 'suspended' && <span className={`${ck.chip} ${ck.chipWarn}`}>Suspended</span>}
                 </span>
-                <span className={ck.rowSub}>{line}</span>
+                <span className={ck.rowSub}>{line}{twoStep && <> · {twoStep}</>}</span>
               </span>
               {canManageRow(m) && <ChevronRight size={16} className={ck.rowEnd} aria-hidden />}
             </>
@@ -400,7 +432,11 @@ export default function MembersKit() {
                     <div key={m.id} className={ck.row}>
                       <span className={ck.rowMain}>
                         <span className={ck.rowTitle}>{memberName(m)}</span>
-                        <span className={ck.rowSub}>{m.displayName ? `${m.email} · ` : ''}Managed on the team’s staff page</span>
+                        <span className={ck.rowSub}>
+                          {m.displayName ? `${m.email} · ` : ''}Managed on the team’s staff page
+                          {/* Tab 6: a coach with it on adds nothing; off, or not set up where the club requires it, says so. */}
+                          {m.twoStep && m.twoStep.state !== 'on' && <> · {twoStepPhrase(m)}</>}
+                        </span>
                       </span>
                     </div>
                   ))}

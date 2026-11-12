@@ -43,6 +43,12 @@ export const EMAIL_KINDS = {
   two_step_requirement_off:             { klass: 'account', label: 'Two-step requirement turned off' },
   two_step_owner_reset_confirm:         { klass: 'account', label: 'Owner two-step reset: confirm', story: true },
   two_step_owner_reset_notice:          { klass: 'account', label: 'Owner two-step reset: club notice' },
+  // Part 4: the grace emails (no link) and the account alarms (owner ruling 2026-11-12).
+  two_step_grace_started:               { klass: 'account', label: 'Two-step required: the grace period starts' },
+  two_step_grace_reminder:              { klass: 'account', label: 'Two-step required: a few days left' },
+  two_step_turned_on:                   { klass: 'account', label: 'Two-step sign-in turned on' },
+  two_step_turned_off:                  { klass: 'account', label: 'Two-step sign-in turned off' },
+  password_changed:                     { klass: 'account', label: 'Password changed' },
   // ── account: plan and billing ──────────────────────────────────────────────
   basic_team_welcome:                   { klass: 'account', label: 'Team page ready' },
   team_workspace_welcome:               { klass: 'account', label: 'Coaches Portal welcome' },

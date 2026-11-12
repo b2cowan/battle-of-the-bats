@@ -36,9 +36,9 @@ export type CodeAgainProof = { code: string } | { backupCode: string } | { passw
 /** The words, drafts for Part 4's copy pass. One home. */
 export const CODE_AGAIN_WORDS = {
   freshTitle: 'Type your code to continue',
-  freshLead: 'This needs a code from your authenticator app. Your last one was typed more than 15 minutes ago.',
+  freshLead: 'For your security, this needs a fresh code from your authenticator app. You last typed one more than 15 minutes ago.',
   reaskTitle: 'Type your code to keep going',
-  reaskLead: 'It’s been 30 days since you last typed a code on this device. Type the one your app shows now.',
+  reaskLead: 'It’s been 30 days since you last typed a code on this device. Type the one your authenticator app shows now.',
   confirm: 'Continue',
   checking: 'Checking…',
   codeLabel: 'Code',
@@ -50,7 +50,7 @@ export const CODE_AGAIN_WORDS = {
   backupLead: 'Type one of the codes you saved when you set up two-step sign-in. It works once.',
   wrongCode: 'That code didn’t work. The codes change every 30 seconds. Type the one showing now.',
   wrongBackup: 'That backup code didn’t work. Each code works once.',
-  noAuthenticator: 'Your authenticator app isn’t set up on this account right now. Use a backup code.',
+  noAuthenticator: 'Your old phone was removed while you set up a new one. Use a backup code, then finish the set-up.',
   tooManyTries: 'Too many tries. Wait 15 minutes, then try again.',
   notChecked: 'We couldn’t check that just now. Try again in a moment.',
   backupLeft: (left: number) => `That backup code won’t work again. You have ${left} left.`,

@@ -1,8 +1,8 @@
 # Two-step sign-in — what Part 1 holds, and what the policy may say
-**Last verified:** 2026-11-11 (light review of Board Ready two-step Part 1, read against mig 463, `lib/two-step-codes.ts`,
+**Last verified:** 2026-11-12 (Part 4 light review below; 2026-11-11: light review of Board Ready two-step Part 1, read against mig 463, `lib/two-step-codes.ts`,
 `app/api/auth/two-step/set-up/start/route.ts`, `lib/demo-session.ts`; PIPEDA/CASL/Law 25 not re-researched — nothing in Part 1
 is new law, and the analysis rests on the existing `PRIVACY_POLICY_REQUIREMENTS_PIPEDA.md`)
-**Re-verify by:** Part 4 policy follow-through, the promote, or a Québec customer (Part 3 reviewed 2026-11-11, below)
+**Re-verify by:** the promote (re-check every policy sentence against the code), or a Québec customer (Parts 3 and 4 reviewed, below)
 **Depends on facts:** FieldLogicHQ is an organization in its own right for account holders' data (not the club's service
 provider); Supabase (production: us-east-2) is already a listed supplier; no email is sent by Part 1.
 
@@ -19,7 +19,7 @@ Does Part 1 create a legal problem now, and which "after the build" policy lines
   touches our systems".
 - **Backup codes: "scrambled (hashed)" is true but weak protection; do not call it more.** Stored as salt + sha-256
   (`lib/two-step-codes.ts:62-66`). A code is 40 random bits and sha-256 is fast, so someone holding a copy of the table
-  could try every code offline in hours. They would still need the person's password and a live sign-in to use one. Say
+  could try every code offline in hours. *(Updated 2026-11-12: `lib/two-step-codes.ts:36-51` now keys the hash with a server secret, `TWO_STEP_CODE_KEY`, when it is set; without it new codes use the unkeyed form. See the TWO_STEP_CODE_KEY item in the Part 4 review below.)* They would still need the person's password and a live sign-in to use one. Say
   "stored only in a one-way (hashed) form, not as readable codes"; do not say "cannot be recovered" or "secure". A keyed hash
   (server-side secret) would make the plain claim stronger. Build item for `/plan`, not a legal condition.
 - **Used backup codes** are kept, deliberately: the used row (when, and the session id it let in) is what keeps that session
@@ -83,6 +83,49 @@ Read against `lib/two-step-emails.ts`, `app/(consumer)/auth/two-step/confirm-res
   whether two-step sign-in is on and when it was set up, never your codes, app or devices"; §10 the reset paths (your club,
   or support with an email confirmation, a notice to the club's other admins when you own the club, and a 24-hour wait);
   `BREACH_PROCEDURE.md` "a fraudulent reset"; L16 gains the support reset Why.
+
+## Part 4 light review (2026-11-12) — the five new emails, the club's view, the policy text
+Read against `lib/two-step-email-words.ts`, `lib/two-step-grace-emails.ts`, `lib/two-step-club-status.ts`, the three routes that send the
+alarms (`app/api/auth/password/route.ts`, `two-step/set-up/verify/route.ts`, `two-step/turn-off/route.ts`, `two-step/reset-password/route.ts`), the
+reminder screen (`app/(consumer)/auth/two-step/page.tsx`) and the data dictionary. CASL not re-researched: same class and same
+reasoning as `CASL_MEMBER_INVITE_EMAILS.md` and the Part 3 review above.
+- **CASL: no blocker.** All five are account or security notices to the person's own sign-in address, with no plan, price,
+  offer or sign-up link, so they are not commercial messages (s.1(2)) and need no unsubscribe. They stay that way only while
+  no offer or link is added (a new "upgrade to Club" line would make them commercial). Each also names a fact the person acts
+  on, which is the s.6(6) security/account-information class.
+- **Must-fix before the walk: two alarm lines state a result unconditionally that the route can fail to deliver.**
+  "Your other devices were signed out" (`two-step-email-words.ts:150`) is sent even when `othersSignedOut` is false
+  (`password/route.ts:84-95`) or the sign-out threw (`reset-password/route.ts:33-37`). "Codes from the old app no longer work"
+  (`:116`) is sent when `oldRemoved` is false and the route still returns ok (`set-up/verify/route.ts:54-83`). A warning that
+  says the door is shut when it is open is worse than none. Pass the flag to the builder and use the cautious sentence on failure.
+- **Later: "That way a stolen password can't open the club's books or its families' details"** (`:51-52`) is an absolute.
+  It is not "secure" in so many words, but the Part 1 caution applies: "makes it much harder for someone with only a stolen
+  password to open…" is the true sentence.
+- **Later: "Your other teams and places on FieldLogicHQ stay open"** (`:71`, `:92`) is not true for a person whose other club also
+  requires it and is past its deadline (the screen offers "Go to my other teams" only when something is open, `page.tsx:28`).
+  Say "Places that don't need it stay open".
+- **Later (product gap, already known): the "Forgot your password?" email-link reset sends no email of ours.** The alarms'
+  advice (`:107`) sends a worried person down exactly that path, and its result is the one password change nobody is told about.
+  Zero-code cover is the sign-in service's own "password changed" notification in production Auth settings: an owner call,
+  not touched. Also check at the walk that the link reset signs out a second, already-signed-in browser: the advice only evicts
+  a person holding a session if it does.
+- **Owner (carried from Part 3, now bigger): is `FIELDLOGICHQ_CONTACT_EMAIL` read daily?** Six emails now tell a person who
+  may have lost their account to write there. The alarms say "write to", not "reply" (right: a reply reaches nobody); only the
+  Part 3 club notice sets Reply-To.
+- **What the club sees:** on / off, since when, days left or "past the deadline", and the Overview list (up to three names, role,
+  earliest deadline), owners and admins only, plus the export. This discloses to the club that a named person has not set up a
+  protection: accepted by the ask 6 ruling, and said plainly in §5 (applied). Keep treasurers, registrars and the public board
+  page off it (a list of whose password is worth stealing).
+- **Later: the policy says nothing about the sent-email record** (recipient, kind, time; `sendEmail` logs each of these five
+  as an account kind). Pre-existing; check what the record keeps (the message body?) before adding a sentence to §3.
+- **Carry to `/release`: `TWO_STEP_CODE_KEY` must exist on production before the first backup code is made.** Without it new
+  codes use the unkeyed hash, and a keyed code is refused if the secret later goes missing (`two-step-codes.ts:57-59`). The
+  policy's "one-way (hashed)" is true either way; the stronger claim is not made.
+- **Applied (2026-11-12):** `drafts/PRIVACY_POLICY.md` §3 (three row kinds; the account and set-up emails), §5 (what owners and
+  admins see), §9 (retention as built: with the person or the club, no separate limit; never "five minutes"), §10 (the
+  two-step paragraph; the reset paths), notes 3 and 4, finding 5 reworded and not closed; all marked live-only-at-promote.
+  `LEGAL_FACTS.md` two-step line; `BREACH_PROCEDURE.md` §1 and §3 step 1; `LEGAL_INDEX.md` L16 (the support reset's free-text
+  Why is the same class).
 
 ## Sources
 - Code and migration paths listed above — read 2026-11-11.

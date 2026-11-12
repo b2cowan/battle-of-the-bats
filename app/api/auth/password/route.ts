@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@/lib/supabase-server';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { freshCodeRefusal, hasFreshCode } from '@/lib/two-step-fresh';
+import { passwordChangedEmail, sendTwoStepEmail } from '@/lib/two-step-emails';
 
 const MIN_LENGTH = 8;
 
@@ -87,5 +88,10 @@ export const POST = withObservability(async (req: Request) => {
       if (outErr) othersSignedOut = false;
     } catch { othersSignedOut = false; }
   }
+  // Part 4 (owner ruling 2026-11-12): the account is told, so a change it didn't make is seen. AFTER this device is signed
+  // back in and the others are sent away (/review: a slow mail service must never hold those up), with a short limit.
+  await sendTwoStepEmail(user.email, passwordChangedEmail({ atIso: new Date().toISOString(), othersSignedOut: signedBackIn && othersSignedOut }), 'password_changed', {
+    orgId: null, askedBy: user.id, timeoutMs: 5_000,
+  });
   return NextResponse.json({ ok: true, othersSignedOut, signedBackIn, needsCode: signedBackIn && state.hasFactor });
 }, { route: '/api/auth/password' });

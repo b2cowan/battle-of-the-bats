@@ -2,9 +2,14 @@ import { supabaseAdmin } from './supabase-admin';
 import { sendEmail } from './email';
 import { warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagraph, warmEmailSmall } from './email-envelope-warm';
 import { FIELDLOGICHQ_CONTACT_EMAIL } from './fieldlogichq-contact';
-import { formatInOrgZone } from './timezone';
-import { formatTime, possessive } from './utils';
+import { possessive } from './utils';
 import { getUserDisplayName } from './user-display';
+import { NO_LINK, esc, whenWords } from './two-step-email-words';
+
+export { whenWords };
+export {
+  passwordChangedEmail, twoStepGraceReminderEmail, twoStepGraceStartedEmail, twoStepTurnedOffEmail, twoStepTurnedOnEmail,
+} from './two-step-email-words';
 
 /**
  * THE TWO-STEP EMAILS OF PART 3 (Board Ready · two-step sign-in; drawings tabs 6, 7, 8). The words are drafts for Part 4's
@@ -17,24 +22,6 @@ import { getUserDisplayName } from './user-display';
  *   two_step_owner_reset_confirm  the owner, from support's record: the ONE link, "Confirm the reset"
  *   two_step_owner_reset_notice   the club's other owners, admins and treasurer, once the owner confirmed (no reason given)
  */
-
-const NO_LINK = 'This email has no link on purpose. If an email about two-step sign-in asks you to click a link to fix something, it isn’t from us.';
-
-function esc(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-/** "November 19 at 3:10 p.m." in the club's zone (the house clock, lib/utils.ts formatTime). */
-export function whenWords(iso: string): string {
-  const day = formatInOrgZone(iso, { month: 'long', day: 'numeric' });
-  const clock = formatInOrgZone(iso, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-  return `${day} at ${formatTime(clock)}`;
-}
 
 export type BoardRecipient = { userId: string; email: string; name: string | null };
 
@@ -116,14 +103,14 @@ export function twoStepRequirementOffEmail(p: {
 
 /** `orgName`: the club the person owns, whose other admins are told; null for a person who owns no club. */
 export function twoStepOwnerResetConfirmEmail(p: { orgName: string | null; confirmUrl: string; expiresIso: string }): { subject: string; html: string } {
-  const tell = p.orgName ? `we tell ${esc(possessive(p.orgName))} other admins and treasurer, and ` : '';
+  const tell = p.orgName ? `we tell ${esc(possessive(p.orgName))} other owners, admins and treasurer, and ` : '';
   return {
     subject: 'Confirm the reset of your two-step sign-in',
     html: warmEmailDocument([
       warmEmailHeading('Confirm the reset of your two-step sign-in'),
       warmEmailParagraph('You asked FieldLogicHQ support to reset two-step sign-in on your account. Press the button to confirm.'),
       warmEmailButton('Confirm the reset', p.confirmUrl),
-      warmEmailParagraph(`Once you confirm, ${tell}the reset happens 24 hours later. Signing in with a code from your app, or a backup code, during that time cancels it.`),
+      warmEmailParagraph(`Once you confirm, ${tell}the reset happens 24 hours later. Signing in with a code from your authenticator app, or a backup code, during that time cancels it.`),
       warmEmailParagraph(`If you didn’t ask for this, don’t press the button: nothing changes. Write to ${esc(FIELDLOGICHQ_CONTACT_EMAIL)} so we know.`),
       warmEmailSmall(`The button works until ${esc(whenWords(p.expiresIso))}.`),
     ].join('')),
@@ -146,12 +133,17 @@ export function twoStepOwnerResetNoticeEmail(p: { orgName: string; ownerName: st
   };
 }
 
+export type TwoStepEmailKind =
+  | 'two_step_reset' | 'two_step_requirement_off' | 'two_step_owner_reset_confirm' | 'two_step_owner_reset_notice'
+  | 'two_step_grace_started' | 'two_step_grace_reminder'
+  | 'two_step_turned_on' | 'two_step_turned_off' | 'password_changed';
+
 /** Send one of these; best effort (a failed send never undoes the change it reports). */
 export async function sendTwoStepEmail(
   to: string,
   mail: { subject: string; html: string },
-  kind: 'two_step_reset' | 'two_step_requirement_off' | 'two_step_owner_reset_confirm' | 'two_step_owner_reset_notice',
-  opts: { orgId: string | null; askedBy: string | null; replyTo?: string; idempotencyKey?: string },
+  kind: TwoStepEmailKind,
+  opts: { orgId: string | null; askedBy: string | null; replyTo?: string; idempotencyKey?: string; timeoutMs?: number },
 ): Promise<boolean> {
   try {
     const res = await sendEmail(to, mail.subject, mail.html, {
@@ -160,6 +152,7 @@ export async function sendTwoStepEmail(
       askedBy: opts.askedBy ?? undefined,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
       ...(opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : {}),
+      ...(opts.timeoutMs ? { timeoutMs: opts.timeoutMs } : {}),
     });
     return res.status === 'sent';
   } catch {

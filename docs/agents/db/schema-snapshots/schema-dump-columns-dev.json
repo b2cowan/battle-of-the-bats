@@ -30483,6 +30483,24 @@
     "ordinal_position": 3
   },
   {
+    "table_name": "two_step_grace",
+    "column_name": "reminder_sent_for",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "two_step_grace",
+    "column_name": "start_email_for",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
     "table_name": "two_step_owner_resets",
     "column_name": "id",
     "data_type": "uuid",

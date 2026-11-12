@@ -5,7 +5,7 @@
 | **Version** | 0.2 (draft) |
 | **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
 | **Effective date** | — (set on publication; the version then becomes that date, `YYYY-MM-DD`) |
-| **Last reviewed** | 2026-11-09 |
+| **Last reviewed** | 2026-11-12 |
 | **Backlog** | L2 (with L9 findings); children's consent wording (L5) and CASL lawful basis (L6) are referenced, not settled |
 
 **Change log**
@@ -25,6 +25,10 @@
   Québec. New finding 10.
 - 0.2 · 2026-11-09 · §3 and §9: the Terms acceptance record is kept for six years after the account closes (Stage 6 step 6.3
   drawing round; Terms §20 (5f)). Nothing deletes it automatically yet — finding 1 covers it.
+- 0.2 · 2026-11-12 · Two-step sign-in (Board Ready, Parts 1–4; **text goes live only when two-step ships to production**).
+  §3: the two-step records, the support-reset request record, and the account and set-up emails. §5: what a club's owners and
+  admins see about two-step. §9: how long those records are kept (with the account or the club; no separate limit). §10: the
+  two-step paragraph and the reset paths. Finding 5 and §10 note 3 reworded (not closed). Read against `TWO_STEP_SIGNIN_PRIVACY.md`.
 
 > **How to read this draft.** `[square brackets]` = a fact the owner fills in (only the mailing address is
 > left, and that one is optional — §2 note). `> NOTE` blocks are for the owner and are deleted before publication. The law this is written to is **PIPEDA**
@@ -81,6 +85,9 @@ officials, treasurers, volunteers), and people who buy a plan. Everyone who hold
 | For the account owner who buys a plan, or who turns on online payments for a club: the billing address, and (when a card is used) the card's brand, last four digits and country | To bill you — for your plan, and for the Stripe fees a club's online payments cause — to work out the sales tax that applies, and to show you which card is on file. Your full card number goes to Stripe, never to us. |
 | **For each sale, our tax record of it:** the name on the invoice, the full billing address it was taxed on (including the postal code — **for a coach buying as a person, that is usually a home address**), the card's country, the country of a club's payout account, and, where a buyer declares where they are, which version of that declaration they gave and when | The tax law requires us to keep evidence of where each sale was taxed. It is kept apart from your account, so closing the account does not remove it (§9). Our staff can see it to answer tax questions, and can add a note to a sale that needs a second look. |
 | Purchase, plan and invoice history | To run your subscription and keep the business and tax records the law requires. |
+| If you use **two-step sign-in**: your backup codes, kept only in a one-way (hashed) form, with when each was used and which sign-in it let in; a short-lived record of codes recently accepted; and the time your account turned two-step on | To check your codes, keep a sign-in that used a backup code working, and show you your own settings. The secret your authenticator app uses is held by our sign-in provider; we do not keep it. |
+| If an organization **requires** two-step sign-in for your role: the time your set-up period started in that organization, and the dates we last emailed you about it | To give you your set-up time, and to send each email only once. |
+| If you ask us to **reset your two-step sign-in**: the request — which of our staff made it, how you asked, a note of why, when each step happened (you confirming, the reset running, being held or cancelled) — and a one-way (hashed) form of the confirmation link | To confirm it is you, to carry out the reset, and to keep a record in case it is questioned later. |
 | Settings you choose (for example light or dark display, reminders you have dismissed) | To remember your preferences. |
 | What you send us — support emails, feedback you submit in the product, a request to delete your organization | To answer you and improve FieldLogicHQ. Feedback submitted in the product is stored with your name, email address, role and organization, the page you were on, your internet (IP) address and your browser type, so we can find and fix the problem. Email addresses you type into the message itself are removed. |
 
@@ -89,8 +96,9 @@ roster or a schedule) so clubs can see what happened and we can support them. We
 third-party analytics tools.
 
 **Our emails to you.** We send account holders emails about their account, their organization and their plan — for
-example sign-in links, invitations, renewal and payment notices, and a club's monthly invoice for its Stripe fees. These
-are part of the service. We only send promotional emails (news about features or offers) in line with Canada's anti-spam
+example sign-in links, invitations, renewal and payment notices, a club's monthly invoice for its Stripe fees, notices when two-step sign-in is turned on or off, or your password is
+changed from inside FieldLogicHQ, and, where an organization requires two-step sign-in for your role, an email when your set-up time
+starts and a reminder three days before it ends. These are part of the service. We only send promotional emails (news about features or offers) in line with Canada's anti-spam
 law, and every one has an unsubscribe link.
 
 > NOTES —
@@ -106,6 +114,13 @@ law, and every one has an unsubscribe link.
 >    Settle the basis under L6 before any promotional email goes to free-plan users. The sentence above is true either way.
 > 5. Family accounts (Stage 4) add a paragraph here only when the tier is real — the text waits in
 >    `GUARDIAN_CONSENT_STAGE4.md` "Privacy policy follow-through".
+> 6. **Two-step rows and the two-step email sentence (added 2026-11-12) are published only when two-step is live on
+>    production.** Read against `TWO_STEP_SIGNIN_PRIVACY.md` (Parts 1, 3, 4) and the dictionary: backup-code hashes and used
+>    rows (`two_step_backup_codes`), recent accepted codes (`two_step_code_uses`), grace start and the two email stamps per
+>    club (`two_step_grace`), the support reset request (`two_step_owner_resets`: staff address, how asked, free-text Why,
+>    timestamps, hashed link token). "Held by our sign-in provider; we do not keep it" is the careful form of the secret —
+>    it passes through our server once at set-up, so never "never touches our systems". The row says "a note of why" and
+>    nothing about its length or content; the free text can name a person (LEGAL_INDEX L16).
 
 ## 4. Information about website visitors and the public
 
@@ -155,6 +170,14 @@ To keep it stopped we keep that address on a short list for that club for as lon
 emailed about the stop; the club's registrar can see that the address was stopped and when. Receipts and refunds go to the
 person who paid, not to the second address.
 
+**Two-step sign-in, and what your club sees.** A club's owners and admins (no other role) can see, for each person in the
+club, whether two-step sign-in is on and when it was set up. Where the club requires it for a role, they also see how many
+days that person has left to set it up, or that the time has passed. The club's Overview shows its owners and admins a short
+list of the people who still need to set it up (up to three names, with their role and the earliest date), and the members
+list the club can download carries the same column. **The club never sees your codes, your authenticator app or your
+devices.** If an owner or admin resets your two-step sign-in, it is only when your account is used for that club alone; if
+your account reaches anywhere else, the club is told only that FieldLogicHQ support must do it, with no reason given.
+
 **What we do with it:** store it, keep it secure, display it to the people the club authorizes, send the emails the club
 asks us to send, and help the club when it asks for support. **We do not sell it, we do not use it for advertising, and
 we do not use it for our own purposes.**
@@ -195,6 +218,11 @@ If you can't reach the club, contact us (§2) and we will pass your request on a
 > 6. Second-parent flags (`CASL_SECOND_PARENT_EMAIL.md`): the stop page's "reply to the club" can reach nobody when a club has
 >    no public contact email; a `+alias` of the same mailbox is not caught. Add no promise about reply speed here until the
 >    first is settled.
+> 7. **Two-step paragraph (added 2026-11-12; published only when two-step is live).** Sources: Part 4 build facts given by
+>    the build session, `TWO_STEP_SIGNIN_PRIVACY.md` Part 3 review ("§5 should say it"). Owners and admins only; treasurers,
+>    registrars and the public board page never see it. The last sentence discloses a narrow inference (the account reaches
+>    somewhere beyond the club) — accepted by the ask 3 ruling, so say it plainly rather than hide it. If the Overview or
+>    export ever shows a role other than owner/admin, or a code/app/device fact, this paragraph is wrong first.
 
 ## 6. Who we share personal information with
 
@@ -292,6 +320,11 @@ and email addresses.
   information. A club can remove a player from a team, but a child's record (§5) is kept until we delete it at the club's
   or a parent's request, or the organization is deleted. **When an organization is deleted, its information and the files
   it uploaded are deleted with it**, except our own tax records (above).
+- **Two-step sign-in records** (§3) are kept while your account exists, or, for your set-up time in an organization, while
+  that organization exists; they are deleted with the account or the organization. Your backup codes are removed when you
+  turn two-step off or replace your phone; the record of codes recently accepted is cleared the next time you enter a code.
+  A **support reset request** and the note of why are kept with your account or your organization, with no separate time
+  limit.
 - **Error reports** are deleted after 30 days; the detailed log of records our staff opened, after 90 days; performance
   measurements, after one year. The list of pages our staff visit in our own tools is kept with no set end date today.
 
@@ -317,6 +350,12 @@ and email addresses.
 >    prune it at the same 90 days as the record-open log, then this sentence becomes "after 90 days" too.
 > 6. **"When it is closed, we delete it"** — true: staff delete accounts permanently, and a club's "Remove member" deletes
 >    the account of a person with nothing outside that club [H]. No self-serve delete; by request (§11), which PIPEDA allows.
+> 7. **Two-step retention (added 2026-11-12; published only when two-step is live).** As built: backup codes — unused ones
+>    are deleted on a new set; used rows stay (they keep that sign-in working) until the account goes (`on delete cascade`);
+>    accepted-code rows are swept only on that person's next code check, so **never "five minutes"** (Part 1 review); grace
+>    rows and reset-request rows cascade with the person or the club. "Backup codes are removed when you turn two-step off"
+>    rests on the turn-off route's last step (`turn-off/route.ts`, `lib/two-step-reset.ts`): re-check it at promote. No
+>    separate limit exists for the free-text Why (LEGAL_INDEX L16): same open question as the staff change-log reasons.
 
 ## 10. How we protect information
 
@@ -327,6 +366,13 @@ and email addresses.
   sign-in-free links are stored only in a scrambled (hashed) form.
 - Information is encrypted in transit (TLS), and our database provider encrypts all stored data at rest (AES-256).
 - Our staff's changes are permanently recorded, and the pages they open are recorded too.
+- **Two-step sign-in.** You can protect your account with a second step, a code from an authenticator app; an organization
+  can require it for its members. Backup codes are stored only in a one-way (hashed) form, not as readable codes. We email
+  you when two-step sign-in is turned on or off, or when your password is changed from inside FieldLogicHQ, so a change you did not make is noticed.
+- **If you lose your phone and your backup codes,** your club's owner or an admin can reset your two-step sign-in when your
+  account is used only for that club. Otherwise, or if you own the club, FieldLogicHQ support resets it after you confirm by
+  email; when you own a club, we also tell its other owners, admins and treasurer, and the reset waits 24 hours, during
+  which signing in with a code cancels it.
 
 No system is perfectly secure. We keep a written procedure for handling a breach of our safeguards and a record of every
 one. If a breach creates a **real risk of significant harm** to you, we will tell you, and the Privacy Commissioner of
@@ -338,8 +384,16 @@ holds, we will tell the club straight away so it can notify its members.
 >    via TLS." Our sentence restates it, nothing more.
 > 2. **Breach procedure (P6)**: `docs/agents/legal/BREACH_PROCEDURE.md` v0.1, owner approval owed; where the record lives is
 >    an owner question there. "We keep … a record of every one" becomes true the day the owner starts the record (even empty).
-> 3. **No two-step sign-in (MFA) exists** — not claimed, deliberately. For accounts that can open children's medical notes,
->    MFA is the single strongest safeguard missing (finding 5). → `/plan`.
+> 3. **Two-step sign-in is built (Parts 1–4), not yet on production — the two-step bullets above are published only once it
+>    is live.** Until then the policy claims nothing about it. Even live, the claim is "available" and "an organization can
+>    require it", never "we require", "all accounts" or "secure": every club seat that can open children's medical notes is
+>    offered it, and it is required only where the club switches it on, so the safeguard for children's medical notes depends
+>    on the club's choice (finding 5, reworded, not closed).
+> 4. **Two-step wording limits (Part 1 review).** "One-way (hashed)" is true as built (keyed with a server secret when
+>    `TWO_STEP_CODE_KEY` is set, otherwise salted sha-256, `lib/two-step-codes.ts:36-51`); never "cannot be recovered" or
+>    "secure". The reset paths sentence: club reset only when the account reaches no other organization; support reset needs
+>    the person's email confirmation, a notice to the club's other owners/admins/treasurer when they own a club, a 24-hour
+>    wait, and is cancelled by a real code (Part 3 build). Re-check it against the code at promote.
 
 ## 11. Your rights and how to use them
 
@@ -415,7 +469,9 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca · [mailing address]
 2. **High** — no automatic purge at the end of a retention window; no written retention schedule (PIPEDA 4.5.3).
 3. **Medium** — a club cannot delete a child's record (sharper with Stage 14's one record across seasons).
 4. **Medium** — signup acceptance of the Terms and this policy. **In this stage as 6.3.**
-5. **Medium** — two-step sign-in for accounts that can see children's medical information.
+5. **Medium** — two-step sign-in for accounts that can see children's medical information. **Reworded 2026-11-12, not closed:**
+   two-step now exists (built, not yet on production); every club seat that can open children's medical notes is offered it,
+   and it is required only where the club switches it on, so the safeguard depends on the club's choice.
 6. **Low** — players' full names in the online-payment description.
 7. **Low** — self-serve correction of name and email.
 8. **Low** — feedback keeps IP address and browser type unredacted (disclosed in §3; is the IP needed?).

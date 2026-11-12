@@ -1,9 +1,9 @@
 {
   "generated": "2026-11-12",
-  "total": 620,
+  "total": 622,
   "counts": {
     "tables": 21,
-    "columns": 295,
+    "columns": 297,
     "indexes": 93,
     "constraints": 82,
     "rls": 129
@@ -1379,6 +1379,14 @@
     },
     {
       "key": "column:only-dev:two_step_grace.organization_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_grace.reminder_sent_for",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:two_step_grace.start_email_for",
       "sig": ""
     },
     {

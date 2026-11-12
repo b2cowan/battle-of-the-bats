@@ -7,6 +7,7 @@ import { createBackupCodes, normalizeAuthenticatorCode, recordCodeUse } from '@/
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { REPLACING_AUTHENTICATOR_FLAG, isReplacingAuthenticator } from '@/lib/two-step-session';
 import { freshCodeRefusal, hasFreshCode } from '@/lib/two-step-fresh';
+import { sendTwoStepEmail, twoStepTurnedOnEmail } from '@/lib/two-step-emails';
 
 /**
  * Finish setting up two-step (tab 2): the first code from the app turns it on, and the ten backup codes are made and
@@ -74,5 +75,14 @@ export const POST = withObservability(async (req: Request) => {
   // here only means the browser's direct reach waits for its next ordinary refresh.
   if (wasReplacing) await supabase.auth.refreshSession().catch(() => undefined);
   const backupCodes = await createBackupCodes(state.user.id);
+  // Part 4 (Part 1 call 2; owner ruling 2026-11-12): the account is told. Someone holding only the password could turn
+  // two-step on and lock the real person out; this is their warning. A new phone (beside the old one, or replacing a lost
+  // one) says so instead. Best effort.
+  if (state.user.email) {
+    const newPhone = state.hasFactor || wasReplacing || body.replace === true;
+    await sendTwoStepEmail(state.user.email, twoStepTurnedOnEmail({ atIso: new Date().toISOString(), newPhone, oldRemoved }), 'two_step_turned_on', {
+      orgId: null, askedBy: state.user.id, timeoutMs: 5_000,
+    });
+  }
   return NextResponse.json({ ok: true, backupCodes, oldRemoved });
 }, { route: '/api/auth/two-step/set-up/verify' });

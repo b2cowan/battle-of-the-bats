@@ -12,7 +12,7 @@
  *
  * Words are drafts for Part 4's copy pass.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatStoredDate } from '@/lib/timezone';
 import { TWO_STEP_FRESH_CODE } from '@/lib/code-again';
@@ -39,15 +39,15 @@ export function loadTwoStepSwitches(orgQuery: string): Promise<TwoStepSwitches |
 const ROWS: Record<Which, { label: string; who: string; askTitle: string; askBody: string }> = {
   board: {
     label: 'Require it for the board',
-    who: 'Owner, admins, treasurer, registrars and league admins.',
+    who: 'Owner, admins, treasurers, registrars and league admins.',
     askTitle: 'Stop requiring two-step sign-in for the board?',
-    askBody: 'People who have it on keep it. New board members won’t be asked to set it up. We’ll email your club’s other admins and treasurer that you turned it off.',
+    askBody: 'People who have it on keep it. New board members won’t be asked to set it up. We’ll email your club’s other owners, admins and treasurer that you turned it off.',
   },
   coaches: {
     label: 'Also require it for coaches',
     who: 'Every coach on your club’s teams.',
     askTitle: 'Stop requiring two-step sign-in for coaches?',
-    askBody: 'Coaches who have it on keep it. New coaches won’t be asked to set it up. We’ll email your club’s other admins and treasurer that you turned it off.',
+    askBody: 'Coaches who have it on keep it. New coaches won’t be asked to set it up. We’ll email your club’s other owners, admins and treasurer that you turned it off.',
   },
 };
 
@@ -60,6 +60,15 @@ export default function TwoStepRequirementCard({ orgQuery, initial }: { orgQuery
   const [busy, setBusy] = useState<Which | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [askOff, setAskOff] = useState<Which | null>(null);
+
+  // Part 4 (tab 8): the owner's one-time Overview card closes for good once they open Settings. Best effort, once a visit.
+  // The clock, read once per mount (render stays pure): "has until" vs "has passed".
+  const [now] = useState(() => Date.now());
+  const ownerHere = !!data?.canChange;
+  useEffect(() => {
+    if (!ownerHere) return;
+    void fetch(`/api/admin/org-settings/two-step/overview${orgQuery}`, { method: 'POST' }).catch(() => {});
+  }, [ownerHere, orgQuery]);
 
   if (!data) return null;
 
@@ -107,10 +116,10 @@ export default function TwoStepRequirementCard({ orgQuery, initial }: { orgQuery
         const on = Boolean(since);
         const until = since ? addDays(since, data.graceDays) : null;
         // "Has until" is true for people already seated when it was turned on; someone who joins later gets their own 14 days.
-        const stillRunning = until !== null && Date.parse(until) > Date.now();
+        const stillRunning = until !== null && Date.parse(until) > now;
         const sub = on && since && until
           ? stillRunning
-            ? `${row.who} On since ${formatStoredDate(since, { withYear: false })}. Everyone already in a seat has until ${formatStoredDate(until, { withYear: false })}; anyone new gets ${data.graceDays} days.`
+            ? `${row.who} On since ${formatStoredDate(since, { withYear: false })}. Everyone already in these roles has until ${formatStoredDate(until, { withYear: false })}; anyone new gets ${data.graceDays} days.`
             : `${row.who} On since ${formatStoredDate(since, { withYear: false })}. Anyone new gets ${data.graceDays} days to set it up.`
           : `${row.who} They get ${data.graceDays} days to set it up.`;
         const disabled = !data.canChange || busy !== null || ownerNeedsOwn;

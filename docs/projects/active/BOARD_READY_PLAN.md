@@ -354,6 +354,56 @@ points here, so they aren't tracked twice)
       4. Noted, not fixed: the support-only line tells an admin the account reaches *somewhere* else (accepted by the ask 3
          ruling); the club's audit line is written after the reset (support's is before); a super admin can start a support
          reset on a staff account; Help still says an admin can't open Settings (Part 4 `/docs`).
+  - **Part 4 (what the club sees, and the words) — rulings at the UX summary (owner 2026-11-12, all four as recommended):**
+    - **five emails, not two:** the two grace emails (when the 14 days start; 3 days before they end) AND the three account
+      alarms the plan carried here from Parts 1 and 2 ("two-step was turned on" — Part 1 call 2 — "turned off", "your password
+      was changed"), all with no link, all through `/legal`;
+    - **Members reads only the club's own people:** the list's one platform-wide 1,000-account read (past it, emails and last
+      sign-in went blank, and the new column would read Off) is replaced by a read of just this club's people, in this change;
+    - **the 3-day email rides the existing hourly two-step job** (no new schedule), with one small database change: a
+      "reminder sent" stamp so nobody gets it twice;
+    - **one notice spot on Overview, two-step first:** the owner's one-time card and "N people still need to set up" share
+      the single spot under the bar with the What's-new line, and a two-step notice goes first.
+    - Session calls (stated in the summary, not objected to): the column, the phone line, the coaching-staff words and the
+      export column are for owners and admins only (a treasurer or registrar who can open Members does not get them); a seat
+      no switch covers (staff, volunteers) reads only On or Off.
+  - **Part 4 BUILT 2026-11-12, commit owed (owner's yes), walk §520 owed** https://claude.ai/artifact/Rm73xYcDckZZzuPWv5c18b
+    (`BOARD_READY_TWO_STEP_PART4_WALK.html`, built by `.probe/two-step-p4/build-walk.cjs`; fixture `.probe/two-step-p4/fixture.mjs`
+    prompt | members | run-job | code | undo). Mig 475 applied to dev (prod BEFORE the code; MANUAL_PROD_STEPS). What was built:
+    - **One read of the club's own people** `public.people_sign_in_facts(uuid[])` (mig 475, server key only) → `lib/two-step-club-status.ts`
+      (`peopleSignInFacts`, `memberTwoStep`, `clubTwoStepWaiting`); the Members route no longer calls `auth.admin.listUsers`.
+    - **Members:** `twoStep` on each row only for an owner/admin viewer (the route decides; the screen follows what came back);
+      column, phone line, coaching-staff words, export column. Suspended = On/Off only. The board tab untouched (test).
+    - **Overview:** `GET/POST /api/admin/org-settings/two-step/overview` + `TwoStepOverviewNotice` in the one notice spot, What's
+      new as its fallback. The owner card closes on ×, Open Settings, the Settings card's owner visit, or a switch turned on
+      (`two_step_prompt_closed_at`).
+    - **Emails** (`lib/two-step-email-words.ts`, split out so tests read them): the two grace emails sent ONLY by the hourly
+      two-step job (`lib/two-step-grace-emails.ts`; session call: also the "started" one, never inside the owner's press —
+      paced, 15-second budget, claimed per deadline in `two_step_grace.start_email_for` / `reminder_sent_for`); the three
+      account alarms from set-up verify, turn off, change password and the backup-code reset (5-second limit, after the
+      change; they say only what happened).
+    - **Copy pass** (`/marketing`, 35 word changes across Parts 1–4: "authenticator app" everywhere, "requires" not "asks",
+      the lost-phone choices say what happens next, "owners, admins and treasurer", "N days left"). **`/legal`**: no CASL
+      blocker; two must-fixes applied (the alarm emails no longer claim a sign-out or old-phone removal that failed); policy
+      follow-through applied (privacy draft §3/§5/§9/§10 + notes, finding 5 reworded and open, LEGAL_FACTS line, BREACH_PROCEDURE
+      fraudulent reset, L16). **`/docs`**: new "Two-step sign-in" section in the club guide (7 answers, 3 FAQs) and the coaches
+      guide; Members, Settings and roles text (admins read the Settings card), sign-in help; the owner/admin role path.
+    - **`/review` (high-risk, 4 lenses) found and fixed:** the job's 80-second budget against the app's ~30-second limit (an
+      email could be lost); a give-back that could clear a newer deadline; the password email sent before the sign-back-in with
+      no time limit; suspended members shown amber; a no-mail-key machine counting every hour as failed; a malformed flag that
+      could fail the whole Members read; a line break in a subject.
+    - **Open owner calls from Part 4:**
+      1. **The plain "Forgot your password?" reset sends none of our alarms** (it changes the password in the browser). Covering
+         it means switching on the sign-in service's own "password changed" notice in production Auth settings (not done: the
+         project changes no production Auth settings). The alarms' own advice points people to that reset.
+      2. **The contact address now carries six emails' "write to us"** and the Part 3 hold promise: confirm it is read daily.
+      3. **`TWO_STEP_CODE_KEY` on production** (Part 2 call 2) must exist and be backed up before the first backup code is made
+         there (`/legal` carried it to `/release`).
+      4. Copy-pass items left for you: the "Scan" step label on a phone (the drawn labels), the wait after too many wrong
+         codes (the service's own number is unknown, so "a few minutes" stays), and whether Account's backup-code line splits.
+      5. Noted, not fixed: a hand-edited earlier switch time could push a deadline later; the tournament-only Overview gets no
+         notice (it never had the What's-new line either); the support reset's free-text Why has no "don't name anyone" hint
+         or retention (L16, `/legal` asks for a `/plan` item).
   - **Build outline:**
     - server enforcement in the helpers above;
     - pages route a password-only session in a required seat to the code or set-up step;
@@ -398,8 +448,9 @@ board's two questions:
     advertising cookies, AI service or SMS;
   - who can see what (by seat, with the role table), and that platform staff access is audit-logged;
   - encryption;
-  - sign-in: two-step sign-in is available to everyone, and the club can require it for its board and its coaches
-    (ruled 2026-11-10); FieldLogicHQ staff always use it;
+  - sign-in (ruled 2026-11-10; the pack's line as written in two-step Part 4, 2026-11-12, use it as is): **"Two-step
+    sign-in is available to everyone, and your club can require it for its board and coaches; FieldLogicHQ staff always
+    use it."** Only once two-step is on production (the pack is built after 0a, so it can be honest);
   - how payments work: the club is the merchant and no card data is held;
   - backups and the breach procedure;
   - the club owns its data and can export and delete it;

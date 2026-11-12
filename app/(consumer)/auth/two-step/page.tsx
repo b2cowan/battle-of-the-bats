@@ -153,7 +153,7 @@ function SetUp() {
     }
     if (!res.ok || !data.factorId) {
       setScreen(data.code === 'already_on'
-        ? { kind: 'refused', title: 'Two-step sign-in is already on', body: 'Signing in asks for a code from your app.' }
+        ? { kind: 'refused', title: 'Two-step sign-in is already on', body: 'Signing in asks for a code from your authenticator app.' }
         : { kind: 'refused', title: 'We couldn’t start the set-up', body: 'Try again in a moment.' });
       return;
     }
@@ -182,7 +182,7 @@ function SetUp() {
 
       // Already on — unless the person is finishing the replacement of a lost phone.
       if (s.hasFactor && !replace && !s.replacing) {
-        setScreen({ kind: 'refused', title: 'Two-step sign-in is already on', body: 'Signing in asks for a code from your app.' });
+        setScreen({ kind: 'refused', title: 'Two-step sign-in is already on', body: 'Signing in asks for a code from your authenticator app.' });
         return;
       }
       // A club's screen first (tab 8), when sign-in or the server's check sent the person here.
@@ -258,9 +258,9 @@ function SetUp() {
     return (
       <StartColumn>
         <StartHead
-          title={screen.past ? 'Set up two-step sign-in to continue' : 'Your club now asks for two-step sign-in'}
+          title={screen.past ? 'Set up two-step sign-in to continue' : 'Your club now requires two-step sign-in'}
           sub={screen.past
-            ? `${screen.orgName} requires it for ${screen.who}. Until it’s set up, the club’s pages wait.`
+            ? `${screen.orgName} requires it for ${screen.who}. You can’t open the club’s pages until it’s set up.`
             : `${screen.orgName} requires it for ${screen.who}. It takes about two minutes.`}
         />
         <div className={accountForm.form}>
@@ -445,7 +445,7 @@ function SetUp() {
     <StartColumn>
       <StartHead
         title="Two-step sign-in is on"
-        sub="From now on, signing in asks for a code from your app."
+        sub="From now on, signing in asks for a code from your authenticator app."
         steps={<StartSteps current={3} labels={STEP_LABELS} ariaLabel="Set-up steps" />}
       />
       <div className={accountForm.form}>

@@ -103,3 +103,6 @@
 .guideNo { color: var(--text-tertiary); }
 .guideWords { color: var(--text-secondary); font-size: var(--type-support); white-space: normal; }
 .guideNote { margin-top: 0.6rem; }
+/* Board Ready two-step, Part 4: a required seat not set up, in the phone row and coaching-staff line (the table uses the
+   kit's amber chip; a chip inside a sentence would break the line). Ask E: past the deadline stays amber. */
+.twoStepWaiting { color: var(--warning); font-weight: 650; }

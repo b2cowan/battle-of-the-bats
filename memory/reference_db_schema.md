@@ -1108,7 +1108,7 @@ id (uuid), user_id (uuid) NOT NULL, salt NOT NULL, code_hash NOT NULL, created_a
 user_id (uuid) NOT NULL, code_hash NOT NULL, used_at
 
 ### two_step_grace
-user_id (uuid) NOT NULL, organization_id (uuid) → organizations.id NOT NULL, starts_at
+user_id (uuid) NOT NULL, organization_id (uuid) → organizations.id NOT NULL, starts_at, reminder_sent_for, start_email_for
 
 ### two_step_owner_resets
 id (uuid), organization_id (uuid) → organizations.id, user_id (uuid) NOT NULL, asked_by NOT NULL, asked_how NOT NULL, reason NOT NULL, requested_at, confirmed_at, runs_at, held_at, held_by, cancelled_at, completed_at, confirm_token_hash, confirm_expires_at, club_notice_count (integer), cancelled_by

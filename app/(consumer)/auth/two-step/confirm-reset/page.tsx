@@ -52,7 +52,7 @@ function ConfirmReset() {
         <div className={accountForm.form}>
           <div className={accountForm.callout}>
             <strong>Found your phone?</strong>{' '}
-            Sign in with a code from your app before then, and the reset is cancelled.
+            Sign in with a code from your authenticator app before then, and the reset is cancelled.
           </div>
           <p className={accountForm.hint}>
             After the reset, sign in with your password and set up two-step sign-in on your new phone.
@@ -73,8 +73,8 @@ function ConfirmReset() {
       />
       <div className={accountForm.form}>
         <p className={accountForm.hint}>
-          Once you confirm, the reset happens 24 hours later. If you own a club, we tell its other admins and treasurer
-          first. Signing in with a code from your app, or a backup code, during that time cancels it.
+          Once you confirm, the reset happens 24 hours later. If you own a club, we tell its other owners, admins and treasurer
+          first. Signing in with a code from your authenticator app, or a backup code, during that time cancels it.
         </p>
         {failed && <div className={accountForm.noticeError} role="alert">{failed}</div>}
         <button type="button" className={accountForm.primary} onClick={() => void confirm()} disabled={busy || !token} id="two-step-confirm-reset">

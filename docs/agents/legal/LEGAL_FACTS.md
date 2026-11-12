@@ -1,5 +1,5 @@
 # FieldLogicHQ — Legal Facts
-**Last updated:** 2026-11-08 (supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
+**Last updated:** 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
 Stage 6 step 6.1). Seeded 2026-11-04 from a repo census — each fact carries its source; re-open the source before a draft
 rests on it.
 
@@ -56,7 +56,7 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   production project: AWS us-east-2 (USA), Pro plan** (read from the Supabase Management API 2026-11-08; the dev project is
   ca-central-1 and is not what any policy describes). Stripe's customer portal is always opened with our own configuration,
   built from code: cancel at the period end, no refund, no plan switches (production code, read 2026-11-08; the live copy is
-  created on the first live open). No MFA is on production yet (two-step Part 1 is built on dev, mig 463; see `TWO_STEP_SIGNIN_PRIVACY.md`, 2026-11-11 — the policy claims nothing until it ships). No automatic purge at the end of a retention window; org delete
+  created on the first live open). Two-step sign-in (authenticator app + hashed backup codes; club-requirable; staff always) is built on dev, Parts 1–4 (`docs/projects/active/BOARD_READY_TWO_STEP_BUILD_PROMPTS.md`, 2026-11-11/12; see `TWO_STEP_SIGNIN_PRIVACY.md`); deployment state lives in the release-history record, and the privacy policy describes it only once it is live. No automatic purge at the end of a retention window; org delete
   does not touch file storage. Full list: `drafts/PRIVACY_POLICY.md` § Product findings.
 - **Stripe:** a data-processing addendum is in place (`FACILITATED_PAYMENTS_COUNSEL_BRIEF.md` ~L37).
 - **Data-processing terms — how each supplier's are accepted** (read on each supplier's own site 2026-11-08; owner P3 ruled

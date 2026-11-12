@@ -10,6 +10,7 @@
 | **Ruled by** | owner P6, 2026-11-08: `/legal` drafts, the owner approves. Stage 6 plan §3. |
 
 **Change log:** 0.1 · 2026-11-08 · First draft (GST/HST Stage 6 step 6.1). Statute and regulation text read this session [V].
+0.1 · 2026-11-12 · §1 gains "a fraudulent two-step reset"; §3 step 1 gains the account-takeover containment line (Board Ready two-step Part 4).
 
 **No incident data in this repo, ever.** The record itself lives outside it (§6). This file holds the procedure and the
 record's shape only.
@@ -27,6 +28,7 @@ s. 2(1)). It covers mistakes, not only attacks. For us, for example:
 - a leaked key or password (Supabase service key, Stripe key, the Gmail account);
 - a page showing a child's date of birth, medical note or home address publicly;
 - a lost or stolen device holding exports or a signed-in session;
+- a fraudulent two-step reset (someone talked support or a club admin into resetting another person's two-step sign-in);
 - **a breach at a provider** (Supabase, AWS, Resend, Stripe, Google) that touches our data.
 
 **Not a breach:** an outage where nobody got the information; a phishing email that got nothing; a club admin seeing what the
@@ -59,7 +61,7 @@ Write the reasoning down either way (§5, column 9). "No RROSH" with no reason i
 ## 3. Steps, in order
 
 1. **Contain** (first hours): revoke the key or password, end the session, fix or switch off the feature, pull the page, ask
-   the recipient to delete. Do not wait for the assessment.
+   the recipient to delete. Do not wait for the assessment. If an account may have been taken over (for example a fraudulent two-step reset): sign the account out everywhere, reset its password, re-establish two-step with the real person, and check the account's activity.
 2. **Open the record entry** the same day (§5), even if it later proves not to be a breach.
 3. **Assess** (§2). Find out what information, whose, how many people, when it started and ended.
 4. **Club information?** Email the club's owner straight away with what you know (the report list below). Keep going on our

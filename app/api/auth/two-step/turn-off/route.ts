@@ -5,6 +5,7 @@ import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { twoStepRequirementsFor } from '@/lib/two-step-requirements';
 import { removeEveryAuthenticator } from '@/lib/two-step-reset';
 import { freshCodeRefusal, hasFreshCode } from '@/lib/two-step-fresh';
+import { sendTwoStepEmail, twoStepTurnedOffEmail } from '@/lib/two-step-emails';
 
 /**
  * TURN OFF your own two-step sign-in (Board Ready · two-step sign-in, Part 2; drawings tab 5 "On · not required"). The
@@ -34,6 +35,12 @@ export const POST = withObservability(async () => {
   // the backup codes last. A failure part-way leaves two-step ON.
   if (!(await removeEveryAuthenticator(user.id))) {
     return NextResponse.json({ error: 'We couldn’t turn it off. Two-step sign-in is still on. Try again.', code: 'not_turned_off' }, { status: 502 });
+  }
+  // Part 4 (owner ruling 2026-11-12): the account is told, so a turn-off it didn't make is seen. Best effort.
+  if (user.email) {
+    await sendTwoStepEmail(user.email, twoStepTurnedOffEmail({ atIso: new Date().toISOString() }), 'two_step_turned_off', {
+      orgId: null, askedBy: user.id, timeoutMs: 5_000,
+    });
   }
   return NextResponse.json({ ok: true });
 }, { route: '/api/auth/two-step/turn-off' });

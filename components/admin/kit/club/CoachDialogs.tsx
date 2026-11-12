@@ -174,7 +174,7 @@ export function CoachPersonDialog({
       if (res.status === 401 && data.code === TWO_STEP_FRESH_CODE) { setError('Nothing changed. Resetting someone’s two-step sign-in needs your code.'); return; }
       if (!res.ok) { setError(data.error ?? 'It wasn’t reset. Try again.'); return; }
       setTwoStep({ on: false, since: null, door: 'none' });
-      setResetNotice(`${possessive(who)} two-step sign-in was reset. We’ve emailed ${first}.`);
+      setResetNotice(`${possessive(who)} two-step sign-in was reset, and ${first} was signed out everywhere. We’ve emailed ${first}.`);
     } catch {
       setError('Could not reach the server. Please try again.');
     } finally {
@@ -298,7 +298,7 @@ export function CoachPersonDialog({
           )}
           {twoStep.door === 'support' && (
             <span className={ck.hint} style={{ display: 'block', marginTop: 4 }}>
-              Only FieldLogicHQ support can reset this one. {first} emails {FIELDLOGICHQ_CONTACT_EMAIL} from their account’s address.
+              Only FieldLogicHQ support can reset this one. {first} emails {FIELDLOGICHQ_CONTACT_EMAIL} from the address they sign in with.
             </span>
           )}
         </div>

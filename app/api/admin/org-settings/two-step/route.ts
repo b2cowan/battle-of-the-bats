@@ -110,6 +110,13 @@ export const PATCH = withObservability(async (req: Request) => {
 
   await writeOrgAudit(ctx.org.id, ctx.user.id, null, on ? 'two_step_requirement_on' : 'two_step_requirement_off', { which });
 
+  // Part 4: turning a requirement on closes the owner's one-time Overview card for good (it never returns, even if the
+  // switch is later turned off). The "your club now requires it" emails go from the hourly job, paced
+  // (lib/two-step-grace-emails.ts), never inside this press.
+  if (on) {
+    await supabaseAdmin.from('organizations').update({ two_step_prompt_closed_at: nowIso }).eq('id', ctx.org.id).is('two_step_prompt_closed_at', null);
+  }
+
   if (!on) {
     const { data: me } = await supabaseAdmin
       .from('organization_members')

@@ -51,6 +51,7 @@ import frame from '../AdminKitFrame.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import PageNotice from '@/components/shared/PageNotice';
 import WhatsNewNote from './WhatsNewNote';
+import TwoStepOverviewNotice from './TwoStepOverviewNotice';
 import ClubBand from './ClubBand';
 import ClubStillToDo, { type StillToDoChecklist } from './ClubStillToDo';
 import { useBoardPeople } from '@/lib/use-board-people';
@@ -312,7 +313,12 @@ export default function ClubHubKit() {
           content starts the portal's masthead gap under the bar (`.hubPage`). */}
       {/* An ANNOUNCED release, one line, dismissible (owner 2026-11-07); nothing when none is unread. It sits
           directly under the title, which is now the bar (What's new plan, ruling 5). */}
-      <WhatsNewNote />
+      {/* ONE notice spot (Board Ready two-step Part 4, owner 2026-11-12): a two-step notice first (the owner's one-time
+          card, or "N people still need to set up" for owners and admins), otherwise the What's-new line. */}
+      <TwoStepOverviewNotice
+        slug={slug} base={base} noun={noun} canSee={isOwner || isAdmin}
+        fallback={<WhatsNewNote />}
+      />
       {showUpgradeSetup && <>
         <CoachCard className={billing.setupCard}>
           <h2 className={billing.sectionTitle}>{W.clubUpgrade.ready}</h2>

@@ -4,6 +4,9 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { memberSection, whatTheyCanOpen } from '@/lib/member-access';
 import type { OrgRole } from '@/lib/types';
+import {
+  graceStartsFor, memberTwoStep, orgTwoStepFacts, peopleSignInFacts, type MemberTwoStep, type OrgTwoStepRow,
+} from '@/lib/two-step-club-status';
 
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -31,14 +34,26 @@ export const GET = withObservability(async (req: Request) => {
     return NextResponse.json([]);
   }
 
-  // Fetch user details from auth.admin — cannot JOIN auth.users via postgrest
-  const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers({
-    perPage: 1000,
-  });
-
-  if (usersError) {
-    return NextResponse.json({ error: usersError.message }, { status: 500 });
+  // Email, last sign-in and two-step for THIS club's people only (mig 475; owner ruling 2026-11-12). It replaced one
+  // platform-wide page of 1,000 accounts, past which a member read "(unknown)" with no last sign-in.
+  let people: Awaited<ReturnType<typeof peopleSignInFacts>>;
+  try {
+    people = await peopleSignInFacts(members.map(m => m.user_id as string | null));
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'We couldn’t read the members.' }, { status: 500 });
   }
+
+  // The Two-step column (Board Ready two-step, Part 4; ask 6): the club's owners and admins only. Members also opens
+  // for a treasurer or registrar with the capability; they get no two-step field at all (owner, 2026-11-12).
+  const viewer = members.find(m => m.user_id === ctx.user.id && (m.status ?? 'active') === 'active');
+  const seesTwoStep = viewer?.role === 'owner' || viewer?.role === 'admin';
+  let graces: Map<string, string> = new Map();
+  let switches: OrgTwoStepRow | null = null;
+  if (seesTwoStep) {
+    // A failed read leaves the column blank ("—" for everyone), never a guessed On or Off.
+    try { [graces, switches] = await Promise.all([graceStartsFor(org.id), orgTwoStepFacts(org.id)]); } catch { switches = null; }
+  }
+  const now = Date.now();
 
   // Batch-fetch tournament assignments for all members
   const memberIds = members.map(m => m.id);
@@ -67,10 +82,17 @@ export const GET = withObservability(async (req: Request) => {
     repGroupScopeMap.set(s.member_id, arr);
   }
 
-  const userMap = new Map(usersData.users.map(u => [u.id, u]));
-
   const result = members.map(m => {
-    const authUser = userMap.get(m.user_id);
+    const authUser = m.user_id ? people.get(m.user_id) : undefined;
+    const status = (m.status as 'invited' | 'active' | 'suspended') ?? 'active';
+    // An invitation has no seat yet ("—"); an account the read did not return is unknown, never "Off".
+    // A suspended person cannot sign in, so no requirement runs for them: only On or Off, never the amber count (/review:
+    // the Overview reminder counts active seats only, and the two must agree).
+    const twoStep: MemberTwoStep | null = !switches || status === 'invited' || !authUser
+      ? null
+      : status === 'suspended'
+        ? { state: authUser.twoStepOn ? 'on' : 'off' }
+        : memberTwoStep(switches, m.role as string, graces.get(m.user_id) ?? null, authUser.twoStepOn, now);
     const role = m.role as OrgRole;
     const capabilities = (m.capabilities as Record<string, boolean> | null) ?? null;
     return {
@@ -87,13 +109,15 @@ export const GET = withObservability(async (req: Request) => {
       displayName:           (m as any).display_name ?? null,
       title:                 (m as any).title ?? null,
       role:                  m.role,
-      status:                (m.status as 'invited' | 'active' | 'suspended') ?? 'active',
+      status,
       capabilities:          (m.capabilities as Record<string, boolean> | null) ?? null,
       invitedAt:             m.invited_at,
       acceptedAt:            m.accepted_at ?? null,
-      lastSignIn:            authUser?.last_sign_in_at ?? null,
+      lastSignIn:            authUser?.lastSignInAt ?? null,
       assignedTournamentIds: assignmentMap.get(m.id) ?? [],
       repGroupIds:           repGroupScopeMap.get(m.id) ?? [],
+      // Part 4: present (possibly null) only for an owner or admin viewer; absent for everyone else.
+      ...(seesTwoStep ? { twoStep } : {}),
     };
   });
 
