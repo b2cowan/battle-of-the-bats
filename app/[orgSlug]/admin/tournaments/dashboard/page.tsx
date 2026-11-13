@@ -36,8 +36,8 @@ import { EmptyCard } from '@/components/admin/kit/club/RepKit';
 import CoinTossRecorder, { CoinTossNote } from '@/components/admin/CoinTossRecorder';
 import type { PendingToss } from '@/lib/coin-toss';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import HelpButton from '@/components/help/HelpButton';
-import type { HelpRequest } from '@/components/help/help-drawer-context';
+import { useHandPageHelp } from '@/components/admin/AdminPageHelp';
+import { DASHBOARD_HELP } from '@/lib/admin-page-help';
 import type { EventRecap } from '@/lib/event-recap';
 import FinishedBoard from './FinishedBoard';
 import DraftBoard, { type DraftChecklist } from './DraftBoard';
@@ -53,13 +53,6 @@ import GameDayBoard, {
 } from './GameDayBoard';
 import LoadingState from '@/components/shared/LoadingState';
 import TournamentHealthWindow from '../schedule/components/TournamentHealthWindow';
-
-// ── Each board's "?" (A56): its own help sub-topic ─────────────────────────────────────────────────────────────
-const DRAFT_BOARD_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-open-tournament-registration'], subtopicId: 'launch-draft-board' };
-const WEEKS_BEFORE_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-open-tournament-registration'], subtopicId: 'launch-weeks-before' };
-const GAME_DAY_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-finalize-tournament-scores'], subtopicId: 'results-game-day-board' };
-/** A finished board's "?" — the close-out guide (the help drawer lists the stage's tasks above it). */
-const FINISHED_BOARD_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'closeout-finished-board' };
 
 // ── Domain types ────────────────────────────────────────────────────────────
 
@@ -607,11 +600,12 @@ export default function AdminDashboard() {
     ? () => setIsCustomizing(true)
     : null;
 
-  // Each board's "?" (A56), once the page knows which board it is.
-  const boardHelp = !currentTournament?.id ? null
-    : isFinished ? FINISHED_BOARD_HELP
-      : isDraft ? DRAFT_BOARD_HELP
-        : isGameDay ? GAME_DAY_HELP : WEEKS_BEFORE_HELP;
+  // Each board's "?" (A56), once the page knows which board it is: handed up to the strip and the phone bar (navigation
+  // Phase 6b — the "?" left the page's row; the address's answer is the weeks-before board until this one lands).
+  useHandPageHelp(!currentTournament?.id ? null
+    : isFinished ? DASHBOARD_HELP.finished
+      : isDraft ? DASHBOARD_HELP.draft
+        : isGameDay ? DASHBOARD_HELP.gameDay : DASHBOARD_HELP.weeksBefore);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -621,7 +615,6 @@ export default function AdminDashboard() {
       <AdminPageHeader
         title="Dashboard"
         inlineActions
-        actions={boardHelp ? <HelpButton help={boardHelp} label="Dashboard" iconOnly /> : undefined}
       />
 
       {statsReady && !boardWaiting && statsError && (

@@ -123,19 +123,25 @@ describe('the "?" in the strip (owner 2026-11-12)', () => {
   const strip = readCode('components/coaches/CoachTopStrip.tsx');
   const css = readCode('app/[orgSlug]/coaches/coaches.module.css');
 
+  // ⚖ UPDATED IN THE OPEN (navigation Phase 6b, owner 2026-11-13): the store, the publisher and the door moved into ONE channel the
+  // admin's strip and bar use too (`components/help/PageHelpChannel.tsx`), so the pins on their text moved there; the Coaches
+  // Portal keeps its names, its host mark (now three states: own · masthead · strip) and its two ends.
   it('ONE entry, held by the shell’s provider; the team layout’s provider only marks a page hosted; the default stays unhosted', () => {
+    const channel = readCode('components/help/PageHelpChannel.tsx');
     assert.match(slot, /export function CoachStripHelpProvider\(/);
-    assert.match(slot, /const publish = useContext\(StripHelpPublishContext\);/);
-    assert.match(slot, /hosted: !!publish/, 'no shell above it means unhosted: every header keeps its own "?"');
-    assert.equal((slot.match(/useState<Entry>/g) ?? []).length, 1, 'one state machine, not two');
-    assert.match(slot, /prev\?\.id === id \? null : prev/, 'clearing only while the entry is still the publisher’s');
-    assert.ok(slot.includes('hosted: false'), 'the fallback is the default context value');
-    assert.match(slot, /export function CoachPageHelpSlot\(\{ reserve = false \}: \{ reserve\?: boolean \} = \{\}\) \{\s*const entry = useContext\(StripHelpEntryContext\);/, 'the phone’s bar reads the same entry');
+    assert.match(slot, /<PageHelpChannelProvider>\{children\}<\/PageHelpChannelProvider>/);
+    assert.match(slot, /const publish = usePageHelpPublisher\(\);/);
+    assert.match(slot, /value=\{publish \? host : 'own'\}/, 'no shell above it means unhosted: every header keeps its own "?"');
+    assert.equal((channel.match(/useState<Entry>/g) ?? []).length, 1, 'one state machine, not two');
+    assert.match(channel, /prev\?\.id === id \? null : prev/, 'clearing only while the entry is still the publisher’s');
+    assert.ok(slot.includes("createContext<CoachHelpHost>('own')"), 'the fallback is the default context value');
+    assert.match(slot, /export function CoachPageHelpSlot\(\{ reserve = false \}: \{ reserve\?: boolean \} = \{\}\) \{\s*return <PageHelpDoor help=\{usePublishedPageHelp\(\)\}/, 'the phone’s bar reads the same entry');
     assert.match(readCode('components/coaches/CoachesChrome.tsx'), /<CoachStripHelpProvider>[\s\S]*<\/CoachStripHelpProvider>/);
   });
 
   it('the strip draws it between the bell and the account menu, never on a wall or the free portal', () => {
-    assert.match(strip, /\{!wall && !free && <CoachStripHelp reserve=\{split\} \/>\}/, 'a team page holds the door’s width so the bell does not slide');
+    // (Phase 6b, updated in the open: the three off-team pages with a topic hold its width too — known from the address.)
+    assert.match(strip, /\{!wall && !free && <CoachStripHelp reserve=\{split \|\| offTeamHelp\} holdMs=\{offTeamHelp \? OFF_TEAM_HOLD_MS : undefined\} \/>\}/, 'a team page holds the door’s width so the bell does not slide');
     const at = strip.indexOf('<CoachStripHelp ');
     assert.ok(at > strip.indexOf('<NotificationBell') && at < strip.indexOf('<AccountMenu'), 'after the bell, before the account menu');
     assert.equal((strip.match(/<CoachStripHelp /g) ?? []).length, 1);
@@ -143,7 +149,8 @@ describe('the "?" in the strip (owner 2026-11-12)', () => {
 
   it('a hosted "?" is never the row’s at any width; an unhosted page keeps drawing its own', () => {
     assert.match(header, /const helpOnRow = showHelp && !helpHosted;/);
-    assert.match(header, /\{helpOnRow && \(\s*<span className=\{styles\.pageHeaderHelp\}>/, 'the own-"?" fallback survives: drawn only when unhosted, never rendered-and-hidden');
+    // (Phase 6b, updated in the open: an off-team page's copy carries the phone-only class — the strip draws it above 900.)
+    assert.match(header, /\{helpOnRow && \(\s*<span className=\{`\$\{styles\.pageHeaderHelp\}\$\{helpPhoneOnly \? ` \$\{styles\.pageHeaderHelpPhone\}` : ''\}`\}>/, 'the own-"?" fallback survives: drawn only when unhosted (or off a team’s pages, for the phone)');
     assert.doesNotMatch(css, /pageHeaderHelpDesk/, 'the hide-it class is gone');
     // The phone’s own end: the team bar draws the published "?" (F3 A), holding its width until it arrives.
     assert.ok(readCode('components/coaches/CoachTeamHeader.tsx').includes('<CoachPageHelpSlot reserve />'));
@@ -154,7 +161,8 @@ describe('a header whose actions are a phone’s only draws no row above 900 (Sc
   it('the prop exists, feeds the computer’s row only, and Schedule sets it', () => {
     const header = readCode('components/coaches/CoachPageHeader.tsx');
     assert.match(header, /actionsPhoneOnly\?: boolean;/);
-    assert.match(header, /const deskRowHas = \(!!actions && !actionsPhoneOnly\) \|\| helpOnRow;/);
+    // (Phase 6b, updated in the open: an off-team page's "?" is the strip's above 900, so it no longer keeps the computer's row.)
+    assert.match(header, /const deskRowHas = \(!!actions && !actionsPhoneOnly\) \|\| \(showHelp && helpHost === 'own'\);/);
     assert.match(header, /deskRowHas \? 'actions' : 'empty'/);
     assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx'), /actionsPhoneInTitleRow\s*\n\s*actionsPhoneOnly\n/);
   });

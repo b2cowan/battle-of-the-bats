@@ -50,7 +50,9 @@ describe('Event settings (E3)', () => {
     assert.match(page, /<SavePill/);
     assert.match(page, /const fieldsDirty = isInitialized && \(/, '"loaded" guards every comparison, not just the first');
     assert.doesNotMatch(page, /saveStatusLabel|formFooter/);
-    assert.match(page, /subtopicId: 'event-settings-cards'/);
+    // ⚖ UPDATED IN THE OPEN (navigation Phase 6b): the page's "?" is the chrome's, from `lib/admin-page-help.ts`'s
+    // `settings/event` row — the same sub-topic, now opened from the strip and the phone bar.
+    assert.match(read('lib/admin-page-help.ts'), /'settings\/event': t\(\['settings-and-access'\], 'Event settings', 'event-settings-cards'\)/);
     assert.match(read('lib/help-content/tournaments.tsx'), /id: 'event-settings-cards'/);
     assert.doesNotMatch(page, /useKitStyle|kx\(|legacy=\{/);
   });

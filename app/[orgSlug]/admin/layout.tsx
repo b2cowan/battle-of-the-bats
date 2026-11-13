@@ -146,11 +146,14 @@ export default async function AdminLayout({
       limitedToTeamGroups={!!authCtx.repGroupIds}
     >
       <TournamentProvider orgSlug={orgSlug} seed={tournamentSeed}>
-        <AdminChrome clubShape={clubShape}>
-          <HelpDrawerProvider>
+        {/* ⚖ THE HELP PANEL WRAPS THE WHOLE CHROME (navigation Phase 6b, T6·2): the page's "?" is drawn by the strip and the phone
+            bar, which `AdminChrome` renders — a "?" outside this provider reaches the no-op default context and opens NOTHING,
+            with no error. One provider, so one drawer. */}
+        <HelpDrawerProvider>
+          <AdminChrome clubShape={clubShape}>
             {children}
-          </HelpDrawerProvider>
-        </AdminChrome>
+          </AdminChrome>
+        </HelpDrawerProvider>
         <InstallAppPrompt {...MEMBER_INSTALL} />
         {/* Every upgrade link opens the plan's panel over the page it is on (owner 2026-10-16). */}
         <PlanPanelHost />

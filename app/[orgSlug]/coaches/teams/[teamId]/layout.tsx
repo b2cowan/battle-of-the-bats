@@ -42,10 +42,11 @@ export default async function CoachTeamLayout({
        break both. A context provider renders only its children, so the DOM is byte-identical.
        It wraps the masthead AND the page because the "?" travels upward between them: the page
        publishes its help topic, the masthead draws it (2026-08-25 ruling, `CoachPageHelpSlot`).
-       ⚠ Deliberately INSIDE the authenticated branch. The `if (!authCtx) return <>{children}</>`
-       above renders no masthead, so it must render no host either — a page publishing to a host
-       that draws nothing would lose its "?" entirely. The fallback is automatic: no provider means
-       `CoachPageHeader` keeps drawing its own. */
+       ⚠ Deliberately INSIDE the branch that draws the masthead. The `if (!masthead) return <>{children}</>`
+       above renders no team bar, so it must not claim this host either — a page publishing to a bar
+       that is not drawn would lose its "?" on a phone. The fallback is automatic: there the shell's own
+       host (`CoachesChrome`, `strip` — navigation Phase 6b) applies, so the strip draws it on a computer
+       and `CoachPageHeader` keeps its own on a phone. */
     <CoachPageHelpProvider>
       {/* ⚖ The phone's bar (≤900; Phase 5 retires it). Above 900 it draws nothing: the strip names the page and carries the
           team's facts (navigation Phase 4, E6/E7). `statusYearId` says WHICH season the status describes — a team

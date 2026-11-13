@@ -1,9 +1,10 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
-import HelpButton from '@/components/help/HelpButton';
+import { createContext, useContext, type ReactNode } from 'react';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
+import {
+  PageHelpChannelProvider, PageHelpDoor, usePageHelpPublisher, usePublishPageHelp, usePublishedPageHelp,
+} from '@/components/help/PageHelpChannel';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import stripStyles from './CoachTopStrip.module.css';
 
@@ -42,121 +43,84 @@ import stripStyles from './CoachTopStrip.module.css';
  * Help row and the account menu's Help row stay the full guide (in a new tab) — a different door from this one, which
  * opens the in-page drawer at this screen's section.
  *
+ * ⚖ **THE OFF-TEAM PAGES MOVED TOO (navigation Phase 6b, T6·1, owner 2026-11-13 — crossing 4b's "team pages only" line on
+ * purpose):** notifications, Plan & billing and Join a club publish to the strip on a computer like a team's pages, so help's
+ * place is the same on every page of all three portals. They have no phone bar, so on a phone each keeps its own "?" on its
+ * title row (host `strip`, below).
+ *
  * ⚠ **A PAGE WITHOUT A HOST KEEPS DRAWING ITS OWN "?" — the fallback is the default context value,
- * not a branch anyone has to remember.** `hosted` is false everywhere the provider is not mounted
- * (the team-picker hub, notifications, the portal-level shells, and the team layout's own
- * no-auth early return), so those pages render exactly what they rendered before this existed.
+ * not a branch anyone has to remember.** The host is `own` everywhere the provider is not mounted
+ * (the free portal, a wall, the help guide), so those pages render exactly what they rendered before this existed.
  * **Never make the publisher unconditional; a page whose "?" is published to nobody has no help.**
  */
 
-type Entry = { id: string; req: HelpRequest } | null;
-type Publish = (id: string, req: HelpRequest | null) => void;
-/** Set, or clear only while the stored entry is still the caller's (see the guard note on the provider). */
-const nextEntry = (prev: Entry, id: string, req: HelpRequest | null): Entry => (req ? { id, req } : prev?.id === id ? null : prev);
-
 /**
- * The channel's ONE store (navigation Phase 4b): the published entry lives here, above the team layout, where the strip is. Two
- * contexts so the many publishers (which only need the stable `publish`) never re-render on an entry change.
- * ⚠⚠ **CLEARING IS GUARDED BY THE PUBLISHER'S OWN ID, AND THAT GUARD IS LOAD-BEARING.** Moving between two team pages unmounts one
- * `CoachPageHeader` and mounts another. React runs the outgoing cleanup before the incoming effect *in a single commit*, but
- * nothing in the framework promises that across every navigation shape — and an unguarded `publish(null)` arriving after the
- * new page has published leaves the screen with **no "?" at all**, silently, on a page that has help. Clearing only when the
- * stored entry is still MINE makes the order irrelevant.
- * ⚠ `children` ARRIVES AS A PROP FROM THE SERVER LAYOUT, so a state change here re-renders only real consumers — the two ends
- * below and the publishing header — and bails out on the page subtree. Do not "tidy" this into rendering children inline.
+ * The channel's ONE store (navigation Phase 4b): the published entry lives here, above the team layout, where the strip is. Since
+ * Phase 6b it is the shared channel (`components/help/PageHelpChannel.tsx`) — the admin's strip and phone bar read the same
+ * store, publisher and door, so the three portals cannot drift; its guard notes (the id-guarded clear, children as a prop) live there.
  */
-const StripHelpPublishContext = createContext<Publish | null>(null);
-const StripHelpEntryContext = createContext<Entry>(null);
-
 export function CoachStripHelpProvider({ children }: { children: ReactNode }) {
-  const [entry, setEntry] = useState<Entry>(null);
-  const publish = useCallback<Publish>((id, req) => setEntry(prev => nextEntry(prev, id, req)), []);
-  return (
-    <StripHelpPublishContext.Provider value={publish}>
-      <StripHelpEntryContext.Provider value={entry}>{children}</StripHelpEntryContext.Provider>
-    </StripHelpPublishContext.Provider>
-  );
+  return <PageHelpChannelProvider>{children}</PageHelpChannelProvider>;
 }
 
 /**
  * The strip's "?" — nothing until a page publishes (a screen with no help topic leaves the corner empty). `reserve` (a team's pages,
  * where the strip is split) holds the door's width while nothing is published, so the bell and the account button do not slide a
- * door's width each time a page's help arrives after hydration or a navigation crosses a page with help and one without (/review 2026-11-12).
+ * door's width each time a page's help arrives after hydration or a navigation crosses a page with help and one without (/review
+ * 2026-11-12) — and gives it back once the page has had its turn (the shared door's loading rule, owner 2026-11-12).
  */
-export function CoachStripHelp({ reserve = false }: { reserve?: boolean }) {
-  const entry = useContext(StripHelpEntryContext);
-  // ⚠ THE HELD WIDTH IS A LOADING STATE, NOT A PERMANENT GAP (owner 2026-11-12: a page with no help topic — a player's page — left a
-  // door-sized hole between the bell and the account button). The spacer stands only until the page has had its turn to publish:
-  // pages publish in an effect in the same commit as this one, so one short tick later "no entry" really means "no topic here"
-  // and the width is given back. Keyed to the address, so each new page gets its own chance and the bell still does not slide
-  // while a page's help is on its way.
-  const pathname = usePathname() ?? '';
-  const [settledFor, setSettledFor] = useState<string | null>(null);
-  useEffect(() => {
-    if (!reserve) return;
-    const t = setTimeout(() => setSettledFor(pathname), 120);
-    return () => clearTimeout(t);
-  }, [reserve, pathname]);
-  if (!entry) return reserve && settledFor !== pathname ? <span className={stripStyles.stripHelpSpacer} aria-hidden /> : null;
-  return (
-    <span className={stripStyles.stripHelp}>
-      <HelpButton iconOnly label={entry.req.label} help={entry.req} />
-    </span>
-  );
+export function CoachStripHelp({ reserve = false, holdMs }: { reserve?: boolean; holdMs?: number }) {
+  return <PageHelpDoor help={usePublishedPageHelp()} reserve={reserve} holdMs={holdMs} className={stripStyles.stripHelp} spacerClassName={stripStyles.stripHelpSpacer} />;
 }
 
-const CoachPageHelpContext = createContext<{ hosted: boolean; publish: Publish }>({ hosted: false, publish: () => {} });
+/**
+ * WHO DRAWS A PAGE'S "?":
+ * - `own` — the page header, at every width (the default: no host mounted — the free portal, a wall, the help guide).
+ * - `masthead` — the chrome, at every width: the strip above 900, the team bar at 900 and below (a team's pages).
+ * - `strip` — the strip above 900; at 900 and below the page header keeps its own (the paid portal's off-team pages —
+ *   notifications, Plan & billing, Join a club: navigation Phase 6b, T6·1, owner 2026-11-13). Those pages have no phone bar to
+ *   carry it, and the drawing drew none, so the phone stays as it was rather than inventing one.
+ */
+export type CoachHelpHost = 'own' | 'masthead' | 'strip';
+
+const CoachPageHelpContext = createContext<CoachHelpHost>('own');
 
 /**
- * The team layout's provider: it exists only to say "this page HAS a host" (`hosted` — so a header stops drawing its own "?", and the
- * phone's team bar draws the published one), and to hand `publish` down. It holds no state of its own; with no shell above it (no
- * `CoachStripHelpProvider`) it reports unhosted and every header keeps its own "?".
+ * The portal's host mark: it exists only to say "this page HAS a host" (`host` — so a header stops drawing its own "?" where the
+ * chrome draws the published one), and to hand `publish` down. It holds no state of its own; with no shell above it (no
+ * `CoachStripHelpProvider`) it reports `own` and every header keeps its own "?". Two mounts: `CoachesChrome` around the paid
+ * portal's pages (`strip`), and the team layout inside it (`masthead`, the inner one wins). Never the free portal (E13).
  */
-export function CoachPageHelpProvider({ children }: { children: ReactNode }) {
-  const publish = useContext(StripHelpPublishContext);
-  const value = useMemo(() => ({ hosted: !!publish, publish: publish ?? (() => {}) }), [publish]);
+export function CoachPageHelpProvider({ children, host = 'masthead' }: { children: ReactNode; host?: Exclude<CoachHelpHost, 'own'> }) {
+  const publish = usePageHelpPublisher();
   return (
-    <CoachPageHelpContext.Provider value={value}>
+    <CoachPageHelpContext.Provider value={publish ? host : 'own'}>
       {children}
     </CoachPageHelpContext.Provider>
   );
 }
 
 /**
- * Called by `CoachPageHeader` on every render, request or not. Returns whether a host exists — the
- * caller draws its own "?" when it does not.
+ * Called by `CoachPageHeader` on every render, request or not. Returns who draws the "?" — the caller draws its own unless
+ * the masthead does (and, with `strip`, only at 900 and below).
  *
  * ⚠ It must be called UNCONDITIONALLY, including for the `embedded` and `nested` shapes that never
  * own a "?" (they pass `null`). Both of those return early in the component, and a hook behind an
  * early return is the classic ordering crash.
  */
-export function useCoachPageHelp(help: HelpRequest | null, label?: string): boolean {
-  const { hosted, publish } = useContext(CoachPageHelpContext);
-  const id = useId();
-  // The request is rebuilt inline by every caller on every render, so depending on the object
-  // identity would republish on each one. Depend on what the drawer actually reads instead.
-  const key = help ? `${help.module}|${help.sectionIds.join(',')}|${help.subtopicId ?? ''}|${help.fullGuideHref ?? ''}|${help.label ?? ''}|${label ?? ''}` : '';
-  useEffect(() => {
-    if (!hosted || !help) return;
-    publish(id, { ...help, label: help.label ?? label });
-    return () => publish(id, null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hosted, id, key, publish]);
-  return hosted;
+export function useCoachPageHelp(help: HelpRequest | null, label?: string): CoachHelpHost {
+  const host = useContext(CoachPageHelpContext);
+  const publish = usePageHelpPublisher();
+  usePublishPageHelp(host === 'own' ? null : publish, help, label);
+  return host;
 }
 
 /**
  * The phone bar's end of the channel (F3 A, owner 2026-11-12: the "?" stays at the bar's right end, More → Help stays the
- * full guide). Renders nothing until a page publishes — a screen with no help topic leaves the corner empty rather than
- * showing a "?" that opens the drawer at nothing. `reserve` holds the door's width meanwhile (the strip's `reserve`), so the
- * bar's two lines do not re-cut when a page's help arrives after hydration.
+ * full guide). Renders nothing once a page has had its turn and published nothing — a screen with no help topic leaves the
+ * corner empty rather than showing a "?" that opens the drawer at nothing. `reserve` holds the door's width meanwhile (the
+ * strip's `reserve`), so the bar's two lines do not re-cut when a page's help arrives after hydration.
  */
 export function CoachPageHelpSlot({ reserve = false }: { reserve?: boolean } = {}) {
-  const entry = useContext(StripHelpEntryContext);
-  if (!entry) return reserve ? <span className={styles.teamHeaderHelpSpacer} aria-hidden /> : null;
-  return (
-    <span className={styles.teamHeaderHelp}>
-      <HelpButton iconOnly label={entry.req.label} help={entry.req} />
-    </span>
-  );
+  return <PageHelpDoor help={usePublishedPageHelp()} reserve={reserve} className={styles.teamHeaderHelp} spacerClassName={styles.teamHeaderHelpSpacer} />;
 }

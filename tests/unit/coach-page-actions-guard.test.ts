@@ -126,11 +126,13 @@ type Site = {
   /**
    * Who draws this page's help "?" — the settled TWO legal shapes (2026-08-25).
    * `masthead` inside the team layout (the page publishes, `CoachTeamHeader` renders);
-   * `own` outside it, where there is no host and the header renders its own fallback.
+   * `own` outside it, where there is no host and the header renders its own fallback;
+   * `strip` the paid portal's off-team pages (navigation Phase 6b, T6·1, owner 2026-11-13): the strip draws it above 900 and
+   * the header keeps its own at 900 and below (there is no phone bar off a team's pages).
    * Derived from the path and asserted against this declaration, so a page moving in or out of
    * the team layout is a decision rather than a surprise.
    */
-  helpHost: 'masthead' | 'own';
+  helpHost: 'masthead' | 'strip' | 'own';
   /** `null` = this screen has NO page-level action. 26 of 39 call sites (navigation Phase 5b, 2026-11-12). */
   actions: null | {
     /** `inline` = JSX written at the call site; otherwise the file-local name it passes. */
@@ -160,7 +162,7 @@ const SITES: Site[] = [
   {
     file: 'app/[orgSlug]/coaches/billing/page.tsx', occurrence: 0,
     screen: 'Plan & billing (the workspace, independent of its teams)',
-    variant: 'standard', helpHost: 'own', actions: null,
+    variant: 'standard', helpHost: 'strip', actions: null,
   },
   {
     // Staff access review pass 1 (2026-09-10): a coach the link API refuses (anyone but the head
@@ -169,17 +171,17 @@ const SITES: Site[] = [
     // over `CoachNotGranted`, never a header with actions.
     file: 'app/[orgSlug]/coaches/link-org/page.tsx', occurrence: 0,
     screen: 'Join a club — the "only the head coach" early return',
-    variant: 'standard', helpHost: 'own', actions: null,
+    variant: 'standard', helpHost: 'strip', actions: null,
   },
   {
     file: 'app/[orgSlug]/coaches/link-org/page.tsx', occurrence: 1,
     screen: 'Join a club — the "already part of a club" early return',
-    variant: 'standard', helpHost: 'own', actions: null,
+    variant: 'standard', helpHost: 'strip', actions: null,
   },
   {
     file: 'app/[orgSlug]/coaches/link-org/page.tsx', occurrence: 2,
     screen: 'Join a club',
-    variant: 'standard', helpHost: 'own',
+    variant: 'standard', helpHost: 'strip',
     actions: {
       from: 'inline', slot: 'action', holds: 'Refresh (re-reads the link list)',
       phoneHidden: null, phoneInTitleRow: null,
@@ -194,7 +196,7 @@ const SITES: Site[] = [
     // on the list (house rule 2's reasoning), and it took the phone's half-empty second row with it.
     file: 'components/coaches/CoachNotificationsPage.tsx', occurrence: 0,
     screen: 'Notifications (the coach "See all" feed)',
-    variant: 'standard', helpHost: 'own',
+    variant: 'standard', helpHost: 'strip',
     actions: {
       from: 'inline', slot: 'action',
       holds: 'Notification settings (the universal settings page, carrying the way back) — a bare gear beside the "?"',
@@ -882,7 +884,10 @@ describe('coach page headers — what the actions slot may hold', () => {
       // hosts the "?" (CoachPageHelpProvider is mounted there); outside it the page draws its own.
       // A COMPONENT is placed by its pages, so its host is derived from where the pages that import
       // it live — every importer must agree, or the component draws two shapes and the entry lies.
-      const hostOf = (file: string): 'masthead' | 'own' => (file.startsWith('app/[orgSlug]/coaches/teams/[teamId]/') ? 'masthead' : 'own');
+      // ⚖ Phase 6b (T6·1): the paid portal's shell hosts every page for the strip (`CoachesChrome`, host `strip`); the free
+      // portal (`app/coaches/`, E13) hosts none.
+      const hostOf = (file: string): 'masthead' | 'strip' | 'own' => (file.startsWith('app/[orgSlug]/coaches/teams/[teamId]/') ? 'masthead'
+        : file.startsWith('app/[orgSlug]/coaches/') ? 'strip' : 'own');
       const derived = listed.file.startsWith('components/')
         ? (() => {
             const name = listed.file.replace(/^.*\//, '').replace(/\.tsx$/, '');
@@ -891,6 +896,9 @@ describe('coach page headers — what the actions slot may hold', () => {
               .map(full => repoPath(full));
             assert.ok(importers.length > 0, `${listed.screen}: no coach page imports ${name}, so its help host cannot be derived`);
             const hosts = new Set(importers.map(hostOf));
+            // A component mounted by the paid portal off a team's pages AND by the free portal (the notifications feed) is one
+            // header shape: the host above it decides, and the free portal's copy is its own at every width (E13).
+            if (hosts.size === 2 && hosts.has('strip') && hosts.has('own')) hosts.delete('own');
             assert.equal(hosts.size, 1, `${listed.screen} is mounted both inside and outside the team layout (${importers.join(', ')}) — one entry cannot describe two help hosts`);
             return [...hosts][0];
           })()
@@ -1060,7 +1068,7 @@ describe('coach page headers — what the actions slot may hold', () => {
     );
     const slot = blankComments(readFileSync(HELP_SLOT_COMPONENT, 'utf8')).text;
     assert.ok(
-      slot.includes('hosted: false'),
+      slot.includes("createContext<CoachHelpHost>('own')"),
       'CoachPageHelpSlot\'s default context stopped defaulting to unhosted. The fallback is the DEFAULT ' +
       'value, not a branch anyone has to remember — that is what makes a missing provider safe.',
     );

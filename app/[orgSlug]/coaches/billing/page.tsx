@@ -17,7 +17,7 @@ export default function CoachBillingPage() {
   usePageTitle(W.page.title);
   const slug = currentOrg?.slug ?? '';
   return <div className={styles.page}>
-    <CoachPageHeader icon={CreditCard} title={W.page.title} help={{
+    <CoachPageHeader icon={CreditCard} title={W.page.title} helpLabel={W.page.title} help={{
       module: 'coaches', sectionIds: ['premium'],
       fullGuideHref: `/${slug}/coaches/help#faq-premium-plan-billing`,
     }} />

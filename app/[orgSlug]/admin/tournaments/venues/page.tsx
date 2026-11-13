@@ -22,8 +22,6 @@ import { hasCapability } from '@/lib/roles';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
-import HelpButton from '@/components/help/HelpButton';
-import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { ClubRow, ClubRowList, EmptyCard, LoadFailed, repKit } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import VenueRecord, { type RecordFacility, type RecordVenue } from '@/components/admin/tournament/VenueRecord';
@@ -47,7 +45,6 @@ const VENUES_EXPORT_COLS: ExportColumnDef[] = [
 ];
 
 /** Venues & facilities' "?" (A56): its own help sub-topic. */
-const VENUES_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['venues-contacts-rules'], subtopicId: 'venues-records' };
 
 /** A venue as the list reads it: the record's facts, each lane with its kind (the export says it). */
 type ListVenue = Omit<RecordVenue, 'facilities'> & { facilities?: Array<RecordFacility & { facilityType?: FacilityType }> };
@@ -157,7 +154,6 @@ export default function TournamentVenuesPage() {
           <>
             {addButton}
             <ExportMenu formats={['xlsx', 'csv']} onExportXLSX={handleExportXLSX} onExportCSV={handleExportCSV} disabled={venues.length === 0} />
-            <HelpButton help={VENUES_HELP} label={W.title} iconOnly />
           </>
         )}
       />

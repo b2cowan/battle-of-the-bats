@@ -31,8 +31,6 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { useTournament } from '@/lib/tournament-context';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import HelpButton from '@/components/help/HelpButton';
-import type { HelpRequest } from '@/components/help/help-drawer-context';
 import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { LoadFailed } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
@@ -63,7 +61,6 @@ type SummaryData = {
   publicHome: string | null;
 };
 
-const SUMMARY_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'closeout-summary' };
 
 export default function TournamentSummaryPage() {
   const { currentOrg } = useOrg();
@@ -116,7 +113,6 @@ export default function TournamentSummaryPage() {
   // A read for a different event than the one on screen is never shown.
   const ready = summary && summary.tournament.id === tournamentId ? summary : null;
 
-  const help = <HelpButton help={SUMMARY_HELP} label={SUMMARY_WORDS.title} iconOnly />;
   const tools = ready ? (
     <>
       <ShareAction recap={ready.recap} onCopied={() => track('share_public_results')} />
@@ -135,7 +131,7 @@ export default function TournamentSummaryPage() {
   // The demo tour's closing beat anchors on the title band (it renders in every state of this page).
   const header = (
     <div data-sandbox-tour="post-event-summary">
-      <AdminPageHeader inlineActions title={SUMMARY_WORDS.title} actions={hasSummary ? <>{tools}{help}</> : help} />
+      <AdminPageHeader inlineActions title={SUMMARY_WORDS.title} actions={hasSummary ? tools ?? undefined : undefined} />
     </div>
   );
 

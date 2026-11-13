@@ -13,9 +13,7 @@ import { useTournament } from '@/lib/tournament-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { WEB_ADDRESS_WORDS as WA } from '@/lib/web-address-words';
 import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
-import HelpButton from '@/components/help/HelpButton';
 import WebAddressWindow from '../WebAddressWindow';
-import { SETTINGS_ACCESS_HELP } from '../settings-access-help';
 import styles from '../settings-access.module.css';
 
 export default function WebAddressTab() {
@@ -28,7 +26,7 @@ export default function WebAddressTab() {
 
   return (
     <>
-      <TabPageHeader inlineActions title={WA.name} actions={<HelpButton help={SETTINGS_ACCESS_HELP} label={WA.name} iconOnly />} />
+      <TabPageHeader inlineActions title={WA.name} />
       <section className={styles.addressCard} aria-labelledby="web-address-name">
         <div className={styles.addressFacts}>
           <h2 id="web-address-name" className={styles.addressCaption}>{WA.name}</h2>

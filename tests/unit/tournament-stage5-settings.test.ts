@@ -159,6 +159,8 @@ describe('notifications and the hub (E6, F31)', () => {
     assert.match(code('app/[orgSlug]/admin/tournaments/settings/SettingsAccessDoor.tsx'), /<TabsDoor tabs=\{useTournamentSettingsTabs\(\)\}/);
     assert.match(code('components/admin/kit/club/TabsDoor.tsx'), /const first = ready \? tabs\?\.\[0\]\?\.href \?\? null : null;/);
     assert.match(code('app/[orgSlug]/admin/tournaments/settings/page.tsx'), /export default tournamentSideOnly\(SettingsAccessDoor, 'org'\);/);
-    assert.match(code('app/[orgSlug]/admin/tournaments/settings/web-address/WebAddressTab.tsx'), /<HelpButton help=\{SETTINGS_ACCESS_HELP\}/);
+    // ⚖ UPDATED IN THE OPEN (navigation Phase 6b, owner 2026-11-13): the tab's "?" is the chrome's (the strip, the phone bar), from
+    // `lib/admin-page-help.ts` — every Settings & access tab has one there (`admin-page-help.test.ts`), so the place is never half covered.
+    assert.doesNotMatch(code('app/[orgSlug]/admin/tournaments/settings/web-address/WebAddressTab.tsx'), /HelpButton/);
   });
 });

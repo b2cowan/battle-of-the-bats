@@ -18,9 +18,10 @@ const PAGE = 'app/[orgSlug]/admin/tournaments/chat/page.tsx';
 
 describe('Chat (E11)', () => {
   const page = code(PAGE);
-  it('has its title band: Chat, Manage room, the "?"', () => {
+  it('has its title band: Chat, Manage room — its "?" is the chrome\'s (navigation Phase 6b, updated in the open)', () => {
     assert.match(page, /<AdminPageHeader\s+title=\{W\.title\}/);
-    assert.match(page, /<HelpButton help=\{CHAT_HELP\}/);
+    // ⚖ The "?" left the page's row for the strip and the phone bar (owner 2026-11-13): `lib/admin-page-help.ts`'s `chat` row.
+    assert.doesNotMatch(page, /HelpButton/);
     assert.match(page, /\{W\.manage\}/);
     assert.equal(W.title, 'Chat');
   });

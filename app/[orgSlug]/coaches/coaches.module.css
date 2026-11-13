@@ -1436,6 +1436,8 @@
   margin-left: auto;
 }
 .pageHeaderHelp { flex-shrink: 0; display: inline-flex; }
+/* ⚖ An off-team page's "?" is the strip's above 900 (navigation Phase 6b, T6·1): the row keeps its copy for the phone only. */
+@media (min-width: 901px) { .pageHeaderHelp.pageHeaderHelpPhone { display: none; } }
 
 /* ⚖ ON A COMPUTER THE STRIP NAMES THE PAGE (navigation Phase 4, E6, E11, C1, C4; tab 17 — `CoachPageHeader`'s note). Above
    900 a named page's header keeps only its top row — its actions, then the "?" last (C1: a row holding the "?" alone when
@@ -16000,6 +16002,10 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
    the title row's calendar mark in every view, C13.) */
 .viewMenuPhone { display: none; }
 .schedulePhoneOnly { display: none; }
+/* ⚖ Roster's two rows are one on a computer (navigation Phase 6b, T4): the header's Add Player and Import, drawn again in the
+   list toolbar before Export, shown only above 900 — the header's own copy is the phone's and the tablet's (`actionsPhoneOnly`). */
+.rosterDeskActions { display: none; }
+@media (min-width: 901px) { .rosterDeskActions { display: contents; } }
 /* The toolbar's Export at 641–768: a 44px icon beside the worded Add Event (the 768 drawing); the words above 768. */
 .scheduleExportIcon { display: contents; }
 @media (max-width: 768px) {

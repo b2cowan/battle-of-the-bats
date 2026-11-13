@@ -21,8 +21,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import HelpButton from '@/components/help/HelpButton';
-import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { ClubRow, ClubRowList, ClubSection, LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { ReorderList, ReorderRow } from '@/components/admin/tournament/ReorderList';
@@ -40,7 +38,6 @@ import styles from './rules.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
 /** Rules & resources' "?" (A56): its own help sub-topic. */
-const RULES_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['venues-contacts-rules'], subtopicId: 'rules-records' };
 
 export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tournament; orgSlug?: string }) {
   const [rules, setRules] = useState<RuleSection[]>([]);
@@ -128,7 +125,6 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
       <AdminPageHeader
         title={W.title}
         inlineActions
-        actions={<HelpButton help={RULES_HELP} label={W.title} iconOnly />}
       />
 
       {loadError && rules.length === 0 && resources.length === 0 ? (

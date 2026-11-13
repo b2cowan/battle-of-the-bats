@@ -81,6 +81,42 @@ const repTeamsHelp: HelpPageContent = {
       ),
     },
     {
+      id: 'team-page',
+      group: 'Getting started',
+      heading: 'A team’s page',
+      summary: 'A team’s first tab: its record and doors, its coaches, what the club sees, its details and its seasons.',
+      keywords: ['team page', 'team details', 'what the club sees', 'with the club', 'record card', 'archive team', 'bring back', 'birth years', 'close the season', 'start next season', 'reopen', 'seasons list'],
+      searchText: 'a team’s page team page tab record card roster next event tryouts door cards coaches what the club sees with the club the team’s money its account in accounting reopen team details name group division colour sport description birth years saves as you go archive team bring back seasons list closed season opens its record live season close the season start next season owner admin no live season',
+      content: (
+        <>
+          <p>Open a team from <strong>Rep teams</strong> and its first tab, <strong>Team page</strong>, reads top to bottom:</p>
+          <ul>
+            <li><strong>Record</strong>, then <strong>Roster</strong>, <strong>Next event</strong> and <strong>Tryouts</strong> cards, each opening its tab. A team with no live season shows its last season&apos;s card instead.</li>
+            <li><strong>Coaches</strong> &mdash; who coaches the team; a row opens the person on the Coaches tab.</li>
+            <li><strong>What the club sees</strong> &mdash; what the club reads from the coach&apos;s team, and what stays the coach&apos;s.</li>
+            <li><strong>With the club</strong> (for someone who can open Accounting) &mdash; the team&apos;s money with the club, opening its account in Accounting.</li>
+            <li><strong>Team details</strong> &mdash; name, group, division, colour, sport, description and birth years. Each change saves as you go. <strong>Archive team</strong> is here; an archived team shows <strong>Bring back</strong>.</li>
+            <li><strong>Seasons</strong> &mdash; every season of the team. A closed one opens its record.</li>
+          </ul>
+          <p>While a season runs, the owner and the club&apos;s admins see <strong>Close the season</strong> and <strong>Start next season</strong> at the top right. With none running, the last season&apos;s card holds <strong>Start next season</strong> and a link to reopen it (see <a href="#recipe-seasons">How to start the next season</a>).</p>
+        </>
+      ),
+    },
+    {
+      id: 'team-roster-read',
+      group: 'Getting started',
+      heading: 'A team’s roster, from the club',
+      summary: 'The Roster tab is the coach’s roster, read-only, with three exports: Excel, CSV and a printable PDF.',
+      keywords: ['roster', 'team roster', 'read only roster', 'export roster', 'roster pdf', 'print roster', 'association roster'],
+      searchText: 'a team’s roster roster tab read only the coach keeps the roster the club reads it live season last closed season export excel csv number name date of birth standing printable pdf names numbers positions no contacts association accepted tryout applicant player name opens the child page families',
+      content: (
+        <>
+          <p>The <strong>Roster</strong> tab shows the team&apos;s players on its live season, or its last closed season as a record when none is live. It is read-only: the coach keeps the roster in the Coaches Portal, and an accepted tryout applicant joins it too (<a href="#recipe-accept-player-to-roster">How to accept a player</a>).</p>
+          <p><strong>Export</strong> gives Excel or CSV (number, name, date of birth and standing) or a printable PDF (names, numbers and positions, nothing private &mdash; the sheet an association asks for). None carries contact details. For anyone who can open Families, a player&apos;s name opens the child&apos;s page.</p>
+        </>
+      ),
+    },
+    {
       id: 'recipe-create-team-program-year',
       group: 'How-to recipes',
       heading: 'How to add a team and start its first season',
@@ -250,6 +286,25 @@ const repTeamsHelp: HelpPageContent = {
           ),
         },
       ],
+    },
+    {
+      id: 'assistant-coaches-page',
+      group: 'Org-level tools',
+      heading: 'Assistant coaches — every team’s staff in one list',
+      summary: 'The club’s view of every team’s staff, the switch that makes a head coach’s invitations wait for you, and Remove.',
+      keywords: ['assistant coaches', 'staff', 'require admin approval', 'approve assistant', 'awaiting your approval', 'invited awaiting acceptance', 'active staff', 'remove assistant'],
+      searchText: 'assistant coaches tab rep teams oversight across your teams head coaches invite and set their own staff assistant coaches team managers treasurers helpers your view and override require admin approval on off approve decline awaiting your approval invited awaiting acceptance revoke active staff what each can open remove',
+      content: (
+        <>
+          <p>Head coaches invite their own staff &mdash; assistant coaches, team managers, treasurers and helpers &mdash; from their team&apos;s Staff page. <strong>Rep teams &rsaquo; Assistant coaches</strong> is the club&apos;s view of all of them, and its override:</p>
+          <ul>
+            <li><strong>Require admin approval</strong> &mdash; when on, a head coach&apos;s invitation waits here until an admin approves it, before its email is sent. Off by default.</li>
+            <li><strong>Awaiting your approval</strong> &mdash; <strong>Approve</strong> or <strong>Decline</strong> each one.</li>
+            <li><strong>Invited &mdash; awaiting acceptance</strong> &mdash; invitations sent and not yet accepted; <strong>Revoke</strong> takes one back.</li>
+            <li><strong>Active staff</strong> &mdash; each person, their team and what they can open, with <strong>Remove</strong>. It asks first.</li>
+          </ul>
+        </>
+      ),
     },
     {
       id: 'recipe-assign-coach-access',
@@ -526,6 +581,19 @@ const repTeamsHelp: HelpPageContent = {
           ),
         },
       ],
+    },
+    {
+      id: 'team-history',
+      group: 'Org-level tools',
+      heading: 'A team’s history and its past seasons',
+      summary: 'A team’s History lists its closed seasons; each opens as a read-only record of that year.',
+      keywords: ['team history', 'past season', 'closed season', 'season record', 'last year'],
+      searchText: 'a team’s history closed seasons completed archived past season record read only roster schedule coaches documents record figures reopen start next season on the team page',
+      content: (
+        <>
+          <p>A team&apos;s <strong>History</strong> lists its closed seasons. Open one to read that year as a record: its roster, schedule, coaches and documents, with the season&apos;s record and figures. Nothing on it can be changed. Starting the next season, or reopening one, is done from the team&apos;s page (<a href="#recipe-seasons">How to start the next season</a>).</p>
+        </>
+      ),
     },
     {
       id: 'team-urls-past',

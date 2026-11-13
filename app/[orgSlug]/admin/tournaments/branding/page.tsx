@@ -24,8 +24,6 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
-import HelpButton from '@/components/help/HelpButton';
-import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { ClubSection, LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
 import { SwitchRow, SwitchRows } from '@/components/admin/tournament/SwitchRows';
@@ -48,7 +46,6 @@ import pageCss from './site.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
 /** Public site's "?" (A56): its own help sub-topic. */
-const SITE_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['public-site-preview'], subtopicId: 'public-site-cards' };
 
 interface BrandingSettings {
   logoUrl: string | null;
@@ -264,7 +261,7 @@ export default function TournamentBrandingPage() {
   }
 
   const header = (
-    <AdminPageHeader title={W.title} inlineActions actions={<HelpButton help={SITE_HELP} label={W.title} iconOnly />} />
+    <AdminPageHeader title={W.title} inlineActions />
   );
   // One sentence through both waits — the tournament, then its settings.
   const loadingLine = <div className={repKit.page}>{header}<LoadingState label="Loading the public site’s settings…" /></div>;

@@ -55,6 +55,7 @@ import { useAdminFlip } from '@/lib/use-admin-flip';
 import { useOrg } from '@/lib/org-context';
 import HubTabBar from '@/components/shared/HubTabBar';
 import { useAdminPlace } from './useAdminPlace';
+import { AdminPageHelpDoor } from './AdminPageHelp';
 import { useDeskTitle } from './DeskNamedPage';
 import AdminEventSwitchSheet, { ADMIN_EVENT_SHEET_ID } from './kit/AdminEventSwitchSheet';
 import styles from './kit/AdminKitEventHeader.module.css';
@@ -176,6 +177,9 @@ export default function AdminEventHeader({ suspended = false }: {
           )}
         </div>
         {!suspended && <FlipPill resolution={flip} variant="inline" className={styles.pill} />}
+        {/* ⚖ The page's "?" — the bar's LAST control, after the globe (navigation Phase 6b, T1/T3, owner 2026-11-13): the strip's
+            answer at 900 and below. Never cut or pushed off: the line's words give way first (T6·3). None on a cancelled account. */}
+        <AdminPageHelpDoor suspended={suspended} className={styles.help} spacerClassName={styles.helpSpacer} />
       </div>
       {tabbed && <HubTabBar inBar tabs={tabbed.tabs} activeId={tabbed.activeId} ariaLabel={tabbed.ariaLabel} />}
     </header>

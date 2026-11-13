@@ -161,8 +161,12 @@ describe('the boards (E2, A56)', () => {
   const page = code('app/[orgSlug]/admin/tournaments/dashboard/page.tsx');
   it('every board has its "?", each opening a help sub-topic that exists', () => {
     const help = read('lib/help-content/tournaments.tsx');
+    // ⚖ UPDATED IN THE OPEN (navigation Phase 6b): the four boards' topics moved to the chrome's table, and the page hands its
+    // board's one up (`useHandPageHelp`); `admin-page-help.test.ts` proves each sub-topic sits in its section.
+    const table = read('lib/admin-page-help.ts');
+    assert.match(page, /useHandPageHelp\(/);
     for (const id of ['launch-draft-board', 'launch-weeks-before', 'results-game-day-board', 'closeout-finished-board']) {
-      assert.match(page, new RegExp(`subtopicId: '${id}'`));
+      assert.match(table, new RegExp(`'${id}'`));
       assert.match(help, new RegExp(`id: '${id}'`), `the help content has ${id}`);
     }
   });

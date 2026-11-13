@@ -7,6 +7,7 @@ import AdminEventHeader from '@/components/admin/AdminEventHeader';
 import { AdminBarPlaceProvider } from '@/components/admin/AdminBarPlace';
 import AdminTopStrip from '@/components/admin/AdminTopStrip';
 import { DeskTitleProvider } from '@/components/admin/DeskNamedPage';
+import { PageHelpChannelProvider } from '@/components/help/PageHelpChannel';
 import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { orgBell } from '@/lib/notification-bell-scope';
@@ -171,7 +172,11 @@ export default function AdminChrome({
               the page and the place's frame inside it both sit under this one hand-off. */}
           {/* What the strip names on a computer, decided once for the strip and every page header (navigation Phase 2 Part B). */}
           <DeskTitleProvider suspended={suspended}>
-            <ClubBriefProvider seedShape={clubShape}><AdminBarPlaceProvider>{frame}</AdminBarPlaceProvider></ClubBriefProvider>
+            {/* The page's "?" (navigation Phase 6b): a page whose topic is its own state (the dashboard's board) hands it to the
+                strip and the bar through this one channel — the Coaches Portal's, shared (`PageHelpChannel`). */}
+            <PageHelpChannelProvider>
+              <ClubBriefProvider seedShape={clubShape}><AdminBarPlaceProvider>{frame}</AdminBarPlaceProvider></ClubBriefProvider>
+            </PageHelpChannelProvider>
           </DeskTitleProvider>
         </SetupWizardProvider>
       </AdminWorklistProvider>

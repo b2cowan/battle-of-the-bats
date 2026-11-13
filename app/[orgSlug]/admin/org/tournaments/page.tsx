@@ -33,8 +33,6 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature } from '@/lib/plan-features';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import HelpButton from '@/components/help/HelpButton';
-import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, LoadFailed, RowAction, repKit } from '@/components/admin/kit/club/RepKit';
 import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
@@ -49,7 +47,6 @@ import { holdsSlot } from '@/lib/tournament-slot';
 import styles from './tournaments-admin.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
-const LIST_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'closeout-two-lists' };
 
 export default function AdminTournamentsPage({
   searchParams,
@@ -159,7 +156,7 @@ export default function AdminTournamentsPage({
       <AdminPageHeader
         title={LIST_WORDS.tournaments}
         inlineActions
-        actions={<>{newButton}<HelpButton help={LIST_HELP} label={LIST_WORDS.tournaments} iconOnly /></>}
+        actions={newButton || undefined}
       />
       {finiteSlots && ready && (
         <div className={styles.slotLine}>

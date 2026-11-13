@@ -6,7 +6,7 @@ import CoachTopStrip from './CoachTopStrip';
 import CoachesSidebar from './CoachesSidebar';
 import CoachesBottomNav from './CoachesBottomNav';
 import { CoachDeskTitleProvider } from './CoachDeskTitle';
-import { CoachStripHelpProvider } from './CoachPageHelpSlot';
+import { CoachPageHelpProvider, CoachStripHelpProvider } from './CoachPageHelpSlot';
 import { HubBandContext } from '@/components/shared/HubBandSlot';
 import { coachBandAt } from '@/lib/coach-team-nav';
 import { coachTeamIdIn } from '@/lib/coach-nav-visibility';
@@ -125,7 +125,10 @@ export default function CoachesChrome({
             pin + padding-cancelling negative margins depend on. */}
         <main className={styles.coachesMain}>
           {bandOn && <div ref={setBandEl} className={styles.bandSlot} />}
-          {children}
+          {/* ⚖ Every paid page's "?" is the strip's on a computer (navigation Phase 6b, T6·1, owner 2026-11-13): the off-team pages
+              (notifications, Plan & billing, Join a club) publish to it too, keeping their own on a phone (no bar there). The team
+              layout's own host, inside this one, hands a team's pages to the team bar as well. The free portal never mounts this. */}
+          <CoachPageHelpProvider host="strip">{children}</CoachPageHelpProvider>
         </main>
       </div>
       <CoachesBottomNav />

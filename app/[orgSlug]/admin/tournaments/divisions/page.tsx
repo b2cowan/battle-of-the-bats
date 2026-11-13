@@ -20,8 +20,6 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasCapability } from '@/lib/roles';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import HelpButton from '@/components/help/HelpButton';
-import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { ClubRow, ClubRowList, EmptyCard, LoadFailed, repKit } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { DIVISION_WORDS as W, agesLine, divisionCaption, teamsFigure } from '@/lib/division-words';
@@ -32,7 +30,6 @@ import styles from './divisions.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
 /** Divisions' "?" — its own help topic (kept from before Stage 5: the only setup screen that had one). */
-const DIVISIONS_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['divisions-and-pools'] };
 
 export default function DivisionsPage() {
   const { currentTournament, isLocked } = useTournament();
@@ -111,7 +108,7 @@ export default function DivisionsPage() {
       <AdminPageHeader
         title={W.title}
         inlineActions
-        actions={<>{addButton}<HelpButton help={DIVISIONS_HELP} label={W.title} iconOnly /></>}
+        actions={addButton || undefined}
       />
 
       {!tournamentId ? null : error && groups.length === 0 ? (

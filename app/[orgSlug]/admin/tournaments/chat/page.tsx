@@ -24,8 +24,6 @@ import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { Callout, repKit } from '@/components/admin/kit/club/RepKit';
 import { TextField } from '@/components/admin/kit/club/money/MoneyKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
-import HelpButton from '@/components/help/HelpButton';
-import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { useAbsentArea } from '@/components/admin/tournament/useAbsentArea';
 import ChatPanel from '@/components/chat/ChatPanel';
 import ChatManagePanel, { type ChatMember, type ChatPending, type ChatReport } from '@/components/chat/ChatManagePanel';
@@ -37,7 +35,6 @@ import styles from './chat-admin.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
 /** Chat's "?" (A56): the tournament chat topic. */
-const CHAT_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['tournament-chat'] };
 
 type RoomSummary = {
   id: string;
@@ -324,7 +321,7 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
       <AdminPageHeader
         title={W.title}
         inlineActions
-        actions={<>{list && manageButton}<HelpButton help={CHAT_HELP} label={W.title} iconOnly /></>}
+        actions={list ? manageButton : undefined}
       />
     </div>
   );

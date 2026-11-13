@@ -817,6 +817,10 @@ export default function RosterPage({
            gone by that width. A read-only assistant has no create either, so the row drops. */
         actionsPhoneInTitleRow
         actionsPhoneHidden={!canWriteRoster}
+        /* ⚖ ONE ROW ON A COMPUTER (navigation Phase 6b, T4, owner 2026-11-13 — a fix to this page, not a rule): above 900 Add Player
+           and Import sit beside Export on the List / Depth chart row below, so this header's row is empty there and draws
+           nothing (−50px). At 900 and below (the phone and the tablet, which wear the phone's chrome) it is exactly as it was. */
+        actionsPhoneOnly
         helpLabel="Roster"
         help={rosterHelpRequest}
       />
@@ -834,7 +838,9 @@ export default function RosterPage({
           (§3.9) puts the arrangement control left with only the export pinned right. It is the
           portal's one view switch, rounded (Toolbar Rules Rule 4, census C7): `kit.toolbarView`
           inside it carries the equal-pill grid and the phone floor. */}
-      <CoachListToolbar actions={rosterExport}>
+      {/* Above 900 the header's two buttons ride this row, before Export (T4: the drawing's Add Player · Import · Export); both
+          copies render and the stylesheet shows one per width, at the chrome's split. */}
+      <CoachListToolbar actions={<><span className={styles.rosterDeskActions}>{rosterHeaderActions}</span>{rosterExport}</>}>
         <ViewSwitch views={ROSTER_VIEWS} value={view} onChange={setView} label="Roster view" />
       </CoachListToolbar>
 

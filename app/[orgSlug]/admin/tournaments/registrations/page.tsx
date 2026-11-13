@@ -1837,11 +1837,6 @@ export default function UnifiedTeamsPage() {
       <TournamentAdminHeader
         title="Teams"
         locked={isLocked}
-        help={{
-          module: 'tournaments',
-          sectionIds: ['registrations-and-teams', 'recipe-review-tournament-teams', 'assign-teams-to-pools'],
-          fullGuideHref: currentOrg ? `/${currentOrg.slug}/admin/help/tournaments#registrations-and-teams` : undefined,
-        }}
         actions={(
           <>
             {/* Registration health — the header's first action, across every division (owner 2026-10-21; the Schedule

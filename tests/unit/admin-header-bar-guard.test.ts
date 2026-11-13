@@ -140,8 +140,10 @@ describe('a club place names itself in the bar, and its tabs pin inside it', () 
     assert.ok(at('{facts.map(') < at('place?.chip &&'), 'the chip ends the small line');
     assert.ok(at('<HubTabBar inBar') > at('className={styles.pill}'), 'the tab row is under the bar’s row');
     assert.match(css, /\.header\.withTabs \{ padding-bottom: 0; \}/);
-    // The name is cut to ONE line beside its switcher; the switcher never is.
-    assert.match(css, /\.header \.titleRow \.name \{[^}]*white-space: nowrap; text-overflow: ellipsis;/);
+    // ⚖ UPDATED IN THE OPEN (navigation Phase 6b, T6·3, owner 2026-11-13): the bar's "?" took 44px of its width, so the name
+    // beside its switcher WRAPS to a second line when it must (the record bars' rule, 5b) and is cut only past two; the
+    // switcher never is. (It was cut to one line, walk §486 E.)
+    assert.match(css, /\.header \.titleRow \.name \{[^}]*-webkit-line-clamp: 2;/);
     assert.match(css, /\.switcher \{ flex: none;/);
   });
 

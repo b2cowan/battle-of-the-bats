@@ -6,6 +6,9 @@
  * the wordmark exits to Home on the left (grammar Zone 1 — platform identity lives HERE
  * now, not in the sidebar), and the person's own doors sit in the top-right corner every
  * other surface uses (Zone 3): notifications · account · the Workspaces popover.
+ * ⚖ PHASE 6b (navigation, T1, owner 2026-11-13): View site · bell · the page's "?" · account · Workspaces — the "?" left the page's
+ * top row for this strip (and the phone bar's end), as the Coaches Portal's did. It is not an exit; it opens the page's help in
+ * place. The 2026-07-31 "only leave-this-place doors" boundary was reversed for it on purpose (the Coaches Portal, 2026-11-12).
  * Desktop only (>900px) — phones keep the bottom nav + More sheet, which already carry
  * these doors.
  *
@@ -56,6 +59,7 @@ import { adminHelpHref, isTournamentEventShell } from '@/lib/admin-kit-nav';
 import { useTournament } from '@/lib/tournament-context';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { useAdminPlace } from './useAdminPlace';
+import { AdminPageHelpDoor } from './AdminPageHelp';
 import { useDeskTitle } from './DeskNamedPage';
 import styles from '@/components/coaches/CoachTopStrip.module.css';
 import own from './AdminTopStrip.module.css';
@@ -168,6 +172,10 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
             onCountChange={onNotifCountChange}
           />
         )}
+        {/* ⚖ THE PAGE'S "?" (navigation Phase 6b, T1, owner 2026-11-13): between the bell and the account button, as in the Coaches
+            Portal — help's place the same in all three portals. Drawn from the address on the first paint (no width to hold),
+            nothing where the page has no topic, never on a cancelled account's page. The demo shows it: it opens in place. */}
+        <AdminPageHelpDoor suspended={suspended} className={styles.stripHelp} spacerClassName={styles.stripHelpSpacer} />
         {/* The account door opens IN PLACE (2026-09-01, shared with the coach strip — plan
             `docs/projects/active/COACH_ACCOUNT_MENU_PLAN.md`): identity, notification
             settings, feedback, the account pages, sign out — and the Appearance choice, since

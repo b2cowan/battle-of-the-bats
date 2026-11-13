@@ -126,6 +126,20 @@ const orgHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'the-board',
+      group: 'How-to recipes',
+      heading: 'The board — who runs the club',
+      summary: 'Organization › The board lists who runs the club, by name and role, for a member who doesn’t hold Members.',
+      keywords: ['the board', 'board', 'who runs the club', 'club executive', 'who is the owner', 'who are the admins', 'names and roles'],
+      searchText: 'the board organization tab who runs the club names and roles only no email no phone read only owner admins invite people change roles members not yours registrar treasurer league admin club executive',
+      content: (
+        <>
+          <p><strong>The board</strong> is the Organization tab for a member who doesn&rsquo;t hold Members: a treasurer, a registrar, a league admin. It lists who runs the club, each person&rsquo;s name and role and nothing else &mdash; never an email or a phone number.</p>
+          <p>It is read-only. The owner and the club&rsquo;s admins invite people and change their roles, on <strong>Members</strong>. What each role opens is in <a href="#roles">Roles explained</a>.</p>
+        </>
+      ),
+    },
+    {
       id: 'recipe-invite-member',
       group: 'How-to recipes',
       heading: 'How to invite a member and choose the right role',
@@ -320,8 +334,8 @@ const orgHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'Finding your way: places in the sidebar, pages as tabs',
       summary: 'The club sidebar lists places and stays the same on every screen; each place shows its pages as tabs under its title.',
-      keywords: ['sidebar', 'navigation', 'menu', 'tabs', 'tab row', 'where is', 'where did it go', 'places', 'programs', 'club', 'also on your plan', 'team pages', 'season pages', 'roster', 'switch season', 'organization tabs', 'back', 'bookmark', 'lit row', 'help in account menu', 'where is help', 'club door', 'tournaments door', 'sidebar foot', 'events'],
-      searchText: 'finding your way around the sidebar lists places only overview calendar permits schedules programs rep teams house league tournaments also on your plan club accounting families public site organization nothing opens under a row no arrows the same rows on every screen one lit row the place you are in tab row under the title pages are tabs team page roster schedule tryouts coaches back to teams season overview registrations teams and draft schedule standings money email families back to seasons season name chevron switch season members the board audit log settings venue library pdf settings plan and billing stays at the foot of the sidebar tournaments door club door coaches portal door in the foot where is help help in the account menu under what’s new where did tournaments go where did club overview go phone tab row scrolls sideways back button bookmark lands on the same tab view site live site public site button top right globe on a phone back arrow in the header child page past season no tabs page that isn’t yours not one of your pages who opens it back to your home where did the team menu go where did the season menu go where is the organization page',
+      keywords: ['sidebar', 'navigation', 'menu', 'tabs', 'tab row', 'where is', 'where did it go', 'places', 'programs', 'club', 'also on your plan', 'team pages', 'season pages', 'roster', 'switch season', 'organization tabs', 'back', 'bookmark', 'lit row', 'help in account menu', 'where is help', 'club door', 'tournaments door', 'sidebar foot', 'events', 'question mark', 'where is the help icon', 'help for this page'],
+      searchText: 'finding your way around the sidebar lists places only overview calendar permits schedules programs rep teams house league tournaments also on your plan club accounting families public site organization nothing opens under a row no arrows the same rows on every screen one lit row the place you are in tab row under the title pages are tabs team page roster schedule tryouts coaches back to teams season overview registrations teams and draft schedule standings money email families back to seasons season name chevron switch season members the board audit log settings venue library pdf settings plan and billing stays at the foot of the sidebar tournaments door club door coaches portal door in the foot where is help help in the account menu under what’s new the question mark in the top strip between the bell and the account button opens the help for this page on a phone the last thing in the bar after the globe where is the help icon where did tournaments go where did club overview go phone tab row scrolls sideways back button bookmark lands on the same tab view site live site public site button top right globe on a phone back arrow in the header child page past season no tabs page that isn’t yours not one of your pages who opens it back to your home where did the team menu go where did the season menu go where is the organization page',
       content: (
         <>
           <p>The club sidebar lists <strong>places</strong>, and it has the same rows on every screen. One row is lit: the place you are in, however deep you go. A place&rsquo;s pages are the tabs under its title.</p>
@@ -331,10 +345,30 @@ const orgHelp: HelpPageContent = {
             <HelpDef term="A season">Open it from <strong>House league</strong>. Its tabs run from Overview to Email families. Click the arrow beside the season&rsquo;s name to switch seasons; you stay on the same tab. <strong>&larr; Seasons</strong> takes you back.</HelpDef>
             <HelpDef term="Organization">Members (or <strong>The board</strong>, if Members isn&rsquo;t yours), Audit log, Settings, Venue library and PDF settings, each a tab you can open. The club&rsquo;s permits are not here: they have their own place, <strong>Permits</strong>, in the sidebar.</HelpDef>
             <HelpDef term="The foot">The bottom of the sidebar reads, in one order: <strong>Plan &amp; billing</strong> (owner only), a thin line, then a door to each other portal you hold &mdash; <strong>Tournaments</strong> (once your club has a tournament), <strong>Coaches Portal</strong> &mdash; then <strong>Collapse sidebar</strong>. <strong>Help</strong> is not in the sidebar on a computer: it is in your <strong>account menu</strong> (the person icon, top right), right under <strong>What&rsquo;s new</strong>, and opens the help for the section you are in, in a new tab. On a phone, Help stays at the bottom of <strong>More</strong>.</HelpDef>
+            <HelpDef term="The page&rsquo;s ?">On a page that has help of its own, the <strong>?</strong> in the top strip &mdash; between the bell and your account button &mdash; opens the help for that page, beside it. On a phone it is the last thing in the bar at the top, after the globe. A page with no help of its own shows no <strong>?</strong>.</HelpDef>
           </HelpDefs>
           <p>A page for one record, such as a child&rsquo;s page or a team&rsquo;s past season, has no tabs; its back arrow (&larr; Families, &larr; Team) sits at the left of the top strip, or in the bar on a phone. Every tab has its own address, so Back and a bookmark return to the same tab.</p>
           <p><strong>View site</strong>, at the top right (a globe on a phone), opens your club&rsquo;s live site. If you follow a link to a page that isn&rsquo;t yours, the page says so, names who opens it, and offers a button back to your own home.</p>
           <HelpNote variant="info" title="On a phone">The tabs scroll sideways, with the one you&rsquo;re on in view. The bar at the bottom doesn&rsquo;t change.</HelpNote>
+        </>
+      ),
+    },
+    {
+      id: 'club-overview',
+      group: 'How-to recipes',
+      heading: 'The club’s Overview — the first page each day',
+      summary: 'Overview opens with the club today, then the counts you can act on, then your programs. You see only what is yours to open.',
+      keywords: ['overview', 'club overview', 'home', 'first page', 'the club today', 'this morning', 'your programs', 'continue setup', 'you also coach', 'dashboard'],
+      searchText: 'overview the club’s overview home page first page dashboard the club today cash on hand what is owed this week who is needed owner admin this morning counts to act on registrations to review nothing waiting one line your programs rep teams house league tournaments accounting families quiet rows also on your plan not started organization members plan and billing team capacity settings continue setup setup checklist still to do view the board you also coach a team coaches portal',
+      content: (
+        <>
+          <p><strong>Overview</strong> is the first row of the sidebar and the page you land on. It reads top to bottom:</p>
+          <ul>
+            <li><strong>The club today</strong> (the owner and the club&rsquo;s admins): one band with the club&rsquo;s cash, what is owed to it, this week, and who is needed.</li>
+            <li><strong>This morning</strong>: counts of what you can act on now, such as registrations waiting for review. A count opens its list when that list is yours to open. With nothing waiting, it is one quiet line.</li>
+            <li><strong>Your programs</strong>: the programs the club runs, in the sidebar&rsquo;s order. Each opens its place.</li>
+            <li><strong>The rows under them</strong>: what your plan carries that the club hasn&rsquo;t started; for the owner, <strong>Organization</strong> (members, plan &amp; billing with how many teams your plan holds, settings) and <strong>Continue setup</strong> while the setup checklist is unfinished; for an admin, <strong>Still to do</strong>; for anyone else, an Organization list of what is theirs to open; and <strong>You also coach…</strong> when you coach a team here.</li>
+          </ul>
         </>
       ),
     },
@@ -519,6 +553,9 @@ const orgHelp: HelpPageContent = {
       ],
     },
     {
+      // The id it had always been given from its heading and place, written down (navigation Phase 6b): Members' "?" opens
+      // here, and an id that moved whenever a section was added above it would leave that "?" opening nothing.
+      id: 'inviting-and-managing-members-11',
       heading: 'Inviting and managing members',
       keywords: ['two-step column', 'reset two-step', 'not set up', 'seat limit', 'staff seats', 'volunteers free', 'scorekeepers free', 'free plan no volunteers', 'officials free', 'do volunteers count', 'do scorekeepers count', 'invite member', 'manage member', 'resend invite', 'helping with', 'staff kit'],
       searchText: 'two-step column on off not set up amber reset two-step sign-in lost phone owners and admins only export two-step column seat limit staff seats how many seats do volunteers scorekeepers count toward limit officials free seats free tournament 3 seats upgrade invite member manage role restrict tournaments helping with change a volunteer job resend pending invite export member list staff kit volunteer links qr codes',

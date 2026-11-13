@@ -31,8 +31,6 @@ import { Callout, ClubRow, ClubRowList, RepChip, SavePill } from '@/components/a
 import DateInput from '@/components/shared/DateInput';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { SwitchFixedRow, SwitchRow, SwitchRows } from '@/components/admin/tournament/SwitchRows';
-import HelpButton from '@/components/help/HelpButton';
-import type { HelpRequest } from '@/components/help/help-drawer-context';
 import RecordFromList from '@/components/admin/tournament/RecordFromList';
 import { useTournamentLists } from '@/components/admin/tournament/useTournamentLists';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -65,7 +63,6 @@ import FeeFilingSetting from './FeeFilingSetting';
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 /** Event settings' "?" (A56): its own help sub-topic. */
-const EVENT_SETTINGS_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['settings-and-access'], subtopicId: 'event-settings-cards' };
 
 type DivisionFee = { id: string; name: string; totalFeeAmount: number | null; depositAmount: number | null };
 
@@ -924,7 +921,6 @@ export default function TournamentEventSettingsPage() {
       <AdminPageHeader
         inlineActions
         title={W.title}
-        actions={<HelpButton help={EVENT_SETTINGS_HELP} label={W.title} iconOnly />}
       />
 
       <div className={es.cards}>

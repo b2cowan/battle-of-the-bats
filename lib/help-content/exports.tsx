@@ -260,6 +260,26 @@ const exportsHelp: HelpPageContent = {
       ),
     },
 
+    // ── PDF settings (the Organization tab; Settings & access on the tournament plans) ──
+    {
+      id: 'pdf-settings',
+      heading: 'PDF settings — how your organization’s PDFs look',
+      summary: 'One page sets the header, logo, footer, look, privacy defaults and file name of every PDF your organization prints.',
+      keywords: ['pdf settings', 'pdf header', 'pdf logo', 'pdf footer', 'accent colour', 'orientation', 'density', 'privacy defaults', 'guardian contacts', 'filename pattern', 'report look', 'save settings', 'preview pdf', 'page numbers', 'generated date'],
+      searchText: 'pdf settings organization settings and access header organization name second line logo from public site prints on its own footer generated date page numbers appearance accent colour default orientation landscape portrait report density compact readable privacy defaults include guardian contacts include player notes include internal admin notes override per export filename pattern for reference preview pdf save settings limited customization free tournament plan fieldlogichq branding',
+      content: (
+        <>
+          <p><strong>PDF settings</strong> (Organization &rsaquo; PDF settings; on the tournament plans, Settings &amp; access &rsaquo; PDF settings) decides how every PDF your organization prints looks:</p>
+          <ul>
+            <li><strong>Header</strong>, <strong>Logo</strong> and <strong>Footer</strong> &mdash; your organization&apos;s name and a second line; the logo you set for your Public site, which prints on its own; and the line at the foot of each page (the date it was made, page numbers).</li>
+            <li><strong>Appearance</strong> &mdash; the accent colour, the default orientation, and how dense a report reads (Compact for long lists, Readable for board reports).</li>
+            <li><strong>Privacy defaults</strong> &mdash; whether guardian contacts, player notes and internal admin notes are included. You can change them for one export from its menu.</li>
+            <li><strong>Filename pattern</strong> &mdash; shows how a downloaded file is named (organization, report, team or scope, date). It is for reference; you can&apos;t change it.</li>
+          </ul>
+          <p>Press <strong>Preview PDF</strong> to see a sample, and <strong>Save settings</strong> to keep your changes &mdash; this page does not save as you go. On the free Tournament plan the header, footer and privacy settings are yours to set, and FieldLogicHQ&apos;s branding always shows.</p>
+        </>
+      ),
+    },
     // ── Section 5: Calendar import instructions ──────────────────────────────
     {
       id: 'calendar-import',

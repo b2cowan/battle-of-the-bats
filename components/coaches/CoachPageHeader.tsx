@@ -212,7 +212,8 @@ export default function CoachPageHeader({
   /* ⚠ UNCONDITIONAL, and above every early return. The `embedded` and `nested` shapes own no "?"
      (nested is one line under a header that already carries this screen's), so they publish null —
      but a hook behind the `embedded` early return below is the classic ordering crash. */
-  const helpHosted = useCoachPageHelp(help && !nested && variant !== 'embedded' ? help : null, helpLabel);
+  const helpHost = useCoachPageHelp(help && !nested && variant !== 'embedded' ? help : null, helpLabel);
+  const helpHosted = helpHost === 'masthead';
   const { title: desk } = useCoachDeskTitle();
   // The chrome's two slots one level down — each answers only at the widths its bar shows (the split at 900 lives with the chrome),
   // hooks above the early return.
@@ -232,8 +233,11 @@ export default function CoachPageHeader({
   // ⚖ Hosted, the "?" is NOT this row's at any width (navigation Phase 4b, owner 2026-11-12): the team bar draws it on a phone, the
   // strip above 900. So a hosted "?" alone no longer keeps a row; an unhosted page (outside the team layout) still draws its own.
   const helpOnRow = showHelp && !helpHosted;
-  // Whether the computer's top row has any content: buttons the page shows above 900, or an unhosted "?".
-  const deskRowHas = (!!actions && !actionsPhoneOnly) || helpOnRow;
+  // ⚖ An off-team page's "?" is the strip's above 900 and the row's at 900 and below (host `strip`, navigation Phase 6b, T6·1):
+  // the row's copy is hidden above 900 (CSS at the chrome's split, so the server's first paint is already right).
+  const helpPhoneOnly = helpOnRow && helpHost === 'strip';
+  // Whether the computer's top row has any content: buttons the page shows above 900, or a "?" the strip does not draw.
+  const deskRowHas = (!!actions && !actionsPhoneOnly) || (showHelp && helpHost === 'own');
   // ⚖ ON A PHONE THE BAR NAMES THE PAGE TOO (navigation Phase 5, E8, owner 2026-11-12), so a named page's header keeps only its
   // buttons there as well — the ones each width shows. At 900 and below every action shows (`actionsPhoneOnly` buttons are
   // the phone's); `actionsPhoneHidden` drops them only at 640 and below (`.pageHeaderActionsWideOnly`), so a tablet keeps
@@ -310,9 +314,10 @@ export default function CoachPageHeader({
           line under a header that already carries this screen's "?", and two of them would be two
           doors to the same drawer.
           Hosted (inside the team layout, the 2026-08-25 move), the team bar draws the "?" on a phone and the STRIP above 900
-          (owner 2026-11-12, navigation Phase 4b), so this copy hides at every width. Unhosted, it is the row's, last. One "?" per width. */}
+          (owner 2026-11-12, navigation Phase 4b), so this copy hides at every width. Unhosted, it is the row's, last. Off a team's
+          pages (Phase 6b, T6·1) the strip draws it above 900 and this copy is the phone's. One "?" per width. */}
       {helpOnRow && (
-        <span className={styles.pageHeaderHelp}>
+        <span className={`${styles.pageHeaderHelp}${helpPhoneOnly ? ` ${styles.pageHeaderHelpPhone}` : ''}`}>
           <HelpButton iconOnly label={helpLabel} help={help} />
         </span>
       )}

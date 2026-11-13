@@ -132,10 +132,12 @@
 .back:active, .back:focus-visible { color: var(--text-primary); background: var(--home-olive-soft); }
 .backRule { width: 1px; height: 22px; flex: none; background: var(--home-line-strong); }
 
-/* The name beside its switcher: the name is cut to ONE line with "…" (walk §486 E) and gives way first; the switcher
-   never does. The switcher's 44px square overhangs the name's line, so the line does not grow (the drawing's `.tr .chev`). */
+/* The name beside its switcher gives way first; the switcher never does. The switcher's 44px square overhangs the name's
+   line, so the line does not grow (the drawing's `.tr .chev`). ⚖ THE NAME WRAPS TO A SECOND LINE WHEN IT MUST (navigation
+   Phase 6b, T6·3, owner 2026-11-13 — the record bars' rule, 5b): the bar's "?" took 44px of its width, and a season's name is
+   one a person typed, so it is cut with "…" only past two lines (it was one line, walk §486 E, before the "?" came). */
 .titleRow { display: flex; align-items: center; gap: 0.25rem; min-width: 0; }
-.header .titleRow .name { display: block; flex: 0 1 auto; white-space: nowrap; text-overflow: ellipsis; }
+.header .titleRow .name { flex: 0 1 auto; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
 .switcher { flex: none; display: inline-flex; margin-block: -12px; }
 
 /* The place's status chip, last on the small line: snug to the words' line like the tournament's (`.meta .chip`). */
@@ -168,6 +170,12 @@
 @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
 
 .pill { flex-shrink: 0; }
+/* ⚖ THE PAGE'S "?", THE BAR'S LAST CONTROL (navigation Phase 6b, T1/T3/T6·3, owner 2026-11-13): never cut or pushed off — the
+   line's words give way before it (`.meta`'s words ellipsize; the chip and the chevron stay whole). The shared door's bare glyph
+   (`HelpButton iconOnly`); the row's gap is not repeated between it and the globe, so it costs the line exactly its own 44px
+   (the drawing: the event door 302 → 258 at 390). */
+.help { flex: none; display: inline-flex; }
+.helpSpacer { flex: none; width: var(--tap-min, 44px); }
 
 /* On a touch screen the bar's doors are a thumb's targets (G1, measured 2026-09-29): the ⇄ pill takes the 44px square it
    is drawn as, overhanging the bar by 4px top and bottom so the bar stays at the portal's height (the drawing's
@@ -177,6 +185,8 @@
   .row { min-height: 36px; }
   .pill :is(a, button) { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); justify-content: center; }
   .pill { margin-block: -4px; }
+  .help { margin-block: -4px; margin-left: -0.75rem; }
+  .help button { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
   /* A place's way up is the arrow alone, a 44px square overhanging the bar like the pill (the drawing's `.back.sq`);
      its name stays the link's spoken label. */
   .back { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); justify-content: center; padding: 0; margin-block: -4px; }

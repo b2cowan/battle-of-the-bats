@@ -1346,12 +1346,6 @@ export default function AdminSchedulePage() {
       <TournamentAdminHeader
         title={W.title}
         locked={isLocked}
-        help={{
-          module: 'tournaments',
-          sectionIds: ['recipe-build-tournament-schedule', 'schedule-playoffs'],
-          label: 'Schedule',
-          fullGuideHref: currentOrg ? `/${currentOrg.slug}/admin/help/tournaments#recipe-build-tournament-schedule` : undefined,
-        }}
         actions={(
           <>
             {/* Schedule health — the header's first action, across every division (owner 2026-10-19, A1). The demo

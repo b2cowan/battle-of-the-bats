@@ -127,6 +127,12 @@ function useFactsGiveWay(placeRef: RefObject<HTMLDivElement | null>, on: boolean
   }, [placeRef, on]);
 }
 
+/** The paid portal's off-team pages that publish a help topic (navigation Phase 6b, T6·1): their strip holds the "?"'s width.
+ *  `admin-page-help.test.ts` keeps this list equal to the pages that publish one. They draw their header only once their data
+ *  has loaded (Join a club shows "Loading…" first), so the width is held until the topic lands, up to a few seconds. */
+const OFF_TEAM_HELP_PAGES = /\/coaches\/(notifications|billing|link-org)\/?$/;
+const OFF_TEAM_HOLD_MS = 4000;
+
 export default function CoachTopStrip({ wall = false, free = false, facts = null }: {
   /** True on the portal's WALLS (billing-suspended, not-assigned): a wall keeps only the
    *  identity + exit doors it always had. Portal FUNCTION stays off — the bell (a working
@@ -154,6 +160,7 @@ export default function CoachTopStrip({ wall = false, free = false, facts = null
   // 2026-09-03 this was the one strip door that ejected a coach with no way back (coach-notifications
   // review A3/D2): the mechanism existed three rows away and this link simply never used it.
   const pathname = usePathname() ?? '';
+  const offTeamHelp = OFF_TEAM_HELP_PAGES.test(pathname);
   const back = encodeURIComponent(pathname);
   // ⚖ SPLIT ON THE SIDEBAR'S EDGE ON A TEAM'S PAGES ONLY (navigation Phase 4, E6/E7/E9): over the 240 sidebar the wordmark and
   // "Coach" (the short word for the sidebar-width cell; "Coaches Portal" stays on every other surface), over the page its
@@ -179,8 +186,11 @@ export default function CoachTopStrip({ wall = false, free = false, facts = null
           />
         )}
         {/* ⚖ THE PAGE'S "?" (owner 2026-11-12, navigation Phase 4b — reverses the 2026-07-31 boundary on purpose): beside the bell, in
-            the strip's own door size, drawn only once a page has published a help topic. Not on a wall or the free portal (no host). */}
-        {!wall && !free && <CoachStripHelp reserve={split} />}
+            the strip's own door size, drawn only once a page has published a help topic — a team's pages and, since Phase 6b (T6·1,
+            owner 2026-11-13), the off-team pages too (notifications, Plan & billing, Join a club). Not on a wall or the free portal
+            (no host). The width is held where a topic is coming — a team's pages (`split`) and those three, known from the address —
+            so the bell does not slide when the page's help lands after the first paint. */}
+        {!wall && !free && <CoachStripHelp reserve={split || offTeamHelp} holdMs={offTeamHelp ? OFF_TEAM_HOLD_MS : undefined} />}
         {!inSandbox && (
           <AccountMenu
             warm

@@ -494,12 +494,6 @@ export default function AdminResultsPage() {
     <div className={`${s.page} ${s.pageWide}`}>
       <TournamentAdminHeader
         title="Results & scoring"
-        help={{
-          module: 'tournaments',
-          sectionIds: ['scores-and-results', 'recipe-finalize-tournament-scores'],
-          label: 'Results',
-          fullGuideHref: currentOrg ? `/${currentOrg.slug}/admin/help/tournaments#scores-and-results` : undefined,
-        }}
         actions={(
           <>
             <ExportMenu
