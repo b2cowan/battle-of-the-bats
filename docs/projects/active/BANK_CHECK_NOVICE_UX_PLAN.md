@@ -134,7 +134,10 @@ default library.
 ### S4 — The printed check names its method
 One method line above the items on both portals' printed checks (row 15, D6).
 - **Depends on:** nothing; any time after S1. **`/accounting` review** (it changes what the product prints about money).
-  **Asks:** A6. **Risk:** low.
+  **Asks:** A6. **Risk:** low. **Build prompt written 2026-11-13:** `BANK_CHECK_NOVICE_UX_S4_BUILD_PROMPT.md` (three calls to
+  settle first: the ruled sentence omits online payments and cash; the title and "Bank balance on the statement" still say
+  "statement" and D6's after-frame keeps them; the coach's paper says "books" where the coach's screen says "Ledger").
+  **Built 2026-11-13** (§4); owner walk §523 owed; commit on the owner's yes.
 
 ### S5 — The phone's second Save (parked, A9 Not yet)
 After S3, measure Save's distance on a phone with Find open. If it is within a screen once the list waits behind "Show
@@ -313,3 +316,29 @@ sentence; the walked working-draft cards change shape and their walks are redone
   yes (four small word additions, `/marketing`), F link (club phone rows become a quiet link like the coach's), D later, E stay,
   G leave, I no (S5 stays parked).
 - 2026-11-13 — **Calls A, B, C, H, F built 2026-11-13.** Words: the fee/interest foot line now reads "…Use the date the bank posted it. If both a fee and interest posted, record them as two lines."; the repeat line adds "If you recorded it then, this may be a new charge."; the folded sentence reads "to mark any that the bank hasn’t received yet." Club phone cards: the quiet link on every row the callout does not name (the named row keeps the bordered button), as the coach’s do. Both help articles updated to match (body + search text). Used the owner-approved sentences verbatim, so no separate `/marketing` pass was run. Bank/help tests 190 + 19 pass, lint and spelling clean; `verify:changed` fails only on another session’s files (workspace-flip guard). Owner browser look owed: club Bank tab at 390 px.
+- 2026-11-13 — **S4 built (the printed check names its method), both portals; commit on the owner's yes.** Calls settled with
+  the owner first (all as recommended, after `/accounting` + `/marketing`): (1) the method line WIDENED from row 15's "cheques
+  it hasn't cashed come off, deposits it hasn't received go on" to **"Worked from the bank’s balance: money it hasn’t paid out
+  yet comes off, money it hasn’t received yet goes on."** — a waiting line can be any line (e-transfer, bill payment), and the
+  page also adds online payments on their way and cash, which the ruled words left unexplained; (2) "statement" goes from the
+  paper (a difference from D6's after-frame, ruled): title **"{account} · The check for {date}"** (the screen's `savedTitle`
+  words), first row **"Bank balance on {date}"** (= `bandBankCaption`); (3) the coach's paper says **Ledger** in all four places
+  ("What your Ledger should say", "Your Ledger on {date}", the result notes "…than your Ledger" — before this the coach paper
+  reused the club's "than your books" while the coach screen said Ledger — and "Your Ledger now says $X"), and the coach's
+  screen takes "Your Ledger now says $X" too (list chip + opened check); the club keeps "books"; (4) the club's starting-point
+  note stays under the books row. Placement as D6: the line is the body's first thing, above "Bank balance on…", 12 px in the
+  notes' ink (`/design`: ship as drawn; took its `break-after: avoid` so the line can't strand at a sheet's foot). Not built
+  from `/accounting`: renaming the items' "Amount" heading (walk call B, recommend keep); flagging stale cheques (~6 months) and
+  checking that online payments on their way are net of Stripe's fee — later ideas, outside the print. Leftover "statement"
+  words in the club's start flow (`setupLead`, `afterStart`, `deleteStartAsk`, `deletedStart`, `added`) and in both help
+  articles' "Books now say" bullet ("on or before the statement") are a real statement or a later A1b sweep, not S4.
+  **Measured** (Letter, the browser's own print-to-PDF): the line costs 24 px ≈ one item row (27 px); a club check with a long
+  account name fits **11** lines not in the bank yet on one sheet (was 12), the coach's **15** (was 16); a longer list already
+  flows to sheet two by the BC9a/BC8b rule (walk call A, recommend accept; the signing space is the only room big enough to win
+  it back). Pins: describe 13 (club: the words, no "statement", the line first in the body before the one sum table in BOTH
+  reports, one use each, the bank row dated) and describe 8 (coach: the Ledger rows, the coach result notes, no club books word on
+  the team's paper, `coachBooksNowSay` on paper, window and list). Bank + help tests 668/668, typecheck, lint, spelling clean.
+  Help: club `bank-tab-print` and coach `premium-money-bank-print` say the title, the method line and why a cheque is a minus on
+  paper and a plus on screen; coach "Books now say" bullet → "Your Ledger now says"; keywords/searchText follow. **Owner walk
+  §523:** https://claude.ai/artifact/AMfeuhHejpjsEg9JRSni7e (4 walks, 15 steps, 2 calls; nothing saves), fixture
+  `.probe/bank-ux-s4/owner/` (setup + teardown), torn down after he reports.

@@ -331,9 +331,16 @@ export const BANK_WORDS = {
   printCheck: 'Print this check',
   // One name for the saved thing (S1 `/marketing`): "Balance check", as the coach's View option says it.
   reportEyebrow: (club: string) => `${club} · Balance check`,
-  reportTitle: (account: string, date: string) => `${account} · statement ending ${date}`,
+  // S4 (A1b's last place; owner 2026-11-13, a difference from drawing D6): no "statement", which no screen says any more (a
+  // volunteer types any day's balance). The title is the saved check's own name on the screen (`savedTitle`), and the bank's
+  // row is the band's caption (`bandBankCaption`), pairing with "Your books on {date}" two rows down.
+  reportTitle: (account: string, date: string) => `${account} · The check for ${date}`,
   reportBooks: (names: readonly string[]) => `Books in this account: ${names.join(' · ')}`,
-  reportBank: 'Bank balance on the statement',
+  // S4 (A6, Words row 15; owner 2026-11-13 widened the ruled "cheques it hasn't cashed come off, deposits it hasn't received
+  // go on", `/marketing` + `/accounting`): a waiting line can be any line (an e-transfer, a bill), and the page also adds
+  // online payments on their way and cash. One quiet line over the sum, both portals; it never refers to the screen.
+  reportMethod: 'Worked from the bank’s balance: money it hasn’t paid out yet comes off, money it hasn’t received yet goes on.',
+  reportBank: (date: string) => `Bank balance on ${date}`,
   reportWaitingHead: 'Not in the bank yet',
   reportWaitingCol: { date: 'Date', what: 'What', amount: 'Amount' },
   reportOnItsWay: 'Online payments on their way',
@@ -438,4 +445,8 @@ export const BANK_WORDS = {
   // / role / start line" 2026-11-07). The eyebrow, title, sum and sign-off words are the club's settled report words above.
   coachReportFoot: (date: string, team: string) => `Printed ${date} from FieldLogicHQ${team ? ` · ${team}` : ''} · Money → Ledger → Balance check`,
   coachReportEyebrowBare: 'Balance check',
+  // S4 (owner 2026-11-13, `/marketing`): the team's paper names the books as the coach's screen does, "your Ledger" (its
+  // books row is `coachSumBooks`, its result notes `coachBandBankMore`/`Less`), and so does "Books now say", on the screen too.
+  coachReportShould: 'What your Ledger should say',
+  coachBooksNowSay: (amount: string) => `Your Ledger now says ${amount}`,
 } as const;

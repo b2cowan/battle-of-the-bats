@@ -1,9 +1,15 @@
 /* ── THE TEAM'S PRINTED BANK CHECK (CoachBankReport.tsx, BC8b, R0 tab 9): what sits inside the shipped PrintedPage frame.
    Paper's inks, fixed whatever the coach's theme (PrintedPage's own rule) — the literals below are deliberate. The club's
    sheet (BankReport.module.css) is its own portal's and is not imported (plan §0 "Coach sharing"). ── */
-/* No "Books in this account" line under the title (a team's books ARE its Ledger): the sum keeps the frame's own gap. */
+/* S4 (A6, drawing D6): the method line over the sum — a quiet note, not a heading; the notes' ink, a size up. No "Books in
+   this account" line under the title (a team's books ARE its Ledger), so the line takes the frame's own gap. */
+.method {
+  margin: 24px 0 6px;
+  font-size: 12px;
+  color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */
+  break-after: avoid; /* /design S4: never left alone at a sheet's foot, away from the sum it explains */
+}
 .sums {
-  margin-top: 24px;
   width: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;

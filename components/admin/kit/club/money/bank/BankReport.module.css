@@ -1,5 +1,14 @@
 /* ── THE PRINTED BANK CHECK (BankCheckReport.tsx, BC5b, R0 tab 9): what sits inside the shipped PrintedPage frame. Paper's
    inks, fixed whatever the admin's theme (PrintedPage's own rule) — the literals below are deliberate. ── */
+/* S4 (A6, drawing D6): the method line over the sum — a quiet note, not a heading; the notes' ink, a size up. Under the
+   books list it takes the frame's gap; with no books list it keeps the same gap below the title. */
+.method {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */
+  break-after: avoid; /* /design S4: never left alone at a sheet's foot, away from the sum it explains */
+}
+h1 + .method { margin-top: 24px; }
 .sums {
   width: 100%;
   border-collapse: collapse;

@@ -6,9 +6,10 @@
  * (`BankCheckWindow`), whose "Print this check" calls `window.print()`.
  *
  *   {club} · Bank check                                   the eyebrow
- *   {account} · statement ending {date}                   the title
+ *   {account} · The check for {date}                      the title (S4: the screen's name for it, no "statement")
  *   Books in this account: General · House league …       the check's OWN saved books, by name
- *   Bank balance on the statement ............ $X         BANK FIRST, as the association's monthly form runs
+ *   Worked from the bank's balance: …                      S4 (A6): the method line, one quiet sentence
+ *   Bank balance on {date} ................... $X         BANK FIRST, as the association's monthly form runs
  *   Not in the bank yet: Date | What | Amount              each item moving the bank its own line's way
  *   Online payments on their way ............. + $Y        or "not counted"
  *   What your books should say ............... $T         the rule-off
@@ -51,11 +52,13 @@ export default function BankCheckReport({ view, check }: { view: AccountView; ch
       dates={check.bookNames.length > 0 ? W.reportBooks(check.bookNames) : null}
       foot={<span>{W.reportFoot(dayYear(tournamentToday()), club)}</span>}
     >
+      {/* S4 (A6, drawing D6): how the page is worked out, so a sign the screen shows the other way reads as the method. */}
+      <p className={r.method}>{W.reportMethod}</p>
       <table className={r.sums}>
         <tbody>
           {terms.map(t => {
             switch (t.kind) {
-              case 'base': return <SumRow key={t.key} label={W.reportBank} amount={cents(t.cents)} />;
+              case 'base': return <SumRow key={t.key} label={W.reportBank(when)} amount={cents(t.cents)} />;
               case 'onItsWay': return t.cents === null
                 ? <SumRow key={t.key} label={W.reportOnItsWay} amount={W.notCounted} note={W.savedNotCountedNote} />
                 : <SumRow key={t.key} label={W.reportOnItsWay} amount={moved(t.cents)} />;

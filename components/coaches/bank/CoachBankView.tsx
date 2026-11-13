@@ -214,7 +214,7 @@ function Result({ c }: { c: TeamCheck }) {
       {c.figure.result === 'matches'
         ? <span>{waiting ? W.matchesWaiting(waiting) : W.matches}</span>
         : <CoachChip tone="warn">{W.offBy(cents(c.figure.offByCents))}</CoachChip>}
-      {c.booksNowSayCents !== null && <CoachChip tone="warn">{W.booksNowSay(cents(c.booksNowSayCents))}</CoachChip>}
+      {c.booksNowSayCents !== null && <CoachChip tone="warn">{W.coachBooksNowSay(cents(c.booksNowSayCents))}</CoachChip>}
     </span>
   );
 }

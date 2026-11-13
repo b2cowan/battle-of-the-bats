@@ -7,16 +7,17 @@
  * check" calls `window.print()`.
  *
  *   {team} · Bank check                                   the eyebrow
- *   Team bank account · statement ending {date}           the title (a team has one account, its books ARE the Ledger:
- *                                                         no "Books in this account")
- *   Bank balance on the statement ............ $X         BANK FIRST, as the association's monthly form runs
+ *   Team bank account · The check for {date}              the title (a team has one account, its books ARE the Ledger:
+ *                                                         no "Books in this account"; S4: no "statement")
+ *   Worked from the bank's balance: …                      S4 (A6): the club's method line, word for word
+ *   Bank balance on {date} ................... $X         BANK FIRST, as the association's monthly form runs
  *   Not in the bank yet: Date | What | Amount              each item moving the bank its own line's way
  *   Cash not deposited yet ................... + $C        when there is any
- *   What your books should say ............... $T         the rule-off
- *   Your books on {date} ..................... $B         no starting-point line (owner: a team has no starting statement)
- *   Result ................................... Matches | Off by $X, and the direction in words
+ *   What your Ledger should say .............. $T         the rule-off (S4: the coach's screen word, "Ledger")
+ *   Your Ledger on {date} .................... $B         no starting-point line (owner: a team has no starting statement)
+ *   Result ................................... Matches | Off by $X, and the direction in words (than your Ledger)
  *   Checked by {name} ({role}), {date} at {time}           the role is the team's staff word today; the clock `formatTime`
- *   Books now say $X. {why}                                 when it applies, as the window says it
+ *   Your Ledger now says $X. {why}                          when it applies, as the window says it
  *   Prepared by · Date        Reviewed by · Date            the two signature lines (owner: kept for the team)
  *   Printed {date} from FieldLogicHQ · {team} · Money → Ledger → Bank
  *
@@ -58,11 +59,13 @@ export default function CoachBankReport({ teamName, accountName, check }: {
       title={W.reportTitle(accountName, when)}
       foot={<span>{W.coachReportFoot(dayYear(tournamentToday()), teamName)}</span>}
     >
+      {/* S4 (A6, drawing D6): the club's method line, word for word. */}
+      <p className={r.method}>{W.reportMethod}</p>
       <table className={r.sums}>
         <tbody>
           {terms.map(t => {
             switch (t.kind) {
-              case 'base': return <SumRow key={t.key} label={W.reportBank} amount={cents(t.cents)} />;
+              case 'base': return <SumRow key={t.key} label={W.reportBank(when)} amount={cents(t.cents)} />;
               case 'cash': return <SumRow key={t.key} label={W.savedCash} amount={moved(t.cents)} />;
               // The engine lists the items straight after the bank: one table, where the first of them stands.
               case 'waiting': return t === items[0] ? <ItemsRow key="waiting" items={items} /> : null;
@@ -70,15 +73,16 @@ export default function CoachBankReport({ teamName, accountName, check }: {
               default: return null;
             }
           })}
-          <SumRow label={W.reportShould} amount={cents(totalCents)} total />
-          <SumRow label={W.reportBooksOn(when)} amount={cents(check.booksCents)} />
+          {/* S4: the team's books are "your Ledger", as the coach's screen says them. */}
+          <SumRow label={W.coachReportShould} amount={cents(totalCents)} total />
+          <SumRow label={W.coachSumBooks(when)} amount={cents(check.booksCents)} />
           <SumRow label={W.reportResult} amount={f.result === 'matches' ? W.matches : W.offBy(off)} result
-            note={f.direction === 'bank_more' ? W.bandBankMore(off) : f.direction === 'bank_less' ? W.bandBankLess(off) : undefined} />
+            note={f.direction === 'bank_more' ? W.coachBandBankMore(off) : f.direction === 'bank_less' ? W.coachBandBankLess(off) : undefined} />
         </tbody>
       </table>
       <p className={r.line}>{W.reportCheckedBy(check.checkedBy, check.checkedByRole, dayYear(at.date), formatTime(at.time))}</p>
       {check.booksNowSayCents !== null && (
-        <p className={r.line}><b>{W.booksNowSay(cents(check.booksNowSayCents))}.</b> {W.booksNowSayWhy(when)}</p>
+        <p className={r.line}><b>{W.coachBooksNowSay(cents(check.booksNowSayCents))}.</b> {W.booksNowSayWhy(when)}</p>
       )}
       <div className={r.signs}>
         {[W.reportPrepared, W.reportReviewed].map(who => (

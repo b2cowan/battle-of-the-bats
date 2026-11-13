@@ -116,7 +116,7 @@ export default function CoachBankWindow({ orgSlug, teamId, accountName, check, c
         <div className={`${b.sumRow} ${b.sumTotal}`}><span>{W.savedShouldTotal}</span><span className={b.sumAmt}>{cents(totalCents)}</span></div>
       </div>
       {check.booksNowSayCents !== null && (
-        <p className={b.savedNote}><b>{W.booksNowSay(cents(check.booksNowSayCents))}.</b> {W.booksNowSayWhy(when)}</p>
+        <p className={b.savedNote}><b>{W.coachBooksNowSay(cents(check.booksNowSayCents))}.</b> {W.booksNowSayWhy(when)}</p>
       )}
       <p className={b.savedNote}>{W.checkedOn(check.checkedBy, dayYear(at.date), formatTime(at.time))}</p>
       {/* Hidden on screen; only the paper (portalled onto <body>, as the club's is mounted with its window). */}

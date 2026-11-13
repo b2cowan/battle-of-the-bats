@@ -260,6 +260,21 @@ describe('8 · the team\'s printed check (BC8b: K8, R0 tab 9, the club\'s report
   it('⚠ BC5b\'s trap: printed th/td are put back to paper ink, whatever the coach\'s theme', () => {
     assert.match(css, /\.sums th, \.sums td \{[^}]*color: #1F1B14;[^}]*background: transparent;/);
   });
+  it('S4 (owner 2026-11-13): the club\'s method line; the team\'s books are "your Ledger" on paper as on the screen', () => {
+    assert.match(rep, /<p className=\{r\.method\}>\{W\.reportMethod\}<\/p>/);
+    assert.match(css, /\.method \{[^}]*font-size: 12px;[^}]*color: #5A5348;/);
+    assert.match(rep, /<SumRow label=\{W\.coachReportShould\} amount=\{cents\(totalCents\)\} total \/>/);
+    assert.match(rep, /<SumRow label=\{W\.coachSumBooks\(when\)\} amount=\{cents\(check\.booksCents\)\} \/>/);
+    assert.match(rep, /W\.coachBandBankMore\(off\) : f\.direction === 'bank_less' \? W\.coachBandBankLess\(off\)/);
+    assert.doesNotMatch(rep, /W\.reportShould\b|W\.reportBooksOn|W\.bandBankMore|W\.bandBankLess|W\.booksNowSay\(/, 'no club "books" word on the team\'s paper');
+    assert.equal(BANK_WORDS.coachReportShould, 'What your Ledger should say');
+    // "Books now say" is "Your Ledger now says" everywhere a coach reads it: the paper, the opened check, the list's chip.
+    assert.equal(BANK_WORDS.coachBooksNowSay('$3,060.00'), 'Your Ledger now says $3,060.00');
+    for (const f of ['CoachBankReport.tsx', 'CoachBankWindow.tsx', 'CoachBankView.tsx']) {
+      assert.doesNotMatch(code(f), /W\.booksNowSay\(/, f);
+      assert.match(code(f), /W\.coachBooksNowSay\(cents\(/, f);
+    }
+  });
 });
 
 describe('9 · through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_CHECK_NOVICE_UX_PLAN.md §2)', () => {

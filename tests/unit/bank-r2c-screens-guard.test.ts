@@ -580,6 +580,21 @@ describe('13. BC5b: the printed report (ask 9, R0 tab 9; owner "Report door / bo
     assert.equal(BANK_WORDS.reportCheckedBy('Priya Shah', 'Treasurer', 'Nov 3, 2026', '8:14 p.m.'), 'Checked by Priya Shah (Treasurer), Nov 3, 2026 at 8:14 p.m.');
     assert.equal(BANK_WORDS.reportFoot('Nov 4, 2026', 'Lakeshore Lynx'), 'Printed Nov 4, 2026 from FieldLogicHQ · Lakeshore Lynx · Accounting → Bank');
   });
+  it('S4 (A6, D6; owner 2026-11-13): the method line over the sum, both portals one constant; no "statement"; the order unchanged', () => {
+    assert.equal(BANK_WORDS.reportMethod, 'Worked from the bank’s balance: money it hasn’t paid out yet comes off, money it hasn’t received yet goes on.');
+    assert.doesNotMatch(BANK_WORDS.reportMethod, /screen/i, 'nothing on the page refers to the screen (row 15)');
+    assert.equal(BANK_WORDS.reportTitle('General', 'Nov 8, 2026'), 'General · The check for Nov 8, 2026');
+    assert.equal(BANK_WORDS.reportBank('Nov 8, 2026'), BANK_WORDS.bandBankCaption('Nov 8, 2026'), 'the bank row is the screen\'s own caption');
+    for (const s of [BANK_WORDS.reportTitle('A', 'B'), BANK_WORDS.reportBank('B')]) assert.doesNotMatch(s, /statement/i);
+    const coach = readCode('components/coaches/bank/CoachBankReport.tsx');
+    for (const page of [rep, coach]) {
+      // The line is the body's first thing, then the one sum table, then the bank's row first (engine order untouched).
+      assert.match(page, /\n\s*>\s*(?:\{[^}<]*\}\s*)?<p className=\{r\.method\}>\{W\.reportMethod\}<\/p>\s*<table className=\{r\.sums\}>/);
+      assert.match(page, /case 'base': return <SumRow key=\{t\.key\} label=\{W\.reportBank\(when\)\}/);
+      assert.equal(page.match(/W\.reportMethod/g)?.length, 1);
+    }
+    assert.match(readSource(`${DIR}/BankReport.module.css`), /\.method \{[^}]*font-size: 12px;[^}]*color: #5A5348;/);
+  });
 });
 
 describe('the start is a statement\'s opening balance (owner 2026-11-08)', () => {
