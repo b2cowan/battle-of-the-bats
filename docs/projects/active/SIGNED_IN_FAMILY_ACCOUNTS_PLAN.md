@@ -284,6 +284,50 @@ with the tier on, Publish and a club team's rep Send invitation refuse until the
 mailing address to print (/legal re-reads in the closeout). Also found in Session 2: FieldLogicHQ has no privacy policy page in the product,
 so the accept page's "How we use your information" has nowhere to link; publishing it is owed before the tier goes on anywhere real.
 
+**RULED 2026-11-13 (owner, Stage 4b coach-side drawings, all 15 asks A, pasted from the page; no notes).** Page
+https://claude.ai/artifact/UkYTNt3NtTbKrKP1GZoAiJ · source `SIGNED_IN_FAMILY_STAGE4B_DRAWINGS.html`. Build to the drawing; where these differ
+from `COACH_AVAILABILITY_RSVP_PLAN.md`'s older wording, these win.
+1. **One switch per team** (Team settings → Sharing: Off / Games / Games and practices, default Off, head coach). Families answer every
+   upcoming event it covers; the coach's only send is **Remind**. No per-event ask, no tick on the event form.
+2. **Remind** reaches connected parents of players who have neither answered nor been marked by the coach: a note in the app plus an email to
+   their own address. Once per event per 24 hours for the whole staff, never after the start; the report names players with no parent in the app.
+   No email to addresses that have not joined.
+3. **No Accept buttons.** One "Use N family answers" copies answers only into unmarked players (Maybe stays Not marked), with Undo; a tap in the
+   sheet takes one player. Only families write family answers.
+4. **Rep teams in 4b; house league is its own small stage after** (read-only count, Who's coming, Remind, a club switch). Answers are stored so they
+   can hold house-league events from the start.
+5. **The parent tick-box is enough for 4b.** A parent sees only their own child's answer, the other connected parent's first name and answer, and
+   their own note. If that ever grows to other families, the coach's marks or someone else's note, the club must confirm the parent first.
+6. **Two parents differ:** latest wins. Coach sees who and which day plus "earlier: In (Dev, Mon)"; a parent sees the other parent's answer, first name
+   and day, and that they left a note, not its words. A change clears the earlier parent's note.
+7. **Red row** = "5 out · at most 8 can play" when players not out are fewer than the sport's field positions; no red for a sport with none.
+8. **Count** = one per player, the coach's mark first else the family's answer ("9 of 13 in · 1 out · 1 maybe"); the Overview's "Next up" counts the
+   same way while availability is on.
+9. **Rename "No reply" → "Not marked"** everywhere, for every team (room, sheet, Attendance row, Overview, Game day's Who's here; one spelling).
+10. **An event moves:** a new day clears the answers (family sees Answer again; the schedule-change notice says so); a new time on the same day keeps them.
+11. **Who sees:** the count on schedule rows = anyone on the staff who sees the schedule; the room's family lines, Use family answers, Remind and the
+    bell = coaches who can mark attendance (head and assistants).
+12. **Coach's bell:** an Out, or any change in the last 48 hours, never a routine In; bundled per event within the hour and per family across events;
+    a Family answers row in Account → Notifications; "left a note" instead of the note's words. Bell on, email and push off.
+13. **Lineup builder:** Out and Maybe words on a game lineup's pool (not templates), and the "said Out after you saved this lineup" warning with a
+    one-tap Take out that changes only the lineup.
+14. **Changes Stage 4 ruling 8 for JOINED second parents:** a parent who joined gets the team's Unsubscribe line only; the 3b Stop line stays on copies
+    to a second address that has not joined.
+15. **Retention:** a note's words are deleted 30 days after the event; the answer, who and when are kept until the season is finished plus 60 days;
+    leaving or being removed clears that parent's notes.
+
+**Build prompt written 2026-11-13:** `SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md` (four sessions; Parts 1–9). Ask 9's rename touches every screen with
+the word, and ask 14 edits the Stage 3b footer builder; both are listed in it. Four owner calls are open inside it: **O1** how far ask 14 reaches
+(every second-parent copy, or the reminder only), **O2** where a parent's first name comes from, **O3** which permission flips the switch,
+**O4** what "the season is finished" means for retention.
+
+**RULED 2026-11-13 (owner, Stage 4b build Session 1).** **O1 = every copy:** a joined second parent's every second-parent copy drops the
+Stop line and keeps the team's Unsubscribe (a not-joined second address keeps both). **O2 = ask at joining, plus words:** no first name is
+stored for a second parent anywhere, so the accept page's new-account path asks for a first name (pre-filled when the sign-up has it);
+a parent with none reads as "the other parent" / "a parent", never an address. **O4 = 60 days after the season's last event, closed or
+not** (no rep season stores a close date): only the family's answers are deleted; the coach's attendance book is never touched. O3 keeps
+the Schedule visibility row's gate (the prompt's default). Detail: the build prompt's Progress block.
+
 ### Stage 5 — Next season pre-filled for a signed-in parent · needs Stage 4
 
 A returning parent who is signed in gets next season's form filled in; the public form stays for everyone else. Never a sent

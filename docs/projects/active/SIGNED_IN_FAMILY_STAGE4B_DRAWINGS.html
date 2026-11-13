@@ -1,0 +1,919 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>In Out Maybe Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the house review document (cool grey chrome, Plex) holding true-size specimens of the warm coaches portal
+   (schedule list, event window, attendance room, lineup builder, settings, bell), the family team page and the
+   reminder email. Sticky tabs, one section at a time, Everything / Show only what differs on tabs that compare.
+   Specimen controls are drawn from the shipped CSS (scoutRecChip, scrimmageChip, attFilter, attendanceStatusBadge,
+   segChoice/segBtnActive, lineupNotPlayingRow/lineupAddPill/lineupNotPlayingTag, rowChipOk/rowChipDue, the ≤640
+   row-list order). Round 2: /ux, /design, /legal applied. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.doc{max-width:1240px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:18px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:82ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px;scrollbar-width:thin}
+.tabs button{flex:none;font:600 14px/1 var(--f-doc);min-height:44px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+section.pane[hidden]{display:none}
+.viewrow{display:flex;align-items:center;gap:10px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);margin:12px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+details.card>summary{cursor:pointer;font-weight:700;font-size:16px;min-height:32px;display:flex;align-items:center}
+details.card.drift{border-left:5px solid var(--flag);border-radius:0 12px 12px 0}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+.x{color:var(--flag);font-weight:700}
+.vh{font:700 10.5px/1 var(--f-mono);border-radius:4px;padding:2px 5px;white-space:nowrap}
+.vh.v{color:var(--fix);background:var(--fix-soft)} .vh.h{color:var(--ask);background:var(--ask-soft)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:0 9px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:32px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+.cap2{font:500 11.5px/1.4 var(--f-mono);color:var(--muted);margin:6px 0 0;max-width:390px}
+.pair{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;margin:8px 0}
+.pair>div{min-width:0;max-width:100%}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;max-width:100%}
+.w375{width:375px} .w390{width:390px} .w720{width:720px}
+.wide{overflow-x:auto;max-width:100%;padding:2px}
+.samebar{display:none;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin:10px 0;font:600 12px/1.4 var(--f-mono);color:var(--muted);text-align:center}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+body[data-view="diff"] .pair>.before{display:none}
+
+/* the warm surfaces (family app + warm coaches portal share the --home-* tokens); dark = the shipped dark map
+   (--home-paper → --bg #0A0A0A, --home-card → --bg-card #111827) */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--on-ink:#F8F4ED;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--red:#B03A22;--red-soft:rgba(176,58,34,.12);--green:#34662A;--green-soft:rgba(52,102,42,.12);--amber:#835006;--amber-soft:rgba(131,80,6,.12);--even:rgba(70,55,30,.08);--new:rgba(75,46,131,.09);
+  --club:#1E3A5F;
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;text-align:left}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ak{--paper:#0A0A0A;--card:#111827;--ink:#F1F5F9;--on-ink:#0A0A0A;--soft:rgba(255,255,255,.7);--dim:rgba(255,255,255,.5);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.18);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--red:#F87171;--red-soft:rgba(239,68,68,.14);--green:#4ADE80;--green-soft:rgba(34,197,94,.13);--amber:#FBBF24;--amber-soft:rgba(245,158,11,.14);--even:rgba(255,255,255,.1);--new:rgba(187,166,238,.14);--club:#2B4C75}}
+:root[data-theme="dark"] .ak{--paper:#0A0A0A;--card:#111827;--ink:#F1F5F9;--on-ink:#0A0A0A;--soft:rgba(255,255,255,.7);--dim:rgba(255,255,255,.5);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.18);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--red:#F87171;--red-soft:rgba(239,68,68,.14);--green:#4ADE80;--green-soft:rgba(34,197,94,.13);--amber:#FBBF24;--amber-soft:rgba(245,158,11,.14);--even:rgba(255,255,255,.1);--new:rgba(187,166,238,.14);--club:#2B4C75}
+.ak *{box-sizing:border-box}
+.ak .bd{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.ak .sec{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.ak .ey{margin:0;font:700 11.2px/1.2 'Inter';letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak .th{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.ak .th b{font:700 16.8px/1.2 'Inter'} .ak .th span{font-size:13px;color:var(--dim)}
+.ak .in{border:1px solid var(--line2);background:var(--paper);border-radius:7px;min-height:44px;padding:11px 10px;font-size:13.5px;line-height:1.3;color:var(--ink);min-width:0}
+.ak .in.ph{color:var(--dim)}
+.ak .hint{font-size:12.5px;line-height:1.45;color:var(--dim);margin:4px 0 0}
+.ak .soft{font-size:13.5px;line-height:1.45;color:var(--soft);margin:0}
+.ak .lk{color:var(--olive);font-weight:600;text-decoration:underline;text-underline-offset:2px;display:inline-flex;align-items:center;min-height:44px}
+.ak .newbox{background:var(--new);outline:2px solid var(--t-new);outline-offset:3px;border-radius:8px;cursor:pointer}
+.ak .resbox{outline:2px dashed var(--t-res);outline-offset:3px;border-radius:8px;cursor:pointer}
+.ak .okc{background:var(--green-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.ak .okc h5{margin:0 0 4px;font:700 15px/1.3 'Inter';color:var(--green)}
+.ak .okc p{margin:0;font-size:13.5px}
+.ak .row{display:flex;gap:10px;align-items:center;justify-content:space-between;min-height:44px}
+.ak .row .m{min-width:0;flex:1}
+.ak .row .t{font-weight:600;font-size:14px}
+.ak .row .s{font-size:12.5px;color:var(--dim)}
+.ak .dv{height:1px;background:var(--line);margin:0}
+.ak .up{border:1px solid var(--olive);background:var(--olive-soft);border-radius:10px;padding:10px 12px}
+.ak .up .ul{font:700 11px/1.2 'Inter';letter-spacing:.06em;text-transform:uppercase;color:var(--olive);margin-bottom:4px}
+.ak .sheet{background:var(--card);border-top-left-radius:16px;border-top-right-radius:16px;padding:8px 16px 16px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line2)}
+.ak .grab{width:40px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 4px}
+.ak .shd{display:flex;justify-content:space-between;align-items:flex-start}
+.ak .shd b{font:800 16px/1.3 'Inter'}
+.ak .x44{min-width:44px;min-height:44px;display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--soft);border:1px solid var(--line2);border-radius:8px}
+.ak .choice{min-height:52px;border:1px solid var(--line2);border-radius:10px;display:flex;align-items:center;gap:10px;padding:0 14px;font:600 14px/1 'Inter'}
+.ak .choice .ic{width:18px;text-align:center;flex:none}
+.ak .choice .tick{margin-left:auto;font-weight:800}
+.ak .choice.on{border-color:var(--olive);background:var(--olive-soft);color:var(--olive)}
+/* family answer pill: shipped rowChipOk / rowChipDue (borderless 12% fill, 12px 700), hit area 44px */
+.ak .hit{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:flex-end}
+.ak .ans{display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font:700 12px/1.5 'Inter';white-space:nowrap}
+.ak .ans.in{background:var(--green-soft);color:var(--green)}
+.ak .ans.may{background:var(--amber-soft);color:var(--amber)}
+.ak .ans.out{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+.ak .ans.ask{background:var(--ink);color:var(--on-ink)}
+.ak .ans.closed{background:var(--even);color:var(--dim)}
+.ak .kid{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;min-height:44px}
+.ak .kid b{font-weight:600}
+.ak .strike{text-decoration:line-through;color:var(--dim)}
+/* coach portal specimens */
+.ak .ctop{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--card);min-height:56px}
+.ak .ctop b{font:700 17px/1.2 'Inter';flex:1}
+.ak .ctop .back{color:var(--olive);font:600 13.5px/1 'Inter';min-height:44px;display:flex;align-items:center}
+.ak .clist{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .cband{font:700 11px/1.2 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--line)}
+/* the ≤640 row-list order: mark · title · trail, line break, date lead · caption */
+.ak .cr{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;padding:10px 13px;border-bottom:1px solid var(--line);min-height:44px}
+.ak .cr:last-child{border-bottom:0}
+.ak .cr .mk2{font-size:12px;color:var(--olive);flex:none}
+.ak .cr .tt{flex:1 1 0;min-width:0;font-size:14px}
+.ak .cr .tt .opp{color:var(--dim)}
+.ak .cr .tr{margin-left:auto;display:flex;gap:8px;align-items:center}
+.ak .cr .br{flex-basis:100%;height:0}
+.ak .cr .ld{font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.ak .cr .cp{font-size:12.5px;color:var(--dim);flex:1 1 0;min-width:0}
+.ak .cr .ld.ind{padding-left:20px}
+.ak .cr .cv{color:var(--dim);font-size:16px}
+.ak .hcnt{color:var(--soft);font-variant-numeric:tabular-nums}
+.ak .short{color:var(--red);font-weight:600}
+.ak .warnw{color:var(--amber);font-weight:600}
+/* shipped scoutRecChip (6px, 700, data font, tone) and scrimmageChip (uppercase outline) */
+.ak .rec{font:700 12px/1.3 'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;padding:4px 8px;border-radius:6px}
+.ak .rec.up{color:var(--green);background:var(--green-soft)} .ak .rec.down{color:var(--red);background:var(--red-soft)} .ak .rec.even{color:var(--soft);background:var(--even)}
+.ak .scr{font:600 10px/1 'Inter';letter-spacing:.06em;text-transform:uppercase;padding:3px 5px;border-radius:4px;color:var(--soft);border:1px solid var(--line2)}
+/* shipped attendanceStatusBadge (tinted pill) and attFilter (999px pill with icon) */
+.ak .bdg{display:inline-flex;align-items:center;gap:4px;font:700 12.5px/1 'Inter';white-space:nowrap;padding:4px 8px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+.ak .bdg.in{color:var(--green);background:var(--green-soft);border-color:var(--green)} .ak .bdg.late{color:var(--amber);background:var(--amber-soft);border-color:var(--amber)} .ak .bdg.out{color:var(--red);background:var(--red-soft);border-color:var(--red)}
+.ak .nf{color:var(--olive);font-size:13px}
+.ak .filt{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ak .filt span{min-height:44px;border:1px solid var(--line2);border-radius:999px;display:flex;align-items:center;justify-content:center;gap:4px;font:600 12.5px/1 'Inter';color:var(--dim);background:var(--card)}
+.ak .filt span.on{background:var(--card);border-color:var(--ink);color:var(--ink)}
+.ak .filt .g{color:var(--green)} .ak .filt .a{color:var(--amber)} .ak .filt .r{color:var(--red)}
+.ak .bulk{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.ak .bulk.l{justify-content:flex-start}
+.ak .gh{border:1px solid var(--line2);border-radius:8px;min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;font:600 13px/1 'Inter';background:var(--card);color:var(--ink);white-space:nowrap}
+.ak .gh.full{width:100%;justify-content:center;background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.ak .lane{flex-basis:100%;font-size:12.5px;color:var(--dim);line-height:1.35;min-width:0}
+.ak .lane.drift{color:var(--amber);font-weight:600}
+.ak .fam{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.ak .fam .fl{font-size:13px;line-height:1.4;margin:0}
+.ak .fam .acts{display:flex;gap:8px;flex-wrap:wrap}
+.ak .door{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:10px 12px;border-bottom:1px solid var(--line);align-items:center}
+.ak .door:last-child{border-bottom:0}
+.ak .door .h{font-weight:600;font-size:14px}
+.ak .door .l{font-size:12.5px;color:var(--dim);grid-column:1}
+.ak .door .l .o{color:var(--red);font-weight:600} .ak .door .l .w{color:var(--amber);font-weight:600}
+.ak .door .cv{grid-row:1/4;grid-column:2;color:var(--dim)}
+.ak .fbox{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;background:var(--paper);font-size:13px;line-height:1.45}
+.ak .fbox .fe{font:700 10.5px/1.2 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+.ak .toast{align-self:center;background:var(--ink);color:var(--on-ink);border-radius:999px;padding:10px 16px;font:600 13px/1.2 'Inter';display:flex;gap:14px;align-items:center}
+.ak .toast u{color:var(--olive);text-decoration:underline}
+/* shipped segChoice: 7px bordered group, no tray; warm active = ink fill; settingRow label+desc then control */
+.ak .collhd{display:flex;justify-content:space-between;align-items:center;min-height:48px;font:700 15px/1.2 'Inter';border-bottom:1px solid var(--line);padding:0 14px}
+.ak .collhd span{font:500 12.5px/1 'Inter';color:var(--dim)}
+.ak .seg{display:flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden;width:100%}
+.ak .seg span{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;padding:0 8px;font:600 13px/1.15 'Inter';color:var(--dim);border-right:1px solid var(--line);text-align:center}
+.ak .seg span:last-child{border-right:0}
+.ak .seg span.on{background:var(--ink);color:var(--paper)}
+.ak .seg.dis span{opacity:.5}
+.ak .setrow{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-top:1px solid var(--line)}
+.ak .setrow:first-of-type{border-top:0}
+.ak .setrow .lb{font-weight:600;font-size:14px}
+.ak .setrow .ds{font-size:12.5px;color:var(--dim);line-height:1.45;margin:0}
+/* shipped lineupNotPlayingRow + lineupAddPill (12px/600, + span) + lineupNotPlayingTag (warning word) */
+.ak .pool{display:flex;flex-wrap:wrap;gap:6px}
+.ak .pp{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;min-height:44px;padding:0 12px;font:600 12px/1 'Inter';background:var(--card)}
+.ak .pp .pl{color:var(--dim);font-weight:700}
+.ak .pp .ft{font-size:12px;font-weight:500;color:var(--amber)}
+.ak .strip{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.ak .strip .sl{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.ak .chip{display:inline-flex;align-items:center;border-radius:999px;padding:2px 9px;font:700 12px/1.5 'Inter';background:var(--even);color:var(--soft)}
+.ak .chip.ok{background:var(--green-soft);color:var(--green)} .ak .chip.due{background:var(--amber-soft);color:var(--amber)}
+.ak .bell{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .bi{display:grid;grid-template-columns:28px minmax(0,1fr);gap:2px 10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.ak .bi:last-child{border-bottom:0}
+.ak .bi .ic{grid-row:1/4;font-size:16px}
+.ak .bi .bt{font-weight:600;font-size:13.5px}
+.ak .bi .bb{font-size:12.5px;color:var(--soft)}
+.ak .bi .bw{font-size:11.5px;color:var(--dim)}
+.ak .tg{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px 14px;align-items:center;font-size:13px}
+.ak .tg .hd{font:700 10.5px/1 'Inter';letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.ak .tg .bx{width:22px;height:22px;border:1.5px solid var(--line2);border-radius:4px;display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--olive)}
+.ak .tg .bx.on{background:var(--olive-soft);border-color:var(--olive)}
+.ak .deskrow{display:grid;grid-template-columns:130px minmax(0,1fr) 120px 20px;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13.5px;min-height:48px}
+.ak .deskrow:last-child{border-bottom:0}
+.ak .deskrow.hd{font:700 10.5px/1.2 'Inter';letter-spacing:.06em;text-transform:uppercase;color:var(--dim);background:var(--paper);min-height:0}
+.ak .deskrow .lane{flex-basis:auto}
+/* the family email (shipped warm envelope: 24px heading, card 28px 26px) */
+.em{background:#fff;padding:10px;font:16px/1.55 Arial,Helvetica,sans-serif;color:#211c15}
+.em .meta{font:12px/1.5 Arial,sans-serif;color:#665f57;border-bottom:1px solid #dad3c9;padding:0 2px 8px;margin-bottom:10px}
+.em .cb{background:#1E3A5F;color:#fff;border-radius:11px 11px 0 0;padding:12px 18px;display:flex;gap:12px;align-items:center;font:700 18px/1.2 Arial,sans-serif}
+.em .cb i{width:44px;height:44px;border-radius:10px;background:#fff;color:#1E3A5F;display:grid;place-items:center;font:700 16px/1 Arial;font-style:normal;flex:none}
+.em .cd{background:#fff;border:1px solid #c9c1b2;border-top:0;border-radius:0 0 12px 12px;padding:28px 26px;display:flex;flex-direction:column;gap:12px}
+.em h6{margin:0;font:700 24px/1.25 Arial,sans-serif;color:#211c15}
+.em p{margin:0}
+.em .eb{display:inline-block;background:#d9f99d;border:1px solid #55641c;border-radius:10px;padding:14px 26px;font:700 16px/1.2 Arial,sans-serif;color:#211c15}
+.em .pn{background:#f6f1ea;border:1px solid #dad3c9;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.em .sm{font-size:13px;color:#665f57}
+.em .fp{font-size:12px;color:#665f57;line-height:1.5;border-top:1px solid #dad3c9;padding-top:16px;margin-top:4px;display:flex;flex-direction:column;gap:6px}
+.em .newbox{outline:2px solid #4B2E83;outline-offset:3px;border-radius:10px;cursor:pointer}
+.em .lk{color:#55641c;text-decoration:underline}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask.shape{border-left-color:var(--ask)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;cursor:pointer;flex-wrap:wrap}
+.ask .opts label>span{flex:1;min-width:0}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+@media (max-width:600px){.ask .opts label.rec::after{flex-basis:100%;margin-left:30px;padding-left:0}}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask .tag{font:700 10.5px/1 var(--f-mono);color:var(--ask);letter-spacing:.06em;text-transform:uppercase;margin-left:6px}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:300px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.rw{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(520px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:16px;flex:1}
+dialog.note .nh button{font-size:22px;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="doc">
+<div class="eyebrow">Signed-in family accounts · Stage 4b · drawings</div>
+<h1>Families answer In, Out or Maybe in the app, and the coach sees who is coming</h1>
+<p class="lede">The parent taps In, Out or Maybe on each upcoming game or practice. The coach sees a headcount on the schedule, copies the answers into the attendance book in one tap, reminds the families who haven’t answered, and sees when a family changes their mind after the lineup is made. The parent’s sheet was drawn in Stage 4; the coach’s side is new. The four asks that change the shape of the stage come first in tab 10. The guardian tier stays off.</p>
+
+<details class="card drift">
+  <summary>What the code says today, where the plan had it wrong (5)</summary>
+  <ul>
+    <li><b>The event window has no tabs any more.</b> Attendance is a row under “On this event” that opens a full-screen <b>attendance room</b>: five count chips that filter, <b>All in</b> and <b>Reset</b>, one row per player, and a tap raises the four-choice sheet. The old inline RSVP editor was removed in September. The family’s answers go on the room’s rows.</li>
+    <li><b>The coach’s own words are already In, Late, Out and No reply.</b> The family’s In / Out / Maybe would put the same words on a second record. So every family answer on a coach screen reads “Family said …”, and ask 9 renames the coach’s “No reply”.</li>
+    <li><b>There is no “Not playing” pool.</b> The lineup builder’s pool is “Not in the lineup”, everyone not placed, and it shows no attendance. Its warnings read the coach’s book only.</li>
+    <li><b>The house-league coach’s page is a different page</b>: read-only, outside the coaches portal, with no attendance book, no lineup and no settings screen. Its games and practices are kept in different records from a rep team’s.</li>
+    <li><b>On day one, nobody is connected.</b> A rep parent connects only when the coach presses Send invitation on that player’s Guardians card, one player at a time, and nothing shows the coach a team-wide count. The live demo teams have none. A headcount that read “0 in” would say “nobody is coming”.</li>
+  </ul>
+</details>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="p1">1 · Schedule headcount</button>
+  <button role="tab" aria-selected="false" data-t="p2">2 · Attendance room</button>
+  <button role="tab" aria-selected="false" data-t="p3">3 · Turning it on</button>
+  <button role="tab" aria-selected="false" data-t="p4">4 · Reminding</button>
+  <button role="tab" aria-selected="false" data-t="p5">5 · Lineups</button>
+  <button role="tab" aria-selected="false" data-t="p6">6 · The coach’s bell</button>
+  <button role="tab" aria-selected="false" data-t="p7">7 · Parent side</button>
+  <button role="tab" aria-selected="false" data-t="p8">8 · House league</button>
+  <button role="tab" aria-selected="false" data-t="p9">9 · What it reaches, and the law</button>
+  <button role="tab" aria-selected="false" data-t="p10">10 · Asks</button>
+</div>
+
+<!-- ============ 1 · SCHEDULE HEADCOUNT ============ -->
+<section class="pane" id="p1">
+  <h2>Each upcoming row says who is coming, on its second line</h2>
+  <p class="muted">The Schedule’s list view on a phone at 390 px. The count joins the row’s second line, after the date, where the row already puts extra words. The top line stays as it is, so the record chip, Scrimmage and Game day keep their room. It counts each player once: <b>your own mark wins</b>, and a family’s answer counts only where you haven’t marked the player. Showing it writes nothing to your book.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div class="before"><div class="cap"><b>Today</b> · Schedule, list view <button class="mk unc" data-note="The list view as it ships. On a phone: mark, title and the trail on line one; the date on line two. The 2–1 and 0–1 chips are your record against that opponent from the scouting book, green when you lead and red when you trail. They are not scores. The only attendance sign today is a warning triangle when the lineup and the book disagree.">UNCHANGED</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="ctop"><b>Schedule</b><span class="gh">+ Add</span></div>
+        <div class="bd">
+          <div class="clist">
+            <div class="cband">April 2027</div>
+            <div class="cr"><span class="mk2">●</span><span class="tt">Practice</span><span class="br"></span><span class="ld ind">Tue, Apr 20 · 6:00 p.m.</span></div>
+            <div class="cr"><span class="mk2">◆</span><span class="tt">Ridge 12U <span class="opp">vs Lakeshore</span></span><span class="tr"><span class="rec up">2–1</span></span><span class="br"></span><span class="ld ind">Sat, Apr 24 · 10:30 a.m.</span></div>
+            <div class="cr"><span class="mk2">●</span><span class="tt">Practice</span><span class="br"></span><span class="ld ind">Tue, Apr 27 · 6:00 p.m.</span></div>
+            <div class="cband">May 2027</div>
+            <div class="cr"><span class="mk2">◆</span><span class="tt">Ridge 12U <span class="opp">@ Oakville</span></span><span class="tr"><span class="rec down">0–1</span></span><span class="br"></span><span class="ld ind">Sat, May 1 · 1:00 p.m.</span></div>
+            <div class="cr"><span class="mk2">◆</span><span class="tt">Ridge 12U <span class="opp">vs Milton</span></span><span class="tr"><span class="scr">Scrimmage</span></span><span class="br"></span><span class="ld ind">Sun, May 2 · 11:00 a.m.</span></div>
+          </div>
+        </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · availability on, 10 of 13 players have a parent in the app <button class="mk new" data-note="New: the count on line two, in the caption slot the shipped row already has (the date gets its ‘ ·’ joiner automatically). In or Late counts as in. The count has the roster beside the in figure, like the Overview’s “9 of 12 in”, so a low number reads as “not all answered”, not “not coming”. Parts with zero are left out. Only the shortfall is coloured. Tap the row as today.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="ctop"><b>Schedule</b><span class="gh">+ Add</span></div>
+        <div class="bd">
+          <div class="clist">
+            <div class="cband">April 2027</div>
+            <div class="cr"><span class="mk2">●</span><span class="tt">Practice</span><span class="br"></span><span class="ld ind">Tue, Apr 20 · 6:00 p.m. ·</span><span class="cp newbox" data-note="8 of 13 are in (your marks or their families’ answers), 1 is out, 4 nobody knows yet."><span class="hcnt">8 of 13 in · 1 out</span></span></div>
+            <div class="cr"><span class="mk2">◆</span><span class="tt">Ridge 12U <span class="opp">vs Lakeshore</span></span><span class="tr"><span class="rec up">2–1</span></span><span class="br"></span><span class="ld ind">Sat, Apr 24 · 10:30 a.m. ·</span><span class="cp newbox" data-note="The game in tab 2. Your marks give 7 in, 1 late (in) and Ava out. Leo’s family said In and you haven’t marked him: 9 in. Noor’s family said Maybe. Maya’s family changed to Out, but you marked her In, so she counts as in until you change her (tab 2 shows the warning)."><span class="hcnt">9 of 13 in · 1 out · 1 maybe</span></span></div>
+            <div class="cr"><span class="mk2">●</span><span class="tt">Practice</span><span class="br"></span><span class="ld ind">Tue, Apr 27 · 6:00 p.m.</span></div>
+            <div class="cband">May 2027</div>
+            <div class="cr"><span class="mk2">◆</span><span class="tt">Ridge 12U <span class="opp">@ Oakville</span></span><span class="tr"><span class="rec down">0–1</span></span><span class="br"></span><span class="ld ind">Sat, May 1 · 1:00 p.m. ·</span><span class="cp newbox" data-note="The shortfall, in the danger word style the event window already uses for Out. 5 of 13 are out, so at most 8 can play, and baseball needs 9 on the field. The rule counts OUTS, never ins: a low ‘in’ only means families haven’t answered yet. A sport with no field positions in the product never shows this (ask 7)."><span class="short">5 out · at most 8 can play</span></span></div>
+            <div class="cr"><span class="mk2">◆</span><span class="tt">Ridge 12U <span class="opp">vs Milton</span></span><span class="tr"><span class="scr">Scrimmage</span></span><span class="br"></span><span class="ld ind">Sun, May 2 · 11:00 a.m. ·</span><span class="cp"><span class="hcnt">2 of 13 in</span></span></div>
+          </div>
+        </div></div></div>
+      <p class="cap2">Tue, Apr 27 shows no count: nobody has answered and you’ve marked nobody. An empty row says nothing rather than “0 in”.</p></div>
+  </div>
+
+  <h3>Every state the count can be in</h3>
+  <div class="tw"><table class="t">
+    <tr><th>When</th><th>What line two shows after the date</th><th>Why</th></tr>
+    <tr><td>Availability is off for the team (the default)</td><td>Nothing new. Today’s row.</td><td>Dark until a head coach turns it on (tab 3).</td></tr>
+    <tr><td>On, but no parent is in the app yet</td><td>The count from your own marks, if you’ve made any.</td><td>Your marks are real. A coach who marks by hand loses nothing by turning it on.</td></tr>
+    <tr><td>On, nobody has answered and you’ve marked nobody</td><td>Nothing.</td><td>“0 in” reads as “nobody is coming”.</td></tr>
+    <tr><td>Some answers or marks</td><td>“9 of 13 in · 1 out · 1 maybe”. Parts with zero are left out.</td><td>It counts only what someone said, and the “of 13” keeps a low number honest.</td></tr>
+    <tr><td>Outs make the event short</td><td><span class="x">5 out · at most 8 can play</span></td><td>Players not out are fewer than the sport’s field positions (9 for baseball and softball). Never driven by a low “in” (ask 7).</td></tr>
+    <tr><td>Started, over or cancelled</td><td>Nothing new. Cancelled keeps its strike and pill.</td><td>From the start the book is the record (Game day’s “Who’s here”), and answers are closed.</td></tr>
+  </table></div>
+  <p class="muted">At a desk the same words sit under the title, as the row’s caption already does there. The team Overview’s “Next up” already says “<b>9</b> of 13 in” from your book alone; with availability on it should count the same way, or the two screens give two numbers for one game (ask 8). The club admin’s read-only copy of a rep team’s schedule uses these rows without the extras, so it stays as it is.</p>
+</section>
+
+<!-- ============ 2 · ATTENDANCE ROOM ============ -->
+<section class="pane" id="p2" hidden>
+  <h2>The attendance room shows each family’s answer under the player, and copies it into your book in one tap</h2>
+  <p class="muted">Your book stays yours. The badge on each row is still <b>your</b> mark. The grey line under the name is <b>what the family said</b>. Colour is spent only where you need to decide: a family who changed their answer after you marked the player.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+
+  <h3>The event window’s Attendance row</h3>
+  <div class="pair">
+    <div class="before"><div class="cap"><b>Today</b> · event window, phone, full screen <button class="mk unc" data-note="The event window’s door rows as built (the Schedule deep dive, 2026-09-25). The Attendance row’s head counts your book and the line names Out, then Late, then No reply, up to three names.">UNCHANGED</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="ctop"><b>Ridge 12U vs Lakeshore</b><span class="x44">Close</span></div>
+        <div class="bd">
+          <p class="soft">Sat, Apr 24 · 10:30 a.m. · Riverdale Park, Diamond 1</p>
+          <p class="ey">On this event</p>
+          <div class="clist">
+            <div class="door"><span class="h">Attendance · 7 in · 1 late · 1 out · 4 no reply</span><span class="l"><span class="o">Out: #4 Ava</span> · <span class="w">Late: #11 Theo</span> · No reply: Leo and 3 more</span><span class="cv">›</span></div>
+            <div class="door"><span class="h">Lineup · Has a lineup</span><span class="l">Saved Tue, Apr 20</span><span class="cv">›</span></div>
+            <div class="door"><span class="h">Scouting</span><span class="l">2–1 against Lakeshore</span><span class="cv">›</span></div>
+          </div>
+        </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · one line added <button class="mk new" data-note="One line under the existing one, only while availability is on and the event hasn’t started. It counts families, not your book. The amber part shows only when a family changed their answer after you marked that player. The head uses ‘not marked’ if ask 9 renames No reply.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="ctop"><b>Ridge 12U vs Lakeshore</b><span class="x44">Close</span></div>
+        <div class="bd">
+          <p class="soft same">Sat, Apr 24 · 10:30 a.m. · Riverdale Park, Diamond 1</p>
+          <p class="ey">On this event</p>
+          <div class="clist">
+            <div class="door"><span class="h">Attendance · 7 in · 1 late · 1 out · 4 not marked</span><span class="l"><span class="o">Out: #4 Ava</span> · <span class="w">Late: #11 Theo</span> · Not marked: Leo and 3 more</span>
+              <span class="l newbox" style="padding:2px 4px" data-note="The family line: 7 answered, 3 haven’t, 3 players have no parent in the app, and 1 changed after you marked them.">Families: 7 answered · 3 haven’t · <span class="w">1 changed</span></span><span class="cv">›</span></div>
+            <div class="door newbox" data-note="The Lineup row already turns to Needs a look when the book and the lineup disagree. With availability on it also catches a family’s change after the lineup was saved (tab 5)."><span class="h">Lineup · Needs a look</span><span class="l"><span class="w">Maya’s family said Out after you saved</span></span><span class="cv">›</span></div>
+            <div class="door same"><span class="h">Scouting</span><span class="l">2–1 against Lakeshore</span><span class="cv">›</span></div>
+          </div>
+        </div></div></div></div>
+  </div>
+
+  <h3>Whole screen: the room, before and after</h3>
+  <div class="pair">
+    <div class="before"><div class="cap"><b>Today</b> · the attendance room <button class="mk unc" data-note="As built: five count chips that double as filters, All in and Reset, then one row per player with your badge (and a note flag when you wrote a note), and a chevron. A row tap raises the four-choice sheet; every tap saves by itself. Drawn so a whole 12-player roster fits on screen one.">UNCHANGED</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="ctop"><span class="back">← vs Lakeshore</span><b style="text-align:right">Attendance</b></div>
+        <div class="bd">
+          <div class="filt"><span class="on">All 13</span><span><i class="g">✓</i> 7</span><span><i class="a">◷</i> 1</span><span><i class="r">⊘</i> 1</span><span>? 4</span></div>
+          <div class="bulk"><span class="gh">✓ All in</span><span class="gh">? Reset</span></div>
+          <div class="clist">
+            <div class="cr"><span class="tt">#2 Blake</span><span class="tr"><span class="bdg in">✓ In</span><span class="cv">›</span></span></div>
+            <div class="cr"><span class="tt">#4 Ava</span><span class="tr"><span class="nf">✎</span><span class="bdg out">⊘ Out</span><span class="cv">›</span></span></div>
+            <div class="cr"><span class="tt">#5 Leo</span><span class="tr"><span class="bdg">? No reply</span><span class="cv">›</span></span></div>
+            <div class="cr"><span class="tt">#7 Maya</span><span class="tr"><span class="bdg in">✓ In</span><span class="cv">›</span></span></div>
+            <div class="cr"><span class="tt">#8 Noor</span><span class="tr"><span class="bdg">? No reply</span><span class="cv">›</span></span></div>
+            <div class="cr"><span class="tt">#9 Owen</span><span class="tr"><span class="bdg">? No reply</span><span class="cv">›</span></span></div>
+            <div class="cr"><span class="tt">#11 Theo</span><span class="tr"><span class="bdg late">◷ Late</span><span class="cv">›</span></span></div>
+            <div class="cr"><span class="tt">#12 Zoe</span><span class="tr"><span class="bdg">? No reply</span><span class="cv">›</span></span></div>
+          </div>
+          <p class="hint">5 more players below.</p>
+        </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · what families said, beside your book <button class="mk new" data-note="New: the compact Families card, and a grey line under each player whose family said something. Kept as built: the count chips (they still count YOUR book), All in, Reset, the rows, the badge, the sheet on tap, the autosave. RESTYLED word: ‘No reply’ reads ‘Not marked’ (ask 9).">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="ctop"><span class="back">← vs Lakeshore</span><b style="text-align:right">Attendance</b></div>
+        <div class="bd">
+          <div class="fam newbox" data-note="Two ghost buttons, the room’s own button style. ‘Use 1 family answer’ copies an answer into your book ONLY for a player you haven’t marked (In → In, Out → Out; Maybe stays Not marked), then a toast says who and offers Undo. It never changes a mark you made. It is hidden when there is nothing to copy. Remind is tab 4. The ‘1 changed’ line filters the list to Maya.">
+            <p class="fl"><b>Families</b> · 7 answered · 3 haven’t · 3 have no parent in the app</p>
+            <p class="fl warnw">⚠ 1 changed since you marked: Maya <span class="lk" style="min-height:0">Show</span></p>
+            <div class="acts"><span class="gh">Use 1 family answer</span><span class="gh">Remind 1</span></div>
+          </div>
+          <div class="filt same"><span class="on">All 13</span><span><i class="g">✓</i> 7</span><span><i class="a">◷</i> 1</span><span><i class="r">⊘</i> 1</span><span>? 4</span></div>
+          <div class="bulk same"><span class="gh">✓ All in</span><span class="gh">? Reset</span></div>
+          <div class="samebar">Count chips, All in and Reset · unchanged</div>
+          <div class="clist">
+            <div class="cr"><span class="tt">#2 Blake</span><span class="tr"><span class="bdg in">✓ In</span><span class="cv">›</span></span><span class="lane">Family said In · Dev, Mon</span></div>
+            <div class="cr"><span class="tt">#4 Ava</span><span class="tr"><span class="nf">✎</span><span class="bdg out">⊘ Out</span><span class="cv">›</span></span><span class="lane">Family said Out · “away at a tournament” · Priya, Tue</span></div>
+            <div class="cr newbox" data-note="A family answered and you haven’t marked Leo. ‘Use 1 family answer’ would make this In."><span class="tt">#5 Leo</span><span class="tr"><span class="bdg">? Not marked</span><span class="cv">›</span></span><span class="lane">Family said In · Sam, Wed</span></div>
+            <div class="cr newbox" data-note="The drift. You marked Maya In on Monday; her family changed to Out on Wednesday evening. The amber line stays until you tap her row and choose: Out, or In again to keep your mark (the warning then clears). ‘Use family answers’ never touches her."><span class="tt">#7 Maya</span><span class="tr"><span class="bdg in">✓ In</span><span class="cv">›</span></span><span class="lane drift">⚠ Family changed to Out · Wed</span></div>
+            <div class="cr"><span class="tt">#8 Noor</span><span class="tr"><span class="bdg">? Not marked</span><span class="cv">›</span></span><span class="lane">Family said Maybe · “depends on my shift”</span></div>
+            <div class="cr"><span class="tt">#9 Owen</span><span class="tr"><span class="bdg">? Not marked</span><span class="cv">›</span></span><span class="lane">Family hasn’t answered</span></div>
+            <div class="cr"><span class="tt">#11 Theo</span><span class="tr"><span class="bdg late">◷ Late</span><span class="cv">›</span></span><span class="lane">Family said In · “arriving 10:45”</span></div>
+            <div class="cr newbox" data-note="No parent is connected to Zoe. The row says nothing about it; the card says the count once. A call-up player gets no family line at all."><span class="tt">#12 Zoe</span><span class="tr"><span class="bdg">? Not marked</span><span class="cv">›</span></span></div>
+          </div>
+          <p class="hint">5 more players below.</p>
+          <div class="toast newbox" data-note="After Use family answers: the toast names who changed and offers Undo, which puts those players back to Not marked. Undo matters because Reset would also wipe your own marks.">Used 1 family answer: Leo <u>Undo</u></div>
+        </div></div></div>
+      <p class="cap2">Use counts 1: Leo. Noor said Maybe, so she stays Not marked. You marked Maya yourself, so her change waits for your tap. The five players off screen are all marked In; two of their families (Ezra, Lily) haven’t answered.</p></div>
+  </div>
+
+  <h3>Tapping a player: the family’s answer sits above your four choices</h3>
+  <div class="pair">
+    <div class="before"><div class="cap"><b>Today</b> · the RSVP sheet <button class="mk unc" data-note="As built: the name, the event, four 52 px choices (icon, word, a tick on the current one), the coach’s own note. A tap saves.">UNCHANGED</button></div>
+      <div class="fr w390"><div class="ak" style="padding-top:60px">
+        <div class="sheet"><div class="grab"></div>
+          <div class="shd"><div><b>#7 Maya</b><div class="s" style="font-size:12.5px;color:var(--dim)">Sat, Apr 24 · vs Lakeshore</div></div><span class="x44">Close</span></div>
+          <div class="choice on"><span class="ic">✓</span>In<span class="tick">✓</span></div><div class="choice"><span class="ic">◷</span>Late</div><div class="choice"><span class="ic">⊘</span>Out</div><div class="choice"><span class="ic">?</span>No reply</div>
+          <div class="in ph">Note (e.g. leaving early)</div>
+        </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the family box <button class="mk new" data-note="New: one box above the choices, only while availability is on. It says the answer, the family’s note, who answered and which day, and the earlier answer when it changed (ask 6). There is no separate Accept button: tapping Out IS the accept, because a tap already saves. The coach’s own note below stays the coach’s and never takes the family’s words.">NEW</button></div>
+      <div class="fr w390"><div class="ak" style="padding-top:60px">
+        <div class="sheet"><div class="grab"></div>
+          <div class="shd"><div><b>#7 Maya</b><div class="s" style="font-size:12.5px;color:var(--dim)">Sat, Apr 24 · vs Lakeshore</div></div><span class="x44">Close</span></div>
+          <div class="fbox newbox" data-note="Who answered is the parent’s first name from their account, never an address. The earlier answer shows when the answer changed, including when the other parent changed it (ask 6).">
+            <div class="fe">Maya’s family said</div>
+            <div><b>Out</b> · “can’t make it after all”</div>
+            <div class="s" style="font-size:12px;color:var(--dim)">Priya, Wed · earlier: In (Dev, Mon)</div>
+          </div>
+          <div class="choice on"><span class="ic">✓</span>In<span class="tick">✓</span></div><div class="choice"><span class="ic">◷</span>Late</div><div class="choice"><span class="ic">⊘</span>Out</div><div class="choice"><span class="ic">?</span>Not marked</div>
+          <div class="in ph same">Note (e.g. leaving early)</div>
+          <p class="hint newbox" data-note="Says what a tap does, and that the family isn’t told what the coach chose.">Tap Out to use the family’s answer, or tap In to keep your mark and clear the warning. Families don’t see your mark.</p>
+        </div></div></div></div>
+  </div>
+
+  <h3>At a desk: the same room in the 720 px event window</h3>
+  <p class="muted">Above 900 px the room fills the event window’s body, as today. The family’s answer gets its own column.</p>
+  <div class="wide"><div class="fr w720"><div class="ak"><div class="bd">
+    <div class="fam newbox" data-note="Same card, laid out on one line."><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><p class="fl"><b>Families</b> · 7 answered · 3 haven’t · 3 have no parent in the app</p><p class="fl warnw">⚠ 1 changed since you marked: Maya</p></div><div class="acts"><span class="gh">Use 1 family answer</span><span class="gh">Remind 1</span></div></div></div>
+    <div class="clist">
+      <div class="deskrow hd"><span>Player</span><span>Family said</span><span>Your mark</span><span></span></div>
+      <div class="deskrow"><span>#4 Ava</span><span class="lane">Out · “away at a tournament” · Priya, Tue</span><span><span class="bdg out">⊘ Out</span></span><span>›</span></div>
+      <div class="deskrow"><span>#5 Leo</span><span class="lane">In · Sam, Wed</span><span><span class="bdg">? Not marked</span></span><span>›</span></div>
+      <div class="deskrow"><span>#7 Maya</span><span class="lane drift">⚠ Changed to Out · “can’t make it after all” · Priya, Wed</span><span><span class="bdg in">✓ In</span></span><span>›</span></div>
+      <div class="deskrow"><span>#8 Noor</span><span class="lane">Maybe · “depends on my shift”</span><span><span class="bdg">? Not marked</span></span><span>›</span></div>
+      <div class="deskrow"><span>#12 Zoe</span><span class="lane"></span><span><span class="bdg">? Not marked</span></span><span>›</span></div>
+    </div>
+  </div></div></div></div>
+
+  <h3>The room’s other states</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Few parents in the app yet</b> <button class="mk new" data-note="Said once on the card, with the door to fix it. Rows without a parent stay blank, so the three real answers aren’t buried. Rep teams: invitations go out from each player’s Guardians card (Stage 4 ruling 4).">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="fam newbox" data-note="3 of 13 connected. When nobody is connected it reads ‘No parent is in the app yet, so no family can answer.’ with the same link.">
+          <p class="fl"><b>Families</b> · 2 answered · 1 hasn’t · 10 players have no parent in the app</p>
+          <span class="lk">Invite parents from the Roster →</span></div>
+        <div class="samebar">Count chips, All in, Reset and the rows · unchanged</div>
+      </div></div></div></div>
+    <div style="flex:1;min-width:300px;max-width:640px"><div class="tw" style="margin-top:22px"><table class="t" style="min-width:0">
+      <tr><th>When</th><th>The room</th></tr>
+      <tr><td>The event has started</td><td>The family lines stay (they explain your marks). Use family answers stays until the event ends. Remind goes.</td></tr>
+      <tr><td>Cancelled</td><td>The Families card and lines go. Answers are kept, and come back if you put the event back on.</td></tr>
+      <tr><td>A player leaves the roster</td><td>Their row goes, as today, with their family’s answer.</td></tr>
+      <tr><td>A call-up player</td><td>No family line and not counted as “no parent in the app”.</td></tr>
+      <tr><td>Availability turned off</td><td>The card and lines go; your marks stay. Answers come back if it is turned on again this season.</td></tr>
+    </table></div>
+    <p class="muted">What would help most at first is a team-wide “who’s in the app” line on the Roster, with one Send invitation for everyone not yet invited. That changes the Roster, outside this stage. It is listed as a follow-up, not an ask.</p></div>
+  </div>
+</section>
+
+<!-- ============ 3 · TURNING IT ON ============ -->
+<section class="pane" id="p3" hidden>
+  <h2>One switch per team, off by default, and no separate “ask” on each event</h2>
+  <p class="muted">The plan had two steps: a team switch, then the coach asking on each event (or ticking a box when making one). The drawing recommends one step. When the switch is on, families can answer every upcoming event it covers, and the coach only ever sends <b>reminders</b>. This is ask 1.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · Team settings → Sharing, off <button class="mk new" data-note="A new row in the Sharing section, under Schedule visibility, drawn from the same segmented control (the warm theme fills the chosen one in ink; 44 px on a phone). It appears only where Schedule visibility appears (the family layer is on for the team) and only with the guardian tier on. Head coach only, like the other Sharing rows.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="ctop"><span class="back">← Team</span><b style="text-align:right">Team settings</b></div>
+        <div class="bd"><div class="sec" style="padding:0;gap:0">
+          <div class="collhd">Sharing <span>Families · public page on</span></div>
+          <div class="setrow same"><span class="lb">Schedule visibility</span><p class="ds">Families in the app see games and practices.</p><span class="seg"><span>Staff only</span><span class="on">Families</span><span>Public</span></span></div>
+          <div class="setrow newbox" data-note="Three choices fold in the plan’s open practice question: games only, or games and practices. Off is the default for every team. The words under the label change with the choice.">
+            <span class="lb">Families say if they’re coming</span>
+            <p class="ds">Off: families don’t see In / Out / Maybe. Attendance works as it does today.</p>
+            <span class="seg"><span class="on">Off</span><span>Games</span><span>Games and practices</span></span></div>
+          <div class="setrow same"><span class="lb">Your team’s public page</span><p class="ds">On · riverdale-ridge/12u</p></div>
+        </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the words under the label for each case <button class="mk new" data-note="What families see, what the coach sees, that the book stays the coach’s, and what Off does to answers. No email goes out when a coach turns it on; families find the buttons on their team page.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd"><div class="sec" style="padding:0;gap:0">
+        <div class="setrow"><span class="lb">Families say if they’re coming</span>
+          <p class="ds">Parents in the app can answer In, Out or Maybe for every upcoming game and practice. You see their answers in Attendance; your own marks stay yours. 10 of 13 players have a parent in the app.</p>
+          <span class="seg"><span>Off</span><span>Games</span><span class="on">Games and practices</span></span></div>
+        <div class="setrow"><span class="lb">Turning it back off</span>
+          <p class="ds">“Families stop seeing In / Out / Maybe and you stop seeing their answers. Your marks stay. If you turn it on again this season, the answers come back.”</p></div>
+        <div class="setrow"><span class="lb">Nobody in the app yet</span>
+          <p class="ds">“No parent is in the app yet. Answers appear once you invite parents from each player’s Guardians on the Roster.”</p></div>
+        <div class="setrow"><span class="lb">Schedule visibility on Staff only</span>
+          <p class="ds">“Families can’t see the schedule, so they can’t answer. Set Schedule visibility to Families or Public first.”</p>
+          <span class="seg dis"><span>Off</span><span>Games</span><span>Games and practices</span></span></div>
+      </div></div></div></div></div>
+  </div>
+  <div class="read">
+    <div class="w"><h4>Why one switch</h4><ul>
+      <li>It removes a whole state, “not asked yet”. With a per-event ask, a parent sees buttons on some events and not others, and has to wonder why.</li>
+      <li>The event form, which has no family toggle today, stays as it is.</li>
+      <li>The coach sends one kind of message, a reminder, with its 24-hour limit (tab 4). The first reminder does what “ask” would have done.</li></ul></div>
+    <div class="g"><h4>What it costs</h4><ul>
+      <li>Families can answer events the coach never meant to ask about. Those answers show only to the coach.</li>
+      <li>No email tells families a new event is open. They find it on their page, or when the coach reminds.</li></ul></div>
+    <div class="c"><h4>If you choose the plan’s shape (ask 1 B)</h4><ul>
+      <li>An “Ask families” button on the event window’s Attendance row, and an “Ask families if they’re coming” tick under “This is a scrimmage” on the event form.</li>
+      <li>Every row then has a fourth state, “not asked”, and the parent’s page shows buttons only on asked events.</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ 4 · REMINDING ============ -->
+<section class="pane" id="p4" hidden>
+  <h2>Remind the families who haven’t answered: one button, once a day, with an honest report</h2>
+  <p class="muted">The button is on the Families card. It reaches parents <b>in the app</b> of players who haven’t answered <b>and</b> whom you haven’t marked; your mark settles a player (ask 2). Each parent gets a note in the app and an email that says to open the app. The email cannot answer anything.</p>
+  <div class="pair">
+    <div><div class="cap"><b>1 · Confirm, in place</b> <button class="mk new" data-note="The card turns into its own confirm, the dues-reminder pattern: who gets it, what it says, who isn’t reminded and why, who gets the app note only, and the limit. One full-width action, the other two as links.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="fam newbox" data-note="Owen is the only player who hasn’t answered and isn’t marked. Ezra and Lily haven’t answered either, but the coach marked them In, so they are left alone. Nobody can be reminded for Zoe, Ian and Kai.">
+          <p class="fl"><b>Remind Owen’s family?</b></p>
+          <p class="fl">His 2 parents get a note in the app and an email: “Ridge 12U vs Lakeshore, Sat, Apr 24: is Owen coming? Answer on the team page.” One of them has turned off the team’s emails, so they get the app note only.</p>
+          <p class="fl">Ezra and Lily haven’t answered either, but you marked them In, so they aren’t reminded. Zoe, Ian and Kai have no parent in the app.</p>
+          <p class="hint" style="margin:0">You can remind again for this game after 24 hours.</p>
+          <span class="gh full">Send 1 reminder</span>
+          <div class="acts"><span class="lk">See what they’ll get</span><span class="lk">Cancel</span></div></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>2 · The report</b> <button class="mk new" data-note="Honest send report: families and parents, how many got the app note only (a count, never who), and when the button comes back, as plain text. Nothing here shows an email address.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="okc newbox" data-note="Parents can be more than families when both parents of a child are in the app. A reminder never goes to an address that has stopped or unsubscribed, and the build tests that (fail closed).">
+          <h5>Reminded Owen’s family (2 parents)</h5>
+          <p>1 got the note in the app only.</p></div>
+        <div class="fam">
+          <p class="fl"><b>Families</b> · 7 answered · 3 haven’t · 3 have no parent in the app</p>
+          <p class="fl" style="color:var(--dim)">Reminded at 4:12 p.m. You can remind again tomorrow at 4:12 p.m.</p>
+          <div class="acts"><span class="gh">Use 1 family answer</span></div></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>3 · Nobody left to remind</b> <button class="mk new" data-note="When every unmarked player’s family has answered, Remind goes and the line says so. Use family answers hides itself when there is nothing to copy. No reminders once the event has started.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="fam"><p class="fl"><b>Families</b> · every family you haven’t marked has answered · 3 players have no parent in the app</p></div>
+      </div></div></div></div>
+  </div>
+
+  <h3>What the parent gets</h3>
+  <div class="pair">
+    <div><div class="cap"><b>The email</b> · 375 px, a phone mail app <button class="mk new" data-note="A new family email through the family email door, which checks the team’s unsubscribe list and fails closed. The subject names the team and the event word (‘game’ or ‘practice’), not the child. The button opens the signed-in team page (a sign-in is asked for if needed), the same kind of link as today’s schedule-change email. It cannot answer. A parent with two children on the team gets one email naming both.">NEW</button></div>
+      <div class="fr w375"><div class="em">
+        <div class="meta"><b>From:</b> Riverdale Ridge Baseball<br><b>Subject:</b> Ridge 12U vs Lakeshore, Sat, Apr 24: is your player coming?</div>
+        <div class="cb"><i>RR</i>Riverdale Ridge Baseball</div>
+        <div class="cd">
+          <h6>Is Owen coming?</h6>
+          <div class="pn"><b>Ridge 12U vs Lakeshore</b><span class="sm">Sat, Apr 24 · 10:30 a.m.<br>Riverdale Park, Diamond 1</span></div>
+          <p>Owen’s coach asked families to say whether their player is coming. Open the team page and tap Answer.</p>
+          <p><span class="eb">Open the team page</span></p>
+          <p class="sm">You’ll be asked to sign in if you aren’t already.</p>
+          <div class="fp newbox" data-note="The footer the family email door builds today: who sent it and why, the reply line, the unsubscribe link. Whether a connected second parent’s copy also carries the Stage 3b Stop line is ask 14.">
+            <span>Sent by Riverdale Ridge Baseball because you’re connected to Owen’s team in the app.</span>
+            <span>Questions? Reply to coach.patel@example.com</span>
+            <span class="lk">Unsubscribe from Riverdale Ridge Baseball emails</span></div>
+        </div></div></div></div>
+    <div><div class="cap"><b>The parent’s bell</b> <button class="mk new" data-note="A new family bell kind beside the schedule-change kinds. Tapping it opens the team page at that event (tab 7, ‘Arriving from a reminder’). No push, by the standing rule.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="bell">
+          <div class="bi newbox"><span class="ic">🗓</span><span class="bt">Is Owen coming Sat, Apr 24?</span><span class="bb">Ridge 12U vs Lakeshore · Answer on the team page</span><span class="bw">4:12 p.m.</span></div>
+          <div class="bi"><span class="ic">⚠</span><span class="bt">Ridge 12U — Lakeshore is back on</span><span class="bb">Sat, Apr 24 · 10:30 a.m.</span><span class="bw">Mon</span></div>
+        </div></div></div></div></div>
+  </div>
+</section>
+
+<!-- ============ 5 · LINEUPS ============ -->
+<section class="pane" id="p5" hidden>
+  <h2>The lineup builder shows who is out, and says when a family’s Out came in after the lineup was saved</h2>
+  <p class="muted">The pool is “Not in the lineup”, every unplaced player, with no attendance on it today. With availability on, a pool pill gains a word, <b>Out</b> or <b>Maybe</b>, in the pool’s existing tag style (your mark first, then the family’s answer). The status strip gains one warning with a one-tap fix that changes only the lineup.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div class="before"><div class="cap"><b>Today</b> · lineup builder, phone, saved Tue, Apr 20 <button class="mk unc" data-note="As built: the status strip (it already warns when someone marked Out in the book is still in the lineup) and the Not in the lineup pool of plus pills, 44 px on a phone. Ava is in the pool because the coach marked her Out before saving.">UNCHANGED</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="ctop"><span class="back">← Lineups</span><b style="text-align:right">vs Lakeshore</b></div>
+        <div class="bd">
+          <div class="strip"><div class="sl"><span>Batting order 9 · Field 9 of 9</span><span class="chip ok">Ready</span></div></div>
+          <p class="soft">… the batting order and the field …</p>
+          <p class="ey">Not in the lineup · 4</p>
+          <div class="pool"><span class="pp"><span class="pl">+</span>Ava</span><span class="pp"><span class="pl">+</span>Noor</span><span class="pp"><span class="pl">+</span>Zoe</span><span class="pp"><span class="pl">+</span>Kai</span></div>
+        </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · Wednesday, after Maya’s family changed to Out <button class="mk new" data-note="New: one warning line in the strip, in the builder’s own sentence shape, with ‘Take Maya out’, which moves her to the pool and changes nothing in your attendance book. The pool words read your mark first, then the family’s answer. Only on a game’s lineup: the template editor uses the same pool and gets nothing, because a template has no event.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="ctop"><span class="back">← Lineups</span><b style="text-align:right">vs Lakeshore</b></div>
+        <div class="bd">
+          <div class="strip newbox" data-note="With two: ‘2 families said Out after you saved this lineup: Maya, Blake’ and ‘Take them out’. The lineup then asks who fills 2B, as it does today.">
+            <div class="sl"><span>Batting order 9 · Field 9 of 9</span><span class="chip due">Needs a look</span></div>
+            <div class="sl"><span class="warnw">⚠ Maya’s family said Out after you saved this lineup.</span><span class="gh">Take Maya out</span></div></div>
+          <p class="soft same">… the batting order and the field …</p>
+          <p class="ey">Not in the lineup · 4</p>
+          <div class="pool newbox" data-note="Words, not colour alone: ‘Out’ and ‘Maybe’ in the pool’s existing tag style. Ava’s Out is your mark; Noor’s Maybe is her family’s answer. A player with no answer, or whose family said In, looks as today.">
+            <span class="pp"><span class="pl">+</span>Ava <span class="ft">Out</span></span><span class="pp"><span class="pl">+</span>Noor <span class="ft">Maybe</span></span><span class="pp"><span class="pl">+</span>Zoe</span><span class="pp"><span class="pl">+</span>Kai</span></div>
+        </div></div></div></div>
+  </div>
+  <p class="muted">The event window’s Lineup row (“Lineup · Needs a look”) and the schedule row’s warning triangle use the same count: a family’s Out on a player you haven’t marked counts as Out, and a family’s change on a player you marked shows as the warning above.</p>
+</section>
+
+<!-- ============ 6 · THE COACH'S BELL ============ -->
+<section class="pane" id="p6" hidden>
+  <h2>The bell rings for an Out, or for a change close to the event. Never for a routine In.</h2>
+  <p class="muted">The bell says who and what. It never carries the family’s note: a note can hold health or family details, so it stays in the attendance room, where only coaches who mark attendance can see it (/legal).</p>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the coach’s bell <button class="mk new" data-note="A new coach bell kind, ‘Family answers’, in the ‘know’ group. Fires on an Out at any time, and on any change inside the last 48 hours before the event. Several within the hour bundle into one line per event, and one family answering Out to several events is one line. Tapping opens the event window on the attendance room. It reaches coaches who can mark attendance (head coach and assistants by default).">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="bell">
+          <div class="bi newbox" data-note="One Out. ‘Priya left a note’ without its words."><span class="ic">👪</span><span class="bt">Ava is Out for Sat vs Lakeshore</span><span class="bb">Priya left a note · now 9 of 13 in · 1 out · 1 maybe</span><span class="bw">Tue 4:10 p.m.</span></div>
+          <div class="bi newbox" data-note="A change inside 48 hours of the event, on a player the coach marked: it says the mark still stands."><span class="ic">👪</span><span class="bt">Maya’s family changed to Out for Sat vs Lakeshore</span><span class="bb">Was In · your mark still says In</span><span class="bw">Wed 9:02 p.m.</span></div>
+          <div class="bi newbox" data-note="Bundled: three answers inside the hour for one event become one line."><span class="ic">👪</span><span class="bt">3 families said Out for Thu, Apr 29 practice</span><span class="bb">Leo, Noor, Theo · now 6 of 13 in · 3 out</span><span class="bw">Yesterday</span></div>
+          <div class="bi newbox" data-note="Bundled per family: one parent answering Out to a run of events is one line, not one per event."><span class="ic">👪</span><span class="bt">Ava’s family said Out for 3 events</span><span class="bb">Sat, May 1 · Tue, May 4 · Sat, May 8</span><span class="bw">Mon</span></div>
+        </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · Account → Notifications, the coach card <button class="mk new" data-note="A new kind needs its own row, or the coach can’t change it. Defaults: bell on, email off, push off (the plan’s ‘bell-only by default’). The product has no per-kind digest, so ‘digest-friendly’ means the bundling; the weekly digest stays a later phase.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd"><div class="sec">
+        <p class="ey">As a coach</p>
+        <div class="tg"><span></span><span class="hd">Bell</span><span class="hd">Email</span><span class="hd">Push</span>
+          <span>Weekly summary</span><span class="bx on">✓</span><span class="bx on">✓</span><span class="bx"></span>
+          <span>Practice plans</span><span class="bx on">✓</span><span class="bx"></span><span class="bx"></span>
+          <span class="newbox" style="padding:2px 4px" data-note="Shown only to a coach whose team has availability on."><b>Family answers</b><br><span style="font-size:12px;color:var(--dim)">When a family says Out, or changes an answer in the 48 hours before an event.</span></span><span class="bx on">✓</span><span class="bx"></span><span class="bx"></span>
+        </div></div></div></div></div></div>
+  </div>
+</section>
+
+<!-- ============ 7 · PARENT SIDE ============ -->
+<section class="pane" id="p7" hidden>
+  <h2>The parent’s side: the sheet as drawn, plus the states the coach’s screens forced</h2>
+  <p class="muted">The Stage 4 sheet stays: grab line, the child’s name, three 52 px choices, a note. Redrawn here: <b>the schedule row</b> (it now carries the answer), <b>two children</b>, <b>the other parent answered</b>, <b>started</b>, <b>cancelled</b> and <b>arriving from a reminder</b>. The sheet’s hint is rewritten by /legal. The choices follow the coach’s sheet (icon, word, tick).</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div class="before"><div class="cap"><b>Today</b> · family team page, schedule card <button class="mk unc" data-note="As built in 4a: one list, Up next marked, past rows faded, cancelled struck.">UNCHANGED</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="th"><b>Ridge 12U</b><span>12–6–2</span></div>
+        <div class="sec"><p class="ey">Schedule</p>
+          <div class="up"><div class="ul">Up next</div><div class="row"><div class="m"><div class="t">Practice</div><div class="s">Tue, Apr 20 · 6:00 p.m. · Lakeview School field</div></div><span class="lk">Directions →</span></div></div>
+          <div class="row"><div class="m"><div class="t">vs Lakeshore</div><div class="s">Sat, Apr 24 · 10:30 a.m. · Riverdale Park, Diamond 1</div></div></div>
+          <div class="dv"></div>
+          <div class="row"><div class="m"><div class="t"><span class="strike">Practice</span> · Cancelled</div><div class="s">Tue, Apr 27</div></div></div>
+          <div class="dv"></div>
+          <div class="row"><div class="m"><div class="t">@ Oakville</div><div class="s">Sat, May 1 · 1:00 p.m. · Oakville Park</div></div></div>
+        </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · one child, availability on <button class="mk new" data-note="Each upcoming row gains the child’s answer on the right: a small pill inside a 44 px tap area. In is green and Maybe amber (the page’s own chip colours); Out is plain ink with an outline, so a parent’s own answer never looks like an error. ‘Answer’ when not answered yet. A cancelled event shows nothing. On Games only, practices show nothing.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="th"><b>Ridge 12U</b><span>12–6–2</span></div>
+        <div class="sec"><p class="ey">Schedule</p>
+          <div class="up"><div class="ul">Up next</div><div class="row"><div class="m"><div class="t">Practice</div><div class="s">Tue, Apr 20 · 6:00 p.m. · Lakeview School field</div></div><span class="hit newbox" data-note="Answered In. Tap to change until the practice starts."><span class="ans in">In ✓</span></span></div><span class="lk">Directions →</span></div>
+          <div class="row"><div class="m"><div class="t">vs Lakeshore</div><div class="s">Sat, Apr 24 · 10:30 a.m. · Riverdale Park, Diamond 1</div></div><span class="hit newbox" data-note="Not answered yet. ‘Answer’ matches the email’s words."><span class="ans ask">Answer</span></span></div>
+          <div class="dv"></div>
+          <div class="row same"><div class="m"><div class="t"><span class="strike">Practice</span> · Cancelled</div><div class="s">Tue, Apr 27</div></div></div>
+          <div class="dv same"></div>
+          <div class="row"><div class="m"><div class="t">@ Oakville</div><div class="s">Sat, May 1 · 1:00 p.m. · Oakville Park</div></div><span class="hit"><span class="ans out">Out</span></span></div>
+        </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · two children on one rep team <button class="mk new" data-note="Siblings on one team share the card (4a). The answer is per child, so each upcoming row gets one line per child. One reminder email and one bell line per parent per event, naming both children.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="th"><b>Ridge 12U</b><span>12–6–2</span></div>
+        <div class="sec"><p class="ey">Schedule</p>
+          <div class="row"><div class="m"><div class="t">vs Lakeshore</div><div class="s">Sat, Apr 24 · 10:30 a.m. · Riverdale Park, Diamond 1</div></div></div>
+          <div class="kid"><b>Ezra</b><span class="hit"><span class="ans in">In ✓</span></span></div>
+          <div class="kid"><b>Lily</b><span class="hit"><span class="ans ask">Answer</span></span></div>
+        </div>
+      </div></div></div></div>
+  </div>
+
+  <div class="pair">
+    <div><div class="cap"><b>The other parent answered</b> <button class="mk res" data-note="RESTYLED from the Stage 4 sheet. The current answer is the child’s, so whoever opens the sheet sees it, with the other parent’s first name and the day (not the clock time). The other parent’s note is not shown, only that one exists (ask 6). Either parent can change it; latest wins, and a change clears the earlier parent’s note.">RESTYLED</button></div>
+      <div class="fr w390"><div class="ak" style="padding-top:20px">
+        <div class="sheet"><div class="grab"></div>
+          <div class="shd"><div><b>Ava</b><div class="s" style="font-size:12.5px;color:var(--dim)">vs Lakeshore · Sat, Apr 24 · 10:30 a.m.</div></div><span class="x44">Close</span></div>
+          <p class="soft newbox" style="padding:4px 6px" data-note="First name from the other parent’s account. Both parents already see who is connected (Stage 4 ruling 7).">Priya answered Out on Tuesday and left a note for the coach.</p>
+          <div class="choice"><span class="ic">✓</span>In</div><div class="choice on"><span class="ic">⊘</span>Out<span class="tick">✓</span></div><div class="choice"><span class="ic">?</span>Maybe</div>
+          <div class="in ph">Your note for the coach (e.g. leaving early)</div>
+          <p class="hint newbox" data-note="/legal’s rewrite of the Stage 4 hint. It names everyone who sees the answer. The health line is a request, not a block, so the privacy policy must not promise notes are health-free. The note is capped short.">Your team’s coaches see your answer and note. Priya, Ava’s other parent, sees the answer but not your note. Other families see neither. Please don’t put health details here; tell the coach directly.</p>
+          <p class="hint" style="margin:0">A tap saves. Tap your answer again to clear it.</p>
+        </div></div></div></div>
+    <div><div class="cap"><b>Started</b> <button class="mk new" data-note="From the start time the answer shows and can’t be changed; the coach’s book is the record from then on. An unanswered child shows ‘No answer’, muted.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd"><div class="sec">
+        <div class="up"><div class="ul">Now</div><div class="row"><div class="m"><div class="t">vs Lakeshore</div><div class="s">Started 10:30 a.m. · Riverdale Park, Diamond 1</div></div><span class="ans closed">In</span></div>
+          <p class="hint" style="margin:0">Answers closed when the game started. To tell the coach something now, tell them directly.</p></div>
+        <div class="kid"><b>Lily</b><span class="ans closed">No answer</span></div>
+      </div></div></div></div></div>
+    <div><div class="cap"><b>Cancelled after answering</b> <button class="mk new" data-note="A cancelled event shows no answer, whatever was said. If the coach puts it back on, the earlier answer comes back (it is kept, only hidden).">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd"><div class="sec">
+        <div class="row"><div class="m"><div class="t"><span class="strike">vs Lakeshore</span> · Cancelled</div><div class="s">Sat, Apr 24</div></div></div>
+      </div></div></div></div></div>
+    <div><div class="cap"><b>Arriving from a reminder</b> <button class="mk new" data-note="The reminder’s bell or email lands on the team page scrolled to that event, with its row marked, the way the page already scrolls to Up next. The sheet doesn’t open by itself. The line shows only while the event is still open and unanswered; with two children it names the one who hasn’t answered.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd"><div class="sec">
+        <div class="row resbox" style="padding:0 6px"><div class="m"><div class="t">vs Lakeshore</div><div class="s">Sat, Apr 24 · 10:30 a.m. · Riverdale Park, Diamond 1</div></div><span class="hit"><span class="ans ask">Answer</span></span></div>
+        <p class="hint" style="margin:0">The coach asked whether Owen is coming.</p>
+      </div></div></div></div></div>
+  </div>
+</section>
+
+<!-- ============ 8 · HOUSE LEAGUE ============ -->
+<section class="pane" id="p8" hidden>
+  <h2>House league: recommended for a later stage, drawn here so you can see the shape</h2>
+  <p class="muted">A house-league parent can already join (Stage 4 ruling 3), so the parent side would be the same sheet. The coach side cannot be the same drawing: the house-league coach’s page has no attendance book, no lineup and no settings screen, so there is nothing to copy answers into, no lineup to warn, and nowhere for the coach to turn it on.</p>
+  <div class="pair">
+    <div><div class="cap"><b>If house league comes in (ask 4 B)</b> · the coach’s team page <button class="mk new" data-note="The lighter house-league shape: the same count on the read-only Schedule rows (families’ answers only; house league has no coach marks), and a tap opens a read-only Who’s coming sheet. Remind works the same way.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <p class="ey">U9 Rookie · House League 2027</p>
+        <div class="th"><b>Otters</b><span class="lk" style="min-height:0">Subscribe</span></div>
+        <div class="clist">
+          <div class="cr"><span class="tt">Otters vs Herons · 10:30 a.m.</span><span class="br"></span><span class="ld">Sat, Apr 24 · Riverdale Park, Diamond 1 ·</span><span class="cp newbox" data-note="Counted from family answers only."><span class="hcnt">6 of 10 in · 1 out</span></span></div>
+          <div class="cr"><span class="tt">Practice · 6:00–7:00 p.m.</span><span class="br"></span><span class="ld">Tue, Apr 27 · Lakeview School field</span></div>
+        </div></div></div></div></div>
+    <div><div class="cap"><b>If house league comes in</b> · Who’s coming <button class="mk new" data-note="Read-only, grouped by answer. The club, not the coach, would turn it on (per season, in the club’s house-league settings), because the house-league coach has no settings screen. That makes it a club-admin screen change too.">NEW</button></div>
+      <div class="fr w390"><div class="ak" style="padding-top:20px"><div class="sheet"><div class="grab"></div>
+        <div class="shd"><div><b>Who’s coming</b><div class="s" style="font-size:12.5px;color:var(--dim)">Otters vs Herons · Sat, Apr 24</div></div><span class="x44">Close</span></div>
+        <div class="kid"><b>In · 6</b><span class="s" style="font-size:12.5px;color:var(--dim)">Aarav, Leo, Mia, Sam, Ivy, Ben</span></div>
+        <div class="kid"><b>Out · 1</b><span class="s" style="font-size:12.5px;color:var(--dim)">Ava · “away this weekend”</span></div>
+        <div class="kid"><b>Haven’t answered · 2</b><span class="s" style="font-size:12.5px;color:var(--dim)">Noah, Ella</span></div>
+        <div class="kid"><b>No parent in the app · 1</b><span class="s" style="font-size:12.5px;color:var(--dim)">Zac</span></div>
+        <span class="gh full">Remind 2</span>
+      </div></div></div></div>
+  </div>
+  <div class="read">
+    <div class="w"><h4>Why later (ask 4 A)</h4><ul>
+      <li>It is a different coach screen, outside the coaches portal and kept apart from it on purpose by a build check. Every piece of tabs 2 to 6 would need a second version.</li>
+      <li>The switch would live with the club, so it changes a club-admin screen too.</li>
+      <li>House-league games and practices are kept in two other records, so answers need a second kind of event from day one.</li>
+      <li>No house-league team has a parent connected yet either; the demo league has none.</li></ul></div>
+    <div class="g"><h4>What waiting costs</h4><ul>
+      <li>House league is where most families are. A house-league parent in the app sees no In / Out / Maybe until the later stage.</li>
+      <li>The Stage 4 drawing showed an “Is Aarav coming?” ghost on a house-league page, which may have set an expectation.</li></ul></div>
+    <div class="c"><h4>Either way</h4><ul>
+      <li>The parent’s sheet is one drawing for both.</li>
+      <li>Build the answer record so it can hold a house-league game or practice, so the later stage adds screens, not a second record.</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ 9 · WHAT IT REACHES ============ -->
+<section class="pane" id="p9" hidden>
+  <h2>Every screen this touches, and what the law says about the reminder and the answers</h2>
+  <h3>Screens a change reaches</h3>
+  <div class="tw"><table class="t">
+    <tr><th>Screen</th><th>Whose</th><th>What changes</th><th>Shared with</th></tr>
+    <tr><td>Schedule list rows</td><td>Coach</td><td>The count on line two (tab 1)</td><td>The club admin’s read-only rep schedule uses the same rows without the extras: it stays the same</td></tr>
+    <tr><td>Event window, Attendance and Lineup rows</td><td>Coach</td><td>A Families line; the Lineup row counts a family’s Out</td><td>Nothing else</td></tr>
+    <tr><td>Attendance room and the four-choice sheet</td><td>Coach</td><td>The Families card, a line per player, the family box, “Not marked” (ask 9)</td><td>Game day’s “Who’s here” uses the same four choices: only the word in ask 9 reaches it</td></tr>
+    <tr><td>Lineup builder</td><td>Coach</td><td>Out / Maybe words in the pool, the after-saved warning</td><td>The pool is shared with the template editor, which gets nothing</td></tr>
+    <tr><td>Team Overview “Next up”</td><td>Coach</td><td>The same count (ask 8)</td><td>Nothing else</td></tr>
+    <tr><td>Team settings → Sharing</td><td>Head coach</td><td>The switch (tab 3)</td><td>Nothing else</td></tr>
+    <tr><td>Account → Notifications</td><td>Every coach</td><td>A “Family answers” row (tab 6)</td><td>The account page is shared by both portals; the row shows only to coaches with availability on</td></tr>
+    <tr><td>Family team page</td><td>Parent</td><td>The answer on each row, the sheet (tab 7)</td><td>Rep and house league share it; house league’s rows wait for ask 4</td></tr>
+    <tr><td>Family bell and a new family email</td><td>Parent</td><td>The reminder (tab 4)</td><td>Through the one family email door</td></tr>
+    <tr><td>Not touched</td><td colspan="3">Club admin screens; the house-league coach’s page unless ask 4 B; closed seasons (live season only, no shelf, no year). Reliability stats read the book: a family’s answer reaches them only after a coach copies it in (ask 3).</td></tr>
+  </table></div>
+
+  <h3>The reminder is an email about a child</h3>
+  <div class="read">
+    <div class="w"><h4>Which side of the line</h4><ul>
+      <li>It says only that an event is coming up and the coach asked whether the player is coming. No offer, price or sign-up. /legal reads it as not a commercial message on its face.</li>
+      <li>It goes only to parents who joined the app (ask 2), through the family email door, which honours the team’s unsubscribe list and fails closed. The build rule: no reminder path that ignores a stop or an unsubscribe, tested.</li>
+      <li>The join tick-box (“email me about {child}’s team”) is a privacy consent, not CASL consent, so the reminder doesn’t lean on it.</li></ul></div>
+    <div class="g"><h4>Open CASL flags you hold (second-parent memo)</h4><ul>
+      <li><b>(a)</b> The reply path needs a real address. Closed for teams with the tier on (O1, O4).</li>
+      <li><b>(b)</b> An unsubscribe matches the exact address; a “+alias” of it isn’t caught.</li>
+      <li><b>(d)</b> A mixed first- and second-parent address gets the wrong Stop wording.</li>
+      <li><b>(e)</b> A second parent’s copy carries two footnotes. The reminder would be one more email with both, unless ask 14 drops the Stop line for parents who joined.</li>
+      <li class="muted">(c), the sign-up and stop race, was closed by the Stage 4a database rule.</li></ul></div>
+    <div class="c"><h4>The answer is a record about a child</h4><ul>
+      <li>/legal wrote in Stage 4 that the parent tick-box is enough while the page shows team, times and places, and stops being enough when it shows attendance or notes. 4b crosses that on a literal reading. The read side is mild; the write side (a stranger answering Out) is the risk. Ask 5.</li>
+      <li>The bell carries no note (tab 6). The sheet asks parents to keep health details out.</li>
+      <li>The consent words need three lines added (/legal draft 0.2): a parent can answer once the coach turns it on; the coaches see answers and notes and when; the other parent sees your name and answer, not your note. New joins only; the sheet’s hint is the notice for parents who joined earlier.</li>
+      <li>How long notes and answers are kept is not chosen (ask 15). No retention promise is published until a purge exists.</li></ul></div>
+  </div>
+
+  <h3>The facts this drawing rests on</h3>
+  <p class="muted"><span class="vh v">V</span> opened this session, at the line · <span class="vh h">H</span> a helper’s reading, not opened by hand</p>
+  <div class="tw"><table class="t">
+    <tr><th></th><th>Fact</th><th>Where</th></tr>
+    <tr><td><span class="vh v">V</span></td><td>Coach attendance words are In, Late, Out, No reply; the same option set feeds Game day’s Who’s here</td><td>lib/coach-schedule-vocab.ts:130-135 · components/coaches/attendanceOptions.ts:14-23</td></tr>
+    <tr><td><span class="vh v">V</span></td><td>The attendance room: five count chips, All in, Reset, rows with the badge and note flag, a tap opens the sheet, autosave</td><td>components/coaches/ScheduleAttendanceRoom.tsx:61-171</td></tr>
+    <tr><td><span class="vh v">V</span></td><td>Attendance row words; Lineup row “Needs a look”</td><td>lib/coach-schedule-sheet.ts:96-139, 178-190</td></tr>
+    <tr><td><span class="vh v">V</span></td><td>List row slots (mark, date lead, title, trail, Game day beside); the phone order puts the caption after the date on line two; no headcount today</td><td>components/coaches/ScheduleCalendarViews.tsx:251-329 · coaches.module.css:12480-12500</td></tr>
+    <tr><td><span class="vh v">V</span></td><td>Shipped chip and control styles drawn here: record chip, scrimmage chip, badge, filter, segmented control (warm = ink), pool pill and tag</td><td>coaches.module.css:12284-12300, 6466, 6847-6872, 6979-6992, 5490-5502, 9387, 7982-8003, 8333</td></tr>
+    <tr><td><span class="vh v">V</span></td><td>Overview Next up “9 of 12 in” / “Attendance not taken”, from the book</td><td>app/[orgSlug]/coaches/teams/[teamId]/page.tsx:1907-1909</td></tr>
+    <tr><td><span class="vh v">V</span></td><td>The lineup pool is “Not in the lineup”</td><td>lineups/[eventId]/page.tsx:1028</td></tr>
+    <tr><td><span class="vh v">V</span></td><td>Family chips: borderless 12% fills, 12px 700</td><td>app/(consumer)/family/family.module.css:635-647</td></tr>
+    <tr><td><span class="vh v">V</span></td><td>/legal: the tick-box stops being enough when the page shows attendance or notes</td><td>SIGNED_IN_FAMILY_STAGE4_DRAWINGS.html:707 · GUARDIAN_CONSENT_STAGE4.md:194</td></tr>
+    <tr><td><span class="vh v">V</span></td><td>The Stage 4 parent sheet (one state drawn: In, one child)</td><td>SIGNED_IN_FAMILY_STAGE4_DRAWINGS.html:488-496</td></tr>
+    <tr><td><span class="vh h">H</span></td><td>Attendance writes are a batch, need the attendance permission (head and assistant coaches), and are the only writer of the book</td><td>api/coaches/…/events/[eventId]/attendance/route.ts:53-112</td></tr>
+    <tr><td><span class="vh h">H</span></td><td>No family toggle on the event form; Sharing holds Schedule visibility</td><td>ScheduleEventForm.tsx · settings/page.tsx:953-1044</td></tr>
+    <tr><td><span class="vh h">H</span></td><td>Field positions: 9 for baseball and softball, 5 basketball, none for the generic pack</td><td>lib/sports.ts:184-346</td></tr>
+    <tr><td><span class="vh h">H</span></td><td>The family email door checks the unsubscribe list, fails closed, adds the unsubscribe footer</td><td>lib/family-email.ts:81-209</td></tr>
+    <tr><td><span class="vh h">H</span></td><td>Coach notification kinds need a label, a category and a settings row; no per-kind digest</td><td>lib/notification-labels.ts · AccountNotificationsClient.tsx:157-203 · lib/notify.ts:80-262</td></tr>
+    <tr><td><span class="vh h">H</span></td><td>A rep coach sees connections only per player on the Guardians card; no team count</td><td>components/coaches/PlayerGuardiansCard.tsx:153-220</td></tr>
+    <tr><td><span class="vh h">H</span></td><td>The house-league coach page: read-only, no attendance, no settings; events in other records</td><td>app/[orgSlug]/league/[seasonSlug]/team/[teamId]/page.tsx · lib/house-league-coach.ts</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ 10 · ASKS ============ -->
+<section class="pane" id="p10" hidden>
+  <h2>Your asks</h2>
+  <p class="muted">The four that change the shape of the stage come first. Pick an option on each, add a note if you want, then press <b>Make my answers</b> and paste the text back into the chat.</p>
+  <div id="asks"></div>
+  <div class="paste">
+    <div class="rw"><button class="btn-d pri" id="mk" type="button">Make my answers</button><button class="btn-d" id="cp" type="button">Copy</button><span id="cpmsg" class="muted" aria-live="polite"></span></div>
+    <textarea id="out" aria-label="Your answers, to paste back" readonly></textarea>
+  </div>
+</section>
+</div>
+
+<dialog class="note" id="nd"><div class="nh"><h3>About this</h3><button id="nx" type="button" aria-label="Close">×</button></div><div class="nb" id="nt"></div></dialog>
+
+<script>
+(function(){
+  var ASKS=[
+   {id:1,s:1,t:"Asking: one team switch, or a switch plus an ask on each event?",
+    r:"Tab 3. With one switch, families can answer every upcoming event it covers and the coach only sends reminders. The plan had a per-event ask and an event-form tick, which adds a “not asked yet” state to every row and to the parent’s page. The switch also settles the plan’s practice question (Off / Games / Games and practices). Turning it off hides answers; they come back if it is turned on again this season.",
+    o:[["A","One switch per team in Team settings → Sharing (Off / Games / Games and practices, default Off, head coach). Families can answer every upcoming event it covers. The coach’s only send is Remind","rec"],["B","The plan’s shape: the switch, then Ask families on each event, plus a tick on the event form",""]]},
+   {id:2,s:1,t:"Who does a reminder reach, and how often?",
+    r:"Tab 4. Only a parent in the app can answer. An email to an address that hasn’t joined, saying “open the app”, is an invitation in disguise, with the invitation rules, the Stage 3b Stop and the second-parent CASL questions. And a player you already marked is settled.",
+    o:[["A","Parents in the app of players who haven’t answered and whom you haven’t marked: a note in the app plus an email to their own address. Once per event per 24 hours for the whole staff, never after the start. The report names players with no parent in the app","rec"],["B","As A, but also the parents of players you marked (every family that hasn’t answered)",""],["C","Also email addresses on the child’s sign-up who haven’t joined (the plan’s wording): a second invitation email",""]]},
+   {id:3,s:1,t:"Two records for one fact: how does the coach’s book take families’ answers?",
+    r:"Tabs 1, 2 and 5. Kept from your ruling: answers live in their own record, and the book is never written without a coach’s tap. What the code changes: the coach’s sheet already saves on a tap, so tapping Out IS the accept, and the room already has All in. The count, lineup words and warnings read answers directly, so a coach who only wants a headcount never accepts anything. Reliability stats read the book, so an answer reaches them only once a coach copies it in.",
+    o:[["A","No Accept buttons. One “Use N family answers” button copies answers only into players you haven’t marked (Maybe stays Not marked), with Undo; a tap in the sheet takes one player. Only families write family answers; a phone call goes in your book","rec"],["B","The plan’s shape: an Accept button on every row, plus Accept all answers",""],["C","No copying at all: answers show beside the book, and the coach marks the book by hand as today",""]]},
+   {id:4,s:1,t:"House league: in 4b, or its own stage after?",
+    r:"Tab 8. The house-league coach page has no book, no lineup and no settings, sits outside the portal, and keeps events in other records. Its parents can already join.",
+    o:[["A","Rep teams in 4b. House league is its own small stage after, as tab 8 draws it (read-only count, Who’s coming, Remind, a club switch). Answers are stored so they can hold house-league events from the start","rec"],["B","Both in 4b, with tab 8’s lighter house-league shape and a club-admin switch",""]]},
+   {id:5,s:0,t:"Is the parent tick-box still enough once answers are on the page?",
+    r:"Tab 9. /legal (Stage 4): the tick-box “stops being enough the day the page shows attendance, notes or medical details”. /legal now: the read side of 4b is mild; the write side is the risk, because a stranger on a rep team could answer Out and the count and lineup words would show it with no coach tap. A rep address is one the coach typed; a house-league address came from the family’s own sign-up.",
+    o:[["A","Enough for 4b. A parent sees only their own child’s answer, the other connected parent’s first name and answer, and their own note. If that grows to other families, the coach’s marks or someone else’s note, the club must confirm the parent first","rec"],["B","Not enough for rep teams. On a rep team the coach typed the address, so a parent can answer only after the coach confirms them on the Guardians card. House league stays tick-box only, as the address came from the child’s sign-up",""]]},
+   {id:6,s:0,t:"Two parents answer differently",
+    r:"Tabs 2 and 7. Latest wins (ruled). The open question was only how it shows. /legal: show the day, not the clock time, and keep each parent’s note from the other.",
+    o:[["A","The coach sees the latest answer with who and which day, plus “earlier: In (Dev, Mon)”. A parent sees the other parent’s answer, first name and day, and that they left a note, not its words. A change clears the earlier parent’s note","rec"],["B","The coach sees the latest only. Parents see the answer without a name",""],["C","Also show each parent’s note to the other",""]]},
+   {id:7,s:0,t:"When does a row turn red?",
+    r:"Tab 1. A low “in” mostly means families haven’t answered, so the rule counts outs. Field positions exist for baseball and softball (9) and basketball (5); every other sport has none.",
+    o:[["A","“5 out · at most 8 can play” in red when players not out are fewer than the sport’s field positions. No red for a sport with no positions","rec"],["B","A number the coach sets in Team settings → Game day",""]]},
+   {id:8,s:0,t:"How the count reads, and the Overview",
+    r:"Tabs 1 and 2. One count per player: your mark first (In or Late is in), else the family’s answer. “9 of 13 in · 1 out · 1 maybe”, no zeros, no question marks; the room names who hasn’t answered.",
+    o:[["A","As drawn, and the team Overview’s “Next up” counts the same way while availability is on","rec"],["B","As drawn, but the Overview keeps counting the book only",""]]},
+   {id:9,s:0,t:"Rename the coach’s “No reply”",
+    r:"Tab 2. Beside “Family said In”, the coach’s “No reply” reads as the family’s non-answer. One spelling everywhere means the rename reaches every screen with the word: the room, the sheet, the Attendance row, the Overview, Game day’s Who’s here.",
+    o:[["A","“Not marked”, everywhere, for every team (it is true with or without families in the app)","rec"],["B","Keep “No reply”, and rely on the “Family said” wording",""]]},
+   {id:10,s:0,t:"An event moves to a new time or day",
+    r:"Not drawn yet. An In given for 6:00 p.m. may not hold at 9:00 a.m. Families already get the schedule-change bell and email.",
+    o:[["A","A new day clears the answers (the family sees Answer again, and the schedule-change notice says so). A new time on the same day keeps them","rec"],["B","Always keep them, flagged “answered before the change” to the coach",""],["C","Any change clears them",""]]},
+   {id:11,s:0,t:"Who sees answers, and who can act",
+    r:"Managers, treasurers and helpers can’t mark attendance today. The schedule count is a number; the room shows names and notes.",
+    o:[["A","The count on schedule rows: anyone on the staff who sees the schedule. The room’s family lines, Use family answers, Remind and the bell: coaches who can mark attendance (head coach and assistants)","rec"],["B","Everything, the count included, only for coaches who can mark attendance",""]]},
+   {id:12,s:0,t:"The coach’s bell",
+    r:"Tab 6. An Out, or any change in the last 48 hours, never a routine In; bundled per event within the hour and per family across events; bell on, email and push off. /legal: no note words in the bell.",
+    o:[["A","As drawn, with a Family answers row in Account → Notifications, and “left a note” instead of the note","rec"],["B","As drawn, but show the note in the bell (never in an email)",""]]},
+   {id:13,s:0,t:"The lineup builder",
+    r:"Tab 5. The pool is “Not in the lineup” and shows no attendance today.",
+    o:[["A","Out and Maybe words on a game lineup’s pool (not templates), and the “said Out after you saved this lineup” warning with a one-tap Take out that changes only the lineup","rec"],["B","The warning only, no words in the pool",""]]},
+   {id:14,s:0,t:"A second parent who joined the app: does the reminder carry the Stage 3b Stop line?",
+    r:"Tab 4 and tab 9 (flags d and e). Ruling 8 kept the Stop line after joining, and Stop also removes the parent from the app. /legal: a parent who only wants fewer emails would lose the app; one who joined ticked the box themselves.",
+    o:[["A","Parents who joined get the team’s Unsubscribe line only. The Stop line stays on copies that go to a second address that hasn’t joined (this changes ruling 8 for joined parents)","rec"],["B","Keep ruling 8: the Stop line on every second parent’s copy, joined or not",""]]},
+   {id:15,s:0,t:"How long notes and answers are kept",
+    r:"Tab 9. Nothing is chosen and no purge exists. /legal follows the friend-request precedent.",
+    o:[["A","The note’s words are deleted 30 days after the event. The answer, who and when are kept until the season is finished plus 60 days. Leaving or being removed clears that parent’s notes","rec"],["B","Keep everything for the life of the season, deleted with it",""]]}
+  ];
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask'+(a.s?' shape':'');
+    var h='<h3><span class="no">Ask '+a.id+'</span>'+a.t+(a.s?'<span class="tag">changes the shape</span>':'')+'</h3><p class="rides">'+a.r+'</p><div class="opts">';
+    a.o.forEach(function(o){h+='<label class="'+o[2]+'"><input type="radio" name="a'+a.id+'" value="'+o[0]+'"'+(o[2]?' checked':'')+'><span><b>'+o[0]+'.</b> '+o[1]+'</span></label>';});
+    h+='</div><textarea id="n'+a.id+'" aria-label="Note for ask '+a.id+'" placeholder="Note (optional)"></textarea>';
+    d.innerHTML=h;host.appendChild(d);
+  });
+  var tabs=document.getElementById('tabs');
+  tabs.addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(!b)return;
+    [].forEach.call(tabs.querySelectorAll('button'),function(x){x.setAttribute('aria-selected',x===b?'true':'false')});
+    [].forEach.call(document.querySelectorAll('section.pane'),function(s){s.hidden=s.id!==b.getAttribute('data-t')});
+    var top=tabs.offsetTop;if(window.scrollY>top)window.scrollTo(0,top);});
+  [].forEach.call(document.querySelectorAll('[data-note]:not(button)'),function(el){el.setAttribute('role','button');el.setAttribute('tabindex','0');});
+  function openNote(el){document.getElementById('nt').textContent=el.getAttribute('data-note');var d=document.getElementById('nd');if(d.showModal)d.showModal();}
+  document.addEventListener('click',function(e){
+    var v=e.target.closest('.sw button');
+    if(v){var val=v.getAttribute('data-v');document.body.setAttribute('data-view',val);
+      [].forEach.call(document.querySelectorAll('.sw button'),function(x){x.setAttribute('aria-pressed',x.getAttribute('data-v')===val?'true':'false')});return;}
+    var m=e.target.closest('[data-note]');
+    if(m){openNote(m);}
+  });
+  document.addEventListener('keydown',function(e){if(e.key!=='Enter'&&e.key!==' ')return;var m=e.target.closest&&e.target.closest('[data-note]:not(button)');if(m){e.preventDefault();openNote(m);}});
+  document.getElementById('nx').onclick=function(){document.getElementById('nd').close()};
+  document.getElementById('mk').onclick=function(){
+    var L=['Signed-in family accounts Stage 4b drawings, my answers:'];
+    ASKS.forEach(function(a){var c=document.querySelector('input[name=a'+a.id+']:checked');var n=document.getElementById('n'+a.id).value.trim();
+      L.push('Ask '+a.id+': '+(c?c.value:'(none)')+(n?' — '+n:''));});
+    document.getElementById('out').value=L.join('\n');};
+  document.getElementById('cp').onclick=function(){
+    var t=document.getElementById('out');var msg=document.getElementById('cpmsg');
+    function sel(){t.select();msg.textContent='Selected. Press Ctrl+C.';}
+    if(navigator.clipboard&&t.value){navigator.clipboard.writeText(t.value).then(function(){msg.textContent='Copied.'},sel);}else{sel();}};
+})();
+</script>
