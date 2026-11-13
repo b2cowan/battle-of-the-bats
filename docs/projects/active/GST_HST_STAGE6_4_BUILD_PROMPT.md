@@ -471,7 +471,7 @@ Research reads, not a professional's sign-off. **Both applied to §6 on 2026-11-
        cancel sentence (the Terms say the same); the rule should read "never say a payment was received, never call it a receipt".
        Three small owner questions are in that file (a "keep this transactional" line on the template description; the rule's
        wording; one optional privacy-policy clause about who sees "Bought by").
-- [ ] Part B — the yearly reminder, Québec — BUILT 2026-11-13 (/legal + /accounting applied; no migration). Tests:
+- [x] Part B — the yearly reminder, Québec — COMMITTED `4a0444c03` 2026-11-13 (simplify + review + legal + accounting applied; no migration). Tests:
   `tests/unit/gst-hst-6-4-renewal-reminder.test.ts` (43) + the `purchase` column in `billing-location-every-path-guard.test.ts`.
   Hand-over notes for the walk:
   - **Built as:** rules + words + the once-only run in `lib/renewal-reminder.ts`; the reads in `lib/renewal-reminder-server.ts`;
@@ -509,6 +509,25 @@ Research reads, not a professional's sign-off. **Both applied to §6 on 2026-11-
     now reads the face spread first and the fixed block only added to its foot.
   - **Repo-wide lint step** in `verify:changed` crashes on a missing `react-hooks` plugin config (not this build's files);
     `lint:focused` on this build's files: 0 errors.
+  - **Close session 2026-11-13 (`4a0444c03`):** `verify:changed` still ends red on the known, not-this-build workspace-flip-guard
+    entries; typecheck clean; 224 tests (+2 pins) green.
+    - **/simplify changed:** the Québec 409 body is built once (`regionClosedResponse`, used by the gate and the in-place preview);
+      the reminder's three stored reads run together; the "already told" accounts are dropped AFTER the one-per-account pick (so the
+      pick never flips) and no longer cost a Stripe read each day; the two per-account reads in the run go in parallel; `DAY_MS`,
+      the 31-day constant and one `ms` helper named once; `planLineFigures` hands its taxes back as read. **Declined:** moving
+      `money` out of `purchase-details.ts` (an identical `formatCents` sits in `console-money.ts`, which pulls in four heavy
+      modules — a shared leaf would touch other sessions' files; one-line call for a later tidy); making the gate's default
+      "purchase" (the census pins today's doors; a design change); previewing only after the cheap Stripe checks; a shared
+      budgeted-sweep helper; a `retryable` set shared with `plan-upgrade.ts`.
+    - **/review found and fixed:** (1) **a Québec buyer in the Premium → Club window was stuck** — the refusal removed the address
+      fields and left only Cancel; the fields now stay (changing the province asks again). (2) the next-season stamp lookup sent up
+      to 500 ids in one URL — now a hundred at a time, so it cannot take the whole step down. (3) a comment overclaimed what the
+      "already told" filter protects; corrected. Both pinned in the test.
+    - **/review noted, not changed (watch in the walk / scale):** the reads cap at 500 rows before the filter (past 500 yearly
+      accounts inside 37 days it needs a paged read); a no-cycle row is read only past 31 days, so a job down that long misses it
+      (decision 2 above); `planLineFigures` would count a proration line on the plan item and would overstate an inclusive-tax
+      line (no inclusive price exists; a pending proration is not expected on a yearly renewal — the walk's upgrade-then-reminder
+      case can look); a claim that lands in the database but loses its response is not released (needs a network fault).
 - [x] Test-mode answers (a) (b) (c) from 3.2 (read-only, from test-mode events 2026-11-13):
   - **(a)** A trial's $0 first invoice reaches paid and fires **both** `invoice.paid` and `invoice.payment_succeeded`
     (32 of 32 seen). So does every other paid invoice.
