@@ -460,6 +460,84 @@ Build on the existing family team page; extend the `FamilyScheduleEntry` DTO (an
        sign-in, so a pre-filled name would show to anyone holding the link. Same outcome, nothing disclosed.
     5. Words added beyond the drawing: the day reads "today" / "yesterday" / "on Tuesday" (within a week) / "on Apr 2". /marketing
        confirms in Part 9.
-- Session 2 (Parts 4–5): not started.
+- **Session 2 (Parts 4–5): COMMITTED 2026-11-13 on `dev`: A `b5d121f0c` (the build, mig 479, 37 files), B = the commit that holds this
+  block (records). Mig 479 is on DEV only; prod step in `MANUAL_PROD_STEPS` (BEFORE this code). Simplify + review applied the same day
+  (below). Not pushed.** PM UX plan presented first.
+  - **O3 asked and RULED (owner, 2026-11-13): "Same as Schedule".** Found: `canManageSchedule` (`scheduleManage`) is ON by default
+    for every assistant AND every manager (`lib/coach-capabilities.ts:176,270,284`), and a manager with `manageStaff` can hand it to a
+    treasurer or helper (it is an "everyday" grant, `coach-staff-delegation.ts`). The owner chose the Schedule visibility row's exact
+    gate anyway (anyone who can set Staff only already controls family answers in effect). Built: shown where Schedule visibility is
+    shown (the family layer), only with the tier on and a live season; edited by `canManageSchedule`; others read "{choice} — only
+    coaches who manage the schedule can change it."
+  - **Mig `479_the_book_remembers_when_a_player_was_marked.sql`** (dev, applied twice; `MANUAL_PROD_STEPS` entry, before the
+    Session 2 code): `rep_team_event_attendance.marked_at`. ⚠ Needed and not in the prompt: `updated_at` cannot say when a coach
+    marked a player, because the room saves the WHOLE roster in one batch (every row's `updated_at` moves on any tap). The PATCH now
+    reads the book first and moves `marked_at` only for a row whose status changed or that the coach tapped (`confirmed`, sent by the
+    RSVP sheet's pick, even the same choice); the rule is `bookMarkedAt` in the rules file. Backfilled from `updated_at` for marked rows.
+  - **Part 4.** `FamilyAnswersSettingRow` under Schedule visibility (same segmented control; the words per state from tab 3;
+    "turning back off" shows right after this coach turned it off; Staff only disables the two "on" choices and keeps Off choosable;
+    the PATCH refuses an "on" value while Staff only, 409). The count rides the schedule's one read (`scheduleHeadcounts`, counts
+    only, bulk reads, paged) as `familyHeadcounts`, omitted when off; the list row's caption shows it ("9 of 13 in · 1 out · 1 maybe";
+    red "5 out · at most 8 can play" in the event window's Out word style via `.sheetDoorTone[data-tone=out]`). `total` = the active
+    roster (no call-ups). The admin's read-only schedule passes no `headcountFor` (unchanged). Overview "Next up": when the next event
+    has a family count it shows "X of N in" (Late folded in) + Out + Maybe chips; otherwise today's chips, with "not marked".
+  - **Part 5.** Room read `GET .../events/[eventId]/family-answers` (tier 404, `attendance` capability, live season; read only).
+    `ScheduleAttendanceRoom`: Families card (counts, "⚠ N changed since you marked: Maya · Show" filtering the list, "Invite parents
+    from the Roster →" when nobody or few are in the app, **Use N family answers**, the toast with **Undo** inline in the card), grey
+    line under each player on a phone, amber when drifted, "Family hasn't answered"; at a desk (>900) the "Player · Family said ·
+    Your mark" head and the family cell in the row. `CoachRsvpSheet` family box + hint. The event window's Attendance row gains
+    "Families: 7 answered · 3 haven't · 1 changed" (amber "changed") until the start. Use stays until the event's end time (no end
+    time: its day). Cancelled: card and lines go.
+  - **The rename (ask 9):** `ATTENDANCE_WORD.unknown`, `COUNT_WORD`/label in `coach-schedule-sheet.ts` (and the all-unmarked
+    sentence: "12 not marked — Avery, …" instead of "12 haven't replied"), the practice run page, Overview's chip word, the history
+    panel, `MonthlyAttendanceChart`'s foot ("left Not marked"), 20 help lines in `coaches.tsx` (incl. keywords/searchText; "hasn't
+    replied" → "isn't marked"; the redundant "(not marked yet)" gloss removed). Game day's Who's here inherits the vocab. NOT touched:
+    the practice planner's "hasn't replied yes" (a different meaning: not In or Late) and code comments.
+  - **Session 1 item (d) done:** the parent's read offers a pill only on events of a season the child is rostered in (through the
+    account's own reach), so a team with two seasons open never offers one the writer refuses.
+  - **Tests:** `tests/unit/family-availability-coach.test.ts` 23/23 (count, red, drift, mark time, Use, card, words, who-sees-what,
+    tier-off gates, admin schedule unchanged, rename guard, the season filter); `family-availability.test.ts` 22/22 and
+    `coach-schedule-sheet.test.ts` updated, green. `tsc` clean. Lint: warnings only, all pre-existing in those files.
+  - **Done differently, and why:** (1) the room's family side is its OWN read (not added to the attendance/lineup GETs), so the
+    shared attendance payload (also Game day's) is untouched; the sheet asks for it only when the schedule read says families can
+    answer. (2) The coach side's day reads "Tue" (short weekday) and "today"; first name falls back to "a parent" (O2). (3) The
+    toast is inline in the Families card, not a floating pill, so it never sits on the autosave's Saved pill. (4) The Families
+    card's "Invite parents" link shows when nobody, or fewer than half, are in the app (the drawing shows it only on its "few" frame).
+  - **Owed to the walk / later:** the desk column widths (17rem family cell) need eyes at 720 px; Remind (Session 3) joins the card.
+  - **Session 2 simplify (4 angles: reuse, simplification, efficiency, altitude).** Applied: one day-wording classifier shared by the
+    parent's and the coach's day words; one first-name rule (the room and the sheet used two, one printed "null"); the room's "changed"
+    names come from the sheet; the "Use" list is emptied once at the source when the event has ended; `FW.changedPart` replaces the
+    index hack; two pass-through word wrappers gone; `BookStatus` is `RepAttendanceStatus`; the team passed in saves a second
+    `rep_teams` read on the schedule load; the Settings counts read together with the plan-coverage read; the room route's reads run
+    together. **Declined, with reasons:** sharing one segmented control with the Schedule visibility row (touches Settings' other row,
+    about a dozen hand-written copies exist; a later tidy); lifting the attendance route's private resolver into `lib/` (a shared
+    PATCH, third copy noted, do it when a fourth route needs it); folding the room's read into the attendance GET (would widen the
+    shared payload Game day reads; the separate read is on purpose); a name cache for `firstNames` (up to ~25 auth lookups per room
+    open; fine for now, measure at the walk); `familyStateFor` / `byPlayer` helper (churn in a tested type for little gain); the
+    Overview and schedule count sharing one view function (see the review notes); `plural` to `pluralize` (one call site fits).
+  - **Session 2 review (high-risk tier; 4 finders: security/tenancy, data/contract, concurrency/state, regression; gate: typecheck
+    clean, lint 0 errors, focused tests 116/116; `verify:changed` 22 failures, ALL other sessions' files).** No Critical or High.
+    **Fixed:** (1) a confirming tap made while a save is in flight was dropped (the unsaved-changes check ignored it); (2) the sheet's
+    optimistic mark time now uses the server's own rule (`bookMarkedAt`, with the status the server holds), so All in / Use / Undo no
+    longer flash a false amber; (3) the room hides itself if the switch is turned off while the window is open; (4) a finished
+    season's schedule read no longer carries headcounts (live season only); (5) Settings read could leave an unhandled rejection
+    (introduced by simplify); (6) paged reads of marks, answers and links are ordered (a second page could skip or repeat a row);
+    (7) the attendance writer no longer wipes a mark time a caller did not name; (8) the schedule row's count re-reads once on close
+    when families are on and attendance was saved (it went stale until a reload).
+  - **Review: declined / owner's call (go to the walk):** (a) the practice planner and its Groups room still say "haven't replied
+    yes" and "Who replied" (a different meaning, not In or Late; ask 9's scope: owner); (b) the team Overview's "Next up" never shows
+    the red "at most N can play" (ask 8 says the count; ask 7 puts the red on schedule rows; say if Overview should carry it);
+    (c) the coach's family answers are read once when the window opens (an answer arriving while it is open shows on reopen; a tap
+    then clears a warning for an answer the coach never saw); (d) Undo also resets a player the coach confirmed with a tap to the
+    same mark; (e) a coach who can mark attendance sees parents' first names and notes even without roster-PII access (ask 11 as
+    written: confirm); (f) Game day's one-tap Who's here cannot clear the amber (it sends no confirm; only before the start);
+    (g) demo and UAT fixtures write attendance without `marked_at`, so they cannot show the amber until a coach re-taps (seed it if
+    the demo should show it); (h) with Schedule visibility on Staff only the setting row keeps "Games" pressed while its help text
+    says families cannot answer (the answers return when visibility goes back); (i) "Not marked" is longer than "No reply": the
+    layout sweep on Game day's Who's here, the room's chips and the practice run page is owed at 360 px.
+  - **Owed to Session 3 (carried from Session 1, still true):** clear a parent's notes BEFORE any account delete; decide whether a
+    departed parent's answer shows by name; release the 24-hour Remind claim on a total send failure. Remind joins the Families card
+    the room already has (`FamiliesCard` in `ScheduleAttendanceRoom`). The lineup warning uses `rep_team_lineups.updated_at`: confirm
+    it reaches the page's type.
 - Session 3 (Parts 6–8): not started.
 - Session 4 (Part 9): not started.
