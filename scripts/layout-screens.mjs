@@ -371,10 +371,12 @@ async function openSectionEdits(page) {
   if (n) await page.waitForTimeout(300);
 }
 async function openPlayerSheet(page) {
-  const name = page.locator('h1 button[aria-haspopup="menu"]').first();
-  if (await name.count() === 0 || !(await name.isVisible())) return;
+  // ⚖ The name ▾ is the switcher at every width since navigation Phase 5b (2026-11-12): the roster sheet at ≤900, the switch
+  // list ("Players") above — either one is the open state this entry measures.
+  const name = page.locator('h1 button[aria-haspopup="menu"]').locator('visible=true').first();
+  if (await name.count() === 0) return;
   await name.click();
-  await page.locator('#coach-player-sheet').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.locator('#coach-player-sheet, [role="menu"][aria-label="Players"]').first().waitFor({ state: 'attached', timeout: 15_000 });
   await page.waitForTimeout(300);
 }
 async function openCallUpShelf(page) {
@@ -872,13 +874,12 @@ export const SCREENS = [
   { id: 'coach-player-family-edit', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?tab=family`,
     interact: openSectionEdits },
-  // The roster sheet, open (stage 5 · F2) — the team sheet's twin, scoped to the open sheet. Above
-  // 640 the name is plain text and the page keeps its select, so the scope matches nothing and the
-  // entry falls back to the page, as `coach-team-hub-switcher` does above 900.
+  // The player switcher, open (stage 5 · F2; navigation Phase 5b) — at ≤900 the roster sheet, the team sheet's twin; above 900 the
+  // switch list under the strip's name. Scoped to whichever is open.
   { id: 'coach-player-switcher', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}`,
     interact: openPlayerSheet,
-    scope: '#coach-player-sheet' },
+    scope: '#coach-player-sheet, [role="menu"][aria-label="Players"]' },
   { id: 'coach-lineup-builder',  session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/lineups/${c.gameEventId}` },
   // The builder's phone states (phone re-evaluation stage 3, 2026-09-21): a game with no lineup

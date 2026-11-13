@@ -18,14 +18,20 @@ const BASE = '/falcons/coaches/teams/t1';
 const T = 'app/[orgSlug]/coaches/teams/[teamId]/';
 
 describe('the band is reserved by the address (R1, R5)', () => {
-  it('the five tabbed rooms have a band; nothing else does', () => {
+  it('the five tabbed rooms and the player page have a band; nothing else does', () => {
     for (const room of ['accounting', 'history', 'development', 'lineups', 'practice']) {
       assert.equal(coachBandAt(`${BASE}/${room}`, BASE), true, room);
       assert.equal(coachBandAt(`${BASE}/${room}/`, BASE), true, `${room}/`);
     }
-    // One level down is a record, not a room: no tabs, no band (the strip carries the way back).
+    // ⚖ The player page is the one record with tabs, and it joins the rooms (navigation Phase 5b, owner 2026-11-12, reversing R5).
+    assert.equal(coachBandAt(`${BASE}/roster/p1`, BASE), true, 'roster/p1');
+    assert.equal(coachBandAt(`${BASE}/roster/p1/`, BASE), true, 'roster/p1/');
+    // One level down is otherwise a record, not a room: no tabs, no band (the strip carries the way back). No other two-segment
+    // address learns a band from the player page's rule — each drill-in of that shape is listed here, and the handout under it.
     for (const p of ['practice/ev1', 'practice/templates/t9', 'lineups/ev1', 'lineups/templates/t9', 'history/opponents/x', 'development/sessions/s1',
-      'roster', 'roster/p1', 'schedule', 'tryouts', 'documents', 'settings', 'season-end', '']) {
+      'practice/circuits/c1', 'tournaments/x1', 'tryouts/history', 'game/ev1', 'history/development', 'accounting/x',
+      'roster/p1/development/handout', 'roster/p1/development',
+      'roster', 'schedule', 'tryouts', 'documents', 'settings', 'season-end', '']) {
       assert.equal(coachBandAt(`${BASE}/${p}`, BASE), false, p);
     }
     assert.equal(coachBandAt('/falcons/coaches/billing', BASE), false);
@@ -81,14 +87,14 @@ describe('which tab bars wear the band (R5)', () => {
     assert.ok(bar.indexOf('const dock = band ?') < bar.indexOf('const tabsKey'), 'the dock is known before the effects that key on it');
     assert.match(bar, /useBandEmptyReport\(bandSlot, !!band, tabs\.length < 2\);/, 'a bar of one tab gives the band back');
   });
-  it('Money, Insights, Skills & goals, Lineups and Practice plans set band; the player page docks with sticky', () => {
+  it('Money, Insights, Skills & goals, Lineups, Practice plans and the player page set band (Phase 5b)', () => {
     assert.match(readCode(`${T}accounting/page.tsx`), /ariaLabel="Money"[\s\S]{0,900}?\n\s+band\n/);
     assert.match(readCode(`${T}history/page.tsx`), /ariaLabel="Reports"\n\s+band\n/);
     assert.match(readCode(`${T}development/page.tsx`), /ariaLabel="Skills and Goals views" band \/>/);
     assert.match(readCode(`${T}lineups/_LineupsTabs.tsx`), /ariaLabel="Lineups views" band \/>/);
     assert.match(readCode(`${T}practice/_PracticePlansTabs.tsx`), /ariaLabel="Practice plans views" band \/>/);
-    assert.match(readCode(`${T}roster/[playerId]/page.tsx`), /ariaLabel="Player record"[\s\S]{0,260}?\n\s+sticky\n/);
-    assert.doesNotMatch(readCode(`${T}roster/[playerId]/page.tsx`), /<HubTabBar[^>]*\bband\b/);
+    assert.match(readCode(`${T}roster/[playerId]/page.tsx`), /ariaLabel="Player record"\n\s+band\n/);
+    assert.doesNotMatch(readCode(`${T}roster/[playerId]/page.tsx`), /\bsticky\b/, 'the player page no longer docks once scrolled past (R5 reversed)');
   });
   it('no coach page uses the club’s in-bar row, and the club’s bar is not handed a coach band', () => {
     for (const f of ['accounting/page.tsx', 'history/page.tsx', 'development/page.tsx', 'lineups/_LineupsTabs.tsx', 'practice/_PracticePlansTabs.tsx', 'roster/[playerId]/page.tsx']) {

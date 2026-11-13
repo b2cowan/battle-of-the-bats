@@ -197,9 +197,21 @@ describe('4. the chrome', () => {
     assert.match(strip, /<div ref=\{recordSlot\} className=\{styles\.recordSlot\} \/>/);
     assert.match(readCode('components/coaches/CoachDeskTitle.tsx'), /recordSlot: HTMLElement \| null/);
     // The header draws into it only once the slot exists, so a server paint or a free portal keeps the page's own title.
-    assert.match(header, /const deskRecord = deskDrill && !!recordSlot && typeof title === 'string';/);
-    assert.match(header, /createPortal\(/);
-    assert.match(header, /data-desk-drill=\{deskDrill \? \(deskRecord \? \(deskRowHas \? 'record' : 'empty'\) : ''\) : undefined\}/);
+    // ⚖ ANY title, not text only, and only ABOVE 900 (navigation Phase 5b, 2026-11-12: one home per width — the bar holds it at 900
+    // and below — so a title that is a control, the player's name ▾, is one element; this replaced "a text title only").
+    // The width rule lives with the chrome (`useCoachRecordSlot`, the mirror of the bar's `useCoachBarNameSlot`), not in the header.
+    assert.match(header, /const recordSlot = useCoachRecordSlot\(\);/);
+    assert.match(header, /const deskRecord = deskDrill && !!recordSlot;/);
+    assert.match(readCode('components/coaches/CoachBarName.tsx'), /export function useCoachRecordSlot\(\)[\s\S]{0,200}?return !phone && desk\?\.kind === 'back' \? recordSlot : null;/);
+    assert.ok(!/typeof title === 'string';/.test(header.replace(/typeof title === 'string' && !title\.trim\(\)/, '')), 'no text-only rule left');
+    assert.match(header, /\{deskRecord && !untitled && createPortal\(\s*<>\s*<h1 className=\{strip\.name\}>\{title\}<\/h1>/);
+    assert.match(header, /data-desk-drill=\{deskDrill \? \(deskRecord \|\| untitled \? \(deskRowHas \? 'record' : 'empty'\) : ''\) : undefined\}/);
+    // ⚖ The hairline belongs to the strip (it stands beside "Player" while the record loads, A5), not to the portaled title.
+    assert.match(strip, /<span className=\{own\.backRule\} aria-hidden \/>[\s\S]{0,40}?<div ref=\{recordSlot\}/);
+    // ⚖ A5: until the page names its record, the strip says the KIND of place — the phone bar's rule, on a computer.
+    assert.match(strip, /<span className=\{`\$\{own\.name\} \$\{styles\.recordHere\}`\}>\{title\.here\}<\/span>/);
+    assert.match(readCode('components/coaches/CoachTopStrip.module.css'), /\.recordSlot:not\(:empty\) \+ \.recordHere \{ display: none; \}/);
+    assert.ok(!/backRule/.test(header.replace(/pageHeaderBackRule/g, '')), 'the header no longer portals the strip’s rule');
     assert.match(css, /@media \(min-width: 901px\) \{[\s\S]*\.pageHeaderStd\[data-desk-drill='record'\] \.pageHeaderLeft \{ display: none; \}/);
     assert.match(css, /\.pageHeaderStd\[data-desk-drill='empty'\] \{ display: none; \}/);
   });

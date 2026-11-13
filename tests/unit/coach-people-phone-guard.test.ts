@@ -117,17 +117,35 @@ describe('F1 · Edit is a VISIT, not an address', () => {
     assert.match(w, /if \(storedValue\(f\[k\]\) !== storedValue\(saved\[k\]\)\) next = \{ \.\.\.next, \[k\]: saved\[k\] \};/);
     assert.doesNotMatch(w, /setForm\(playerToForm/, 'never a whole-form reset — it would eat a trailing space mid-word');
   });
-  it('a save already in flight is not raced by a second copy (switch, take off the roster)', () => {
-    assert.equal((page.match(/if \(saving\) return;\s*if \(dirty && !\(await handleSave\(\)\)\) return;/g) ?? []).length, 2);
+  it('a save already in flight is not raced by a second copy (take off the roster); a switch WAITS for it, then goes', () => {
+    assert.equal((page.match(/if \(saving\) return;\s*if \(dirty && !\(await handleSave\(\)\)\) return;/g) ?? []).length, 1);
+    // /review 2026-11-12: the switch has no early return — it closed the list and did nothing. `handleSave` joins the save in flight.
+    const sw = page.slice(page.indexOf('async function switchTo'), page.indexOf('router.push(playerHref(id));'));
+    assert.doesNotMatch(sw, /if \(saving\) return;/);
+  });
+  it('the switcher is offered only for an ACTIVE player on the list, and the list is re-read after Take off / Add back', () => {
+    assert.match(page, /const onRoster = player\?\.status === 'active' && roster\.some\(r => r\.id === playerId\);/);
+    assert.match(page, /setPlayer\(data\.player\);\s*void refreshRoster\(\);/);
   });
 });
 
 describe('F2 · the name is the switcher; the sheet is the team sheet\'s twin', () => {
-  it('is offered only on a phone, with somewhere to go, for a player on the list', () => {
-    assert.match(page, /const canSheet = isPhone && onRoster && roster\.length > 1;/);
+  // ⚖ AT EVERY WIDTH since navigation Phase 5b (owner 2026-11-12): the name ▾ in the chrome is the switcher — the list on a computer,
+  // this sheet at 900 and below (the CHROME's split, so a tablet too). It replaced "offered only on a phone" and the `<select>`.
+  it('is offered at every width, with somewhere to go, for a player on the list — never for a roster of one or an off-roster player', () => {
+    assert.match(page, /const canSwitch = onRoster && roster\.length > 1;/);
+    assert.match(page, /const title = canSwitch \? \(\s*<button\s+ref=\{nameButtonRef\}/);
+    assert.doesNotMatch(page, /canSheet|isPhone && onRoster/);
   });
-  it('the <select> survives above 640 only', () => {
-    assert.match(page, /const switchPlayer = !isPhone && roster\.length > 1 \? \(/);
+  it('the <select> is gone: no dropdown row, no Switch player select on the player page', () => {
+    assert.doesNotMatch(page, /<select[^>]*aria-label="Switch player"|switchPlayer|styles\.playerSwitch\b/);
+    assert.doesNotMatch(readSource(CSS), /\.playerSwitch \{/);
+  });
+  it('one button, one open state; the chrome’s split decides the sheet (≤900) or the list (>900)', () => {
+    assert.match(page, /const phoneNav = useIsPhoneNav\(\);/);
+    assert.match(page, /\{switchOpen && phoneNav && \(\s*<CoachPlayerSwitchSheet/);
+    assert.match(page, /<CoachPlayerSwitchMenu\s+open=\{switchOpen && !phoneNav\}\s+anchorRef=\{nameButtonRef\}/);
+    assert.match(page, /titleMenu=\{switchMenu\}/);
   });
   it('the team sheet\'s twin: the More sheet\'s rows, no stylesheet of its own', () => {
     // Sheet Frame step 2 (2026-10-05): both switchers sit on the portal's sheet frame — its container, dim,
@@ -144,8 +162,19 @@ describe('F2 · the name is the switcher; the sheet is the team sheet\'s twin', 
     assert.doesNotMatch(sheet, /useOverlayOpen/);
     assert.match(sheet, /role="menu"/);
   });
-  it('rows are LINKS — the page guard asks the unsaved-changes question on them — tinted "you are here", no chevron', () => {
-    assert.match(sheet, /<Link[\s\S]*?role="menuitem"[\s\S]*?aria-current=\{active \? 'true' : undefined\}/);
+  // ⚖ A6·3 (navigation Phase 5b, owner 2026-11-12): picking a player SAVES FIRST AND GOES, as the computer's list does — the rows stay
+  // links but say they save for themselves (`data-saves-first`), so the guard no longer asks "Leave without saving?" on them.
+  it('rows are LINKS that save first (the guard lets them through) — tinted "you are here", no chevron', () => {
+    assert.match(sheet, /<Link[\s\S]*?role="menuitem"[\s\S]*?aria-current=\{active \? 'true' : undefined\}\s*data-saves-first=""/);
+    assert.match(sheet, /e\.preventDefault\(\);\s*onClose\(\);\s*onPick\(p\.id\);/);
+    assert.match(page, /onPick=\{id => \{ void switchTo\(id\); \}\}/);
+    const menu = readCode('components/coaches/CoachPlayerSwitchMenu.tsx');
+    assert.match(menu, /data-saves-first=""/);
+    assert.match(menu, /if \(!current\) onPick\(p\.id\);/);
+    // The guard's one opt-out — every OTHER link off a dirty page still asks.
+    const guard = readCode('components/shared/UnsavedChangesGuard.tsx');
+    assert.match(guard, /if \(anchor\.hasAttribute\('data-saves-first'\)\) return;/);
+    assert.equal((guard.match(/data-saves-first/g) ?? []).length, 1, 'one opt-out, by one attribute');
     // No chevrons on EITHER switcher (owner, 2026-09-24): the tint says where you are.
     assert.doesNotMatch(sheet, /ChevronRight|dropChevron/);
     assert.doesNotMatch(readCode(TEAM_SHEET), /ChevronRight|dropChevron/);
@@ -248,5 +277,44 @@ describe('§228 walk rulings, 2026-09-24 — the Season figures (F5), the emerge
     assert.match(docs, /<CoachPageSection sectionId="documents" title="Documents" meta=\{toSignChip\} action=\{uploadButton\}>/);
     assert.match(docs, /isPhone \? `\$\{styles\.footerIconBtn\} \$\{styles\.sectionEditBtn\}`/);
     assert.doesNotMatch(page, /<CoachPageSection sectionId="documents"/, 'the page no longer wraps it');
+  });
+});
+
+/* ══ navigation Phase 5b (owner 2026-11-12, drawing v2 + A1–A6): the player page joins the tab rule ════════════════════════════
+   The tabs at the top from the first paint, the summary on Details only (tiles above 640, the dashboard's figure rows at 640 and
+   below), the off-roster fact beside the name in the chrome. Reverses hub F10 ("the index on every tab") and R5 on purpose. */
+describe('Phase 5b · the player page joins the tab rule', () => {
+  it('the tab row needs the coach’s access only: drawn before the record arrives, in one frame that never remounts', () => {
+    assert.match(page, /const tabBar = caps \? \(\s*<HubTabBar/);
+    assert.match(page, /if \(assignmentsLoading \|\| fetching\) return frame\(unnamedHeader, <LoadingState label="Loading this player…" \/>\);/);
+    assert.match(page, /const unnamedHeader = <CoachPageHeader icon=\{Users\} title=\{null\} backTo=\{backTo\} \/>;/);
+    assert.match(page, /return frame\(\s*<CoachPageHeader/);
+    assert.doesNotMatch(page, /return <LoadingState/, 'no early return that drops the band row');
+  });
+  it('the summary renders on Details only, its chips line keeps only years with the team', () => {
+    assert.match(page, /\{tab === 'details' && \(\s*<div className=\{styles\.playerGlance\}>/);
+    const glance = page.slice(page.indexOf('<div className={styles.playerGlance}>'), page.indexOf('</CoachFigureRows>'));
+    assert.match(glance, /\{withTeam && \(/);
+    assert.doesNotMatch(glance, /pitcherSummary|Age \{age\}|A-squad|bestPositions|Off the roster/, 'the Player section below states each');
+  });
+  it('the tiles fit their count above 640; the phone gets the figure rows and the tiles hide by their own class', () => {
+    assert.match(page, /<div className=\{styles\.playerGlanceTiles\} data-count=\{figures\.length\}>/);
+    assert.match(page, /<CoachFigureRows label=/);
+    assert.match(page, /<CoachFigureRow key=\{f\.key\} href=\{f\.href\} label=\{f\.label\} caption=\{f\.caption\}/);
+    const css = readSource(CSS);
+    assert.match(css, /\.playerGlanceTiles\[data-count="3"\] \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
+    assert.match(css, /@media \(max-width: 640px\) \{[^}]*?\.playerGlanceTiles \{ display: none; \}/);
+    assert.doesNotMatch(page, /useIsPhone\(\)[\s\S]{0,80}playerGlanceTiles/, 'never a JS media query for the wide form');
+  });
+  it('a row’s caption is a fact or nothing: no hint captions on the phone rows', () => {
+    const figs = page.slice(page.indexOf('const figures: Figure[] = ['), page.indexOf('return frame('));
+    for (const cap of figs.match(/caption: [^\n]*/g) ?? []) {
+      assert.doesNotMatch(cap, /Add a contact|this season|No dues this season/, cap);
+    }
+  });
+  it('"Off the roster" is the header’s titleChips — it rides with the name into the strip and the bar, on every tab', () => {
+    assert.match(page, /const offRoster = player\.status !== 'active'\s*\? <span className=\{`\$\{styles\.badge\} \$\{styles\.badgeDraft\}`\}>Off the roster<\/span>/);
+    assert.match(page, /titleChips=\{offRoster\}/);
+    assert.equal((page.match(/Off the roster<\/span>/g) ?? []).length, 1, 'stated once');
   });
 });

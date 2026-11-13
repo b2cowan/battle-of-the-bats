@@ -50,7 +50,7 @@
  * chat-unread pipeline, which retires the KNOWN COST this file used to carry.
  */
 
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -75,8 +75,10 @@ import styles from './CoachTopStrip.module.css';
 function CoachStripPlace({ facts }: { facts: ReactNode }) {
   const { title } = useCoachDeskTitle();
   const recordSlot = useCoachRecordSlotRef();
+  const placeRef = useRef<HTMLDivElement>(null);
+  useFactsGiveWay(placeRef, title?.kind === 'back');
   return (
-    <div className={own.place}>
+    <div ref={placeRef} className={own.place}>
       {title?.kind === 'name' && <h1 className={`${own.name} ${own.pageName}`}>{title.name}</h1>}
       {title?.kind === 'back' && (
         <>
@@ -84,14 +86,45 @@ function CoachStripPlace({ facts }: { facts: ReactNode }) {
             <ArrowLeft size={15} aria-hidden />
             <span>{title.label}</span>
           </Link>
+          <span className={own.backRule} aria-hidden />
           {/* ⚖ The record's own name and chips arrive HERE, from the page's header (a portal — see `recordSlot` in
-              CoachDeskTitle). Empty until the page has loaded its record: the arrow is all the address can say. */}
+              CoachDeskTitle). Until the page has loaded its record — and on a drill-in that never names itself here — the KIND of
+              place stands in ("Player", from the address: `coachDrillBack().here`), exactly as the phone's bar does (`.teamBarHere`;
+              navigation Phase 5b, A5 — one rule for every drill-in). Not a heading: the page's portaled title is the `<h1>`. */}
           <div ref={recordSlot} className={styles.recordSlot} />
+          <span className={`${own.name} ${styles.recordHere}`}>{title.here}</span>
         </>
       )}
       {facts}
     </div>
   );
+}
+
+/**
+ * ⚖ ON A RECORD'S PAGE THE TEAM'S FACTS GIVE WAY BEFORE THE NAME (navigation Phase 5b, A6·1, owner 2026-11-12). The strip is one
+ * line by design (walk §486 E), and a record's name is typed by a coach — "Maximilien-Alexandre Beauchemin-Tremblay" was cut at
+ * ≈1100–1420 wide while the facts kept their room. The team is named in the sidebar's cell, so when the place cannot hold the
+ * name (and its chips) beside the facts, the facts go. Measured, not a width rule: while the facts show the name does not shrink
+ * (CSS), the facts do — the club's name first (C9) — and only when the place then OVERFLOWS do they go. `data-crowded` hides them
+ * (`display: none`, so a game day's "Open the bench" door leaves the Tab order with them rather than sitting clipped and
+ * focusable). Re-measured when the place's width changes and when the slot's content does (the name arriving, a saved rename);
+ * the attribute is not observed, so measuring cannot loop.
+ */
+function useFactsGiveWay(placeRef: RefObject<HTMLDivElement | null>, on: boolean) {
+  useLayoutEffect(() => {
+    const place = placeRef.current;
+    if (!on || !place) return;
+    const fit = () => {
+      place.removeAttribute('data-crowded');
+      if (place.scrollWidth > place.clientWidth + 1) place.setAttribute('data-crowded', '');
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(place);
+    const mo = new MutationObserver(fit);
+    mo.observe(place, { childList: true, subtree: true, characterData: true });
+    return () => { ro.disconnect(); mo.disconnect(); place.removeAttribute('data-crowded'); };
+  }, [placeRef, on]);
 }
 
 export default function CoachTopStrip({ wall = false, free = false, facts = null }: {

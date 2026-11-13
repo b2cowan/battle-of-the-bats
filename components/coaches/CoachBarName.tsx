@@ -27,6 +27,16 @@ export function useCoachBarNameSlot(): HTMLElement | null {
   return phone && desk?.kind === 'back' ? barSlot : null;
 }
 
+/**
+ * The strip's slot, one level down, on a computer — the mirror of the bar's: each answers only at the widths its bar shows, so the
+ * page header never decides the chrome's split (navigation Phase 5b, /simplify 2026-11-12).
+ */
+export function useCoachRecordSlot(): HTMLElement | null {
+  const { title: desk, recordSlot } = useCoachDeskTitle();
+  const phone = useIsPhoneNav();
+  return !phone && desk?.kind === 'back' ? recordSlot : null;
+}
+
 export default function CoachBarName({ title, chips }: { title: ReactNode; chips?: ReactNode }) {
   const slot = useCoachBarNameSlot();
   // A blank name (a first name cleared mid-edit) draws nothing, so the bar keeps its kind-of-place stand-in rather than an empty

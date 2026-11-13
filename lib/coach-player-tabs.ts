@@ -29,7 +29,8 @@ export const PLAYER_TABS: ReadonlyArray<{ id: PlayerTab; label: string; short?: 
   { id: 'family',  label: 'Family & paperwork', short: 'Family' },
 ];
 
-/** Details lands first (owner, round 2): the glance card carries the mid-season answer on every tab. */
+/** Details lands first (owner, round 2) — and since navigation Phase 5b (2026-11-12) it is the one tab that carries the summary
+ *  card, so the mid-season answer is still the first thing a coach sees. */
 export const DEFAULT_PLAYER_TAB: PlayerTab = 'details';
 
 /** Which tab a `?section=` lives on. Unknown sections fall to the default tab. */

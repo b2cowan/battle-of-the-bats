@@ -8,9 +8,10 @@ import sheet from './CoachesBottomNav.module.css';
 export interface RosterSheetPlayer { id: string; name: string; number: string | null }
 
 /**
- * THE ROSTER SHEET — the phone's player switcher, opened from the player's NAME in the page header
- * (phone re-evaluation stage 5 · F2, owner ruling 2026-09-23, "build as redrawn"; the hub's
- * "5 · People" tab). The desktop and the 641–768 band keep the Switch player `<select>`.
+ * THE ROSTER SHEET — the player switcher at 900 and below, opened from the player's NAME ▾ in the team bar
+ * (phone re-evaluation stage 5 · F2, owner ruling 2026-09-23, "build as redrawn"; the hub's "5 · People" tab).
+ * ⚖ It follows the CHROME's split, not the content's (navigation Phase 5b, D8, owner 2026-11-12): a tablet wears the phone's bar,
+ * so it gets the sheet too, and the computer's name ▾ opens the switch list (`CoachPlayerSwitchMenu`). The `<select>` is gone.
  *
  * ⚠ WHY A SHEET AND NOT THE PREV/NEXT STEPPER FIRST DRAWN. The 13 September dropdown was reasoned in
  * the code as "a native select — the sidebar's team switcher is one too": it exists to MATCH the team
@@ -33,16 +34,18 @@ export interface RosterSheetPlayer { id: string; name: string; number: string | 
  * the tint alone says "you are here", as on the team sheet); the jersey number as the quiet trailing qualifier. Each row opens that player ON THE TAB
  * THE COACH WAS READING — `href` is built by the page, which owns the tab and the way back.
  *
- * ⚠ THE ROWS ARE LINKS, AND THAT IS HOW THEY ASK THE UNSAVED-CHANGES QUESTION. The `<select>` had to
- * ask by hand because a select is not a link and the page's `UnsavedChangesGuard` intercepts anchor
- * clicks only (/review, 2026-09-13). A row here IS an anchor, so the guard's capture-phase listener
- * sees it first and asks — a second, hand-written ask would never run (the guard stops the click
- * before it reaches the row). Nothing to add; do not "fix" it by turning the rows into buttons.
+ * ⚖ PICKING A PLAYER SAVES FIRST AND GOES (navigation Phase 5b, A6·3, owner 2026-11-12) — as the computer's list does. Until then
+ * the rows were links the page's `UnsavedChangesGuard` stopped to ask "Leave without saving?" while an edit sat inside the
+ * autosave's pause; the record autosaves, so the honest move is to save it. `onPick` is the page's `switchTo` (a save already out
+ * waits; a save that cannot land keeps the coach on the page with the pill saying so). The rows STAY LINKS — a long-press or a
+ * modified click still opens a player in a new tab, and the address is the row's own — and carry `data-saves-first`, which tells
+ * the guard this link saves for itself. A modified click is left to the browser.
  */
 export default function CoachPlayerSwitchSheet({
   players,
   currentPlayerId,
   hrefFor,
+  onPick,
   onClose,
   opener,
 }: {
@@ -50,6 +53,8 @@ export default function CoachPlayerSwitchSheet({
   currentPlayerId: string;
   /** The address for a player — the page keeps the coach's `?tab=` and way back on it. */
   hrefFor: (id: string) => string;
+  /** Save a pending edit, then open that player (the page's `switchTo`). */
+  onPick: (id: string) => void;
   onClose: () => void;
   /** The player's name that opened the sheet — where a tap on the dim hands focus back. */
   opener: RefObject<HTMLElement | null>;
@@ -78,7 +83,13 @@ export default function CoachPlayerSwitchSheet({
             className={`${sheet.dropItem} ${active ? sheet.dropActive : ''}`}
             role="menuitem"
             aria-current={active ? 'true' : undefined}
-            onClick={onClose}
+            data-saves-first=""
+            onClick={e => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+              e.preventDefault();
+              onClose();
+              onPick(p.id);
+            }}
           >
             <span className={sheet.dropItemName}>{p.name}</span>
             {p.number && <span className={sheet.dropItemMeta}>#{p.number}</span>}

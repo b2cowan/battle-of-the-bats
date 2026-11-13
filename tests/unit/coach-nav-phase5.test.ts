@@ -40,8 +40,10 @@ describe('1. one rule names the page at both widths', () => {
     // The title is drawn in the bar, once, as a portal of the page’s own element — and NOT also in the page.
     assert.match(header, /const barNames = deskDrill && !!barSlot;/);
     assert.match(header, /\{barNames && <CoachBarName title=\{title\} chips=\{titleChips\} \/>\}/);
-    assert.match(header, /\{!barNames && \(\s*<div className=\{styles\.pageTitleWrap\}>/, 'nothing is named twice');
-    assert.match(header, /data-phone-record=\{barNames \|\| undefined\}/);
+    // ⚖ Nor in the strip (navigation Phase 5b): one home per width, and a record still loading draws no title of its own.
+    assert.match(header, /const titleAway = deskRecord \|\| barNames \|\| untitled;/);
+    assert.match(header, /\{!titleAway && \(\s*<div className=\{styles\.pageTitleWrap\}>/, 'nothing is named twice');
+    assert.match(header, /data-phone-record=\{barNames \|\| untitled \|\| undefined\}/);
     assert.match(css, /\.pageHeaderStd\[data-phone-record\] \.pageHeaderLeft \{ display: none; \}/);
     const name = readCode('components/coaches/CoachBarName.tsx');
     assert.match(name, /return phone && desk\?\.kind === 'back' \? barSlot : null;/, 'a phone, one level down, once the bar has mounted its slot');
@@ -80,7 +82,7 @@ describe('2. one <h1> per width', () => {
     const header = readCode('components/coaches/CoachPageHeader.tsx');
     // Each width's own buttons: a tablet keeps the ones a phone drops (`actionsPhoneHidden` is a ≤640 rule) — /review 2026-11-12.
     assert.match(header, /const tabletRowHas = !!actions \|\| helpOnRow;\s*const phoneRowHas = \(!!actions && !actionsPhoneHidden\) \|\| helpOnRow;/);
-    assert.match(header, /data-phone-row=\{deskNamed \|\| barNames \? \(!tabletRowHas \? 'empty' : !phoneRowHas \? 'tablet' : undefined\) : undefined\}/);
+    assert.match(header, /data-phone-row=\{deskNamed \|\| barNames \|\| untitled \? \(!tabletRowHas \? 'empty' : !phoneRowHas \? 'tablet' : undefined\) : undefined\}/);
     const tabletRule = css.indexOf(".pageHeaderStd[data-phone-row='tablet'] { display: none; }");
     assert.ok(tabletRule > 0);
     assert.match(css.slice(css.lastIndexOf('@media', tabletRule), tabletRule), /^@media \(max-width: 640px\) \{/,

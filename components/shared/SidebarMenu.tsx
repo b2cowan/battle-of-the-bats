@@ -14,10 +14,13 @@
  * outside closes (`useDismissable`); a row that acts closes the window and focus goes back to the opener unless the row
  * took it elsewhere (`rescueFocusTo`).
  *
- * ⚖ TWO PLACEMENTS, one per kind of opener:
+ * ⚖ THREE PLACEMENTS, one per kind of opener:
  *   · `cell` — a sidebar's pinned top cell: under the cell (its left edge 2px in) while the sidebar is open, beside the
  *     40px tile while it is folded; `width` wide, 8px clear of the window's edges. The cell is pinned (outside the
  *     scrolling list), so the window never follows a scroll; a resize closes it and hands focus back.
+ *   · `under` — a name in the top strip (navigation Phase 5b, D3: the player's name ▾): always under it, 2px down, its left edge
+ *     with the name's, `width` wide — the `cell` window with no folded form (the strip never folds). The strip is fixed, so the
+ *     window never follows a scroll either; a resize closes it the same way. It lives in the strip's own layer, not the sidebar's.
  *   · `beside` — an icon in the folded strip's list: beside it, lifted to fit above the window's foot and never above the
  *     sidebar's own top; it follows its icon while the sidebar scrolls and closes once the icon leaves the sidebar's view.
  *
@@ -45,7 +48,7 @@ export function focusCurrentItem(panel: HTMLElement | null) {
 const MARGIN = 8;
 const GAP = 8;
 
-export type SidebarMenuPlacement = 'cell' | 'beside';
+export type SidebarMenuPlacement = 'cell' | 'beside' | 'under';
 
 export default function SidebarMenu({
   open, anchorRef, label, placement, width, className, onClose, children,
@@ -55,7 +58,7 @@ export default function SidebarMenu({
   /** The window's accessible name ("Tournaments", "Your teams"). */
   label: string;
   placement: SidebarMenuPlacement;
-  /** `cell` only: the window's width (the drawings' 320). A `beside` window takes its width from its class. */
+  /** `cell` and `under`: the window's width (the drawings' 320). A `beside` window takes its width from its class. */
   width?: number;
   /** The window's own skin (the event list's two-line dropdown, the strip menu's box). */
   className: string;
@@ -78,14 +81,16 @@ export default function SidebarMenu({
     const panel = panelRef.current;
     if (!anchor || !panel) return;
 
-    if (placement === 'cell') {
+    if (placement !== 'beside') {
       const r = anchor.getBoundingClientRect();
       const viewW = document.documentElement.clientWidth;
       const viewH = document.documentElement.clientHeight;
       const w = Math.min(width ?? 320, viewW - MARGIN * 2);
-      // Folded: beside the tile, its top with the cell's. Open: under the cell, its left edge with the sidebar's.
-      const folded = isSidebarStrip();
-      const left = Math.max(2, Math.min(folded ? r.right + MARGIN : r.left + 2, viewW - w - MARGIN));
+      // Folded: beside the tile, its top with the cell's. Open: under the cell, its left edge with the sidebar's. `under`: always
+      // under its name, the left edges together.
+      const cell = placement === 'cell';
+      const folded = cell && isSidebarStrip();
+      const left = Math.max(2, Math.min(folded ? r.right + MARGIN : r.left + (cell ? 2 : 0), viewW - w - MARGIN));
       const top = folded ? r.top + 2 : r.bottom + 2;
       panel.style.left = `${left}px`;
       panel.style.top = `${top}px`;

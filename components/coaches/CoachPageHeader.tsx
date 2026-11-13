@@ -8,7 +8,7 @@ import HelpButton from '@/components/help/HelpButton';
 import { useCoachPageHelp } from '@/components/coaches/CoachPageHelpSlot';
 import { useCoachDeskTitle } from '@/components/coaches/CoachDeskTitle';
 import CoachDeskNudge from '@/components/coaches/CoachDeskNudge';
-import CoachBarName, { useCoachBarNameSlot } from '@/components/coaches/CoachBarName';
+import CoachBarName, { useCoachBarNameSlot, useCoachRecordSlot } from '@/components/coaches/CoachBarName';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -62,14 +62,16 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   with no actions and no "?" draws nothing there. ONE LEVEL DOWN (C4, AMENDED 2026-11-11) the strip carries the way back AND
  *   the record's name and chips, as the club's record pages do ("← Families │ Avery Test"): this header PORTALS its title and
  *   chips into the strip's slot (`recordSlot`) and keeps only its buttons and "?" (`data-desk-drill='record'`). Until the slot
- *   exists, or when the title is not text (the player page's phone button), it keeps its own title and drops only its arrow and
- *   its icon tile (`data-desk-drill`). The answer is the strip's own (`useCoachDeskTitle`) — one rule, never decided twice. Because
+ *   exists it keeps its own title and drops only its arrow and its icon tile (`data-desk-drill`); a record still loading (no
+ *   title yet) draws none — the chrome says the kind of place ("Player") until it is named (navigation Phase 5b, A5). ⚖ ONE HOME
+ *   PER WIDTH (Phase 5b): the title goes to the strip above 900 and the bar at 900 and below, never both, so a title that is a
+ *   control (the player's name ▾) is one element. The answer is the strip's own (`useCoachDeskTitle`) — one rule, never decided twice. Because
  *   the team bar is the phone's only (≤900), the "?" a page publishes is drawn by the strip above 900 and by the bar at 900
  *   and below — never here while hosted. The scouting reminder sits right under this row on a computer (`CoachDeskNudge`, C3).
  * ⚖ ON A PHONE THE BAR NAMES THE PAGE TOO (navigation Phase 5, E8, F1, owner 2026-11-12): a named page's paper title hides at
  *   EVERY width, and the header keeps only the phone's own buttons (`data-phone-row`; nothing at all when it has none). One
- *   level down the bar carries the way back, so this header drops its own arrow on a phone and KEEPS its title, chips and
- *   switcher (the player's name is a button that opens the player switcher) — the record's title is the phone's `<h1>`.
+ *   level down (N13, owner 2026-11-12) the bar carries the way back AND the record's name: the title, chips and switcher (the
+ *   player's name ▾) are portaled into the bar's slot (`CoachBarName`) — the record's title is the phone's `<h1>`.
  *   No call site changes: the mechanism is this component's.
  *
  * CoachModalHeader is this component's older sibling for modals; pages went years without the
@@ -79,6 +81,7 @@ export default function CoachPageHeader({
   icon: Icon,
   title,
   titleChips,
+  titleMenu,
   actions,
   actionsPhoneHidden,
   actionsPhoneInTitleRow,
@@ -94,6 +97,13 @@ export default function CoachPageHeader({
   title: ReactNode;
   /** Identity/state chips beside the title (premium badge, status badge, division). Never quantities. */
   titleChips?: ReactNode;
+  /**
+   * ⚖ THE RECORD'S SWITCH WINDOW, carried with its title (navigation Phase 5b, owner 2026-11-12): the player page's list of
+   * players, opened by its name ▾ on a computer. Drawn wherever the title is — after it in the strip's slot, so the window sits in
+   * the strip's own layer above the band and in its palette — and never inside the `<h1>`. Not drawn where the phone's bar holds
+   * the title (a phone's switcher is a sheet, which the page renders itself).
+   */
+  titleMenu?: ReactNode;
   /** The action group — primary + secondaries. Rendered right of the title, left of help. */
   actions?: ReactNode;
   /**
@@ -203,8 +213,11 @@ export default function CoachPageHeader({
      (nested is one line under a header that already carries this screen's), so they publish null —
      but a hook behind the `embedded` early return below is the classic ordering crash. */
   const helpHosted = useCoachPageHelp(help && !nested && variant !== 'embedded' ? help : null, helpLabel);
-  const { title: desk, recordSlot } = useCoachDeskTitle();
-  const barSlot = useCoachBarNameSlot(); // the phone's bar slot, one level down — a hook, so above the early return
+  const { title: desk } = useCoachDeskTitle();
+  // The chrome's two slots one level down — each answers only at the widths its bar shows (the split at 900 lives with the chrome),
+  // hooks above the early return.
+  const barSlot = useCoachBarNameSlot();
+  const recordSlot = useCoachRecordSlot();
   if (variant === 'embedded') {
     return actions ? (
       <div className={`${styles.pageHeader} ${styles.pageHeaderStd}`}>
@@ -228,34 +241,37 @@ export default function CoachPageHeader({
   // nothing at that width (`data-phone-row`: 'empty' at 900 and below, 'tablet' at 640 and below).
   const tabletRowHas = !!actions || helpOnRow;
   const phoneRowHas = (!!actions && !actionsPhoneHidden) || helpOnRow;
-  // One level down on a computer the strip names the RECORD too: this header's title and chips are drawn there (portaled into
-  // the strip's slot) and its own copy hides in CSS. Only once the slot exists — until then (the server's paint, a phone) the
-  // header keeps its own title, so a page is never left unnamed.
-  // ⚠ A TEXT TITLE ONLY: the player page's phone title is a button owning a ref and a sheet's state — a second copy of it in
-  // the (hidden) strip would steal that ref. On a computer every drill-in's title is text.
-  const deskRecord = deskDrill && !!recordSlot && typeof title === 'string';
-  // ⚖ ON A PHONE THE BAR NAMES THE RECORD TOO (owner, 2026-11-12: "the arrow is the only thing representing back and the bar always
-  // names the place you are in"): once the bar's slot exists the title and chips are drawn THERE (a portal of the page's own
-  // elements — the player's switcher button included, its ref and sheet state stay this page's) and are NOT rendered here, so the
-  // paper title hides, the row keeps only the page's buttons, and nothing is named twice. Until then the header keeps its own.
-  const barNames = deskDrill && !!barSlot;
+  // ⚖ ONE TITLE, ONE HOME PER WIDTH (navigation Phase 5b, owner 2026-11-12). One level down the record's title and chips are drawn
+  // in the CHROME — the strip's slot on a computer (`recordSlot`, "← Roster │ Avery Test"), the bar's on a phone and tablet
+  // (`CoachBarName`; owner 2026-11-12: "the arrow is the only thing representing back and the bar always names the place you are
+  // in") — as a portal of the page's own elements, never a copy. Both bars are in the DOM at every width (CSS hides one), so the
+  // title goes to the ONE the chrome's split (900, `useIsPhoneNav`) shows: one element, so a title that is a control (the player's
+  // name ▾, a button owning a ref and an open state) is one control, and the page holds one `<h1>` — not a visible one and a hidden
+  // copy. Until the slot exists (the server's paint) the header keeps its own title, so a page is never left unnamed.
+  const deskRecord = deskDrill && !!recordSlot; // `useCoachRecordSlot` answers only above 900
+  const barNames = deskDrill && !!barSlot; // `useCoachBarNameSlot` answers only at 900 and below
+  // ⚖ A RECORD STILL LOADING HAS NO NAME YET (navigation Phase 5b, A5): the chrome says the KIND of place ("Player",
+  // `coachDrillBack().here`) at both widths until the page names it, so the header draws no empty title of its own — nothing on the
+  // page's first rows moves when the name arrives.
+  const untitled = deskDrill && (title == null || title === false || (typeof title === 'string' && !title.trim()));
+  const titleAway = deskRecord || barNames || untitled; // the header's own title is not drawn: the chrome has it (or nothing does yet)
   return (
     <>
     {barNames && <CoachBarName title={title} chips={titleChips} />}
-    {deskRecord && createPortal(
+    {deskRecord && !untitled && createPortal(
       <>
-        <span className={strip.backRule} aria-hidden />
         <h1 className={strip.name}>{title}</h1>
         {titleChips && <span className={strip.chip}>{titleChips}</span>}
+        {titleMenu}
       </>,
       recordSlot,
     )}
     <div
       className={`${styles.pageHeader} ${styles.pageHeaderStd}${nested ? ` ${styles.pageHeaderNested}` : ''}${actionsPhoneInTitleRow ? ` ${styles.pageHeaderActionsCorner}` : ''}`}
       data-desk-named={deskNamed ? (deskRowHas ? 'actions' : 'empty') : undefined}
-      data-desk-drill={deskDrill ? (deskRecord ? (deskRowHas ? 'record' : 'empty') : '') : undefined}
-      data-phone-row={deskNamed || barNames ? (!tabletRowHas ? 'empty' : !phoneRowHas ? 'tablet' : undefined) : undefined}
-      data-phone-record={barNames || undefined}
+      data-desk-drill={deskDrill ? (deskRecord || untitled ? (deskRowHas ? 'record' : 'empty') : '') : undefined}
+      data-phone-row={deskNamed || barNames || untitled ? (!tabletRowHas ? 'empty' : !phoneRowHas ? 'tablet' : undefined) : undefined}
+      data-phone-record={barNames || untitled || undefined}
     >
       <div className={styles.pageHeaderLeft}>
         {backTo && (
@@ -268,12 +284,12 @@ export default function CoachPageHeader({
             <span className={styles.pageHeaderBackRule} aria-hidden />
           </>
         )}
-        {!barNames && Icon && (
+        {!titleAway && Icon && (
           <div className={`${styles.headerIcon}${nested ? ` ${styles.headerIconNested}` : ''}`}>
             <Icon size={nested ? 15 : 18} />
           </div>
         )}
-        {!barNames && (
+        {!titleAway && (
           <div className={styles.pageTitleWrap}>
             {nested ? (
               <h2 className={`${styles.pageTitle} ${styles.pageTitleNested}`}>{title}</h2>
@@ -281,6 +297,7 @@ export default function CoachPageHeader({
               <h1 className={styles.pageTitle}>{title}</h1>
             )}
             {titleChips}
+            {titleMenu}
           </div>
         )}
       </div>

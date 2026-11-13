@@ -1,13 +1,16 @@
 'use client';
-import { use, useState, useEffect, useCallback, useRef } from 'react';
+import { use, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import DateInput from '@/components/shared/DateInput';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { parseDevelopmentAddress, returnLabel } from '@/lib/development-address';
 import { Users, Check, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import { formatStoredDate } from '@/lib/timezone';
 import CoachPlayerSwitchSheet, { type RosterSheetPlayer } from '@/components/coaches/CoachPlayerSwitchSheet';
+import CoachPlayerSwitchMenu from '@/components/coaches/CoachPlayerSwitchMenu';
+import { CoachFigureRows, CoachFigureRow } from '@/components/coaches/CoachFigureRows';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachPageSection from '@/components/coaches/CoachPageSection';
@@ -68,9 +71,16 @@ const optLabel = (labels: Record<string, string>, v: string | null | undefined) 
    awards, dues) · Skills & goals (the judgement, named for the sidebar item) · Notes (everything
    written about the player, read in one place) · Family & paperwork (who to call). Each tab is a
    flat page of sections; `?tab=` names the tab on the portal's shared tab bar; `?section=` still
-   scrolls-and-flashes within it; the glance card is the index on every tab, which is what lets
-   Details land first without losing the mid-season answer. The tab table itself lives in
-   `lib/coach-player-tabs.ts` so the roster's prompts and a unit test read the same one. */
+   scrolls-and-flashes within it. The tab table itself lives in `lib/coach-player-tabs.ts` so the
+   roster's prompts and a unit test read the same one.
+   ⚖ THE TABS ARE AT THE TOP AND THE SUMMARY IS ON DETAILS (navigation Phase 5b, owner 2026-11-12 —
+   reversing hub F10's "the glance card is the index on every tab" and Phase 4b R5's "its tabs sit under
+   its summary and dock once scrolled past", on purpose). Since Phase 4 the strip names the player, so
+   the page's own top row held only the Switch player dropdown and the tabs sat ~300px below every other
+   tabbed room. Now the tabs sit in the band from rest at every width (`HubTabBar band`; the address
+   reserves it, `coachBandAt`), the player's name ▾ in the top chrome is the switcher, and the summary
+   shows on Details only — F10's reason survives because Details is the landing tab, so the mid-season
+   answer is still the first thing a coach sees. */
 
 /** Which tabs need a capability: Skills & goals needs goals or measurables; Notes needs Internal
  *  notes. A tab not listed here is every coach's. */
@@ -267,7 +277,7 @@ export default function PlayerDetailPage({
   const [withTeam, setWithTeam] = useState<string | null>(null);
   const [healthError, setHealthError] = useState('');
   const [playingTime, setPlayingTime] = useState<PlayingTime | null>(null);
-  /** The roster, for the Switch player dropdown and the phone's roster sheet — the coach's own
+  /** The roster, for the player switcher (the computer's list, the phone's sheet) — the coach's own
    *  order, active players only. */
   const [roster, setRoster] = useState<RosterSheetPlayer[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -475,11 +485,22 @@ export default function PlayerDetailPage({
       if (!res.ok) throw new Error(data.error ?? 'Failed to update status');
       // The SAVED player only — the form holds no status, and a keystroke typed meanwhile is kept.
       setPlayer(data.player);
+      // The switcher's list is the ACTIVE roster: re-read it so the ▾ and "Off the roster" never disagree (/review 2026-11-12).
+      void refreshRoster();
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to update status.'));
     } finally {
       setTogglingStatus(false);
     }
+  }
+
+  /** Re-read only the switcher's roster — the page's own `load` would flash the loading frame. */
+  async function refreshRoster() {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}`);
+      const data = await res.json();
+      if (res.ok) setRoster(data.roster ?? []);
+    } catch { /* the list keeps what it had */ }
   }
 
   /** "Still right for the {season}?" → Confirm: marks this season's entry checked. Nothing else is written. */
@@ -522,24 +543,84 @@ export default function PlayerDetailPage({
     ? { href: returnTo, label: returnLabel(returnTo, base)! }
     : { href: `${base}/roster`, label: 'Roster' };
 
-  /* THE ROSTER SHEET's open state (stage 5 · F2) — the team sheet's own mechanics (stage 1 · B1).
-     It remembers the ADDRESS it was opened on rather than a boolean, so picking a player (a
-     navigation) closes it with no effect to write. The sheet frame answers its keys (Sheet Frame
-     step 5): a tap outside the sheet, its dim and the name (the name stays a toggle), Escape and the
-     phone's Back close it, and focus goes home to the name. Before step 5 this page answered them and
-     stood no back step, so on a phone Back with the sheet open left the player. */
+  /* ⚖ THE NAME ▾ IS THE SWITCHER AT EVERY WIDTH (navigation Phase 5b, owner 2026-11-12; stage 5 · F2
+     on a phone since 2026-09-23). ONE button, ONE ref, ONE open state: the header puts the name in the
+     chrome the width shows (the strip above 900, the bar at 900 and below), and the same split — the
+     CHROME's, `useIsPhoneNav`, not the content's 640 — decides what it opens: the switch list on a
+     computer (`CoachPlayerSwitchMenu`), the roster sheet on a phone and tablet (D8: the tablet wears the
+     phone's bar, so it gets the sheet and loses its last dropdown row). The open state remembers the
+     ADDRESS it was opened on rather than a boolean, so picking a player (a navigation) closes it with
+     no effect to write. The sheet frame and the shared menu answer their own keys (a press outside,
+     Escape, the phone's Back; Tab in the list) and send focus home to the name. */
   const pathname = usePathname() ?? '';
-  const [sheetOpenAt, setSheetOpenAt] = useState<string | null>(null);
+  const phoneNav = useIsPhoneNav();
+  const [switchOpenAt, setSwitchOpenAt] = useState<string | null>(null);
   const nameButtonRef = useRef<HTMLButtonElement>(null);
-  const onRoster = roster.some(r => r.id === playerId);
+  const onRoster = player?.status === 'active' && roster.some(r => r.id === playerId);
   // Offered only when there is somewhere to go (a one-player roster gets no chevron, as a one-team
-  // coach gets none), and never for a player who is off the list — there is no "you are here" row.
-  const canSheet = isPhone && onRoster && roster.length > 1;
-  const sheetOpen = canSheet && sheetOpenAt === pathname;
-  const closeSheet = () => setSheetOpenAt(null);
+  // coach gets none), and never for a player who is off the list — there is no "you are here" row
+  // (a coach reaches another player from an off-roster one by the arrow, through Roster).
+  const canSwitch = onRoster && roster.length > 1;
+  const switchOpen = canSwitch && switchOpenAt === pathname;
+  const closeSwitch = () => setSwitchOpenAt(null);
 
-  if (assignmentsLoading || fetching) return <LoadingState label="Loading this player…" />;
-  if (!page.hasAccess) {
+  // Which tabs THIS coach has (the same gate that decided `tab` above). They need the coach's ACCESS
+  // only, never the player — so they are drawn before the record arrives (below).
+  const tabs = caps ? PLAYER_TABS.filter(t => { const gate = TAB_GATE[t.id]; return !gate || gate(caps); }) : [];
+  const tabHref = (id: PlayerTab, section?: string) => playerTabHref(playerBase, id, { section, returnTo });
+  /** A player's address ON THE TAB THE COACH IS READING (the tab rides in the address). */
+  const playerHref = (id: string) => playerTabHref(`${base}/roster/${id}`, tab, { returnTo });
+  /* ⚖ PICKING A PLAYER SAVES FIRST AND GOES, at every width (navigation Phase 5b, A6·3). A pending
+     edit still inside the debounce is saved first, and a save that cannot land (a failure, a cleared
+     first name) keeps the coach here with the pill saying so — so there is no "Leave without saving?"
+     to ask (the switcher's rows carry `data-saves-first`, which the unsaved-changes guard lets
+     through; every other way off a dirty page still asks). */
+  async function switchTo(id: string) {
+    if (!id || id === playerId) return;
+    // A save already out is WAITED FOR, then the pick goes (/review 2026-11-12): `handleSave` joins the save in flight and saves
+    // again only if something changed since — so there is no early return here, which closed the list and did nothing.
+    if (dirty && !(await handleSave())) return;
+    router.push(playerHref(id));
+  }
+
+  /* ⚖ THE TABS SIT IN THE BAND FROM THE FIRST PAINT (navigation Phase 5b, A5): the band is reserved by
+     the address (`coachBandAt`), and the row is drawn as soon as the coach's access is known — never
+     behind the player's own load. While access is unknown the band stays empty rather than drawing
+     three tabs that become five. So when the player arrives the only things that change are the name
+     (on the chrome's line, where "Player" stood) and the page body, under a band that does not move. */
+  const tabBar = caps ? (
+    <HubTabBar
+      tabs={tabs.map(t => ({ id: t.id, label: t.label, short: t.short, href: tabHref(t.id) }))}
+      activeId={tab}
+      ariaLabel="Player record"
+      band
+    />
+  ) : null;
+  /** The page's frame — the same elements in the same places while loading and once loaded, so the
+   *  header and the tab row are never remounted when the player arrives. */
+  const frame = (header: ReactNode, body: ReactNode) => (
+    <div className={styles.page}>
+      <UnsavedChangesGuard active={dirty} message="You have unsaved changes to this player. Leave without saving them?" />
+      {header}
+      {tabBar}
+      {body}
+      {feedbackMsg && (
+        <KitDialog
+          kind="question"
+          title="Error"
+          onClose={() => setFeedbackMsg('')}
+          openOn="panel"
+          footer={<button type="button" className="btn btn-outline" onClick={() => setFeedbackMsg('')}>Close</button>}
+        >
+          <p>{feedbackMsg}</p>
+        </KitDialog>
+      )}
+    </div>
+  );
+  // Untitled until the record arrives: the chrome says "Player" (`coachDrillBack().here`) at both widths.
+  const unnamedHeader = <CoachPageHeader icon={Users} title={null} backTo={backTo} />;
+
+  if (!assignmentsLoading && !page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -547,7 +628,8 @@ export default function PlayerDetailPage({
       </div>
     );
   }
-  if (!player || !form) return <p className={styles.muted}>Player not found.</p>;
+  if (assignmentsLoading || fetching) return frame(unnamedHeader, <LoadingState label="Loading this player…" />);
+  if (!player || !form) return frame(unnamedHeader, <p className={styles.muted}>Player not found.</p>);
 
   // The mound is never a fielding chip — pitching is set only in the Pitching section below. The
   // chips are the field positions minus the mound.
@@ -561,7 +643,6 @@ export default function PlayerDetailPage({
   const fieldShare = playingTime && playingTime.fieldInnings + playingTime.benchInnings > 0
     ? Math.round((playingTime.fieldInnings / (playingTime.fieldInnings + playingTime.benchInnings)) * 100) : 0;
   const age = ageFromDob(player.playerDateOfBirth);
-  const bestPositions = form.positions.best;
   /** What is STORED — the record face reads this, never the form (see the Details record). */
   const savedPositions = playerPositionPrefs(player, pitcherPos);
   const canWriteRoster = !!page.capabilities?.rosterWrite;
@@ -571,65 +652,50 @@ export default function PlayerDetailPage({
   const fullName = playerName(player);
   const guardianName = [player.guardianFirstName, player.guardianLastName].filter(Boolean).join(' ').trim();
 
-  // Which tabs THIS coach has (the same gate that decided `tab` above).
-  const tabs = PLAYER_TABS.filter(t => { const gate = TAB_GATE[t.id]; return !gate || (!!caps && gate(caps)); });
-  const tabHref = (id: PlayerTab, section?: string) => playerTabHref(playerBase, id, { section, returnTo });
-
   // Money words, once (hub F12): a negative balance is a CREDIT the team holds for the family, and
   // the balance is said the same way everywhere on the page.
   const credit = dues?.hasSchedule && dues.balance < 0 ? -dues.balance : 0;
   const balanceLabel = dues?.hasSchedule ? (credit > 0 ? `${formatMoney(credit)} credit` : formatMoney(dues.balance)) : '';
 
-  /* The Switch player dropdown (hub F14, owner R2-5). A native select — the sidebar's team switcher
-     is one too — listing the roster in the coach's own order with the current player selected;
-     picking one opens that player on the SAME tab (the tab rides in the address). A player who is
-     off the roster is not in the list, so the select starts on a blank prompt for them.
-     ⚠ ABOVE 640 ONLY since stage 5 (2026-09-23): on a phone the NAME is the switcher (below) and
-     the 56px row this select sat on is gone. */
-  const onList = onRoster;
-  const playerHref = (id: string) => playerTabHref(`${base}/roster/${id}`, tab, { returnTo });
-  /* ⚠ A SELECT IS NOT A LINK, so the unsaved-changes guard (which intercepts anchor clicks and the
-     browser's own leave) never sees this navigation — a dirty form would have been dropped without
-     a word (/review, 2026-09-13). Since the record autosaves (2026-09-24) there is no question to
-     ask: a change still inside the debounce is saved first, and a save that cannot land (a failure,
-     a cleared first name) keeps the coach here with the pill saying so. */
-  async function switchTo(id: string) {
-    if (!id || id === playerId) return;
-    // A save already out is not raced by a second copy of itself (/review) — the tap simply waits it out.
-    if (saving) return;
-    if (dirty && !(await handleSave())) return;
-    router.push(playerHref(id));
-  }
-  const switchPlayer = !isPhone && roster.length > 1 ? (
-    <select
-      className={styles.playerSwitch}
-      aria-label="Switch player"
-      value={onList ? playerId : ''}
-      onChange={e => { void switchTo(e.target.value); }}
-    >
-      {!onList && <option value="">Switch player…</option>}
-      {roster.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-    </select>
-  ) : null;
-  /* THE NAME IS THE SWITCHER on a phone (stage 5 · F2) — the masthead's team name one line down:
-     the same 16px chevron, sitting OUTSIDE the name's own span, and a real 44px box (the header
-     row does not grow; see `.playerNameSwitch`). The name WRAPS rather than truncating — stage 4 ·
-     E5's standing rule, clamping hides part of a name a coach typed. */
-  const title = canSheet ? (
+  /* THE NAME ▾ (stage 5 · F2 on a phone; every width since navigation Phase 5b): the masthead's team
+     name one level down — the 16px chevron OUTSIDE the name's own span, and ONE target (the cell
+     recipe, N3: never a name beside a separate chevron). The header carries it into the chrome — the
+     strip on a computer, the bar on a phone and tablet, where the name WRAPS (stage 4 · E5: a name a
+     coach typed is never clipped). ↓ opens it too (the shared menu's contract, the team cell's key). */
+  const title = canSwitch ? (
     <button
       ref={nameButtonRef}
       type="button"
       className={styles.playerNameSwitch}
       aria-haspopup="menu"
-      aria-expanded={sheetOpen}
-      aria-controls={sheetOpen ? 'coach-player-sheet' : undefined}
+      aria-expanded={switchOpen}
+      aria-controls={switchOpen && phoneNav ? 'coach-player-sheet' : undefined}
       title="Switch player"
-      onClick={() => setSheetOpenAt(o => (o === pathname ? null : pathname))}
+      onClick={() => setSwitchOpenAt(o => (o === pathname ? null : pathname))}
+      onKeyDown={e => { if (e.key === 'ArrowDown' && !switchOpen) { e.preventDefault(); setSwitchOpenAt(pathname); } }}
     >
       <span>{fullName}</span>
       <ChevronDown size={16} aria-hidden className={styles.playerNameSwitchChevron} />
     </button>
   ) : fullName;
+  /* ⚖ "OFF THE ROSTER" RIDES BESIDE THE NAME, IN THE CHROME (navigation Phase 5b, A1): a fact about
+     the player, so it travels with the title into the strip and the bar, on every tab — the shipped
+     neutral badge, not a colour (a fact, not an action). It was the summary card's one badge. */
+  const offRoster = player.status !== 'active'
+    ? <span className={`${styles.badge} ${styles.badgeDraft}`}>Off the roster</span>
+    : undefined;
+  /* The computer's switch list, carried with the title into the strip (`titleMenu`). */
+  const switchMenu = canSwitch ? (
+    <CoachPlayerSwitchMenu
+      open={switchOpen && !phoneNav}
+      anchorRef={nameButtonRef}
+      players={roster}
+      currentPlayerId={playerId}
+      hrefFor={playerHref}
+      onPick={id => { void switchTo(id); }}
+      onClose={closeSwitch}
+    />
+  ) : undefined;
 
   /* The section head's Edit / Done (stage 5 · F1/F4) — a phone control for a writer only. A coach
      without roster-write sees the record with no Edit at all (nothing to edit), and keeps the
@@ -658,105 +724,105 @@ export default function PlayerDetailPage({
    *  that section is being edited. */
   const showForm = (s: EditSection) => canWriteRoster && (!isPhone || isEditing(s));
 
-  return (
-    <div className={styles.page}>
-      <UnsavedChangesGuard active={dirty} message="You have unsaved changes to this player. Leave without saving them?" />
-      {/* Header (page-header ruling 2026-08-11): the player's name, nothing under the title — age
-          is a live fact, so it leads the glance card one line down. The jersey number chip that
-          used to sit beside it was dropped (owner call, 2026-09-13): it read as an orphaned badge
-          floating alone whenever a player carried no other chip, and it is not lost — the Details
-          tab's record row still names it. The way back is the ARROW in this header's leading
-          corner (amendment 2026-08-26); the trailing slot holds the Switch player dropdown
-          (2026-09-13) above 640, and on a phone the name itself opens the roster sheet (stage 5 ·
-          F2) — so the trailing slot is empty there, and stays empty: Edit belongs on the section. */}
+  /* ⚠ THE SUMMARY'S FIGURES, ALL FROM DATA THIS PAGE HAS ALREADY FETCHED — no extra call for a summary.
+     Each is a DOOR to the section it names (none to Details: it sits on Details). Read twice: as the
+     tiles above 640, and as the dashboard's figure rows at 640 and below (A3; owner 2026-11-12 —
+     "isn't our standard to turn these to rows on the phone like our other dashboards?": the Overview's
+     B3·B5·B6 and the Insights scoreboard's A1). A row's caption is a FACT or nothing (no "Add a contact",
+     no "this season", no "No dues this season" — the figure "None set" says it); the tile's foot keeps
+     its words. A figure that is words takes the row's `words` form.
+     The Dues figure is money and rides the money gate with its section (the route sends null to a
+     coach without it) — "None set" to a coach who cannot see dues would be a lie about the family.
+     ⚠ There is deliberately no "documents outstanding" figure: nothing in the product records which
+     documents a team REQUIRES, and a figure that invented that number would be inventing a policy.
+     Documents live on the Family & paperwork tab, where they can be counted honestly. */
+  type Figure = {
+    key: string; label: string; href: string; aria: string; figure: string | number;
+    foot: string; caption?: string; tone?: 'danger'; words?: boolean;
+  };
+  const attnFoot = attendance && attendance.total > 0
+    ? `${attendance.total} recorded${attendance.unknown > 0 ? ` · ${attendance.unknown} not recorded` : ''}`
+    : 'Nothing recorded yet';
+  const figures: Figure[] = [
+    ...(dues !== null ? [{
+      key: 'dues', label: 'Dues', href: tabHref('season', 'dues'), aria: 'Dues — open the Dues section',
+      figure: !dues.hasSchedule ? 'None set' : dues.balance > 0 ? formatMoney(dues.balance) : 'Paid',
+      foot: !dues.hasSchedule ? 'No dues this season'
+        : credit > 0 ? `${formatMoney(credit)} credit held` : `${dues.paidInstallmentCount}/${dues.installmentCount} installments paid`,
+      caption: !dues.hasSchedule ? undefined
+        : credit > 0 ? `${formatMoney(credit)} credit held` : `${dues.paidInstallmentCount}/${dues.installmentCount} installments paid`,
+      tone: dues.hasSchedule && dues.balance > 0 ? 'danger' as const : undefined,
+      words: !dues.hasSchedule || dues.balance <= 0,
+    }] : []),
+    {
+      key: 'attendance', label: 'Attendance', href: tabHref('season', 'attendance'), aria: 'Attendance — open the Attendance section',
+      figure: attnPct,
+      foot: attnFoot, caption: attnFoot, // a fact either way, so the row keeps it
+      words: attnKnown === 0,
+    },
+    {
+      key: 'family', label: 'Family', href: tabHref('family', 'guardian'), aria: 'Family — open Guardian contact',
+      figure: guardianName || 'No contact',
+      foot: player.guardianEmail || player.guardianPhone || (pii ? 'Add a contact' : 'Kept to the head coach'),
+      caption: player.guardianEmail || player.guardianPhone || (pii ? undefined : 'Kept to the head coach'),
+      words: true,
+    },
+    {
+      key: 'awards', label: 'Awards', href: tabHref('season', 'awards'), aria: 'Awards — open the Awards section',
+      figure: awards?.total ?? 0, foot: 'this season',
+    },
+  ];
+
+  return frame(
+      /* Header (page-header ruling 2026-08-11): the player's name, nothing under the title. One level
+         down the CHROME carries it (the strip on a computer, the bar on a phone) with the way back, and
+         the name ▾ is the player switcher (navigation Phase 5b). "Off the roster" rides beside it on
+         every tab. The jersey number chip that used to sit beside it was dropped (owner call,
+         2026-09-13) — the Details tab's record row names it. No actions: the Switch player dropdown
+         that was the trailing slot's only content is gone (Phase 5b, D2), so the header's own row draws
+         nothing at any width, and Edit belongs on the section. */
       <CoachPageHeader
         icon={Users}
         title={title}
+        titleChips={offRoster}
+        titleMenu={switchMenu}
         backTo={backTo}
-        actions={switchPlayer}
-      />
-
-      {/* ⚠ THE PLAYER, BEFORE THE FORM (owner ruling 2026-08-26), and THE INDEX ON EVERY TAB
-          (hub F10, 2026-09-13). The chips are facts; the four tiles are DOORS — each opens the
-          section it names, which is what lets Details be the landing tab without losing the
-          mid-season answer.
-          ⚠ No medical-notes warning chip (owner ruling 2026-09-23, §228 walk — reversed F15): the
-          coach knows their players, and the notes are reference kept on Safety, not an alert to
-          interrupt editing skills or goals.
-          ⚠ Off the roster is the ONE state worth stating, so it is the only badge here. */}
-      <div className={styles.playerGlance}>
-        <div className={styles.playerGlanceChips}>
-          {/* A returning child's years with THIS team (Stage 14 S5, Ask 9: never another team's, never the house league). */}
-          {withTeam && <span className={styles.chipQuiet}>{withTeam}</span>}
-          {player.status !== 'active' && (
-            <span className={`${styles.badge} ${styles.badgeDraft}`}>Off the roster</span>
+      />,
+      <>
+      {/* ⚠ THE PLAYER, BEFORE THE FORM (owner ruling 2026-08-26) — ON DETAILS ONLY since navigation
+          Phase 5b (owner 2026-11-12; reversing hub F10's "the index on every tab", whose reason
+          survives: Details is the landing tab, so the mid-season answer is still the first thing seen).
+          ⚠ The chips line keeps ONE fact (A3): a returning child's years with THIS team. Pitching,
+          positions, A-squad and age left it — the Player section directly below states each — and
+          "Off the roster" moved beside the name in the chrome (A1).
+          ⚠ No medical-notes warning chip (owner ruling 2026-09-23, §228 walk — reversed F15). */}
+      {tab === 'details' && (
+        <div className={styles.playerGlance}>
+          {/* Stage 14 S5, Ask 9: never another team's, never the house league. */}
+          {withTeam && (
+            <div className={styles.playerGlanceChips}>
+              <span className={styles.chipQuiet}>{withTeam}</span>
+            </div>
           )}
-          {/* The pitching chip reads the way the editor names it — "Ace", "P2" (hub F05) — with
-              the innings cap when one is set: the whole stored profile, in the form's words. */}
-          {player.lineupProfile?.pitcher && (
-            <span className={styles.chipQuiet}>{pitcherSummary(player.lineupProfile.pitcher)}</span>
-          )}
-          {bestPositions.length > 0 && <span className={styles.chipQuiet}>{bestPositions.join(' / ')}</span>}
-          {player.lineupProfile?.aSquad && <span className={styles.chipQuiet}>A-squad</span>}
-          {age !== null && <span className={styles.chipQuiet}>Age {age}</span>}
+          {/* Above 640 — tiles, the grid fitting its count (three across without the Dues tile). */}
+          <div className={styles.playerGlanceTiles} data-count={figures.length}>
+            {figures.map(f => (
+              <Link key={f.key} href={f.href} className={`${styles.playerTile} ${styles.playerTileDoor}`} aria-label={f.aria}>
+                <span className={styles.playerTileKey}>{f.label}</span>
+                <span className={styles.playerTileValue} data-tone={f.tone}>{f.figure}</span>
+                <span className={styles.playerTileFoot}>{f.foot}</span>
+              </Link>
+            ))}
+          </div>
+          {/* At 640 and below — the dashboard's figure rows (phone-only by their own stylesheet). */}
+          <CoachFigureRows label={`${firstOrThis === 'this player' ? 'This player' : firstOrThis} at a glance`}>
+            {figures.map(f => (
+              <CoachFigureRow key={f.key} href={f.href} label={f.label} caption={f.caption}
+                figure={f.figure} tone={f.tone} words={f.words} />
+            ))}
+          </CoachFigureRows>
         </div>
-
-        {/* ⚠ FOUR TILES, ALL FROM DATA THIS PAGE HAS ALREADY FETCHED — no extra call for a summary.
-            The Dues tile is money and rides the money gate with its section (the route sends null
-            to a coach without it) — a tile reading "None set" to a coach who cannot see dues would
-            be a lie about the family.
-            ⚠ There is deliberately no "documents outstanding" tile: nothing in the product records
-            which documents a team REQUIRES, and a tile that invented that number would be inventing
-            a policy. Documents live on the Family & paperwork tab, where they can be counted
-            honestly. */}
-        <div className={styles.playerGlanceTiles}>
-          {dues !== null && (
-          <Link href={tabHref('season', 'dues')} className={`${styles.playerTile} ${styles.playerTileDoor}`} aria-label="Dues — open the Dues section">
-            <span className={styles.playerTileKey}>Dues</span>
-            <span className={styles.playerTileValue}
-              data-tone={dues.hasSchedule && dues.balance > 0 ? 'danger' : undefined}>
-              {!dues.hasSchedule ? 'None set' : dues.balance > 0 ? formatMoney(dues.balance) : 'Paid'}
-            </span>
-            <span className={styles.playerTileFoot}>
-              {!dues.hasSchedule
-                ? 'No dues this season'
-                : credit > 0
-                  ? `${formatMoney(credit)} credit held`
-                  : `${dues.paidInstallmentCount}/${dues.installmentCount} installments paid`}
-            </span>
-          </Link>
-          )}
-          <Link href={tabHref('season', 'attendance')} className={`${styles.playerTile} ${styles.playerTileDoor}`} aria-label="Attendance — open the Attendance section">
-            <span className={styles.playerTileKey}>Attendance</span>
-            <span className={styles.playerTileValue}>{attnPct}</span>
-            <span className={styles.playerTileFoot}>
-              {attendance && attendance.total > 0
-                ? `${attendance.total} recorded${attendance.unknown > 0 ? ` · ${attendance.unknown} not recorded` : ''}`
-                : 'Nothing recorded yet'}
-            </span>
-          </Link>
-          <Link href={tabHref('family', 'guardian')} className={`${styles.playerTile} ${styles.playerTileDoor}`} aria-label="Family — open Guardian contact">
-            <span className={styles.playerTileKey}>Family</span>
-            <span className={styles.playerTileValue}>{guardianName || 'No contact'}</span>
-            <span className={styles.playerTileFoot}>
-              {player.guardianEmail || player.guardianPhone || (pii ? 'Add a contact' : 'Kept to the head coach')}
-            </span>
-          </Link>
-          <Link href={tabHref('season', 'awards')} className={`${styles.playerTile} ${styles.playerTileDoor}`} aria-label="Awards — open the Awards section">
-            <span className={styles.playerTileKey}>Awards</span>
-            <span className={styles.playerTileValue}>{awards?.total ?? 0}</span>
-            <span className={styles.playerTileFoot}>this season</span>
-          </Link>
-        </div>
-      </div>
-
-      <HubTabBar
-        tabs={tabs.map(t => ({ id: t.id, label: t.label, short: t.short, href: tabHref(t.id) }))}
-        activeId={tab}
-        ariaLabel="Player record"
-        /* Under the glance block, so it cannot be the band: it docks under the strip once scrolled past (R5, 2026-11-11). */
-        sticky
-      />
+      )}
 
       {/* ── DETAILS: the record. The form for the head coach above 640; the RECORD for everyone
           else (F16), and on a phone for the head coach too until they press the section's Edit
@@ -1347,29 +1413,19 @@ export default function PlayerDetailPage({
           view wherever they are. A writer's only: nothing is ever saved for a reader. */}
       {canWriteRoster && <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />}
 
-      {/* THE ROSTER SHEET (stage 5 · F2) — the portal's sheet frame, fixed at the bar's top edge (Sheet
-          Frame step 2), answering its own keys and back step (step 5). */}
-      {sheetOpen && (
+      {/* THE ROSTER SHEET (stage 5 · F2) — the switcher at 900 and below (navigation Phase 5b: the chrome's split,
+          so a tablet too). The portal's sheet frame, fixed at the bar's top edge (Sheet Frame step 2),
+          answering its own keys and back step (step 5). Picking saves first and goes, as the computer's list. */}
+      {switchOpen && phoneNav && (
         <CoachPlayerSwitchSheet
           players={roster}
           currentPlayerId={playerId}
           hrefFor={playerHref}
-          onClose={closeSheet}
+          onPick={id => { void switchTo(id); }}
+          onClose={closeSwitch}
           opener={nameButtonRef}
         />
       )}
-
-      {feedbackMsg && (
-        <KitDialog
-          kind="question"
-          title="Error"
-          onClose={() => setFeedbackMsg('')}
-          openOn="panel"
-          footer={<button type="button" className="btn btn-outline" onClick={() => setFeedbackMsg('')}>Close</button>}
-        >
-          <p>{feedbackMsg}</p>
-        </KitDialog>
-      )}
-    </div>
+      </>,
   );
 }

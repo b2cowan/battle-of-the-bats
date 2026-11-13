@@ -729,7 +729,8 @@
 
 .teamBarIdentity { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 /* The page's name: the UI sans at 700 — a name is data (owner-picked 2026-08-02: heavy condensed type only at large sizes or
-   uppercase). It is the page's `<h1>` on a named page, so the heading's own margins are zeroed. One line, cut with "…". */
+   uppercase). It is the page's `<h1>` on a named page, so the heading's own margins are zeroed. One line, cut with "…" — except a
+   RECORD's name one level down, which wraps (`.teamBarSlot > .teamBarName`, below). */
 .teamBarName {
   margin: 0;
   min-width: 0;
@@ -748,19 +749,33 @@
    bar always names the place you are in"). `.teamBarSlot` is where the page's header portals its title (and chips) — `CoachBarName`;
    the page's own <h1> carries `.teamBarName`, so it looks as a named page's does. `.teamBarHere` is the stand-in until then: the KIND
    of place from the address ("Lineup"), gone the moment the slot has content, and an empty slot draws nothing. */
-.teamBarSlot { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+/* It wraps (Phase 5b, A6·1): a long name takes the line and a chip beside it ("Off the roster") drops under it, rather than
+   squeezing the name into a narrow column of hyphen-broken lines. */
+.teamBarSlot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.4rem; min-width: 0; }
 .teamBarSlot:empty { display: none; }
 .teamBarSlot:not(:empty) + .teamBarHere { display: none; }
-.teamBarSlot > .teamBarName { flex: 0 1 auto; }
+/* ⚖ A RECORD'S NAME WRAPS, NEVER CUT (navigation Phase 5b, A6·1, owner 2026-11-12; stage 4 · E5 — a name a coach typed is never
+   clipped). Every drill-in's name in the slot is typed — a player, a lineup's opponent, a plan's title — so it is one rule: the bar
+   grows a line and the band under it follows (`--coach-header-h`, measured by the bar). A page's name (`.teamBarName` outside the
+   slot) is a short sidebar word and keeps its one line. */
+.teamBarSlot > .teamBarName { flex: 0 1 auto; overflow: visible; white-space: normal; overflow-wrap: anywhere; }
 /* A chip the page hands over (the opponent's record) must not grow the bar: it would sit at the body's 1.6 line height and its own
    padding, ~10px taller than the 53px floor — the small line's chips (`.teamBarLine .teamBarChip`) pin theirs the same way
    (/review 2026-11-12). */
 .teamBarSlot > :not(.teamBarName) { flex: none; line-height: 1; padding-block: 0.05rem; }
-/* A player's name is the switcher BUTTON (the page's own element, portaled whole): its 44px box overhangs the line as it did under
-   the page title (the bar's line is 1.2em, the title's 1.1em), so the heading stops clipping, and the name cuts with "…" inside. */
-.teamBarSlot > .teamBarName:has(> button) { overflow: visible; }
-.teamBarSlot > .teamBarName > button { margin-block: calc((1.2em - var(--tap-min, 44px)) / 2); }
-.teamBarSlot > .teamBarName > button > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A player's name is the switcher BUTTON (the page's own element, portaled whole). Its 44px box overhangs the line by padding and an
+   equal negative margin, so one line keeps the bar's 53px and each wrapped line adds exactly its own height (a fixed overhang on a
+   44px floor would let a second line overlap the small line). */
+.teamBarSlot > .teamBarName > button {
+  min-height: 0;
+  align-items: flex-start;
+  padding-block: calc((var(--tap-min, 44px) - 1.2em) / 2);
+  margin-block: calc((1.2em - var(--tap-min, 44px)) / 2);
+}
+.teamBarSlot > .teamBarName > button > span { min-width: 0; }
+/* The ▾ rides beside the name's FIRST line, not the middle of a wrapped name (the drawing's `align-self: flex-start`; /design
+   2026-11-12): a three-line name must not send the chevron floating at mid-height. A one-line name centres it as before. */
+.teamBarSlot > .teamBarName > button > svg { margin-top: calc((1.2em - 16px) / 2); }
 /* The small line (F2): the masthead's meta voice — the data face at the label step, normal weight, the 11px/1.3 line (left
    to inherit the body's, the tournament bar stood 2px taller). The team's name gives way first; the record and the chips
    never do. */
@@ -1431,7 +1446,7 @@
    width, so no screen names itself twice; the header keeps the phone's own buttons as the page's top row, and nothing at
    all when it has none (`data-phone-row`, which counts the buttons a phone shows — Schedule's are a phone's only, Money's
    import a computer's only). One level down the bar carries the way back, so the header's own arrow goes on a phone too;
-   the record keeps its title, chips and switcher there (its title is the phone's `<h1>`). */
+   the record's title, chips and switcher are portaled into the bar's slot there (`CoachBarName`; Phase 5b — one home per width). */
 /* With the title gone the row is the actions: packed to the right end. */
 .pageHeaderStd[data-desk-named] { justify-content: flex-end; }
 .pageHeaderStd[data-desk-named] .pageHeaderLeft { display: none; }
@@ -5554,6 +5569,9 @@ a.oneChip:hover { border-color: currentColor; }
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem;
 }
+/* ⚖ THE GRID FITS ITS COUNT (navigation Phase 5b, A6·4): a coach without the money gate has no Dues tile, so three tiles go three
+   across — never an empty fourth slot. */
+.playerGlanceTiles[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .playerTile {
   border: 1px solid var(--border-2);
   border-radius: 9px;
@@ -5851,33 +5869,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   .noteSide { padding-top: 0; }
 }
 
-/* The Switch player dropdown in the page header's trailing slot (hub F14, owner R2-5: a dropdown,
-   not arrows). A native select — the sidebar's team switcher is one too — so the list is the
-   platform's, the keyboard works, and there is nothing to maintain. Its tap floor comes from the
-   header's own rules (`.pageHeaderStd .pageHeaderActions select`, beside the buttons), so a
-   future header select is covered without a rule of its own. */
-.playerSwitch {
-  min-height: 36px;
-  max-width: 220px;
-  padding: 0.35rem 1.9rem 0.35rem 0.7rem;
-  border: 1px solid var(--home-line-strong, var(--border-2));
-  border-radius: 8px;
-  background: var(--home-card, rgba(255,255,255,0.05)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23615A54'/%3E%3C/svg%3E") no-repeat right 0.7rem center;
-  color: var(--text-primary);
-  font-size: var(--type-body);
-  font-weight: 600;
-  -webkit-appearance: none; appearance: none;
-  cursor: pointer;
-  text-overflow: ellipsis;
-}
-@media (max-width: 640px) {
-  .playerSwitch { max-width: 100%; }
-}
-/* THE NAME IS THE SWITCHER on a phone (stage 5 · F2, 2026-09-23) — the masthead's `.teamHeaderSwitch`
-   one line down: the same 16px chevron `flex: none` OUTSIDE the name's span, and a real 44px box made
-   by an overhang above and below the one-line title, so the header row does not grow (1.1em is
-   `.pageTitle`'s own line box). Unlike the masthead the name WRAPS — stage 4 · E5, a clamped title
-   hides part of a name a coach typed. Rendered only at ≤640 (the page decides), so no media query. */
+/* THE NAME IS THE SWITCHER (stage 5 · F2, 2026-09-23 on a phone; every width since navigation Phase 5b) — the masthead's
+   `.teamHeaderSwitch` one level down: the same 16px chevron `flex: none` OUTSIDE the name's span, and a real 44px box. These are
+   its rules where the page header itself holds it (a shell with no chrome slot, or the server's paint); in the chrome it takes the
+   chrome's measure — the phone bar's (`.teamBarSlot > .teamBarName > button`, where the name wraps) or the strip's
+   (`CoachTopStrip.module.css`, one 40px line). */
 .playerNameSwitch {
   display: inline-flex;
   align-items: center;
@@ -5917,9 +5913,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .playerDangerBtn { color: var(--danger-text, var(--danger)); border-color: rgba(var(--danger-rgb), 0.45); }
 
 @media (max-width: 640px) {
-  /* Two-up rather than four across — four tiles on a phone gives each one about 80px, which is
-     narrower than "None set". */
-  .playerGlanceTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* ⚖ ON A PHONE THE SUMMARY IS THE DASHBOARD'S FIGURE ROWS (navigation Phase 5b, A3, owner 2026-11-12), not 2×2 tiles: the rows
+     (`CoachFigureRows`) are phone-only by their own stylesheet, and the tiles hide here by THIS class — never a JS media query,
+     so the server's frame and the first client frame agree. The rows are their own white frame, so the card gives up its own
+     here and keeps only the chips line above them. */
+  .playerGlanceTiles { display: none; }
+  .playerGlance { background: none; border: 0; border-radius: 0; padding: 0; gap: 0.6rem; }
   .playerDangerZone > button { width: 100%; }
 }
 
@@ -15861,7 +15860,7 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 .devReportRowLink:hover { text-decoration: underline; }
 
 /* The filter chips (the practice review's tag filter, the drill library, the template room) take
-   the touch floor on phone and tablet widths — the same rule .playerSwitch follows. Desktop keeps
+   the touch floor on phone and tablet widths — the same rule the player's name ▾ follows. Desktop keeps
    the compact chip by the portal-wide decision. Closes the Phase 0 deferral on the Practice review
    (development lifecycle Phase 3 restyles that report). */
 @media (max-width: 768px) {

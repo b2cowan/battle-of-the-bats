@@ -13,6 +13,10 @@ import KitDialog from '@/components/shared/KitDialog';
  *   <UnsavedChangesGuard active={isDirty} message="…" />
  * into any edit screen. Same-tab flips (The Flip) can now navigate away from dirty forms that the old
  * new-tab "View Site" behavior accidentally protected — this closes that gap.
+ *
+ * ONE OPT-OUT: a link carrying `data-saves-first` is let through. The contract is the link's — it guarantees the save before it
+ * navigates, or keeps the coach on the page (the player switcher's rows, navigation Phase 5b). A link that sets it and does not
+ * save defeats the guard, so set it only where the click handler saves first.
  */
 export default function UnsavedChangesGuard({
   active,
@@ -68,6 +72,11 @@ export default function UnsavedChangesGuard({
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const anchor = (e.target as HTMLElement | null)?.closest?.('a');
       if (!anchor) return;
+      // ⚖ A LINK THAT SAVES FIRST asks nothing (navigation Phase 5b, A6·3, owner 2026-11-12): the player switcher's rows save the
+      // pending edit themselves and then go, and a save that cannot land keeps the coach on the page with the pill saying so — so
+      // "Leave without saving?" would be a question about a loss that cannot happen. Only a link that says so is let through; every
+      // other way out of a dirty page still asks.
+      if (anchor.hasAttribute('data-saves-first')) return;
       const href = anchor.getAttribute('href');
       if (!href) return;
       if (anchor.target === '_blank' || anchor.hasAttribute('download')) return;

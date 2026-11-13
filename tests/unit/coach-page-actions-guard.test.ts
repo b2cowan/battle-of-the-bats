@@ -102,6 +102,10 @@ const KNOWN_PROPS = new Set([
      put an arrow in — two failed-load branches and the certificate print bar, enumerated in the
      prop's own docblock. A FOURTH `CoachBackLink` call site is what would be drift now. */
   'backTo',
+  /* ⚖ THE RECORD'S SWITCH WINDOW, carried with its title into the strip (navigation Phase 5b, owner 2026-11-12): the player
+     page's list of players, opened by its name ▾ on a computer. Not an action — it is drawn after the title, never in the actions
+     slot. */
+  'titleMenu',
 ]);
 
 type Slot =
@@ -127,7 +131,7 @@ type Site = {
    * the team layout is a decision rather than a surprise.
    */
   helpHost: 'masthead' | 'own';
-  /** `null` = this screen has NO page-level action. 24 of 38 call sites. */
+  /** `null` = this screen has NO page-level action. 26 of 39 call sites (navigation Phase 5b, 2026-11-12). */
   actions: null | {
     /** `inline` = JSX written at the call site; otherwise the file-local name it passes. */
     from: 'inline' | string;
@@ -271,17 +275,19 @@ const SITES: Site[] = [
     },
   },
   {
+    // The player page while its record loads (navigation Phase 5b, A5): untitled — the chrome says "Player" — and no actions, so
+    // the header and the band sit where they will stay when the player arrives.
     file: 'app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx', occurrence: 0,
+    screen: 'Roster → one player (loading)',
+    variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
+    // ⚖ NO ACTIONS SINCE navigation Phase 5b (owner 2026-11-12, D2): the Switch player dropdown (hub F14) that was the slot's
+    // only content is gone — the player's name ▾ in the chrome is the switcher at every width (`titleMenu` carries the
+    // computer's list) — so the header's own row draws nothing at any width.
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx', occurrence: 1,
     screen: 'Roster → one player',
-    variant: 'standard', helpHost: 'masthead',
-    actions: {
-      // The Switch player dropdown (roster + player page review, hub F14; owner R2-5: a dropdown,
-      // not arrows). Not a create, not an export — a native select listing the roster in the
-      // coach's own order. Present at every width (no phone flags): on a phone it drops to the
-      // row beneath the title like any other action.
-      from: 'switchPlayer', slot: 'action', holds: 'Switch player (a dropdown of the roster in the coach\'s order)',
-      phoneHidden: null, phoneInTitleRow: null,
-    },
+    variant: 'standard', helpHost: 'masthead', actions: null,
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', occurrence: 0,

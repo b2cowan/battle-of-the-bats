@@ -208,12 +208,16 @@ export function isCoachNavItemLit(pathname: string, teamBase: string, href: stri
  * that have tab bars — Money, Insights, Skills & goals, Lineups, Practice plans — answer on the ROOM's address alone (their
  * tabs are `?section=`, never another path), so the shell can hold the band's 45px open before the page has loaded and its
  * tabs arrive into room already made: a tabbed route never shifts when its tabs show up (the club's Phase 0 lesson, "no flash").
- * ⚠ Every other address is false: the drill-ins (`practice/{plan}`, `lineups/{game}` …) have no tabs, and the player page
- * keeps its tabs in the page (they dock under the strip once scrolled past — HubTabBar's `sticky`, not the band).
+ * ⚖ THE PLAYER PAGE IS THE ONE RECORD WITH TABS, AND IT JOINS THE ROOMS (navigation Phase 5b, owner 2026-11-12 — reversing R5's
+ * "its tabs stay under its summary and dock once scrolled past"): `roster/{player}` — its tabs are `?tab=`, so its address alone
+ * answers too, and the band is held open before the player has loaded.
+ * ⚠ Every other address is false: the drill-ins (`practice/{plan}`, `lineups/{game}` …) have no tabs. The player page is named
+ * by its own shape (`roster` + one id), so no other two-segment address learns a band by accident.
  */
 const BAND_ROOMS = new Set(['accounting', 'history', 'development', 'lineups', 'practice']);
 export function coachBandAt(pathname: string, teamBase: string): boolean {
   if (!pathname.startsWith(`${teamBase}/`)) return false;
   const seg = pathname.slice(teamBase.length + 1).split('/').filter(Boolean);
+  if (seg.length === 2) return seg[0] === 'roster';
   return seg.length === 1 && BAND_ROOMS.has(seg[0]);
 }

@@ -186,6 +186,34 @@
 /* ⚖ One level down: the record's name and chips (portaled in by the page's header) sit in the place row as if they were its own
    children — the slot draws nothing of itself, so an empty slot (the record still loading) costs no gap. */
 .recordSlot { display: contents; }
+/* The kind of place ("Player") until the page names its record (navigation Phase 5b, A5): the name's own look, gone the moment
+   the slot has content — the phone bar's `.teamBarHere`, in the strip. */
+.recordSlot:not(:empty) + .recordHere { display: none; }
+/* A long record name keeps its room: the team's facts give way first (`useFactsGiveWay`, CoachTopStrip.tsx; A6·1). While they show,
+   the name does not shrink — the facts do (the club's name first, C9) — and when even that cannot hold them, the place overflows,
+   which is what the hook measures; it then hides the facts, and only past that can a name (an absurd one) cut with "…". */
+:not([data-crowded]) > .recordSlot > h1 { flex-shrink: 0; }
+[data-crowded] .teamFacts { display: none; }
+
+/* ⚖ THE RECORD'S NAME ▾ IS ITS SWITCHER (navigation Phase 5b, D3, owner 2026-11-12): "← Roster │ Avery Test ▾" — the name and its
+   16px chevron are ONE 40px button (the cell recipe, N3: one target, never a name beside a separate chevron). The button is the
+   page's own element (portaled whole); here it takes the strip's measure: no 44px overhang (the strip is a fixed-height row), the
+   back link's quiet tint under a pointer, and the words cut with "…" while the chevron stays. */
+/* The tint's inset is taken back on the HEADING, not the button: a negative margin inside the heading made it measure itself
+   narrower than its button, so the words were cut by 6px with room to spare (and the facts gave way for nothing). */
+.recordSlot > h1:has(> button) { display: flex; overflow: visible; margin-left: -0.4rem; }
+.recordSlot > h1 > button {
+  min-width: 0;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 0.4rem;
+  border-radius: 6px;
+}
+.recordSlot > h1 > button > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (hover: hover) {
+  .recordSlot > h1 > button:hover { background: var(--home-olive-soft); }
+}
+.recordSlot > h1 > button[aria-expanded='true'] { background: var(--home-olive-soft); }
 
 /* ⚖ THE PAGE'S "?" IN THE STRIP (navigation Phase 4b, owner 2026-11-12): the shared HelpButton, dressed as one of the strip's doors —
    the door's own size and quiet ink, the same hover. The button's class is a single selector, so this wins by being under the wrapper. */
