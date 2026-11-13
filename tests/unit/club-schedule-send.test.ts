@@ -107,7 +107,7 @@ describe('the words a coach reads (Ask 7 — drafts for /marketing)', () => {
     assert.equal(e.greeting, 'Hi Dana and Sam,');
     assert.equal(e.subject, 'Winter dome · Sundays: 15U AAA’s slots');
     assert.equal(e.paragraphs[0], 'UAT Rep Club has given 15U AAA 25 slots at Lakeshore Dome, from Sun, Oct 4 to Sun, Mar 28, 2027:');
-    assert.equal(e.lists[1].title, 'The bill: $2,700.00 in 3 payments, for the time you got.');
+    assert.equal(e.lists[1].title, 'The bill: $2,700.00 in 3 payments, for the time your team got.');
     assert.deepEqual(e.lists[1].items, ['Oct 1 · $972.00', 'Dec 1 · $864.00', 'Feb 1 · $864.00']);
     assert.match(e.outro ?? '', /hand it back from the practice on your schedule/);
     assert.doesNotMatch(JSON.stringify(e), /From the club\b/);
@@ -151,6 +151,7 @@ describe('the words a coach reads (Ask 7 — drafts for /marketing)', () => {
     assert.equal(e.lists.length, 1);
     assert.match(e.lists[0].title ?? '', /\$133\.34 in 1 payment/);
     assert.match(e.outro ?? '', /Your slots stay as they were/);
+    assert.match(e.outro ?? '', /Questions about the bill\? Reply to this email; it goes to the person at the club who sent it\./);
     assert.match(unreachableSentence('14U AA', 'no_head_coach', 4, 'bill'), /Its bill goes on its Money › Club tab; nobody is emailed about it\./);
   });
   it('Stage 11c: a shared slot, moved around, the open time — in the drawings’ words', () => {

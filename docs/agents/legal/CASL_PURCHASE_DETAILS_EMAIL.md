@@ -10,7 +10,7 @@ descriptions, the "paid" conflict, what changed for a returning club, "Bought by
 ## Finding
 1. **CASL: transactional, fine as built.** The email confirms a purchase the person made and gives factual information about an
    ongoing purchase (price, renewal date, cancel and refund lines). That is the s.6(6) class (confirming a transaction the person
-   agreed to; factual information about an ongoing subscription), so it needs no consent and no unsubscribe link. It holds only
+   agreed to; factual information about an ongoing subscription), so it needs no consent. (Corrected 2026-11-13: s.6(6) lifts only the consent requirement. The email needs no unsubscribe link only because it is most likely not a commercial electronic message at all, as it encourages no purchase; see `CASL_LATE_BILL_EMAIL.md`.) It holds only
    while the email carries **no offer, upsell or sign-up/pricing link**: today the links are the invoice, the billing page and the
    Terms. "Renews on {date} at {price}" is a fact about their own plan, not an offer. **One soft spot:** the opening and closing
    are operator-editable, so a staff edit could add promotion. Staff are trusted, but the template's description (platform-admin

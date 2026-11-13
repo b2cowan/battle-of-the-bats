@@ -50,7 +50,7 @@ export const SCHEDULE_WORDS = {
     `Each team’s coaches see their slots and their bill${replyBy ? `, and reply by ${formatShortWeekdayDate(replyBy)}` : ''}. Nothing is booked or billed yet. You finalize when you’re ready, whether or not every team has replied.`,
   /** A final schedule's first bill, made later: it bills and tells coaches, and books nothing. */
   lateBillStatement: (teams: number, total: string) =>
-    `The bill goes to ${pluralize(teams, 'team')}, ${total} in all. Each team’s share lands on its Money › Club tab, with its payments. The schedule stays final and nothing on a team’s schedule changes.`,
+    `The bill goes to ${pluralize(teams, 'team')}, ${total} in all. Each team’s share lands on its Money › Club tab, with its payments, and its coaches are emailed the bill; replies come to you. The schedule stays final and nothing on a team’s schedule changes.`,
   // [marketing] Stage 11b Part 5: house-league teams' practices, and their families, join the statement ("Only those teams'
   // coaches are told" was untrue once families of a house-league team hear too, 9d2·2).
   // [marketing] House League 9d-2b Part 5: a house-league division's games join it (9d2·13) — families hear about those
@@ -299,7 +299,7 @@ const firstNames = (names: readonly (string | null)[]) => {
 
 /** [marketing] A team's bill as an email's list: its total and payments, then each payment. */
 const billList = (bill: { cents: number; installments: Installment[] }): EmailWords['lists'][number] =>
-  ({ title: `The bill: ${billPhrase(bill.cents, bill.installments.length)}, for the time you got.`, items: bill.installments.map(paymentLine) });
+  ({ title: `The bill: ${billPhrase(bill.cents, bill.installments.length)}, for the time your team got.`, items: bill.installments.map(paymentLine) });
 
 /** [marketing] What a team's coaches receive when the schedule is sent for review or final (specimens 9 and 14). */
 export function teamEmail(p: {
@@ -356,7 +356,7 @@ export function billEmail(p: {
     paragraphs: [`${p.orgName} has billed ${p.teamName} for the time it got on ${p.scheduleName}.`],
     lists: [billList(p.bill)],
     link: { label: `Open ${possessive(p.teamName)} Money › Club tab →`, path: p.link },
-    outro: 'The bill is on your Money › Club tab, with each payment. Your slots stay as they were.',
+    outro: 'The bill is on your Money › Club tab, with each payment. Your slots stay as they were. Questions about the bill? Reply to this email; it goes to the person at the club who sent it.',
   };
 }
 
