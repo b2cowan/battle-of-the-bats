@@ -24,6 +24,7 @@ import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
 import { analyzeLineup, canMarkLineupReady } from '@/lib/lineup-analysis';
 import { gameHasStarted } from '@/lib/coach-game-day';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { lineupFamilyAnswers } from '@/lib/family-availability-coach';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
 const VALID_POSITIONS = new Set([
@@ -115,7 +116,13 @@ export const GET = withObservability(async (_req: Request,
     getRepTeamLineupForEvent(eventId),
     getRepCallUpsForEvent(eventId),
   ]);
-  const entries = lineup ? await getRepTeamLineupEntries(lineup.id) : [];
+  const [entries, familyAnswers] = await Promise.all([
+    lineup ? getRepTeamLineupEntries(lineup.id) : Promise.resolve([]),
+    // Signed-in family accounts Stage 4b (Part 6, ask 13): the family's answer per rostered player (no note, no name), for the
+    // pool words and the "said Out after you saved" warning. Only for a coach who can ALSO mark attendance (ask 11) and only on
+    // the working season; null (omitted) otherwise, so the builder is exactly as before.
+    !isReadOnly && capabilities.attendance ? lineupFamilyAnswers({ teamId, programYearId: programYear.id, event }) : null,
+  ]);
 
   return NextResponse.json({
     // The game itself — matchup/date/name — so the standalone Lineups builder page can render its
@@ -139,6 +146,7 @@ export const GET = withObservability(async (_req: Request,
     entries,
     programYear,
     isReadOnly,
+    ...(familyAnswers ? { familyAnswers } : {}),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/lineup' });
 

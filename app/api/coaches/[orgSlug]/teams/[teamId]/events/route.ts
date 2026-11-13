@@ -35,7 +35,7 @@ import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { isVisibleToFamilies } from '@/lib/family-access';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { clubSourcesFor } from '@/lib/club-schedule-coach';
-import { scheduleHeadcounts } from '@/lib/family-availability-coach';
+import { familyLineupFlagEventIds, scheduleHeadcounts } from '@/lib/family-availability-coach';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -95,12 +95,18 @@ export const GET = withObservability(async (req: Request,
   // Draft / Ready / Needs review badge (F02 — replaces the old "any nonblank cell = set" boolean),
   // powering the Lineups page's chips, the schedule and Overview's flags, and the "Needs lineup"
   // filter, all without N+1 probes.
-  const [lineupMismatchEventIds, lineupReadiness] = capabilities.lineups
+  // Signed-in family accounts Stage 4b (Part 6, ask 13): a saved lineup holding a player a family said Out about joins the same
+  // triangle, by the builder's own rule — only for a coach who can also mark attendance (the builder shows them why; ask 11).
+  const [bookMismatchEventIds, lineupReadiness, familyLineupEventIds] = capabilities.lineups
     ? await Promise.all([
         getRepTeamLineupAttendanceMismatchEventIds(programYear.id),
         getRepTeamLineupReadinessByEvent(programYear.id, getSportPack(team.sport ?? DEFAULT_SPORT).fieldPositions),
+        capabilities.attendance && programYear.status === 'active'
+          ? familyLineupFlagEventIds({ teamId, programYearId: programYear.id, events, team })
+          : Promise.resolve([] as string[]),
       ])
-    : [[], null];
+    : [[], null, [] as string[]];
+  const lineupMismatchEventIds = [...new Set([...bookMismatchEventIds, ...familyLineupEventIds])];
   const lineupStatusByEvent = lineupReadiness?.statusByEvent ?? null;
   // D11: beside the badge, how many innings still need a decision — a Ready lineup may carry open
   // innings the coach means to fill at the field, and the hub's chip says so ("Ready · 3 open").

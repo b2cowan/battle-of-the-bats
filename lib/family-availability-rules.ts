@@ -138,6 +138,8 @@ export interface RoomFamilyAnswers {
   /** Where this event stands for families: `open` before the start, `closed` after, `cancelled` (the room then shows nothing). */
   state: Exclude<FamilyAnswerState, 'not_covered'>;
   rows: RoomFamilyRow[];
+  /** When Remind was last used on this event (any coach), or null (Part 7: the card's "Reminded at … again tomorrow at …"). */
+  remindedAt: string | null;
 }
 
 /** The room's Families card and its two actions, decided in ONE place from the book and the family rows. */
@@ -149,6 +151,8 @@ export interface RoomFamilySummary {
   changed: string[];
   /** What "Use N family answers" would write: only players the coach hasn't marked, In → attending, Out → absent. */
   usable: { playerId: string; status: 'attending' | 'absent' }[];
+  /** Players whose families Remind would reach (`remindPlan`): a parent in the app, no answer, not marked. */
+  remind: string[];
 }
 
 export function roomFamilySummary(
@@ -156,7 +160,7 @@ export function roomFamilySummary(
   family: readonly RoomFamilyRow[],
 ): RoomFamilySummary {
   const byPlayer = new Map(family.map(f => [f.playerId, f]));
-  const out: RoomFamilySummary = { answered: 0, haveNot: 0, noParent: 0, changed: [], usable: [] };
+  const out: RoomFamilySummary = { answered: 0, haveNot: 0, noParent: 0, changed: [], usable: [], remind: [] };
   for (const b of book) {
     const f = byPlayer.get(b.playerId);
     if (!f) continue; // a call-up: no family line, not counted
@@ -167,6 +171,10 @@ export function roomFamilySummary(
     const use = usableFamilyMark(b.status, f.line?.answer ?? null);
     if (use) out.usable.push({ playerId: b.playerId, status: use });
   }
+  out.remind = remindPlan(book.flatMap(b => {
+    const f = byPlayer.get(b.playerId);
+    return f ? [{ playerId: b.playerId, status: b.status, answered: !!f.line, connected: f.connected }] : [];
+  })).remind;
   return out;
 }
 
@@ -181,4 +189,139 @@ export function bookMarkedAt(
   if (status === 'unknown') return null;
   if (!prior || prior.status !== status || confirmed) return now;
   return prior.markedAt;
+}
+
+// ── The lineup (Session 3, Part 6; drawing tab 5) ─────────────────────────────────────────────────────────────────────────────
+// ONE rule for the builder's pool words and warning, the event window's Lineup row and the schedule row's triangle (ask 13).
+
+/** One rostered player as the lineup reads the book and the family. */
+export interface LineupFamilyPlayer {
+  playerId: string;
+  status: RepAttendanceStatus;
+  markedAt: string | null;
+  family: { answer: FamilyAnswer; answeredAt: string } | null;
+}
+
+/** One rostered player's family answer, as the lineup reads it: the answer and when. No note, no name (those stay in the room). */
+export interface LineupFamilyAnswer { playerId: string; answer: FamilyAnswer; answeredAt: string }
+
+/** The word on a pool pill ("Not in the lineup"): the coach's mark first (Out), then the family's answer (Out / Maybe). A coach's
+ *  In or Late, a family's In, or nothing at all: no word. */
+export function lineupTagWord(status: RepAttendanceStatus, family: { answer: FamilyAnswer } | null): 'out' | 'maybe' | null {
+  if (status === 'absent') return 'out';
+  if (status !== 'unknown' || !family || family.answer === 'in') return null;
+  return family.answer;
+}
+
+/** A lineup player a family said Out about that the coach hasn't settled. `afterSave`: the Out came after the lineup was saved. */
+export interface LineupFamilyOut { playerId: string; afterSave: boolean }
+
+/**
+ * The players IN the lineup whose family said Out and whom the coach hasn't settled:
+ *   · not marked → the family's Out counts as Out (whenever it came; `afterSave` says which sentence);
+ *   · marked In or Late → only a family Out that came after BOTH the coach's mark and the lineup's last save (the room's amber
+ *     warning, seen from the lineup). Re-saving the lineup or re-tapping the mark settles it;
+ *   · marked Out → nothing here: the coach's own mark already says "marked Out but still in the lineup".
+ */
+export function lineupFamilyOuts(
+  players: readonly LineupFamilyPlayer[], inLineup: ReadonlySet<string>, savedAt: string | null,
+): LineupFamilyOut[] {
+  const out: LineupFamilyOut[] = [];
+  for (const p of players) {
+    if (!inLineup.has(p.playerId) || p.family?.answer !== 'out') continue;
+    const afterSave = !!savedAt && Date.parse(p.family.answeredAt) > Date.parse(savedAt);
+    if (p.status === 'unknown') out.push({ playerId: p.playerId, afterSave });
+    else if ((p.status === 'attending' || p.status === 'late') && afterSave && familyDrifted(p, p.family)) {
+      out.push({ playerId: p.playerId, afterSave: true });
+    }
+  }
+  return out;
+}
+
+// ── Remind (Session 3, Part 7; ask 2; drawing tab 4) ─────────────────────────────────────────────────────────────────────────
+
+/** Once per event per 24 hours for the whole staff (the database's claim holds it; this is the same gap for the words). */
+export const REMIND_GAP_MS = 24 * 60 * 60 * 1000;
+
+/** When Remind is offered again after a reminder sent at `remindedAt`. */
+export function remindAgainAt(remindedAt: string): string {
+  return new Date(Date.parse(remindedAt) + REMIND_GAP_MS).toISOString();
+}
+
+/**
+ * WHO A REMINDER IS FOR (ask 2), decided in ONE place for the room's "Remind N", the confirm and the send:
+ *   · remind   — a parent is in the app, the family hasn't answered, and the coach hasn't marked the player;
+ *   · marked   — the family hasn't answered, but the coach marked the player: settled, never reminded;
+ *   · noParent — the family hasn't answered, nobody marked the player, and no parent is in the app: reported, never emailed.
+ * A family that answered is left alone. A call-up is never passed in.
+ */
+export function remindPlan(players: readonly { playerId: string; status: RepAttendanceStatus; answered: boolean; connected: boolean }[]): {
+  remind: string[]; marked: string[]; noParent: string[];
+} {
+  const out = { remind: [] as string[], marked: [] as string[], noParent: [] as string[] };
+  for (const p of players) {
+    if (p.answered) continue;
+    if (!p.connected) { if (p.status === 'unknown') out.noParent.push(p.playerId); continue; }
+    (p.status === 'unknown' ? out.remind : out.marked).push(p.playerId);
+  }
+  return out;
+}
+
+// ── The coach's bell (Session 3, Part 8; ask 12; drawing tab 6) ──────────────────────────────────────────────────────────────
+
+/** "In the 48 hours before the event" (ask 12). */
+export const COACH_BELL_LATE_MS = 48 * 60 * 60 * 1000;
+/** Answers inside this window fold into the coach's existing unread line (ask 12's bundling). */
+export const COACH_BELL_BUNDLE_MS = 60 * 60 * 1000;
+
+/**
+ * Does this save ring the coach's bell? A family's Out at any time; any CHANGE (including a cleared answer) inside the 48 hours
+ * before the event. Never a first In or Maybe, never a note-only re-send, never a routine In.
+ */
+export function coachBellFires(prior: FamilyAnswer | null, next: FamilyAnswer | null, startsAt: string, now: Date): boolean {
+  if (prior === next) return false;
+  if (next === 'out') return true;
+  return prior !== null && Date.parse(startsAt) - now.getTime() <= COACH_BELL_LATE_MS;
+}
+
+/** One family answer as the coach's bell carries it. Never the note's words: only that there is one (ask 12, /legal). */
+export interface CoachBellItem {
+  eventId: string;
+  /** "Sat vs Lakeshore" / "Thu, Apr 29 practice". */
+  eventLabel: string;
+  /** "Sat, May 1" (a family's run of events lists these). */
+  eventDay: string;
+  childId: string;
+  child: string;
+  answer: FamilyAnswer | null;
+  prior: FamilyAnswer | null;
+  /** The answering parent's first name, or null ("A parent"). */
+  parent: string | null;
+  hasNote: boolean;
+  /** The coach's mark on this player when it says something else than the family now does (the drift), else null. */
+  markWord: string | null;
+  /** The event's count after this answer ("9 of 13 in · 1 out · 1 maybe"), or null. */
+  count: string | null;
+}
+
+/** One bell line: one event's answers, or one family's run of events. */
+export interface CoachBellBundle { kind: 'event' | 'family'; teamId: string; items: CoachBellItem[] }
+
+/**
+ * Fold a new answer into the coach's unread lines from the last hour (ask 12): first a line about the SAME event (one line per
+ * event; the same child's newer answer replaces theirs), else a line that is only about THIS family (one line per family across
+ * events), else a new line. Returns the line to write and which existing line it replaces (null = a new one).
+ */
+export function mergeCoachBell(
+  open: readonly { id: string; bundle: CoachBellBundle }[], item: CoachBellItem, teamId: string,
+): { id: string | null; bundle: CoachBellBundle } {
+  const sameEvent = open.find(o => o.bundle.teamId === teamId && o.bundle.kind === 'event' && o.bundle.items.every(i => i.eventId === item.eventId));
+  if (sameEvent) {
+    return { id: sameEvent.id, bundle: { ...sameEvent.bundle, items: [...sameEvent.bundle.items.filter(i => i.childId !== item.childId), item] } };
+  }
+  const sameFamily = open.find(o => o.bundle.teamId === teamId && o.bundle.items.length > 0 && o.bundle.items.every(i => i.childId === item.childId));
+  if (sameFamily) {
+    return { id: sameFamily.id, bundle: { kind: 'family', teamId, items: [...sameFamily.bundle.items.filter(i => i.eventId !== item.eventId), item] } };
+  }
+  return { id: null, bundle: { kind: 'event', teamId, items: [item] } };
 }

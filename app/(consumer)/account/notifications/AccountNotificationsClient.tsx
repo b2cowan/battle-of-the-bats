@@ -41,6 +41,8 @@ export type NotificationCard = {
   /** The coach holds a club team's money (head coach, or given money access): the club-money notices
    *  can reach them, so "Your club" lists them too (Club Tier Stage 3a, Ask 5c). */
   clubMoney?: boolean;
+  /** The coach marks attendance on a team whose families can answer (Stage 4b, Part 8): the "Family answers" row shows. */
+  familyAnswers?: boolean;
 };
 
 /** The club scheduler's notices to a club team's staff who see the schedule (Club Tier 11a) — "Your club" lists them:
@@ -174,9 +176,14 @@ function CoachCard({ card }: { card: NotificationCard }) {
     () => (clubMoney ? ['club_season_changed', 'club_coach_listed', ...CLUB_SCHEDULE_EVENTS, ...CLUB_MONEY_EVENTS, ...CLUB_HAND_BACK_EVENTS] : ['club_season_changed', 'club_coach_listed', ...CLUB_SCHEDULE_EVENTS]),
     [clubMoney],
   );
+  // Families say if they're coming (Stage 4b, Part 8): the "Family answers" row, only where such a bell can arrive.
+  const familyAnswers = card.familyAnswers === true;
   const eventTypes = useMemo<NotificationEventType[]>(
-    () => (clubTeam ? ['coach_insights_digest', 'practice_plan_sent', ...clubEvents] : ['coach_insights_digest', 'practice_plan_sent']),
-    [clubTeam, clubEvents],
+    () => [
+      ...(clubTeam ? ['coach_insights_digest', 'practice_plan_sent', ...clubEvents] : ['coach_insights_digest', 'practice_plan_sent']),
+      ...(familyAnswers ? ['family_availability_response'] : []),
+    ] as NotificationEventType[],
+    [clubTeam, clubEvents, familyAnswers],
   );
   const groups = useMemo<PreferenceGroup[]>(
     () => [
@@ -191,6 +198,11 @@ function CoachCard({ card }: { card: NotificationCard }) {
         blurb: 'When a coach sends you the practice plan, with the stations you’re running. An email the coach chooses to send arrives whatever you set here.',
         eventTypes: ['practice_plan_sent'],
       },
+      ...(familyAnswers ? [{
+        label: 'Family answers',
+        blurb: 'When a family says Out, or changes an answer in the 48 hours before an event.',
+        eventTypes: ['family_availability_response'] as NotificationEventType[],
+      }] : []),
       ...(clubTeam ? [{
         label: 'Your club',
         blurb: clubMoney
@@ -199,7 +211,7 @@ function CoachCard({ card }: { card: NotificationCard }) {
         eventTypes: clubEvents,
       }] : []),
     ],
-    [clubTeam, clubMoney, clubEvents],
+    [clubTeam, clubMoney, clubEvents, familyAnswers],
   );
 
   const p = useOrgPreferences({ orgSlug: card.orgSlug, role: card.role, eventTypes });

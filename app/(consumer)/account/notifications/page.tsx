@@ -9,6 +9,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getFanAlertOverview } from '@/lib/fan-alert-prefs';
 import { isNotificationsPaused } from '@/lib/notification-pause';
 import { holdsTeamMoneyInOrg } from '@/lib/coach-membership';
+import { marksFamilyAnswersInOrg } from '@/lib/family-availability-coach';
 import { hasTeamCoachBell } from '@/lib/notification-bell-scope';
 import type { Capability } from '@/lib/roles';
 import type { Organization } from '@/lib/types';
@@ -116,6 +117,9 @@ export default async function AccountNotificationsPage({
         // coach, or staff the head coach has given money access, on one of the club's teams.
         clubMoney:         ctx.isTeamWorkspace !== true && !!ctx.orgId
           && await holdsTeamMoneyInOrg(ctx.orgId, user.id).catch(() => false),
+        // Signed-in family accounts Stage 4b (Part 8): the "Family answers" row, only for a coach who marks attendance on a team
+        // whose families can answer (tier on, switch on). Off everywhere while the guardian tier is off.
+        familyAnswers:     !!ctx.orgId && await marksFamilyAnswersInOrg(ctx.orgId, user.id).catch(() => false),
       });
     }
   }

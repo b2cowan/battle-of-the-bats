@@ -9,7 +9,8 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import type { RepAttendanceStatus, RepRosterPlayer } from '@/lib/types';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
-import { FAMILY_AVAILABILITY_COACH_WORDS as FW } from '@/lib/family-availability-words';
+import { FAMILY_AVAILABILITY_COACH_WORDS as FW, FAMILY_REMIND_COACH_WORDS } from '@/lib/family-availability-words';
+import FamilyRemindPanel from '@/components/coaches/FamilyRemindPanel';
 import type { RoomFamilyRow, RoomFamilySummary } from '@/lib/family-availability-rules';
 
 /**
@@ -59,6 +60,11 @@ export interface RoomFamilyView {
   /** "⚠ 1 changed since you marked: Maya · Show" filters the list to those players. The SHEET holds it (the room holds no state). */
   onlyChanged: boolean;
   toggleChanged: () => void;
+  /** Remind (Part 7): only while the event is open (not started, not cancelled). The panel reads the server's own preview. */
+  remind: {
+    open: boolean; endpoint: string; remindedAt: string | null; nowMs: number;
+    saveFirst: () => Promise<boolean>; onReminded: (at: string) => void;
+  };
 }
 
 // Quick status → {label, icon} lookup for the per-player status badge.
@@ -246,11 +252,16 @@ function FamiliesCard({ family, changedNames }: { family: RoomFamilyView; change
   const parts = FW.familyParts({ answered: summary.answered, haveNot: summary.haveNot, noParent: summary.noParent });
   const nobody = summary.answered === 0 && summary.haveNot === 0;
   const fewInApp = summary.noParent > summary.answered + summary.haveNot;
+  // Tab 4, frame 3: open, and every family the coach hasn't marked has answered: Remind goes and the card says so.
+  const nobodyLeft = family.remind.open && !nobody && summary.remind.length === 0;
+  const lineParts = nobodyLeft
+    ? [FAMILY_REMIND_COACH_WORDS.nobodyLeft, ...FW.familyParts({ answered: 0, haveNot: 0, noParent: summary.noParent })]
+    : parts;
   return (
     <section className={styles.attFamilies} aria-label={FW.card.title}>
       <p className={styles.attFamiliesLine}>
         <strong>{FW.card.title}</strong>
-        {!nobody && parts.length > 0 && <> · {parts.join(' · ')}</>}
+        {!nobody && lineParts.length > 0 && <> · {lineParts.join(' · ')}</>}
       </p>
       {nobody && <p className={styles.attFamiliesLine}>{FW.card.nobody}</p>}
       {changedNames.length > 0 && (
@@ -266,6 +277,16 @@ function FamiliesCard({ family, changedNames }: { family: RoomFamilyView; change
         <div className={styles.attendanceBulkActions}>
           <button type="button" className={styles.btnGhost} onClick={family.onUse}>{FW.card.use(summary.usable.length)}</button>
         </div>
+      )}
+      {family.remind.open && (
+        <FamilyRemindPanel
+          endpoint={family.remind.endpoint}
+          count={summary.remind.length}
+          remindedAt={family.remind.remindedAt}
+          nowMs={family.remind.nowMs}
+          saveFirst={family.remind.saveFirst}
+          onReminded={family.remind.onReminded}
+        />
       )}
       {family.toast && (
         <p className={styles.attFamiliesToast} role="status">

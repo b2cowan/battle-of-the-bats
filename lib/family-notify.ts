@@ -7,6 +7,7 @@ import { systemMailFace } from './club-email-context';
 import { formatInOrgZone } from './timezone';
 import { endSentence } from './utils';
 import { isVisibleToFamilies, verifiedLinksReachingRepTeam } from './family-access';
+import { FAMILY_AVAILABILITY_WORDS } from './family-availability-words';
 
 /**
  * lib/family-notify.ts — telling connected families when their team's plan changes.
@@ -84,6 +85,9 @@ export async function notifyFamiliesOfGameUpdate(params: {
   kind: FamilyGameUpdateKind;
   /** The coach who made the change — never notified about their own action. */
   actorUserId?: string;
+  /** The move put the event on a new day and families had answered whether their player is coming: the answers are gone (a
+   *  database rule, mig 480), so the notice says they will need to answer again (Stage 4b ask 10). Never on a cancel. */
+  answersCleared?: boolean;
 }): Promise<void> {
   try {
     const { data: eventRow } = await supabaseAdmin
@@ -137,7 +141,11 @@ export async function notifyFamiliesOfGameUpdate(params: {
     );
     if (links.length === 0) return;
 
-    const { title, body } = describe(event, team.name, params.kind);
+    const described = describe(event, team.name, params.kind);
+    const title = described.title;
+    const body = params.answersCleared && params.kind !== 'cancelled'
+      ? `${described.body} ${FAMILY_AVAILABILITY_WORDS.answerAgain}`
+      : described.body;
     const link = `/family/teams/${event.teamId}`;
 
     // ── In-app (bell). Push is deliberately not in this event's defaults. ──

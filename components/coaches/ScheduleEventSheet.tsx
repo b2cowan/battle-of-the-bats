@@ -15,7 +15,9 @@ import GuardedDelete from '@/components/coaches/GuardedDelete';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import ScheduleAttendanceRoom, { type AttendanceRoomRow } from '@/components/coaches/ScheduleAttendanceRoom';
 import { FAMILY_AVAILABILITY_COACH_WORDS as FW } from '@/lib/family-availability-words';
-import { bookMarkedAt, roomFamilySummary, type RoomFamilyAnswers } from '@/lib/family-availability-rules';
+import {
+  bookMarkedAt, lineupFamilyOuts, roomFamilySummary, type LineupFamilyAnswer, type RoomFamilyAnswers,
+} from '@/lib/family-availability-rules';
 import { ATTENDANCE_WORD } from '@/lib/coach-schedule-vocab';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatStoredClock as fmtClock } from '@/lib/utils';
@@ -259,6 +261,9 @@ export default function ScheduleEventSheet({
   // retired with the tabs (E3): the builder's first screen IS the order, one inning at a time.
   const [hasLineup, setHasLineup] = useState(false);
   const [lineupEntryIds, setLineupEntryIds] = useState<Set<string>>(new Set());
+  // Families say if they're coming (Stage 4b, Part 6): the lineup's last save and the family's answers, from the lineup read
+  // (present only for a coach who can also mark attendance, while families can answer this game). Null = as before.
+  const [lineupFamily, setLineupFamily] = useState<{ savedAt: string | null; answers: LineupFamilyAnswer[] } | null>(null);
   const [scoreForm, setScoreForm] = useState<{ teamScore: string; opponentScore: string } | null>(null);
   const [giveAwardOpen, setGiveAwardOpen] = useState(false);
   // Editing an already-given award (Awards One Tag Idiom Part A) reuses the give form — null
@@ -366,6 +371,7 @@ export default function ScheduleEventSheet({
         setAttendanceRows([]);
         setHasLineup(false);
         setLineupEntryIds(new Set());
+        setLineupFamily(null);
         setAttendanceError('');
         setAttendanceDirty(false);
         setAttendanceLoading(false);
@@ -390,6 +396,8 @@ export default function ScheduleEventSheet({
           callUps?: RepRosterPlayer[];
           attendance?: RepTeamEventAttendance[];
           entries?: RepTeamLineupEntry[];
+          lineup?: { updatedAt?: string } | null;
+          familyAnswers?: LineupFamilyAnswer[];
         } = await res.json();
         if (cancelled) return;
 
@@ -416,9 +424,11 @@ export default function ScheduleEventSheet({
           const entries = data.entries ?? [];
           setHasLineup(entries.some(e => Object.values(e.inningPositions ?? {}).some(Boolean)));
           setLineupEntryIds(new Set(entries.map(e => e.playerId)));
+          setLineupFamily(data.familyAnswers ? { savedAt: data.lineup?.updatedAt ?? null, answers: data.familyAnswers } : null);
         } else {
           setHasLineup(false);
           setLineupEntryIds(new Set());
+          setLineupFamily(null);
         }
       } catch (e: unknown) {
         if (!cancelled) setAttendanceError(errorMessage(e, 'Failed to load attendance'));
@@ -674,7 +684,19 @@ export default function ScheduleEventSheet({
     const out = attendanceRows
       .filter(r => r.status === 'absent' && lineupEntryIds.has(r.player.id))
       .map(r => rowPlayer(r.player));
-    return coming.length > 0 || out.length > 0 ? { coming, out } : null;
+    // A family's Out the coach hasn't settled (Stage 4b, Part 6): the builder's own rule, with the mark the server will hold once
+    // the room saves (a tap on In clears it here as it does in the room).
+    const said = lineupFamily && ev.status !== 'cancelled' ? new Map(lineupFamily.answers.map(a => [a.playerId, a])) : null;
+    const familyOuts = said ? lineupFamilyOuts(attendanceRows.map(r => ({
+      playerId: r.player.id, status: r.status, family: said.get(r.player.id) ?? null,
+      markedAt: bookMarkedAt(r.savedStatus ? { status: r.savedStatus, markedAt: r.markedAt } : undefined, r.status, !!r.confirmed, new Date(nowMs).toISOString()),
+    })), lineupEntryIds, lineupFamily!.savedAt) : [];
+    const byId = new Map(attendanceRows.map(r => [r.player.id, r.player]));
+    const family = {
+      afterSave: familyOuts.filter(o => o.afterSave).map(o => rowPlayer(byId.get(o.playerId)!)),
+      before: familyOuts.filter(o => !o.afterSave).map(o => rowPlayer(byId.get(o.playerId)!)),
+    };
+    return coming.length > 0 || out.length > 0 || familyOuts.length > 0 ? { coming, out, family } : null;
   })();
 
   /**
@@ -1387,6 +1409,16 @@ export default function ScheduleEventSheet({
           inviteHref: `${base}/roster`,
           onlyChanged: familyOnlyChanged,
           toggleChanged: () => setFamilyOnlyChanged(v => !v),
+          remind: {
+            // Open = not started, not cancelled (read when the window opened; the clock closes it at the start).
+            open: familyAnswers.state === 'open' && !!ev.startsAt && Date.parse(ev.startsAt) > nowMs,
+            endpoint: `/api/coaches/${orgSlug}/teams/${teamId}/events/${ev.id}/family-remind`,
+            remindedAt: familyAnswers.remindedAt,
+            nowMs,
+            // A mark tapped but not yet saved must reach the book first: the server decides who is reminded from the book.
+            saveFirst: () => (attendanceDirty ? handleAttendanceSave() : Promise.resolve(true)),
+            onReminded: (at: string) => setFamilyRead(r => (r?.answers ? { ...r, answers: { ...r.answers, remindedAt: at } } : r)),
+          },
         } : null}
       />
     </>

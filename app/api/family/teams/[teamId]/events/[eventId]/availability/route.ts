@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import { withObservability } from '@/lib/observability';
 import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 import { isFamilyAnswer, writeFamilyAnswer } from '@/lib/family-availability';
+import { notifyCoachesOfFamilyAnswer } from '@/lib/family-availability-coach-bell';
 import { getSignedInUser } from '@/lib/two-step-session';
 import { isUuid } from '@/lib/utils';
 
@@ -34,5 +35,8 @@ export const POST = withObservability(async (req: Request,
     const status = result.code === 'closed' ? 409 : result.code === 'bad_note' ? 400 : 404;
     return NextResponse.json({ error: result.code }, { status });
   }
+  // The coaches' "Family answers" bell (Part 8): an Out, or a change in the last 48 hours. AWAITED (Amplify has no after-response
+  // hook) and it never throws, so the parent's save never fails on it. The change itself never reaches the browser.
+  await notifyCoachesOfFamilyAnswer({ teamId, eventId, childId, actorUserId: user.id, change: result.change });
   return NextResponse.json({ ok: true, row: result.row });
 }, { route: '/api/family/teams/[teamId]/events/[eventId]/availability' });

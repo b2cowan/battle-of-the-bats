@@ -18,6 +18,8 @@
  *   · `sheetAddressFor` / `sheetViewFromTab` — the `?event=…&tab=…` grammar (E5), unchanged in shape.
  */
 
+import { FAMILY_AVAILABILITY_COACH_WORDS } from './family-availability-words';
+
 // ── The address (E5) ───────────────────────────────────────────────────────────────────────────
 
 /** A view that opens INSIDE the sheet — the attendance room, or the scouting book's panel. */
@@ -171,6 +173,9 @@ export function lineupDoor({ started, hasLineup, mismatch, liveWindow }: {
 export interface LineupMismatch {
   coming: RowPlayer[];
   out: RowPlayer[];
+  /** Signed-in family accounts Stage 4b (Part 6): lineup players a family said Out about that the coach hasn't settled, split by
+   *  whether the Out came after the lineup's last save (`lineupFamilyOuts` decides; the builder reads the same rule). */
+  family?: { afterSave: RowPlayer[]; before: RowPlayer[] };
 }
 
 /** The Lineup row's words. A disagreement is the line, in the warning tone (E4). */
@@ -179,10 +184,15 @@ export function lineupRowWords({ hasLineup, mismatch, door }: {
   mismatch: LineupMismatch | null;
   door: LineupDoor;
 }): { head: string; line: string; warn: boolean } {
-  if (mismatch && (mismatch.coming.length > 0 || mismatch.out.length > 0)) {
+  const familyAfter = mismatch?.family?.afterSave ?? [];
+  const familyBefore = mismatch?.family?.before ?? [];
+  if (mismatch && (mismatch.coming.length > 0 || mismatch.out.length > 0 || familyAfter.length > 0 || familyBefore.length > 0)) {
     const first = (ps: RowPlayer[]) => nameList(ps.map(p => p.firstName || rowPlayerLabel(p)));
     const is = (n: number) => (n === 1 ? 'is' : 'are');
+    const familyLine = FAMILY_AVAILABILITY_COACH_WORDS.lineup.rowLine;
     const sentences = [
+      familyAfter.length > 0 ? familyLine(first(familyAfter), familyAfter.length, true) : '',
+      familyBefore.length > 0 ? familyLine(first(familyBefore), familyBefore.length, false) : '',
       mismatch.coming.length > 0 ? `${first(mismatch.coming)} ${is(mismatch.coming.length)} in, but not in the lineup` : '',
       mismatch.out.length > 0 ? `${first(mismatch.out)} ${is(mismatch.out.length)} Out but in the lineup` : '',
     ].filter(Boolean);

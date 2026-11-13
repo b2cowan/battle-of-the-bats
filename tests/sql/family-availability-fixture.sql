@@ -12,13 +12,17 @@
 --   5. the purge clears a note 30+ days after its event, keeps a recent one, keeps the answer while its season's last event is recent,
 --      and deletes the answers of a season whose last event is 60+ days ago;
 --   6. a deleted rep event takes its answers and its Remind rows;
---   7. the coach's attendance book is never touched by the purge.
+--   7. the coach's attendance book is never touched by the purge;
+--   8. (mig 480) a new day clears the event's answers and Remind log; a same-day time change and a cancel keep them;
+--   9. (mig 480) a parent's connection ending clears their notes on that child (answers kept; the other parent's note kept; a merge
+--      clears nothing);
+--  10. (mig 480) the answering account cleared (an account deletion) takes the note.
 do $fixture$
 declare
   v_org uuid; v_team uuid; y_live uuid; y_old uuid;
   e_past uuid; e_recent uuid; e_next uuid; e_old uuid; e_gone uuid;
   r_a uuid; c_a uuid;
-  a_past uuid; a_recent uuid; a_old uuid;
+  a_past uuid; a_recent uuid; a_old uuid; a_next uuid; l_a uuid; u_two uuid[];
   v_ok int := 0; v_n int; v_s text; v_b boolean; v_t timestamptz; v_id uuid;
 begin
   select o.id into v_org from organizations o where exists (select 1 from rep_teams t where t.org_id = o.id) limit 1;
@@ -139,5 +143,50 @@ begin
   if v_n <> 1 then raise exception 'S4B FIXTURE FAIL 7: the purge touched the coach''s attendance book'; end if;
   v_ok := v_ok + 1;
 
-  raise exception 'S4B FIXTURE OK: %/7', v_ok;
+  -- ── Session 3 (mig 480) ───────────────────────────────────────────────────────────────────────────────────────────────────
+  -- 8. a new DAY clears the event's answers and Remind log; a new time on the same day keeps them; a cancel keeps them
+  delete from event_availability_reminders where event_id = e_next;
+  insert into event_availability_reminders (event_kind, event_id) values ('rep_event', e_next);
+  update rep_team_events set starts_at = starts_at + interval '1 minute' where id = e_next;
+  update rep_team_events set status = 'cancelled' where id = e_next;
+  update rep_team_events set status = 'scheduled' where id = e_next;
+  if not exists (select 1 from event_availability_answers where event_id = e_next)
+     or not exists (select 1 from event_availability_reminders where event_id = e_next) then
+    raise exception 'S4B FIXTURE FAIL 8: a same-day time change or a cancel cleared the answers'; end if;
+  update rep_team_events set starts_at = starts_at + interval '1 day' where id = e_next;
+  if exists (select 1 from event_availability_answers where event_id = e_next)
+     or exists (select 1 from event_availability_reminders where event_id = e_next) then
+    raise exception 'S4B FIXTURE FAIL 8: a new day kept the answers or the Remind log'; end if;
+  v_ok := v_ok + 1;
+
+  -- 9. a parent's connection ends: their notes on THAT child go, the answers stay; another parent's note stays; a merge keeps it
+  select array_agg(id) into u_two from (select id from auth.users order by created_at limit 2) u;
+  if coalesce(array_length(u_two, 1), 0) < 2 then raise exception 'S4B FIXTURE FAIL 9: dev needs two accounts to build with'; end if;
+  insert into family_links (org_id, rep_team_id, role, child_id, player_id, invited_email, status, verified_via, user_id)
+    values (v_org, v_team, 'guardian', c_a, r_a, 's4b-fx-a@example.invalid', 'verified', 'coach_approved', u_two[1]) returning id into l_a;
+  insert into family_links (org_id, rep_team_id, role, child_id, player_id, invited_email, status, verified_via, user_id)
+    values (v_org, v_team, 'guardian', c_a, r_a, 's4b-fx-b@example.invalid', 'verified', 'coach_approved', u_two[2]);
+  update event_availability_answers set note = 'mine', answered_by_user_id = u_two[1] where id = a_recent;
+  insert into event_availability_answers (event_kind, event_id, child_id, answer, note, answered_by_user_id)
+    values ('rep_event', e_next, c_a, 'in', 'theirs', u_two[2]) returning id into a_next;
+  update family_links set status = 'revoked', ended_by = 'merged', revoked_at = now() where id = l_a;
+  if (select note from event_availability_answers where id = a_recent) is distinct from 'mine' then
+    raise exception 'S4B FIXTURE FAIL 9: a merge cleared the note'; end if;
+  update family_links set status = 'verified', ended_by = null, revoked_at = null where id = l_a;
+  update family_links set status = 'revoked', ended_by = 'parent', revoked_at = now() where id = l_a;
+  if (select note from event_availability_answers where id = a_recent) is not null then
+    raise exception 'S4B FIXTURE FAIL 9: a leaving parent''s note was kept'; end if;
+  if (select answer from event_availability_answers where id = a_recent) is distinct from 'maybe' then
+    raise exception 'S4B FIXTURE FAIL 9: a leaving parent''s answer went with the note'; end if;
+  if (select note from event_availability_answers where id = a_next) is distinct from 'theirs' then
+    raise exception 'S4B FIXTURE FAIL 9: the other parent''s note was cleared'; end if;
+  v_ok := v_ok + 1;
+
+  -- 10. the answering account cleared (what an account deletion's ON DELETE SET NULL does): the note goes with it
+  update event_availability_answers set answered_by_user_id = null where id = a_next;
+  if (select note from event_availability_answers where id = a_next) is not null then
+    raise exception 'S4B FIXTURE FAIL 10: a deleted account''s note was kept'; end if;
+  v_ok := v_ok + 1;
+
+  raise exception 'S4B FIXTURE OK: %/10', v_ok;
 end $fixture$;

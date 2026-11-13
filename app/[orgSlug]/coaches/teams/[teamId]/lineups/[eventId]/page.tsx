@@ -39,6 +39,7 @@ import LineupCopyFrom, { type LineupCopyPick } from '@/components/coaches/Lineup
 import LineupSaveTemplate from '@/components/coaches/LineupSaveTemplate';
 import { copyLineup, type LineupCopySource, type LineupCopyWhat } from '@/lib/lineup-copy';
 import LineupEditor from '../_LineupEditor';
+import { lineupFamilyOuts, lineupTagWord, type LineupFamilyAnswer } from '@/lib/family-availability-rules';
 import styles from '../../../../coaches.module.css';
 import type {
   LineupSettings, LineupRulesOverride,
@@ -156,6 +157,10 @@ export default function CoachLineupBuilderPage({
   // the minute so a tab left open through first pitch changes its mind at the right moment.
   const [lineupStatus, setLineupStatus] = useState<'draft' | 'ready'>('draft');
   const [lineupReadyAt, setLineupReadyAt] = useState<string | null>(null);
+  /* Signed-in family accounts Stage 4b (Part 6, ask 13): when the lineup was last saved, and the family's answer per rostered
+     player (null = nothing about answers exists here: the builder is exactly as before). "Said Out after you saved" compares the two. */
+  const [lineupSavedAt, setLineupSavedAt] = useState<string | null>(null);
+  const [familyAnswers, setFamilyAnswers] = useState<LineupFamilyAnswer[] | null>(null);
   const [markingReady, setMarkingReady] = useState(false);
   const [readyError, setReadyError] = useState('');
   const nowMs = useMinuteClock();
@@ -173,7 +178,7 @@ export default function CoachLineupBuilderPage({
 
   // Attendance is loaded READ-ONLY here (edited on the Schedule) — used only to flag lineup ↔
   // attendance mismatches. The lineup and attendance are independent: neither auto-changes the other.
-  const [attendanceRows, setAttendanceRows] = useState<{ player: RepRosterPlayer; status: RepAttendanceStatus; note: string }[]>([]);
+  const [attendanceRows, setAttendanceRows] = useState<{ player: RepRosterPlayer; status: RepAttendanceStatus; note: string; markedAt: string | null }[]>([]);
 
   /* ── Call-ups on this game (mig 309) ──────────────────────────────────────────────────────────
      `callUps` is only ever the players linked to THIS game. The saved pool is fetched on demand
@@ -275,6 +280,7 @@ export default function CoachLineupBuilderPage({
         lineup?: RepTeamLineup | null;
         entries?: RepTeamLineupEntry[];
         programYear?: RepProgramYear | null;
+        familyAnswers?: LineupFamilyAnswer[];
       } = await res.json();
       if (isStale()) return;
 
@@ -291,7 +297,7 @@ export default function CoachLineupBuilderPage({
          exists to keep clean. Call-ups reach the editor through its own `callUps` prop. */
       setAttendanceRows(players.map(player => {
         const existing = attendanceByPlayer.get(player.id);
-        return { player, status: existing?.status ?? 'unknown', note: existing?.note ?? '' };
+        return { player, status: existing?.status ?? 'unknown', note: existing?.note ?? '', markedAt: existing?.markedAt ?? null };
       }));
 
       const mode = data.lineup?.lineupMode ?? 'everyone_bats';
@@ -317,6 +323,8 @@ export default function CoachLineupBuilderPage({
       setLineupHistory({ undo: [], redo: [] });
       setLineupStatus(data.lineup?.status ?? 'draft');
       setLineupReadyAt(data.lineup?.readyAt ?? null);
+      setLineupSavedAt(data.lineup?.updatedAt ?? null);
+      setFamilyAnswers(data.familyAnswers ?? null);
       setReadyError('');
     } catch (e: unknown) {
       if (isStale()) return;
@@ -711,7 +719,9 @@ export default function CoachLineupBuilderPage({
         const d = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(d.error ?? 'Lineup save failed');
       }
-      const saved: { lineup?: { status?: 'draft' | 'ready'; readyAt?: string | null } } = await res.json().catch(() => ({}));
+      const saved: { lineup?: { status?: 'draft' | 'ready'; readyAt?: string | null; updatedAt?: string } } = await res.json().catch(() => ({}));
+      // The lineup WAS saved, whatever the grid has done since: a family's Out before this moment is no longer "after you saved".
+      if (saved.lineup?.updatedAt) setLineupSavedAt(saved.lineup.updatedAt);
       // Both write-backs are signature-guarded: an edit made while this PUT was in flight has its
       // own save coming, and THAT response is the one that speaks for the grid as it is now.
       if (lineupSigRef.current === sigAtSave) {
@@ -887,6 +897,23 @@ export default function CoachLineupBuilderPage({
   const comingNotInLineup = attendanceRows.filter(r => (r.status === 'attending' || r.status === 'late') && !lineupRowIds.has(r.player.id));
   const outButInLineup = attendanceRows.filter(r => r.status === 'absent' && lineupRowIds.has(r.player.id));
 
+  // Families say if they're coming (Stage 4b, Part 6; ask 13): the pool's Out / Maybe words and the players a family said Out
+  // about that the coach hasn't settled, by the one rule the event window and the schedule's triangle also read.
+  const familyView = (() => {
+    if (!familyAnswers) return undefined;
+    const said = new Map(familyAnswers.map(a => [a.playerId, a]));
+    const players = attendanceRows.map(r => ({ playerId: r.player.id, status: r.status, markedAt: r.markedAt, family: said.get(r.player.id) ?? null }));
+    const byId = new Map(attendanceRows.map(r => [r.player.id, r.player]));
+    const tagWords = new Map<string, 'out' | 'maybe'>();
+    for (const p of players) {
+      const w = lineupTagWord(p.status, p.family);
+      if (w) tagWords.set(p.playerId, w);
+    }
+    const outs = lineupFamilyOuts(players, lineupRowIds, lineupSavedAt)
+      .map(o => ({ player: byId.get(o.playerId)!, afterSave: o.afterSave }));
+    return { tagWords, outs, onTakeOut: removePlayersFromLineup };
+  })();
+
   // ⚠ THE ATTENDANCE RAIL WAS REMOVED HERE (owner, 2026-08-13) — it showed an In / Out / No-reply
   // headcount beside the grid. What still reports attendance on this page is the editor's status
   // strip and the Lineup check behind it (the mismatch strip that stood here went into that check
@@ -1037,6 +1064,7 @@ export default function CoachLineupBuilderPage({
               onAddComing: () => addPlayersToLineup(comingNotInLineup.map(r => r.player.id)),
               onRemoveOut: () => removePlayersFromLineup(outButInLineup.map(r => r.player.id)),
             }}
+            family={familyView}
             callUps={{
               players: callUps,
               sheetOpen: callUpSheetOpen,

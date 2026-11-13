@@ -131,10 +131,11 @@ export async function readFamilyAnswers(params: {
   const answerRows = (answers.data ?? []) as AnswerRow[];
   const linkRows = (links.data ?? []) as { child_id: string; user_id: string }[];
 
-  const names = await firstNames([
-    ...linkRows.map(l => l.user_id),
-    ...answerRows.map(a => a.answered_by_user_id).filter((id): id is string => !!id && id !== params.userId),
-  ]);
+  // Only a parent STILL connected to the child is named: a parent who left, was removed or stopped reads as "the other parent"
+  // (their answer stays, ask 15; the sheet's hint no longer names them as connected). The coach's side keeps the name.
+  const names = await firstNames(linkRows.map(l => l.user_id));
+  const connected = new Set(linkRows.map(l => `${l.child_id}|${l.user_id}`));
+  const nameOf = (userId: string, childId: string) => (connected.has(`${childId}|${userId}`) ? names.get(userId) ?? null : null);
 
   const otherParent: Record<string, string | null> = {};
   for (const c of params.children) {
@@ -150,7 +151,7 @@ export async function readFamilyAnswers(params: {
       // would refuse; Session 1 review, item d).
       if (!seasons || !seasons.child.get(c.childId)?.has(seasons.event.get(e.id) ?? '')) continue;
       rows.push({
-        ...rowOf(e.id, c.childId, byKey.get(`${e.id}|${c.childId}`) ?? null, familyAnswerState(setting, e, now) === 'open', params.userId, names, now),
+        ...rowOf(e.id, c.childId, byKey.get(`${e.id}|${c.childId}`) ?? null, familyAnswerState(setting, e, now) === 'open', params.userId, nameOf, now),
         child: c.firstName,
       });
     }
@@ -190,9 +191,11 @@ async function childSeasons(userId: string, teamId: string, eventIds: readonly s
 /** A row without the child's name: the page adds it; a save's response never carries it (the sheet already holds it). */
 export type FamilyAnswerFields = Omit<FamilyAnswerRow, 'child'>;
 
+const noName = () => null;
+
 function rowOf(
   eventId: string, childId: string, a: AnswerRow | null, open: boolean,
-  userId: string, names: Map<string, string | null>, now: Date,
+  userId: string, nameOf: (userId: string, childId: string) => string | null, now: Date,
 ): FamilyAnswerFields {
   const mine = !!a && a.answered_by_user_id === userId;
   return {
@@ -201,17 +204,32 @@ function rowOf(
     open,
     answer: a?.answer ?? null,
     mine,
-    byFirstName: a && !mine && a.answered_by_user_id ? (names.get(a.answered_by_user_id) ?? null) : null,
+    byFirstName: a && !mine && a.answered_by_user_id ? nameOf(a.answered_by_user_id, childId) : null,
     dayWords: a ? answeredDayWords(a.answered_at, now) : null,
     note: mine ? a?.note ?? null : null,
     otherHasNote: !!a && !mine && !!a.note,
   };
 }
 
+/**
+ * Does this rep event hold any family answer? The event PATCH asks BEFORE a move to a new day (mig 480's trigger then deletes them),
+ * so the schedule-change notice can say families will need to answer again (ask 10). False while the tier is off.
+ */
+export async function eventHasFamilyAnswers(eventId: string): Promise<boolean> {
+  if (!GUARDIAN_TIER_ENABLED) return false;
+  const { count, error } = await supabaseAdmin.from('event_availability_answers')
+    .select('id', { count: 'exact', head: true }).eq('event_kind', 'rep_event').eq('event_id', eventId);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
 // ── The one writer ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
+/** What a save changed, for the coach's bell (Part 8). Server-only: the route never sends it to the browser. */
+export interface FamilyAnswerChange { prior: FamilyAnswer | null; next: FamilyAnswer | null; hasNote: boolean; startsAt: string }
+
 export type FamilyAnswerWrite =
-  | { ok: true; row: FamilyAnswerFields }
+  | { ok: true; row: FamilyAnswerFields; change: FamilyAnswerChange }
   /** not_found: nothing this account may answer here (no reach, wrong team, the switch doesn't cover it, the tier is off).
    *  closed: the event started or was cancelled. bad_note: longer than 200 characters, or not text. */
   | { ok: false; code: 'not_found' | 'closed' | 'bad_note' };
@@ -265,9 +283,13 @@ export async function writeFamilyAnswer(params: {
   const stamp = now.toISOString();
 
   if (params.answer === null) {
-    const { error } = await supabaseAdmin.from('event_availability_answers').delete().match(key);
+    const { data: gone, error } = await supabaseAdmin.from('event_availability_answers').delete().match(key).select('answer');
     if (error) throw error;
-    return { ok: true, row: rowOf(ev.id, params.childId, null, true, params.userId, new Map(), now) };
+    const prior = ((gone ?? []) as { answer: FamilyAnswer }[])[0]?.answer ?? null;
+    return {
+      ok: true, row: rowOf(ev.id, params.childId, null, true, params.userId, noName, now),
+      change: { prior, next: null, hasNote: false, startsAt: ev.starts_at },
+    };
   }
 
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -308,7 +330,10 @@ export async function writeFamilyAnswer(params: {
       answered_by_user_id: params.userId,
       answered_at: prior && prior.answer === params.answer && prior.answered_by_user_id === params.userId ? prior.answered_at : stamp,
     };
-    return { ok: true, row: rowOf(ev.id, params.childId, saved, true, params.userId, new Map(), now) };
+    return {
+      ok: true, row: rowOf(ev.id, params.childId, saved, true, params.userId, noName, now),
+      change: { prior: prior?.answer ?? null, next: params.answer, hasNote: !!cleaned.note, startsAt: ev.starts_at },
+    };
   }
   throw new Error('The answer could not be saved.');
 }

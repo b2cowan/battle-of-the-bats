@@ -8333,6 +8333,19 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   .lineupOnScheduleLink { min-height: var(--tap-min, 44px); }
 }
 .lineupNotPlayingTag { font-style: normal; font-size: var(--type-support); color: var(--warning); }
+/* Families say if they're coming (Stage 4b, Part 6; drawing tab 5): the builder's "said Out after you saved this lineup" line,
+   under the status strip, in the strip's own warning ink, with its one-tap fix (a text button, 44px on a phone). */
+.lineupFamilyWarn {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem;
+  margin: 0.4rem 0 0; color: var(--warning); font-size: var(--type-support);
+}
+.lineupFamilyTakeOut {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--blueprint-light); font: inherit; font-weight: 700; text-decoration: underline;
+}
+@media (max-width: 768px) {
+  .lineupFamilyTakeOut { min-height: var(--tap-min, 44px); }
+}
 
 
 /* Primary action — logic-lime fill, dark text (app-wide convention, matches the
@@ -16253,6 +16266,22 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
   cursor: pointer;
 }
 .attFamilies .attendanceBulkActions { justify-content: flex-start; }
+/* Remind (Stage 4b, Part 7; drawing tab 4): the confirm opens IN the card (the dues reminder's pattern), one full-width send,
+   the sample and Cancel as links under it; then the report. */
+.attRemindConfirm,
+.attRemindReport { display: flex; flex-direction: column; gap: 0.35rem; padding-top: 0.35rem; border-top: 1px solid var(--border); }
+.attRemindAsk { margin: 0; font-weight: 700; color: var(--text-primary); }
+.attRemindSend { width: 100%; justify-content: center; }
+.attRemindLinks { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0; font-size: var(--type-support); }
+.attRemindSample {
+  display: flex; flex-direction: column; gap: 0.25rem;
+  padding: 0.5rem 0.65rem; border: 1px dashed var(--border); border-radius: 8px; background: var(--surface-2, var(--surface));
+}
+.attRemindSampleTitle { margin: 0; font-weight: 700; color: var(--text-primary); }
+.attRemindSampleBody { margin: 0; white-space: pre-line; font-size: var(--type-support); color: var(--text-secondary); }
+@media (max-width: 900px) {
+  .attRemindSend { min-height: var(--tap-min, 44px); }
+}
 /* The event window's Attendance row: the families line sits on its own line under the book's (tab 2). */
 .sheetDoorFamilies { display: block; }
 .attFamilyLine { color: var(--text-tertiary); }

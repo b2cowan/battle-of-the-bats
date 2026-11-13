@@ -28,7 +28,7 @@ export function scheduleTimeLabel(iso: string): string {
 }
 
 /** "vs Falcons" / "at Falcons" — which preposition a matchup reads with. */
-function opponentPhrase(opponent: string, homeAway: string | null): string {
+export function opponentPhrase(opponent: string, homeAway: string | null): string {
   return `${homeAway === 'away' ? 'at' : 'vs'} ${opponent}`;
 }
 

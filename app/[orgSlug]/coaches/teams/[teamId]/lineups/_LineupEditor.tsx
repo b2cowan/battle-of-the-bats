@@ -29,7 +29,8 @@ import { analyzeLineup, deriveLineupBadge, canMarkLineupReady, inningsNeedingDec
 import { generateBestLineup, describePlacementReason, type PositionPolicy, type FillMode, type GenerationRationale } from '@/lib/lineup-generator';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
 import { resolveLineupCaps, normalizeRulesOverride } from '@/lib/lineup-caps';
-import { playerDisplayName, isCallUp, CALL_UP_LABEL } from '@/lib/coach-roster-name';
+import { playerDisplayName, isCallUp, CALL_UP_LABEL, cleanNamePart } from '@/lib/coach-roster-name';
+import { FAMILY_AVAILABILITY_COACH_WORDS } from '@/lib/family-availability-words';
 import {
   LINEUP_POSITIONS, POSITION_ORDER, heatStyle, renumberBattingOrder, lineupModeLabel,
   type LineupPlayerRow,
@@ -201,6 +202,17 @@ export interface LineupEditorProps {
     onRemoveOut: () => void;
   };
   /**
+   * Families say if they're coming (Signed-in family accounts Stage 4b, Part 6; drawing tab 5), a GAME lineup only — the
+   * template editor never passes it. `tagWords`: the Out / Maybe on a pool pill (the coach's mark first, then the family's
+   * answer). `outs`: players in the lineup a family said Out about that the coach hasn't settled. `onTakeOut` changes only
+   * the lineup, never the attendance book. Absent = the builder exactly as before.
+   */
+  family?: {
+    tagWords: ReadonlyMap<string, 'out' | 'maybe'>;
+    outs: { player: RepRosterPlayer; afterSave: boolean }[];
+    onTakeOut: (playerIds: string[]) => void;
+  };
+  /**
    * The lineup's notes field, rendered BETWEEN the order and the availability panel (owner,
    * 2026-09-22: *"that is what prints with the lineup so it would be good to see them together,
    * kind of as they would print"*).
@@ -259,7 +271,7 @@ export default function LineupEditor(props: LineupEditorProps) {
     roster, rows, onRowsChange, lineupMode, onLineupModeChange, inningCount, onInningCountChange,
     sportPack, seasonCaps, gameRules, onGameRulesChange, defaultPolicy = 'balanced',
     addLabel, notInHeading, onBeforeMutate, onNotice, controlsExtra, controlsTrailing, notice, readyState, attendance,
-    callUps, notesSlot,
+    callUps, notesSlot, family,
   } = props;
   const confirm = useConfirm();
   // THE PHONE'S FORMS (phone re-evaluation stage 3, owner ruling 2026-09-21) differ from the desktop's
@@ -551,8 +563,13 @@ export default function LineupEditor(props: LineupEditorProps) {
   // waits, a check once every role is covered — none until there is work to read. On a lineup the
   // coach has MARKED ready the check is their word (D11c, owner 2026-09-20): it answers "am I done
   // here?", and the open innings are named in the sentence beside it, never hidden by the mark.
+  // A family's Out the coach hasn't settled outranks "Marked ready" (the lineup was ready for a game that has since changed).
+  const familyOutGroups = family
+    ? [true, false].map(afterSave => family.outs.filter(o => o.afterSave === afterSave)).filter(g => g.length > 0)
+    : [];
   const stripMark: { state: LineupMarkState; label: string } | null = badge === 'needs_review'
     ? { state: 'bad', label: 'Position clash' }
+    : familyOutGroups.length ? { state: 'warn', label: FAMILY_AVAILABILITY_COACH_WORDS.lineup.needsLook }
     : readyState && badge === 'ready' ? { state: 'ok', label: 'Marked ready' }
       : checkHasRows ? { state: 'warn', label: 'Needs a decision' }
         : analysis.readiness === 'ready' ? { state: 'ok', label: 'Every role covered' }
@@ -1091,6 +1108,20 @@ export default function LineupEditor(props: LineupEditorProps) {
           )}
           {readyState?.error && <p className={styles.errorText}>{readyState.error}</p>}
         </div>
+        {/* Families say if they're coming (Stage 4b, Part 6): the after-saved warning, one line per kind, each with its one-tap
+            fix. Beside the strip, never inside its door (a button inside a button). */}
+        {family && familyOutGroups.map(group => {
+          const names = group.map(o => cleanNamePart(o.player.playerFirstName) || playerDisplayName(o.player));
+          const W = FAMILY_AVAILABILITY_COACH_WORDS.lineup;
+          return (
+            <p key={String(group[0].afterSave)} className={styles.lineupFamilyWarn} role="status">
+              <span>{W.warn(names, group[0].afterSave)}</span>
+              <button type="button" className={styles.lineupFamilyTakeOut} onClick={() => family.onTakeOut(group.map(o => o.player.id))}>
+                {W.takeOut(names)}
+              </button>
+            </p>
+          );
+        })}
         <div className={styles.lineupControls}>
           {/* THE SETUP ROW (stage 3 · D1, owner ruling 2026-09-21 — B, the panel; unified across
              both breakpoints 2026-09-23 — the desktop toolbar used to spell out Format, Innings,
@@ -1391,18 +1422,23 @@ export default function LineupEditor(props: LineupEditorProps) {
                   {group.heading} · {group.items.length}
                 </p>
                 <div className={styles.lineupNotPlayingList}>
-                  {group.items.map(p => (
+                  {group.items.map(p => {
+                    // Families say if they're coming (Part 6): Out / Maybe in the pool's tag style. Never on a call-up.
+                    const tagWord = !group.callUp ? family?.tagWords.get(p.id) : undefined;
+                    const tagWordText = tagWord ? FAMILY_AVAILABILITY_COACH_WORDS.lineup.tag[tagWord] : null;
+                    return (
                     <span key={p.id} className={`${styles.lineupNotPlayingRow}${group.callUp ? ` ${styles.lineupCallUpRow}` : ''}`}>
                       <button
                         type="button"
                         className={styles.lineupAddPill}
                         onClick={() => addPlayer(p.id)}
-                        aria-label={`${addLabel}: ${playerDisplayName(p)}${group.callUp ? ` (${CALL_UP_LABEL})` : ''}`}
+                        aria-label={`${addLabel}: ${playerDisplayName(p)}${group.callUp ? ` (${CALL_UP_LABEL})` : ''}${tagWordText ? `, ${tagWordText}` : ''}`}
                       >
                         {/* The verb lives in the accessible name — a screen reader hears "Add to
                             lineup: #11 Kai Test", never a bare plus sign. */}
                         <span className={styles.lineupAddPillPlus} aria-hidden>+</span>
                         <span className={styles.lineupNotPlayingName}>{playerDisplayName(p)}</span>
+                        {tagWordText && <em className={styles.lineupNotPlayingTag}>{tagWordText}</em>}
                       </button>
                       {/* ⚠ The heavier of the two, and it keeps a full tap target rather than being
                           a glyph at the pill's edge: this does not merely leave them out of the
@@ -1418,7 +1454,8 @@ export default function LineupEditor(props: LineupEditorProps) {
                         >&times;</button>
                       )}
                     </span>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}

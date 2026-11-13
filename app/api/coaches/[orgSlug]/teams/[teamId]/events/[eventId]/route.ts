@@ -28,6 +28,9 @@ import { ORGANIZER_OWNED_API_FIELDS } from '@/lib/tournament-game-mirror';
 import { CLUB_OWNED_API_FIELDS, CLUB_SLOT_REFUSALS, isClubSlotEvent } from '@/lib/club-slot-event';
 import { scheduleNameOfSlot } from '@/lib/club-schedule-server';
 import { notifyFamiliesOfGameUpdate } from '@/lib/family-notify';
+import { eventHasFamilyAnswers } from '@/lib/family-availability';
+import { coachFamilyAnswersSetting } from '@/lib/family-availability-coach';
+import { familyAnswerState } from '@/lib/family-availability-rules';
 import { deriveGameResult, toGameDayEventShape, validateQuietScoreWrite } from '@/lib/coach-game-day';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -300,6 +303,19 @@ export const PATCH = withObservability(async (req: Request,
     }
   }
 
+  // A new day deletes the event's family answers (a database rule, mig 480; ask 10). Asked BEFORE the write, so the notice below
+  // can tell families to answer again. A failed read only drops that sentence, never the save.
+  // The sentence is told only when the event can still be answered after the move (the team's switch covers it and the new time is
+  // ahead): otherwise the team page has no control to answer on.
+  const familyAnswersCleared = dayChanges && fields.startsAt
+    ? await (async () => {
+      if (!(await eventHasFamilyAnswers(eventId))) return false;
+      const setting = await coachFamilyAnswersSetting(teamId, team);
+      return !!setting
+        && familyAnswerState(setting, { eventType: event.eventType, status: fields.status ?? event.status, startsAt: String(fields.startsAt) }, new Date()) === 'open';
+    })().catch(err => { console.error('[events] family answers read failed', err); return false; })
+    : false;
+
   const updated = await updateRepTeamEvent(eventId, fields);
   if (tagIds !== null) {
     await setRepTeamEventTagsOfKind(eventId, 'game', tagIds);
@@ -337,6 +353,7 @@ export const PATCH = withObservability(async (req: Request,
       eventId,
       kind: familyUpdateKind,
       actorUserId: ctx.user.id,
+      answersCleared: familyAnswersCleared,
     });
   }
 
