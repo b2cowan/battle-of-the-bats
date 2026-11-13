@@ -16,7 +16,7 @@
    layout's own warmTab wraps this one; the nesting is safe because --home-lime is captured from --logic-lime-fixed,
    which the auth surface never re-points. */
 .page {
-  composes: warm warmVars warmTab from '../consumer/warmTheme.module.css';
+  composes: warm warmVars warmTab kitWindow from '../consumer/warmTheme.module.css';
   /* The product's one loading line (LoadingState) inks with the shell's greys; on this paper they are the warm ones. */
   --text-tertiary: var(--home-dim);
   --white-35: var(--home-line-strong);

@@ -141,6 +141,47 @@
   composes: warm warmVars;
 }
 
+/* ── THE SHARED WINDOW ON A WARM PUBLIC PAGE (found by the owner 2026-11-12: the Terms window over /start/tournament drew dark) ──
+   KitDialog (the one window) is NOT portalled and reads the PORTAL's token names — `--card-bg`, `--text-*`, `--home-scrim`
+   — which only the admin kit and the coaches portal remap (globals.css). A public sign-up page wears the `--home-*` warm
+   vocabulary alone, so a window opened there fell back to the dark :root values: a navy card with the page's dark ink on it.
+   This class bridges the names the window reads to the page's own `--home-*` tokens, so it follows the page — paper in Warm,
+   the shell in an explicit Dark choice — with no per-window change. The two buttons are the kit's secondary and primary
+   (globals.css keys those to the kit markers, which a public page does not carry). Compose it on a warm page that can open
+   a window; it changes nothing else on the page. */
+.kitWindow {
+  --card-bg:            var(--home-card);
+  --text-primary:       var(--home-ink);
+  --text-secondary:     var(--home-ink-soft);
+  --text-tertiary:      var(--home-dim);
+  --blueprint-blue-rgb: var(--home-olive-rgb);
+  --danger-light:       var(--home-live);
+  --warning:            var(--home-amber);
+  --home-scrim:         rgba(36, 30, 21, 0.34); /* token-exempt: the kit window's scrim, as globals.css defines it */
+}
+:global(html[data-user-theme="dark"]) .kitWindow {
+  --home-scrim:         rgba(13, 17, 26, 0.55); /* token-exempt: the dark scrim, as globals.css defines it */
+}
+.kitWindow :global([data-kit-dialog] .btn-outline) {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--home-line-strong);
+}
+.kitWindow :global([data-kit-dialog] .btn-outline:hover:not(:disabled)) {
+  background: var(--home-olive-soft);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+.kitWindow :global([data-kit-dialog] .btn-lime) {
+  background: var(--home-lime);
+  border-color: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+.kitWindow :global([data-kit-dialog] .btn-lime:hover:not(:disabled)) {
+  background: rgba(var(--home-lime-rgb), 0.82);
+  border-color: rgba(var(--home-lime-rgb), 0.82);
+}
+
 :global(html[data-user-theme="dark"]) .warmTab {
   --home-paper:       var(--bg);
   --home-card:        var(--bg-card);
