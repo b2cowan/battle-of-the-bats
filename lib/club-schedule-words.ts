@@ -46,11 +46,12 @@ export const SCHEDULE_WORDS = {
     `Saving keeps ${name} as a draft. Nothing reaches a team until you send it. On its page you can read every week, export it, change these settings and adjust it by hand.`,
   finalStatement: (slots: number, teams: number) =>
     `Sending makes ${pluralize(slots, 'slot')} real bookings: on ${pluralize(teams, 'team')}’ schedules, on the club calendar and in the clash check. Families see their team’s slots on the team’s schedule. Nothing is emailed to a family.`,
+  // [marketing] Owner 2026-11-13: the bill goes only to the coaches who can open Money.
   reviewStatement: (replyBy: string | null) =>
-    `Each team’s coaches see their slots and their bill${replyBy ? `, and reply by ${formatShortWeekdayDate(replyBy)}` : ''}. Nothing is booked or billed yet. You finalize when you’re ready, whether or not every team has replied.`,
+    `Each team’s coaches see their slots, and the ones who can open Money see the bill too.${replyBy ? ` Replies are due by ${formatShortWeekdayDate(replyBy)}.` : ''} Nothing is booked or billed yet. You finalize when you’re ready, whether or not every team has replied.`,
   /** A final schedule's first bill, made later: it bills and tells coaches, and books nothing. */
   lateBillStatement: (teams: number, total: string) =>
-    `The bill goes to ${pluralize(teams, 'team')}, ${total} in all. Each team’s share lands on its Money › Club tab, with its payments, and its coaches are emailed the bill; replies come to you. The schedule stays final and nothing on a team’s schedule changes.`,
+    `The bill goes to ${pluralize(teams, 'team')}, ${total} in all. Each team’s share lands on its Money › Club tab, with its payments, and its coaches who can open Money are emailed the bill; replies come to you. The schedule stays final and nothing on a team’s schedule changes.`,
   // [marketing] Stage 11b Part 5: house-league teams' practices, and their families, join the statement ("Only those teams'
   // coaches are told" was untrue once families of a house-league team hear too, 9d2·2).
   // [marketing] House League 9d-2b Part 5: a house-league division's games join it (9d2·13) — families hear about those
@@ -261,8 +262,18 @@ export const SCHEDULE_UNREACHABLE = {
   no_head_coach: 'has no head coach',
   invitation_unanswered: 'has a head coach invitation nobody has accepted yet',
   only_you: 'has nobody with schedule access but you',
+  // [marketing] Owner 2026-11-13: an active head coach with no address used to read "has no head coach", which was false.
+  head_coach_no_email: 'has a head coach with no email address on file',
 } as const;
 export type ScheduleUnreachableWhy = keyof typeof SCHEDULE_UNREACHABLE;
+
+/** [marketing] A late bill goes only to the people who can open Money (owner 2026-11-13), so its `only_you` says so. */
+const UNREACHABLE_BILL_ONLY_YOU = 'has nobody with Money access but you';
+
+/** [marketing] Under a Finalize / Send the changes team that is emailed its slots but has nobody who can open Money:
+ *  "15U AAA’s bill goes on its Money › Club tab; nobody with Money access is emailed about it." (owner 2026-11-13) */
+export const billNotToldSentence = (team: string) =>
+  `${possessive(team)} bill goes on its Money › Club tab; nobody with Money access is emailed about it.`;
 
 /** [marketing] specimen 9: "12U AA has a head coach invitation nobody has accepted yet. Its 36 slots go on its schedule; …" */
 export function unreachableSentence(team: string, why: ScheduleUnreachableWhy, slots: number, kind: SendKind): string {
@@ -273,7 +284,8 @@ export function unreachableSentence(team: string, why: ScheduleUnreachableWhy, s
       : kind === 'bill'
         ? 'Its bill goes on its Money › Club tab; nobody is emailed about it.'
         : 'Its changes go on its schedule; nobody is emailed about them.';
-  return `${team} ${SCHEDULE_UNREACHABLE[why]}. ${what} Name or chase its coach from its Coaches page.`;
+  const reason = why === 'only_you' && kind === 'bill' ? UNREACHABLE_BILL_ONLY_YOU : SCHEDULE_UNREACHABLE[why];
+  return `${team} ${reason}. ${what} Name or chase its coach from its Coaches page.`;
 }
 
 // ── The emails (colleague mail, Ask 7) ───────────────────────────────────────────────────────────

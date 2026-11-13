@@ -230,7 +230,7 @@ describe('one club send (Ask 9): a claim before any email, emails only from the 
     assert.ok((send.match(/await release\(\)/g) ?? []).length >= 4);
   });
   it('the sender is never a recipient (the people resolver leaves them out)', () => {
-    assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'schedulePeople'), /\.filter\(m => m\.userId !== senderId/);
+    assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'schedulePeople'), /\.filter\(\(\{ m \}\) => m\.userId !== senderId/);
   });
   it('the database claim refuses a second send of one schedule inside a minute, under a lock', () => {
     const sql = readSource(MIG);
@@ -365,6 +365,56 @@ describe('the money: one step, build questions A and B (ruled 2026-10-11)', () =
   it('a bill\'s figures in a send preview and the send log read only to a money reader', () => {
     assert.match(readCode('app/api/admin/schedules/[scheduleId]/send/route.ts'), /const teams = money \? p\.teams : p\.teams\.map\(/);
     assert.match(readCode('app/api/admin/schedules/[scheduleId]/route.ts'), /const shownLog = r\.canMoney \? log : log\.map\(/);
+    // The route asks the SAME "carries money" the emails are built on, so a mixed team's plain email survives for a sender
+    // without Accounting and a money one never does.
+    assert.match(readCode('app/api/admin/schedules/[scheduleId]/send/route.ts'), /carriesMoney\(t\) && t\.recipients\.some\(x => x\.money\)/);
+  });
+});
+
+describe('money terms go only to people who can open Money (owner 2026-11-13, CASL_LATE_BILL_EMAIL finding 4)', () => {
+  const code = readCode('lib/club-schedule-send.ts');
+  it('every email and bell that can carry a bill is built by the money-audience helper — none in the send module itself', () => {
+    // The bill email, the bill bell, the review bell's "and a $ bill" and the correction lines are built only in
+    // `lib/club-schedule-money-audience.ts`, which picks their audience. A future send kind that called them here directly
+    // would hand the bill to everyone with schedule access again.
+    for (const builder of ['billEmail(', 'changesEmail(', 'teamEmail(', 'SCHEDULE_NOTICES.bill', 'SCHEDULE_NOTICES.review']) {
+      assert.ok(!code.includes(builder), `${builder} in lib/club-schedule-send.ts`);
+    }
+    for (const f of ['lib/club-schedule-server.ts', 'lib/club-schedule-coach.ts']) {
+      assert.doesNotMatch(readCode(f), /billEmail\(|SCHEDULE_NOTICES\.bill\b/, f);
+    }
+  });
+  it('the late bill keeps only Money people, before the unreachable reasons are worked out', () => {
+    const people = functionBody(code, 'schedulePeople');
+    assert.match(people, /\.filter\(x => inSendAudience\(kind, x\.caps\)\)/);
+    assert.ok(people.indexOf('inSendAudience(') < people.indexOf('unreachableWhy('), 'filtered first');
+    assert.match(people, /const mine = eligible\.filter\(/, 'a team’s people come from the filtered list, never the raw staff');
+    assert.match(people, /senderEligible: mine\.length > 0 && mine\.every\(/, 'the reason is worked out on the people the filter kept, and "only you" means nobody else is eligible');
+    assert.match(people, /money: canViewMoney\(caps\)/);
+  });
+  it('every email goes through emailFor, and every bell through teamBells with the Money-marked staff', () => {
+    const send = functionBody(code, 'sendSchedule');
+    assert.match(send, /const w = emailFor\(t, p\);/);
+    assert.ok(!/t\.sample\b/.test(send), 'no email is sent from a team\'s sample without asking who it is for');
+    const tell = functionBody(code, 'tellTeams');
+    assert.match(tell, /for \(const b of teamBells\(\{/);
+    assert.match(tell, /userIds: b\.userIds/);
+    assert.match(functionBody(code, 'scheduleUserIds'), /money: canViewMoney\(caps\)/);
+  });
+  it('Bill the corrections off: the send recomputes its preview with the switch, so nothing told carries a correction', () => {
+    assert.match(functionBody(code, 'sendSchedule'), /previewSend\([^)]*corrections: billCorrectionsOn \}\)/);
+    const preview = functionBody(code, 'previewSend');
+    assert.match(preview, /const billedCents = kind === 'changes' && toldCorrections \?/);
+    assert.match(preview, /const teamLost = kind === 'changes' && toldCorrections \?/);
+    // ⚠ Only what is told: the step's own inputs (the lost map, the correction, the splits) stay whole.
+    assert.match(preview, /lost\.set\(t, settled\.lost\);/);
+  });
+  it('the review\'s card and reply stay the head coach\'s — the bill\'s safety there rests on it (head coach ⇒ Money)', () => {
+    const rv = readCode('app/api/coaches/[orgSlug]/teams/[teamId]/club-schedules/route.ts');
+    const get = rv.slice(rv.indexOf('export const GET'), rv.indexOf('export const POST'));
+    assert.match(get, /if \(!capabilities\.isHeadCoach \|\| isReadOnly \|\| !clubSchedulerOn\(ctx\.org\.planId\)\) return NextResponse\.json\(\{ reviews: \[\] \}\);/);
+    const post = rv.slice(rv.indexOf('export const POST'));
+    assert.match(post, /if \(!assignment\.capabilities\.isHeadCoach\) \{\s*return NextResponse\.json\(\{[^}]*code: 'not_head_coach' \}, \{ status: 403 \}\);/);
   });
 });
 

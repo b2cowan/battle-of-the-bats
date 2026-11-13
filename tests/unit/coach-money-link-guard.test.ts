@@ -41,9 +41,13 @@ describe('a coach money tab is addressed one way', () => {
   it('the club money bells link to the Club tab through moneySectionHref', () => {
     const notify = readCode('lib/club-money-notify.ts');
     assert.match(notify, /link: moneySectionHref\(`\/\$\{p\.org\.slug\}\/coaches\/teams\/\$\{p\.teamId\}`, 'club'\)/);
+    // The schedule send's bells (owner 2026-11-13: built by `teamBells`): every bill bell is marked `toMoney`, and
+    // `tellTeams` opens a `toMoney` bell on the Club tab.
     const send = readCode('lib/club-schedule-send.ts');
-    assert.equal((send.match(/moneySectionHref\(`\/\$\{org\.slug\}\/coaches\/teams\/\$\{t\.teamId\}`, 'club'\)/g) ?? []).length >= 2, true,
-      'both of the schedule send\'s bill bells open the Club tab');
+    assert.match(send, /const moneyLink = moneySectionHref\(`\/\$\{org\.slug\}\/coaches\/teams\/\$\{t\.teamId\}`, 'club'\);/);
+    assert.match(send, /link: b\.toMoney \? moneyLink : link/);
+    assert.match(readCode('lib/club-schedule-money-audience.ts'), /eventType: 'club_bill_arrived', userIds, toMoney: true/,
+      'every schedule bill bell opens the Club tab');
   });
 
   it('the address it builds is the hub with ?section=club', () => {
