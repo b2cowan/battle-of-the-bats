@@ -1,6 +1,6 @@
 # One attendance record — plan
 
-**Status:** RULED 2026-11-13 (owner, mid-walk §526). Not built. PM brief: `ONE_ATTENDANCE_RECORD_PM_BRIEF.md`.
+**Status:** RULED 2026-11-13 (owner, mid-walk §526). S1 the record committed `54272a665` + `f554a73ea` 2026-11-13; S2 next. PM brief: `ONE_ATTENDANCE_RECORD_PM_BRIEF.md`.
 **Supersedes** Signed-in Family Stage 4b's two-record design (`SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md`, committed
 `22db0210d` … `7fa87f3f7`; `COACH_AVAILABILITY_RSVP_PLAN.md` §governing constraint 1 and :136-137; the accounts plan's
 Stage 4b ask 3). Everything else Stage 4b ruled (the switch, Remind's cap, the bell's 48 h rule, consent 0.2, ask 14's
@@ -180,6 +180,42 @@ on; stage explicit pathspecs only; update the Progress block below; stop at the 
     TODO line — the changed-rows save and the family writer together; (B) 484 alone, its message naming the behaviour
     change (the nightly job blanks instead of deleting). `TODO.md` has another session's edits: stage this line only.
   - Next: **S2 — the screens.** `npm run dev` restart owed before any browser look (new migrations, shared modules).
+- 2026-11-13 — **S1 COMMITTED + REVIEWED.** Commit A `54272a665` (migs 483 + 485, all code, tests, fixture, dictionary, prod steps,
+  snapshots, this plan, the TODO line; 44 files) and commit B `f554a73ea` (mig 484 alone — the watched nightly job, owner's go C4).
+  Dev server restarted after both. `/review` (high-risk tier; four lenses: the coach window's save, the family writer's reach, a Maybe
+  census, the RLS drop + dropped-table blast radius). Verified clean: the browser reads nothing from the table; no live code uses the
+  dropped table or `marked_at`; the writer's guards, row lock, family-after-start refusal and `updated_by` rule hold; a call-up cannot be
+  reached by a parent; the family reads name their columns. Proof run on a CLEAN copy of the commit: typecheck 0 errors, the
+  attendance unit files + the sheet guard pass, the SQL fixture 13/13 on dev.
+  - **Fixed in commit A (found by the review):** (1) a tap that went back to the answer held before an in-flight save was lost (the
+    reply overwrote it) — the window now compares against what the request carried; (2) the coach's note lost a trailing space
+    mid-typing (the server trims) — what the coach is typing stays as typed; (3) "All in" / "Reset" cleared the unsaved flag over a
+    pick made while the flush ran, and (4) a save chained behind another read the rows of the render that asked for it — the window
+    now keeps one live copy of the rows (written the instant it changes) and every save reads it when it runs; (5) the room's count
+    chips and filter left a Maybe in no chip — they read through `countedAttendanceStatus`; (6) the practice picker tagged a Maybe like a
+    marked player; (7) a parent tapping In over a coach's **Late** erased it (the page still shows Late as In) — an interim guard writes
+    only the note then; **S2 removes it the moment the family page can pick Late**; (8) "Reset" did nothing on marked rows nobody set
+    through the writer (seeded, fixture, UAT rows) — mig 483's Reset guard treats them as the coach's (re-applied to dev; fixture 13/13).
+  - **Owner calls the review raised (not decided, not built):** (a) **Does a standing Maybe stay on Remind's list?** Ruling 2 (counts as
+    Not marked) and ruling 6 (Remind skips any answer) disagree; today a Maybe is skipped. (b) **Stats on games not yet played:** the
+    reliability and per-player reads count every scheduled event with no date test, so a parent's advance In / Out on an upcoming game
+    now counts as attended / absent before it is played (a coach's advance mark always did). Ruling 2 says "as it stands" — confirm,
+    or count started events only. (c) **Leave / Stop and a deleted account** blank the family's NOTES only; who-set-it stays until the
+    60-day clock (design says notes only) — a /legal point for S3.
+  - **For S2 (screens):** the family page picks In / Late / Maybe / Out and shows "Coach, today · earlier: …" (then delete the In-over-Late
+    guard in `writeFamilyAnswer`); the game console shows nothing pressed for a Maybe and counts it "here", and the RSVP sheet ticks
+    nothing for a Maybe; the room's Maybe badge and the choice styles have no `maybe` look; a confirming tap on a mark a family has since
+    changed sends nothing (console and window); a parent of an **inactive** roster entry can still write an answer the coach never sees
+    (`readChildTeamEntries` excludes call-ups, not inactive) — exclude them; delete the dead rules and `FAMILY_AVAILABILITY_WORDS.answerAgain`.
+  - **For S3 (closeout):** the demo seed, UAT seeds and the demo reconcile insert marked rows with no setter (Reset now copes, but no
+    "earlier" ever shows) and the reconcile deletes family answers at future demo events, which contradicts C1; the writer does not check
+    that the player belongs to the event's team (both callers do; a lent call-up may belong to another team, so the check needs care);
+    a no-op write still leaves an empty Not marked row (as the old whole-roster save did). `memory/reference_db_schema.md` was refreshed
+    by the snapshot hook and is not in either commit.
+  - Full suite, proven on CLEAN copies of the commits: the parent commit fails 34 tests and commits A + B fail the identical 34 — no new
+    failure (practice-plan arrival words, the team-move table census, billing, disputes, possessives, walks). On the working tree it read 25
+    (other sessions' uncommitted fixes mask some); the one failure this work caused on the way — the sheet guard naming the rows' state by
+    its old spelling — is fixed in commit A.
 
 ## 5. The walk (owner 2026-11-13: concise, one action per step, ~20–50 boxes)
 
