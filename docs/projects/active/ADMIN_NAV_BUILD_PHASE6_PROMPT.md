@@ -117,6 +117,10 @@ crest backfill — the release session's); the old walks' stale checks (walks ar
    `riverdale-*` demo org or any real org). Walks, each one purpose: the club on a computer; a tournament on a computer; the
    Coaches Portal on a computer; each of the three on a phone; moving between portals (the sidebar foot's doors, Workspaces);
    Help (the account menu, the "?"); a closed season and a finished event; the demos. Write the ledger § and publish the walk.
+   **Phase 5b has its own walk — do NOT repeat its checks here:** §521, https://claude.ai/artifact/KHs5QacKtSWKZt6PLXNHEm
+   (owner asked for it 2026-11-12; source `ADMIN_NAV_PHASE5B_WALK.html`). If §521 is still unwalked when this runs, say so in
+   the closing walk's "Before you start" rather than folding its steps in. The closing walk's Coaches Portal walks may open a
+   player page as one stop on a journey; they must describe it as 5b built it (tabs from the start, the name ▾ is the switcher).
 7. D — the records. Then present the summary and **ask before committing**; on a yes, only this session's files, as above.
 
 ## Done when

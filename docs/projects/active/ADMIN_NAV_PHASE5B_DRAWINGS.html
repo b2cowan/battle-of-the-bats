@@ -1,0 +1,601 @@
+<title>Player Page Tabs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: the house drawing page (2026-10-28) — a document on a cool slate ground, sticky section tabs, a View row
+   (Everything / Show only what differs · True size / Fit to width); product specimens in the product's own warm skin. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --warn: #8A5A00; --warn-soft: #F7ECD4;
+  --doc-sans: 'Inter', system-ui, sans-serif; --doc-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --warn: #E9B95A; --warn-soft: #33290F; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --warn: #E9B95A; --warn-soft: #33290F; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1520px; margin: 0 auto; }
+header.doc { padding-block: 22px 10px; }
+header.doc h1 { font: 700 30px/1.1 var(--doc-display); letter-spacing: .01em; margin: 0 0 6px; text-wrap: balance; }
+header.doc p { margin: 0; color: var(--muted); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); overflow-x: auto; white-space: nowrap; }
+nav.tabs button { font: 600 14px var(--doc-sans); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 13px 12px 11px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+button:focus-visible, .mk:focus-visible, .hit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+section.panel { display: none; } section.panel.on { display: block; }
+h2 { font: 700 24px/1.15 var(--doc-display); margin: 18px 0 6px; letter-spacing: .01em; text-wrap: balance; }
+h3 { font: 650 16px/1.3 var(--doc-sans); margin: 22px 0 6px; }
+p, li { max-width: 84ch; } .muted { color: var(--muted); }
+.tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin: 10px 0 18px; }
+table.t { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.t th { font: 700 12px var(--doc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+table.t td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t td.n { text-align: right; white-space: nowrap; font-family: var(--doc-mono); font-size: 12.5px; }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); } .spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.pair { display: flex; gap: 22px; align-items: flex-start; width: max-content; transform-origin: 0 0; }
+.pair > div > .lbl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.pair > div > .lbl.after { color: var(--accent); }
+.mk { position: absolute; z-index: 30; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 2px solid #fff; background: var(--mark); color: var(--mark-ink); font: 700 11px/18px var(--doc-mono); text-align: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.mk.inl { position: static; display: inline-block; border-color: transparent; vertical-align: 1px; margin-right: 6px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; } .ask ol, .ask ul { margin: 6px 0 0; padding-left: 22px; } .ask li { margin: 4px 0; }
+.ask .why { font-size: 14px; color: var(--muted); margin: 8px 0 0; }
+.rec { font-weight: 650; color: var(--accent); }
+.flag { border-left: 3px solid var(--warn); padding: 8px 12px; background: var(--warn-soft); border-radius: 0 8px 8px 0; margin: 10px 0; max-width: 84ch; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.notes .ask { margin: 0; }
+@media (prefers-reduced-motion: no-preference) { .ask { transition: outline-color .3s; } }
+
+/* ───────── PRODUCT SPECIMEN — the warm skin as shipped (fixed colours in both document themes) ───────── */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #776D5D; --ln: rgba(70,55,30,.12);
+  --ln2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --red: #B23A26; --red-soft: #F9E3DE; --field: #F6F1E8;
+  position: relative; overflow: hidden; background: var(--paper); color: var(--ink); font: 400 14px/1.4 'Inter', sans-serif;
+  border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.12); flex: none; }
+.fr * { box-sizing: border-box; }
+.fr .grid { position: absolute; inset: 0; background-image: linear-gradient(var(--ln) 1px, transparent 1px), linear-gradient(90deg, var(--ln) 1px, transparent 1px); background-size: 40px 40px; opacity: .45; pointer-events: none; }
+.fr svg { flex: none; display: block; }
+/* computer chrome */
+.st { position: absolute; top: 0; left: 0; right: 0; height: 48px; background: var(--white); border-bottom: 1px solid var(--ln2); display: flex; align-items: center; z-index: 6; }
+.st .brand { width: 240px; height: 100%; border-right: 1px solid var(--ln2); display: flex; align-items: center; gap: 10px; padding-left: 20px; font: 700 15px 'Inter'; flex: none; }
+.st .brand i { font: 600 10.5px 'IBM Plex Mono'; letter-spacing: .1em; color: var(--ink2); font-style: normal; border-left: 1px solid var(--ln2); padding-left: 12px; }
+.st .place { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding-left: 32px; }
+.st .back { display: flex; align-items: center; gap: 6px; color: var(--ink2); font: 600 14.5px 'Inter'; flex: none; }
+.st .rule { width: 1px; height: 22px; background: var(--ln2); flex: none; }
+.st .nm { font: 700 16px 'Inter'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; display: flex; align-items: center; gap: 4px; }
+.st .nm.btn44 { height: 40px; padding: 0 6px; margin-left: -6px; border-radius: 6px; }
+.st .nm.btn44.open { background: var(--olive-soft); }
+.st .nm .ch { color: var(--ink3); }
+.st .nm .tx { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st .here { font: 700 16px 'Inter'; color: var(--ink3); }
+.st .facts { margin-left: auto; display: flex; align-items: center; gap: 10px; font: 400 13px 'Inter'; color: var(--ink2); white-space: nowrap; padding-right: 16px; border-right: 1px solid var(--ln2); height: 22px; }
+.st .facts b { font: 600 10px 'IBM Plex Mono'; letter-spacing: .08em; color: var(--ink2); }
+.st .doors { display: flex; align-items: center; gap: 14px; padding: 0 16px 0 18px; flex: none; color: var(--ink2); }
+.st .ws { border: 1px solid var(--olive); color: var(--olive); border-radius: 999px; font: 600 12.5px 'Inter'; padding: 5px 12px; display: flex; gap: 4px; align-items: center; }
+.st .bell { position: relative; } .st .bell em { position: absolute; top: -9px; right: -9px; background: var(--red); color: #fff; font: 700 8.5px/1 'Inter'; padding: 2px 3px; border-radius: 6px; font-style: normal; }
+.sb { position: absolute; top: 48px; left: 0; width: 240px; bottom: 0; background: var(--white); border-right: 1px solid var(--ln2); z-index: 5; }
+.sb .cell { height: 45px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--ln2); font: 700 14.5px 'Inter'; }
+.sb .cell .ut { width: 24px; height: 24px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--ln2); display: grid; place-items: center; font: 700 9px 'Inter'; }
+.sb .cell .cv { margin-left: auto; color: var(--ink2); }
+.sb .it { position: absolute; left: 20px; display: flex; align-items: center; gap: 9px; font: 500 14.5px 'Inter'; color: var(--ink2); }
+.sb .it.on { left: 0; right: 0; padding-left: 20px; height: 37px; background: var(--olive-soft); color: var(--olive); font-weight: 600; }
+.sb .gh { position: absolute; left: 20px; font: 700 11px 'Inter'; letter-spacing: .1em; color: var(--ink2); }
+.sb .foot { position: absolute; left: 0; right: 0; bottom: 0; height: 28px; border-top: 1px solid var(--ln2); display: flex; align-items: center; gap: 8px; padding-left: 20px; font: 500 12px 'Inter'; color: var(--ink2); }
+.bandD { position: absolute; top: 48px; left: 240px; right: 0; height: 45px; background: var(--white); border-bottom: 1px solid var(--ln2); z-index: 4; display: flex; align-items: flex-end; padding-left: 18px; }
+.tb { display: flex; align-items: flex-end; height: 45px; white-space: nowrap; }
+.tb span { height: 44px; padding: 0 14px; display: flex; align-items: center; font: 600 14px 'Inter'; color: var(--ink2); border-bottom: 2px solid transparent; flex: none; }
+.tb span.on { color: var(--olive); border-bottom-color: var(--olive); }
+.tb.inpage { border-bottom: 1px solid var(--ln2); }
+.col { position: absolute; display: flex; flex-direction: column; }
+.hdrow { height: 36px; display: flex; justify-content: flex-end; }
+.sel { height: 36px; min-width: 137px; border: 1px solid var(--ln2); border-radius: 8px; background: var(--white); display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 12px; font: 600 14.5px 'Inter'; }
+.card { background: var(--white); border: 1px solid var(--ln2); border-radius: 12px; }
+.glance { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+.glance .chips { display: flex; gap: 6px; flex-wrap: wrap; font: 600 12.5px 'Inter'; color: var(--ink2); min-height: 22px; align-items: center; padding-left: 9px; }
+.chipq { font: 600 12.5px 'Inter'; color: var(--ink2); }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.tile { border: 1px solid var(--ln2); border-radius: 9px; padding: 9px 11px; height: 78px; position: relative; min-width: 0; }
+.tile i { display: block; font: 600 9.5px 'IBM Plex Mono'; letter-spacing: .1em; font-style: normal; color: var(--ink2); }
+.tile b { display: block; font: 700 17px/1.3 'Inter'; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile small { display: block; font: 400 12.5px 'Inter'; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .cr { position: absolute; top: 10px; right: 10px; color: var(--ink2); }
+.tile.hole { border-style: dashed; background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(181,71,15,.07) 6px 12px); }
+.sec { padding: 16px 18px; }
+.sec h5 { margin: 0 0 12px; font: 700 17px 'Inter'; display: flex; align-items: center; }
+.sec h5 .meta { margin-left: auto; font: 600 11px 'IBM Plex Mono'; letter-spacing: .06em; color: var(--ink2); }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fl label { display: block; font: 600 13px 'Inter'; margin-bottom: 6px; }
+.fl .in { height: 35px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--field); display: flex; align-items: center; padding: 0 12px; font-size: 14.5px; }
+.pos { display: flex; gap: 8px; margin-top: 10px; } .pos span { height: 30px; min-width: 42px; padding: 0 12px; border: 1px solid var(--ln2); border-radius: 999px; display: grid; place-items: center; font: 500 13px 'Inter'; }
+.stat3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stat3 div { background: var(--field); border: 1px solid var(--ln2); border-radius: 8px; padding: 10px 14px; height: 65px; }
+.stat3 b { display: block; font: 700 19px 'Inter'; } .stat3 small { font: 700 11px 'Inter'; letter-spacing: .06em; color: var(--ink2); }
+.sl { font: 700 11.5px 'Inter'; letter-spacing: .07em; color: var(--ink2); margin: 16px 0 8px; }
+.arow { height: 41px; border: 1px solid var(--ln2); border-radius: 6px; display: flex; align-items: center; padding: 0 6px 0 10px; margin-bottom: 5px; font-size: 14.5px; }
+.arow em { margin-left: auto; font: 400 12.5px 'Inter'; color: var(--ink2); font-style: normal; margin-right: 10px; }
+.pres { font: 700 11.5px 'Inter'; letter-spacing: .06em; color: #2E5E2E; background: #E4EEDF; border: 1px solid rgba(46,94,46,.3); border-radius: 5px; padding: 5px 9px; }
+.ro { font: 400 13.5px 'Inter'; color: var(--ink3); margin: 2px 0 12px; }
+.rr { display: grid; grid-template-columns: 170px 1fr; border-bottom: 1px solid var(--ln); padding: 10px 0; font-size: 14.5px; }
+.rr span:first-child, .prr span:first-child { font: 700 12px 'Barlow Condensed'; letter-spacing: .1em; color: var(--ink2); text-transform: uppercase; align-self: center; }
+.danger { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--ln); display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--ink3); }
+.danger b { font: 600 13.5px 'Inter'; color: var(--ink2); border: 1px solid var(--ln2); border-radius: 6px; padding: 7px 12px; }
+.chipr { font: 600 12px/1 'Inter'; letter-spacing: .04em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; border: 1px solid var(--ln2); color: var(--ink3); background: var(--white); white-space: nowrap; flex: none; }
+/* the switch list (SidebarMenu 'cell' + SublinedChoice rows) */
+.menu { position: absolute; width: 320px; background: var(--white); border: 1px solid var(--olive); border-radius: 10px; box-shadow: 0 12px 32px rgba(36,30,21,.18); z-index: 20; overflow: hidden; }
+.menu .gh2 { font: 700 11px 'Inter'; letter-spacing: .1em; color: var(--ink3); padding: 9px 14px 7px; background: rgba(87,101,30,.10); }
+.menu .mr { height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid var(--ln); font: 600 14px 'Inter'; }
+.menu .mr:last-child { border-bottom: 0; }
+.menu .mr em { margin-left: auto; font: 600 11px 'IBM Plex Mono'; color: var(--olive); font-style: normal; }
+.menu .mr.cur { color: var(--olive); } .menu .mr.cur svg { color: var(--olive); }
+.menu .mr.foc { background: var(--olive-soft); }
+/* phone chrome */
+.pb1 { position: absolute; top: 0; left: 0; right: 0; background: var(--white); border-bottom: 1px solid var(--ln2); z-index: 6; }
+.pb1 .r { display: flex; align-items: center; min-height: 52px; padding: 7px 4px 7px 16px; gap: 6px; }
+.pb1 .bk { width: 44px; height: 44px; display: grid; place-items: center; margin: -4px 0 -4px -12px; color: var(--ink2); flex: none; }
+.pb1 .rl { width: 1px; align-self: stretch; margin: 2px 6px 2px 0; background: var(--ln); flex: none; }
+.pb1 .t { min-width: 0; flex: 1; }
+.pb1 .t .nmr { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.pb1 .t b { font: 700 16px/19px 'Inter'; min-width: 0; }
+.pb1 .t b.clip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pb1 .t .cv { color: var(--ink3); flex: none; align-self: flex-start; margin-top: 2px; }
+.pb1 .t small { display: block; margin-top: 2px; font: 400 11px/14px 'IBM Plex Mono'; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pb1 .t small b { font: 600 11px 'IBM Plex Mono'; }
+.pb1 .t .here { font: 700 16px/19px 'Inter'; color: var(--ink3); }
+.pb1 .stat { flex: none; text-align: right; font: 600 12px/1.3 'Inter'; padding-right: 10px; }
+.pb1 .stat i { display: block; font: 700 9px 'Inter'; letter-spacing: .12em; color: var(--ink3); font-style: normal; }
+.bandP { position: absolute; left: 0; right: 0; height: 45px; background: var(--white); border-bottom: 1px solid var(--ln2); z-index: 5; display: flex; align-items: flex-end; padding-left: 6px; }
+.bandP .tb span { padding: 0 11px; font-size: 14px; }
+.pbody { position: absolute; left: 16px; right: 16px; display: flex; flex-direction: column; }
+.pgl { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.pgl .tiles { grid-template-columns: 1fr 1fr; }
+.pgl .chips { font: 600 13px 'Inter'; color: var(--ink2); padding-left: 9px; }
+/* the dashboard's figures on a phone (CoachFigureRows: one white frame, hairlines, label + one fact left, figure right, chevron) */
+.frows { background: var(--white); border: 1px solid var(--ln2); border-radius: 10px; overflow: hidden; }
+.frow { display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; column-gap: 8px; align-items: center; min-height: 44px; padding: 7px 12px 7px 16px; border-bottom: 1px solid var(--ln); }
+.frow:last-child { border-bottom: 0; }
+.frow b { font: 600 14.5px/1.3 'Inter'; grid-column: 1; }
+.frow small { font: 400 12.5px/1.3 'Inter'; color: var(--ink3); grid-column: 1; margin-top: 2px; }
+.frow .fig { grid-column: 2; grid-row: 1 / span 2; font: 700 20px/1 'Inter'; letter-spacing: -.01em; }
+.frow .fig.w { font: 600 15px/1.2 'Inter'; color: var(--ink2); }
+.frow .cv { grid-column: 3; grid-row: 1 / span 2; color: var(--ink3); }
+.psec { padding: 16px 18px 12px; }
+.psec h5 { margin: 0 0 6px; font: 700 17px 'Inter'; display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.psec h5 .pen { width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink2); margin-right: -10px; }
+.prr { display: grid; grid-template-columns: 86px 1fr; gap: 0 14px; padding: 10px 0; border-bottom: 1px solid var(--ln); font-size: 14.5px; }
+.prr span:first-child { font-size: 11px; }
+.bnav { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; background: var(--white); border-top: 1px solid var(--ln2); display: flex; z-index: 7; }
+.bnav .it { flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 9px; gap: 5px; font: 700 10px 'Inter'; color: var(--ink2); }
+.bnav .it .pill { width: 46px; height: 30px; border-radius: 15px; display: grid; place-items: center; }
+.bnav .it.on { color: var(--olive); } .bnav .it.on .pill { background: var(--olive-soft); }
+.scrim { position: absolute; left: 0; right: 0; top: 0; bottom: 72px; background: rgba(20,16,10,.38); z-index: 8; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 72px; background: var(--white); border-radius: 18px 18px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.25); z-index: 9; padding: 6px 8px 10px; overflow: hidden; }
+.sheet .grab { width: 38px; height: 4px; border-radius: 2px; background: var(--ln2); margin: 4px auto 10px; }
+.sheet .lab { font: 700 13px 'Barlow Condensed'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); padding: 0 10px; margin: 0 0 4px; }
+.srow { display: flex; align-items: center; min-height: 52px; padding: 0 16px 0 13px; margin: 0 -8px; font: 600 16px 'Inter'; }
+.srow em { margin-left: auto; font: 500 12px 'IBM Plex Mono'; color: var(--ink3); font-style: normal; }
+.srow.on { background: var(--olive-soft); color: var(--olive); box-shadow: inset 0 0 0 0; }
+.loading { position: absolute; font: 400 14px 'Inter'; color: var(--ink3); }
+/* annotations */
+.hit { position: absolute; border: 1.5px dashed #B5470F; border-radius: 6px; z-index: 25; cursor: pointer; background: none; padding: 0; }
+.hit:hover { background: rgba(181,71,15,.06); }
+.hit span { position: absolute; left: 4px; bottom: -19px; font: 600 9.5px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 3px; white-space: nowrap; }
+.hit.up span { bottom: auto; top: -18px; }
+.hit.r span { left: calc(100% + 6px); bottom: auto; top: 50%; transform: translateY(-50%); }
+.meas { position: absolute; height: 0; border-top: 1.5px dashed #B5470F; z-index: 26; pointer-events: none; }
+.meas span { position: absolute; right: 6px; top: 2px; font: 600 9.5px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 3px; white-space: nowrap; }
+.ghostrow { position: absolute; border: 1.5px dashed #B5470F; border-radius: 6px; background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(181,71,15,.08) 6px 12px); z-index: 3; }
+#pop { position: fixed; z-index: 50; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(540px, calc(100vw - 32px)); max-height: 70vh; overflow: auto; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.28); padding: 4px 16px 14px; }
+#pop .x { position: sticky; top: 0; float: right; margin: 6px -8px 0 0; width: 36px; height: 36px; border: 0; background: var(--card); color: var(--muted); font-size: 20px; cursor: pointer; border-radius: 8px; }
+#pop .ask { border: 0; padding: 8px 0 0; margin: 0; }
+body.only-diff .fr .same { opacity: .16; }
+body.only-diff .fr .grid { opacity: .12; }
+.strips { display: flex; flex-direction: column; gap: 14px; width: max-content; }
+.strips .lbl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.strips .lbl.after { color: var(--accent); }
+.hm { font: 600 11px var(--doc-mono); color: var(--mark); margin-top: 4px; }
+</style>
+
+<div class="wrap">
+  <header class="doc">
+    <h1>The player page joins the tab rule</h1>
+    <p>Navigation Phase 5b, points 1–3 (owner ruling 2026-11-12). The player’s tabs go to the top like every other tabbed room, the summary card moves into Details, and the player’s name with its ▾ is the switcher in the top chrome at every width. Every screen is drawn whole, at true size, from the shipped parts and the numbers measured on the dev server on 2026-11-12 (UAT Test Team, Avery Test, head coach). The phone bar is drawn as N13 shipped it (committed <code>dc1351820</code>). The orange markers and dashed boxes open the note or the ask they belong to.</p>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
+  <div class="viewrow">
+    <span>View</span>
+    <span class="seg" role="group" aria-label="View"><button type="button" id="v-all" aria-pressed="true">Everything</button><button type="button" id="v-diff" aria-pressed="false">Show only what differs</button></span>
+    <span>Size</span>
+    <span class="seg" role="group" aria-label="Size"><button type="button" id="s-true" aria-pressed="true">True size</button><button type="button" id="s-fit" aria-pressed="false">Fit to width</button></span>
+  </div>
+  <main id="panels"></main>
+</div>
+
+<script>
+(function () {
+'use strict';
+var P = {
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+  cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  notebook: '<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4M2 6h4M2 10h4M2 14h4M2 18h4M18.4 2.6a2.17 2.17 0 0 1 3 3L16 11l-4 1 1-4Z"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+  down: '<path d="m6 9 6 6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>', left: '<path d="m12 19-7-7 7-7M19 12H5"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>', bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  user: '<circle cx="12" cy="7" r="4"/><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>', pencil: '<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>', trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  trend: '<path d="m22 7-8.5 8.5-5-5L2 17M16 7h6v6"/>', bars: '<path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>', dollar: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>', clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>', gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  panel: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>', star: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>'
+};
+function I(n, s, w) { return '<svg width="' + (s || 14) + '" height="' + (s || 14) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[n] + '</svg>'; }
+function mk(id, x, y) { return '<button type="button" class="mk" data-go="' + id + '" style="left:' + x + 'px;top:' + y + 'px" aria-label="Open ' + id + '">' + id + '</button>'; }
+function hit(id, x, y, w, h, label, up) { return '<button type="button" class="hit' + (up ? ' ' + (up === true ? 'up' : up) : '') + '" data-go="' + id + '" aria-label="' + label + ' (' + id + ')" style="left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px"><span>' + label + '</span></button>'; }
+function meas(y, x, w, label) { return '<div class="meas" style="top:' + y + 'px;left:' + x + 'px;width:' + w + 'px"><span>' + label + '</span></div>'; }
+function frame(w, h, inner) { return '<div class="fr" style="width:' + w + 'px;height:' + h + 'px"><div class="grid"></div>' + inner + '</div>'; }
+function pair(items) { return '<div class="stage"><div class="pair">' + items.map(function (x) { return '<div><div class="lbl ' + (x[2] || '') + '">' + x[0] + '</div>' + x[1] + '</div>'; }).join('') + '</div></div>'; }
+function spec(title, note, body) { return '<div class="spec"><div class="cap"><b>' + title + '</b>' + (note ? '<span>' + note + '</span>' : '') + '</div>' + body + '</div>'; }
+
+/* ── the fixture, as captured ── */
+var NAME = 'Avery Test';
+var ROSTER = [['Avery Test', 1], ['Blake Test', 2], ['Casey Test', 3], ['Devon Test', 4], ['Emerson Test', 5], ['Frankie Test', 6], ['Gray Test', 7], ['Harper Test', 8], ['Indigo Test', 9], ['Jules Test', 10], ['Kai Test', 11], ['Logan Test', 12]];
+var LONG = 'Maximilien-Alexandre Beauchemin-Tremblay';
+var TABS = ['Details', 'This season', 'Skills & goals', 'Notes', 'Family & paperwork'];
+var TABS_S = ['Details', 'Season', 'Skills', 'Notes', 'Family'];
+var TILES = [['DUES', 'Paid', '$497.00 credit held'], ['ATTENDANCE', '100%', '14 recorded'], ['FAMILY', 'No contact', 'Add a contact'], ['AWARDS', '0', 'this season']];
+
+/* ── computer chrome ── */
+function strip(o) {
+  o = o || {};
+  var nm = '';
+  if (o.here) nm = '<span class="here">' + o.here + '</span>';
+  else if (o.name !== '') nm = '<span class="nm' + (o.chev ? ' btn44' : '') + (o.open ? ' open' : '') + '" style="' + (o.nmMax ? 'max-width:' + o.nmMax + 'px' : '') + '"><span class="tx">' + (o.name || NAME) + '</span>' + (o.chev ? '<span class="ch">' + I('down', 16) + '</span>' : '') + '</span>' + (o.chip || '');
+  return '<div class="st"><div class="brand same"><span style="color:#57651E">' + I('trend', 16, 2.4) + '</span>FieldLogicHQ<i>COACH</i></div>' +
+    '<div class="place"><span class="back same">' + I('left', 15) + 'Roster</span><span class="rule same"></span>' + nm +
+    (o.facts === false ? '' : '<span class="facts same">UAT Rep Club <span style="opacity:.45">·</span> 2026 Season <span style="opacity:.45">·</span> 3-2-1 <b>NEXT</b> Sun 9:30 a.m. practice</span>') + '</div>' +
+    '<div class="doors same' + (o.facts === false ? '" style="border-left:1px solid rgba(70,55,30,.2)' : '') + '"><span class="bell">' + I('bell', 18) + '<em>9+</em></span>' + I('user', 17) + '<span class="ws">Workspaces ' + I('down', 12) + '</span></div></div>';
+}
+var SB = [['it', 'Overview', 126, 'grid'], ['gh', 'SEASON', 158], ['it', 'Schedule', 199, 'cal'], ['it', 'Practice plans', 238, 'notebook'], ['it', 'Lineups', 276, 'list'], ['it', 'Tournaments', 314, 'trophy'], ['gh', 'PROGRESS', 347], ['it', 'Skills & goals', 388, 'trend'], ['it', 'Insights', 426, 'bars'], ['gh', 'MONEY', 459], ['it', 'Money', 500, 'dollar'], ['gh', 'COMMUNICATION', 532], ['it', 'Email families', 573, 'mail'], ['gh', 'TEAM', 606], ['on', 'Roster', 647, 'users'], ['it', 'Tryouts', 685, 'clip'], ['it', 'Staff', 724, 'users'], ['it', 'Documents', 762, 'file'], ['it', 'Settings', 801, 'gear']];
+function sidebar(h) {
+  return '<div class="sb same"><div class="cell"><span class="ut">UT</span>UAT Test Team<span class="cv">' + I('down', 16) + '</span></div>' +
+    SB.filter(function (r) { return r[2] + 20 < h; }).map(function (r) {
+      var y = r[2] - 48 - 10;
+      if (r[0] === 'gh') return '<span class="gh" style="top:' + (r[2] - 48) + 'px">' + r[1] + '</span>';
+      if (r[0] === 'on') return '<span class="it on" style="top:' + (y - 8) + 'px">' + I(r[3], 15) + r[1] + '</span>';
+      return '<span class="it" style="top:' + y + 'px">' + I(r[3], 15) + r[1] + '</span>';
+    }).join('') + (h >= 880 ? '<div class="foot">' + I('panel', 13) + 'Collapse sidebar</div>' : '') + '</div>';
+}
+function tabRow(names, on, cls) { return '<div class="tb ' + (cls || '') + '">' + names.map(function (n) { return '<span class="' + (n === on ? 'on' : '') + '">' + n + '</span>'; }).join('') + '</div>'; }
+function tilesHTML(list, opt) {
+  opt = opt || {};
+  var cols = opt.cols || 4;
+  return '<div class="tiles" style="grid-template-columns:repeat(' + cols + ',minmax(0,1fr))">' + list.map(function (t, i) {
+    if (t === 'hole') return '<div class="tile hole"></div>';
+    var span = opt.spanLast && i === list.length - 1 ? ' style="grid-column:1 / -1"' : '';
+    return '<div class="tile"' + span + '><i>' + t[0] + '</i><b>' + t[1] + '</b><small>' + t[2] + '</small><span class="cr">' + I('right', 13) + '</span></div>';
+  }).join('') + '</div>';
+}
+function glanceD(o) {
+  o = o || {};
+  return '<div class="card glance ' + (o.cls || '') + '">' + (o.chips ? '<div class="chips">' + o.chips + '</div>' : '') + tilesHTML(o.tiles || TILES, o.tileOpt) + '</div>';
+}
+function playerFormD() {
+  return '<div class="card sec same"><h5>Player</h5><div class="fgrid">' +
+    '<div class="fl"><label>First name</label><div class="in">Avery</div></div><div class="fl"><label>Last name</label><div class="in">Test</div></div>' +
+    '<div class="fl"><label>Date of birth</label><div class="in" style="color:#776D5D">Choose a date</div></div><div class="fl"><label>Jersey #</label><div class="in">1</div></div></div>' +
+    '<div class="fl" style="margin-top:16px"><label>Positions</label><div style="font-size:12.5px;color:#776D5D">Best — tap to rank; used first · Never — a hard block, in every mode · Blank — fine anywhere they’re not Never</div>' +
+    '<div class="pos">' + ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF'].map(function (p) { return '<span>' + p + '</span>'; }).join('') + '</div></div>' +
+    '<div class="fl" style="margin-top:18px"><label>Pitching</label><div style="display:flex;gap:8px;align-items:center;font-size:14.5px"><span style="width:16px;height:16px;border-radius:3px;background:#DAF27C;border:1px solid #57651E;display:grid;place-items:center">' + I('check', 11, 3) + '</span>This player pitches</div></div>' +
+    '<div style="display:grid;grid-template-columns:170px 188px;gap:14px;margin-top:18px"><div class="fl"><label>Pitcher rank</label><div class="in" style="background:#fff">1 — Ace</div></div><div class="fl"><label>Max innings / game</label><div class="in">1</div></div></div>' +
+    '<div style="font-size:12.5px;color:#776D5D;margin-top:12px">Guides the game-day Auto-fill: competitive games lead with your ace; balanced &amp; development games spread innings down the order.</div>' +
+    '<div class="fl" style="margin-top:18px"><label>A-squad</label><div style="display:flex;gap:8px;align-items:center;font-size:14.5px">' + I('star', 18) + 'Gold-medal starter — tap to mark</div></div>' +
+    '<div class="fgrid" style="grid-template-columns:1fr 1fr 1fr;margin-top:18px"><div class="fl"><label>Bats</label><div class="in" style="background:#fff">—</div></div><div class="fl"><label>Throws</label><div class="in" style="background:#fff">—</div></div><div class="fl"><label>Jersey size</label><div class="in" style="background:#fff">—</div></div></div></div>';
+}
+function playerRecordD(o) {
+  o = o || {};
+  return '<div class="card sec same"><h5>Player</h5>' +
+    [['Name', o.name || NAME], ['Jersey #', '1'], ['Date of birth', '—'], ['Positions', '—'], ['Pitching', 'Ace · 1 innings cap'], ['A-squad', 'No'], ['Bats / throws', '—'], ['Jersey size', '—']].map(function (r) { return '<div class="rr"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; }).join('') +
+    '<p class="ro" style="margin-top:12px">Only the head coach can edit a player’s record.</p></div>';
+}
+function seasonD() {
+  return '<div class="card sec same"><h5>Attendance<span class="meta">100% · 14 RECORDED</span></h5>' +
+    '<div class="stat3"><div><b>14</b><small>PRESENT</small></div><div><b>0</b><small>LATE</small></div><div><b>0</b><small>ABSENT</small></div></div><div class="sl">LAST 10 SESSIONS</div>' +
+    [['UAT probe game', '12 Nov'], ['UAT probe practice', '7 Oct'], ['Team practice 5', '29 May'], ['Team practice 4', '26 May'], ['Team practice 3', '19 May'], ['Team practice 2', '12 May'], ['Team practice 1', '5 May'], ['vs Ridgeview', '4 May'], ['vs Westbrook', '28 Apr'], ['vs Northside', '21 Apr']].map(function (r) { return '<div class="arow">' + r[0] + '<em>' + r[1] + '</em><span class="pres">PRESENT</span></div>'; }).join('') + '</div>';
+}
+
+/* ── the whole computer screen ── */
+function desk(o) {
+  o = o || {};
+  var H = o.h || 900, inner = strip(o.strip) + sidebar(H);
+  var tab = o.tab === 'season' ? 'This season' : 'Details';
+  var body = o.tab === 'season' ? seasonD() : (o.record ? playerRecordD() : playerFormD());
+  if (o.paint) {
+    inner += (o.after ? '<div class="bandD same">' + (o.paintTabs ? tabRow(TABS, 'Details') : '') + '</div>' : '') +
+      '<div class="loading same" style="left:360px;top:' + (o.after ? 125 : 112) + 'px">Loading this player…</div>';
+  } else if (!o.after) {
+    inner += '<div class="col" style="left:360px;width:960px;top:80px">' +
+      '<div class="hdrow chg">' + (o.noSelect ? '' : '<span class="sel">' + NAME + '<span style="font-size:10px">▼</span></span>') + '</div>' +
+      '<div style="height:16px"></div>' + glanceD({ chips: '<span class="chipq">Ace · 1 IP cap</span>', tiles: o.tiles, tileOpt: o.tileOpt, cls: 'chg' }) +
+      '<div style="height:14px"></div>' + tabRow(TABS, tab, 'inpage chg') + '<div style="height:19px"></div>' + body + '</div>';
+  } else {
+    var card = o.tab === 'season' ? '' : glanceD({ chips: o.cardChips, tiles: o.tiles, tileOpt: o.tileOpt, cls: 'chg' }) + '<div style="height:14px"></div>';
+    inner += '<div class="bandD chg">' + tabRow(TABS, tab) + '</div><div class="col" style="left:360px;width:960px;top:125px">' + card + body + '</div>';
+  }
+  if (o.menu) inner += menuD(o.menu);
+  return frame(1440, H, inner + (o.marks || ''));
+}
+function menuD(m) {
+  var rows = ROSTER.map(function (r, i) { var cur = r[0] === NAME; return '<div class="mr' + (cur ? ' cur' : '') + (i === 1 ? ' foc' : '') + '">' + r[0] + '<em>#' + r[1] + '</em>' + (cur ? I('check', 16) : '<span style="width:16px"></span>') + '</div>'; }).join('');
+  return '<div class="menu" style="left:' + m.x + 'px;top:' + m.y + 'px"><div class="gh2">PLAYERS</div>' + rows + '</div>';
+}
+
+/* ── phone + tablet chrome ── */
+function bar(o) {
+  o = o || {};
+  var nm;
+  if (o.here) nm = '<span class="here">' + o.here + '</span>';
+  else nm = '<span class="nmr"><b class="' + (o.wrap ? '' : 'clip') + '">' + (o.name || NAME) + '</b>' + (o.chev === false ? '' : '<span class="cv">' + I('down', 16) + '</span>') + (o.chip || '') + '</span>';
+  return '<div class="pb1 ' + (o.cls || '') + '" ' + (o.id ? 'id="' + o.id + '"' : '') + '><div class="r"><span class="bk">' + I('left', 20) + '</span><span class="rl"></span><div class="t">' + nm +
+    '<small>UAT Test Team <span style="opacity:.45">·</span> ' + (o.tablet ? 'UAT Rep Club <span style="opacity:.45">·</span> 2026 Season <span style="opacity:.45">·</span> ' : '') + '<b>3-2-1</b></small></div>' +
+    (o.tablet ? '<span class="stat"><i>NEXT</i>Sun 9:30 a.m. practice</span>' : '') + '</div></div>';
+}
+function bnav() { return '<div class="bnav same">' + [['grid', 'Overview'], ['cal', 'Schedule'], ['notebook', 'Practices'], ['users', 'Roster'], ['more', 'More']].map(function (x) { return '<div class="it' + (x[1] === 'Roster' ? ' on' : '') + '"><span class="pill">' + I(x[0], 22, x[1] === 'Roster' ? 2.4 : 1.8) + '</span>' + x[1] + '</div>'; }).join('') + '</div>'; }
+function glanceP(o) {
+  o = o || {};
+  return '<div class="card pgl ' + (o.cls || '') + '">' + (o.chips ? '<div class="chips">' + o.chips + '</div>' : '') + tilesHTML(o.tiles || TILES, Object.assign({ cols: 2 }, o.tileOpt || {})) + '</div>';
+}
+/* the tiles' figures as the phone's dashboard rows: a caption only when it is a FACT (never a hint like "Add a contact") */
+var HINTS = { 'Add a contact': 1, 'this season': 1, 'No dues this season': 1 };
+function figRowsP(list, cls) {
+  return '<div class="frows ' + (cls || '') + '">' + list.filter(function (t) { return t !== 'hole'; }).map(function (t) {
+    var label = t[0].charAt(0) + t[0].slice(1).toLowerCase(), cap = HINTS[t[2]] ? '' : t[2], words = !/^[\d$]/.test(t[1]);
+    return '<div class="frow"><b>' + label + '</b>' + (cap ? '<small>' + cap + '</small>' : '') + '<span class="fig' + (words ? ' w' : '') + '">' + t[1] + '</span><span class="cv">' + I('right', 15) + '</span></div>';
+  }).join('') + '</div>';
+}
+function recordP(o) {
+  o = o || {};
+  return '<div class="card psec same"><h5>Player' + (o.ro ? '' : '<span class="pen">' + I('pencil', 19) + '</span>') + '</h5>' +
+    (o.ro ? '<p class="ro">Only the head coach can edit a player’s record.</p>' : '') +
+    [['Name', o.name || NAME], ['Jersey #', '1'], ['Date of birth', '—'], ['Positions', '—'], ['Pitching', 'Ace · 1 innings cap'], ['A-squad', 'No'], ['Bats / throws', '—'], ['Jersey size', '—']].map(function (r) { return '<div class="prr"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; }).join('') +
+    (o.addBack ? '<div class="danger"><span>Off the roster since Oct 3</span><b>Add back</b></div>' : '') + '</div>';
+}
+function seasonP() {
+  return '<div class="card psec same"><h5 style="min-height:30px">Attendance<span style="font:600 10.5px IBM Plex Mono;color:#4A4235">100% · 14 RECORDED</span></h5>' +
+    '<div class="stat3" style="gap:8px"><div><b>14</b><small>PRESENT</small></div><div><b>0</b><small>LATE</small></div><div><b>0</b><small>ABSENT</small></div></div><div class="sl">LAST 10 SESSIONS</div>' +
+    [['UAT probe game', '12 Nov'], ['UAT probe practice', '7 Oct'], ['Team practice 5', '29 May'], ['Team practice 4', '26 May'], ['Team practice 3', '19 May'], ['Team practice 2', '12 May'], ['Team practice 1', '5 May'], ['vs Ridgeview', '4 May'], ['vs Westbrook', '28 Apr']].map(function (r) { return '<div class="arow">' + r[0] + '<em>' + r[1] + '</em><span class="pres">PRESENT</span></div>'; }).join('') + '</div>';
+}
+/* the whole phone screen (390 × 844) or tablet (768 × 1024) */
+function phone(o) {
+  o = o || {};
+  var W = o.tablet ? 768 : 390, H = o.tablet ? 1024 : 844, BH = o.barH || 53;
+  var inner = bar(Object.assign({ tablet: o.tablet, cls: 'chg' }, o.bar || {}));
+  var body;
+  if (o.tablet) body = o.tab === 'season' ? seasonD() : playerFormD();
+  else body = o.tab === 'season' ? seasonP() : recordP(o.rec);
+  var tabs = o.tablet ? TABS : TABS_S, tab = o.tab === 'season' ? tabs[1] : 'Details';
+  var glance = o.tablet ? glanceD : glanceP;
+  if (o.paint) {
+    inner += (o.after ? '<div class="bandP same" style="top:' + BH + 'px">' + (o.paintTabs ? tabRow(tabs, 'Details') : '') + '</div>' : '') +
+      '<div class="loading same" style="left:16px;top:' + (o.after ? BH + 45 + 16 : 112) + 'px">Loading this player…</div>';
+  } else if (!o.after) {
+    var top = o.tablet ? 69 : BH + 16;
+    inner += '<div class="pbody" style="top:' + top + 'px">' + (o.tablet ? '<div class="hdrow chg" style="height:44px;align-items:center">' + (o.noSelect ? '' : '<span class="sel">' + NAME + I('down', 14) + '</span>') + '</div><div style="height:16px"></div>' : '') +
+      glance({ chips: '<span class="chipq">Ace · 1 IP cap</span>', tiles: o.tiles, tileOpt: o.tileOpt, cls: 'chg' }) + '<div style="height:15px"></div>' +
+      '<div style="margin:0 -16px;padding-left:6px" class="chg">' + tabRow(tabs, tab, 'inpage') + '</div><div style="height:18px"></div>' + body + '</div>';
+  } else {
+    var card = o.tab === 'season' ? '' : (o.tablet ? glance({ chips: o.cardChips, tiles: o.tiles, tileOpt: o.tileOpt, cls: 'chg' }) : figRowsP(o.tiles || TILES, 'chg')) + '<div style="height:14px"></div>';
+    inner += '<div class="bandP chg" style="top:' + BH + 'px">' + tabRow(tabs, tab) + '</div><div class="pbody" style="top:' + (BH + 45 + 16) + 'px">' + card + body + '</div>';
+  }
+  inner += bnav();
+  if (o.sheet) inner += '<div class="scrim"></div><div class="sheet" style="top:193px"><div class="grab"></div><div class="lab">Players</div>' + ROSTER.map(function (r) { return '<div class="srow' + (r[0] === NAME ? ' on' : '') + '">' + r[0] + '<em>#' + r[1] + '</em></div>'; }).join('') + '</div>';
+  return frame(W, H, inner + (o.marks || ''));
+}
+
+/* ── the panels ── */
+var PANELS = [
+  ['summary', 'Summary & asks', function () {
+    return '<h2>What changes</h2>' +
+      '<p>Every other tabbed room in the Coaches Portal pins its tabs at the top. The player page was carved out (Phase 4b R5): today it stacks a lone “Switch player” dropdown row, then a summary card, then its tabs, about 300px down on a computer. After this change it works like the other rooms:</p>' +
+      '<ul><li><b>Computer:</b> the tabs sit in the band under the strip from the moment the page opens. The dropdown row is gone, and the player’s name in the strip carries a ▾ that opens the roster list. The summary card shows on Details only. The first section starts <b>110px higher</b> on Details (y 356 → 246) and <b>231px higher</b> on the other four tabs (y 356 → 125).</li>' +
+      '<li><b>Phone:</b> the bar is unchanged; it already reads “← │ Avery Test ▾” since N13 shipped. The tabs move into the phone’s band, directly under the bar, from rest. The summary shows on Details only, as the dashboard’s figure rows instead of 2×2 tiles (A3). The first section starts <b>≈57px higher</b> on Details (379 → ≈322) and <b>265px higher</b> on the other tabs (379 → 114).</li>' +
+      '<li><b>Tablet (641–900):</b> today it is a hybrid: the phone’s bar on top, with the computer’s dropdown row in the page. After, it is the phone’s rule: the name’s ▾ opens the roster sheet, and the dropdown row goes.</li>' +
+      '<li><b>Who is affected:</b> every coach who opens a player. An assistant without roster write sees the same layout without pencils. A coach without the money gate sees three tiles.</li></ul>' +
+      '<h2>Drawing notes</h2><div class="notes">' + NOTES + '</div>' +
+      '<h2>The asks</h2><p class="muted">Each ask gives a recommendation first. Points 1–3 of the ruling are drawn as ruled; these are the decisions the ruling left open.</p>' + ASKS +
+      '<h2>Measured today (dev, 2026-11-12)</h2><div class="tablewrap"><table class="t"><thead><tr><th>Details tab</th><th>1440 × 900</th><th>390 × 844</th><th>768 × 1024</th></tr></thead><tbody>' +
+      '<tr><td>Top chrome</td><td class="n">strip 0–48</td><td class="n">bar 0–53</td><td class="n">bar 0–53</td></tr>' +
+      '<tr><td>Dropdown row</td><td class="n">80–116 (select alone)</td><td class="n">none</td><td class="n">69–113 (select alone)</td></tr>' +
+      '<tr><td>Summary card</td><td class="n">132–278</td><td class="n">69–301</td><td class="n">129–275</td></tr>' +
+      '<tr><td>Tabs</td><td class="n">292–337, in the page</td><td class="n">316–361, in the page</td><td class="n">290–335, in the page</td></tr>' +
+      '<tr><td>First section (Player; Attendance on This season)</td><td class="n">356</td><td class="n">379</td><td class="n">353</td></tr>' +
+      '<tr><td>After: tabs</td><td class="n">48–93, the band</td><td class="n">53–98, the band</td><td class="n">53–98, the band</td></tr>' +
+      '<tr><td>After: first section on Details / other tabs</td><td class="n">≈246 / 125</td><td class="n">≈322 / 114</td><td class="n">≈234 / 114</td></tr></tbody></table></div>' +
+      '<p class="muted">The fixture: 12 players on the roster (#1–#12) and two off it. Avery Test is on the roster, as Ace with a 1-inning cap, with a $497.00 dues credit and no guardian. Today the card’s only chip is “Ace · 1 IP cap”. The “after” figures assume A3’s recommendation (no chips line for Avery); with A3 B the Details figures move down 39px.</p>';
+  }],
+  ['desk', 'Details · computer', function () {
+    return spec('Details tab, 1440 × 900', 'Head coach (the form). Before = the capture; after = the ruling with A1–A3 as recommended.',
+      pair([['Before — today', desk({ marks: hit('D2', 1180, 78, 142, 40, 'the dropdown row, alone') + hit('D4', 358, 130, 964, 150, 'the card, on every tab') + hit('D1', 358, 290, 964, 49, 'tabs 292, under the card') + meas(356, 240, 1200, 'first section y 356') })],
+        ['After', desk({ after: true, strip: { chev: true }, marks: hit('D3', 358, 4, 116, 40, 'the name ▾ = the switcher (A2)', 'r') + hit('D1', 242, 49, 1196, 44, 'tabs in the band, 48–93, from rest') + hit('D4', 358, 123, 964, 112, 'the card, Details only') + mk('A3', 1300, 118) + meas(246, 240, 1200, 'first section ≈ y 246') }), 'after']]));
+  }],
+  ['phone', 'Details · phone & tablet', function () {
+    return spec('Details tab, 390 × 844', 'Head coach (the record, with the section pencil). The bar as N13 shipped it, unchanged.',
+      pair([['Before — today', phone({ marks: hit('D4', 14, 67, 362, 236, 'the card, on every tab') + hit('D5', 2, 314, 386, 49, 'tabs 316, in the page') + meas(379, 0, 390, 'Player y 379') })],
+        ['After', phone({ after: true, marks: hit('D6', 60, 2, 150, 49, 'unchanged (N13)', 'r') + hit('D5', 2, 54, 386, 43, 'the phone band, 53–98') + hit('D4', 14, 112, 362, 198, 'figure rows, Details only') + mk('A3', 350, 106) + meas(322, 0, 390, 'Player ≈ y 322') }), 'after']])) +
+      spec('Details tab, tablet 768 × 1024', 'The phone’s chrome at 641–900 (bar, band, bottom bar); the computer’s content (the form, four tiles across).',
+        pair([['Before — today', phone({ tablet: true, bar: { chev: false }, marks: hit('D8', 590, 67, 160, 48, 'the dropdown row, still here') + meas(353, 0, 768, 'Player y 353') })],
+          ['After', phone({ tablet: true, after: true, marks: hit('D8', 60, 2, 130, 49, 'name ▾ opens the sheet', 'r') + hit('D5', 2, 54, 764, 43, 'the band, 53–98') + meas(234, 0, 768, 'Player ≈ y 234') }), 'after']]));
+  }],
+  ['season', 'Another tab', function () {
+    return spec('This season, 1440 × 900', 'No card: the first section sits directly under the band.',
+      pair([['Before — today', desk({ tab: 'season', marks: hit('D4', 358, 130, 964, 150, 'the card, again') + meas(356, 240, 1200, 'Attendance y 356') })],
+        ['After', desk({ tab: 'season', after: true, strip: { chev: true }, marks: hit('D7', 358, 123, 964, 60, 'Attendance, first, at y 125', true) + mk('A1', 476, 4) }), 'after']])) +
+      spec('This season, 390 × 844', 'The phone: Attendance at y 114 instead of 379.',
+        pair([['Before — today', phone({ tab: 'season', marks: meas(379, 0, 390, 'Attendance y 379') })],
+          ['After', phone({ tab: 'season', after: true, marks: hit('D7', 14, 120, 362, 52, 'Attendance, first, at y 114', true) }), 'after']]));
+  }],
+  ['switch', 'The switcher open', function () {
+    return spec('Computer: the name ▾ opens the roster list under it', 'The shipped switch-list window (320 wide, 2px under the name, 44px rows, hairlines, the current row olive with a check), holding the phone sheet’s rows: name and jersey number. The keyboard focus ring is on Blake.',
+      pair([['Before — today: a native select (12 names, no numbers)', desk({ h: 640, marks: hit('A2', 1180, 78, 142, 40, 'native select') })],
+        ['After — open', desk({ h: 640, after: true, strip: { chev: true, open: true }, menu: { x: 358, y: 50 }, marks: mk('A2', 688, 104) }), 'after']])) +
+      spec('Phone: the name ▾ opens the roster sheet', 'Unchanged from today: the same sheet, the same rows, opened from the bar (as N13 already does). The tabs now sit under the dim, in the band.',
+        pair([['Today (captured)', phone({ sheet: true })], ['After', phone({ after: true, sheet: true, marks: mk('A2', 340, 200) }), 'after']]));
+  }],
+  ['edges', 'Edge cases', function () {
+    var longStripToday = '<div class="fr" style="width:1440px;height:48px">' + strip({ name: LONG }) + '</div>';
+    var longStripAfter = '<div class="fr" style="width:1440px;height:48px">' + strip({ name: LONG, chev: true }) + '</div>';
+    var longStrip1280 = '<div class="fr" style="width:1280px;height:48px">' + strip({ name: LONG, chev: true }) + '</div>';
+    var longStrip1280r = '<div class="fr" style="width:1280px;height:48px">' + strip({ name: LONG, chev: true, facts: false }) + '</div>';
+    var longStrip1280c = '<div class="fr" style="width:1280px;height:48px">' + strip({ name: LONG, facts: false, chip: '<span class="chipr">Off the roster</span>' }) + '</div>';
+    var longStrip1024 = '<div class="fr" style="width:1024px;height:48px">' + strip({ name: LONG, chev: true, facts: false }) + '</div>';
+    function barBox(id, o, w) { return '<div class="fr" style="width:' + (w || 390) + 'px;height:auto;min-height:53px"><div style="position:relative">' + bar(Object.assign({ id: id }, o)).replace('class="pb1', 'style="position:relative" class="pb1') + '</div></div><div class="hm" data-h="' + id + '"></div>'; }
+    return '<h2>A long name</h2><p>The rule (stage 4 · E5): a name a coach typed wraps and is never cut. The strip is one line by design (walk §486 E), so there the question is which part gives way: today it is the name. The phone bar that shipped with N13 also cuts it, while the in-page name it replaced wrapped. Both specimens below are rendered live in Inter. The heights under the bars are measured in this page.</p>' +
+      '<div class="stage"><div class="strips">' +
+      '<div><div class="lbl">Computer strip, 1440 — today and after (one line; fits with ≈65px to spare)</div>' + longStripToday + '<div style="height:10px"></div>' + longStripAfter + '</div>' +
+      '<div><div class="lbl">Computer strip, 1280 — today: the facts hold their width, so the name is cut</div>' + longStrip1280 + '</div>' +
+      '<div><div class="lbl after">Computer strip, 1280 — A6·1 recommended: the facts give way first, the name keeps its room</div>' + longStrip1280r + '<div style="height:10px"></div>' + longStrip1280c + '</div>' +
+      '<div><div class="lbl">Computer strip, 1024 — the facts are already hidden at 1100 and below; the name fits</div>' + longStrip1024 + '</div>' +
+      '<div style="display:flex;gap:22px;flex-wrap:wrap"><div><div class="lbl">Phone bar — as shipped (N13): one line, cut</div>' + barBox('lb1', { name: LONG }) + '</div>' +
+      '<div><div class="lbl after">Phone bar — A6·1 recommended: wraps</div>' + barBox('lb2', { name: LONG, wrap: true }) + '</div>' +
+      '<div><div class="lbl after">Phone bar — wraps, off the roster (A1 chip)</div>' + barBox('lb3', { name: LONG, wrap: true, chev: false, chip: '<span class="chipr">Off the roster</span>' }) + '</div></div>' +
+      '</div></div>' + mkInline('A6') +
+      '<h2>A player off the roster</h2>' +
+      spec('Off the roster: the chip in the chrome on every tab (A1 A); no ▾ (A2)', 'Morgan Left, #99. The card loses the badge; Details ends with “Add back”.',
+        pair([['Phone · Details', phone({ after: true, bar: { name: 'Morgan Left', chev: false, chip: '<span class="chipr">Off the roster</span>' }, tiles: [['DUES', 'None set', 'No dues this season'], ['ATTENDANCE', '82%', '11 recorded'], ['FAMILY', 'Pat Left', 'pat.left@example.com'], ['AWARDS', '0', 'this season']], rec: { name: 'Morgan Left', addBack: true }, marks: mk('A1', 340, 15) }), 'after'],
+          ['Phone · This season', phone({ after: true, tab: 'season', bar: { name: 'Morgan Left', chev: false, chip: '<span class="chipr">Off the roster</span>' }, marks: mk('A1', 340, 15) }), 'after']])) +
+      spec('Computer strip, off the roster', '', '<div class="stage"><div class="fr" style="width:1440px;height:48px">' + strip({ name: 'Morgan Left', chip: '<span class="chipr">Off the roster</span>' }) + '</div></div>') +
+      '<h2>A roster of one</h2>' + spec('No ▾ at any width; the name is plain text', 'Nothing to switch to (today’s rule on both widths).', '<div class="stage"><div class="strips"><div class="fr" style="width:1440px;height:48px">' + strip({}) + '</div><div class="fr" style="width:390px;height:53px">' + bar({ chev: false }) + '</div></div></div>') +
+      '<h2>An assistant coach without roster write</h2>' +
+      spec('The read-only record: no pencils, no form; the switcher stays (switching is reading)', 'Without the family-contact permission, the Family tile says “Kept to the head coach”.',
+        pair([['Computer · Details', desk({ after: true, record: true, strip: { chev: true }, tiles: [TILES[0], TILES[1], ['FAMILY', 'No contact', 'Kept to the head coach'], TILES[3]] }), 'after'],
+          ['Phone · Details', phone({ after: true, rec: { ro: true }, tiles: [TILES[0], TILES[1], ['FAMILY', 'No contact', 'Kept to the head coach'], TILES[3]] }), 'after']])) +
+      '<h2>A coach without the money gate</h2>' +
+      spec('Three tiles: today’s grid leaves a hole; recommended: the grid fits the count', 'A6·4. Computer three across; phone two, then one across the width.',
+        pair([['Computer today (4 columns, 3 tiles)', '<div class="fr" style="width:992px;padding:16px">' + glanceD({ tiles: [TILES[1], TILES[2], TILES[3], 'hole'] }) + '</div>'],
+          ['Computer recommended', '<div class="fr" style="width:992px;padding:16px">' + glanceD({ tiles: [TILES[1], TILES[2], TILES[3]], tileOpt: { cols: 3 } }) + '</div>', 'after']])) +
+      pair([['Phone today', '<div class="fr" style="width:390px;padding:16px">' + glanceP({ tiles: [TILES[1], TILES[2], TILES[3], 'hole'] }) + '</div>'],
+        ['Phone after (A3): rows, so three is just three rows', '<div class="fr" style="width:390px;padding:16px">' + figRowsP([TILES[1], TILES[2], TILES[3]]) + '</div>', 'after']]);
+  }],
+  ['paint', 'First paint', function () {
+    return '<p>The server’s paint (scripts off) and what moves when the player loads. Measured today: <b>1440</b>: the strip says “← Roster” with an <b>empty</b> name slot. There is no band, no tabs and no card, only “Loading this player…” at y≈123. Once the player loads (≈1.4s on dev), everything below the strip appears at once: the dropdown row at 80, the card at 132, the tabs at 292, and the page grows from 900 to 1277. <b>390</b>: the bar says “Player”, the body is the loading line, and then the card at 69 and the tabs at 316 appear. Nothing in the chrome moves today, because nothing is in it.</p>' +
+      spec('Computer, the server’s paint', 'After: the band is reserved by the address (as the five rooms’ is), with the tabs in it, and the slot says “Player” like the phone’s bar.',
+        pair([['Today', desk({ h: 420, paint: true, strip: { name: '' }, marks: hit('A5', 364, 6, 120, 36, 'name slot empty') })],
+          ['After — A5 recommended', desk({ h: 420, paint: true, after: true, paintTabs: true, strip: { here: 'Player' }, marks: hit('A5', 242, 49, 1196, 44, 'band + tabs at the first paint') }), 'after']])) +
+      spec('Phone, the server’s paint', '', pair([['Today', phone({ paint: true, bar: { here: 'Player' } })], ['After — A5 recommended', phone({ paint: true, after: true, paintTabs: true, bar: { here: 'Player' }, marks: mk('A5', 350, 60) }), 'after']])) +
+      '<div class="tablewrap"><table class="t"><thead><tr><th>When the player loads</th><th>Today</th><th>After (A5 recommended)</th></tr></thead><tbody>' +
+      '<tr><td>Strip / bar name</td><td>Computer: empty → “Avery Test”. Phone: “Player” → “Avery Test ▾”.</td><td>“Player” → “Avery Test ▾” at both widths, on the same line. A long name on a phone wraps to a second line: the bar grows ≈19px and the band follows it, for that player only (A6·1).</td></tr>' +
+      '<tr><td>Tabs</td><td>Appear with the player, at y 292 / 316.</td><td>In the band from the first paint. They wait on the coach’s access, never on the player. Skills & goals and Notes are added by capability on the same row; nothing below moves.</td></tr>' +
+      '<tr><td>Card + first section</td><td>Appear with the player; everything below the strip is new.</td><td>Appear in the page body, under a band that has not moved.</td></tr>' +
+      '<tr><td>Page height</td><td>900 → 1277 (computer)</td><td>Grows the same way; the chrome does not move.</td></tr></tbody></table></div>';
+  }]
+];
+function mkInline(id) { return '<p><button type="button" class="mk inl" data-go="' + id + '">' + id + '</button><span class="muted">The ask this case belongs to.</span></p>'; }
+
+var NOTES = [
+  ['D1', 'The tabs go to the band (computer)', 'From rest, in the 45px band under the strip (48–93), full width, tabs alone, exactly as Money, Insights, Skills & goals, Lineups and Practice plans. The player page joins the band’s rooms. That reverses R5’s “dock once scrolled past”. Tabs keep their address (<code>?tab=</code>) and <code>?section=</code> deep links.'],
+  ['D2', 'The dropdown row is gone', 'Today a 36px row at y 80 holds only the “Switch player” select, at the right. Since Phase 4 the strip names the player, so the row has nothing else left in it. The switcher moves to the name (D3).'],
+  ['D3', 'The name ▾ is the switcher (computer)', '“← Roster │ Avery Test ▾”: the name and its 16px chevron are one 40px button in the strip (the cell recipe: one target, never a name beside a separate chevron). It opens the roster list under it (A2). With a roster of one, or a player off the roster, there is no ▾.'],
+  ['D4', 'The card lives in Details only', 'The four tiles stay doors to their sections on other tabs (A3/A4). F10’s reason survives: Details is the landing tab, so the mid-season answer is still the first thing a coach sees. On the other four tabs the card is gone, along with the three tiles that pointed at sections on the same tab.'],
+  ['D5', 'The phone band', 'The tabs sit in the phone’s own 45px band directly under the bar (53–98), full bleed, from rest. The band is the one the five rooms already use (N11), with today’s short labels: Details · Season · Skills · Notes · Family.'],
+  ['D6', 'The phone bar is unchanged', 'N13 shipped it: the arrow, then the record’s name as the switcher button, then “UAT Test Team · 3-2-1” on the small line. One level down there is no team door. Nothing about the bar is redrawn here except the long-name case (A6·1) and the off-roster chip (A1).'],
+  ['D7', 'Another tab: first section directly under the tabs', 'This season, Skills & goals, Notes and Family & paperwork open on their first section, at y 125 on a computer and 114 on a phone (today 356 and 379).'],
+  ['D8', 'The tablet follows the chrome, not the content', 'At 641–900 the page wears the phone’s bar but today still draws the computer’s dropdown row, because the page decides “phone” at 640 and the chrome decides it at 900. After, the name’s ▾ and the roster sheet follow the chrome (≤900), so the tablet loses its last dropdown row. The form and the four tiles across stay, because they follow the content.']
+].map(function (n) { return '<div class="ask" id="ask-' + n[0] + '"><h3><span class="mk inl">' + n[0] + '</span>' + n[1] + '</h3><p style="margin:0;font-size:14px">' + n[2] + '</p></div>'; }).join('');
+
+var ASKS =
+  '<div class="ask" id="ask-A1"><h3><span class="mk inl">A1</span>Where “Off the roster” lives</h3><p style="margin:0">Today it is the card’s only badge (“the ONE state worth stating”). With the card on Details only, a coach reading This season or Notes would no longer see it.</p><ol>' +
+  '<li><span class="rec">(A) Recommended: a chip beside the name in the strip and the bar, on every tab.</span> The way exists already: a page’s title chips travel with its title into the strip and the bar (N13). It is the record’s state, so it belongs with the record’s name, and the chrome is the one thing on every tab. It keeps today’s look, the quiet grey badge, not a colour, because it is a fact and not something to act on. At 390 the chip takes ≈120px of the name’s room. An off-roster player has no ▾ (A2), which gives some of it back. A long name wraps under A6·1.</li>' +
+  '<li>(B) Details only, with the rest of the card. A coach on This season can’t tell.</li>' +
+  '<li>(C) A line at the top of every tab: a new pattern that costs a row on every tab.</li></ol></div>' +
+  '<div class="ask" id="ask-A2"><h3><span class="mk inl">A2</span>The computer’s switch list</h3><ol>' +
+  '<li><span class="rec">(A) Recommended: the shipped switch-list window holding the phone sheet’s rows.</span> The window and its keyboard are the event list’s and the team cell’s: 320 wide, 2px under the name, 44px rows with hairlines, the current row olive with a check, head “Players”. Each row carries what the roster sheet carries: the name, then “#12” in the list’s trailing slot. One line, not the event list’s two: the roster the page already loads has only the name and number. There is no foot row, because the arrow already leads to Roster. A long roster scrolls inside the window, which keeps the shipped list’s height cap.<br><b>Keyboard:</b> Enter, Space or ↓ on the name opens the list. Focus lands on the current player, the arrows move it, and Enter opens that player. Escape, Tab or a click outside closes the list, and focus returns to the name.<br><b>Switching keeps the tab</b> (it does today), <b>and a pending edit is saved first</b> (as the select does today; a save that cannot land keeps the coach on the page, with the pill saying so).<br><b>Who is listed:</b> active players only (today’s list). <b>A player off the roster gets no ▾ at any width</b>, which matches the phone today (no “you are here” row). The computer loses its way to jump from an off-roster player straight to another one; the arrow back to Roster is one click.</li>' +
+  '<li>(B) Two-line rows with positions on the second line. The roster the page loads carries only the name and number, so this would be new data for a list.</li>' +
+  '<li>(C) Keep the native select, in the strip. That would be a second switcher shape in the portal.</li></ol></div>' +
+  '<div class="ask" id="ask-A3"><h3><span class="mk inl">A3</span>The card on Details: tiles and chips</h3><ol>' +
+  '<li><span class="rec">(A) Recommended: the four figures stay doors. On a phone they are the dashboard’s rows, not tiles.</span> On a phone, every Coaches Portal dashboard shows its figures as rows (the Overview’s “at a glance” board and the Insights scoreboard; owner rulings B3 · B5 · B6, 2026-09-20/21, and the Insights scoreboard A1, 2026-09-25). That means one white frame and a row per figure: the label with one <b>fact</b> under it, the figure at the right, and a chevron. The player page’s 2×2 tiles predate that rule and were never moved over. So: Dues · “$497.00 credit held” · Paid; Attendance · “14 recorded” · 100%; Family · No contact; Awards · 0. Hints (“Add a contact”) and filler (“this season”) drop, because a row’s caption is a fact or nothing. The computer and the tablet keep the four tiles across. <b>The chips line</b> keeps only what the record below does not say. Every chip but one restates the Player section directly under it: pitching (“Ace · 1 IP cap” ↔ the Pitching row), positions, A-squad, and age (Date of birth · age). Those chips were there for the other tabs, which no longer show the card. The one chip the record lacks, <b>years with the team</b> (“With the 14U AA 2025 · 2026”), stays as the card’s one quiet line. Off the roster moves to the chrome (A1). For Avery the card is just the tiles.</li>' +
+  '<li>(B) Keep the chips line whole, as today: 39px more card, and the Player section repeats it.</li>' +
+  '<li>(C) Move the chips into the Player section’s head. Above 640 the head coach sees that section as a form, so read-only chips would sit among inputs.</li></ol></div>' +
+  '<div class="ask" id="ask-A4"><h3><span class="mk inl">A4</span>No tile points at its own tab: confirm</h3><p style="margin:0">Confirmed from the code. Dues, Attendance and Awards open sections on <b>This season</b>; Family opens <b>Guardian contact</b> on Family & paperwork. None opens Details, so nothing on the card points at the tab it sits on. Links from elsewhere: the only <code>?tab=details&amp;section=</code> link in the product is the roster’s “+ Add a position” prompt. It lands on the Player section, which now sits just under the card, and the landing already clears the band. A bare <code>?section=player</code> still resolves to Details. Nothing to rule unless you want a tile added for Details.</p></div>' +
+  '<div class="ask" id="ask-A5"><h3><span class="mk inl">A5</span>First paint</h3><p style="margin:0">Today the page draws nothing but “Loading this player…” until the record arrives, and then everything below the strip appears at once (tabs at 292 / 316). On the computer the strip’s name slot is <b>empty</b> on the server’s paint, while the phone’s bar says “Player”.</p><ol>' +
+  '<li><span class="rec">(A) Recommended:</span> the band is reserved by the address from the server’s paint, as the five rooms’ is. The tab row is drawn as soon as the coach’s access is known, never waiting for the player. The strip’s empty slot says “Player”, like the bar. Then the only things that change when the player loads are the name (same line) and the page body under a band that does not move.</li>' +
+  '<li>(B) Reserve the band empty and draw the tabs with the player. Simpler, but the band sits blank for about a second on every player.</li></ol>' +
+  '<p class="why">The gated tabs (Skills & goals, Notes) join the row when the coach’s access arrives. On the scripts-off paint the band is reserved without them, so the row may gain two tabs, but nothing moves down.</p></div>' +
+  '<div class="ask" id="ask-A6"><h3><span class="mk inl">A6</span>What the drawing surfaced</h3><p style="margin:0">No disagreement with the ruling: it is right, and the code agrees. Today, on This season, three of the four tiles pointed at sections on the tab already open. Four smaller decisions surfaced:</p><ol>' +
+  '<li><b>A long name in the phone bar.</b> <span class="rec">Recommended: it wraps to a second line</span> (the bar grows ≈19px for that player, and the band follows it because it reads the bar’s height). The bar that shipped with N13 cuts the player’s name with “…”, while the in-page name it replaced wrapped (stage 4 · E5). The computer strip stays one line, but today the team’s facts hold their width and the name gives way. A 40-character name fits at 1440 with ≈65px to spare and is cut between ≈1100 and ≈1420. Add the off-roster chip and it is cut at 1440 too. <span class="rec">Recommended: on a record’s page the facts give way first</span> (the team is named in the sidebar cell anyway), so the name and its chip keep their room at every computer width down to ≈1000. Below that, the open list shows the whole name. (See Edge cases.)</li>' +
+  '<li><b>The tablet.</b> <span class="rec">Recommended: the ▾ and the roster sheet follow the chrome (≤900), not the content (≤640).</span> That removes today’s hybrid, where the tablet has the phone’s bar and the computer’s dropdown row.</li>' +
+  '<li><b>One answer to a pending edit.</b> <span class="rec">Recommended: the phone sheet saves first too.</span> Today the computer’s select saves a pending edit and moves on. The phone sheet’s rows are links, so the leave-guard asks “Leave without saving?” while an edit is still inside the autosave pause. After this change both switchers would do the same thing.</li>' +
+  '<li><b>Three tiles</b> (a coach without the money gate). <span class="rec">Recommended: the grid fits the count.</span> Today’s fixed four-column grid leaves a hole on the computer and a hole in the phone’s second row. After: three across on a computer. On a phone the question goes away: the figures are rows (A3), so three figures are simply three rows.</li></ol></div>';
+
+/* ── wiring ── */
+var tabs = document.getElementById('tabs'), panels = document.getElementById('panels');
+PANELS.forEach(function (p, i) {
+  var b = document.createElement('button'); b.type = 'button'; b.id = 't-' + p[0]; b.textContent = p[1];
+  b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', i === 0 ? 'true' : 'false'); b.setAttribute('aria-controls', 'p-' + p[0]);
+  tabs.appendChild(b);
+  var s = document.createElement('section'); s.className = 'panel' + (i === 0 ? ' on' : ''); s.id = 'p-' + p[0]; s.setAttribute('role', 'tabpanel'); s.setAttribute('aria-labelledby', 't-' + p[0]);
+  s.innerHTML = p[2](); panels.appendChild(s);
+});
+function measureBars() {
+  document.querySelectorAll('.hm[data-h]').forEach(function (el) {
+    var b = document.getElementById(el.getAttribute('data-h'));
+    if (b && b.offsetHeight) el.textContent = 'bar height ' + b.offsetHeight + 'px' + (b.offsetHeight > 53 ? ' (+' + (b.offsetHeight - 53) + ' over the 53px floor)' : ' (the 53px floor)');
+  });
+}
+function show(id) {
+  PANELS.forEach(function (p) {
+    var on = p[0] === id;
+    document.getElementById('t-' + p[0]).setAttribute('aria-selected', on ? 'true' : 'false');
+    document.getElementById('p-' + p[0]).classList.toggle('on', on);
+  });
+  try { localStorage.setItem('p5b-tab', id); } catch (e) {}
+  fit(); measureBars();
+}
+tabs.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) show(b.id.slice(2)); });
+var start = 'summary';
+try { start = localStorage.getItem('p5b-tab') || 'summary'; } catch (e) {}
+if (PANELS.some(function (p) { return p[0] === start; })) show(start);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureBars);
+var pop = document.createElement('div'); pop.id = 'pop'; pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Note'); document.body.appendChild(pop);
+var popFrom = null;
+function closePop() { pop.hidden = true; if (popFrom) popFrom.focus(); popFrom = null; }
+document.addEventListener('click', function (e) {
+  if (e.target.closest('#pop .x')) { closePop(); return; }
+  var m = e.target.closest('[data-go]'); if (!m || m.closest('#pop')) return;
+  var src = document.getElementById('ask-' + m.getAttribute('data-go')); if (!src) return;
+  if (m.closest('#p-summary')) { src.scrollIntoView({ behavior: 'smooth', block: 'start' }); src.classList.add('flash'); setTimeout(function () { src.classList.remove('flash'); }, 1600); return; }
+  popFrom = m; pop.innerHTML = '<button type="button" class="x" aria-label="Close">×</button>' + src.outerHTML.replace(/ id="ask-[^"]*"/, '');
+  pop.hidden = false; pop.querySelector('.x').focus();
+});
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.hidden) closePop(); });
+function seg(a, b, fn) {
+  var A = document.getElementById(a), B = document.getElementById(b);
+  A.addEventListener('click', function () { A.setAttribute('aria-pressed', 'true'); B.setAttribute('aria-pressed', 'false'); fn(false); });
+  B.addEventListener('click', function () { B.setAttribute('aria-pressed', 'true'); A.setAttribute('aria-pressed', 'false'); fn(true); });
+}
+seg('v-all', 'v-diff', function (on) { document.body.classList.toggle('only-diff', on); });
+var fitOn = false;
+function fit() {
+  document.querySelectorAll('section.panel.on .pair, section.panel.on .strips').forEach(function (p) {
+    p.style.transform = ''; p.parentElement.style.height = '';
+    if (!fitOn) return;
+    var w = p.parentElement.clientWidth - 28, need = p.scrollWidth;
+    if (need > w) { var k = w / need; p.style.transform = 'scale(' + k + ')'; p.style.transformOrigin = '0 0'; p.parentElement.style.height = (p.scrollHeight * k + 28) + 'px'; }
+  });
+}
+seg('s-true', 's-fit', function (on) { fitOn = on; fit(); });
+window.addEventListener('resize', fit);
+})();
+</script>
