@@ -354,7 +354,7 @@ function LineRow({ line: l, chip, action, undo }: {
 
 /** The same line as a phone's row card (drawing tab 3, the kit's `ClubRow`): title what · sub-line date · book · how it
  *  came, with its chip · the amount at the right with the line's own sign (−$75.00 out, +$100.00 in green; the engine's
- *  `signed`, plan §6's phone rule) · its action, its own 44px button (the kit's `RowAction`, under the card on a phone).
+ *  `signed`, plan §6's phone rule) · its action: the kit's `RowAction` (a 44px button under the card) on the row the callout names, the quiet link on every other (call F).
  *  The card itself is not a button. A marked line greys and offers Undo. */
 function LineCard({ line: l, chip, action, undo }: Parameters<typeof LineRow>[0]) {
   const isMarked = undo !== undefined;
@@ -367,7 +367,10 @@ function LineCard({ line: l, chip, action, undo }: Parameters<typeof LineRow>[0]
       trail={<span className={`${s.cardAmt}${isMarked ? ` ${s.cardDim}` : l.direction === 'in' ? ` ${s.moneyIn}` : ''}`}>{moved(signed(l.direction, l.amountCents))}</span>}
       actions={isMarked
         ? <RowAction quiet aria-label={W.undoLine(name)} onClick={undo}>{W.undo}</RowAction>
-        : <RowAction aria-label={action.aria} onClick={action.onClick} disabled={action.disabled}>{action.label}</RowAction>} />
+        // The bordered button on the row the callout names; the quiet link at rest on every other, as the coach’s cards do
+        // (S3 walk call F, 2026-11-13: thirty bordered buttons would bury the named one).
+        : chip ? <RowAction aria-label={action.aria} onClick={action.onClick} disabled={action.disabled}>{action.label}</RowAction>
+          : <button type="button" className={s.link} aria-label={action.aria} onClick={action.onClick} disabled={action.disabled}>{action.label}</button>} />
   );
 }
 

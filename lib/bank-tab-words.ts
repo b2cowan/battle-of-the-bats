@@ -200,8 +200,8 @@ export const BANK_WORDS = {
   interestDoor: 'Add interest',
   feeDescription: 'Bank fee',
   interestDescription: 'Bank interest',
-  bankAppCheckFee: 'Check your banking app first: was this a bank fee? Use the date it shows.',
-  bankAppCheckInterest: 'Check your banking app first: was this interest? Use the date it shows.',
+  bankAppCheckFee: 'Check your banking app first: was this a bank fee? Use the date the bank posted it. If both a fee and interest posted, record them as two lines.',
+  bankAppCheckInterest: 'Check your banking app first: was this interest? Use the date the bank posted it. If both a fee and interest posted, record them as two lines.',
   // Ruling 6: the coach's Record money, opened from a fee or interest door, says the unbudgeted word plainly (grey).
   coachOffPlanNote: 'Not in your budget yet, so it shows as off-plan on Budget vs. Actual.',
   // A13 (row 24): with nothing to name, the list waits behind this line ("Show the line" for one; the trailing words drop
@@ -209,10 +209,10 @@ export const BANK_WORDS = {
   noLineOnItsOwn: (amount: string) => `No line matches ${amount} on its own.`,
   showTheLines: (n: number) => (n === 1 ? 'Show the line' : `Show the ${n} lines`),
   hideTheLines: (n: number) => (n === 1 ? 'Hide the line' : `Hide the ${n} lines`),
-  toMarkAny: 'to mark any the bank hasn’t received yet.',
+  toMarkAny: 'to mark any that the bank hasn’t received yet.',
   // A7 (D2): the gap is the newest earlier saved check's, signed. "The same **$4.50** as your last check, on Oct 31, 2026."
   sameGapLead: 'The same',
-  sameGapTail: (date: string) => `as your last check, on ${date}.`,
+  sameGapTail: (date: string) => `as your last check, on ${date}. If you recorded it then, this may be a new charge.`,
   // S1 row 19: under Status in the Ledger's Add an entry window, when the Bank tab opened it (only posted lines reach the
   // check's figure; a bank fee left Pending would keep the check off).
   addEntryStatusHint: 'Choose Posted for a fee the bank has already taken. Pending entries aren’t counted in a balance check.',

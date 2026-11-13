@@ -92,8 +92,8 @@ describe('S3 · the platform word (rulings 1, 2)', () => {
   it('what the window opens with: the description, the word, and the banking-app line', () => {
     assert.deepEqual(doorFill('coach', 'fee'), { description: 'Bank fee', word: GAP_DOOR_WORDS.coach.fee });
     assert.deepEqual(doorFill('club', 'interest'), { description: 'Bank interest', word: GAP_DOOR_WORDS.club.interest });
-    assert.equal(doorFootLine('fee'), 'Check your banking app first: was this a bank fee? Use the date it shows.');
-    assert.equal(doorFootLine('interest'), 'Check your banking app first: was this interest? Use the date it shows.');
+    assert.equal(doorFootLine('fee'), 'Check your banking app first: was this a bank fee? Use the date the bank posted it. If both a fee and interest posted, record them as two lines.');
+    assert.equal(doorFootLine('interest'), 'Check your banking app first: was this interest? Use the date the bank posted it. If both a fee and interest posted, record them as two lines.');
   });
 });
 
@@ -111,7 +111,7 @@ describe('S3 · A7, the repeat line', () => {
     assert.equal(sameGapAs([check('2026-10-31', 0)], '2026-11-08', 0), null);
   });
   it('the words: "The same **$4.50** as your last check, on Oct 31, 2026."', () => {
-    assert.equal(`${W.sameGapLead} $4.50 ${W.sameGapTail('Oct 31, 2026')}`, 'The same $4.50 as your last check, on Oct 31, 2026.');
+    assert.equal(`${W.sameGapLead} $4.50 ${W.sameGapTail('Oct 31, 2026')}`, 'The same $4.50 as your last check, on Oct 31, 2026. If you recorded it then, this may be a new charge.');
     for (const f of [COACH_FIND, CLUB_FIND]) {
       assert.match(readCode(f), /\{off && repeatOf && <p className=\{(b|s)\.repeat\}>\{W\.sameGapLead\} <b>\{cents\(band\.offByCents\)\}<\/b> \{W\.sameGapTail\(dayYear\(repeatOf\)\)\}<\/p>\}/);
     }
@@ -151,7 +151,7 @@ describe('S3 · Find, both portals (A5, A13, D1, D4)', () => {
     assert.equal(W.feeDoor, 'Add a bank fee');
     assert.equal(W.interestDoor, 'Add interest');
     assert.equal(`${W.noLineOnItsOwn('$4.50')} ${W.showTheLines(31)} ${W.toMarkAny}`,
-      'No line matches $4.50 on its own. Show the 31 lines to mark any the bank hasn’t received yet.');
+      'No line matches $4.50 on its own. Show the 31 lines to mark any that the bank hasn’t received yet.');
     assert.equal(W.showTheLines(1), 'Show the line');
     assert.equal(W.hideTheLines(31), 'Hide the 31 lines');
     assert.equal(W.hideTheLines(1), 'Hide the line');

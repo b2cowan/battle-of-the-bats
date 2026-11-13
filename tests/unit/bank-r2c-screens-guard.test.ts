@@ -393,6 +393,9 @@ describe('11 · the phone: Find as row cards, the callout\'s row, the two phone 
     assert.doesNotMatch(find, /<ClubRow\b[^>]*\bas=/, 'a Find card has no as="button"/"link"');
     assert.match(find, /<RowAction aria-label=\{action\.aria\} onClick=\{action\.onClick\} disabled=\{action\.disabled\}>\{action\.label\}<\/RowAction>/);
     assert.match(find, /<RowAction quiet aria-label=\{W\.undoLine\(name\)\} onClick=\{undo\}>\{W\.undo\}<\/RowAction>/);
+    // Call F (2026-11-13): a card the callout does not name says its action as the quiet link, like the coach's; only the named card keeps the bordered RowAction.
+    assert.match(find, /chip \? <RowAction aria-label=\{action\.aria\}/);
+    assert.match(find, /: <button type="button" className=\{s\.link\} aria-label=\{action\.aria\}/);
   });
   it('the signed amount is the engine\'s sign, formatted; no arithmetic on the screen', () => {
     const find = code('BankFind.tsx');

@@ -309,3 +309,7 @@ sentence; the walked working-draft cards change shape and their walks are redone
   he reports. The review's fixes are in the working tree, commit on his yes. `check-schema-parity` still reports six bank-check
   tables on PROD only (`bank_check_added_lines`, `bank_check_changes`, `bank_check_events`, `bank_check_marks`,
   `bank_line_exclusions`, `bank_saved_lines`) — not from S3; reported to the owner as a finding, not fixed.
+- 2026-11-13 — **S3 owner walk §505 PASSED 38/38, no findings; fixture torn down (72 rows, dev).** Calls ruled as recommended: A, B, C, H
+  yes (four small word additions, `/marketing`), F link (club phone rows become a quiet link like the coach's), D later, E stay,
+  G leave, I no (S5 stays parked).
+- 2026-11-13 — **Calls A, B, C, H, F built 2026-11-13.** Words: the fee/interest foot line now reads "…Use the date the bank posted it. If both a fee and interest posted, record them as two lines."; the repeat line adds "If you recorded it then, this may be a new charge."; the folded sentence reads "to mark any that the bank hasn’t received yet." Club phone cards: the quiet link on every row the callout does not name (the named row keeps the bordered button), as the coach’s do. Both help articles updated to match (body + search text). Used the owner-approved sentences verbatim, so no separate `/marketing` pass was run. Bank/help tests 190 + 19 pass, lint and spelling clean; `verify:changed` fails only on another session’s files (workspace-flip guard). Owner browser look owed: club Bank tab at 390 px.
