@@ -1,6 +1,14 @@
 # Availability & RSVP — Implementation Plan
 
-**Status:** Proposed (not started) — **rewritten 2026-11-08 to the app channel** (Signed-in family accounts Stage 4a closeout, build prompt
+**Status (2026-11-13): Drawn + ruled 2026-11-13 (all 15 asks A); BUILT on `dev` as Signed-in family accounts Stage 4b** — Session 1
+`22db0210d` + `7dd71b435` (watched automation) + records `8b21c44cd`; Session 2 `b5d121f0c`; Session 3 `fdae0e4f0` + records
+`8e7c7520b`; Session 4 (closeout: the owner's Session 4 rulings, consent 0.2, the Remind daily cap, mig 482) built 2026-11-13, its
+commit recorded in [SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md](SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md)'s Progress block. Migrations 476, 477, 479, 480, 482 on DEV only; prod order 476 → 477 →
+479 → 480 → 482 (453 first), each before its code (`MANUAL_PROD_STEPS`). The tier stays off. Owner walk: OWNER_QA_LEDGER §526.
+**The build prompt's Progress block is the record of what was built and why; where this plan differs, the drawing and the Progress
+block win.**
+
+**Earlier status:** Proposed (not started) — **rewritten 2026-11-08 to the app channel** (Signed-in family accounts Stage 4a closeout, build prompt
 Part 9.6). The emailed-link door this plan first described is **removed and ruled out** (owner 2026-10-31, `BUSINESS_DECISIONS.md` "A family
 gets an account when their child is PLACED ON A TEAM…" point 4): a parent replies In / Out / Maybe **inside the signed-in family page**, and
 nowhere else. This is **Stage 4b** of `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md`. **Not buildable yet:** the parent's sheet is drawn (4b sheet in
@@ -93,12 +101,12 @@ Carried forward from the first draft as the starting point for that session, not
 - **Lineup builder:** a child whose family said Out goes to the same "Not playing" pool attendance-absent players do, tagged "family said Out"; Maybe
   renders an amber dot.
 
-### 3.4 Asking & reminding
+### 3.4 Asking & reminding (superseded: drawing tab 4 + the build prompt; Remind, once per event per 24 hours, one email per parent per day)
 
 v1: a coach-pressed button per event (and an optional "ask for availability" at event creation). A weekly automatic digest is a later phase on the
 existing scheduled-jobs rail, to keep send volume owner-controlled while the feature beds in.
 
-### 3.5 Notifications to the coach
+### 3.5 Notifications to the coach (superseded: drawing tab 6 + the build prompt; ask 12, and an Out taken back rings, owner 2026-11-13)
 
 New `family_availability_response` event type (bell-only by default, digest-friendly): fires on `out` answers and on answer changes within 48 hours
 of the event, never on a routine "in".
@@ -148,6 +156,10 @@ Ships dark: the family-page control exists only with the guardian tier on, and t
 defaulting OFF; the owner flips personal teams first.
 
 ## 9. Open questions (owner)
+
+**CLOSED 2026-11-13.** Every question below became an ask on the drawing and was ruled (all 15 A, 2026-11-13); the build's own owner
+calls (O1–O4 and Session 4's rulings 1–11) are in the build prompt's Progress block. What is still open for the owner is listed in the
+walk (§526, its last part).
 
 1. **4b drawing session:** the coach's chips, drawer lane, nudge and lineup tag are undrawn; draw them before a build prompt is written.
 2. Do house-league teams get the control and a coach headcount (the house-league coach's page is deliberately unchanged in 4a)?

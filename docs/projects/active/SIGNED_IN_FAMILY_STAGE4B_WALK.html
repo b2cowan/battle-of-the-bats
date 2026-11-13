@@ -1,0 +1,539 @@
+<title>Families’ answers walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column of cards; each step is Do / See so nothing is left to guess. Same house look as before. */
+:root{
+  --bg:#f6f6f2; --panel:#ffffff; --fg:#1d2320; --muted:#5d665f; --line:#d9dcd3;
+  --accent:#1f5f4a; --accent-fg:#ffffff; --pass:#1f7a4d; --issue:#b3261e; --call:#9a6700;
+  --chip:#eceee6; --mark:#fff3c4; --seebg:#eef5f0;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-data: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --panel:#1b221f; --fg:#e6ebe7; --muted:#9aa59d; --line:#2e3833;
+  --accent:#6fcfa6; --accent-fg:#0d1612; --pass:#58c98d; --issue:#ff8a80; --call:#e5b94c;
+  --chip:#232c28; --mark:#4a4220; --seebg:#1f2b25; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --panel:#1b221f; --fg:#e6ebe7; --muted:#9aa59d; --line:#2e3833;
+  --accent:#6fcfa6; --accent-fg:#0d1612; --pass:#58c98d; --issue:#ff8a80; --call:#e5b94c;
+  --chip:#232c28; --mark:#4a4220; --seebg:#1f2b25; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);line-height:1.5;
+  padding-block:20px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;text-wrap:balance}
+h2{font-size:1.1rem;margin:0;text-wrap:balance}
+p{margin:0}
+code,.mono{font-family:var(--font-data);font-size:.85em;background:var(--chip);padding:1px 5px;border-radius:4px;word-break:break-word}
+.lede{color:var(--muted);max-width:68ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.signin{border-left:4px solid var(--accent)}
+dl.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;min-width:0;word-break:break-word}
+@media (max-width:520px){dl.kv{grid-template-columns:1fr}dl.kv dt{margin-top:6px}}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.bar progress{flex:1;min-width:120px;height:10px;accent-color:var(--accent)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:8px;padding:6px 12px}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+ol.steps>li{display:flex;gap:10px;align-items:flex-start;padding-top:14px;border-top:1px solid var(--line)}
+ol.steps>li:first-child{padding-top:0;border-top:0}
+ol.steps>li>input[type=checkbox]{margin-top:4px;width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.step{min-width:0;display:flex;flex-direction:column;gap:6px;flex:1}
+.step>label{font-weight:600}
+li.done .step>label{color:var(--muted)}
+.row{display:grid;grid-template-columns:3.4rem 1fr;gap:8px;min-width:0}
+.row>b{font-size:.72em;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.row>div{min-width:0}
+.row.see>div{background:var(--seebg);border-radius:6px;padding:6px 10px}
+.row ol,.row ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
+.row p+p{margin-top:4px}
+.where{color:var(--muted);font-size:.9em}
+.who{display:inline-block;font-size:.72em;font-weight:600;padding:1px 8px;border-radius:99px;background:var(--chip);color:var(--muted);margin-left:6px;vertical-align:1px}
+.verdict{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.verdict button[aria-pressed="true"].v-pass{background:var(--pass);color:#fff;border-color:var(--pass)}
+.verdict button[aria-pressed="true"].v-issue{background:var(--issue);color:#fff;border-color:var(--issue)}
+.verdict button[aria-pressed="true"].v-call{background:var(--call);color:#fff;border-color:var(--call)}
+textarea{width:100%;min-height:54px;font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px;box-sizing:border-box}
+.call{background:var(--mark);padding:12px 14px;border-radius:8px}
+.note{background:var(--mark);border-radius:8px;padding:8px 10px}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--chip);padding:10px;border-radius:8px;margin:0;font-family:var(--font-data);font-size:.85em;max-height:340px;overflow:auto}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92em}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.8em;text-transform:uppercase;letter-spacing:.05em}
+</style>
+
+<main>
+<header class="card" style="gap:6px">
+  <h1>Families’ answers walk · Stage 4b</h1>
+  <p class="lede">Parents on a rep team say In, Out or Maybe for each game and practice; the coach sees the answers beside the attendance book, can remind families who have not answered, and gets a bell for the ones that matter. Every step says what to open and do (Do) and what you should see (See). Allow about three hours. Part 0 builds the test parents; the later parts use them in order. Nothing here changes the coach’s own attendance marks unless a step tells you to press Use.</p>
+</header>
+
+<section class="card signin" aria-label="Before you start">
+  <h2>Before you start</h2>
+  <dl class="kv">
+    <dt>App</dt><dd><code>http://localhost:3000</code> with the dev server restarted today (new files and shared changes went in).</dd>
+    <dt>Rep coach login</dt><dd><code>uat-club-coach-15aaa@uat-rep-club.local</code>, password in your <code>.env.local</code>. The club is UAT Rep Club.</dd>
+    <dt>Parent inbox</dt><dd>Your own Gmail with “+” addresses, which all land in one inbox: <code>YOU+p1@gmail.com</code> Priya, <code>YOU+p2@gmail.com</code> Dan (a second parent of the same child), <code>YOU+p3@gmail.com</code> Tess (parent of two children). Put your own Gmail name in place of YOU.</dd>
+    <dt>Parent windows</dt><dd>Private windows share one sign-in, so only one parent at a time per browser. Use two different browsers when a step needs two parents at once.</dd>
+    <dt>Games</dt><dd>Four far games (A to D), one game within 48 hours (E), two practices. Part 0 explains.</dd>
+  </dl>
+</section>
+
+<div class="bar" role="status">
+  <progress id="prog" value="0" max="1"></progress>
+  <span id="progText" class="mono">0 of 0</span>
+  <button class="primary" id="summaryBtn" type="button">Build summary</button>
+</div>
+
+<section class="card" id="p0" data-part="0">
+  <h2>0 · Get ready (about 40 minutes)</h2>
+  <p class="where">Nothing here needs a real family. You build three test parents on the rep team, the same way the 4a walk did. Placeholders in curly braces, like {child}, are the real name you see on screen.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s0a"><div class="step"><label for="s0a">The family-app switch is on, and email can send</label>
+      <div class="row"><b>Do</b><div>Open your own <code>.env.local</code> (not the hosting settings) and set <code>GUARDIAN_TIER_ENABLED=true</code>. Check a Resend key (<code>RESEND_API_KEY</code>) is set. The dev server is restarted for you before this walk.</div></div>
+      <div class="row see"><b>See</b><div>The site loads at <code>http://localhost:3000</code>. If the switch was already true, leave it. Part 13 turns it off again at the end.</div></div></div></li>
+    <li><input type="checkbox" id="s0b"><div class="step"><label for="s0b">The rep team has what this walk needs <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Sign in as the rep coach (<code>uat-club-coach-15aaa@uat-rep-club.local</code>, password in <code>.env.local</code>). Open the baseball rep team with a live season. On Schedule, make sure you have: <strong>four games more than 48 hours away</strong> (call them Games A, B, C, D), <strong>one game within the next 48 hours</strong> (Game E), and <strong>two practices</strong>. The active roster should be <strong>10 or 11 players</strong> (the red “at most N can play” line in part 4 needs it small).</div></div>
+      <div class="row see"><b>See</b><div>The games and practices show on Schedule. Write down which is A to E. If your roster is bigger, set a few players inactive for now and put them back when you finish.</div></div></div></li>
+    <li><input type="checkbox" id="s0c"><div class="step"><label for="s0c">Invite the three test parents <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div><ol><li>Roster, open a player (call them <strong>Child A</strong>), then <strong>Guardians</strong>, <strong>Invite a guardian</strong>. Replace the address with <code>YOU+p1@gmail.com</code> (swap in your own address) and press <strong>Send invitation</strong>.</li><li>On the <strong>same</strong> Child A, invite <code>YOU+p2@gmail.com</code>. That is two parents on one child.</li><li>Open a different player, <strong>Child B</strong>, and invite <code>YOU+p3@gmail.com</code>. Then open Child B’s <strong>sibling</strong> (same surname, call them <strong>Child C</strong>) and invite <code>YOU+p3@gmail.com</code> again. If the club has no mailing address yet, add one first (4a step 9a).</li></ol></div></div>
+      <div class="row see"><b>See</b><div>Four emails arrive in your inbox, each addressed to its own “+” address. Each row on the Guardians card reads “invite sent — waiting for them to accept”.</div></div></div></li>
+    <li><input type="checkbox" id="s0d"><div class="step"><label for="s0d">Accept as the first parent <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Open the email for <code>+p1</code> and press its button. New account: choose a password. Read the page before you join.</div></div>
+      <div class="row see"><b>See</b><div>The page asks <strong>“Your first name”</strong>; type <strong>Priya</strong>. Under “Who sees what” you read: “If {child}’s coach turns it on, you can also say here whether {child} is coming to a game or practice.” Then: “Coaches also see your answers, any note you add, your first name and when you answered.” and “{child}’s other parent, if they’ve joined, sees your first name and your answer, but not your note.” Join. Sign out (or use a second browser for the next parent).</div></div></div></li>
+    <li><input type="checkbox" id="s0e"><div class="step"><label for="s0e">Accept the second parent and the third <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Same for <code>+p2</code> (first name <strong>Dan</strong>) on Child A. Then <code>+p3</code> (first name <strong>Tess</strong>) on Child B. Then accept the Child C invitation while signed in as Tess.</div></div>
+      <div class="row see"><b>See</b><div>Dan joins Child A. Tess joins Child B, and the second invitation (already signed in) skips straight to the words and adds Child C to the same account. No “Your first name” box the second time.</div></div></div></li>
+    <li><input type="checkbox" id="s0f"><div class="step"><label for="s0f">Each parent sees the right children <span class="who">Private window</span></label>
+      <div class="row"><b>Do</b><div>Sign in as each parent in turn (or one per browser) and open <code>/family</code>.</div></div>
+      <div class="row see"><b>See</b><div>Priya and Dan each see Child A only. Tess sees Child B and Child C on one page. Nobody sees another family’s child. Note which parent is signed in where: later parts say “Priya”, “Dan” and “Tess”.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p0"></div><textarea id="n0" aria-label="Notes for part 0" data-notes="p0" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p1" data-part="1">
+  <h2>1 · The switch</h2>
+  <p class="where">Rep coach, Team settings, then Sharing. The row sits under Schedule visibility.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s1a"><div class="step"><label for="s1a">Find the row <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open Team settings, then Sharing.</div></div>
+      <div class="row see"><b>See</b><div>A row <strong>“Families say if they’re coming”</strong> under Schedule visibility, with three choices: <strong>Off</strong>, <strong>Games</strong>, <strong>Games and practices</strong>. Off reads “Off: families don’t see In / Out / Maybe. Attendance works as it does today.”</div></div></div></li>
+    <li><input type="checkbox" id="s1b"><div class="step"><label for="s1b">Turn on Games <span class="who">Rep coach + Priya</span></label>
+      <div class="row"><b>Do</b><div>Press <strong>Games</strong>. Then, as Priya, reload the team page.</div></div>
+      <div class="row see"><b>See</b><div>The row reads: “Parents in the app can answer In, Out or Maybe for every upcoming game. You see their answers in Attendance; your own marks stay yours. 4 of 11 players have a parent in the app.” (your numbers differ). Priya has an <strong>Answer</strong> button on each upcoming game and <strong>none</strong> on the practices.</div></div></div></li>
+    <li><input type="checkbox" id="s1c"><div class="step"><label for="s1c">Turn on Games and practices <span class="who">Rep coach + Priya</span></label>
+      <div class="row"><b>Do</b><div>Press <strong>Games and practices</strong>. Reload as Priya.</div></div>
+      <div class="row see"><b>See</b><div>The row reads “…for every upcoming game and practice.” Priya now also has an Answer button on the practices.</div></div></div></li>
+    <li><input type="checkbox" id="s1d"><div class="step"><label for="s1d">Off hides everything; back on restores <span class="who">Rep coach + Priya</span></label>
+      <div class="row"><b>Do</b><div><ol><li>As Priya, answer <strong>In</strong> on Game A.</li><li>Rep coach: press <strong>Off</strong>.</li><li>Reload as Priya.</li><li>Rep coach: press <strong>Games and practices</strong> again. Reload as Priya.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>After Off the row reads “Families stop seeing In / Out / Maybe and you stop seeing their answers. Your marks stay. If you turn it on again this season, the answers come back.” Priya has no Answer buttons and no answers at all. After turning it back on, Priya’s <strong>In</strong> on Game A is back.</div></div></div></li>
+    <li><input type="checkbox" id="s1e"><div class="step"><label for="s1e">Staff only turns the two “on” choices off <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Set Schedule visibility to <strong>Staff only</strong>. Look at the switch row, then set Schedule visibility back to <strong>Families</strong>.</div></div>
+      <div class="row see"><b>See</b><div>Under Staff only, <strong>Games</strong> and <strong>Games and practices</strong> cannot be pressed; <strong>Off</strong> still can. The row says “Families can’t see the schedule, so they can’t answer. Set Schedule visibility to Families or Public first.” (Whether “Games” stays lit is call 9.)</div></div></div></li>
+    <li><input type="checkbox" id="s1f"><div class="step"><label for="s1f">A coach without schedule rights only reads it <span class="where">(optional)</span> <span class="who">Assistant coach</span></label>
+      <div class="row"><b>Do</b><div>As the head coach, turn off the schedule right for an assistant under Staff. Sign in as that assistant and open Team settings, Sharing.</div></div>
+      <div class="row see"><b>See</b><div>The row is read-only: “Games and practices — only coaches who manage the schedule can change it.” If you cannot set this up in a few minutes, press Needs a call and move on.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p1"></div><textarea id="n1" aria-label="Notes for part 1" data-notes="p1" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p2" data-part="2">
+  <h2>2 · A parent answers</h2>
+  <p class="where">Priya (or Tess where it says so), signed in at the team page. Use Games A to E; keep the switch on Games and practices.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s2a"><div class="step"><label for="s2a">The pills <span class="who">Priya</span></label>
+      <div class="row"><b>Do</b><div>Open the team page and look at the schedule.</div></div>
+      <div class="row see"><b>See</b><div>Each upcoming game and practice has a button: <strong>Answer</strong> (nothing said yet). One line per child. Other families’ children never appear.</div></div></div></li>
+    <li><input type="checkbox" id="s2b"><div class="step"><label for="s2b">Open the sheet and read the privacy hint <span class="who">Priya</span></label>
+      <div class="row"><b>Do</b><div>Press <strong>Answer</strong> on Game A.</div></div>
+      <div class="row see"><b>See</b><div>A sheet with <strong>In</strong>, <strong>Out</strong>, <strong>Maybe</strong>, a note box (“Your note for the coach (e.g. leaving early)”), and “A tap saves. Tap your answer again to clear it.” Under it: “Your team’s coaches see your answer, your note, your first name and the day you answered. Dan, {child}’s other parent, sees your answer and first name, but not your note. Other families see none of it. Please don’t put health details here; tell the coach directly.”</div></div></div></li>
+    <li><input type="checkbox" id="s2c"><div class="step"><label for="s2c">Answer, change, clear <span class="who">Priya</span></label>
+      <div class="row"><b>Do</b><div><ol><li>Tap <strong>In</strong>.</li><li>Tap <strong>Out</strong>, then <strong>Maybe</strong>.</li><li>Tap the same answer again.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>Each tap shows “Saving…” then “Saved”, and the button on the page reads <strong>In ✓</strong>, <strong>Out</strong> or <strong>Maybe</strong>. The last tap clears it and the button goes back to <strong>Answer</strong>.</div></div></div></li>
+    <li><input type="checkbox" id="s2d"><div class="step"><label for="s2d">A note <span class="who">Priya</span></label>
+      <div class="row"><b>Do</b><div>Answer <strong>Out</strong> on Game A, type <code>Leaving early</code> in the note box and tap outside the box. Close the sheet and reopen it. Then paste about 250 characters into the note.</div></div>
+      <div class="row see"><b>See</b><div>The note saves (“Saved”) and is still there on reopen. The box stops you at 200 characters; if it lets you go past, press Needs a call.</div></div></div></li>
+    <li><input type="checkbox" id="s2e"><div class="step"><label for="s2e">A game that has started <span class="who">Rep coach + Priya</span></label>
+      <div class="row"><b>Do</b><div>Rep coach: add a game today whose start time has just passed. Priya: open the team page and look at that game.</div></div>
+      <div class="row see"><b>See</b><div>Its button cannot change. A line reads “Answers closed when the game started. To let the coach know something now, contact them directly.” If Priya had answered before it started the answer still shows, muted; otherwise it reads <strong>No answer</strong>. If you cannot add a past game, press Needs a call.</div></div></div></li>
+    <li><input type="checkbox" id="s2f"><div class="step"><label for="s2f">A cancelled game <span class="who">Rep coach + Priya</span></label>
+      <div class="row"><b>Do</b><div>Rep coach: cancel Game D. Priya: reload and look at Game D. Then reinstate Game D.</div></div>
+      <div class="row see"><b>See</b><div>The game shows as cancelled and there is no way to answer; if a sheet opens it says “Answers have closed for this one.”</div></div></div></li>
+    <li><input type="checkbox" id="s2g"><div class="step"><label for="s2g">Two children on one page <span class="who">Tess</span></label>
+      <div class="row"><b>Do</b><div>Sign in as Tess. On Game A answer <strong>Out</strong> for Child B and <strong>Out</strong> for Child C. Then change Child C to <strong>Maybe</strong> and back to <strong>Out</strong>.</div></div>
+      <div class="row see"><b>See</b><div>Each child has their own button and their own answer. Changing Child C never changes Child B. Priya’s page shows only Child A, and neither Priya nor Dan can see Tess’s answers.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p2"></div><textarea id="n2" aria-label="Notes for part 2" data-notes="p2" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p3" data-part="3">
+  <h2>3 · The second parent</h2>
+  <p class="where">Priya and Dan are both parents of Child A. Use two browsers so you are both at once, or sign out between.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s3a"><div class="step"><label for="s3a">Dan sees Priya’s answer, not her note <span class="who">Priya + Dan</span></label>
+      <div class="row"><b>Do</b><div>Priya: answer <strong>In</strong> on Game B and type the note <code>Leaving early</code>. Dan: open the team page and open Game B.</div></div>
+      <div class="row see"><b>See</b><div>Dan reads “Priya answered In today and left a note for the coach.” He does <strong>not</strong> see the words “Leaving early”.</div></div></div></li>
+    <li><input type="checkbox" id="s3b"><div class="step"><label for="s3b">Latest wins <span class="who">Priya + Dan</span></label>
+      <div class="row"><b>Do</b><div>Dan: tap <strong>Out</strong> on Game B. Priya: reload and open Game B.</div></div>
+      <div class="row see"><b>See</b><div>There is one answer for the child, and it is now Out (Dan’s). Priya reads “Dan answered Out today.” The sheet’s hint names Dan.</div></div></div></li>
+    <li><input type="checkbox" id="s3c"><div class="step"><label for="s3c">Tapping the other parent’s answer <span class="who">Priya</span></label>
+      <div class="row"><b>Do</b><div>On Game B, tap <strong>Out</strong> (the answer Dan just gave).</div></div>
+      <div class="row see"><b>See</b><div>Nothing breaks. Note what happens (it clears the answer; typing a note under it makes the answer yours). Call 3 asks whether that is right.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p3"></div><textarea id="n3" aria-label="Notes for part 3" data-notes="p3" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p4" data-part="4">
+  <h2>4 · The coach’s schedule and Attendance</h2>
+  <p class="where">Rep coach. Before this part have these answers in place: Priya Out on Game A (with a note), Tess Out for Child B and Out for Child C on Game A, plus one In and one Maybe from anyone on Game B. If you did parts 2 and 3 in order, this is already so.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s4a"><div class="step"><label for="s4a">The count on the schedule <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open Schedule and look at Game A and Game B.</div></div>
+      <div class="row see"><b>See</b><div>A caption under each row: Game B reads like “1 of 11 in · 1 maybe” (parts with a zero are left out). Game A reads like “3 out · at most 8 can play”.</div></div></div></li>
+    <li><input type="checkbox" id="s4b"><div class="step"><label for="s4b">The red line on a baseball team <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Look at Game A’s caption.</div></div>
+      <div class="row see"><b>See</b><div>With three Outs on a roster of 11, it reads <strong>“3 out · at most 8 can play”</strong> in red. If it is not red, your active roster is bigger than 11 (part 0 asked for 10 or 11); press Needs a call if you cannot reproduce it.</div></div></div></li>
+    <li><input type="checkbox" id="s4c"><div class="step"><label for="s4c">The Families card <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open Game A (tap the row), then Attendance.</div></div>
+      <div class="row see"><b>See</b><div>A <strong>Families</strong> card at the top with counts like “3 answered · 8 haven’t · 7 have no parent in the app”, and “Invite parents from the Roster →” (only when nobody, or few, are in the app). A cancelled game has no card and no family lines.</div></div></div></li>
+    <li><input type="checkbox" id="s4d"><div class="step"><label for="s4d">Each player’s family line <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Look at the rows for Child A, B, C and one player with no parent in the app. Open Child A’s sheet.</div></div>
+      <div class="row see"><b>See</b><div>Under each player: “Family said Out · “Leaving early” · Priya, today” for Child A; “Family hasn’t answered” where nobody has. The player’s sheet has a box headed “{child}’s family said” with the answer, the note in quotes, “Priya, today”, and a hint: “Families don’t see your mark.”</div></div></div></li>
+    <li><input type="checkbox" id="s4e"><div class="step"><label for="s4e">Use the family answers, then Undo <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>On the Families card press <strong>Use 3 family answers</strong>. Then press <strong>Undo</strong> in the strip that appears.</div></div>
+      <div class="row see"><b>See</b><div>The three players are marked Out, and the strip reads “Used 3 family answers: {names}”. <strong>Undo</strong> puts them back: “Put back to Not marked.”</div></div></div></li>
+    <li><input type="checkbox" id="s4f"><div class="step"><label for="s4f">The amber “changed” warning <span class="who">Rep coach + Priya</span></label>
+      <div class="row"><b>Do</b><div><ol><li>Rep coach: mark Child A <strong>In</strong>.</li><li>Priya: change Game A from Out to <strong>Maybe</strong>.</li><li>Rep coach: reload the room.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>The card shows “⚠ 1 changed since you marked: {Child A}” with <strong>Show</strong> (filters to that player; then “Show everyone”). The player’s line is amber: “⚠ Family changed to Maybe · today”. The event window’s Attendance row reads “Families: … · 1 changed”. Tapping Out or In on the player clears the amber.</div></div></div></li>
+    <li><input type="checkbox" id="s4g"><div class="step"><label for="s4g">At a desk, 720 px wide <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Make the browser window about 720 px wide and open the room.</div></div>
+      <div class="row see"><b>See</b><div>Columns headed <strong>Player</strong>, <strong>Family said</strong> and <strong>Your mark</strong>. Nothing overlaps or clips.</div></div></div></li>
+    <li><input type="checkbox" id="s4h"><div class="step"><label for="s4h">The team Overview <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open the team Overview and look at “Next up”.</div></div>
+      <div class="row see"><b>See</b><div>If the next event has family answers it shows “X of N in” with Out and Maybe chips; otherwise today’s chips with “not marked”. The red “at most N can play” never shows here (call 7).</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p4"></div><textarea id="n4" aria-label="Notes for part 4" data-notes="p4" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p5" data-part="5">
+  <h2>5 · Remind</h2>
+  <p class="where">Rep coach for the card, then each parent’s inbox and bell. Do the steps in order. Game C is the first Remind and Game D the second (same day). Nobody should have answered on C or D yet: clear any earlier answers there first.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s5a"><div class="step"><label for="s5a">Dan unsubscribes from club emails <span class="who">Dan</span></label>
+      <div class="row"><b>Do</b><div>Before any Remind goes out: in the <code>+p2</code> inbox, find an email from the club with an <strong>Unsubscribe</strong> link at the bottom (for example a schedule-change email) and use it. If Dan has no such email yet, skip this step: the “unsubscribed” lines below will not show, so press Needs a call and note it.</div></div>
+      <div class="row see"><b>See</b><div>A confirmation page. Dan is unsubscribed from the club’s emails but stays in the app.</div></div></div></li>
+    <li><input type="checkbox" id="s5b"><div class="step"><label for="s5b">Mark one player and open the confirm <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>On the schedule open Game C, then Attendance. Mark Child C <strong>In</strong> yourself first. On the Families card press <strong>Remind</strong> (its number counts the players whose parents it would reach).</div></div>
+      <div class="row see"><b>See</b><div>The card changes in place to <strong>“Remind about {Child A} and {Child B}?”</strong>, then a line like “3 parents get a note in the app and an email asking whether their player is coming to {team} vs {opponent}, {date}.” Under it: “One of them has unsubscribed from {club}’s emails, so that parent gets the app note only.” and “{Child C} hasn’t answered either, but you’ve already marked that player, so that family isn’t reminded.” Players with no parent in the app are listed: “{names} have no parent in the app.” Buttons: <strong>Send to 3 parents</strong>, <strong>See what they’ll get</strong>, <strong>Cancel</strong>.</div></div></div></li>
+    <li><input type="checkbox" id="s5c"><div class="step"><label for="s5c">See what they’ll get <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Press <strong>See what they’ll get</strong>, read it, then <strong>Hide what they’ll get</strong>.</div></div>
+      <div class="row see"><b>See</b><div>A sample shows “Subject:” and a line like “{team} vs {opponent}, {date}: is your player coming?” and the body. The subject never names a child.</div></div></div></li>
+    <li><input type="checkbox" id="s5d"><div class="step"><label for="s5d">Send it <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Press <strong>Send to 3 parents</strong>.</div></div>
+      <div class="row see"><b>See</b><div>“Sending…”, then <strong>“Reminded 3 parents about {Child A} and {Child B}”</strong> and “1 got the note in the app only.” (Dan). The card then reads like “Reminded at 4:12 p.m. You can remind again tomorrow at 4:12 p.m.” and the Remind button is gone.</div></div></div></li>
+    <li><input type="checkbox" id="s5e"><div class="step"><label for="s5e">The reminder email <span class="who">Priya inbox</span></label>
+      <div class="row"><b>Do</b><div>Open the email sent to <code>+p1</code>. Hover over the button without clicking.</div></div>
+      <div class="row see"><b>See</b><div>Subject “{team} vs {opponent}, {date}: is your player coming?” (never the child’s name). Body: the event, date and time, place, then “{child}’s coach asked families to say whether their player is coming. Open the team page and tap Answer. You’ll be asked to sign in if you aren’t already.” Button <strong>Open the team page</strong>; footer says it was sent because you’re connected to {child}’s team in the app. The link goes to the team page; there is no answer link in the email. Tess’s email goes to <code>+p3</code> once, naming her child. Dan gets <strong>no email</strong>.</div></div></div></li>
+    <li><input type="checkbox" id="s5f"><div class="step"><label for="s5f">The parent’s bell <span class="who">Dan + Priya</span></label>
+      <div class="row"><b>Do</b><div>Dan: sign in and open the bell. Priya: do the same.</div></div>
+      <div class="row see"><b>See</b><div>Both have a line “Is {Child A} coming {date}?” with “{team} vs {opponent} · Answer on the team page”. Dan has it even though he is unsubscribed.</div></div></div></li>
+    <li><input type="checkbox" id="s5g"><div class="step"><label for="s5g">The reminder opens the right row <span class="who">Priya</span></label>
+      <div class="row"><b>Do</b><div>Press the email’s button (and, separately, the bell line).</div></div>
+      <div class="row see"><b>See</b><div>The team page opens at that game with a line “The coach asked whether {Child A} is coming.” and the Answer button for it. After Priya answers, the line goes away on reload. A game that has already started shows no such line.</div></div></div></li>
+    <li><input type="checkbox" id="s5h"><div class="step"><label for="s5h">The daily cap <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open Game D, Attendance, press <strong>Remind</strong> and read the confirm. Send it.</div></div>
+      <div class="row see"><b>See</b><div>The confirm adds: “2 parents have already had a reminder email today, so they get the app note only.” (Priya and Tess had one from Game C; Dan is unsubscribed, so that line stays.) The report reads “Reminded 3 parents about …” and “3 got the note in the app only.” Priya and Tess get a second bell but <strong>no second email</strong>.</div></div></div></li>
+    <li><input type="checkbox" id="s5i"><div class="step"><label for="s5i">Nobody left to remind <span class="who">Rep coach + parents</span></label>
+      <div class="row"><b>Do</b><div>Have Priya and Tess answer on Game C, then open Game C’s Attendance.</div></div>
+      <div class="row see"><b>See</b><div>The card says “every family you haven’t marked has answered” and offers no Remind button. If you open Remind anyway it reads “Every family you haven’t marked has answered, so there’s nobody to remind.”</div></div></div></li>
+    <li><input type="checkbox" id="s5j"><div class="step"><label for="s5j">A mark made just before Remind is kept <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>On Game E tap one unanswered player In (do not wait for “Saved”) and press Remind at once.</div></div>
+      <div class="row see"><b>See</b><div>That player’s family is left out of the list: the tap is saved first.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p5"></div><textarea id="n5" aria-label="Notes for part 5" data-notes="p5" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p6" data-part="6">
+  <h2>6 · The coach’s bell</h2>
+  <p class="where">Rep coach bell (the bell in the portal). Open the bell between steps only where a step says so; unread lines from the last hour fold together.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s6a"><div class="step"><label for="s6a">An Out rings, and never shows the note’s words <span class="who">Priya + Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Priya: answer <strong>Out</strong> on Game C with the note <code>Doctor visit</code>. Rep coach: open the bell.</div></div>
+      <div class="row see"><b>See</b><div>A line “{Child A}’s family said Out for {Sat vs Opponent}” with “Priya left a note”. The words “Doctor visit” appear nowhere in the bell. Opening the line takes you to that game.</div></div></div></li>
+    <li><input type="checkbox" id="s6b"><div class="step"><label for="s6b">A first In does not ring <span class="who">Tess + Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Tess: answer <strong>In</strong> for Child B on Game D. Rep coach: check the bell.</div></div>
+      <div class="row see"><b>See</b><div>Nothing new (a first In or Maybe does not ring).</div></div></div></li>
+    <li><input type="checkbox" id="s6c"><div class="step"><label for="s6c">A taken-back Out rings, any time <span class="who">Priya + Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Priya: reopen Game C (more than 48 hours away) and tap <strong>Out</strong> again to clear it.</div></div>
+      <div class="row see"><b>See</b><div>A line says “{Child A}’s family took back their answer for {Sat vs Opponent}” with “Was Out”. It may fold into the unread line instead of adding a second one; either is fine.</div></div></div></li>
+    <li><input type="checkbox" id="s6d"><div class="step"><label for="s6d">A late change inside 48 hours rings <span class="who">Priya + Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Priya: answer <strong>In</strong> on Game E (within 48 hours), then change it to <strong>Maybe</strong>. If you had marked Child A In yourself, do that first.</div></div>
+      <div class="row see"><b>See</b><div>The In rings nothing; the change to Maybe rings: “{Child A}’s family changed to Maybe for …” with “Was In” (and “your mark still says In” if you marked them).</div></div></div></li>
+    <li><input type="checkbox" id="s6e"><div class="step"><label for="s6e">Bundling <span class="who">Priya + Tess + Rep coach</span></label>
+      <div class="row"><b>Do</b><div><ol><li>Do not open the bell. Priya: answer <strong>Out</strong> on Game A, Game B and Game C.</li><li>Tess: answer <strong>Out</strong> for Child B on Game A.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>Priya’s three become one line: “{Child A}’s family said Out for 3 events” with the three days. With Tess on Game A, a game with two families’ Outs reads “2 families said Out for {Sat vs Opponent}” with both names. No second line per answer within the hour.</div></div></div></li>
+    <li><input type="checkbox" id="s6f"><div class="step"><label for="s6f">Your notification setting <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Account menu, then Notifications.</div></div>
+      <div class="row see"><b>See</b><div>A row <strong>“Family answers”</strong> on the coach card (only while the switch is on for a team you can mark attendance on). Switch it off and have Priya answer Out on a new game: no line.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p6"></div><textarea id="n6" aria-label="Notes for part 6" data-notes="p6" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p7" data-part="7">
+  <h2>7 · The lineup builder</h2>
+  <p class="where">Rep coach, Lineups, a GAME lineup. The template editor is checked in step 7f.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s7a"><div class="step"><label for="s7a">Tags on the pool <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open a lineup for Game A (it has Outs from Tess, and a Maybe from Priya if you did step “The amber warning” in part 4).</div></div>
+      <div class="row see"><b>See</b><div>Players whose family said Out show an <strong>Out</strong> tag and Maybe players a <strong>Maybe</strong> tag in the pool. Call-ups are never tagged.</div></div></div></li>
+    <li><input type="checkbox" id="s7b"><div class="step"><label for="s7b">An Out after you saved <span class="who">Rep coach + Priya</span></label>
+      <div class="row"><b>Do</b><div><ol><li>Pick a game where Child A has not answered (clear Priya’s answer first). Put Child A in the lineup and save.</li><li>Priya: answer <strong>Out</strong> for Child A on that game.</li><li>Rep coach: reload the builder.</li></ol></div></div>
+      <div class="row see"><b>See</b><div>A warning at the top: <strong>“⚠ {Child A}’s family said Out after you saved this lineup.”</strong> with a button <strong>Take {Child A} out</strong>. The strip’s mark reads “Needs a look”.</div></div></div></li>
+    <li><input type="checkbox" id="s7c"><div class="step"><label for="s7c">An Out before you built it <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>On a game where Tess already said Out for Child B (Game A works), put Child B in the lineup and save, then reload.</div></div>
+      <div class="row see"><b>See</b><div>The warning reads <strong>“⚠ {Child B}’s family said Out, but {Child B} is still in the lineup.”</strong></div></div></div></li>
+    <li><input type="checkbox" id="s7d"><div class="step"><label for="s7d">Take them out <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>With both warnings showing, press <strong>Take them out</strong> (with one player the button is “Take {name} out”).</div></div>
+      <div class="row see"><b>See</b><div>With two players the line reads “⚠ 2 families said Out …: {names}”. The players leave the lineup and the warning goes.</div></div></div></li>
+    <li><input type="checkbox" id="s7e"><div class="step"><label for="s7e">A coach’s mark settles an older Out <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Mark Child A <strong>In</strong> in Attendance after their Out, then reopen the lineup.</div></div>
+      <div class="row see"><b>See</b><div>No warning for Child A. If Priya then answers Out again, the warning returns.</div></div></div></li>
+    <li><input type="checkbox" id="s7f"><div class="step"><label for="s7f">A started game: tags yes, warning no <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open the lineup for the game you added that has already started (part 2) with a player whose family said Out.</div></div>
+      <div class="row see"><b>See</b><div>The Out tag still shows in the pool, but there is <strong>no warning</strong> and no Take out button. The event window’s Lineup row shows nothing for it either.</div></div></div></li>
+    <li><input type="checkbox" id="s7g"><div class="step"><label for="s7g">The schedule triangle and the template editor <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>On Schedule, find a game with a triangle and hover it. Then open a lineup <strong>template</strong> in the template editor.</div></div>
+      <div class="row see"><b>See</b><div>The triangle’s label now reads <strong>“Lineup needs a look”</strong> for every coach (whether the cause is family or attendance). The event window’s Lineup row says “{Child A}’s family said Out after you saved” or “…, but {Child A} is still in the lineup”. The template editor shows no tags and no warning at all.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p7"></div><textarea id="n7" aria-label="Notes for part 7" data-notes="p7" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p8" data-part="8">
+  <h2>8 · A moved event</h2>
+  <p class="where">Rep coach moves a game; Priya reads. Use Game D, where Priya has an answer.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s8a"><div class="step"><label for="s8a">A new day asks again <span class="who">Rep coach + Priya</span></label>
+      <div class="row"><b>Do</b><div>Priya: answer <strong>Out</strong> on Game D. Rep coach: move Game D to a different day and save. Priya: reload.</div></div>
+      <div class="row see"><b>See</b><div>Priya’s button on Game D is back to <strong>Answer</strong>. The family notice carries the sentence <strong>“The new day cleared any earlier answers about whether your player is coming. Please answer again on the team page.”</strong> (check whichever way your team’s schedule-change notice reaches parents; if none arrives press Needs a call). The coach’s own marks stay. A Remind can be sent again right away.</div></div></div></li>
+    <li><input type="checkbox" id="s8b"><div class="step"><label for="s8b">A new time on the same day keeps them <span class="who">Rep coach + Priya</span></label>
+      <div class="row"><b>Do</b><div>Priya: answer <strong>In</strong> on Game D. Rep coach: change only the start time, same day, and save.</div></div>
+      <div class="row see"><b>See</b><div>The answer stays In and no “answer again” sentence is sent.</div></div></div></li>
+    <li><input type="checkbox" id="s8c"><div class="step"><label for="s8c">Cancel and reinstate keep them <span class="who">Rep coach + Priya</span></label>
+      <div class="row"><b>Do</b><div>Cancel Game D, then reinstate it.</div></div>
+      <div class="row see"><b>See</b><div>Priya’s answer is still there. While cancelled it could not be changed.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p8"></div><textarea id="n8" aria-label="Notes for part 8" data-notes="p8" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p9" data-part="9">
+  <h2>9 · A parent leaves</h2>
+  <p class="where">Dan answers with a note first, then leaves. Use Game A.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s9a"><div class="step"><label for="s9a">The Leave words <span class="who">Dan</span></label>
+      <div class="row"><b>Do</b><div>Dan: answer <strong>Out</strong> on Game A with the note <code>Away that weekend</code>. Then open the team’s Manage page and press <strong>Leave {Child A}’s team</strong>. Read the confirm before pressing Leave.</div></div>
+      <div class="row see"><b>See</b><div>The title is “Leave {Child A}’s team?” and, because Dan has answers on this child, the text adds: <strong>“Any notes you added to {Child A}’s answers are deleted; your answers stay in the team’s record until the season is over.”</strong> A parent with no answers on a child does not see that sentence.</div></div></div></li>
+    <li><input type="checkbox" id="s9b"><div class="step"><label for="s9b">His note goes, his answer stays <span class="who">Dan, Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Press <strong>Leave</strong>. Rep coach: open Game A’s Attendance and Child A’s sheet.</div></div>
+      <div class="row see"><b>See</b><div>Child A’s family line still says Out (Dan’s name stays on the coach’s side), but the note “Away that weekend” is gone.</div></div></div></li>
+    <li><input type="checkbox" id="s9c"><div class="step"><label for="s9c">Priya sees an unnamed answer <span class="who">Priya</span></label>
+      <div class="row"><b>Do</b><div>Open Game A on Priya’s page and its sheet.</div></div>
+      <div class="row see"><b>See</b><div>“The other parent answered Out on Tuesday.” (or “today”) with no name. The sheet’s privacy hint no longer mentions another parent.</div></div></div></li>
+    <li><input type="checkbox" id="s9d"><div class="step"><label for="s9d">A coach removing a parent does the same <span class="who">Rep coach + Dan</span></label>
+      <div class="row"><b>Do</b><div>Rep coach: send Dan a new invitation (Roster, Child A, Guardians) and have him rejoin and answer Game B with a note. Then on Guardians remove him.</div></div>
+      <div class="row see"><b>See</b><div>Dan’s note is cleared and his answer stays, same as when he leaves.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p9"></div><textarea id="n9" aria-label="Notes for part 9" data-notes="p9" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p10" data-part="10">
+  <h2>10 · A child merge keeps the answers</h2>
+  <p class="where">Club admin of UAT Rep Club. Best effort: it needs a duplicate pair.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s10a"><div class="step"><label for="s10a">Join two records of one child <span class="who">Club admin</span></label>
+      <div class="row"><b>Do</b><div>Add the same player (same name and birth date) on a second rep team, invite a parent, and let that parent answer an event. Then open Families, tab <strong>Duplicates</strong>, switch to <strong>Children</strong> and press <strong>Join as one child</strong>. Reopen the family page.</div></div>
+      <div class="row see"><b>See</b><div>The answers the parent gave are still on the joined child; where both records answered the same event, the newer one wins. If the app never proposes the pair, press Needs a call.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p10"></div><textarea id="n10" aria-label="Notes for part 10" data-notes="p10" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p11" data-part="11">
+  <h2>11 · A phone, 360 px wide</h2>
+  <p class="where">The layout pass was not run by the build. Narrow your browser to 360 px wide (or use a phone). Nothing may run off the edge, overlap, or be hidden by the keyboard.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s11a"><div class="step"><label for="s11a">The parent’s sheet <span class="who">Priya</span></label>
+      <div class="row"><b>Do</b><div>Open Game A’s sheet and type in the note box.</div></div>
+      <div class="row see"><b>See</b><div>The sheet rises from the bottom, the In / Out / Maybe buttons are easy to hit, and the note box is not hidden by the keyboard.</div></div></div></li>
+    <li><input type="checkbox" id="s11b"><div class="step"><label for="s11b">The Families card <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open Game A’s Attendance. Look at the card with a changed warning, Use and the Undo strip.</div></div>
+      <div class="row see"><b>See</b><div>Everything wraps; the “⚠ changed since you marked” line, Show, Use and Undo are all reachable. The grey family line under each player wraps.</div></div></div></li>
+    <li><input type="checkbox" id="s11c"><div class="step"><label for="s11c">The Remind confirm and report <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open Remind on a fresh game, read the confirm, See what they’ll get, then Send.</div></div>
+      <div class="row see"><b>See</b><div>The confirm, the sample and the report all fit; Send and Cancel are easy to hit.</div></div></div></li>
+    <li><input type="checkbox" id="s11d"><div class="step"><label for="s11d">The lineup warning <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open a lineup that shows the family warning.</div></div>
+      <div class="row see"><b>See</b><div>The warning wraps, and Take out is reachable.</div></div></div></li>
+    <li><input type="checkbox" id="s11e"><div class="step"><label for="s11e">The settings row and “Not marked” <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Open Team settings, Sharing; then the room’s chips, Game day’s Who’s here and a practice’s run page.</div></div>
+      <div class="row see"><b>See</b><div>The three switch choices fit. “Not marked” (longer than the old “No reply”) fits on every chip and row.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p11"></div><textarea id="n11" aria-label="Notes for part 11" data-notes="p11" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p12" data-part="12">
+  <h2>12 · “Not marked”, everywhere</h2>
+  <p class="where">The old words “No reply” and “haven’t replied” are gone from the coach’s attendance. Check a team with the switch ON and again with it OFF.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s12a"><div class="step"><label for="s12a">The attendance screens <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Look at the room’s chips and rows, Game day’s Who’s here, a practice’s run page, the history panel, the monthly attendance chart and the team Overview.</div></div>
+      <div class="row see"><b>See</b><div>The word is <strong>“Not marked”</strong> on each (“not marked” in the Overview chips; “left Not marked” under the chart). An all-unmarked game reads “12 not marked — {names}…”. Nowhere does “No reply” or “haven’t replied” remain, except the practice planner’s “haven’t replied yes” (call 6).</div></div></div></li>
+    <li><input type="checkbox" id="s12b"><div class="step"><label for="s12b">The same with the switch Off <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Turn the switch Off and glance at the same screens again.</div></div>
+      <div class="row see"><b>See</b><div>“Not marked” is still the word. Nothing about families shows.</div></div></div></li>
+    <li><input type="checkbox" id="s12c"><div class="step"><label for="s12c">The help article <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Help, then the coaches guide, and search for “Families say if they’re coming”.</div></div>
+      <div class="row see"><b>See</b><div>An article by that name explains the switch, answers, Remind and the bell, using the words you have seen.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p12"></div><textarea id="n12" aria-label="Notes for part 12" data-notes="p12" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p13" data-part="13">
+  <h2>13 · Switch it off again</h2>
+  <p class="where">Last. Set <code>GUARDIAN_TIER_ENABLED=false</code> in your own <code>.env.local</code>; the dev server is restarted for you.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s13a"><div class="step"><label for="s13a">The site loads</label>
+      <div class="row"><b>Do</b><div>After the restart open <code>http://localhost:3000</code>.</div></div>
+      <div class="row see"><b>See</b><div>Loads normally.</div></div></div></li>
+    <li><input type="checkbox" id="s13b"><div class="step"><label for="s13b">The coach’s side is as before <span class="who">Rep coach</span></label>
+      <div class="row"><b>Do</b><div>Team settings, Schedule, the room, a lineup and Account then Notifications.</div></div>
+      <div class="row see"><b>See</b><div>No “Families say if they’re coming” row, no family counts under any game, no Families card, no Remind, no family lines, no tags or warnings in the builder, no “Family answers” notification row. “Not marked” stays. The triangle’s label still reads “Lineup needs a look” (the one deliberate change for everyone).</div></div></div></li>
+    <li><input type="checkbox" id="s13c"><div class="step"><label for="s13c">The parent’s side is gone <span class="who">Priya</span></label>
+      <div class="row"><b>Do</b><div>Open <code>/family</code>, the team page and an old invitation link.</div></div>
+      <div class="row see"><b>See</b><div>Each answers “not found”. No Answer buttons anywhere.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p13"></div><textarea id="n13" aria-label="Notes for part 13" data-notes="p13" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p14" data-part="14">
+  <h2>14 · Calls for you</h2>
+  <p class="where">Not pass or fail. Tick each one once you have a view, and write the ruling in the notes (or press Needs a call).</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s14_1"><div class="step"><label for="s14_1">Call 1</label>
+      <div class="row"><b>Ask</b><div>Answers are deleted 60 days after the season’s last event, closed or not (adding a later event moves the clock). The coach’s attendance book is never touched. Right?</div></div></div></li>
+    <li><input type="checkbox" id="s14_2"><div class="step"><label for="s14_2">Call 2</label>
+      <div class="row"><b>Ask</b><div>A stale sheet that clears an answer can wipe the other parent’s newer answer. Latest wins, a re-tap restores it. Keep?</div></div></div></li>
+    <li><input type="checkbox" id="s14_3"><div class="step"><label for="s14_3">Call 3</label>
+      <div class="row"><b>Ask</b><div>Tapping the other parent’s current answer clears it, and a note typed under it makes the answer yours. Keep? (part 3, last step)</div></div></div></li>
+    <li><input type="checkbox" id="s14_4"><div class="step"><label for="s14_4">Call 4</label>
+      <div class="row"><b>Ask</b><div>Closing the sheet with a note typed and no answer chosen discards the note. Keep?</div></div></div></li>
+    <li><input type="checkbox" id="s14_5"><div class="step"><label for="s14_5">Call 5</label>
+      <div class="row"><b>Ask</b><div>A note-only save re-sends the answer the sheet shows, so it can overwrite a change the other parent just made. Keep?</div></div></div></li>
+    <li><input type="checkbox" id="s14_6"><div class="step"><label for="s14_6">Call 6</label>
+      <div class="row"><b>Ask</b><div>The practice planner and Groups room still say “haven’t replied yes” and “Who replied”. Reword them to match “Not marked”, or leave (different meaning)?</div></div></div></li>
+    <li><input type="checkbox" id="s14_7"><div class="step"><label for="s14_7">Call 7</label>
+      <div class="row"><b>Ask</b><div>The team Overview’s Next up never shows the red “at most N can play”. Should it?</div></div></div></li>
+    <li><input type="checkbox" id="s14_8"><div class="step"><label for="s14_8">Call 8</label>
+      <div class="row"><b>Ask</b><div>A coach who can mark attendance sees parents’ first names and notes even without roster-contact access. Confirm?</div></div></div></li>
+    <li><input type="checkbox" id="s14_9"><div class="step"><label for="s14_9">Call 9</label>
+      <div class="row"><b>Ask</b><div>On Staff only, the settings row keeps “Games” lit though families cannot answer. Fine?</div></div></div></li>
+    <li><input type="checkbox" id="s14_10"><div class="step"><label for="s14_10">Call 10</label>
+      <div class="row"><b>Ask</b><div>The room reads family answers once when the window opens (a new answer shows on reopen). Fine?</div></div></div></li>
+    <li><input type="checkbox" id="s14_11"><div class="step"><label for="s14_11">Call 11</label>
+      <div class="row"><b>Ask</b><div>Undo also resets a player you confirmed with a tap to Not marked. Fine?</div></div></div></li>
+    <li><input type="checkbox" id="s14_12"><div class="step"><label for="s14_12">Call 12</label>
+      <div class="row"><b>Ask</b><div>Game day’s one-tap Who’s here cannot clear the amber (it sends no confirm). Fine?</div></div></div></li>
+    <li><input type="checkbox" id="s14_13"><div class="step"><label for="s14_13">Call 13</label>
+      <div class="row"><b>Ask</b><div>A parent with a saved email preference for the reminder kind might get a plain email on top of the family one. Confirm no parent screen can set it.</div></div></div></li>
+    <li><input type="checkbox" id="s14_14"><div class="step"><label for="s14_14">Call 14</label>
+      <div class="row"><b>Ask</b><div>Remind’s words say “{club}’s emails” (there is no per-team list) and the sign-in line sits at the end of the email. Fine?</div></div></div></li>
+    <li><input type="checkbox" id="s14_15"><div class="step"><label for="s14_15">Call 15</label>
+      <div class="row"><b>Ask</b><div>Two parents answering at the same instant can leave the newest bell line saying the earlier answer. Accept?</div></div></div></li>
+    <li><input type="checkbox" id="s14_16"><div class="step"><label for="s14_16">Call 16</label>
+      <div class="row"><b>Ask</b><div>A Remind sent in the last minute before the game starts goes out but its report is not shown. Accept?</div></div></div></li>
+    <li><input type="checkbox" id="s14_17"><div class="step"><label for="s14_17">Call 17</label>
+      <div class="row"><b>Ask</b><div>A removed coach keeps their old bell lines (child’s first name, parent’s first name, the answer); the bell lines have no retention clock yet. Accept for 4b?</div></div></div></li>
+    <li><input type="checkbox" id="s14_18"><div class="step"><label for="s14_18">Call 18</label>
+      <div class="row"><b>Ask</b><div>The daily cap can send one extra email if a parent’s bell is off or deleted. Accept?</div></div></div></li>
+    <li><input type="checkbox" id="s14_19"><div class="step"><label for="s14_19">Call 19</label>
+      <div class="row"><b>Ask</b><div>The FieldLogicHQ privacy page is still not published, and the consent words say “Draft wording — not final.” Must exist before real families. Noted?</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p14"></div><textarea id="n14" aria-label="Notes for part 14" data-notes="p14" placeholder="Notes"></textarea>
+</section>
+
+<section class="card">
+  <h2>Paste-back</h2>
+  <p class="where">Press Build summary at the top, then copy this and paste it into the chat.</p>
+  <pre id="out">Nothing yet.</pre>
+  <button type="button" id="copyBtn">Copy</button>
+</section>
+</main>
+
+<script>
+(function(){
+  var KEY = "s4b-walk-v1";
+  var state = { checks:{}, verdicts:{}, notes:{} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = JSON.parse(raw); } catch (e) {}
+  state.checks = state.checks || {}; state.verdicts = state.verdicts || {}; state.notes = state.notes || {};
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('ol.steps input[type=checkbox]'));
+  function refresh(){
+    var n = boxes.filter(function(b){ return b.checked; }).length;
+    var p = document.getElementById('prog'); p.max = boxes.length; p.value = n;
+    document.getElementById('progText').textContent = n + " of " + boxes.length;
+    boxes.forEach(function(b){ b.closest('li').classList.toggle('done', b.checked); });
+  }
+  boxes.forEach(function(b){
+    b.checked = !!state.checks[b.id];
+    b.addEventListener('change', function(){ state.checks[b.id] = b.checked; save(); refresh(); });
+  });
+
+  var labels = [["pass","Pass"],["issue","Issue"],["call","Needs a call"]];
+  Array.prototype.slice.call(document.querySelectorAll('.verdict')).forEach(function(box){
+    var part = box.getAttribute('data-for');
+    labels.forEach(function(pair){
+      var btn = document.createElement('button'); btn.type = 'button';
+      btn.className = 'v-' + pair[0]; btn.textContent = pair[1];
+      btn.setAttribute('aria-pressed', state.verdicts[part] === pair[0] ? 'true' : 'false');
+      btn.addEventListener('click', function(){
+        state.verdicts[part] = state.verdicts[part] === pair[0] ? "" : pair[0]; save();
+        Array.prototype.slice.call(box.querySelectorAll('button')).forEach(function(x){
+          x.setAttribute('aria-pressed', x.className === 'v-' + state.verdicts[part] ? 'true' : 'false');
+        });
+      });
+      box.appendChild(btn);
+    });
+  });
+  Array.prototype.slice.call(document.querySelectorAll('textarea[data-notes]')).forEach(function(t){
+    var part = t.getAttribute('data-notes'); t.value = state.notes[part] || "";
+    t.addEventListener('input', function(){ state.notes[part] = t.value; save(); });
+  });
+
+  function summary(){
+    var lines = ["Families’ answers walk (Stage 4b, v1): " + boxes.filter(function(b){return b.checked;}).length + " of " + boxes.length + " steps ticked"];
+    Array.prototype.slice.call(document.querySelectorAll('section[data-part]')).forEach(function(s){
+      var part = s.id, h = s.querySelector('h2').textContent;
+      var sb = Array.prototype.slice.call(s.querySelectorAll('input[type=checkbox]'));
+      var done = sb.filter(function(b){return b.checked;}).length;
+      var missed = sb.filter(function(b){return !b.checked;}).map(function(b){return b.id;});
+      var v = state.verdicts[part] || "no verdict";
+      lines.push("", h + " | " + v + " | " + done + "/" + sb.length + (missed.length ? " | not ticked: " + missed.join(", ") : ""));
+      if (state.notes[part]) lines.push("  notes: " + state.notes[part]);
+    });
+    return lines.join("\n");
+  }
+  document.getElementById('summaryBtn').addEventListener('click', function(){
+    document.getElementById('out').textContent = summary();
+    document.getElementById('out').scrollIntoView({behavior:'smooth', block:'center'});
+  });
+  document.getElementById('copyBtn').addEventListener('click', function(){
+    var text = document.getElementById('out').textContent;
+    var done = function(){ document.getElementById('copyBtn').textContent = "Copied"; };
+    try { navigator.clipboard.writeText(text).then(done, function(){ selectOut(); }); } catch (e) { selectOut(); }
+  });
+  function selectOut(){ var r = document.createRange(); r.selectNodeContents(document.getElementById('out'));
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  refresh();
+})();
+</script>

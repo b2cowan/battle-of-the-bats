@@ -2,14 +2,17 @@
 
 | | |
 |---|---|
-| **Version** | 0.1 |
+| **Version** | **0.2** (0.1 stays the words every parent who joined before the 0.2 build accepted) |
 | **Status** | draft — not owner-approved, not reviewed by a lawyer; rendered by the product (switched off) as the words it ships with (Stage 4a built 2026-11-08) |
 | **Effective date** | — (not published) |
-| **Last reviewed** | 2026-11-08 |
+| **Last reviewed** | 2026-11-13 |
 | **Backlog** | L5 (children's consent wording), L6 (CASL line) |
 | **Replaces** | the placeholder in `lib/family-guardian-consent.ts` once the owner approves and the build adopts it |
 
-**Change log:** 0.1 (2026-11-08, Stage 4a Session 4) (d) corrected to what the build does; (a), (b), (c), (e) unchanged; closeout read below. 0.1 (2026-11-08, later) the parked Terms line in (a) written, after Terms v0.2's O7 and O5 (every account holder is 18 or
+**Change log:** **0.2 (2026-11-13, Stage 4b closeout)** adds the three "families say if they're coming" lines to (a) and "sees if you leave" (the 4a
+closeout's answer 3), **for new joins only, and for rep-team invitations only** (see "(a) 0.2"); the sheet's hint is the notice for parents who joined
+earlier; the retention promise for answers and notes is now publishable (see the follow-through list); the Stage 4b closeout read is below. **The 0.1
+words in (a) are unchanged and are what a house-league invitation still shows.** 0.1 (2026-11-08, Stage 4a Session 4) (d) corrected to what the build does; (a), (b), (c), (e) unchanged; closeout read below. 0.1 (2026-11-08, later) the parked Terms line in (a) written, after Terms v0.2's O7 and O5 (every account holder is 18 or
 older and accepts one set of Terms); "no child holds a login" still reads true beside O5. 0.1 (2026-11-08) first draft for the Stage 4 drawings (`docs/projects/active/SIGNED_IN_FAMILY_STAGE4_DRAWINGS.html`,
 tabs 1, 2, 3, 5). Braces are filled by the product: {child} first name, {club} the club's name, {coach}, {email}, {contact} the
 club's contact email, {first parent} full name of the parent who added the address.
@@ -78,6 +81,39 @@ conditions. Words (b) and (e) ship verbatim. **One word fix:** (d) is corrected 
     the dev walk:** everything else. The privacy policy draft needs no new promise from this build beyond the follow-through list below,
     plus: ended connections and consent records are kept (no retention period chosen).
 
+**Closeout read, Stage 4b "Families say if they're coming" (Session 4), 2026-11-13** — the rendered words (`lib/family-availability-words.ts`,
+`lib/family-invitation-words.ts`, `lib/family-home-words.ts`, `lib/family-guardian-consent.ts`), the sender (`lib/family-availability-remind.ts`) and
+migrations 476, 477, 480 and 482 read against the drawing's tab 9 and the build prompt's rulings. Reasoning, the proposed words and the CASL half:
+`FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md` and `CASL_SECOND_PARENT_EMAIL.md` ("Stage 4b closeout"). Answers:
+1. **The reminder email and bell: no legal problem; the words ship as built.** It goes to the account's own address (never the typed or invited
+   one), through `sendFamilyEmail` (the club's unsubscribe list read first; a list that cannot be read stops the send), carries no answer link and
+   no token, names the child only in the body (the subject names team, event and day, so a lock screen does not show a child), and its footer says
+   why it arrived. The join box's "email me about {child}'s team" is the PIPEDA consent it leans on; it need not be CASL consent because the
+   message is, on its face, not a commercial message.
+2. **The sheet's hint (`sheet.privacy`) needs edits, one of them required.** *Required:* it never says the other parent sees **your** first
+   name and the day (it names the other parent to you, not you to them), and a parent who already had an account is never asked for a name
+   (the O2 box is new-account only) yet the name is shown, so this hint is their only notice. *Recommended:* it says the coaches see "your answer
+   and note", not your first name and the day; and it says nothing of how long a note is kept (add it once the purge is on production).
+3. **The O2 "Your first name" box: acceptable, one condition.** It asks for the least (a first name, 50 characters, never taken from an email)
+   and says who sees it. Condition: the 0.2 lines above must be in the stored text, so that "the other parent sees your first name" is part of
+   what the parent agreed to and not only a hint beside a text box.
+4. **The coach bell: no legal problem.** It never carries a note's words (it says "left a note"), has no email and no push, and names the child
+   by first name only. Its lines are not covered by the purge: see the privacy draft's new finding 11.
+5. **`GUARDIAN_CONSENT_VERSION` must move with the words.** It is one constant (`lib/family-guardian-consent.ts:21`, `'GUARDIAN_CONSENT_STAGE4 v0.1'`),
+   stored as the first line of every consent record. The code change (not made here), in one commit: (i) the constant becomes
+   `'GUARDIAN_CONSENT_STAGE4 v0.2'`; (ii) `beforeYouJoinWords` gains an input saying whether any listed child is on a rep team and builds the 0.2
+   lines only then, and the text it returns carries the version that matches its words (so a house-league invitation keeps storing 0.1's words
+   under v0.1; in practice the version becomes a field beside the words rather than one global); (iii) `lib/family-invitation.ts:327` quotes the
+   version found on the acceptance it rests on, not the constant. If the owner decides NOT to change the accept page for 4b, the constant stays
+   at v0.1 and this draft's 0.2 is held back (do not publish a version number the product does not store). The tests that read the constant
+   (`family-invitation-rules.test.ts:211`, `legal-links-surfaces-guard.test.ts:122`) follow it; a new one should pin "rep words ↔ v0.2, league
+   words ↔ v0.1".
+6. **The Leave and Stop confirms (d) and (e) do not say what happens to answers and notes** (`lib/family-home-words.ts:120, 122, 185`, unchanged by
+   4b). A parent who leaves may expect their words to go: mig 480 deletes their notes about that child at once, but the answers, their first name
+   and the day stay until the retention date. One sentence each (proposed in the topic file). Recommended before real families.
+7. **Still open before the tier is on for real families, unchanged:** the published FieldLogicHQ privacy page and its URL (the accept page's own
+   "Draft wording — not final." line stays until then); R2 (the record names the children connected at Join); and now the 0.2 build above.
+
 **Home rule:** when the build renders these words, the product copy (`lib/family-guardian-consent.ts` and the email builders) is the
 single source and this file is replaced by a pointer in `LEGAL_INDEX.md`.
 
@@ -131,6 +167,38 @@ one-time sign-in screen if they already had one. This page only says so, in one 
 Keep it a statement, not a tick-box: the consent boxes above are about this club and this child, and folding the Terms into them would
 blur a meaningful consent into a contract. If the build lets someone reach this page with an account that has not yet accepted, the
 Terms §20 sign-in screen comes first.
+
+## (a) 0.2 — the Stage 4b lines (new joins only; rep-team invitations only)
+
+Three of the four "Who sees what" lines change; the boxes, the Terms line and the button do not. Written as the product would build them
+(`beforeYouJoinWords` in `lib/family-guardian-consent.ts`); {child} is one name or a list, as the 0.1 words already handle.
+
+> - **You** see {child}'s team, coach, practice and game times and places, and your sign-up. **If {child}'s coach turns it on, you can also
+>   say here whether {child} is coming to a game or practice.** Nothing about other children.
+> - **{child}'s coaches and {club}'s staff** see the name, email and phone number on {child}'s sign-up. **Coaches also see your answers, any
+>   note you add, your first name and when you answered.** {club} can also see that you joined, **sees if you leave**, and can remove you.
+> - **Other families** can't see you or {child} here. **{child}'s other parent, if they've joined, sees your first name and your answer, but
+>   not your note.**
+> - (the FieldLogicHQ line is unchanged)
+
+Rules for the build, each one a fact the new words rely on:
+1. **Rep-team invitations only.** The sentence about answering and the coaches' answers line appear only when at least one child on the
+   invitation is on a **rep team**. In 4b a house-league parent sees no In / Out / Maybe (ruling 4), so promising it on a house-league
+   accept page would be a statement the product does not keep. A house-league-only invitation shows the 0.1 words (the "sees if you
+   leave" and "other parent" clauses are true there too and may ride along). A mixed invitation shows the rep wording.
+2. **The stored record is what was shown.** `guardianConsentText` is built from these words, so a rep invitation stores the 0.2 lines and a
+   house-league one stores 0.1's, each under the version that matches (closeout read, answer 5). Never a 0.2 header over 0.1 words or the reverse.
+3. **New joins only.** A parent who accepted under 0.1 keeps a record that says 0.1 and is not asked again. Their notice of the new feature
+   is the sheet's hint, shown every time the sheet opens, before and while they answer. No email is sent to tell them (it would be a message
+   whose only purpose is the notice, and the sheet already is one).
+4. **A sibling connected later** (the "under this address's acceptance of {date}" record, `lib/family-invitation.ts:327`) must carry the
+   version of the acceptance it rests on, **not the current constant**: after the bump that record would otherwise say v0.2 for a parent who
+   only ever saw v0.1.
+
+**The first-name box** (O2, accept page, new-account path only; `lib/family-invitation-words.ts:51-52`) sits outside the stored text. That is
+acceptable: it is a collection notice for one field, not part of the consent. Its hint is true for the two places the name shows on the 4b
+screens (coaches, the other parent); what it leaves unsaid is the name's third kind of reader, a parent who already had an account and is not
+asked, which the sheet's hint has to cover (`FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md`, "The sheet's hint").
 
 ## (b) The parent's first screen — one line
 
@@ -187,7 +255,10 @@ the same address may be the first parent on another child's sign-up, whose email
   information stays the club's (§5).
 - §5 "Stop these emails" paragraph gains: "If the address had joined a child's team, the stop ends that connection too."
 - §8 note 1: the family-account paragraph replaces "we do not knowingly let a child create an account" only by adding to it; no child holds a login.
-- Retention: consent and connection records are kept indefinitely today (packet Q7). Do not publish a retention promise until a period is chosen.
+- Retention: consent and connection records are kept indefinitely today (packet Q7). Do not publish a retention promise for **them** until a period is chosen.
+- **Families' answers and notes (Stage 4b, 2026-11-13): the retention line is now publishable**, because the purge exists (migs 476 + 477, 480, 482).
+  The text is in `drafts/PRIVACY_POLICY.md` §9; it goes live only when those migrations are on production, in the order the build prompt names
+  (476, 477, 479, 480, 482), each before its code. §5 gains the paragraph on parents saying whether a player is coming.
 
 ## For a lawyer's eye
 
@@ -196,3 +267,12 @@ the same address may be the first parent on another child's sign-up, whose email
   band worked out from the date of birth) meets Law 25 for a Québec club. No Québec customer exists; text not re-fetched this session.
 - (c) Second parent and the rep coach's invitation: CASL classification of an invitation to a non-party's address (memo `CASL_SECOND_PARENT_EMAIL.md`).
 - (d) A stop that also ends a connection: custody-adjacent; the product, not the club, ends a parent's access.
+- **(a) 0.2 / the sheet — a record about a child that a parent writes.** Stage 4's own line said a tick-box stops being enough once the page shows
+  attendance or notes. The owner ruled (4b ask 5) that it is enough because only the parent connected to that child can write (re-checked on
+  every write), and the note is capped at 200 characters with a request to keep health details out. A lawyer should say whether a free-text note
+  about a child, which can hold health or family detail despite the request, is acceptable on a tick-box consent, and for a Québec child (under 14).
+- **Retention periods are the owner's, not a statutory number.** Notes 30 days after the event; answers, who and when until 60 days after the
+  team's last event of the season (PIPEDA clause 4.5). Whether 60 days after an open-ended season is "as long as needed" is the question; no
+  law names a figure.
+- **A leaving parent's first name stays beside their answers** until that date (the coach can still read "Priya, Tue"). Whether withdrawing
+  consent by leaving should also remove the name is a PIPEDA 4.3.8 question; the product keeps the answer because it is the club's team record.

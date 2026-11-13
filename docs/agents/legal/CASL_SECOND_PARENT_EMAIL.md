@@ -142,6 +142,27 @@ unsubscribed … speak to your coach") and the Stop footer. Wording only; for th
 a club’s open sign-up form test whether an address has stopped (owner call O4, rate-limited, same status code as any other
 validation error); the stop page names the club and the address only to a holder of a valid link.
 
+## Stage 4b closeout (2026-11-13) — the reminder, and what it does to flags (b), (d), (e)
+Full reading: `FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md`. Statute not re-fetched; the s.1(2) / s.6(6) reading above is relied on.
+- **The reminder is a different email from every second-parent copy above.** It goes through the family door to the **account's own address** of a
+  parent who has joined (`lib/family-availability-remind.ts:128-131`), never to the address a first parent typed. It has no offer, price or sign-up line,
+  so on its face it is not a CEM; it still carries the club's unsubscribe and the sender line, and a parent on the club's list gets the in-app note
+  only. The join box's "email me about {child}'s team" is the privacy basis. It carries **no** Stop line and no "a parent added your email".
+- **O1 was re-ruled (build Session 3, 2026-11-13): reminder only; nothing in the 3b footer changes.** Reason found in the code: no second-parent copy
+  carries an unsubscribe, the Stop link is their only way out, so dropping it for joined parents would have left some copies with no way out at all.
+  Recorded as ruled. **The drawing's tab 9 said ask 14 would close flag (e) for joined parents; it does not, because ask 14 was not built that way.**
+- **(a)** unchanged by 4b (the reminder uses the club face's reply line and Reply-To like other family mail; a club with no public contact email is the
+  same gap as before).
+- **(b) exact-address stop:** not worsened. The reminder uses the exact address the parent signed up with, and the suppression list expands through the
+  person (`getFamilySuppressionList`), so an alias is caught only when both addresses belong to one recorded person. Inherent; still open.
+- **(d) mixed address:** cannot occur in the reminder (no Stop wording). Unchanged for sign-up copies.
+- **(e) two footnotes:** the reminder carries one footnote (sent by / because / reply / unsubscribe). The sign-up copies to a joined second parent keep
+  both footnotes; **(e) stays open.**
+- **The Stop line's lead for a joined second parent** ("A parent added your email to this sign-up. Don’t want these?"): still true (a statement of
+  origin); the confirm page says a stop also removes a joined parent from the app before anything is written. No word change; a joined-parent
+  variant was weighed and declined (it needs every second-parent sender to read join state). One consequence for the Leave and Stop confirms: say
+  what happens to notes and answers (topic file, recommendation 1).
+
 ## Sources
 - [Canada's Anti-Spam Legislation (S.C. 2010, c. 23) — s.1(2), s.6(1), s.6(2), s.6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-06
 - [Electronic Commerce Protection Regulations (SOR/2013-221) — s.2, s.4 referral exclusion](https://laws-lois.justice.gc.ca/eng/regulations/SOR-2013-221/FullText.html) — accessed 2026-11-06

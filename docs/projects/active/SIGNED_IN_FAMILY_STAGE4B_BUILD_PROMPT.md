@@ -655,4 +655,121 @@ Build on the existing family team page; extend the `FamilyScheduleEntry` DTO (an
     hunks, the prod-step entry, the CSS rules); records in the commit after it. Mig 480 is on DEV only. **Prod order: 476 → 477 → 479 →
     480, each before its code.** Verified at the close: the seven Session 3 suites 219/219; SQL fixture "S4B FIXTURE OK: 10/10"; `tsc`
     clean; ESLint 0 errors on every touched file; `check:spelling` and `check:dictionary` clean.
-- Session 4 (Part 9): not started.
+- **Session 4 (Part 9): STARTED 2026-11-13.**
+  - **Owner calls RULED at the start (owner, 2026-11-13, Session 4; all seven as recommended):**
+    1. **Child merge = fix now.** A NEW migration re-creates `org_children_join` to re-point `event_availability_answers` (the newer
+       `answered_at` wins a clash on the same event) + a merge test. Mig 480's "merged" carve-out then holds.
+    2. **A taken-back Out rings.** `coachBellFires` also fires when `prior` was Out, at any time (folds into the unread line).
+    3. **Lineup warning settled by an autosave = keep as built.** The bell already rang for the Out and the room keeps its amber; the
+       builder strip is a third signal. No new column.
+    4. **Started games = stop flagging at the start everywhere.** The builder and the event window match the schedule triangle (open
+       games only); /marketing rewords the triangle's label for a family-only flag.
+    5. **Remind = name players, count parents.** The confirm names the players, the send says how many parents receive it, the report
+       counts parents reached (not attempted). /marketing settles the words.
+    6. **Remind's stale confirm and a crash burning the day = accept, recorded.** No stale-claim recovery.
+    7. **Notices (cancel + day move in one save; mirror / club-tool moves) = accept, recorded.** The family page's "Answer" is the signal;
+       family notices from the mirror and the club scheduler are separate work.
+  - **Built for the rulings (2026-11-13):** mig `482_a_merged_child_keeps_the_family_answers.sql` (re-creates `org_children_join` from 453
+    with ONE added step; applied twice to DEV; fixture 11/11; `MANUAL_PROD_STEPS` entry; dictionary line on `event_availability_answers`).
+    **Prod order now 476 → 477 → 479 → 480 → 482.** `coachBellFires` rings on `prior === 'out'`. `familyEventOpen` (rules) is the one
+    "not cancelled, not started" test; `lineupFamilyOuts` takes a REQUIRED `open` argument (builder, event window, triangle; the pool
+    words still show after the start). Remind words: "Remind about Owen and Maya?", "Send to 3 parents", "Reminded 2 parents about
+    Owen"; the report's app-only count adds every email that did not go out. New suite `family-availability-session4.test.ts` (incl. a
+    guard: EVERY table with an FK to `org_children`, from the snapshot AND the migrations, must be moved by the latest join).
+  - **/simplify over the WHOLE stage (4 angles; 2026-11-13). APPLIED:** the "open" rule into `lineupFamilyOuts` (above); one
+    `resolveFamilyAttendanceContext` (`lib/family-coach-route.ts`) for the room's family read AND Remind (the declined move's reason
+    changed: the room's one caller reads a 404 and `{ answers: null }` alike; the family-layer 404 now applies to both); Remind reuses
+    `readClubEmailOrg` and the team the route holds (`KnownRepTeam.name`); one `playerFirstName` (`coach-roster-name.ts`) for Remind,
+    the bell, the room and the builder warning (the bell no longer says "A player" for a player with a last name only); the schedule
+    GET's two read batches run together (joined in one Promise.all); `marksFamilyAnswersInOrg` = one `rep_teams` read; the parent's
+    save runs the team gate alongside its reads; the event PATCH's inline block is `familyAnswersWillClear`; dead words removed
+    (`sheet.saveNote`, `sheet.youAnswered`, `card.useFailed`), one `SAVE_FAILED` / `ANSWERS_CLOSED`, `cell` built once, `pluralize`
+    replaces `s()`; the module re-export trimmed to `isFamilyAnswer`; stale headers/comments fixed.
+  - **/simplify DECLINED (reason):** moving `bookMarkedAt` to an attendance module (a move touching the attendance PATCH; no behavior
+    gain); `LineupMismatch.extraSentences` instead of the family field in `coach-schedule-sheet` (defer until a second warning kind);
+    the bell / headcounts / lineup-GET / parent-page re-reading the gate and roster (passing `setting` + roster down through three
+    callers is a restructure; measure at the walk with the bulk `auth.users` lookup, still declined); the purge's full-table
+    `season_end` scan (mig 476/477 are watched automation: a rewrite needs the owner's go; a follow-up, not urgent at today's volume);
+    leaf types shared between rules and words (a type-file move across the stage); `againAt` derived once (two lines, two clocks agree
+    to the minute); `remindCount`, `FamilyAnswerStamp`, `openEvents` helpers; `setFamilyAnswers` in `family-access`; one paged
+    "verified link with an account" reader (Remind and the parent page read per team/child; a team never nears the page size).
+  - **/review over the WHOLE stage (high-risk; 5 lenses: correctness, security/tenancy, data/contract, concurrency, regression;
+    2026-11-13).** Gate: `tsc` clean; ESLint 0 errors on touched files; `check:dictionary`, `check:spelling` clean; `check:migrations`
+    = prod behind dev (many sessions' migs owed; not a defect here); `check:layout` NOT RUN (no dev server; the walk's 360 px pass);
+    `verify:changed` unit run 24 failures, ONE ours (below, fixed), the rest other sessions' files (billing rail, permits layout,
+    `platform_charge_tax_looks` move coverage, PlayerGuardiansCard's possessive, workspace/portal-tag census, help/billing words).
+    No Critical, High or Medium survived. **FIXED:** (1) the billing rail guard did not know `resolveFamilyAttendanceContext` (it
+    reaches `getAuthContext` through `resolveFamilyCoachContext`): added to its RAILS list with the file:line, as the guard asks;
+    (2) attendance saves now run ONE AT A TIME in the event window (Remind's save-first or closing the window could start a second
+    whole-roster PATCH while the autosave was in flight, and the older one could land last and undo a tap); (3) a malformed event id
+    on the room read / Remind is a 404, not a database 500; (4) the family save queue survives a task that ever rejects (hardening);
+    (5) the dictionary's Remind log columns say PLANNED counts (the report can read higher), its join history names 453 and 482;
+    (6) the 482 prod step names 453 as a prerequisite and verifies it; (7) a doc comment the simplify pass misplaced.
+  - **/review RECORDED (owner calls for the walk, not built):**
+    - **Remind has no cap per parent or per day**: a coach can remind on many events in one sitting and a parent gets one email per
+      event (once per event per 24 hours holds). Trusted staff, not a hole. Option: a per-parent daily cap. Owner call.
+    - **A removed coach keeps the bell lines** (child's first name, parent's first name, the answer) in their own inbox after losing
+      `attendance` or leaving the team. Same posture as every notification kind today; worth a ruling, not a fix here.
+    - **The Remind report can vanish at the start minute**: the panel closes when the game starts, so a send pressed in the last
+      minute goes out (and uses the day) but its report is not shown. Rare.
+    - **Two parents answering at the same instant** can leave the newest bell line saying the earlier answer (each folds or posts;
+      the room and the count are right). Rare; the recorded fold rule.
+    - The confirm's one-line summary quotes "is your player coming?" while a parent of two gets "are your players coming?"
+      (the "See what they'll get" sample is exact) → /marketing.
+    - Names: a player with no first name now reads by last name in the bell and the builder warning (was "A player" / "#12 Smith").
+  - **/legal + /marketing closeout (2026-11-13; helpers, docs under docs/agents/legal/ edited by /legal: GUARDIAN_CONSENT_STAGE4.md →
+    0.2, new FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md, CASL_SECOND_PARENT_EMAIL.md, PRIVACY_POLICY.md draft §5/§9 + finding 11,
+    LEGAL_INDEX.md, LEGAL_FACTS.md).** Reminder email and bell: no legal problem. REQUIRED: the sheet's privacy hint names the parent's
+    first name and the day (a parent who joined earlier was never asked for a name; the hint is their only notice). Stop line for a
+    joined second parent: still true, no change; CASL flag (e) stays open (O1 re-ruled). The coach's bell lines have no retention
+    clock (privacy finding 11, route to /plan for every notification kind).
+  - **Owner rulings on the closeout asks (owner, 2026-11-13, Session 4; all as recommended):**
+    8. **Consent 0.2 = build now**: rep-team invitations show and store the 0.2 lines under `GUARDIAN_CONSENT_STAGE4 v0.2`; house
+       league keeps 0.1; a connected sibling's record quotes the version the parent accepted, not the constant.
+    9. **Remind daily cap = add it**: at most ONE reminder email per parent per day across the team's events; the rest go as the app
+       note only; the confirm and the report count it.
+    10. **The schedule triangle = "Lineup needs a look" for everyone** (a deliberate, recorded exception to "tier off: only the
+       rename changes": it is the label's wording, true for all three causes; the event window and builder already say it).
+    11. **Leave / Stop confirms add the notes-and-answers sentence**, only where true (a rep child whose team has answers on).
+  - **BUILT for rulings 8–11 and the word reviews (2026-11-13):** (8) `beforeYouJoinWords(club, children, rep)` + `words.version`:
+    a rep invitation (`InvitationChild.rep` = `!!repEntryId`, the page and the record read the same children) shows and stores the
+    0.2 lines under `GUARDIAN_CONSENT_VERSION_REP` (`…v0.2`); house league stores 0.1 unchanged; the placement sibling record no
+    longer stamps a version (it names the acceptance it rests on). (9) Remind's daily cap: a parent with a `family_availability_reminder`
+    bell row today (org day) for this team with `metadata.emailed = true` gets the app note only (`Recipient.capped`; the confirm says
+    "N parents have already had a reminder email today…"); every reminder bell now records `emailed`; the report's app-only = parents
+    minus those an email went to. ⚠ A parent whose bell is off or who deleted the row is not seen (errs toward one more email).
+    (10) the triangle's `aria-label` = "Lineup needs a look" for every coach. (11) `answeredByAccounts` (family-availability.ts) +
+    `leave.answersStay`: the Leave confirm and the second-parent Stop page add the notes-and-answers sentence only when that
+    account has answers on the child. **Words:** /legal's required hint ("…your first name and the day you answered" / "sees your
+    answer and first name, but not your note" / "none of it"); /marketing A–N except F (ruled 10): unsubscribed (not "turned off"),
+    "but … still in the lineup" (both surfaces), "Reminded yesterday at …", `who` without a fake quote, coach-side "yesterday",
+    `answerAgain` addressed to the parent, the bell's single Out "Ava’s family said Out for …", "Maya (Maybe)", `marked` without the
+    repeated name, `failed` without "Nothing was used up", `started` "let the coach know … contact them", `ask` folds past four
+    names, `hide` "Hide what they’ll get". Tests: session4 suite + the updated session3 / family-availability / family-home guards.
+  - The removed coach's bell lines = accept for 4b (/legal); privacy finding 11 (bell lines have no retention clock) → /plan later.
+  - **/docs (2026-11-13):** new coach article `premium-families-say-coming` ("Families say if they’re coming", six sub-topics, three
+    FAQs) in `lib/help-content/coaches.tsx`, linked from the attendance, schedule, lineups and Team settings articles and the Coach path
+    in both help hubs; the "No reply" sweep found nothing left (the planner's "hasn't replied yes" kept, walk call 6). ⚠ **No parent
+    help surface exists** (`/account/help` is a mailto + the coach guide): the parent side is written into the coach article's last
+    sub-topic. A parent-facing help place is a gap for the family app (route to /plan with the privacy page).
+  - **Records (2026-11-13):** `COACH_AVAILABILITY_RSVP_PLAN.md` status + §3.3–3.5 superseded + §9 closed; the PM brief; the accounts plan's
+    Stage 4 heading; the TODO line; `MANUAL_PROD_STEPS` 482; the dictionary. **Walk published as OWNER_QA_LEDGER §526:**
+    https://claude.ai/artifact/YC1MxeDgsRXyQx3unpwdUF (14 parts, 72 steps + 19 calls). Owner walk owed.
+  - **COMMITTED 2026-11-13 (owner's yes in Session 4):** build `7fa87f3f7` (38 files: code, mig 482, tests, help, the dictionary,
+    `MANUAL_PROD_STEPS`); records in the commit after it (this prompt, the walk page, ledger §526, the plan/brief/accounts-plan/TODO
+    lines staged as THIS session's hunks only, the consent draft 0.2, the CASL memo, the new legal topic file). Not pushed. **Held in
+    the working tree, to commit together with Board Ready's friend-requests legal hunks they share hunks with:** /legal's Stage 4b
+    edits in `LEGAL_INDEX.md`, `LEGAL_FACTS.md` and `drafts/PRIVACY_POLICY.md`; and the drawing session's 11-12 hunks in
+    `COACH_AVAILABILITY_RSVP_PLAN.md` / `_PM_BRIEF.md` (this session's §3.3 note and the brief's "Built" paragraph sit beside them).
+    The dev server was restarted for the walk (cache cleared; the tier was already on in the owner's `.env.local`).
+  - **Session 4 files (commit only on the owner's yes, explicit pathspecs; ⚠ shared files hold other sessions' hunks — TODO.md,
+    OWNER_QA_LEDGER.md, DATA_DICTIONARY.md, MANUAL_PROD_STEPS.json, COACH_AVAILABILITY_RSVP_PLAN.md / PM_BRIEF.md (the drawing
+    session's uncommitted hunks), the legal docs LEGAL_INDEX / LEGAL_FACTS / PRIVACY_POLICY / FRIEND_REQUESTS_PRIVACY):** mig 482;
+    lib/family-availability{,-rules,-words,-coach,-coach-bell,-remind}.ts, family-coach-route.ts, coach-roster-name.ts,
+    family-guardian-consent.ts, family-invitation.ts, family-home-words.ts; components/coaches/{ScheduleEventSheet,FamilyRemindPanel,
+    ScheduleCalendarViews}.tsx; the lineup page + _LineupEditor; the events, event, family-answers, family-remind routes;
+    app/(consumer)/family/{children/[childId]/page,claim/[token]/ClaimClient,teams/[teamId]/FamilyAnswers}.tsx;
+    app/second-parent-stop/page.tsx; help: coaches.tsx + the two help hub pages; tests (session3/4, family-availability, -coach,
+    family-home, org-billing-access-guard) + tests/sql fixture; docs: this prompt, the walk HTML, the legal topic file and drafts.
+    - Accepted, no action: the parent's save reads the team gate before the event check (a bogus request costs one more read); a
+      parent saving during a child merge's instant gets a generic "didn't save".
