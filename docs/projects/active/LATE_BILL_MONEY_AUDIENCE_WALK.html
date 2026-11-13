@@ -1,0 +1,469 @@
+<title>Who Sees the Bill</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: one column. A sign-in card, an index of six walk cards, then the one open walk with its steps grouped by who is signed in. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #15202b;
+  --muted: #566372;
+  --line: #d8dfe6;
+  --accent: #1d6a58;
+  --accent-soft: #e2f1ec;
+  --warn: #8a5300;
+  --warn-soft: #fff3d9;
+  --bad: #9c2b2b;
+  --bad-soft: #fdeaea;
+  --ok: #1b6a37;
+  --ok-soft: #e1f3e7;
+  --write: #7a2e8a;
+  --write-soft: #f6e9f9;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1418; --surface: #161e25; --ink: #e8eef3; --muted: #9aa8b5; --line: #2a3640;
+    --accent: #62c4a6; --accent-soft: #163329; --warn: #f0b75a; --warn-soft: #382a0f;
+    --bad: #f29a9a; --bad-soft: #3a1a1a; --ok: #78d494; --ok-soft: #14301f;
+    --write: #d9a2e6; --write-soft: #301a38; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1418; --surface: #161e25; --ink: #e8eef3; --muted: #9aa8b5; --line: #2a3640;
+  --accent: #62c4a6; --accent-soft: #163329; --warn: #f0b75a; --warn-soft: #382a0f;
+  --bad: #f29a9a; --bad-soft: #3a1a1a; --ok: #78d494; --ok-soft: #14301f;
+  --write: #d9a2e6; --write-soft: #301a38; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; padding-block: 24px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { font-family: var(--font-head); line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.label { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card.accent { border-color: var(--accent); }
+.note { border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+.note.warn { background: var(--warn-soft); color: var(--ink); border: 1px solid var(--warn); }
+.note.write { background: var(--write-soft); color: var(--ink); border: 1px solid var(--write); }
+.note.info { background: var(--accent-soft); color: var(--ink); border: 1px solid var(--accent); }
+.note b { font-weight: 600; }
+header { display: flex; flex-direction: column; gap: 8px; }
+.stamp { display: inline-block; font-size: 12.5px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; width: fit-content; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 6px 10px 6px 0; vertical-align: top; border-bottom: 1px solid var(--line); }
+th { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.scroll { overflow-x: auto; }
+code, .mono { font-family: var(--font-mono); font-size: 13px; overflow-wrap: anywhere; }
+button, .btn { font: inherit; cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 7px 12px; font-weight: 500; min-height: 36px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.btn:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.pw { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+/* index */
+.index { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.wcard { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); min-width: 0; }
+.wcard[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.wcard .wt { font-family: var(--font-head); font-weight: 600; font-size: 16px; }
+.chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; width: fit-content; background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.chip.prog { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
+.chip.call { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+.chip.write { background: var(--write-soft); color: var(--write); border-color: var(--write); }
+.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); }
+/* walk */
+.defs { display: grid; gap: 10px; }
+.defs > div { display: grid; gap: 2px; }
+.defs ul { margin: 4px 0 0; padding-left: 20px; }
+.group { display: flex; flex-direction: column; gap: 10px; }
+.who { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: var(--accent-soft); color: var(--ink); font-weight: 600; flex-wrap: wrap; }
+.who .mono { font-weight: 400; color: var(--muted); }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.step:last-child { border-bottom: 0; }
+.step .box { padding-top: 2px; }
+.step input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
+.step .body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.step .num { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.do { font-weight: 500; }
+.see { color: var(--ink); }
+.see::before { content: "You should see: "; font-weight: 600; color: var(--accent); }
+.see.check::before { content: "Check: "; }
+.opts { display: flex; flex-direction: column; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.opts input { margin-top: 3px; }
+.tag { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; width: fit-content; }
+.tag.write { background: var(--write-soft); color: var(--write); border: 1px solid var(--write); }
+.tag.opt { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+.tag.pre { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdicts button[aria-pressed="true"].v-pass { background: var(--ok); color: var(--surface); border-color: var(--ok); }
+.verdicts button[aria-pressed="true"].v-issue { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdicts button[aria-pressed="true"].v-call { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; min-height: 84px; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); resize: vertical; }
+textarea.out { font-family: var(--font-mono); font-size: 12.5px; min-height: 160px; }
+details > summary { cursor: pointer; font-weight: 600; }
+@media (max-width: 520px) { h1 { font-size: 25px; } .card { padding: 14px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<main>
+  <header>
+    <span class="stamp">Dev fixture read 2026-11-13</span>
+    <h1>Who Sees the Bill</h1>
+    <p class="muted">Six short walks for the change that keeps bill amounts from coaches who cannot open Money. Walks 1 to 3 only look; walk 4 and 5 flip one setting each and put it back; walk 6 sends for real, so it goes last. Ticks and notes stay in this browser.</p>
+  </header>
+
+  <section class="card accent" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <p>Local site: <a href="http://localhost:3000/uat-rep-club/admin/schedules">http://localhost:3000</a> (the dev server must be running). Everyone below uses the same password. This is a dev-only test password: keep this page private.</p>
+    <div class="pw"><span class="label">Password</span><code id="pw">{{UAT_PASSWORD}}</code><button class="btn" id="copypw" type="button">Copy</button><span class="small muted" id="copied" aria-live="polite"></span></div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Person</th><th>Email</th><th>Used in</th></tr></thead>
+        <tbody>
+          <tr><td><b>Dana Kowalski</b><br><span class="muted small">club administrator, the sender</span></td><td><code>uat-club-admin@uat-rep-club.local</code></td><td>Walks 1, 2, 3, 4, 5, 6</td></tr>
+          <tr><td><b>Morgan Ellis</b><br><span class="muted small">club owner, also head coach of UAT Test Team</span></td><td><code>uat-club-owner@uat-rep-club.local</code></td><td>Walks 4, 5</td></tr>
+          <tr><td><b>UAT Assistant (no money)</b></td><td><code>uat-asst-nomoney@uat-test-org.local</code></td><td>Walk 6</td></tr>
+          <tr><td><b>UAT Assistant (money, read-only)</b></td><td><code>uat-asst-money-read@uat-test-org.local</code></td><td>Walk 6</td></tr>
+          <tr><td><b>Taylor Brooks</b><br><span class="muted small">head coach of 14U AA, assistant on 15U AAA</span></td><td><code>uat-club-coach-14aa@uat-rep-club.local</code></td><td>Walk 6</td></tr>
+          <tr><td><b>UAT Assistant (treasurer only)</b></td><td><code>uat-asst-treasurer@uat-test-org.local</code></td><td>Walk 5, 6</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note info"><b>Two windows save you re-signing in.</b> Keep Dana in one browser window and Morgan (or whoever the walk names) in a private window of another browser. A setting Morgan changes shows up for Dana after a reload.</div>
+  </section>
+
+  <section class="card" aria-labelledby="heads-h">
+    <h2 id="heads-h">Before you walk</h2>
+    <div class="defs">
+      <div><span class="label">What the change does</span>
+        <ul>
+          <li>The late bill (&ldquo;Send the bill&rdquo;) goes only to coaches who can open Money. Others are not emailed and get no notice.</li>
+          <li>Send for review, Finalize and Send the changes still go to everyone who can see the schedule. Coaches who cannot open Money get the same email with every money line taken out, and their bell leaves out the dollar figure.</li>
+          <li>The Send window says who gets which email, so you are never surprised.</li>
+        </ul>
+      </div>
+      <div><span class="label">Mail on the dev site</span>
+        <p>Every address above ends in <code>.local</code>, so nothing can reach a real inbox. A send will still say &ldquo;Sent to N people&rdquo; and may add &ldquo;couldn&rsquo;t be delivered&rdquo;. Either is fine. The doors in the Send window and the bells in the coach portal are the proof, not an inbox.</p>
+      </div>
+      <div><span class="label">Figures and counts</span>
+        <p>Counts (&ldquo;6 teams&rdquo;, &ldquo;15 coaches&rdquo;) and dollar amounts here were read on 2026-11-13. They are illustrations of what right looks like, not pass conditions. The pass conditions are the relationships: who is named, who is left out, what the email does and does not contain.</p>
+      </div>
+      <div><span class="label">Not in any walk</span>
+        <ul>
+          <li><b>&ldquo;Bill not emailed&rdquo; warning.</b> It appears only for a team that is emailed its slots but has nobody who can open Money. Every team on this fixture has a head coach, and a head coach always can. Tests prove the warning, who it counts and that it skips unticked teams. If you want to see it, ask for a team to be set up first.</li>
+          <li><b>An Assistant or Helper left out of a late bill.</b> The three teams on that schedule have only head coaches. Tests prove the filter for every role.</li>
+          <li><b>A team whose head coach has no email on file.</b> No such team exists on the fixture. Tests prove the new wording.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="idx-h" class="group">
+    <div class="row" style="justify-content:space-between">
+      <h2 id="idx-h">The walks</h2>
+      <span class="small muted" id="overall" aria-live="polite"></span>
+    </div>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walk" aria-live="polite"></section>
+
+  <section class="card" aria-labelledby="all-h">
+    <h2 id="all-h">Everything, for pasting back</h2>
+    <p class="muted small">Builds one plain-text summary of all six walks. Paste it into the chat. The tick count is the evidence; a verdict button is only an opinion.</p>
+    <div class="row"><button class="btn primary" id="buildall" type="button">Build summary of all walks</button><button class="btn" id="copyall" type="button">Copy it</button><span class="small muted" id="copiedall" aria-live="polite"></span></div>
+    <textarea id="allout" class="out" readonly aria-label="Summary of all walks" placeholder="Press Build summary of all walks."></textarea>
+    <details><summary>Clear every tick on this page</summary>
+      <div class="row" style="margin-top:8px"><span class="small muted">This removes all ticks, verdicts and notes in this browser.</span><button class="btn" id="clear1" type="button">Clear everything&hellip;</button><button class="btn primary" id="clear2" type="button" hidden>Yes, clear everything</button></div>
+    </details>
+  </section>
+</main>
+
+<script>
+(function () {
+  var KEY = 'money-audience-walk-2026-11-13-v1';
+  var ADMIN = 'http://localhost:3000/uat-rep-club/admin/schedules';
+  var MEMBERS = 'http://localhost:3000/uat-rep-club/admin/org/members';
+  var STAFF = 'http://localhost:3000/uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe/staff';
+  var BELLS = 'http://localhost:3000/uat-rep-club/coaches/notifications';
+
+  var DANA = { name: 'Dana Kowalski', note: 'club administrator', email: 'uat-club-admin@uat-rep-club.local' };
+  var MORGAN = { name: 'Morgan Ellis', note: 'club owner', email: 'uat-club-owner@uat-rep-club.local' };
+
+  var WALKS = [
+    {
+      id: 'W1', title: 'Send for review and Finalize', writes: false,
+      purpose: 'A club administrator sends a billed draft schedule to coaches. On a team where some coaches can open Money and some cannot, the window must say who gets the bill and who gets the same email without it, and it must let you read both emails before anything is sent. You only look in this walk. Nothing is sent.',
+      passes: 'On the two mixed teams (15U AAA and UAT Test Team) the people who cannot open Money are named on their own line, the &ldquo;without the bill&rdquo; email has no dollar figure and no talk of a bill, and the &ldquo;with the bill&rdquo; email does. Teams with only head coaches show no extra line.',
+      notIn: 'Sending for real (walk 6). A sender who cannot open Money (walk 4). The Finalize button cannot be pressed today because the budget line is short; do not fix it.',
+      signin: 'Dana Kowalski.',
+      where: '<a href="' + ADMIN + '">Admin &rsaquo; Schedules</a>, the schedule named &ldquo;Dome sharing walk&rdquo;. Use a full-width window: on a phone the Finalize button moves into a menu.',
+      steps: [
+        { who: DANA, kind: 'pre', do: 'Open Schedules and then &ldquo;Dome sharing walk&rdquo;.', see: 'The schedule reads <b>Draft</b>, not &ldquo;In review&rdquo;, and a <b>Finalize and send</b> button is at the top. If it already reads In review, stop: this walk and walk 6 need the draft.' },
+        { who: DANA, do: 'Press <b>Finalize and send</b>. In the window, set <b>Send</b> to <b>For review first</b>.', see: 'The window is titled <b>Send for review</b>. Its first sentence reads: &ldquo;Each team&rsquo;s coaches see their slots, and the ones who can open Money see the bill too.&rdquo; and then &ldquo;Replies are due by&rdquo; a date about a week out, and &ldquo;Nothing is booked or billed yet.&rdquo;' },
+        { who: DANA, do: 'Read the hint under the team list.', see: '&ldquo;Each team&rsquo;s coaches get one email with their slots, and the bill too if they can open Money; a reply comes to you.&rdquo;' },
+        { who: DANA, do: 'Read the <b>Who reviews</b> list and the <b>Nobody to send to</b> box.', see: 'Six teams are listed with their coaches: 14U AA, 15U AA, 15U AAA, 11U AA, 13U AAA and UAT Test Team (15 coaches in all, as of 2026-11-13). A box names 9U AA and 12U AA as having no head coach. Illustration: the point is that teams with a head coach are listed and the two with nobody are not.' },
+        { who: DANA, do: 'Look at 14U AA, 15U AA, 11U AA and 13U AAA.', see: 'Each row has one coach and <b>no</b> &ldquo;gets it without the bill&rdquo; line, because everyone on those teams can open Money.' },
+        { who: DANA, do: 'Look at the 15U AAA row.', see: 'A second line under it reads &ldquo;Taylor Brooks and Riley Assistant get it without the bill.&rdquo; Jordan Reyes, the head coach, is not named in that line.' },
+        { who: DANA, do: 'Look at the UAT Test Team row.', see: 'Its second line names exactly four people: UAT Assistant (money), UAT Assistant (no money), UAT Assistant (development) and UAT Helper. Do not read the name &ldquo;(money)&rdquo; as the rule: on this team that assistant has Money switched off, so being in the line is correct. The four who can open Money (UAT Coach, Morgan Ellis, UAT Assistant (money, read-only), Jordan Reyes) are not in it. &ldquo;UAT Assistant (treasurer only)&rdquo; appears nowhere: that person can open Money but not the schedule, so a review does not go to them.' },
+        { who: DANA, do: 'Look at the two links at the bottom of the window.', see: 'Two doors side by side about the same team, the first mixed team in the list (15U AAA today): one that names Jordan Reyes and ends &ldquo;email, with the bill&rdquo;, and one that reads &ldquo;See the email Taylor Brooks gets, without the bill&rdquo;.' },
+        { who: DANA, do: 'Open the <b>with the bill</b> door.', see: 'A mail preview addressed to Jordan Reyes alone. Subject: &ldquo;Dome sharing walk: 15U AAA&rsquo;s slots and bill, for review&rdquo;. It lists the slots and shows the bill with a dollar figure.' },
+        { who: DANA, do: 'Go back and open the <b>without the bill</b> door.', see: 'Addressed to Taylor Brooks and Riley Assistant, greeting &ldquo;Hi Taylor and Riley&rdquo;. Subject: &ldquo;Dome sharing walk: 15U AAA&rsquo;s slots, for review&rdquo;. It lists the same slots. There is no dollar sign anywhere, no mention of a bill, no &ldquo;Club tab&rdquo; and nothing about money owed.' },
+        { who: DANA, do: 'Go back. Note the number on the Send button. Untick <b>15U AAA</b>, then note it again.', see: 'The Send button&rsquo;s count drops by exactly <b>3</b> (Jordan, Taylor and Riley). And the two doors now describe <b>UAT Test Team</b> instead. Leave 15U AAA unticked for the next step.' },
+        { who: DANA, do: 'Open the <b>with the bill</b> door for UAT Test Team.', see: 'The To: line names four people, all of whom can open Money, and the treasurer is not one of them. Now tick 15U AAA again and go back.' },
+        { who: DANA, do: 'Change <b>Send</b> to <b>Final now</b>. Read the statement and the bottom of the window.', see: 'The title becomes <b>Finalize and send</b> and the statement says sending makes the slots real bookings. The same second lines and the same two doors are there. The &ldquo;with the bill&rdquo; email shows a dollar bill; the &ldquo;without the bill&rdquo; one shows none.' },
+        { who: DANA, do: 'Look at the top of the Final window and at the send button.', see: 'A line says the budget line has some left to allocate, and the send button is greyed. That is expected today, so <b>do not fix the budget line</b>: finalizing would make real bookings and bill eight teams. If the button is <b>not</b> greyed, do not press it; write what you see in the notes.', kind2: 'check' },
+        { who: DANA, do: 'Look for a box titled <b>Bill not emailed</b> in both versions of the window.', see: 'There is none. Every team in this send has a head coach who can open Money.', kind2: 'check' },
+        { who: DANA, do: 'Close the window without sending.', see: 'The schedule still reads Draft.' }
+      ]
+    },
+    {
+      id: 'W2', title: 'Send the changes', writes: false,
+      purpose: 'After a schedule is final, the club can tell coaches what changed. When a change carries no money, every coach on the team must get the same single email and the window must not invent a &ldquo;without the bill&rdquo; split. The optional part moves money and checks that turning off &ldquo;Bill the corrections&rdquo; takes the correction and the credit out of what is shown and sent.',
+      passes: 'With nothing money-related in the change: one email to all three coaches on the team, one door, no switch, no warning. In the optional part: the correction and credit appear for coaches who can open Money, never in the &ldquo;without the bill&rdquo; email, and vanish everywhere when the switch is off.',
+      notIn: 'The send itself. The first six steps change nothing. The optional steps edit the schedule and say so.',
+      signin: 'Dana Kowalski.',
+      where: '<a href="' + ADMIN + '">Admin &rsaquo; Schedules</a>, &ldquo;Winter dome &middot; Sundays&rdquo; (a final, billed schedule).',
+      steps: [
+        { who: DANA, kind: 'pre', do: 'Open &ldquo;Winter dome &middot; Sundays&rdquo;.', see: 'It is <b>Final</b> and a <b>Send the changes</b> button is showing, because something changed since it was last sent.' },
+        { who: DANA, do: 'Press <b>Send the changes</b>.', see: 'A window titled <b>Send the changes</b>. Its statement says the changes reach one team&rsquo;s schedule (15U AAA on 2026-11-13) and that only those coaches are told.' },
+        { who: DANA, do: 'Look at the 15U AAA row.', see: 'Jordan Reyes, Taylor Brooks and Riley Assistant are listed with the change. There is <b>no</b> &ldquo;gets it without the bill&rdquo; line: nothing in this change carries money, so everyone gets the same email.' },
+        { who: DANA, do: 'Look at the bottom of the window and open the door.', see: 'Only <b>one</b> door (&ldquo;See &hellip; email&rdquo;). The email greets &ldquo;Jordan, Taylor and Riley&rdquo; together, shows the Dec 13 time move, and has no dollar figure.' },
+        { who: DANA, do: 'Look for the <b>Bill the corrections</b> switch and for a <b>Bill not emailed</b> box.', see: 'Neither is there. Nothing here moves money.', kind2: 'check' },
+        { who: DANA, do: 'Close the window without sending.', see: 'The schedule still shows the changes waiting.' },
+        { who: DANA, kind: 'optional', write: true, do: '<b>Optional, edits the schedule.</b> Make a change that moves money: on the schedule page, give one Sunday slot of <b>UAT Test Team</b> to another team on this schedule (open the slot and change its team). Then press Send the changes again.', see: 'Both teams are listed. The window shows the <b>Bill the corrections</b> switch, on, and a line such as &ldquo;a correction of $&hellip;&rdquo; for the team that gained time and a credit line for the team that lost it.' },
+        { who: DANA, kind: 'optional', do: 'Open the doors for UAT Test Team.', see: 'The &ldquo;with the bill&rdquo; email names the four who can open Money and shows the correction or credit. The &ldquo;without the bill&rdquo; email, to the other four, shows none of it and no dollar sign.' },
+        { who: DANA, kind: 'optional', do: 'Untick <b>Bill the corrections</b>.', see: 'The send button greys for a moment while the window re-reads. Then the correction and credit lines are gone from the window <b>and</b> from the email behind the door. The two people lists are unchanged.' },
+        { who: DANA, kind: 'optional', write: true, do: '<b>Put it back.</b> Close the window and give the slot back to UAT Test Team (or press undo if the page offers it). Open Send the changes again.', see: 'The window is back to listing only the original Dec 13 change for 15U AAA, and no switch.' }
+      ]
+    },
+    {
+      id: 'W3', title: 'The late bill', writes: false,
+      purpose: 'A schedule can be finalized without a bill and billed afterwards, as its own send. That send goes only to coaches who can open Money. You build the bill in the window and read the email. The send itself is optional and billing three teams is a real write.',
+      passes: 'The statement and hint say &ldquo;coaches who can open Money&rdquo;, every team shown has only people who can open Money (so no &ldquo;without the bill&rdquo; line and no &ldquo;Nobody to send to&rdquo; box), and the email reads as a bill with the Club tab line and a reply line.',
+      notIn: 'An Assistant or Helper being left out (the teams here have only head coaches; tests prove it). A team with nobody to email (none exists here).',
+      signin: 'Dana Kowalski.',
+      where: '<a href="' + ADMIN + '">Admin &rsaquo; Schedules</a>, &ldquo;Saturdays at Kinsmen, December 2026&rdquo; (final, no bill, teams 13U AAA, 14U AA and 15U AA).',
+      steps: [
+        { who: DANA, kind: 'pre', do: 'Open &ldquo;Saturdays at Kinsmen, December 2026&rdquo;.', see: 'It is <b>Final</b>, has no bill, and the <b>Fair shares</b> area has a <b>Bill the teams</b> door.' },
+        { who: DANA, do: 'Press <b>Bill the teams</b>. Choose <b>Bill from: No budget line</b>. If it asks for an amount, type 1,200. Choose <b>One payment</b> with a date a few weeks out. Press <b>Review the bill</b>.', see: 'A window titled <b>Send the bill</b>.' },
+        { who: DANA, do: 'Read the statement.', see: '&ldquo;The bill goes to 3 teams, $&hellip; in all. Each team&rsquo;s share lands on its Money &rsaquo; Club tab, with its payments, and its coaches who can open Money are emailed the bill; replies come to you. The schedule stays final and nothing on a team&rsquo;s schedule changes.&rdquo;' },
+        { who: DANA, do: 'Read the hint under the list.', see: '&ldquo;Every team here is billed. Each team&rsquo;s coaches who can open Money get one email with that team&rsquo;s bill, and unticking a team only skips its email; a reply comes to you. The schedule stays final.&rdquo;' },
+        { who: DANA, do: 'Look at the three team rows.', see: 'Priya Nair (13U AAA), Taylor Brooks (14U AA) and Sam Whitford (15U AA), one head coach each. No &ldquo;gets it without the bill&rdquo; line, no &ldquo;Nobody to send to&rdquo; box, no &ldquo;Bill not emailed&rdquo; box.' },
+        { who: DANA, do: 'Open the one door.', see: 'An email to one person. Subject &ldquo;Saturdays at Kinsmen, December 2026: 14U AA&rsquo;s bill&rdquo;. It shows the bill with its payment, says the bill is on their Money &rsaquo; Club tab, and ends &ldquo;Questions about the bill? Reply to this email; it goes to the person at the club who sent it.&rdquo;' },
+        { who: DANA, do: 'Close the window without sending.', see: 'The schedule still has no bill.' },
+        { who: DANA, kind: 'optional', write: true, do: '<b>Optional, a real write.</b> Open the window again and press <b>Send the bill</b>. This bills 13U AAA, 14U AA and 15U AA on their Money &rsaquo; Club tabs and emails their head coaches (the .local addresses will not receive it). Treat it as permanent: do it only if you are happy to leave three dev teams billed.', see: 'A notice &ldquo;Billed 3 teams. Emailed 3 people.&rdquo; (it may add &ldquo;couldn&rsquo;t be delivered&rdquo;). Read back: each of those teams has a new bill on its Money &rsaquo; Club tab, and the schedule&rsquo;s Send log has a &ldquo;The bill &middot; 3 teams&rdquo; row.' }
+      ]
+    },
+    {
+      id: 'W4', title: 'A sender without Money', writes: true,
+      purpose: 'Not every club administrator holds the club&rsquo;s Accounting. Someone who sends a schedule without it must not be shown a dollar figure or an email that carries one. You take Accounting away from Dana, look at the windows as Dana, and give it back.',
+      passes: 'As Dana without Accounting: no dollar amount anywhere in the Send window, a clear sentence saying only people with Accounting can add a bill, a greyed Send button on the billed schedule, no email door that opens a bill, and an ordinary working window for a change that has no money. After the put-back, Dana is as before.',
+      notIn: 'The bell and email contents (walk 6).',
+      signin: 'Morgan Ellis in one window, Dana Kowalski in another. Walks 1 to 3 should be finished first.',
+      where: '<a href="' + MEMBERS + '">Admin &rsaquo; Organization &rsaquo; Members</a> for Morgan; <a href="' + ADMIN + '">Schedules</a> for Dana.',
+      steps: [
+        { who: MORGAN, kind: 'pre', do: 'Open Members and then <b>Manage Dana Kowalski</b>.', see: 'Under &ldquo;What Dana can open&rdquo;, the <b>Accounting</b> row reads <b>On</b>. If it is already Off, someone left it that way: turn it On and save before going on.' },
+        { who: MORGAN, kind: 'writeStep', do: 'Set <b>Accounting</b> to <b>Off</b> and save.', see: 'The row is marked &ldquo;Changed for Dana&rdquo;. Read back: close and reopen Manage Dana Kowalski; Accounting still reads Off.' },
+        { who: DANA, do: 'Reload Schedules. Open &ldquo;Dome sharing walk&rdquo;, press <b>Finalize and send</b> and set Send to <b>For review first</b>.', see: 'A line in the window reads &ldquo;Only the people who hold the club&rsquo;s Accounting can add a bill to a schedule.&rdquo; and the send button is greyed.' },
+        { who: DANA, do: 'Look through the whole window for any dollar amount.', see: 'There is none. The team rows show slots and coaches. The &ldquo;gets it without the bill&rdquo; lines may still appear on the two mixed teams: they say a bill exists but show no amount.', kind2: 'check' },
+        { who: DANA, do: 'Look at the bottom of the window. Open the door that is there.', see: 'The only door is &ldquo;See the email Taylor Brooks gets, without the bill&rdquo;. There is no door that opens an email with a bill. The email it opens has no dollar sign.' },
+        { who: DANA, do: 'Look for a <b>Bill not emailed</b> box. Then set Send to <b>Final now</b> and look again.', see: 'No such box in either. The same sentence about Accounting is there.', kind2: 'check' },
+        { who: DANA, do: 'Close the window. Open &ldquo;Winter dome &middot; Sundays&rdquo; and press <b>Send the changes</b>.', see: 'The window opens normally for the 15U AAA time change, with one email to all three coaches, and the send button is <b>not</b> greyed. Close it without sending.' },
+        { who: MORGAN, kind: 'writeStep', do: '<b>Put it back.</b> Manage Dana Kowalski, set <b>Accounting</b> to <b>On</b>, save.', see: 'The &ldquo;Changed for Dana&rdquo; mark is gone. Read back: reload Dana&rsquo;s Send for review window; the Accounting sentence is gone and the with-the-bill doors are back.' }
+      ]
+    },
+    {
+      id: 'W5', title: 'A Treasurer joins the list', writes: true,
+      purpose: 'UAT Assistant (treasurer only) can open Money but has the schedule hidden, so a review does not go to them. Giving them the schedule should add them to the people who get the email with the bill, and nobody else should move. Every step here is optional, because it changes a setting on the dev team and puts it back.',
+      passes: 'Before the change the treasurer is in nobody&rsquo;s list. After Schedule is set to View they are in the with-the-bill list for UAT Test Team and the Send count is one higher; the without-the-bill list is unchanged. After the put-back they are out again.',
+      notIn: 'The treasurer&rsquo;s own bell (walk 6).',
+      signin: 'Dana Kowalski and Morgan Ellis.',
+      where: 'Morgan: <a href="' + STAFF + '">UAT Test Team &rsaquo; Coaching staff</a> in the coach portal. Dana: Send for review on &ldquo;Dome sharing walk&rdquo;.',
+      steps: [
+        { who: DANA, kind: 'optional', do: 'Open Send for review on &ldquo;Dome sharing walk&rdquo;. Untick <b>15U AAA</b> so the doors describe UAT Test Team. Note the Send count. Open the <b>with the bill</b> door.', see: 'The To: line has four names and not &ldquo;UAT Assistant (treasurer only)&rdquo;. Close the window.' },
+        { who: MORGAN, kind: 'optional', write: true, do: 'In the coach portal, open UAT Test Team, then <b>Coaching staff</b>, then <b>UAT Assistant (treasurer only)</b>. Set <b>Schedule</b> to <b>View</b>. It saves as you tap.', see: 'Their row shows a Schedule &middot; view chip.' },
+        { who: DANA, kind: 'optional', do: 'Reopen Send for review, untick 15U AAA again and open the <b>with the bill</b> door.', see: 'The To: line now has <b>five</b> names and includes UAT Assistant (treasurer only). The Send count is exactly one higher than before. The &ldquo;without the bill&rdquo; line and door still name the same four people.' },
+        { who: MORGAN, kind: 'optional', write: true, do: '<b>Put it back.</b> Set the treasurer&rsquo;s <b>Schedule</b> back to <b>Hidden</b>.', see: 'The chip is gone. Read back: Dana&rsquo;s window is back to four names and the earlier count.' }
+      ]
+    },
+    {
+      id: 'W6', title: 'Bells and the real send', writes: true,
+      purpose: 'The bell is the notice a coach sees in the app, and it can carry the dollar figure. This walk sends the Dome sharing walk for review for real and then reads the bell as people who can and cannot open Money. It sends real mail and moves the draft to In review, so it goes last.',
+      passes: 'Coaches who can open Money see a bell that ends &ldquo;and a $&hellip; bill&rdquo;. Coaches who cannot see the same bell with no bill in it. A person on two teams sees a different bell for each. A person with no schedule access sees none.',
+      notIn: 'Whether any email arrives (the dev addresses cannot receive mail).',
+      signin: 'Dana to send; then each person below to read their bell (private windows).',
+      where: 'Dana: <a href="' + ADMIN + '">Schedules</a>. Everyone else: <a href="' + BELLS + '">the coach portal&rsquo;s Notifications</a>.',
+      steps: [
+        { who: DANA, kind: 'pre', do: 'Check the put-backs held: Dana&rsquo;s Accounting is On (Members) and the treasurer&rsquo;s Schedule is Hidden (Coaching staff). Open &ldquo;Dome sharing walk&rdquo;.', see: 'Both settings are as described, and the schedule still reads <b>Draft</b>. If not, stop and go back to walk 4 or 5.' },
+        { who: DANA, kind: 'write', do: '<b>This sends real mail and moves the draft to In review.</b> Press <b>Finalize and send</b>, set Send to <b>For review first</b>, leave every team ticked and press <b>Send to &hellip; coaches</b>.', see: 'A notice &ldquo;Sent to N people on 6 teams.&rdquo;, possibly followed by &ldquo;N couldn&rsquo;t be delivered&rdquo;. The schedule now reads <b>In review</b>. Write N in the notes.' },
+        { who: DANA, do: 'Open the schedule&rsquo;s <b>Send log</b>.', see: 'A new row &ldquo;For review &middot; 6 teams&rdquo; with a people count that matches N (the log counts emails actually sent).' },
+        { who: { name: 'UAT Assistant (no money)', note: 'or UAT Helper', email: 'uat-asst-nomoney@uat-test-org.local' }, do: 'Sign in and open Notifications.', see: 'A new bell &ldquo;UAT Rep Club sent Dome sharing walk for review&rdquo; whose second line starts &ldquo;UAT Test Team &middot; 25 slots.&rdquo; and goes on to a reply date. It has <b>no</b> &ldquo;and a $&hellip; bill&rdquo;.' },
+        { who: { name: 'UAT Assistant (money, read-only)', note: 'can open Money', email: 'uat-asst-money-read@uat-test-org.local' }, do: 'Sign in and open Notifications.', see: 'The same bell title. The second line reads &ldquo;UAT Test Team &middot; 25 slots and a $&hellip; bill.&rdquo; followed by the reply date.' },
+        { who: { name: 'Taylor Brooks', note: 'one person, two teams', email: 'uat-club-coach-14aa@uat-rep-club.local' }, do: 'Sign in and open Notifications.', see: 'Two review bells. The one for <b>14U AA</b> (Taylor is the head coach) carries &ldquo;and a $&hellip; bill&rdquo;. The one for <b>15U AAA</b> (Taylor is an assistant with Money off) does not.' },
+        { who: { name: 'UAT Assistant (treasurer only)', note: 'can open Money, schedule hidden', email: 'uat-asst-treasurer@uat-test-org.local' }, do: 'Sign in and open Notifications.', see: 'No bell from this review. A person who cannot see the schedule is not told, even though they can open Money.' }
+      ]
+    }
+  ];
+
+  /* ------------ state ------------ */
+  var state = { open: 'W1', checks: {}, opt: {}, rule: {}, verdict: {}, notes: {} };
+  function load() { try { var s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && typeof s === 'object') { for (var k in state) if (s[k] !== undefined) state[k] = s[k]; } } catch (e) {} }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  load();
+
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function plain(html) { var d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g, ' ').trim(); }
+  function sid(w, i) { return w.id + '.' + (i + 1); }
+  function isDone(w, i) {
+    var s = w.steps[i], id = sid(w, i);
+    if (s.kind === 'optional') return !!state.opt[id];
+    return !!state.checks[id];
+  }
+  function counts(w) {
+    var done = 0, skipped = 0;
+    for (var i = 0; i < w.steps.length; i++) {
+      var id = sid(w, i);
+      if (w.steps[i].kind === 'optional') { if (state.opt[id] === 'did') done++; else if (state.opt[id] === 'skip') skipped++; }
+      else if (state.checks[id]) done++;
+    }
+    return { done: done, skipped: skipped, total: w.steps.length };
+  }
+  function status(w) {
+    var c = counts(w), v = state.verdict[w.id], dealt = c.done + c.skipped;
+    if (v === 'pass') return dealt < c.total ? { cls: 'call', text: 'Passed · only ' + dealt + ' of ' + c.total + ' dealt with' } : { cls: 'pass', text: 'Passed' };
+    if (v === 'issue') return { cls: 'issue', text: 'Issue' };
+    if (v === 'call') return { cls: 'call', text: 'Needs a call' };
+    if (dealt === 0) return { cls: '', text: 'Not started' };
+    return { cls: 'prog', text: 'In progress · ' + dealt + ' of ' + c.total };
+  }
+
+  /* ------------ render ------------ */
+  function renderIndex() {
+    var html = '', allDone = 0, allTotal = 0;
+    WALKS.forEach(function (w, n) {
+      var c = counts(w), st = status(w), pct = Math.round(((c.done + c.skipped) / c.total) * 100);
+      allDone += c.done + c.skipped; allTotal += c.total;
+      html += '<button type="button" class="wcard" data-walk="' + w.id + '" aria-current="' + (state.open === w.id) + '">' +
+        '<span class="label">Walk ' + (n + 1) + ' of ' + WALKS.length + '</span>' +
+        '<span class="wt">' + esc(w.title) + '</span>' +
+        '<span class="row"><span class="chip ' + st.cls + '">' + esc(st.text) + '</span>' + (w.writes ? '<span class="chip write">changes a setting or sends</span>' : '') + '</span>' +
+        '<span class="bar" aria-hidden="true"><i style="width:' + pct + '%"></i></span></button>';
+    });
+    $('index').innerHTML = html;
+    $('overall').textContent = allDone + ' of ' + allTotal + ' steps dealt with';
+  }
+
+  function whoLabel(p) { return '<div class="who"><span>As ' + esc(p.name) + (p.note ? ' <span class="muted" style="font-weight:400">(' + esc(p.note) + ')</span>' : '') + '</span><span class="mono">' + esc(p.email) + '</span></div>'; }
+
+  function renderWalk() {
+    var w = WALKS.filter(function (x) { return x.id === state.open; })[0] || WALKS[0], n = WALKS.indexOf(w) + 1;
+    var st = status(w), c = counts(w);
+    var h = '<article class="card accent" aria-labelledby="wh">' +
+      '<div class="row" style="justify-content:space-between"><span class="label">Walk ' + n + ' of ' + WALKS.length + '</span><span class="chip ' + st.cls + '">' + esc(st.text) + '</span></div>' +
+      '<h2 id="wh">' + esc(w.title) + '</h2>';
+    if (w.writes) h += '<div class="note write"><b>This walk changes something.</b> ' + (w.id === 'W6' ? 'It sends real mail and moves a schedule to In review. Do it last.' : 'It flips a setting and the last step puts it back. Do not stop halfway.') + '</div>';
+    h += '<div class="defs">' +
+      '<div><span class="label">What this walk is for</span><p>' + w.purpose + '</p></div>' +
+      '<div><span class="label">It passes when</span><p>' + w.passes + '</p></div>' +
+      '<div><span class="label">Not in this walk</span><p>' + w.notIn + '</p></div>' +
+      '<div><span class="label">Sign in as</span><p>' + w.signin + '</p></div>' +
+      '<div><span class="label">Where and on what</span><p>' + w.where + '</p></div></div>';
+    h += '<div class="row small muted"><b>' + (c.done + c.skipped) + ' of ' + c.total + '</b> steps dealt with' + (c.skipped ? ' (' + c.skipped + ' skipped)' : '') + '</div>';
+    var last = null;
+    w.steps.forEach(function (s, i) {
+      var id = sid(w, i), who = s.who.email;
+      if (who !== last) { if (last !== null) h += '</div>'; h += '<div class="group">' + whoLabel(s.who); last = who; }
+      h += '<div class="step"><div class="box">' + stepBox(s, id) + '</div><div class="body">' +
+        '<div class="row"><span class="num">Step ' + (i + 1) + '</span>' +
+        (s.kind === 'pre' ? '<span class="tag pre">Start here</span>' : '') +
+        (s.kind === 'optional' ? '<span class="tag opt">Optional</span>' : '') +
+        ((s.write || s.kind === 'write' || s.kind === 'writeStep') ? '<span class="tag write">Changes something</span>' : '') + '</div>' +
+        '<p class="do">' + s.do + '</p>' +
+        '<p class="see' + (s.kind2 === 'check' ? ' check' : '') + '">' + s.see + '</p>' +
+        (s.kind === 'optional' ? '<div class="opts" role="group" aria-label="Step ' + (i + 1) + '"><label><input type="checkbox" data-opt="' + id + '" data-val="did"' + (state.opt[id] === 'did' ? ' checked' : '') + '> Did it</label><label><input type="checkbox" data-opt="' + id + '" data-val="skip"' + (state.opt[id] === 'skip' ? ' checked' : '') + '> Skipped it</label></div>' : '') +
+        '</div></div>';
+    });
+    if (last !== null) h += '</div>';
+    h += '<div class="group"><span class="label">Your verdict on this walk</span><div class="verdicts">' +
+      ['pass:Pass', 'issue:Issue', 'call:Needs a call'].map(function (p) { var k = p.split(':'); return '<button type="button" class="btn v-' + k[0] + '" data-verdict="' + k[0] + '" aria-pressed="' + (state.verdict[w.id] === k[0]) + '">' + k[1] + '</button>'; }).join('') + '</div>' +
+      '<label class="label" for="notes">Notes for this walk</label><textarea id="notes" data-notes="' + w.id + '" placeholder="What you saw, what surprised you, the number N from a send.">' + esc(state.notes[w.id] || '') + '</textarea>' +
+      '<div class="row"><button class="btn primary" id="buildone" type="button">Build summary of this walk</button><button class="btn" id="copyone" type="button">Copy it</button><span class="small muted" id="copiedone" aria-live="polite"></span></div>' +
+      '<textarea id="oneout" class="out" readonly aria-label="Summary of this walk" placeholder="Press Build summary of this walk."></textarea></div>';
+    h += '</article>';
+    $('walk').innerHTML = h;
+  }
+
+  function stepBox(s, id) {
+    if (s.kind === 'optional') return '';
+    return '<input type="checkbox" data-step="' + id + '" aria-label="Done"' + (state.checks[id] ? ' checked' : '') + '>';
+  }
+
+  /* ------------ summaries ------------ */
+  function summarize(w) {
+    var c = counts(w), v = state.verdict[w.id], out = [];
+    out.push(w.id + ' ' + w.title + ' [' + (v ? v.toUpperCase() : 'NO VERDICT') + '] ticked ' + c.done + '/' + c.total + (c.skipped ? ', skipped ' + c.skipped : ''));
+    var missing = [], opts = [];
+    w.steps.forEach(function (s, i) {
+      var id = sid(w, i);
+      if (s.kind === 'optional') opts.push((i + 1) + ' ' + (state.opt[id] === 'did' ? 'Did it' : state.opt[id] === 'skip' ? 'Skipped it' : 'not marked'));
+      else if (!state.checks[id]) missing.push(i + 1);
+    });
+    if (missing.length) out.push('  Not ticked: ' + missing.join(', '));
+    if (opts.length) out.push('  Optional steps: ' + opts.join(' | '));
+    if (state.notes[w.id]) out.push('  Notes: ' + state.notes[w.id].replace(/\s*\n\s*/g, ' / '));
+    return out.join('\n');
+  }
+  function allText() {
+    var head = 'WHO SEES THE BILL - walk paste-back (fixture read 2026-11-13). The fraction is the evidence; the verdict is an opinion.';
+    return head + '\n' + WALKS.map(summarize).join('\n');
+  }
+  function copyText(text, area, flag) {
+    function fallback() { area.focus(); area.select(); $(flag).textContent = 'Selected: press Ctrl+C'; }
+    try { navigator.clipboard.writeText(text).then(function () { $(flag).textContent = 'Copied'; setTimeout(function () { $(flag).textContent = ''; }, 2000); }, fallback); } catch (e) { fallback(); }
+  }
+
+  /* ------------ events ------------ */
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.dataset.step) { if (t.checked) state.checks[t.dataset.step] = true; else delete state.checks[t.dataset.step]; }
+    else if (t.dataset.opt) {
+      var id = t.dataset.opt;
+      if (t.checked) state.opt[id] = t.dataset.val; else if (state.opt[id] === t.dataset.val) delete state.opt[id];
+    } else return;
+    save(); renderIndex(); if (t.dataset.opt) { var y = window.scrollY; renderWalk(); window.scrollTo(0, y); } else { updateHead(); }
+  });
+  function updateHead() { var w = WALKS.filter(function (x) { return x.id === state.open; })[0]; var el = document.querySelector('#walk .small.muted b'); if (el && w) { var c = counts(w); el.parentNode.innerHTML = '<b>' + (c.done + c.skipped) + ' of ' + c.total + '</b> steps dealt with' + (c.skipped ? ' (' + c.skipped + ' skipped)' : ''); var chip = document.querySelector('#walk .card .chip'); var st = status(w); if (chip) { chip.className = 'chip ' + st.cls; chip.textContent = st.text; } } }
+  document.addEventListener('input', function (e) { var t = e.target; if (t.dataset && t.dataset.notes) { state.notes[t.dataset.notes] = t.value; save(); } });
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.walk) { state.open = t.dataset.walk; save(); renderIndex(); renderWalk(); $('walk').scrollIntoView({ behavior: 'auto', block: 'start' }); }
+    else if (t.dataset.verdict) { var id = state.open; state.verdict[id] = state.verdict[id] === t.dataset.verdict ? null : t.dataset.verdict; save(); renderIndex(); var y = window.scrollY; renderWalk(); window.scrollTo(0, y); }
+    else if (t.id === 'buildone') { var w = WALKS.filter(function (x) { return x.id === state.open; })[0]; $('oneout').value = summarize(w); }
+    else if (t.id === 'copyone') { var w2 = WALKS.filter(function (x) { return x.id === state.open; })[0]; $('oneout').value = summarize(w2); copyText($('oneout').value, $('oneout'), 'copiedone'); }
+    else if (t.id === 'buildall') { $('allout').value = allText(); }
+    else if (t.id === 'copyall') { $('allout').value = allText(); copyText($('allout').value, $('allout'), 'copiedall'); }
+    else if (t.id === 'copypw') { var r = document.createRange(); r.selectNodeContents($('pw')); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); try { navigator.clipboard.writeText($('pw').textContent).then(function () { $('copied').textContent = 'Copied'; }, function () { $('copied').textContent = 'Selected: press Ctrl+C'; }); } catch (err) { $('copied').textContent = 'Selected: press Ctrl+C'; } }
+    else if (t.id === 'clear1') { $('clear2').hidden = false; t.hidden = true; }
+    else if (t.id === 'clear2') { state = { open: 'W1', checks: {}, opt: {}, rule: {}, verdict: {}, notes: {} }; save(); renderIndex(); renderWalk(); t.hidden = true; $('clear1').hidden = false; }
+  });
+
+  renderIndex(); renderWalk();
+})();
+</script>
