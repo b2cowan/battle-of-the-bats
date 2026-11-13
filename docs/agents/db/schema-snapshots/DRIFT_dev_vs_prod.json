@@ -1,12 +1,12 @@
 {
-  "generated": "2026-11-12",
-  "total": 622,
+  "generated": "2026-11-13",
+  "total": 673,
   "counts": {
-    "tables": 21,
-    "columns": 297,
-    "indexes": 93,
-    "constraints": 82,
-    "rls": 129
+    "tables": 23,
+    "columns": 323,
+    "indexes": 102,
+    "constraints": 88,
+    "rls": 137
   },
   "items": [
     {
@@ -59,6 +59,30 @@
     },
     {
       "key": "check:only-dev:bank_checks.bank_checks_kind",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:event_availability_answers.event_availability_answers_answer_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:event_availability_answers.event_availability_answers_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:event_availability_answers.event_availability_answers_note_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:event_availability_answers.event_availability_answers_previous_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:event_availability_reminders.event_availability_reminders_counts_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:event_availability_reminders.event_availability_reminders_kind_check",
       "sig": ""
     },
     {
@@ -191,6 +215,10 @@
     },
     {
       "key": "check:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_why_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_billing_reason_check",
       "sig": ""
     },
     {
@@ -414,6 +442,10 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:rep_teams.rep_teams_family_answers_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:second_parent_stops.second_parent_stops_email_check",
       "sig": ""
     },
@@ -603,6 +635,90 @@
     },
     {
       "key": "column:only-dev:bank_checks.on_its_way_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.answer",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.answered_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.answered_by_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.child_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.event_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.event_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.previous_answer",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.previous_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.previous_by_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_answers.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_reminders.app_only",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_reminders.event_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_reminders.event_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_reminders.families",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_reminders.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_reminders.parents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_reminders.reminded_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:event_availability_reminders.reminded_by_user_id",
       "sig": ""
     },
     {
@@ -878,6 +994,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:organizations.renewal_reminded_for",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:organizations.two_step_board_required_since",
       "sig": ""
     },
@@ -935,6 +1055,10 @@
     },
     {
       "key": "column:only-dev:platform_charge_tax_records.amount_before_tax_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.billing_reason",
       "sig": ""
     },
     {
@@ -1059,6 +1183,10 @@
     },
     {
       "key": "column:only-dev:platform_charge_tax_records.payout_country",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.purchase_email_at",
       "sig": ""
     },
     {
@@ -1302,6 +1430,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_teams.family_answers",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:second_parent_stops.email",
       "sig": ""
     },
@@ -1323,6 +1455,10 @@
     },
     {
       "key": "column:only-dev:second_parent_stops.stopped_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:team_workspaces.renewal_reminded_for",
       "sig": ""
     },
     {
@@ -1738,6 +1874,30 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:event_availability_answers.event_availability_answers_answered_by_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:event_availability_answers.event_availability_answers_child_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:event_availability_answers.event_availability_answers_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:event_availability_answers.event_availability_answers_previous_by_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:event_availability_reminders.event_availability_reminders_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:event_availability_reminders.event_availability_reminders_reminded_by_user_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:family_calendar_feeds.family_calendar_feeds_pkey",
       "sig": ""
     },
@@ -2074,6 +2234,38 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:event_availability_answers_by_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:event_availability_answers_child_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:event_availability_answers_event_child_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:event_availability_answers_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:event_availability_answers_prev_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:event_availability_reminders_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:event_availability_reminders_event_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:event_availability_reminders_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:family_calendar_feeds_live_user_uniq",
       "sig": ""
     },
@@ -2219,6 +2411,10 @@
     },
     {
       "key": "index:only-dev:platform_charge_tax_records_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_charge_tax_records_purchase_email_idx",
       "sig": ""
     },
     {
@@ -2415,6 +2611,14 @@
     },
     {
       "key": "table:only-dev:bank_check_waiting",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:event_availability_answers",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:event_availability_reminders",
       "sig": ""
     },
     {

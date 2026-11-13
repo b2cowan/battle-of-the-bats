@@ -5204,6 +5204,195 @@
         "column_default": "now()"
       },
       {
+        "table_name": "event_availability_answers",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 2,
+        "column_name": "event_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 3,
+        "column_name": "event_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 4,
+        "column_name": "child_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 5,
+        "column_name": "answer",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 6,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 7,
+        "column_name": "answered_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 8,
+        "column_name": "answered_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 9,
+        "column_name": "previous_answer",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 10,
+        "column_name": "previous_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 11,
+        "column_name": "previous_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 12,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "event_availability_answers",
+        "pos": 13,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 2,
+        "column_name": "event_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 3,
+        "column_name": "event_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 4,
+        "column_name": "reminded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 5,
+        "column_name": "reminded_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 6,
+        "column_name": "families",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 7,
+        "column_name": "parents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 8,
+        "column_name": "app_only",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "family_calendar_feeds",
         "pos": 1,
         "column_name": "id",
@@ -15275,6 +15464,15 @@
         "column_default": "false"
       },
       {
+        "table_name": "organizations",
+        "pos": 55,
+        "column_name": "renewal_reminded_for",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "pitch_decks",
         "pos": 1,
         "column_name": "id",
@@ -17010,6 +17208,24 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 55,
+        "column_name": "billing_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 56,
+        "column_name": "purchase_email_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "platform_credit_note_tax_records",
@@ -26642,6 +26858,15 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "rep_teams",
+        "pos": 23,
+        "column_name": "family_answers",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'off'::text"
+      },
+      {
         "table_name": "rep_tryout_evaluator_sessions",
         "pos": 1,
         "column_name": "id",
@@ -28825,6 +29050,15 @@
         "column_name": "free_time_reminded_3_for",
         "data_type": "date",
         "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "team_workspaces",
+        "pos": 24,
+        "column_name": "renewal_reminded_for",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -31726,6 +31960,34 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "error_events_org_id_fkey"
+      },
+      {
+        "table_name": "event_availability_answers",
+        "column_name": "answered_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "event_availability_answers_answered_by_user_id_fkey"
+      },
+      {
+        "table_name": "event_availability_answers",
+        "column_name": "child_id",
+        "foreign_table": "org_children",
+        "foreign_column": "id",
+        "constraint_name": "event_availability_answers_child_id_fkey"
+      },
+      {
+        "table_name": "event_availability_answers",
+        "column_name": "previous_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "event_availability_answers_previous_by_user_id_fkey"
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "column_name": "reminded_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "event_availability_reminders_reminded_by_user_id_fkey"
       },
       {
         "table_name": "family_calendar_feeds",
@@ -38005,6 +38267,46 @@
         "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
       },
       {
+        "tablename": "event_availability_answers",
+        "indexname": "event_availability_answers_by_user_idx",
+        "indexdef": "CREATE INDEX event_availability_answers_by_user_idx ON public.event_availability_answers USING btree (answered_by_user_id) WHERE (answered_by_user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "event_availability_answers",
+        "indexname": "event_availability_answers_child_idx",
+        "indexdef": "CREATE INDEX event_availability_answers_child_idx ON public.event_availability_answers USING btree (child_id)"
+      },
+      {
+        "tablename": "event_availability_answers",
+        "indexname": "event_availability_answers_event_child_uniq",
+        "indexdef": "CREATE UNIQUE INDEX event_availability_answers_event_child_uniq ON public.event_availability_answers USING btree (event_kind, event_id, child_id)"
+      },
+      {
+        "tablename": "event_availability_answers",
+        "indexname": "event_availability_answers_pkey",
+        "indexdef": "CREATE UNIQUE INDEX event_availability_answers_pkey ON public.event_availability_answers USING btree (id)"
+      },
+      {
+        "tablename": "event_availability_answers",
+        "indexname": "event_availability_answers_prev_user_idx",
+        "indexdef": "CREATE INDEX event_availability_answers_prev_user_idx ON public.event_availability_answers USING btree (previous_by_user_id) WHERE (previous_by_user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "event_availability_reminders",
+        "indexname": "event_availability_reminders_by_idx",
+        "indexdef": "CREATE INDEX event_availability_reminders_by_idx ON public.event_availability_reminders USING btree (reminded_by_user_id) WHERE (reminded_by_user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "event_availability_reminders",
+        "indexname": "event_availability_reminders_event_idx",
+        "indexdef": "CREATE INDEX event_availability_reminders_event_idx ON public.event_availability_reminders USING btree (event_kind, event_id, reminded_at DESC)"
+      },
+      {
+        "tablename": "event_availability_reminders",
+        "indexname": "event_availability_reminders_pkey",
+        "indexdef": "CREATE UNIQUE INDEX event_availability_reminders_pkey ON public.event_availability_reminders USING btree (id)"
+      },
+      {
         "tablename": "family_calendar_feeds",
         "indexname": "family_calendar_feeds_live_user_uniq",
         "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_live_user_uniq ON public.family_calendar_feeds USING btree (user_id) WHERE (stopped_at IS NULL)"
@@ -40148,6 +40450,11 @@
         "tablename": "platform_charge_tax_records",
         "indexname": "platform_charge_tax_records_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_records_pkey ON public.platform_charge_tax_records USING btree (id)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_purchase_email_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_records_purchase_email_idx ON public.platform_charge_tax_records USING btree (paid_at) WHERE ((billing_reason IS NOT NULL) AND (purchase_email_at IS NULL))"
       },
       {
         "tablename": "platform_charge_tax_records",
@@ -44140,6 +44447,54 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "event_availability_answers",
+        "detail": "event_availability_answers_answer_check",
+        "check_clause": "(answer = ANY (ARRAY['in'::text, 'out'::text, 'maybe'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "event_availability_answers",
+        "detail": "event_availability_answers_kind_check",
+        "check_clause": "(event_kind = ANY (ARRAY['rep_event'::text, 'league_game'::text, 'league_practice'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "event_availability_answers",
+        "detail": "event_availability_answers_note_check",
+        "check_clause": "((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 200)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "event_availability_answers",
+        "detail": "event_availability_answers_previous_check",
+        "check_clause": "((previous_answer IS NULL) OR (previous_answer = ANY (ARRAY['in'::text, 'out'::text, 'maybe'::text])))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "event_availability_answers",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "event_availability_reminders",
+        "detail": "event_availability_reminders_counts_check",
+        "check_clause": "((families >= 0) AND (parents >= 0) AND (app_only >= 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "event_availability_reminders",
+        "detail": "event_availability_reminders_kind_check",
+        "check_clause": "(event_kind = ANY (ARRAY['rep_event'::text, 'league_game'::text, 'league_practice'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "event_availability_reminders",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "family_calendar_feeds",
         "detail": "ENABLED",
@@ -46350,6 +46705,12 @@
       {
         "kind": "CHECK",
         "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_billing_reason_check",
+        "check_clause": "((billing_reason IS NULL) OR (billing_reason ~ '^[a-z_]{1,64}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
         "detail": "platform_charge_tax_records_buyer_kind_check",
         "check_clause": "(buyer_kind = ANY (ARRAY['club'::text, 'person'::text, 'unknown'::text]))"
       },
@@ -48518,6 +48879,12 @@
         "table_name": "rep_teams",
         "detail": "rep_teams_arrival_before_practice_min_check",
         "check_clause": "((arrival_before_practice_min IS NULL) OR (arrival_before_practice_min = ANY (ARRAY[15, 30, 45, 60, 90, 120])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_teams",
+        "detail": "rep_teams_family_answers_check",
+        "check_clause": "(family_answers = ANY (ARRAY['off'::text, 'games'::text, 'games_and_practices'::text]))"
       },
       {
         "kind": "CHECK",

@@ -15,6 +15,9 @@ import type { FamilyScheduleEntry } from '@/lib/family-view';
 import type { GuardianPayload } from '@/lib/family-guardian-view';
 import { FAMILY_HOME_WORDS as W } from '@/lib/family-home-words';
 import { possessive } from '@/lib/utils';
+import type { FamilyAnswersView } from '@/lib/family-availability';
+import { useFamilyAnswers } from './FamilyAnswers';
+import answerStyles from './FamilyAnswers.module.css';
 
 /**
  * The family team page (S3; Signed-in family accounts Stage 4a, Part 6, drawing tab 3) — one scrolling schedule, opened at
@@ -77,7 +80,10 @@ function RecapDoor({ firstName, recap }: { firstName: string; recap: FamilyRecap
   );
 }
 
-export default function FamilyTeamClient({ teamName, metaLine, backHref, joined, guardian, leaguePlayers, recap, entries, children }: {
+export default function FamilyTeamClient({
+  teamId, teamName, metaLine, backHref, joined, guardian, leaguePlayers, recap, entries, answers = null, focusEventId = null, children,
+}: {
+  teamId: string;
   teamName: string;
   /** "12–6–2", "2027", "House League 2027". */
   metaLine: string | null;
@@ -92,9 +98,16 @@ export default function FamilyTeamClient({ teamName, metaLine, backHref, joined,
   /** Rep only, resolved server-side through the shared recap gate. */
   recap?: FamilyRecapDoor | null;
   entries: FamilyScheduleEntry[] | null;
+  /** Stage 4b: the account's own children's In / Out / Maybe on this rep team (null = nothing about answers on this page). */
+  answers?: FamilyAnswersView | null;
+  /** Arriving from a reminder (`?event=`): the page opens at that event, its row marked. */
+  focusEventId?: string | null;
   children?: React.ReactNode;
 }) {
   const nextUpRef = useRef<HTMLDivElement | null>(null);
+  const familyAnswers = useFamilyAnswers({ view: answers, teamId, teamName, focusEventId });
+  // The row the page opens at: the reminder's event while it carries an answer row, else Up next.
+  const anchorId = familyAnswers.focusable ? focusEventId : entries?.find(e => e.isNextUp)?.id ?? null;
 
   useEffect(() => {
     // 'auto' rather than 'smooth': the list should already BE at the right place when the family looks at it, not animate
@@ -197,36 +210,46 @@ export default function FamilyTeamClient({ teamName, metaLine, backHref, joined,
               </div>
             );
 
+            const a = familyAnswers.forEntry(entry);
+            const anchor = entry.id === anchorId ? nextUpRef : undefined;
+
             if (entry.isNextUp) {
               const directions = directionsHref(entry.locationAddress);
+              const directionsLink = directions && (
+                <a className={`${styles.rowLink} ${a?.pill ? answerStyles.directions : ''}`} href={directions} target="_blank" rel="noopener noreferrer">
+                  {W.team.directions}
+                </a>
+              );
               return (
-                <div key={entry.id} ref={nextUpRef} className={styles.upNext}>
+                <div key={entry.id} ref={anchor} className={`${styles.upNext} ${a?.marked ? answerStyles.marked : ''}`}>
                   <div className={styles.upNextLabel}>{W.family.upNext}</div>
                   <div className={styles.row}>
                     {body}
-                    {directions && (
-                      <a className={styles.rowLink} href={directions} target="_blank" rel="noopener noreferrer">
-                        {W.team.directions}
-                      </a>
-                    )}
+                    {/* With an answer pill the row's right is the pill's; Directions moves under the row (drawing tab 7). */}
+                    {a?.pill ?? directionsLink}
                   </div>
+                  {a?.pill && directionsLink}
+                  {a?.below}
                 </div>
               );
             }
 
             return (
-              <div key={entry.id}>
+              <div key={entry.id} ref={anchor} className={a?.marked ? answerStyles.marked : undefined}>
                 {index > 0 && <div className={styles.divider} />}
                 <div className={`${styles.row} ${completed ? styles.rowDone : ''}`}>
                   {body}
                   <ScoreCell entry={entry} />
+                  {a?.pill}
                 </div>
+                {a?.below}
               </div>
             );
           })
         )}
       </div>
 
+      {familyAnswers.sheet}
       {children}
     </>
   );

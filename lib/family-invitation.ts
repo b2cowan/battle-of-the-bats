@@ -14,6 +14,7 @@ import { authAccountExistsForEmail } from './auth-account-lookup';
 import { isPlatformAdminEmail } from './platform-auth';
 import { beforeYouJoinWords, guardianConsentText, GUARDIAN_CONSENT_VERSION } from './family-guardian-consent';
 import { FAMILY_INVITATION_WORDS } from './family-invitation-words';
+import { cleanFirstName } from './family-availability-rules';
 import {
   connectables,
   consentJurisdiction,
@@ -643,7 +644,7 @@ export async function inspectInvitation(token: string, user: InvitationUser | nu
  * learns whether to choose a password or enter one — nobody else learns anything.
  */
 export async function invitationEmailCheck(token: string, typed: string): Promise<
-  { match: false } | { match: true; hasAccount: boolean }
+  { match: false } | { match: true; hasAccount: boolean; askName: boolean }
 > {
   if (!GUARDIAN_TIER_ENABLED) return { match: false };
   const inv = await invitationByToken(token);
@@ -652,7 +653,10 @@ export async function invitationEmailCheck(token: string, typed: string): Promis
   if (!inv || invitationState(asRow(inv), new Date().toISOString(), null) !== 'open') return { match: false };
   if (!emailMatches(inv.email, typed)) return { match: false };
   const hasAccount = (await isPlatformAdminEmail(inv.email)) || (await authAccountExistsForEmail(inv.email));
-  return { match: true, hasAccount };
+  // Stage 4b O2: a NEW account is asked its first name only when no sign-up of the club holds one for this address (the name is
+  // never sent to the page: the link opens without a sign-in, and anyone holding it would read it).
+  const askName = !hasAccount && !(await nameOnSignup(inv.org_id, inv.email));
+  return { match: true, hasAccount, askName };
 }
 
 export type AcceptResult =
@@ -757,7 +761,9 @@ export const NEW_ACCOUNT_PASSWORD_MIN = 8;
  */
 export async function acceptWithNewAccount(params: {
   token: string; typedEmail: string; password: string; consentIp: string | null; guardianBox: boolean; consentBox: boolean;
-}): Promise<AcceptResult | { kind: 'account_exists' } | { kind: 'password_short' }> {
+  /** Stage 4b O2: the first name the page asked for (only when the sign-up holds none). */
+  firstName?: string;
+}): Promise<AcceptResult | { kind: 'account_exists' } | { kind: 'password_short' } | { kind: 'name_required' }> {
   assertGuardianTier();
   const inv = await invitationByToken(params.token);
   const state = invitationState(inv ? asRow(inv) : null, new Date().toISOString(), null);
@@ -769,13 +775,16 @@ export async function acceptWithNewAccount(params: {
   const { connect } = await connectablesOf(inv);
   if (connect.length === 0) return { kind: 'state', state: 'no_longer_works' };
 
-  const name = await nameOnSignup(inv.org_id, inv.email);
-  const full = name ? `${name.first} ${name.last}`.trim() : null;
+  // The sign-up's name first (the first parent's); else the first name the page asked for (Stage 4b O2), required then.
+  const typedFirst = cleanFirstName(params.firstName);
+  const name = (await nameOnSignup(inv.org_id, inv.email)) ?? (typedFirst ? { first: typedFirst, last: '' } : null);
+  if (!name) return { kind: 'name_required' };
+  const full = `${name.first} ${name.last}`.trim();
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email: inv.email,
     password: params.password,
     email_confirm: true,
-    user_metadata: name ? { first_name: name.first, last_name: name.last, full_name: full, display_name: full } : {},
+    user_metadata: { first_name: name.first, last_name: name.last, full_name: full, display_name: full },
   });
   if (error || !data.user) {
     // A second submit that raced past the check: the same answer as the check. Only the address-taken codes — Auth answers 422

@@ -1840,6 +1840,66 @@
     "update_rule": null
   },
   {
+    "table_name": "event_availability_answers",
+    "constraint_name": "event_availability_answers_answered_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "answered_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "event_availability_answers",
+    "constraint_name": "event_availability_answers_child_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "child_id",
+    "foreign_table": "org_children",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "event_availability_answers",
+    "constraint_name": "event_availability_answers_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "event_availability_answers",
+    "constraint_name": "event_availability_answers_previous_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "previous_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "event_availability_reminders",
+    "constraint_name": "event_availability_reminders_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "event_availability_reminders",
+    "constraint_name": "event_availability_reminders_reminded_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "reminded_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "family_calendar_feeds",
     "constraint_name": "family_calendar_feeds_pkey",
     "constraint_type": "PRIMARY KEY",

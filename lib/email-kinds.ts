@@ -114,6 +114,7 @@ export const EMAIL_KINDS = {
   // ── family: never logged here ──────────────────────────────────────────────
   family_announcement:                  { klass: 'family', label: 'Team announcement' },
   family_game_update:                   { klass: 'family', label: 'Game update' },
+  family_availability_reminder:         { klass: 'family', label: 'Is your player coming?' },
   family_message:                       { klass: 'family', label: 'Message to a family' },
   family_club_email:                    { klass: 'family', label: 'Club email to families' },
   house_league_placement:               { klass: 'family', label: 'House league placement' },

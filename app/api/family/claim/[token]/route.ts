@@ -52,12 +52,14 @@ export const POST = withObservability(async (req: Request,
     // The third box (GST/HST Stage 6 step 6.3, §20 (5h)): a new account always ticks it — refused BEFORE the account is made.
     const termsRefusal = accountDoorRefusal(body);
     if (termsRefusal) return termsRefusal;
-    const outcome = await acceptWithNewAccount({ token, typedEmail: email, password, consentIp, ...boxes });
+    const firstName = typeof body?.firstName === 'string' ? body.firstName : undefined;
+    const outcome = await acceptWithNewAccount({ token, typedEmail: email, password, consentIp, firstName, ...boxes });
     if (outcome.kind === 'joined' && outcome.userId) {
       await recordDoorAcceptance({ id: outcome.userId, email }, 'family_accept', body);
     }
     if (outcome.kind === 'account_exists') return NextResponse.json({ error: 'account_exists' }, { status: 409 });
     if (outcome.kind === 'password_short') return NextResponse.json({ error: 'password_short' }, { status: 400 });
+    if (outcome.kind === 'name_required') return NextResponse.json({ error: 'name_required' }, { status: 400 });
     if (outcome.kind === 'mismatch') return NextResponse.json({ error: 'email_mismatch', maskedEmail: outcome.maskedEmail }, { status: 409 });
     return answer(outcome);
   }

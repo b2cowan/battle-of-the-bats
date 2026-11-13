@@ -3443,6 +3443,12 @@ export type NotificationEventType =
   // the email half is sent by lib/family-notify.ts so it honours the family opt-out list.
   // TS-union change only (no DB CHECK on event_type).
   | 'family_game_update'
+  // Signed-in family accounts Stage 4b (ask 2): the coach pressed Remind on an event a family has not answered. Reaches FAMILY
+  // accounts with an explicit recipient list, like family_game_update; bell + email (the email through sendFamilyEmail), no push.
+  | 'family_availability_reminder'
+  // Stage 4b (ask 12): a family said Out, or changed an answer in the 48 hours before an event. To the coaches who can mark
+  // attendance on that team. Bell on, email and push off by default; its row is on the coach card of Account → Notifications.
+  | 'family_availability_response'
   // Assistant Coaches Phase 2 — an assistant accepted an invite (→ the head coach) / a head coach
   // requested approval (→ org admins). Bell default on; TS-union change only (no DB CHECK).
   | 'assistant_coach_joined'

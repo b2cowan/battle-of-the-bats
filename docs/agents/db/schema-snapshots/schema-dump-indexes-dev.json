@@ -990,6 +990,46 @@
     "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
   },
   {
+    "tablename": "event_availability_answers",
+    "indexname": "event_availability_answers_by_user_idx",
+    "indexdef": "CREATE INDEX event_availability_answers_by_user_idx ON public.event_availability_answers USING btree (answered_by_user_id) WHERE (answered_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "event_availability_answers",
+    "indexname": "event_availability_answers_child_idx",
+    "indexdef": "CREATE INDEX event_availability_answers_child_idx ON public.event_availability_answers USING btree (child_id)"
+  },
+  {
+    "tablename": "event_availability_answers",
+    "indexname": "event_availability_answers_event_child_uniq",
+    "indexdef": "CREATE UNIQUE INDEX event_availability_answers_event_child_uniq ON public.event_availability_answers USING btree (event_kind, event_id, child_id)"
+  },
+  {
+    "tablename": "event_availability_answers",
+    "indexname": "event_availability_answers_pkey",
+    "indexdef": "CREATE UNIQUE INDEX event_availability_answers_pkey ON public.event_availability_answers USING btree (id)"
+  },
+  {
+    "tablename": "event_availability_answers",
+    "indexname": "event_availability_answers_prev_user_idx",
+    "indexdef": "CREATE INDEX event_availability_answers_prev_user_idx ON public.event_availability_answers USING btree (previous_by_user_id) WHERE (previous_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "event_availability_reminders",
+    "indexname": "event_availability_reminders_by_idx",
+    "indexdef": "CREATE INDEX event_availability_reminders_by_idx ON public.event_availability_reminders USING btree (reminded_by_user_id) WHERE (reminded_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "event_availability_reminders",
+    "indexname": "event_availability_reminders_event_idx",
+    "indexdef": "CREATE INDEX event_availability_reminders_event_idx ON public.event_availability_reminders USING btree (event_kind, event_id, reminded_at DESC)"
+  },
+  {
+    "tablename": "event_availability_reminders",
+    "indexname": "event_availability_reminders_pkey",
+    "indexdef": "CREATE UNIQUE INDEX event_availability_reminders_pkey ON public.event_availability_reminders USING btree (id)"
+  },
+  {
     "tablename": "family_calendar_feeds",
     "indexname": "family_calendar_feeds_live_user_uniq",
     "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_live_user_uniq ON public.family_calendar_feeds USING btree (user_id) WHERE (stopped_at IS NULL)"
@@ -3133,6 +3173,11 @@
     "tablename": "platform_charge_tax_records",
     "indexname": "platform_charge_tax_records_pkey",
     "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_records_pkey ON public.platform_charge_tax_records USING btree (id)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_purchase_email_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_records_purchase_email_idx ON public.platform_charge_tax_records USING btree (paid_at) WHERE ((billing_reason IS NOT NULL) AND (purchase_email_at IS NULL))"
   },
   {
     "tablename": "platform_charge_tax_records",

@@ -31,6 +31,8 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   // preferences UI below (it is not in NOTIFICATION_SECTIONS). The label exists because the
   // bell renders one for every event it displays.
   family_game_update:                'Team schedule update',
+  family_availability_reminder:      'Is your player coming?',
+  family_availability_response:      'Family answers',
   assistant_coach_joined:            'Assistant coach joined',
   assistant_coach_approval_requested: 'Assistant coach awaiting approval',
   playoffs_set:                      'Playoff bracket set',
@@ -124,6 +126,8 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   chat_mention:                      'Someone @mentions you in a tournament chat (always delivered).',
   tryout_offer_response:             'A tryout family accepts or declines an offer via their link — you confirm the roster spot.',
   family_game_update:                'A team you follow as family moves a game, cancels one, or puts one back on.',
+  family_availability_reminder:      'Your child’s coach asked whether your player is coming to an event you haven’t answered.',
+  family_availability_response:      'When a family says Out, or changes an answer in the 48 hours before an event.',
   assistant_coach_joined:            'An assistant coach you invited accepted and joined the team.',
   assistant_coach_approval_requested: 'A head coach invited an assistant coach and it needs admin approval.',
   playoffs_set:                      'A published division’s playoff teams are all known, so its bracket is filled in.',
@@ -478,6 +482,10 @@ export const NOTIFICATION_CATEGORY = {
   club_request_reversed:              'know',
   // A family's own team news — informational, never a decision to make.
   family_game_update:                 'know',
+  // Stage 4b: the coach asking a family (they answer on the team page), and a family's answer reaching the coach. News, not a
+  // decision the bell holds open: the coach's mark is made in the attendance room.
+  family_availability_reminder:       'know',
+  family_availability_response:       'know',
   // A free coach's own notices (TEAM_COACH_EVENTS). News, except the payment reminder: money the coach owes
   // waits under Needs attention until they mark it Done, as action items do in the paid drawer (owner B4,
   // 2026-10-13 — the /design pass's DC7).

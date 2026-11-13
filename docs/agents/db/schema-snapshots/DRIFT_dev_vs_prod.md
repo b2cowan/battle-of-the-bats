@@ -1,20 +1,22 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-12 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-13 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 622 divergence(s)** across dev/prod.
+**⚠️ 673 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 15 | 6 | — |
-| Columns | 237 | 59 | 1 |
-| Indexes | 67 | 26 | 0 |
-| Constraints | 54 | 28 | — |
-| RLS / CHECK | 99 | 26 | 0 (RLS state) |
+| Tables | 17 | 6 | — |
+| Columns | 263 | 59 | 1 |
+| Indexes | 76 | 26 | 0 |
+| Constraints | 60 | 28 | — |
+| RLS / CHECK | 107 | 26 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (15)
+### Only in DEV (17)
 - `bank_check_waiting`
+- `event_availability_answers`
+- `event_availability_reminders`
 - `family_calendar_feeds`
 - `family_invitations`
 - `family_invite_stops`
@@ -39,7 +41,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (237)
+### Only in DEV (263)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -59,6 +61,27 @@
 - `bank_checks.deleted_by`
 - `bank_checks.kind`
 - `bank_checks.on_its_way_cents`
+- `event_availability_answers.answer`
+- `event_availability_answers.answered_at`
+- `event_availability_answers.answered_by_user_id`
+- `event_availability_answers.child_id`
+- `event_availability_answers.created_at`
+- `event_availability_answers.event_id`
+- `event_availability_answers.event_kind`
+- `event_availability_answers.id`
+- `event_availability_answers.note`
+- `event_availability_answers.previous_answer`
+- `event_availability_answers.previous_at`
+- `event_availability_answers.previous_by_user_id`
+- `event_availability_answers.updated_at`
+- `event_availability_reminders.app_only`
+- `event_availability_reminders.event_id`
+- `event_availability_reminders.event_kind`
+- `event_availability_reminders.families`
+- `event_availability_reminders.id`
+- `event_availability_reminders.parents`
+- `event_availability_reminders.reminded_at`
+- `event_availability_reminders.reminded_by_user_id`
 - `family_calendar_feeds.created_at`
 - `family_calendar_feeds.id`
 - `family_calendar_feeds.stopped_at`
@@ -127,6 +150,7 @@
 - `org_public_site_content.mailing_address`
 - `organizations.is_test_organization`
 - `organizations.logo_aspect`
+- `organizations.renewal_reminded_for`
 - `organizations.two_step_board_required_since`
 - `organizations.two_step_coaches_required_since`
 - `organizations.two_step_prompt_closed_at`
@@ -142,6 +166,7 @@
 - `platform_charge_tax_looks.stripe_invoice_id`
 - `platform_charge_tax_looks.why`
 - `platform_charge_tax_records.amount_before_tax_cents`
+- `platform_charge_tax_records.billing_reason`
 - `platform_charge_tax_records.buyer_kind`
 - `platform_charge_tax_records.buyer_name`
 - `platform_charge_tax_records.cad_amount_before_tax_cents`
@@ -173,6 +198,7 @@
 - `platform_charge_tax_records.org_id`
 - `platform_charge_tax_records.paid_at`
 - `platform_charge_tax_records.payout_country`
+- `platform_charge_tax_records.purchase_email_at`
 - `platform_charge_tax_records.refunded_cents`
 - `platform_charge_tax_records.review_note`
 - `platform_charge_tax_records.review_reason`
@@ -233,12 +259,14 @@
 - `rep_document_templates.validity`
 - `rep_roster_players.health_confirmed_at`
 - `rep_roster_players.health_confirmed_by`
+- `rep_teams.family_answers`
 - `second_parent_stops.email`
 - `second_parent_stops.id`
 - `second_parent_stops.org_id`
 - `second_parent_stops.registration_ids`
 - `second_parent_stops.source`
 - `second_parent_stops.stopped_at`
+- `team_workspaces.renewal_reminded_for`
 - `teams.link_replaced_at`
 - `teams.link_version`
 - `tournaments.logo_aspect`
@@ -343,7 +371,7 @@
 - `family_links.rep_team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (67)
+### Only in DEV (76)
 - `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
@@ -352,6 +380,14 @@
 - `bank_checks_deleted_by_idx`
 - `bank_checks_one_live_per_date`
 - `bank_checks_one_live_start`
+- `event_availability_answers_by_user_idx`
+- `event_availability_answers_child_idx`
+- `event_availability_answers_event_child_uniq`
+- `event_availability_answers_pkey`
+- `event_availability_answers_prev_user_idx`
+- `event_availability_reminders_by_idx`
+- `event_availability_reminders_event_idx`
+- `event_availability_reminders_pkey`
 - `family_calendar_feeds_live_user_uniq`
 - `family_calendar_feeds_pkey`
 - `family_calendar_feeds_token_hash_key`
@@ -389,6 +425,7 @@
 - `platform_charge_tax_records_org_idx`
 - `platform_charge_tax_records_period_idx`
 - `platform_charge_tax_records_pkey`
+- `platform_charge_tax_records_purchase_email_idx`
 - `platform_charge_tax_records_stripe_invoice_id_key`
 - `platform_charge_tax_records_user_idx`
 - `platform_credit_note_tax_records_invoice_idx`
@@ -444,13 +481,19 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (54)
+### Only in DEV (60)
 - `bank_check_waiting.bank_check_waiting_added_by_fkey`
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
 - `bank_check_waiting.bank_check_waiting_pkey`
 - `bank_checks.bank_checks_corrected_by_fkey`
 - `bank_checks.bank_checks_deleted_by_fkey`
+- `event_availability_answers.event_availability_answers_answered_by_user_id_fkey`
+- `event_availability_answers.event_availability_answers_child_id_fkey`
+- `event_availability_answers.event_availability_answers_pkey`
+- `event_availability_answers.event_availability_answers_previous_by_user_id_fkey`
+- `event_availability_reminders.event_availability_reminders_pkey`
+- `event_availability_reminders.event_availability_reminders_reminded_by_user_id_fkey`
 - `family_calendar_feeds.family_calendar_feeds_pkey`
 - `family_calendar_feeds.family_calendar_feeds_token_hash_key`
 - `family_calendar_feeds.family_calendar_feeds_user_id_fkey`
@@ -534,7 +577,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (99)
+### CHECK only in DEV (107)
 - `bank_check_waiting.bank_check_waiting_added_shape`
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
@@ -544,6 +587,12 @@ _none_
 - `bank_checks.bank_checks_corrected_shape`
 - `bank_checks.bank_checks_deleted_shape`
 - `bank_checks.bank_checks_kind`
+- `event_availability_answers.event_availability_answers_answer_check`
+- `event_availability_answers.event_availability_answers_kind_check`
+- `event_availability_answers.event_availability_answers_note_check`
+- `event_availability_answers.event_availability_answers_previous_check`
+- `event_availability_reminders.event_availability_reminders_counts_check`
+- `event_availability_reminders.event_availability_reminders_kind_check`
 - `family_invitations.family_invitations_email_check`
 - `family_invitations.family_invitations_source_check`
 - `family_invite_stops.family_invite_stops_email_check`
@@ -577,6 +626,7 @@ _none_
 - `platform_charge_tax_looks.platform_charge_tax_looks_shape`
 - `platform_charge_tax_looks.platform_charge_tax_looks_stripe_invoice_id_check`
 - `platform_charge_tax_looks.platform_charge_tax_looks_why_check`
+- `platform_charge_tax_records.platform_charge_tax_records_billing_reason_check`
 - `platform_charge_tax_records.platform_charge_tax_records_buyer_kind_check`
 - `platform_charge_tax_records.platform_charge_tax_records_buyer_name_check`
 - `platform_charge_tax_records.platform_charge_tax_records_buyer_shape`
@@ -632,6 +682,7 @@ _none_
 - `platform_refunds.platform_refunds_invoice_id_chk`
 - `platform_refunds.platform_refunds_note_needs_invoice_chk`
 - `rep_document_templates.rep_document_templates_validity_check`
+- `rep_teams.rep_teams_family_answers_check`
 - `second_parent_stops.second_parent_stops_email_check`
 - `teams.teams_link_version_check`
 

@@ -8,7 +8,7 @@ import { invitationEmailCheck } from '@/lib/family-invitation';
 /**
  * The accept page's email-first step (Signed-in family accounts Stage 4a, Part 4; drawing tab 2): "Type the email this
  * invitation was sent to". No address rides in the link (Stage 2 ruling 2), so the page asks, and the server compares — the page
- * never receives the full address. Answers { match: false }, or { match: true, hasAccount } so the page shows "Choose a password"
+ * never receives the full address. Answers { match: false }, or { match: true, hasAccount, askName } so the page shows "Choose a password"
  * or "Your password". Throttled per IP (the family form buckets) and per invitation.
  */
 export const POST = withObservability(async (req: Request,

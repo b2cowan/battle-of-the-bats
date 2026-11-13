@@ -74,6 +74,8 @@ export const EVENT_ICONS: Record<string, string> = {
   // way the three maps in lib/notification-labels.ts do — a new event type falls back to the
   // generic bell instead of failing the build. Add here whenever one is added there.
   family_game_update:                '🗓️',
+  family_availability_reminder:      '🙋',
+  family_availability_response:      '🙋',
   // A free coach's own notices (Free coach header parity, 2026-10-13).
   team_coach_registered:             '📋',
   team_coach_accepted:               '✅',

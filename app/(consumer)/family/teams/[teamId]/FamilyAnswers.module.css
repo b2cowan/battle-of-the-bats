@@ -1,0 +1,255 @@
+/* "Families say if they're coming" on the parent's team page (Signed-in family accounts Stage 4b, Part 3; drawing tab 7).
+   The pill sits in a 44 px tap area; In green and Maybe amber (the page's own chip colours); Out plain ink with an outline, so a
+   parent's own answer never reads as an error; Answer is the ink button the reminder email names. */
+
+.hit {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hit:disabled {
+  cursor: default;
+}
+
+.hit:focus-visible {
+  outline: 2px solid var(--home-olive);
+  outline-offset: 2px;
+  border-radius: var(--home-radius-sm);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--home-radius-pill);
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.pillIn { background: rgba(var(--home-win-rgb), 0.12); color: var(--home-win); }
+.pillMaybe { background: rgba(var(--home-amber-rgb), 0.14); color: var(--home-amber); }
+.pillOut { background: transparent; color: var(--home-ink); box-shadow: inset 0 0 0 1px var(--home-line-strong); }
+.pillAsk { background: var(--home-ink); color: var(--home-paper); }
+.pillClosed { background: var(--home-fill); color: var(--home-dim); }
+
+/* Two children on one team: one line per child under the row. */
+.kid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 0.15rem;
+  font-size: 0.82rem;
+  color: var(--home-ink);
+}
+
+.kid b {
+  font-weight: 600;
+}
+
+.line {
+  margin: 0 0 0.35rem;
+  padding: 0 0.15rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--home-dim);
+}
+
+/* Arriving from a reminder: the event's row is marked, the way Up next is. */
+.marked {
+  border-radius: var(--home-radius-sm);
+  box-shadow: inset 0 0 0 2px rgba(var(--home-olive-rgb), 0.45);
+  scroll-margin-top: 5rem;
+}
+
+.directions {
+  display: block;
+  padding: 0 0.15rem 0.2rem;
+}
+
+/* ── The sheet ─────────────────────────────────────────────────────────── */
+
+.sheet {
+  border: 0;
+  border-top: 1px solid var(--home-line-strong);
+  border-radius: 16px 16px 0 0;
+  background: var(--home-card);
+  color: var(--home-ink);
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100dvh - 2rem);
+  margin: auto auto 0;
+  padding: 0.5rem 1rem 1rem;
+  box-shadow: var(--home-shadow);
+}
+
+.sheet::backdrop {
+  background: var(--home-scrim);
+}
+
+@media (min-width: 640px) {
+  .sheet {
+    margin: auto;
+    border: 1px solid var(--home-line);
+    border-radius: var(--home-radius);
+    width: min(440px, calc(100vw - 2rem));
+  }
+}
+
+.sheetBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.grab {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--home-line-strong);
+  margin: 0 auto 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .grab { display: none; }
+}
+
+.sheetHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sheetTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.sheetSub {
+  margin: 0.1rem 0 0;
+  font-size: 0.8rem;
+  color: var(--home-dim);
+}
+
+.close {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0 0.6rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--home-ink-soft);
+  background: transparent;
+  border: 1px solid var(--home-line-strong);
+  border-radius: var(--home-radius-sm);
+  cursor: pointer;
+}
+
+.soft {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--home-ink-soft);
+}
+
+.choice {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--home-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.choice:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.choiceOn {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+
+.choiceIcon {
+  width: 18px;
+  text-align: center;
+  flex: none;
+}
+
+.tick {
+  margin-left: auto;
+  font-weight: 800;
+}
+
+.noteLabel {
+  /* visually hidden: the placeholder carries the words the drawing shows; the label is for a screen reader */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.note {
+  min-height: 44px;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: var(--home-radius-sm);
+  background: var(--home-paper);
+  color: var(--home-ink);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.note:focus-visible {
+  outline: 2px solid var(--home-olive);
+  outline-offset: 1px;
+}
+
+.hint {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--home-dim);
+}
+
+.status {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--home-dim);
+  min-height: 1.1em;
+}
+
+.error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--home-live);
+}

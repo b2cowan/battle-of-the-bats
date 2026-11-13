@@ -46,6 +46,11 @@ export const FAMILY_INVITATION_WORDS = {
     newPasswordLabel: 'Choose a password',
     newPasswordHint: 'At least 8 characters',
     passwordTooShort: 'Choose a password of at least 8 characters.',
+    /** Stage 4b O2 (owner 2026-11-13): asked only when the sign-up holds no name for this address (a second parent, most rep
+     *  invitees). The other parent and the coaches see it beside an answer. */
+    firstNameLabel: 'Your first name',
+    firstNameHint: 'Your child’s coaches and the other parent see it beside your answers.',
+    firstNameRequired: 'Type your first name.',
     existingPasswordLabel: 'Your password',
     existingPasswordHint: 'You already have a FieldLogicHQ account with this email.',
     forgotPassword: 'Forgot your password?',

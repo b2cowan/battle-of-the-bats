@@ -2809,6 +2809,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_teams.family_calendar_token_hash -->
 **`family_calendar_token_hash`** (text, nullable, unique-partial; **mig 215**) — ⚠ **RETIRING: dropped by mig 324** (Club Tier Stage 6d, A6 — written 2026-10-11, held on production until the promote that ships the 6d code, applied LAST; **dropped on dev 2026-10-11** with 6d's feed commit). It was the TEAM-WIDE calendar feed token, meant to be handed out at `public_link`, and it never was: its mint (`ensureTeamCalendarToken`) made a NEW token on every call, so no page could show it without stopping every subscriber (S6D-02) — 0 rows ever held one, on both databases. **Nothing reads or writes it after 6d** (the mint, its resolver and the family feed's team-wide branch are gone; `tests/unit/club-stage6d-feeds-guard.test.ts`). The team's public feed is the team page's own address (`/{org}/teams/{team}/calendar`, no secret — `lib/public-team-schedule.ts`). Distinct from `family_links.calendar_token_hash`, the per-FAMILY feed, which stays.
 
+<!-- dict:col:rep_teams.family_answers -->
+**`family_answers`** (text, NOT NULL, default `'off'`; CHECK `off|games|games_and_practices`; **mig 476**, Signed-in family accounts Stage 4b ask 1) — the team's one switch **"Families say if they're coming"** (Team settings → Sharing, under Schedule visibility). When on, a connected parent answers In / Out / Maybe on **every upcoming event it covers**: `games` = the product's game list (`COACH_GAME_EVENT_TYPES`: league games incl. scrimmages, tournament games); `games_and_practices` adds `practice`. The tournament container and team events are never asked. Rep teams only (house league is a later stage). ⚠ Meaningless while the guardian tier is off (every reader checks the tier first). Turning it off hides the answers; they are kept (`event_availability_answers`) and come back if it is turned on again this season.
+
 ### `rep_team_groups`
 <!-- dict:table:rep_team_groups -->
 
@@ -6214,6 +6217,51 @@ A mismatched claim of a coach-sent invite (mig 220) still queues as `pending_app
 <!-- dict:col:family_invite_stops.email -->
 <!-- dict:col:family_invite_stops.created_at -->
 **`id` / `org_id` / `email` / `created_at`** (uuid PK / uuid → `organizations` CASCADE / text, lowercased and trimmed / timestamptz) — unique `(org_id, email)`. ⚠ Keyed by the org: a standalone coach team that later moves into a club leaves its stops behind (`team-move-coverage` STAYS) — see the Stage 4a build prompt's Progress note.
+
+## `event_availability_answers`
+<!-- dict:table:event_availability_answers -->
+
+**Purpose (mig 476, Signed-in family accounts Stage 4b, plan `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` Stage 4 "RULED 2026-11-13"):** a **family's** answer to "is your player coming?" for one child on one event: In / Out / Maybe and an optional one-line note. ⚠ **It is NOT the attendance book.** `rep_team_event_attendance` stays the coach's alone (the coach's PATCH is its only writer); a coach copies answers in with a tap ("Use N family answers", ask 3). No family write ever reaches the book. Service-role only (RLS on, no policies); every write goes through the family route, which re-derives reach from the signed-in account (`getFamilyReach`) on every write.
+
+<!-- dict:col:event_availability_answers.id -->
+<!-- dict:col:event_availability_answers.event_kind -->
+<!-- dict:col:event_availability_answers.event_id -->
+<!-- dict:col:event_availability_answers.child_id -->
+**`id` / `event_kind` / `event_id` / `child_id`** (uuid PK / text CHECK `rep_event|league_game|league_practice` / uuid, **no FK** / uuid → `org_children` CASCADE) — which event and which child. `rep_event` = `rep_team_events.id` (the only kind written in 4b); `league_game` / `league_practice` are **reserved** for the house-league stage (ask 4), so the key is `(event_kind, event_id)`, never a bare id (the two kinds keep separate id spaces). ⚖ **No `org_id`, deliberately**: a row is reached only through its event and child, so a team that moves into a club carries its answers with nothing to re-point (`move_team_into_club` re-points the events), and `team-move-coverage` has no decision to make. The answer is about the **child**, as the connection is (Stage 4 ruling 3). UNIQUE `(event_kind, event_id, child_id)`: **latest wins, updated in place** (ask 6). A deleted rep event takes its answers (trigger `rep_team_events_drop_availability`, AFTER DELETE on `rep_team_events`, also on a cascaded delete).
+
+<!-- dict:col:event_availability_answers.answer -->
+<!-- dict:col:event_availability_answers.note -->
+**`answer`** (text NOT NULL, CHECK `in|out|maybe`) / **`note`** (text, nullable, CHECK 1–200 characters) — what the family said. There is no `maybe` in the attendance book, and "Use family answers" copies Maybe as nothing (the player stays Not marked). The note is one short line, plain text, trimmed by the server. **A write replaces answer and note wholesale**, so a second parent's change clears the first parent's note (ask 6). ⚖ **Who reads it:** the coaches who can mark attendance (the `attendance` capability) read answers, notes, who and when; a parent reads their own note, and only the other parent's answer, first name, day and **that** a note exists (ask 5); staff without `attendance` see counts only (ask 11). **Retention (ask 15):** the note is cleared 30 days after its event (the purge), and on every answer a parent gave when that parent's connection ends (their leave, a club removal, a stop).
+
+<!-- dict:col:event_availability_answers.answered_by_user_id -->
+<!-- dict:col:event_availability_answers.answered_at -->
+<!-- dict:col:event_availability_answers.previous_answer -->
+<!-- dict:col:event_availability_answers.previous_by_user_id -->
+<!-- dict:col:event_availability_answers.previous_at -->
+**`answered_by_user_id` / `answered_at`** (uuid → `auth.users` SET NULL / timestamptz NOT NULL) — the parent who gave the current answer, and when ("Priya, Tue"; the coach's warning compares `answered_at` with the coach's mark time and the lineup's saved time). **`previous_answer` / `previous_by_user_id` / `previous_at`** — the one-step history ask 6 needs ("earlier: In (Dev, Mon)"): written **only when the answer changed** (re-sending the same answer changes the note only). Indexes on both user columns serve a leaving parent's note clear-out.
+
+<!-- dict:col:event_availability_answers.created_at -->
+<!-- dict:col:event_availability_answers.updated_at -->
+**`created_at` / `updated_at`** (timestamptz) — row bookkeeping; `updated_at` is code-maintained (and set by the purge).
+
+**Retention (ask 15, O4 ruled 2026-11-13):** `event_availability_purge()` (SECURITY DEFINER, service role only; nightly by mig 477's pg_cron job `family-answers-purge`, 08:35 GMT) clears `note` 30 days after the event (its end, else its start) and **deletes the answers of a season whose LAST event is more than 60 days ago, closed or not** (no rep season stores a close date; adding a later event moves the clock). It never touches the coach's attendance book. Proved by `tests/sql/family-availability-fixture.sql` (rolled back, 7/7 on dev 2026-11-13).
+
+## `event_availability_reminders`
+<!-- dict:table:event_availability_reminders -->
+
+**Purpose (mig 476, Stage 4b ask 2):** the **Remind** log: one row per send, so "once per event per 24 hours for the whole staff" is a database fact. Service-role only.
+
+<!-- dict:col:event_availability_reminders.id -->
+<!-- dict:col:event_availability_reminders.event_kind -->
+<!-- dict:col:event_availability_reminders.event_id -->
+<!-- dict:col:event_availability_reminders.reminded_at -->
+<!-- dict:col:event_availability_reminders.reminded_by_user_id -->
+**`id` / `event_kind` / `event_id` / `reminded_at` / `reminded_by_user_id`** (uuid PK / text, same CHECK as the answers / uuid, no FK / timestamptz NOT NULL default now() / → `auth.users` SET NULL) — which event was reminded, when, by which coach. ⚠ **Written only by `event_availability_remind_claim(kind, event, by)`** (SECURITY DEFINER, service role only): it takes the event's transaction-scoped advisory lock, refuses (`claimed = false`, with the last `reminded_at`) when a row from the last 24 hours exists, and inserts otherwise. Two coaches pressing at once: the second waits and is refused. The send happens AFTER the claim; a send that fails still used the slot (the coach is told).
+
+<!-- dict:col:event_availability_reminders.families -->
+<!-- dict:col:event_availability_reminders.parents -->
+<!-- dict:col:event_availability_reminders.app_only -->
+**`families` / `parents` / `app_only`** (integer NOT NULL default 0, CHECK ≥ 0) — what the send reached, as **counts, never who**: families reminded, parents reached, parents who got the app note only (their email is off for the team). Written after the send. Deleted with the season by the same purge rule, and with a deleted event.
 
 ## `family_consents`
 <!-- dict:table:family_consents -->

@@ -19,6 +19,8 @@ import { FAMILY_HOME_WORDS as W } from '@/lib/family-home-words';
 import FamilyCalendarCard from '../../_parts/FamilyCalendarCard';
 import { FamilyFoot, SignupRow } from '../../_parts/FamilyRows';
 import { getSignedInUser } from '@/lib/two-step-session';
+import { readFamilyAnswers } from '@/lib/family-availability';
+import { isUuid } from '@/lib/utils';
 
 /**
  * /family/teams/[teamId] — a connected parent's view of one of their children's teams, either kind (Signed-in family accounts
@@ -66,10 +68,10 @@ function Quiet({ title, body, action }: { title: string; body: string; action: {
 
 export default async function FamilyTeamPage({ params, searchParams }: {
   params: Promise<{ teamId: string }>;
-  searchParams: Promise<{ joined?: string }>;
+  searchParams: Promise<{ joined?: string; event?: string }>;
 }) {
   if (!GUARDIAN_TIER_ENABLED) notFound();
-  const [{ teamId }, { joined }] = await Promise.all([params, searchParams]);
+  const [{ teamId }, { joined, event }] = await Promise.all([params, searchParams]);
 
   const supabase = await createClient();
   const user = await getSignedInUser(supabase);
@@ -123,9 +125,11 @@ export default async function FamilyTeamPage({ params, searchParams }: {
     }
   }
 
-  const [calendarUrl, connected] = await Promise.all([
+  const [calendarUrl, connected, answers] = await Promise.all([
     onlyTeam ? familyFeedUrl(user.id, canonicalAppOrigin()) : Promise.resolve(null),
     connectedLines(user.id, childrenHere),
+    // Stage 4b: the account's OWN children's In / Out / Maybe (rep only; null while the coach's switch is off).
+    shown ? readFamilyAnswers({ userId: user.id, teamId, kind: team.kind, children: childrenHere, entries: shown.entries }) : Promise.resolve(null),
   ]);
   const signups = home.signups.filter(s => s.childIds.some(id => team.childIds.includes(id)));
 
@@ -137,6 +141,7 @@ export default async function FamilyTeamPage({ params, searchParams }: {
   return (
     <Shell>
       <FamilyTeamClient
+        teamId={teamId}
         teamName={teamLine}
         metaLine={metaLine}
         backHref={onlyTeam ? null : FAMILY_HOME_PATH}
@@ -145,6 +150,8 @@ export default async function FamilyTeamPage({ params, searchParams }: {
         leaguePlayers={team.kind === 'league' ? team.children.map(firstName => ({ firstName, division: team.divisionName })) : null}
         recap={recapDoor}
         entries={shown ? shown.entries : null}
+        answers={answers}
+        focusEventId={typeof event === 'string' && isUuid(event) ? event : null}
       >
         {onlyTeam && <FamilyCalendarCard initialUrl={calendarUrl} />}
         {signups.map(s => <SignupRow key={s.registrationId} row={s} />)}

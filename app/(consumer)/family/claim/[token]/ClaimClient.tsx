@@ -139,6 +139,9 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // Stage 4b O2: asked only when the server says the sign-up holds no name for this address (a new account only).
+  const [askName, setAskName] = useState(false);
+  const [firstName, setFirstName] = useState('');
   const [guardianBox, setGuardianBox] = useState(false);
   const [consentBox, setConsentBox] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -171,6 +174,7 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
     if (status === 429) return setError(W.tooMany);
     if (data.error === 'consent_required') return setError(W.boxesRequired);
     if (data.error === 'password_short') return setError(W.passwordTooShort);
+    if (data.error === 'name_required') { setAskName(true); return setError(W.firstNameRequired); }
     if (data.error === 'email_mismatch') return setError(W.emailNoMatch(maskedEmail));
     if (data.error === 'account_exists') { setStep('existing'); setPassword(''); return setError(W.accountExists); }
     if (status === 404 || data.error === 'another_email') { reloadFromTop(); return; }
@@ -187,6 +191,7 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
       if (!res.ok) return setError(W.failed);
       if (data.match !== true) return setError(W.emailNoMatch(maskedEmail));
       setStep(data.hasAccount === true ? 'existing' : 'new');
+      setAskName(data.hasAccount !== true && data.askName === true);
     } catch {
       setError(W.failed);
     } finally {
@@ -203,7 +208,10 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
     try {
       if (!signedIn && step === 'new') {
         if (password.length < 8) return setError(W.passwordTooShort);
-        const { res, data } = await post(`/api/family/claim/${token}`, { mode: 'new', email, password, guardianBox, consentBox, ...terms.fields });
+        if (askName && !firstName.trim()) return setError(W.firstNameRequired);
+        const { res, data } = await post(`/api/family/claim/${token}`, {
+          mode: 'new', email, password, guardianBox, consentBox, ...(askName ? { firstName } : {}), ...terms.fields,
+        });
         if (!res.ok) return refused(res.status, data);
         // The account exists and has joined; this signs the browser in to it, then opens the family page.
         const created = await signIn(email, password, { next: String(data.next ?? '/family') });
@@ -266,6 +274,12 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
               {W.otherEmail}
             </button>
           </div>
+          {step === 'new' && askName && (
+            <Field id="claim-first-name" label={W.firstNameLabel} hint={W.firstNameHint}>
+              <input id="claim-first-name" className={accountForm.input} type="text" autoComplete="given-name" maxLength={50}
+                aria-describedby="claim-first-name-hint" value={firstName} onChange={e => setFirstName(e.target.value)} required />
+            </Field>
+          )}
           <PasswordField id="claim-password" value={password} onChange={setPassword} showName="password"
             purpose={step === 'new' ? 'create' : 'current'} label={step === 'new' ? W.newPasswordLabel : W.existingPasswordLabel} />
           {step === 'existing' && (
@@ -314,7 +328,7 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
 
         {error && <p className={styles.error} role="alert">{error}</p>}
         <div className={styles.acceptActions}>
-          <button type="submit" className={accountForm.primary} disabled={busy || !guardianBox || !consentBox || (showTerms && !terms.ticked) || (!signedIn && !password)}>
+          <button type="submit" className={accountForm.primary} disabled={busy || !guardianBox || !consentBox || (showTerms && !terms.ticked) || (!signedIn && !password) || (!signedIn && step === 'new' && askName && !firstName.trim())}>
             {busy ? W.joining : words.button}
           </button>
         </div>
