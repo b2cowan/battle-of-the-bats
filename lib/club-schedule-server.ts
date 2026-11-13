@@ -136,6 +136,10 @@ export function stepRefusal(r: { code?: string; teamId?: string; left?: number; 
     case 'already_final': return refusal(409, 'already_final', R.alreadyFinal);
     case 'not_final': return refusal(409, 'not_final', R.notFinal);
     case 'just_sent': return refusal(409, 'just_sent', R.justSent);
+    // A final schedule's first bill, made later (mig 481): what its one step refuses.
+    case 'already_billed': return refusal(409, 'already_billed', R.billAlready);
+    case 'changes_waiting': return refusal(409, 'changes_waiting', R.billChangesWaiting);
+    case 'asks_waiting': return refusal(409, 'asks_waiting', R.billAsksWaiting);
     case 'season_closed': return refusal(409, 'season_closed', R.seasonClosed(r.teamId ? teamName(r.teamId) : 'A team'), { teamId: r.teamId });
     case 'year_closed': return refusal(409, 'year_closed', R.billYearClosed);
     case 'over_line': return refusal(409, 'over_line', R.overLine(Number(r.left ?? 0)), { left: r.left });
@@ -959,7 +963,7 @@ const PLANS: readonly PaymentPlan[] = ['one', 'monthly', 'two_months', 'dates'];
  *  time (or none — then the amount is required), the part the teams pay (or the whole time's price), the payments. */
 export async function readBill(orgId: string, raw: unknown): Promise<{ ok: true; value: BillTerms | null } | Refused> {
   if (raw === null) return { ok: true, value: null };
-  if (!raw || typeof raw !== 'object') return no('bad_bill', 'Fill in the bill again.');
+  if (!raw || typeof raw !== 'object') return no('bad_bill', R.billAgain);
   const b = raw as Record<string, unknown>;
   const plan = b.plan as PaymentPlan;
   if (!PLANS.includes(plan)) return no('bad_plan', 'Choose how the teams pay.');
@@ -978,7 +982,7 @@ export async function readBill(orgId: string, raw: unknown): Promise<{ ok: true;
   if (given && amount === null) return no('bad_amount', 'The amount must be above zero.');
   const lineId = isUuid(b.lineId) ? b.lineId : null;
   const permitId = isUuid(b.permitId) ? b.permitId : null;
-  if ((b.lineId && !lineId) || (b.permitId && !permitId)) return no('bad_bill', 'Fill in the bill again.');
+  if ((b.lineId && !lineId) || (b.permitId && !permitId)) return no('bad_bill', R.billAgain);
   const [line, permit] = await Promise.all([
     lineId ? supabaseAdmin.from('org_budget_lines').select('id, budget_items ( direction )').eq('id', lineId).eq('org_id', orgId).maybeSingle() : null,
     permitId ? readPermitTimes(orgId, { ids: [permitId] }) : null,

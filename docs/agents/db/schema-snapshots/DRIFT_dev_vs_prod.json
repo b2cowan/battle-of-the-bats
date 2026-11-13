@@ -1,17 +1,21 @@
 {
   "generated": "2026-11-13",
-  "total": 674,
+  "total": 675,
   "counts": {
     "tables": 23,
     "columns": 324,
     "indexes": 102,
     "constraints": 88,
-    "rls": 137
+    "rls": 138
   },
   "items": [
     {
       "key": "check:changed:child_match_rejections.child_match_rejections_door_check",
       "sig": "(door = ANY (ARRAY['single_add'::text, 'paste_list'::text, 'tryout_accept'::text, 'children_queue'::text, 'split'::text])) :: (door = ANY (ARRAY['single_add'::text, 'paste_list'::text, 'tryout_accept'::text]))"
+    },
+    {
+      "key": "check:changed:club_schedule_sends.club_schedule_sends_kind_check",
+      "sig": "(kind = ANY (ARRAY['review'::text, 'final'::text, 'changes'::text, 'bill'::text])) :: (kind = ANY (ARRAY['review'::text, 'final'::text, 'changes'::text]))"
     },
     {
       "key": "check:changed:family_links.family_links_role_player_ck",

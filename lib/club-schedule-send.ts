@@ -28,11 +28,11 @@ import {
 } from './club-schedule-bill';
 import {
   SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, changeLine, changesEmail, houseLeagueUse, patternLine,
-  placeWords, teamEmail, unreachableSentence, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
+  placeWords, teamEmail, unreachableSentence, billEmail, moneyCents, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
 } from './club-schedule-words';
 import {
-  billSlotsOf, computeBill, liveSlots, readClubTeams, readPrices, stepRefusal, teamNamer,
-  type ClubTeam, type LoadedSchedule, type SchedulerCtx,
+  billSlotsOf, computeBill, liveSlots, readBill, readClubTeams, readPrices, stepRefusal, teamNamer,
+  type BillTerms, type ClubTeam, type LoadedSchedule, type SchedulerCtx,
 } from './club-schedule-server';
 import type { NotificationEventType } from './types';
 import { HOUSE_LEAGUE, teamsOnly } from './club-schedule-holders';
@@ -76,7 +76,8 @@ import { readHouseholds, sendPracticeChangeNotices, type Household } from './clu
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-export type SendKind = 'review' | 'final' | 'changes';
+/** `bill`: a FINAL schedule's first bill, made later (mig 481) — it bills and tells coaches; nothing on a schedule moves. */
+export type SendKind = 'review' | 'final' | 'changes' | 'bill';
 
 export interface Person { userId: string; name: string | null; email: string; isHeadCoach: boolean }
 
@@ -415,7 +416,7 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
   const gameDivision = new Map(gameDivisions.map(d => [d.id, d]));
   // Time house league came to hold since the last send — a slot made since, or given to house league since (a hand drag
   // on the grid swaps holders, it makes no slot) — is the only place a moved use can have gone (/review 2026-10-27).
-  const [{ told }, made, held] = await Promise.all([
+  const [{ practicesTold: told }, made, held] = await Promise.all([
     lastSends(c.orgId, c.loaded.row.id),
     fetchAllIn<{ id: string; created_at: string }>(slotIds, (ch, a, b) => supabaseAdmin
       .from('club_schedule_slots').select('id, created_at').eq('org_id', c.orgId).in('id', ch).order('id').range(a, b)),
@@ -638,16 +639,49 @@ async function lastSends(orgId: string, scheduleId: string) {
   const sends = await fetchAll<{ id: string; kind: SendKind; sent_at: string; sent_by: string | null; team_values: Record<string, number> }>((a, b) => supabaseAdmin
     .from('club_schedule_sends').select('id, kind, sent_at, sent_by, team_values').eq('org_id', orgId).eq('schedule_id', scheduleId)
     .not('landed_at', 'is', null).order('sent_at', { ascending: false }).range(a, b));
-  const told = sends.find(s => s.kind === 'final' || s.kind === 'changes') ?? null;
-  return { last: sends[0] ?? null, told, review: sends.find(s => s.kind === 'review') ?? null };
+  // A late bill's row carries the baseline too (its `team_values`): the next Send the changes measures from what it billed.
+  const told = sends.find(s => s.kind === 'final' || s.kind === 'changes' || s.kind === 'bill') ?? null;
+  // The last send that told the teams their PRACTICES: house league's "new since the last send" cutoff is this, never a late
+  // bill's (a league admin's hand-out sets no `changed_since_sent`, so time handed to house league between Finalize and a
+  // late bill must still read as new at the next Send the changes).
+  const practicesTold = sends.find(s => s.kind === 'final' || s.kind === 'changes') ?? null;
+  return { last: sends[0] ?? null, told, practicesTold, review: sends.find(s => s.kind === 'review') ?? null };
 }
 
 // ── The preview ──────────────────────────────────────────────────────────────────────────────────
 
-export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKind, opts: { replyBy?: string | null } = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> }; lost?: Map<string, LostTime>; half?: LeagueHalf | null }> {
+export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kind: SendKind, opts: { replyBy?: string | null; bill?: unknown } = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> }; lost?: Map<string, LostTime>; half?: LeagueHalf | null; billTerms?: BillTerms | null }> {
+  // ⚖ A FINAL SCHEDULE'S FIRST BILL, MADE LATER (mig 481): its terms ride with the REQUEST, not the schedule — nothing is
+  // stored until the send lands, so a window closed halfway leaves nothing half-billed. The schedule is read as if it
+  // carried them, so the bill is worked out by the one `computeBill` Finalize uses.
+  const blockers: SendPreview['blockers'] = [];
+  let loaded = asked;
+  let billTerms: BillTerms | null = null;
+  if (kind === 'bill') {
+    if (!sctx.canMoney) blockers.push({ code: 'bill_money', error: R.billMoney });
+    else {
+      const read = await readBill(sctx.ctx.org.id, opts.bill ?? null);
+      if (!read.ok) blockers.push({ code: read.code, error: read.error });
+      else if (!read.value) blockers.push({ code: 'bad_bill', error: R.billAgain });
+      else {
+        billTerms = read.value;
+        loaded = { ...asked, row: { ...asked.row, bill_line_id: billTerms.lineId, bill_permit_id: billTerms.permitId, bill_amount: billTerms.amount, bill_plan: billTerms.plan, bill_first_due: billTerms.firstDue, bill_dates: billTerms.dates } };
+      }
+    }
+  }
   const [c, { last, told }] = await Promise.all([contextFor(sctx, loaded), lastSends(sctx.ctx.org.id, loaded.row.id)]);
   const row = loaded.row;
-  const blockers: SendPreview['blockers'] = [];
+  if (kind === 'bill') {
+    if (asked.row.state !== 'final') blockers.push({ code: 'not_final', error: R.billNotFinal });
+    else if (asked.row.allocation_id || asked.row.bill_plan) blockers.push({ code: 'already_billed', error: R.billAlready });
+    else {
+      if (asked.row.changed_since_sent) blockers.push({ code: 'changes_waiting', error: R.billChangesWaiting });
+      const { count, error } = await supabaseAdmin.from('club_schedule_hand_backs').select('id', { count: 'exact', head: true })
+        .eq('org_id', c.orgId).eq('schedule_id', row.id).eq('state', 'waiting');
+      if (error) throw error;
+      if (count) blockers.push({ code: 'asks_waiting', error: R.billAsksWaiting });
+    }
+  }
   // "Last sent … by …".
   const nameOf = await resolvePersonNamer(c.orgId, [last?.sent_by]);
   const teamName = teamNamer(c.teams);
@@ -658,7 +692,10 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
   if (kind === 'changes' && row.state !== 'final') blockers.push({ code: 'not_final', error: R.notFinal });
 
   // The bill now, and the money it settles.
-  const bill = kind === 'changes' ? null : computeBill(row, billSlotsOf(c.slots, c.assignments), c.fullHour, c.teams.map(t => t.id));
+  // A late bill is worked out only from the terms the request carried (a money reader's, validated above): without them the
+  // stored row's bill — a draft's staged one — would be priced for a reader who may not see money, and its total said in the
+  // statement the GET returns whole.
+  const bill = kind === 'changes' || (kind === 'bill' && !billTerms) ? null : computeBill(row, billSlotsOf(c.slots, c.assignments), c.fullHour, c.teams.map(t => t.id));
   let splits: TimeSplit[] | undefined, rate: number | null = null, teamValues: Record<string, number> | undefined;
   if (bill) {
     const total = bill.shares?.totalCents ?? 0;
@@ -674,12 +711,25 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
       splits = timeSplits({ slots: bill.billSlots, shares: bill.shares, periods: bill.periods, seasons, priced: bill.priced });
       rate = bill.shares.rate;
       teamValues = Object.fromEntries(bill.shares.shares);
-    } else if (kind === 'final' && !c.fullHour && row.bill_amount == null) blockers.push({ code: 'bill_no_price', error: R.billNoPrice });
+      if (kind === 'bill') {
+        // ⚖ THE BASELINE OF A LATE BILL counts the time a team already handed back as part of its measure (as Send the
+        // changes measures a team it touches). The bill prices what each team holds now, so a Sunday handed back before it
+        // is not billed — and without this, the next Send the changes would read that Sunday as time GAINED and bill it.
+        // A team that handed back ALL its time has no share but is measured, so it joins the baseline too
+        // (`valuesAfterChanges`, as Send the changes builds the next one): left out, it would be "new to the bill" then.
+        const measured = await withHandedBack(c.orgId, row.id, bill.priced, c);
+        const touched = new Set([...measured].filter(([teamId, minutes]) => minutes !== (bill.priced.get(teamId) ?? 0)).map(([teamId]) => teamId));
+        if (touched.size) teamValues = Object.fromEntries(valuesAfterChanges(teamValues, sharesAtRate(measured, bill.shares.rate, c.teams.map(t => t.id)), touched));
+      }
+    } else if ((kind === 'final' || kind === 'bill') && !c.fullHour && row.bill_amount == null) blockers.push({ code: 'bill_no_price', error: R.billNoPrice });
   }
 
   // Seasons (Ask 15): a slot lands on the team's running season; a team without one can't take one.
   if (kind === 'final') {
     for (const t of scheduled) if (!t.season) blockers.push({ code: 'season_closed', error: R.seasonClosed(t.name), teamId: t.id });
+  } else if (kind === 'bill') {
+    // Only a team with a share is billed; its running season carries the bill's payments.
+    for (const t of scheduled) if (!t.season && teamValues?.[t.id]) blockers.push({ code: 'season_closed', error: R.seasonClosed(t.name), teamId: t.id });
   }
 
   // Changes, and the money they settle (build question B, amended by Stage 11d Ask 8).
@@ -731,7 +781,9 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
   }
 
   // Who is told.
-  const audienceIds = new Set(kind === 'changes' ? plan?.byTeam.keys() ?? [] : scheduled.map(t => t.id));
+  const billedSplits = splits ?? [];
+  // A late bill tells only the teams it bills — a team in the slots with no share has nothing to hear.
+  const audienceIds = new Set(kind === 'changes' ? plan?.byTeam.keys() ?? [] : kind === 'bill' ? billedSplits.map(s => s.teamId) : scheduled.map(t => t.id));
   const audience = c.teams.filter(t => audienceIds.has(t.id));
   const people = await schedulePeople(c.orgId, audience.map(t => t.id), c.senderId);
   const replyBy = kind === 'review' ? (opts.replyBy && isCalendarDate(opts.replyBy) ? opts.replyBy : row.reply_by ?? addCalendarDays(tournamentToday(), 7)) : null;
@@ -740,7 +792,7 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
   const venueNames = [...new Set(c.slots.map(s => c.places.venueName.get(s.venueId) ?? ''))].filter(Boolean);
   const slotCount = new Map<string, number>();
   for (const s of c.slots) for (const t of c.assignments.get(s.key) ?? []) slotCount.set(t, (slotCount.get(t) ?? 0) + 1);
-  const splitOf = new Map((splits ?? []).map(s => [s.teamId, s]));
+  const splitOf = new Map(billedSplits.map(s => [s.teamId, s]));
   const teams: PreviewTeam[] = [];
   const unreachable: SendPreview['unreachable'] = [];
   for (const t of audience) {
@@ -748,7 +800,7 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
     const slots = slotCount.get(t.id) ?? 0;
     const split = splitOf.get(t.id);
     const teamBill = kind !== 'changes' && split ? { cents: toCents(split.amount), installments: split.installments } : null;
-    const lines = kind === 'changes' ? (plan!.byTeam.get(t.id) ?? []).map(ch => changeLine(ch, clockOf)) : patternsFor(c, t.id);
+    const lines = kind === 'changes' ? (plan!.byTeam.get(t.id) ?? []).map(ch => changeLine(ch, clockOf)) : kind === 'bill' ? [] : patternsFor(c, t.id);
     const billedCents = kind === 'changes' ? correction?.gains.get(t.id) ?? null : null;
     const teamLost = kind === 'changes' ? lost.get(t.id) ?? null : null;
     if (!p.people.length) {
@@ -756,9 +808,12 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
       continue;
     }
     const recipientNames = p.people.map(x => x.name);
-    const sample = kind === 'changes'
+    // A late bill's audience is the teams with a share, so `teamBill` is always there for it.
+    const sample = kind === 'bill'
+      ? billEmail({ orgName: c.orgName, scheduleName: row.name, teamName: t.name, recipientNames, bill: teamBill!, link: moneySectionHref(`/${c.orgSlug}/coaches/teams/${t.id}`, 'club') })
+      : kind === 'changes'
       ? changesEmail({ orgName: c.orgName, scheduleName: row.name, teamName: t.name, recipientNames, lines, billedCents, lost: teamLost, link: scheduleLink(t.id) })
-      : teamEmail({ kind, orgName: c.orgName, scheduleName: row.name, teamName: t.name, venueName: joinWithAnd(venueNames), recipientNames, slotCount: slots, firstDay, lastDay, patterns: lines, bill: teamBill, replyBy, link: scheduleLink(t.id) });
+      : teamEmail({ kind: kind === 'review' ? 'review' : 'final', orgName: c.orgName, scheduleName: row.name, teamName: t.name, venueName: joinWithAnd(venueNames), recipientNames, slotCount: slots, firstDay, lastDay, patterns: lines, bill: teamBill, replyBy, link: scheduleLink(t.id) });
     teams.push({ teamId: t.id, teamName: t.name, recipients: p.people, slots, lines, bill: teamBill, billedCents, lost: teamLost, sample });
   }
 
@@ -768,6 +823,7 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
   const leagueTeams = half?.teams ?? [];
   const changedTeams = plan ? plan.byTeam.size : 0;
   const statement = kind === 'review' ? W.reviewStatement(replyBy)
+    : kind === 'bill' ? W.lateBillStatement(billedSplits.length, moneyCents(billedSplits.reduce((n, s) => n + toCents(s.amount), 0)))
     : kind === 'final' ? W.finalStatement(c.slots.filter(s => teamsOnly(c.assignments.get(s.key) ?? []).length).length, scheduled.length)
     : W.changesStatement(changedTeams, handedBack.map(h => h.teamName), leagueTeams.length, new Set((half?.games ?? []).map(g => g.divisionName)).size);
   return {
@@ -778,7 +834,7 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
     recipientCount: teams.reduce((n, t) => n + t.recipients.length, 0) + leagueTeams.reduce((n, t) => n + t.coaches.length, 0)
       + new Set(leagueTeams.flatMap(t => t.households)).size,
     league: half ? { teams: leagueTeams, games: half.games, seen: half.seen } : null,
-    plan, finalRows, splits, rate, teamValues, correction, lost, half,
+    plan, finalRows, splits, rate, teamValues, correction, lost, half, billTerms,
   };
 }
 
@@ -799,13 +855,15 @@ const json = (status: number, body: object) => ({ ok: false as const, response: 
  */
 export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKind, body: {
   version?: unknown; teamIds?: unknown; replyBy?: unknown; billCorrections?: unknown;
+  /** A late bill (`kind: 'bill'`): its terms, as Bill the teams reads them. */
+  bill?: unknown;
   /** Stage 11b Part 5: the house-league teams to email (absent: every one the preview named), and the plan it showed. */
   leagueTeamIds?: unknown; leagueSeen?: unknown;
 }): Promise<SendResult> {
   const row = loaded.row;
   if (Number(body.version) !== row.version) return json(409, { error: R.changed, code: 'changed', version: row.version });
   if (!Array.isArray(body.teamIds) || !body.teamIds.every(x => typeof x === 'string')) return json(400, { error: R.noTeamsMatch, code: 'teams_required' });
-  const preview = await previewSend(sctx, loaded, kind, { replyBy: typeof body.replyBy === 'string' ? body.replyBy : null });
+  const preview = await previewSend(sctx, loaded, kind, { replyBy: typeof body.replyBy === 'string' ? body.replyBy : null, bill: body.bill });
   if (preview.blockers.length) return json(409, { error: preview.blockers[0].error, code: preview.blockers[0].code, blockers: preview.blockers });
   // ⚖ THE PLAN THE OWNER SAW: a league admin's hand-out moves no schedule version, so the house-league half is compared by
   // its fingerprint — a plan that changed under the window is read again, never sent unseen.
@@ -866,6 +924,22 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     written = { slotIds: loaded.slots.filter(s => !s.removed).map(s => s.id), teamIds: null };
     // Needs attention clears itself (owner 2026-10-16): a review still waiting on a team ends with Finalize.
     await clearSettled({ orgIds: [orgId], kinds: ['club_schedule_review'] });
+  } else if (kind === 'bill') {
+    // A final schedule's first bill, made later: the allocation, the terms and the next Send the changes' baseline in ONE
+    // step; the schedule stays final and no practice moves. The server's own terms (`preview.billTerms`), never the browser's.
+    if (!preview.splits?.length || !preview.billTerms) { await release(); return json(409, { error: R.changed, code: 'changed', version: row.version }); }
+    const bill = { description: row.name, lineId: preview.billTerms.lineId, notes: null, splits: preview.splits };
+    const { data, error } = await supabaseAdmin.rpc('club_schedule_bill_late', {
+      p_org: orgId, p_schedule: row.id, p_actor: actor, p_version: row.version, p_terms: preview.billTerms, p_bill: bill,
+      p_scale: preview.rate, p_send: sendId, p_log: { teamValues: preview.teamValues ?? {} },
+    });
+    if (error && isClosedYearError(error)) { await release(); return { ok: false, response: stepRefusal({ code: 'year_closed' }, teamName) }; }
+    if (error && /changed:/.test(error.message ?? '')) { await release(); return { ok: false, response: stepRefusal({ code: 'changed' }, teamName) }; }
+    if (error) { await release(); throw error; }
+    const r = data as { ok: boolean; code?: string; teamId?: string; left?: number; allocationId?: string | null; version?: number };
+    if (!r.ok) { await release(); return { ok: false, response: stepRefusal(r, teamName) }; }
+    allocationId = r.allocationId ?? null;
+    version = r.version ?? row.version + 1;
   } else {
     const plan = preview.plan!;
     const gains = billCorrectionsOn && preview.splits?.length ? preview.splits : [];
@@ -1045,20 +1119,18 @@ async function tellTeams(sctx: SchedulerCtx, scheduleName: string, kind: SendKin
       const link = `/${org.slug}/coaches/teams/${t.teamId}${kind === 'review' ? '' : '/schedule'}`;
       const send = (eventType: NotificationEventType, words: { title: string; body: string }, href = link) =>
         notify({ ...base, eventType, title: words.title, body: words.body, link: href });
+      const billBell = (team: PreviewTeam, cents: number, first: Installment | null, payments: number) =>
+        send('club_bill_arrived', SCHEDULE_NOTICES.bill({ orgName: org.name, teamName: team.teamName, cents, scheduleName, first, payments }),
+          moneySectionHref(`/${org.slug}/coaches/teams/${team.teamId}`, 'club'));
       if (kind === 'review') {
         await send('club_schedule_review', SCHEDULE_NOTICES.review({ orgName: org.name, scheduleName, teamName: t.teamName, slots: t.slots, billCents: t.bill?.cents ?? null, replyBy: preview.replyBy }));
-      } else if (kind === 'final') {
-        await send('club_schedule_final', SCHEDULE_NOTICES.final({ scheduleName, teamName: t.teamName, slots: t.slots }));
-        if (t.bill) {
-          await send('club_bill_arrived', SCHEDULE_NOTICES.bill({ orgName: org.name, teamName: t.teamName, cents: t.bill.cents, scheduleName, first: t.bill.installments[0] ?? null, payments: t.bill.installments.length }),
-            moneySectionHref(`/${org.slug}/coaches/teams/${t.teamId}`, 'club'));
-        }
+      } else if (kind === 'final' || kind === 'bill') {
+        // The late bill is only a bill: the schedule and its practices were told at Finalize.
+        if (kind === 'final') await send('club_schedule_final', SCHEDULE_NOTICES.final({ scheduleName, teamName: t.teamName, slots: t.slots }));
+        if (t.bill) await billBell(t, t.bill.cents, t.bill.installments[0] ?? null, t.bill.installments.length);
       } else {
         await send('club_schedule_changes', SCHEDULE_NOTICES.changes({ scheduleName, teamName: t.teamName, changes: t.lines.length }));
-        if (t.billedCents) {
-          await send('club_bill_arrived', SCHEDULE_NOTICES.bill({ orgName: org.name, teamName: t.teamName, cents: t.billedCents, scheduleName, first: null, payments: 1 }),
-            moneySectionHref(`/${org.slug}/coaches/teams/${t.teamId}`, 'club'));
-        }
+        if (t.billedCents) await billBell(t, t.billedCents, null, 1);
       }
     }
   } catch (e) {

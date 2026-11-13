@@ -135,7 +135,10 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
 
   // The bill's door: "The bill · 3 payments ›" once a bill rides with the schedule, else "Bill the teams ›".
   const billDoor = view.bill ? W.billDoor(view.bill.dues.length) : W.billTeamsDoor;
-  return { results, shorts, columns, groupsOf, withGroups, tiles, lines: [...clashLines, ...shortLines], kept, notes, billDoor };
+  // A schedule finalized with no bill reads the permit's estimate in its Bill column — said once, so it isn't mistaken for a
+  // bill that went out (13c). The door beside it makes one, without reopening the schedule.
+  const unbilled = showBill && schedule.state === 'final' && !view.bill ? W.billLateNote : null;
+  return { results, shorts, columns, groupsOf, withGroups, tiles, lines: [...clashLines, ...shortLines], kept, notes, billDoor, unbilled };
 }
 
 /**
@@ -200,6 +203,7 @@ export function FairSharesTeams({ model, nameOf, colourOf, onBill }: {
           </button>
         )}
       </div>
+      {model.unbilled && <p className={sch.fairNote}>{model.unbilled}</p>}
       <div className={sch.fairCols}>
         <table className={sch.fairTable}>
           <thead>

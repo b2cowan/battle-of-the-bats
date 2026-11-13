@@ -398,8 +398,8 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
     assert.match(page, /type Lens = 'overview' \| 'grid' \| 'team' \| 'group';/, 'no fair lens');
     assert.doesNotMatch(page, /id: 'fair'|lens === 'fair'/, 'the View menu holds Overview, Grid, By team and By group');
     assert.match(page, /<FairSharesBand model=\{fair\} onOpen=\{\(\) => setWin\(\{ kind: 'fair' \}\)\} \/>/, 'the band’s tile opens the window');
-    assert.match(page, /\{win\?\.kind === 'fair' && fair && \(\s*<KitDialog [^>]*title=\{billOpen \|\| fair\.tiles\.some\(t => t\.key === 'bill'\) \? W\.fairBillTitle : W\.fairTitle\}/, 'titled for whether the bill is in it — the bill door, or the tile that opened it');
-    assert.match(page, /<FairSharesTeams model=\{fair\} nameOf=\{nameOf\} colourOf=\{colourOf\} onBill=\{billOpen \? \(\) => setWin\(\{ kind: 'bill' \}\) : undefined\} \/>/);
+    assert.match(page, /\{win\?\.kind === 'fair' && fair && \(\s*<KitDialog [^>]*title=\{v\.canMoney \? W\.fairBillTitle : W\.fairTitle\}/, 'titled for whether the bill is in it — the bill is a money reader’s, always (13c: even a finalized schedule with none can be billed)');
+    assert.match(page, /<FairSharesTeams model=\{fair\} nameOf=\{nameOf\} colourOf=\{colourOf\}\s+onBill=\{v\.canMoney && \(!final \|\| !!v\.bill \|\| v\.slots\.some\(x => x\.teamIds\.some\(id => teamById\.has\(id\)\)\)\) \? \(\) => setWin\(\{ kind: 'bill' \}\) : undefined\} \/>/, 'a money reader’s door — not on a schedule given wholly to house league');
     assert.doesNotMatch(readCode(`${KIT}/FairShares.tsx`), /onTeams/, 'no redundant Fair shares link beside the tab');
     assert.doesNotMatch(css, /\.body \{ display: grid; grid-template-columns: minmax\(0, 1fr\) 300px/, 'no 300 column beside the grid');
   });
@@ -427,7 +427,10 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     assert.match(fair, /\{ \.\.\.\(showBill \? \{ key: 'bill', label: W\.tileBill, value: money\(billTotal\) \} : \{ key: 'open', label: W\.tileOpen, value: String\(t\.open\) \}\), door: true \}/);
     assert.match(fair, /'door' in t && t\.door && onOpen \? \{ \.\.\.t, onOpen \} : t/);
     assert.match(parts, /<button key=\{t\.key\} type="button" className=\{`\$\{sch\.bandTile\} \$\{sch\.bandDoor\}`\} onClick=\{t\.onOpen\}>/);
-    assert.match(page, /const billOpen = v\.canMoney && \(!!v\.bill \|\| !final\);/, 'the bill door only for a money reader');
+    // 13c: a schedule finalized WITHOUT a bill can still be billed (Send the bill, mig 481), so the door is the money reader's
+    // always — it was once shut after Finalize unless a bill existed, which left a finalized, unbilled schedule stuck.
+    assert.match(page, /onBill=\{v\.canMoney && /, 'the bill door only for a money reader');
+    assert.match(page, /onReview=\{terms => setWin\(\{ kind: 'send', start: 'bill', bill: terms \}\)\}/, 'Bill the teams on an unbilled final schedule goes on to Send the bill');
     assert.match(page, /\{!isPhone && fair && <FairSharesBand/, 'the phone keeps no band (unchanged)');
   });
   it('Needs attention’s "Outside the permit" row comes from the ONE rule, its own read, after the page has read (C2)', () => {

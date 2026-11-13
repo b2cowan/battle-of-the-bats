@@ -29,6 +29,7 @@ import { HOUSE_LEAGUE, isProgramHolder } from '@/lib/club-schedule-holders';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
 import { SCHEDULE_SCREEN_WORDS as W, sendLogLine } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
+import type { SendKind } from '@/lib/club-schedule-send';
 import { dayHead, dropLanding, engineSlotsOf, heldWords, slotTime, type ScheduleAsk, type ScheduleView, type SharingRead, type SlotView } from '@/lib/club-schedule-view';
 import { Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
@@ -271,7 +272,7 @@ export function SwapWindow({ view, slot, nameOf, placeOf, onPick, onClose }: {
 }
 
 export interface SendLogRow {
-  id: string; kind: 'review' | 'final' | 'changes'; at: string; by: string | null; teamIds: string[]; people: number; failed: number;
+  id: string; kind: SendKind; at: string; by: string | null; teamIds: string[]; people: number; failed: number;
   /** Stage 11b Part 5: the house-league teams a Send the changes told, by name. */
   leagueTeams?: string[];
 }

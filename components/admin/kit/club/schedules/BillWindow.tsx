@@ -21,7 +21,7 @@ import ck from '../ClubKit.module.css';
 import { RecordAction, repKit } from '../RepKit';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import { fmt } from '@/lib/coach-money-summary';
-import { formatStoredDate, isCalendarDate } from '@/lib/timezone';
+import { formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { pluralize } from '@/lib/utils';
 import { billShares, closingRow, paymentPeriods, pricedMinutes, teamInstallments, type BillSlot, type PaymentPlan } from '@/lib/club-schedule-bill';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, closingRowLine, moneyCents as money } from '@/lib/club-schedule-words';
@@ -36,11 +36,14 @@ const PLANS: { id: PaymentPlan; label: string }[] = [
   { id: 'one', label: W.billOne }, { id: 'monthly', label: W.billMonthly }, { id: 'two_months', label: W.billTwoMonths }, { id: 'dates', label: W.billDates },
 ];
 
-export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose }: {
+export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale, onClose }: {
   q: string;
   view: ScheduleView;
   nameOf: (teamId: string) => string;
   onSaved: (text: string) => void;
+  /** A schedule finalized WITHOUT a bill (13c): its terms go on to Send the bill, which makes the bill and tells the
+   *  coaches. Nothing is saved here — the schedule stays final and the terms ride with the send. */
+  onReview: (terms: object) => void;
   /** The schedule changed under the window: the page re-reads it. */
   onStale?: () => void;
   onClose: () => void;
@@ -48,20 +51,24 @@ export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose 
   const existing = view.bill;
   const pricing = view.pricing;
   const final = view.schedule.state === 'final';
+  /** Finalized with no bill: the window is a form again, and its button reviews the bill instead of saving it. */
+  const late = final && !existing;
   const [lines, setLines] = useState<{ year: string; lines: BillFromLine[] } | null>(null);
   const [lineId, setLineId] = useState<string>(existing?.lineId ?? pricing?.lineId ?? '');
   const [part, setPart] = useState<boolean>(existing?.amount != null || pricing?.fullHour == null);
   const [amountText, setAmountText] = useState(existing?.amount != null ? existing.amount.toFixed(2) : '');
   const [plan, setPlan] = useState<PaymentPlan>(existing?.plan ?? 'two_months');
   const firstOfStart = `${view.schedule.startsOn.slice(0, 7)}-01`;
-  const [firstDue, setFirstDue] = useState(existing?.firstDue ?? firstOfStart);
-  const [dates, setDates] = useState<string[]>(existing?.dates?.length ? existing.dates : [firstOfStart]);
+  // A bill made late opens on today, never on a start-of-schedule date that has already passed.
+  const firstDefault = late && firstOfStart < tournamentToday() ? tournamentToday() : firstOfStart;
+  const [firstDue, setFirstDue] = useState(existing?.firstDue ?? firstDefault);
+  const [dates, setDates] = useState<string[]>(existing?.dates?.length ? existing.dates : [firstDefault]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
   const savedLineId = existing?.lineId ?? null;
   useEffect(() => {
-    if (final) return;
+    if (final && !late) return;
     let live = true;
     // org-slug-ok: `q` is the host page's "orgSlug=…" query
     moneyFetch<{ year: { name: string }; lines: BillFromLine[] }>(`/api/admin/accounting/bill-from?${q}`).then(r => {
@@ -75,7 +82,7 @@ export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose 
       else setLines({ year: '', lines: [] });
     }).catch(() => { if (live) setLines({ year: '', lines: [] }); });
     return () => { live = false; };
-  }, [q, final, savedLineId]);
+  }, [q, final, late, savedLineId]);
 
   // ── The bill, worked out as the server works it ──
   const billSlots: BillSlot[] = useMemo(() => viewBillSlots(view.slots), [view.slots]);
@@ -223,7 +230,9 @@ export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose 
       footer={(
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{W.cancel}</button>
-          <button type="button" className="btn btn-lime" onClick={() => void save(billBody())} disabled={busy}>{existing ? W.billSave : W.billAdd}</button>
+          <button type="button" className="btn btn-lime" onClick={() => { if (!late) { void save(billBody()); return; } const p = problem(); if (p) setError(p); else onReview(billBody()); }} disabled={busy}>
+            {late ? W.billLateGo : existing ? W.billSave : W.billAdd}
+          </button>
         </>
       )}
     >
@@ -284,7 +293,7 @@ export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose 
         </div>
       </div>
       {rows.length > 0 ? table : <p className={ck.hint}>{problem() ?? W.billNoTimeYet}</p>}
-      <Statement lead={W.billStatementLead} rest={W.billStatement(dues.length, word)} />
+      <Statement lead={late ? W.billLateLead : W.billStatementLead} rest={(late ? W.billLateStatement : W.billStatement)(dues.length, word)} />
       {existing && (
         <div className={sch.ends}>
           <RecordAction icon={<Trash2 size={14} aria-hidden />} onClick={() => void save(null)} disabled={busy}>{W.billRemove}</RecordAction>

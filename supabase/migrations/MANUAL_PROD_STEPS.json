@@ -746,6 +746,10 @@
     "479_the_book_remembers_when_a_player_was_marked.sql": {
       "prod": "pending",
       "note": "Signed-in family accounts Stage 4b Session 2 (Part 5.4). Visible: rep_team_event_attendance.marked_at timestamptz (nullable), backfilled from updated_at where status <> unknown. ORDER: after mig 476; BEFORE the Stage 4b Session 2 code (the attendance PATCH writes marked_at and its readers select it). The guardian tier stays OFF on prod, but the PATCH writes the column for every team, so the column must exist first. Ends with NOTIFY pgrst reload. Idempotent (applied twice to DEV 2026-11-13). Verify on prod: SELECT count(*) FROM information_schema.columns WHERE table_name = 'rep_team_event_attendance' AND column_name = 'marked_at' -> 1."
+    },
+    "481_a_finalized_schedule_can_still_be_billed.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 13c (the Fair shares window's Bill door; owner ask 2026-11-13: a schedule finalized with no bill can still be billed). Visible to check:migrations: nothing (no table or column). INVISIBLE: club_schedule_sends_kind_check WIDENED to review|final|changes|bill, and the new SECURITY DEFINER function public.club_schedule_bill_late(uuid,uuid,uuid,integer,jsonb,jsonb,numeric,uuid,jsonb) (service role only). ORDER: before the code that ships Send the bill (the send route's kind=bill POST calls the function; the Fair shares door now opens Bill the teams on a finalized, unbilled schedule). Idempotent (applied to DEV 2026-11-13; the step run inside a rolled-back transaction on the dev fixture: ok once, already_billed the second time, state/sent_at/finalized_at untouched, baseline written). Verify on prod: SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'club_schedule_sends_kind_check' -> includes 'bill'; SELECT count(*) FROM pg_proc WHERE proname = 'club_schedule_bill_late' -> 1; SELECT has_function_privilege('authenticated','public.club_schedule_bill_late(uuid,uuid,uuid,integer,jsonb,jsonb,numeric,uuid,jsonb)','execute') -> false."
     }
   }
 }

@@ -16,6 +16,7 @@ import { fmt } from './coach-money-summary';
 import { PERMIT_WORDS, weekdayCount, weekdayOne, weekdayPlural } from './permit-words';
 import type { DraftMeasure, DraftStrategy, ShareWarning, SlotPattern } from './club-schedule-engine';
 import type { ClosingRow, Installment } from './club-schedule-bill';
+import type { SendKind } from './club-schedule-send';
 import { HAND_BACK_WORDS, type CreditMove } from './club-hand-back-words';
 
 /** Cents said as money — the schedule's one spelling, on every screen and in every email. */
@@ -47,6 +48,9 @@ export const SCHEDULE_WORDS = {
     `Sending makes ${pluralize(slots, 'slot')} real bookings: on ${pluralize(teams, 'team')}’ schedules, on the club calendar and in the clash check. Families see their team’s slots on the team’s schedule. Nothing is emailed to a family.`,
   reviewStatement: (replyBy: string | null) =>
     `Each team’s coaches see their slots and their bill${replyBy ? `, and reply by ${formatShortWeekdayDate(replyBy)}` : ''}. Nothing is booked or billed yet. You finalize when you’re ready, whether or not every team has replied.`,
+  /** A final schedule's first bill, made later: it bills and tells coaches, and books nothing. */
+  lateBillStatement: (teams: number, total: string) =>
+    `The bill goes to ${pluralize(teams, 'team')}, ${total} in all. Each team’s share lands on its Money › Club tab, with its payments. The schedule stays final and nothing on a team’s schedule changes.`,
   // [marketing] Stage 11b Part 5: house-league teams' practices, and their families, join the statement ("Only those teams'
   // coaches are told" was untrue once families of a house-league team hear too, 9d2·2).
   // [marketing] House League 9d-2b Part 5: a house-league division's games join it (9d2·13) — families hear about those
@@ -106,6 +110,12 @@ export const SCHEDULE_REFUSALS = {
   notACostLine: 'That budget line is money coming in. Bill from a cost line.',
   notSaved: 'We couldn’t save that just now. Try again.',
   billFinal: 'The bill went out at Finalize, and a bill’s terms never change. A change to the time is billed at Send the changes.',
+  /** A final schedule's first bill, made later ("Send the bill"): what stops it, in words. */
+  billAgain: 'Fill in the bill again.',
+  billNotFinal: 'This schedule isn’t final yet: its bill goes out with Finalize.',
+  billAlready: 'This schedule has already been billed. A bill’s terms never change; a change to the time is billed at Send the changes.',
+  billChangesWaiting: 'This schedule has changes waiting to be sent. Send the changes first, so the bill prices the time the teams were told of.',
+  billAsksWaiting: 'A team’s ask to hand time back is waiting for an answer. Answer it first, so the bill is made with it settled.',
   replyWords: 'Say what you’d like changed.',
   notInReview: 'This schedule isn’t waiting for a reply.',
   handBackNothing: 'Those practices aren’t the club’s, or they were already handed back.',
@@ -255,12 +265,14 @@ export const SCHEDULE_UNREACHABLE = {
 export type ScheduleUnreachableWhy = keyof typeof SCHEDULE_UNREACHABLE;
 
 /** [marketing] specimen 9: "12U AA has a head coach invitation nobody has accepted yet. Its 36 slots go on its schedule; …" */
-export function unreachableSentence(team: string, why: ScheduleUnreachableWhy, slots: number, kind: 'review' | 'final' | 'changes'): string {
+export function unreachableSentence(team: string, why: ScheduleUnreachableWhy, slots: number, kind: SendKind): string {
   const what = kind === 'review'
     ? `Its ${pluralize(slots, 'slot')} wait for Finalize; nobody is emailed about them.`
     : kind === 'final'
       ? `Its ${pluralize(slots, 'slot')} go on its schedule; nobody is emailed about them.`
-      : 'Its changes go on its schedule; nobody is emailed about them.';
+      : kind === 'bill'
+        ? 'Its bill goes on its Money › Club tab; nobody is emailed about it.'
+        : 'Its changes go on its schedule; nobody is emailed about them.';
   return `${team} ${SCHEDULE_UNREACHABLE[why]}. ${what} Name or chase its coach from its Coaches page.`;
 }
 
@@ -285,6 +297,10 @@ const firstNames = (names: readonly (string | null)[]) => {
   return firsts.length ? `Hi ${joinWithAnd(firsts)},` : 'Hi,';
 };
 
+/** [marketing] A team's bill as an email's list: its total and payments, then each payment. */
+const billList = (bill: { cents: number; installments: Installment[] }): EmailWords['lists'][number] =>
+  ({ title: `The bill: ${billPhrase(bill.cents, bill.installments.length)}, for the time you got.`, items: bill.installments.map(paymentLine) });
+
 /** [marketing] What a team's coaches receive when the schedule is sent for review or final (specimens 9 and 14). */
 export function teamEmail(p: {
   kind: 'review' | 'final';
@@ -304,7 +320,7 @@ export function teamEmail(p: {
   const range = `from ${formatShortWeekdayDate(p.firstDay)} to ${formatShortWeekdayDate(p.lastDay)}, ${p.lastDay.slice(0, 4)}`;
   const lists: EmailWords['lists'] = [{ title: null, items: p.patterns }];
   if (p.bill) {
-    lists.push({ title: `The bill: ${billPhrase(p.bill.cents, p.bill.installments.length)}, for the time you got.`, items: p.bill.installments.map(paymentLine) });
+    lists.push(billList(p.bill));
   }
   if (p.kind === 'review') {
     return {
@@ -325,6 +341,22 @@ export function teamEmail(p: {
     lists,
     link: { label: `Open ${possessive(p.teamName)} schedule →`, path: p.link },
     outro: `They’re on ${possessive(p.teamName)} schedule now. Your families see them there.${p.bill ? ' The bill is on your Money › Club tab.' : ''} If you won’t use a slot, hand it back from the practice on your schedule, and the club can give it to another team.`,
+  };
+}
+
+/** [marketing] What a team's coaches receive when a finalized schedule's bill is sent later: the bill alone — their slots
+ *  were told at Finalize. */
+export function billEmail(p: {
+  orgName: string; scheduleName: string; teamName: string; recipientNames: readonly (string | null)[];
+  bill: { cents: number; installments: Installment[] }; link: string;
+}): EmailWords {
+  return {
+    subject: `${p.scheduleName}: ${possessive(p.teamName)} bill`,
+    greeting: firstNames(p.recipientNames),
+    paragraphs: [`${p.orgName} has billed ${p.teamName} for the time it got on ${p.scheduleName}.`],
+    lists: [billList(p.bill)],
+    link: { label: `Open ${possessive(p.teamName)} Money › Club tab →`, path: p.link },
+    outro: 'The bill is on your Money › Club tab, with each payment. Your slots stay as they were.',
   };
 }
 
@@ -406,8 +438,8 @@ export const SCHEDULE_NOTICES = {
 
 /** [marketing] The send log's row (specimen 9): "Changes · 2 teams, 4 people". A schedule tells the club's coaches only —
  *  never the venue (owner 2026-10-12, walk §300 W7: "this is between clubs and their coaches"). */
-export function sendLogLine(p: { kind: 'review' | 'final' | 'changes'; teams: number; people: number }): string {
-  const what = p.kind === 'review' ? 'For review' : p.kind === 'final' ? 'The whole schedule' : 'Changes';
+export function sendLogLine(p: { kind: SendKind; teams: number; people: number }): string {
+  const what = p.kind === 'review' ? 'For review' : p.kind === 'final' ? 'The whole schedule' : p.kind === 'bill' ? 'The bill' : 'Changes';
   return `${what} · ${pluralize(p.teams, 'team')}, ${pluralize(p.people, 'person', 'people')}`;
 }
 
@@ -879,6 +911,17 @@ export const SCHEDULE_SCREEN_WORDS = {
   billNeedAmount: 'Type what the teams pay.',
   billNoTimeYet: 'Hand out some time before billing it.',
   billLoading: 'Loading the budget lines…',
+  // A finalized schedule's bill, made later (13c — the schedule stays final; the bill is its own send)
+  billLateLead: 'This schedule was finalized without a bill.',
+  billLateStatement: (payments: number, word: string | null) =>
+    `The schedule stays as it is. Sending the bill puts each team’s share on its Money › Club tab with its ${payments === 1 ? 'payment' : `${payments} payments`}${word ? `, filed under ${word} where the team’s budget has it` : ''}, and tells its coaches.`,
+  billLateGo: 'Review the bill',
+  billLateNote: 'This schedule was finalized without a bill, so these figures are the time at the permit’s price, not a bill. Bill the teams makes one without reopening the schedule.',
+  billSendTitle: 'Send the bill',
+  billSendGo: (n: number) => `Send the bill to ${pluralize(n, 'person', 'people')}`,
+  billSendHint: 'Every team here is billed. Each team’s coaches get one email with that team’s bill, and unticking a team only skips its email; a reply comes to you. The schedule stays final.',
+  billSentNotice: (people: number, teams: number, failed: number) =>
+    `Billed ${pluralize(teams, 'team')}. Emailed ${pluralize(people, 'person', 'people')}.${failed ? ` ${failed} couldn’t be delivered.` : ''}`,
   // Send (specimens 9, 10, 14 step 5)
   sendTitle: 'Send the schedule',
   reviewTitle: 'Send for review',

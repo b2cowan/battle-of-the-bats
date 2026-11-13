@@ -334,6 +334,34 @@ describe('the money: one step, build questions A and B (ruled 2026-10-11)', () =
     assert.match(apply, /club_schedule_slot_id = \(v_u->>'slotId'\)::uuid,/);
     assert.match(apply, /update rep_team_events set club_schedule_slot_id = null[\s\S]*delete from club_schedule_slots where schedule_id = p_schedule and removed_at is not null;/);
   });
+  it('a final schedule finalized with no bill can still be billed — one step, the schedule stays final, the baseline lands in it (mig 481)', () => {
+    const mig = readCode('supabase/migrations/481_a_finalized_schedule_can_still_be_billed.sql');
+    const fn = /create or replace function public\.club_schedule_bill_late[\s\S]*?\$\$;/.exec(mig)?.[0] ?? '';
+    assert.ok(fn.length > 0);
+    // Refusals before anything is written, in the order the step reads them.
+    for (const code of ['not_found', 'not_final', 'already_billed', 'changed', 'changes_waiting', 'asks_waiting']) assert.match(fn, new RegExp(`'code', '${code}'`), code);
+    // The same allocation Finalize makes, filed as Finalize files it.
+    assert.match(fn, /club_allocation_create\(p_org, p_actor, p_bill->>'description'[\s\S]*'time'/);
+    assert.match(fn, /club_bill_file_shares\(v_alloc\)/);
+    // It never moves the schedule's state, its send or finalize moment, or its changed flag.
+    const write = /update club_schedules set[\s\S]*?where id = p_schedule;/.exec(fn)?.[0] ?? '';
+    assert.ok(write.length > 0);
+    assert.doesNotMatch(write, /\bstate\s*=|sent_at\s*=|finalized_at\s*=|changed_since_sent\s*=/, 'the schedule stays final, exactly as it was sent');
+    // The next Send the changes' baseline is written IN the step, as Finalize writes its own (a `{}` baseline double-bills).
+    assert.match(fn, /update club_schedule_sends set landed_at = now\(\), team_values = coalesce\(p_log->'teamValues'/);
+    assert.match(mig, /check \(kind in \('review', 'final', 'changes', 'bill'\)\)/);
+    assert.match(mig, /revoke all on function public\.club_schedule_bill_late[\s\S]*to service_role;/);
+    const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
+    const at = send.indexOf("rpc('club_schedule_bill_late'");
+    assert.ok(at > 0);
+    assert.match(send.slice(at, at + 500), /p_send: sendId/, 'the late bill carries the claimed row');
+    // The terms are the SERVER's own (read again from the request), never a list the browser sends on trust.
+    assert.match(send.slice(at - 400, at + 300), /preview\.billTerms/);
+    // The next Send the changes measures from the late bill's row as well as Finalize's and the changes'.
+    assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'lastSends'), /s\.kind === 'bill'/);
+    // A team that already handed time back is measured with it, so the next send never reads that time as gained.
+    assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'previewSend'), /kind === 'bill'[\s\S]*withHandedBack\(/);
+  });
   it('a bill\'s figures in a send preview and the send log read only to a money reader', () => {
     assert.match(readCode('app/api/admin/schedules/[scheduleId]/send/route.ts'), /const teams = money \? p\.teams : p\.teams\.map\(/);
     assert.match(readCode('app/api/admin/schedules/[scheduleId]/route.ts'), /const shownLog = r\.canMoney \? log : log\.map\(/);

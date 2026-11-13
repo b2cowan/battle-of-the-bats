@@ -2,7 +2,7 @@
 
 **Generated:** 2026-11-13 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 674 divergence(s)** across dev/prod.
+**⚠️ 675 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|

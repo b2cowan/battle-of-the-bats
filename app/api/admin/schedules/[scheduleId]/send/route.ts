@@ -7,7 +7,8 @@ import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 // ---------------------------------------------------------------------------
 // SEND A SCHEDULE (Club Tier Stage 11a, part A — Asks 7, 9, 14, 23, 24; the reminders' pattern; hub specimens 9, 10, 14).
 //
-// GET  ?orgSlug=&kind=review|final|changes[&replyBy=]  — the preview: what sending does in one statement; who is told, per
+// GET  ?orgSlug=&kind=review|final|changes|bill[&replyBy=][&bill=<terms JSON>]  — the preview (`bill`: a FINAL schedule's
+//      first bill, made later — mig 481; its terms ride on the request and nothing is stored until the POST lands): what sending does in one statement; who is told, per
 //      team (its head coaches and staff with schedule access, its slots as a pattern, its bill — or, for changes, what
 //      changes and the money it settles); the teams nobody can be told about, with the reason; anything that blocks the
 //      send, in words; "Last sent … by …". The club's coaches only, never the venue (owner 2026-10-12, walk §300 W7).
@@ -21,7 +22,7 @@ import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 // ---------------------------------------------------------------------------
 
 type Params = { params: Promise<{ scheduleId: string }> };
-const KINDS: SendKind[] = ['review', 'final', 'changes'];
+const KINDS: SendKind[] = ['review', 'final', 'changes', 'bill'];
 
 export const GET = withObservability(async (req: Request, { params }: Params) => {
   const r = await resolveScheduler(req, { write: true });
@@ -34,7 +35,13 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   if (!loaded) return schedulerRefusal(404, 'not_found', R.notFound);
   const closed = repTeamsRefusal(r, loaded);
   if (closed) return closed;
-  const p = await previewSend(r, loaded, kind, { replyBy: url.searchParams.get('replyBy') });
+  // A late bill's terms ride on the request (`bill=` JSON): nothing is stored until the POST lands. Terms that don't parse
+  // read as none, and the preview refuses them in words ("Fill in the bill again.").
+  let bill: unknown = null;
+  if (kind === 'bill') {
+    try { bill = JSON.parse(url.searchParams.get('bill') ?? 'null'); } catch { bill = null; }
+  }
+  const p = await previewSend(r, loaded, kind, { replyBy: url.searchParams.get('replyBy'), bill });
   // The step's own rows and the money's working stay on the server; the screen gets what it says. A bill's figures read
   // only to a money reader (as the schedule's page strips them): for anyone else a team's bill, its correction and an
   // email that carries money are left out (/review 2026-10-11).

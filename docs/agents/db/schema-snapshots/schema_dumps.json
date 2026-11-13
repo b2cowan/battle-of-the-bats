@@ -44141,7 +44141,7 @@
         "kind": "CHECK",
         "table_name": "club_schedule_sends",
         "detail": "club_schedule_sends_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['review'::text, 'final'::text, 'changes'::text]))"
+        "check_clause": "(kind = ANY (ARRAY['review'::text, 'final'::text, 'changes'::text, 'bill'::text]))"
       },
       {
         "kind": "CHECK",

@@ -65,17 +65,20 @@ interface Preview {
 }
 
 
-export default function SendWindow({ q, view, start, onSent, onStale, onClose }: {
+export default function SendWindow({ q, view, start, bill, onSent, onStale, onClose }: {
   q: string;
   view: ScheduleView;
-  /** What opened it: Send on a draft (`draft`), Finalize and send (`final`), Send the changes (`changes`). */
-  start: 'draft' | 'final' | 'changes';
+  /** What opened it: Send on a draft (`draft`), Finalize and send (`final`), Send the changes (`changes`), or Send the bill
+   *  on a final schedule that was finalized without one (`bill`, with its terms in `bill`). */
+  start: 'draft' | 'final' | 'changes' | 'bill';
+  /** The late bill's terms, as Bill the teams filled them in — they ride on the preview and the send; nothing is stored before. */
+  bill?: object;
   onSent: (text: string) => void;
   /** The schedule changed under the window: the page re-reads it. */
   onStale?: () => void;
   onClose: () => void;
 }) {
-  const [kind, setKind] = useState<SendKind>(start === 'changes' ? 'changes' : start === 'final' ? 'final' : view.bill ? 'review' : 'final');
+  const [kind, setKind] = useState<SendKind>(start !== 'draft' ? start : view.bill ? 'review' : 'final');
   const [replyBy, setReplyBy] = useState(view.schedule.replyBy ?? addCalendarDays(tournamentToday(), 7));
   const [preview, setPreview] = useState<Preview | null>(null);
   const [failed, setFailed] = useState(false);
@@ -85,16 +88,17 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
   const [busy, setBusy] = useState(false);
 
   const url = `/api/admin/schedules/${encodeURIComponent(view.schedule.id)}/send?${q}`;
+  const billParam = kind === 'bill' && bill ?`&bill=${encodeURIComponent(JSON.stringify(bill))}` : '';
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
     const current = beginRead();
     setFailed(false);
-    const r = await moneyFetch<Preview>(`${url}&kind=${kind}${kind === 'review' && isCalendarDate(replyBy) ? `&replyBy=${replyBy}` : ''}`).catch(() => null);
+    const r = await moneyFetch<Preview>(`${url}&kind=${kind}${kind === 'review' && isCalendarDate(replyBy) ? `&replyBy=${replyBy}` : ''}${billParam}`).catch(() => null);
     if (!current()) return;
     if (!r?.ok) { setFailed(true); setError(refusalText(r?.data, W.previewFailed2)); return; }
     setError('');
     setPreview(r.data);
-  }, [url, kind, replyBy, beginRead]);
+  }, [url, kind, replyBy, billParam, beginRead]);
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => { void load(); });
     return () => window.cancelAnimationFrame(frame);
@@ -134,10 +138,11 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
       const r = await moneyFetch<{ teams: number; people: number; failed: number; version: number; checks: { clashes: number } }>(url, jsonInit('POST', {
         kind, version: view.schedule.version, teamIds: ticked.map(t => t.teamId), replyBy: kind === 'review' ? replyBy : null,
         billCorrections: kind === 'changes' ? corrections : undefined,
+        bill,
         ...(kind === 'changes' ? { leagueTeamIds: leagueTicked.map(t => t.teamId), leagueSeen: shown.league?.seen ?? '' } : {}),
       }));
       if (!r.ok) { if (isStale(r.data)) onStale?.(); setError(refusalText(r.data, R.notSaved)); void load(); setBusy(false); return; }
-      const text = [gamesOnly ? W.sentNoticeGamesOnly : W.sentNotice(r.data.people, r.data.teams, r.data.failed), r.data.checks.clashes ? W.sentClash(r.data.checks.clashes) : ''].filter(Boolean).join(' ');
+      const text = [gamesOnly ? W.sentNoticeGamesOnly : kind === 'bill' ? W.billSentNotice(r.data.people, r.data.teams, r.data.failed) : W.sentNotice(r.data.people, r.data.teams, r.data.failed), r.data.checks.clashes ? W.sentClash(r.data.checks.clashes) : ''].filter(Boolean).join(' ');
       onSent(text);
     } catch {
       setError(R.notSaved);
@@ -147,10 +152,11 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
 
   const statement = shown?.statement ?? '';
   const cut = statement.indexOf('. ');
-  const title = kind === 'changes' ? W.changesTitle : start === 'final' ? W.finalizeTitle : kind === 'review' ? W.reviewTitle : W.sendTitle;
+  const title = kind === 'bill' ? W.billSendTitle : kind === 'changes' ? W.changesTitle : start === 'final' ? W.finalizeTitle : kind === 'review' ? W.reviewTitle : W.sendTitle;
   const lv = useSendLevel(title);
   const mail = lv.level === 'email' && sample?.sample ? sample : null;
   const lime = !shown ? W.sendTo(0)
+    : kind === 'bill' ? W.billSendGo(people)
     : kind === 'review' ? W.sendToCoaches(people)
     : kind === 'changes' ? gamesOnly ? W.sendToLeagueAdmins : W.sendToPeople(people)
     : start === 'final' ? W.finalizeGo(people) : W.sendTo(people);
@@ -162,6 +168,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
       const money2 = [t.billedCents ? W.billedCorrection(money(t.billedCents)) : '', t.lost ? HAND_BACK_WORDS.lostLine({ teamName: t.teamName, ...t.lost }) : ''].filter(Boolean);
       return [t.lines.join('; '), ...money2].join(' · ');
     }
+    if (kind === 'bill') return t.bill ? billPhrase(t.bill.cents, t.bill.installments.length) : '';
     const slots = W.teamSlots(t.slots, daysOf.get(t.teamId)?.size ?? 0, oneWeekday);
     if (kind === 'review') return t.bill ? `${slots} · ${billPhrase(t.bill.cents, t.bill.installments.length)}` : slots;
     return i === 0 ? `${W.staffNote} · ${slots}` : slots;
@@ -264,7 +271,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
           )}
           <p className={ck.hint}>
             {gamesOnly ? <>{W.changesHintLeagueGames}{' '}</> : <>
-              {kind === 'review' ? W.reviewHint : kind === 'changes' ? W.changesHint : W.emailHint}{' '}
+              {kind === 'review' ? W.reviewHint : kind === 'changes' ? W.changesHint : kind === 'bill' ? W.billSendHint : W.emailHint}{' '}
               {league.length > 0 ? <>{W.changesHintLeague}{' '}</> : leagueGames.length > 0 && <>{W.changesHintLeagueGames}{' '}</>}
             </>}
             {shown.lastSent ? W.lastSent(formatStoredDate(shown.lastSent.at), shown.lastSent.by) : W.notSentYet}

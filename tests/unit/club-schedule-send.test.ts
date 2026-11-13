@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { findClashPairs, findClubClashes, repEventBooking } from '../../lib/venue-clash.ts';
 import { diffAgainstSent, slotPatterns, type DiffSlot, type SentPractice, type Slot } from '../../lib/club-schedule-engine.ts';
 import {
-  billPhrase, changeLine, closingRowLine, heldLine, measureLines, patternLine, sendLogLine, teamEmail, unreachableSentence,
+  billEmail, billPhrase, changeLine, closingRowLine, heldLine, measureLines, patternLine, sendLogLine, teamEmail, unreachableSentence,
 } from '../../lib/club-schedule-words.ts';
 import { zonedWallClockToUtc } from '../../lib/timezone.ts';
 
@@ -139,6 +139,19 @@ describe('the words a coach reads (Ask 7 — drafts for /marketing)', () => {
     assert.equal(billPhrase(270000, 3), '$2,700.00 in 3 payments');
     assert.equal(sendLogLine({ kind: 'changes', teams: 2, people: 4 }), 'Changes · 2 teams, 4 people');
     assert.equal(sendLogLine({ kind: 'final', teams: 7, people: 14 }), 'The whole schedule · 7 teams, 14 people');
+    assert.equal(sendLogLine({ kind: 'bill', teams: 3, people: 3 }), 'The bill · 3 teams, 3 people');
+  });
+  it('a late bill’s email is the bill alone: no slots, the schedule stays as it was', () => {
+    const e = billEmail({
+      orgName: 'UAT Rep Club', scheduleName: 'Saturdays at Kinsmen', teamName: '14U AA', recipientNames: ['Sam Lee'],
+      bill: { cents: 13334, installments: [{ installmentNumber: 1, dueDate: '2026-11-20', amount: 133.34 }] }, link: '/club/coaches/teams/t1',
+    });
+    assert.equal(e.subject, 'Saturdays at Kinsmen: 14U AA’s bill');
+    assert.deepEqual(e.paragraphs, ['UAT Rep Club has billed 14U AA for the time it got on Saturdays at Kinsmen.']);
+    assert.equal(e.lists.length, 1);
+    assert.match(e.lists[0].title ?? '', /\$133\.34 in 1 payment/);
+    assert.match(e.outro ?? '', /Your slots stay as they were/);
+    assert.match(unreachableSentence('14U AA', 'no_head_coach', 4, 'bill'), /Its bill goes on its Money › Club tab; nobody is emailed about it\./);
   });
   it('Stage 11c: a shared slot, moved around, the open time — in the drawings’ words', () => {
     const names: Record<string, string> = { t9: '9U AA', t11: '11U AA', t14: '14U AA' };

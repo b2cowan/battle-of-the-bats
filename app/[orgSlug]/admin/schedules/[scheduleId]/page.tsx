@@ -71,7 +71,7 @@ type Win =
   | { kind: 'settings'; regenerate?: boolean; addDatesOff?: DateOff[] }
   | { kind: 'fair' }
   | { kind: 'bill' }
-  | { kind: 'send'; start: 'draft' | 'final' | 'changes' }
+  | { kind: 'send'; start: 'draft' | 'final' | 'changes' | 'bill'; bill?: object }
   | { kind: 'log' }
   | { kind: 'team'; teamId: string }
   | { kind: 'clearWeek' }
@@ -579,8 +579,6 @@ export default function SchedulePage() {
   // Fair shares' figures answer for the whole schedule; its team detail opens from the band's Bill tile (13c C4).
   const fair = cols ? fairShares({ view: v, week: cols.days, weeks: weeksShown, scope: weekScope, nameOf, placeOf: (a, b) => placeName(v.places, a, b) }) : null;
   const canOverview = final && oneWeekday != null && days.length > 1;
-  /** The bill's door — a money reader, while there is a bill or one can still be made. */
-  const billOpen = v.canMoney && (!!v.bill || !final);
   const desktopViews: { id: Lens; label: string }[] = [
     ...(canOverview ? [{ id: 'overview' as const, label: W.viewOverview }] : []),
     { id: 'grid', label: W.viewGrid }, { id: 'team', label: W.viewTeam },
@@ -705,15 +703,20 @@ export default function SchedulePage() {
       {/* ⚖ 13c Session C (C4 = A): Fair shares and the bill, in a window — the team table and its bill door. A reader
           without the club's money reads Fair shares alone (the window is titled so), and nobody lost the view. */}
       {win?.kind === 'fair' && fair && (
-        <KitDialog kind="form" size="wide" eyebrow={s.name} title={billOpen || fair.tiles.some(t => t.key === 'bill') ? W.fairBillTitle : W.fairTitle} onClose={() => setWin(null)}>
-          <FairSharesTeams model={fair} nameOf={nameOf} colourOf={colourOf} onBill={billOpen ? () => setWin({ kind: 'bill' }) : undefined} />
+        <KitDialog kind="form" size="wide" eyebrow={s.name} title={v.canMoney ? W.fairBillTitle : W.fairTitle} onClose={() => setWin(null)}>
+          {/* The bill's door is the money reader's: before Finalize the bill rides with the schedule, once it exists it reads, and a
+              schedule finalized WITHOUT one can still be billed (Send the bill; the schedule stays final) — if any rep team holds
+              time on it (a schedule given wholly to house league has nothing to bill). */}
+          <FairSharesTeams model={fair} nameOf={nameOf} colourOf={colourOf}
+            onBill={v.canMoney && (!final || !!v.bill || v.slots.some(x => x.teamIds.some(id => teamById.has(id)))) ? () => setWin({ kind: 'bill' }) : undefined} />
         </KitDialog>
       )}
       {win?.kind === 'bill' && (
-        <BillWindow q={q} view={v} nameOf={nameOf} onClose={() => setWin(null)} onStale={() => void load()} onSaved={text => { setWin(null); say(text); void load(); }} />
+        <BillWindow q={q} view={v} nameOf={nameOf} onClose={() => setWin(null)} onStale={() => void load()} onSaved={text => { setWin(null); say(text); void load(); }}
+          onReview={terms => setWin({ kind: 'send', start: 'bill', bill: terms })} />
       )}
       {win?.kind === 'send' && (
-        <SendWindow q={q} view={v} start={win.start} onClose={() => setWin(null)} onStale={() => void load()} onSent={text => { setWin(null); setMoved(new Set()); say(text); void load(); }} />
+        <SendWindow q={q} view={v} start={win.start} bill={win.bill} onClose={() => setWin(null)} onStale={() => void load()} onSent={text => { setWin(null); setMoved(new Set()); say(text); void load(); }} />
       )}
       {win?.kind === 'log' && <SendLogWindow view={v} log={v.sendLog} nameOf={nameOf} onClose={() => setWin(null)} />}
       {/* The one Answer window (Stage 11d, Ask 4) — the same from every door: Payment requests, the bell, this page. */}
