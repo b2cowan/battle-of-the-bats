@@ -87,7 +87,11 @@ export const POST = withObservability(async (req: Request) => {
   const prorationDate = typeof body.prorationDate === 'number' ? Math.floor(body.prorationDate) : undefined;
   const expectedAmountDue = typeof body.expectedAmountDue === 'number' && Number.isInteger(body.expectedAmountDue) ? body.expectedAmountDue : undefined;
   // Only a Premium coach's portal becoming the club uses the name (and is refused without one); every other move ignores it.
-  const runMove = () => applyMove(org, toPlan, { prorationDate, expectedAmountDue, actor, clubName: typeof body.clubName === 'string' ? body.clubName : null });
+  const runMove = () => applyMove(org, toPlan, {
+    prorationDate, expectedAmountDue, actor, clubName: typeof body.clubName === 'string' ? body.clubName : null,
+    // GST/HST 6.4: who moved up (the purchase email's "Bought by" and their Terms); a down move ignores it.
+    buyerUserId: authorized.user.id,
+  });
   // GST/HST Stage 2 Ask 2 (owner 2026-11-05): the move's prorated invoice is taxed by the Stripe customer's address, so the club's
   // address goes on BEFORE the move, and the coach's home address is put back if the move is refused (or throws). A stamp that
   // fails refuses the move with nothing changed.

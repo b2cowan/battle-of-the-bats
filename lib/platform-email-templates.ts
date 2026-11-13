@@ -167,6 +167,9 @@ export async function renderResolvedEmail(opts: {
   alwaysRenderFromTemplate?: boolean;
   /** A family email's club, footnote and reply line, for a customised template (the builders' own default already wears them). */
   family?: FamilyTemplateFace;
+  /** Words a template must NOT change, rendered by code after the operator's body when it is customised (the caller's default
+   *  already holds them): the purchase email's figures, cancel and refund lines (GST/HST 6.4, /legal 6). */
+  fixedHtml?: string;
 }): Promise<ResolvedEmail> {
   const { key, vars, fallback, alwaysRenderFromTemplate = false } = opts;
 
@@ -182,8 +185,12 @@ export async function renderResolvedEmail(opts: {
     return { subject: fallback.subject, html: fallback.html, source: 'default' };
   }
 
+  const face = familyTemplateParts(opts.family);
+  // The fixed words go after the operator's body, before a family email's own foot.
+  const fixed = opts.fixedHtml ? { footerHtml: [opts.fixedHtml, face.footerHtml].filter(Boolean).join('\n') } : {};
   const html = renderPlatformEmailHtml({
-    ...familyTemplateParts(opts.family),
+    ...face,
+    ...fixed,
     heading: row.heading,
     body: bodyWithCta(row),
     vars,
@@ -222,6 +229,8 @@ export async function sendTransactionalEmail(opts: {
   /** Send the caller's default even when the template is customised: for a copy whose words a template cannot carry
    *  (the second parent's sign-up confirmation, Signed-in family accounts Stage 3). Same kind, log and envelope. */
   builtInOnly?: boolean;
+  /** Fixed words a customised template keeps (see renderResolvedEmail). */
+  fixedHtml?: string;
 }): Promise<SendEmailResult> {
   const { subject, html } = opts.builtInOnly
     ? { subject: opts.defaultSubject, html: opts.defaultHtml }
@@ -230,6 +239,7 @@ export async function sendTransactionalEmail(opts: {
       vars: opts.vars,
       fallback: { subject: opts.defaultSubject, html: opts.defaultHtml },
       family: opts.family,
+      fixedHtml: opts.fixedHtml,
     });
   const log = { kind: opts.key, orgId: opts.orgId, askedBy: opts.askedBy, ...(opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : {}) };
   if (!opts.family) return sendEmail(opts.to, subject, html, log);

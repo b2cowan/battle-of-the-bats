@@ -256,6 +256,8 @@ export type InvoiceLike = {
   total: number;
   total_excluding_tax?: number | null;
   total_taxes?: ReadonlyArray<TotalTaxLike> | null;
+  /** Why Stripe made the invoice (subscription_create, subscription_update, subscription_cycle, manual, …). */
+  billing_reason?: string | null;
   automatic_tax?: { enabled?: boolean | null; status?: string | null } | null;
   effective_at?: number | null;
   created?: number | null;
@@ -301,6 +303,9 @@ export type ChargeTaxRecordRow = ChargeRecordState & CadValuation & {
   evidence_line2: string | null; evidence_city: string | null; evidence_postal_code: string | null; evidence_confirmed_at: string | null;
   us_declaration_version: string | null; us_declaration_at: string | null; card_country: string | null; payout_country: string | null;
   review_reason: string | null; review_note: string | null; evidence_read_at: string;
+  /** GST/HST 6.4 (mig 478): why the invoice was made, what the purchase email reads. Null for a backfilled row, which never
+   *  gets an email (history is not told again). */
+  billing_reason: string | null;
 };
 
 /** The whole row for a first write. Null for a draft or an invoice with no customer (nothing to record). */
@@ -364,6 +369,9 @@ export function buildChargeTaxRecord(inv: InvoiceLike, ctx: RecordContext): Char
     review_reason: ctx.evidence?.review?.reason ?? null,
     review_note: ctx.evidence?.review?.note ?? null,
     evidence_read_at: ctx.readAt,
+    // The column's CHECK is `^[a-z_]{1,64}$`: a value Stripe adds later that does not fit is left out (NULL = never emailed) rather than
+    // failing the whole record, which the books need far more than the purchase email.
+    billing_reason: ctx.captured === 'backfill' ? null : (/^[a-z_]{1,64}$/.test(inv.billing_reason?.trim() ?? '') ? inv.billing_reason!.trim() : null),
   };
 }
 

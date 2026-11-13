@@ -5,7 +5,7 @@ import { PLAN_CONFIG, normalizeBillingCycle, type BillingCycle } from './plan-co
 import { getStripePriceId } from './stripe-prices';
 import { foundingCompAppliesToPlan, revokeFoundingSeasonComp } from './founding-season';
 import { writeGrowthEvent } from './platform-events';
-import { MOVE_METADATA_KEY } from './plan-growth';
+import { BUYER_USER_META, MOVE_METADATA_KEY } from './plan-growth';
 import { futureMoveAnswer, stripeCancelSignal, waitingState } from './plan-ending';
 import { readPendingEnding } from './plan-ending-store';
 import type { OrgPlan } from './types';
@@ -428,7 +428,11 @@ export async function moveLandedInStripe(org: MoveOrg, toPlan: OrgPlan): Promise
 export async function applyMove(
   org: MoveOrg,
   toPlan: OrgPlan,
-  opts: { prorationDate?: number; expectedAmountDue?: number; actor: string; clubName?: string | null; restore?: boolean },
+  opts: {
+    prorationDate?: number; expectedAmountDue?: number; actor: string; clubName?: string | null; restore?: boolean;
+    /** GST/HST 6.4: the signed-in person moving up (the purchase email's "Bought by" and their Terms). */
+    buyerUserId?: string | null;
+  },
 ): Promise<MoveResult | MoveRefusal> {
   let clubName: string | null = null;
   if (ownPlanOf(org) === 'team' && moveDirection('team', toPlan)) {
@@ -444,7 +448,10 @@ export async function applyMove(
   if (!checked.ok) return checked.refusal;
   const { direction, live, priceId } = checked;
   const stripe = getStripe();
-  const baseMetadata = { orgId: org.id, planKey: toPlan, billingCycle: live.billingCycle, [MOVE_METADATA_KEY]: direction };
+  const baseMetadata: Record<string, string> = {
+    orgId: org.id, planKey: toPlan, billingCycle: live.billingCycle, [MOVE_METADATA_KEY]: direction,
+    ...(direction === 'up' && opts.buyerUserId ? { [BUYER_USER_META]: opts.buyerUserId } : {}),
+  };
   const metadata = clubName ? inPlaceMetadata(baseMetadata, clubName) : baseMetadata;
 
   try {

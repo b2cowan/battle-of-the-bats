@@ -12,7 +12,7 @@ import { getPlanFromPriceId } from '@/lib/stripe-prices';
 import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
 import { endingForDeletedSubscription, recordStripeSignal } from '@/lib/plan-ending';
 import { endingAccountForSubscription, endingDeps, readEndingAccount, readPendingEnding, withdrawPendingEnding } from '@/lib/plan-ending-server';
-import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPastDueTransition, isRecoveryTransition, writeGrowthEvent, writePlatformEvent } from '@/lib/platform-events';
 import {
   provisionTeamWorkspaceFromCheckoutMetadata,
@@ -43,7 +43,7 @@ import { FEE_INVOICE_META } from '@/lib/online-payment-words';
 import { CHARGE_TAX_CREDIT_NOTE_EVENTS, CHARGE_TAX_INVOICE_EVENTS } from '@/lib/charge-tax-record';
 import { orgOfSubscription, recordCreditNoteTax, recordInvoiceRefunded, recordInvoiceTax, recordTaxOrReport } from '@/lib/charge-tax-record-server';
 import { buyerNameAfterCheckout } from '@/lib/billing-tax';
-import { orgOwnerUserIds } from '@/lib/notify-recipients';
+import { orgOwnerEmails, orgOwnerUserIds } from '@/lib/notify-recipients';
 import { clearSettled } from '@/lib/needs-attention';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
@@ -54,6 +54,10 @@ import {
 import type { BillingEventOutcome } from '@/lib/stripe-billing-events';
 import { customerSenders, type RunOptions } from '@/lib/billing-event-customer-messages';
 import { getBillingHref, billingUrlOrgFromRow } from '@/lib/billing-urls';
+import { sendPurchaseEmailOrReport } from '@/lib/purchase-details-server';
+
+/** The events that mean an invoice is paid (test mode 2026-11-13: a trial's $0 first invoice fires both, like any other). */
+const PURCHASE_EMAIL_EVENTS = ['invoice.paid', 'invoice.payment_succeeded'] as const;
 
 
 function toIso(unixSeconds: number | null | undefined): string | null {
@@ -74,6 +78,11 @@ function stripeId<T extends { id: string }>(value: string | T | null | undefined
 function invoicePeriodEnd(invoice: Stripe.Invoice): string | null {
   const ends = (invoice.lines?.data ?? []).map(l => l.period?.end ?? 0);
   return toIso(ends.length ? Math.max(...ends) : null);
+}
+
+/** Whether a Stripe invoice comes with this subscription (every one Stripe started has a first invoice, a trial's at $0). */
+function comesWithInvoice(sub: Stripe.Subscription): boolean {
+  return !!sub.latest_invoice;
 }
 
 function subscriptionIdFromSession(session: Stripe.Checkout.Session): string | null {
@@ -243,6 +252,9 @@ export async function runVerifiedBillingEvent(event: Stripe.Event, customerId: s
   if ((CHARGE_TAX_INVOICE_EVENTS as readonly string[]).includes(event.type)) {
     const invoiceId = (event.data.object as Stripe.Invoice).id;
     if (invoiceId) await recordTaxOrReport({ kind: 'invoice', id: invoiceId }, () => recordInvoiceTax(invoiceId));
+    // GST/HST 6.4: "The details of your purchase", AFTER the record (it reads the stored row, so the email, the billing page and
+    // the books show the same figures). Silent on a replay; never throws; once only across both paid events and the daily job.
+    if (invoiceId && (PURCHASE_EMAIL_EVENTS as readonly string[]).includes(event.type)) await sendPurchaseEmailOrReport(invoiceId, opts);
   }
   return outcome;
 }
@@ -524,14 +536,16 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
               currentPeriodEnd: toIso(sub.items?.data?.[0]?.current_period_end),
             });
 
-            // Welcome back email when a canceled team workspace reactivates
+            // Welcome back email when a canceled team workspace reactivates — ONLY when no Stripe invoice comes with it
+            // (GST/HST 6.4 ruling Q3): a paid comeback's one email is the purchase email, opening with its welcome-back line.
             if (
               prevWs?.workspace_org_id &&
               prevWs.subscription_status === 'canceled' &&
-              (sub.status === 'active' || sub.status === 'trialing')
+              (sub.status === 'active' || sub.status === 'trialing') &&
+              !comesWithInvoice(sub)
             ) {
-              const [wsOwnerEmail, wsOrg] = await Promise.all([
-                getOrgOwnerEmail(prevWs.workspace_org_id),
+              const [wsOwners, wsOrg] = await Promise.all([
+                orgOwnerEmails(prevWs.workspace_org_id),
                 supabaseAdmin
                   .from('organizations')
                   .select('name, slug')
@@ -539,10 +553,10 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
                   .maybeSingle()
                   .then(r => r.data),
               ]);
-              if (wsOwnerEmail && wsOrg) {
+              if (wsOrg) for (const { email: to } of wsOwners) {
                 await say.email({
                   key: 'welcome_back',
-                  to: wsOwnerEmail,
+                  to,
                   vars: { orgName: wsOrg.name, planLabel: 'Team', dashboardUrl: `${SITE_URL}/${wsOrg.slug}/coaches` },
                   defaultSubject: `Welcome back — ${wsOrg.name}`,
                   defaultHtml: welcomeBackHtml({
@@ -691,15 +705,16 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
             });
 
             // Welcome back email — only for resubscriptions (canceled → active/trialing),
-            // not for payment recovery (past_due → active) which is a different context.
-            if (previousStatus === 'canceled') {
-              const ownerEmail = await getOrgOwnerEmail(updatedOrg.id);
-              if (ownerEmail) {
-                const planLabel = PLAN_CONFIG[planKey]?.label ?? planKey;
-                const dashboardUrl = `${SITE_URL}/${updatedOrg.slug}/admin`;
+            // not for payment recovery (past_due → active) which is a different context. And only when no Stripe invoice
+            // comes with it (GST/HST 6.4 ruling Q3): a paid comeback's one email is the purchase email, which opens with
+            // its welcome-back line (lib/purchase-details.ts).
+            if (previousStatus === 'canceled' && !comesWithInvoice(sub)) {
+              const planLabel = PLAN_CONFIG[planKey]?.label ?? planKey;
+              const dashboardUrl = `${SITE_URL}/${updatedOrg.slug}/admin`;
+              for (const { email: to } of await orgOwnerEmails(updatedOrg.id)) {
                 await say.email({
                   key: 'welcome_back',
-                  to: ownerEmail,
+                  to,
                   vars: { orgName: updatedOrg.name, planLabel, dashboardUrl },
                   defaultSubject: `Welcome back to FieldLogicHQ — ${updatedOrg.name}`,
                   defaultHtml: welcomeBackHtml({
@@ -947,8 +962,9 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
       // Plans end at renewal (G5): an account that cancelled is not asked to add a card for a plan it is leaving.
       if (sub.cancel_at_period_end || sub.cancel_at || await readPendingEnding(org.id)) break;
 
-      const ownerEmail = await getOrgOwnerEmail(org.id);
-      if (!ownerEmail) break;
+      // Every active owner (GST/HST 6.4 ruling Q4): one owner's read sent nothing to a club with two.
+      const owners = await orgOwnerEmails(org.id);
+      if (!owners.length) break;
 
       const planLabel = PLAN_CONFIG[org.plan_id as OrgPlan]?.label ?? org.plan_id;
       const trialEndDate = sub.trial_end
@@ -956,9 +972,9 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
         : 'soon';
       const billingUrl = `${SITE_URL}${getBillingHref(billingUrlOrgFromRow(org))}`;
 
-      await say.email({
+      for (const { email: to } of owners) await say.email({
         key: 'trial_ending',
-        to: ownerEmail,
+        to,
         vars: { orgName: org.name, planLabel, trialEndDate, billingUrl },
         defaultSubject: `Your ${planLabel} trial ends ${trialEndDate}`,
         defaultHtml: trialEndingHtml({ orgName: org.name, planLabel, trialEndDate, billingUrl }),

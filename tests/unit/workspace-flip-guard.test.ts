@@ -502,6 +502,9 @@ const LIVE_ROW_FILES: string[] = [
   // carries the account kind the server read (for retention days); it reads nothing.
   'lib/plan-ending-server.ts',
   'lib/plan-ending.ts',
+  // GST/HST 6.4: the purchase email reads the organization row fresh (its account_kind) only to build the billing page link,
+  // so a flipped club's email links the club's billing page.
+  'lib/purchase-details-server.ts',
   'lib/club-payees.ts',
   'lib/coach-billing-access.ts',
   'lib/coach-calendar-feed.ts',

@@ -28,6 +28,7 @@ import {
 } from '@/lib/billing-location-server';
 import type { BillingLocation } from '@/lib/billing-location';
 import { requireAcceptance } from '@/lib/legal-acceptance';
+import { BUYER_USER_META, COMEBACK_META } from '@/lib/plan-growth';
 
 /** Welcome email fires this many days after a user selects Tournament Plus at onboarding. */
 const PLUS_WELCOME_DELAY_DAYS = 1;
@@ -406,14 +407,19 @@ export const POST = withObservability(async (req: Request) => {
   // — a cancelled club coming back is the common case — pays from day one; the trial is for a
   // first purchase. A Founding Season next-season choice is a promise to pay, not a subscription
   // they used, so it does not count. (Asked of Stripe only when there is a trial to withhold.)
-  const trialDays = mergedConfig.trialDays > 0 && !(await hadSubscriptionBefore(customerId))
+  // GST/HST 6.4: also the purchase email's "Welcome back" (a paid comeback's one email, ruling Q3), so it is always asked.
+  const returning = await hadSubscriptionBefore(customerId);
+  const trialDays = mergedConfig.trialDays > 0 && !returning
     ? mergedConfig.trialDays
     : 0;
 
   await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
 
   // The same object on the session AND the subscription: the webhook reads the subscription's, and a retry has no request behind it.
-  const checkoutMetadata = { orgId: auth.org.id, planKey, billingCycle };
+  // GST/HST 6.4: who bought (the purchase email's "Bought by" and the Terms version they accepted) and whether they came back.
+  const checkoutMetadata = {
+    orgId: auth.org.id, planKey, billingCycle, [BUYER_USER_META]: auth.user.id, ...(returning ? { [COMEBACK_META]: '1' } : {}),
+  };
   const metadata = inPlaceClubName ? inPlaceMetadata(checkoutMetadata, inPlaceClubName) : checkoutMetadata;
 
   const session = await stripe.checkout.sessions.create({

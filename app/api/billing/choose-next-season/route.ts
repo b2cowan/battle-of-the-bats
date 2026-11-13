@@ -188,6 +188,7 @@ export const POST = withObservability(async (req: Request) => {
       successUrl,
       cancelUrl,
       teamWorkspaceId,
+      buyerUserId: auth.user.id,
     });
   } catch (err) {
     // The builder refuses rather than emitting a session that could bill early (a first-charge

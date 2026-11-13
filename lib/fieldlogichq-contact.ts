@@ -11,3 +11,11 @@
  * (a script that runs by itself — shared automation, changed only when the owner asks).
  */
 export const FIELDLOGICHQ_CONTACT_EMAIL = 'hello@fieldlogichq.ca';
+
+/**
+ * The seller's phone and mailing address on a purchase email (GST/HST 6.4, /legal: Ontario's Consumer Protection Act asks a seller
+ * to give them). Blank today: the owner fills both at step 6.7 with no other change, and a blank line simply drops out of the email.
+ * A business number or address only, never a personal name (owner ruling O1').
+ */
+export const FIELDLOGICHQ_SELLER_PHONE = '';
+export const FIELDLOGICHQ_SELLER_MAILING_ADDRESS = '';

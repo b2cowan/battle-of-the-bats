@@ -645,7 +645,7 @@ describe('4 · a coach with no subscription buys Club on the same workspace', ()
 
   it('the trial: an ordinary Club checkout still withholds it from a customer that ever held a subscription — and cannot see another customer’s history', () => {
     const checkout = readCode('app/api/billing/create-checkout/route.ts');
-    assert.match(checkout, /mergedConfig\.trialDays > 0 && !\(await hadSubscriptionBefore\(customerId\)\)/);
+    assert.match(checkout, /const returning = await hadSubscriptionBefore\(customerId\);[\s\S]{0,80}mergedConfig\.trialDays > 0 && !returning/);
     assert.match(readCode('lib/plan-move.ts'), /subscriptions\.list\(\{ customer: customerId/, 'scoped to ONE Stripe customer — the limit reported in the hand-off');
   });
 });

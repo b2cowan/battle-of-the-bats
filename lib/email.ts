@@ -87,7 +87,7 @@ const DEFINITE_REFUSALS = new Set([400, 401, 403, 404, 422]);
 export type SendEmailOptions = {
   /**
    * What kind of email this is (Support console Stage 5, owner Q8: required on every send, build-enforced by
-   * tests/unit/support-console-stage5-sender-guard.test.ts). An account or registration kind writes a row in the
+   * tests/unit/support-console-stage5-guard.test.ts, section 2). An account or registration kind writes a row in the
    * sent-email log BEFORE the email leaves (lib/email-kinds.ts says which); every other kind writes nothing.
    */
   kind: EmailKind;

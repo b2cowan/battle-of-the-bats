@@ -1,6 +1,6 @@
 /**
  * What kind of email a send is (Support console Stage 5, owner Q8 2026-10-26: a kind is required on every send call,
- * build-enforced by tests/unit/support-console-stage5-sender-guard.test.ts). The ONE home of the kinds and of the label
+ * build-enforced by tests/unit/support-console-stage5-guard.test.ts, section 2). The ONE home of the kinds and of the label
  * the console shows for each logged kind (owner G1 2026-10-26: approved as listed).
  *
  * Which kinds are logged (Q6, G2):
@@ -66,6 +66,9 @@ export const EMAIL_KINDS = {
   plan_downgrade_reminder:              { klass: 'account', label: 'Move to the free plan reminder' },
   welcome_back:                         { klass: 'account', label: 'Welcome back' },
   trial_ending:                         { klass: 'account', label: 'Trial ending' },
+  // GST/HST Stage 6 step 6.4 (owner rulings 2026-11-13): the details of a purchase, and the yearly plan's 30-day notice.
+  purchase_details:                     { klass: 'account', label: 'Purchase details' },
+  yearly_renewal_reminder:              { klass: 'account', label: 'Yearly renewal reminder' },
   portal_free_time_ending:              { klass: 'account', label: 'Free time ending' },
   plan_downgraded:                      { klass: 'account', label: 'Plan downgraded' },
   billing_retention_warning:            { klass: 'account', label: 'Records retention notice' },

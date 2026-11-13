@@ -250,6 +250,10 @@ const CHARGING_CALLS: Entry[] = [
   { file: 'lib/console-money-stripe.ts', call: 'invoices.createPreview', count: 1, allowed: 'platform admin’s read of the next charge: charges nothing',
     tax: { untaxed: 'the operator’s read of a live subscription’s next charge AS STRIPE WILL MAKE IT: setting tax here would show a '
       + 'figure Stripe will not charge. The subscription’s own tax decides it', onlyKeys: ['customer', 'subscription'] } },
+  { file: 'lib/purchase-details-server.ts', call: 'invoices.createPreview', count: 1,
+    allowed: 'the purchase email’s trial estimate (GST/HST 6.4): a read of the subscription’s next charge, charges nothing',
+    tax: { untaxed: 'the trial’s first charge AS STRIPE WILL MAKE IT, labelled an estimate: setting tax here would show a figure Stripe '
+      + 'will not charge. The subscription’s own tax decides it', onlyKeys: ['subscription'] } },
   { file: 'lib/plan-ending-server.ts', call: 'subscriptions.update', count: 2,
     allowed: 'cancel at renewal, and Keep {Plan} withdrawing it: the same subscription, only its cancel fields, no new charge',
     facts: [
@@ -617,6 +621,7 @@ const TAX_RECORD: Record<string, { invoice: string } | { none: string }> = {
   'lib/plan-move.ts invoices.createPreview': { none: RECORD_NONE.quote },
   'lib/workspace-upgrade-preview.ts invoices.createPreview': { none: RECORD_NONE.quote },
   'lib/console-money-stripe.ts invoices.createPreview': { none: RECORD_NONE.quote },
+  'lib/purchase-details-server.ts invoices.createPreview': { none: RECORD_NONE.quote },
   'lib/plan-ending-server.ts subscriptions.update': { none: RECORD_NONE.cancel },
   'lib/billing-setup.ts checkout.sessions.create': { none: RECORD_NONE.setup },
   'lib/team-org-billing.ts checkout.sessions.create': { none: RECORD_NONE.dead },

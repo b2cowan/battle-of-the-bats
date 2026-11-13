@@ -5,7 +5,9 @@ import 'server-only';
  * renewal, Stage 1). The rules live there and are tested with an in-memory store; this file only reads and writes.
  */
 import { getStripe } from './stripe';
-import { supabaseAdmin, getOrgOwnerEmail } from './supabase-admin';
+import { supabaseAdmin } from './supabase-admin';
+import { orgOwnerEmails, type OwnerRecipient } from './notify-recipients';
+import { sendToOwners } from './owners-send-outcome';
 import { buildCancellationPreflight, getNonArchivedTournaments, getSlotHoldingTournaments, retentionDateLabel, retentionDaysFor } from './billing-retention';
 import { closePagesIfPaymentsEnded } from './online-payment-endings';
 import { writePlatformEvent } from './platform-events';
@@ -394,38 +396,39 @@ export const endingDeps: EndingDeps = {
   },
 
   async sendEndedEmail({ account, intentId, retentionUntil, retainedTournaments, askedBy }) {
-    const ownerEmail = await getOrgOwnerEmail(account.orgId);
-    if (!ownerEmail) return;
+    // Every active owner (GST/HST 6.4 ruling Q4); each its own once-only key (the mail service refuses one key for two addresses).
+    const recipients = await orgOwnerEmails(account.orgId);
+    if (!recipients.length) return;
     const kept = retentionDateLabel(retentionUntil);
-    const idempotencyKey = `intent:${intentId}:ended_email`;
+    const keyFor = (userId: string) => `intent:${intentId}:ended_email:${userId}`;
     if (account.isCoachesPortal) {
       // The org is named "{team} Coaches Portal" and the copy says "Coaches Portal" itself — pass the team name alone.
       // Resubscribe is the reactivation door, never the new-portal signup.
       const workspaceName = teamWorkspaceDisplayName(account.name);
       const resubscribeUrl = `${SITE_URL}${teamWorkspaceReactivatePath({ slug: account.slug, name: account.name })}`;
-      await sendTransactionalEmail({
+      for (const { userId, email: to } of recipients) await sendTransactionalEmail({
         key: 'team_workspace_cancelled',
-        to: ownerEmail,
+        to,
         vars: { workspaceName, resubscribeUrl, retentionUntil: kept },
         defaultSubject: `Your ${workspaceName} Coaches Portal has been cancelled`,
         defaultHtml: teamWorkspaceCancelledHtml({ workspaceName, resubscribeUrl, retentionUntil: kept }),
         orgId: account.orgId,
         askedBy,
-        idempotencyKey,
+        idempotencyKey: keyFor(userId),
       });
       return;
     }
     const planLabel = PLAN_CONFIG[account.ownPlan]?.label ?? account.ownPlan;
     const resubscribeUrl = `${SITE_URL}${getBillingHref(billingUrlOrgFromRow({ slug: account.slug, plan_id: account.ownPlan, account_kind: account.accountKind, name: account.name }, 'canceled'))}`;
-    await sendTransactionalEmail({
+    for (const { userId, email: to } of recipients) await sendTransactionalEmail({
       key: 'cancellation_confirmation',
-      to: ownerEmail,
+      to,
       vars: { orgName: account.name, planLabel, retentionUntil: kept, resubscribeUrl },
       defaultSubject: `Your ${account.name} subscription has been cancelled`,
       defaultHtml: cancellationConfirmationHtml({ orgName: account.name, planLabel, retentionUntil: kept, retainedTournaments, resubscribeUrl }),
       orgId: account.orgId,
       askedBy,
-      idempotencyKey,
+      idempotencyKey: keyFor(userId),
     });
   },
 
@@ -455,29 +458,23 @@ export const endingDeps: EndingDeps = {
 
   async sendEndingEmail(email) {
     // Before the send: a failure here means nothing went, so the claim goes back for the next run.
-    let to: string;
+    let recipients: OwnerRecipient[];
     let out: ReturnType<typeof endingEmail>;
     try {
-      const ownerEmail = await getOrgOwnerEmail(email.account.orgId);
-      if (!ownerEmail) return 'not_sent';
-      to = ownerEmail;
+      // Every active owner (GST/HST 6.4 ruling Q4): the row's stamp is claimed once, then the email goes to each.
+      recipients = await orgOwnerEmails(email.account.orgId);
+      if (!recipients.length) return 'not_sent';
       out = endingEmail(await endingEmailFacts(email));
     } catch {
       return 'not_sent';
     }
-    try {
-      const sent = await sendTransactionalEmail({
-        key: out.key, to, vars: out.vars, defaultSubject: out.subject, defaultHtml: out.html,
-        orgId: email.account.orgId, askedBy: email.intent.createdBy,
-        // The email service's own guard for a retry inside a day; the row's stamp is the real one.
-        idempotencyKey: `intent:${email.intent.id}:${email.kind}_email`,
-      });
-      // 'skipped': no email service here (dev) — nothing to retry. Only a definite refusal is "not sent" (lib/email.ts).
-      if (sent.status === 'sent' || sent.status === 'skipped') return 'sent';
-      return sent.status === 'provider_error' && sent.refused ? 'not_sent' : 'unknown';
-    } catch {
-      return 'unknown'; // the request may have reached the email service
-    }
+    // 'skipped': no email service here (dev) — nothing to retry. Only a definite refusal of every one is "not sent" (lib/email.ts).
+    return sendToOwners(recipients, ({ userId, email: to }) => sendTransactionalEmail({
+      key: out.key, to, vars: out.vars, defaultSubject: out.subject, defaultHtml: out.html,
+      orgId: email.account.orgId, askedBy: email.intent.createdBy,
+      // The email service's own guard for a retry inside a day; the row's stamp is the real one.
+      idempotencyKey: `intent:${email.intent.id}:${email.kind}_email:${userId}`,
+    }), { skippedIsSent: true });
   },
 
   async clearEndedSubscription(account, sub) {

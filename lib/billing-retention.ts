@@ -1,7 +1,8 @@
 import 'server-only';
 
 import { PLAN_CONFIG } from './plan-config';
-import { getOrgOwnerEmail, supabaseAdmin } from './supabase-admin';
+import { supabaseAdmin } from './supabase-admin';
+import { orgOwnerEmails } from './notify-recipients';
 import { billingRetentionWarningHtml, SITE_URL } from './email';
 import { sendTransactionalEmail } from './platform-email-templates';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
@@ -447,16 +448,17 @@ async function sendRetentionEmail(
   records: RetainedRecordProcessRow[],
   isPendingPurge: boolean,
 ) {
-  const ownerEmail = await getOrgOwnerEmail(orgId);
-  if (!ownerEmail) return false;
+  // Every active owner (GST/HST 6.4 ruling Q4): one owner's read sent nothing to a club with two.
+  const recipients = await orgOwnerEmails(orgId);
+  if (!recipients.length) return false;
 
   const orgName = org.name;
   const billingHref = getBillingHref(billingUrlOrgFromRow(org));
 
   const first = records[0];
-  await sendTransactionalEmail({
+  for (const { email: to } of recipients) await sendTransactionalEmail({
     key: 'billing_retention_warning',
-    to: ownerEmail,
+    to,
     orgId,
     vars: {
       orgName,

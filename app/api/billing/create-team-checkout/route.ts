@@ -23,6 +23,7 @@ import { buyerStripeCustomer } from '@/lib/team-checkout-customer';
 import { hadSubscriptionBefore } from '@/lib/plan-move';
 import { requireBillingLocation, stampStripeCustomerAddress } from '@/lib/billing-location-server';
 import { BUYER_NAME_META, TAXED_CHECKOUT } from '@/lib/billing-tax';
+import { BUYER_USER_META, COMEBACK_META } from '@/lib/plan-growth';
 import { toStripeAddress } from '@/lib/billing-location';
 import { requireAcceptance } from '@/lib/legal-acceptance';
 
@@ -339,8 +340,13 @@ export const POST = withObservability(async (req: Request) => {
 
   // Keep Premium is a coach who already had Premium free: a trial on top would only push the first charge out. And, as the
   // club checkout rules, no second trial for a customer that ever held a subscription (a new customer has held none).
-  const trialDays = !keepPortal && mergedConfig.trialDays > 0 && !(source !== 'created' && await hadSubscriptionBefore(customerId))
+  // GST/HST 6.4: also the purchase email's "Welcome back" (a paid comeback's one email, ruling Q3), so it is always asked.
+  const returning = source !== 'created' && await hadSubscriptionBefore(customerId);
+  const trialDays = !keepPortal && mergedConfig.trialDays > 0 && !returning
     ? mergedConfig.trialDays : 0;
+  // GST/HST 6.4: who bought (the purchase email's "Bought by" and their Terms) and whether they came back. On the subscription
+  // only: the session's metadata is what the webhook's team-checkout parser reads, and it stays as it was.
+  const subscriptionMetadata = { ...metadata, [BUYER_USER_META]: user.id, ...(returning ? { [COMEBACK_META]: '1' } : {}) };
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
@@ -350,7 +356,7 @@ export const POST = withObservability(async (req: Request) => {
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
       ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
-      metadata,
+      metadata: subscriptionMetadata,
     },
     metadata,
     success_url: `${appUrl}/coaches/checkout/complete?session_id={CHECKOUT_SESSION_ID}`,

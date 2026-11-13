@@ -52,7 +52,7 @@ export interface AcceptanceCheck {
 type Env = Record<string, string | undefined>;
 
 /** The latest Terms version the table holds for this person, or null. A read failure is null (the person is asked again). */
-async function latestRecordedTermsVersion(userId: string): Promise<string | null> {
+export async function latestRecordedTermsVersion(userId: string): Promise<string | null> {
   const { data, error } = await supabaseAdmin
     .from('legal_acceptances')
     .select('terms_version')

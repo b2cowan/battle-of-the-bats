@@ -59,7 +59,7 @@ describe('the team checkout wears it', () => {
     assert.match(route, /\.eq\('billing_owner_user_id', userId\)\.neq\('billing_mode', 'org_team_addon'\)\.neq\('workspace_state', 'org_owned'\)/);
   });
   it('no second trial, by the club checkout\'s one rule; Keep Premium still gets none', () => {
-    assert.match(route, /!keepPortal && mergedConfig\.trialDays > 0 && !\(source !== 'created' && await hadSubscriptionBefore\(customerId\)\)/);
+    assert.match(route, /const returning = source !== 'created' && await hadSubscriptionBefore\(customerId\);[\s\S]{0,80}!keepPortal && mergedConfig\.trialDays > 0 && !returning/);
     assert.match(route, /\.\.\.\(trialDays > 0 \? \{ trial_period_days: trialDays \} : \{\}\)/);
     assert.match(route, /import \{ hadSubscriptionBefore \} from '@\/lib\/plan-move'/);
   });

@@ -10,6 +10,7 @@ import {
 } from '@/lib/platform-stripe-fees';
 import { countOverdueEndings, sendEndingEmails } from '@/lib/plan-ending-server';
 import { backfillChargeTaxRecords, catchUpChargeTaxRecords } from '@/lib/charge-tax-record-server';
+import { catchUpPurchaseEmails } from '@/lib/purchase-details-server';
 
 /**
  * THE ONLINE-PAYMENTS DAILY JOB (Club Tier Stage 12d-1 Part 4; owner 2026-10-27, the build's ask 2: one new daily job).
@@ -35,6 +36,8 @@ import { backfillChargeTaxRecords, catchUpChargeTaxRecords } from '@/lib/charge-
  *      this job's record. Never acted on here: a platform admin finishes each from the club's record, after Stripe is read;
  *  13. (GST/HST Stage 3 Part 1) every invoice and credit note Stripe made in the last 35 days that has no tax record gets one
  *      (a missed or failed webhook event), and every record still open has its payment state re-read; then
+ *  13b. (GST/HST 6.4) the purchase email still owed by an invoice paid in the last three days (a webhook that failed or never
+ *      arrived), through the same send as the webhook — once only, on the record's stamp; then
  *  14. (Stage 4 Ask 11, owner 2026-11-06) the BACKFILL: invoices and credit notes from 2026-05-01 up to the first record the webhook
  *      wrote, 120 a run until none is missing.
  * One step's failure never stops the next.
@@ -74,6 +77,7 @@ export const POST = withObservability(async (req: Request) => {
   await run('plan_ending_emails', () => sendEndingEmails(now));
   await run('overdue_endings', () => countOverdueEndings(now));
   await run('tax_records', () => catchUpChargeTaxRecords(now));
+  await run('purchase_emails', () => catchUpPurchaseEmails(now));
   await run('tax_records_backfill', () => backfillChargeTaxRecords(now));
 
   await writePlatformAuditLog(actor, null, 'stripe_fees_sweep', 'result', null, steps);

@@ -11,6 +11,7 @@ import { LEAVING_WORDS, PAYMENTS_TERMS_VERSION, TERMS_WORDS, termsVersionDate } 
 import { closePagesIfPaymentsEnded, endingNotice, readOutstanding, upcomingEnding } from './online-payment-endings';
 import type { Organization } from './types';
 import { PLAN_CONFIG } from './plan-config';
+import { orgOwnerEmails, orgOwnerUserIds } from './notify-recipients';
 
 /**
  * WHAT THE DAILY JOB TELLS A CLUB'S OWNER ABOUT ONLINE PAYMENTS (Club Tier Stage 12d-2 Parts 3 and 4; owner ruling 4,
@@ -33,17 +34,10 @@ type AccountRow = {
   terms_reminded_at: string | null; ending_warned_for: string | null;
 };
 
+/** The owners' in-app items (every active owner) and emails (the shared reader, which leaves a demo address out). */
 async function owners(orgId: string): Promise<{ userIds: string[]; emails: string[] }> {
-  const { data, error } = await supabaseAdmin.from('organization_members').select('user_id')
-    .eq('organization_id', orgId).eq('role', 'owner').eq('status', 'active'); // organization_id: predates org_id
-  if (error) throw error;
-  const userIds = [...new Set((data ?? []).map(m => m.user_id as string).filter(Boolean))];
-  const emails: string[] = [];
-  for (const id of userIds) {
-    const { data: u } = await supabaseAdmin.auth.admin.getUserById(id);
-    if (u?.user?.email) emails.push(u.user.email);
-  }
-  return { userIds, emails };
+  const [userIds, recipients] = await Promise.all([orgOwnerUserIds(orgId), orgOwnerEmails(orgId)]);
+  return { userIds, emails: recipients.map(r => r.email) };
 }
 
 async function orgOf(orgId: string): Promise<Organization | null> {

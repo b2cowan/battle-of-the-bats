@@ -15,6 +15,12 @@ import type { OrgPlan } from './types';
 /** Marks a Stripe subscription an in-app plan move changed; `applyMove` writes it, the webhook reads it. */
 export const MOVE_METADATA_KEY = 'flhq_plan_move';
 
+/** GST/HST 6.4: stamped on the subscription at every purchase door: the signed-in person who bought (the purchase email's
+ *  "Bought by" and the Terms version they accepted). Read by lib/purchase-details-server.ts. */
+export const BUYER_USER_META = 'flhq_buyer_user_id';
+/** GST/HST 6.4: stamped on a Checkout's subscription when this buyer had a subscription before: the email opens "Welcome back". */
+export const COMEBACK_META = 'flhq_comeback';
+
 /**
  * True for the subscription update an in-app UP move causes. `applyMove` already records that upgrade
  * (it writes the new plan itself, so the webhook arrives to find nothing changed, or races it) — the

@@ -8,6 +8,7 @@ import {
 } from './plan-config';
 import type { OrgPlan } from './types';
 import { TAXED_CHECKOUT } from './billing-tax';
+import { BUYER_USER_META } from './plan-growth';
 
 /**
  * THE NEXT-SEASON PLAN CHOICE — "what do you want for the season after this one?"
@@ -122,6 +123,8 @@ export function buildNextSeasonCheckoutParams(input: {
   cancelUrl: string;
   /** Present for a coach workspace — the webhook binds the new subscription to it. */
   teamWorkspaceId?: string | null;
+  /** GST/HST 6.4: the signed-in person choosing (the purchase email's "Bought by" and their Terms). */
+  buyerUserId?: string | null;
   /** Injectable clock, for the test. */
   now?: number;
 }): Stripe.Checkout.SessionCreateParams {
@@ -153,6 +156,7 @@ export function buildNextSeasonCheckoutParams(input: {
     billingCycle: input.billingCycle,
   };
   if (input.teamWorkspaceId) metadata.teamWorkspaceId = input.teamWorkspaceId;
+  if (input.buyerUserId) metadata[BUYER_USER_META] = input.buyerUserId;
 
   return {
     mode: 'subscription',
