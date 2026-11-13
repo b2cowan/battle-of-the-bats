@@ -421,7 +421,70 @@ Research reads, not a professional's sign-off. **Both applied to §6 on 2026-11-
   already does this (no work here).
 
 ## Progress
-- [ ] Part A — the purchase email, every owner, the migration
-- [ ] Part B — the yearly reminder, Québec
-- [ ] Test-mode answers (a) (b) (c) from 3.2
+- [x] Part A — the purchase email, every owner, the migration — COMMITTED `8bb8ac32f` 2026-11-13 (simplify + review + legal applied).
+  Migration is **478** (476 and 477 were taken by Signed-in family accounts 4b), applied to dev 2026-11-13; its prod step (before
+  the promote that ships 6.4) is recorded in MANUAL_PROD_STEPS. Tests: `tests/unit/gst-hst-6-4-purchase-email.test.ts` (30). Hand-over notes for Part B and the walk:
+  - **Built as:** pure rules + words + the once-only run in `lib/purchase-details.ts`; the server's reads in
+    `lib/purchase-details-server.ts`; every-owner reader `orgOwnerEmails` in `lib/notify-recipients.ts`; the shared send
+    outcome in `lib/owners-send-outcome.ts`; `sendTransactionalEmail({ fixedHtml })` keeps the fixed block when an operator
+    customises (it renders after the operator's body there, so a customised email reads opening, closing, then the block).
+  - **Metadata keys** (`lib/plan-growth.ts`): `flhq_buyer_user_id` at create-checkout, create-team-checkout (subscription only),
+    choose-next-season (via `buildNextSeasonCheckoutParams({ buyerUserId })`) and a move UP (`applyMove({ buyerUserId })`);
+    `flhq_comeback: '1'` at the two Checkouts when `hadSubscriptionBefore` (now always asked there). The classifier reads the
+    invoice's own `parent.subscription_details.metadata` (as it stood when the invoice was made).
+  - **Welcome back:** both webhook sends now wait for `!sub.latest_invoice` (a comeback with no invoice). Every Stripe comeback
+    has one, so in practice the only `welcome_back` left is the dev mock path in create-checkout (no invoice), kept.
+  - **Every owner, moved:** `trial_ending`, both `welcome_back` sends (no-invoice case), the plan-ending emails (ended,
+    ends-on, reminder; one idempotency key per owner), the retention warning, the online-payments notices (`owners()` now reads
+    the shared helper, demo addresses skipped). `getOrgOwnerEmail` itself no longer fails on two owners (active owners, first
+    to accept, `.limit(1)`). **Left on it (one contact address, decided):** the tournament reply-to/fallback senders, schedule
+    publish, registration routes, game-day reminders, team-payment notices, CoachTournamentRecord, the platform-admin delete
+    email, and the club fee-invoice emails + the Stripe customer email in `lib/platform-stripe-fees.ts` (:472, :642, :688). **The
+    fee-invoice emails are billing emails: moving them to every owner is a recommended follow-up, not done (stamp per row).**
+  - **New sentences for the next `/legal` pass:** the fallback names "your plan" and "your Coaches Portal" (a Premium invoice
+    paid before its workspace exists names `workspaceName`/`teamName` from the checkout first); the two template descriptions
+    (platform-admin only). **A conflict to rule:** §6's rule says never "paid" anywhere, but §6's own reviewed cancel sentence
+    says "the period you've paid for". The reviewed words were copied exactly; the test pins "paid" to that one phrase.
+  - **Not in §6, decided in the build:** a trial or next-season email leaves out "Started on {date}" (the opening says it
+    started, or that nothing is charged yet). A $0 `subscription_create` that is not trialing (a 100% coupon) sends nothing.
+  - **Known limit:** `flhq_plan_move: 'up'` stays on the subscription after a move, so a later `subscription_update` invoice
+    with an amount (only a dashboard change makes one) would read as a plan change.
+  - **Close session 2026-11-13 (simplify, review, legal; applied):** one `sendToOwners` in `lib/owners-send-outcome.ts` for the two
+    outcome-aggregating senders (plan-ending, purchase); "Bought by" reads the shared name helper (account-only signups have
+    `first_name`/`last_name`); the purchase run skips its Stripe reads for a renewal or a fee invoice; the daily catch-up stops
+    starting invoices after 2 minutes; a billing reason that does not fit the column's CHECK is stored NULL instead of failing the
+    tax record; an unknown outcome now alerts (`captureError`); the fixed block's footer is composed before the render call
+    (the envelope guard pins that call's shape). Review found no Critical or High; the guard trigger in mig 478 equals mig 451 plus
+    `purchase_email_at`. **Owner calls recorded, not changed:**
+    1. *Welcome back is dead for real Stripe subscriptions* (every one has a latest invoice), so a returning club gets only the
+       purchase email: the old welcome's restored-tournaments count and dashboard link are gone (product-only, `/legal`: no law angle).
+    2. *The comeback flag counts any past or current subscription on a reused customer* (`hadSubscriptionBefore`, which also withholds
+       the trial): a coach adding a second team's Premium can be greeted "Welcome back". Fix needs a new Stripe lookup and a ruling.
+    3. *A 429 or 5xx from the mail service is read as "may have gone"* (shared `lib/email.ts` refusal list): the once-only stamp stays,
+       nothing retries; a person is alerted (new). Treating 429 as a definite refusal is a shared-infra change for the owner.
+    4. *Operator sees no fixed block*: the template preview and test-send build from the row alone; a customised send renders
+       opening, closing, then the fixed block (default: opening, block, closing); saving a transactional template unchanged flips it
+       to customised. Options: show the fixed block in the preview, or move the closing below the block in both paths.
+    5. *Two-owner clubs*: `getOrgOwnerEmail` now names the oldest owner where it used to return nothing (schedule publish and
+       tournament footers used the club's contact email in that case); the fee-invoice emails still go to one owner (follow-up).
+    6. `/legal` (`docs/agents/legal/CASL_PURCHASE_DETAILS_EMAIL.md`): fine as built. Rule wording: "paid" is allowed in the reviewed
+       cancel sentence (the Terms say the same); the rule should read "never say a payment was received, never call it a receipt".
+       Three small owner questions are in that file (a "keep this transactional" line on the template description; the rule's
+       wording; one optional privacy-policy clause about who sees "Bought by").
+- [ ] Part B — the yearly reminder, Québec. The migration's `renewal_reminded_for` (organizations + team_workspaces) and the
+  `yearly_renewal_reminder` template (variables `subjectLine`, `headingLine`, `lead`, `moveDownLine`, `date`, `billingUrl`)
+  are already applied on dev. Reuse `orgOwnerEmails` + `ownersSendOutcome`. A second `invoices.createPreview` needs its own row
+  in `billing-location-every-path-guard.test.ts` (the purchase email's estimate has one).
+- [x] Test-mode answers (a) (b) (c) from 3.2 (read-only, from test-mode events 2026-11-13):
+  - **(a)** A trial's $0 first invoice reaches paid and fires **both** `invoice.paid` and `invoice.payment_succeeded`
+    (32 of 32 seen). So does every other paid invoice.
+  - **(b)** The move-up proration invoice's `billing_reason` is **`subscription_update`**, its metadata carries
+    `flhq_plan_move: 'up'`.
+  - **(c)** Premium → Club in place is the same: `subscription_update`, with `flhq_plan_move: 'up'`, `inPlaceClub: '1'`,
+    `checkoutKind: 'standalone_team'`, `clubName`.
+  - **§6's trial-preview question — unanswered:** test mode holds no trialing subscription today (read 2026-11-13), and making one
+    fires webhooks into dev. The code drops only the estimate sentence when the preview carries no tax, so either answer is
+    safe; the 6.4 walk's trial case answers it.
+  - **Stripe Checkout as a side door (§4.2):** `billing_address_collection` is set nowhere; `TAXED_CHECKOUT` sets
+    `customer_update: { name: 'auto' }` only (never `address`). Part B confirms in test mode.
 - [ ] The 6.4 walk
