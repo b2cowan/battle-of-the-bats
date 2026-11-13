@@ -71,6 +71,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/plan-move.ts': ['writer', 'plan move side effects (clears team_limit)'],
   'lib/billing-retention.ts': ['writer', 'cancellation retention writes status'],
   'lib/purchase-details-server.ts': ['other', 'GST/HST 6.4 purchase email: reads the club\'s name, slug, plan_id and account_kind only to build the billing page link (getBillingHref); decides nothing by the plan'],
+  'lib/renewal-reminder-server.ts': ['stored', 'GST/HST 6.4 Part B yearly reminder: reads the subscription the account HOLDS (its own status, to find a yearly plan Stripe will charge) and its own plan_id (to name the plan and see a waiting move down in Stripe\'s preview). Free time is not billed, so it is never reminded of'],
   'lib/plan-ending-server.ts': ['writer', 'the one ending (Plans end at renewal): reads the plan the club holds (plan_id, own plan) and writes the cancelled status; Stage 2: the move to the free plan writes plan_id, tournament_limit and an active status (the downgrade route no longer writes them itself)'],
   'lib/billing-urls.ts': ['other', "billingUrlOrgFromRow maps a row's plan_id / subscription_status onto the resolver's shape; the resolver only picks a destination, never gates"],
   'lib/club-record-changes.ts': ['writer', "the console's section writer (compare-and-set on the stored sections)"],

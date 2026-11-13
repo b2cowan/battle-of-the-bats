@@ -10,10 +10,12 @@ import { isUuid } from './utils';
 import type { SaleEvidence } from './charge-tax-record';
 import {
   BILLING_LOCATION_WORDS,
+  BILLING_REGION_CLOSED,
   US_DECLARATION_VERSION,
   checkBillingLocation,
   countryChangeReview,
   currentReview,
+  isClosedRegion,
   reviewSentence,
   toStripeAddress,
   type BillingLocation,
@@ -261,15 +263,28 @@ export async function saveBillingLocation(
   }
 }
 
+/** The Québec refusal (GST/HST 6.4): one body for the gate and for the in-place preview, which refuses before it saves anything. */
+export function regionClosedResponse(buyer: 'club' | 'person'): Response {
+  return Response.json({ error: BILLING_LOCATION_WORDS.regionClosed, code: BILLING_REGION_CLOSED, buyer }, { status: 409 });
+}
+
 /**
  * THE CHECK every paid path calls before its first Stripe call (paths A–E, Part 0's list). Refuses with 409 and the
  * stable code `billing_address_required` when the buyer has no valid address on file; the screen opens the Billing
  * address window on that code instead of showing an error. Free, comped and trial-only paths never call it.
+ *
+ * `purchase: true` (GST/HST 6.4, owner ruling Q6): a door that makes a NEW charge decision (a new plan or trial, coach Premium, a
+ * move up and its preview, Premium → Club, a next-season choice) also refuses a Québec address, with 409 and
+ * `billing_region_closed`: the sent one BEFORE it is saved (a refused buyer's address is never stored), then the one on file. A
+ * door that renews or charges nothing new (a move down, payouts connect) leaves it off: an account with Québec on file keeps
+ * those. The census in tests/unit/billing-location-every-path-guard.test.ts pins which door passes it.
  */
-export async function requireBillingLocation(buyer: BillingBuyer, sentAddress?: BillingLocationInput | null): Promise<
+export async function requireBillingLocation(buyer: BillingBuyer, sentAddress?: BillingLocationInput | null, opts: { purchase?: boolean } = {}): Promise<
   | { ok: true; location: BillingLocation }
   | { ok: false; response: Response }
 > {
+  const regionClosed = () => ({ ok: false as const, response: regionClosedResponse(buyer.kind === 'org' ? 'club' : 'person') });
+  if (opts.purchase && sentAddress && isClosedRegion(sentAddress)) return regionClosed();
   // An address that came with the purchase (the "Start your club" window) is saved to the buyer's own row first, but NOT copied
   // to Stripe: the purchase is not accepted yet (Stage 1 Part 3 Ask 2). The Premium → Club move stamps it just before its Stripe
   // update (`withClubAddressOnStripe`, Stage 2 Ask 2); a checkout through the customer the checkout itself charges.
@@ -287,6 +302,7 @@ export async function requireBillingLocation(buyer: BillingBuyer, sentAddress?: 
     })
     : null;
   const tax = decideBuyerTax({ stored: row ? toStored(row) : null, review, usSalesOpen: usSalesOpen() });
+  if (tax.ok && opts.purchase && isClosedRegion(tax.location)) return regionClosed();
   if (tax.ok) return { ok: true, location: tax.location };
   return {
     ok: false,

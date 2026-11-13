@@ -62,6 +62,7 @@ owner decision, not a blank fact; resolve it (or word it as a single blank fact)
 | House-league friend requests (Board Ready Stage 1, Parts 1–3) — who sees the typed names (the registrations read; run is a subset), the form sentence holds; Keep apart is the one soft spot against "only to put friends on the same team"; deletion covers `draft_outcome` and the kept-apart columns; **owed: privacy policy §5/§9 text (none yet)** | `FRIEND_REQUESTS_PRIVACY.md` | 2026-11-12 | The promote of Parts 1–3; Québec club; the form sentence edited |
 | The "details of your purchase" email (GST/HST 6.4 Part A) — CASL transactional (fine while no offer/link is added; one soft spot: operator-editable opening/closing), the "paid" conflict is the build prompt rule's wording not the email's, "Bought by" to every owner is fine; 3 owner questions | `CASL_PURCHASE_DETAILS_EMAIL.md` | 2026-11-13 | The email gains a promotional line or link; Bill C-36; Québec customer |
 
+| The yearly renewal reminder + the Québec purchase gate (GST/HST 6.4 Part B) — words equal §6; CASL transactional; **one finding: the reminder's template is editable, so an edit can drop the date/amount or cancel line the Terms §8 30-day promise rests on** (Part A fixed that by code; this one does not); late send and Québec-on-file renewals; lawyer flags | `RENEWAL_REMINDER_AND_QUEBEC_GATE.md` | 2026-11-13 | The reminder gains a promotional line; Terms 0.3; first Québec account |
 ## Open questions — the backlog
 
 Seeded 2026-11-04 from the repo. Each is a lead to the place it was raised; **the source is the

@@ -84,6 +84,11 @@ export const BILLING_LOCATION_WORDS = {
   stampFailed: 'We couldn’t send your club’s address to our payment provider, so nothing was changed. Try again in a moment.',
   /** The server's refusal when a paid checkout is reached with no valid address on file; the screen opens the window instead. */
   required: 'Add a billing address before you pay.',
+  /** GST/HST 6.4 (owner ruling Q6, O4): every purchase door refuses a Québec billing address (`billing_region_closed`). Reviewed
+   *  by /legal and /accounting 2026-11-13 (build prompt §6): copy it exactly. */
+  regionClosed: 'We’re not selling in Québec yet, so we can’t take a purchase with a billing address there. If the province is wrong, correct it on your billing page and try again.',
+  /** The address form's notice under Province when Québec is chosen. It never blocks the save (an account keeps everything else). */
+  qcClosed: 'We’re not selling in Québec yet.',
 } as const;
 
 /** The window and the sign-up step (owner drawing 2026-11-03, tabs 2, 4, 5, 6). */
@@ -130,6 +135,19 @@ export const BILLING_LOCATION_CONSOLE_WORDS = {
 
 /** The stable code every paid path refuses with when the buyer has no valid address (409). */
 export const BILLING_ADDRESS_REQUIRED = 'billing_address_required';
+
+/**
+ * GST/HST 6.4 (owner ruling Q6, 2026-11-13; O4 "not offered in Québec"): no new charge decision from a Québec billing address. The
+ * stable code a purchase door refuses with (409). ⚠ It lives at the purchase gate (`requireBillingLocation(…, { purchase: true })`),
+ * NOT in `checkBillingLocation`: that validator also decides the address on file, which club fee invoicing and the save path read,
+ * and an account with Québec on file keeps renewing, moving down, cancelling, payouts, its fee invoices and saving the address.
+ */
+export const BILLING_REGION_CLOSED = 'billing_region_closed';
+
+/** A billing address in a province where nothing is sold yet (Québec). Reads a typed address or a stored one. */
+export function isClosedRegion(location: { country?: string | null; regionCode?: string | null }): boolean {
+  return tidy(location.country).toUpperCase() === 'CA' && tidy(location.regionCode).toUpperCase() === 'QC';
+}
 
 /** A buyer's row as the screens read it (GET /api/billing/location). */
 export interface StoredBillingLocation extends BillingLocation {

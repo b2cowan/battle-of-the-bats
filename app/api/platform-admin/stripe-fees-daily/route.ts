@@ -11,6 +11,7 @@ import {
 import { countOverdueEndings, sendEndingEmails } from '@/lib/plan-ending-server';
 import { backfillChargeTaxRecords, catchUpChargeTaxRecords } from '@/lib/charge-tax-record-server';
 import { catchUpPurchaseEmails } from '@/lib/purchase-details-server';
+import { sendRenewalReminders } from '@/lib/renewal-reminder-server';
 
 /**
  * THE ONLINE-PAYMENTS DAILY JOB (Club Tier Stage 12d-1 Part 4; owner 2026-10-27, the build's ask 2: one new daily job).
@@ -38,6 +39,9 @@ import { catchUpPurchaseEmails } from '@/lib/purchase-details-server';
  *      (a missed or failed webhook event), and every record still open has its payment state re-read; then
  *  13b. (GST/HST 6.4) the purchase email still owed by an invoice paid in the last three days (a webhook that failed or never
  *      arrived), through the same send as the webhook — once only, on the record's stamp; then
+ *  13c. (GST/HST 6.4 Part B) the yearly reminder: every owner of a yearly plan, 30 to 37 days before its next charge (a renewal, a
+ *      yearly trial ending, a yearly next-season choice's first charge), the date and the amount with its tax as Stripe would charge
+ *      it — once per charge date, on the account's stamp; under 30 days and still untold, it goes anyway and is counted `late`; then
  *  14. (Stage 4 Ask 11, owner 2026-11-06) the BACKFILL: invoices and credit notes from 2026-05-01 up to the first record the webhook
  *      wrote, 120 a run until none is missing.
  * One step's failure never stops the next.
@@ -78,6 +82,7 @@ export const POST = withObservability(async (req: Request) => {
   await run('overdue_endings', () => countOverdueEndings(now));
   await run('tax_records', () => catchUpChargeTaxRecords(now));
   await run('purchase_emails', () => catchUpPurchaseEmails(now));
+  await run('renewal_reminders', () => sendRenewalReminders(now));
   await run('tax_records_backfill', () => backfillChargeTaxRecords(now));
 
   await writePlatformAuditLog(actor, null, 'stripe_fees_sweep', 'result', null, steps);

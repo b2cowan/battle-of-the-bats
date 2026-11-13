@@ -471,10 +471,44 @@ Research reads, not a professional's sign-off. **Both applied to §6 on 2026-11-
        cancel sentence (the Terms say the same); the rule should read "never say a payment was received, never call it a receipt".
        Three small owner questions are in that file (a "keep this transactional" line on the template description; the rule's
        wording; one optional privacy-policy clause about who sees "Bought by").
-- [ ] Part B — the yearly reminder, Québec. The migration's `renewal_reminded_for` (organizations + team_workspaces) and the
-  `yearly_renewal_reminder` template (variables `subjectLine`, `headingLine`, `lead`, `moveDownLine`, `date`, `billingUrl`)
-  are already applied on dev. Reuse `orgOwnerEmails` + `ownersSendOutcome`. A second `invoices.createPreview` needs its own row
-  in `billing-location-every-path-guard.test.ts` (the purchase email's estimate has one).
+- [ ] Part B — the yearly reminder, Québec — BUILT 2026-11-13 (/legal + /accounting applied; no migration). Tests:
+  `tests/unit/gst-hst-6-4-renewal-reminder.test.ts` (43) + the `purchase` column in `billing-location-every-path-guard.test.ts`.
+  Hand-over notes for the walk:
+  - **Built as:** rules + words + the once-only run in `lib/renewal-reminder.ts`; the reads in `lib/renewal-reminder-server.ts`;
+    the daily step `renewal_reminders` right after `purchase_emails` (2-minute budget, `captureError` on unknown/throw).
+    Québec: `requireBillingLocation(buyer, sent, { purchase: true })` refuses the SENT address before the save, then the one on
+    file; `BILLING_REGION_CLOSED` + `isClosedRegion` in `lib/billing-location.ts`; the in-place preview refuses a typed QC address
+    before the quote; Province notice in `BillingAddressFields`; the move window offers no "Check again" on it.
+  - **Decided in the build (not in §4):** (1) **one stamp table** — a coach's Premium is mirrored on its workspace's
+    `organizations` row, so the reminder reads and stamps there; `team_workspaces.renewal_reminded_for` is UNUSED (dictionary says
+    so; dropping it is an owner call). (2) **Rows with no cycle on record** (seen on dev: a Premium's org row with
+    `subscription_period` NULL) are read too, but only while the charge is 31–37 days out (never a monthly plan's), so they cost
+    no daily Stripe read; Stripe's preview decides yearly. (3) **One reminder per account** (the earlier date) if the rows show
+    two (a live yearly plan and a next-season choice), or the one stamp would flip and both send daily. (4) **Stripe's date wins**:
+    the subscription is read; a cancel set in Stripe, a status not active/trialing, a date moved out of the window or a next
+    charge that is not yearly sends nothing. (5) Release restores the stamp to what it held before.
+  - **/accounting (applied):** the price is the PLAN's lines only (amount after discounts), their own taxes, total = price + taxes
+    charged on top — a club's recovered fees queued on the subscription ride the same invoice and must not inflate it
+    (`planLineFigures`; the plan's "subtotal" was ruled wrong under a coupon). A 100% coupon sends nothing. A non-CAD price names
+    its code (new sentence shape, no non-CAD sale exists). A subscription that works no tax out alerts a person (`captureError`),
+    the email still goes. **Owner flag:** existing Québec accounts renew at GST only (no QST registration) and count toward
+    Québec's $30,000/12-month test — keep a running total (`docs/agents/accounting/GST_HST_ON_SUBSCRIPTIONS_CANADA.md`).
+  - **/legal (`docs/agents/legal/RENEWAL_REMINDER_AND_QUEBEC_GATE.md`):** words equal §6; transactional. **Owner call (route
+    to /plan): the reminder's template is EDITABLE** — an operator edit that drops `{{lead}}` or the cancel line silently breaks
+    Terms §8's "at least 30 days … the date and the amount". Rec: render the lead and the cancel sentence in code outside the
+    editable body (as the purchase email does; needs a new migration for the row's body), or refuse to save a body without them.
+    Terms 0.3: §17 "we do not accept a billing address in Québec" is now untrue for existing accounts (the §9 replacement + "an
+    account already holding Québec keeps its plan"); §8 needs the trial line. Lawyer flags: Québec CPA/French on a renewing QC
+    account; whether a consumer is owed the renewal notice by law against the `late` path.
+  - **Stripe Checkout side door (test mode, read-only 2026-11-13):** 40 of 40 recent subscription sessions set no
+    `billing_address_collection` and no `customer_update.address` (only `name`), so Checkout cannot change the customer's address
+    and tax uses the one our gate checked. The one completed session whose customer still exists carries the customer's own
+    address. The walk's Québec case looks at the page itself.
+  - **§6 trial-preview tax question — still open:** test mode holds no trialing subscription (read 2026-11-13). Left to the walk.
+  - **Also fixed:** `public-face-s3b-family-emails` was red from Part A's `fixedHtml` (its pin read the old render shape); the pin
+    now reads the face spread first and the fixed block only added to its foot.
+  - **Repo-wide lint step** in `verify:changed` crashes on a missing `react-hooks` plugin config (not this build's files);
+    `lint:focused` on this build's files: 0 errors.
 - [x] Test-mode answers (a) (b) (c) from 3.2 (read-only, from test-mode events 2026-11-13):
   - **(a)** A trial's $0 first invoice reaches paid and fires **both** `invoice.paid` and `invoice.payment_succeeded`
     (32 of 32 seen). So does every other paid invoice.

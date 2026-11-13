@@ -379,7 +379,11 @@ describe('S3b — the senders thread the club', () => {
   });
   it('a customised template wears the band and the foot too; the operator’s words stay theirs', () => {
     const code = readCode('lib/platform-email-templates.ts');
-    assert.match(code, /\.\.\.familyTemplateParts\(opts\.family\),\s*heading: row\.heading,\s*body: bodyWithCta\(row\)/);
+    // GST/HST 6.4 Part A put a code-rendered fixed block between the operator's body and the family foot (`fixedHtml`): the
+    // face is spread first and the fixed block only ADDS to its foot, so a family email keeps its band and foot either way.
+    assert.match(code, /const face = familyTemplateParts\(opts\.family\);/);
+    assert.match(code, /footerHtml: \[opts\.fixedHtml, face\.footerHtml\]\.filter\(Boolean\)\.join\('\\n'\)/);
+    assert.match(code, /\.\.\.face,\s*\.\.\.fixed,\s*heading: row\.heading,\s*body: bodyWithCta\(row\)/);
   });
   it('the template editor’s preview and test-send show the six family keys on a sample club', () => {
     for (const key of ['league_registration_approved', 'league_registration_pending', 'league_registration_waitlisted', 'league_waitlist_promoted', 'league_registration_declined', 'tryout_application_received']) {

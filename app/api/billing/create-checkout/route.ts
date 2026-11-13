@@ -200,7 +200,8 @@ export const POST = withObservability(async (req: Request) => {
     const buyer: BillingBuyer = inPlaceClubName
       ? { kind: 'org', orgId: auth.org.id, name: inPlaceClubName, stripeCustomerId: auth.org.stripeCustomerId ?? null }
       : billingBuyerOf(auth.org, auth.user);
-    const located = await requireBillingLocation(buyer, inPlaceClubName ? billingAddressFromBody(body.billingAddress) : null);
+    // A new plan or trial (and Premium → Club through checkout) is a purchase: a Québec address is refused (GST/HST 6.4, Q6).
+    const located = await requireBillingLocation(buyer, inPlaceClubName ? billingAddressFromBody(body.billingAddress) : null, { purchase: true });
     if (!located.ok) return located.response;
     billingLocation = located.location;
   }

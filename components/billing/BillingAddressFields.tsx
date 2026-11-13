@@ -18,6 +18,7 @@ import {
   BILLING_LOCATION_WORDS,
   checkBillingLocation,
   countryInfo,
+  isClosedRegion,
   normalizeCanadianPostalCode,
   normalizeZipCode,
   usDeclarationText,
@@ -131,6 +132,7 @@ export default function BillingAddressFields({ form, idPrefix, subject, variant 
   );
 
   const { usClosed } = form;
+  const qcClosed = isClosedRegion(draft);
 
   return (
     <div className={styles.fields}>
@@ -147,12 +149,15 @@ export default function BillingAddressFields({ form, idPrefix, subject, variant 
         <div className={k.field}>
           {label('region', info.regionLabel, true)}
           <select id={id('region')} className={k.select} value={draft.regionCode} disabled={disabled} aria-required
-            autoComplete={auto('address-level1')} aria-invalid={Boolean(errors.regionCode) || undefined} aria-describedby={described('regionCode')}
+            autoComplete={auto('address-level1')} aria-invalid={Boolean(errors.regionCode) || undefined}
+            aria-describedby={described('regionCode', qcClosed ? id('region-closed') : undefined)}
             onChange={event => setField('regionCode', event.target.value)}>
             <option value="">Choose…</option>
             {info.regions.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
           </select>
-          {err('regionCode')}
+          {/* GST/HST 6.4 (Q6): a notice, never an error. The address saves; only a purchase from it is refused (by the server). */}
+          {errors.regionCode ? err('regionCode') : qcClosed
+            ? <p id={id('region-closed')} className={styles.amberLine} role="status">{BILLING_LOCATION_WORDS.qcClosed}</p> : null}
         </div>
         <div className={k.field}>
           {label('line1', F.line1, true)}

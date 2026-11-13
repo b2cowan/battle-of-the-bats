@@ -40,7 +40,8 @@ describe('every paid path checks the billing address before Stripe (paths A–E)
   it('C · coach Premium new, reactivate and Keep Premium (the buyer is the PERSON)', () => {
     const file = 'app/api/billing/create-team-checkout/route.ts';
     const code = readCode(file);
-    const check = at(code, "requireBillingLocation({ kind: 'user', userId: user.id })", file);
+    // GST/HST 6.4 (Q6): a purchase door, so it also refuses a Québec address (the census: billing-location-every-path-guard).
+    const check = at(code, "requireBillingLocation({ kind: 'user', userId: user.id }, null, { purchase: true })", file);
     assert.ok(at(code, 'provisionCompTeamWorkspaceFromCheckout(', file) < check, `${file}: the comped Founding path comes before the check`);
     assert.ok(check < at(code, 'if (shouldApplyDirectly) {', file), `${file}: the check must come before the dev-mock purchase`);
     assert.ok(check < at(code, 'stripe.checkout.sessions.create(', file), `${file}: the check must come before the Stripe checkout`);
@@ -52,7 +53,7 @@ describe('every paid path checks the billing address before Stripe (paths A–E)
     const file = 'app/api/billing/choose-next-season/route.ts';
     const code = readCode(file);
     assert.match(code, /const buyer = billingBuyerOf\(auth\.org, auth\.user\);/);
-    const check = at(code, 'requireBillingLocation(buyer)', file);
+    const check = at(code, 'requireBillingLocation(buyer, null, { purchase: true })', file);
     assert.ok(check < at(code, 'recordNextSeasonChoice(', file), `${file}: the check must come before the dev-mock choice`);
     assert.ok(check < at(code, 'stripe.checkout.sessions.create(', file), `${file}: the check must come before the Stripe checkout`);
     assert.match(code, /ensureStripeCustomer\(auth\.org, auth\.user\.email, located\.location, buyer\.kind === 'org' \? auth\.org\.name : coachName\)/);

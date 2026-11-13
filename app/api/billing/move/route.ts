@@ -79,7 +79,8 @@ export const POST = withObservability(async (req: Request) => {
     const up = direction === 'up';
     const clubName = up && ownPlanOf(org) === 'team' && typeof body.clubName === 'string' ? body.clubName.trim() : null;
     const buyer = { kind: 'org' as const, orgId: org.id, name: clubName || org.name, stripeCustomerId: org.stripeCustomerId ?? null };
-    const located = await requireBillingLocation(buyer, clubName ? billingAddressFromBody(body.billingAddress) : null);
+    // GST/HST 6.4 (Q6): only a move UP is a purchase, so only it refuses a Québec address. A move down renews what was bought.
+    const located = await requireBillingLocation(buyer, clubName ? billingAddressFromBody(body.billingAddress) : null, { purchase: up });
     if (!located.ok) return located.response;
     if (clubName) clubAddress = { buyer, location: located.location };
   }

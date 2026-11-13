@@ -198,7 +198,8 @@ export const POST = withObservability(async (req: Request) => {
   // GST/HST Stage 1: a coach buys Premium as a PERSON, so the address is their own home address, saved by the sign-up page's
   // Address step before this request. The comped Founding path above charges nothing and is never asked; the mock path below
   // is a purchase, so the dev walk meets the step.
-  const located = await requireBillingLocation({ kind: 'user', userId: user.id });
+  // Coach Premium is a purchase: a Québec address is refused (GST/HST 6.4, Q6).
+  const located = await requireBillingLocation({ kind: 'user', userId: user.id }, null, { purchase: true });
   if (!located.ok) return located.response;
 
   const shouldApplyDirectly = isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production');

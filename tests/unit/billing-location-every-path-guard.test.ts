@@ -254,6 +254,10 @@ const CHARGING_CALLS: Entry[] = [
     allowed: 'the purchase email’s trial estimate (GST/HST 6.4): a read of the subscription’s next charge, charges nothing',
     tax: { untaxed: 'the trial’s first charge AS STRIPE WILL MAKE IT, labelled an estimate: setting tax here would show a figure Stripe '
       + 'will not charge. The subscription’s own tax decides it', onlyKeys: ['subscription'] } },
+  { file: 'lib/renewal-reminder-server.ts', call: 'invoices.createPreview', count: 1,
+    allowed: 'the yearly reminder’s amount (GST/HST 6.4 Part B): a read of the subscription’s next charge, charges nothing',
+    tax: { untaxed: 'the next charge AS STRIPE WILL MAKE IT (Q5: "the date and the amount with its tax, as Stripe would charge it that '
+      + 'day"): setting tax here would show a figure Stripe will not charge. The subscription’s own tax decides it', onlyKeys: ['subscription'] } },
   { file: 'lib/plan-ending-server.ts', call: 'subscriptions.update', count: 2,
     allowed: 'cancel at renewal, and Keep {Plan} withdrawing it: the same subscription, only its cancel fields, no new charge',
     facts: [
@@ -596,6 +600,71 @@ describe('turning on online payments asks for the club’s billing address first
 });
 
 /**
+ * NO NEW CHARGE DECISION FROM A QUÉBEC BILLING ADDRESS — GST/HST 6.4 Part B (owner ruling Q6, 2026-11-13; build prompt §4.2). The
+ * same census, a `purchase` column: every call of `requireBillingLocation` says whether its door is a purchase. A purchase door
+ * (a new plan or trial, coach Premium, a move up and its preview, Premium → Club, a next-season choice) passes `{ purchase: true }`,
+ * which refuses Québec with `billing_region_closed`. A door that renews or charges nothing new (a move down, payouts connect)
+ * must NOT: an account with Québec on file keeps those. A new call that is on neither list fails.
+ */
+const GATE_DOORS: Record<string, { purchase: 'yes' | 'up_only' | 'no'; why: string }> = {
+  'app/api/billing/create-checkout/route.ts': { purchase: 'yes', why: 'a new plan or trial, and Premium → Club through checkout' },
+  'app/api/billing/create-team-checkout/route.ts': { purchase: 'yes', why: 'coach Premium: new, reactivate and Keep Premium' },
+  'app/api/billing/choose-next-season/route.ts': { purchase: 'yes', why: 'the Founding next-season choice' },
+  'app/api/billing/move/preview/route.ts': { purchase: 'yes', why: 'the move-up quote (only a move up reaches the check)' },
+  'app/api/billing/move/route.ts': { purchase: 'up_only', why: 'a move up is a purchase; a move down renews what was bought (it asks for an address for its tax only)' },
+  'app/api/admin/payouts/route.ts': { purchase: 'no', why: 'payouts connect: the club’s fee invoices, never a purchase' },
+};
+
+describe('a Québec billing address is refused at every purchase door, and only there (GST/HST 6.4, Q6)', () => {
+  const GATE = /(?<![\w$])requireBillingLocation\s*\(/g;
+  const calls = [...CODE].flatMap(([file, code]) => [...code.matchAll(GATE)]
+    .filter(m => !/function\s+$/.test(code.slice(Math.max(0, m.index! - 20), m.index!)))
+    .map(m => ({ file, args: argumentsAt(code, m.index! + m[0].length - 1) })));
+
+  it('every call of requireBillingLocation is on the list, once, and no entry outlives its call', () => {
+    const files = calls.map(c => c.file).sort();
+    assert.deepEqual(files, Object.keys(GATE_DOORS).sort(),
+      'A new call of requireBillingLocation: add it to GATE_DOORS in this file with its purchase answer (does this door make a new charge decision?)');
+  });
+
+  for (const { file, args } of calls) {
+    const door = GATE_DOORS[file];
+    if (!door) continue;
+    it(`purchase: ${door.purchase} · ${file} (${door.why})`, () => {
+      const bare = blankLiterals(args);
+      if (door.purchase === 'yes') assert.match(bare, /\{ purchase: true \}\s*$/, `${file}: a purchase door must pass { purchase: true }`);
+      if (door.purchase === 'no') assert.doesNotMatch(bare, /purchase/, `${file}: not a purchase door, so it must not refuse Québec`);
+      if (door.purchase === 'up_only') {
+        assert.match(bare, /\{ purchase: up \}\s*$/, `${file}: only a move UP is a purchase`);
+        assert.match(CODE.get(file)!, /const up = direction === 'up';/, `${file}: \`up\` must mean the move's direction is up`);
+      }
+    });
+  }
+
+  it('the gate refuses the sent address BEFORE it saves it, then the one on file (a refused buyer’s address is never stored)', () => {
+    const body = between(CODE.get('lib/billing-location-server.ts')!, 'export async function requireBillingLocation(',
+      'export async function withClubAddressOnStripe', 'requireBillingLocation');
+    const sent = body.indexOf('if (opts.purchase && sentAddress && isClosedRegion(sentAddress)) return regionClosed();');
+    const save = body.indexOf('saveBillingLocation(');
+    const stored = body.indexOf('if (tax.ok && opts.purchase && isClosedRegion(tax.location)) return regionClosed();');
+    assert.ok(sent >= 0 && save > sent, 'requireBillingLocation: the sent address must be checked for Québec before it is saved');
+    assert.ok(stored > save, 'requireBillingLocation: the address on file must be checked for Québec too');
+  });
+
+  it('Premium → Club’s quote refuses a typed Québec address before it asks Stripe for a figure', () => {
+    const code = CODE.get('app/api/billing/move/preview/route.ts')!;
+    const at = code.indexOf('if (typed.ok && isClosedRegion(typed.value))');
+    assert.ok(at >= 0 && at < code.indexOf('previewMove('), 'the in-place preview must refuse a typed Québec address before the quote');
+  });
+
+  it('the rule is not in checkBillingLocation (it also decides the address on file: fee invoices and saving read it)', () => {
+    const fn = between(CODE.get('lib/billing-location.ts')!, 'export function checkBillingLocation(',
+      'export function storedLocationStillValid(', 'checkBillingLocation');
+    assert.doesNotMatch(fn, /isClosedRegion|QC/, 'checkBillingLocation must not refuse Québec: an account with it on file keeps everything else');
+  });
+});
+
+/**
  * EVERY CHARGE LEAVES A TAX RECORD — GST/HST Stage 3 Part 1 (build prompt GST_HST_STAGE3_BUILD_PROMPT.md; owner rulings 2026-11-06).
  * The same list, a third answer: does the charge this call opens leave a record in `platform_charge_tax_records`? Only a Stripe
  * INVOICE on our own account does, through the billing webhook's writer (and the daily catch-up). So each entry above is either
@@ -622,6 +691,7 @@ const TAX_RECORD: Record<string, { invoice: string } | { none: string }> = {
   'lib/workspace-upgrade-preview.ts invoices.createPreview': { none: RECORD_NONE.quote },
   'lib/console-money-stripe.ts invoices.createPreview': { none: RECORD_NONE.quote },
   'lib/purchase-details-server.ts invoices.createPreview': { none: RECORD_NONE.quote },
+  'lib/renewal-reminder-server.ts invoices.createPreview': { none: RECORD_NONE.quote },
   'lib/plan-ending-server.ts subscriptions.update': { none: RECORD_NONE.cancel },
   'lib/billing-setup.ts checkout.sessions.create': { none: RECORD_NONE.setup },
   'lib/team-org-billing.ts checkout.sessions.create': { none: RECORD_NONE.dead },

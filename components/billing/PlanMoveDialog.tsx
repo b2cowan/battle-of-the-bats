@@ -33,7 +33,7 @@ import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import styles from './Billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import FreeTimeBand from './FreeTimeBand';
-import { BILLING_ADDRESS_FORM_WORDS, BILLING_ADDRESS_REQUIRED, BILLING_LOCATION_WORDS, checkBillingLocation } from '@/lib/billing-location';
+import { BILLING_ADDRESS_FORM_WORDS, BILLING_ADDRESS_REQUIRED, BILLING_LOCATION_WORDS, BILLING_REGION_CLOSED, checkBillingLocation } from '@/lib/billing-location';
 import BillingAddressFields, { useAddressDraft } from './BillingAddressFields';
 import { isAddressRefusal, useBillingAddressGate } from './BillingAddressDialog';
 // A held account (GST/HST Stage 2 Ask 1) shows the server's sentence with no "Check again": asking again cannot change it.
@@ -298,7 +298,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   const preview = state.status === 'preview' ? state.preview : null;
   const canCheckout = refusal?.code === 'no_live_subscription' && (!inPlace || !!quote);
   // No address on file for a band move: the Billing address window, which comes back here with the figures once saved.
-  const retryable = figures === 'failed' || (refusal && (refusal.code === 'no_live_subscription' ? inPlace && !quote : !['band_too_small', 'plan_not_on_sale', 'payment_failing', 'cannot_become_club', 'subscription_ending', BILLING_REVIEW_HOLD, BILLING_ADDRESS_REQUIRED].includes(refusal.code)));
+  const retryable = figures === 'failed' || (refusal && (refusal.code === 'no_live_subscription' ? inPlace && !quote : !['band_too_small', 'plan_not_on_sale', 'payment_failing', 'cannot_become_club', 'subscription_ending', BILLING_REVIEW_HOLD, BILLING_ADDRESS_REQUIRED, BILLING_REGION_CLOSED].includes(refusal.code)));
   const payWaits = working || figures !== 'ready';
   const footer = <>
     {cancel}
@@ -339,7 +339,8 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     {changed && <p className={styles.waitCallout} role="status">{changed}</p>}
     {state.status === 'loading' && <LoadingState inline label={W.move.loading} />}
     {state.status === 'finished' && <PageNotice notice={{ tone: 'good', text: W.clubUpgrade.finishing }} />}
-    {inPlace && (preview || quote) && <>
+    {/* The Québec refusal keeps the address fields: the typed province is what was refused, and changing it asks again. */}
+    {inPlace && (preview || quote || refusal?.code === BILLING_REGION_CLOSED) && <>
       {quote && <FreeTimeBand band={{ tone: 'amber', eyebrow: W.page.sections.plan, title: W.clubUpgrade.freeTitle(), text: W.clubUpgrade.freeWarning(freeThrough) }} />}
       {quote && <p>{quote.trialDays > 0 ? W.clubUpgrade.trial(quote.trialDays) : W.clubUpgrade.noTrial}</p>}
       <p>{W.clubUpgrade.owner}</p>

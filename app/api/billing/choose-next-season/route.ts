@@ -107,7 +107,8 @@ export const POST = withObservability(async (req: Request) => {
   // ── 5. GST/HST Stage 1: the buyer's billing address is on file ────────────
   // A choice is a subscription that will charge, so it is a purchase (the club's address, or a coach's own home address).
   const buyer = billingBuyerOf(auth.org, auth.user);
-  const located = await requireBillingLocation(buyer);
+  // A next-season choice is a new charge decision: a Québec address is refused (GST/HST 6.4, Q6).
+  const located = await requireBillingLocation(buyer, null, { purchase: true });
   if (!located.ok) return located.response;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';

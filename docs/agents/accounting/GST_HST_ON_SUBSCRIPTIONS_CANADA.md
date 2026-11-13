@@ -42,6 +42,13 @@ if it has none, the IPP fallback is the **highest-rate province** where the prop
   once taxable supplies to **specified Québec consumers** exceed **$30,000 over 12 months**. A specified Québec
   consumer is a person **not registered for QST** — so a small non-profit club that isn't QST-registered likely counts
   (all Québec points: Revenu Québec pages blocked fetch; confirm).
+- **A Québec account that keeps renewing (6.4 Part B review, 2026-11-13; owner ruling Q6: no NEW purchase from a Québec
+  billing address, stored-Québec accounts keep renewing, moving down and paying fees).** We hold no QST registration, so Stripe
+  Tax charges those renewals 5% GST and no QST (the same as the recovered-fee rule). Every renewal, and every fee line riding
+  it, still counts toward the $30,000-in-12-months test above, so refusing new Québec buyers does not stop the total from
+  growing. Owner-level flag: keep a running 12-month total of taxable sales to Québec billing addresses (platform admin's sales
+  report by province would do) and decide before it nears $30,000, not after. Unconfirmed against Revenu Québec's own pages
+  (not fetchable); a professional should confirm the threshold and the specified-consumer test before the first Québec sale.
 
 **Invoices (input-tax-credit documentation, tiers since 2021-04-20):** under $100: supplier/trading name, date, total ·
 $100–$499.99: add GST/HST charged (or that it's included), **GST/HST registration number** · $500+: add buyer's name,

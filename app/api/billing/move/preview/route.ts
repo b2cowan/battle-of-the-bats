@@ -7,8 +7,8 @@ import { normalizeBillingCycle } from '@/lib/plan-config';
 import { isPremiumToClub } from '@/lib/workspace-upgrade';
 import { moveDirection } from '@/lib/plan-move-options';
 import { ownPlanOf } from '@/lib/entitlement-grants';
-import { billingAddressFromBody, requireBillingLocation, usSalesOpen } from '@/lib/billing-location-server';
-import { checkBillingLocation, toStripeAddress } from '@/lib/billing-location';
+import { billingAddressFromBody, regionClosedResponse, requireBillingLocation, usSalesOpen } from '@/lib/billing-location-server';
+import { checkBillingLocation, isClosedRegion, toStripeAddress } from '@/lib/billing-location';
 
 /**
  * POST /api/billing/move/preview — { orgSlug, planKey } → what the move would do, before the owner
@@ -53,9 +53,13 @@ export const POST = withObservability(async (req: Request) => {
   let place: QuotePlace = { kind: 'customer' };
   if (inPlace) {
     const typed = checkBillingLocation(billingAddressFromBody(body.billingAddress) ?? {}, { usSalesOpen: usSalesOpen() });
+    // GST/HST 6.4 (Q6): the club's typed address in Québec is refused here too, the same answer the move itself gives.
+    if (typed.ok && isClosedRegion(typed.value)) {
+      return regionClosedResponse('club');
+    }
     place = typed.ok ? { kind: 'typed', address: toStripeAddress(typed.value) } : { kind: 'wait' };
   } else if (moveDirection(ownPlanOf(org), toPlan) === 'up') {
-    const located = await requireBillingLocation({ kind: 'org', orgId: org.id, name: org.name, stripeCustomerId: org.stripeCustomerId ?? null });
+    const located = await requireBillingLocation({ kind: 'org', orgId: org.id, name: org.name, stripeCustomerId: org.stripeCustomerId ?? null }, null, { purchase: true });
     if (!located.ok) return located.response;
   }
 
