@@ -411,6 +411,40 @@ census (B1, C1) **supersedes §7's 6.3 lines** — several §7 line numbers had 
   `HISTORY_ENDPOINTS` guard pattern), and the walk covers every door.
 
 ### 6.4 — The purchase-confirmation email, and its neighbours (build session; needs 6.2; `/accounting` on the tax lines)
+**Kickoff prompt:** [GST_HST_STAGE6_4_KICKOFF_PROMPT.md](GST_HST_STAGE6_4_KICKOFF_PROMPT.md) (written 2026-11-13, after the 6.3 walk §506 passed 81/81).
+**Build prompt:** [GST_HST_STAGE6_4_BUILD_PROMPT.md](GST_HST_STAGE6_4_BUILD_PROMPT.md) — two parts (A the purchase email + every owner +
+the migration; B the yearly reminder + Québec). **Progress: PLANNED 2026-11-13; words reviewed by `/accounting` and `/legal` the
+same day (the prompt's §9); Part A next.**
+
+> **⚖ RULED 2026-11-13 (owner, the 6.4 planning session — all four as recommended):**
+> - **Q1 — live, not dark.** The email, the reminder and the Québec refusal ship with the next release. Only the email's Terms
+>   line follows the legal-pages switch (off: no line; preview: "the draft"; published: the accepted version's page).
+> - **Q4 — every active owner** receives both emails (a Premium's coach). The same build fixes the existing billing emails
+>   (trial ending, welcome back, the plan-ending emails, the retention warning) that send **nothing** when a club has two owners
+>   [V `lib/supabase-admin.ts:11–23` `.single()`].
+> - **Q3 — the Premium welcome stays** beside the details email (a coach gets two); **a paid comeback gets one email**, the
+>   details email opening with "Welcome back"; the separate `welcome_back` stops for invoiced comebacks.
+> - **Q6 — every purchase door refuses Québec, upgrades included** ("no new charge decision from a Québec billing address");
+>   move down, cancel, payouts, fee invoices, renewals and saving the address are untouched.
+>
+> **Settled by the planning session from the code (no owner call needed):**
+> - **The completion point is the paid invoice**, sorted by `billing_reason`, sent after the tax record is written, with a
+>   daily catch-up.
+> - **The reminder reads Stripe's next-invoice preview**, 30–37 days ahead, sends late rather than never, stamped per period.
+> - **§9 needs no change.** The draft already says "we will try"; the retention warning is manual only [H
+>   `lib/billing-retention.ts:494`], and scheduling it rides with the purge.
+>
+> **Open (owner):**
+> - **A paid → paid move down sends no email today** (only the on-screen message) [H `lib/plan-move.ts:527–553`].
+>   Recommend: send the existing "your move is scheduled" email for it too, in Part A.
+> - The GST/HST number must print on invoices in the Stripe dashboard (the email reads it from the invoice).
+> - **Terms 0.3 edits owed (`/legal`, from its 2026-11-13 read; the build prompt §9):**
+>   - §16 "a link to the version you accepted", not "a copy";
+>   - §17 "no new purchase, upgrade or plan choice" with a Québec billing address (today's "we do not accept a billing
+>     address" is untrue once one can be saved and renewed);
+>   - §8 a trial's first payment date is in the purchase email, and "owner" means every owner;
+>   - the Privacy Policy says "owners".
+> - **§8 price-change procedure written:** `docs/agents/legal/PRICE_CHANGE_NOTICE_PROCEDURE.md` v0.1 (owner approval at 6.6).
 - **On every first purchase and every paid plan change** (checkout completed, upgrade, next-season plan): an email to the owner
   with what was bought, the price, the taxes, the billing period, the renewal date, how to cancel, and **the exact Terms version
   — as a link to that version's page plus the text itself** (attached or inline; `/legal` settles which satisfies "a copy" in

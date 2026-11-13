@@ -44,6 +44,28 @@ Plan: [GST_HST_STAGE6_TERMS_PLAN.md](GST_HST_STAGE6_TERMS_PLAN.md) · Written 20
 - Success: the build fails if a new account, organization or plan door is added without the check; with the switch off,
   nothing changes anywhere.
 
+## Step 6.4 — the purchase email, the yearly reminder, Québec (planned 2026-11-13)
+- **Ruled: live with the next release, not hidden.** Only the email's "Terms you accepted" line waits for the pages to publish.
+- **"The details of your purchase."** One email, a minute after a payment goes through:
+  - **When:** on a first plan, a free trial starting, an upgrade, a next-season choice, and coming back after cancelling.
+  - **What it shows:** the plan, the price, each tax by name and rate, the total, the dates, how to cancel, a link to the
+    invoice, our GST/HST number.
+  - **The figures** come from the same record our books keep.
+  - **Not sent for** renewals, fee invoices, free Founding accounts, demos or test purchases.
+- **Coming back after cancelling** gets one email, which opens "Welcome back", instead of two. A coach buying Premium still
+  gets "Your portal is ready" as well.
+- **The yearly reminder:** about 30 days before a yearly plan charges again, the date and the amount with its tax.
+- **Every owner gets these**, and the same build fixes today's billing emails, which send nothing when a club has two owners.
+- **Québec:** every way to buy or upgrade politely says "We're not selling in Québec yet." An account with a Québec address
+  on file keeps renewing, moving down, cancelling and taking payouts.
+- **Success:**
+  - every purchase gets exactly one email, with the same figures as its invoice;
+  - a replayed payment sends nothing;
+  - no yearly plan renews without 30 days' notice;
+  - no Québec address can start a purchase;
+  - nothing a Québec account already has changes.
+- Order: two builds (the email first; then the reminder and Québec), then the walk.
+
 ## Why it matters
 - Today the Terms bind nobody: nothing records that anyone agreed to them, and they aren't published.
 - A coach buying a yearly Coaches Portal is a consumer under Ontario law, which requires a copy of the agreement within 15 days.
