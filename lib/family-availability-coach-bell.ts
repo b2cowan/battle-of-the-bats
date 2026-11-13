@@ -4,7 +4,7 @@ import { notify } from './notify';
 import { listActiveStaffForTeams, resolveMembershipCapabilities } from './coach-membership';
 import { sheetAddressFor } from './coach-schedule-sheet';
 import { ATTENDANCE_WORD } from './coach-schedule-vocab';
-import { cleanNamePart } from './coach-roster-name';
+import { playerFirstName } from './coach-roster-name';
 import { firstNames, type FamilyAnswerChange } from './family-availability';
 import { scheduleHeadcounts } from './family-availability-coach';
 import {
@@ -20,8 +20,8 @@ import type { RepAttendanceStatus } from './types';
  *
  *   notifyCoachesOfFamilyAnswer(...)   called by the parent's save route after a successful write
  *
- * ⚠ WHEN: a family's Out at any time, or any change (a cleared answer too) inside the 48 hours before the event
- *   (`coachBellFires`). Never a first In or Maybe, never a note-only re-send.
+ * ⚠ WHEN: a family's Out at any time, an Out taken back at any time (owner, Session 4), or any change (a cleared answer too)
+ *   inside the 48 hours before the event (`coachBellFires`). Never a first In or Maybe, never a note-only re-send.
  * ⚠ TO WHOM: the team's coaches who can mark attendance (the `attendance` capability; head coach and assistants by default),
  *   never the parent who answered (a coach who is also a parent). Bell only: the kind's defaults are bell on, email off, push off
  *   (it is not in the push defaults, and `notify()` emails staff only for payment failures), and each coach's own Account →
@@ -71,7 +71,7 @@ export async function notifyCoachesOfFamilyAnswer(params: {
     if (coachIds.length === 0) return;
 
     const [player, org, parentNames, counts] = await Promise.all([
-      supabaseAdmin.from('rep_roster_players').select('id, player_first_name')
+      supabaseAdmin.from('rep_roster_players').select('id, player_first_name, player_last_name')
         .eq('program_year_id', event.program_year_id).eq('child_id', params.childId).eq('status', 'active').maybeSingle(),
       supabaseAdmin.from('organizations').select('slug').eq('id', event.org_id).maybeSingle(),
       firstNames([params.actorUserId]),
@@ -81,7 +81,7 @@ export async function notifyCoachesOfFamilyAnswer(params: {
     ]);
     if (player.error) throw player.error;
     if (org.error) throw org.error;
-    const playerRow = player.data as { id: string; player_first_name: string | null } | null;
+    const playerRow = player.data as { id: string; player_first_name: string | null; player_last_name: string | null } | null;
     const slug = (org.data as { slug: string } | null)?.slug;
     if (!playerRow || !slug) return;
 
@@ -100,7 +100,7 @@ export async function notifyCoachesOfFamilyAnswer(params: {
       }),
       eventDay: scheduleDayLabel(event.starts_at),
       childId: params.childId,
-      child: cleanNamePart(playerRow.player_first_name) || 'A player',
+      child: playerFirstName({ playerFirstName: playerRow.player_first_name ?? '', playerLastName: playerRow.player_last_name ?? '' }, 'A player'),
       answer: params.change.next,
       prior: params.change.prior,
       parent: parentNames.get(params.actorUserId) ?? null,

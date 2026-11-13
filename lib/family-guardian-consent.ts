@@ -17,8 +17,11 @@ import { possessive } from './utils';
  * wrote the one-child words; /legal and /marketing re-read it in the Stage 4a closeout.
  */
 
-/** Stored with every consent record (/legal condition 4: the wording version). */
+/** Stored with every consent record (/legal condition 4: the wording version). 0.1 = the words a house-league invitation shows. */
 export const GUARDIAN_CONSENT_VERSION = 'GUARDIAN_CONSENT_STAGE4 v0.1';
+/** Draft 0.2 "(a) 0.2" (Stage 4b, owner 2026-11-13): an invitation with a REP-team child adds the In / Out / Maybe lines. New joins
+ *  only; a parent who joined earlier reads the same facts in the answer sheet's hint. The version travels with the words. */
+export const GUARDIAN_CONSENT_VERSION_REP = 'GUARDIAN_CONSENT_STAGE4 v0.2';
 
 /** Shown above the boxes while the words are a draft. Nothing on a real page may claim a review is under way (the old notice,
  *  "being confirmed with our privacy advisor", was false from 2026-11-04). */
@@ -39,6 +42,8 @@ export function namesList(names: readonly string[]): string {
 const poss = possessive;
 
 export interface BeforeYouJoinWords {
+  /** The wording version these words are (stored at the head of the record, so a record can never claim words it didn't show). */
+  version: string;
   title: string;
   intro: string;
   whoTitle: string;
@@ -56,22 +61,32 @@ export interface BeforeYouJoinWords {
 }
 
 /**
- * /legal draft (a), filled. `children` are first names, in the order the page lists them (one or more).
+ * /legal draft (a), filled. `children` are first names, in the order the page lists them (one or more). `rep`: at least one child
+ * on the invitation is on a rep team (draft 0.2's rule 1: only then do the In / Out / Maybe lines appear; a mixed invitation shows
+ * them; a house-league-only invitation shows 0.1, because in 4b a house-league parent sees no In / Out / Maybe).
  */
-export function beforeYouJoinWords(club: string, children: readonly string[]): BeforeYouJoinWords {
+export function beforeYouJoinWords(club: string, children: readonly string[], rep = false): BeforeYouJoinWords {
   const several = children.length > 1;
   const names = namesList(children);
   const theirs = poss(names);
   const team = several ? 'teams' : 'team';
+  const answers = rep
+    ? ` If ${several ? 'their coaches turn' : `${theirs} coach turns`} it on, you can also say here whether ${names} ${several ? 'are' : 'is'} coming to a game or practice.`
+    : '';
   return {
+    version: rep ? GUARDIAN_CONSENT_VERSION_REP : GUARDIAN_CONSENT_VERSION,
     pageTitle: several ? 'Join your children’s teams' : `Join ${theirs} team`,
     title: 'Before you join',
     intro: `${club} already has ${theirs} ${several ? 'sign-ups' : 'sign-up'}. Joining lets you see ${theirs} ${team}, practices and games here, and your sign-up.`,
     whoTitle: 'Who sees what',
     who: {
-      you: `You see ${theirs} ${team}, coach, practice and game times and places, and your sign-up. Nothing about other children.`,
-      staff: `${theirs} coaches and ${poss(club)} staff see the name, email and phone number on ${theirs} ${several ? 'sign-ups' : 'sign-up'}. ${club} can also see that you joined, and can remove you.`,
-      others: `Other families can’t see you or ${names} here.`,
+      you: `You see ${theirs} ${team}, coach, practice and game times and places, and your sign-up.${answers} Nothing about other children.`,
+      staff: rep
+        ? `${theirs} coaches and ${poss(club)} staff see the name, email and phone number on ${theirs} ${several ? 'sign-ups' : 'sign-up'}. Coaches also see your answers, any note you add, your first name and when you answered. ${club} can also see that you joined, sees if you leave, and can remove you.`
+        : `${theirs} coaches and ${poss(club)} staff see the name, email and phone number on ${theirs} ${several ? 'sign-ups' : 'sign-up'}. ${club} can also see that you joined, and can remove you.`,
+      others: rep
+        ? `Other families can’t see you or ${names} here. ${theirs} other parent, if they’ve joined, sees your first name and your answer, but not your note.`
+        : `Other families can’t see you or ${names} here.`,
       us: `FieldLogicHQ, the software ${club} uses, keeps your account (your email and password). It opens ${poss(club)} records only to support the club.`,
     },
     policyLink: 'How we use your information',
@@ -90,7 +105,7 @@ export function beforeYouJoinWords(club: string, children: readonly string[]): B
  */
 export function guardianConsentText(words: BeforeYouJoinWords): string {
   return [
-    GUARDIAN_CONSENT_VERSION,
+    words.version,
     words.title,
     words.intro,
     words.whoTitle,

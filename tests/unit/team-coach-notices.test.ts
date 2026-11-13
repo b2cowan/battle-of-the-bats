@@ -224,6 +224,9 @@ describe('two bells that never overlap (B1/B3)', () => {
       // Stage 4b "Family answers" (Part 8): folds a coach's own unread line of ONE kind, keyed by org AND kind like lib/db.ts's
       // dedupe; that kind is only ever filed on the club's bell, so it can never mix the two bells.
       'lib/family-availability-coach-bell.ts',
+      // Stage 4b Remind's daily cap (Session 4): reads parents' OWN rows of ONE kind (`family_availability_reminder`, keyed by
+      // kind, user, team and day) to count today's reminder emails; it never lists a bell, so the bell rule has nothing to apply to.
+      'lib/family-availability-remind.ts',
       // Needs attention clears itself (2026-10-16): a reader's pass reads through `bellReadFilter`; a settle step's
       // sweep names its own kinds, none of them a free coach's; the doors read the reader's own row by kind.
       'lib/needs-attention.ts',

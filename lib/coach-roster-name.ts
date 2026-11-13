@@ -38,6 +38,12 @@ export function playerName(player: Pick<NamedRosterPlayer, 'playerFirstName' | '
   return [cleanNamePart(player.playerFirstName), cleanNamePart(player.playerLastName)].filter(Boolean).join(' ');
 }
 
+/** "Maya": the first name a sentence uses ("Maya's family said Out"), else the whole name, else `fallback` (no name at all).
+ *  One rule for the family answers' coach side (the room, the lineup warning, Remind, the coach's bell; Stage 4b /simplify). */
+export function playerFirstName(player: Pick<NamedRosterPlayer, 'playerFirstName' | 'playerLastName'>, fallback = ''): string {
+  return cleanNamePart(player.playerFirstName) || playerName(player) || fallback;
+}
+
 /**
  * A `tel:` href from a phone number as a coach typed it ("(905) 555-0142" → "tel:9055550142").
  * ⚠ ONE STRIPPING RULE (roster + player page review /simplify, 2026-09-13): it was written inline

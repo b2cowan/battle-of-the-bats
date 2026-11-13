@@ -155,7 +155,7 @@ function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: 
   const showTerms = terms.on && ((signedIn && signedInNeedsTerms) || (!signedIn && step === 'new') || termsAsked);
 
   const names = kids.map(c => c.firstName);
-  const words = beforeYouJoinWords(club.name, names);
+  const words = beforeYouJoinWords(club.name, names, kids.some(c => c.rep));
   const several = kids.length > 1;
   // Children on the same team share one row ("Leo and Ava · Otters · U9 Rookie"), as drawn (state B).
   const rows = [...new Set(kids.map(c => c.teamLine))].map(line => ({

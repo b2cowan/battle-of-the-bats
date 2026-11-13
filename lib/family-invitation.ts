@@ -12,7 +12,7 @@ import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import { getOrgPrivacyPolicyHref } from './privacy-policy';
 import { authAccountExistsForEmail } from './auth-account-lookup';
 import { isPlatformAdminEmail } from './platform-auth';
-import { beforeYouJoinWords, guardianConsentText, GUARDIAN_CONSENT_VERSION } from './family-guardian-consent';
+import { beforeYouJoinWords, guardianConsentText } from './family-guardian-consent';
 import { FAMILY_INVITATION_WORDS } from './family-invitation-words';
 import { cleanFirstName } from './family-availability-rules';
 import {
@@ -324,7 +324,9 @@ async function connectAlreadyJoined(orgId: string, placed: PlacedSignup[], bandO
       if (!linkId) continue;
       await recordConsent({
         orgId, userId: j.userId, email, consentIp: null, province, linkId,
-        consentText: `${GUARDIAN_CONSENT_VERSION}\nConnected when ${c.firstName} was placed on a team, under this address's acceptance of ${j.usedAt} (invitation ${j.id}).`,
+        // No version stamp: this record shows no words of its own; it rests on the acceptance it names, whose record holds the
+        // words and version the parent actually saw (0.1 or 0.2; /legal Stage 4b closeout).
+        consentText: `GUARDIAN_CONSENT_STAGE4 (the acceptance below)\nConnected when ${c.firstName} was placed on a team, under this address's acceptance of ${j.usedAt} (invitation ${j.id}).`,
       });
     }
   }
@@ -568,7 +570,8 @@ async function connectablesOf(inv: InvitationDbRow) {
 }
 
 /** One child the accept page lists: the first name and the team line(s) ("Otters · U9 Rookie"). Never another child's. */
-export interface InvitationChild { firstName: string; teamLine: string }
+/** `rep`: the child is on the invitation through a rep team (the accept page's consent words follow it, draft 0.2). */
+export interface InvitationChild { firstName: string; teamLine: string; rep: boolean }
 
 /** Who is signed in, as the page may show it: never the full address of either account. */
 export type InvitationViewer =
@@ -634,7 +637,7 @@ export async function inspectInvitation(token: string, user: InvitationUser | nu
     ...base,
     state,
     maskedEmail: maskEmail(inv.email),
-    children: connect.map(c => ({ firstName: c.firstName, teamLine: [...(lines.get(c.childId) ?? [])].join(', ') })),
+    children: connect.map(c => ({ firstName: c.firstName, teamLine: [...(lines.get(c.childId) ?? [])].join(', '), rep: !!c.repEntryId })),
   };
 }
 
@@ -702,7 +705,9 @@ export async function acceptInvitation(params: {
   // The exact words the page showed for these children (the page renders the same builder from `inspectInvitation`'s names).
   const childIds: string[] = [];
   try {
-    const consentText = guardianConsentText(beforeYouJoinWords(await clubNameOf(inv.org_id), connect.map(c => c.firstName)));
+    const consentText = guardianConsentText(
+      beforeYouJoinWords(await clubNameOf(inv.org_id), connect.map(c => c.firstName), connect.some(c => !!c.repEntryId)),
+    );
     for (const c of connect) {
       const linkId = await writeVerifiedLink({
         orgId: inv.org_id, userId: params.userId, email: inv.email, consentIp: params.consentIp, c, viaRep: !!c.repEntryId,

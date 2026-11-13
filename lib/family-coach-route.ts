@@ -2,9 +2,11 @@ import 'server-only';
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from './api-auth';
 import { refuseWithoutLiveSeat } from './coach-season-refusal';
-import { getCoachingAssignmentsForUser, getRepTeam } from './db';
+import { getActiveRepProgramYear, getCoachingAssignmentsForUser, getRepTeam } from './db';
+import { denyUnless, type CoachCapabilities } from './coach-capabilities';
+import { GUARDIAN_TIER_ENABLED } from './family-guardian';
+import { isUuid } from './utils';
 import { isFamilyLayerEnabled } from './family-access';
-import type { CoachCapabilities } from './coach-capabilities';
 import type { RepTeam } from './types';
 
 /**
@@ -61,4 +63,25 @@ export async function resolveFamilyCoachContext(
   }
 
   return { ctx, team, assignment };
+}
+
+/**
+ * The chain above plus what every coach-side "families say if they're coming" route adds (Stage 4b; the room's family read and
+ * Remind): 404 while the guardian tier is off, the `attendance` capability (ask 11: coaches who can mark attendance), and the
+ * team's LIVE season (no year parameter; an event of another season is the caller's "not found").
+ */
+export async function resolveFamilyAttendanceContext(
+  params: Promise<{ orgSlug: string; teamId: string; eventId: string }>,
+): Promise<{ error: Response } | (FamilyCoachContext & { teamId: string; eventId: string; programYearId: string })> {
+  if (!GUARDIAN_TIER_ENABLED) return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
+  const { orgSlug, teamId, eventId } = await params;
+  // A malformed id is "not found", never a database error (the family POST route's rule).
+  if (!isUuid(eventId)) return { error: NextResponse.json({ error: 'Event not found' }, { status: 404 }) };
+  const resolved = await resolveFamilyCoachContext(orgSlug, teamId);
+  if ('error' in resolved) return resolved;
+  const denied = denyUnless(resolved.assignment.capabilities.attendance, 'You do not have access to attendance.');
+  if (denied) return { error: denied };
+  const programYear = await getActiveRepProgramYear(teamId);
+  if (!programYear) return { error: NextResponse.json({ error: 'Event not found' }, { status: 404 }) };
+  return { ...resolved, teamId, eventId, programYearId: programYear.id };
 }

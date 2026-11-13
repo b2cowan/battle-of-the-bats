@@ -3,20 +3,21 @@ import { supabaseAdmin } from './supabase-admin';
 import { notify } from './notify';
 import { getFamilySuppressionList, sendFamilyEmail } from './family-email';
 import { inParallel } from './supabase-paging';
-import { systemMailFace } from './club-email-context';
+import { readClubEmailOrg, systemMailFace } from './club-email-context';
 import { normalizeGuardianEmail } from './guardian-email';
-import { cleanNamePart, playerName } from './coach-roster-name';
+import { playerFirstName } from './coach-roster-name';
 import { coachFamilyAnswersSetting, lastRemindedAt, type KnownRepTeam } from './family-availability-coach';
 import { familyAnswerState, remindAgainAt, remindPlan } from './family-availability-rules';
 import { FAMILY_REMINDER_WORDS as RW, reminderEventLabel, clockOf } from './family-availability-words';
 import { scheduleDayLabel } from './family-schedule-format';
+import { orgDayKey, zonedWallClockToUtc } from './timezone';
 import type { RepAttendanceStatus } from './types';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * "FAMILIES SAY IF THEY'RE COMING" — REMIND (Signed-in family accounts Stage 4b, Session 3, Part 7; ask 2; drawing tab 4).
  *
- *   remindPreview(...)  what the coach's confirm shows: which families, how many parents, how many get the app note only, who
+ *   remindPreview(...)  what the coach's confirm shows: which players, how many parents, how many get the app note only, who
  *                       is not reminded and why, when Remind was last used, and a sample of the email
  *   sendRemind(...)     the send: re-derives everything, claims the event's 24-hour slot, then a bell and an email per parent
  *
@@ -31,7 +32,7 @@ import type { RepAttendanceStatus } from './types';
  * ⚠ ONCE PER EVENT PER 24 HOURS for the whole staff: the database's claim (`event_availability_remind_claim`) is taken BEFORE
  *   the send so two coaches pressing at once cannot both send. The emails go first and the bells after: a send where every email
  *   plainly failed gives the slot back BEFORE any bell, so nobody is touched and a retry cannot bell a parent twice.
- * ⚠ The report is COUNTS (families, parents, app-only), never who received what, never an address.
+ * ⚠ The report is COUNTS (parents reached, app-only) and the players' names, never who received what, never an address.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -40,17 +41,17 @@ interface EventRow {
   name: string; opponent: string | null; home_away: string | null; location: string | null;
 }
 
-/** One parent to reach, and the children of theirs this reminder is about. */
-interface Recipient { userId: string; email: string | null; appOnly: boolean; children: string[] }
-
-interface OrgFaceRow { name: string; logo_url: string | null; theme_preset: string | null; theme_primary: string | null; theme_accent: string | null }
+/** One parent to reach, and the children of theirs this reminder is about. `appOnly`: no address, or on the club's unsubscribe
+ *  list. `capped`: already had a reminder EMAIL from this team today (owner, Session 4: one per parent per day; the app note still
+ *  goes). */
+interface Recipient { userId: string; email: string | null; appOnly: boolean; capped: boolean; children: string[] }
 
 interface Gathered {
   event: EventRow;
   teamName: string;
   orgName: string;
   /** The club's row, for the email's face (read once here, reused by the send). */
-  orgRow: OrgFaceRow | null;
+  org: Awaited<ReturnType<typeof readClubEmailOrg>>;
   /** The club's unsubscribe list (empty when nobody is reminded). */
   suppressed: Set<string>;
   /** First names, in roster order. */
@@ -58,15 +59,17 @@ interface Gathered {
   marked: string[];
   noParent: string[];
   recipients: Recipient[];
-  /** How many of the recipients get the app note only (no email). */
+  /** How many of the recipients get the app note only because of their address (none, or unsubscribed). */
   appOnly: number;
+  /** How many get the app note only because they already had a reminder email from this team today (the daily cap). */
+  capped: number;
   remindedAt: string | null;
 }
 
 export type RemindRefusal = 'not_found' | 'closed' | 'nobody' | 'too_soon';
 
 function firstNameOfPlayer(p: { player_first_name: string | null; player_last_name: string | null }): string {
-  return cleanNamePart(p.player_first_name) || playerName({ playerFirstName: p.player_first_name ?? '', playerLastName: p.player_last_name ?? '' });
+  return playerFirstName({ playerFirstName: p.player_first_name ?? '', playerLastName: p.player_last_name ?? '' });
 }
 
 async function gather(params: {
@@ -84,16 +87,18 @@ async function gather(params: {
   if (state === 'not_covered') return { refused: 'not_found' };
   if (state !== 'open') return { refused: 'closed' };
 
-  const [roster, team, org, book, answers, last] = await Promise.all([
+  const [roster, teamName, org, book, answers, last] = await Promise.all([
     supabaseAdmin.from('rep_roster_players').select('id, child_id, player_first_name, player_last_name')
       .eq('program_year_id', params.programYearId).eq('status', 'active').order('player_last_name').order('player_first_name'),
-    supabaseAdmin.from('rep_teams').select('name').eq('id', params.teamId).maybeSingle(),
-    supabaseAdmin.from('organizations').select('name, logo_url, theme_preset, theme_primary, theme_accent').eq('id', event.org_id).maybeSingle(),
+    // The routes pass the team they already hold; a caller without it reads the name.
+    params.team?.name ?? supabaseAdmin.from('rep_teams').select('name').eq('id', params.teamId).maybeSingle()
+      .then(r => { if (r.error) throw r.error; return (r.data as { name: string } | null)?.name ?? null; }),
+    readClubEmailOrg(event.org_id),
     supabaseAdmin.from('rep_team_event_attendance').select('player_id, status').eq('event_id', event.id),
     supabaseAdmin.from('event_availability_answers').select('child_id').eq('event_kind', 'rep_event').eq('event_id', event.id),
     lastRemindedAt(event.id),
   ]);
-  for (const r of [roster, team, org, book, answers]) if (r.error) throw r.error;
+  for (const r of [roster, book, answers]) if (r.error) throw r.error;
   const players = (roster.data ?? []) as { id: string; child_id: string; player_first_name: string | null; player_last_name: string | null }[];
   const childIds = players.map(p => p.child_id);
   const { data: linkData, error: linkError } = childIds.length
@@ -109,7 +114,6 @@ async function gather(params: {
   const plan = remindPlan(players.map(p => ({
     playerId: p.id, status: status.get(p.id) ?? 'unknown', answered: answered.has(p.child_id), connected: connected.has(p.child_id),
   })));
-  const orgRow = (org.data as OrgFaceRow | null) ?? null;
   const byId = new Map(players.map(p => [p.id, p]));
   const nameOf = (id: string) => firstNameOfPlayer(byId.get(id)!);
 
@@ -130,22 +134,41 @@ async function gather(params: {
     // A lookup that failed is not "no address": it must not be reported to the coach as "app note only".
     if (error) throw error;
     const email = normalizeGuardianEmail(data?.user?.email ?? null);
-    return { userId, email, appOnly: !email || suppressed.has(email), children };
+    return { userId, email, appOnly: !email || suppressed.has(email), capped: false, children };
   });
+  const emailedToday = await remindEmailedToday(recipients.filter(r => !r.appOnly).map(r => r.userId), params.teamId, params.now);
+  for (const r of recipients) r.capped = !r.appOnly && emailedToday.has(r.userId);
 
   return {
     event,
-    teamName: (team.data as { name: string } | null)?.name ?? 'Your team',
-    orgName: orgRow?.name ?? '',
-    orgRow,
+    teamName: teamName ?? 'Your team',
+    orgName: org.name,
+    org,
     suppressed,
     remind: plan.remind.map(nameOf),
     marked: plan.marked.map(nameOf),
     noParent: plan.noParent.map(nameOf),
     recipients,
     appOnly: recipients.filter(r => r.appOnly).length,
+    capped: recipients.filter(r => r.capped).length,
     remindedAt: last,
   };
+}
+
+/**
+ * The daily cap (owner, Session 4; /legal): which of these parents already had a reminder EMAIL from this team today (the org's
+ * day). Read from their own reminder bell lines, which say whether the email went (`metadata.emailed`); a parent whose bell is
+ * off or who deleted the line is not seen, so the cap can only err toward one more email, never toward a missed reminder.
+ */
+async function remindEmailedToday(userIds: readonly string[], teamId: string, now: Date): Promise<Set<string>> {
+  if (userIds.length === 0) return new Set();
+  const dayStart = zonedWallClockToUtc(orgDayKey(now.toISOString()), '00:00');
+  if (!dayStart) return new Set();
+  const { data, error } = await supabaseAdmin.from('notifications').select('user_id')
+    .eq('event_type', 'family_availability_reminder').in('user_id', [...userIds]).gte('created_at', dayStart)
+    .eq('metadata->>teamId', teamId).eq('metadata->>emailed', 'true');
+  if (error) throw error;
+  return new Set(((data ?? []) as { user_id: string }[]).map(r => r.user_id));
 }
 
 /** The email and bell one parent gets (the same words the confirm's sample shows). */
@@ -168,9 +191,12 @@ function messageFor(g: Gathered, children: readonly string[]) {
 const teamPagePath = (teamId: string, eventId: string) => `/family/teams/${teamId}?event=${eventId}`;
 
 export interface RemindPreview {
-  families: string[];
+  /** The players whose parents are reminded (named in the confirm; owner, Session 4: name players, count parents). */
+  players: string[];
   parents: number;
   appOnly: number;
+  /** Parents who get the app note only because of the daily cap. */
+  capped: number;
   marked: string[];
   noParent: string[];
   remindedAt: string | null;
@@ -195,9 +221,10 @@ export async function remindPreview(params: {
   const first = g.recipients[0];
   const m = messageFor(g, first?.children ?? g.remind.slice(0, 1));
   return {
-    families: g.remind,
+    players: g.remind,
     parents: g.recipients.length,
     appOnly: g.appOnly,
+    capped: g.capped,
     marked: g.marked,
     noParent: g.noParent,
     remindedAt: g.remindedAt,
@@ -210,7 +237,9 @@ export async function remindPreview(params: {
   };
 }
 
-export interface RemindReport { remindedAt: string; families: string[]; parents: number; appOnly: number }
+/** `parents` = every parent reached (each gets the app note); `appOnly` = of those, how many got NO email (turned off, no address,
+ *  or the email did not go out), so the report counts what reached them, not what was attempted (owner, Session 4). */
+export interface RemindReport { remindedAt: string; players: string[]; parents: number; appOnly: number }
 
 /**
  * Send it (tab 4, frame 2). Re-derives everything from the database (never from the client's list), claims the event's 24-hour
@@ -238,20 +267,17 @@ export async function sendRemind(params: {
 
   let emailsTried = 0;
   let emailsFailed = 0;
+  /** The parents an email actually went to (their bell line says so; the next reminder today reads it for the cap). */
+  const emailed = new Set<string>();
   try {
-    const o = g.orgRow;
-    const face = o
-      ? await systemMailFace({
-        id: g.event.org_id, name: o.name, logoUrl: o.logo_url, themePreset: o.theme_preset, themePrimary: o.theme_primary, themeAccent: o.theme_accent,
-      })
-      : null;
+    const face = await systemMailFace(g.org);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
     const link = teamPagePath(params.teamId, g.event.id);
 
     // The emails FIRST, the bells after: when every email plainly failed the slot is given back and nobody has been touched, so a
     // retry cannot bell the same parents twice.
     await inParallel(g.recipients, 8, async r => {
-      if (r.appOnly || !r.email) return;
+      if (r.appOnly || r.capped || !r.email) return;
       const m = messageFor(g, r.children);
       emailsTried++;
       const result = await sendFamilyEmail({
@@ -276,6 +302,7 @@ export async function sendRemind(params: {
         return { status: 'provider_error' as const };
       });
       if (result.status === 'provider_error') emailsFailed++;
+      if (result.status === 'sent' || result.status === 'no_answer') emailed.add(r.userId);
     });
 
     // Only a plain failure of EVERY email gives the slot back ("skipped" and "no answer" may yet have gone out).
@@ -289,7 +316,7 @@ export async function sendRemind(params: {
       const m = messageFor(g, r.children);
       return notify({
         orgId: g.event.org_id, eventType: 'family_availability_reminder', title: m.bellTitle, body: m.bellBody, link,
-        userIds: [r.userId], metadata: { teamId: params.teamId, eventId: g.event.id },
+        userIds: [r.userId], metadata: { teamId: params.teamId, eventId: g.event.id, emailed: emailed.has(r.userId) },
       });
     });
   } catch (err) {
@@ -297,9 +324,12 @@ export async function sendRemind(params: {
     throw err;
   }
 
+  // The log keeps what was PLANNED (`families` = players reminded, `parents`, `app_only` = no email by choice or no address); the
+  // coach's report counts what reached them (every parent minus those an email went to), so it can read higher.
   const { error: countError } = await supabaseAdmin.from('event_availability_reminders')
     .update({ families: g.remind.length, parents: g.recipients.length, app_only: g.appOnly }).eq('id', claim.reminder_id);
   if (countError) console.error('[family-remind] the counts were not recorded:', countError.message);
 
-  return { ok: true, report: { remindedAt: claim.reminded_at, families: g.remind, parents: g.recipients.length, appOnly: g.appOnly } };
+  // What REACHED them: every parent got the app note; those with no email that went out are the app-only count.
+  return { ok: true, report: { remindedAt: claim.reminded_at, players: g.remind, parents: g.recipients.length, appOnly: g.recipients.length - emailed.size } };
 }

@@ -295,7 +295,7 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
     </>
   );
   const mismatchMark = mismatch && !cancelled
-    ? <TriangleAlert size={12} style={{ color: 'var(--warning)', flexShrink: 0 }} aria-label="Lineup and attendance don't match" />
+    ? <TriangleAlert size={12} style={{ color: 'var(--warning)', flexShrink: 0 }} aria-label="Lineup needs a look" />
     : null;
   const name = (
     <>

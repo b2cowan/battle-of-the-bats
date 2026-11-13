@@ -16,6 +16,7 @@ import { functionBody, readCode, readSource } from './_source-code.ts';
 const COACH_MODULE = 'lib/family-availability-coach.ts';
 const ROOM_ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/family-answers/route.ts';
 const EVENTS_ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/events/route.ts';
+const FAMILY_CHAIN = 'lib/family-coach-route.ts';
 const TEAM_ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/route.ts';
 const BOOK_ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/attendance/route.ts';
 const ADMIN_SCHEDULE = 'app/[orgSlug]/admin/rep-teams/teams/[teamId]/schedule/page.tsx';
@@ -158,7 +159,9 @@ describe('ask 11 — who sees what', () => {
     assert.match(body, /Promise<Record<string, Headcount> \| null>|out\[id\] = c/);
   });
   it('the room’s family lines (with the note’s words) need the attendance capability', () => {
-    assert.match(readCode(ROOM_ROUTE), /denyUnless\(assignment\.capabilities\.attendance/);
+    // Both coach-side family routes run ONE chain (Session 4): the tier, the family layer, `attendance`, the live season.
+    assert.match(readCode(ROOM_ROUTE), /await resolveFamilyAttendanceContext\(params\)/);
+    assert.match(functionBody(readCode(FAMILY_CHAIN), 'resolveFamilyAttendanceContext'), /denyUnless\(resolved\.assignment\.capabilities\.attendance/);
   });
   it('the switch uses exactly the Schedule visibility row’s gate (O3)', () => {
     const code = readCode(TEAM_ROUTE);
@@ -170,7 +173,9 @@ describe('ask 11 — who sees what', () => {
 
 describe('guard (a) — the guardian tier off: nothing about family answers exists for the coach', () => {
   it('every new coach path is gated on the tier', () => {
-    assert.match(readCode(ROOM_ROUTE), /if \(!GUARDIAN_TIER_ENABLED\) return NextResponse\.json\(\{ error: 'Not found' \}, \{ status: 404 \}\)/);
+    assert.match(readCode(ROOM_ROUTE), /await resolveFamilyAttendanceContext\(params\)/);
+    assert.match(functionBody(readCode(FAMILY_CHAIN), 'resolveFamilyAttendanceContext'),
+      /if \(!GUARDIAN_TIER_ENABLED\) return \{ error: NextResponse\.json\(\{ error: 'Not found' \}, \{ status: 404 \}\) \}/);
     assert.match(functionBody(readCode(COACH_MODULE), 'coachFamilyAnswersSetting'), /if \(!GUARDIAN_TIER_ENABLED\) return null/);
     const team = readCode(TEAM_ROUTE);
     assert.match(team, /familyAnswersRow = familyLayer && GUARDIAN_TIER_ENABLED && programYear\.status === 'active'/);

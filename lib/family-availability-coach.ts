@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { fetchAllIn } from './supabase-paging';
 import { GUARDIAN_TIER_ENABLED } from './family-guardian';
 import { getCoachingAssignmentsForUser } from './db';
-import { firstNames, liveSetting, readTeam } from './family-availability';
+import { eventHasFamilyAnswers, firstNames, liveSetting, readTeam, type TeamRow } from './family-availability';
 import { answeredDayShort, type FamilyAnswer } from './family-availability-words';
 import {
   familyAnswerState, headcountOf, lineupFamilyOuts, type Headcount, type LineupFamilyAnswer, type LiveFamilyAnswersSetting,
@@ -23,16 +23,20 @@ import type { RepAttendanceStatus } from './types';
  *                             no name), for coaches who hold BOTH lineups and attendance (Session 3, Part 6)
  *   familyLineupFlagEventIds  the schedule row's lineup triangle: the upcoming games whose saved lineup holds a player a family
  *                             said Out about that the coach hasn't settled (ids only)
+ *   coachFamilyAnswersSetting the team's live switch (null = nothing about answers exists); every reader above starts here
+ *   rosterConnection(...)     Team settings' "N of M players have a parent in the app"
+ *   lastRemindedAt(...)       when Remind was last used on an event (the room's card and Remind read the same)
+ *   marksFamilyAnswersInOrg   Account → Notifications: whether this coach's "Family answers" row shows (Part 8)
  *
  * ⚠ READ ONLY. Nothing here writes the coach's book: the coach copies answers in with a tap, through the attendance PATCH (ask 3).
- * ⚠ While the guardian tier is off, or the team's switch is off, or the schedule is Staff only, every reader answers null and the
- *   coach's screens are exactly as before (the rename to "Not marked" is the only change for everyone, ask 9).
+ * ⚠ While the guardian tier is off, or the team's switch is off, or the schedule is Staff only, every reader answers "nothing" (null,
+ *   [] or false) and the coach's screens are exactly as before (the rename to "Not marked" is the only change for everyone, ask 9).
  * ⚠ Live season only: the callers pass the active season's id; there is no year parameter here.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
 /** The team as a caller that already read it (`getRepTeam`) holds it; passing it saves the second `rep_teams` read. */
-export interface KnownRepTeam { id: string; orgId: string; scheduleVisibility: string; isArchived: boolean; familyAnswers: string }
+export interface KnownRepTeam { id: string; orgId: string; scheduleVisibility: string; isArchived: boolean; familyAnswers: string; name?: string }
 
 /** The team's switch when its family answers are live for the coach's screens; null = nothing about them exists. */
 export async function coachFamilyAnswersSetting(teamId: string, known?: KnownRepTeam): Promise<LiveFamilyAnswersSetting | null> {
@@ -269,9 +273,29 @@ export async function familyLineupFlagEventIds(params: {
         family: { answer: 'out' as const, answeredAt: o.answered_at },
       };
     });
-    if (lineupFamilyOuts(players, inLineup.get(lineup.id) ?? new Set(), lineup.updated_at).length > 0) flagged.push(eventId);
+    // Every event here passed `familyAnswerState === 'open'` above.
+    if (lineupFamilyOuts(players, inLineup.get(lineup.id) ?? new Set(), lineup.updated_at, true).length > 0) flagged.push(eventId);
   }
   return flagged;
+}
+
+/**
+ * A coach's edit moves an event to a new DAY (Part 6, ask 10): will that clear families' answers AND leave the event answerable, so
+ * the schedule-change notice adds "answer again"? Asked BEFORE the save (mig 480's trigger deletes the answers on the write). Not
+ * when the switch no longer covers it or the new time is already past: the team page would have no control to answer on.
+ * Never throws: a failed read says nothing rather than failing the coach's save.
+ */
+export async function familyAnswersWillClear(p: {
+  teamId: string; team?: KnownRepTeam; eventId: string; eventType: string; status: string; startsAt: string;
+}): Promise<boolean> {
+  try {
+    if (!(await eventHasFamilyAnswers(p.eventId))) return false;
+    const setting = await coachFamilyAnswersSetting(p.teamId, p.team);
+    return !!setting && familyAnswerState(setting, p, new Date()) === 'open';
+  } catch (err) {
+    console.error('[family-availability] could not tell whether a move clears family answers:', err instanceof Error ? err.message : String(err));
+    return false;
+  }
 }
 
 /**
@@ -282,5 +306,10 @@ export async function familyLineupFlagEventIds(params: {
 export async function marksFamilyAnswersInOrg(orgId: string, userId: string): Promise<boolean> {
   if (!GUARDIAN_TIER_ENABLED) return false;
   const teams = (await getCoachingAssignmentsForUser(orgId, userId)).filter(a => a.capabilities.attendance).map(a => a.teamId);
-  return (await Promise.all(teams.map(teamId => coachFamilyAnswersSetting(teamId)))).some(Boolean);
+  if (teams.length === 0) return false;
+  // One read for every team, and the gate only for a team whose switch is on (usually none): Account → Notifications loads this.
+  const { data, error } = await supabaseAdmin.from('rep_teams')
+    .select('id, org_id, schedule_visibility, is_archived, family_answers').in('id', teams).neq('family_answers', 'off');
+  if (error) throw error;
+  return (await Promise.all(((data ?? []) as TeamRow[]).map(t => liveSetting(t)))).some(Boolean);
 }

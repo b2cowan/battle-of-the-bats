@@ -273,6 +273,8 @@ describe('billing rail — a cancelled subscription stops working', () => {
       'resolveLiveCoachTeamContext', // lib/coach-route-context.ts:49    → getAuthContext
       'resolveCoachTeamAssignment',  // lib/coach-route-context.ts:49    → getAuthContext
       'resolveFamilyCoachContext',   // lib/family-coach-route.ts:42     → getAuthContext
+      // Stage 4b /simplify (2026-11-13): the room's family read and Remind share ONE chain on top of the one above.
+      'resolveFamilyAttendanceContext', // lib/family-coach-route.ts:77 → resolveFamilyCoachContext → getAuthContext
       'coach-tag-routes',            // the tag route FACTORY; rides the two resolvers above
       // M1 (2026-08-16): the staff routes' shared head-coach gate.
       'requireHeadCoachMembership',  // lib/coach-membership.ts          → getAuthContext (requireOrgSlug: true)

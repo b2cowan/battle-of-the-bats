@@ -93,13 +93,13 @@ describe('ask 5 and 6 — the parent’s sheet words', () => {
   it('/legal’s hint names who sees what; the other-parent sentence only when one is connected', () => {
     assert.equal(
       W.sheet.privacy('Ava', 'Priya'),
-      'Your team’s coaches see your answer and note. Priya, Ava’s other parent, sees the answer but not your note. Other families see neither. Please don’t put health details here; tell the coach directly.',
+      'Your team’s coaches see your answer, your note, your first name and the day you answered. Priya, Ava’s other parent, sees your answer and first name, but not your note. Other families see none of it. Please don’t put health details here; tell the coach directly.',
     );
     assert.equal(
       W.sheet.privacy('Ava', null),
-      'Your team’s coaches see your answer and note. Other families see neither. Please don’t put health details here; tell the coach directly.',
+      'Your team’s coaches see your answer, your note, your first name and the day you answered. Other families see none of it. Please don’t put health details here; tell the coach directly.',
     );
-    assert.match(W.sheet.privacy('Ava', W.otherParentFallback), /^Your team’s coaches see your answer and note\. The other parent sees the answer/);
+    assert.match(W.sheet.privacy('Ava', W.otherParentFallback), /^Your team’s coaches see your answer, your note, your first name and the day you answered\. The other parent sees your answer and first name/);
   });
   it('the day, never the clock time (ask 6)', () => {
     const now = new Date('2027-04-22T16:00:00Z'); // Thu, Apr 22 in Toronto

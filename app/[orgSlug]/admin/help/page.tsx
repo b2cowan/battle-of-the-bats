@@ -220,6 +220,7 @@ export default function AdminHelpHubPage() {
           { label: 'Track player documents', href: `${helpBase}/coaches#recipe-track-documents` },
           ...(CHAT_PAUSED ? [] : [{ label: 'Chat with the tournament organizer', href: `${helpBase}/coaches#recipe-tournament-chat` }]),
           { label: 'Families and the season recap', href: `${helpBase}/coaches#premium-family-access` },
+          { label: 'Families say if they’re coming', href: `${helpBase}/coaches#premium-families-say-coming` },
         ],
       },
     ] : []),

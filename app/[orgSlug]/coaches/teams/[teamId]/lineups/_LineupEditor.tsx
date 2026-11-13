@@ -29,7 +29,7 @@ import { analyzeLineup, deriveLineupBadge, canMarkLineupReady, inningsNeedingDec
 import { generateBestLineup, describePlacementReason, type PositionPolicy, type FillMode, type GenerationRationale } from '@/lib/lineup-generator';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
 import { resolveLineupCaps, normalizeRulesOverride } from '@/lib/lineup-caps';
-import { playerDisplayName, isCallUp, CALL_UP_LABEL, cleanNamePart } from '@/lib/coach-roster-name';
+import { playerDisplayName, playerFirstName, isCallUp, CALL_UP_LABEL } from '@/lib/coach-roster-name';
 import { FAMILY_AVAILABILITY_COACH_WORDS } from '@/lib/family-availability-words';
 import {
   LINEUP_POSITIONS, POSITION_ORDER, heatStyle, renumberBattingOrder, lineupModeLabel,
@@ -1111,7 +1111,7 @@ export default function LineupEditor(props: LineupEditorProps) {
         {/* Families say if they're coming (Stage 4b, Part 6): the after-saved warning, one line per kind, each with its one-tap
             fix. Beside the strip, never inside its door (a button inside a button). */}
         {family && familyOutGroups.map(group => {
-          const names = group.map(o => cleanNamePart(o.player.playerFirstName) || playerDisplayName(o.player));
+          const names = group.map(o => playerFirstName(o.player, playerDisplayName(o.player)));
           const W = FAMILY_AVAILABILITY_COACH_WORDS.lineup;
           return (
             <p key={String(group[0].afterSave)} className={styles.lineupFamilyWarn} role="status">

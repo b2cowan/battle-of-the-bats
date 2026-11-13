@@ -1,10 +1,7 @@
-import { refuseWithoutLiveSeat } from '@/lib/coach-season-refusal';
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getActiveRepProgramYear, getCoachingAssignmentsForUser, getRepTeam, getRepTeamEventById } from '@/lib/db';
+import { getRepTeamEventById } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless } from '@/lib/coach-capabilities';
-import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
+import { resolveFamilyAttendanceContext } from '@/lib/family-coach-route';
 import { roomFamilyAnswers } from '@/lib/family-availability-coach';
 
 /**
@@ -12,30 +9,19 @@ import { roomFamilyAnswers } from '@/lib/family-availability-coach';
  * parent is in the app and what the family said, with the note's words. Coaches who can mark attendance only (ask 11). READ ONLY:
  * the coach copies an answer into the book through the attendance PATCH, never here.
  *
- * 404 while the guardian tier is off, and `{ answers: null }` while the team's switch doesn't cover this event, so the room renders
- * exactly as before.
+ * 404 while the guardian tier is off or the team has no family layer (the shared chain), and `{ answers: null }` while the team's
+ * switch doesn't cover this event; the room's one caller reads both as "nothing", so the room renders exactly as before.
  */
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
-  if (!GUARDIAN_TIER_ENABLED) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const { orgSlug, teamId, eventId } = await params;
+  const r = await resolveFamilyAttendanceContext(params);
+  if ('error' in r) return r.error;
 
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
-  if (ctx.org.slug !== orgSlug) return forbidden();
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx.org.id) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const assignment = (await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id)).find(a => a.teamId === teamId);
-  if (!assignment) return refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId);
-  const denied = denyUnless(assignment.capabilities.attendance, 'You do not have access to attendance.');
-  if (denied) return denied;
-
-  // The live season only (no year parameter): an event of another season is not found.
-  const [programYear, event] = await Promise.all([getActiveRepProgramYear(teamId), getRepTeamEventById(eventId)]);
-  if (!programYear || !event || event.teamId !== teamId || event.programYearId !== programYear.id) {
+  const event = await getRepTeamEventById(r.eventId);
+  if (!event || event.teamId !== r.teamId || event.programYearId !== r.programYearId) {
     return NextResponse.json({ error: 'Event not found' }, { status: 404 });
   }
 
-  const answers = await roomFamilyAnswers({ teamId, programYearId: programYear.id, event, team });
+  const answers = await roomFamilyAnswers({ teamId: r.teamId, programYearId: r.programYearId, event, team: r.team });
   return NextResponse.json({ answers });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/family-answers' });

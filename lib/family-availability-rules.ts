@@ -24,8 +24,7 @@ export function familyAnswersCover(setting: FamilyAnswersSetting, eventType: str
 }
 
 /**
- * Where one event stands for a family's answer, decided in ONE place (the parent's page and the writer both call it; the coach's
- * Remind will too). `not_covered`: the switch doesn't ask about this kind of event. `cancelled`: kept, hidden. `closed`: it has
+ * Where one event stands for a family's answer, decided in ONE place (the parent's page, the writer and the coach's Remind call it). `not_covered`: the switch doesn't ask about this kind of event. `cancelled`: kept, hidden. `closed`: it has
  * started (the row shows the answer, no control). `open`: answerable now.
  */
 export type FamilyAnswerState = 'not_covered' | 'cancelled' | 'closed' | 'open';
@@ -36,7 +35,13 @@ export function familyAnswerState(
 ): FamilyAnswerState {
   if (!familyAnswersCover(setting, event.eventType)) return 'not_covered';
   if (event.status === 'cancelled') return 'cancelled';
-  return Date.parse(event.startsAt) > now.getTime() ? 'open' : 'closed';
+  return familyEventOpen(event, now.getTime()) ? 'open' : 'closed';
+}
+
+/** Not cancelled and not started: a family can answer it, and only then does a family Out flag a lineup (owner, Session 4). The
+ *  one "is it still open" test for the server's `familyAnswerState` and the clients' minute clock. */
+export function familyEventOpen(event: { status: string; startsAt: string | null }, nowMs: number): boolean {
+  return event.status !== 'cancelled' && !!event.startsAt && Date.parse(event.startsAt) > nowMs;
 }
 
 const ANSWERS: readonly FamilyAnswer[] = ['in', 'out', 'maybe'];
@@ -225,7 +230,11 @@ export interface LineupFamilyOut { playerId: string; afterSave: boolean }
  */
 export function lineupFamilyOuts(
   players: readonly LineupFamilyPlayer[], inLineup: ReadonlySet<string>, savedAt: string | null,
+  /** `familyEventOpen`: a started or cancelled game flags nothing (owner, Session 4; the pool's words still show). Required, so
+   *  every surface decides it. */
+  open: boolean,
 ): LineupFamilyOut[] {
+  if (!open) return [];
   const out: LineupFamilyOut[] = [];
   for (const p of players) {
     if (!inLineup.has(p.playerId) || p.family?.answer !== 'out') continue;
@@ -275,12 +284,13 @@ export const COACH_BELL_LATE_MS = 48 * 60 * 60 * 1000;
 export const COACH_BELL_BUNDLE_MS = 60 * 60 * 1000;
 
 /**
- * Does this save ring the coach's bell? A family's Out at any time; any CHANGE (including a cleared answer) inside the 48 hours
- * before the event. Never a first In or Maybe, never a note-only re-send, never a routine In.
+ * Does this save ring the coach's bell? A family's Out at any time, and an Out TAKEN BACK at any time (owner, Session 4: else the
+ * coach's unread line keeps saying "Out" after the family changed it); any other CHANGE (including a cleared answer) inside the
+ * 48 hours before the event. Never a first In or Maybe, never a note-only re-send, never a routine In.
  */
 export function coachBellFires(prior: FamilyAnswer | null, next: FamilyAnswer | null, startsAt: string, now: Date): boolean {
   if (prior === next) return false;
-  if (next === 'out') return true;
+  if (next === 'out' || prior === 'out') return true;
   return prior !== null && Date.parse(startsAt) - now.getTime() <= COACH_BELL_LATE_MS;
 }
 

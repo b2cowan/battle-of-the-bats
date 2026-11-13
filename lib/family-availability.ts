@@ -4,11 +4,12 @@ import { GUARDIAN_TIER_ENABLED } from './family-guardian';
 import { getEnabledFamilyOrg, getFamilyReach, isVisibleToFamilies } from './family-access';
 import { FAMILY_AVAILABILITY_WORDS, answeredDayWords, type FamilyAnswer } from './family-availability-words';
 import {
-  cleanFamilyNote, familyAnswersCover, familyAnswerState, firstNameOf, normalizeFamilyAnswers, type FamilyAnswersSetting,
+  cleanFamilyNote, familyAnswersCover, familyAnswerState, firstNameOf, normalizeFamilyAnswers, type LiveFamilyAnswersSetting,
 } from './family-availability-rules';
 import type { FamilyScheduleEntry } from './family-view';
 
-export { familyAnswersCover, isFamilyAnswer, normalizeFamilyAnswers, type FamilyAnswersSetting } from './family-availability-rules';
+// The parent's save route reads its one guard from here (every other caller imports the rules file itself).
+export { isFamilyAnswer } from './family-availability-rules';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -56,7 +57,7 @@ export interface FamilyAnswerRow {
 }
 
 export interface FamilyAnswersView {
-  setting: Exclude<FamilyAnswersSetting, 'off'>;
+  setting: LiveFamilyAnswersSetting;
   rows: FamilyAnswerRow[];
   /** Per child: the other connected parent's first name (or the fallback words), or null when nobody else is connected. */
   otherParent: Record<string, string | null>;
@@ -76,7 +77,7 @@ export async function readTeam(teamId: string): Promise<TeamRow | null> {
 }
 
 /** The team's switch when families may answer on it at all now (tier on, not archived, schedule shared, family layer on). */
-export async function liveSetting(team: TeamRow | null): Promise<Exclude<FamilyAnswersSetting, 'off'> | null> {
+export async function liveSetting(team: TeamRow | null): Promise<LiveFamilyAnswersSetting | null> {
   if (!GUARDIAN_TIER_ENABLED || !team || team.is_archived) return null;
   const setting = normalizeFamilyAnswers(team.family_answers);
   if (setting === 'off' || !isVisibleToFamilies(team.schedule_visibility)) return null;
@@ -215,6 +216,16 @@ function rowOf(
  * Does this rep event hold any family answer? The event PATCH asks BEFORE a move to a new day (mig 480's trigger then deletes them),
  * so the schedule-change notice can say families will need to answer again (ask 10). False while the tier is off.
  */
+/** Does any of these accounts hold a family answer on any of these children? The Leave and Stop confirms say what happens to them
+ *  only then (Stage 4b /legal closeout). False while the tier is off, and for empty input. */
+export async function answeredByAccounts(userIds: readonly string[], childIds: readonly string[]): Promise<boolean> {
+  if (!GUARDIAN_TIER_ENABLED || userIds.length === 0 || childIds.length === 0) return false;
+  const { count, error } = await supabaseAdmin.from('event_availability_answers').select('id', { count: 'exact', head: true })
+    .in('child_id', [...childIds]).in('answered_by_user_id', [...userIds]);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
 export async function eventHasFamilyAnswers(eventId: string): Promise<boolean> {
   if (!GUARDIAN_TIER_ENABLED) return false;
   const { count, error } = await supabaseAdmin.from('event_availability_answers')
@@ -260,8 +271,9 @@ export async function writeFamilyAnswer(params: {
   const reached = hold?.teams.find(isThisTeam);
   if (!hold || !reached) return { ok: false, code: 'not_found' };
 
-  const [team, event, entry] = await Promise.all([
-    readTeam(params.teamId),
+  // The team's gate runs ALONGSIDE the event and entry reads (its org must be the link's; Stage 4b /simplify).
+  const [setting, event, entry] = await Promise.all([
+    readTeam(params.teamId).then(team => (team && team.org_id === hold.link.orgId ? liveSetting(team) : null)),
     supabaseAdmin.from('rep_team_events').select('id, team_id, program_year_id, event_type, status, starts_at')
       .eq('id', params.eventId).maybeSingle(),
     supabaseAdmin.from('rep_roster_players').select('program_year_id').eq('id', reached.entryId).maybeSingle(),
@@ -272,8 +284,6 @@ export async function writeFamilyAnswer(params: {
   const season = (entry.data as { program_year_id: string } | null)?.program_year_id ?? null;
   // The event must be this team's, in the season the child is live on (never an old season's, never another team's).
   if (!ev || ev.team_id !== params.teamId || !season || ev.program_year_id !== season) return { ok: false, code: 'not_found' };
-  if (!team || team.org_id !== hold.link.orgId) return { ok: false, code: 'not_found' };
-  const setting = await liveSetting(team);
   if (!setting) return { ok: false, code: 'not_found' };
   const state = familyAnswerState(setting, { eventType: ev.event_type, status: ev.status, startsAt: ev.starts_at }, now);
   if (state === 'not_covered') return { ok: false, code: 'not_found' };

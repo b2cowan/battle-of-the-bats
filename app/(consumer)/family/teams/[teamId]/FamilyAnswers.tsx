@@ -59,7 +59,8 @@ export function useFamilyAnswers({ view, teamId, teamName, focusEventId }: {
   // every save goes through, so the order a parent acted in is the order the server hears it, even across closing and reopening.
   const latestRows = useRef(rows);
   const queue = useRef<Promise<void>>(Promise.resolve());
-  const enqueue = (task: () => Promise<void>) => { queue.current = queue.current.then(task); };
+  // A task that ever rejected must not stop every later save (each task catches today; this keeps it so if one stops).
+  const enqueue = (task: () => Promise<void>) => { queue.current = queue.current.then(task).catch(() => undefined); };
 
   const replaceRow = (next: FamilyAnswerFields) => {
     latestRows.current = latestRows.current.map(r => (keyOf(r) === keyOf(next) ? { ...r, ...next } : r));

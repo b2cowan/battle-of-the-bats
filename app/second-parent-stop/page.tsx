@@ -15,6 +15,7 @@
 import type { Metadata } from 'next';
 import SystemScreen, { SystemAction, type SystemIcon } from '@/components/shared/SystemScreen';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { answeredByAccounts } from '@/lib/family-availability';
 import { SECOND_PARENT_WORDS } from '@/lib/league-second-parent';
 import { verifySecondParentStopToken } from '@/lib/unsubscribe-token';
 import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
@@ -30,7 +31,7 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
 type View =
   /** `joined`: the children this address joined as the SECOND parent (Stage 4a, ruling 8): the stop ends that too, so /legal
    *  draft (d) says so before the one press. Empty for an address that never joined (and while the guardian tier is off). */
-  | { state: 'confirm'; club: string; email: string; org: string; token: string; joined: string[] }
+  | { state: 'confirm'; club: string; email: string; org: string; token: string; joined: string[]; answered: boolean }
   | { state: 'done'; club: string; email: string }
   | { state: 'invalid' }
   | { state: 'db' };
@@ -51,19 +52,24 @@ async function viewOf(sp: Awaited<Props['searchParams']>): Promise<View> {
   if (!club.data?.name) return { state: 'invalid' };
   return stop.data
     ? { state: 'done', club: club.data.name, email }
-    : { state: 'confirm', club: club.data.name, email, org, token, joined: await joinedAsSecondParent(org, email) };
+    : { state: 'confirm', club: club.data.name, email, org, token, ...(await joinedAsSecondParent(org, email)) };
 }
 
 /** The first names of the children this address is connected to as the second parent in this club (never a first-parent
  *  connection: a stop never ends one, CASL flag d). A read only; the page still writes nothing. */
-async function joinedAsSecondParent(org: string, email: string): Promise<string[]> {
-  if (!GUARDIAN_TIER_ENABLED) return [];
-  const { data, error } = await supabaseAdmin.from('family_links').select('child_id')
+async function joinedAsSecondParent(org: string, email: string): Promise<{ joined: string[]; answered: boolean }> {
+  if (!GUARDIAN_TIER_ENABLED) return { joined: [], answered: false };
+  const { data, error } = await supabaseAdmin.from('family_links').select('child_id, user_id')
     .eq('org_id', org).eq('invited_email', email).eq('invited_as', 'second_parent').eq('status', 'verified');
-  if (error || !data?.length) return [];
-  const { data: kids } = await supabaseAdmin.from('org_children').select('first_name')
-    .eq('org_id', org).in('id', [...new Set((data as { child_id: string }[]).map(r => r.child_id))]);
-  return ((kids ?? []) as { first_name: string }[]).map(k => k.first_name).sort((a, b) => a.localeCompare(b));
+  if (error || !data?.length) return { joined: [], answered: false };
+  const links = data as { child_id: string; user_id: string | null }[];
+  const childIds = [...new Set(links.map(r => r.child_id))];
+  const [{ data: kids }, answered] = await Promise.all([
+    supabaseAdmin.from('org_children').select('first_name').eq('org_id', org).in('id', childIds),
+    // Stage 4b: the stop clears this parent's notes (mig 480); the confirm says so only when they gave any answer.
+    answeredByAccounts(links.flatMap(l => (l.user_id ? [l.user_id] : [])), childIds).catch(() => false),
+  ]);
+  return { joined: ((kids ?? []) as { first_name: string }[]).map(k => k.first_name).sort((a, b) => a.localeCompare(b)), answered };
 }
 
 const ICON: Record<View['state'], SystemIcon> = { confirm: 'mail', done: 'mail', invalid: 'broken', db: 'alert' };
@@ -86,7 +92,9 @@ export default async function SecondParentStopPage({ searchParams }: Props) {
         icon={ICON.confirm}
         title={WORDS.title}
         // Stage 4a (ruling 8, /legal draft (d)): first, for an address that joined as the second parent, what the stop also ends.
-        notes={view.joined.length > 0 ? [FAMILY_HOME_WORDS.stopJoined(view.joined, view.club), WORDS.note] : [WORDS.note]}
+        notes={view.joined.length > 0
+          ? [FAMILY_HOME_WORDS.stopJoined(view.joined, view.club), ...(view.answered ? [FAMILY_HOME_WORDS.leave.answersStay(view.joined)] : []), WORDS.note]
+          : [WORDS.note]}
         actions={
           // A plain form post: no script needed, and the page that answers is the page that reports what was written.
           <form method="post" action="/api/second-parent-stop" style={{ display: 'contents' }}>

@@ -16,7 +16,7 @@ import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/Coa
 import ScheduleAttendanceRoom, { type AttendanceRoomRow } from '@/components/coaches/ScheduleAttendanceRoom';
 import { FAMILY_AVAILABILITY_COACH_WORDS as FW } from '@/lib/family-availability-words';
 import {
-  bookMarkedAt, lineupFamilyOuts, roomFamilySummary, type LineupFamilyAnswer, type RoomFamilyAnswers,
+  bookMarkedAt, familyEventOpen, lineupFamilyOuts, roomFamilySummary, type LineupFamilyAnswer, type RoomFamilyAnswers,
 } from '@/lib/family-availability-rules';
 import { ATTENDANCE_WORD } from '@/lib/coach-schedule-vocab';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -28,7 +28,7 @@ import type { CoachCapabilities } from '@/lib/coach-capabilities';
 import { canWriteMoney, canWritePracticePlans } from '@/lib/coach-capabilities';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { practiceHasPlan } from '@/lib/practice-state';
-import { cleanNamePart, playerDisplayName, playerName } from '@/lib/coach-roster-name';
+import { playerDisplayName, playerFirstName } from '@/lib/coach-roster-name';
 import { isMirroredEvent, type MovedGame } from '@/lib/coach-tournament-games';
 import { gameHasStarted } from '@/lib/coach-game-day';
 import { awardEventKind, awardOccasionLabel, awardUnlockState } from '@/lib/rep-award-occasion';
@@ -86,7 +86,7 @@ import type {
 
 /** A roster player as a door row names them — "#12 Logan". */
 function rowPlayer(p: RepRosterPlayer): RowPlayer {
-  return { firstName: cleanNamePart(p.playerFirstName) || playerName(p), number: p.playerNumber ?? null };
+  return { firstName: playerFirstName(p), number: p.playerNumber ?? null };
 }
 
 /** A row's second line, each part in its tone (Out in the danger ink, Late in the warning ink). */
@@ -347,6 +347,9 @@ export default function ScheduleEventSheet({
   const attendanceSig = () => JSON.stringify(attendanceRows.map(r => [r.player.id, r.status, r.note, !!r.confirmed]));
   const attendanceSigRef = useRef('');
   const attendanceSavedRef = useRef(false);
+  // Attendance saves run ONE AT A TIME (Stage 4b /review): the room PATCHes the whole roster, so a second save started while the
+  // autosave is in flight (Remind's save-first, closing the window) could land first and be overwritten by the older one.
+  const attendanceSaveChain = useRef<Promise<unknown>>(Promise.resolve());
   useEffect(() => { attendanceSigRef.current = attendanceSig(); }, [attendanceRows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save attendance ~0.7s after the last change (a status tap is meant to stick).
@@ -594,7 +597,12 @@ export default function ScheduleEventSheet({
     setAttendanceFilter('all'); // a status filter would empty out after a bulk set — show the result
   }
 
-  async function handleAttendanceSave(): Promise<boolean> {
+  function handleAttendanceSave(): Promise<boolean> {
+    const run = attendanceSaveChain.current.then(saveAttendanceNow);
+    attendanceSaveChain.current = run.catch(() => undefined);
+    return run;
+  }
+  async function saveAttendanceNow(): Promise<boolean> {
     const sigAtSave = attendanceSig();
     setAttendanceSaving(true);
     setAttendanceError('');
@@ -685,12 +693,12 @@ export default function ScheduleEventSheet({
       .filter(r => r.status === 'absent' && lineupEntryIds.has(r.player.id))
       .map(r => rowPlayer(r.player));
     // A family's Out the coach hasn't settled (Stage 4b, Part 6): the builder's own rule, with the mark the server will hold once
-    // the room saves (a tap on In clears it here as it does in the room).
-    const said = lineupFamily && ev.status !== 'cancelled' ? new Map(lineupFamily.answers.map(a => [a.playerId, a])) : null;
+    // the room saves (a tap on In clears it here as it does in the room). Open games only (the rule decides).
+    const said = lineupFamily ? new Map(lineupFamily.answers.map(a => [a.playerId, a])) : null;
     const familyOuts = said ? lineupFamilyOuts(attendanceRows.map(r => ({
       playerId: r.player.id, status: r.status, family: said.get(r.player.id) ?? null,
       markedAt: bookMarkedAt(r.savedStatus ? { status: r.savedStatus, markedAt: r.markedAt } : undefined, r.status, !!r.confirmed, new Date(nowMs).toISOString()),
-    })), lineupEntryIds, lineupFamily!.savedAt) : [];
+    })), lineupEntryIds, lineupFamily!.savedAt, familyEventOpen(ev, nowMs)) : [];
     const byId = new Map(attendanceRows.map(r => [r.player.id, r.player]));
     const family = {
       afterSave: familyOuts.filter(o => o.afterSave).map(o => rowPlayer(byId.get(o.playerId)!)),
@@ -1411,7 +1419,7 @@ export default function ScheduleEventSheet({
           toggleChanged: () => setFamilyOnlyChanged(v => !v),
           remind: {
             // Open = not started, not cancelled (read when the window opened; the clock closes it at the start).
-            open: familyAnswers.state === 'open' && !!ev.startsAt && Date.parse(ev.startsAt) > nowMs,
+            open: familyAnswers.state === 'open' && familyEventOpen(ev, nowMs),
             endpoint: `/api/coaches/${orgSlug}/teams/${teamId}/events/${ev.id}/family-remind`,
             remindedAt: familyAnswers.remindedAt,
             nowMs,

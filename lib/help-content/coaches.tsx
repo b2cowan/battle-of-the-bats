@@ -3206,7 +3206,7 @@ const coachesHelp: HelpPageContent = {
         'subscribe', 'subscribe to schedule', 'subscribe in your calendar app', 'subscribe on this phone', 'calendar feed', 'calendar subscription', 'ical', 'webcal', 'ics', 'sync', 'calendar sync', 'google calendar', 'apple calendar', 'outlook', 'download a copy', 'reset the link', 'my calendar did not update', 'calendar not updating'],
       searchText: 'premium schedule calendar list week month view multi day tournament spans every day date range day 1 of 3 add event types game tournament game this is a scrimmage scrimmage box practice team event tournament which tournament attach group game slot orphaned loose all day event sorts first nested add game phone mobile month view up to three plus more N more opens the day view symbol beside the plus switch list week month on a phone add event and view open from the bottom of the screen tap the dimmed page to close add event form add game add practice date once start time end time arrival time location recent opponent home away dropdown opponent picker type the opponent scouting book offers teams you have met same spelling record against each more field uniform address tags links name notes wrong type picked the wrong kind change the type cancel and pick again add game button edit pencil top right of the event cancel this game cancel this practice restore delete this game delete this practice rained out families told keep it opens on today at a computer too today line olive today sat oct 10 season above scroll up for the past weekday on each row tue oct 13 one row of controls list week month date arrows range oct 5 – 11 2026 export add event import a schedule last item of the add event menu import on a phone export calendar icon in the title row every view week today column olive time over the name month starts on monday time and name up to three plus more today ringed tablet touch month dots tap a day nothing scheduled cancelled win loss tie arrows never skip a month subscribe in your calendar app subscribe on this phone calendar feed calendar subscription ical webcal sync google calendar apple calendar outlook copy the link keeps itself up to date download a copy ics today\'s schedule only what is in it tryout days organizer games cancelled stays marked arrive by eastern time how often within a few hours google calendar up to a day your link yours alone stops if you leave the team read by your calendar today reset the link new link old calendar stops updating events leave season closes',
       content: (
-        <p>On <strong>Premium Coaches Portal</strong>, your <strong>Schedule</strong> is a full team calendar: <strong>List</strong>, <strong>Week</strong> and <strong>Month</strong>, opening on today, with games (tick <strong>This is a scrimmage</strong> on one that shouldn&apos;t count toward your record), tournament games, practices, team events and multi-day tournaments.</p>
+        <p>On <strong>Premium Coaches Portal</strong>, your <strong>Schedule</strong> is a full team calendar: <strong>List</strong>, <strong>Week</strong> and <strong>Month</strong>, opening on today, with games (tick <strong>This is a scrimmage</strong> on one that shouldn&apos;t count toward your record), tournament games, practices, team events and multi-day tournaments. With <strong>Families say if they&rsquo;re coming</strong> on, each row also shows a headcount; see <a href="#premium-families-say-coming">Families say if they&rsquo;re coming</a>.</p>
       ),
       subtopics: [
         {
@@ -3564,6 +3564,7 @@ const coachesHelp: HelpPageContent = {
           <p>At the top, a <strong>color-coded count bar</strong> shows the totals at a glance — All, In, Late, Out, and Not marked. <strong>Tap any count to filter</strong> the list to just those players (tap it again to show everyone); great for working through the &ldquo;Not marked&rdquo; pile until it&apos;s empty.</p>
           <p>Each player&apos;s row shows their <strong>current status</strong> — the same colored symbol and word as the count bar. <strong>Tap the row</strong> to open that player&apos;s four choices and an optional <strong>note</strong> (&ldquo;leaving early&rdquo;, &ldquo;ride needed&rdquo;); pick one and the row updates right away. Use <strong>All in</strong> to mark everyone present at once, or <strong>Reset</strong> to clear back to Not marked. Your changes <strong>save automatically</strong>.</p>
           <p><strong>See the season picture.</strong> Over time, open <strong>Insights → &ldquo;Who&apos;s showing up?&rdquo;</strong> for a season-long read of who&apos;s been making it out — each player&apos;s <strong>games</strong> and <strong>practices</strong> attended (for example, &ldquo;Games 9/10 · Practices 12/15&rdquo;). It&apos;s meant to inform playing-time decisions and to spot when someone&apos;s drifting — not a ranking — and events left <strong>Not marked aren&apos;t counted against anyone</strong>. Any coach with attendance access can see it.</p>
+          <p><strong>Families can answer too.</strong> With the Sharing switch on, a Families card in the room shows what parents said and lets you use their answers or send a reminder. See <a href="#premium-families-say-coming">Families say if they&rsquo;re coming</a>.</p>
         </>
       ),
       faqs: [
@@ -3771,6 +3772,7 @@ const coachesHelp: HelpPageContent = {
         <>
           <p>A <strong>lineup</strong> is your playing order and field positions for one game, set period by period. Open <strong>Lineups</strong> in the Season menu — the <strong>Games</strong> tab lists every game on your schedule, each carrying its state — <strong>Not started</strong>, <strong>Draft</strong>, <strong>Ready</strong> (with a count like <em>Ready &middot; 3 open</em> when you&rsquo;ve left innings for game day) or <strong>Needs review</strong> — so you can see at a glance what still needs doing before the weekend.</p>
           <p><strong>Why it&rsquo;s worth doing once.</strong> A saved lineup isn&rsquo;t just a game-day sheet. Your game sheet and attendance read from it instead of asking you again, and <strong>Insights</strong> uses it to answer <em>&ldquo;Where is playing time going?&rdquo;</em> — innings on the field versus the bench, positions each player has covered, and pitching against your arm-care caps.</p>
+          <p>If families answer In, Out or Maybe, a game&rsquo;s lineup builder shows their Out and Maybe words and warns you when a family says Out; see <a href="#premium-families-say-lineup">Families say if they&rsquo;re coming</a>.</p>
         </>
       ),
       subtopics: [
@@ -6265,6 +6267,162 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
+      // Signed-in family accounts, Stage 4b (2026-11-13). Every customer-visible word is quoted from
+      // lib/family-availability-words.ts. The plan name is deliberately not in the heading (the section sits in the
+      // Premium group like its neighbours). Parent side: there is no parent help surface (Account → Help is a support
+      // mailto plus a link into this guide), so what a parent sees lives here as a subtopic for the coach.
+      id: 'premium-families-say-coming',
+      group: 'Premium Coaches Portal',
+      heading: 'Families say if they’re coming',
+      summary: 'Turn on one switch and parents in the app answer In, Out or Maybe for each game or practice; you see a headcount on the schedule, the answers in Attendance, and can remind the families who haven’t.',
+      keywords: ['families say if they’re coming', 'families say if theyre coming', 'in out maybe', 'in / out / maybe', 'family answers', 'parents answer', 'parent rsvp', 'rsvp', 'who is coming', 'is my player coming', 'headcount', 'schedule headcount', 'at most can play', 'not enough players', 'remind', 'remind families', 'reminder email', 'remind parents', 'use family answers', 'use 3 family answers', 'undo', 'changed since you marked', 'family said', 'family line', 'family note', 'left a note', 'coach bell', 'bell', 'family answers notification', 'notifications family answers', 'sharing', 'which events families answer', 'games and practices', 'games only', 'lineup out', 'lineup maybe', 'take out', 'family said out after you saved', 'new day clears answers', 'moved game answers', 'not marked', 'maybe stays not marked', 'no parent in the app', 'what a parent sees', 'parent answers'],
+      searchText: 'families say if they are coming team settings sharing switch off games games and practices schedule visibility families public staff only coaches who manage the schedule parents in the app answer in out maybe every upcoming game practice schedule row count 9 of 13 in 1 out 1 maybe at most can play attendance room families card answered have not no parent in the app use family answers undo put back to not marked changed since you marked show show everyone family said under a player note earlier remind once per event 24 hours whole staff one reminder email per parent per day app note only unsubscribed marked player never reminded never after the start report reminded parents about open the team page sign in coach bell notification out at any time out taken back any change last 48 hours never a routine in left a note never the note words account notifications family answers lineup builder out maybe tags warning take out game lineups only open games only template editor lineup needs a look new day clears answers new time same day keeps them your marks families never see them who sees what attendance capability head coach assistant staff see counts health details notes deleted 30 days after the event signed in family accounts a parent taps answer note for the coach tap again to clear',
+      content: (
+        <p>Where your club has signed-in family accounts, one switch on your team lets each connected parent say <strong>In</strong>, <strong>Out</strong> or <strong>Maybe</strong> for every upcoming game or practice, with a one-line note. You see the headcount at a glance, read the answers where you take attendance, and can <strong>Remind</strong> the families who haven&rsquo;t answered. Your attendance book is never changed unless you tap.</p>
+      ),
+      subtopics: [
+        {
+          id: 'premium-families-say-switch',
+          title: 'Turning it on: the Sharing switch',
+          content: (
+            <>
+              <p>Open <strong>Team settings &rarr; Sharing</strong>. Under <strong>Schedule visibility</strong> you&rsquo;ll find <strong>Families say if they&rsquo;re coming</strong>, with a choice of which events families answer:</p>
+              <HelpDefs>
+                <HelpDef term="Off">The default. Families don&rsquo;t see In / Out / Maybe, and Attendance works as it always has.</HelpDef>
+                <HelpDef term="Games">Parents in the app can answer In, Out or Maybe for every upcoming game.</HelpDef>
+                <HelpDef term="Games and practices">The same, for every upcoming game and practice.</HelpDef>
+              </HelpDefs>
+              <p>There is no &ldquo;ask families&rdquo; button and no tick on the event form: once the switch is on, every upcoming event it covers is open for answers. Under the choice you&rsquo;ll see how many of your players have a parent in the app (&ldquo;6 of 13 players have a parent in the app&rdquo;). If none do yet, it points you to invite parents from each player&rsquo;s <strong>Guardians</strong> on the Roster.</p>
+              <HelpDefs>
+                <HelpDef term="Who can change it">Coaches who manage the schedule. Everyone else on the staff sees the setting, with a line saying only coaches who manage the schedule can change it.</HelpDef>
+                <HelpDef term="It needs Families or Public">Families can&rsquo;t answer a schedule they can&rsquo;t see. If <strong>Schedule visibility</strong> is <strong>Staff only</strong>, the switch tells you to set it to <strong>Families</strong> or <strong>Public</strong> first.</HelpDef>
+                <HelpDef term="Turning it off">Families stop seeing In / Out / Maybe and you stop seeing their answers. Your own marks stay. If you turn it on again this season, the answers come back.</HelpDef>
+              </HelpDefs>
+              <HelpNote variant="info" title="It only appears where the family app is on">
+                <p>It&rsquo;s part of the signed-in family app, so you&rsquo;ll see the switch only where your club has family accounts. See <a href="#premium-family-access">Families and your season recap</a> for inviting a parent.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-families-say-reading',
+          title: 'Reading the answers: the schedule, the event and Attendance',
+          content: (
+            <>
+              <p>Three places show what families said, from a quick glance to the detail.</p>
+              <HelpDefs>
+                <HelpDef term="The schedule row">A second line gives the headcount, like <strong>9 of 13 in &middot; 1 out &middot; 1 maybe</strong>. Each player counts once: your own mark first (In or Late counts as in, Out as out), otherwise their family&rsquo;s answer. A part with nothing in it is left out, and the line is missing altogether when nobody has answered and nobody is marked. When so many are out that you can&rsquo;t field a full side, it turns red and reads, for example, <strong>5 out &middot; at most 8 can play</strong> (a sport with no fixed field positions never shows red). <strong>Next up</strong> on your Overview counts the same way. Anyone on the staff who can see the schedule sees these counts.</HelpDef>
+                <HelpDef term="The event">Its <strong>Attendance</strong> row gets a <strong>Families:</strong> line, like &ldquo;4 answered &middot; 2 haven&rsquo;t &middot; 1 changed&rdquo;.</HelpDef>
+                <HelpDef term="The attendance room">A <strong>Families</strong> card sits at the top, with the same counts (&ldquo;4 answered &middot; 2 haven&rsquo;t&rdquo;) and a count of players with no parent in the app. Under each player is a grey line such as <em>Family said Out &middot; &ldquo;Dentist at 4&rdquo; &middot; Priya, Tue</em>: the answer, the note, who answered and the day, and if it changed, <em>earlier: In (Dev, Mon)</em>. A player whose family hasn&rsquo;t answered reads <em>Family hasn&rsquo;t answered</em>. On a computer the same sits in a <strong>Family said</strong> column beside <strong>Your mark</strong>.</HelpDef>
+              </HelpDefs>
+              <p>If two parents of one player disagree, the latest answer wins and you see who gave it. A change clears the earlier parent&rsquo;s note.</p>
+              <p><strong>Using the answers.</strong> The card&rsquo;s <strong>Use N family answers</strong> copies answers into players you haven&rsquo;t marked yet: an In becomes In, an Out becomes Out, and a <strong>Maybe stays Not marked</strong>. It never overwrites a mark you made. A line then reads <em>Used 3 family answers</em> with their names, and <strong>Undo</strong> puts those players back to Not marked. To take just one player, open their row and tap the family&rsquo;s answer in the box, which also shows the note.</p>
+              <p><strong>When a family changes its mind.</strong> If a family answers differently after you marked, the card says <em>&#9888; 2 changed since you marked</em> with the names, and the player&rsquo;s line carries the same warning. <strong>Show</strong> narrows the list to those players (<strong>Show everyone</strong> brings the rest back). Tap the family&rsquo;s answer to use it, or tap your own mark to keep it and clear the warning.</p>
+              <HelpNote variant="tip" title="Who sees what on your side">
+                <p>Counts are for anyone on the staff who sees the schedule. The families&rsquo; lines and notes, <strong>Use family answers</strong>, <strong>Remind</strong> and the coach&rsquo;s bell are for coaches who can mark attendance: the head coach and assistants with attendance access.</p>
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-families-say-remind',
+          title: 'Reminding the families who haven’t answered',
+          content: (
+            <>
+              <p>In the attendance room, <strong>Remind 4</strong> on the Families card asks the families who haven&rsquo;t said. The confirm names the players (&ldquo;Remind about Owen and Maya?&rdquo;), says how many parents will receive it, and <strong>See what they&rsquo;ll get</strong> shows the email as it will be sent.</p>
+              <HelpDefs>
+                <HelpDef term="Who it reaches">The parents who are in the app for players with <strong>neither a family answer nor a mark from you</strong>. A marked player&rsquo;s family is never reminded, and the confirm says so.</HelpDef>
+                <HelpDef term="What they get">A note in the app and an email to the parent&rsquo;s own address. The email names the team and the event, says the coach asked whether their player is coming, and has one button, <strong>Open the team page</strong>, where they sign in if needed and answer. The email itself can&rsquo;t answer anything.</HelpDef>
+                <HelpDef term="How often">Once per event every 24 hours, for the whole staff. After someone reminds, the card says when you can remind again. You can&rsquo;t remind once the game or practice has started.</HelpDef>
+                <HelpDef term="One email a day">A parent gets at most one reminder email a day from your team. If you remind about several events that day, the extra ones reach them as the app note only. A parent who has unsubscribed from the club&rsquo;s emails also gets the app note only. The confirm and the report count these.</HelpDef>
+                <HelpDef term="No parent in the app">Players whose families have nobody connected are named in the confirm and the report, so you can reach them yourself. Nothing is sent to an address that hasn&rsquo;t joined.</HelpDef>
+              </HelpDefs>
+              <p>When it&rsquo;s sent, the card reads <em>Reminded 2 parents about Owen</em>, plus how many got the note in the app only. When every family you haven&rsquo;t marked has answered, there&rsquo;s nobody to remind and the card says so.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-families-say-bell',
+          title: 'Your bell: when a family says Out',
+          content: (
+            <>
+              <p>Family answers have their own kind of notification on your bell. It rings for:</p>
+              <ul>
+                <li>an <strong>Out</strong>, at any time before the event;</li>
+                <li>an Out that a family <strong>takes back</strong>; and</li>
+                <li><strong>any change</strong> in the last 48 hours before the event.</li>
+              </ul>
+              <p>It never rings for a routine In. Answers for one event within the hour become one line, and several events for one family become one line too. A note shows only as <em>left a note</em>, never in the note&rsquo;s own words; open Attendance to read it. It&rsquo;s a bell line only, with no email or push.</p>
+              <p>To turn it off, open <strong>Account &rarr; Notifications</strong> and switch off <strong>Family answers</strong>. That row appears only for a coach whose team has the switch on.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-families-say-lineup',
+          title: 'In the lineup builder',
+          content: (
+            <>
+              <p>When you build a <strong>game&rsquo;s lineup</strong>, a player whose family said <strong>Out</strong> or <strong>Maybe</strong> carries that word on their pill in the pool (your own mark comes first, then the family&rsquo;s answer). The template editor never shows it.</p>
+              <p>If a family says Out after you saved the lineup, a line appears in the builder: <em>&#9888; Ava&rsquo;s family said Out after you saved this lineup.</em> A family that said Out before you saved, with the player still in, reads &ldquo;&hellip; said Out, but Ava is still in the lineup.&rdquo; <strong>Take Ava out</strong> (<strong>Take them out</strong> for several) removes the player from the lineup only; your attendance mark is untouched.</p>
+              <p>The warning is for games that haven&rsquo;t started. Once a game starts, the Out and Maybe words stay on the pool but the warning stops. On the schedule, the triangle on a game reads <strong>Lineup needs a look</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-families-say-moved',
+          title: 'When an event moves, and what families see',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="A new day clears answers">Move an event to another day and every family&rsquo;s earlier answer is cleared. They see <strong>Answer</strong> again, and the schedule-change notice asks them to answer again. A new time on the <strong>same day</strong> keeps their answers.</HelpDef>
+                <HelpDef term="Answers close at the start">Once a game or practice starts, families can no longer change their answer. Your marks keep working.</HelpDef>
+                <HelpDef term="Your marks are yours">Families never see your marks. A parent sees their own child&rsquo;s answer, their own note and the other connected parent&rsquo;s first name and answer, and only <em>that</em> a note was left, never its words.</HelpDef>
+                <HelpDef term="What you can read">The answer, the note, the parent&rsquo;s first name and the day they answered. Notes are one short line, and parents are asked not to put health details there. A note&rsquo;s words are deleted 30 days after the event.</HelpDef>
+              </HelpDefs>
+              <p>For a parent it works like this: tap <strong>Answer</strong> on the game, then <strong>In</strong>, <strong>Out</strong> or <strong>Maybe</strong>, and add a note for the coach if they like. A tap saves, and tapping the same answer again clears it. The sheet tells them who sees what: your team&rsquo;s coaches see the answer, the note, their first name and the day they answered; the other parent sees their answer and first name but not the note; other families see none of it. A parent who leaves the team has their notes cleared. A reminder email or bell takes them to the team page, where they sign in if they need to.</p>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-families-say-no-answers',
+          question: 'I turned on Families say if they’re coming, but nobody has answered. Why?',
+          answerText: 'Answers come from parents who are connected in the app. Under the switch in Team settings, Sharing, the line says how many of your players have a parent in the app; if none, invite parents from each player\'s Guardians on the Roster. Schedule visibility must be Families or Public, because families can\'t answer a schedule they can\'t see. The switch must cover the event: Games does not cover practices. Moving an event to a new day also clears its answers. Use Remind in the attendance room to nudge families who haven\'t answered.',
+          keywords: ['no answers', 'nobody has answered', 'switch on no answers', 'no parent in the app', 'families cannot answer', 'staff only'],
+          answer: (
+            <>
+              <p>Answers come from parents who are connected in the app. The line under the switch (<strong>Team settings &rarr; Sharing</strong>) says how many players have a parent in the app. If it&rsquo;s none, invite parents from each player&rsquo;s <strong>Guardians</strong> on the Roster.</p>
+              <p>Also check that <strong>Schedule visibility</strong> is <strong>Families</strong> or <strong>Public</strong> (families can&rsquo;t answer a schedule they can&rsquo;t see), that the switch covers the event (<strong>Games</strong> doesn&rsquo;t cover practices), and that the event hasn&rsquo;t moved to a new day, which clears answers. <strong>Remind</strong> in the attendance room nudges the families who haven&rsquo;t answered.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-families-say-attendance',
+          question: 'Does a family’s answer change my attendance marks?',
+          answerText: 'No. A family\'s answer never writes to your attendance book on its own. You decide: tap Use family answers on the Families card to copy In and Out answers into players you have not marked (a Maybe stays Not marked), or tap one player\'s answer in their sheet. Undo puts them back to Not marked. Families never see your marks.',
+          keywords: ['attendance changed', 'overwrite my marks', 'family answer attendance', 'maybe', 'use family answers', 'undo'],
+          answer: (
+            <>
+              <p>No. A family&rsquo;s answer never writes to your attendance book on its own. <strong>Use N family answers</strong> copies answers into players you haven&rsquo;t marked yet, and only when you tap it; a <strong>Maybe</strong> stays <strong>Not marked</strong>. <strong>Undo</strong> puts them back. Families never see your marks.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-families-say-reminder-missing',
+          question: 'A parent says they didn’t get my reminder email. Why?',
+          answerText: 'Remind sends a note in the app and an email to the parent\'s own address. A parent gets at most one reminder email a day from your team, so reminders for other events that day reach them as the app note only. A parent who unsubscribed from the club\'s emails also gets the app note only. A player with no parent in the app is named in the report but nothing is sent. Remind works once per event every 24 hours for the whole staff, and never after the start.',
+          keywords: ['reminder email', 'did not get reminder', 'remind not received', 'app note only', 'unsubscribed', 'one email per day'],
+          answer: (
+            <>
+              <p>Remind sends a note in the app plus an email to the parent&rsquo;s own address. A parent gets at most <strong>one reminder email a day</strong> from your team, so reminders for other events that day arrive as the app note only. A parent who has unsubscribed from the club&rsquo;s emails also gets the app note only, and a player with no parent in the app is named in the report with nothing sent.</p>
+              <p>Reminders run once per event every 24 hours for the whole staff, and not after the start.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       // Chunk B (P1 #17). Team settings was the one nav destination in the premium portal with no
       // guide at all — so its help icon could only ever have opened the hub, which is a table of
       // contents where the coach expected an answer about this screen. Written rather than linked
@@ -6351,6 +6509,7 @@ const coachesHelp: HelpPageContent = {
           content: (
             <>
               <p>The <strong>Sharing</strong> group holds what leaves your team. <strong>Schedule visibility</strong> decides who outside your coaching staff can see games and practices: <strong>Staff only</strong> keeps them inside your staff; <strong>Families</strong> (the default) lets the people connected to your players see the full schedule; <strong>Public</strong> also puts your games and tournaments on your team&rsquo;s public page (never practices or team events), with a <strong>Subscribe</strong> button so families can keep it in their own calendar app — no account and nothing to reset. Switch back to <strong>Families</strong> and the button goes, and the schedule leaves those calendars the next time they check. It&rsquo;s enforced on our side, not just hidden, and head coaches and assistants who manage the schedule can change it. (It moved here from the Roster page&rsquo;s old <em>Team family access</em> card.)</p>
+              <p>Below it, <strong>Families say if they&rsquo;re coming</strong> (Off, Games, or Games and practices) lets connected parents answer In, Out or Maybe; see <a href="#premium-families-say-coming">Families say if they&rsquo;re coming</a>.</p>
               <p>In a club, your team&rsquo;s public page follows the club&rsquo;s own switch: while the club&rsquo;s public site is turned off, Public shows nobody your schedule until it&rsquo;s back on. The note about that sits in <strong>Your team&rsquo;s public page</strong>, just below. There&rsquo;s nothing to change on your side.</p>
               <p>In clubs that have turned on the <strong>Club Shared Book</strong>, a second row decides whether your scouting book is readable by the club&rsquo;s other sharing teams. You see theirs while you share yours, and stopping removes your book from their pages immediately.</p>
             </>

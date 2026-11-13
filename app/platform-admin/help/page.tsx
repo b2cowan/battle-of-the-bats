@@ -169,6 +169,7 @@ export default function PlatformAdminHelpPage() {
         ...(CHAT_PAUSED ? [] : [{ label: 'Coach tournament chat', href: '/platform-admin/help/coaches#recipe-tournament-chat' }]),
         ...(CHAT_PAUSED ? [] : [{ label: 'Team staff room (Premium)', href: '/platform-admin/help/coaches#recipe-staff-room' }]),
         { label: 'Families, the season recap & sharing a game (Premium)', href: '/platform-admin/help/coaches#premium-family-access' },
+        { label: 'Families say if they’re coming', href: '/platform-admin/help/coaches#premium-families-say-coming' },
       ],
     },
     {

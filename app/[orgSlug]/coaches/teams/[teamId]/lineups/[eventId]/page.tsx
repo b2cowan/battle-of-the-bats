@@ -39,7 +39,7 @@ import LineupCopyFrom, { type LineupCopyPick } from '@/components/coaches/Lineup
 import LineupSaveTemplate from '@/components/coaches/LineupSaveTemplate';
 import { copyLineup, type LineupCopySource, type LineupCopyWhat } from '@/lib/lineup-copy';
 import LineupEditor from '../_LineupEditor';
-import { lineupFamilyOuts, lineupTagWord, type LineupFamilyAnswer } from '@/lib/family-availability-rules';
+import { familyEventOpen, lineupFamilyOuts, lineupTagWord, type LineupFamilyAnswer } from '@/lib/family-availability-rules';
 import styles from '../../../../coaches.module.css';
 import type {
   LineupSettings, LineupRulesOverride,
@@ -909,7 +909,7 @@ export default function CoachLineupBuilderPage({
       const w = lineupTagWord(p.status, p.family);
       if (w) tagWords.set(p.playerId, w);
     }
-    const outs = lineupFamilyOuts(players, lineupRowIds, lineupSavedAt)
+    const outs = lineupFamilyOuts(players, lineupRowIds, lineupSavedAt, !!event && familyEventOpen(event, nowMs))
       .map(o => ({ player: byId.get(o.playerId)!, afterSave: o.afterSave }));
     return { tagWords, outs, onTakeOut: removePlayersFromLineup };
   })();

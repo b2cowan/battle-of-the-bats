@@ -9,8 +9,8 @@ import { remindAgainAt } from '@/lib/family-availability-rules';
  * REMIND, inside the room's Families card (Signed-in family accounts Stage 4b, Part 7; drawing tab 4).
  *
  * "Remind N" turns into its own confirm IN PLACE (the dues reminder's pattern): who gets it and the message, how many get the app
- * note only, who isn't reminded and why, the 24-hour rule; one full-width "Send N reminders", with "See what they'll get" and
- * "Cancel" as links. Then the report (counts, never who received what). The server re-derives everything; what this panel shows
+ * note only, who isn't reminded and why, the 24-hour rule; one full-width "Send to N parents", with "See what they'll get" and
+ * "Cancel" as links. Then the report (parents reached and the players it was about, never who received what). The server re-derives everything; what this panel shows
  * comes from the server's own preview, read when the coach presses Remind.
  *
  * Only while the event is open (not started, not cancelled). Once used, nobody on the staff can remind for 24 hours: the line
@@ -31,7 +31,7 @@ type Step =
 export default function FamilyRemindPanel({ endpoint, count, remindedAt, nowMs, saveFirst, onReminded }: {
   /** The event's Remind address (GET = the confirm's facts, POST = the send). */
   endpoint: string;
-  /** Families Remind would reach now (`remindPlan`), from the room's own read. */
+  /** Players whose parents Remind would reach now (`remindPlan`), from the room's own read. */
   count: number;
   /** When Remind was last used on this event, by anyone on the staff. */
   remindedAt: string | null;
@@ -58,7 +58,7 @@ export default function FamilyRemindPanel({ endpoint, count, remindedAt, nowMs, 
       }
       const preview = json.preview as Preview;
       if (preview.againAt && preview.remindedAt) { onReminded(preview.remindedAt); setStep({ kind: 'idle' }); return; }
-      if (preview.families.length === 0) { setStep({ kind: 'error', text: RW.nobody }); return; }
+      if (preview.players.length === 0) { setStep({ kind: 'error', text: RW.nobody }); return; }
       setStep({ kind: 'confirm', preview, showSample: false, sending: false, error: '' });
     } catch {
       setStep({ kind: 'error', text: RW.readFailed });
@@ -89,7 +89,7 @@ export default function FamilyRemindPanel({ endpoint, count, remindedAt, nowMs, 
     const appOnly = RW.reportAppOnly(step.report.appOnly);
     return (
       <div className={styles.attRemindReport} role="status">
-        <p className={styles.attFamiliesToast}><strong>{RW.report(step.report.families, step.report.parents)}</strong></p>
+        <p className={styles.attFamiliesToast}><strong>{RW.report(step.report.players, step.report.parents)}</strong></p>
         {appOnly && <p className={styles.attFamiliesLine}>{appOnly}</p>}
         <p className={styles.attFamiliesLine}>{RW.when(step.report.remindedAt, remindAgainAt(step.report.remindedAt), nowMs)}</p>
       </div>
@@ -101,15 +101,16 @@ export default function FamilyRemindPanel({ endpoint, count, remindedAt, nowMs, 
   if (step.kind === 'confirm') {
     const p = step.preview;
     const lines = [
-      RW.who({ families: p.families, parents: p.parents, label: p.label, date: p.date }),
+      RW.who({ players: p.players, parents: p.parents, label: p.label, date: p.date }),
       RW.appOnly(p.appOnly, p.parents, p.clubName),
+      RW.capped(p.capped),
       RW.marked(p.marked),
       RW.noParent(p.noParent),
       RW.limit(p.isPractice),
     ].filter((l): l is string => !!l);
     return (
-      <div className={styles.attRemindConfirm} role="group" aria-label={RW.ask(p.families)}>
-        <p className={styles.attRemindAsk}>{RW.ask(p.families)}</p>
+      <div className={styles.attRemindConfirm} role="group" aria-label={RW.ask(p.players)}>
+        <p className={styles.attRemindAsk}>{RW.ask(p.players)}</p>
         {lines.map(l => <p key={l} className={styles.attFamiliesLine}>{l}</p>)}
         {step.showSample && p.sample && (
           <div className={styles.attRemindSample}>
@@ -121,7 +122,7 @@ export default function FamilyRemindPanel({ endpoint, count, remindedAt, nowMs, 
         )}
         {step.error && <p className={styles.errorText} role="alert">{step.error}</p>}
         <button type="button" className={`${styles.btnPrimary} ${styles.attRemindSend}`} disabled={step.sending} onClick={() => void send(p)}>
-          {step.sending ? RW.sending : RW.send(p.families.length)}
+          {step.sending ? RW.sending : RW.send(p.parents)}
         </button>
         <p className={styles.attRemindLinks}>
           {p.sample && (

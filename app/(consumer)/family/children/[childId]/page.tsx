@@ -13,6 +13,7 @@ import { FAMILY_HOME_PATH } from '@/lib/family-invitation-panel';
 import { FAMILY_HOME_WORDS as W } from '@/lib/family-home-words';
 import LeaveButton from './LeaveButton';
 import { getSignedInUser } from '@/lib/two-step-session';
+import { answeredByAccounts } from '@/lib/family-availability';
 
 /**
  * /family/children/[childId] — "Connected to {child}", under Manage (Signed-in family accounts Stage 4a, Part 6.2; drawing 5.1).
@@ -40,9 +41,14 @@ export default async function FamilyChildPage({ params }: { params: Promise<{ ch
   if (!read) notFound();
   const { child, club, adults, teamNames } = read;
   const day = (iso: string) => clubDay(orgDayKey(iso));
-  const leaveBody = child.invitedAs === 'second_parent'
-    ? W.leave.second(teamNames, child.firstName, club.name, SECOND_PARENT_WORDS.stop.button)
-    : W.leave.first(teamNames, child.firstName, club.name);
+  // Stage 4b: what happens to this parent's In / Out / Maybe, said only when they gave any (a failed read says nothing extra).
+  const answered = await answeredByAccounts([user.id], [childId]).catch(() => false);
+  const leaveBody = [
+    child.invitedAs === 'second_parent'
+      ? W.leave.second(teamNames, child.firstName, club.name, SECOND_PARENT_WORDS.stop.button)
+      : W.leave.first(teamNames, child.firstName, club.name),
+    answered ? W.leave.answersStay([child.firstName]) : null,
+  ].filter(Boolean).join(' ');
 
   return (
     <div className={warm.warm}>

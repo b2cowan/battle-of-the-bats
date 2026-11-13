@@ -16,12 +16,13 @@
 --   8. (mig 480) a new day clears the event's answers and Remind log; a same-day time change and a cancel keep them;
 --   9. (mig 480) a parent's connection ending clears their notes on that child (answers kept; the other parent's note kept; a merge
 --      clears nothing);
---  10. (mig 480) the answering account cleared (an account deletion) takes the note.
+--  10. (mig 480) the answering account cleared (an account deletion) takes the note;
+--  11. (mig 482) a child join carries the absorbed record's answers to the kept child; on a clash the newer answer wins.
 do $fixture$
 declare
   v_org uuid; v_team uuid; y_live uuid; y_old uuid;
   e_past uuid; e_recent uuid; e_next uuid; e_old uuid; e_gone uuid;
-  r_a uuid; c_a uuid;
+  r_a uuid; c_a uuid; r_b uuid; c_b uuid; e_merge uuid;
   a_past uuid; a_recent uuid; a_old uuid; a_next uuid; l_a uuid; u_two uuid[];
   v_ok int := 0; v_n int; v_s text; v_b boolean; v_t timestamptz; v_id uuid;
 begin
@@ -188,5 +189,31 @@ begin
     raise exception 'S4B FIXTURE FAIL 10: a deleted account''s note was kept'; end if;
   v_ok := v_ok + 1;
 
-  raise exception 'S4B FIXTURE OK: %/10', v_ok;
+  -- ── Session 4 (mig 482) ───────────────────────────────────────────────────────────────────────────────────────────────────
+  -- 11. a child join keeps the families' answers: the absorbed record's answer moves; on a clash the newer answer wins
+  insert into rep_roster_players (program_year_id, team_id, org_id, player_first_name, player_last_name, player_date_of_birth)
+    values (y_old, v_team, v_org, 'Myah', 'Fixturedup', date '2015-09-09') returning id into r_b;
+  select child_id into c_b from rep_roster_players where id = r_b;
+  if c_b is null or c_b = c_a then raise exception 'S4B FIXTURE FAIL 11: the second roster entry made no separate child'; end if;
+  insert into rep_team_events (program_year_id, team_id, org_id, event_type, name, starts_at)
+    values (y_live, v_team, v_org, 'league_game', 'Merge game', now() + interval '5 days') returning id into e_merge;
+  -- c_a: Maybe on e_recent (a_recent) and In on e_next (a_next). c_b: Out on e_next (NEWER: wins), In on e_recent (OLDER: loses),
+  -- Maybe on e_merge (no clash: moves).
+  update event_availability_answers set answered_at = now() - interval '1 hour' where id = a_next;
+  insert into event_availability_answers (event_kind, event_id, child_id, answer, answered_at) values
+    ('rep_event', e_next, c_b, 'out', now()),
+    ('rep_event', e_recent, c_b, 'in', now() - interval '30 days'),
+    ('rep_event', e_merge, c_b, 'maybe', now());
+  perform public.org_children_join(c_a, c_b);
+  if exists (select 1 from event_availability_answers where child_id = c_b) then
+    raise exception 'S4B FIXTURE FAIL 11: an answer stayed on the absorbed child'; end if;
+  if (select answer from event_availability_answers where event_id = e_next and child_id = c_a) is distinct from 'out' then
+    raise exception 'S4B FIXTURE FAIL 11: the newer answer did not win the clash'; end if;
+  if (select answer from event_availability_answers where event_id = e_recent and child_id = c_a) is distinct from 'maybe' then
+    raise exception 'S4B FIXTURE FAIL 11: an older answer beat the kept child''s newer one'; end if;
+  if (select answer from event_availability_answers where event_id = e_merge and child_id = c_a) is distinct from 'maybe' then
+    raise exception 'S4B FIXTURE FAIL 11: the absorbed child''s answer was lost'; end if;
+  v_ok := v_ok + 1;
+
+  raise exception 'S4B FIXTURE OK: %/11', v_ok;
 end $fixture$;

@@ -153,7 +153,7 @@ describe('guard (a) — with the tier off nothing changes: every new door answer
   it('the record window’s statuses, the join window’s names, the stop page’s (d) and the emailed page’s way back: nothing', () => {
     assert.match(between(readCode('lib/family-registration-status.ts'), 'function withFamilyAppStatuses<', 'export async function sendFamilyInvitationAgain'), /if \(!GUARDIAN_TIER_ENABLED \|\| regs\.length === 0\) return \[\.\.\.regs\];/);
     assert.match(functionBody(readCode('lib/children-duplicates-read.ts'), 'withConnectedParents'), /if \(!GUARDIAN_TIER_ENABLED \|\| proposals\.length === 0\) return proposals;/);
-    assert.match(functionBody(readCode('app/second-parent-stop/page.tsx'), 'joinedAsSecondParent'), /if \(!GUARDIAN_TIER_ENABLED\) return \[\];/);
+    assert.match(functionBody(readCode('app/second-parent-stop/page.tsx'), 'joinedAsSecondParent'), /if \(!GUARDIAN_TIER_ENABLED\) return \{ joined: \[\], answered: false \};/);
     assert.match(functionBody(readCode('lib/family-home.ts'), 'placedOnSignup'), /if \(!GUARDIAN_TIER_ENABLED \|\| !isLiveLeagueSeasonStatus\(seasonStatus\)\) return \[\];/);
     assert.match(functionBody(readCode('lib/family-home.ts'), 'buildFamilyHome'), /if \(!GUARDIAN_TIER_ENABLED\) return/);
   });

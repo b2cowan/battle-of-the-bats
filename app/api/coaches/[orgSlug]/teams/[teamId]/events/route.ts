@@ -97,22 +97,17 @@ export const GET = withObservability(async (req: Request,
   // filter, all without N+1 probes.
   // Signed-in family accounts Stage 4b (Part 6, ask 13): a saved lineup holding a player a family said Out about joins the same
   // triangle, by the builder's own rule — only for a coach who can also mark attendance (the builder shows them why; ask 11).
-  const [bookMismatchEventIds, lineupReadiness, familyLineupEventIds] = capabilities.lineups
-    ? await Promise.all([
+  // Not awaited here: it runs ALONGSIDE the book reads below and both are joined in one Promise.all (a rejection is never left
+  // unhandled; Stage 4b /simplify — the two batches don't depend on each other).
+  const lineupReads: Promise<[string[], Awaited<ReturnType<typeof getRepTeamLineupReadinessByEvent>> | null, string[]]> = capabilities.lineups
+    ? Promise.all([
         getRepTeamLineupAttendanceMismatchEventIds(programYear.id),
         getRepTeamLineupReadinessByEvent(programYear.id, getSportPack(team.sport ?? DEFAULT_SPORT).fieldPositions),
         capabilities.attendance && programYear.status === 'active'
           ? familyLineupFlagEventIds({ teamId, programYearId: programYear.id, events, team })
           : Promise.resolve([] as string[]),
       ])
-    : [[], null, [] as string[]];
-  const lineupMismatchEventIds = [...new Set([...bookMismatchEventIds, ...familyLineupEventIds])];
-  const lineupStatusByEvent = lineupReadiness?.statusByEvent ?? null;
-  // D11: beside the badge, how many innings still need a decision — a Ready lineup may carry open
-  // innings the coach means to fill at the field, and the hub's chip says so ("Ready · 3 open").
-  const lineupOpenInningsByEvent = lineupReadiness?.openInningsByEvent ?? null;
-  // Each lineup's inning count — the builder's Copy from list reads it ("Sat, Oct 3 · 3:15 p.m. · 7 innings").
-  const lineupInningsByEvent = lineupReadiness?.inningsByEvent ?? null;
+    : Promise.resolve([[], null, []]);
   // Tags: the team's game-tag library (for the chip picker) + which tags each returned event
   // already carries (for chip display without a per-event fetch). Both gate on the same
   // `schedule` capability already required for this whole route.
@@ -121,7 +116,7 @@ export const GET = withObservability(async (req: Request,
   // The club's venues (Club Tier Stage 6a, Ask 1) ride the same read: the Venue field lists them above the team's
   // places, read-only, and only in a club with a Venue library — `inClub: false` keeps a team outside a club's
   // picker exactly as built. The usual facility per venue is the dropdown's opening pick (Ask 2) — read only in a club.
-  const [tags, tagsByEventId, awardCountByEventId, places, clubBook, clubSources, familyHeadcounts] = await Promise.all([
+  const [[bookMismatchEventIds, lineupReadiness, familyLineupEventIds], [tags, tagsByEventId, awardCountByEventId, places, clubBook, clubSources, familyHeadcounts]] = await Promise.all([lineupReads, Promise.all([
     getRepTeamTagLibrary(teamId, 'game', ctx.org.id),
     getRepTeamEventTagsMap(events.map(e => e.id)),
     getRepEventAwardCountsMap(events.map(e => e.id)),
@@ -134,7 +129,14 @@ export const GET = withObservability(async (req: Request,
     // the schedule (ask 11). Null (omitted) while the guardian tier, the team's switch or family visibility is off.
     // A finished season (this read serves the working season even then) shows no availability: live season only.
     programYear.status === 'active' ? scheduleHeadcounts({ teamId, programYearId: programYear.id, events, team }) : null,
-  ]);
+  ])]);
+  const lineupMismatchEventIds = [...new Set([...bookMismatchEventIds, ...familyLineupEventIds])];
+  const lineupStatusByEvent = lineupReadiness?.statusByEvent ?? null;
+  // D11: beside the badge, how many innings still need a decision — a Ready lineup may carry open
+  // innings the coach means to fill at the field, and the hub's chip says so ("Ready · 3 open").
+  const lineupOpenInningsByEvent = lineupReadiness?.openInningsByEvent ?? null;
+  // Each lineup's inning count — the builder's Copy from list reads it ("Sat, Oct 3 · 3:15 p.m. · 7 innings").
+  const lineupInningsByEvent = lineupReadiness?.inningsByEvent ?? null;
   const { usualFacilityByVenue, ...clubVenues } = clubBook;
   // lineupStatusByEvent is OMITTED (not {}) when the caller can't see lineups, so a client with a
   // stale capability cache can tell "no lineup visibility" apart from "no lineups saved" and
