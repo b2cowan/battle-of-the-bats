@@ -931,7 +931,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   billLateNote: 'This schedule was finalized without a bill, so these figures are the time at the permit’s price, not a bill. Bill the teams makes one without reopening the schedule.',
   billSendTitle: 'Send the bill',
   billSendGo: (n: number) => `Send the bill to ${pluralize(n, 'person', 'people')}`,
-  billSendHint: 'Every team here is billed. Each team’s coaches get one email with that team’s bill, and unticking a team only skips its email; a reply comes to you. The schedule stays final.',
+  // [marketing] Owner 2026-11-13: only the coaches who can open Money are emailed the bill.
+  billSendHint: 'Every team here is billed. Each team’s coaches who can open Money get one email with that team’s bill, and unticking a team only skips its email; a reply comes to you. The schedule stays final.',
   billSentNotice: (people: number, teams: number, failed: number) =>
     `Billed ${pluralize(teams, 'team')}. Emailed ${pluralize(people, 'person', 'people')}.${failed ? ` ${failed} couldn’t be delivered.` : ''}`,
   // Send (specimens 9, 10, 14 step 5)
@@ -953,7 +954,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   teamSlots: (slots: number, days: number, oneWeekday: number | null) => slotCountWords(slots, days, oneWeekday),
   nobodyHead: (n: number) => `Nobody to send to · ${pluralize(n, 'team')}`,
   emailHint: 'Each team’s coaches get one email listing that team’s slots; a reply comes to you.',
-  reviewHint: 'Each team’s coaches get one email with their slots and their bill; a reply comes to you.',
+  // [marketing] Owner 2026-11-13: the bill goes only to the coaches who can open Money.
+  reviewHint: 'Each team’s coaches get one email with their slots, and the bill too if they can open Money; a reply comes to you.',
   changesHint: 'Each team’s coaches get one email listing what changed for that team; a reply comes to you.',
   // Stage 11b Part 5 (h4, settled): the sentence changesHint gains when house league is in the send.
   changesHintLeague: `A house-league team’s families get one email too. ${GAME_CHANGES_HINT}`,
@@ -962,6 +964,13 @@ export const SCHEDULE_SCREEN_WORDS = {
   lastSent: (day: string, by: string | null) => `Last sent ${day}${by ? ` by ${by}` : ''}.`,
   notSentYet: 'Not sent yet.',
   seeEmail: (who: string) => `See ${possessive(who)} email`,
+  // [marketing] Owner 2026-11-13: a team where some coaches can't open Money — they get the same email without the bill.
+  plainGets: (names: string[]) => `${joinWithAnd(names)} ${names.length === 1 ? 'gets' : 'get'} it without the bill.`,
+  seePlainEmail: (who: string) => `See the email ${who} gets, without the bill`,
+  /** /design 2026-11-13: beside the door above, the first door says it is the one with the bill. */
+  seeMoneyEmail: (who: string) => `See ${possessive(who)} email, with the bill`,
+  /** The heading over the teams whose bill reaches nobody who can open Money (as `nobodyHead` heads the unreachable). */
+  billNotToldHead: (n: number) => `Bill not emailed · ${pluralize(n, 'team')}`,
   sendTo: (n: number) => `Send to ${n}`,
   sendToCoaches: (n: number) => `Send to ${pluralize(n, 'coach', 'coaches')}`,
   sendToPeople: (n: number) => `Send to ${pluralize(n, 'person', 'people')}`,

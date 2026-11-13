@@ -30,24 +30,30 @@ import { addCalendarDays, formatStoredDate, isCalendarDate, tournamentToday } fr
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, billPhrase, moneyCents as money, type EmailWords } from '@/lib/club-schedule-words';
 import { isStale, oneWeekdayOf, type ScheduleView } from '@/lib/club-schedule-view';
 import type { SendKind } from '@/lib/club-schedule-send';
+import { getsPlainEmail } from '@/lib/club-schedule-money-audience';
 import { HAND_BACK_WORDS, type CreditMove } from '@/lib/club-hand-back-words';
 import { Statement } from './ScheduleParts';
-import { EmailWordsSample, MailView, SendDoor, SendRow, SendRows, useSendLevel } from '../SendParts';
+import { EmailWordsSample, MailView, SendDoor, SendDoors, SendRow, SendRows, useSendLevel } from '../SendParts';
 import sch from './Schedules.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import DateInput from '@/components/shared/DateInput';
 
 interface PreviewTeam {
-  teamId: string; teamName: string; recipients: { userId: string; name: string | null; email: string; isHeadCoach: boolean }[];
+  /** `money`: can open the team's Money — the bill goes only to them (owner 2026-11-13). */
+  teamId: string; teamName: string; recipients: { userId: string; name: string | null; email: string; isHeadCoach: boolean; money: boolean }[];
   slots: number; lines: string[]; bill: { cents: number; installments: { dueDate: string; amount: number }[] } | null;
   billedCents: number | null;
   /** Stage 11d, Ask 8: time the club moved off the team, and how it settles (a credit off what it owes; the rest owed back). */
   lost: { cents: number; creditCents: number; payCents: number; moves: CreditMove[] } | null;
   sample: EmailWords | null;
+  /** A mixed team's email for the coaches who can't open Money — the same words without the bill. */
+  plainSample: EmailWords | null;
 }
 interface Preview {
   kind: SendKind; version: number; statement: string; teams: PreviewTeam[];
   unreachable: { teamId: string; teamName: string; sentence: string }[];
+  /** Finalize / changes: a team emailed its slots whose bill reaches nobody who can open Money. */
+  billNotTold: { teamId: string; teamName: string; sentence: string }[];
   blockers: { code: string; error: string }[];
   correctionBlocked: { code: string; error: string } | null;
   replyBy: string | null;
@@ -89,16 +95,23 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
 
   const url = `/api/admin/schedules/${encodeURIComponent(view.schedule.id)}/send?${q}`;
   const billParam = kind === 'bill' && bill ?`&bill=${encodeURIComponent(JSON.stringify(bill))}` : '';
+  // Bill the corrections off: the preview's emails and lines drop the correction and the credit, as the send will.
+  const correctionsParam = kind === 'changes' && !corrections ? '&corrections=0' : '';
   const beginRead = useLatestRead();
+  // /design 2026-11-13: while a read is out (the corrections switch moved, the reply date changed), Send waits for it, so
+  // what is pressed is what the window says.
+  const [reading, setReading] = useState(true);
   const load = useCallback(async () => {
     const current = beginRead();
     setFailed(false);
-    const r = await moneyFetch<Preview>(`${url}&kind=${kind}${kind === 'review' && isCalendarDate(replyBy) ? `&replyBy=${replyBy}` : ''}${billParam}`).catch(() => null);
+    setReading(true);
+    const r = await moneyFetch<Preview>(`${url}&kind=${kind}${kind === 'review' && isCalendarDate(replyBy) ? `&replyBy=${replyBy}` : ''}${billParam}${correctionsParam}`).catch(() => null);
     if (!current()) return;
+    setReading(false);
     if (!r?.ok) { setFailed(true); setError(refusalText(r?.data, W.previewFailed2)); return; }
     setError('');
     setPreview(r.data);
-  }, [url, kind, replyBy, billParam, beginRead]);
+  }, [url, kind, replyBy, billParam, correctionsParam, beginRead]);
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => { void load(); });
     return () => window.cancelAnimationFrame(frame);
@@ -107,6 +120,8 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   const shown = preview && preview.kind === kind ? preview : null;
   const teams = shown?.teams ?? [];
   const ticked = teams.filter(t => !unticked.has(t.teamId));
+  // A team the user unticked is not emailed at all, so it has no bill to warn about.
+  const billNotTold = (shown?.billNotTold ?? []).filter(u => !unticked.has(u.teamId));
   // A house-league team's row reaches its coaches and its households (9d2·2); unticked, neither is emailed (its practices
   // still move — the send is the schedule's, the email is the row's).
   const league = shown?.league?.teams ?? [];
@@ -126,13 +141,24 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   // With no rep team in the send, the sample is the first house-league coach's email.
   const sample: PreviewTeam | null = teams[0] ?? (league[0] ? {
     teamId: league[0].teamId, teamName: league[0].teamName, slots: 0, lines: league[0].lines, bill: null, billedCents: null, lost: null,
-    recipients: league[0].coaches.map(c => ({ userId: c.userId ?? '', name: c.name, email: c.email, isHeadCoach: false })), sample: league[0].sample,
+    recipients: league[0].coaches.map(c => ({ userId: c.userId ?? '', name: c.name, email: c.email, isHeadCoach: false, money: true })),
+    sample: league[0].sample, plainSample: null,
   } : null);
-  const sampleName = sample ? (sample.recipients.find(r => r.isHeadCoach)?.name ?? sample.recipients[0]?.name ?? sample.teamName) : null;
+  // ⚖ Who gets which email (owner 2026-11-13): on a mixed team the bill's email goes only to the coaches who can open Money,
+  // and the rest get the same words without it — the door names someone who actually gets the email it opens.
+  const getsSample = (t: PreviewTeam) => t.recipients.filter(r => !getsPlainEmail(t, r));
+  const getsPlain = (t: PreviewTeam) => t.recipients.filter(r => getsPlainEmail(t, r));
+  // /design 2026-11-13: both doors open ONE team's two emails, so the pair compares like with like — a ticked mixed team
+  // when there is one, else the first team (one door).
+  const plainTeam = ticked.find(t => t.plainSample) ?? null;
+  const doorTeam = plainTeam ?? sample;
+  const sampleName = doorTeam ? (getsSample(doorTeam).find(r => r.isHeadCoach)?.name ?? getsSample(doorTeam)[0]?.name ?? doorTeam.teamName) : null;
+  const plainName = plainTeam ? (getsPlain(plainTeam)[0]?.name ?? getsPlain(plainTeam)[0]?.email ?? plainTeam.teamName) : null;
+  const [variant, setVariant] = useState<'money' | 'plain'>('money');
   const blocked = (shown?.blockers.length ?? 0) > 0 || (kind === 'changes' && corrections && !!shown?.correctionBlocked);
 
   async function send() {
-    if (busy || !shown || blocked) return;
+    if (busy || !shown || blocked || reading || failed) return;
     setBusy(true); setError('');
     try {
       const r = await moneyFetch<{ teams: number; people: number; failed: number; version: number; checks: { clashes: number } }>(url, jsonInit('POST', {
@@ -154,7 +180,9 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   const cut = statement.indexOf('. ');
   const title = kind === 'bill' ? W.billSendTitle : kind === 'changes' ? W.changesTitle : start === 'final' ? W.finalizeTitle : kind === 'review' ? W.reviewTitle : W.sendTitle;
   const lv = useSendLevel(title);
-  const mail = lv.level === 'email' && sample?.sample ? sample : null;
+  const mail = lv.level !== 'email' ? null
+    : variant === 'plain' && plainTeam?.plainSample ? { to: getsPlain(plainTeam), words: plainTeam.plainSample }
+    : doorTeam?.sample ? { to: getsSample(doorTeam), words: doorTeam.sample } : null;
   const lime = !shown ? W.sendTo(0)
     : kind === 'bill' ? W.billSendGo(people)
     : kind === 'review' ? W.sendToCoaches(people)
@@ -173,6 +201,13 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
     if (kind === 'review') return t.bill ? `${slots} · ${billPhrase(t.bill.cents, t.bill.installments.length)}` : slots;
     return i === 0 ? `${W.staffNote} · ${slots}` : slots;
   };
+  // A mixed team's row says who gets it without the bill (owner 2026-11-13) — on its own line under the team's line
+  // (/design 2026-11-13: appended, it pushed a phone row to three lines).
+  const teamSub = (t: PreviewTeam, i: number) => {
+    const plain = getsPlain(t).map(r => r.name ?? r.email);
+    const line = teamLine(t, i);
+    return plain.length ? <>{line}{line && <br />}{W.plainGets(plain)}</> : line;
+  };
 
   return (
     <KitDialog
@@ -185,7 +220,7 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
       footer={(
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{W.cancel}</button>
-          <button type="button" className="btn btn-lime" onClick={() => void send()} disabled={busy || !shown || blocked}>{busy ? W.sending : lime}</button>
+          <button type="button" className="btn btn-lime" onClick={() => void send()} disabled={busy || !shown || blocked || reading || failed} aria-busy={reading || undefined}>{busy ? W.sending : lime}</button>
         </>
       )}
     >
@@ -204,9 +239,9 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
         <p className={repKit.formError}>{W.previewFailed2} <button type="button" className={repKit.inlineLink} onClick={() => void load()}>{W.tryAgain}</button></p>
       ) : !shown ? (
         <LoadingState inline label="Loading the preview…" />
-      ) : mail?.sample ? (
-        <MailView to={mail.recipients.map(r => r.name ?? r.email).join(', ')} subject={mail.sample.subject}>
-          <EmailWordsSample w={mail.sample} />
+      ) : mail ? (
+        <MailView to={mail.to.map(r => r.name ?? r.email).join(', ')} subject={mail.words.subject}>
+          <EmailWordsSample w={mail.words} />
         </MailView>
       ) : (
         <>
@@ -229,7 +264,7 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
                 {teams.map((t, i) => (
                   <SendRow key={t.teamId}
                     title={<><b>{t.teamName}</b> · {t.recipients.map(r => r.name ?? r.email).join(', ')}</>}
-                    sub={teamLine(t, i)}
+                    sub={teamSub(t, i)}
                     pick={{
                       checked: !unticked.has(t.teamId),
                       onChange: checked => setUnticked(u => { const n = new Set(u); if (checked) n.delete(t.teamId); else n.add(t.teamId); return n; }),
@@ -259,6 +294,14 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
               {shown.unreachable.map(u => <span key={u.teamId} className={repKit.calloutSub}>{u.sentence}</span>)}
             </Callout>
           )}
+          {/* Finalize / changes: a team emailed its slots whose bill reaches nobody who can open Money — information, never a
+              blocker (owner 2026-11-13). */}
+          {billNotTold.length > 0 && (
+            <Callout tone="warn" role="note" icon={<AlertTriangle size={16} aria-hidden />}>
+              <b>{W.billNotToldHead(billNotTold.length)}</b>
+              {billNotTold.map(u => <span key={u.teamId} className={repKit.calloutSub}>{u.sentence}</span>)}
+            </Callout>
+          )}
           {kind === 'changes' && shown.correction && (Object.keys(shown.correction.billed).length > 0 || Object.keys(shown.correction.lost).length > 0) && (
             <label className={sch.switchLine}>
               <input type="checkbox" checked={corrections} onChange={e => setCorrections(e.target.checked)} />
@@ -276,7 +319,17 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
             </>}
             {shown.lastSent ? W.lastSent(formatStoredDate(shown.lastSent.at), shown.lastSent.by) : W.notSentYet}
           </p>
-          {sample?.sample && <SendDoor onOpen={() => lv.open('email')}>{W.seeEmail(sampleName ?? sample.teamName)}</SendDoor>}
+          {/* The email door, and — for a mixed team — the door to the email its coaches without Money get. A lone door stays left. */}
+          {(doorTeam?.sample || plainName) && (
+            <SendDoors>
+              {doorTeam?.sample && (
+                <SendDoor onOpen={() => { setVariant('money'); lv.open('email'); }}>
+                  {plainName ? W.seeMoneyEmail(sampleName ?? doorTeam.teamName) : W.seeEmail(sampleName ?? doorTeam.teamName)}
+                </SendDoor>
+              )}
+              {plainName && <SendDoor onOpen={() => { setVariant('plain'); lv.open('email'); }}>{W.seePlainEmail(plainName)}</SendDoor>}
+            </SendDoors>
+          )}
         </>
       )}
     </KitDialog>
