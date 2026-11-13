@@ -25,7 +25,7 @@ Read 2026-11-13: `lib/club-schedule-words.ts` (`billEmail`, `billList`, `SCHEDUL
 ### Owner questions
 1. **Audience (above):** confirm the rule "the bill goes only to people who can open Money" for the late bill, and whether to apply it to Finalize's bill too.
 2. **A way to ask about the bill: BUILT 2026-11-13 (owner said go).** The late bill email now ends "Questions about the bill? Reply to this email; it goes to the person at the club who sent it." True while the Reply-To is set (every send today). Late bill only; the Finalize email did not get it, because that bill had a review step.
-   **Owner recommendation on question 1 (given 2026-11-13, not yet ruled):** the bill goes only to people who can open Money, in the late bill, the Finalize bill and the correction line. For Finalize and changes the person still gets the slots email, minus the bill list and the "your Money tab" sentence; for the late bill they are simply not emailed. The bell follows the same rule.
+   **Question 1 RULED 2026-11-13 (owner agreed to the recommendation as given; build not yet planned):** the bill goes only to people who can open Money, in the late bill, the Finalize bill and the correction line. For Finalize and changes the person still gets the slots email, minus the bill list and the "your Money tab" sentence; for the late bill they are simply not emailed. The bell follows the same rule.
 3. **Purchase-details email file:** its finding 1 said s.6(6) meant "no consent and no unsubscribe". Corrected today (one line) to the s.6(6) text above; its "not a CEM" conclusion stands.
 
 ## Sources
