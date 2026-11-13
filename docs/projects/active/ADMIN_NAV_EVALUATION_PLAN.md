@@ -875,7 +875,9 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
 - **Phase 6b · Help's place the same in all three portals; the page's top row (T1–T6).** BUILT 2026-11-13 (Opus session, prompt
   `ADMIN_NAV_BUILD_PHASE6B_QUESTION_MARK_PROMPT.md`), both parts in one session. Walk §522 published
   https://claude.ai/artifact/JW5P3XR3JysLPqJiEodJ4i (source `ADMIN_NAV_PHASE6B_WALK.html`, builder `.probe/nav-phase6b/build-walk.cjs`;
-  7 walks, 35 checks); dev server restarted for it 2026-11-13.
+  7 walks, 35 checks); dev server restarted for it 2026-11-13. **Walk §522 PASSED 35/35 2026-11-13, no findings**; the two
+  open owner questions (off-team Coaches phone "?" stays on the title row; Roster order Add Player · Import · Export) were
+  ticked through, so they stand as built. Code committed `06ddfa1d5`, records `1ee2ca136`.
   - **What shipped.** Tournament admin and club: the page's "?" sits in the strip — View site · bell · "?" · account · Workspaces
     — and is the phone bar's last control, after the globe; no admin page draws its own (13 removed: the list, dashboard, Teams,
     Schedule, Results, Divisions, Venues, Rules, Chat, Public site, Summary, Event settings, Web address); the shared tournament
