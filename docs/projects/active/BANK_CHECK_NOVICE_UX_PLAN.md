@@ -137,7 +137,7 @@ One method line above the items on both portals' printed checks (row 15, D6).
   **Asks:** A6. **Risk:** low. **Build prompt written 2026-11-13:** `BANK_CHECK_NOVICE_UX_S4_BUILD_PROMPT.md` (three calls to
   settle first: the ruled sentence omits online payments and cash; the title and "Bank balance on the statement" still say
   "statement" and D6's after-frame keeps them; the coach's paper says "books" where the coach's screen says "Ledger").
-  **Built 2026-11-13** (§4); owner walk §523 owed; commit on the owner's yes.
+  **Built and committed `ffaa0500d` 2026-11-13** (§4); owner walk §523 owed.
 
 ### S5 — The phone's second Save (parked, A9 Not yet)
 After S3, measure Save's distance on a phone with Find open. If it is within a screen once the list waits behind "Show
@@ -316,7 +316,7 @@ sentence; the walked working-draft cards change shape and their walks are redone
   yes (four small word additions, `/marketing`), F link (club phone rows become a quiet link like the coach's), D later, E stay,
   G leave, I no (S5 stays parked).
 - 2026-11-13 — **Calls A, B, C, H, F built 2026-11-13.** Words: the fee/interest foot line now reads "…Use the date the bank posted it. If both a fee and interest posted, record them as two lines."; the repeat line adds "If you recorded it then, this may be a new charge."; the folded sentence reads "to mark any that the bank hasn’t received yet." Club phone cards: the quiet link on every row the callout does not name (the named row keeps the bordered button), as the coach’s do. Both help articles updated to match (body + search text). Used the owner-approved sentences verbatim, so no separate `/marketing` pass was run. Bank/help tests 190 + 19 pass, lint and spelling clean; `verify:changed` fails only on another session’s files (workspace-flip guard). Owner browser look owed: club Bank tab at 390 px.
-- 2026-11-13 — **S4 built (the printed check names its method), both portals; commit on the owner's yes.** Calls settled with
+- 2026-11-13 — **S4 built (the printed check names its method), both portals; committed `ffaa0500d` 2026-11-13.** Calls settled with
   the owner first (all as recommended, after `/accounting` + `/marketing`): (1) the method line WIDENED from row 15's "cheques
   it hasn't cashed come off, deposits it hasn't received go on" to **"Worked from the bank’s balance: money it hasn’t paid out
   yet comes off, money it hasn’t received yet goes on."** — a waiting line can be any line (e-transfer, bill payment), and the

@@ -1,4 +1,4 @@
-**EXECUTED 2026-11-13: S4 built (plan §4, the S4 entry; the three calls ruled as recommended, the method line widened); owner walk §523 owed; commit on the owner's yes.**
+**EXECUTED 2026-11-13: S4 built (plan §4, the S4 entry; the three calls ruled as recommended, the method line widened); committed `ffaa0500d` 2026-11-13; owner walk §523 owed.**
 
 **Written 2026-11-13, after S3's owner walk §505 PASSED 38/38 and its call-follow-ups were committed `eb6e166a8`. S4 is RULED (A6, 2026-11-08, "Reshape: the method line"; drawing D6 in the evaluation page) but not yet built, and no `/accounting` verdict on the print exists. Nothing here has been built.**
 
