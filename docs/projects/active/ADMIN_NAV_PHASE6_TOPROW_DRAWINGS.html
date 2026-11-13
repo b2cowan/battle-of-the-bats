@@ -1,0 +1,820 @@
+<title>Help’s Place, Three Portals</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: the house drawing page (2026-10-28) — a document on a cool slate ground, sticky section tabs, a View row
+   (Everything / Show only what differs · True size / Fit to width); product specimens in the product's own warm skin. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --warn: #8A5A00; --warn-soft: #F7ECD4;
+  --doc-sans: 'Inter', system-ui, sans-serif; --doc-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --warn: #E9B95A; --warn-soft: #33290F; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --warn: #E9B95A; --warn-soft: #33290F; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1520px; margin: 0 auto; }
+header.doc { padding-block: 22px 10px; }
+header.doc h1 { font: 700 30px/1.1 var(--doc-display); letter-spacing: .01em; margin: 0 0 6px; text-wrap: balance; }
+header.doc p { margin: 0; color: var(--muted); max-width: 88ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); overflow-x: auto; white-space: nowrap; }
+nav.tabs button { font: 600 14px var(--doc-sans); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 13px 12px 11px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+button:focus-visible, .mk:focus-visible, .hit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+section.panel { display: none; } section.panel.on { display: block; }
+h2 { font: 700 24px/1.15 var(--doc-display); margin: 18px 0 6px; letter-spacing: .01em; text-wrap: balance; }
+h3 { font: 650 16px/1.3 var(--doc-sans); margin: 22px 0 6px; }
+p, li { max-width: 88ch; } .muted { color: var(--muted); }
+code { font: 500 .9em var(--doc-mono); }
+.tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin: 10px 0 18px; }
+table.t { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.t th { font: 700 12px var(--doc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+table.t td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t td.n { text-align: right; white-space: nowrap; font-family: var(--doc-mono); font-size: 12.5px; }
+table.t tr.grp td { font: 700 12px var(--doc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
+table.t .win { color: var(--accent); font-weight: 650; }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); } .spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.pair { display: flex; gap: 22px; align-items: flex-start; width: max-content; transform-origin: 0 0; }
+.pair.col { flex-direction: column; }
+.pair > div > .lbl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.pair > div > .lbl.after { color: var(--accent); }
+.pair > div > .hm { font: 600 11px var(--doc-mono); color: var(--mark); margin-top: 5px; }
+.mk { position: absolute; z-index: 30; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 2px solid #fff; background: var(--mark); color: var(--mark-ink); font: 700 11px/18px var(--doc-mono); text-align: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.mk.inl { position: static; display: inline-block; border-color: transparent; vertical-align: 1px; margin-right: 6px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; } .ask ol, .ask ul { margin: 6px 0 0; padding-left: 22px; } .ask li { margin: 5px 0; }
+.ask .why { font-size: 14px; color: var(--muted); margin: 8px 0 0; }
+.rec { font-weight: 650; color: var(--accent); }
+.flag { border-left: 3px solid var(--warn); padding: 8px 12px; background: var(--warn-soft); border-radius: 0 8px 8px 0; margin: 10px 0; max-width: 88ch; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; margin-top: 8px; }
+.notes .ask { margin: 0; }
+.tags { font: 700 10.5px var(--doc-mono); letter-spacing: .06em; padding: 2px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .ask { transition: outline-color .3s; } }
+
+/* ───────── PRODUCT SPECIMEN — the warm skin as shipped (fixed colours in both document themes) ───────── */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #776D5D; --ln: rgba(70,55,30,.12);
+  --ln2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --red: #B23A26; --field: #F6F1E8; --tan: #EDE6D8;
+  position: relative; overflow: hidden; background: var(--paper); color: var(--ink); font: 400 14px/1.4 'Inter', sans-serif;
+  border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.12); flex: none; }
+.fr * { box-sizing: border-box; }
+.fr .grid { position: absolute; inset: 0; background-image: linear-gradient(var(--ln) 1px, transparent 1px), linear-gradient(90deg, var(--ln) 1px, transparent 1px); background-size: 40px 40px; opacity: .45; pointer-events: none; }
+.fr svg { flex: none; display: block; }
+.ab { position: absolute; }
+/* the strip (computer) */
+.st { position: absolute; top: 0; left: 0; right: 0; height: 48px; background: var(--white); border-bottom: 1px solid var(--ln2); display: flex; align-items: center; z-index: 6; }
+.st .brand { width: 240px; height: 100%; border-right: 1px solid var(--ln2); display: flex; align-items: center; gap: 8px; padding-left: 20px; font: 700 15px 'Inter'; flex: none; }
+.st .brand .lg { color: var(--olive); }
+.st .brand i { font: 600 10.5px 'IBM Plex Mono'; letter-spacing: .1em; color: var(--ink2); font-style: normal; border-left: 1px solid var(--ln2); padding-left: 12px; margin-left: 6px; }
+.st .place { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding-left: 32px; }
+.st .back { display: flex; align-items: center; gap: 6px; color: var(--ink2); font: 600 14.5px 'Inter'; flex: none; }
+.st .rule { width: 1px; height: 22px; background: var(--ln2); flex: none; }
+.st .nm { font: 700 16px 'Inter'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.st .facts { margin-left: auto; display: flex; align-items: center; gap: 9px; font: 400 13px 'Inter'; color: var(--ink2); white-space: nowrap; padding-right: 16px; border-right: 1px solid var(--ln2); height: 22px; flex: none; }
+.st .facts b { font: 600 10px 'IBM Plex Mono'; letter-spacing: .08em; }
+.st .facts .dot { opacity: .45; }
+.chipS { font: 700 10px/1 'IBM Plex Mono'; letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; border: 1px solid rgba(87,101,30,.35); color: var(--olive); background: rgba(218,242,124,.35); white-space: nowrap; flex: none; }
+.st .doors { display: flex; align-items: center; gap: 10px; padding: 0 16px 0 16px; flex: none; color: var(--ink2); }
+.st .pillv { display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border: 1px solid var(--ln2); border-radius: 999px; background: var(--field); font: 600 13px 'Inter'; color: var(--ink); }
+.st .bell { position: relative; width: 34px; height: 34px; display: grid; place-items: center; }
+.st .bell em { position: absolute; top: -2px; right: -3px; background: var(--red); color: #fff; font: 700 8.5px/1 'Inter'; padding: 2px 3px; border-radius: 6px; font-style: normal; }
+.st .qd, .st .acct { width: 30px; height: 30px; display: grid; place-items: center; color: var(--ink2); }
+.st .goq { outline: 1.5px dashed #B5470F; outline-offset: 3px; border-radius: 6px; cursor: pointer; }
+.st .goq:hover { background: rgba(181,71,15,.08); }
+.fr .top { z-index: 7; }
+.st .ws { border: 1px solid var(--olive); color: var(--olive); border-radius: 999px; font: 600 12.5px 'Inter'; padding: 6px 12px; display: flex; gap: 6px; align-items: center; }
+/* sidebar */
+.sb { position: absolute; top: 48px; left: 0; width: 240px; bottom: 0; background: var(--white); border-right: 1px solid var(--ln2); z-index: 5; }
+.sb .cell { height: 45px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--ln2); font: 700 14.5px/1.15 'Inter'; }
+.sb .cell .ut { width: 24px; height: 24px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--ln2); display: grid; place-items: center; font: 700 9px 'Inter'; flex: none; }
+.sb .cell .ut.rd { border-radius: 50%; background: #4B3A7A; color: #fff; box-shadow: none; }
+.sb .cell .cv { margin-left: auto; color: var(--ink2); }
+.sb .lst { display: flex; flex-direction: column; padding-top: 14px; }
+.sb .g { font: 700 11px 'Inter'; letter-spacing: .1em; color: var(--ink2); padding: 12px 20px 7px; }
+.sb .r { height: 38.5px; display: flex; align-items: center; gap: 9px; padding: 0 20px; font: 500 14.5px 'Inter'; color: var(--ink2); }
+.sb .r.on { background: var(--olive-soft); color: var(--olive); font-weight: 600; }
+.sb .r .bd { margin-left: auto; min-width: 18px; height: 18px; border-radius: 9px; border: 1px solid rgba(131,80,6,.45); background: #FBF0DC; color: var(--amber); font: 700 9.5px/16px 'Inter'; text-align: center; padding: 0 4px; }
+.sb .foot { position: absolute; left: 0; right: 0; bottom: 0; border-top: 1px solid var(--ln2); padding: 8px 0 0; background: var(--white); }
+.sb .foot .r { height: 35px; font-size: 12.5px; }
+.sb .foot .r.cl { border-top: 1px solid var(--ln2); margin-top: 8px; height: 38px; }
+/* the band (tabs pinned under the strip) */
+.band { position: absolute; top: 48px; left: 240px; right: 0; height: 45px; background: var(--white); border-bottom: 1px solid var(--ln2); z-index: 4; display: flex; align-items: flex-end; padding-left: 18px; }
+.tb { display: flex; align-items: flex-end; height: 45px; white-space: nowrap; }
+.tb span { height: 44px; padding: 0 14px; display: flex; align-items: center; font: 600 14.5px 'Inter'; color: var(--ink2); border-bottom: 2px solid transparent; flex: none; }
+.tb span.on { color: var(--olive); border-bottom-color: var(--olive); }
+/* page pieces */
+.b { position: absolute; height: 34px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border: 1px solid var(--ln2); border-radius: 7px; background: var(--white); font: 600 14.5px 'Inter'; color: var(--ink); white-space: nowrap; }
+.b.lime { background: var(--lime); border-color: transparent; }
+.b.tan { background: var(--tan); }
+.b.dim { color: var(--ink3); }
+.b .sc { color: var(--olive); font-weight: 700; }
+.b .bdg { min-width: 17px; height: 17px; border-radius: 9px; border: 1px solid rgba(131,80,6,.45); background: #FBF0DC; color: var(--amber); font: 700 9px/15px 'Inter'; text-align: center; }
+.b.sel { justify-content: space-between; font-weight: 600; }
+.b.srch { justify-content: flex-start; color: var(--ink3); font-weight: 400; border-radius: 999px; }
+.b.pill { border-radius: 999px; }
+.qh { position: absolute; width: 34px; height: 34px; display: grid; place-items: center; color: var(--ink); }
+.cd { position: absolute; background: var(--white); border: 1px solid var(--ln2); border-radius: 12px; overflow: hidden; }
+.cd h6 { margin: 0; padding: 16px 18px 6px; font: 700 17px 'Inter'; display: flex; align-items: baseline; }
+.cd h6 em { margin-left: auto; font: 600 11px 'IBM Plex Mono'; font-style: normal; color: var(--ink2); }
+.cd .ln { display: flex; align-items: center; gap: 10px; padding: 9px 18px; border-top: 1px solid var(--ln); }
+.cd .ln:first-of-type { border-top: 0; }
+.cd .ln .tx { flex: 1; min-width: 0; }
+.cd .ln b { display: block; font: 600 14.5px/1.35 'Inter'; }
+.cd .ln small { display: block; font: 400 12.5px/1.35 'Inter'; color: var(--ink3); }
+.cd .ln .cv { color: var(--ink2); }
+.ban { position: absolute; background: var(--white); border: 1px solid var(--ln2); border-left: 3px solid var(--olive); border-radius: 8px; display: flex; align-items: center; padding: 0 16px; font: 400 14.5px/1.5 'Inter'; }
+.ban b { color: var(--olive); }
+.note { position: absolute; font: 400 12.5px 'Inter'; color: var(--ink2); white-space: nowrap; }
+.tbl { position: absolute; background: var(--white); border: 1px solid var(--ln2); border-radius: 10px; overflow: hidden; }
+.tbl .hr, .tbl .rw, .tbl .gr { display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid var(--ln); }
+.tbl .hr { height: 33px; font: 700 11.5px 'Barlow Condensed'; letter-spacing: .1em; color: var(--ink2); }
+.tbl .gr { height: 34px; background: var(--field); font: 700 11.5px 'Barlow Condensed'; letter-spacing: .1em; color: var(--ink2); }
+.tbl .rw { font: 400 14.5px 'Inter'; }
+.tbl .rw b { font-weight: 600; }
+.tbl .c { flex: none; white-space: nowrap; overflow: hidden; }
+.tbl .sm { display: block; font: 400 12.5px 'Inter'; color: var(--ink3); }
+.chipL { font: 700 9.5px/1 'IBM Plex Mono'; letter-spacing: .08em; padding: 4px 7px; border-radius: 999px; border: 1px solid rgba(87,101,30,.4); color: var(--olive); background: rgba(218,242,124,.25); }
+.chipR { font: 700 9.5px/1 'IBM Plex Mono'; letter-spacing: .08em; padding: 4px 7px; border-radius: 999px; border: 1px solid rgba(178,58,38,.4); color: var(--red); background: #FBEAE6; }
+.sq { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; vertical-align: 0; }
+.segv { position: absolute; display: flex; padding: 4px; gap: 2px; border: 1px solid var(--ln2); border-radius: 999px; background: var(--white); }
+.segv span { padding: 0 18px; height: 32px; display: grid; place-items: center; border-radius: 999px; font: 600 13px 'Inter'; color: var(--ink2); }
+.segv span.on { background: var(--tan); color: var(--ink); }
+.ghostrow { position: absolute; border: 1.5px dashed #B5470F; border-radius: 6px; background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(181,71,15,.08) 6px 12px); z-index: 3; pointer-events: none; }
+/* phone chrome */
+.pb { position: absolute; top: 0; left: 0; right: 0; background: var(--white); border-bottom: 1px solid var(--ln2); z-index: 6; }
+.pb .pr { display: flex; align-items: center; min-height: 53px; padding: 4px 16px 4px 16px; gap: 0; }
+.pb .door { flex: 1; min-width: 0; margin-right: 12px; display: flex; flex-direction: column; justify-content: center; min-height: 44px; }
+.pb .door b { font: 700 16px/19px 'Inter'; }
+.pb .door .lnr { display: flex; align-items: center; gap: 6px; margin-top: 2px; min-width: 0; }
+.pb .door small { font: 400 11px/14px 'IBM Plex Mono'; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pb .door small b { font: 600 11px 'IBM Plex Mono'; }
+.pb .door .cv { margin-left: auto; color: var(--ink2); flex: none; padding-right: 4px; }
+.pb .ib { width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink); flex: none; }
+.pb .bk { width: 44px; height: 44px; display: grid; place-items: center; margin-left: -12px; color: var(--ink2); flex: none; }
+.pb .ptabs { display: flex; height: 45px; align-items: flex-end; border-top: 1px solid var(--ln); padding-left: 6px; white-space: nowrap; overflow: hidden; position: relative; }
+.pb .ptabs span { height: 44px; padding: 0 11px; display: flex; align-items: center; font: 600 14.5px 'Inter'; color: var(--ink2); border-bottom: 2px solid transparent; flex: none; }
+.pb .ptabs span.on { color: var(--olive); border-bottom-color: var(--olive); }
+.pb .ptabs .more { position: absolute; right: 0; top: 0; bottom: 0; width: 44px; background: linear-gradient(90deg, rgba(255,255,255,0), #fff 40%); display: grid; place-items: center; }
+.pbt { position: absolute; left: 0; right: 0; height: 45px; background: var(--white); border-bottom: 1px solid var(--ln2); z-index: 5; display: flex; align-items: flex-end; padding-left: 6px; white-space: nowrap; overflow: hidden; }
+.pbt span { height: 44px; padding: 0 11px; display: flex; align-items: center; font: 600 14.5px 'Inter'; color: var(--ink2); border-bottom: 2px solid transparent; flex: none; }
+.pbt span.on { color: var(--olive); border-bottom-color: var(--olive); }
+.pq { position: absolute; width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink); }
+.pplus { position: absolute; width: 44px; height: 44px; display: grid; place-items: center; background: var(--lime); border-radius: 8px; }
+.pib { position: absolute; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--ln2); border-radius: 8px; background: var(--tan); }
+.bnav { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; background: var(--white); border-top: 1px solid var(--ln2); display: flex; z-index: 7; }
+.bnav .it { flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 9px; gap: 5px; font: 700 10.5px 'Inter'; color: var(--ink2); position: relative; }
+.bnav .it .pill { width: 46px; height: 30px; border-radius: 15px; display: grid; place-items: center; }
+.bnav .it.on { color: var(--olive); } .bnav .it.on .pill { background: var(--olive-soft); }
+.bnav .it em { position: absolute; top: 4px; left: calc(50% + 6px); background: var(--olive); color: #fff; font: 700 8.5px/1 'Inter'; padding: 2px 4px; border-radius: 6px; font-style: normal; }
+.toast { position: absolute; left: 0; right: 0; height: 42px; background: var(--white); border-top: 1px solid var(--ln2); display: flex; align-items: center; gap: 8px; padding: 0 16px; font: 600 14px 'Inter'; z-index: 6; }
+.toast span { margin-left: auto; color: var(--ink2); }
+/* the drawer */
+.dr { position: absolute; top: 0; right: 0; bottom: 0; width: 420px; background: var(--white); box-shadow: -10px 0 30px rgba(0,0,0,.18); z-index: 9; display: flex; flex-direction: column; }
+.dr .dh { padding: 16px 18px 12px; border-bottom: 1px solid var(--ln2); position: relative; }
+.dr .dh i { display: block; font: 600 11px 'IBM Plex Mono'; letter-spacing: .12em; font-style: normal; color: var(--ink2); }
+.dr .dh b { display: block; font: 700 17px 'Inter'; margin-top: 4px; }
+.dr .dh .x { position: absolute; right: 14px; top: 16px; width: 30px; height: 30px; border: 1px solid var(--ln2); border-radius: 6px; display: grid; place-items: center; }
+.dr .db { padding: 14px 18px; flex: 1; overflow: hidden; }
+.dr .db .iw { font: 700 11px 'IBM Plex Mono'; letter-spacing: .1em; color: var(--olive); margin-bottom: 8px; }
+.dr .db .sh { display: flex; justify-content: space-between; padding: 9px 9px; font: 400 13.5px 'Inter'; }
+.dr .db h4 { font: 700 18px 'Inter'; margin: 18px 0 4px; padding-top: 16px; border-top: 1px solid var(--ln2); }
+.dr .db p { font: 400 14px/1.6 'Inter'; color: var(--ink2); margin: 0 0 10px; }
+.dr .db .tg { display: inline-block; font: 600 12px 'Inter'; color: var(--olive); background: var(--olive-soft); border: 1px solid rgba(87,101,30,.3); border-radius: 5px; padding: 5px 9px; margin: 0 6px 6px 0; }
+.dr .df { padding: 14px 18px; border-top: 1px solid var(--ln2); font: 600 14px 'Inter'; color: var(--olive); display: flex; gap: 6px; align-items: center; }
+.scrimD { position: absolute; inset: 0; background: rgba(36,30,21,.35); z-index: 8; backdrop-filter: blur(2px); }
+/* annotations */
+.hit { position: absolute; border: 1.5px dashed #B5470F; border-radius: 6px; z-index: 25; cursor: pointer; background: none; padding: 0; }
+.hit:hover { background: rgba(181,71,15,.06); }
+.hit span { position: absolute; left: 4px; bottom: -19px; font: 600 9.5px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 3px; white-space: nowrap; }
+.hit.up span { bottom: auto; top: -18px; }
+.hit.lf span { left: auto; right: 0; }
+.meas { position: absolute; height: 0; border-top: 1.5px dashed #B5470F; z-index: 26; pointer-events: none; }
+.meas span { position: absolute; right: 6px; top: 2px; font: 600 9.5px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 3px; white-space: nowrap; }
+.vmeas { position: absolute; width: 0; border-left: 1.5px dashed #B5470F; z-index: 26; pointer-events: none; }
+.vmeas span { position: absolute; left: 5px; top: 50%; transform: translateY(-50%); font: 600 9.5px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 3px; white-space: nowrap; }
+.room { position: absolute; top: 34px; height: 11px; border: 1.5px dashed #B5470F; border-top: 0; z-index: 26; pointer-events: none; }
+.room span { position: absolute; left: 50%; transform: translateX(-50%); top: 0; font: 600 9.5px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 3px; white-space: nowrap; }
+#pop { position: fixed; z-index: 50; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(560px, calc(100vw - 32px)); max-height: 70vh; overflow: auto; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.28); padding: 4px 16px 14px; }
+#pop .x { position: sticky; top: 0; float: right; margin: 6px -8px 0 0; width: 36px; height: 36px; border: 0; background: var(--card); color: var(--muted); font-size: 20px; cursor: pointer; border-radius: 8px; }
+#pop .ask { border: 0; padding: 8px 0 0; margin: 0; }
+body.only-diff .fr .same { opacity: .16; }
+body.only-diff .fr .grid { opacity: .12; }
+</style>
+
+<div class="wrap">
+  <header class="doc">
+    <h1>Help’s place, the same in all three portals, and the page’s top row</h1>
+    <p>Navigation Phase 6, the top-row review and the “?” move for the tournament admin and the club (ruled YES 2026-11-12). Every screen is drawn whole, at true size, from the shipped parts and from numbers measured on the dev server on 2026-11-12 (Coaches Portal: UAT Test Team, head coach; tournament admin: UAT Import Smoke Tournament, owner; club: UAT Rep Club, owner). The Coaches Portal is the shipped reference. The orange markers and dashed boxes open the note or ask they belong to. Drawings only; nothing is built.</p>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
+  <div class="viewrow">
+    <span>View</span>
+    <span class="seg" role="group" aria-label="View"><button type="button" id="v-all" aria-pressed="true">Everything</button><button type="button" id="v-diff" aria-pressed="false">Show only what differs</button></span>
+    <span>Size</span>
+    <span class="seg" role="group" aria-label="Size"><button type="button" id="s-true" aria-pressed="true">True size</button><button type="button" id="s-fit" aria-pressed="false">Fit to width</button></span>
+  </div>
+  <main id="panels">
+
+<!-- ═════════════ 1 · WHAT CHANGES ═════════════ -->
+<section class="panel" data-id="summary" data-title="1 · What changes">
+  <h2>What changes, in one table</h2>
+  <p>The “?” in the tournament admin moves out of the page’s top row and into the strip, between the bell and the account button, as it already sits on every Coaches Portal team page. The club gains a “?” in the same place; today it has none. On a phone the “?” is the bar’s last control in all three portals.</p>
+  <p><b>What this does to the top row:</b> a row that held only a “?” disappears, and the first content moves up 50px on a computer and 52px on a phone. A row that holds buttons stays where it is and loses only the “?” at its end. After this phase, every top row left in the three portals is there for a button.</p>
+  <p><b>What it does not fix, said plainly:</b> a row holding <b>one</b> button still costs its full height (Divisions, first content at 131; Communications 130; the club’s House league 128; a rep team’s page 163). The recommended rule for buttons (T2 A) leaves those rows as they are. The only place this phase wins room back on a page with buttons is the Coaches Portal Roster, whose two rows of controls can become one (T4).</p>
+  <div class="tablewrap"><table class="t">
+    <thead><tr><th>Portal · page shape</th><th>Page measured</th><th>Today, 1440: what sits on the top row</th><th class="n">First content y, today → after (1440)</th><th class="n">Phone 390, today → after</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="5">Tournament admin: 21 screens with a header; 13 carry a “?” (8 beside buttons, 5 alone)</td></tr>
+      <tr><td>“?” only</td><td>Dashboard</td><td>the “?” alone</td><td class="n win">130 → 80</td><td class="n win">121 → 69</td></tr>
+      <tr><td>Form, “?” only</td><td>Event settings</td><td>the “?” alone</td><td class="n win">130 → 80</td><td class="n win">121 → 69</td></tr>
+      <tr><td>“?” only (not measured, same row)</td><td>Rules, Public site, Web address</td><td>the “?” alone</td><td class="n win">−50</td><td class="n win">−52</td></tr>
+      <tr><td>Several buttons</td><td>Teams</td><td>Registration health · Export · Add team · “?”; the page’s toolbar on a second row</td><td class="n">208 → 208</td><td class="n">unchanged</td></tr>
+      <tr><td>Several buttons</td><td>Schedule</td><td>Export · Add game · “?”; toolbar on a second row</td><td class="n">176 → 176</td><td class="n">233 → 233</td></tr>
+      <tr><td>One button</td><td>Divisions</td><td>Add division · “?”</td><td class="n">131 → 131</td><td class="n">121 → 121</td></tr>
+      <tr><td>One button, no “?” today</td><td>Communications</td><td>New message</td><td class="n">130 → 130</td><td class="n">121 → 121</td></tr>
+      <tr><td>Tabs</td><td>Settings &amp; access › Members</td><td>tabs in the band; Audit log · Export · Invite below; no “?”</td><td class="n">173 → 173</td><td class="n">161 → 161</td></tr>
+      <tr><td>One level down</td><td>Members › Audit log</td><td>Export; no “?”</td><td class="n">181 → 181</td><td class="n">unchanged</td></tr>
+      <tr class="grp"><td colspan="5">Club: no page draws a “?” today; help is the account menu’s Help row (the program’s guide)</td></tr>
+      <tr><td>Tabs + several buttons</td><td>Rep teams</td><td>tabs in the band; Team groups · Rename team URLs · All groups · Add team</td><td class="n">165 → 165</td><td class="n">195 → 195</td></tr>
+      <tr><td>One button</td><td>House league</td><td>Create season</td><td class="n">128 → 128</td><td class="n">119 → 119</td></tr>
+      <tr><td>Tabs + one button</td><td>Accounting overview</td><td>fiscal-year pill · Export</td><td class="n">191 → 191</td><td class="n">≈159</td></tr>
+      <tr><td>Tabs + two buttons</td><td>Organization › Members</td><td>Export · Invite</td><td class="n">163 → 163</td><td class="n">169 → 169</td></tr>
+      <tr><td>Form, tabs only</td><td>Organization › Settings</td><td>no row</td><td class="n">115 → 115</td><td class="n">111 → 111</td></tr>
+      <tr><td>Record</td><td>A rep team (14U AA)</td><td>Close the season · Start next season</td><td class="n">163 → 163</td><td class="n">unchanged</td></tr>
+      <tr class="grp"><td colspan="5">Coaches Portal, team pages: the reference, already moved (Phase 4b · Phase 5)</td></tr>
+      <tr><td>Tabs + buttons</td><td>Money</td><td>tabs in the band; Record money · Import below</td><td class="n">175</td><td class="n">170 (the lone “+” row, ask T4)</td></tr>
+      <tr><td>Two rows of buttons</td><td>Roster</td><td>Add Player · Import; Export on the next row</td><td class="n">187 → 137 with T4</td><td class="n">193</td></tr>
+      <tr><td>No buttons</td><td>Documents · Settings</td><td>no row</td><td class="n">80</td><td class="n">69</td></tr>
+    </tbody>
+  </table></div>
+  <div class="flag"><b>Facts the plan had slightly wrong, said out loud.</b> (1) The club’s “move” is an <b>addition</b>: no club page has a “?” or a help topic of its own today (ask T3). (2) The tournament admin’s help panel is mounted inside the page area, below the strip and the bar. A “?” placed in the strip today would draw and do nothing when clicked. The build’s first job is to make the panel reachable from the strip and bar, and its first check is that the “?” opens it. (3) The Coaches Portal’s own pages outside a team (notifications, billing, link a club) still draw a “?” on the page row. After this phase they would be the only pages in the product that do (ask T6).</div>
+  <div class="notes">
+    <div class="ask" id="ask-n1"><h3><span class="mk inl">n1</span>Why the “?” sits in the strip (the reason the drawing rests on)</h3><p style="margin:0">The 2026-07-31 boundary held the strip to leave-this-place doors and said a “?” is not an exit. The owner reversed it on purpose for the Coaches Portal on 2026-11-12 (4b R3, revised). The reason recorded in the plan is that most pages have no heading to hang a “?” on: tabbed pages open on tiles or lists, Email families on a paragraph, and every gate and first load has none. Anchoring it to the page would give a different place on every page. The strip is the one place that is the same on every page. Phase 5 F3 added the phone half: help in the fixed top chrome is the computer’s arrangement exactly. The tournament and club follow for the 11-12 entry’s reason, one grammar on all three portals. <b>This reason is in the plan but not in the design log; the build writes it there.</b></p></div>
+    <div class="ask" id="ask-n2"><h3><span class="mk inl">n2</span>What the “?” opens, everywhere</h3><p style="margin:0">One panel, already shared by the Coaches Portal and the tournament admin: it slides in from the right (420px), headed “Help · on this page” and the page’s name, with the page’s own sections, an “I want to…” list where the page has one, and “Open the full guide” at its foot. The account menu’s Help row stays the full guide in a new tab. A page with no help topic shows <b>no “?”</b> rather than a “?” that opens an empty panel. That is the Coaches Portal’s rule today (the player page), and the drawing keeps it for all three portals.</p></div>
+  </div>
+</section>
+
+<!-- ═════════════ 2 · WHOLE SCREENS ═════════════ -->
+<section class="panel" data-id="screens" data-title="2 · Whole screens">
+  <h2>Whole screens, before and after (1440 × 900)</h2>
+  <p>Drawn at true size; use “Fit to width” to see a pair side by side. “Show only what differs” fades everything that does not change.</p>
+  <div class="spec"><div class="cap"><b>Tournament admin · Dashboard</b><span>the “?” alone on its row, the case that wins room. Content 130 → 80.</span></div><div data-s="dash"></div></div>
+  <div class="spec"><div class="cap"><b>Tournament admin · Teams</b><span>buttons + “?”: the “?” leaves, the buttons stay where they are. The second row (the page’s toolbar) is untouched; see T2 and T4.</span></div><div data-s="teams"></div></div>
+  <div class="spec"><div class="cap"><b>Club · Rep teams</b><span>an addition: the page does not change; the strip gains a “?”.</span></div><div data-s="club"></div></div>
+  <div class="spec"><div class="cap"><b>Coaches Portal · Roster (shipped reference)</b><span>the “?” between the bell and the account button, the shape the other two take on.</span></div><div data-s="roster"></div></div>
+</section>
+
+<!-- ═════════════ 3 · THE STRIP ═════════════ -->
+<section class="panel" data-id="strip" data-title="3 · The strip">
+  <h2>The strip with the “?”, at 1440 and 1280</h2>
+  <p>One rule for all three, as shipped in the Coaches Portal: <b>the “?” sits between the bell and the account button.</b> In the tournament admin and the club, the order becomes View site · bell · “?” · account · Workspaces. The “?” is 30px with a 10px gap, so it costs the free space in the middle of the strip 40px.</p>
+  <div class="tablewrap"><table class="t">
+    <thead><tr><th>Page measured</th><th>What has to fit</th><th class="n">Free room today 1280 / 1366 / 1440</th><th class="n">After the “?”</th><th>What gives way</th></tr></thead>
+    <tbody>
+      <tr><td>Tournament · Schedule</td><td>page name … dates + phase chip</td><td class="n">448 / 534 / 608</td><td class="n">408 / 494 / 568</td><td>nothing</td></tr>
+      <tr><td>Club · a rep team (one level down)</td><td>← Teams · team name · season chip</td><td class="n">512 / 598 / 672</td><td class="n">472 / 558 / 632</td><td>nothing</td></tr>
+      <tr><td>Coaches Portal · Overview (shipped)</td><td>page name … club · season · record · next event</td><td class="n">362 / 448 / 522</td><td class="n">(already in)</td><td>nothing (the facts’ quiet words go at ≤1100, shipped)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">The admin strip’s longest fact is a tournament’s dates and phase (≈130px); its page names are the sidebar’s words, all short. The Coaches Portal carries the longest facts and already fits. Nothing was cut at any of the three widths, and no page scrolled sideways.</p>
+  <div class="spec"><div class="cap"><b>Tournament admin · 1440</b></div><div data-s="stT1440"></div></div>
+  <div class="spec"><div class="cap"><b>Tournament admin · 1280</b><span>the narrowest computer the product draws for</span></div><div data-s="stT1280"></div></div>
+  <div class="spec"><div class="cap"><b>Club · 1440 and 1280</b></div><div data-s="stC"></div></div>
+  <div class="spec"><div class="cap"><b>Coaches Portal · 1280 (shipped)</b><span>the reference: bell · “?” · account · Workspaces</span></div><div data-s="stK"></div></div>
+</section>
+
+<!-- ═════════════ 4 · THE PHONE BAR ═════════════ -->
+<section class="panel" data-id="phone" data-title="4 · The phone bar">
+  <h2>The phone bar with the “?” (390 × 844, touch)</h2>
+  <p>On a phone the “?” is the bar’s <b>last</b> control, in the corner, as the Coaches Portal’s is. In the tournament admin and the club the View site globe moves one place left. The tournament bar’s door (page name + event line, one 44px target, Phase 3 R4) keeps its whole height and gives up 44px of width, 302 → 258.</p>
+  <div class="spec"><div class="cap"><b>Tournament admin · Dashboard, whole screen</b><span>the “?” row goes; the first card rises 52px</span></div><div data-s="phDash"></div></div>
+  <div class="spec"><div class="cap"><b>The three bars side by side</b><span>today | after; the coach bar is the shipped reference</span></div><div data-s="phBars"></div></div>
+  <div class="spec"><div class="cap"><b>Club · Rep teams, whole screen</b><span>the tabs ride inside the bar on a phone (shipped); the “?” joins the bar’s first line</span></div><div data-s="phClub"></div></div>
+  <div class="spec"><div class="cap"><b>Tablet · 768 (wears the phone chrome)</b><span>same rule; the corner is x 708</span></div><div data-s="phTab"></div></div>
+</section>
+
+<!-- ═════════════ 5 · THE PAGE'S BUTTONS ═════════════ -->
+<section class="panel" data-id="buttons" data-title="5 · The page’s buttons">
+  <h2>With the “?” gone, where do the page’s buttons live? (T2)</h2>
+  <p>Drawn on the tournament Teams page, the one with the most buttons, at 1440 and at 1280, where room runs out first. The three options the owner has been weighing; the Coaches Portal ruled A in 4b (R1 = tabs only in the band, buttons stay in the page).</p>
+  <div class="spec"><div class="cap"><b>A · buttons stay in the page; a page with none has no row</b><span class="tags">RECOMMENDED</span><span>nothing to build beyond the “?” leaving: the tournament row already disappears when it is empty</span></div><div data-s="optA"></div></div>
+  <div class="spec"><div class="cap"><b>B · buttons ride the strip’s right end</b><span>at 1280 the buttons need about 442px (measured) and 408 are left; on a phone there is no room at all, so the buttons would live in two places by width</span></div><div data-s="optB"></div></div>
+  <div class="spec"><div class="cap"><b>C · buttons ride the band</b><span>only a tabbed page has a band (one tournament place of 21 screens), so most pages would still need a row; and 4b R2 ruled that nothing rides the band</span></div><div data-s="optC"></div></div>
+  <h2>The second row (the Phase 4 /design point, T4)</h2>
+  <p>Some pages have two rows of controls: the page header’s buttons, then the page’s own toolbar. That is where the remaining room is. It is a page-by-page question, not a rule, because it fits on one page and not on the others:</p>
+  <div class="tablewrap"><table class="t">
+    <thead><tr><th>Page</th><th>Row 1</th><th>Row 2 (the page’s toolbar)</th><th>Join them?</th></tr></thead>
+    <tbody>
+      <tr><td>Coaches Portal · Roster</td><td>Add Player · Import</td><td>List / Depth chart … Export</td><td class="win">Fits at every computer width; saves 50px</td></tr>
+      <tr><td>Tournament · Schedule</td><td>Export · Add game</td><td>Day ‹ date › … Search · Filter · Tools</td><td>Fits only at about 1400 and wider; at 1280 the row would break by width</td></tr>
+      <tr><td>Tournament · Teams</td><td>Registration health · Export · Add team</td><td>Division · Registration open … Search · Filter · Tools</td><td>Does not fit (≈1420px needed, 976 available at 1280)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="spec"><div class="cap"><b>Coaches Portal · Roster: the two rows joined</b><span>Add Player and Import join the List / Depth chart row, beside Export</span></div><div data-s="rosterJoin"></div></div>
+  <div class="spec"><div class="cap"><b>The lone “+” on a phone (the Phase 5 open call), in both portals</b><span>Coaches Portal · Money has it today. Once the “?” leaves, the tournament’s one-button pages (Divisions, Communications) take the same shape: one “+” on its own 44px row</span></div><div data-s="lonePlus"></div></div>
+</section>
+
+<!-- ═════════════ 6 · WHAT THE ? OPENS ═════════════ -->
+<section class="panel" data-id="help" data-title="6 · What the “?” opens">
+  <h2>What the “?” opens, and what a page with no help shows</h2>
+  <p>The panel already exists and is shared: the Coaches Portal and the tournament admin open the same one. It does not change. What changes is <b>who tells it what to show</b>: today the tournament page’s own “?” carries its topic, and after the move the page hands its topic up to the strip and bar, as Coaches Portal pages already do.</p>
+  <div class="spec"><div class="cap"><b>The panel, opened from the strip’s “?” (tournament Teams)</b><span>420 wide, over the page; its close button sits where the account and Workspaces doors are. The panel itself is unchanged by this phase.</span></div><div data-s="drawer"></div></div>
+  <div class="tablewrap"><table class="t">
+    <thead><tr><th>Portal</th><th>Pages with a help topic today</th><th>Pages without one</th><th>Recommended for the build</th></tr></thead>
+    <tbody>
+      <tr><td>Coaches Portal</td><td>every team page with a header; the off-team pages carry their own</td><td>the player page, the game page, gates and first loads: no “?” (shipped)</td><td>unchanged; the off-team pages move into the strip too (T6·1)</td></tr>
+      <tr><td>Tournament admin</td><td>13 screens (Dashboard, Teams, Schedule, Results, Divisions, Venues, Rules, Chat, Public site, Summary, Event settings, the Tournaments list, Web address)</td><td>8: Check-in, Communications, Staff kit, Your notifications, Payouts, and the club’s own Members, Audit log and PDF screens reused here</td><td>give the 8 a topic from the tournaments guide; the three reused club screens get theirs with the club (T3)</td></tr>
+      <tr><td>Club</td><td>none</td><td>all</td><td>a topic for every place and tab (T3). Matched below: 44 screens, 37 with a clear section, 7 partial, none without.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="flag"><b>The tournament already shows the problem a half-done mapping causes.</b> In Settings &amp; access, the Web address tab carries a “?” and its neighbours (Members, Audit log, PDF settings, Payouts) do not, so the “?” comes and goes as you move across one place’s tabs. Whatever the club gets, a place’s tabs should all have a “?” or none.</div>
+  <h3>The club’s screens against the guide (top-level sections: Organization 21, House league 17, Accounting 22, Rep teams 17, Families 8)</h3>
+  <div class="tablewrap"><table class="t">
+    <thead><tr><th>Place</th><th>Screens</th><th>Clear match</th><th>Partial (needs a section, or one written)</th></tr></thead>
+    <tbody>
+      <tr><td>Rep teams</td><td>6 tabs</td><td class="n">5</td><td>Assistant coaches (only “How to invite a coach” touches it)</td></tr>
+      <tr><td>A rep team</td><td>5 tabs</td><td class="n">3</td><td>Team page (pieces only, no “team details” section); Schedule (the club’s schedules section, not the team’s)</td></tr>
+      <tr><td>A house-league season</td><td>7 tabs</td><td class="n">6</td><td>Overview (the season home describes its header and tabs only)</td></tr>
+      <tr><td>Accounting</td><td>9 tabs</td><td class="n">9</td><td>none</td></tr>
+      <tr><td>Families</td><td>3 tabs</td><td class="n">3</td><td>none</td></tr>
+      <tr><td>Organization</td><td>6 tabs</td><td class="n">4</td><td>The board (only “Roles explained”); PDF settings (mentioned in passing in the export guide)</td></tr>
+      <tr><td>Named screens</td><td>Overview, Calendar, Permits, Schedules, Public site, Plan &amp; billing, Notifications, Seasons list</td><td class="n">7</td><td>the club Overview (nothing describes the Overview itself)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Matched by section titles and a sample of their text, not by opening every screen; the build’s help pass confirms each one. Two Organization sections have no address a screen can point at (“Your first 30 days”, “Inviting and managing members”); the second is the best fit for Members, so the help pass gives it one.</p>
+  <div class="notes">
+    <div class="ask" id="ask-n3"><h3><span class="mk inl">n3</span>No topic, no “?”</h3><p style="margin:0">The Coaches Portal holds the “?”’s width for a moment while the page loads (so the bell does not slide), then gives it back if the page has no topic. The phone bar does the same. The tournament admin and the club take the same behaviour. A “?” that opens an empty panel is a door that dead-ends; the full guide stays one tap away in the account menu (computer) and the More sheet (phone).</p></div>
+    <div class="ask" id="ask-n4"><h3><span class="mk inl">n4</span>The account menu’s Help row</h3><p style="margin:0">Unchanged in all three: it opens the full guide in a new tab, at the program you are in (club: House league, Rep teams, Accounting or Organization; tournament: the tournaments guide). So every screen keeps two help doors with two jobs: the “?” for this page, the menu row for the whole guide. That is the Coaches Portal’s pair today.</p></div>
+  </div>
+</section>
+
+<!-- ═════════════ 7 · EDGE CASES ═════════════ -->
+<section class="panel" data-id="edges" data-title="7 · Edge cases">
+  <h2>Edge cases</h2>
+  <div class="spec"><div class="cap"><b>A suspended (cancelled) account’s one page</b><span>the strip is the only chrome; it drops View site and the bell today, and the account menu drops Help. The “?” is absent too: its help would bounce to billing.</span></div><div data-s="edSusp"></div></div>
+  <div class="spec"><div class="cap"><b>The demo sandbox</b><span>the sandbox hides the account menu; the Coaches Portal’s “?” already shows there. Recommended: the admin’s shows too, because it opens in place and is no exit from the demo. The guide link in the sidebar foot stays.</span></div><div data-s="edSand"></div></div>
+  <div class="spec"><div class="cap"><b>A long event name at 390</b><span>the event line gives up 44px; the event’s name is cut with “…” sooner, and the phase chip and chevron stay whole</span></div><div data-s="edLong"></div></div>
+  <div class="spec"><div class="cap"><b>The tightest bar: a club house-league season at 390</b><span>back arrow + season name + “House league” + its stage chip + globe. Measured today: 258px for the name and line; with the “?”, 214. The small line no longer fits whole: the word “House league” is cut, the chip stays whole. The season’s name wraps to a second line when it must, as the record bars already do (5b).</span></div><div data-s="edSeason"></div></div>
+  <div class="notes">
+    <div class="ask" id="ask-n5"><h3><span class="mk inl">n5</span>Untouched by this phase</h3><ul style="margin:0;padding-left:20px">
+      <li><b>The support console</b> has its own shell and its own account menu without Help. It never draws these strips.</li>
+      <li><b>The free Coaches Portal</b> (E13) shares the strip, but the strip never draws its “?” for the free portal; the free team page keeps its own. Out of scope, unchanged.</li>
+      <li><b>“Help access”</b>: there is no such switch in the product. Everyone signed in can open the panel; only a wall (suspended, no access) removes it, which the drawing keeps.</li>
+      <li><b>A long page name at 1280</b>: the admin strip names the page with the sidebar’s words, all short; a club record (a team, a season) leaves 472px at 1280. The Coaches Portal’s long record names were settled in 5b (the facts give way first).</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ═════════════ 8 · ASKS ═════════════ -->
+<section class="panel" data-id="asks" data-title="8 · Asks">
+  <h2>The asks (first option = the recommendation)</h2>
+  <div class="ask" id="ask-T1"><h3><span class="mk inl">T1</span>The “?” position in the strip</h3><ol>
+    <li><span class="rec">(A) Recommended: between the bell and the account button, in all three portals.</span> That is where the Coaches Portal’s already sits (walked §517 and §519). The admin order becomes View site · bell · “?” · account · Workspaces. It costs 40px; at 1280 the tournament keeps 408px of free room, the club 472, the Coaches Portal 362, so <b>nothing gives way at 1280, 1366 or 1440</b> on any page measured. If a page ever runs short, the shipped order holds: the facts’ quiet words go first, then the dates; the page’s name, the chip, the “?” and the doors never do. <b>On a phone</b> the “?” is the bar’s last control in all three, with the admin’s View site globe just left of it. <b>In the demos</b> the “?” shows (the Coaches Portal’s already does): it opens in place and is no way out of the demo. <b>On a cancelled account’s one page</b> there is none, as there is no Help today.</li>
+    <li>(B) First of the doors, before View site. That would reorder the Coaches Portal strip the owner has already walked.</li>
+    <li>(C) The far right corner. The corner belongs to the Workspaces pill for people with more than one place and to the account button for everyone else, so the “?” would move by person.</li></ol></div>
+  <div class="ask" id="ask-T2"><h3><span class="mk inl">T2</span>The page’s buttons: one rule for three portals</h3><ol>
+    <li><span class="rec">(A) Recommended: the buttons stay in the page under the strip; a page with no buttons has no row.</span> This is the Coaches Portal’s 4b ruling, so all three end on the same answer. On a tabbed page the band holds the tabs only and the buttons sit below it (4b R1/R2). Nothing to build for the buttons themselves: once the “?” leaves, a tournament row with nothing else on it already disappears. <b>What A leaves:</b> a page with one button keeps a full row for it (Divisions, Communications, House league, a rep team’s page), about 50px on a computer. None of B or C removes those rows without the costs below, so A is the answer, and the room it leaves is the price of one rule.</li>
+    <li>(B) The buttons ride the strip’s right end. At 1280 the Teams buttons need about 442px (measured) and 408 are left; on a phone there is no room, so buttons would sit in two places depending on width, and the strip would turn into whatever page is open’s toolbar.</li>
+    <li>(C) The buttons ride the band. Only tabbed pages have a band, so most pages still need a row, and 4b R2 ruled the band holds tabs only.</li></ol></div>
+  <div class="ask" id="ask-T3"><h3><span class="mk inl">T3</span>The club: where a “?” shows</h3><ol>
+    <li><span class="rec">(A) Recommended: a “?” on every club page that has help to show, and the build gives every club place and tab a topic, so in practice every page has one.</span> Same rule as the other two: no topic, no “?”. Matched in tab 6: of 44 club screens, 37 have a clear section today and 7 a partial one (Assistant coaches, a rep team’s page and its schedule, a season’s Overview, The board, PDF settings, the club Overview). The help pass points those 7 at the nearest section or writes a short one; no place’s tabs end up half covered (the tournament’s Settings &amp; access shows what that looks like, and the build fixes it there too). <b>The phone bar gets it too</b>, last, after the globe. The risk sits here: in the club this is an addition, and it is only as good as the matching. A “?” that opens the wrong section is worse than today’s program guide in the menu, so the help pass is part of the build, not a later tidy-up.</li>
+    <li>(B) Only the pages whose section already matches by name, with no new matching. Quicker, but the “?” would come and go across a place’s own tabs.</li>
+    <li>(C) No “?” in the club; keep the account menu’s Help. That leaves help in a different place in one of the three portals, against the direction.</li></ol></div>
+  <div class="ask" id="ask-T4"><h3><span class="mk inl">T4</span>The rows still left: “?”-only, the lone “+”, the second row</h3><ul>
+    <li><b>“?”-only rows: gone everywhere.</b> That is the move itself: the five tournament screens lose a 50px row on a computer and 52px on a phone, and the Coaches Portal’s off-team pages lose theirs with T6·1.</li>
+    <li><b>The lone “+” on a phone</b> (both portals: Coaches Portal Money today; the tournament’s Divisions and Communications once the “?” leaves; drawn in tab 5): <span class="rec">(A) Recommended: keep it.</span> It is the page’s own add, where every page’s actions are. Each other home puts it in the chrome (the band, ruled tabs only; the bar, already holding name, globe and “?”) or invents a floating button the product does not have. It costs about 60px on a phone, only on pages with an add. (B) Into the bar beside the “?”: the tournament door would shrink to 214px. (C) A floating button: a new pattern, one more thing that covers content.</li>
+    <li><b>The second row on a computer:</b> <span class="rec">Recommended: join Roster’s two rows</span> (Add Player and Import beside Export on the List / Depth chart row, −50px, fits at every computer width). Leave the tournament Schedule and Teams as they are: Schedule fits only at about 1400 and wider, and Teams does not fit at all. This is a fix to one page, not a rule.</li></ul></div>
+  <div class="ask" id="ask-T5"><h3><span class="mk inl">T5</span>Order of the build</h3><ol>
+    <li><span class="rec">(A) Recommended: one phase in two parts, one walk at the end.</span> <b>Part 1 (the tournament admin)</b>: make the help panel reachable from the admin’s strip and bar (today it is not, which is why this is first); move the tournament’s 13 “?”s into the strip and bar; point the 5 event screens without one (Check-in, Communications, Staff kit, Your notifications, Payouts) at their tournaments-guide sections, a small help task. <b>Part 2 (the club)</b>: the club’s help matching with the help agent (44 screens, 7 partial), then the club’s “?” at both widths; the three club screens the tournament reuses (Members, Audit log, PDF settings) get theirs here. Part 2 needs Part 1’s slot; Part 1’s help work is five pointers, so it does not wait on the club’s matching. Under T2 A there is no button work, so there is no “buttons second” step. <b>The Coaches Portal changes</b> (its off-team pages, T6·1; Roster’s row, T4) ride Part 1 only if you rule them in; they touch no admin code and can be left out without rework.</li>
+    <li>(B) Strip first, buttons second. Under T2 A the second part would be empty.</li>
+    <li>(C) One part. The club’s matching is content work that would hold up the tournament’s mechanical move.</li></ol>
+    <p class="why"><b>Rework to avoid:</b> the Phase 6 closing walk comes before this phase. It should <b>not</b> check where the tournament “?” sits, because this phase moves it; say so in the walk’s open list.</p></div>
+  <div class="ask" id="ask-T6"><h3><span class="mk inl">T6</span>What the drawing surfaced</h3><p style="margin:0">No disagreement with the ruling. The direction is right, and the code agrees: the panel is already shared, and the tournament’s empty rows already disappear on their own. The risk is in the club’s help matching (T3). Four smaller things:</p><ol>
+    <li><b>A separate small ask: the Coaches Portal’s own pages outside a team</b> (notifications, billing, link a club) still draw a “?” on the page row. After this phase they would be the only pages in the product that do. Keeping them there was a deliberate line, not an oversight: the 4b build hosts the strip “?” on team pages only, and its code says a page whose “?” is handed to nothing has no help at all. <span class="rec">(A) Recommended: they move into the strip too</span>, crossing that line on purpose (the shell gives those pages the same host; the free portal stays out, E13). (B) Leave them: three low-traffic pages keep the old shape.</li>
+    <li><b>The help panel has to be reachable from the admin’s chrome.</b> Today the tournament admin’s panel sits inside the page area. A “?” drawn in the strip would show and do nothing, with no error. This is a build step, not a ruling; the walk’s first check is that every “?” opens its panel.</li>
+    <li><b>The admin phone bar loses 44px of line.</b> <span class="rec">Recommended, one rule for the admin bar: the line’s words give way (cut with “…”), the chip and the chevron stay whole.</span> For a tournament event that cuts the event’s name sooner. The tightest bar measured is a club house-league season (back arrow, season name, “House league”, its stage chip): 258 → 214px, so “House league” is cut and the chip stays. Both are drawn in Edge cases.</li>
+    <li><b>Records to fix on the way:</b> the prompts index row for 4b still says the phone’s help goes into the More sheet (Phase 5 F3 replaced that); the design log has no entry giving the reason for the strip “?” (n1). The build writes both.</li></ol></div>
+</section>
+
+  </main>
+</div>
+
+<script>
+(function () {
+'use strict';
+var P = {
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+  cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+  down: '<path d="m6 9 6 6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>', left: '<path d="m12 19-7-7 7-7M19 12H5"/>', chevL: '<path d="m15 18-6-6 6-6"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  user: '<circle cx="12" cy="7" r="4"/><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/>',
+  logo: '<path d="M5 21V4h13M5 12h9"/>',
+  gauge: '<path d="m12 14 4-4M3.34 19a10 10 0 1 1 17.32 0"/>', trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  ucheck: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/>',
+  qr: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 21h-4M21 14v.01"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+  pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  tag: '<path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l8.59-8.59a1 1 0 0 0 0-1.41Z"/><circle cx="7" cy="7" r="1"/>',
+  book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>', panel: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>', dollar: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  bldg: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',
+  notebook: '<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4M2 6h4M2 10h4M2 14h4M2 18h4M18.4 2.6a2.17 2.17 0 0 1 3 3L16 11l-4 1 1-4Z"/>',
+  trend: '<path d="m22 7-8.5 8.5-5-5L2 17M16 7h6v6"/>', bars: '<path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>', clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  dl: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>', ul: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>', search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>', filter: '<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>',
+  layers: '<path d="m12 2 10 5-10 5L2 7zM2 17l10 5 10-5M2 12l10 5 10-5"/>', link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>', ext: '<path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>', arrowR: '<path d="M5 12h14M12 5l7 7-7 7"/>',
+  grip: '<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>'
+};
+function I(n, s, w) { return '<svg width="' + (s || 14) + '" height="' + (s || 14) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[n] + '</svg>'; }
+function px(x, y, w, h) { return 'left:' + x + 'px;top:' + y + 'px;' + (w != null ? 'width:' + w + 'px;' : '') + (h != null ? 'height:' + h + 'px;' : ''); }
+function hit(id, x, y, w, h, label, cls) { return '<button type="button" class="hit ' + (cls || '') + '" data-go="' + id + '" aria-label="' + label + ' (' + id + ')" style="' + px(x, y, w, h) + '"><span>' + label + '</span></button>'; }
+function meas(y, x, w, label) { return '<div class="meas" style="top:' + y + 'px;left:' + x + 'px;width:' + w + 'px"><span>' + label + '</span></div>'; }
+function vmeas(x, y, h, label) { return '<div class="vmeas" style="left:' + x + 'px;top:' + y + 'px;height:' + h + 'px"><span>' + label + '</span></div>'; }
+function room(x, w, label) { return '<div class="room" style="left:' + x + 'px;width:' + w + 'px"><span>' + label + '</span></div>'; }
+function frame(w, h, inner) { return '<div class="fr" style="width:' + w + 'px;height:' + h + 'px"><div class="grid"></div>' + inner + '</div>'; }
+function pair(items, col) { return '<div class="stage"><div class="pair' + (col ? ' col' : '') + '">' + items.map(function (x) { return '<div><div class="lbl ' + (x[2] || '') + '">' + x[0] + '</div>' + x[1] + (x[3] ? '<div class="hm">' + x[3] + '</div>' : '') + '</div>'; }).join('') + '</div></div>'; }
+function B(x, y, w, html, cls) { return '<span class="b ' + (cls || '') + '" style="' + px(x, y, w) + '">' + html + '</span>'; }
+function Q(x, y, cls) { return '<span class="qh ' + (cls || '') + '" style="' + px(x, y) + '">' + I('help', 22) + '</span>'; }
+
+/* ── the strip ── */
+function strip(o) {
+  var place = '';
+  if (o.back) place += '<span class="back same">' + I('left', 15) + o.back + '</span><span class="rule same"></span>';
+  place += '<span class="nm same">' + o.name + '</span>';
+  if (o.chip) place += '<span class="chipS same">' + o.chip + '</span>';
+  if (o.facts) place += '<span class="facts same">' + o.facts + '</span>';
+  var d = '';
+  if (o.view) d += '<span class="pillv same">' + I('globe', 14) + 'View site</span>';
+  if (o.bell !== false) d += '<span class="bell same">' + I('bell', 18) + '<em>9+</em></span>';
+  if (o.help) d += '<span class="qd' + (o.helpSame ? ' same' : '') + (o.go ? ' goq' : '') + '"' + (o.go ? ' data-go="' + o.go + '" role="button" tabindex="0" aria-label="Open note ' + o.go + '"' : '') + '>' + I('help', 20) + '</span>';
+  if (o.acct !== false) d += '<span class="acct same">' + I('user', 17) + '</span>';
+  if (o.ws) d += '<span class="ws same">Workspaces ' + I('down', 12) + '</span>';
+  return '<div class="st"><div class="brand same"><span class="lg">' + I('logo', 17, 2.6) + '</span>FieldLogicHQ<i>' + o.word + '</i></div><div class="place">' + place + '</div><div class="doors">' + d + '</div></div>';
+}
+var FT = 'Jul 1–3, 2099 <span class="chipS">Open</span>';
+var FK = 'UAT Rep Club <span class="dot">·</span> 2026 Season <span class="dot">·</span> 3-2-1 <b>NEXT</b> Sun 9:30 a.m. practice';
+
+/* ── sidebars ── */
+function sidebar(S, on) {
+  var cell = '<div class="cell"><span class="ut' + (S.round ? ' rd' : '') + '">' + S.tile + '</span><span>' + S.name + '</span>' + (S.chev ? '<span class="cv">' + I('down', 16) + '</span>' : '') + '</div>';
+  var rows = S.rows.map(function (r) {
+    if (r[0] === 'g') return '<div class="g">' + r[1] + '</div>';
+    return '<div class="r' + (r[0] === on ? ' on' : '') + '">' + I(r[1], 15) + r[0] + (r[2] ? '<span class="bd">' + r[2] + '</span>' : '') + '</div>';
+  }).join('');
+  var foot = '<div class="foot">' + S.foot.map(function (r) { return '<div class="r">' + I(r[1], 13) + r[0] + (r[2] ? '<span class="bd">' + r[2] + '</span>' : '') + '</div>'; }).join('') + '<div class="r cl">' + I('panel', 13) + 'Collapse sidebar</div></div>';
+  return '<div class="sb same">' + cell + '<div class="lst">' + rows + '</div>' + foot + '</div>';
+}
+var SB_T = { tile: 'UI', name: 'UAT Import Smoke<br>Tournament', chev: true, rows: [['g', 'OPERATIONS'], ['Dashboard', 'gauge'], ['Teams', 'users', '1'], ['Schedule', 'cal'], ['Results', 'trophy'], ['Check-in', 'ucheck'], ['Staff kit', 'qr'], ['Communications', 'mail'], ['g', 'SETUP'], ['Event settings', 'sliders'], ['Venues &amp; facilities', 'pin'], ['Divisions', 'tag'], ['Rules &amp; resources', 'book'], ['Public site', 'globe'], ['g', 'ADMIN'], ['Your notifications', 'bell']], foot: [['Settings &amp; access', 'gear'], ['Plan &amp; billing', 'card']] };
+var SB_C = { tile: 'U', round: true, name: 'UAT Rep Club', rows: [['Overview', 'grid'], ['Calendar', 'cal'], ['Permits', 'file', '8'], ['Schedules', 'list'], ['g', 'PROGRAMS'], ['Rep teams', 'users'], ['House league', 'cal', '2'], ['g', 'CLUB'], ['Accounting', 'dollar', '9'], ['Families', 'users', '1'], ['Public site', 'globe'], ['Organization', 'bldg']], foot: [['Plan &amp; billing', 'card', '1'], ['Tournaments', 'trophy']] };
+var SB_K = { tile: 'UT', name: 'UAT Test Team', chev: true, rows: [['Overview', 'grid'], ['g', 'SEASON'], ['Schedule', 'cal'], ['Practice plans', 'notebook'], ['Lineups', 'list'], ['Tournaments', 'trophy'], ['g', 'PROGRESS'], ['Skills &amp; goals', 'trend'], ['Insights', 'bars'], ['g', 'MONEY'], ['Money', 'dollar'], ['g', 'COMMUNICATION'], ['Email families', 'mail'], ['g', 'TEAM'], ['Roster', 'users'], ['Tryouts', 'clip'], ['Staff', 'users'], ['Documents', 'file'], ['Settings', 'gear']], foot: [] };
+
+/* ── tournament Dashboard ── */
+function dashBody(dy) {
+  var sm = dy ? '' : ' same';
+  function card(x, y, w, h, title, em, lines) {
+    return '<div class="cd' + sm + '" style="' + px(x, y + dy, w, h) + '"><h6>' + title + (em ? '<em>' + em + '</em>' : '') + '</h6>' + lines.map(function (l) {
+      return '<div class="ln"><div class="tx"><b>' + l[0] + '</b>' + (l[1] ? '<small>' + l[1] + '</small>' : '') + '</div>' + (l[2] || '') + '<span class="cv">' + I('right', 15) + '</span></div>';
+    }).join('') + '</div>';
+  }
+  return '<div class="ban' + sm + '" style="' + px(272, 130 + dy, 1136, 57) + '">Your event is 26529 days away. Tell your teams what to expect.&nbsp;<b>Message teams ›</b></div>' +
+    card(272, 203, 557, 181, 'Registration', '2 of 8 spots', [['<span style="color:#57651E">97</span><small style="display:inline;font-size:12px">/100</small>&nbsp;&nbsp; Registration health', 'Healthy · 1 issue'], ['U12', '2 of 8 accepted', '<span class="b" style="position:static;height:18px;min-width:18px;padding:0 5px;border-radius:9px;font-size:9.5px;color:#835006;background:#FBF0DC;border-color:rgba(131,80,6,.45)">1</span>']]) +
+    card(850, 203, 558, 85, 'Payments', '', [['Not set up — payments aren’t tracked here']]) +
+    card(272, 405, 557, 114, 'Coaches', '1 of 3 signed up', [['2 haven’t signed up', 'Their page shows games and announcements', '<span class="b" style="position:static;color:#57651E;border-color:#57651E">Remind 2 teams</span>']]) +
+    card(850, 405, 558, 114, 'Messages', '', [['Nothing sent yet', 'Announcements go to the public site and your teams']]) +
+    card(272, 540, 557, 115, 'Schedule', '', [['No games have times yet', '3 teams in 1 division']]) +
+    '<span class="ab' + sm + '" style="' + px(272, 670 + dy) + 'font:600 14.5px Inter;color:#57651E;text-decoration:underline">Customize this board</span>';
+}
+function dash(after) {
+  var inner = strip({ word: 'EVENTS', name: 'Dashboard', facts: FT, view: true, ws: true, help: after, go: 'T1' }) + sidebar(SB_T, 'Dashboard');
+  if (!after) inner += '<div class="ghostrow" style="' + px(272, 76, 1136, 42) + '"></div>' + Q(1374, 80) + hit('T4', 268, 74, 1144, 46, '“?”-only row: 50px', 'up') + meas(130, 1180, 228, 'content y 130');
+  else inner += meas(80, 1180, 228, 'content y 80 (−50)');
+  return frame(1440, 900, inner + dashBody(after ? -50 : 0));
+}
+
+/* ── tournament Teams ── */
+function teamsBody() {
+  var t = '<div class="tbl same" style="' + px(290, 208, 1100) + '">' +
+    '<div class="hr"><span class="c" style="width:455px">TEAM</span><span class="c" style="width:344px">COACH</span><span class="c">PAYMENT</span></div>' +
+    '<div class="gr">TO REVIEW 1</div>' +
+    '<div class="rw" style="height:48px"><b class="c" style="width:455px">No Metrics - Walk</b><span class="c" style="width:344px">Chris Hadley</span><span class="c" style="width:136px">—</span><span class="b" style="position:static;color:#57651E;border-color:#57651E">Accept</span><span style="margin-left:auto">' + I('right', 15) + '</span></div>' +
+    '<div class="gr">ACCEPTED 2</div>' +
+    '<div class="rw" style="height:37px"><b class="c" style="width:455px">Smoke Existing Team</b><span class="c" style="width:344px">Smoke Coach mpxbvc1u</span><span class="c">—</span><span style="margin-left:auto">' + I('right', 15) + '</span></div>' +
+    '<div class="rw" style="height:37px;border-bottom:0"><b class="c" style="width:455px">Smoke Import Commit mpxbvc1u</b><span class="c" style="width:344px">Smoke New Coach</span><span class="c">—</span><span style="margin-left:auto">' + I('right', 15) + '</span></div></div>';
+  return '<span class="b sel same" style="' + px(290, 132, 260) + '">U12 ' + I('down', 15) + '</span>' +
+    '<span class="b pill same" style="' + px(558, 132, 258) + '"><span style="width:8px;height:8px;border-radius:50%;background:#3E7B2E"></span>Registration open <span style="font-weight:400;font-size:13px;color:#776D5D">2 of 8 spots</span>' + I('down', 14) + '</span>' +
+    '<span class="b srch same" style="' + px(936, 132, 255) + '">' + I('search', 15) + 'Search teams or coaches…</span>' +
+    '<span class="b same" style="' + px(1200, 132, 99) + '">' + I('filter', 14) + 'Filter ' + I('down', 13) + '</span>' +
+    '<span class="b same" style="' + px(1307, 132, 82) + '">Tools ' + I('down', 13) + '</span>' +
+    '<span class="note same" style="' + px(290, 180) + '">Teams pay you directly, outside FieldLogicHQ.&nbsp; Let them pay online &nbsp;· Settings &amp; access › Payouts</span>' + t;
+}
+function teamsRow(sh, cls) {
+  var c = (cls || '') + (sh ? '' : ' same');
+  return B(906 + sh, 80, 215, '<span class="sc">97</span> Registration health <span class="bdg">1</span>', c) +
+    B(1130 + sh, 80, 96, I('dl', 14) + 'Export', c) + B(1233 + sh, 80, 115, I('plus', 15) + 'Add team', 'lime ' + c);
+}
+function teams(after) {
+  var inner = strip({ word: 'EVENTS', name: 'Teams', facts: FT, view: true, ws: true, help: after, go: 'T1' }) + sidebar(SB_T, 'Teams');
+  if (!after) inner += teamsRow(0) + Q(1356, 80) + hit('n2', 1352, 76, 42, 42, '“?” opens the panel', 'lf');
+  else inner += teamsRow(42) + hit('T2', 944, 74, 452, 46, 'buttons stay (T2 A)', 'lf');
+  inner += hit('T4', 286, 126, 1108, 46, 'the page’s toolbar: a second row (T4)', '') + meas(208, 1190, 200, 'content y 208 → 208');
+  return frame(1440, 900, inner + teamsBody());
+}
+
+/* ── club Rep teams ── */
+function clubBody() {
+  var rows = [['#127A6B', '14U AA', '14U', '2027 · LIVE', 'Taylor Brooks', '12', 'Sun, Nov 15', 'Practice · 8:00 a.m.', '0 of 12', '$900.00', '$600.00 overdue'],
+    ['#127A6B', '15U AA', '15U', '2026 · LIVE', 'Sam Whitford', '12', 'Sun, Nov 15', 'Practice · 9:30 a.m.', '0 of 12', '$1,308.00', '$900.00 overdue'],
+    ['#25358A', '15U AAA', '15U', '2026 · LIVE', 'Jordan Reyes', '12', 'Sun, Nov 15', 'Practice · 8:00 a.m.', '9 of 12', '$3,756.00', '$2,457.00 overdue'],
+    ['#9B1C3A', '16U AA', '16U', '2025 · CLOSED', 'Casey Morgan', '—', '—', '', '—', '$0.00', '']];
+  var rows2 = [['#7A3FD0', '11U AA', '11U', '2026 · LIVE', 'Marcus Bell', '12', 'Sun, Nov 15', 'Practice · 8:00 a.m.', '0 of 12', '$7,200.00', '$2,958.00 overdue'],
+    ['#127A8A', '12U AA', '12U', '2026 · LIVE', '<span class="chipR">NO HEAD COACH</span>', '12', 'Sun, Nov 15', 'Practice · 8:00 a.m.', '0 of 12', '$5,700.00', '$2,958.00 overdue'],
+    ['#B23A26', '13U AAA', '13U', '2026 · LIVE', 'Priya Nair', '12', 'Sun, Nov 15', 'Practice · 8:00 a.m.', '12 of 12', '$8,280.00', '$3,498.00 overdue'],
+    ['#C98A12', '9U AA', '9U', '2027 · LIVE', '<span class="chipR">NO HEAD COACH</span>', '<span class="chipR">NO PLAYERS</span>', 'Sun, Nov 15', 'Practice · 8:00 a.m.', '—', '$4,200.00', '$1,458.00 overdue']];
+  function rw(r) {
+    return '<div class="rw" style="height:67px"><span class="c" style="width:211px"><b><span class="sq" style="background:' + r[0] + '"></span>' + r[1] + '</b><span class="sm" style="padding-left:18px">' + r[2] + '</span></span>' +
+      '<span class="c" style="width:155px"><span class="chipL">' + r[3] + '</span><span class="sm" style="margin-top:6px">No games yet</span></span>' +
+      '<span class="c" style="width:200px">' + r[4] + '</span><span class="c" style="width:60px;text-align:right;padding-right:22px">' + r[5] + '</span>' +
+      '<span class="c" style="width:180px">' + r[6] + '<span class="sm">' + r[7] + '</span></span><span class="c" style="width:90px;text-align:right">' + r[8] + '</span>' +
+      '<span class="c" style="width:170px;text-align:right">' + r[9] + '<span class="sm" style="color:#B23A26;font-weight:600">' + r[10] + '</span></span><span style="margin-left:auto">' + I('right', 15) + '</span></div>';
+  }
+  return '<div class="band same"><div class="tb"><span class="on">Teams</span><span>Assistant coaches</span><span>Document templates</span><span>Shared library</span><span>Past seasons</span><span>Bring in a coach’s team</span></div></div>' +
+    '<span class="note same" style="' + px(272, 124) + '">11 teams in 2 groups · 11 of 15 on your plan</span>' +
+    B(825, 115, 142, I('layers', 15) + 'Team groups', 'tan same') + B(975, 115, 182, I('link', 15) + 'Rename team URLs', 'tan same') +
+    B(1165, 115, 118, 'All groups ' + I('down', 13), 'sel same') + B(1291, 115, 117, I('plus', 15) + 'Add team', 'lime same') +
+    '<div class="tbl same" style="' + px(272, 165, 1136) + '"><div class="hr"><span class="c" style="width:211px">TEAM</span><span class="c" style="width:155px">SEASON</span><span class="c" style="width:200px">HEAD COACH</span><span class="c" style="width:60px">ROSTER</span><span class="c" style="width:180px">NEXT EVENT</span><span class="c" style="width:90px">DOCUMENTS</span><span class="c" style="width:170px;text-align:right">OUTSTANDING</span></div>' +
+    '<div class="gr">SENIOR · 4 TEAMS</div>' + rows.map(rw).join('') + '<div class="gr">JUNIOR · 4 TEAMS</div>' + rows2.map(rw).join('') + '<div class="gr">UNGROUPED · 3 TEAMS</div>' +
+    rw(['transparent', 'S3 owner walk team', '', '2026 · LIVE', 'Jordan Reyes', '<span class="chipR">NO PLAYERS</span>', '—', '', '—', '$0.00', '']) + '</div>';
+}
+function club(after) {
+  var inner = strip({ word: 'CLUB', name: 'Rep teams', view: true, help: after, go: 'T3' }) + sidebar(SB_C, 'Rep teams');
+  inner += meas(165, 1210, 198, 'content y 165 → 165');
+  return frame(1440, 900, inner + clubBody());
+}
+
+/* ── coach Roster ── */
+var PLAYERS = ['Avery Test', 'Blake Test', 'Casey Test', 'Devon Test', 'Emerson Test', 'Frankie Test', 'Gray Test', 'Harper Test', 'Indigo Test', 'Jules Test', 'Kai Test', 'Logan Test'];
+function rosterTable(y, n) {
+  return '<div class="tbl same" style="' + px(272, y, 1136) + '"><div class="hr"><span class="c" style="width:40px"></span><span class="c" style="width:58px">#</span><span class="c" style="width:326px">PLAYER</span><span class="c" style="width:366px">POSITIONS</span><span class="c">FAMILY</span></div>' +
+    PLAYERS.slice(0, n).map(function (p, i) {
+      var pos = i === 0 ? '<span class="chipS" style="color:#241E15;background:#fff;border-color:rgba(70,55,30,.25)">Ace</span>' : i === 3 ? '<span class="chipS" style="color:#241E15;background:#fff;border-color:rgba(70,55,30,.25)">P2</span>&nbsp; 2B / SS' : '+ Add a position';
+      var fam = i === 3 ? '<b style="color:#241E15">Dana Test</b> ' + '<span style="display:inline-block;vertical-align:-2px">' + I('mail', 13) + '</span>' : '+ Add a contact';
+      return '<div class="rw" style="height:40px"><span class="c" style="width:40px;color:#776D5D">' + I('grip', 14) + '</span><span class="c" style="width:58px;font-family:IBM Plex Mono">' + (i + 1) + '</span><b class="c" style="width:326px;text-decoration:underline">' + p + (i === 3 ? ' <span style="color:#B23A26;text-decoration:none">+</span>' : '') + '</b><span class="c" style="width:366px;color:#4A4235">' + pos + '</span><span class="c" style="color:#4A4235">' + fam + '</span></div>';
+    }).join('') + '</div>';
+}
+function roster(joined) {
+  var inner = strip({ word: 'COACH', name: 'Roster', facts: FK, ws: true, help: true, helpSame: true }) + sidebar(SB_K, 'Roster');
+  if (!joined) {
+    inner += B(1182, 80, 123, I('plus', 15) + 'Add Player', 'lime same') + B(1313, 80, 95, I('ul', 14) + 'Import', 'same') +
+      '<div class="segv same" style="' + px(272, 130) + '"><span class="on">List</span><span>Depth chart</span></div>' + B(1313, 134, 95, I('dl', 14) + 'Export', 'same') + rosterTable(186, 12);
+  } else {
+    inner += '<div class="segv same" style="' + px(272, 80) + '"><span class="on">List</span><span>Depth chart</span></div>' +
+      B(1078, 84, 123, I('plus', 15) + 'Add Player', 'lime') + B(1210, 84, 95, I('ul', 14) + 'Import', '') + B(1313, 84, 95, I('dl', 14) + 'Export', 'same') +
+      hit('T4', 1072, 78, 340, 46, 'one row of controls (T4)', 'lf') + rosterTable(136, 12) + meas(136, 1210, 198, 'content y 136 (−50)');
+  }
+  return frame(1440, 900, inner);
+}
+
+/* ── strips alone ── */
+function stripOnly(w, o, extra) { return frame(w, 60, strip(o) + (extra || '')); }
+
+/* ── phone ── */
+function barA(o) {
+  var line = o.line ? '<div class="lnr"><small>' + o.line + '</small>' + (o.chip ? '<span class="chipS">' + o.chip + '</span>' : '') + (o.chev ? '<span class="cv">' + I('down', 15) + '</span>' : '') + '</div>' : '';
+  var right = (o.globe ? '<span class="ib same">' + I('globe', 22) + '</span>' : '') + (o.help ? '<span class="ib' + (o.helpSame ? ' same' : '') + '">' + I('help', 22) + '</span>' : '');
+  var tabs = o.tabs ? '<div class="ptabs same">' + o.tabs.map(function (t, i) { return '<span class="' + (i === 0 ? 'on' : '') + '">' + t + '</span>'; }).join('') + '<span class="more">' + I('right', 16) + '</span></div>' : '';
+  return '<div class="pb"><div class="pr">' + (o.back ? '<span class="bk">' + I('left', 20) + '</span>' : '') + '<div class="door same"><b>' + o.name + '</b>' + line + '</div>' + right + '</div>' + tabs + '</div>';
+}
+function bnav(items, on) {
+  return '<div class="bnav same">' + items.map(function (it) { return '<div class="it' + (it[0] === on ? ' on' : '') + '"><span class="pill">' + I(it[1], 21) + '</span>' + it[0] + (it[2] ? '<em>' + it[2] + '</em>' : '') + '</div>'; }).join('') + '</div>';
+}
+var NAV_T = [['Dashboard', 'gauge'], ['Teams', 'users', '1'], ['Schedule', 'cal'], ['Messages', 'mail'], ['More', 'more', '9+']];
+var NAV_C = [['Overview', 'grid'], ['Calendar', 'cal'], ['Rep teams', 'users'], ['House league', 'cal'], ['More', 'more', '9+']];
+var NAV_K = [['Overview', 'grid'], ['Schedule', 'cal'], ['Practices', 'notebook'], ['Roster', 'users'], ['More', 'more', '9+']];
+function phDashBody(dy) {
+  function card(y, h, title, em, lines) {
+    return '<div class="cd same" style="' + px(16, y + dy, 358, h) + '"><h6>' + title + (em ? '<em>' + em + '</em>' : '') + '</h6>' + lines.map(function (l) { return '<div class="ln"><div class="tx"><b>' + l[0] + '</b>' + (l[1] ? '<small>' + l[1] + '</small>' : '') + '</div>' + (l[2] || '') + '<span class="cv">' + I('right', 15) + '</span></div>'; }).join('') + '</div>';
+  }
+  return '<div class="ban same" style="' + px(16, 121 + dy, 358, 88) + 'align-items:center">Your event is 26529 days away. Tell your teams what to expect. <b>&nbsp;Message teams ›</b></div>' +
+    card(224, 181, 'Registration', '2 of 8 spots', [['<span style="color:#57651E">97</span>/100&nbsp; Registration health', 'Healthy · 1 issue'], ['U12', '2 of 8 accepted']]) +
+    card(421, 116, 'Payments', '', [['Not set up — payments aren’t tracked here']]) +
+    card(552, 135, 'Coaches', '1 of 3 signed up', [['2 haven’t signed up', 'Their page shows games and announcements', '<span class="b" style="position:static;color:#57651E;border-color:#57651E;height:42px">Remind 2 teams</span>']]) +
+    card(703, 120, 'Messages', '', [['Nothing sent yet', 'Announcements go to the public site']]);
+}
+function phDash(after) {
+  var inner = barA({ name: 'Dashboard', line: 'UAT Import Smoke Tournament', chip: 'Open', chev: true, globe: true, help: after }) + phDashBody(after ? -52 : 0) +
+    '<div class="toast same" style="top:730px">' + I('users', 16) + '1 team to review<span>' + I('arrowR', 16) + '</span>' + I('x', 16) + '</div>' + bnav(NAV_T, 'Dashboard');
+  if (!after) inner += '<div class="ghostrow" style="' + px(10, 59, 370, 50) + '"></div><span class="pq" style="' + px(330, 61) + '">' + I('help', 22) + '</span>' + hit('T4', 6, 57, 378, 54, '“?”-only row: 52px') + meas(121, 250, 124, 'content y 121');
+  else inner += hit('T1', 330, 5, 44, 44, '“?” last', 'lf') + meas(69, 250, 124, 'content y 69 (−52)');
+  return frame(390, 844, inner);
+}
+function phClub(after) {
+  var inner = barA({ name: 'Rep teams', globe: true, help: after, tabs: ['Teams', 'Assistant coaches', 'Document templates'] }) +
+    '<span class="note same" style="' + px(16, 112) + '">11 teams in 2 groups · 11 of 15 on your plan</span>' +
+    '<span class="pib same" style="' + px(99, 137) + '">' + I('layers', 18) + '</span><span class="pib same" style="' + px(151, 137) + '">' + I('link', 18) + '</span>' +
+    '<span class="b sel same" style="' + px(204, 137, 118) + 'height:44px">All groups ' + I('down', 13) + '</span><span class="pplus same" style="' + px(330, 137) + '">' + I('plus', 20) + '</span>' +
+    '<div class="tbl same" style="' + px(16, 195, 358) + '"><div class="gr" style="height:32px">SENIOR · 4 TEAMS</div>' + [['14U AA', '<span class="chipL">2027 · LIVE</span>', 'Taylor Brooks · 12 players · Sun, Nov 15'], ['15U AA', '<span class="chipL">2026 · LIVE</span>', 'Sam Whitford · 12 players · Sun, Nov 15'], ['15U AAA', '<span class="chipL">2026 · LIVE</span>', 'Jordan Reyes · 12 players · Sun, Nov 15'], ['16U AA', '<span class="chipL" style="color:#4A4235;border-color:rgba(70,55,30,.3);background:#F6F1E8">2025 · CLOSED</span>', 'Casey Morgan'], 'g', ['11U AA', '<span class="chipL">2026 · LIVE</span>', 'Marcus Bell · 12 players · Sun, Nov 15'], ['12U AA', '<span class="chipR">NO HEAD COACH</span>', '12 players · Sun, Nov 15'], ['13U AAA', '<span class="chipL">2026 · LIVE</span>', 'Priya Nair · 12 players · Sun, Nov 15'], ['9U AA', '<span class="chipR">NO HEAD COACH</span>', 'Sun, Nov 15']].map(function (r) {
+      if (r === 'g') return '<div class="gr" style="height:32px">JUNIOR · 4 TEAMS</div>';
+      return '<div class="rw" style="height:66px"><span class="c" style="flex:1"><b style="font-size:15px">' + r[0] + '</b> &nbsp;' + r[1] + '<span class="sm" style="margin-top:4px">' + r[2] + '</span></span><span style="margin-left:8px">' + I('right', 15) + '</span></div>';
+    }).join('') + '</div>' + bnav([['Overview', 'grid'], ['Calendar', 'cal'], ['Rep teams', 'users'], ['Accounting', 'dollar', '9'], ['More', 'more', '1']], 'Rep teams');
+  if (after) inner += hit('T3', 330, 5, 44, 44, '“?” added', 'lf');
+  return frame(390, 844, inner);
+}
+function lonePlus() {
+  var inner = barA({ name: 'Money', line: 'UAT Test Team · <b>3-2-1</b>', chev: true, help: true, helpSame: true }) +
+    '<div class="pbt same" style="top:53px"><span class="on">Overview</span><span>Budget</span><span>Player dues</span><span>Fundraising</span></div>' +
+    '<span class="pplus" style="' + px(330, 114) + '">' + I('plus', 20) + '</span>' + hit('T4', 6, 108, 378, 56, 'the lone “+” row') +
+    '<div class="cd same" style="' + px(16, 170, 358, 238) + 'padding:18px"><div style="font:700 11.5px IBM Plex Mono;letter-spacing:.1em">BILLS SETTLED</div><div style="font:700 26px Inter;margin-top:8px">$1,944.00 <small style="font:400 13px Inter;color:#4A4235">of $3,733.00 · 52%</small></div><div style="height:10px;border-radius:5px;margin-top:10px;background:linear-gradient(90deg,#3E5A1E 0 52%,#C9533A 52% 80%,#E6E0D4 80%)"></div></div>' +
+    '<div class="cd same" style="' + px(16, 424, 358, 248) + 'padding:18px"><div style="font:700 11.5px IBM Plex Mono;letter-spacing:.1em">CASH ON HAND</div><div style="font:700 26px Inter;color:#2F5A1E;margin-top:8px">$2,995.00</div></div>' +
+    bnav(NAV_K, 'More') + meas(170, 260, 114, 'content y 170');
+  return frame(390, 844, inner);
+}
+function phDiv(after) {
+  var inner = barA({ name: 'Divisions', line: 'UAT Import Smoke Tournament', chip: 'Open', chev: true, globe: true, help: after }) +
+    (after ? '<span class="pplus" style="' + px(330, 61) + '">' + I('plus', 20) + '</span>' + hit('T4', 6, 57, 378, 52, 'now a lone “+” row')
+      : '<span class="pplus same" style="' + px(280, 61) + '">' + I('plus', 20) + '</span><span class="pq" style="' + px(330, 61) + '">' + I('help', 22) + '</span>') +
+    '<div class="cd same" style="' + px(16, 121, 358, 68) + '"><div class="ln" style="padding:12px 16px"><div class="tx"><b style="font-size:16px">U12</b><small>Ages 10–12 · registration open</small></div><b style="font:700 16px Inter">2 of 8</b><span class="cv">' + I('right', 15) + '</span></div></div>' +
+    '<span class="note same" style="' + px(16, 204) + '">2 of 8 spots taken</span>' +
+    '<div class="toast same" style="top:730px">' + I('users', 16) + '1 team to review<span>' + I('arrowR', 16) + '</span>' + I('x', 16) + '</div>' + bnav(NAV_T, 'More') + meas(121, 250, 124, 'content y 121 → 121');
+  return frame(390, 844, inner);
+}
+function barFrame(w, o, extra) { return frame(w, o.tabs ? 100 : 56, barA(o) + (extra || '')); }
+
+/* ── the drawer ── */
+function drawer() {
+  return frame(1440, 900, strip({ word: 'EVENTS', name: 'Teams', facts: FT, view: true, ws: true, help: true }) + sidebar(SB_T, 'Teams') + teamsRow(42) + teamsBody() + '<div class="scrimD"></div>' + '<div class="dr" style="width:420px"><div class="dh"><i>HELP · ON THIS PAGE</i><b>Teams</b><span class="x">' + I('x', 16) + '</span></div><div class="db"><div class="iw">I WANT TO…</div>' +
+    ['Get my schedule onto the public site', 'Set up a playoff bracket', 'Hand scorekeeping to a volunteer', 'Send an announcement to all teams'].map(function (s) { return '<div class="sh">' + s + I('arrowR', 15) + '</div>'; }).join('') +
+    '<h4>Open and close registration</h4><p>Control when teams can sign up, and understand how the public registration form works.</p><span class="tg">Divisions</span><span class="tg">Teams</span><span class="tg">Registration questions</span>' +
+    '<p style="margin-top:8px">On Tournament Plus and above, teams register through the public tournament registration form once the tournament is active and at least one division is open…</p></div>' +
+    '<div class="df">Open the full guide ' + I('ext', 14) + '</div></div>');
+}
+
+/* ── fill the slots ── */
+var S = {
+  dash: function () { return pair([['Today · the “?” on a row of its own', dash(false)], ['After · the “?” in the strip', dash(true), 'after']]); },
+  teams: function () { return pair([['Today', teams(false)], ['After', teams(true), 'after']]); },
+  club: function () { return pair([['Today · no “?”', club(false)], ['After · the “?” in the strip', club(true), 'after']]); },
+  roster: function () { return pair([['Shipped (Phase 4b)', roster(false)]]); },
+  stT1440: function () {
+    return pair([['Today', stripOnly(1440, { word: 'EVENTS', name: 'Schedule', facts: FT, view: true, ws: true }, room(345, 608, 'measured free 608'))],
+      ['After', stripOnly(1440, { word: 'EVENTS', name: 'Schedule', facts: FT, view: true, ws: true, help: true, go: 'T1' }, room(345, 568, 'free 568')), 'after', 'the “?” between the bell and the account button (T1)']], true);
+  },
+  stT1280: function () {
+    return pair([['Today', stripOnly(1280, { word: 'EVENTS', name: 'Schedule', facts: FT, view: true, ws: true }, room(345, 448, 'measured free 448'))],
+      ['After', stripOnly(1280, { word: 'EVENTS', name: 'Schedule', facts: FT, view: true, ws: true, help: true, go: 'T1' }, room(345, 408, 'free 408 · nothing gives way')), 'after']], true);
+  },
+  stC: function () {
+    var o = { word: 'CLUB', back: 'Teams', name: '14U AA', chip: '2026 Season · Live', view: true };
+    var o2 = { word: 'CLUB', back: 'Teams', name: '14U AA', chip: '2026 Season · Live', view: true, help: true, go: 'T3' };
+    return pair([['Today · 1440', stripOnly(1440, o)], ['After · 1440', stripOnly(1440, o2), 'after'],
+      ['Today · 1280', stripOnly(1280, o)], ['After · 1280', stripOnly(1280, o2), 'after', 'free room 472 after; nothing gives way']], true);
+  },
+  stK: function () { return pair([['Shipped · 1280', stripOnly(1280, { word: 'COACH', name: 'Overview', facts: FK, ws: true, help: true, helpSame: true }, room(347, 362, 'free 362'))]], true); },
+  phDash: function () { return pair([['Today · 390', phDash(false)], ['After · 390', phDash(true), 'after']]); },
+  phBars: function () {
+    return pair([
+      ['Tournament · today', barFrame(390, { name: 'Dashboard', line: 'UAT Import Smoke Tournament', chip: 'Open', chev: true, globe: true })],
+      ['Tournament · after', barFrame(390, { name: 'Dashboard', line: 'UAT Import Smoke Tournament', chip: 'Open', chev: true, globe: true, help: true }, hit('T1', 330, 5, 44, 44, '“?” last', 'lf')), 'after', 'door 302 → 258'],
+      ['Club · today', barFrame(390, { name: 'House league', globe: true })],
+      ['Club · after', barFrame(390, { name: 'House league', globe: true, help: true }, hit('T3', 330, 5, 44, 44, '“?” added', 'lf')), 'after'],
+      ['Coaches Portal · shipped', barFrame(390, { name: 'Roster', line: 'UAT Test Team · <b>3-2-1</b>', chev: true, help: true, helpSame: true })]], true);
+  },
+  phClub: function () { return pair([['Today · 390', phClub(false)], ['After · 390', phClub(true), 'after']]); },
+  phTab: function () {
+    return pair([['Tournament · today · 768', barFrame(768, { name: 'Teams', line: 'UAT Import Smoke Tournament', chip: 'Open', chev: true, globe: true })],
+      ['Tournament · after · 768', barFrame(768, { name: 'Teams', line: 'UAT Import Smoke Tournament', chip: 'Open', chev: true, globe: true, help: true }), 'after', 'the “?” at x 708, the globe at x 664']], true);
+  },
+  optA: function () {
+    return pair([['A · 1440', frame(1440, 230, strip({ word: 'EVENTS', name: 'Teams', facts: FT, view: true, ws: true, help: true }) + teamsRow(42) + '<div class="ab" style="left:0;top:48px;width:240px;height:182px;background:#fff;border-right:1px solid rgba(70,55,30,.2)"></div>' + teamsBody() + hit('T2', 944, 74, 452, 46, 'buttons stay in the page', 'lf')), 'after'],
+      ['A · 1280', frame(1280, 230, strip({ word: 'EVENTS', name: 'Teams', facts: FT, view: true, ws: true, help: true }) + '<div class="ab" style="left:0;top:48px;width:240px;height:182px;background:#fff;border-right:1px solid rgba(70,55,30,.2)"></div>' +
+        '<div style="position:absolute;left:-142px;top:0;width:1440px;height:230px">' + teamsRow(42) + '</div>' + hit('T2', 802, 74, 452, 46, 'same row, same place', 'lf')), 'after']], true);
+  },
+  optB: function () {
+    var o = { word: 'EVENTS', name: 'Teams', facts: FT, view: true, ws: true, help: true };
+    function crowd(w) {
+      var x = w === 1280 ? 295 : 455;
+      return frame(w, 120, strip(o) + '<div class="ab" style="left:0;top:48px;width:240px;height:72px;background:#fff;border-right:1px solid rgba(70,55,30,.2)"></div>' +
+        B(x, 7, 215, '<span class="sc">97</span> Registration health <span class="bdg">1</span>', 'top') + B(x + 223, 7, 96, I('dl', 14) + 'Export', 'top') + B(x + 327, 7, 115, I('plus', 15) + 'Add team', 'lime top') +
+        '<div class="ghostrow top" style="' + px(x - 4, 4, 450, 40) + '"></div>' + hit('T2', x - 4, 4, 450, 40, w === 1280 ? 'needs ≈442, 408 free: runs over the page name' : 'fits at 1440 only'));
+    }
+    return pair([['B · 1440', crowd(1440)], ['B · 1280', crowd(1280), '', 'at 1280 the buttons run over the page’s name']], true);
+  },
+  optC: function () {
+    return pair([['C · drawn on the one tournament place with a band (Settings &amp; access)', frame(1440, 150, strip({ word: 'CLUB', name: 'Settings &amp; access', view: true, ws: true, help: true }) +
+      '<div class="ab" style="left:0;top:48px;width:240px;height:102px;background:#fff;border-right:1px solid rgba(70,55,30,.2)"></div>' +
+      '<div class="band"><div class="tb"><span class="on">Members</span><span>Audit log</span><span>PDF settings</span><span>Web address</span><span>Payouts</span></div></div>' +
+      B(1110, 53, 96, I('dl', 14) + 'Export', 'top') + B(1214, 53, 90, I('plus', 15) + 'Invite', 'lime top') + '<div class="ghostrow top" style="' + px(1104, 50, 206, 40) + '"></div>' +
+      hit('T2', 1104, 50, 206, 40, 'against 4b R2: the band holds tabs only', 'lf'))]], true);
+  },
+  rosterJoin: function () { return pair([['Today (shipped)', roster(false)], ['Recommended · one row of controls', roster(true), 'after']]); },
+  lonePlus: function () { return pair([['Coaches Portal · Money · shipped', lonePlus()], ['Tournament · Divisions · today', phDiv(false)], ['Tournament · Divisions · after', phDiv(true), 'after', 'the “?” leaves; the “+” is alone on its row']]); },
+  drawer: function () { return pair([['After · the “?” in the strip opens the panel over the page (Teams, 1440)', drawer(), 'after']]); },
+  edSusp: function () {
+    return pair([['After · a cancelled account’s one page (unchanged: no “?”)', frame(1440, 60, '<div class="st same"><div style="display:flex;align-items:center;gap:8px;padding-left:20px;font:700 15px Inter;height:100%"><span style="color:#57651E">' + I('logo', 17, 2.6) + '</span>FieldLogicHQ<span style="width:1px;height:22px;background:rgba(70,55,30,.2);margin:0 6px"></span><span style="font:600 10.5px IBM Plex Mono;letter-spacing:.1em;color:#4A4235">ADMIN AREA</span></div>' +
+      '<div class="doors" style="margin-left:auto"><span class="acct">' + I('user', 17) + '</span><span class="ws">Workspaces ' + I('down', 12) + '</span></div></div>')]], true);
+  },
+  edSeason: function () {
+    var o = { back: true, name: '2026 Fall House League', line: 'House league', chip: 'Registration open', globe: true, tabs: ['Overview', 'Registrations', 'Teams &amp; draft'] };
+    var o2 = { back: true, name: '2026 Fall House League', line: 'House league', chip: 'Registration open', globe: true, help: true, tabs: ['Overview', 'Registrations', 'Teams &amp; draft'] };
+    return pair([['Club · a house-league season · today · 390', barFrame(390, o), '', 'identity column 258px'], ['After · 390', barFrame(390, o2, hit('T6', 60, 30, 200, 20, 'the words give way; the chip stays', 'up')), 'after', 'identity column 214px']], true);
+  },
+  edSand: function () { return pair([['After · a demo (no account menu)', stripOnly(1440, { word: 'EVENTS', name: 'Teams', facts: FT, view: true, acct: false, help: true, go: 'n5' }), 'after', 'the “?” shows in the demo, as the Coaches Portal’s does']], true); },
+  edLong: function () { return pair([['After · 390', barFrame(390, { name: 'Schedule', line: 'Saturday Morning Spring Classic Invitational', chip: 'Open', chev: true, globe: true, help: true }, hit('T6', 16, 26, 240, 20, 'the name is cut; the chip stays', 'up')), 'after']], true); }
+};
+
+/* ── wiring ── */
+var tabs = document.getElementById('tabs');
+var secs = Array.prototype.slice.call(document.querySelectorAll('section.panel'));
+secs.forEach(function (s, i) {
+  var id = s.getAttribute('data-id');
+  s.id = 'p-' + id; s.setAttribute('role', 'tabpanel'); s.setAttribute('aria-labelledby', 't-' + id);
+  var b = document.createElement('button'); b.type = 'button'; b.id = 't-' + id; b.textContent = s.getAttribute('data-title');
+  b.setAttribute('role', 'tab'); b.setAttribute('aria-controls', 'p-' + id); tabs.appendChild(b);
+});
+document.querySelectorAll('[data-s]').forEach(function (el) { var f = S[el.getAttribute('data-s')]; if (f) el.innerHTML = f(); });
+function show(id) {
+  secs.forEach(function (s) {
+    var on = s.getAttribute('data-id') === id;
+    s.classList.toggle('on', on);
+    document.getElementById('t-' + s.getAttribute('data-id')).setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  try { localStorage.setItem('p6top-tab', id); } catch (e) {}
+  fit(); placeRooms();
+}
+/* The "free room" bracket spans the drawn gap between the page's name (or chip) and the facts / doors; its label is the
+   number measured on the dev server. */
+function placeRooms() {
+  document.querySelectorAll('section.panel.on .room').forEach(function (r) {
+    var fr = r.closest('.fr'), st = fr && fr.querySelector('.st'); if (!st) return;
+    var left = st.querySelector('.chipS:not(.facts .chipS)') || st.querySelector('.nm');
+    var next = st.querySelector('.facts') || st.querySelector('.doors');
+    var k = fr.getBoundingClientRect(), sc = k.width / fr.offsetWidth || 1;
+    var a = (left.getBoundingClientRect().right - k.left) / sc, b = (next.getBoundingClientRect().left - k.left) / sc;
+    r.style.left = a + 'px'; r.style.width = Math.max(0, b - a) + 'px';
+  });
+}
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeRooms);
+tabs.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) show(b.id.slice(2)); });
+var start = 'summary';
+try { start = localStorage.getItem('p6top-tab') || 'summary'; } catch (e) {}
+if (!secs.some(function (s) { return s.getAttribute('data-id') === start; })) start = 'summary';
+var pop = document.createElement('div'); pop.id = 'pop'; pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Note'); document.body.appendChild(pop);
+var popFrom = null;
+function closePop() { pop.hidden = true; if (popFrom) popFrom.focus(); popFrom = null; }
+document.addEventListener('click', function (e) {
+  if (e.target.closest('#pop .x')) { closePop(); return; }
+  var m = e.target.closest('[data-go]'); if (!m || m.closest('#pop')) return;
+  var src = document.getElementById('ask-' + m.getAttribute('data-go')); if (!src) return;
+  var here = m.closest('section.panel');
+  if (here && here.contains(src)) { src.scrollIntoView({ behavior: 'smooth', block: 'start' }); src.classList.add('flash'); setTimeout(function () { src.classList.remove('flash'); }, 1600); return; }
+  popFrom = m; pop.innerHTML = '<button type="button" class="x" aria-label="Close">×</button>' + src.outerHTML.replace(/ id="ask-[^"]*"/, '');
+  pop.hidden = false; pop.querySelector('.x').focus();
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && !pop.hidden) { closePop(); return; }
+  var g = e.target.closest && e.target.closest('.goq');
+  if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); g.click(); }
+});
+function seg(a, b, fn) {
+  var A = document.getElementById(a), Bt = document.getElementById(b);
+  A.addEventListener('click', function () { A.setAttribute('aria-pressed', 'true'); Bt.setAttribute('aria-pressed', 'false'); fn(false); });
+  Bt.addEventListener('click', function () { Bt.setAttribute('aria-pressed', 'true'); A.setAttribute('aria-pressed', 'false'); fn(true); });
+}
+seg('v-all', 'v-diff', function (on) { document.body.classList.toggle('only-diff', on); });
+var fitOn = false;
+function fit() {
+  document.querySelectorAll('section.panel.on .pair').forEach(function (p) {
+    p.style.transform = ''; p.parentElement.style.height = '';
+    if (!fitOn) return;
+    var w = p.parentElement.clientWidth - 28, need = p.scrollWidth;
+    if (need > w) { var k = w / need; p.style.transform = 'scale(' + k + ')'; p.parentElement.style.height = (p.scrollHeight * k + 28) + 'px'; }
+  });
+}
+seg('s-true', 's-fit', function (on) { fitOn = on; fit(); });
+window.addEventListener('resize', fit);
+show(start);
+})();
+</script>

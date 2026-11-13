@@ -842,7 +842,8 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   - **Owed, in order:** (1) walk §519 (Phase 5) gets a result; (2) the page top-row review is drawn (Opus session) — the
     owner chose to walk first and carry it as open; (3) the closing walk is built from `.probe/nav-phase5/build-walk.cjs`
     (one person who is club owner, tournament admin and coach; needs a dev sign-in holding all three) and published with its
-    ledger §; (4) the "?" move for the tournament admin and the club (ruled yes 2026-11-12) is its own phase; (5) the full sweep
+    ledger §; (4) the "?" move for the tournament admin and the club (ruled yes 2026-11-12) is its own phase — built as Phase 6b
+    2026-11-13 (its own walk; the closing walk still excludes where the tournament "?" sits); (5) the full sweep
     on staging at the next release (not deployed for it). Phase 5's open owner calls (Game day chip colour, the lone "+" row, a
     live team's Season's End title, the team sheet's season-only rows) go into the walk's open list unchanged.
 - **Owner review owed (logged 2026-11-11, after the Phase 4 gate): the page's top row in the tournament admin and the Coaches
@@ -851,6 +852,149 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   wants the "?" and the top buttons in general looked at across both portals. Phase 4 builds C1 as ruled so the two portals
   stay one rule; this review then changes both together. Not a phase yet: draw it (whole screens, both portals, desktop and
   phone) once Phase 4 has landed, before Phase 6's closing walk.
+  **DRAWN 2026-11-12 together with the "?" move (Opus session, prompt `ADMIN_NAV_PHASE6_TOPROW_DRAWING_PROMPT.md`):**
+  https://claude.ai/artifact/WqQZeay2h4xyCnTGzt7E8D (source `ADMIN_NAV_PHASE6_TOPROW_DRAWINGS.html`; measured on dev 2026-11-12,
+  probe + screenshots `.probe/nav-phase6-toprow/`). Asks **T1–T6 owed** (recommendations: T1 A the "?" between the bell and
+  the account button in all three, last in the phone bar; T2 A buttons stay in the page, no row when none; T3 A a "?" on every
+  club page with a help topic, the build matching every club place to its guide sections; T4 "?"-only rows go, the phone's
+  lone "+" row stays, Roster's two rows join; T5 A one phase in two parts — tournament + coach off-team pages first, the club's
+  help matching second — Coaches Portal items ride Part 1 only if ruled in; T6·1 a separate small ask: the Coaches Portal's
+  off-team pages (notifications, billing, link a club) move their "?" too, crossing the 4b "team pages only" host line on
+  purpose; T6·3 the admin phone bar's line words give way, the chip never — tightest bar a house-league season, 258 → 214).
+  /design pass applied (v2): club phone frame redrawn from the capture, help counts corrected to top-level sections
+  (Org 21, HL 17, Acct 22, Rep 17, Families 8), club census 44 screens = 37 clear / 7 partial / 0 none, Teams buttons
+  ≈442px (not 426), one-button rows stated as left by T2 A, tournament Divisions drawn as a second lone-"+" case. Facts found: the club's "?" is an
+  ADDITION (no club page has a "?" or a help topic); the admin help drawer is mounted inside the page area, so a strip "?"
+  would draw and do nothing until the build lifts it; the tournament row already hides itself when empty, so the five
+  "?"-only screens lose their row with no button work (content 130 → 80 at 1440, 121 → 69 at 390).
+  **RULED 2026-11-13 (owner: "I agree with your recommendations") — T1–T6 all as recommended, T6·1 (the Coaches Portal's
+  off-team pages move their "?" too) and T6·3 (the phone bar's line words give way, chip and chevron never) included.**
+  One phase in two parts, one walk at the end (the club's help matching must follow Part 1 straight away so Settings & access
+  is never half covered); Coaches items (off-team pages, Roster's joined row) ride Part 1. Build prompt written:
+  `ADMIN_NAV_BUILD_PHASE6B_QUESTION_MARK_PROMPT.md` (Opus). Built 2026-11-13 — the Phase 6b record below.
+- **Phase 6b · Help's place the same in all three portals; the page's top row (T1–T6).** BUILT 2026-11-13 (Opus session, prompt
+  `ADMIN_NAV_BUILD_PHASE6B_QUESTION_MARK_PROMPT.md`), both parts in one session. Walk §522 published
+  https://claude.ai/artifact/JW5P3XR3JysLPqJiEodJ4i (source `ADMIN_NAV_PHASE6B_WALK.html`, builder `.probe/nav-phase6b/build-walk.cjs`;
+  7 walks, 35 checks); dev server restarted for it 2026-11-13.
+  - **What shipped.** Tournament admin and club: the page's "?" sits in the strip — View site · bell · "?" · account · Workspaces
+    — and is the phone bar's last control, after the globe; no admin page draws its own (13 removed: the list, dashboard, Teams,
+    Schedule, Results, Divisions, Venues, Rules, Chat, Public site, Summary, Event settings, Web address); the shared tournament
+    header lost its `help` prop. The five with none got a topic (Check-in, Communications, Staff kit, Your notifications, Payouts);
+    every club place, tab and named screen got one (table below). The help panel now wraps the whole admin chrome (it wrapped
+    the page only, so a strip "?" would have opened nothing). Coaches Portal: notifications, Plan & billing and Join a club put
+    their "?" in the strip on a computer (host `strip`); Roster's two rows are one above 900 (Add Player · Import · Export on the
+    List / Depth chart row). Phone bar (T6·3): the "?" never gives way; the line's words do; a season's name wraps to two lines.
+  - **⚖ Two departures from the prompt, argued from the code.** (1) The admin answers the topic from the ADDRESS
+    (`lib/admin-page-help.ts`, one table: a tournament page by its path, a club place by `clubPlaceAt`'s place + lit tab) instead
+    of each page handing it up: the chrome already knows the place from the address on the server's first paint (the rule that
+    keeps the bar from flashing the wrong name), so the "?" is in the first paint with no width to hold, ~20 club tabs that draw
+    no header needed no edit, and one test proves every id. Only the dashboard hands its board's topic up (its stage is page
+    state). (2) The Coaches off-team pages have no phone bar, and the drawing drew none, so on a phone they keep their own "?"
+    on the title row (owner question below). **Shared channel, not a copy:** the Coaches Portal's store, id-guarded publisher and
+    door moved into `components/help/PageHelpChannel.tsx`; both portals use it (the 4b pins moved there, updated in the open).
+  - **The matching table** (screen → guide · section [· sub-topic] → verdict). Matched by reading each section against the
+    screen's component; the drawing's seven partials got short sections of their own (★ = written in this build).
+    Tournament (new): Check-in → tournaments · scores-and-results · scores-t-gate (clear) · Communications → public-communication
+    (clear) · Staff kit → scores-and-results · scores-t-staff-kit (clear) · Your notifications → settings-and-access ·
+    tournament-notifications (clear) · Payouts → online-payments · online-payments-setup (clear) · Web address now opens its own
+    sub-topic, settings-web-address (it opened the whole section). Settings & access's Members / Audit log / PDF settings open
+    the club's topics (below). Rep teams: Teams → rep-teams · team-board + recipe-create-team-program-year (clear) · Assistant
+    coaches → ★assistant-coaches-page + recipe-assign-coach-access (was partial) · Document templates →
+    recipe-publish-document-templates · Shared library → shared-library · Past seasons → team-urls-past · Bring in a coach's
+    team → recipe-bring-in-coach-team · Rename team URLs → team-urls-past (all clear). A rep team: Team page → ★team-page +
+    recipe-seasons (was partial) · Roster → ★team-roster-read + recipe-accept-player-to-roster (was partial) · Schedule →
+    franchise-model, whose question "What does a team's Schedule show me?" is this page (clear — the drawing's partial corrected)
+    · Tryouts → recipe-open-tryouts-review-applicants · recipe-open-tryouts-steps · Coaches → recipe-assign-coach-access · History
+    and a past season → ★team-history (was partial). A house-league season: Overview → house-league · recipe-launch-season +
+    lifecycle (clear — the drawing's partial corrected: season-home describes only the header) · Registrations → registrations ·
+    Teams & draft → recipe-build-teams · build-teams-board · Schedule → recipe-generate-house-league-schedule · its -t-page ·
+    Standings → recipe-record-house-league-scores · its -t-ranked · Money → ledger-notifications · money-page · Email families →
+    ledger-notifications · email-families · the club's schedule from a season → house-league-time · its -t-club-schedule ·
+    Seasons list → season-home (all clear). Accounting: Overview → ledgers · Budget → budget · Teams → teams-tab (a team's
+    account → team-account) · Ledger → entries + recipe-add-income-expense · Bank → bank-tab · Allocations → allocations ·
+    Payment requests → payment-requests · Budget vs. Actual → budget-vs-actual · Payouts → payouts-tab (all clear). Families:
+    Families → families-worklist (a family → families-family-page) · Duplicates → families-duplicates · Emails → families-email ·
+    a child → families-child-page (all clear). Organization: The board → org · ★the-board + roles (was partial) · Members →
+    inviting-and-managing-members-11 + roles (clear; the section now carries the id it always computed to, so it cannot move) ·
+    Audit log → notifications-audit · its -t-audit-log · Settings → settings + two-step-sign-in · Venue library → venue-library
+    (clear) · PDF settings → exports · ★pdf-settings (was partial). Named screens: Overview → org · ★club-overview (was partial
+    — nothing described it) · Calendar → club-calendar · Permits → permits · Schedules → club-schedules · its -t-list · a
+    schedule → its -t-page · Public site → public-site-editor · Plan & billing → club-plan-and-billing · Notifications →
+    notifications-audit · its -t-notifications (all clear). Not screens (redirects or doors, no "?"): the tournaments address,
+    Settings & access's own address, data tools, registration fields, the season's old Ledger address, the old program-year
+    address, Organization's own address and its Notifications and Team links. **Open (no topic): a Tournament plan's Plan &
+    billing** — no tournaments-guide section describes it; it is the foot's row, not a Settings & access tab, so no place is half
+    covered. Every id is proved by `admin-page-help.test.ts` (125 checks, sub-topics checked inside their own section).
+  - **Measured** (dev, `.probe/nav-phase6b/`: `probe.mjs` → `final.json` + shots, `rows.mjs`, `nav.mjs`, `demo.mjs`): **exactly one
+    visible "?" on every page measured** — 16 tournament, 26 club, 5 Coaches, both demos — in the strip at 1440/1366/1280 and in
+    the bar at 390/768 (the off-team Coaches pages: strip on a computer, the page's own row on a phone), and **every click opened
+    a non-empty panel** (title = the page; 250–730 words; the full guide's door at the first section). Strip free room with the
+    "?": tournament Dashboard 410 / 496 / 570 at 1280 / 1366 / 1440 (drawn 408 at 1280), Schedule 422 / 508 / 582, club team
+    492 / 578 / 652 (drawn 472), house-league season 355 / 441 / 515, Coaches team — / 336 / 410; nothing gave way. Order read
+    off the strip: View site · bell · "?" · account · Workspaces (Workspaces only for 2+ places). Phone bar at 390: the event
+    door 258 wide (drawn 302 → 258), globe x 286, "?" x 330, both 44 × 44; a season's / a team's bar: back 44 · rule · identity
+    197 · globe · "?", "House league" / "Rep teams" cut with "…", the chip whole; 768: globe x 664, "?" x 708 (drawn the same).
+    Rows: Dashboard, Event settings, Rules, Public site draw no row — content at 80 on a computer (drawn 130 → 80) and 61 on a
+    phone (the drawing's 69 measured to the board's first card under its note; same rule); Divisions and Communications keep
+    their one-button row, content 130 / 121 (drawn 131 / 121, unchanged); Teams and Schedule keep their rows (buttons as
+    before, toolbar under at 130–132); Coaches Money unchanged (row at 125 / 114, content 175 / 170). Roster: one row on a
+    computer at 1440, 1101 and 901 (List · Depth chart … Add player · Import · Export at y 80; was two rows, −50), the phone
+    unchanged (the + in the title row, Export on the list row). First paint with scripts off: the admin's "?" is in the server's
+    paint at both widths (no width held, nothing moves); the Coaches team pages hold its width and it lands after hydration (as
+    shipped); the off-team pages now hold it too (up to 4 s — Join a club draws its header after its data). A route change by
+    the sidebar's links leaves no stale "?" (tournament Dashboard → Schedule → Dashboard → Divisions; club Rep teams →
+    Accounting → Bank → Families → Overview: the label followed each page). The tournament demo, entered through See it live:
+    the "?" shows at both widths and opens in place (the address does not change). **Not measured live:** a cancelled account's
+    page (no fixture; held by the guard — the help hook answers null when suspended); `check:layout --changed` widened to the
+    whole product (shared chrome) and refused on dev (fixture `uat-club-org` onboarding), and a whole sweep runs on staging at the
+    release by rule — skipped, not passed.
+  - **/simplify (applied):** the "?" got its own small door component (`AdminPageHelpDoor`) so a page handing its topic up
+    re-renders the two doors, not the strip or the place; one guide factory; the guide's address is the module's (no map); the
+    reused club screens are rows of the tournament table (no alias map); a record over a tab is told from the tab by the tab's own
+    address (no hand-written patterns — a fourth Families tab cannot be mistaken for a family); the Coaches host is a plain value;
+    the test reads through the shared source helpers and walks with `filesUnder`; the off-team width list is held equal to the
+    pages that publish by the guard. Skipped with reasons: holding the width on every Coaches page (the team-picker hub would then
+    slide its bell), renaming the pinned `helpOnRow` line (three guards read it), Settings & access by place rather than path
+    (a club's addresses there redirect), a shared desk-actions slot for Roster + Schedule (the owner: one page, not a rule).
+  - **/design (helper, against the drawing + the shots + `final.json`): built to the drawing.** Strip order, one "?" per width,
+    the free room, the phone bar's 258 / 44 / 44, the gone rows and Roster's order (the drawing's own source puts Add Player ·
+    Import · Export, as built) all match. FIXED: the Coaches Plan & billing "?" was named "Help" (no page name) — it now says
+    "Plan & billing". RECORDED, not changed: (1) on a phone the five pages that lost their row start at 61, not the drawing's 69
+    — the drawing assumed the row cost 52 when it cost 60 (44 + its 16 margin); 61 is where every club page with no row already
+    starts, so the admin's phone padding is left as shipped (owner call if the card should sit 8 px lower); (2) the Coaches
+    off-team pages sit at slightly different insets on a phone (shipped page padding); (3) the "?" glyph's ring is heavier than the
+    bell's — the shipped `HelpButton iconOnly`, identical in the Coaches Portal the owner walked; (4) the two-line season name is
+    not measured (no long-named season in the fixture) — walk Q2 checks it; (5) Roster on a phone keeps Import hidden (house rule
+    1, as before this build).
+  - **/docs (helper, each new section read against its screen):** FIXED — `team-roster-read`: Excel/CSV carry number, name, date
+    of birth and standing, only the PDF has positions, and an accepted tryout applicant joins as well as the coach's own adds;
+    `team-page`: the season doors sit at the top right only while a season runs (else the last season's card holds Start next
+    season and Reopen), and the "With the club" money section was missing; `pdf-settings`: Save settings / Preview PDF (it does
+    not save as you go), the logo is the Public site's and prints on its own, the filename pattern is for reference only, the
+    footer's date and page numbers; `club-overview`: the rows under the programs differ by role (owner Organization + Continue
+    setup, admin Still to do, others their own list); `places-and-tabs`: "on every page" → "on a page that has help of its own".
+    Also corrected (stale since Phase 4b, found by the same pass): the Coaches Money article said "+ Record" sits "beside Import
+    and the ?" (three places) — the "?" is the top bar's there. `measure:help` flags none of the new sections; spelling ✓;
+    `help-articles` / `help-subtopics` green.
+  - **/legal:** not needed — no help sentence changes what the product collects, sends or promises.
+  - **/review (applied, 3 lenses):** FIXED — a typed `/tournaments/constructor` found an Object member and crashed the chrome (own
+    keys only, test added); the off-team pages' held width was given back after 120 ms, before Join a club draws (4 s hold);
+    a page that had settled skipped the hold when revisited (cleared on the way out); the Dashboard with no event drew a "?"
+    (it did not before; none now); a person the tournament admin refuses saw its "?" over the refusal (none now; the
+    organization's own screens there keep their own gates). Refuted/noted: a late club "?" (the place is known from the address
+    on the first paint), a second publisher wiping the one entry (no page has two), one frame of the old "?" on a client move
+    (as before), an empty actions wrapper on a read-only assistant's Roster at 641–900 (predates this).
+  - **Guards updated in the open:** `admin-header-bar-guard` (the switcher row's name wraps to two lines, T6·3),
+    `coach-band-phase4b` (the channel's pins moved to `PageHelpChannel`; the host is a value; the strip holds the width on the three
+    off-team pages too; the off-team page's phone-only copy), `coach-page-actions-guard` (`helpHost` gains `strip` for billing,
+    Join a club ×3 and notifications; the free portal's notifications mount stays `own`), `tournament-stage5-chat` /
+    `-settings` / `-board` / `-event-settings` (the page's "?" is the chrome's; the topics are in the table). **Added:**
+    `admin-page-help` — every id and sub-topic exists, every place's tabs covered, every tournament route a topic or a reason, no
+    `HelpButton` under the admin, the strip's order, the bar's last control, suspended draws none, the free portal draws none, the
+    off-team width list matches the pages that publish.
+  - **Owner questions (new, from the build):** (a) the Coaches off-team pages on a phone keep their "?" on the page's title row —
+    the drawing showed no bar there; keep, or draw a bar? (b) A Tournament plan's Plan & billing has no help topic — write one,
+    or leave it without a "?"?
 
 ## 6. The /design pass (2026-11-09) — what it changed in the drawings
 - **The whole cell opens the list** when there is more than one to choose from (the chevron is its sign); a club's cell

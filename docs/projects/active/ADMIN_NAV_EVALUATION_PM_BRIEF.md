@@ -35,6 +35,15 @@ The "?" no longer takes a row of its own: it sits at the right end of the page's
 a page has buttons). The owner wants help in the same place in all three portals and will decide that after walking this one. Benefit: a coach deep in a long Money or Insights page can
 change section without scrolling back up. Risk to rule on: Money's tabs were deliberately un-pinned in August for consistency.
 
+## Added 2026-11-13 — Phase 6b: help is in the same place in all three portals (BUILT 2026-11-13)
+Ruled 2026-11-13 (T1–T6). The page's "?" moved out of the page and into the top bar: on a computer it sits between the bell
+and the account button in the tournament admin, the club and the Coaches Portal; on a phone it is the bar's last control.
+Pages whose top row held only a "?" lose that row, so content starts about 50px higher; pages with buttons keep them. The
+club, which had no "?" at all, now has one on every page, each opening the guide section for that screen (seven sections
+were written for screens nothing described). Why it matters: one place to look for help everywhere, help that never scrolls
+away, and screen space back on the busiest pages. Success: one "?" per screen at every width, each opening the right section
+(proved for every screen by a test), and the owner's walk §522.
+
 ## Priority
 After the Admin header bar project (closed 2026-11-09). The first build step fixes a real defect found by the audit: a
 tournament page names the club for a moment before the tournament loads.

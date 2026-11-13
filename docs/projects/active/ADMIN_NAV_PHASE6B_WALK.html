@@ -1,0 +1,506 @@
+<title>Help Place Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Navigation across the three portals · Phase 6b, help’s place · Owner QA Ledger §522</span>
+    <h1>The “?” is in the same place in all three portals</h1>
+    <p class="lead">The page’s “?” no longer sits at the end of the page’s own top row. On a computer it is in the top bar, between the bell and your account button (View site · bell · “?” · account · Workspaces), in the tournament admin, the club and the Coaches Portal. On a phone it is the last thing in the bar at the top, after the globe. A page whose top row held only the “?” has no row any more, so its content starts about 50 px higher; a page with buttons keeps them where they were. The club had no “?” at all and now has one on every place and tab, each opening the guide section for that screen (seven of them got a short new section). The Coaches Portal’s notifications, Plan &amp; billing and Join a club pages put theirs in the top bar on a computer too, and Roster’s two button rows are one on a computer. Seven walks, one purpose each. About 30 minutes.</p>
+    <p class="lead">Written Nov 13, 2026 against the dev site. Nothing here is real data: the clubs, the tournament and the teams are test data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; restart the dev server first: this build added files)</dd>
+      <dt>Tournament admin</dt><dd><code>uat-owner@uat-test-org.local</code> · password <code>UATPassword2026!</code> — opens at <code>localhost:3000/uat-test-org/admin</code>; the event is <b>UAT Import Smoke Tournament</b>.</dd>
+      <dt>Club</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> — <b>UAT Rep Club</b>. Walk 3’s board step uses the treasurer, <code>uat-club-treasurer@uat-rep-club.local</code> (same password).</dd>
+      <dt>Coaches Portal</dt><dd><code>uat-coach@uat-test-org.local</code> · <code>UATPassword2026!</code> — opens at <code>localhost:3000/uat-rep-club/coaches</code>; the team is <b>UAT Test Team</b>.</dd>
+      <dt>Demo</dt><dd>No sign-in: <code>localhost:3000/see-it-live</code> (the tournament demo), then its admin.</dd>
+      <dt>Widths</dt><dd>Your desk browser at <b>1440</b> wide, and its device toolbar at <b>390 × 844</b> (touch on) where a walk says so. A real phone works too.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Use a private window per person.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>No script to run.</b> Nothing in these walks changes data: every step opens a page and its help.</li>
+      <li><b>Walk the parts in order, 1 to 7.</b> Each opens with a stop check.</li>
+      <li>The drawings these screens were built to: <a href="https://claude.ai/artifact/WqQZeay2h4xyCnTGzt7E8D">help’s place and the page’s top row</a>.</li>
+      <li>Your rulings it was built to: T1–T6, all as recommended — the “?” between the bell and the account button, last in the phone bar; buttons stay in the page and a page with none has no row; a “?” on every club page, each matched to its guide; “?”-only rows go, the phone’s lone “+” row stays, Roster’s two rows join; one phase in two parts with this one walk; the Coaches Portal’s off-team pages move theirs too; on the phone bar the line’s words give way, never the chip or the chevron.</li>
+      <li>This replaces older walk checks that look for the tournament “?” at the right end of the page’s top row, or that say the club has no “?”. The Phase 6 closing walk does not check where the tournament “?” sits, so it is unchanged.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests and my own pass (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>Exactly one “?” on every page measured (16 tournament, 26 club, 5 Coaches Portal, both demos) at 1440, 1366, 1280, 768 and 390, and every one opened a panel with that page’s section in it. A test proves every section the club’s and the tournament’s “?” point at exists, and that no place has some tabs with a “?” and some without.</li>
+      <li>The strip’s free room with the “?” in it: 410 px on the tournament Dashboard at 1280 (drawn 408), 492 on a club team; nothing gives way at 1280, 1366 or 1440.</li>
+      <li>On a phone the event’s bar measures as drawn: the line 258 px wide, the globe and the “?” 44 × 44 at x 286 and 330 (768: 664 and 708).</li>
+      <li>The “?” is in the first paint in the tournament admin and the club (scripts off), so the bell never slides; moving between pages through the sidebar never leaves the last page’s “?” behind.</li>
+      <li>Not walked, for want of a fixture: a cancelled account’s one page. The code draws no “?” there at either end, and a test holds that.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: does the “?” read as part of the top bar, does each one open the help you would expect for that screen, and is the page better without its “?”-only row?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "nav-phase6b-walk-v1";
+  var PAGE = "Navigation across the three portals · Phase 6b, help’s place · Owner QA Ledger §522";
+  var WALKS = [
+ {
+  "id": "Q1",
+  "title": "Where the “?” sits on a computer",
+  "job": "tournament owner, club owner, coach · 1440 wide",
+  "forText": "In all three portals the page’s “?” is in the top bar, between the bell and your account button.",
+  "passes": "One “?” per page, in the top bar beside the bell, the same size and grey as the bell; it opens the help panel for that page, in place; there is no “?” at the end of the page’s own row.",
+  "notIn": "The phone (walk 2), which section opens (walk 3), the rows (walk 4).",
+  "who": "uat-owner@uat-test-org.local",
+  "where": "UAT Import Smoke Tournament",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: as the tournament owner, open the event’s <b>Dashboard<\/b>.",
+    "s": "The top bar’s right end reads <b>View site<\/b> · bell · <b>?<\/b> · your account button · Workspaces. There is no “?” anywhere in the page itself. If the “?” is still at the page’s top right, stop and tell me."
+   },
+   {
+    "d": "Click the “?”.",
+    "s": "The help panel slides in from the right, headed <b>Dashboard<\/b>, with the section for this board open; its foot offers <b>Open the full guide<\/b>. You did not leave the page."
+   },
+   {
+    "d": "Open <b>Schedule<\/b>, <b>Teams<\/b> and <b>Divisions<\/b> from the sidebar, clicking the “?” on each.",
+    "s": "Each panel is that page’s: Schedule, Teams, Divisions. The pages’ own buttons (Export, Add game, Add team, Add division) are still where they were."
+   },
+   {
+    "d": "Sign in as the club owner and open <b>Rep teams<\/b>.",
+    "s": "The same corner: View site · bell · <b>?<\/b> · account. The club has never had a “?” before; it opens <b>Teams<\/b> — “Reading the Teams board”."
+   },
+   {
+    "d": "Sign in as the coach and open <b>Plan &amp; billing<\/b> (account menu or the sidebar’s foot), then <b>Join a club<\/b>.",
+    "s": "Each has its “?” in the top bar beside the bell now, not on the page’s title row."
+   },
+   {
+    "d": "Look at the account menu’s <b>Help<\/b> row in any of the three.",
+    "s": "Still there, still opening the full guide in a new tab — a different door from the “?”."
+   }
+  ]
+ },
+ {
+  "id": "Q2",
+  "title": "Where the “?” sits on a phone",
+  "job": "tournament owner, club owner, coach · 390 × 844",
+  "forText": "On a phone the “?” is the last thing in the bar at the top, after the globe.",
+  "passes": "The “?” is at the bar’s right end in all three portals, never cut; when the bar is tight the words on its small line give way first, never the status chip or the chevron; a long season name wraps to two lines.",
+  "notIn": "The computer (walk 1).",
+  "who": "uat-owner@uat-test-org.local",
+  "where": "UAT Import Smoke Tournament",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: at 390, as the tournament owner, open the <b>Dashboard<\/b>.",
+    "s": "The bar reads <b>Dashboard<\/b> over the event’s name and phase chip with its ▾; at its right, the globe, then the <b>?<\/b> in the corner. If the “?” is missing or before the globe, stop and tell me."
+   },
+   {
+    "d": "Tap the “?”.",
+    "s": "The help panel opens at the Dashboard’s section; close it and you are where you were."
+   },
+   {
+    "d": "As the club owner, open <b>House league<\/b>, then a season.",
+    "s": "The bar: back arrow, the season’s name, then the globe and the <b>?<\/b>. Its small line reads “House league…” cut with “…” where it must, and the season’s status chip stays whole. A long season name may take a second line; it is never cut on the first."
+   },
+   {
+    "d": "As the coach, open <b>Roster<\/b>.",
+    "s": "The team bar: Roster over the team’s line, the <b>?<\/b> at its right end (as shipped in Phase 5)."
+   },
+   {
+    "d": "As the coach, open <b>Plan &amp; billing<\/b>.",
+    "s": "This page has no bar on a phone, so its “?” stays on the page’s own title row. Does that read right, or should these three pages get a bar? Tell me — it is an open question, not drawn."
+   }
+  ]
+ },
+ {
+  "id": "Q3",
+  "title": "It opens the right section",
+  "job": "club owner (and the treasurer for one step) · 1440 wide",
+  "forText": "Every club place and tab now has a “?” that opens the guide section for that screen. The seven that had only a near match got a short section of their own.",
+  "passes": "On each screen below, the panel’s first section is about that screen; none opens empty; a place’s tabs all have a “?”.",
+  "notIn": "Where the “?” sits (walks 1 and 2).",
+  "who": "uat-club-owner@uat-rep-club.local",
+  "where": "UAT Rep Club",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <b>Overview<\/b> and click the “?”.",
+    "s": "A new section, <b>The club’s Overview — the first page each day<\/b>: the club today, This morning, Your programs, the rows under them. If the panel is empty, stop and tell me."
+   },
+   {
+    "d": "Rep teams › <b>Assistant coaches<\/b>; then open a team’s <b>Team page<\/b>, <b>Roster<\/b> and (from its Seasons) its <b>History<\/b>.",
+    "s": "New sections, in order: <b>Assistant coaches — every team’s staff in one list<\/b>; <b>A team’s page<\/b>; <b>A team’s roster, from the club<\/b>; <b>A team’s history and its past seasons<\/b>. Do they describe what you see?"
+   },
+   {
+    "d": "On the team, open <b>Schedule<\/b> and <b>Tryouts<\/b>.",
+    "s": "Schedule opens “What the club runs, and what the coach runs”, whose question <i>What does a team’s Schedule show me?<\/i> is this page; Tryouts opens “How to open tryouts and review applicants”."
+   },
+   {
+    "d": "House league › a season: <b>Overview<\/b>, <b>Teams &amp; draft<\/b>, <b>Money<\/b>.",
+    "s": "How to launch a house league season (with the season lifecycle); How to build teams and run a draft; Money and Email families."
+   },
+   {
+    "d": "Accounting › <b>Bank<\/b>; Families › <b>Duplicates<\/b>; Organization › <b>PDF settings<\/b>.",
+    "s": "Checking your bank balance; Duplicates: are these the same parent or child?; a new section, <b>PDF settings — how your organization’s PDFs look<\/b> (it opens in the export guide)."
+   },
+   {
+    "d": "Sign in as the treasurer and open Organization › <b>The board<\/b>.",
+    "s": "A new section, <b>The board — who runs the club<\/b>, then Roles explained."
+   },
+   {
+    "d": "As the tournament owner (1440), open <b>Check-in<\/b>, <b>Communication<\/b>, <b>Staff kit<\/b> and <b>Your notifications<\/b>.",
+    "s": "Pages that had no “?” before: the gate volunteer’s Check-in; Announcements and email; Hand out the Staff kit; Your notifications (mute this tournament)."
+   }
+  ]
+ },
+ {
+  "id": "Q4",
+  "title": "A page with no buttons has no top row",
+  "job": "tournament owner · 1440, then 390",
+  "forText": "The rows that held only a “?” are gone; rows with buttons keep them.",
+  "passes": "Dashboard, Event settings, Rules and Public site start straight under the strip; Divisions, Communications, Teams and Schedule keep their buttons on a row of their own.",
+  "notIn": "The Coaches Portal’s Roster (walk 5).",
+  "who": "uat-owner@uat-test-org.local",
+  "where": "UAT Import Smoke Tournament",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: at 1440, open the <b>Dashboard<\/b>.",
+    "s": "The first card sits right under the top bar — no empty band with a lone “?” above it. If there is a row with nothing but space, stop and tell me."
+   },
+   {
+    "d": "Open <b>Event settings<\/b>, <b>Rules<\/b> and <b>Public site<\/b>.",
+    "s": "The same: content right under the strip."
+   },
+   {
+    "d": "Open <b>Divisions<\/b> and <b>Communication<\/b>.",
+    "s": "Each keeps its one button (<b>Add division<\/b>, <b>New message<\/b>) on its own row at the right, as before — the price of one rule you accepted."
+   },
+   {
+    "d": "Open <b>Teams<\/b> and <b>Schedule<\/b>.",
+    "s": "Their buttons are where they were (Registration health, Export, Add team; Export, Add game), just without the “?” at the end."
+   },
+   {
+    "d": "At 390, open the <b>Dashboard<\/b>, then <b>Divisions<\/b>.",
+    "s": "The Dashboard’s first card is right under the bar; Divisions keeps its <b>+<\/b> on a row of its own."
+   }
+  ]
+ },
+ {
+  "id": "Q5",
+  "title": "Roster is one row on a computer",
+  "job": "coach · 1440, then 768",
+  "forText": "Add Player and Import moved up beside Export on the List / Depth chart row.",
+  "passes": "At computer widths Roster has one row: List / Depth chart on the left, Add Player · Import · Export on the right; on a tablet and a phone nothing changed.",
+  "notIn": "Any other page (this is a fix to one page, not a rule).",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "UAT Test Team",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: at 1440, open <b>Roster<\/b>.",
+    "s": "One row under the strip: <b>List · Depth chart<\/b> at the left, <b>Add Player<\/b> (green), <b>Import<\/b> and <b>Export<\/b> at the right. If Add Player and Import still sit on a row above it, stop and tell me."
+   },
+   {
+    "d": "Click <b>Add Player<\/b>, close it; click <b>Import<\/b>, close it.",
+    "s": "Both open what they always did."
+   },
+   {
+    "d": "Switch to <b>Depth chart<\/b>.",
+    "s": "The same row stays, with the same buttons."
+   },
+   {
+    "d": "Set the window to <b>768 × 1024<\/b>.",
+    "s": "As before this build: the buttons on their own row under the bar (the tablet wears the phone’s chrome)."
+   },
+   {
+    "d": "Look at the order on the computer row.",
+    "s": "The drawing put Add Player · Import · Export at the right, in that order, the green one first. Is that the order you want, or should Export lead? Tell me."
+   }
+  ]
+ },
+ {
+  "id": "Q6",
+  "title": "The Coaches Portal’s pages outside a team",
+  "job": "coach · 1440, then 390",
+  "forText": "Notifications, Plan & billing and Join a club put their “?” in the top bar on a computer, as a team’s pages do.",
+  "passes": "On a computer each has its “?” beside the bell and none on the page; the bell does not jump when the page finishes loading; on a phone each keeps its own on the title row.",
+  "notIn": "A team’s pages (walked in Phases 4b and 5).",
+  "who": "uat-coach@uat-test-org.local",
+  "where": "UAT Test Team",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: at 1440, open the bell’s <b>See all<\/b> (Notifications).",
+    "s": "The “?” is in the top bar beside the bell; the page’s title row has its gear and no “?”. If there are two “?”s, stop and tell me."
+   },
+   {
+    "d": "Reload <b>Join a club<\/b> and watch the bell.",
+    "s": "It stays put while the page loads (the “?”’s space is held), then the “?” lands in it."
+   },
+   {
+    "d": "Click the “?” on each of the three.",
+    "s": "Notifications → getting around your portal; Plan &amp; billing → what Premium adds; Join a club → joining a club with your team."
+   },
+   {
+    "d": "At 390, open the three again.",
+    "s": "Each shows its “?” on its own title row, as before (no bar on these pages)."
+   }
+  ]
+ },
+ {
+  "id": "Q7",
+  "title": "The demo shows it",
+  "job": "no sign-in · 1440, then 390",
+  "forText": "The demo sandbox shows the “?”: it opens in place, so it is no way out of the demo.",
+  "passes": "The tournament demo’s admin has the “?” beside the bell (no account button there, as before); it opens the page’s help without leaving the demo.",
+  "notIn": "The demo’s story (unchanged).",
+  "who": "none",
+  "where": "Riverdale demo",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open <code>localhost:3000/see-it-live<\/code>, then its admin, and open <b>Schedule<\/b>.",
+    "s": "The top bar’s right end: View site · bell · <b>?<\/b> (no account button in the demo, as before). If there is no “?”, stop and tell me."
+   },
+   {
+    "d": "Click the “?”.",
+    "s": "The Schedule’s help opens beside the page; the address does not change."
+   },
+   {
+    "d": "At 390, the same page.",
+    "s": "The “?” is the bar’s last control, after the globe, and opens the same help."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "B1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "Q1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "B1" }; save(); render();
+  });
+  render();
+})();
+</script>
