@@ -192,7 +192,7 @@ Also drawn: one address per sign-up (not per child); the same address as the fir
 
 **Stage 3b — a stop button on the second parent’s emails (BUILT 2026-11-06).** The `/legal` review found the gap (a stranger’s address typed by someone else, with no way off but writing to the club); plan [SIGNED_IN_FAMILY_STAGE3B_SECOND_PARENT_STOP_PLAN.md](SIGNED_IN_FAMILY_STAGE3B_SECOND_PARENT_STOP_PLAN.md), owner calls O1–O5 ruled as recommended. Every second-parent copy carries a quiet “Stop these emails” link from one footer builder; the link opens a confirm page (a GET writes nothing, one POST stops), the stop clears the address from every sign-up of that club and refuses it afterwards (family form and both registrar windows), the registrar sees “Stopped by the address owner, {date}” and cannot undo it, nobody is emailed, and the first parent’s mail is untouched. Session 1 committed `80c9bc430`; Session 2 committed 2026-11-06; mig 448 dev only (prod owed before the promote); walk §472 owed. Open flags for the owner (reply path with no club contact email, exact-address match, a millisecond race, a mixed address, two footnotes on the pay-link copy) are in `docs/agents/legal/CASL_SECOND_PARENT_EMAIL.md`.
 
-### Stage 4 — The invitation at team placement; "Your sign-up" inside the app · 4a BUILT 2026-11-08 (drawn + all 15 asks ruled 2026-11-08)
+### Stage 4 — The invitation at team placement; "Your sign-up" inside the app · 4a BUILT 2026-11-08 (drawn + all 15 asks ruled 2026-11-08) · 4b Sessions 1–3 COMMITTED 2026-11-13 (Session 1 `22db0210d` `7dd71b435` `8b21c44cd`; Session 2 `b5d121f0c`; Session 3 `fdae0e4f0`; migs 476 + 477 + 479 + 480 on dev only, prod order 476 → 477 → 479 → 480), Session 4 (closeout and the walk) next
 
 **Stage 4a status (2026-11-08):** all four build sessions done. Session 1 (migration 453, reach, rules) committed `7823c406c`; Session 2 (accept
 page, emails, migration 454) `5ca68c786`; Session 3 (family pages, calendar, club and coach screens) `db96afd5a`; Session 4 (closeout:
@@ -327,6 +327,14 @@ stored for a second parent anywhere, so the accept page's new-account path asks 
 a parent with none reads as "the other parent" / "a parent", never an address. **O4 = 60 days after the season's last event, closed or
 not** (no rep season stores a close date): only the family's answers are deleted; the coach's attendance book is never touched. O3 keeps
 the Schedule visibility row's gate (the prompt's default). Detail: the build prompt's Progress block.
+
+**O1 RE-RULED 2026-11-13 (owner, Stage 4b build Session 3) = the reminder only.** Checked before building: NONE of the second-parent
+copies (placement, sign-up confirmation, pay link, sign-up-link notices, approve / waitlist / decline) carries an Unsubscribe line. They
+are service emails that skip the unsubscribe list by design, so the Stop line is their only way out, and leaving the app does not take
+the address off the sign-up. Dropping Stop there would have left a joined parent no way out (O1's own condition: "a copy without the
+Stop line must still carry a working unsubscribe"). The reminder goes to the parent's own sign-in address through the family email door
+(the club's Unsubscribe, no Stop line), so ask 14 already holds for it. **Nothing in the 3b footer changes.** For the closeout: /legal and
+/marketing re-read the Stop line's lead ("A parent added your email…") for parents who have since joined.
 
 ### Stage 5 — Next season pre-filled for a signed-in parent · needs Stage 4
 
