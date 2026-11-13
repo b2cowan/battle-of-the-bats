@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { CheckCircle2, CircleHelp, StickyNote } from 'lucide-react';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import LoadingState from '@/components/shared/LoadingState';
@@ -7,6 +8,9 @@ import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import type { RepAttendanceStatus, RepRosterPlayer } from '@/lib/types';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
+import { FAMILY_AVAILABILITY_COACH_WORDS as FW } from '@/lib/family-availability-words';
+import type { RoomFamilyRow, RoomFamilySummary } from '@/lib/family-availability-rules';
 
 /**
  * THE ATTENDANCE ROOM (the Schedule deep dive, stage 1 · E2, owner ruling 2026-09-25: "as drawn —
@@ -30,6 +34,31 @@ export interface AttendanceRoomRow {
   player: RepRosterPlayer;
   status: RepAttendanceStatus;
   note: string;
+  /** When a coach last set or confirmed this mark (mig 479); null when never marked. */
+  markedAt: string | null;
+  /** The status the server holds for this player (loaded or last saved): the baseline the mark time moves against. */
+  savedStatus?: RepAttendanceStatus;
+  /** The coach tapped this player's current mark since the last save (it keeps the mark and clears the family warning). */
+  confirmed?: boolean;
+}
+
+/**
+ * What families said, beside the coach's book (Signed-in family accounts Stage 4b, Part 5; drawing tab 2). Present only while
+ * families can answer this event and this coach can mark attendance; the room is exactly as before without it.
+ */
+export interface RoomFamilyView {
+  rows: Map<string, RoomFamilyRow>;
+  summary: RoomFamilySummary;
+  /** First names of `summary.changed`, in the same order (the card's "⚠ 1 changed since you marked: Maya"). */
+  changedNames: string[];
+  /** "Use N family answers": copies into players the coach hasn't marked, then the toast with Undo. */
+  onUse: () => void;
+  toast: { text: string; onUndo: (() => void) | null } | null;
+  /** The Roster, where parents are invited from each player's Guardians card. */
+  inviteHref: string;
+  /** "⚠ 1 changed since you marked: Maya · Show" filters the list to those players. The SHEET holds it (the room holds no state). */
+  onlyChanged: boolean;
+  toggleChanged: () => void;
 }
 
 // Quick status → {label, icon} lookup for the per-player status badge.
@@ -39,7 +68,7 @@ const ATTENDANCE_BY_VALUE = Object.fromEntries(
 
 export default function ScheduleAttendanceRoom({
   attendanceRows, attendanceLoading, attendanceError, attendanceSaving, attendanceDirty,
-  attendanceFilter, setAttendanceFilter, setAllAttendance, setRsvpEditId, handleAttendanceSave,
+  attendanceFilter, setAttendanceFilter, setAllAttendance, setRsvpEditId, handleAttendanceSave, family = null,
 }: {
   attendanceRows: AttendanceRoomRow[];
   attendanceLoading: boolean;
@@ -52,13 +81,24 @@ export default function ScheduleAttendanceRoom({
   /** Raise the RSVP sheet for one player — with the row, where focus goes home to. */
   setRsvpEditId: (playerId: string, from: HTMLElement) => void;
   handleAttendanceSave: () => Promise<boolean>;
+  family?: RoomFamilyView | null;
 }) {
-  const filteredRows = attendanceFilter === 'all'
+  const desk = !useIsPhoneNav();
+  // "⚠ 1 changed since you marked: Maya · Show" filters the list to those players (tab 2).
+  const changed = family && family.onlyChanged && family.summary.changed.length > 0 ? new Set(family.summary.changed) : null;
+  const statusRows = attendanceFilter === 'all'
     ? attendanceRows
     : attendanceRows.filter(row => row.status === attendanceFilter);
+  const filteredRows = changed ? statusRows.filter(row => changed.has(row.player.id)) : statusRows;
   // data-field-floor: a surface read standing up — the sweep holds its type floor (A4).
   return (
     <div className={styles.attendanceRoom} data-field-floor>
+      {family && attendanceRows.length > 0 && (
+        <FamiliesCard
+          family={family}
+          changedNames={family.changedNames}
+        />
+      )}
       {/* Metric chips that double as filters — counts are always visible; tap to focus.
           On a phone: five equal 44px cells (C3). First, as drawn: the room reads its counts
           before its actions. */}
@@ -130,21 +170,36 @@ export default function ScheduleAttendanceRoom({
            status badge is its trail (its word at the body size — on attendance-taking the status
            IS the looked-for value, A4's field key), the note flag beside it, a chevron says it
            opens. */
+        <>
+        {/* At a desk the family's answer gets its own column (tab 2): Player · Family said · Your mark. */}
+        {family && desk && (
+          <div className={styles.attFamilyHead} aria-hidden>
+            <span>{FW.desk.player}</span><span>{FW.desk.family}</span><span>{FW.desk.mark}</span>
+          </div>
+        )}
         <CoachRowList label="Attendance" inset className={styles.attendanceRows}>
           {filteredRows.map(row => {
             const cur = ATTENDANCE_BY_VALUE[row.status] ?? ATTENDANCE_BY_VALUE.unknown;
             const StatusIcon = cur.icon;
             const name = playerDisplayName(row.player);
+            const said = family ? familySaid(family, row.player.id, desk) : null;
             return (
               <CoachRow
                 key={row.player.id}
                 as="button"
                 aria-haspopup="dialog"
-                aria-label={`${name} · ${cur.label}${row.note ? ' · has a note' : ''} · set attendance`}
+                aria-label={`${name} · ${cur.label}${row.note ? ' · has a note' : ''}${said ? ` · ${said.text}` : ''} · set attendance`}
                 onClick={e => setRsvpEditId(row.player.id, e.currentTarget)}
                 title={name}
+                // The grey line under the name is what the family said (phone); amber only when it changed after your mark.
+                caption={said && !desk
+                  ? <span className={styles.attFamilyLine} data-drift={said.drift || undefined}>{said.text}</span>
+                  : undefined}
                 trail={
                   <>
+                    {family && desk && (
+                      <span className={styles.attFamilyCell} data-drift={said?.drift || undefined}>{said?.text ?? ''}</span>
+                    )}
                     {row.note && (
                       <span className={styles.attendanceNoteFlag} title={row.note} aria-hidden>
                         <StickyNote size={13} />
@@ -162,6 +217,7 @@ export default function ScheduleAttendanceRoom({
             );
           })}
         </CoachRowList>
+        </>
       )}
       {/* The autosave word, a transient pill at the window's foot (owner 2026-09-20): appears on an
           edit, says "Saved" and fades; only an error stays. Fixed to the viewport, so it shows
@@ -170,5 +226,55 @@ export default function ScheduleAttendanceRoom({
         <SaveStatusPill saving={attendanceSaving} dirty={attendanceDirty} error={attendanceError} onRetry={handleAttendanceSave} />
       )}
     </div>
+  );
+}
+
+/** The words under one player (phone) or in the "Family said" column (desk); null = no line (no parent in the app). */
+function familySaid(family: RoomFamilyView, playerId: string, desk: boolean): { text: string; drift: boolean } | null {
+  const f = family.rows.get(playerId);
+  if (!f) return null; // a call-up
+  if (!f.line) return f.connected ? { text: FW.notYet, drift: false } : null;
+  const drift = family.summary.changed.includes(playerId);
+  if (drift) return { text: desk ? FW.driftCell(f.line) : FW.drift(f.line), drift: true };
+  return { text: desk ? FW.cell(f.line) : FW.line(f.line), drift: false };
+}
+
+/** The Families card at the top of the room (tab 2): the counts, who changed, Use N family answers, and its toast. */
+function FamiliesCard({ family, changedNames }: { family: RoomFamilyView; changedNames: string[] }) {
+  const { summary, onlyChanged, toggleChanged } = family;
+  // The card says who changed on its own line, so its counts are answered / haven’t / no parent.
+  const parts = FW.familyParts({ answered: summary.answered, haveNot: summary.haveNot, noParent: summary.noParent });
+  const nobody = summary.answered === 0 && summary.haveNot === 0;
+  const fewInApp = summary.noParent > summary.answered + summary.haveNot;
+  return (
+    <section className={styles.attFamilies} aria-label={FW.card.title}>
+      <p className={styles.attFamiliesLine}>
+        <strong>{FW.card.title}</strong>
+        {!nobody && parts.length > 0 && <> · {parts.join(' · ')}</>}
+      </p>
+      {nobody && <p className={styles.attFamiliesLine}>{FW.card.nobody}</p>}
+      {changedNames.length > 0 && (
+        <p className={styles.attFamiliesWarn}>
+          {FW.card.changed(changedNames)} ·{' '}
+          <button type="button" className={styles.attFamiliesLinkBtn} onClick={toggleChanged} aria-pressed={onlyChanged}>
+            {onlyChanged ? FW.card.showAll : FW.card.show}
+          </button>
+        </p>
+      )}
+      {(nobody || fewInApp) && <Link href={family.inviteHref} className={styles.attFamiliesLinkBtn}>{FW.card.invite}</Link>}
+      {summary.usable.length > 0 && (
+        <div className={styles.attendanceBulkActions}>
+          <button type="button" className={styles.btnGhost} onClick={family.onUse}>{FW.card.use(summary.usable.length)}</button>
+        </div>
+      )}
+      {family.toast && (
+        <p className={styles.attFamiliesToast} role="status">
+          {family.toast.text}
+          {family.toast.onUndo && (
+            <> · <button type="button" className={styles.attFamiliesLinkBtn} onClick={family.toast.onUndo}>{FW.card.undo}</button></>
+          )}
+        </p>
+      )}
+    </section>
   );
 }

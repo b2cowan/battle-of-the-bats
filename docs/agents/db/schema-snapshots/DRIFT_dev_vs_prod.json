@@ -1,9 +1,9 @@
 {
   "generated": "2026-11-13",
-  "total": 673,
+  "total": 674,
   "counts": {
     "tables": 23,
-    "columns": 323,
+    "columns": 324,
     "indexes": 102,
     "constraints": 88,
     "rls": 137
@@ -1427,6 +1427,10 @@
     },
     {
       "key": "column:only-dev:rep_roster_players.health_confirmed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_event_attendance.marked_at",
       "sig": ""
     },
     {

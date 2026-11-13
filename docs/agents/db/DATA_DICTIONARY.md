@@ -3351,6 +3351,9 @@ copy `carriedEntryFields` only). NULL on a returning child's live entry with a v
 <!-- dict:col:rep_team_event_attendance.updated_by -->
 **`updated_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — always the acting coach (auth-schema introspection gap).
 
+<!-- dict:col:rep_team_event_attendance.marked_at -->
+**`marked_at`** (timestamptz, nullable; mig 479, Signed-in family accounts Stage 4b) — when a coach last **set or confirmed this player's mark**. ⚠ Not `updated_at`: the room saves the whole roster in one batch, so every row's `updated_at` moves on any tap. The PATCH writes `marked_at` only for a row whose status changed or that the coach tapped (`confirmed`); the others keep theirs. The room's "⚠ Family changed to Out" compares a family answer's `answered_at` with it. Backfilled from `updated_at` for rows already marked; null on a row never marked.
+
 ### `rep_team_lineups`
 <!-- dict:table:rep_team_lineups -->
 

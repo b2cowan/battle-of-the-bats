@@ -14,6 +14,8 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { FAMILY_AVAILABILITY_COACH_WORDS } from '@/lib/family-availability-words';
+import { isShort, type Headcount } from '@/lib/family-availability-rules';
 import { scheduleDrawerDoors } from '@/lib/coach-schedule-doors';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICSFromInstants,
@@ -211,6 +213,9 @@ export default function CoachesSchedulePage({
   /** Whether a cancel / restore reaches families — the event window asks once before it tells them. Unknown is
    *  TRUE (/review 2026-10-09): an unread flag must ask, never tell families on one press. */
   const [familiesSeeSchedule, setFamiliesSeeSchedule] = useState(true);
+  // Signed-in family accounts Stage 4b: who is coming, per upcoming event (counts only). Null = families can't answer on this
+  // team (the guardian tier, the switch or family visibility is off): every row and window is then exactly as before.
+  const [familyHeadcounts, setFamilyHeadcounts] = useState<Record<string, Headcount> | null>(null);
   const [tagsByEventId, setTagsByEventId] = useState<Record<string, string[]>>({});
   // Player Awards (Phase 2): the team's award-type library, every award given this season
   // (filtered client-side per event for the slide-over), a minimal PII-free player list for the
@@ -379,6 +384,7 @@ export default function CoachesSchedulePage({
       setUsualFacilityByVenue(data.usualFacilityByVenue ?? {});
       if (data.arrivalDefaults) setArrivalDefaults({ game: data.arrivalDefaults.game ?? null, practice: data.arrivalDefaults.practice ?? null });
       setFamiliesSeeSchedule(data.familiesSeeSchedule !== false);
+      setFamilyHeadcounts(data.familyHeadcounts ?? null);
       // Tryout sessions are projected onto the calendar as read-only markers. Non-fatal: if this
       // fails the schedule still works, tryout dates just won't show.
       // Tryout markers + real tournament games are both optional read-only overlays keyed only on
@@ -762,8 +768,16 @@ export default function CoachesSchedulePage({
       handBack: src.handBack ?? null, teamName: assignment?.teamName ?? '',
     } : null;
   };
+  /** "9 of 13 in · 1 out · 1 maybe", or the red "5 out · at most 8 can play" (Stage 4b, asks 7 and 8). */
+  const headcountFor = (e: RepTeamEvent) => {
+    const c = familyHeadcounts?.[e.id];
+    if (!c) return null;
+    const short = isShort(c, sportPack.fieldPositions.length);
+    const words = short ? FAMILY_AVAILABILITY_COACH_WORDS.short(c) : FAMILY_AVAILABILITY_COACH_WORDS.headcount(c);
+    return words ? { words, short } : null;
+  };
   const rowDecor: ScheduleRowDecor = {
-    mismatchIds, awardCountByEventId, movedEventIds, bookRecordFor, gameDayHrefById, openEvent, clubSourceOf,
+    mismatchIds, awardCountByEventId, movedEventIds, bookRecordFor, gameDayHrefById, openEvent, clubSourceOf, headcountFor,
   };
   const viewData: ScheduleViewData = {
     events, tryoutSessions, unmirroredGames, sport: sportPack.id, tryoutsHref: `${base}/tryouts`, decor: rowDecor,
@@ -1040,6 +1054,7 @@ export default function CoachesSchedulePage({
           bookEntry={selectedEvent.opponent ? bookByKey.get(normalizeOpponentName(selectedEvent.opponent)) ?? null : null}
           gameDayLive={gameDayHrefById.has(selectedEvent.id)}
           familiesSeeSchedule={familiesSeeSchedule}
+          familyAnswersOn={familyHeadcounts !== null}
           seriesReach={selectedReach}
           clubSource={clubSourceOf(selectedEvent)}
           onHandedBack={text => setImportToast(text)}

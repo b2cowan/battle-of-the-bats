@@ -131,7 +131,9 @@ export const ATTENDANCE_WORD: Record<RepAttendanceStatus, string> = {
   attending: 'In',
   late:      'Late',
   absent:    'Out',
-  unknown:   'No reply',
+  // "Not marked" (Signed-in family accounts Stage 4b, ask 9, owner 2026-11-13): the coach's book, for every team. It was "No
+  // reply", which read as a family's silence once families can answer for themselves. The value stays `unknown`.
+  unknown:   'Not marked',
 };
 
 /** Friendly default name when the coach leaves the name blank and there is no opponent to derive

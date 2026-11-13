@@ -35,6 +35,7 @@ import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { isVisibleToFamilies } from '@/lib/family-access';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { clubSourcesFor } from '@/lib/club-schedule-coach';
+import { scheduleHeadcounts } from '@/lib/family-availability-coach';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -114,7 +115,7 @@ export const GET = withObservability(async (req: Request,
   // The club's venues (Club Tier Stage 6a, Ask 1) ride the same read: the Venue field lists them above the team's
   // places, read-only, and only in a club with a Venue library — `inClub: false` keeps a team outside a club's
   // picker exactly as built. The usual facility per venue is the dropdown's opening pick (Ask 2) — read only in a club.
-  const [tags, tagsByEventId, awardCountByEventId, places, clubBook, clubSources] = await Promise.all([
+  const [tags, tagsByEventId, awardCountByEventId, places, clubBook, clubSources, familyHeadcounts] = await Promise.all([
     getRepTeamTagLibrary(teamId, 'game', ctx.org.id),
     getRepTeamEventTagsMap(events.map(e => e.id)),
     getRepEventAwardCountsMap(events.map(e => e.id)),
@@ -123,6 +124,10 @@ export const GET = withObservability(async (req: Request,
     // Club Tier Stage 11a: a club practice's schedule, by slot — "From {schedule} · the club's schedule" (Ask 16); and
     // Stage 11d: the team's waiting ask on it (the "Hand-back asked" pill and what was asked).
     clubSourcesFor(ctx.org.id, events, teamId),
+    // Signed-in family accounts Stage 4b: "9 of 13 in · 1 out · 1 maybe" per upcoming event, COUNTS ONLY, for anyone who sees
+    // the schedule (ask 11). Null (omitted) while the guardian tier, the team's switch or family visibility is off.
+    // A finished season (this read serves the working season even then) shows no availability: live season only.
+    programYear.status === 'active' ? scheduleHeadcounts({ teamId, programYearId: programYear.id, events, team }) : null,
   ]);
   const { usualFacilityByVenue, ...clubVenues } = clubBook;
   // lineupStatusByEvent is OMITTED (not {}) when the caller can't see lineups, so a client with a
@@ -144,6 +149,8 @@ export const GET = withObservability(async (req: Request,
     // Whether a cancel / restore reaches families (`notifyFamiliesOfGameUpdate`'s own gate): the event window asks
     // once before it tells them, and says nothing extra when nobody is told (owner, 2026-10-09).
     familiesSeeSchedule: isVisibleToFamilies(team.scheduleVisibility),
+    // Omitted while families can't answer on this team: every coach screen is then exactly as before.
+    ...(familyHeadcounts ? { familyHeadcounts } : {}),
     ...(lineupStatusByEvent ? { lineupStatusByEvent } : {}),
     ...(lineupOpenInningsByEvent ? { lineupOpenInningsByEvent } : {}),
     ...(lineupInningsByEvent ? { lineupInningsByEvent } : {}),

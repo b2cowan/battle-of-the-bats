@@ -2987,6 +2987,8 @@ function mapRepTeam(r: any): RepTeam {
     // Defaults to the column default when a row predates mig 215 — never to something more
     // permissive.
     scheduleVisibility: r.schedule_visibility ?? 'families',
+    // Stage 4b (mig 476): fail-closed, an unknown value is off.
+    familyAnswers: r.family_answers === 'games' || r.family_answers === 'games_and_practices' ? r.family_answers : 'off',
     // Club Shared Book (mig 227) — same fail-closed default as the org flag above.
     shareClubBook: r.share_club_book === true,
     // Team paper look (mig 259) — {} and null both mean "fully inherited".
@@ -6213,6 +6215,7 @@ function mapRepTeamEventAttendance(r: any): RepTeamEventAttendance {
     updatedBy: r.updated_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    markedAt: r.marked_at ?? null,
   };
 }
 
@@ -6234,6 +6237,8 @@ export async function upsertRepTeamEventAttendance(rows: {
   status: RepAttendanceStatus;
   note?: string | null;
   updatedBy?: string | null;
+  /** When the coach set or confirmed this mark (mig 479). The caller decides: only a changed or tapped row moves it. */
+  markedAt?: string | null;
 }[]): Promise<RepTeamEventAttendance[]> {
   if (rows.length === 0) return [];
 
@@ -6250,6 +6255,8 @@ export async function upsertRepTeamEventAttendance(rows: {
         note: row.note?.trim() || null,
         updated_by: row.updatedBy ?? null,
         updated_at: new Date().toISOString(),
+        // A caller that doesn't decide leaves the stored time alone (never wipes it).
+        ...(row.markedAt !== undefined ? { marked_at: row.markedAt } : {}),
       })),
       { onConflict: 'event_id,player_id' },
     )

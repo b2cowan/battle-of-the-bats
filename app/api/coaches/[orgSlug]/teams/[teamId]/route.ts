@@ -23,8 +23,13 @@ import { DEFAULT_COACH_NAMES_POLICY, seatNameListing } from '@/lib/coach-names-p
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 import { getCoachTeamPlanCoverage } from '@/lib/team-plan-coverage';
 import {
-  SCHEDULE_VISIBILITIES, isFamilyLayerEnabled, setScheduleVisibility, type ScheduleVisibility,
+  SCHEDULE_VISIBILITIES, isFamilyLayerEnabled, isVisibleToFamilies, setScheduleVisibility, type ScheduleVisibility,
 } from '@/lib/family-access';
+import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
+import { FAMILY_ANSWERS_SETTINGS } from '@/lib/family-availability-rules';
+import { FAMILY_AVAILABILITY_COACH_WORDS } from '@/lib/family-availability-words';
+import { rosterConnection } from '@/lib/family-availability-coach';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 /**
  * Does the plan carry a public team page at all — whatever the site switch says (a closed site still has the door,
@@ -105,6 +110,19 @@ export const GET = withObservability(async (_req: Request,
 
   const scope = computeScope(ctx.org, assignment.coachRole);
   const clubAccess = resolveClubBookAccessFor(ctx.org, team);
+  // The premium family layer: Schedule visibility's row, and the family-answers row beside it, exist only with it.
+  const familyLayer = await isFamilyLayerEnabled({ org: ctx.org, repTeamId: teamId });
+  // The family-answers row exists only with the tier on, the family layer and a live season; its "10 of 13" counts are read
+  // together with the plan-coverage read, not behind it. (Information only: a failed payer/role read means no card, never a
+  // failed page.)
+  const familyAnswersRow = familyLayer && GUARDIAN_TIER_ENABLED && programYear.status === 'active';
+  const [planCoverage, familyCounts] = await Promise.all([
+    getCoachTeamPlanCoverage(ctx.org, teamId, ctx.user.id).catch((err) => {
+      console.error('[coaches team GET] plan coverage unavailable:', err);
+      return null;
+    }),
+    familyAnswersRow ? rosterConnection(programYear.id) : null,
+  ]);
 
   return NextResponse.json({
     team: { id: team.id, name: team.name, division: team.division, sport: team.sport },
@@ -114,11 +132,7 @@ export const GET = withObservability(async (_req: Request,
     },
     nextYearDefault: programYear.year + 1,
     scope,
-    // Information only: a failed payer/role read means no card (no claim that a club pays), never a failed page.
-    planCoverage: await getCoachTeamPlanCoverage(ctx.org, teamId, ctx.user.id).catch((err) => {
-      console.error('[coaches team GET] plan coverage unavailable:', err);
-      return null;
-    }),
+    planCoverage,
     /**
      * Club Shared Book — the head coach's switch. `showSwitch` is false unless BOTH the Club
      * plan includes the feature and the club admin has turned sharing on for the org: a coach
@@ -175,8 +189,17 @@ export const GET = withObservability(async (_req: Request,
           };
         })()
       : null,
-    scheduleVisibility: (await isFamilyLayerEnabled({ org: ctx.org, repTeamId: teamId }))
+    scheduleVisibility: familyLayer
       ? { value: team.scheduleVisibility, canEdit: canManageSchedule(assignment.capabilities) }
+      : null,
+    /**
+     * "Families say if they're coming" (Signed-in family accounts Stage 4b, Part 4): the row under Schedule visibility, shown
+     * exactly where that row is shown (the family layer) and edited by exactly its gate (schedule management; O3, owner
+     * 2026-11-13), and ONLY with the guardian tier on and a live season. Null = the row does not exist. `connected`/`roster`
+     * feed the "10 of 13 players have a parent in the app" line.
+     */
+    familyAnswers: familyCounts
+      ? { value: team.familyAnswers, canEdit: canManageSchedule(assignment.capabilities), ...familyCounts }
       : null,
     /**
      * The Money group's two settings, for the Settings page.
@@ -307,6 +330,34 @@ export const PATCH = withObservability(async (req: Request,
     }
     await setScheduleVisibility({ repTeamId: teamId, visibility: visibility as ScheduleVisibility });
     return NextResponse.json({ ok: true, scheduleVisibility: visibility });
+  }
+
+  /**
+   * "Families say if they're coming" (Stage 4b, Part 4): the SAME gate as Schedule visibility above (O3, owner 2026-11-13), plus
+   * the guardian tier (off = the setting does not exist, 404). Nothing is sent to anyone when it is turned on; turning it off
+   * hides the answers and keeps them (they come back if it is turned on again this season). Refused while the schedule is Staff
+   * only: families can't see the events, so they can't answer.
+   */
+  if ('familyAnswers' in body) {
+    if (!GUARDIAN_TIER_ENABLED) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const denied = denyUnless(
+      canManageSchedule(assignment.capabilities),
+      'Only coaches who manage the schedule can change this.',
+    );
+    if (denied) return denied;
+    if (!(await isFamilyLayerEnabled({ org: ctx.org, repTeamId: teamId }))) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    const value = body.familyAnswers;
+    if (!FAMILY_ANSWERS_SETTINGS.includes(value)) {
+      return NextResponse.json({ error: 'familyAnswers must be off, games or games_and_practices' }, { status: 400 });
+    }
+    if (value !== 'off' && !isVisibleToFamilies(team.scheduleVisibility)) {
+      return NextResponse.json({ error: FAMILY_AVAILABILITY_COACH_WORDS.setting.staffOnly }, { status: 409 });
+    }
+    const { error } = await supabaseAdmin.from('rep_teams').update({ family_answers: value }).eq('id', teamId);
+    if (error) throw error;
+    return NextResponse.json({ ok: true, familyAnswers: value });
   }
 
   // The arrival habit (mig 307) — a schedule act. Each key is one of the seven answers or null;

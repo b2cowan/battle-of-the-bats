@@ -62,13 +62,13 @@ export interface FamilyAnswersView {
   otherParent: Record<string, string | null>;
 }
 
-interface TeamRow { id: string; org_id: string; schedule_visibility: string | null; is_archived: boolean; family_answers: string | null }
+export interface TeamRow { id: string; org_id: string; schedule_visibility: string | null; is_archived: boolean; family_answers: string | null }
 interface AnswerRow {
   event_id: string; child_id: string; answer: FamilyAnswer; note: string | null;
   answered_by_user_id: string | null; answered_at: string;
 }
 
-async function readTeam(teamId: string): Promise<TeamRow | null> {
+export async function readTeam(teamId: string): Promise<TeamRow | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_teams').select('id, org_id, schedule_visibility, is_archived, family_answers').eq('id', teamId).maybeSingle();
   if (error) throw error;
@@ -76,7 +76,7 @@ async function readTeam(teamId: string): Promise<TeamRow | null> {
 }
 
 /** The team's switch when families may answer on it at all now (tier on, not archived, schedule shared, family layer on). */
-async function liveSetting(team: TeamRow | null): Promise<Exclude<FamilyAnswersSetting, 'off'> | null> {
+export async function liveSetting(team: TeamRow | null): Promise<Exclude<FamilyAnswersSetting, 'off'> | null> {
   if (!GUARDIAN_TIER_ENABLED || !team || team.is_archived) return null;
   const setting = normalizeFamilyAnswers(team.family_answers);
   if (setting === 'off' || !isVisibleToFamilies(team.schedule_visibility)) return null;
@@ -84,7 +84,7 @@ async function liveSetting(team: TeamRow | null): Promise<Exclude<FamilyAnswersS
   return setting;
 }
 
-async function firstNames(userIds: readonly string[]): Promise<Map<string, string | null>> {
+export async function firstNames(userIds: readonly string[]): Promise<Map<string, string | null>> {
   const out = new Map<string, string | null>();
   await Promise.all([...new Set(userIds)].map(async id => {
     const { data, error } = await supabaseAdmin.auth.admin.getUserById(id);
@@ -115,7 +115,7 @@ export async function readFamilyAnswers(params: {
   const events = params.entries.filter(e => e.status === 'scheduled' && !e.completed && familyAnswersCover(setting, e.eventType));
   const childIds = params.children.map(c => c.childId);
 
-  const [answers, links] = await Promise.all([
+  const [answers, links, seasons] = await Promise.all([
     events.length
       ? supabaseAdmin.from('event_availability_answers')
         .select('event_id, child_id, answer, note, answered_by_user_id, answered_at')
@@ -124,6 +124,7 @@ export async function readFamilyAnswers(params: {
     // The other connected parents of these children (joined: verified, with an account).
     supabaseAdmin.from('family_links').select('child_id, user_id')
       .in('child_id', childIds).eq('status', 'verified').not('user_id', 'is', null).neq('user_id', params.userId),
+    events.length ? childSeasons(params.userId, params.teamId, events.map(e => e.id)) : Promise.resolve(null),
   ]);
   if (answers.error) throw answers.error;
   if (links.error) throw links.error;
@@ -145,6 +146,9 @@ export async function readFamilyAnswers(params: {
   const rows: FamilyAnswerRow[] = [];
   for (const e of events) {
     for (const c of params.children) {
+      // Only an event of the season this child is rostered in (a team with two seasons open never offers a pill the writer
+      // would refuse; Session 1 review, item d).
+      if (!seasons || !seasons.child.get(c.childId)?.has(seasons.event.get(e.id) ?? '')) continue;
       rows.push({
         ...rowOf(e.id, c.childId, byKey.get(`${e.id}|${c.childId}`) ?? null, familyAnswerState(setting, e, now) === 'open', params.userId, names, now),
         child: c.firstName,
@@ -152,6 +156,35 @@ export async function readFamilyAnswers(params: {
     }
   }
   return { setting, rows, otherParent };
+}
+
+/** Each event's season, and the seasons each of this account's children is rostered in on this team (through the account's OWN
+ *  reach, the writer's rule), so the page offers a pill only where the writer would take the answer. */
+async function childSeasons(userId: string, teamId: string, eventIds: readonly string[]): Promise<{
+  event: Map<string, string>; child: Map<string, Set<string>>;
+}> {
+  const reach = await getFamilyReach(userId);
+  const entries = reach.flatMap(r => r.teams.filter(t => t.kind === 'rep' && t.teamId === teamId).map(t => ({ childId: r.link.childId, entryId: t.entryId })));
+  const [events, roster] = await Promise.all([
+    supabaseAdmin.from('rep_team_events').select('id, program_year_id').in('id', [...eventIds]),
+    entries.length
+      ? supabaseAdmin.from('rep_roster_players').select('id, program_year_id').in('id', entries.map(e => e.entryId))
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (events.error) throw events.error;
+  if (roster.error) throw roster.error;
+  const seasonOfEntry = new Map(((roster.data ?? []) as { id: string; program_year_id: string }[]).map(r => [r.id, r.program_year_id]));
+  const child = new Map<string, Set<string>>();
+  for (const e of entries) {
+    const season = seasonOfEntry.get(e.entryId);
+    if (!season) continue;
+    if (!child.has(e.childId)) child.set(e.childId, new Set());
+    child.get(e.childId)!.add(season);
+  }
+  return {
+    event: new Map(((events.data ?? []) as { id: string; program_year_id: string }[]).map(e => [e.id, e.program_year_id])),
+    child,
+  };
 }
 
 /** A row without the child's name: the page adds it; a save's response never carries it (the sheet already holds it). */

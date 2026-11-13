@@ -2,12 +2,12 @@
 
 **Generated:** 2026-11-13 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 673 divergence(s)** across dev/prod.
+**⚠️ 674 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 17 | 6 | — |
-| Columns | 263 | 59 | 1 |
+| Columns | 264 | 59 | 1 |
 | Indexes | 76 | 26 | 0 |
 | Constraints | 60 | 28 | — |
 | RLS / CHECK | 107 | 26 | 0 (RLS state) |
@@ -41,7 +41,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (263)
+### Only in DEV (264)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -259,6 +259,7 @@
 - `rep_document_templates.validity`
 - `rep_roster_players.health_confirmed_at`
 - `rep_roster_players.health_confirmed_by`
+- `rep_team_event_attendance.marked_at`
 - `rep_teams.family_answers`
 - `second_parent_stops.email`
 - `second_parent_stops.id`

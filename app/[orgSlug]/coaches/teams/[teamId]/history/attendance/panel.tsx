@@ -646,7 +646,7 @@ export function AttendancePanel({
                 <p className={att.methodBody}>
                   A season view to inform playing-time decisions and spot when someone&apos;s drifting away — not a ranking.
                   Each figure counts games or practices where you recorded attendance; a player is &ldquo;present&rdquo;
-                  when marked attending or late, and events with no reply aren&apos;t counted against anyone.
+                  when marked attending or late, and events left Not marked aren&apos;t counted against anyone.
                 </p>
               </details>
               )}

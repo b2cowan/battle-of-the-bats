@@ -960,7 +960,7 @@ const ATTENDANCE_GROUPS: { status: RepAttendanceStatus; label: string }[] = [
   { status: 'attending', label: 'In' },
   { status: 'late', label: 'Late' },
   { status: 'absent', label: 'Out' },
-  { status: 'unknown', label: 'No reply' },
+  { status: 'unknown', label: 'Not marked' },
 ];
 
 /** " · A → Short hop" — where the first group lands next, which is what the mockup reads at. */

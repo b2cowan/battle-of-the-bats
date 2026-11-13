@@ -14,6 +14,7 @@ import {
 import type { RepAttendanceStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
+import { bookMarkedAt as markedAtFor } from '@/lib/family-availability-rules';
 
 const VALID_ATTENDANCE_STATUSES: RepAttendanceStatus[] = ['unknown', 'attending', 'absent', 'late'];
 
@@ -94,13 +95,19 @@ export const PATCH = withObservability(async (req: Request,
 
   // Same set the GET offers: the active roster PLUS this game's call-ups (mig 309, owner ruling R4).
   // A picker and its validator must agree — the console's "Who's here" drawer draws from the GET.
-  const [roster, eventCallUps] = await Promise.all([
+  const [roster, eventCallUps, existing] = await Promise.all([
     getRepRosterPlayers(programYear.id),
     getRepCallUpsForEvent(eventId),
+    getRepTeamEventAttendance(eventId),
   ]);
   const players = roster.filter(player => player.status === 'active');
   const activePlayerIds = new Set([...players, ...eventCallUps].map(player => player.id));
 
+  // When was each player last MARKED (mig 479, Stage 4b)? The room saves the whole roster in one batch, so only a row whose status
+  // changed, or that the coach tapped (`confirmed`: picking the mark it already had, which keeps the mark and clears the room's
+  // "family changed after you marked" warning), takes now; every other row keeps its own time.
+  const before = new Map(existing.map(row => [row.playerId, row]));
+  const now = new Date().toISOString();
   const rows = [];
   for (const entry of entries) {
     const playerId = typeof entry?.playerId === 'string' ? entry.playerId : '';
@@ -126,6 +133,7 @@ export const PATCH = withObservability(async (req: Request,
       status,
       note: note || null,
       updatedBy: ctx.user.id,
+      markedAt: markedAtFor(before.get(playerId), status, entry?.confirmed === true, now),
     });
   }
 

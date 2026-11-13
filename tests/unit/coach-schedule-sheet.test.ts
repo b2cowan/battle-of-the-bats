@@ -71,7 +71,7 @@ describe('E1 · E2 — the Attendance row names names', () => {
   it('before anyone answers: how many, and the first three by name', () => {
     const w = attendanceRowWords(roster(TWELVE.map(([f, n]) => [f, n, 'unknown'])));
     assert.equal(w.head, 'Attendance');
-    assert.equal(text(w), '12 haven’t replied — Avery, Blake, Casey and 9 more');
+    assert.equal(text(w), '12 not marked — Avery, Blake, Casey and 9 more');
   });
   it('once everyone is in: "All 12 in"', () => {
     const w = attendanceRowWords(roster(TWELVE.map(([f, n]) => [f, n, 'attending'])));
@@ -80,16 +80,16 @@ describe('E1 · E2 — the Attendance row names names', () => {
   });
   it('vs Ridgeview: everyone in but one who never answered', () => {
     const w = attendanceRowWords([...roster(TWELVE.map(([f, n]) => [f, n, 'attending'])), ...roster([['bob', '56', 'unknown']])]);
-    assert.equal(w.head, 'Attendance · 12 in · 1 no reply');
-    assert.equal(text(w), 'No reply: #56 bob');
+    assert.equal(w.head, 'Attendance · 12 in · 1 not marked');
+    assert.equal(text(w), 'Not marked: #56 bob');
   });
-  it('the order is Out, then Late, then No reply — and the names share one budget of three', () => {
+  it('the order is Out, then Late, then Not marked — and the names share one budget of three', () => {
     const w = attendanceRowWords(roster([
       ['Avery', '1', 'unknown'], ['Blake', '2', 'late'], ['Casey', '3', 'absent'], ['Devon', '4', 'absent'],
       ['Emery', '5', 'late'], ['Finley', '6', 'attending'], ['Gray', '7', 'unknown'],
     ]));
-    assert.equal(w.head, 'Attendance · 1 in · 2 late · 2 out · 2 no reply');
-    assert.equal(text(w), 'Out: #3 Casey, #4 Devon · Late: #2 Blake and 1 more · 2 no reply');
+    assert.equal(w.head, 'Attendance · 1 in · 2 late · 2 out · 2 not marked');
+    assert.equal(text(w), 'Out: #3 Casey, #4 Devon · Late: #2 Blake and 1 more · 2 not marked');
   });
   it('"and N more" is only ever more of THAT answer — never another group\'s players (/review)', () => {
     // 3 Out + 2 Late: the budget is spent on the Out names, and the two Late are counted as Late —
@@ -104,7 +104,7 @@ describe('E1 · E2 — the Attendance row names names', () => {
     const w2 = attendanceRowWords(roster([
       ['A', '1', 'absent'], ['B', '2', 'absent'], ['C', '3', 'absent'], ['D', '4', 'absent'], ['E', '5', 'unknown'], ['F', '6', 'attending'],
     ]));
-    assert.equal(text(w2), 'Out: #1 A, #2 B, #3 C and 1 more · 1 no reply');
+    assert.equal(text(w2), 'Out: #1 A, #2 B, #3 C and 1 more · 1 not marked');
   });
   it('never more than three names on the line, whatever the roster', () => {
     const big = roster(Array.from({ length: 20 }, (_, i) => [`P${i}`, String(i), i % 2 ? 'absent' : 'late'] as [string, string, AttendanceStatusValue]));

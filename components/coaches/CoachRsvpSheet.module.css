@@ -88,3 +88,20 @@
     border-radius: var(--radius);
   }
 }
+
+/* THE FAMILY BOX (Signed-in family accounts Stage 4b, Part 5; drawing tab 2): what the family said, above the four choices,
+   only while families can answer this event. There is no Accept button: tapping the family's answer IS the accept (a tap
+   already saves). Amber edge only when the family changed after the coach's mark. */
+.familyBox {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--home-line-strong, var(--white-10));
+  border-radius: 10px;
+  background: var(--home-card, var(--card-bg));
+}
+.familyBox[data-drift] { border-color: var(--warning); }
+.familyHead { font-size: var(--type-support); color: var(--text-tertiary); }
+.familyAnswer { font-size: var(--type-body); color: var(--text-primary); }
+.familyAnswer strong { font-weight: 700; }
+.familyMeta { font-size: var(--type-support); color: var(--text-tertiary); }
+.familyHint { margin: 6px 0 0; font-size: var(--type-support); color: var(--text-secondary); }

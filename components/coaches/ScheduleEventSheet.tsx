@@ -14,6 +14,9 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import GuardedDelete from '@/components/coaches/GuardedDelete';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import ScheduleAttendanceRoom, { type AttendanceRoomRow } from '@/components/coaches/ScheduleAttendanceRoom';
+import { FAMILY_AVAILABILITY_COACH_WORDS as FW } from '@/lib/family-availability-words';
+import { bookMarkedAt, roomFamilySummary, type RoomFamilyAnswers } from '@/lib/family-availability-rules';
+import { ATTENDANCE_WORD } from '@/lib/coach-schedule-vocab';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatStoredClock as fmtClock } from '@/lib/utils';
 import { arrivalIsAfterStartAt, arrivalNoteSuffix } from '@/lib/coach-arrival';
@@ -98,6 +101,14 @@ function RowLine({ parts }: { parts: RowLinePart[] }) {
   );
 }
 
+/** The event window's Attendance row, its families line (Stage 4b): "Families: 7 answered · 3 haven't · 1 changed". */
+function familyDoorParts(summary: { answered: number; haveNot: number; changed: string[] }): RowLinePart[] {
+  const parts: RowLinePart[] = FW.familyParts({ answered: summary.answered, haveNot: summary.haveNot }).map(text => ({ text, tone: null }));
+  if (summary.changed.length > 0) parts.push({ text: FW.changedPart(summary.changed.length), tone: 'late' });
+  if (parts.length > 0) parts[0] = { ...parts[0], text: `${FW.doorLabel} ${parts[0].text}` };
+  return parts;
+}
+
 /** The played-game scoreline + W/L/T badge. One fragment, shared by the editable (self-entered)
  *  and read-only (organizer-owned) score lines so they can never drift apart visually. */
 function scoreline(event: RepTeamEvent) {
@@ -144,7 +155,7 @@ export async function deleteEventRequest(orgSlug: string, teamId: string, eventI
 export default function ScheduleEventSheet({
   orgSlug, teamId, base, event: ev, initialView, isPhone, nowMs, sportPack, capabilities, drawerDoors,
   places, teamTags, tagIds, teamAwards, awardTypes, awardPlayers, moved: selectedMoved, mirroredGameSource,
-  bookEntry, gameDayLive, familiesSeeSchedule, seriesReach, clubSource = null,
+  bookEntry, gameDayLive, familiesSeeSchedule, seriesReach, clubSource = null, familyAnswersOn = false,
   onClose, onEdit, onAddGame, onEventChanged, onDeleted, refresh, onBookChanged, onAwardsChanged, onHandedBack,
 }: {
   orgSlug: string;
@@ -181,6 +192,8 @@ export default function ScheduleEventSheet({
   gameDayLive: boolean;
   /** Families can see this team's schedule — a cancel or restore tells them, so it asks once first. */
   familiesSeeSchedule: boolean;
+  /** Families can answer In / Out / Maybe on this team (Signed-in family accounts Stage 4b): the room asks what they said. */
+  familyAnswersOn?: boolean;
   /** A repeating event's dates, per answer (null on a one-off): the pencil asks which before the form opens. */
   seriesReach: SeriesReach | null;
   /**
@@ -235,6 +248,12 @@ export default function ScheduleEventSheet({
   const [rsvpEditId, setRsvpEditId] = useState<string | null>(null);
   // The attendance row that opened it — focus goes home to it (a tap on iOS never focused it).
   const rsvpOpenerRef = useRef<HTMLElement | null>(null);
+  // Signed-in family accounts Stage 4b (Part 5): what families said for THIS event, beside the coach's book, and the toast
+  // after "Use N family answers" (its Undo puts exactly those players back to Not marked). Keyed by event so a stale answer
+  // for another event never shows.
+  const [familyRead, setFamilyRead] = useState<{ eventId: string; answers: RoomFamilyAnswers | null } | null>(null);
+  const [familyOnlyChanged, setFamilyOnlyChanged] = useState(false);
+  const [familyToast, setFamilyToast] = useState<{ eventId: string; text: string; undo: { playerId: string; status: RepAttendanceStatus }[] | null } | null>(null);
   // Whether a lineup is SAVED (any position set), and which players it holds — what the Lineup row
   // reads, and what flags attendance ↔ lineup drift. The look-only peek that rendered the order
   // retired with the tabs (E3): the builder's first screen IS the order, one inning at a time.
@@ -319,8 +338,10 @@ export default function ScheduleEventSheet({
     if (slideOverRef.current) slideOverRef.current.scrollTop = 0;
   }, [openView]);
 
-  const attendanceSig = () => JSON.stringify(attendanceRows.map(r => [r.player.id, r.status, r.note]));
+  // A confirming tap (same mark, `confirmed`) is a change too: it must not be read as "nothing new" by a save already in flight.
+  const attendanceSig = () => JSON.stringify(attendanceRows.map(r => [r.player.id, r.status, r.note, !!r.confirmed]));
   const attendanceSigRef = useRef('');
+  const attendanceSavedRef = useRef(false);
   useEffect(() => { attendanceSigRef.current = attendanceSig(); }, [attendanceRows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save attendance ~0.7s after the last change (a status tap is meant to stick).
@@ -387,6 +408,8 @@ export default function ScheduleEventSheet({
             player,
             status: existing?.status ?? 'unknown',
             note: existing?.note ?? '',
+            markedAt: existing?.markedAt ?? null,
+            savedStatus: existing?.status ?? 'unknown',
           };
         }));
         if (lineupCapable) {
@@ -407,6 +430,24 @@ export default function ScheduleEventSheet({
     fetchAttendance();
     return () => { cancelled = true; };
   }, [orgSlug, ev, teamId, drawerDoors.lineupTab, drawerDoors.attendanceTab]);
+
+  // The room's family side (Stage 4b): only while families can answer on this team and this coach can mark attendance.
+  useEffect(() => {
+    if (!familyAnswersOn || !drawerDoors.attendanceTab) return;
+    let cancelled = false;
+    const eventId = ev.id;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/family-answers`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => { if (!cancelled) setFamilyRead({ eventId, answers: json?.answers ?? null }); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [orgSlug, teamId, ev.id, familyAnswersOn, drawerDoors.attendanceTab]);
+  // The toast goes by itself after a while (Undo is offered for its life only).
+  useEffect(() => {
+    if (!familyToast) return;
+    const t = setTimeout(() => setFamilyToast(null), 10000);
+    return () => clearTimeout(t);
+  }, [familyToast]);
 
   // Removing an already-given award (Awards One Tag Idiom Part A) — the same undo-a-mis-click
   // confirm the season report page already offers, now reachable from the game it was given on.
@@ -448,6 +489,9 @@ export default function ScheduleEventSheet({
       cancelText: 'Keep editing',
       tone: 'danger',
     }))) return;
+    // The schedule row's "9 of 13 in" reads the book: when families can answer and this window saved attendance, the row
+    // re-reads on the way out (not while the window is open: that would reload the rows under the coach's hands).
+    if (familyAnswersOn && attendanceSavedRef.current) refresh();
     onClose();
   }
 
@@ -527,7 +571,7 @@ export default function ScheduleEventSheet({
     }
   }
 
-  function setPlayerAttendance(playerId: string, patch: Partial<Pick<AttendanceRoomRow, 'status' | 'note'>>) {
+  function setPlayerAttendance(playerId: string, patch: Partial<Pick<AttendanceRoomRow, 'status' | 'note' | 'confirmed'>>) {
     setAttendanceRows(rows => rows.map(row => (
       row.player.id === playerId ? { ...row, ...patch } : row
     )));
@@ -553,6 +597,9 @@ export default function ScheduleEventSheet({
             playerId: row.player.id,
             status: row.status,
             note: row.note,
+            // A tap on a player's mark, even the same one: the server moves that player's mark time (mig 479), which keeps
+            // the mark and clears the room's "family changed after you marked" warning.
+            ...(row.confirmed ? { confirmed: true } : {}),
           })),
         }),
       });
@@ -560,6 +607,18 @@ export default function ScheduleEventSheet({
         const d = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(d.error ?? 'Attendance save failed');
       }
+      // The server's mark times (only a changed or tapped row moved), and the taps that were sent are spent.
+      const savedJson = await res.json().catch(() => null) as { attendance?: { playerId: string; markedAt: string | null }[] } | null;
+      const markedAt = new Map((savedJson?.attendance ?? []).map(a => [a.playerId, a.markedAt ?? null]));
+      const sentTaps = new Set(attendanceRows.filter(r => r.confirmed).map(r => r.player.id));
+      const sentStatus = new Map(attendanceRows.map(r => [r.player.id, r.status]));
+      setAttendanceRows(rows => rows.map(r => ({
+        ...r,
+        markedAt: markedAt.has(r.player.id) ? markedAt.get(r.player.id)! : r.markedAt,
+        savedStatus: sentStatus.get(r.player.id) ?? r.savedStatus,
+        confirmed: sentTaps.has(r.player.id) ? false : r.confirmed,
+      })));
+      attendanceSavedRef.current = true;
       if (attendanceSigRef.current === sigAtSave) setAttendanceDirty(false);
       return true;
     } catch (e: unknown) {
@@ -640,6 +699,47 @@ export default function ScheduleEventSheet({
    */
   const hasScore = ev.teamScore != null && ev.opponentScore != null;
   const started = gameHasStarted(ev, nowMs);
+  /* ── Families say if they're coming (Stage 4b, Part 5; drawing tab 2) ─────────────────────────────────────────────────────
+     The room's family side, while families can answer this event and it is not cancelled (cancelled: the card and lines go,
+     the answers are kept). A tap not yet saved counts as just marked, so the amber warning clears on the tap. */
+  const familyAnswers = familyAnswersOn && familyRead?.eventId === ev.id && ev.status !== 'cancelled' && familyRead.answers?.state !== 'cancelled'
+    ? familyRead.answers : null;
+  const nowIso = new Date(nowMs).toISOString();
+  const familyByPlayer = familyAnswers ? new Map(familyAnswers.rows.map(r => [r.playerId, r])) : null;
+  // "Use family answers" stays until the event ends (the lines explain the marks); with no end time, until its day is over.
+  const familyEnded = ev.endsAt ? Date.parse(ev.endsAt) <= nowMs
+    : !!ev.startsAt && orgDayKey(ev.startsAt) < orgDayKey(new Date(nowMs).toISOString());
+  const familyRoom = familyAnswers
+    ? roomFamilySummary(attendanceRows.map(r => ({
+      // The mark time the server will hold once this saves: the server's own rule, so the warning never disagrees with it.
+      playerId: r.player.id, status: r.status,
+      markedAt: bookMarkedAt(r.savedStatus ? { status: r.savedStatus, markedAt: r.markedAt } : undefined, r.status, !!r.confirmed, nowIso),
+    })), familyAnswers.rows)
+    : null;
+  const familySummary = familyRoom && familyEnded ? { ...familyRoom, usable: [] } : familyRoom;
+  const firstNameOfPlayer = (playerId: string) => {
+    const row = attendanceRows.find(r => r.player.id === playerId);
+    return row ? rowPlayer(row.player).firstName : '';
+  };
+  /** Copy family answers into players the coach hasn't marked (In → In, Out → Out; Maybe stays), then the toast. */
+  function applyFamilyAnswers() {
+    if (!familySummary || familySummary.usable.length === 0) return;
+    const use = familySummary.usable;
+    const to = new Map(use.map(u => [u.playerId, u.status]));
+    setAttendanceRows(rows => rows.map(r => (to.has(r.player.id) && r.status === 'unknown' ? { ...r, status: to.get(r.player.id)! } : r)));
+    setAttendanceDirty(true);
+    setFamilyToast({ eventId: ev.id, text: FW.card.used(use.map(u => firstNameOfPlayer(u.playerId))), undo: use });
+  }
+  /** Undo: exactly those players back to Not marked (Reset would wipe the coach's own marks too). */
+  function undoFamilyAnswers() {
+    const undo = familyToast?.eventId === ev.id ? familyToast.undo : null;
+    if (!undo) return;
+    const back = new Map(undo.map(u => [u.playerId, u.status]));
+    setAttendanceRows(rows => rows.map(r => (back.get(r.player.id) === r.status ? { ...r, status: 'unknown' } : r)));
+    setAttendanceDirty(true);
+    setFamilyToast({ eventId: ev.id, text: FW.card.undone, undo: null });
+  }
+  const shownToast = familyToast?.eventId === ev.id ? familyToast : null;
   const scoreLeads = isGameEvent && sheetOrder({ started, hasScore }) === 'score-first';
   const mapsQuery = ev.locationAddress || ev.location || locationLabel;
   const openMap = (e: React.MouseEvent) => {
@@ -1050,7 +1150,16 @@ export default function ScheduleEventSheet({
         ? 'Loading attendance…'
         : attendanceError && attendanceRows.length === 0
           ? attendanceError
-          : <RowLine parts={attendanceWords.parts} />}
+          : (
+            <>
+              <RowLine parts={attendanceWords.parts} />
+              {/* Stage 4b: one line under it, only while families can answer and the event hasn't started. It counts
+                  families, not the book; "changed" is amber (a family changed after you marked that player). */}
+              {familySummary && !started && familyDoorParts(familySummary).length > 0 && (
+                <span className={styles.sheetDoorFamilies}><RowLine parts={familyDoorParts(familySummary)} /></span>
+              )}
+            </>
+          )}
       door="chevron"
     />
   ) : null;
@@ -1238,6 +1347,23 @@ export default function ScheduleEventSheet({
     />
   );
 
+  /** The RSVP sheet's family box (Stage 4b): what the family said, and what a tap does here, in the choices' own words. */
+  function rsvpFamilyBox(row: AttendanceRoomRow) {
+    const line = familyByPlayer?.get(row.player.id)?.line;
+    if (!line || !familySummary) return null;
+    const drift = familySummary.changed.includes(row.player.id);
+    const familyChoice = line.answer === 'in' ? ATTENDANCE_WORD.attending : line.answer === 'out' ? ATTENDANCE_WORD.absent : null;
+    const markChoice = row.status === 'unknown' ? null : ATTENDANCE_WORD[row.status];
+    return {
+      head: FW.box.head(firstNameOfPlayer(row.player.id)),
+      answer: FW.box.answer(line),
+      note: FW.box.note(line),
+      meta: FW.box.meta(line),
+      hint: FW.box.hint({ familyChoice, markChoice, drift }),
+      drift,
+    };
+  }
+
   const panelContent = openView === 'attendance' ? (
     <>
       {viewHead('Attendance')}
@@ -1252,6 +1378,16 @@ export default function ScheduleEventSheet({
         setAllAttendance={setAllAttendance}
         setRsvpEditId={(playerId, from) => { rsvpOpenerRef.current = from; setRsvpEditId(playerId); }}
         handleAttendanceSave={handleAttendanceSave}
+        family={familyAnswers && familyByPlayer && familySummary ? {
+          rows: familyByPlayer,
+          summary: familySummary,
+          changedNames: familySummary.changed.map(firstNameOfPlayer),
+          onUse: applyFamilyAnswers,
+          toast: shownToast ? { text: shownToast.text, onUndo: shownToast.undo ? undoFamilyAnswers : null } : null,
+          inviteHref: `${base}/roster`,
+          onlyChanged: familyOnlyChanged,
+          toggleChanged: () => setFamilyOnlyChanged(v => !v),
+        } : null}
       />
     </>
   ) : openView === 'scouting' ? (
@@ -1307,7 +1443,8 @@ export default function ScheduleEventSheet({
             eventLine={[ev.startsAt ? fmtDate(ev.startsAt) : '', ev.name].filter(Boolean).join(' · ')}
             status={row.status}
             note={row.note}
-            onPick={status => { setPlayerAttendance(row.player.id, { status }); setRsvpEditId(null); }}
+            onPick={status => { setPlayerAttendance(row.player.id, { status, confirmed: true }); setRsvpEditId(null); }}
+            family={rsvpFamilyBox(row)}
             onNote={note => setPlayerAttendance(row.player.id, { note })}
             onClose={() => setRsvpEditId(null)}
             opener={rsvpOpenerRef}

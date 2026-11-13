@@ -109,7 +109,7 @@ export default function MonthlyAttendanceChart({ buckets }: MonthlyAttendanceCha
       )}
       {worst && (
         <div className={styles.foot}>
-          {worst.label}: <b>{worst.known} of {worst.recorded}</b> known &mdash; {worst.gap} left at no-reply, not counted either way
+          {worst.label}: <b>{worst.known} of {worst.recorded}</b> known &mdash; {worst.gap} left Not marked, not counted either way
         </div>
       )}
     </div>

@@ -24095,6 +24095,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_event_attendance",
+        "pos": 12,
+        "column_name": "marked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_event_tags",
         "pos": 1,
         "column_name": "event_id",

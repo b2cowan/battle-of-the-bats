@@ -20,6 +20,7 @@ import type { ScheduleVisibility } from '@/lib/family-access';
 import { ARRIVAL_PRESET_MINUTES, arrivalPresetLabel } from '@/lib/coach-arrival';
 import LoadingState from '@/components/shared/LoadingState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { FamilyAnswersSettingRow, type FamilyAnswersSettingData } from '@/components/coaches/FamilyAnswersSettingRow';
 import ClubSiteOffNotice from '@/components/coaches/ClubSiteOffNotice';
 import CoachPublicPageDoor, { VISIBILITY_LABEL } from '@/components/coaches/CoachPublicPageDoor';
 import type { CoachNamesPolicy } from '@/lib/coach-names-policy';
@@ -42,6 +43,9 @@ interface SettingsData {
    *  absent (never locked), exactly like `clubBook`. Moved here from the Roster page's retired
    *  "Team family access" card (2026-09-12). */
   scheduleVisibility: { value: ScheduleVisibility; canEdit: boolean } | null;
+  /** "Families say if they're coming" (Signed-in family accounts Stage 4b). Null ⇒ the row does not exist (no family layer, the
+   *  guardian tier off, or no live season). Shown only where Schedule visibility is shown. */
+  familyAnswers: FamilyAnswersSettingData | null;
   /** The club's public site is off, so the team's public page opens for no one (Club Tier Stage 4a, S4-08). */
   clubSiteOff: boolean;
   /** "Your team's public page" + the caller's OWN name switch (Club Tier 4c-2 Part B). Null ⇒ no public team page in
@@ -994,6 +998,15 @@ export default function TeamSettingsPage({
                     )}
                   </div>
                 </div>
+              )}
+              {visibilityRow && data.familyAnswers && (
+                <FamilyAnswersSettingRow
+                  orgSlug={orgSlug}
+                  teamId={teamId}
+                  data={data.familyAnswers}
+                  scheduleStaffOnly={visibilityRow.value === 'staff'}
+                  onSaved={value => setData(prev => prev?.familyAnswers ? { ...prev, familyAnswers: { ...prev.familyAnswers, value } } : prev)}
+                />
               )}
               {/* The site-off notice moved INTO the door (4c-2 Part B); it stays here only where no door exists. */}
               {visibilityRow && data.clubSiteOff && !data.publicPage && (

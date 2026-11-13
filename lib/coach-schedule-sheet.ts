@@ -6,9 +6,9 @@
  *
  *   · `attendanceRowWords` — the Attendance row's head and second line. The head carries the counts
  *                            ("Attendance · 10 in · 1 late · 1 out"); the line NAMES who is not
- *                            simply in — Out first, then Late, then No reply — so the coach reads
+ *                            simply in — Out first, then Late, then Not marked — so the coach reads
  *                            who is missing without opening anything (R2: a door names what is
- *                            behind it). Before anyone answers: "12 haven't replied — Avery, Blake,
+ *                            behind it). Before anyone is marked: "12 not marked — Avery, Blake,
  *                            Casey and 9 more"; once everyone is in: "All 12 in".
  *   · `lineupDoor`        — the Lineup row's destination, by the clock at every width (E3), and the
  *                            one exception E4 draws: a disagreement on a finished game opens the
@@ -85,7 +85,7 @@ export interface RowWords {
 }
 
 const COUNT_WORD: Record<AttendanceStatusValue, string> = {
-  attending: 'in', late: 'late', absent: 'out', unknown: 'no reply',
+  attending: 'in', late: 'late', absent: 'out', unknown: 'not marked',
 };
 
 /**
@@ -99,10 +99,9 @@ export function attendanceRowWords(rows: readonly { player: RowPlayer; status: A
   const by: Record<AttendanceStatusValue, RowPlayer[]> = { attending: [], late: [], absent: [], unknown: [] };
   for (const r of rows) by[r.status].push(r.player);
 
-  // Nobody has answered: name who has not, first names only (the drawn sentence).
+  // Nobody is marked yet: name who is not, first names only (the drawn sentence; "not marked", ask 9).
   if (by.unknown.length === total) {
-    const verb = total === 1 ? 'hasn’t' : 'haven’t';
-    return { head: 'Attendance', parts: [{ text: `${total} ${verb} replied — ${nameList(by.unknown.map(p => p.firstName || rowPlayerLabel(p)))}`, tone: 'none' }] };
+    return { head: 'Attendance', parts: [{ text: `${total} ${COUNT_WORD.unknown} — ${nameList(by.unknown.map(p => p.firstName || rowPlayerLabel(p)))}`, tone: 'none' }] };
   }
   // Everyone gave the same answer: say so in one breath ("All 12 in").
   for (const s of ['attending', 'late', 'absent'] as const) {
@@ -115,7 +114,7 @@ export function attendanceRowWords(rows: readonly { player: RowPlayer; status: A
   const groups: { label: string; word: string; tone: RowLinePart['tone']; players: RowPlayer[] }[] = [
     { label: 'Out', word: COUNT_WORD.absent, tone: 'out', players: by.absent },
     { label: 'Late', word: COUNT_WORD.late, tone: 'late', players: by.late },
-    { label: 'No reply', word: COUNT_WORD.unknown, tone: 'none', players: by.unknown },
+    { label: 'Not marked', word: COUNT_WORD.unknown, tone: 'none', players: by.unknown },
   ];
   const parts: RowLinePart[] = [];
   let budget = ROW_NAME_CAP;
@@ -125,8 +124,8 @@ export function attendanceRowWords(rows: readonly { player: RowPlayer; status: A
     budget -= shown.length;
     const rest = g.players.length - shown.length;
     // ⚠ "and N more" is only ever more of THAT answer — "Late: #2 Blake and 1 more" — and a group
-    // the budget never reached is counted in its own words ("2 no reply"), in its own tone. Folding
-    // every overflow into the last named group (/review, 2026-09-25) read three Late and No-reply
+    // the budget never reached is counted in its own words ("2 not marked"), in its own tone. Folding
+    // every overflow into the last named group (/review, 2026-09-25) read three Late and Not-marked
     // players as three more Late, and 3 Out + 2 Late as five Out, beside a head that said otherwise.
     parts.push({
       text: shown.length === 0

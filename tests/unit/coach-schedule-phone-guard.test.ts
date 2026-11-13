@@ -253,7 +253,8 @@ describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a
     const siteA = sheet.indexOf('<div className={styles.modalOverlay}');
     const siteB = sheet.indexOf('<CoachRsvpSheet');
     assert.ok(siteA > 0 && siteB > siteA, 'rendered after the event sheet\'s overlay, as a sibling');
-    assert.ok(sheet.includes('onPick={status => { setPlayerAttendance(row.player.id, { status }); setRsvpEditId(null); }}'), 'a choice writes through the list\'s own path and closes');
+    // Stage 4b: the pick also marks the row as tapped (`confirmed`), so the mark's time moves even on the same choice.
+    assert.ok(sheet.includes('onPick={status => { setPlayerAttendance(row.player.id, { status, confirmed: true }); setRsvpEditId(null); }}'), 'a choice writes through the list\'s own path and closes');
     assert.ok(sheet.includes('onNote={note => setPlayerAttendance(row.player.id, { note })}'), 'a note rides the same autosave');
   });
   it('the where-row and the foot row are phone forms; the desktop keeps its inline link and its action row', () => {

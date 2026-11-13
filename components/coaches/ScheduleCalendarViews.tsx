@@ -60,6 +60,12 @@ export interface ScheduleRowDecor {
    * page that doesn't read club sources (an admin's read of a team).
    */
   clubSourceOf?: (e: RepTeamEvent) => { scheduleName: string; handedBack: boolean; ask?: { id: string } | null } | null;
+  /**
+   * Who is coming (Signed-in family accounts Stage 4b, Part 4; drawing tab 1): "9 of 13 in · 1 out · 1 maybe" on the list row's
+   * second line, or the red "5 out · at most 8 can play". Null = the row says nothing new. Absent: a page without family
+   * answers (the club admin's read-only copy of a rep schedule stays exactly as it is).
+   */
+  headcountFor?: (e: RepTeamEvent) => { words: string; short: boolean } | null;
 }
 
 /** The data all three views draw from. */
@@ -212,7 +218,7 @@ function TournamentGameChip({ game, dayKey, listRow }: { game: CoachScheduleTour
   );
 }
 
-function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow, clubSource }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean; clubSource?: { scheduleName: string; handedBack: boolean; ask?: { id: string; late?: boolean } | null } | null }) {
+function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow, clubSource, headcount }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean; clubSource?: { scheduleName: string; handedBack: boolean; ask?: { id: string; late?: boolean } | null } | null; headcount?: { words: string; short: boolean } | null }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
@@ -323,6 +329,11 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
         leadKind={span ? 'text' : dayKey ? 'time' : 'date-time'}
         title={listTitle}
         titleWeight="plain"
+        // Who is coming (Stage 4b): the row's caption, so a phone joins it to the date with " ·" and a desk sets it under the
+        // title. Only the shortfall is coloured, in the event window's Out word style (ask 7).
+        caption={headcount
+          ? <span className={styles.sheetDoorTone} data-tone={headcount.short ? 'out' : undefined}>{headcount.words}</span>
+          : undefined}
         trail={<>{mismatchMark}{states}</>}
         beside={gameDayHref ? <Link href={gameDayHref} className={styles.gdEntryBtn}>Game day</Link> : undefined}
       />
@@ -364,6 +375,7 @@ export function ScheduleEventChip({ event, decor, dayKey, listRow }: { event: Re
       gameDayHref={decor.gameDayHrefById.get(event.id) ?? null}
       listRow={listRow}
       clubSource={decor.clubSourceOf?.(event) ?? null}
+      headcount={decor.headcountFor?.(event) ?? null}
     />
   );
 }

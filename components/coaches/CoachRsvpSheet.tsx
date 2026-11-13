@@ -47,7 +47,10 @@ export default function CoachRsvpSheet({
   onPick,
   onNote,
   onClose,
+  family = null,
 }: {
+  /** What the family said (Stage 4b, Part 5), as words: present only while families can answer this event. */
+  family?: { head: string; answer: string; note: string; meta: string; hint: string; drift: boolean } | null;
   playerName: string;
   /** "Fri, Sep 18 · UAT probe practice" — the day and the event, so the sheet says what it is for. */
   eventLine: string;
@@ -71,6 +74,14 @@ export default function CoachRsvpSheet({
     <>
       <div id={nameId} className={own.name}>{playerName}</div>
       <div id={subId} className={own.sub}>{eventLine}</div>
+      {family && (
+        <div className={own.familyBox} data-drift={family.drift || undefined}>
+          <div className={own.familyHead}>{family.head}</div>
+          <div className={own.familyAnswer}><strong>{family.answer}</strong>{family.note && <> · {family.note}</>}</div>
+          <div className={own.familyMeta}>{family.meta}</div>
+          <p className={own.familyHint}>{family.hint}</p>
+        </div>
+      )}
       <div className={own.choices} role="group" aria-label={`Attendance for ${playerName}`}>
         {ATTENDANCE_OPTIONS.map(option => {
           const Icon = option.icon;

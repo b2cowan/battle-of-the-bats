@@ -60,6 +60,7 @@ import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../coaches.module.css';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, CoachBar, kit } from '@/components/coaches/kit';
 import type { RepRosterPlayer, RepTeamEvent, RepEventType } from '@/lib/types';
+import type { Headcount } from '@/lib/family-availability-rules';
 
 
 /**
@@ -269,6 +270,9 @@ export default function TeamOverviewPage({
   const [birthdays, setBirthdays] = useState<{ name: string; inDays: number }[]>([]);
   // In/Late/Out/No-reply headcount for the next event → Next-up tile.
   const [nextAttendance, setNextAttendance] = useState<{ in: number; late: number; out: number; noReply: number } | null>(null);
+  // Signed-in family accounts Stage 4b (ask 8): while families can answer on this team, "Next up" counts the way the schedule
+  // row does (the coach's mark first, else the family's answer), or the two screens give two numbers for one game. Null = off.
+  const [familyHeadcounts, setFamilyHeadcounts] = useState<Record<string, Headcount> | null>(null);
   /** Chunk C (wow #2) — arm-care concerns for the anchor game, and the sport's period noun. */
   const [gameDayArmCare, setGameDayArmCare] = useState<ArmCareConcern[]>([]);
   const [periodLabelPlural, setPeriodLabelPlural] = useState('Innings');
@@ -334,7 +338,8 @@ export default function TeamOverviewPage({
       }
 
       const rosterData: { players?: RepRosterPlayer[] } = canRoster ? await rosterRes!.json() : {};
-      const eventsData: { events?: RepTeamEvent[] } = canSchedule ? await eventsRes!.json() : {};
+      const eventsData: { events?: RepTeamEvent[]; familyHeadcounts?: Record<string, Headcount> } = canSchedule ? await eventsRes!.json() : {};
+      setFamilyHeadcounts(eventsData.familyHeadcounts ?? null);
       /* ⚠⚠ THE MONEY HUB'S BUDGET, NOT A COPY OF IT (2026-10-01). This tile read the season budget
          from `/budget`, which knew only the optional ESTIMATED total — so a coach who planned 27
          lines and never typed an estimate saw "Not set" here while the Budget Plan read $46,218.30.
@@ -1901,7 +1906,18 @@ export default function TeamOverviewPage({
      * They see no attendance chip at all, which is honest: we do not know.
      */
     const attendanceHref = chipCaps.attendance ? anchorHref('take_attendance') : null;
-    if (chipCaps.attendance) {
+    // Families can answer here (Stage 4b): the schedule row's count for this event when it has one (an upcoming event the switch
+    // covers, with a mark or an answer), In and Late as in, then Out and Maybe, zero parts left out. Otherwise today's chips.
+    const familyCount = familyHeadcounts?.[nextEvent.id];
+    if (chipCaps.attendance && familyCount) {
+      if (familyCount.in > 0) {
+        prepChips.push({ key: 'attendance', state: 'done', href: attendanceHref,
+          body: <><CheckCircle2 size={13} aria-hidden /> <strong>{familyCount.in}</strong> of {familyCount.total} in</> });
+      }
+      ([['out', familyCount.out, 'out'], ['maybe', familyCount.maybe, 'maybe']] as const).forEach(([key, count, word]) => {
+        if (count > 0) prepChips.push({ key, state: 'fact', href: attendanceHref, body: <>{count} {word}</> });
+      });
+    } else if (chipCaps.attendance) {
       prepChips.push(nextAttendance
         ? { key: 'attendance', state: 'done', href: attendanceHref,
             body: <><CheckCircle2 size={13} aria-hidden /> <strong>{nextAttendance.in}</strong> of {attendanceTotal} in</> }
@@ -1925,11 +1941,11 @@ export default function TeamOverviewPage({
     // who never answered are different mornings, and one of each is a third. So the gap is accounted
     // for IN FULL rather than partially: every non-"in" state with anyone in it gets a chip, and the
     // numbers on this row always add up to the total. Only once attendance has actually been taken.
-    if (nextAttendance) {
+    if (nextAttendance && !familyCount) {
       ([
         ['late', nextAttendance.late, 'late'],
         ['out', nextAttendance.out, 'out'],
-        ['noreply', nextAttendance.noReply, 'no reply'],
+        ['noreply', nextAttendance.noReply, 'not marked'],
       ] as const).forEach(([key, count, word]) => {
         if (count > 0) prepChips.push({ key, state: 'fact', href: attendanceHref, body: <>{count} {word}</> });
       });

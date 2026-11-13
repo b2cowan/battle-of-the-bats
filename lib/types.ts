@@ -1231,6 +1231,9 @@ export interface RepTeam {
    * It is NOT the enforcement point: every family/public read re-checks it server-side.
    */
   scheduleVisibility: 'staff' | 'families' | 'public_link';
+  /** "Families say if they're coming" (mig 476, Signed-in family accounts Stage 4b): off | games | games_and_practices. Normalised
+   *  fail-closed (an unknown value is off). NOT the enforcement point: lib/family-availability.ts re-checks every gate. */
+  familyAnswers: 'off' | 'games' | 'games_and_practices';
   /**
    * Club Shared Book (mig 227): is this team sharing its opponent book with the club's other
    * sharing teams? The head coach's own switch, and also the RECIPROCITY key — a team reads
@@ -2113,6 +2116,9 @@ export interface RepTeamEventAttendance {
   updatedBy: string | null;
   createdAt: string;
   updatedAt: string;
+  /** When a coach last set or confirmed THIS player's mark (mig 479); null when never marked. Not `updatedAt`, which every batch
+   *  save moves on every row. The room's "family changed after you marked" compares a family answer with it (Stage 4b). */
+  markedAt: string | null;
 }
 
 export interface RepTeamLineup {
