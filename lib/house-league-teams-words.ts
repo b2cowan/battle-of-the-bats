@@ -43,6 +43,12 @@ export function familyName(guardianLastName: string, childName: string): string 
 
 export type DivisionState = 'noTeams' | 'notDrafted' | 'drafted' | 'published';
 
+/**
+ * `placed` is the players on a team who were dealt or moved: not merely locked there. A lock means "stay put", not
+ * "already drafted": a division whose only players on teams are locked (and no draft has run) still reads Not drafted,
+ * so Run the draft (and its facts window, with the Locked and Friends rows) stays reachable. Anyone dealt by a draft
+ * (it records a draft team for locked players too) or moved by hand makes it Drafted.
+ */
 export function divisionState(d: { teams: number; placed: number; publishedAt: string | null }): DivisionState {
   if (d.publishedAt) return 'published';
   if (d.teams === 0) return 'noTeams';

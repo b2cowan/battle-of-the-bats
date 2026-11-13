@@ -162,7 +162,11 @@ export default function TeamsScreen() {
   const players = board.players;
   const placed = players.filter(p => p.teamId);
   const familyCount = new Set(placed.map(p => p.guardianEmail).filter(Boolean)).size;
-  const state = divisionState({ teams: board.teams.length, placed: placed.length, publishedAt: division.publishedAt });
+  // A lock is "stay put", not a deal: a player who is only locked doesn't make the division Drafted (divisionState).
+  // A real draft records where it dealt every player, locked ones included (draftTeamId), so once it has run, locking
+  // everyone can't send the division back to Not drafted.
+  const dealt = placed.filter(p => !p.locked || p.draftTeamId);
+  const state = divisionState({ teams: board.teams.length, placed: dealt.length, publishedAt: division.publishedAt });
   const day = division.publishedAt ? dayOf(division.publishedAt) : '';
   const words = stateWords(state, { day, familyCount });
   const rated = players.filter(p => ratings.has(p.id)).length;
@@ -281,7 +285,7 @@ export default function TeamsScreen() {
       ) : undefined,
     }] : []),
     {
-      key: 'draft', done: placed.length > 0, title: W.stepTitle.draft,
+      key: 'draft', done: dealt.length > 0, title: W.stepTitle.draft,
       line: board.teams.length === 0 ? draftRefusal('noTeams', { division: division.name }) : W.step.draft(players.length, board.teams.length),
     },
     { key: 'publish', done: published, title: W.stepTitle.publish, line: published ? words.says : W.step.publish(familyCount) },
