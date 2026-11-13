@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type SetStateAction } from 'react';
 import { ArrowLeft, ChevronRight, ClipboardList, ExternalLink, Eye, FileText, Link2, ListOrdered, MapPin, Pencil, Trash2, Trophy, Users, Video, X } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
@@ -238,7 +238,18 @@ export default function ScheduleEventSheet({
   const [footError, setFootError] = useState('');
   /** Ask only for what this coach's grants open (the same answer the rows read). */
   const wantsRead = drawerDoors.lineupTab || drawerDoors.attendanceTab;
-  const [attendanceRows, setAttendanceRows] = useState<AttendanceRoomRow[]>([]);
+  const [attendanceRows, setAttendanceRowsState] = useState<AttendanceRoomRow[]>([]);
+  /**
+   * The rows AS THEY NOW STAND, kept in step with the state by the one setter below (never a render behind). A save chained behind
+   * another reads this when it RUNS, not the render it was asked from, so a tap made in between is neither missed nor re-sent from a
+   * stale baseline (One attendance record /review).
+   */
+  const attendanceRowsRef = useRef<AttendanceRoomRow[]>([]);
+  const setAttendanceRows = useCallback((next: SetStateAction<AttendanceRoomRow[]>) => {
+    const value = typeof next === 'function' ? next(attendanceRowsRef.current) : next;
+    attendanceRowsRef.current = value;
+    setAttendanceRowsState(value);
+  }, []);
   const [attendanceLoading, setAttendanceLoading] = useState(wantsRead);
   const [attendanceSaving, setAttendanceSaving] = useState(false);
   const [attendanceDirty, setAttendanceDirty] = useState(false);
@@ -419,8 +430,9 @@ export default function ScheduleEventSheet({
             player,
             status: existing?.status ?? 'unknown',
             note: existing?.note ?? '',
-            markedAt: existing?.markedAt ?? null,
+            markedAt: existing?.setAt ?? null,
             savedStatus: existing?.status ?? 'unknown',
+            savedNote: existing?.note ?? '',
           };
         }));
         if (lineupCapable) {
@@ -442,7 +454,7 @@ export default function ScheduleEventSheet({
 
     fetchAttendance();
     return () => { cancelled = true; };
-  }, [orgSlug, ev, teamId, drawerDoors.lineupTab, drawerDoors.attendanceTab]);
+  }, [orgSlug, ev, teamId, drawerDoors.lineupTab, drawerDoors.attendanceTab, setAttendanceRows]);
 
   // The room's family side (Stage 4b): only while families can answer on this team and this coach can mark attendance.
   useEffect(() => {
@@ -591,53 +603,104 @@ export default function ScheduleEventSheet({
     setAttendanceDirty(true);
   }
 
+  /**
+   * "All in" and "Reset" are the SERVER's (One attendance record): "All in" fills only players nobody has answered (ruling 6) and
+   * "Reset" clears only the coach's own answers (call C2), each decided under the row's lock, so a family answer is never
+   * overwritten. Pending taps are saved first (the same queue), then the room takes the rows as they now stand.
+   */
   function setAllAttendance(status: RepAttendanceStatus) {
-    setAttendanceRows(rows => rows.map(row => ({ ...row, status })));
-    setAttendanceDirty(true);
     setAttendanceFilter('all'); // a status filter would empty out after a bulk set — show the result
+    void handleAttendanceSave().then(ok => {
+      if (!ok) return false;
+      return runAttendanceWrite(() => writeAttendance(status === 'attending' ? { fill: 'attending' } : { reset: true }, []));
+    });
   }
 
   function handleAttendanceSave(): Promise<boolean> {
-    const run = attendanceSaveChain.current.then(saveAttendanceNow);
+    return runAttendanceWrite(saveAttendanceNow);
+  }
+  /** Attendance writes run ONE AT A TIME, in the order asked (a bulk after a save, a save after a tap). */
+  function runAttendanceWrite(write: () => Promise<boolean>): Promise<boolean> {
+    const run = attendanceSaveChain.current.then(write);
     attendanceSaveChain.current = run.catch(() => undefined);
     return run;
   }
+
+  /**
+   * ⚠⚠ ONLY THE PLAYERS THE COACH CHANGED (One attendance record, plan §1): the status and the coach's note each go only when they
+   * differ from what the server last said. Sending the whole roster re-wrote every row, and under latest-wins that overwrote every
+   * family answer that arrived since the window opened. Ships with the family's writer, never apart.
+   */
   async function saveAttendanceNow(): Promise<boolean> {
-    const sigAtSave = attendanceSig();
+    // The live rows, read NOW (a save chained behind another runs later than the render that asked for it).
+    const entries = attendanceRowsRef.current.flatMap(row => {
+      const statusChanged = row.status !== (row.savedStatus ?? 'unknown');
+      const noteChanged = row.note.trim() !== (row.savedNote ?? '');
+      if (!statusChanged && !noteChanged) return [];
+      return [{ playerId: row.player.id, ...(statusChanged ? { status: row.status } : {}), ...(noteChanged ? { note: row.note } : {}) }];
+    });
+    if (entries.length === 0) {
+      // A tap on the mark a player already has: nothing for the server (one record cannot drift from itself).
+      setAttendanceRows(rows => (rows.some(r => r.confirmed) ? rows.map(r => (r.confirmed ? { ...r, confirmed: false } : r)) : rows));
+      setAttendanceDirty(false);
+      return true;
+    }
+    return writeAttendance({ entries }, entries);
+  }
+
+  /**
+   * One PATCH, then the rows as the server now holds them. A row with a local edit this request did NOT carry (picked while it was
+   * in flight) keeps that pick, against the new baseline, so the next save sends it; every other row takes the server's, a
+   * family's new answer included. Decided in the state updater (the latest rows), never from this render's copy.
+   */
+  async function writeAttendance(
+    body: object, sentEntries: readonly { playerId: string; status?: RepAttendanceStatus; note?: string }[],
+  ): Promise<boolean> {
+    const sigAtSave = attendanceSigRef.current;
+    const sent = new Map(sentEntries.map(e => [e.playerId, e]));
     setAttendanceSaving(true);
     setAttendanceError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${ev.id}/attendance`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          entries: attendanceRows.map(row => ({
-            playerId: row.player.id,
-            status: row.status,
-            note: row.note,
-            // A tap on a player's mark, even the same one: the server moves that player's mark time (mig 479), which keeps
-            // the mark and clears the room's "family changed after you marked" warning.
-            ...(row.confirmed ? { confirmed: true } : {}),
-          })),
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(d.error ?? 'Attendance save failed');
       }
-      // The server's mark times (only a changed or tapped row moved), and the taps that were sent are spent.
-      const savedJson = await res.json().catch(() => null) as { attendance?: { playerId: string; markedAt: string | null }[] } | null;
-      const markedAt = new Map((savedJson?.attendance ?? []).map(a => [a.playerId, a.markedAt ?? null]));
-      const sentTaps = new Set(attendanceRows.filter(r => r.confirmed).map(r => r.player.id));
-      const sentStatus = new Map(attendanceRows.map(r => [r.player.id, r.status]));
-      setAttendanceRows(rows => rows.map(r => ({
-        ...r,
-        markedAt: markedAt.has(r.player.id) ? markedAt.get(r.player.id)! : r.markedAt,
-        savedStatus: sentStatus.get(r.player.id) ?? r.savedStatus,
-        confirmed: sentTaps.has(r.player.id) ? false : r.confirmed,
-      })));
+      const savedJson = await res.json().catch(() => null) as { attendance?: RepTeamEventAttendance[] } | null;
+      const server = new Map((savedJson?.attendance ?? []).map(a => [a.playerId, a]));
+      // Anything picked since this request STARTED (decided before the merge): those rows are not on the server yet.
+      const pickedSince = attendanceSigRef.current !== sigAtSave;
+      setAttendanceRows(rows => rows.map(r => {
+        const s = server.get(r.player.id);
+        const carried = sent.get(r.player.id);
+        const status = s?.status ?? 'unknown';
+        const note = s?.note ?? '';
+        // A pick made while this save was in flight is the coach's NEWEST word: the row differs from what this request carried
+        // (even when it went back to the answer held before it was sent). A row this request did not carry keeps any local edit
+        // against the server's last word. ⚠ The first test was "differs from the old baseline", which lost a tap back to it.
+        const localStatus = carried?.status !== undefined ? r.status !== carried.status : r.status !== (r.savedStatus ?? 'unknown');
+        const localNote = carried?.note !== undefined ? r.note !== carried.note : r.note.trim() !== (r.savedNote ?? '');
+        return {
+          ...r,
+          status: localStatus ? r.status : status,
+          // The server keeps the trimmed note; what the coach is typing stays as typed (a trailing space must not vanish mid-word).
+          note: localNote || r.note.trim() === note ? r.note : note,
+          markedAt: s?.setAt ?? null,
+          savedStatus: status,
+          savedNote: note,
+          confirmed: false,
+        };
+      }));
       attendanceSavedRef.current = true;
-      if (attendanceSigRef.current === sigAtSave) setAttendanceDirty(false);
+      // A pick made while this was in flight stays dirty, so the autosave sends it. The row test also catches a pick made while an
+      // EARLIER save of the chain was in flight (this write's own start already held it, but nothing has sent it): "All in" and
+      // "Reset" carry no rows, so without it they cleared dirty over that tap.
+      const unsent = attendanceRowsRef.current.some(r => r.status !== (r.savedStatus ?? 'unknown') || r.note.trim() !== (r.savedNote ?? ''));
+      setAttendanceDirty(pickedSince || unsent);
       return true;
     } catch (e: unknown) {
       setAttendanceError(errorMessage(e, 'Attendance save failed'));

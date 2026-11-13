@@ -1840,46 +1840,6 @@
     "update_rule": null
   },
   {
-    "table_name": "event_availability_answers",
-    "constraint_name": "event_availability_answers_answered_by_user_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "answered_by_user_id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "event_availability_answers",
-    "constraint_name": "event_availability_answers_child_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "child_id",
-    "foreign_table": "org_children",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "event_availability_answers",
-    "constraint_name": "event_availability_answers_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "event_availability_answers",
-    "constraint_name": "event_availability_answers_previous_by_user_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "previous_by_user_id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
-  },
-  {
     "table_name": "event_availability_reminders",
     "constraint_name": "event_availability_reminders_pkey",
     "constraint_type": "PRIMARY KEY",
@@ -4038,6 +3998,16 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
+  },
+  {
+    "table_name": "league_seasons",
+    "constraint_name": "league_seasons_time_asked_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "time_asked_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "league_slot_uses",
@@ -9601,6 +9571,16 @@
   },
   {
     "table_name": "rep_team_event_attendance",
+    "constraint_name": "rep_team_event_attendance_family_note_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "family_note_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_event_attendance",
     "constraint_name": "rep_team_event_attendance_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
@@ -9631,12 +9611,32 @@
   },
   {
     "table_name": "rep_team_event_attendance",
+    "constraint_name": "rep_team_event_attendance_previous_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "previous_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_event_attendance",
     "constraint_name": "rep_team_event_attendance_program_year_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "program_year_id",
     "foreign_table": "rep_program_years",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "constraint_name": "rep_team_event_attendance_set_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "set_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {

@@ -3322,37 +3322,84 @@ copy `carriedEntryFields` only). NULL on a returning child's live entry with a v
 ### `rep_team_event_attendance`
 <!-- dict:table:rep_team_event_attendance -->
 
-**Purpose:** one attendance/availability row per **active** roster player per event (`UNIQUE(event_id, player_id)`), set by coaches.
+**Purpose:** **THE ONE ATTENDANCE RECORD** (One attendance record, owner ruling 2026-11-13, mig 483; plan
+`ONE_ATTENDANCE_RECORD_PLAN.md`): one answer per player per event (`UNIQUE(event_id, player_id)`). A connected parent or a coach
+with the `attendance` capability sets it; **the latest change wins**. Every stat reads it as it stands. Stage 4b's separate family
+record (`event_availability_answers`, mig 476) was copied in on dev and dropped by mig 485.
 
 **Gotchas (read first):**
-1. **Coach-set only — there is NO player/guardian self-RSVP.** The only writer is the coach attendance PATCH; `updated_by` is always the acting coach.
-2. **Writes are an upsert on `(event_id, player_id)`** (`onConflict: 'event_id,player_id'`, [lib/db.ts:4708](../../../lib/db.ts#L4708)); a batch re-save overwrites in place.
-3. **Restricted to ACTIVE roster players, per-row** — the route rejects the **entire batch** (400) if any `playerId` isn't `status='active'`. Attendance for a since-deactivated player can persist but can't be re-saved.
-4. **Three denormalized scope columns** (`program_year_id`, `team_id`, `org_id`) duplicate values reachable via `event_id` — for the `team_idx (team_id, program_year_id)` rollup; a `SECURITY DEFINER` trigger keeps them synced to the event (mig 069).
-5. **`note` is capped at 500 chars in the API only** (no DB CHECK).
+1. **ONE WRITER: `rep_attendance_write(...)`** (SECURITY DEFINER, service role only; mig 483). It locks the row, moves the current
+   answer into `previous_*` only when the status changes, refuses a FAMILY write once the event has started or on a cancelled event
+   (`attendance_closed`, ruling 2), keeps each note its own side's, and decides two guards under the lock: `p_only_if_unknown`
+   ("All in" fills only players nobody has answered, ruling 6) and `p_only_if_set_by` ("Reset" clears only the coach's answers,
+   call C2). `rep_attendance_write_many` is the coach's batch, in player order. The coach PATCH (`writeCoachAttendance`) and the
+   family route (`writeFamilyAnswer`) both call it; **nothing writes the table directly**.
+2. **The coach's window sends ONLY the rows the coach changed** (status and note each only when they differ). It used to re-save the
+   whole roster on every tap, which under latest-wins would overwrite every family answer that arrived while it was open.
+3. **No browser reader (mig 483):** 069's two SELECT policies are dropped and `anon` / `authenticated` hold no grant. Staff reads
+   name their columns (`ATTENDANCE_STAFF_COLUMNS` in lib/db.ts: status, coach note, `set_at`, `set_by_kind`); the family note and
+   every person id reach only the attendance-capability room read (`roomFamilyAnswers`) and the parent's own page.
+4. **A Maybe still standing counts as Not marked in every stat** (ruling 2): `countedAttendanceStatus` in lib/coach-schedule-vocab.ts.
+5. **Restricted to active roster players and this game's call-ups** (the coach route); a family reaches only its own child's roster
+   entry on THIS team (`getFamilyReach`), so a call-up stays coach-only.
+6. **Three denormalized scope columns** (`program_year_id`, `team_id`, `org_id`) duplicate values reachable via `event_id`; a
+   `SECURITY DEFINER` trigger keeps them synced to the event (mig 069). The writer copies them from the event.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
 <!-- dict:col:rep_team_event_attendance.event_id -->
 <!-- dict:col:rep_team_event_attendance.player_id -->
-**`event_id`** (FK → `rep_team_events.id` CASCADE) / **`player_id`** (FK → `rep_roster_players.id` CASCADE) — the unique pair; `player_id` must be active to write.
+**`event_id`** (FK → `rep_team_events.id` CASCADE) / **`player_id`** (FK → `rep_roster_players.id` CASCADE) — the unique pair. Keyed by
+the roster ENTRY, so a child join (`org_children_join`) keeps every answer by re-pointing the entry (mig 485 removed 482's answers step).
 
 <!-- dict:col:rep_team_event_attendance.program_year_id -->
 <!-- dict:col:rep_team_event_attendance.team_id -->
 <!-- dict:col:rep_team_event_attendance.org_id -->
-**`program_year_id` / `team_id` / `org_id`** — denormalized scope (gotcha 4).
+**`program_year_id` / `team_id` / `org_id`** — denormalized scope (gotcha 6).
 
 <!-- dict:col:rep_team_event_attendance.status -->
-**`status`** (text, NOT NULL, default `'unknown'`; CHECK `unknown|attending|absent|late`).
+**`status`** (text, NOT NULL, default `'unknown'`; CHECK `unknown|attending|absent|late|maybe`) — the one answer. `maybe` added by
+mig 483 (ruling 1); offered to a coach only where families can answer, before the start (call C3). Kept forever (ruling 8).
 
 <!-- dict:col:rep_team_event_attendance.note -->
-**`note`** (text, nullable; ≤500 chars app-enforced).
+**`note`** (text, nullable; ≤500 chars app-enforced) — **the coach's private note** (staff only; ruling 3). Only a `coach` write sets it.
 
 <!-- dict:col:rep_team_event_attendance.updated_by -->
-**`updated_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — always the acting coach (auth-schema introspection gap).
+**`updated_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — **the coach's audit column**: the last coach who wrote the row.
+⚠ A family write never touches it (mig 483), so the purge can blank family authorship without touching the coach's audit.
 
-<!-- dict:col:rep_team_event_attendance.marked_at -->
-**`marked_at`** (timestamptz, nullable; mig 479, Signed-in family accounts Stage 4b) — when a coach last **set or confirmed this player's mark**. ⚠ Not `updated_at`: the room saves the whole roster in one batch, so every row's `updated_at` moves on any tap. The PATCH writes `marked_at` only for a row whose status changed or that the coach tapped (`confirmed`); the others keep theirs. The room's "⚠ Family changed to Out" compares a family answer's `answered_at` with it. Backfilled from `updated_at` for rows already marked; null on a row never marked.
+<!-- dict:col:rep_team_event_attendance.set_at -->
+<!-- dict:col:rep_team_event_attendance.set_by_kind -->
+<!-- dict:col:rep_team_event_attendance.set_by_user_id -->
+**`set_at`** (timestamptz, nullable; renamed from mig 479's dev-only `marked_at` by mig 483) / **`set_by_kind`** (text, CHECK
+`coach|family|system`, nullable) / **`set_by_user_id`** (uuid → `auth.users` SET NULL) — who set the current answer and when
+(ruling 4: "Out · Coach, today"). Null on a row nobody has set. Backfilled by mig 483: every already-marked row is `coach`, by
+`updated_by`, at its `marked_at` else `updated_at`. **Retention:** `set_by_user_id` is blanked 60 days after the season's last
+event (the purge); `set_by_kind` and `set_at` stay (they name no person).
+
+<!-- dict:col:rep_team_event_attendance.previous_status -->
+<!-- dict:col:rep_team_event_attendance.previous_by_kind -->
+<!-- dict:col:rep_team_event_attendance.previous_by_user_id -->
+<!-- dict:col:rep_team_event_attendance.previous_at -->
+**`previous_status` / `previous_by_kind` / `previous_by_user_id` / `previous_at`** (mig 483) — the answer before the latest change,
+with who and when ("earlier: In (Adasmom, Nov 1)"). Written only when the status changes, and only when the old answer had a setter.
+**Retention:** all four blanked 60 days after the season's last event (the purge).
+
+<!-- dict:col:rep_team_event_attendance.family_note -->
+<!-- dict:col:rep_team_event_attendance.family_note_by_user_id -->
+<!-- dict:col:rep_team_event_attendance.family_note_at -->
+**`family_note`** (text, nullable, CHECK 1–200) / **`family_note_by_user_id`** (uuid → `auth.users` SET NULL) / **`family_note_at`**
+(mig 483) — **the family's note** (ruling 3: the coach reads it; the other parent sees only THAT one exists). A family write always
+replaces it (a second parent's change clears the first's; a cleared answer clears it). ⚖ Who reads it: coaches with `attendance`
+(the room) and the note's own writer. **Retention:** blanked 30 days after its event (the purge); blanked when its writer's
+connection to the child ends (`family_links_end_clears_answer_notes`, retargeted by mig 485); the words and time go when the writer's
+account is deleted (`rep_team_event_attendance_family_note_writer_gone`, BEFORE UPDATE OF `family_note_by_user_id`, mig 485).
+
+**The nightly clean-up (mig 484, watched automation, owner's go = call C4):** `event_availability_purge()` keeps its name, grants and
+mig 477's pg_cron job (`family-answers-purge`, 08:35 GMT). It blanks the family note on the 30-day clock and `set_by_user_id` +
+`previous_*` on the season clock, deletes the Remind log by the season rule, and **never deletes an attendance row** (it never
+touches `status`, `note` or `updated_by`). Proved by `tests/sql/one-attendance-record-fixture.sql` §6 (rolled back, 13/13 on dev
+2026-11-13).
 
 ### `rep_team_lineups`
 <!-- dict:table:rep_team_lineups -->
@@ -6227,38 +6274,12 @@ A mismatched claim of a coach-sent invite (mig 220) still queues as `pending_app
 <!-- dict:col:family_invite_stops.created_at -->
 **`id` / `org_id` / `email` / `created_at`** (uuid PK / uuid → `organizations` CASCADE / text, lowercased and trimmed / timestamptz) — unique `(org_id, email)`. ⚠ Keyed by the org: a standalone coach team that later moves into a club leaves its stops behind (`team-move-coverage` STAYS) — see the Stage 4a build prompt's Progress note.
 
-## `event_availability_answers`
-<!-- dict:table:event_availability_answers -->
+## `event_availability_answers` — RETIRED (mig 485, dev only; never on prod)
 
-**Purpose (mig 476, Signed-in family accounts Stage 4b, plan `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` Stage 4 "RULED 2026-11-13"):** a **family's** answer to "is your player coming?" for one child on one event: In / Out / Maybe and an optional one-line note. ⚠ **It is NOT the attendance book.** `rep_team_event_attendance` stays the coach's alone (the coach's PATCH is its only writer); a coach copies answers in with a tap ("Use N family answers", ask 3). No family write ever reaches the book. Service-role only (RLS on, no policies); every write goes through the family route, which re-derives reach from the signed-in account (`getFamilyReach`) on every write.
-
-<!-- dict:col:event_availability_answers.id -->
-<!-- dict:col:event_availability_answers.event_kind -->
-<!-- dict:col:event_availability_answers.event_id -->
-<!-- dict:col:event_availability_answers.child_id -->
-**`id` / `event_kind` / `event_id` / `child_id`** (uuid PK / text CHECK `rep_event|league_game|league_practice` / uuid, **no FK** / uuid → `org_children` CASCADE) — which event and which child. `rep_event` = `rep_team_events.id` (the only kind written in 4b); `league_game` / `league_practice` are **reserved** for the house-league stage (ask 4), so the key is `(event_kind, event_id)`, never a bare id (the two kinds keep separate id spaces). ⚖ **No `org_id`, deliberately**: a row is reached only through its event and child, so a team that moves into a club carries its answers with nothing to re-point (`move_team_into_club` re-points the events), and `team-move-coverage` has no decision to make. The answer is about the **child**, as the connection is (Stage 4 ruling 3). UNIQUE `(event_kind, event_id, child_id)`: **latest wins, updated in place** (ask 6). A deleted rep event takes its answers (trigger `rep_team_events_drop_availability`, AFTER DELETE on `rep_team_events`, also on a cascaded delete). **A child join (`org_children_join`, re-created by mig 482) carries the absorbed child's answers to the kept child**; where both records answered the same event the newer `answered_at` wins (a tie keeps the kept child's). Before 482 the CASCADE deleted them on a join.
-
-<!-- dict:col:event_availability_answers.answer -->
-<!-- dict:col:event_availability_answers.note -->
-**`answer`** (text NOT NULL, CHECK `in|out|maybe`) / **`note`** (text, nullable, CHECK 1–200 characters) — what the family said. There is no `maybe` in the attendance book, and "Use family answers" copies Maybe as nothing (the player stays Not marked). The note is one short line, plain text, trimmed by the server. **A write replaces answer and note wholesale**, so a second parent's change clears the first parent's note (ask 6). ⚖ **Who reads it:** the coaches who can mark attendance (the `attendance` capability) read answers, notes, who and when; a parent reads their own note, and only the other parent's answer, first name, day and **that** a note exists (ask 5); staff without `attendance` see counts only (ask 11). **Retention (ask 15):** the note is cleared 30 days after its event (the purge), and on every answer a parent gave when that parent's connection ends (their leave, a club removal, a stop) or their account is deleted (mig 480's triggers, below).
-
-<!-- dict:col:event_availability_answers.answered_by_user_id -->
-<!-- dict:col:event_availability_answers.answered_at -->
-<!-- dict:col:event_availability_answers.previous_answer -->
-<!-- dict:col:event_availability_answers.previous_by_user_id -->
-<!-- dict:col:event_availability_answers.previous_at -->
-**`answered_by_user_id` / `answered_at`** (uuid → `auth.users` SET NULL / timestamptz NOT NULL) — the parent who gave the current answer, and when ("Priya, Tue"; the coach's warning compares `answered_at` with the coach's mark time and the lineup's saved time). **`previous_answer` / `previous_by_user_id` / `previous_at`** — the one-step history ask 6 needs ("earlier: In (Dev, Mon)"): written **only when the answer changed** (re-sending the same answer changes the note only). Indexes on both user columns serve a leaving parent's note clear-out.
-
-<!-- dict:col:event_availability_answers.created_at -->
-<!-- dict:col:event_availability_answers.updated_at -->
-**`created_at` / `updated_at`** (timestamptz) — row bookkeeping; `updated_at` is code-maintained (and set by the purge).
-
-**Retention (ask 15, O4 ruled 2026-11-13):** `event_availability_purge()` (SECURITY DEFINER, service role only; nightly by mig 477's pg_cron job `family-answers-purge`, 08:35 GMT) clears `note` 30 days after the event (its end, else its start) and **deletes the answers of a season whose LAST event is more than 60 days ago, closed or not** (no rep season stores a close date; adding a later event moves the clock). It never touches the coach's attendance book. Proved by `tests/sql/family-availability-fixture.sql` (rolled back, 7/7 on dev 2026-11-13).
-
-**Three triggers (mig 480, Stage 4b Session 3; all SECURITY DEFINER, no caller; fixture 10/10 on dev 2026-11-13):**
-- `rep_team_events_new_day_clears_availability` (AFTER UPDATE OF `starts_at` on `rep_team_events`): when an event's **org day** (America/Toronto) changes, its answers AND its `event_availability_reminders` rows are deleted (ask 10: families answer again; the 24-hour Remind clock starts over). A same-day time change and a cancel / reinstate keep them. Fires on every path that moves a day (the coach's PATCH, the tournament game mirror, the club's schedule tool), whether or not the team's switch is on.
-- `family_links_end_clears_answer_notes` (AFTER UPDATE OF `status`, `user_id` OR DELETE on `family_links`): a **verified link with an account** that ends (revoked / declined / deleted / its account cleared) nulls that account's `note` on **that child's** answers; the answers stay (ask 15). Not for `ended_by = 'merged'`, and not while the same account holds another verified link to the child. Covers the parent's leave, a club removal, a rep coach's removal and the Stage 3b stop (SQL) in one place.
-- `event_availability_answers_writer_gone` (BEFORE UPDATE OF `answered_by_user_id`): when the FK's ON DELETE SET NULL clears the writer (an account deleted), the `note` goes too, so no words outlive a "by this user" lookup.
+Stage 4b's separate family-answer record (mig 476) was replaced by **the one attendance record**, `rep_team_event_attendance`
+(One attendance record, owner ruling 2026-11-13). Mig 483 copied dev's rows in (latest wins against the coach's mark); mig 484 rewrote
+the purge off it; mig 485 dropped it with its writer-gone trigger and removed 482's step from `org_children_join`. Mig 480's new-day
+trigger went too (call C1: a new day clears nothing). Prod had none of it, so prod copies nothing.
 
 ## `event_availability_reminders`
 <!-- dict:table:event_availability_reminders -->

@@ -1208,7 +1208,13 @@ export type RepEventType =
   | 'league_game'
   | 'practice'
   | 'team_event';
-export type RepAttendanceStatus = 'unknown' | 'attending' | 'absent' | 'late';
+/**
+ * One attendance answer (mig 483, One attendance record ruling 2026-11-13). `maybe` is a family's (or, where families can answer,
+ * a coach's) before the event; a Maybe still standing counts as Not marked in EVERY stat (ruling 2) — `countedAttendanceStatus`.
+ */
+export type RepAttendanceStatus = 'unknown' | 'attending' | 'absent' | 'late' | 'maybe';
+/** Who set the current attendance answer (mig 483). */
+export type RepAttendanceSetter = 'coach' | 'family' | 'system';
 export type RepDocumentType = 'waiver' | 'medical_consent' | 'code_of_conduct' | 'other';
 
 export interface RepTeam {
@@ -2116,9 +2122,11 @@ export interface RepTeamEventAttendance {
   updatedBy: string | null;
   createdAt: string;
   updatedAt: string;
-  /** When a coach last set or confirmed THIS player's mark (mig 479); null when never marked. Not `updatedAt`, which every batch
-   *  save moves on every row. The room's "family changed after you marked" compares a family answer with it (Stage 4b). */
-  markedAt: string | null;
+  /** When the current status was set, by anyone (mig 483's `set_at`, was 479's `marked_at`); null when nobody has set it. */
+  setAt: string | null;
+  /** Who set it: the coach's side, a family, or the system; null when nobody has. Never names the person (that read is the
+   *  attendance-capability room's alone). */
+  setByKind: RepAttendanceSetter | null;
 }
 
 export interface RepTeamLineup {

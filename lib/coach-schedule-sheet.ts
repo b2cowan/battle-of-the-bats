@@ -95,11 +95,12 @@ const COUNT_WORD: Record<AttendanceStatusValue, string> = {
  * on it: who is OUT, then who is LATE, then who has not answered; the names share one budget of
  * `ROW_NAME_CAP`; a group's names past it read "and N more", and a group it never reached is counted.
  */
-export function attendanceRowWords(rows: readonly { player: RowPlayer; status: AttendanceStatusValue }[]): RowWords {
+export function attendanceRowWords(rows: readonly { player: RowPlayer; status: AttendanceStatusValue | 'maybe' }[]): RowWords {
   const total = rows.length;
   if (total === 0) return { head: 'Attendance', parts: [{ text: 'No players on the roster yet', tone: null }] };
   const by: Record<AttendanceStatusValue, RowPlayer[]> = { attending: [], late: [], absent: [], unknown: [] };
-  for (const r of rows) by[r.status].push(r.player);
+  // A Maybe still standing is Not marked here as in every count (One attendance record, ruling 2).
+  for (const r of rows) by[r.status === 'maybe' ? 'unknown' : r.status].push(r.player);
 
   // Nobody is marked yet: name who is not, first names only (the drawn sentence; "not marked", ask 9).
   if (by.unknown.length === total) {

@@ -21,6 +21,7 @@ import type { PracticeRosterPlayer } from '../../_PracticePlanEditor';
 import type { PickableTag } from '@/components/coaches/TagPicker';
 import styles from '../../../../../coaches.module.css';
 import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
+import { countedAttendanceStatus } from '@/lib/coach-schedule-vocab';
 
 /**
  * The field run screen (Practice Plans 1b) — 6:25 PM, sun, gloves, twelve kids.
@@ -498,7 +499,7 @@ export default function CoachPracticeRunPage({
         {ATTENDANCE_GROUPS.map(group => {
           // Roster order, always — no sort affordance anywhere in this feature (§4).
           const names = data.roster
-            .filter(p => (attendanceByPlayer.get(p.id) ?? 'unknown') === group.status)
+            .filter(p => countedAttendanceStatus(attendanceByPlayer.get(p.id) ?? 'unknown') === group.status) // a Maybe sits under Not marked (ruling 2)
             .map(playerDisplayName);
           if (names.length === 0) return null;
           return (

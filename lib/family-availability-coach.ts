@@ -3,13 +3,13 @@ import { supabaseAdmin } from './supabase-admin';
 import { fetchAllIn } from './supabase-paging';
 import { GUARDIAN_TIER_ENABLED } from './family-guardian';
 import { getCoachingAssignmentsForUser } from './db';
-import { eventHasFamilyAnswers, firstNames, liveSetting, readTeam, type TeamRow } from './family-availability';
-import { answeredDayShort, type FamilyAnswer } from './family-availability-words';
+import { firstNames, liveSetting, readTeam, type TeamRow } from './family-availability';
+import { answeredDayShort } from './family-availability-words';
 import {
-  familyAnswerState, headcountOf, lineupFamilyOuts, type Headcount, type LineupFamilyAnswer, type LiveFamilyAnswersSetting,
+  familyAnswerOfStatus, familyAnswerState, headcountOf, type Headcount, type LineupFamilyAnswer, type LiveFamilyAnswersSetting,
   type RoomFamilyAnswers,
 } from './family-availability-rules';
-import type { RepAttendanceStatus } from './types';
+import type { RepAttendanceSetter, RepAttendanceStatus } from './types';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -28,7 +28,10 @@ import type { RepAttendanceStatus } from './types';
  *   lastRemindedAt(...)       when Remind was last used on an event (the room's card and Remind read the same)
  *   marksFamilyAnswersInOrg   Account → Notifications: whether this coach's "Family answers" row shows (Part 8)
  *
- * ⚠ READ ONLY. Nothing here writes the coach's book: the coach copies answers in with a tap, through the attendance PATCH (ask 3).
+ * ⚠ ONE ATTENDANCE RECORD (mig 483): every reader here reads the one record (`rep_team_event_attendance`). "What the family said" is
+ *   a row whose current answer a FAMILY set. READ ONLY: writes go through the one writer (the attendance PATCH, the family route).
+ *   The family's note and the parents' names leave this file only through `roomFamilyAnswers`, whose route holds the
+ *   `attendance` capability (ask 11).
  * ⚠ While the guardian tier is off, or the team's switch is off, or the schedule is Staff only, every reader answers "nothing" (null,
  *   [] or false) and the coach's screens are exactly as before (the rename to "Not marked" is the only change for everyone, ask 9).
  * ⚠ Live season only: the callers pass the active season's id; there is no year parameter here.
@@ -89,32 +92,32 @@ export async function scheduleHeadcounts(params: {
   if (open.length === 0) return {};
   const ids = open.map(e => e.id);
 
-  const [roster, marks, answers] = await Promise.all([
+  const [roster, marks] = await Promise.all([
     activeRoster(params.programYearId),
     fetchAllIn<{ event_id: string; player_id: string; status: RepAttendanceStatus }>(ids, (chunk, from, to) =>
       supabaseAdmin.from('rep_team_event_attendance').select('event_id, player_id, status').in('event_id', chunk)
         .order('event_id').order('player_id').range(from, to)),
-    fetchAllIn<{ event_id: string; child_id: string; answer: FamilyAnswer }>(ids, (chunk, from, to) =>
-      supabaseAdmin.from('event_availability_answers').select('event_id, child_id, answer')
-        .eq('event_kind', 'rep_event').in('event_id', chunk).order('event_id').order('child_id').range(from, to)),
   ]);
   const mark = new Map(marks.map(m => [`${m.event_id}|${m.player_id}`, m.status]));
-  const said = new Map(answers.map(a => [`${a.event_id}|${a.child_id}`, a.answer]));
 
   const out: Record<string, Headcount> = {};
   for (const id of ids) {
-    const c = headcountOf(roster.map(p => ({
-      status: mark.get(`${id}|${p.id}`) ?? 'unknown',
-      family: said.get(`${id}|${p.child_id}`) ?? null,
-    })));
+    // One record (mig 483): the answer IS the status. A Maybe — whoever set it — is the count's "maybe".
+    const c = headcountOf(roster.map(p => {
+      const status = mark.get(`${id}|${p.id}`) ?? 'unknown';
+      return { status, family: status === 'maybe' ? 'maybe' as const : null };
+    }));
     if (c.in + c.out + c.maybe > 0) out[id] = c;
   }
   return out;
 }
 
-interface AnswerRow {
-  child_id: string; answer: FamilyAnswer; note: string | null; answered_by_user_id: string | null; answered_at: string;
-  previous_answer: FamilyAnswer | null; previous_by_user_id: string | null; previous_at: string | null;
+/** The record's columns the attendance room's family side reads (the caller holds the `attendance` capability). */
+interface RoomBookRow {
+  player_id: string; status: RepAttendanceStatus; set_by_kind: RepAttendanceSetter | null; set_by_user_id: string | null;
+  set_at: string | null; family_note: string | null;
+  previous_status: RepAttendanceStatus | null; previous_by_kind: RepAttendanceSetter | null; previous_by_user_id: string | null;
+  previous_at: string | null;
 }
 
 /**
@@ -139,38 +142,44 @@ export async function roomFamilyAnswers(params: {
 
   const roster = await activeRoster(params.programYearId);
   const childIds = roster.map(p => p.child_id);
-  const [connected, answers, lastRemind] = await Promise.all([
+  const [connected, book, lastRemind] = await Promise.all([
     connectedChildIds(childIds),
-    childIds.length
-      ? supabaseAdmin.from('event_availability_answers')
-        .select('child_id, answer, note, answered_by_user_id, answered_at, previous_answer, previous_by_user_id, previous_at')
-        .eq('event_kind', 'rep_event').eq('event_id', params.event.id).in('child_id', childIds)
+    roster.length
+      ? supabaseAdmin.from('rep_team_event_attendance')
+        .select('player_id, status, set_by_kind, set_by_user_id, set_at, family_note, previous_status, previous_by_kind, previous_by_user_id, previous_at')
+        .eq('event_id', params.event.id).in('player_id', roster.map(p => p.id))
       : Promise.resolve({ data: [], error: null }),
     lastRemindedAt(params.event.id),
   ]);
-  if (answers.error) throw answers.error;
-  const rows = (answers.data ?? []) as AnswerRow[];
-  const names = await firstNames(rows.flatMap(a => [a.answered_by_user_id, a.previous_by_user_id]).filter((id): id is string => !!id));
+  if (book.error) throw book.error;
+  const rows = (book.data ?? []) as RoomBookRow[];
+  // Only a FAMILY's names are looked up (a coach's answer carries no family line in this interim; Session 2 draws "Coach").
+  const names = await firstNames(rows.flatMap(b => [
+    b.set_by_kind === 'family' ? b.set_by_user_id : null, b.previous_by_kind === 'family' ? b.previous_by_user_id : null,
+  ]).filter((id): id is string => !!id));
   const nameOf = (id: string | null) => (id ? names.get(id) ?? null : null);
-  const byChild = new Map(rows.map(a => [a.child_id, a]));
+  const byPlayer = new Map(rows.map(b => [b.player_id, b]));
 
   return {
     setting,
     state,
     remindedAt: lastRemind,
     rows: roster.map(p => {
-      const a = byChild.get(p.child_id);
+      const b = byPlayer.get(p.id);
+      // "What the family said" = a current answer a family set (ruling 7's single answer, seen from the family's column).
+      const answer = b?.set_by_kind === 'family' ? familyAnswerOfStatus(b.status) : null;
+      const prevAnswer = b?.previous_by_kind === 'family' ? familyAnswerOfStatus(b.previous_status) : null;
       return {
         playerId: p.id,
         connected: connected.has(p.child_id),
-        answeredAt: a?.answered_at ?? null,
-        line: a ? {
-          answer: a.answer,
-          note: a.note,
-          by: nameOf(a.answered_by_user_id),
-          day: answeredDayShort(a.answered_at, now),
-          previous: a.previous_answer && a.previous_at
-            ? { answer: a.previous_answer, by: nameOf(a.previous_by_user_id), day: answeredDayShort(a.previous_at, now) }
+        answeredAt: answer ? b!.set_at : null,
+        line: answer && b!.set_at ? {
+          answer,
+          note: b!.family_note,
+          by: nameOf(b!.set_by_user_id),
+          day: answeredDayShort(b!.set_at, now),
+          previous: prevAnswer && b!.previous_at
+            ? { answer: prevAnswer, by: nameOf(b!.previous_by_user_id), day: answeredDayShort(b!.previous_at, now) }
             : null,
         } : null,
       };
@@ -205,97 +214,30 @@ export async function lineupFamilyAnswers(params: {
   if (state === 'not_covered' || state === 'cancelled') return null;
   const roster = await activeRoster(params.programYearId);
   if (roster.length === 0) return [];
-  const playerOf = new Map(roster.map(p => [p.child_id, p.id]));
-  const { data, error } = await supabaseAdmin.from('event_availability_answers').select('child_id, answer, answered_at')
-    .eq('event_kind', 'rep_event').eq('event_id', params.event.id).in('child_id', [...playerOf.keys()]);
+  // The answers a FAMILY set (no note, no name). One record: the pool's words read the status itself (`lineupTagWord`).
+  const { data, error } = await supabaseAdmin.from('rep_team_event_attendance').select('player_id, status, set_at')
+    .eq('event_id', params.event.id).eq('set_by_kind', 'family').in('player_id', roster.map(p => p.id));
   if (error) throw error;
-  return ((data ?? []) as { child_id: string; answer: FamilyAnswer; answered_at: string }[])
-    .map(a => ({ playerId: playerOf.get(a.child_id)!, answer: a.answer, answeredAt: a.answered_at }));
+  return ((data ?? []) as { player_id: string; status: RepAttendanceStatus; set_at: string | null }[]).flatMap(b => {
+    const answer = familyAnswerOfStatus(b.status);
+    return answer && b.set_at ? [{ playerId: b.player_id, answer, answeredAt: b.set_at }] : [];
+  });
 }
 
 /**
- * The schedule row's lineup triangle, the family side (the coach's own mismatch is `getRepTeamLineupAttendanceMismatchEventIds`):
- * the upcoming games (not started, not cancelled, covered by the switch) whose SAVED lineup holds a player a family said Out about
- * that the coach hasn't settled (`lineupFamilyOuts`, the builder's own rule). Ids only. Empty when nothing about answers exists.
+ * The schedule row's lineup triangle, the family side. ⚠ EMPTY UNDER ONE RECORD (mig 483): a family's Out IS the player's status,
+ * so the coach's own rule (`getRepTeamLineupAttendanceMismatchEventIds`: "marked Out but still in the lineup") already flags it,
+ * and `lineupFamilyOuts` finds nothing a record can disagree with itself about. Kept as a no-op for its caller until Session 2
+ * deletes it with the rest of the dead rules (plan §2).
  */
-export async function familyLineupFlagEventIds(params: {
+export async function familyLineupFlagEventIds(_params: {
   teamId: string;
   programYearId: string;
   events: readonly { id: string; eventType: string; status: string; startsAt: string }[];
   team?: KnownRepTeam;
   now?: Date;
 }): Promise<string[]> {
-  const setting = await coachFamilyAnswersSetting(params.teamId, params.team);
-  if (!setting) return [];
-  const now = params.now ?? new Date();
-  const ids = params.events.filter(e => familyAnswerState(setting, e, now) === 'open').map(e => e.id);
-  if (ids.length === 0) return [];
-
-  // Only games with a family Out are worth reading lineups for.
-  const outs = await fetchAllIn<{ event_id: string; child_id: string; answered_at: string }>(ids, (chunk, from, to) =>
-    supabaseAdmin.from('event_availability_answers').select('event_id, child_id, answered_at')
-      .eq('event_kind', 'rep_event').eq('answer', 'out').in('event_id', chunk).order('event_id').order('child_id').range(from, to));
-  const withOut = [...new Set(outs.map(o => o.event_id))];
-  if (withOut.length === 0) return [];
-
-  const [roster, lineups, marks] = await Promise.all([
-    activeRoster(params.programYearId),
-    fetchAllIn<{ id: string; event_id: string; updated_at: string }>(withOut, (chunk, from, to) =>
-      supabaseAdmin.from('rep_team_lineups').select('id, event_id, updated_at').in('event_id', chunk).order('id').range(from, to)),
-    fetchAllIn<{ event_id: string; player_id: string; status: RepAttendanceStatus; marked_at: string | null }>(withOut, (chunk, from, to) =>
-      supabaseAdmin.from('rep_team_event_attendance').select('event_id, player_id, status, marked_at').in('event_id', chunk)
-        .order('event_id').order('player_id').range(from, to)),
-  ]);
-  if (lineups.length === 0) return [];
-  const entries = await fetchAllIn<{ lineup_id: string; player_id: string }>(lineups.map(l => l.id), (chunk, from, to) =>
-    supabaseAdmin.from('rep_team_lineup_entries').select('lineup_id, player_id').in('lineup_id', chunk)
-      .order('lineup_id').order('player_id').range(from, to));
-
-  const playerOf = new Map(roster.map(p => [p.child_id, p.id]));
-  const lineupOf = new Map(lineups.map(l => [l.event_id, l]));
-  const inLineup = new Map<string, Set<string>>();
-  for (const e of entries) {
-    if (!inLineup.has(e.lineup_id)) inLineup.set(e.lineup_id, new Set());
-    inLineup.get(e.lineup_id)!.add(e.player_id);
-  }
-  const mark = new Map(marks.map(m => [`${m.event_id}|${m.player_id}`, m]));
-  const outsOf = new Map<string, typeof outs>();
-  for (const o of outs) outsOf.set(o.event_id, [...(outsOf.get(o.event_id) ?? []), o]);
-  const flagged: string[] = [];
-  for (const eventId of withOut) {
-    const lineup = lineupOf.get(eventId);
-    if (!lineup) continue;
-    const players = (outsOf.get(eventId) ?? []).filter(o => playerOf.has(o.child_id)).map(o => {
-      const playerId = playerOf.get(o.child_id)!;
-      const m = mark.get(`${eventId}|${playerId}`);
-      return {
-        playerId, status: m?.status ?? 'unknown' as RepAttendanceStatus, markedAt: m?.marked_at ?? null,
-        family: { answer: 'out' as const, answeredAt: o.answered_at },
-      };
-    });
-    // Every event here passed `familyAnswerState === 'open'` above.
-    if (lineupFamilyOuts(players, inLineup.get(lineup.id) ?? new Set(), lineup.updated_at, true).length > 0) flagged.push(eventId);
-  }
-  return flagged;
-}
-
-/**
- * A coach's edit moves an event to a new DAY (Part 6, ask 10): will that clear families' answers AND leave the event answerable, so
- * the schedule-change notice adds "answer again"? Asked BEFORE the save (mig 480's trigger deletes the answers on the write). Not
- * when the switch no longer covers it or the new time is already past: the team page would have no control to answer on.
- * Never throws: a failed read says nothing rather than failing the coach's save.
- */
-export async function familyAnswersWillClear(p: {
-  teamId: string; team?: KnownRepTeam; eventId: string; eventType: string; status: string; startsAt: string;
-}): Promise<boolean> {
-  try {
-    if (!(await eventHasFamilyAnswers(p.eventId))) return false;
-    const setting = await coachFamilyAnswersSetting(p.teamId, p.team);
-    return !!setting && familyAnswerState(setting, p, new Date()) === 'open';
-  } catch (err) {
-    console.error('[family-availability] could not tell whether a move clears family answers:', err instanceof Error ? err.message : String(err));
-    return false;
-  }
+  return [];
 }
 
 /**

@@ -56,6 +56,8 @@ const ATTN_CHIP: Record<string, string> = {
 };
 const ATTN_LABEL: Record<string, string> = {
   attending: 'Present', late: 'Late', absent: 'Absent', unknown: '—',
+  // A Maybe still standing reads as Not marked in the record (One attendance record, ruling 2).
+  maybe: '—',
 };
 
 /** A stored option's label, or the raw value when the option list has moved on; '' when unset. */

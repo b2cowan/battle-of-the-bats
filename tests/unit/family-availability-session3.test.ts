@@ -17,7 +17,8 @@ import { functionBody, readCode, readSource } from './_source-code.ts';
 /**
  * Signed-in family accounts Stage 4b, Session 3 (Parts 6–8; build prompt docs/projects/active/SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md;
  * drawing tabs 4–6). The pure rules by their real output; "this path never does X" by its source. The database half (a new day
- * clears answers, a leaving parent's notes go, a deleted account's note goes) is tests/sql/family-availability-fixture.sql 8–10.
+ * clears NOTHING since call C1, a leaving parent's notes go, a deleted account's note goes) is
+ * tests/sql/one-attendance-record-fixture.sql 10–12.
  */
 
 const REMIND_MODULE = 'lib/family-availability-remind.ts';
@@ -79,9 +80,11 @@ describe('Part 6 — the lineup: one rule for the pool, the builder’s warning,
     assert.match(readCode(GAME_LINEUP_PAGE), /family=\{familyView\}/);
     assert.match(readCode(LINEUP_ROUTE), /!isReadOnly && capabilities\.attendance \? lineupFamilyAnswers\(/);
     assert.match(readCode(EVENTS_ROUTE), /capabilities\.attendance && programYear\.status === 'active'\s*\?\s*familyLineupFlagEventIds\(/);
-    assert.match(functionBody(readCode('lib/family-availability-coach.ts'), 'familyLineupFlagEventIds'), /lineupFamilyOuts\(/);
+    // One attendance record (mig 483): a family's Out IS the status, so the coach's own triangle rule flags it; the family-side
+    // triangle has nothing left to find (Session 2 deletes it).
+    assert.match(functionBody(readCode('lib/family-availability-coach.ts'), 'familyLineupFlagEventIds'), /return \[\];/);
     const lineupRead = functionBody(readCode('lib/family-availability-coach.ts'), 'lineupFamilyAnswers');
-    assert.doesNotMatch(lineupRead, /note|answered_by|previous_/, 'the lineup never reads a note or who answered');
+    assert.doesNotMatch(lineupRead, /note|set_by_user_id|previous_/, 'the lineup never reads a note or who answered');
   });
   it('Take out changes only the lineup', () => {
     assert.match(readCode(GAME_LINEUP_PAGE), /onTakeOut: removePlayersFromLineup\b/);
@@ -96,18 +99,14 @@ describe('Part 6 — a moved event, and a parent who leaves (guards k and l; the
     }
     assert.match(sql, /at time zone 'America\/Toronto'\)::date is distinct from/);
   });
-  it('the notice says families answer again only when a new day cleared answers, never on a cancel', () => {
-    const route = readCode(EVENT_ROUTE);
-    // Told only when answers existed AND the moved event can still be answered (the switch covers it, the new time is ahead).
-    assert.match(route, /const familyAnswersCleared = dayChanges && fields\.startsAt/);
-    assert.match(route, /await familyAnswersWillClear\(\{/);
-    const willClear = functionBody(readCode('lib/family-availability-coach.ts'), 'familyAnswersWillClear');
-    assert.match(willClear, /await eventHasFamilyAnswers\(p\.eventId\)/);
-    assert.match(willClear, /familyAnswerState\(setting, p, new Date\(\)\) === 'open'/);
-    assert.match(route, /answersCleared: familyAnswersCleared/);
-    const notifyCode = readCode('lib/family-notify.ts');
-    assert.match(notifyCode, /params\.answersCleared && params\.kind !== 'cancelled'/);
-    assert.equal(W.answerAgain, 'The new day cleared any earlier answers about whether your player is coming. Please answer again on the team page.');
+  it('C1 (owner 2026-11-13, reverses ask 10): a new day clears NOTHING, and no notice asks families to answer again', () => {
+    // Mig 485 drops the new-day trigger (not retargeted); answers and the Remind log carry over.
+    const mig485 = readCode('supabase/migrations/485_the_family_answers_table_retires.sql');
+    assert.match(mig485, /drop trigger if exists rep_team_events_new_day_clears_availability on public\.rep_team_events;/);
+    assert.match(mig485, /drop function if exists public\.rep_team_events_new_day_clears_availability\(\);/);
+    assert.doesNotMatch(readCode(EVENT_ROUTE), /familyAnswersWillClear|familyAnswersCleared|answersCleared/);
+    assert.doesNotMatch(readCode('lib/family-notify.ts'), /answersCleared|answerAgain/);
+    assert.doesNotMatch(readCode('lib/family-availability-coach.ts'), /familyAnswersWillClear/);
   });
   it('the parent’s page names only a parent who is still connected (a departed parent reads as “the other parent”)', () => {
     const read = functionBody(readCode('lib/family-availability.ts'), 'readFamilyAnswers');

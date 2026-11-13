@@ -134,7 +134,18 @@ export const ATTENDANCE_WORD: Record<RepAttendanceStatus, string> = {
   // "Not marked" (Signed-in family accounts Stage 4b, ask 9, owner 2026-11-13): the coach's book, for every team. It was "No
   // reply", which read as a family's silence once families can answer for themselves. The value stays `unknown`.
   unknown:   'Not marked',
+  // One attendance record (mig 483, ruling 1): a family's Maybe, offered to the coach only where families can answer (call C3).
+  maybe:     'Maybe',
 };
+
+/**
+ * THE ONE RULE FOR WHAT AN ANSWER COUNTS AS (One attendance record, ruling 2, owner 2026-11-13): a Maybe still standing counts as
+ * Not marked in every stat — attendance rates, reliability, practice misses, the lineup's checks, "N marked". Every count reads
+ * the status through this, so a Maybe can never be read as "known" by a rule that tests `!== 'unknown'`.
+ */
+export function countedAttendanceStatus(status: RepAttendanceStatus): Exclude<RepAttendanceStatus, 'maybe'> {
+  return status === 'maybe' ? 'unknown' : status;
+}
 
 /** Friendly default name when the coach leaves the name blank and there is no opponent to derive
  *  one from. A GAME with an opponent never uses this — `deriveGameName` writes "vs X" / "@ X". */

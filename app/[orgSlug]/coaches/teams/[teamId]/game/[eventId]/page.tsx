@@ -452,9 +452,10 @@ export default function CoachGameConsolePage({
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/attendance`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        // The note rides along UNCHANGED — the route's upsert writes the whole row, so
-        // omitting it would erase a note recorded on the schedule tab.
-        body: JSON.stringify({ entries: [{ playerId, status, note: prev.note ?? '' }] }),
+        // The status ALONE (One attendance record): the route writes only the keys it is sent, so the
+        // coach's note recorded on the schedule tab stays as it is — re-sending it could put back an
+        // older copy.
+        body: JSON.stringify({ entries: [{ playerId, status }] }),
       });
       if (!res.ok) throw new Error();
     } catch {

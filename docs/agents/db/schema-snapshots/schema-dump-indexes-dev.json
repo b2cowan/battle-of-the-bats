@@ -990,31 +990,6 @@
     "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
   },
   {
-    "tablename": "event_availability_answers",
-    "indexname": "event_availability_answers_by_user_idx",
-    "indexdef": "CREATE INDEX event_availability_answers_by_user_idx ON public.event_availability_answers USING btree (answered_by_user_id) WHERE (answered_by_user_id IS NOT NULL)"
-  },
-  {
-    "tablename": "event_availability_answers",
-    "indexname": "event_availability_answers_child_idx",
-    "indexdef": "CREATE INDEX event_availability_answers_child_idx ON public.event_availability_answers USING btree (child_id)"
-  },
-  {
-    "tablename": "event_availability_answers",
-    "indexname": "event_availability_answers_event_child_uniq",
-    "indexdef": "CREATE UNIQUE INDEX event_availability_answers_event_child_uniq ON public.event_availability_answers USING btree (event_kind, event_id, child_id)"
-  },
-  {
-    "tablename": "event_availability_answers",
-    "indexname": "event_availability_answers_pkey",
-    "indexdef": "CREATE UNIQUE INDEX event_availability_answers_pkey ON public.event_availability_answers USING btree (id)"
-  },
-  {
-    "tablename": "event_availability_answers",
-    "indexname": "event_availability_answers_prev_user_idx",
-    "indexdef": "CREATE INDEX event_availability_answers_prev_user_idx ON public.event_availability_answers USING btree (previous_by_user_id) WHERE (previous_by_user_id IS NOT NULL)"
-  },
-  {
     "tablename": "event_availability_reminders",
     "indexname": "event_availability_reminders_by_idx",
     "indexdef": "CREATE INDEX event_availability_reminders_by_idx ON public.event_availability_reminders USING btree (reminded_by_user_id) WHERE (reminded_by_user_id IS NOT NULL)"
@@ -4691,6 +4666,11 @@
   },
   {
     "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_family_note_by_user_idx",
+    "indexdef": "CREATE INDEX rep_team_event_attendance_family_note_by_user_idx ON public.rep_team_event_attendance USING btree (family_note_by_user_id) WHERE (family_note_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
     "indexname": "rep_team_event_attendance_org_id_idx",
     "indexdef": "CREATE INDEX rep_team_event_attendance_org_id_idx ON public.rep_team_event_attendance USING btree (org_id)"
   },
@@ -4706,8 +4686,18 @@
   },
   {
     "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_previous_by_user_idx",
+    "indexdef": "CREATE INDEX rep_team_event_attendance_previous_by_user_idx ON public.rep_team_event_attendance USING btree (previous_by_user_id) WHERE (previous_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
     "indexname": "rep_team_event_attendance_program_year_id_idx",
     "indexdef": "CREATE INDEX rep_team_event_attendance_program_year_id_idx ON public.rep_team_event_attendance USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_set_by_user_idx",
+    "indexdef": "CREATE INDEX rep_team_event_attendance_set_by_user_idx ON public.rep_team_event_attendance USING btree (set_by_user_id) WHERE (set_by_user_id IS NOT NULL)"
   },
   {
     "tablename": "rep_team_event_attendance",

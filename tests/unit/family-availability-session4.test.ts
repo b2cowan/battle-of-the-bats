@@ -10,7 +10,8 @@ import {
 /**
  * Signed-in family accounts Stage 4b, Session 4 (Part 9; build prompt docs/projects/active/SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md,
  * the "Owner calls RULED at the start" block). The owner's Session 4 rulings that changed code. The merge's database half is
- * tests/sql/family-availability-fixture.sql item 11; the bell and Remind words are pinned in family-availability-session3.test.ts.
+ * tests/sql/one-attendance-record-fixture.sql section 13 (One attendance record); the bell and Remind words are pinned in
+ * family-availability-session3.test.ts.
  */
 
 /** The migration that last re-created `org_children_join` (the highest-numbered file that defines it). */
@@ -29,26 +30,28 @@ describe('a child join keeps every record that names the child (owner, Session 4
   const join = sqlCode(between(readSource(latestJoinMigration()),
     'create or replace function public.org_children_join', 'revoke all on function public.org_children_join'));
 
-  it('the latest join (mig 482 or later) moves the family answers before the absorbed child is deleted', () => {
-    const moves = join.indexOf('update public.event_availability_answers set child_id = p_keep, updated_at = now() where child_id = p_absorb');
-    assert.ok(moves > 0, 'the answers are re-pointed');
-    assert.ok(moves < join.indexOf('delete from public.org_children where id = p_absorb'), 'before the delete that would cascade them');
-    // A clash (both records answered one event): the older one goes first, so the unique (kind, event, child) holds.
-    assert.ok(join.indexOf('delete from public.event_availability_answers') < moves, 'the clash is settled before the move');
-    assert.match(join, /x\.answered_at < y\.answered_at/, 'the newer answer wins');
+  it('ONE RECORD (mig 485): the answers ride the roster entry, which the join re-points before the absorbed child is deleted', () => {
+    // The attendance record is keyed by the roster entry (player_id), never the child; mig 476's child-keyed table is retired.
+    const moves = join.indexOf('update public.rep_roster_players       set child_id = p_keep where child_id = p_absorb');
+    assert.ok(moves > 0, 'the roster entries are re-pointed');
+    assert.ok(moves < join.indexOf('delete from public.org_children where id = p_absorb'), 'before the delete');
+    assert.doesNotMatch(join, /event_availability_answers/, 'the retired table is never named');
   });
 
   it('EVERY table with a foreign key to org_children is moved by the join (a new one must be carried, not cascaded away)', () => {
     const constraints = JSON.parse(fs.readFileSync('docs/agents/db/schema-snapshots/schema-dump-constraints-dev.json', 'utf8')) as
       { table_name: string; foreign_table?: string }[];
     const tables = new Set(constraints.filter(c => c.foreign_table === 'org_children').map(c => c.table_name));
-    assert.ok(tables.has('event_availability_answers'), 'the snapshot holds the family answers FK');
-    // A table made by a migration whose snapshot is not refreshed yet: read the migrations too.
-    for (const f of fs.readdirSync('supabase/migrations').filter(n => n.endsWith('.sql'))) {
+    assert.ok(tables.has('rep_roster_players'), 'the snapshot holds the roster’s child FK');
+    // A table made by a migration whose snapshot is not refreshed yet: read the migrations too, IN ORDER, so a table a later
+    // migration drops (mig 485 retired event_availability_answers) is not demanded of the join.
+    const ordered = fs.readdirSync('supabase/migrations').filter(n => /^\d+_.*\.sql$/.test(n)).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+    for (const f of ordered) {
       const sql = sqlCode(fs.readFileSync(`supabase/migrations/${f}`, 'utf8'));
       for (const m of sql.matchAll(/create table(?: if not exists)?\s+public\.(\w+)\s*\(([\s\S]*?)\n\);/gi)) {
         if (/references public\.org_children\s*\(/i.test(m[2])) tables.add(m[1]);
       }
+      for (const m of sql.matchAll(/drop table(?: if exists)?\s+public\.(\w+)/gi)) tables.delete(m[1]);
     }
     for (const t of tables) {
       assert.match(join, new RegExp(`\\b(update|delete from|insert into)\\s+public\\.${t}\\b`), `${t} names a child but the join never moves it`);

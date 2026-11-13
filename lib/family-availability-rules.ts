@@ -47,6 +47,23 @@ export function familyEventOpen(event: { status: string; startsAt: string | null
 const ANSWERS: readonly FamilyAnswer[] = ['in', 'out', 'maybe'];
 export const isFamilyAnswer = (v: unknown): v is FamilyAnswer => ANSWERS.includes(v as FamilyAnswer);
 
+// ── One attendance record (mig 483): the family's words ↔ the record's status ───────────────────────────────────────────────
+// The family's wire words stay In / Out / Maybe until Session 2 folds them into the status vocabulary (plan §2 "dead after the
+// merge"). ⚠ Interim: a coach's Late reads to the family as In until the family page learns Late (Session 2).
+
+/** The record's status for a family's answer (null = cleared → Not marked). */
+export function statusOfFamilyAnswer(answer: FamilyAnswer | null): RepAttendanceStatus {
+  return answer === 'in' ? 'attending' : answer === 'out' ? 'absent' : answer === 'maybe' ? 'maybe' : 'unknown';
+}
+
+/** The family's word for the record's status (null = Not marked). */
+export function familyAnswerOfStatus(status: RepAttendanceStatus | null | undefined): FamilyAnswer | null {
+  if (status === 'attending' || status === 'late') return 'in';
+  if (status === 'absent') return 'out';
+  if (status === 'maybe') return 'maybe';
+  return null;
+}
+
 /** The longest first name the accept page takes and the sheet shows. */
 export const FIRST_NAME_MAX = 50;
 
@@ -214,6 +231,8 @@ export interface LineupFamilyAnswer { playerId: string; answer: FamilyAnswer; an
  *  In or Late, a family's In, or nothing at all: no word. */
 export function lineupTagWord(status: RepAttendanceStatus, family: { answer: FamilyAnswer } | null): 'out' | 'maybe' | null {
   if (status === 'absent') return 'out';
+  // One attendance record (mig 483): a Maybe is a status now, whoever set it.
+  if (status === 'maybe') return 'maybe';
   if (status !== 'unknown' || !family || family.answer === 'in') return null;
   return family.answer;
 }

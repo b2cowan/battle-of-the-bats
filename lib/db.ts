@@ -6215,54 +6215,61 @@ function mapRepTeamEventAttendance(r: any): RepTeamEventAttendance {
     updatedBy: r.updated_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
-    markedAt: r.marked_at ?? null,
+    setAt: r.set_at ?? null,
+    setByKind: r.set_by_kind ?? null,
   };
 }
+
+/**
+ * ⚠ THE COLUMNS EVERY STAFF READ OF THE BOOK MAY CARRY (One attendance record, mig 483). The lineup, game console, practice plan
+ * and roster routes read this for anyone with their grant: the status, the coach's note, and WHEN and BY WHICH SIDE it was set —
+ * never the family's note, never a person's id (Stage 4b ask 11). Those reach only the attendance-capability room read
+ * (lib/family-availability-coach.ts). Named, never `*`: a column added later stays out until someone decides it belongs.
+ */
+const ATTENDANCE_STAFF_COLUMNS =
+  'id, event_id, player_id, program_year_id, team_id, org_id, status, note, updated_by, created_at, updated_at, set_at, set_by_kind';
 
 export async function getRepTeamEventAttendance(eventId: string): Promise<RepTeamEventAttendance[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_event_attendance')
-    .select('*')
+    .select(ATTENDANCE_STAFF_COLUMNS)
     .eq('event_id', eventId);
   if (error) throw error;
   return (data ?? []).map(mapRepTeamEventAttendance);
 }
 
-export async function upsertRepTeamEventAttendance(rows: {
-  eventId: string;
-  playerId: string;
-  programYearId: string;
-  teamId: string;
-  orgId: string;
-  status: RepAttendanceStatus;
-  note?: string | null;
-  updatedBy?: string | null;
-  /** When the coach set or confirmed this mark (mig 479). The caller decides: only a changed or tapped row moves it. */
-  markedAt?: string | null;
-}[]): Promise<RepTeamEventAttendance[]> {
-  if (rows.length === 0) return [];
+/** One coach write: a key left out is not written (status alone, the note alone, or both). */
+export interface CoachAttendanceEntry { playerId: string; status?: RepAttendanceStatus; note?: string | null }
 
-  const { data, error } = await supabaseAdmin
-    .from('rep_team_event_attendance')
-    .upsert(
-      rows.map(row => ({
-        event_id: row.eventId,
-        player_id: row.playerId,
-        program_year_id: row.programYearId,
-        team_id: row.teamId,
-        org_id: row.orgId,
-        status: row.status,
-        note: row.note?.trim() || null,
-        updated_by: row.updatedBy ?? null,
-        updated_at: new Date().toISOString(),
-        // A caller that doesn't decide leaves the stored time alone (never wipes it).
-        ...(row.markedAt !== undefined ? { marked_at: row.markedAt } : {}),
+/**
+ * THE COACH'S SIDE OF THE ONE WRITER (mig 483's `rep_attendance_write_many`): only the rows the coach changed, each under its row
+ * lock, latest wins against a family's answer. `onlyIfUnknown` is "All in" (fills only players nobody has answered, ruling 6);
+ * `onlyIfSetBy: 'coach'` is "Reset" (clears only the coach's answers, call C2) — both decided INSIDE the lock, so a family answer
+ * that lands a moment before is never overwritten. Returns the event's rows as they now stand (the window merges what it didn't
+ * touch), with the players whose row moved under this write's own `prior` reading.
+ */
+export async function writeCoachAttendance(params: {
+  eventId: string;
+  coachUserId: string;
+  entries: readonly CoachAttendanceEntry[];
+  onlyIfUnknown?: boolean;
+  onlyIfSetBy?: 'coach';
+}): Promise<RepTeamEventAttendance[]> {
+  if (params.entries.length > 0) {
+    const { error } = await supabaseAdmin.rpc('rep_attendance_write_many', {
+      p_event: params.eventId,
+      p_by: params.coachUserId,
+      p_entries: params.entries.map(e => ({
+        player_id: e.playerId,
+        ...(e.status !== undefined ? { status: e.status } : {}),
+        ...(e.note !== undefined ? { note: e.note?.trim() || null } : {}),
       })),
-      { onConflict: 'event_id,player_id' },
-    )
-    .select();
-  if (error) throw error;
-  return (data ?? []).map(mapRepTeamEventAttendance);
+      p_only_if_unknown: params.onlyIfUnknown ?? false,
+      p_only_if_set_by: params.onlyIfSetBy ?? null,
+    });
+    if (error) throw error;
+  }
+  return getRepTeamEventAttendance(params.eventId);
 }
 
 // Team Lineups

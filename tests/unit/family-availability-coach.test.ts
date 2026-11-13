@@ -76,10 +76,22 @@ describe('the amber warning — a family changed after the coach marked the play
     assert.equal(bookMarkedAt(undefined, 'late', false, now), now);
     assert.equal(bookMarkedAt({ status: 'absent', markedAt: now }, 'unknown', true, now), null, 'Not marked has no mark time');
   });
-  it('the attendance PATCH uses that rule for every row, and a tap rides as `confirmed`', () => {
+  it('ONE RECORD: the attendance PATCH writes only the changed rows, through the one writer; All in and Reset are the server’s', () => {
+    // One attendance record (mig 483, plan §1): the window used to send the WHOLE roster on every tap, re-stamping each row;
+    // under latest-wins that overwrote every family answer that arrived while it was open. Never again.
     const code = readCode(BOOK_ROUTE);
-    assert.match(code, /markedAt: markedAtFor\(before\.get\(playerId\), status, entry\?\.confirmed === true, now\)/);
-    assert.match(readCode('components/coaches/ScheduleEventSheet.tsx'), /row\.confirmed \? \{ confirmed: true \}/);
+    assert.match(code, /await writeCoachAttendance\(\{ eventId, coachUserId: ctx\.user\.id, entries: rows \}\)/);
+    assert.match(code, /onlyIfUnknown: true/, '"All in" fills only players nobody answered (ruling 6)');
+    assert.match(code, /onlyIfSetBy: 'coach'/, '"Reset" clears only the coach’s answers (call C2)');
+    assert.doesNotMatch(code, /upsertRepTeamEventAttendance|markedAtFor|confirmed/);
+    const sheet = readCode('components/coaches/ScheduleEventSheet.tsx');
+    const save = functionBody(sheet, 'saveAttendanceNow');
+    assert.match(save, /const statusChanged = row\.status !== \(row\.savedStatus \?\? 'unknown'\)/);
+    assert.match(save, /if \(!statusChanged && !noteChanged\) return \[\];/);
+    assert.doesNotMatch(sheet, /entries: attendanceRows\.map\(/, 'the window never sends the whole roster');
+    assert.match(functionBody(sheet, 'setAllAttendance'), /\{ fill: 'attending' \} : \{ reset: true \}/);
+    // The game console's one tap sends the status alone (never the coach's note back).
+    assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/game/[eventId]/page.tsx'), /entries: \[\{ playerId, status \}\]/);
   });
 });
 
@@ -153,9 +165,9 @@ describe('the words the coach reads (tab 2)', () => {
 describe('ask 11 — who sees what', () => {
   it('the schedule count is COUNTS ONLY: its read selects no note, no answerer, and returns numbers', () => {
     const code = readCode(COACH_MODULE);
-    const body = code.slice(code.indexOf('export async function scheduleHeadcounts'), code.indexOf('interface AnswerRow'));
-    assert.ok(body.length > 200, 'found the function');
-    assert.doesNotMatch(body, /note|answered_by|previous_/, 'the count never reads a note or who answered');
+    const body = code.slice(code.indexOf('export async function scheduleHeadcounts'), code.indexOf('interface RoomBookRow'));
+    assert.ok(body.length > 200 && body.length < 3000, 'found the function');
+    assert.doesNotMatch(body, /note|set_by|previous_/, 'the count never reads a note or who answered');
     assert.match(body, /Promise<Record<string, Headcount> \| null>|out\[id\] = c/);
   });
   it('the room’s family lines (with the note’s words) need the attendance capability', () => {
@@ -222,6 +234,7 @@ describe('ask 9 — “No reply” is “Not marked”, everywhere a coach reads
 describe('the parent’s page offers a pill only in the child’s own season (Session 1 review, item d)', () => {
   it('rows are filtered by the event’s season against the child’s rostered seasons', () => {
     const src = readSource('lib/family-availability.ts');
-    assert.match(src, /seasons\.child\.get\(c\.childId\)\?\.has\(seasons\.event\.get\(e\.id\) \?\? ''\)/);
+    // One record: the row is read by the roster entry the child holds in the EVENT's season (the writer's own entry).
+    assert.match(src, /const entryId = seasons\?\.child\.get\(c\.childId\)\?\.get\(seasons\.event\.get\(e\.id\) \?\? ''\);\s*\n\s*if \(!entryId\) continue;/);
   });
 });

@@ -3,16 +3,14 @@ import { supabaseAdmin } from './supabase-admin';
 import { notify } from './notify';
 import { listActiveStaffForTeams, resolveMembershipCapabilities } from './coach-membership';
 import { sheetAddressFor } from './coach-schedule-sheet';
-import { ATTENDANCE_WORD } from './coach-schedule-vocab';
 import { playerFirstName } from './coach-roster-name';
 import { firstNames, type FamilyAnswerChange } from './family-availability';
 import { scheduleHeadcounts } from './family-availability-coach';
 import {
-  COACH_BELL_BUNDLE_MS, coachBellFires, familyDrifted, mergeCoachBell, type CoachBellBundle, type CoachBellItem,
+  COACH_BELL_BUNDLE_MS, coachBellFires, mergeCoachBell, type CoachBellBundle, type CoachBellItem,
 } from './family-availability-rules';
 import { FAMILY_AVAILABILITY_COACH_WORDS as FW, coachBellEventLabel, coachBellWords } from './family-availability-words';
 import { scheduleDayLabel } from './family-schedule-format';
-import type { RepAttendanceStatus } from './types';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -85,12 +83,8 @@ export async function notifyCoachesOfFamilyAnswer(params: {
     const slug = (org.data as { slug: string } | null)?.slug;
     if (!playerRow || !slug) return;
 
-    // The coach's mark, when it now says something else than the family (the drift: "your mark still says In").
-    const { data: mark } = await supabaseAdmin.from('rep_team_event_attendance').select('status, marked_at')
-      .eq('event_id', event.id).eq('player_id', playerRow.id).maybeSingle();
-    const book = mark as { status: RepAttendanceStatus; marked_at: string | null } | null;
-    const drift = !!book && !!params.change.next
-      && familyDrifted({ status: book.status, markedAt: book.marked_at }, { answer: params.change.next, answeredAt: now.toISOString() });
+    // One attendance record (mig 483): the family's answer IS the player's attendance now, so there is no coach mark left saying
+    // something else ("your mark still says In" is gone; Session 2 retires the word with the rest of the drift rules).
     const count = counts?.[event.id] ? FW.headcount(counts[event.id]) : null;
 
     const item: CoachBellItem = {
@@ -105,7 +99,7 @@ export async function notifyCoachesOfFamilyAnswer(params: {
       prior: params.change.prior,
       parent: parentNames.get(params.actorUserId) ?? null,
       hasNote: params.change.hasNote,
-      markWord: drift && book ? ATTENDANCE_WORD[book.status] : null,
+      markWord: null,
       count,
     };
     const base = `/${slug}/coaches/teams/${params.teamId}`;

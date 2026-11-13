@@ -4,9 +4,10 @@ import { CheckCircle2, CircleHelp, StickyNote } from 'lucide-react';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import LoadingState from '@/components/shared/LoadingState';
 import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
-import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
+import { ATTENDANCE_OPTIONS, attendanceOption } from '@/components/coaches/attendanceOptions';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { playerDisplayName } from '@/lib/coach-roster-name';
+import { countedAttendanceStatus } from '@/lib/coach-schedule-vocab';
 import type { RepAttendanceStatus, RepRosterPlayer } from '@/lib/types';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import { FAMILY_AVAILABILITY_COACH_WORDS as FW, FAMILY_REMIND_COACH_WORDS } from '@/lib/family-availability-words';
@@ -37,8 +38,11 @@ export interface AttendanceRoomRow {
   note: string;
   /** When a coach last set or confirmed this mark (mig 479); null when never marked. */
   markedAt: string | null;
-  /** The status the server holds for this player (loaded or last saved): the baseline the mark time moves against. */
+  /** The status the server holds for this player (loaded or last saved): a save sends the status only when it differs from this
+   *  (One attendance record: only the rows the coach changed, never the whole roster). */
   savedStatus?: RepAttendanceStatus;
+  /** The coach's note as the server holds it: sent only when it differs. */
+  savedNote?: string;
   /** The coach tapped this player's current mark since the last save (it keeps the mark and clears the family warning). */
   confirmed?: boolean;
 }
@@ -67,11 +71,6 @@ export interface RoomFamilyView {
   };
 }
 
-// Quick status → {label, icon} lookup for the per-player status badge.
-const ATTENDANCE_BY_VALUE = Object.fromEntries(
-  ATTENDANCE_OPTIONS.map(o => [o.value, o]),
-) as Record<RepAttendanceStatus, (typeof ATTENDANCE_OPTIONS)[number]>;
-
 export default function ScheduleAttendanceRoom({
   attendanceRows, attendanceLoading, attendanceError, attendanceSaving, attendanceDirty,
   attendanceFilter, setAttendanceFilter, setAllAttendance, setRsvpEditId, handleAttendanceSave, family = null,
@@ -94,7 +93,7 @@ export default function ScheduleAttendanceRoom({
   const changed = family && family.onlyChanged && family.summary.changed.length > 0 ? new Set(family.summary.changed) : null;
   const statusRows = attendanceFilter === 'all'
     ? attendanceRows
-    : attendanceRows.filter(row => row.status === attendanceFilter);
+    : attendanceRows.filter(row => countedAttendanceStatus(row.status) === attendanceFilter); // a Maybe sits under Not marked (ruling 2)
   const filteredRows = changed ? statusRows.filter(row => changed.has(row.player.id)) : statusRows;
   // data-field-floor: a surface read standing up — the sweep holds its type floor (A4).
   return (
@@ -120,7 +119,7 @@ export default function ScheduleAttendanceRoom({
           </button>
           {ATTENDANCE_OPTIONS.map(option => {
             const Icon = option.icon;
-            const count = attendanceRows.filter(row => row.status === option.value).length;
+            const count = attendanceRows.filter(row => countedAttendanceStatus(row.status) === option.value).length;
             const active = attendanceFilter === option.value;
             return (
               <button
@@ -185,7 +184,8 @@ export default function ScheduleAttendanceRoom({
         )}
         <CoachRowList label="Attendance" inset className={styles.attendanceRows}>
           {filteredRows.map(row => {
-            const cur = ATTENDANCE_BY_VALUE[row.status] ?? ATTENDANCE_BY_VALUE.unknown;
+            // A family's Maybe renders as Maybe (One attendance record), never as a missing option.
+            const cur = attendanceOption(row.status);
             const StatusIcon = cur.icon;
             const name = playerDisplayName(row.player);
             const said = family ? familySaid(family, row.player.id, desk) : null;

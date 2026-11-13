@@ -23,6 +23,8 @@
 //
 // Relative imports WITH the .ts extension so the unit tests run under plain `node --test`.
 import { ATTENDANCE_MIN_KNOWN } from './insight-findings.ts';
+import { countedAttendanceStatus } from './coach-schedule-vocab.ts';
+import type { RepAttendanceStatus } from './types.ts';
 
 /** One recorded attendance mark on one practice. */
 export interface PracticeAttendanceRecord {
@@ -32,7 +34,7 @@ export interface PracticeAttendanceRecord {
   /** How the receipt names it, e.g. "Tuesday practice". */
   label: string;
   playerId: string;
-  status: 'unknown' | 'attending' | 'absent' | 'late';
+  status: RepAttendanceStatus;
 }
 
 export interface PracticeMissPlayer { id: string; name: string }
@@ -139,9 +141,11 @@ export function computePracticeMisses(input: PracticeMissInput): PracticeMissRan
   for (const r of ordered) {
     const row = rowById.get(r.playerId);
     if (!row || !nameById.has(r.playerId)) continue;
-    if (r.status === 'unknown') continue; // no reply is not evidence, in either direction
+    // A Maybe still standing is Not marked (One attendance record, ruling 2): it would otherwise count as KNOWN and attended.
+    const status = countedAttendanceStatus(r.status);
+    if (status === 'unknown') continue; // no reply is not evidence, in either direction
     row.known += 1;
-    if (r.status !== 'absent') continue;
+    if (status !== 'absent') continue;
     row.missed += 1;
     row.absences.push({ eventId: r.eventId, day: r.day, label: r.label });
   }

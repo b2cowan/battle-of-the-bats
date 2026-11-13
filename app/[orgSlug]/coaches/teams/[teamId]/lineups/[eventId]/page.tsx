@@ -297,7 +297,7 @@ export default function CoachLineupBuilderPage({
          exists to keep clean. Call-ups reach the editor through its own `callUps` prop. */
       setAttendanceRows(players.map(player => {
         const existing = attendanceByPlayer.get(player.id);
-        return { player, status: existing?.status ?? 'unknown', note: existing?.note ?? '', markedAt: existing?.markedAt ?? null };
+        return { player, status: existing?.status ?? 'unknown', note: existing?.note ?? '', markedAt: existing?.setAt ?? null };
       }));
 
       const mode = data.lineup?.lineupMode ?? 'everyone_bats';

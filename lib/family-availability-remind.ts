@@ -87,18 +87,18 @@ async function gather(params: {
   if (state === 'not_covered') return { refused: 'not_found' };
   if (state !== 'open') return { refused: 'closed' };
 
-  const [roster, teamName, org, book, answers, last] = await Promise.all([
+  const [roster, teamName, org, book, last] = await Promise.all([
     supabaseAdmin.from('rep_roster_players').select('id, child_id, player_first_name, player_last_name')
       .eq('program_year_id', params.programYearId).eq('status', 'active').order('player_last_name').order('player_first_name'),
     // The routes pass the team they already hold; a caller without it reads the name.
     params.team?.name ?? supabaseAdmin.from('rep_teams').select('name').eq('id', params.teamId).maybeSingle()
       .then(r => { if (r.error) throw r.error; return (r.data as { name: string } | null)?.name ?? null; }),
     readClubEmailOrg(event.org_id),
-    supabaseAdmin.from('rep_team_event_attendance').select('player_id, status').eq('event_id', event.id),
-    supabaseAdmin.from('event_availability_answers').select('child_id').eq('event_kind', 'rep_event').eq('event_id', event.id),
+    // One attendance record (mig 483): the answer and who set it, in one read. Ruling 6: Remind skips ANY player with an answer.
+    supabaseAdmin.from('rep_team_event_attendance').select('player_id, status, set_by_kind').eq('event_id', event.id),
     lastRemindedAt(event.id),
   ]);
-  for (const r of [roster, book, answers]) if (r.error) throw r.error;
+  for (const r of [roster, book]) if (r.error) throw r.error;
   const players = (roster.data ?? []) as { id: string; child_id: string; player_first_name: string | null; player_last_name: string | null }[];
   const childIds = players.map(p => p.child_id);
   const { data: linkData, error: linkError } = childIds.length
@@ -108,11 +108,13 @@ async function gather(params: {
   if (linkError) throw linkError;
   const links = (linkData ?? []) as { child_id: string; user_id: string }[];
 
-  const status = new Map(((book.data ?? []) as { player_id: string; status: RepAttendanceStatus }[]).map(b => [b.player_id, b.status]));
-  const answered = new Set(((answers.data ?? []) as { child_id: string }[]).map(a => a.child_id));
+  const bookRows = (book.data ?? []) as { player_id: string; status: RepAttendanceStatus; set_by_kind: string | null }[];
+  const status = new Map(bookRows.map(b => [b.player_id, b.status]));
+  // "Answered" = a family set the current answer; a coach's answer is "marked" (remindPlan). Either way, no reminder.
+  const answered = new Set(bookRows.filter(b => b.set_by_kind === 'family' && b.status !== 'unknown').map(b => b.player_id));
   const connected = new Set(links.map(l => l.child_id));
   const plan = remindPlan(players.map(p => ({
-    playerId: p.id, status: status.get(p.id) ?? 'unknown', answered: answered.has(p.child_id), connected: connected.has(p.child_id),
+    playerId: p.id, status: status.get(p.id) ?? 'unknown', answered: answered.has(p.id), connected: connected.has(p.child_id),
   })));
   const byId = new Map(players.map(p => [p.id, p]));
   const nameOf = (id: string) => firstNameOfPlayer(byId.get(id)!);

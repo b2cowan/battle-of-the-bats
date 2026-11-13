@@ -42,7 +42,7 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { isCalendarDate, mondayOfDay, tournamentToday, utcToZonedInputs } from '@/lib/timezone';
 import { dayHeading } from '@/lib/calendar-recipe';
-import { EVENT_LABELS } from '@/lib/coach-schedule-vocab';
+import { EVENT_LABELS, countedAttendanceStatus } from '@/lib/coach-schedule-vocab';
 import ScheduleImportSheet from '@/components/coaches/ScheduleImportSheet';
 import { GAME_EVENT_TYPES, chosenDayAfterStep, dayStr, errorMessage, fmtDate, isLineupEvent, sortDayEvents, stepScheduleCursor } from '@/lib/coach-schedule-view';
 import {
@@ -645,7 +645,7 @@ export default function CoachesSchedulePage({
       if (attRes.status === 'fulfilled' && attRes.value.ok) {
         const d = await attRes.value.json();
         attendanceCount = ((d.attendance ?? []) as RepTeamEventAttendance[])
-          .filter(a => a.status !== 'unknown').length;
+          .filter(a => countedAttendanceStatus(a.status) !== 'unknown').length; // a Maybe is Not marked (ruling 2)
       }
       if (lineupRes.status === 'fulfilled' && lineupRes.value.ok) {
         const d = await lineupRes.value.json();

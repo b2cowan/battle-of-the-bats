@@ -9,7 +9,8 @@ import { between, functionBody, readCode } from './_source-code.ts';
 /**
  * Signed-in family accounts Stage 4b, Parts 1–3 (build prompt docs/projects/active/SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md;
  * drawing tab 7). Real output where the rule is pure; the source where the rule is "this path never does X" (Part 2's guards
- * a–f). The database half (the record, the 24-hour Remind claim, the purge) is proved by tests/sql/family-availability-fixture.sql.
+ * a–f). The database half (the one record and its writer, the 24-hour Remind claim, the purge) is proved by
+ * tests/sql/one-attendance-record-fixture.sql.
  */
 
 const MODULE = 'lib/family-availability.ts';
@@ -120,11 +121,23 @@ describe('Part 2 guards — who may answer (source)', () => {
   const write = functionBody(mod, 'writeFamilyAnswer');
   const read = functionBody(mod, 'readFamilyAnswers');
 
-  it('(f) a family write can never touch the coach’s attendance book', () => {
+  it('(f) ONE RECORD: a family write goes through the one writer as a family, never the coach’s note or audit', () => {
+    // One attendance record (owner 2026-11-13, mig 483): the family's answer IS the attendance, written ONLY through
+    // rep_attendance_write with kind 'family'. Nothing family-side writes the table directly.
+    assert.match(write, /supabaseAdmin\.rpc\('rep_attendance_write', \{/);
+    assert.match(write, /p_kind: 'family'/);
+    assert.match(write, /p_player: reached\.entryId/, 'the player is this team’s roster entry from the reach (a call-up stays coach-only)');
+    assert.doesNotMatch(write, /p_note:|p_set_note:/, 'the coach’s note is the coach’s');
     for (const rel of [MODULE, ROUTE, 'lib/family-availability-rules.ts', CLIENT]) {
-      assert.doesNotMatch(readCode(rel), /rep_team_event_attendance/, rel);
+      assert.doesNotMatch(readCode(rel), /from\('rep_team_event_attendance'\)\s*\.(insert|update|upsert|delete)\(/, rel);
+      assert.doesNotMatch(readCode(rel), /event_availability_answers/, `${rel}: the retired record (mig 485)`);
     }
-    assert.match(write, /from\('event_availability_answers'\)/);
+    // The database is the second guard (mig 483): a family write after the start, or on a cancelled event, is refused there too,
+    // and only a coach's write moves the coach's audit column.
+    const mig = readCode('supabase/migrations/483_one_attendance_record.sql');
+    assert.match(mig, /if p_kind = 'family' and \(e\.status = 'cancelled' or e\.starts_at is null or e\.starts_at <= v_now\) then\s*\n\s*raise exception 'attendance_closed'/);
+    assert.match(mig, /updated_by\s+= case when p_kind = 'coach' then p_by else r\.updated_by end/);
+    assert.match(mig, /if p_set_note and p_kind <> 'coach' then raise exception/);
   });
   it('reach is re-derived from the signed-in account on every write; the first-link helper is never used', () => {
     assert.match(write, /await getFamilyReach\(params\.userId\)/);
@@ -172,9 +185,12 @@ describe('(a) the family payload — the account’s own children only, and no n
     assert.deepEqual(fields, ['answer', 'byFirstName', 'child', 'childId', 'dayWords', 'eventId', 'mine', 'note', 'open', 'otherHasNote'].sort());
   });
   it('a note’s words reach the page only when the answer is this account’s own', () => {
+    // One record: the family's note has its own writer (family_note_by_user_id); the coach's `note` is never read here.
     const row = functionBody(mod, 'rowOf');
-    assert.match(row, /note: mine \? a\?\.note \?\? null : null/);
-    assert.match(row, /otherHasNote: !!a && !mine && !!a\.note/);
+    assert.match(row, /const noteMine = !!b\?\.family_note && b\.family_note_by_user_id === userId;/);
+    assert.match(row, /note: noteMine \? b!\.family_note : null/);
+    assert.match(row, /otherHasNote: !!b\?\.family_note && !noteMine/);
+    assert.doesNotMatch(between(mod, 'const FAMILY_BOOK_COLUMNS', '\n'), /[ ,']note[,']/, 'the coach’s note is never selected');
   });
   it('answers are read only for the children the caller proved this account reaches here', () => {
     const read = functionBody(mod, 'readFamilyAnswers');
@@ -188,16 +204,22 @@ describe('(a) the family payload — the account’s own children only, and no n
   });
 });
 
-describe('the writer’s change and repeat rules (source)', () => {
+describe('the one writer’s change and repeat rules (mig 483; behaviour held by tests/sql/one-attendance-record-fixture.sql §3)', () => {
+  const mig = readCode('supabase/migrations/483_one_attendance_record.sql');
   const write = functionBody(readCode(MODULE), 'writeFamilyAnswer');
-  it('a CHANGED answer keeps the one before it; the same answer re-sent changes only the note', () => {
-    assert.match(write, /previous_answer: prior\.answer, previous_by_user_id: prior\.answered_by_user_id, previous_at: prior\.answered_at/);
-    assert.match(write, /: \{ note: cleaned\.note, updated_at: stamp, \.\.\.\(sameWriter \? \{\} : \{ answered_by_user_id: params\.userId, answered_at: stamp \}\) \}/);
+  it('a CHANGED status keeps the one before it, with who and when; the same status re-sent moves nothing', () => {
+    assert.match(mig, /v_move := p_status is not null and p_status is distinct from r\.status;/);
+    assert.match(mig, /r\.previous_status := r\.status;\s*\n\s*r\.previous_by_kind := r\.set_by_kind;\s*\n\s*r\.previous_by_user_id := r\.set_by_user_id;\s*\n\s*r\.previous_at := r\.set_at;/);
   });
-  it('the update applies only to the row that was read and goes again once; the insert goes again once on a duplicate key', () => {
-    assert.match(write, /\.eq\('id', prior\.id\)\.eq\('answered_at', prior\.answered_at\)\.eq\('answer', prior\.answer\)\.select\('id'\)/);
-    assert.match(write, /if \(!updated\?\.length\) \{\s*\n\s*if \(attempt === 0\) continue;/);
-    assert.match(write, /error\?\.code === '23505' && attempt === 0/);
+  it('the row is locked for the write (latest wins, never a lost update); the guards are decided under the lock', () => {
+    assert.match(mig, /where event_id = p_event and player_id = p_player for update;/);
+    assert.match(mig, /if \(p_only_if_unknown and r\.status <> 'unknown'\)\s*\n\s*or \(p_only_if_set_by is not null[^]*?coalesce\(r\.set_by_kind, case when r\.status <> 'unknown' then 'coach' end\) is distinct from p_only_if_set_by\) then/);
+  });
+  it('a family write always replaces the family’s note (a second parent’s change clears the first’s); a clear clears it', () => {
+    assert.match(write, /p_family_note: params\.answer === null \? null : cleaned\.note,\s*\n\s*p_set_family_note: true,/);
+  });
+  it('the start passing between the gate and the write reads as closed, never as a failure', () => {
+    assert.match(write, /if \(error\?\.message\?\.includes\('attendance_closed'\)\) return \{ ok: false, code: 'closed' \};/);
   });
 });
 

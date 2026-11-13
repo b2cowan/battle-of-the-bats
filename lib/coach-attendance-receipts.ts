@@ -33,8 +33,10 @@
 //
 // Relative import WITH the .ts extension so the unit tests run under plain `node --test`.
 import { sameWeekdayAcross } from './coach-practice-misses.ts';
+import type { RepAttendanceStatus } from './types.ts';
 
-export type AttendanceMarkStatus = 'unknown' | 'attending' | 'absent' | 'late';
+/** A Maybe still standing falls to the last line below, as Not marked (One attendance record, ruling 2). */
+export type AttendanceMarkStatus = RepAttendanceStatus;
 
 /**
  * The ONE rule for what a mark counts toward — `known` excludes no-reply (nobody was ever marked

@@ -60,6 +60,7 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepAttendanceStatus, RepDevelopmentGoalStatus } from '@/lib/types';
 import styles from '../../../coaches.module.css';
 import SearchField from '@/components/shared/SearchField';
+import { ATTENDANCE_WORD, countedAttendanceStatus } from '@/lib/coach-schedule-vocab';
 
 /**
  * The practice-plan builder (slice 1a).
@@ -4948,9 +4949,9 @@ export default function PracticePlanEditor({
                     <span className={styles.ppPickBody}>
                       <span className={styles.ppPickName}>
                         {playerDisplayName(player)}
-                        {canViewAttendance && status && status !== 'unknown' && (
+                        {canViewAttendance && status && countedAttendanceStatus(status) !== 'unknown' && (
                           <span className={styles.ppPickStatus}>
-                            {status === 'attending' ? 'In' : status === 'late' ? 'Late' : 'Out'}
+                            {ATTENDANCE_WORD[status]}
                           </span>
                         )}
                       </span>

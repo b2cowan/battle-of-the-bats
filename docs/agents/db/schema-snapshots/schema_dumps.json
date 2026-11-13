@@ -3404,6 +3404,15 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "club_schedule_sends",
+        "pos": 19,
+        "column_name": "league_slot_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "club_schedule_slot_programs",
         "pos": 1,
         "column_name": "slot_id",
@@ -5198,123 +5207,6 @@
         "table_name": "error_groups",
         "pos": 19,
         "column_name": "created_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 1,
-        "column_name": "id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": "gen_random_uuid()"
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 2,
-        "column_name": "event_kind",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 3,
-        "column_name": "event_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 4,
-        "column_name": "child_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 5,
-        "column_name": "answer",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 6,
-        "column_name": "note",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 7,
-        "column_name": "answered_by_user_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 8,
-        "column_name": "answered_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 9,
-        "column_name": "previous_answer",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 10,
-        "column_name": "previous_by_user_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 11,
-        "column_name": "previous_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 12,
-        "column_name": "created_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
-        "table_name": "event_availability_answers",
-        "pos": 13,
-        "column_name": "updated_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -10332,6 +10224,24 @@
         "udt_name": "int2",
         "is_nullable": "NO",
         "column_default": "2"
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 31,
+        "column_name": "time_asked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 32,
+        "column_name": "time_asked_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "league_slot_uses",
@@ -24097,7 +24007,88 @@
       {
         "table_name": "rep_team_event_attendance",
         "pos": 12,
-        "column_name": "marked_at",
+        "column_name": "set_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 13,
+        "column_name": "set_by_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 14,
+        "column_name": "set_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 15,
+        "column_name": "previous_status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 16,
+        "column_name": "previous_by_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 17,
+        "column_name": "previous_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 18,
+        "column_name": "previous_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 19,
+        "column_name": "family_note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 20,
+        "column_name": "family_note_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 21,
+        "column_name": "family_note_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",
@@ -31971,27 +31962,6 @@
         "constraint_name": "error_events_org_id_fkey"
       },
       {
-        "table_name": "event_availability_answers",
-        "column_name": "answered_by_user_id",
-        "foreign_table": null,
-        "foreign_column": null,
-        "constraint_name": "event_availability_answers_answered_by_user_id_fkey"
-      },
-      {
-        "table_name": "event_availability_answers",
-        "column_name": "child_id",
-        "foreign_table": "org_children",
-        "foreign_column": "id",
-        "constraint_name": "event_availability_answers_child_id_fkey"
-      },
-      {
-        "table_name": "event_availability_answers",
-        "column_name": "previous_by_user_id",
-        "foreign_table": null,
-        "foreign_column": null,
-        "constraint_name": "event_availability_answers_previous_by_user_id_fkey"
-      },
-      {
         "table_name": "event_availability_reminders",
         "column_name": "reminded_by_user_id",
         "foreign_table": null,
@@ -33103,6 +33073,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "league_seasons_org_id_fkey"
+      },
+      {
+        "table_name": "league_seasons",
+        "column_name": "time_asked_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_seasons_time_asked_by_fkey"
       },
       {
         "table_name": "league_slot_uses",
@@ -35710,6 +35687,13 @@
       },
       {
         "table_name": "rep_team_event_attendance",
+        "column_name": "family_note_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_event_attendance_family_note_by_user_id_fkey"
+      },
+      {
+        "table_name": "rep_team_event_attendance",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -35724,10 +35708,24 @@
       },
       {
         "table_name": "rep_team_event_attendance",
+        "column_name": "previous_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_event_attendance_previous_by_user_id_fkey"
+      },
+      {
+        "table_name": "rep_team_event_attendance",
         "column_name": "program_year_id",
         "foreign_table": "rep_program_years",
         "foreign_column": "id",
         "constraint_name": "rep_team_event_attendance_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "column_name": "set_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_event_attendance_set_by_user_id_fkey"
       },
       {
         "table_name": "rep_team_event_attendance",
@@ -38274,31 +38272,6 @@
         "tablename": "error_groups",
         "indexname": "idx_error_groups_status_severity",
         "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
-      },
-      {
-        "tablename": "event_availability_answers",
-        "indexname": "event_availability_answers_by_user_idx",
-        "indexdef": "CREATE INDEX event_availability_answers_by_user_idx ON public.event_availability_answers USING btree (answered_by_user_id) WHERE (answered_by_user_id IS NOT NULL)"
-      },
-      {
-        "tablename": "event_availability_answers",
-        "indexname": "event_availability_answers_child_idx",
-        "indexdef": "CREATE INDEX event_availability_answers_child_idx ON public.event_availability_answers USING btree (child_id)"
-      },
-      {
-        "tablename": "event_availability_answers",
-        "indexname": "event_availability_answers_event_child_uniq",
-        "indexdef": "CREATE UNIQUE INDEX event_availability_answers_event_child_uniq ON public.event_availability_answers USING btree (event_kind, event_id, child_id)"
-      },
-      {
-        "tablename": "event_availability_answers",
-        "indexname": "event_availability_answers_pkey",
-        "indexdef": "CREATE UNIQUE INDEX event_availability_answers_pkey ON public.event_availability_answers USING btree (id)"
-      },
-      {
-        "tablename": "event_availability_answers",
-        "indexname": "event_availability_answers_prev_user_idx",
-        "indexdef": "CREATE INDEX event_availability_answers_prev_user_idx ON public.event_availability_answers USING btree (previous_by_user_id) WHERE (previous_by_user_id IS NOT NULL)"
       },
       {
         "tablename": "event_availability_reminders",
@@ -41977,6 +41950,11 @@
       },
       {
         "tablename": "rep_team_event_attendance",
+        "indexname": "rep_team_event_attendance_family_note_by_user_idx",
+        "indexdef": "CREATE INDEX rep_team_event_attendance_family_note_by_user_idx ON public.rep_team_event_attendance USING btree (family_note_by_user_id) WHERE (family_note_by_user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_event_attendance",
         "indexname": "rep_team_event_attendance_org_id_idx",
         "indexdef": "CREATE INDEX rep_team_event_attendance_org_id_idx ON public.rep_team_event_attendance USING btree (org_id)"
       },
@@ -41992,8 +41970,18 @@
       },
       {
         "tablename": "rep_team_event_attendance",
+        "indexname": "rep_team_event_attendance_previous_by_user_idx",
+        "indexdef": "CREATE INDEX rep_team_event_attendance_previous_by_user_idx ON public.rep_team_event_attendance USING btree (previous_by_user_id) WHERE (previous_by_user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_event_attendance",
         "indexname": "rep_team_event_attendance_program_year_id_idx",
         "indexdef": "CREATE INDEX rep_team_event_attendance_program_year_id_idx ON public.rep_team_event_attendance USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_team_event_attendance",
+        "indexname": "rep_team_event_attendance_set_by_user_idx",
+        "indexdef": "CREATE INDEX rep_team_event_attendance_set_by_user_idx ON public.rep_team_event_attendance USING btree (set_by_user_id) WHERE (set_by_user_id IS NOT NULL)"
       },
       {
         "tablename": "rep_team_event_attendance",
@@ -44452,36 +44440,6 @@
       {
         "kind": "RLS",
         "table_name": "error_groups",
-        "detail": "ENABLED",
-        "check_clause": null
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "event_availability_answers",
-        "detail": "event_availability_answers_answer_check",
-        "check_clause": "(answer = ANY (ARRAY['in'::text, 'out'::text, 'maybe'::text]))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "event_availability_answers",
-        "detail": "event_availability_answers_kind_check",
-        "check_clause": "(event_kind = ANY (ARRAY['rep_event'::text, 'league_game'::text, 'league_practice'::text]))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "event_availability_answers",
-        "detail": "event_availability_answers_note_check",
-        "check_clause": "((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 200)))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "event_availability_answers",
-        "detail": "event_availability_answers_previous_check",
-        "check_clause": "((previous_answer IS NULL) OR (previous_answer = ANY (ARRAY['in'::text, 'out'::text, 'maybe'::text])))"
-      },
-      {
-        "kind": "RLS",
-        "table_name": "event_availability_answers",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -48340,8 +48298,26 @@
       {
         "kind": "CHECK",
         "table_name": "rep_team_event_attendance",
+        "detail": "rep_team_event_attendance_family_note_check",
+        "check_clause": "((family_note IS NULL) OR ((char_length(family_note) >= 1) AND (char_length(family_note) <= 200)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_event_attendance",
+        "detail": "rep_team_event_attendance_previous_check",
+        "check_clause": "(((previous_status IS NULL) OR (previous_status = ANY (ARRAY['unknown'::text, 'attending'::text, 'absent'::text, 'late'::text, 'maybe'::text]))) AND ((previous_by_kind IS NULL) OR (previous_by_kind = ANY (ARRAY['coach'::text, 'family'::text, 'system'::text]))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_event_attendance",
+        "detail": "rep_team_event_attendance_set_by_kind_check",
+        "check_clause": "((set_by_kind IS NULL) OR (set_by_kind = ANY (ARRAY['coach'::text, 'family'::text, 'system'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_event_attendance",
         "detail": "rep_team_event_attendance_status_check",
-        "check_clause": "(status = ANY (ARRAY['unknown'::text, 'attending'::text, 'absent'::text, 'late'::text]))"
+        "check_clause": "(status = ANY (ARRAY['unknown'::text, 'attending'::text, 'absent'::text, 'late'::text, 'maybe'::text]))"
       },
       {
         "kind": "RLS",

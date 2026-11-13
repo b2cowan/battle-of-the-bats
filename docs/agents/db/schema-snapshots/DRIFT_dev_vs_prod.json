@@ -1,10 +1,10 @@
 {
   "generated": "2026-11-13",
-  "total": 675,
+  "total": 671,
   "counts": {
-    "tables": 23,
-    "columns": 324,
-    "indexes": 102,
+    "tables": 22,
+    "columns": 323,
+    "indexes": 100,
     "constraints": 88,
     "rls": 138
   },
@@ -28,6 +28,10 @@
     {
       "key": "check:changed:league_season_notices.league_season_notices_kind_check",
       "sig": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text, 'team_changes'::text])) :: (kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text]))"
+    },
+    {
+      "key": "check:changed:rep_team_event_attendance.rep_team_event_attendance_status_check",
+      "sig": "(status = ANY (ARRAY['unknown'::text, 'attending'::text, 'absent'::text, 'late'::text, 'maybe'::text])) :: (status = ANY (ARRAY['unknown'::text, 'attending'::text, 'absent'::text, 'late'::text]))"
     },
     {
       "key": "check:only-dev:bank_check_waiting.bank_check_waiting_added_shape",
@@ -63,22 +67,6 @@
     },
     {
       "key": "check:only-dev:bank_checks.bank_checks_kind",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:event_availability_answers.event_availability_answers_answer_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:event_availability_answers.event_availability_answers_kind_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:event_availability_answers.event_availability_answers_note_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:event_availability_answers.event_availability_answers_previous_check",
       "sig": ""
     },
     {
@@ -446,6 +434,18 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:rep_team_event_attendance.rep_team_event_attendance_family_note_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_event_attendance.rep_team_event_attendance_previous_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_event_attendance.rep_team_event_attendance_set_by_kind_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:rep_teams.rep_teams_family_answers_check",
       "sig": ""
     },
@@ -642,55 +642,7 @@
       "sig": ""
     },
     {
-      "key": "column:only-dev:event_availability_answers.answer",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.answered_at",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.answered_by_user_id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.child_id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.created_at",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.event_id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.event_kind",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.note",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.previous_answer",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.previous_at",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.previous_by_user_id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:event_availability_answers.updated_at",
+      "key": "column:only-dev:club_schedule_sends.league_slot_ids",
       "sig": ""
     },
     {
@@ -939,6 +891,14 @@
     },
     {
       "key": "column:only-dev:league_seasons.friend_requests_max",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_seasons.time_asked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_seasons.time_asked_by",
       "sig": ""
     },
     {
@@ -1434,7 +1394,43 @@
       "sig": ""
     },
     {
-      "key": "column:only-dev:rep_team_event_attendance.marked_at",
+      "key": "column:only-dev:rep_team_event_attendance.family_note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_event_attendance.family_note_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_event_attendance.family_note_by_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_event_attendance.previous_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_event_attendance.previous_by_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_event_attendance.previous_by_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_event_attendance.previous_status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_event_attendance.set_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_event_attendance.set_by_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_event_attendance.set_by_user_id",
       "sig": ""
     },
     {
@@ -1882,22 +1878,6 @@
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:event_availability_answers.event_availability_answers_answered_by_user_id_fkey",
-      "sig": ""
-    },
-    {
-      "key": "constraint:only-dev:event_availability_answers.event_availability_answers_child_id_fkey",
-      "sig": ""
-    },
-    {
-      "key": "constraint:only-dev:event_availability_answers.event_availability_answers_pkey",
-      "sig": ""
-    },
-    {
-      "key": "constraint:only-dev:event_availability_answers.event_availability_answers_previous_by_user_id_fkey",
-      "sig": ""
-    },
-    {
       "key": "constraint:only-dev:event_availability_reminders.event_availability_reminders_pkey",
       "sig": ""
     },
@@ -1998,6 +1978,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_seasons.league_seasons_time_asked_by_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:legal_acceptances.legal_acceptances_pkey",
       "sig": ""
     },
@@ -2035,6 +2019,18 @@
     },
     {
       "key": "constraint:only-dev:rep_roster_players.rep_roster_players_health_confirmed_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_event_attendance.rep_team_event_attendance_family_note_by_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_event_attendance.rep_team_event_attendance_previous_by_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_event_attendance.rep_team_event_attendance_set_by_user_id_fkey",
       "sig": ""
     },
     {
@@ -2242,26 +2238,6 @@
       "sig": ""
     },
     {
-      "key": "index:only-dev:event_availability_answers_by_user_idx",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:event_availability_answers_child_idx",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:event_availability_answers_event_child_uniq",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:event_availability_answers_pkey",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:event_availability_answers_prev_user_idx",
-      "sig": ""
-    },
-    {
       "key": "index:only-dev:event_availability_reminders_by_idx",
       "sig": ""
     },
@@ -2462,6 +2438,18 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_team_event_attendance_family_note_by_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_event_attendance_previous_by_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_event_attendance_set_by_user_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:second_parent_stops_org_email_uniq",
       "sig": ""
     },
@@ -2619,10 +2607,6 @@
     },
     {
       "key": "table:only-dev:bank_check_waiting",
-      "sig": ""
-    },
-    {
-      "key": "table:only-dev:event_availability_answers",
       "sig": ""
     },
     {

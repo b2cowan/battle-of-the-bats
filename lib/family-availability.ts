@@ -4,8 +4,10 @@ import { GUARDIAN_TIER_ENABLED } from './family-guardian';
 import { getEnabledFamilyOrg, getFamilyReach, isVisibleToFamilies } from './family-access';
 import { FAMILY_AVAILABILITY_WORDS, answeredDayWords, type FamilyAnswer } from './family-availability-words';
 import {
-  cleanFamilyNote, familyAnswersCover, familyAnswerState, firstNameOf, normalizeFamilyAnswers, type LiveFamilyAnswersSetting,
+  cleanFamilyNote, familyAnswerOfStatus, familyAnswersCover, familyAnswerState, firstNameOf, normalizeFamilyAnswers,
+  statusOfFamilyAnswer, type LiveFamilyAnswersSetting,
 } from './family-availability-rules';
+import type { RepAttendanceSetter, RepAttendanceStatus } from './types';
 import type { FamilyScheduleEntry } from './family-view';
 
 // The parent's save route reads its one guard from here (every other caller imports the rules file itself).
@@ -17,17 +19,18 @@ export { isFamilyAnswer } from './family-availability-rules';
  * plan SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md, Stage 4, "RULED 2026-11-13"; build prompt SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md).
  *
  *   familyAnswersCover(setting, type)   the team's switch → which events families answer (ask 1)
- *   writeFamilyAnswer(...)              the ONE writer of a family answer (the parent's route calls it)
+ *   writeFamilyAnswer(...)              the family's side of THE ONE WRITER (the parent's route calls it)
  *   readFamilyAnswers(...)              the parent's page: the account's OWN children's answers on one team, and nothing else
  *
- * ⚠ A FAMILY ANSWER IS NOT THE COACH'S BOOK. This module never reads or writes the attendance book (a guard test holds it to that):
- *   the coach copies answers in with a tap (ask 3).
+ * ⚠ ONE ATTENDANCE RECORD (owner ruling 2026-11-13, mig 483; plan ONE_ATTENDANCE_RECORD_PLAN.md): the family's answer IS the
+ *   player's attendance, the same row the coach sets, through the same database writer (`rep_attendance_write`). Latest change
+ *   wins. The family never writes the coach's note or the coach's audit column. Stage 4b's separate record (mig 476) is retired.
  * ⚠ REACH IS RE-DERIVED ON EVERY WRITE from the signed-in account (`getFamilyReach`), never from a team, event or child id the
  *   client sent; a parent who left, was removed or was stopped holds no verified link and is refused, stale tab or not.
  *   (`getVerifiedLinkForUserTeam` returns the FIRST matching link, so it is never used for a per-child write.)
- * ⚠ WHAT A PARENT READS (ask 5): their own child's answer, the other connected parent's first name and answer and day, whether
- *   that parent left a note (never its words), and their own note. No teammate, no coach mark, nobody else's note
- *   (tests/unit/family-availability-payload.test.ts holds the allow-list).
+ * ⚠ WHAT A PARENT READS (ask 5, re-signed by ruling 4): their own child's CURRENT answer (the coach's change included), the other
+ *   connected parent's first name and day, whether that parent left a note (never its words), and their own note. No teammate,
+ *   never the coach's note, nobody else's words (tests/unit/family-availability-payload.test.ts holds the allow-list).
  * ⚠ Rep teams only in 4b (ask 4). The record can hold a house-league event (`event_kind`); nothing here writes one.
  * ⚠ While the guardian tier is off, nothing here answers: the read is null and the writer refuses.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -64,10 +67,13 @@ export interface FamilyAnswersView {
 }
 
 export interface TeamRow { id: string; org_id: string; schedule_visibility: string | null; is_archived: boolean; family_answers: string | null }
-interface AnswerRow {
-  event_id: string; child_id: string; answer: FamilyAnswer; note: string | null;
-  answered_by_user_id: string | null; answered_at: string;
+/** The record's columns the family side reads: the answer, who set it and when, and the family's note. Never the coach's note. */
+interface BookRow {
+  event_id: string; player_id: string; status: RepAttendanceStatus;
+  set_by_kind: RepAttendanceSetter | null; set_by_user_id: string | null; set_at: string | null;
+  family_note: string | null; family_note_by_user_id: string | null;
 }
+const FAMILY_BOOK_COLUMNS = 'event_id, player_id, status, set_by_kind, set_by_user_id, set_at, family_note, family_note_by_user_id';
 
 export async function readTeam(teamId: string): Promise<TeamRow | null> {
   const { data, error } = await supabaseAdmin
@@ -116,21 +122,22 @@ export async function readFamilyAnswers(params: {
   const events = params.entries.filter(e => e.status === 'scheduled' && !e.completed && familyAnswersCover(setting, e.eventType));
   const childIds = params.children.map(c => c.childId);
 
-  const [answers, links, seasons] = await Promise.all([
-    events.length
-      ? supabaseAdmin.from('event_availability_answers')
-        .select('event_id, child_id, answer, note, answered_by_user_id, answered_at')
-        .eq('event_kind', 'rep_event').in('event_id', events.map(e => e.id)).in('child_id', childIds)
-      : Promise.resolve({ data: [], error: null }),
+  const [links, seasons] = await Promise.all([
     // The other connected parents of these children (joined: verified, with an account).
     supabaseAdmin.from('family_links').select('child_id, user_id')
       .in('child_id', childIds).eq('status', 'verified').not('user_id', 'is', null).neq('user_id', params.userId),
     events.length ? childSeasons(params.userId, params.teamId, events.map(e => e.id)) : Promise.resolve(null),
   ]);
-  if (answers.error) throw answers.error;
   if (links.error) throw links.error;
-  const answerRows = (answers.data ?? []) as AnswerRow[];
   const linkRows = (links.data ?? []) as { child_id: string; user_id: string }[];
+  // The record, by the roster entry each child holds in each event's season (the account's OWN reach, the writer's rule).
+  const entryIds = seasons ? [...new Set([...seasons.child.values()].flatMap(m => [...m.values()]))] : [];
+  const { data: bookData, error: bookError } = events.length && entryIds.length
+    ? await supabaseAdmin.from('rep_team_event_attendance').select(FAMILY_BOOK_COLUMNS)
+      .in('event_id', events.map(e => e.id)).in('player_id', entryIds)
+    : { data: [], error: null };
+  if (bookError) throw bookError;
+  const byKey = new Map(((bookData ?? []) as BookRow[]).map(b => [`${b.event_id}|${b.player_id}`, b]));
 
   // Only a parent STILL connected to the child is named: a parent who left, was removed or stopped reads as "the other parent"
   // (their answer stays, ask 15; the sheet's hint no longer names them as connected). The coach's side keeps the name.
@@ -144,15 +151,15 @@ export async function readFamilyAnswers(params: {
     otherParent[c.childId] = other ? (names.get(other.user_id) ?? FAMILY_AVAILABILITY_WORDS.otherParentFallback) : null;
   }
 
-  const byKey = new Map(answerRows.map(a => [`${a.event_id}|${a.child_id}`, a]));
   const rows: FamilyAnswerRow[] = [];
   for (const e of events) {
     for (const c of params.children) {
       // Only an event of the season this child is rostered in (a team with two seasons open never offers a pill the writer
       // would refuse; Session 1 review, item d).
-      if (!seasons || !seasons.child.get(c.childId)?.has(seasons.event.get(e.id) ?? '')) continue;
+      const entryId = seasons?.child.get(c.childId)?.get(seasons.event.get(e.id) ?? '');
+      if (!entryId) continue;
       rows.push({
-        ...rowOf(e.id, c.childId, byKey.get(`${e.id}|${c.childId}`) ?? null, familyAnswerState(setting, e, now) === 'open', params.userId, nameOf, now),
+        ...rowOf(e.id, c.childId, byKey.get(`${e.id}|${entryId}`) ?? null, familyAnswerState(setting, e, now) === 'open', params.userId, nameOf, now),
         child: c.firstName,
       });
     }
@@ -160,10 +167,11 @@ export async function readFamilyAnswers(params: {
   return { setting, rows, otherParent };
 }
 
-/** Each event's season, and the seasons each of this account's children is rostered in on this team (through the account's OWN
- *  reach, the writer's rule), so the page offers a pill only where the writer would take the answer. */
+/** Each event's season, and per child of this account rostered on this team, its roster entry in each season (through the
+ *  account's OWN reach, the writer's rule), so the page offers a pill only where the writer would take the answer and reads the
+ *  record by the entry the writer writes. */
 async function childSeasons(userId: string, teamId: string, eventIds: readonly string[]): Promise<{
-  event: Map<string, string>; child: Map<string, Set<string>>;
+  event: Map<string, string>; child: Map<string, Map<string, string>>;
 }> {
   const reach = await getFamilyReach(userId);
   const entries = reach.flatMap(r => r.teams.filter(t => t.kind === 'rep' && t.teamId === teamId).map(t => ({ childId: r.link.childId, entryId: t.entryId })));
@@ -176,12 +184,12 @@ async function childSeasons(userId: string, teamId: string, eventIds: readonly s
   if (events.error) throw events.error;
   if (roster.error) throw roster.error;
   const seasonOfEntry = new Map(((roster.data ?? []) as { id: string; program_year_id: string }[]).map(r => [r.id, r.program_year_id]));
-  const child = new Map<string, Set<string>>();
+  const child = new Map<string, Map<string, string>>();
   for (const e of entries) {
     const season = seasonOfEntry.get(e.entryId);
     if (!season) continue;
-    if (!child.has(e.childId)) child.set(e.childId, new Set());
-    child.get(e.childId)!.add(season);
+    if (!child.has(e.childId)) child.set(e.childId, new Map());
+    child.get(e.childId)!.set(season, e.entryId);
   }
   return {
     event: new Map(((events.data ?? []) as { id: string; program_year_id: string }[]).map(e => [e.id, e.program_year_id])),
@@ -195,43 +203,46 @@ export type FamilyAnswerFields = Omit<FamilyAnswerRow, 'child'>;
 const noName = () => null;
 
 function rowOf(
-  eventId: string, childId: string, a: AnswerRow | null, open: boolean,
+  eventId: string, childId: string, b: BookRow | null, open: boolean,
   userId: string, nameOf: (userId: string, childId: string) => string | null, now: Date,
 ): FamilyAnswerFields {
-  const mine = !!a && a.answered_by_user_id === userId;
+  const answer = familyAnswerOfStatus(b?.status);
+  const byFamily = !!b && !!answer && b.set_by_kind === 'family';
+  const mine = byFamily && b!.set_by_user_id === userId;
+  const noteMine = !!b?.family_note && b.family_note_by_user_id === userId;
   return {
     eventId,
     childId,
     open,
-    answer: a?.answer ?? null,
+    answer,
     mine,
-    byFirstName: a && !mine && a.answered_by_user_id ? nameOf(a.answered_by_user_id, childId) : null,
-    dayWords: a ? answeredDayWords(a.answered_at, now) : null,
-    note: mine ? a?.note ?? null : null,
-    otherHasNote: !!a && !mine && !!a.note,
+    byFirstName: byFamily && !mine && b!.set_by_user_id ? nameOf(b!.set_by_user_id, childId) : null,
+    // ⚠ Interim (Session 2 draws "Coach, today"): a coach's answer shows on the pill with no who/day line, so the sheet never
+    // says "the other parent answered" about the coach's change.
+    dayWords: byFamily && b!.set_at ? answeredDayWords(b!.set_at, now) : null,
+    note: noteMine ? b!.family_note : null,
+    otherHasNote: !!b?.family_note && !noteMine,
   };
 }
 
-/**
- * Does this rep event hold any family answer? The event PATCH asks BEFORE a move to a new day (mig 480's trigger then deletes them),
- * so the schedule-change notice can say families will need to answer again (ask 10). False while the tier is off.
- */
-/** Does any of these accounts hold a family answer on any of these children? The Leave and Stop confirms say what happens to them
- *  only then (Stage 4b /legal closeout). False while the tier is off, and for empty input. */
+/** Does any of these accounts hold a family answer (or a family note) on any of these children? The Leave and Stop confirms say
+ *  what happens to them only then (Stage 4b /legal closeout). False while the tier is off, and for empty input. */
 export async function answeredByAccounts(userIds: readonly string[], childIds: readonly string[]): Promise<boolean> {
   if (!GUARDIAN_TIER_ENABLED || userIds.length === 0 || childIds.length === 0) return false;
-  const { count, error } = await supabaseAdmin.from('event_availability_answers').select('id', { count: 'exact', head: true })
-    .in('child_id', [...childIds]).in('answered_by_user_id', [...userIds]);
-  if (error) throw error;
-  return (count ?? 0) > 0;
-}
-
-export async function eventHasFamilyAnswers(eventId: string): Promise<boolean> {
-  if (!GUARDIAN_TIER_ENABLED) return false;
-  const { count, error } = await supabaseAdmin.from('event_availability_answers')
-    .select('id', { count: 'exact', head: true }).eq('event_kind', 'rep_event').eq('event_id', eventId);
-  if (error) throw error;
-  return (count ?? 0) > 0;
+  const { data: entries, error: entryError } = await supabaseAdmin.from('rep_roster_players').select('id').in('child_id', [...childIds]);
+  if (entryError) throw entryError;
+  const players = ((entries ?? []) as { id: string }[]).map(e => e.id);
+  if (players.length === 0) return false;
+  const users = [...userIds];
+  const [set, noted] = await Promise.all([
+    supabaseAdmin.from('rep_team_event_attendance').select('id', { count: 'exact', head: true })
+      .in('player_id', players).eq('set_by_kind', 'family').in('set_by_user_id', users),
+    supabaseAdmin.from('rep_team_event_attendance').select('id', { count: 'exact', head: true })
+      .in('player_id', players).in('family_note_by_user_id', users),
+  ]);
+  if (set.error) throw set.error;
+  if (noted.error) throw noted.error;
+  return (set.count ?? 0) + (noted.count ?? 0) > 0;
 }
 
 // ── The one writer ────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -248,13 +259,16 @@ export type FamilyAnswerWrite =
 interface EventRow { id: string; team_id: string; program_year_id: string; event_type: string; status: string; starts_at: string }
 
 /**
- * Save (or clear, `answer: null`) one child's answer on one event. Every gate is checked here, on the server, from the signed-in
- * account: the tier; a VERIFIED link of this account to THIS child; the child live on THIS rep team (the reach) in the season the
- * event belongs to; the event on this team; the switch covers its kind; the schedule shared with families; the club's family
- * layer on; not cancelled; not started.
+ * Save (or clear, `answer: null`) one child's answer on one event, through THE ONE WRITER (mig 483's `rep_attendance_write`,
+ * kind 'family'). Every gate is checked here, on the server, from the signed-in account: the tier; a VERIFIED link of this account
+ * to THIS child; the child live on THIS rep team (the reach) in the season the event belongs to; the event on this team; the
+ * switch covers its kind; the schedule shared with families; the club's family layer on; not cancelled; not started. The database
+ * refuses a family write after the start on its own too (ruling 2), so no door can get round the lock.
  *
- * A write replaces answer and note wholesale (so a second parent's change clears the first's note, ask 6). A CHANGED answer
- * keeps the one before it in `previous_*`; re-sending the same answer changes only the note (and whose it is).
+ * Latest wins: the answer replaces whatever is there (a coach's included), and the one before it is kept as "earlier" only when it
+ * changed. A family write always replaces the family's note (a second parent's change clears the first's, ask 6); it never writes
+ * the coach's note or the coach's audit column. Reach is to THIS team's roster entry, so a call-up (no family link) stays the
+ * coach's alone.
  */
 export async function writeFamilyAnswer(params: {
   userId: string; teamId: string; eventId: string; childId: string; answer: FamilyAnswer | null; note?: unknown; now?: Date;
@@ -289,61 +303,39 @@ export async function writeFamilyAnswer(params: {
   if (state === 'not_covered') return { ok: false, code: 'not_found' };
   if (state !== 'open') return { ok: false, code: 'closed' };
 
-  const key = { event_kind: 'rep_event', event_id: ev.id, child_id: params.childId };
-  const stamp = now.toISOString();
-
-  if (params.answer === null) {
-    const { data: gone, error } = await supabaseAdmin.from('event_availability_answers').delete().match(key).select('answer');
-    if (error) throw error;
-    const prior = ((gone ?? []) as { answer: FamilyAnswer }[])[0]?.answer ?? null;
-    return {
-      ok: true, row: rowOf(ev.id, params.childId, null, true, params.userId, noName, now),
-      change: { prior, next: null, hasNote: false, startsAt: ev.starts_at },
-    };
+  // ⚠ INTERIM SEAM (One attendance record S1; Session 2 removes it when the family page can pick Late): the page still shows a
+  // coach's Late as "In", so a parent tapping In is saying "yes, coming" and must not erase the coach's Late (the pre-game lineup
+  // signal). Only the note is written then.
+  let nextStatus: string | null = statusOfFamilyAnswer(params.answer);
+  if (params.answer === 'in') {
+    const current = await supabaseAdmin.from('rep_team_event_attendance').select('status')
+      .eq('event_id', ev.id).eq('player_id', reached.entryId).maybeSingle();
+    if (current.error) throw current.error;
+    if ((current.data as { status: string } | null)?.status === 'late') nextStatus = null;
   }
 
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const { data: existing, error: readError } = await supabaseAdmin.from('event_availability_answers')
-      .select('id, answer, answered_by_user_id, answered_at').match(key).maybeSingle();
-    if (readError) throw readError;
-    const prior = existing as { id: string; answer: FamilyAnswer; answered_by_user_id: string | null; answered_at: string } | null;
-
-    if (!prior) {
-      const { error } = await supabaseAdmin.from('event_availability_answers').insert({
-        ...key, answer: params.answer, note: cleaned.note,
-        answered_by_user_id: params.userId, answered_at: stamp, updated_at: stamp,
-      });
-      // The other parent's first answer landed between the read and the insert: go again as a change.
-      if (error?.code === '23505' && attempt === 0) continue;
-      if (error) throw error;
-    } else {
-      const changed = prior.answer !== params.answer;
-      const sameWriter = prior.answered_by_user_id === params.userId;
-      const patch = changed
-        ? {
-          previous_answer: prior.answer, previous_by_user_id: prior.answered_by_user_id, previous_at: prior.answered_at,
-          answer: params.answer, note: cleaned.note, answered_by_user_id: params.userId, answered_at: stamp, updated_at: stamp,
-        }
-        // The same answer: only the note changes. When the other parent re-sends it, the note is theirs now, so the answer is too.
-        : { note: cleaned.note, updated_at: stamp, ...(sameWriter ? {} : { answered_by_user_id: params.userId, answered_at: stamp }) };
-      // Only if the row is still the one we read: a parent who answered a moment ago keeps their "earlier" intact; go again.
-      const { data: updated, error } = await supabaseAdmin.from('event_availability_answers').update(patch)
-        .eq('id', prior.id).eq('answered_at', prior.answered_at).eq('answer', prior.answer).select('id');
-      if (error) throw error;
-      if (!updated?.length) {
-        if (attempt === 0) continue;
-        throw new Error('The answer could not be saved.');
-      }
-    }
-    const saved: AnswerRow = {
-      event_id: ev.id, child_id: params.childId, answer: params.answer, note: cleaned.note,
-      answered_by_user_id: params.userId,
-      answered_at: prior && prior.answer === params.answer && prior.answered_by_user_id === params.userId ? prior.answered_at : stamp,
-    };
-    return {
-      ok: true, row: rowOf(ev.id, params.childId, saved, true, params.userId, noName, now),
-      change: { prior: prior?.answer ?? null, next: params.answer, hasNote: !!cleaned.note, startsAt: ev.starts_at },
-    };
-  }
-  throw new Error('The answer could not be saved.');
+  const { data, error } = await supabaseAdmin.rpc('rep_attendance_write', {
+    p_event: ev.id,
+    p_player: reached.entryId,
+    p_kind: 'family',
+    p_by: params.userId,
+    p_status: nextStatus,
+    p_family_note: params.answer === null ? null : cleaned.note,
+    p_set_family_note: true,
+  });
+  // The start passed between the gate above and the write: the database's own lock refused it.
+  if (error?.message?.includes('attendance_closed')) return { ok: false, code: 'closed' };
+  if (error) throw error;
+  const result = data as { row: BookRow; prior: RepAttendanceStatus | null } | null;
+  if (!result?.row) throw new Error('The answer could not be saved.');
+  return {
+    ok: true,
+    row: rowOf(ev.id, params.childId, result.row, true, params.userId, noName, now),
+    change: {
+      prior: familyAnswerOfStatus(result.prior),
+      next: params.answer,
+      hasNote: params.answer !== null && !!cleaned.note,
+      startsAt: ev.starts_at,
+    },
+  };
 }

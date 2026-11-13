@@ -87,7 +87,9 @@ describe('E2 — attendance in its own room', () => {
   });
   it('the state stays the SHEET\'s — closing the room never drops an answer in flight', () => {
     assert.ok(!/useState|useEffect|fetch\(/.test(room), 'the room holds no state and reads nothing of its own');
-    assert.ok(sheet.includes('const [attendanceRows, setAttendanceRows] = useState'));
+    // The rows are the sheet's own state (One attendance record: its one setter also keeps a ref current for chained saves).
+    assert.ok(sheet.includes('const [attendanceRows, setAttendanceRowsState] = useState'));
+    assert.ok(sheet.includes('const setAttendanceRows = useCallback('));
   });
   it('the RSVP sheet stays a sibling of the dialog — never inside the room or the panel', () => {
     assert.ok(!room.includes('<CoachRsvpSheet'));
