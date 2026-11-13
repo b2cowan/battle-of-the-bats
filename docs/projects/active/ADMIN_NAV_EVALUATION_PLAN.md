@@ -997,6 +997,31 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   - **Owner questions (new, from the build):** (a) the Coaches off-team pages on a phone keep their "?" on the page's title row —
     the drawing showed no bar there; keep, or draw a bar? (b) A Tournament plan's Plan & billing has no help topic — write one,
     or leave it without a "?"?
+- **Phase 6 (remainder) · The closing walk.** Walk §524 PUBLISHED 2026-11-13 (Sonnet session, prompt
+  `ADMIN_NAV_BUILD_PHASE6_CLOSING_WALK_PROMPT.md`; no code, no screen, no help sentence changed):
+  https://claude.ai/artifact/8FcbSMUoivuPypkeC5TR7p (source `ADMIN_NAV_PHASE6_CLOSING_WALK.html`, builder
+  `.probe/nav-phase6-close/build-walk.cjs`); 7 walks, 35 checks, owner walk owed. Gate: §519, §521 and §522 each carry PASSED.
+  - **One sign-in holds all three roles.** `uat-club-owner@uat-rep-club.local` already owned UAT Rep Club (five tournaments)
+    and coached nothing; the fixture (`.probe/nav-phase6-close/fixture.mjs status | run | undo`, dev only, UAT Rep Club only,
+    run 2026-11-13 with the owner's yes) makes that account head coach of UAT Test Team (live) and UAT Between Seasons
+    (closed): two `rep_team_staff_memberships` rows and three `rep_team_coaches` rows (the live season, and the closed team's
+    completed 2024 and 2025 seasons — without those the closed-season door answers "You are not assigned to this team").
+    `undo` removes exactly the recorded rows; run it after the walk passes.
+  - **What it walks** (one purpose each, none repeating §519/§521/§522): C1 start in the club · C2 cross to the tournaments by
+    the foot's door and back by "Club" · C3 cross to the Coaches Portal (Your teams, a lineup's arrow, Workspaces) · C4 the same
+    three on a phone (the bar names the page, the "?" last, one More-sheet order) · C5 Help from anywhere (shortened by the
+    owner: the account menu's Help, help mid-journey, the phone's Help row — §522 Q3 already walked which section opens) ·
+    C6 a closed season is one page and a typed live address for it lands there, a finished tournament reads normally · C7
+    both demos wear the same chrome.
+  - **Observed while probing (read-only), in the walk as written to the product.** Inside a club the Coaches Portal's foot and
+    More sheet carry the Club door only (N4/N7 name "Club · Tournaments you run" for the Premium portal; a club person
+    reaches tournaments through the club). The Tournaments door in the club's foot opens the last event used, not a chosen one.
+  - **Open owner questions carried unchanged, in the walk's own box (not checks):** Phase 5 — Game day chip colour, the phone's
+    lone "+" row, a live team's Season's End title, the team sheet's season-only rows; 5b — the Family figure's "No contact";
+    6b — the off-team Coaches phone "?" (stands, ticked through at §522), a Tournament plan's Plan & billing with no help
+    topic, phone pages that lost their row start at 61 px not 69. Handed to `/demos`: the tour card eyebrowed "Season".
+  - **Owed:** the owner's walk; `fixture.mjs undo`; the full layout sweep at the next release, on staging; commit with the
+    owner's yes.
 
 ## 6. The /design pass (2026-11-09) — what it changed in the drawings
 - **The whole cell opens the list** when there is more than one to choose from (the chevron is its sign); a club's cell
