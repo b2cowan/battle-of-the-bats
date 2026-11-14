@@ -1020,8 +1020,10 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
     lone "+" row, a live team's Season's End title, the team sheet's season-only rows; 5b — the Family figure's "No contact";
     6b — the off-team Coaches phone "?" (stands, ticked through at §522), a Tournament plan's Plan & billing with no help
     topic, phone pages that lost their row start at 61 px not 69. Handed to `/demos`: the tour card eyebrowed "Season".
-  - **Owed:** the owner's walk; `fixture.mjs undo`; the full layout sweep at the next release, on staging; commit with the
-    owner's yes.
+  - **Walk §524 PASSED on the owner's ruling 2026-11-14** (prelim walk of that day: 30 of 35 machine-checked; C2.1, C2.4 and
+    C7.1 ruled a walk-wording error — the event is in the sidebar's drop-down and the top bar names the page, as intended;
+    C7.3 set aside as demo-only; C7.4 passed with the walk). The Phase 6 build is closed by it.
+  - **Owed:** `fixture.mjs undo`; the full layout sweep at the next release, on staging; commit with the owner's yes.
 
 ## 6. The /design pass (2026-11-09) — what it changed in the drawings
 - **The whole cell opens the list** when there is more than one to choose from (the chevron is its sign); a club's cell
