@@ -2,14 +2,16 @@
 
 | | |
 |---|---|
-| **Version** | **0.2** (0.1 stays the words every parent who joined before the 0.2 build accepted) |
+| **Version** | **0.3** (rep-team invitations; written 2026-11-14, owner ruled, not yet built); 0.2 and 0.1 stay the words earlier joiners accepted |
 | **Status** | draft — not owner-approved, not reviewed by a lawyer; rendered by the product (switched off) as the words it ships with (Stage 4a built 2026-11-08) |
 | **Effective date** | — (not published) |
-| **Last reviewed** | 2026-11-13 |
+| **Last reviewed** | 2026-11-14 |
 | **Backlog** | L5 (children's consent wording), L6 (CASL line) |
 | **Replaces** | the placeholder in `lib/family-guardian-consent.ts` once the owner approves and the build adopts it |
 
-**Change log:** **0.2 (2026-11-13, Stage 4b closeout)** adds the three "families say if they're coming" lines to (a) and "sees if you leave" (the 4a
+**Change log:** **0.3 (2026-11-14, One attendance record, walk §529 call 3, owner ruled)** two sentences in the rep invitation's "Who sees what" lines: the answer is
+also the child's attendance and stays in the team's record; a coach can change it and the parent sees when (see "(a) 0.3"); boxes unchanged; new joins only.
+**0.2 (2026-11-13, Stage 4b closeout)** adds the three "families say if they're coming" lines to (a) and "sees if you leave" (the 4a
 closeout's answer 3), **for new joins only, and for rep-team invitations only** (see "(a) 0.2"); the sheet's hint is the notice for parents who joined
 earlier; the retention promise for answers and notes is now publishable (see the follow-through list); the Stage 4b closeout read is below. **The 0.1
 words in (a) are unchanged and are what a house-league invitation still shows.** 0.1 (2026-11-08, Stage 4a Session 4) (d) corrected to what the build does; (a), (b), (c), (e) unchanged; closeout read below. 0.1 (2026-11-08, later) the parked Terms line in (a) written, after Terms v0.2's O7 and O5 (every account holder is 18 or
@@ -199,6 +201,41 @@ Rules for the build, each one a fact the new words rely on:
 acceptable: it is a collection notice for one field, not part of the consent. Its hint is true for the two places the name shows on the 4b
 screens (coaches, the other parent); what it leaves unsaid is the name's third kind of reader, a parent who already had an account and is not
 asked, which the sheet's hint has to cover (`FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md`, "The sheet's hint").
+
+## (a) 0.3 — the answer is the child's attendance (new joins only; rep-team invitations only)
+
+**Owner ruling 2026-11-14 (walk §529 call 3): raise to 0.3 for new parents.** After the One attendance record build, a parent's answer is the
+child's attendance for that event, and a coach can change it. The 0.2 lines say coaches *see* the answer; they say nothing of that.
+**The change is two sentences in the "Who sees what" lines, not in the box.** Both boxes stay word for word (the box agrees to *account and email
+use*; it never mentioned answers, and the stored record carries the whole text, so the facts belong in the lines the record stores).
+
+> - **You** see {child}'s team, coach, practice and game times and places, and your sign-up. If {child}'s coach turns it on, you can also say here
+>   whether {child} is coming to a game or practice. **Your answer is also {child}'s attendance for it, and stays in the team's record.** Nothing
+>   about other children.
+> - **{child}'s coaches and {club}'s staff** see the name, email and phone number on {child}'s sign-up. Coaches also see your answers, any note you
+>   add, your first name and when you answered, **and can change an answer. You'll see when they do.** {club} can also see that you joined, sees if
+>   you leave, and can remove you.
+
+Several children on one invitation (the 0.1 rule for names): "Your answers are also each child's attendance for it, and stay in the team's record."
+and "…and can change an answer. You'll see when they do." (unchanged).
+
+Rules for the build, each one a fact the words rely on (checked against the code 2026-11-14):
+1. **Rep-team invitations only, as 0.2.** `GUARDIAN_CONSENT_VERSION_REP` moves to `GUARDIAN_CONSENT_STAGE4 v0.3`; `GUARDIAN_CONSENT_VERSION` (0.1, house-league-only
+   invitations, which show no answers) does not move. Never a 0.3 header over 0.2 words or the reverse (rule 2 of 0.2 holds).
+2. **"Stays in the team's record" is true:** the nightly clean-up blanks the family note and who-set-it, never the answer (migs 484/485).
+3. **"You'll see when they do" is true:** a parent sees a coach's change to their own child's answer, shown as "Coach", never a teammate, never the
+   coach's private note (`lib/family-availability.ts` `rowOf`, `whoFor`). No message is sent to say so; the parent sees it on the page. If a message is
+   ever added, the line stays true; if the on-page display is ever removed, the line comes out.
+4. **The answer sheet's hint stays** ("Coaches see your answer, note, first name and the day you answered, and can change the answer."): it is read
+   before every answer, so it, not the consent record, is what covers a parent on 0.1 or 0.2. The two must keep saying the same thing.
+5. **A sibling connected later** carries the version of the acceptance it rests on (0.2 rule 4), so a 0.2 parent's later sibling-connect is not
+   re-labelled 0.3.
+
+**Parents already on 0.1 or 0.2: no re-consent, no email.** The sheet's hint is the notice, shown every time and before each answer, and each
+answer is a deliberate act at that moment; a message sent only to tell them would itself need a basis, and the sheet already is the notice.
+Their stored record keeps the words they saw. The honest limit: for them the consent record does not itself evidence the "attendance" fact (the hint
+is not stored). **On the facts today this limit is empty:** the guardian tier is off and migrations 476–485 are on dev only, so no real parent holds a
+0.2 record; the bump costs nothing now and would cost a re-notice problem later.
 
 ## (b) The parent's first screen — one line
 
