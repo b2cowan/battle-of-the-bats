@@ -63,7 +63,7 @@ describe('a started game stops flagging a family Out (owner, Session 4: match th
   const START = '2027-04-24T14:00:00.000Z';
   const before = Date.parse(START) - 60_000;
   const after = Date.parse(START) + 60_000;
-  const maya = [{ playerId: 'maya', status: 'unknown' as const, markedAt: null, family: { answer: 'out' as const, answeredAt: '2027-04-23T00:00:00.000Z' } }];
+  const maya = [{ playerId: 'maya', status: 'absent' as const, family: { status: 'absent' as const, answeredAt: '2027-04-23T00:00:00.000Z' } }];
   const inLineup = new Set(['maya']);
 
   it('one "open" test: not cancelled, not started (the server state and the clients’ clock agree)', () => {
@@ -80,7 +80,7 @@ describe('a started game stops flagging a family Out (owner, Session 4: match th
   it('the warning goes at the start; the pool word stays', () => {
     assert.equal(lineupFamilyOuts(maya, inLineup, null, familyEventOpen({ status: 'scheduled', startsAt: START }, before)).length, 1);
     assert.deepEqual(lineupFamilyOuts(maya, inLineup, null, familyEventOpen({ status: 'scheduled', startsAt: START }, after)), []);
-    assert.equal(lineupTagWord('unknown', { answer: 'out' }), 'out');
+    assert.equal(lineupTagWord('absent'), 'out');
   });
 
   it('every surface passes the rule (the builder, the event window), not a guard of its own', () => {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  bookMarkedAt, familyDrifted, headcountOf, isShort, roomFamilySummary, usableFamilyMark, type RoomFamilyRow,
+  headcountOf, isShort, remindPlan, roomFamilySummary, type RoomFamilyRow,
 } from '../../lib/family-availability-rules.ts';
 import { FAMILY_AVAILABILITY_COACH_WORDS as CW } from '../../lib/family-availability-words.ts';
 import { ATTENDANCE_WORD } from '../../lib/coach-schedule-vocab.ts';
@@ -21,23 +21,16 @@ const TEAM_ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/route.ts';
 const BOOK_ROUTE = 'app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/attendance/route.ts';
 const ADMIN_SCHEDULE = 'app/[orgSlug]/admin/rep-teams/teams/[teamId]/schedule/page.tsx';
 
-const line = (answer: 'in' | 'out' | 'maybe', extra: Partial<{ note: string; by: string | null; day: string }> = {}) => ({
-  answer, note: extra.note ?? null, by: extra.by === undefined ? 'Priya' : extra.by, day: extra.day ?? 'Tue', previous: null,
-});
+const who = (by: 'coach' | 'family', name: string | null, day: string) => ({ by, name, day });
 
-describe('ask 8 — one count per player: the coach’s mark first, else the family’s answer', () => {
-  it('In and Late count as in, Out as out; a family answer counts only where the coach has not marked', () => {
+describe('ask 8 — one count per player, read from the record alone (one attendance record)', () => {
+  it('In and Late count as in, Out as out, Maybe as maybe — whoever set it; Not marked counts nowhere', () => {
     const c = headcountOf([
-      { status: 'attending', family: 'out' }, // the mark wins
-      { status: 'late', family: null },
-      { status: 'absent', family: 'in' },
-      { status: 'unknown', family: 'in' },
-      { status: 'unknown', family: 'maybe' },
-      { status: 'unknown', family: null },
+      { status: 'attending' }, { status: 'late' }, { status: 'absent' }, { status: 'maybe' }, { status: 'unknown' }, { status: 'unknown' },
     ]);
-    assert.deepEqual(c, { total: 6, in: 3, out: 1, maybe: 1 });
+    assert.deepEqual(c, { total: 6, in: 2, out: 1, maybe: 1 });
   });
-  it('the words leave zero parts out, and say nothing when nobody has answered and nobody is marked', () => {
+  it('the words leave zero parts out, and say nothing when nobody has answered', () => {
     assert.equal(CW.headcount({ total: 13, in: 9, out: 1, maybe: 1 }), '9 of 13 in · 1 out · 1 maybe');
     assert.equal(CW.headcount({ total: 13, in: 8, out: 1, maybe: 0 }), '8 of 13 in · 1 out');
     assert.equal(CW.headcount({ total: 13, in: 2, out: 0, maybe: 0 }), '2 of 13 in');
@@ -57,26 +50,8 @@ describe('ask 7 — the red row counts OUTS against the sport’s field position
   });
 });
 
-describe('the amber warning — a family changed after the coach marked the player', () => {
-  const mark = { status: 'attending' as const, markedAt: '2026-11-10T12:00:00Z' };
-  it('an Out after an In mark warns; the same answer, or one given before the mark, does not', () => {
-    assert.equal(familyDrifted(mark, { answer: 'out', answeredAt: '2026-11-11T12:00:00Z' }), true);
-    assert.equal(familyDrifted(mark, { answer: 'maybe', answeredAt: '2026-11-11T12:00:00Z' }), true);
-    assert.equal(familyDrifted(mark, { answer: 'in', answeredAt: '2026-11-11T12:00:00Z' }), false);
-    assert.equal(familyDrifted(mark, { answer: 'out', answeredAt: '2026-11-09T12:00:00Z' }), false);
-  });
-  it('a player the coach has not marked never warns', () => {
-    assert.equal(familyDrifted({ status: 'unknown', markedAt: null }, { answer: 'out', answeredAt: '2026-11-11T12:00:00Z' }), false);
-  });
-  it('the mark time moves only on a changed or tapped mark (tapping In again keeps the mark and clears the warning)', () => {
-    const now = '2026-11-12T00:00:00Z';
-    assert.equal(bookMarkedAt({ status: 'attending', markedAt: '2026-11-10T12:00:00Z' }, 'attending', false, now), '2026-11-10T12:00:00Z');
-    assert.equal(bookMarkedAt({ status: 'attending', markedAt: '2026-11-10T12:00:00Z' }, 'attending', true, now), now);
-    assert.equal(bookMarkedAt({ status: 'attending', markedAt: '2026-11-10T12:00:00Z' }, 'absent', false, now), now);
-    assert.equal(bookMarkedAt(undefined, 'late', false, now), now);
-    assert.equal(bookMarkedAt({ status: 'absent', markedAt: now }, 'unknown', true, now), null, 'Not marked has no mark time');
-  });
-  it('ONE RECORD: the attendance PATCH writes only the changed rows, through the one writer; All in and Reset are the server’s', () => {
+describe('ONE RECORD — the coach’s save (rulings 6–7)', () => {
+  it('the attendance PATCH writes only the changed rows, through the one writer; All in and Reset are the server’s', () => {
     // One attendance record (mig 483, plan §1): the window used to send the WHOLE roster on every tap, re-stamping each row;
     // under latest-wins that overwrote every family answer that arrived while it was open. Never again.
     const code = readCode(BOOK_ROUTE);
@@ -86,86 +61,94 @@ describe('the amber warning — a family changed after the coach marked the play
     assert.doesNotMatch(code, /upsertRepTeamEventAttendance|markedAtFor|confirmed/);
     const sheet = readCode('components/coaches/ScheduleEventSheet.tsx');
     const save = functionBody(sheet, 'saveAttendanceNow');
-    assert.match(save, /const statusChanged = row\.status !== \(row\.savedStatus \?\? 'unknown'\)/);
     assert.match(save, /if \(!statusChanged && !noteChanged\) return \[\];/);
     assert.doesNotMatch(sheet, /entries: attendanceRows\.map\(/, 'the window never sends the whole roster');
     assert.match(functionBody(sheet, 'setAllAttendance'), /\{ fill: 'attending' \} : \{ reset: true \}/);
     // The game console's one tap sends the status alone (never the coach's note back).
     assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/game/[eventId]/page.tsx'), /entries: \[\{ playerId, status \}\]/);
   });
-});
-
-describe('ask 3 — “Use family answers” copies only into players the coach has not marked', () => {
-  it('In → In, Out → Out, Maybe stays Not marked; a marked player is never touched', () => {
-    assert.equal(usableFamilyMark('unknown', 'in'), 'attending');
-    assert.equal(usableFamilyMark('unknown', 'out'), 'absent');
-    assert.equal(usableFamilyMark('unknown', 'maybe'), null);
-    assert.equal(usableFamilyMark('attending', 'out'), null);
-    assert.equal(usableFamilyMark('unknown', null), null);
+  it('a CONFIRMING tap is sent — the window and the console never read a family’s newer answer while open (S2)', () => {
+    const sheet = readCode('components/coaches/ScheduleEventSheet.tsx');
+    assert.match(functionBody(sheet, 'saveAttendanceNow'), /const statusChanged = row\.status !== \(row\.savedStatus \?\? 'unknown'\) \|\| !!row\.confirmed;/);
+    // A confirm made while another save was in flight survives that save's merge, and is still unsent.
+    assert.match(sheet, /confirmed: carried\?\.status === undefined && !!r\.confirmed,/);
+    assert.match(sheet, /const unsent = attendanceRowsRef\.current\.some\(r => !!r\.confirmed \|\|/);
+    const consoleSrc = readCode('app/[orgSlug]/coaches/teams/[teamId]/game/[eventId]/page.tsx');
+    assert.doesNotMatch(consoleSrc, /prev\.status === status\) return/, 'the console no longer drops a tap on the answer it shows');
   });
-  it('the room’s card counts families (not the book), leaves call-ups out, and names who changed', () => {
-    const family: RoomFamilyRow[] = [
-      { playerId: 'ava', connected: true, line: line('out'), answeredAt: '2026-11-10T00:00:00Z' },
-      { playerId: 'leo', connected: true, line: line('in'), answeredAt: '2026-11-10T00:00:00Z' },
-      { playerId: 'maya', connected: true, line: line('out'), answeredAt: '2026-11-11T00:00:00Z' },
-      { playerId: 'noor', connected: true, line: line('maybe'), answeredAt: '2026-11-10T00:00:00Z' },
-      { playerId: 'owen', connected: true, line: null, answeredAt: null },
-      { playerId: 'zoe', connected: false, line: null, answeredAt: null },
-    ];
-    const s = roomFamilySummary([
-      { playerId: 'ava', status: 'absent', markedAt: '2026-11-09T00:00:00Z' },
-      { playerId: 'leo', status: 'unknown', markedAt: null },
-      { playerId: 'maya', status: 'attending', markedAt: '2026-11-10T12:00:00Z' },
-      { playerId: 'noor', status: 'unknown', markedAt: null },
-      { playerId: 'owen', status: 'unknown', markedAt: null },
-      { playerId: 'zoe', status: 'unknown', markedAt: null },
-      { playerId: 'callup', status: 'unknown', markedAt: null },
-    ], family);
-    assert.deepEqual(
-      { answered: s.answered, haveNot: s.haveNot, noParent: s.noParent, changed: s.changed, usable: s.usable },
-      { answered: 4, haveNot: 1, noParent: 1, changed: ['maya'], usable: [{ playerId: 'leo', status: 'attending' }] },
-    );
-  });
-  it('Use goes through the coach’s own PATCH, and the family modules never write the book', () => {
+  it('the reply carries the who/when lines, and the family modules never write the book directly', () => {
+    assert.match(readCode(BOOK_ROUTE), /\.\.\.await linesFor\(teamId, team, event, \[\.\.\.activePlayerIds\]\)/);
     for (const f of [COACH_MODULE, 'lib/family-availability.ts', ROOM_ROUTE]) {
       const code = readCode(f);
       assert.doesNotMatch(code, /rep_team_event_attendance['"]\)\s*\.(insert|update|upsert|delete)/, f);
     }
     assert.doesNotMatch(readCode(ROOM_ROUTE), /export const (POST|PATCH|PUT|DELETE)/, 'the room’s family read is read only');
   });
+  it('the two-record rules are gone: no drift, no “Use family answers”, no mark time', () => {
+    const rules = readCode('lib/family-availability-rules.ts');
+    for (const dead of ['usableFamilyMark', 'answerAgreesWithMark', 'familyDrifted', 'bookMarkedAt', '\\bFamilyAnswer\\b', 'isFamilyAnswer']) {
+      assert.doesNotMatch(rules, new RegExp(dead), dead);
+    }
+    const room = readCode('components/coaches/ScheduleAttendanceRoom.tsx');
+    assert.doesNotMatch(room, /onUse|onlyChanged|card\.changed|card\.use|data-drift/);
+    assert.doesNotMatch(readCode('lib/family-availability-words.ts'), /answerAgain|Family said|changed since you marked|Use \$\{/);
+  });
 });
 
-describe('the words the coach reads (tab 2)', () => {
-  it('the grey line, the desk cell, the amber line and the family box', () => {
-    const l = { ...line('out', { note: 'away at a tournament' }), previous: { answer: 'in' as const, by: 'Dev', day: 'Mon' } };
-    assert.equal(CW.line(l), 'Family said Out · “away at a tournament” · Priya, Tue · earlier: In (Dev, Mon)');
-    assert.equal(CW.cell(line('in', { by: 'Sam', day: 'Wed' })), 'In · Sam, Wed');
-    assert.equal(CW.drift(line('out', { day: 'Wed' })), '⚠ Family changed to Out · Wed');
-    assert.equal(CW.line(line('in', { by: null })), 'Family said In · a parent, Tue', 'never an address (O2)');
-    assert.equal(CW.box.head('Maya'), 'Maya’s family said');
-    assert.equal(
-      CW.box.hint({ familyChoice: 'Out', markChoice: 'In', drift: true }),
-      'Tap Out to use the family’s answer, or tap In to keep your mark and clear the warning. Families don’t see your mark.',
-    );
+describe('the room’s Families card counts the record (one attendance record)', () => {
+  it('answered = a family set the answer; haven’t / no parent = Not marked; a coach’s answer is neither; call-ups out', () => {
+    const family: RoomFamilyRow[] = [
+      { playerId: 'ava', connected: true }, { playerId: 'leo', connected: true }, { playerId: 'maya', connected: true },
+      { playerId: 'noor', connected: true }, { playerId: 'owen', connected: true }, { playerId: 'zoe', connected: false },
+    ];
+    const s = roomFamilySummary([
+      { playerId: 'ava', status: 'absent', setByKind: 'family' },
+      { playerId: 'leo', status: 'attending', setByKind: 'coach' },
+      { playerId: 'maya', status: 'maybe', setByKind: 'family' },
+      { playerId: 'noor', status: 'late', setByKind: 'coach' },
+      { playerId: 'owen', status: 'unknown', setByKind: null },
+      { playerId: 'zoe', status: 'unknown', setByKind: null },
+      { playerId: 'callup', status: 'unknown', setByKind: null },
+    ], family);
+    assert.deepEqual(s, { answered: 2, haveNot: 1, noParent: 1, remind: ['owen'] });
+  });
+  it('a standing Maybe is an answer: Remind never asks about it, whoever set it (owner, S2)', () => {
+    const plan = remindPlan([
+      { playerId: 'maya', status: 'maybe', answered: true, connected: true },
+      { playerId: 'noor', status: 'maybe', answered: false, connected: true },
+      { playerId: 'owen', status: 'unknown', answered: false, connected: true },
+    ]);
+    assert.deepEqual(plan, { remind: ['owen'], marked: ['noor'], noParent: [] });
+  });
+});
+
+describe('the words the coach reads (tab 2; ruling 4)', () => {
+  it('who set it and when, the family’s note, and the answer before — one line', () => {
+    const l = { ...who('family', 'Priya', 'Tue'), familyNote: 'away at a tournament', previous: { ...who('coach', null, 'Mon'), status: 'attending' as const } };
+    assert.equal(CW.setLine(l), 'Priya, Tue · “away at a tournament” · earlier: In (Coach, Mon)');
+    assert.equal(CW.setLine({ ...who('coach', null, 'today'), familyNote: null, previous: { ...who('family', 'Adasmom', 'Nov 1'), status: 'attending' } }),
+      'Coach, today · earlier: In (Adasmom, Nov 1)', 'the ruling’s own example');
+    assert.equal(CW.setLine({ ...who('family', null, 'Tue'), familyNote: null, previous: null }), 'A parent, Tue', 'never an address (O2)');
+    assert.equal(CW.box.meta({ ...who('family', 'Sam', 'Wed'), familyNote: 'late from school', previous: null }), 'Sam, Wed');
+    assert.equal(CW.box.note({ ...who('family', 'Sam', 'Wed'), familyNote: 'late from school', previous: null }), '“late from school”');
+    assert.equal(CW.box.hint, 'A tap replaces the answer. The family sees it, but never your note.');
+    assert.deepEqual(CW.desk, { player: 'Player', setBy: 'Set by', answer: 'Answer' });
   });
   it('the card and the event window line count families; “hasn’t” for one', () => {
     assert.deepEqual(CW.familyParts({ answered: 7, haveNot: 3, noParent: 3 }), ['7 answered', '3 haven’t', '3 have no parent in the app']);
     assert.deepEqual(CW.familyParts({ answered: 2, haveNot: 1, noParent: 1 }), ['2 answered', '1 hasn’t', '1 has no parent in the app']);
-    assert.equal(CW.card.changed(['Maya']), '⚠ 1 changed since you marked: Maya');
-    assert.equal(CW.card.use(1), 'Use 1 family answer');
-    assert.equal(CW.card.used(['Leo']), 'Used 1 family answer: Leo');
   });
-  it('the switch’s words (tab 3)', () => {
+  it('the switch’s words (tab 3) say it is one answer', () => {
     assert.equal(CW.setting.label, 'Families say if they’re coming');
     assert.equal(CW.setting.on('games_and_practices', 10, 13),
-      'Parents in the app can answer In, Out or Maybe for every upcoming game and practice. You see their answers in Attendance; your own marks stay yours. 10 of 13 players have a parent in the app.');
+      'Parents in the app can answer In, Late, Maybe or Out for every upcoming game and practice, until it starts. Their answer and yours are one answer per player: the latest change counts, and the parent sees yours. 10 of 13 players have a parent in the app.');
   });
 });
 
 describe('ask 11 — who sees what', () => {
   it('the schedule count is COUNTS ONLY: its read selects no note, no answerer, and returns numbers', () => {
     const code = readCode(COACH_MODULE);
-    const body = code.slice(code.indexOf('export async function scheduleHeadcounts'), code.indexOf('interface RoomBookRow'));
+    const body = code.slice(code.indexOf('export async function scheduleHeadcounts'), code.indexOf('interface LineBookRow'));
     assert.ok(body.length > 200 && body.length < 3000, 'found the function');
     assert.doesNotMatch(body, /note|set_by|previous_/, 'the count never reads a note or who answered');
     assert.match(body, /Promise<Record<string, Headcount> \| null>|out\[id\] = c/);

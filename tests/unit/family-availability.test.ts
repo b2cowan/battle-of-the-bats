@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  cleanFamilyNote, cleanFirstName, familyAnswersCover, familyAnswerState, firstNameOf, isFamilyAnswer, normalizeFamilyAnswers,
+  answerOfStatus, cleanFamilyNote, cleanFirstName, familyAnswersCover, familyAnswerState, firstNameOf, isAnswerStatus, normalizeFamilyAnswers,
 } from '../../lib/family-availability-rules.ts';
 import { FAMILY_AVAILABILITY_WORDS as W, FAMILY_ANSWER_NOTE_MAX, answeredDayWords } from '../../lib/family-availability-words.ts';
 import { between, functionBody, readCode } from './_source-code.ts';
@@ -42,9 +42,12 @@ describe('ask 1 — the switch decides which events families answer', () => {
 });
 
 describe('the answer and the note as stored', () => {
-  it('only in / out / maybe (no Late: that is the coach’s word)', () => {
-    assert.ok(['in', 'out', 'maybe'].every(isFamilyAnswer));
-    assert.ok(!isFamilyAnswer('late') && !isFamilyAnswer('attending') && !isFamilyAnswer(null));
+  it('the record’s own four: In · Late · Maybe · Out (ruling 1); Not marked is a clear (null), never a word the family sends', () => {
+    assert.ok(['attending', 'late', 'maybe', 'absent'].every(isAnswerStatus));
+    assert.ok(!isAnswerStatus('unknown') && !isAnswerStatus('in') && !isAnswerStatus('out') && !isAnswerStatus(null));
+    assert.equal(answerOfStatus('late'), 'late', 'a coach’s Late reads to the family as Late (S2), never as In');
+    assert.equal(answerOfStatus('unknown'), null);
+    assert.deepEqual(['attending', 'late', 'maybe', 'absent'].map(a => W.answer[a as 'late']), ['In', 'Late', 'Maybe', 'Out']);
   });
   it('the note is one trimmed plain line, 200 at most; empty is no note', () => {
     assert.deepEqual(cleanFamilyNote('  away at a\n tournament\t '), { ok: true, note: 'away at a tournament' });
@@ -85,11 +88,15 @@ describe('O2 — a first name comes from the account, never from an address', ()
 });
 
 describe('ask 5 and 6 — the parent’s sheet words', () => {
-  it('the other parent’s answer names them, the day, and THAT they left a note — never its words', () => {
-    assert.equal(W.sheet.otherAnswered('Priya', 'out', 'on Tuesday', true), 'Priya answered Out on Tuesday and left a note for the coach.');
-    assert.equal(W.sheet.otherAnswered(null, 'in', 'yesterday', false), 'The other parent answered In yesterday.');
-    // The sentence takes no note argument at all: it has nowhere to put the words.
-    assert.equal(W.sheet.otherAnswered.length, 4);
+  it('ruling 4: who set the answer and when, the coach’s change included, and the one before — never a note’s words', () => {
+    assert.equal(W.setLine('absent', { by: 'coach', name: null, day: 'today', previous: { by: 'family', name: 'Adasmom', day: 'Nov 1', status: 'attending' } }),
+      'Out · Coach, today · earlier: In (Adasmom, Nov 1)', 'the ruling’s own example');
+    assert.equal(W.setLine('late', { by: 'you', name: null, day: 'Tue', previous: null }), 'Late · You, Tue');
+    assert.equal(W.setLine('maybe', { by: 'family', name: null, day: 'yesterday', previous: null }), 'Maybe · The other parent, yesterday');
+    assert.equal(W.sheet.otherNote, 'The other parent left a note for the coach.');
+    // The line takes no note at all on the family side: it has nowhere to put the words.
+    assert.equal(W.setLine.length, 2);
+    assert.match(W.pillLabel('Ava', 'Sat vs Lakeshore', 'late', { by: 'coach', name: null, day: 'today', previous: null }), /^Ava: Late for Sat vs Lakeshore, set by Coach\. /);
   });
   it('/legal’s hint names who sees what; the other-parent sentence only when one is connected', () => {
     assert.equal(
@@ -182,7 +189,12 @@ describe('(a) the family payload — the account’s own children only, and no n
   it('FamilyAnswerRow names exactly the allow-listed fields', () => {
     const shape = between(mod, 'export interface FamilyAnswerRow {', '\n}');
     const fields = [...shape.matchAll(/^\s+(\w+):/gm)].map(m => m[1]).sort();
-    assert.deepEqual(fields, ['answer', 'byFirstName', 'child', 'childId', 'dayWords', 'eventId', 'mine', 'note', 'open', 'otherHasNote'].sort());
+    assert.deepEqual(fields, ['answer', 'child', 'childId', 'eventId', 'mine', 'note', 'open', 'otherHasNote', 'setBy'].sort());
+  });
+  it('who set it reads "Coach" for the coach’s side — never a coach’s name; another parent is named only while connected', () => {
+    const who = functionBody(mod, 'whoFor');
+    assert.match(who, /return \{ by: 'coach', name: null, day \};/);
+    assert.match(who, /by === userId \? \{ by: 'you', name: null, day \} : \{ by: 'family', name: by \? nameOf\(by, childId\) : null, day \}/);
   });
   it('a note’s words reach the page only when the answer is this account’s own', () => {
     // One record: the family's note has its own writer (family_note_by_user_id); the coach's `note` is never read here.
@@ -215,6 +227,14 @@ describe('the one writer’s change and repeat rules (mig 483; behaviour held by
     assert.match(mig, /where event_id = p_event and player_id = p_player for update;/);
     assert.match(mig, /if \(p_only_if_unknown and r\.status <> 'unknown'\)\s*\n\s*or \(p_only_if_set_by is not null[^]*?coalesce\(r\.set_by_kind, case when r\.status <> 'unknown' then 'coach' end\) is distinct from p_only_if_set_by\) then/);
   });
+  it('the answer IS the status: no interim guard keeps a coach’s Late over a parent’s In any more (S2: the page picks Late)', () => {
+    assert.match(write, /p_status: params\.answer \?\? 'unknown',/);
+    assert.doesNotMatch(write, /nextStatus|status === 'late'/);
+  });
+  it('an INACTIVE roster entry answers nothing (owner, S2): the writer refuses it and the page offers no pill', () => {
+    assert.match(write, /held\?\.status !== 'active'\) \{\s*\n\s*return \{ ok: false, code: 'not_found' \};/);
+    assert.match(functionBody(readCode(MODULE), 'childSeasons'), /\.in\('id', entries\.map\(e => e\.entryId\)\)\.eq\('status', 'active'\)/);
+  });
   it('a family write always replaces the family’s note (a second parent’s change clears the first’s); a clear clears it', () => {
     assert.match(write, /p_family_note: params\.answer === null \? null : cleaned\.note,\s*\n\s*p_set_family_note: true,/);
   });
@@ -230,11 +250,13 @@ describe('the sheet — a tap is never dropped (source)', () => {
     assert.match(sheet, /queue\.current = queue\.current\.then\(task\)/);
   });
   it('a tap carries the note and decides AT RUN TIME from the latest confirmed row (nothing to roll back after a failure)', () => {
-    assert.match(sheet, /await send\(latest\(\)\.answer === answer \? null : answer, noteNow\.current\)/);
+    // Tapping YOUR answer again clears it; the same answer set by the coach or the other parent is agreed with, not cleared.
+    assert.match(sheet, /const cur = latest\(\);\s*\n\s*await send\(cur\.answer === answer && cur\.mine \? null : answer, noteNow\.current\);/);
     assert.doesNotMatch(sheet, /intent\.current|noteSaved\.current/, 'no guessed state to drift');
   });
   it('the note box saves through the same queue, and a closed answer locks the sheet', () => {
     assert.match(sheet, /function saveNote\(\) \{\s*\n\s*enqueue\(/);
-    assert.match(sheet, /disabled=\{!row\.open\}\s*\n\s*onClick=\{\(\) => choose\(c\.answer\)\}/);
+    assert.match(sheet, /disabled=\{!row\.open\}\s*\n\s*onClick=\{\(\) => choose\(answer\)\}/);
+    assert.match(sheet, /\{ANSWER_STATUSES\.map\(answer => \{/, 'the four choices, in the ruling’s order');
   });
 });

@@ -5451,8 +5451,16 @@ export interface RepPlayerAttendanceSummary {
   recent: { eventId: string; name: string; eventType: string; startsAt: string; status: string }[];
 }
 
+/**
+ * ⚖ STATS COUNT STARTED EVENTS ONLY (One attendance record, owner ruling 2026-11-13, S2). Families answer upcoming events, so an
+ * advance In / Out — a parent's, or a coach's — is a plan, not attendance: an event counts in no stat until its start has passed.
+ * Every attendance stat read below takes this bound (the per-player summary, the team roll-up, the receipts and the month chart),
+ * so the totals and the sessions behind them can never disagree about which sessions counted.
+ */
+const startedBy = () => new Date().toISOString();
+
 /** Season attendance for ONE player: status counts + the 10 most-recent sessions.
- *  Counts only non-cancelled events the coach actually marked. */
+ *  Counts only non-cancelled events that have STARTED (`startedBy`). */
 export async function getRepPlayerAttendanceSummary(
   playerId: string, programYearId: string,
 ): Promise<RepPlayerAttendanceSummary> {
@@ -5461,7 +5469,8 @@ export async function getRepPlayerAttendanceSummary(
     .select('status, rep_team_events!inner(id, name, event_type, starts_at, status)')
     .eq('player_id', playerId)
     .eq('program_year_id', programYearId)
-    .eq('rep_team_events.status', 'scheduled');
+    .eq('rep_team_events.status', 'scheduled')
+    .lte('rep_team_events.starts_at', startedBy());
   if (error) throw error;
   const rows = (data ?? []) as any[];
   const summary: RepPlayerAttendanceSummary = { total: 0, attending: 0, absent: 0, late: 0, unknown: 0, recent: [] };
@@ -5510,8 +5519,8 @@ const blankAttendanceStat = (): RepAttendanceCategoryStat => ({ attended: 0, kno
 
 /**
  * Season attendance reliability for EVERY player on a program year, in ONE query — the team-wide
- * roll-up behind the Roster → Attendance view. Counts only non-cancelled (scheduled) events the
- * coach actually marked. "attended" = attending or late; "known" excludes no-reply so an untracked
+ * roll-up behind the Roster → Attendance view. Counts only non-cancelled (scheduled) events that have
+ * STARTED (`startedBy`: an advance answer on an upcoming event is a plan, not attendance). "attended" = attending or late; "known" excludes no-reply so an untracked
  * RSVP never counts against a player. Returns a map keyed by player_id (players with no recorded
  * attendance simply won't appear — the caller shows them as "not tracked yet").
  */
@@ -5522,7 +5531,8 @@ export async function getRepTeamAttendanceReliability(
     .from('rep_team_event_attendance')
     .select('player_id, status, rep_team_events!inner(event_type, status)')
     .eq('program_year_id', programYearId)
-    .eq('rep_team_events.status', 'scheduled');
+    .eq('rep_team_events.status', 'scheduled')
+    .lte('rep_team_events.starts_at', startedBy());
   if (error) throw error;
 
   const byPlayer = new Map<string, RepPlayerAttendanceReliability>();
@@ -5581,7 +5591,9 @@ export async function getRepTeamAttendanceMarks(
     .select('player_id, status, rep_team_events!inner(id, name, opponent, starts_at, event_type, status)')
     .eq('program_year_id', programYearId)
     .in('rep_team_events.event_type', [...ATTENDANCE_GAME_TYPES, 'practice'])
-    .eq('rep_team_events.status', 'scheduled');
+    .eq('rep_team_events.status', 'scheduled')
+    // The roll-up's own bound (`startedBy`): a receipt never lists a session its total did not count.
+    .lte('rep_team_events.starts_at', startedBy());
   if (error) throw error;
   return ((data ?? []) as any[])
     .filter(r => r.rep_team_events)

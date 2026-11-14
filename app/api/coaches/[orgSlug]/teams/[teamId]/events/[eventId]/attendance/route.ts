@@ -15,7 +15,7 @@ import {
 import type { RepAttendanceStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
-import { coachFamilyAnswersSetting } from '@/lib/family-availability-coach';
+import { answerLinesForReply, coachFamilyAnswersSetting, type KnownRepTeam } from '@/lib/family-availability-coach';
 import { familyAnswerState } from '@/lib/family-availability-rules';
 
 const VALID_ATTENDANCE_STATUSES: RepAttendanceStatus[] = ['unknown', 'attending', 'absent', 'late', 'maybe'];
@@ -91,7 +91,8 @@ export const GET = withObservability(async (_req: Request,
  *   { reset: true }                               "Reset": clears only the answers the COACH set; families' stay (call C2)
  *
  * The reply is the event's rows as they now stand, so the window takes what it didn't touch (a family's answer that arrived while
- * it was open) instead of saving over it.
+ * it was open) instead of saving over it — and, where the room shows them, each player's who/when line (`lines`: who set the
+ * answer, the family's note, the one before; this route holds the attendance capability, ask 11).
  *
  * ⚠⚠ NEVER THE WHOLE ROSTER. The window used to send every row on every tap, re-stamping each one; under latest-wins that
  *   overwrote every family answer that arrived since the window opened. This route and the family's writer ship together.
@@ -128,7 +129,7 @@ export const PATCH = withObservability(async (req: Request,
     const attendance = await writeCoachAttendance(bulk === 'fill'
       ? { eventId, coachUserId: ctx.user.id, entries: all.map(playerId => ({ playerId, status: 'attending' })), onlyIfUnknown: true }
       : { eventId, coachUserId: ctx.user.id, entries: all.map(playerId => ({ playerId, status: 'unknown' })), onlyIfSetBy: 'coach' });
-    return NextResponse.json({ attendance, event });
+    return NextResponse.json({ attendance, event, ...await linesFor(teamId, team, event, [...activePlayerIds]) });
   }
 
   let maybeOpen: boolean | null = null;
@@ -164,16 +165,29 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   const attendance = await writeCoachAttendance({ eventId, coachUserId: ctx.user.id, entries: rows });
-  return NextResponse.json({ attendance, event });
+  return NextResponse.json({ attendance, event, ...await linesFor(teamId, team, event, [...activePlayerIds]) });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/attendance' });
+
+type Team = NonNullable<Awaited<ReturnType<typeof getRepTeam>>>;
+const known = (team: Team): KnownRepTeam => ({
+  id: team.id, orgId: team.orgId, scheduleVisibility: team.scheduleVisibility, isArchived: team.isArchived, familyAnswers: team.familyAnswers,
+});
 
 /** Call C3: Maybe only while families can answer THIS event (the team's live switch covers it, and it hasn't started). */
 async function maybeIsOffered(
   teamId: string, team: Awaited<ReturnType<typeof getRepTeam>>, event: { eventType: string; status: string; startsAt: string },
 ): Promise<boolean> {
   if (!team) return false;
-  const setting = await coachFamilyAnswersSetting(teamId, {
-    id: team.id, orgId: team.orgId, scheduleVisibility: team.scheduleVisibility, isArchived: team.isArchived, familyAnswers: team.familyAnswers,
-  });
+  const setting = await coachFamilyAnswersSetting(teamId, known(team));
   return !!setting && familyAnswerState(setting, event, new Date()) === 'open';
+}
+
+/** The reply's who/when lines, only where the room shows them (else nothing, and the room keeps the lines it has). */
+async function linesFor(
+  teamId: string, team: Awaited<ReturnType<typeof getRepTeam>>, event: { id: string; eventType: string; status: string; startsAt: string },
+  playerIds: string[],
+): Promise<{ lines?: Awaited<ReturnType<typeof answerLinesForReply>> }> {
+  if (!team) return {};
+  const lines = await answerLinesForReply({ teamId, team: known(team), event, playerIds });
+  return lines ? { lines } : {};
 }

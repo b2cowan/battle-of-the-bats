@@ -203,8 +203,8 @@ export interface LineupEditorProps {
   };
   /**
    * Families say if they're coming (Signed-in family accounts Stage 4b, Part 6; drawing tab 5), a GAME lineup only — the
-   * template editor never passes it. `tagWords`: the Out / Maybe on a pool pill (the coach's mark first, then the family's
-   * answer). `outs`: players in the lineup a family said Out about that the coach hasn't settled. `onTakeOut` changes only
+   * template editor never passes it. `tagWords`: the Out / Maybe on a pool pill (the player's one answer, whoever set it).
+   * `outs`: players in the lineup whose Out a family set (one attendance record). `onTakeOut` changes only
    * the lineup, never the attendance book. Absent = the builder exactly as before.
    */
   family?: {

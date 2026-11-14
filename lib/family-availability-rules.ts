@@ -1,5 +1,5 @@
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
-import { FAMILY_ANSWER_NOTE_MAX, type CoachFamilyLine, type FamilyAnswer } from './family-availability-words';
+import { ANSWER_STATUSES, FAMILY_ANSWER_NOTE_MAX, type AnswerStatus, type CoachAnswerLine } from './family-availability-words';
 import type { RepAttendanceStatus } from './types';
 
 /**
@@ -44,24 +44,12 @@ export function familyEventOpen(event: { status: string; startsAt: string | null
   return event.status !== 'cancelled' && !!event.startsAt && Date.parse(event.startsAt) > nowMs;
 }
 
-const ANSWERS: readonly FamilyAnswer[] = ['in', 'out', 'maybe'];
-export const isFamilyAnswer = (v: unknown): v is FamilyAnswer => ANSWERS.includes(v as FamilyAnswer);
+/** One attendance record (ruling 1): a family answers in the record's own words, In · Late · Maybe · Out (null = clear it). */
+export const isAnswerStatus = (v: unknown): v is AnswerStatus => ANSWER_STATUSES.includes(v as AnswerStatus);
 
-// ── One attendance record (mig 483): the family's words ↔ the record's status ───────────────────────────────────────────────
-// The family's wire words stay In / Out / Maybe until Session 2 folds them into the status vocabulary (plan §2 "dead after the
-// merge"). ⚠ Interim: a coach's Late reads to the family as In until the family page learns Late (Session 2).
-
-/** The record's status for a family's answer (null = cleared → Not marked). */
-export function statusOfFamilyAnswer(answer: FamilyAnswer | null): RepAttendanceStatus {
-  return answer === 'in' ? 'attending' : answer === 'out' ? 'absent' : answer === 'maybe' ? 'maybe' : 'unknown';
-}
-
-/** The family's word for the record's status (null = Not marked). */
-export function familyAnswerOfStatus(status: RepAttendanceStatus | null | undefined): FamilyAnswer | null {
-  if (status === 'attending' || status === 'late') return 'in';
-  if (status === 'absent') return 'out';
-  if (status === 'maybe') return 'maybe';
-  return null;
+/** The record's status as an answer: null for Not marked (or nothing there). */
+export function answerOfStatus(status: RepAttendanceStatus | null | undefined): AnswerStatus | null {
+  return status && status !== 'unknown' ? status : null;
 }
 
 /** The longest first name the accept page takes and the sheet shows. */
@@ -95,20 +83,23 @@ export function cleanFamilyNote(raw: unknown): { ok: true; note: string | null }
   return { ok: true, note: note || null };
 }
 
-// ── The coach's side (Session 2, Parts 4–5): one count per player, the drift warning, what "Use" may copy ────────────────────
+// ── The coach's side: one count per player, the room's Families card ─────────────────────────────────────────────────────────
+// One attendance record (owner ruling 2026-11-13): the family's answer IS the player's status, so nothing here compares a family
+// answer with a coach mark — there is one answer per player, with who set it (Stage 4b's drift warning and "Use N family answers"
+// are gone with the second record).
 
 export interface Headcount { total: number; in: number; out: number; maybe: number }
 
 /**
- * ONE count per player (ask 8): the coach's mark first (In or Late = in, Out = out), else the family's answer. A player nobody has
- * marked or answered for counts nowhere. `total` is the players the room lists for the count (the active roster; no call-ups).
+ * ONE count per player, from the record alone: In or Late = in, Out = out, Maybe = maybe, whoever set it. A player nobody has
+ * answered for counts nowhere. `total` is the players the room lists for the count (the active roster; no call-ups).
  */
-export function headcountOf(players: readonly { status: RepAttendanceStatus; family: FamilyAnswer | null }[]): Headcount {
+export function headcountOf(players: readonly { status: RepAttendanceStatus }[]): Headcount {
   const c: Headcount = { total: players.length, in: 0, out: 0, maybe: 0 };
   for (const p of players) {
     if (p.status === 'attending' || p.status === 'late') c.in++;
     else if (p.status === 'absent') c.out++;
-    else if (p.family) c[p.family]++;
+    else if (p.status === 'maybe') c.maybe++;
   }
   return c;
 }
@@ -118,38 +109,11 @@ export function isShort(c: Headcount, fieldPositions: number): boolean {
   return fieldPositions > 0 && c.out > 0 && c.total - c.out < fieldPositions;
 }
 
-/** Does the family's answer say the same as the coach's mark? (Maybe never agrees with a mark.) */
-function answerAgreesWithMark(status: RepAttendanceStatus, answer: FamilyAnswer): boolean {
-  return answer === 'in' ? status === 'attending' || status === 'late' : answer === 'out' && status === 'absent';
-}
-
-/**
- * The amber warning (Part 5): the family's answer came AFTER the coach marked this player and says something else. Tapping the
- * player's mark again (even the same one) moves the mark's time and clears it. A player the coach hasn't marked never drifts.
- */
-export function familyDrifted(
-  book: { status: RepAttendanceStatus; markedAt: string | null },
-  family: { answer: FamilyAnswer; answeredAt: string } | null,
-): boolean {
-  if (!family || book.status === 'unknown' || !book.markedAt) return false;
-  return Date.parse(family.answeredAt) > Date.parse(book.markedAt) && !answerAgreesWithMark(book.status, family.answer);
-}
-
-/** What "Use N family answers" may copy (ask 3): only into a player the coach hasn't marked; In → In, Out → Out, Maybe stays. */
-export function usableFamilyMark(status: RepAttendanceStatus, answer: FamilyAnswer | null): 'attending' | 'absent' | null {
-  if (status !== 'unknown' || !answer || answer === 'maybe') return null;
-  return answer === 'in' ? 'attending' : 'absent';
-}
-
 /** One rostered player in the room, as the family side adds to it (the coach's room route sends these; a call-up never appears). */
 export interface RoomFamilyRow {
   playerId: string;
   /** A parent of this player is in the app (the card's "have no parent in the app" counts the others once). */
   connected: boolean;
-  /** What the family said, or null when nobody has answered. */
-  line: CoachFamilyLine | null;
-  /** When they said it (compared with the coach's mark time for the amber warning). */
-  answeredAt: string | null;
 }
 
 export type LiveFamilyAnswersSetting = Exclude<FamilyAnswersSetting, 'off'>;
@@ -160,92 +124,73 @@ export interface RoomFamilyAnswers {
   /** Where this event stands for families: `open` before the start, `closed` after, `cancelled` (the room then shows nothing). */
   state: Exclude<FamilyAnswerState, 'not_covered'>;
   rows: RoomFamilyRow[];
+  /** Per player with an answer: who set it and when, the family's note, the answer before (ruling 4). The attendance PATCH's
+   *  reply carries the same map, so the line follows every save. */
+  lines: Record<string, CoachAnswerLine>;
   /** When Remind was last used on this event (any coach), or null (Part 7: the card's "Reminded at … again tomorrow at …"). */
   remindedAt: string | null;
 }
 
-/** The room's Families card and its two actions, decided in ONE place from the book and the family rows. */
+/** The room's Families card, decided in ONE place from the record and who has a parent in the app. */
 export interface RoomFamilySummary {
+  /** Players whose current answer a FAMILY set. */
   answered: number;
+  /** Not marked, with a parent in the app (exactly Remind's list). */
   haveNot: number;
+  /** Not marked, and no parent in the app. */
   noParent: number;
-  /** Players whose family changed after the coach marked them (the amber warning), in roster order. */
-  changed: string[];
-  /** What "Use N family answers" would write: only players the coach hasn't marked, In → attending, Out → absent. */
-  usable: { playerId: string; status: 'attending' | 'absent' }[];
-  /** Players whose families Remind would reach (`remindPlan`): a parent in the app, no answer, not marked. */
+  /** Players whose families Remind would reach (`remindPlan`): a parent in the app, and nobody has answered. */
   remind: string[];
 }
 
 export function roomFamilySummary(
-  book: readonly { playerId: string; status: RepAttendanceStatus; markedAt: string | null }[],
+  book: readonly { playerId: string; status: RepAttendanceStatus; setByKind: string | null }[],
   family: readonly RoomFamilyRow[],
 ): RoomFamilySummary {
   const byPlayer = new Map(family.map(f => [f.playerId, f]));
-  const out: RoomFamilySummary = { answered: 0, haveNot: 0, noParent: 0, changed: [], usable: [], remind: [] };
+  const out: RoomFamilySummary = { answered: 0, haveNot: 0, noParent: 0, remind: [] };
+  const plan: { playerId: string; status: RepAttendanceStatus; answered: boolean; connected: boolean }[] = [];
   for (const b of book) {
     const f = byPlayer.get(b.playerId);
     if (!f) continue; // a call-up: no family line, not counted
-    if (f.line) out.answered++;
-    else if (f.connected) out.haveNot++;
-    else out.noParent++;
-    if (f.line && f.answeredAt && familyDrifted(b, { answer: f.line.answer, answeredAt: f.answeredAt })) out.changed.push(b.playerId);
-    const use = usableFamilyMark(b.status, f.line?.answer ?? null);
-    if (use) out.usable.push({ playerId: b.playerId, status: use });
+    const answered = b.status !== 'unknown' && b.setByKind === 'family';
+    if (answered) out.answered++;
+    else if (b.status === 'unknown') {
+      if (f.connected) out.haveNot++;
+      else out.noParent++;
+    }
+    plan.push({ playerId: b.playerId, status: b.status, answered, connected: f.connected });
   }
-  out.remind = remindPlan(book.flatMap(b => {
-    const f = byPlayer.get(b.playerId);
-    return f ? [{ playerId: b.playerId, status: b.status, answered: !!f.line, connected: f.connected }] : [];
-  })).remind;
+  out.remind = remindPlan(plan).remind;
   return out;
 }
 
-/**
- * The coach's mark time for one book row being saved (mig 479): it moves only when the mark changed or the coach tapped it
- * (`confirmed`: picking the mark it already had keeps the mark and clears the room's "family changed after you marked"). Every
- * other row in the batch keeps its own. "Not marked" has no mark time.
- */
-export function bookMarkedAt(
-  prior: { status: RepAttendanceStatus; markedAt: string | null } | undefined, status: RepAttendanceStatus, confirmed: boolean, now: string,
-): string | null {
-  if (status === 'unknown') return null;
-  if (!prior || prior.status !== status || confirmed) return now;
-  return prior.markedAt;
-}
-
 // ── The lineup (Session 3, Part 6; drawing tab 5) ─────────────────────────────────────────────────────────────────────────────
-// ONE rule for the builder's pool words and warning, the event window's Lineup row and the schedule row's triangle (ask 13).
+// ONE rule for the builder's pool words and warning and the event window's Lineup row (ask 13). One attendance record: they read
+// the status itself; the family side adds only WHO said Out and when (the lineup read's family-set rows, no note, no name).
 
-/** One rostered player as the lineup reads the book and the family. */
+/** One rostered player's answer when a FAMILY set it, as the lineup reads it: the status and when. No note, no name. */
+export interface LineupFamilyAnswer { playerId: string; status: AnswerStatus; answeredAt: string }
+
+/** One player as the lineup's rule reads them: the status as it stands in this screen, and the family's answer, if they set it. */
 export interface LineupFamilyPlayer {
   playerId: string;
   status: RepAttendanceStatus;
-  markedAt: string | null;
-  family: { answer: FamilyAnswer; answeredAt: string } | null;
+  family: { status: AnswerStatus; answeredAt: string } | null;
 }
 
-/** One rostered player's family answer, as the lineup reads it: the answer and when. No note, no name (those stay in the room). */
-export interface LineupFamilyAnswer { playerId: string; answer: FamilyAnswer; answeredAt: string }
-
-/** The word on a pool pill ("Not in the lineup"): the coach's mark first (Out), then the family's answer (Out / Maybe). A coach's
- *  In or Late, a family's In, or nothing at all: no word. */
-export function lineupTagWord(status: RepAttendanceStatus, family: { answer: FamilyAnswer } | null): 'out' | 'maybe' | null {
-  if (status === 'absent') return 'out';
-  // One attendance record (mig 483): a Maybe is a status now, whoever set it.
-  if (status === 'maybe') return 'maybe';
-  if (status !== 'unknown' || !family || family.answer === 'in') return null;
-  return family.answer;
+/** The word on a pool pill ("Not in the lineup"): Out or Maybe, whoever set it. In, Late or Not marked: no word. */
+export function lineupTagWord(status: RepAttendanceStatus): 'out' | 'maybe' | null {
+  return status === 'absent' ? 'out' : status === 'maybe' ? 'maybe' : null;
 }
 
-/** A lineup player a family said Out about that the coach hasn't settled. `afterSave`: the Out came after the lineup was saved. */
+/** A lineup player a family said Out about. `afterSave`: the Out came after the lineup was saved. */
 export interface LineupFamilyOut { playerId: string; afterSave: boolean }
 
 /**
- * The players IN the lineup whose family said Out and whom the coach hasn't settled:
- *   · not marked → the family's Out counts as Out (whenever it came; `afterSave` says which sentence);
- *   · marked In or Late → only a family Out that came after BOTH the coach's mark and the lineup's last save (the room's amber
- *     warning, seen from the lineup). Re-saving the lineup or re-tapping the mark settles it;
- *   · marked Out → nothing here: the coach's own mark already says "marked Out but still in the lineup".
+ * The players IN the lineup whose answer is a FAMILY's Out (the status as this screen holds it is still Out, and the family set
+ * it): the builder words it as the family's ("Maya's family said Out after you saved this lineup"), so the coach's own "marked
+ * Out but still in the lineup" leaves these players out (callers subtract them). A coach who taps In takes them off the list.
  */
 export function lineupFamilyOuts(
   players: readonly LineupFamilyPlayer[], inLineup: ReadonlySet<string>, savedAt: string | null,
@@ -256,12 +201,8 @@ export function lineupFamilyOuts(
   if (!open) return [];
   const out: LineupFamilyOut[] = [];
   for (const p of players) {
-    if (!inLineup.has(p.playerId) || p.family?.answer !== 'out') continue;
-    const afterSave = !!savedAt && Date.parse(p.family.answeredAt) > Date.parse(savedAt);
-    if (p.status === 'unknown') out.push({ playerId: p.playerId, afterSave });
-    else if ((p.status === 'attending' || p.status === 'late') && afterSave && familyDrifted(p, p.family)) {
-      out.push({ playerId: p.playerId, afterSave: true });
-    }
+    if (!inLineup.has(p.playerId) || p.status !== 'absent' || p.family?.status !== 'absent') continue;
+    out.push({ playerId: p.playerId, afterSave: !!savedAt && Date.parse(p.family.answeredAt) > Date.parse(savedAt) });
   }
   return out;
 }
@@ -281,7 +222,9 @@ export function remindAgainAt(remindedAt: string): string {
  *   · remind   — a parent is in the app, the family hasn't answered, and the coach hasn't marked the player;
  *   · marked   — the family hasn't answered, but the coach marked the player: settled, never reminded;
  *   · noParent — the family hasn't answered, nobody marked the player, and no parent is in the app: reported, never emailed.
- * A family that answered is left alone. A call-up is never passed in.
+ * A family that answered is left alone. A call-up is never passed in. One attendance record (ruling 6; owner 2026-11-13, S2):
+ * "unanswered" is Not marked, whoever would have set it, and a standing Maybe IS an answer, so it is never reminded (ruling 2
+ * counts it as Not marked in the STATS only).
  */
 export function remindPlan(players: readonly { playerId: string; status: RepAttendanceStatus; answered: boolean; connected: boolean }[]): {
   remind: string[]; marked: string[]; noParent: string[];
@@ -305,11 +248,12 @@ export const COACH_BELL_BUNDLE_MS = 60 * 60 * 1000;
 /**
  * Does this save ring the coach's bell? A family's Out at any time, and an Out TAKEN BACK at any time (owner, Session 4: else the
  * coach's unread line keeps saying "Out" after the family changed it); any other CHANGE (including a cleared answer) inside the
- * 48 hours before the event. Never a first In or Maybe, never a note-only re-send, never a routine In.
+ * 48 hours before the event. Never a first In, Late or Maybe, never a note-only re-send, never a routine In. `prior` is the record's answer
+ * before the save, whoever set it (a parent's In over the coach's Late is a change).
  */
-export function coachBellFires(prior: FamilyAnswer | null, next: FamilyAnswer | null, startsAt: string, now: Date): boolean {
+export function coachBellFires(prior: AnswerStatus | null, next: AnswerStatus | null, startsAt: string, now: Date): boolean {
   if (prior === next) return false;
-  if (next === 'out' || prior === 'out') return true;
+  if (next === 'absent' || prior === 'absent') return true;
   return prior !== null && Date.parse(startsAt) - now.getTime() <= COACH_BELL_LATE_MS;
 }
 
@@ -322,13 +266,12 @@ export interface CoachBellItem {
   eventDay: string;
   childId: string;
   child: string;
-  answer: FamilyAnswer | null;
-  prior: FamilyAnswer | null;
+  /** The answer after this save, and the one before it (any setter: the record's status), null = Not marked. */
+  answer: AnswerStatus | null;
+  prior: AnswerStatus | null;
   /** The answering parent's first name, or null ("A parent"). */
   parent: string | null;
   hasNote: boolean;
-  /** The coach's mark on this player when it says something else than the family now does (the drift), else null. */
-  markWord: string | null;
   /** The event's count after this answer ("9 of 13 in · 1 out · 1 maybe"), or null. */
   count: string | null;
 }

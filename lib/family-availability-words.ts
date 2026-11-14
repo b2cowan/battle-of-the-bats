@@ -1,6 +1,8 @@
 import { daysBetweenDateStrings, formatInOrgZone, orgDayKey, utcToZonedInputs } from './timezone';
 import { endSentence, formatTime, joinWithAnd, pluralize, possessive } from './utils';
 import { opponentPhrase, scheduleDayLabel } from './family-schedule-format';
+import { ATTENDANCE_WORD } from './coach-schedule-vocab';
+import type { RepAttendanceStatus } from './types';
 
 /**
  * EVERY WORD "Families say if they're coming" shows (Signed-in family accounts Stage 4b; drawing
@@ -11,7 +13,26 @@ import { opponentPhrase, scheduleDayLabel } from './family-schedule-format';
  * Not `server-only`: the family page's client component reads it. Nothing here reads data.
  */
 
-export type FamilyAnswer = 'in' | 'out' | 'maybe';
+/**
+ * An answer IS the attendance record's status (One attendance record, ruling 1): In · Late · Maybe · Out, the same four for the
+ * family and the coach. "Not marked" (`unknown`) is no answer, carried as null.
+ */
+export type AnswerStatus = Exclude<RepAttendanceStatus, 'unknown'>;
+/** The family's choices in the order the sheet draws them (ruling 1). */
+export const ANSWER_STATUSES: readonly AnswerStatus[] = ['attending', 'late', 'maybe', 'absent'];
+
+/** Who set an answer, as one side reads it. `name` is a first name (null = the account holds none); a coach is never named. */
+export interface AnswerWho {
+  /** The family side reads 'you' for its own account; the coach side never does. */
+  by: 'coach' | 'family' | 'you';
+  name: string | null;
+  /** "today" / "Tue" / "Nov 1" (the org's days; never the clock time, ask 6). */
+  day: string;
+}
+/** One answer's who/when, and the one before it (ruling 4: "Coach, today · earlier: In (Adasmom, Nov 1)"). */
+export interface AnswerSetLine extends AnswerWho {
+  previous: (AnswerWho & { status: AnswerStatus }) | null;
+}
 
 /** The one-line note's cap (ask 5's "one short line", app-enforced; the database CHECK holds the same 200). */
 export const FAMILY_ANSWER_NOTE_MAX = 200;
@@ -41,21 +62,40 @@ export function answeredDayWords(answeredAtIso: string, now: Date = new Date()):
   return `on ${formatInOrgZone(answeredAtIso, kind === 'week' ? { weekday: 'long' } : { month: 'short', day: 'numeric' })}`;
 }
 
-const ANSWER_WORD: Record<FamilyAnswer, string> = { in: 'In', out: 'Out', maybe: 'Maybe' };
+/** The four answers' words: the coach's own (`ATTENDANCE_WORD`), so a family's Late and a coach's Late are one spelling. */
+const ANSWER_WORD: Record<AnswerStatus, string> = {
+  attending: ATTENDANCE_WORD.attending, late: ATTENDANCE_WORD.late, maybe: ATTENDANCE_WORD.maybe, absent: ATTENDANCE_WORD.absent,
+};
+
+/** "Coach" / "You" / a first name (or the side's fallback words when the account holds none). */
+function whoWord(w: AnswerWho, fallback: string): string {
+  return w.by === 'coach' ? 'Coach' : w.by === 'you' ? 'You' : w.name ?? fallback;
+}
+/** "Coach, today · earlier: In (Adasmom, Nov 1)" — the one shape both sides read (ruling 4). */
+function setLineWords(l: AnswerSetLine, fallback: string, note: string | null = null): string {
+  const p = l.previous;
+  return `${whoWord(l, fallback)}, ${l.day}${note ? ` · “${note}”` : ''}` +
+    (p ? ` · earlier: ${ANSWER_WORD[p.status]} (${whoWord(p, fallback)}, ${p.day})` : '');
+}
 
 export const FAMILY_AVAILABILITY_WORDS = {
   answer: ANSWER_WORD,
   /** The schedule row's pill (tab 7). */
   pill: {
-    in: 'In ✓',
-    out: 'Out',
+    attending: 'In ✓',
+    late: 'Late',
     maybe: 'Maybe',
+    absent: 'Out',
     ask: 'Answer',
     closedNone: 'No answer',
   },
-  /** The pill's accessible name: what tapping it does. */
-  pillLabel: (child: string, eventTitle: string, answer: FamilyAnswer | null) =>
-    answer ? `${child}: ${ANSWER_WORD[answer]} for ${eventTitle}. Change the answer` : `Answer for ${child}: ${eventTitle}`,
+  /** The pill's accessible name: what tapping it does, and who set the answer when it wasn't this parent. */
+  pillLabel: (child: string, eventTitle: string, answer: AnswerStatus | null, setBy: AnswerSetLine | null) =>
+    answer
+      ? `${child}: ${ANSWER_WORD[answer]} for ${eventTitle}${setBy && setBy.by !== 'you' ? `, set by ${whoWord(setBy, OTHER_PARENT)}` : ''}. Change the answer`
+      : `Answer for ${child}: ${eventTitle}`,
+  /** The sheet's line over the choices: the current answer, who set it and when, and the one before (ruling 4). */
+  setLine: (answer: AnswerStatus, l: AnswerSetLine) => `${ANSWER_WORD[answer]} · ${setLineWords(l, 'The other parent')}`,
   sheet: {
     close: 'Close',
     noteLabel: 'Your note for the coach',
@@ -73,9 +113,8 @@ export const FAMILY_AVAILABILITY_WORDS = {
         'Other families see none of it.',
         'Please don’t put health details here; tell the coach directly.',
       ].filter(Boolean).join(' '),
-    /** "Priya answered Out on Tuesday and left a note for the coach." (the other parent's answer; never the note's words). */
-    otherAnswered: (who: string | null, answer: FamilyAnswer, dayWords: string, hasNote: boolean) =>
-      `${who ? who : 'The other parent'} answered ${ANSWER_WORD[answer]} ${dayWords}${hasNote ? ' and left a note for the coach' : ''}.`,
+    /** The other parent's note: that there is one, never its words. */
+    otherNote: 'The other parent left a note for the coach.',
   },
   /** A started event (tab 7): the answer shows muted and cannot change. */
   started: (isGame: boolean) =>
@@ -84,14 +123,9 @@ export const FAMILY_AVAILABILITY_WORDS = {
   coachAsked: (children: readonly string[]) =>
     `The coach asked whether ${children.length > 1 ? `${joinWithAnd(children)} are` : `${children[0]} is`} coming.`,
   otherParentFallback: OTHER_PARENT,
-  /** The schedule-change notice's one added sentence when a new day cleared the answers (ask 10; Part 6). */
-  answerAgain: 'The new day cleared any earlier answers about whether your player is coming. Please answer again on the team page.',
 } as const;
 
 // ── The coach's side (Session 2, Parts 4–5; drawing tabs 1–3) ────────────────────────────────────────────────────────────────
-
-/** A person on the coach's side whose account holds no first name (O2: never an address). */
-const A_PARENT = 'a parent';
 
 /** The coach reads "Priya, Tue": the day only, short (ask 6). "today" / "yesterday"; a weekday within the week; "Apr 2" before. */
 export function answeredDayShort(answeredAtIso: string, now: Date = new Date()): string {
@@ -102,20 +136,14 @@ export function answeredDayShort(answeredAtIso: string, now: Date = new Date()):
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
-/** One family answer as the coach reads it: the answer, the note's words, who and the day, and what it was before. */
-export interface CoachFamilyLine {
-  answer: FamilyAnswer;
-  note: string | null;
-  /** The answering parent's first name, or null (the words say "a parent"). */
-  by: string | null;
-  day: string;
-  previous: { answer: FamilyAnswer; by: string | null; day: string } | null;
+/**
+ * One player's answer as the attendance room reads it (One attendance record, rulings 3–4 and 7): who set it and when, the
+ * family's note (the coach reads it; never the coach's own note, which is the row's), and the answer before. The status is the
+ * row's. Reaches only coaches who can mark attendance (ask 11).
+ */
+export interface CoachAnswerLine extends AnswerSetLine {
+  familyNote: string | null;
 }
-
-const quoted = (note: string | null) => (note ? ` · “${note}”` : '');
-const whoDay = (by: string | null, day: string) => `${by ?? A_PARENT}, ${day}`;
-const familyCell = (l: CoachFamilyLine) => `${ANSWER_WORD[l.answer]}${quoted(l.note)} · ${whoDay(l.by, l.day)}${earlier(l.previous)}`;
-const earlier = (p: CoachFamilyLine['previous']) => (p ? ` · earlier: ${ANSWER_WORD[p.answer]} (${whoDay(p.by, p.day)})` : '');
 
 export const FAMILY_AVAILABILITY_COACH_WORDS = {
   /** Team settings → Sharing (tab 3). */
@@ -123,12 +151,12 @@ export const FAMILY_AVAILABILITY_COACH_WORDS = {
     label: 'Families say if they’re coming',
     groupLabel: 'Which events families answer',
     choice: { off: 'Off', games: 'Games', games_and_practices: 'Games and practices' } as const,
-    off: 'Off: families don’t see In / Out / Maybe. Attendance works as it does today.',
+    off: 'Off: families don’t see In / Late / Maybe / Out. Attendance works as it does today.',
     on: (setting: 'games' | 'games_and_practices', connected: number, roster: number) =>
-      `Parents in the app can answer In, Out or Maybe for every upcoming ${setting === 'games' ? 'game' : 'game and practice'}. ` +
-      'You see their answers in Attendance; your own marks stay yours. ' +
+      `Parents in the app can answer In, Late, Maybe or Out for every upcoming ${setting === 'games' ? 'game' : 'game and practice'}, until it starts. ` +
+      'Their answer and yours are one answer per player: the latest change counts, and the parent sees yours. ' +
       `${connected} of ${roster} ${plural(roster, 'player has', 'players have')} a parent in the app.`,
-    turnedOff: 'Families stop seeing In / Out / Maybe and you stop seeing their answers. Your marks stay. If you turn it on again this season, the answers come back.',
+    turnedOff: 'Families stop seeing In / Late / Maybe / Out. Every answer already given stays as the player’s attendance.',
     nobodyYet: 'No parent is in the app yet. Answers appear once you invite parents from each player’s Guardians on the Roster.',
     staffOnly: 'Families can’t see the schedule, so they can’t answer. Set Schedule visibility to Families or Public first.',
     readOnly: (choice: string) => `${choice} — only coaches who manage the schedule can change it.`,
@@ -152,30 +180,18 @@ export const FAMILY_AVAILABILITY_COACH_WORDS = {
       f.haveNot > 0 ? `${f.haveNot} ${plural(f.haveNot, 'hasn’t', 'haven’t')}` : null,
       f.noParent ? `${f.noParent} ${plural(f.noParent, 'has', 'have')} no parent in the app` : null,
     ].filter((p): p is string => !!p),
-  /** The event window's Attendance row: families who changed after the coach marked (shown in the warning ink). */
-  changedPart: (n: number) => `${n} changed`,
   /** The event window's Attendance row: its one new line (tab 2). */
   doorLabel: 'Families:',
   /** The room's Families card (tab 2). */
   card: {
     title: 'Families',
-    changed: (names: readonly string[]) => `⚠ ${names.length} changed since you marked: ${names.join(', ')}`,
-    show: 'Show',
-    showAll: 'Show everyone',
     nobody: 'No parent is in the app yet, so no family can answer.',
     invite: 'Invite parents from the Roster →',
-    use: (n: number) => `Use ${pluralize(n, 'family answer')}`,
-    used: (names: readonly string[]) => `Used ${pluralize(names.length, 'family answer')}: ${names.join(', ')}`,
-    undo: 'Undo',
-    undone: 'Put back to Not marked.',
   },
-  /** The grey line under a player (phone) and the "Family said" column (desk). */
-  line: (l: CoachFamilyLine) => `Family said ${familyCell(l)}`,
-  cell: (l: CoachFamilyLine) => familyCell(l),
-  drift: (l: CoachFamilyLine) => `⚠ Family changed to ${ANSWER_WORD[l.answer]} · ${l.day}`,
-  driftCell: (l: CoachFamilyLine) => `⚠ Changed to ${ANSWER_WORD[l.answer]}${quoted(l.note)} · ${whoDay(l.by, l.day)}`,
-  notYet: 'Family hasn’t answered',
-  desk: { player: 'Player', family: 'Family said', mark: 'Your mark' },
+  /** Who set a player's answer and when, the family's note, and the answer before (ruling 4): the grey line under a player
+   *  (phone) and the "Set by" column (desk). "Adasmom, today · “leaving early” · earlier: In (Coach, Nov 1)". */
+  setLine: (l: CoachAnswerLine) => setLineWords(l, 'A parent', l.familyNote),
+  desk: { player: 'Player', setBy: 'Set by', answer: 'Answer' },
   /** The lineup (Session 3, Part 6; drawing tab 5). Names are the builder's own player names. */
   lineup: {
     tag: { out: 'Out', maybe: 'Maybe' } as const,
@@ -197,22 +213,13 @@ export const FAMILY_AVAILABILITY_COACH_WORDS = {
         ? `${possessive(names)} family said Out${afterSave ? ' after you saved' : `, but ${names} is still in the lineup`}`
         : `The families of ${names} said Out${afterSave ? ' after you saved' : ', but they’re still in the lineup'}`,
   },
-  /** The player sheet's family box (tab 2). */
+  /** The player sheet's who box (tab 2): who set the answer, the family's note, the one before, and what a tap does. */
   box: {
-    head: (player: string) => `${possessive(player)} family said`,
-    answer: (l: CoachFamilyLine) => ANSWER_WORD[l.answer],
-    note: (l: CoachFamilyLine) => (l.note ? `“${l.note}”` : ''),
-    meta: (l: CoachFamilyLine) => `${whoDay(l.by, l.day)}${earlier(l.previous)}`,
-    /** What a tap does here, in the coach's choice words ("In", "Out", "Late"). */
-    hint: (p: { familyChoice: string | null; markChoice: string | null; drift: boolean }) =>
-      [
-        p.drift && p.familyChoice && p.markChoice
-          ? `Tap ${p.familyChoice} to use the family’s answer, or tap ${p.markChoice} to keep your mark and clear the warning.`
-          : p.drift && p.markChoice
-            ? `Tap ${p.markChoice} to keep your mark and clear the warning.`
-            : !p.markChoice && p.familyChoice ? `Tap ${p.familyChoice} to use the family’s answer.` : null,
-        'Families don’t see your mark.',
-      ].filter(Boolean).join(' '),
+    head: 'Set by',
+    meta: (l: CoachAnswerLine) => setLineWords(l, 'A parent'),
+    note: (l: CoachAnswerLine) => (l.familyNote ? `“${l.familyNote}”` : ''),
+    /** Ruling 4: the family sees the coach's change on their own child (never the coach's note). */
+    hint: 'A tap replaces the answer. The family sees it, but never your note.',
   },
 } as const;
 
@@ -308,15 +315,15 @@ export function coachBellEventLabel(e: { startsAt: string; eventType: string; na
 }
 
 interface BellItemWords {
-  child: string; answer: FamilyAnswer | null; prior: FamilyAnswer | null; parent: string | null; hasNote: boolean;
-  markWord: string | null; count: string | null; eventLabel: string; eventDay: string;
+  child: string; answer: AnswerStatus | null; prior: AnswerStatus | null; parent: string | null; hasNote: boolean;
+  count: string | null; eventLabel: string; eventDay: string;
 }
 
 /** One bell line's title and body, from its items (one event's answers, or one family's run of events). */
 export function coachBellWords(bundle: { kind: 'event' | 'family'; items: readonly BellItemWords[] }): { title: string; body: string } {
   const items = bundle.items;
   const last = items[items.length - 1];
-  const allOut = items.every(i => i.answer === 'out');
+  const allOut = items.every(i => i.answer === 'absent');
   if (bundle.kind === 'family' && items.length > 1) {
     return {
       title: `${possessive(last.child)} family ${allOut ? 'said Out' : 'changed answers'} for ${items.length} events`,
@@ -336,13 +343,7 @@ export function coachBellWords(bundle: { kind: 'event' | 'family'; items: readon
   if (last.answer === null) {
     return { title: `${possessive(last.child)} family took back their answer for ${last.eventLabel}`, body: [was, ...tail].filter(Boolean).join(' · ') };
   }
-  if (last.markWord) {
-    return {
-      title: `${possessive(last.child)} family changed to ${ANSWER_WORD[last.answer]} for ${last.eventLabel}`,
-      body: [was, `your mark still says ${last.markWord}`, last.hasNote ? `${who} left a note` : null].filter(Boolean).join(' · '),
-    };
-  }
-  if (last.answer === 'out' && !last.prior) {
+  if (last.answer === 'absent' && !last.prior) {
     return { title: `${possessive(last.child)} family said Out for ${last.eventLabel}`, body: [last.hasNote ? `${who} left a note` : `${who} answered`, ...tail.slice(1)].filter(Boolean).join(' · ') };
   }
   return {

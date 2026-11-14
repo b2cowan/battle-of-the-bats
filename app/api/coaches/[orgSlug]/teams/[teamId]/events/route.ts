@@ -35,7 +35,7 @@ import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { isVisibleToFamilies } from '@/lib/family-access';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { clubSourcesFor } from '@/lib/club-schedule-coach';
-import { familyLineupFlagEventIds, scheduleHeadcounts } from '@/lib/family-availability-coach';
+import { scheduleHeadcounts } from '@/lib/family-availability-coach';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -95,19 +95,16 @@ export const GET = withObservability(async (req: Request,
   // Draft / Ready / Needs review badge (F02 — replaces the old "any nonblank cell = set" boolean),
   // powering the Lineups page's chips, the schedule and Overview's flags, and the "Needs lineup"
   // filter, all without N+1 probes.
-  // Signed-in family accounts Stage 4b (Part 6, ask 13): a saved lineup holding a player a family said Out about joins the same
-  // triangle, by the builder's own rule — only for a coach who can also mark attendance (the builder shows them why; ask 11).
+  // One attendance record (owner ruling 2026-11-13): a family's Out IS the player's status, so the book's own rule ("marked Out but
+  // still in the lineup") is the whole triangle; the family side Stage 4b (Part 6) added to it is gone.
   // Not awaited here: it runs ALONGSIDE the book reads below and both are joined in one Promise.all (a rejection is never left
   // unhandled; Stage 4b /simplify — the two batches don't depend on each other).
-  const lineupReads: Promise<[string[], Awaited<ReturnType<typeof getRepTeamLineupReadinessByEvent>> | null, string[]]> = capabilities.lineups
+  const lineupReads: Promise<[string[], Awaited<ReturnType<typeof getRepTeamLineupReadinessByEvent>> | null]> = capabilities.lineups
     ? Promise.all([
         getRepTeamLineupAttendanceMismatchEventIds(programYear.id),
         getRepTeamLineupReadinessByEvent(programYear.id, getSportPack(team.sport ?? DEFAULT_SPORT).fieldPositions),
-        capabilities.attendance && programYear.status === 'active'
-          ? familyLineupFlagEventIds({ teamId, programYearId: programYear.id, events, team })
-          : Promise.resolve([] as string[]),
       ])
-    : Promise.resolve([[], null, []]);
+    : Promise.resolve([[], null]);
   // Tags: the team's game-tag library (for the chip picker) + which tags each returned event
   // already carries (for chip display without a per-event fetch). Both gate on the same
   // `schedule` capability already required for this whole route.
@@ -116,7 +113,7 @@ export const GET = withObservability(async (req: Request,
   // The club's venues (Club Tier Stage 6a, Ask 1) ride the same read: the Venue field lists them above the team's
   // places, read-only, and only in a club with a Venue library — `inClub: false` keeps a team outside a club's
   // picker exactly as built. The usual facility per venue is the dropdown's opening pick (Ask 2) — read only in a club.
-  const [[bookMismatchEventIds, lineupReadiness, familyLineupEventIds], [tags, tagsByEventId, awardCountByEventId, places, clubBook, clubSources, familyHeadcounts]] = await Promise.all([lineupReads, Promise.all([
+  const [[lineupMismatchEventIds, lineupReadiness], [tags, tagsByEventId, awardCountByEventId, places, clubBook, clubSources, familyHeadcounts]] = await Promise.all([lineupReads, Promise.all([
     getRepTeamTagLibrary(teamId, 'game', ctx.org.id),
     getRepTeamEventTagsMap(events.map(e => e.id)),
     getRepEventAwardCountsMap(events.map(e => e.id)),
@@ -130,7 +127,6 @@ export const GET = withObservability(async (req: Request,
     // A finished season (this read serves the working season even then) shows no availability: live season only.
     programYear.status === 'active' ? scheduleHeadcounts({ teamId, programYearId: programYear.id, events, team }) : null,
   ])]);
-  const lineupMismatchEventIds = [...new Set([...bookMismatchEventIds, ...familyLineupEventIds])];
   const lineupStatusByEvent = lineupReadiness?.statusByEvent ?? null;
   // D11: beside the badge, how many innings still need a decision — a Ready lineup may carry open
   // innings the coach means to fill at the field, and the hub's chip says so ("Ready · 3 open").

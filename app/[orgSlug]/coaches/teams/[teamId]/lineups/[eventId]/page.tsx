@@ -178,7 +178,7 @@ export default function CoachLineupBuilderPage({
 
   // Attendance is loaded READ-ONLY here (edited on the Schedule) — used only to flag lineup ↔
   // attendance mismatches. The lineup and attendance are independent: neither auto-changes the other.
-  const [attendanceRows, setAttendanceRows] = useState<{ player: RepRosterPlayer; status: RepAttendanceStatus; note: string; markedAt: string | null }[]>([]);
+  const [attendanceRows, setAttendanceRows] = useState<{ player: RepRosterPlayer; status: RepAttendanceStatus; note: string }[]>([]);
 
   /* ── Call-ups on this game (mig 309) ──────────────────────────────────────────────────────────
      `callUps` is only ever the players linked to THIS game. The saved pool is fetched on demand
@@ -297,7 +297,7 @@ export default function CoachLineupBuilderPage({
          exists to keep clean. Call-ups reach the editor through its own `callUps` prop. */
       setAttendanceRows(players.map(player => {
         const existing = attendanceByPlayer.get(player.id);
-        return { player, status: existing?.status ?? 'unknown', note: existing?.note ?? '', markedAt: existing?.setAt ?? null };
+        return { player, status: existing?.status ?? 'unknown', note: existing?.note ?? '' };
       }));
 
       const mode = data.lineup?.lineupMode ?? 'everyone_bats';
@@ -895,24 +895,26 @@ export default function CoachLineupBuilderPage({
 
   const lineupRowIds = new Set(lineupRows.map(r => r.player.id));
   const comingNotInLineup = attendanceRows.filter(r => (r.status === 'attending' || r.status === 'late') && !lineupRowIds.has(r.player.id));
-  const outButInLineup = attendanceRows.filter(r => r.status === 'absent' && lineupRowIds.has(r.player.id));
 
-  // Families say if they're coming (Stage 4b, Part 6; ask 13): the pool's Out / Maybe words and the players a family said Out
-  // about that the coach hasn't settled, by the one rule the event window and the schedule's triangle also read.
+  // Families say if they're coming (Stage 4b, Part 6; ask 13; one record): the pool's Out / Maybe words read the status itself, and
+  // a lineup player whose Out a FAMILY set is worded as the family's — by the one rule the event window also reads — so the book's
+  // "marked Out but still in the lineup" below leaves those players out.
   const familyView = (() => {
     if (!familyAnswers) return undefined;
     const said = new Map(familyAnswers.map(a => [a.playerId, a]));
-    const players = attendanceRows.map(r => ({ playerId: r.player.id, status: r.status, markedAt: r.markedAt, family: said.get(r.player.id) ?? null }));
+    const players = attendanceRows.map(r => ({ playerId: r.player.id, status: r.status, family: said.get(r.player.id) ?? null }));
     const byId = new Map(attendanceRows.map(r => [r.player.id, r.player]));
     const tagWords = new Map<string, 'out' | 'maybe'>();
     for (const p of players) {
-      const w = lineupTagWord(p.status, p.family);
+      const w = lineupTagWord(p.status);
       if (w) tagWords.set(p.playerId, w);
     }
     const outs = lineupFamilyOuts(players, lineupRowIds, lineupSavedAt, !!event && familyEventOpen(event, nowMs))
       .map(o => ({ player: byId.get(o.playerId)!, afterSave: o.afterSave }));
     return { tagWords, outs, onTakeOut: removePlayersFromLineup };
   })();
+  const familyOutIds = new Set(familyView?.outs.map(o => o.player.id) ?? []);
+  const outButInLineup = attendanceRows.filter(r => r.status === 'absent' && lineupRowIds.has(r.player.id) && !familyOutIds.has(r.player.id));
 
   // ⚠ THE ATTENDANCE RAIL WAS REMOVED HERE (owner, 2026-08-13) — it showed an In / Out / No-reply
   // headcount beside the grid. What still reports attendance on this page is the editor's status

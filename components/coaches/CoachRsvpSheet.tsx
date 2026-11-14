@@ -1,7 +1,7 @@
 'use client';
 import { useId, useRef, type RefObject } from 'react';
 import { Check } from 'lucide-react';
-import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
+import { attendanceChoices } from '@/components/coaches/attendanceOptions';
 import SheetFrame from '@/components/coaches/SheetFrame';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
@@ -48,9 +48,14 @@ export default function CoachRsvpSheet({
   onNote,
   onClose,
   family = null,
+  maybeOffered = false,
 }: {
-  /** What the family said (Stage 4b, Part 5), as words: present only while families can answer this event. */
-  family?: { head: string; answer: string; note: string; meta: string; hint: string; drift: boolean } | null;
+  /** Who set this player's answer and when, the family's note and the answer before (One attendance record, ruling 4), as words:
+   *  present only where families can answer this event and someone has answered. */
+  family?: { head: string; meta: string; note: string; hint: string } | null;
+  /** Maybe is a choice here (families can answer this event and it hasn't started; call C3). A player whose answer IS Maybe sees
+   *  it ticked either way, so the current answer always shows. */
+  maybeOffered?: boolean;
   playerName: string;
   /** "Fri, Sep 18 · UAT probe practice" — the day and the event, so the sheet says what it is for. */
   eventLine: string;
@@ -69,21 +74,22 @@ export default function CoachRsvpSheet({
   const subId = useId();
   // The centred dialog's own floor; at ≤900 the frame's form layer is the floor.
   useDialogFloor(!isPhoneNav, panelRef, { onClose, opener });
+  const { options, maybeDisabled } = attendanceChoices(status, maybeOffered);
 
   const body = (
     <>
       <div id={nameId} className={own.name}>{playerName}</div>
       <div id={subId} className={own.sub}>{eventLine}</div>
       {family && (
-        <div className={own.familyBox} data-drift={family.drift || undefined}>
+        <div className={own.familyBox}>
           <div className={own.familyHead}>{family.head}</div>
-          <div className={own.familyAnswer}><strong>{family.answer}</strong>{family.note && <> · {family.note}</>}</div>
           <div className={own.familyMeta}>{family.meta}</div>
+          {family.note && <div className={own.familyNote}>{family.note}</div>}
           <p className={own.familyHint}>{family.hint}</p>
         </div>
       )}
       <div className={own.choices} role="group" aria-label={`Attendance for ${playerName}`}>
-        {ATTENDANCE_OPTIONS.map(option => {
+        {options.map(option => {
           const Icon = option.icon;
           const on = status === option.value;
           return (
@@ -93,6 +99,7 @@ export default function CoachRsvpSheet({
               data-status={option.value}
               aria-pressed={on}
               className={`${own.choice}${on ? ` ${own.choiceOn}` : ''}`}
+              disabled={option.value === 'maybe' && maybeDisabled}
               onClick={() => onPick(option.value)}
             >
               <Icon size={18} aria-hidden />

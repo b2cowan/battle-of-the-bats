@@ -35,32 +35,31 @@ const T0 = '2027-04-20T14:00:00.000Z';
 const LATER = '2027-04-21T14:00:00.000Z';
 
 describe('Part 6 — the lineup: one rule for the pool, the builder’s warning, the Lineup row and the triangle', () => {
-  it('the pool word: the coach’s mark first (Out), then the family’s Out / Maybe; In says nothing', () => {
-    assert.equal(lineupTagWord('absent', { answer: 'in' }), 'out');
-    assert.equal(lineupTagWord('attending', { answer: 'out' }), null);
-    assert.equal(lineupTagWord('unknown', { answer: 'out' }), 'out');
-    assert.equal(lineupTagWord('unknown', { answer: 'maybe' }), 'maybe');
-    assert.equal(lineupTagWord('unknown', { answer: 'in' }), null);
-    assert.equal(lineupTagWord('unknown', null), null);
+  it('the pool word reads the one answer, whoever set it: Out or Maybe; In, Late and Not marked say nothing', () => {
+    assert.equal(lineupTagWord('absent'), 'out');
+    assert.equal(lineupTagWord('maybe'), 'maybe');
+    assert.equal(lineupTagWord('attending'), null);
+    assert.equal(lineupTagWord('late'), null);
+    assert.equal(lineupTagWord('unknown'), null);
   });
-  it('a lineup player with a family Out and no mark counts, whenever the Out came; afterSave says which sentence', () => {
+  it('a lineup player whose Out a FAMILY set is worded as the family’s, whenever it came; afterSave says which sentence', () => {
     const outs = lineupFamilyOuts([
-      { playerId: 'maya', status: 'unknown', markedAt: null, family: { answer: 'out', answeredAt: LATER } },
-      { playerId: 'ava', status: 'unknown', markedAt: null, family: { answer: 'out', answeredAt: '2027-04-19T00:00:00.000Z' } },
-      { playerId: 'noor', status: 'unknown', markedAt: null, family: { answer: 'maybe', answeredAt: LATER } },
-      { playerId: 'zoe', status: 'unknown', markedAt: null, family: { answer: 'out', answeredAt: LATER } }, // not in the lineup
+      { playerId: 'maya', status: 'absent', family: { status: 'absent', answeredAt: LATER } },
+      { playerId: 'ava', status: 'absent', family: { status: 'absent', answeredAt: '2027-04-19T00:00:00.000Z' } },
+      { playerId: 'noor', status: 'maybe', family: { status: 'maybe', answeredAt: LATER } },
+      { playerId: 'zoe', status: 'absent', family: { status: 'absent', answeredAt: LATER } }, // not in the lineup
     ], new Set(['maya', 'ava', 'noor']), T0, true);
     assert.deepEqual(outs, [{ playerId: 'maya', afterSave: true }, { playerId: 'ava', afterSave: false }]);
   });
-  it('a player the coach marked In counts only when the Out came after BOTH the mark and the save; marked Out is the book’s own line', () => {
-    const players = (markedAt: string, answeredAt: string) => [
-      { playerId: 'maya', status: 'attending' as const, markedAt, family: { answer: 'out' as const, answeredAt } },
-      { playerId: 'leo', status: 'absent' as const, markedAt, family: { answer: 'out' as const, answeredAt } },
-    ];
+  it('a coach’s own Out is the book’s line, not the family’s; a coach who taps In over a family’s Out takes it off', () => {
     const inLineup = new Set(['maya', 'leo']);
-    assert.deepEqual(lineupFamilyOuts(players('2027-04-19T00:00:00.000Z', LATER), inLineup, T0, true), [{ playerId: 'maya', afterSave: true }]);
-    assert.deepEqual(lineupFamilyOuts(players('2027-04-22T00:00:00.000Z', LATER), inLineup, T0, true), [], 'the coach re-marked after the Out');
-    assert.deepEqual(lineupFamilyOuts(players('2027-04-19T00:00:00.000Z', LATER), inLineup, '2027-04-22T00:00:00.000Z', true), [], 'saved after the Out');
+    assert.deepEqual(lineupFamilyOuts([
+      { playerId: 'maya', status: 'attending', family: { status: 'absent', answeredAt: LATER } }, // tapped In in this screen
+      { playerId: 'leo', status: 'absent', family: null }, // the coach's own Out
+    ], inLineup, T0, true), []);
+    // The two never say the same player twice: the callers leave the family's Outs out of "marked Out but still in the lineup".
+    assert.match(readCode(GAME_LINEUP_PAGE), /lineupRowIds\.has\(r\.player\.id\) && !familyOutIds\.has\(r\.player\.id\)\);/);
+    assert.match(readCode('components/coaches/ScheduleEventSheet.tsx'), /lineupEntryIds\.has\(r\.player\.id\) && !familyOutIds\.has\(r\.player\.id\)\)/);
   });
   it('the builder’s and the event window’s words', () => {
     assert.equal(CW.lineup.warn(['Maya'], true), '⚠ Maya’s family said Out after you saved this lineup.');
@@ -75,14 +74,14 @@ describe('Part 6 — the lineup: one rule for the pool, the builder’s warning,
     assert.equal(words.line, 'Maya’s family said Out after you saved');
     assert.equal(words.warn, true);
   });
-  it('the template editor gets nothing; only a coach who can also mark attendance gets the answers; the triangle reads the same rule', () => {
+  it('the template editor gets nothing; only a coach who can also mark attendance gets the answers; the triangle is the book’s', () => {
     assert.doesNotMatch(readCode(TEMPLATE_PAGE), /family=/);
     assert.match(readCode(GAME_LINEUP_PAGE), /family=\{familyView\}/);
     assert.match(readCode(LINEUP_ROUTE), /!isReadOnly && capabilities\.attendance \? lineupFamilyAnswers\(/);
-    assert.match(readCode(EVENTS_ROUTE), /capabilities\.attendance && programYear\.status === 'active'\s*\?\s*familyLineupFlagEventIds\(/);
-    // One attendance record (mig 483): a family's Out IS the status, so the coach's own triangle rule flags it; the family-side
-    // triangle has nothing left to find (Session 2 deletes it).
-    assert.match(functionBody(readCode('lib/family-availability-coach.ts'), 'familyLineupFlagEventIds'), /return \[\];/);
+    // One attendance record (S2): a family's Out IS the status, so the book's own rule is the whole triangle.
+    assert.doesNotMatch(readCode(EVENTS_ROUTE), /familyLineupFlagEventIds/);
+    assert.doesNotMatch(readCode('lib/family-availability-coach.ts'), /familyLineupFlagEventIds/);
+    assert.match(readCode(EVENTS_ROUTE), /const \[\[lineupMismatchEventIds, lineupReadiness\], \[tags,/);
     const lineupRead = functionBody(readCode('lib/family-availability-coach.ts'), 'lineupFamilyAnswers');
     assert.doesNotMatch(lineupRead, /note|set_by_user_id|previous_/, 'the lineup never reads a note or who answered');
   });
@@ -106,12 +105,13 @@ describe('Part 6 — a moved event, and a parent who leaves (guards k and l; the
     assert.match(mig485, /drop function if exists public\.rep_team_events_new_day_clears_availability\(\);/);
     assert.doesNotMatch(readCode(EVENT_ROUTE), /familyAnswersWillClear|familyAnswersCleared|answersCleared/);
     assert.doesNotMatch(readCode('lib/family-notify.ts'), /answersCleared|answerAgain/);
+    assert.doesNotMatch(readCode('lib/family-availability-words.ts'), /answerAgain/, 'the words file no longer holds the sentence (S2)');
     assert.doesNotMatch(readCode('lib/family-availability-coach.ts'), /familyAnswersWillClear/);
   });
   it('the parent’s page names only a parent who is still connected (a departed parent reads as “the other parent”)', () => {
     const read = functionBody(readCode('lib/family-availability.ts'), 'readFamilyAnswers');
     assert.match(read, /connected\.has\(`\$\{childId\}\|\$\{userId\}`\)/);
-    assert.equal(W.sheet.otherAnswered(null, 'out', 'on Tuesday', false), 'The other parent answered Out on Tuesday.');
+    assert.equal(W.setLine('absent', { by: 'family', name: null, day: 'Tue', previous: null }), 'Out · The other parent, Tue');
   });
 });
 
@@ -128,13 +128,13 @@ describe('Part 7 — Remind: who, once a day, through the one family door', () =
   });
   it('the room’s card counts the same families (call-ups never)', () => {
     const fam: RoomFamilyRow[] = [
-      { playerId: 'owen', connected: true, line: null, answeredAt: null },
-      { playerId: 'ezra', connected: true, line: null, answeredAt: null },
+      { playerId: 'owen', connected: true },
+      { playerId: 'ezra', connected: true },
     ];
     const s = roomFamilySummary([
-      { playerId: 'owen', status: 'unknown', markedAt: null },
-      { playerId: 'ezra', status: 'attending', markedAt: T0 },
-      { playerId: 'callup', status: 'unknown', markedAt: null },
+      { playerId: 'owen', status: 'unknown', setByKind: null },
+      { playerId: 'ezra', status: 'attending', setByKind: 'coach' },
+      { playerId: 'callup', status: 'unknown', setByKind: null },
     ], fam);
     assert.deepEqual(s.remind, ['owen']);
   });
@@ -208,29 +208,34 @@ describe('Part 8 — the coach’s bell', () => {
   const FAR = '2027-05-20T12:00:00.000Z';
   const now = new Date(T0);
   it('an Out, or an Out taken back, at any time; any change (a clear too) in the 48 hours before; never a first In or Maybe or a note-only save', () => {
-    assert.equal(coachBellFires(null, 'out', FAR, now), true);
-    assert.equal(coachBellFires('in', 'out', FAR, now), true);
-    assert.equal(coachBellFires(null, 'in', NEAR, now), false);
+    assert.equal(coachBellFires(null, 'absent', FAR, now), true);
+    assert.equal(coachBellFires('attending', 'absent', FAR, now), true);
+    assert.equal(coachBellFires(null, 'attending', NEAR, now), false);
     assert.equal(coachBellFires(null, 'maybe', NEAR, now), false);
+    assert.equal(coachBellFires(null, 'late', NEAR, now), false);
     // Owner, Session 4: an Out taken back rings at any time, else the coach's unread line keeps saying "Out".
-    assert.equal(coachBellFires('out', 'in', FAR, now), true);
-    assert.equal(coachBellFires('out', null, FAR, now), true);
-    assert.equal(coachBellFires('out', 'maybe', FAR, now), true);
-    assert.equal(coachBellFires('in', 'maybe', FAR, now), false);
+    assert.equal(coachBellFires('absent', 'attending', FAR, now), true);
+    assert.equal(coachBellFires('absent', null, FAR, now), true);
+    assert.equal(coachBellFires('absent', 'maybe', FAR, now), true);
+    assert.equal(coachBellFires('attending', 'maybe', FAR, now), false);
     assert.equal(coachBellFires('maybe', null, FAR, now), false);
-    assert.equal(coachBellFires('out', 'in', NEAR, now), true);
-    assert.equal(coachBellFires('in', null, NEAR, now), true);
-    assert.equal(coachBellFires('out', 'out', NEAR, now), false);
+    assert.equal(coachBellFires('absent', 'attending', NEAR, now), true);
+    assert.equal(coachBellFires('attending', null, NEAR, now), true);
+    assert.equal(coachBellFires('absent', 'absent', NEAR, now), false);
+    // One record: the prior is any setter's — a parent's In over the coach's Late is a change, inside the 48 hours.
+    assert.equal(coachBellFires('late', 'attending', NEAR, now), true);
+    assert.equal(coachBellFires('late', 'attending', FAR, now), false);
   });
   const item = (over: Partial<CoachBellItem>): CoachBellItem => ({
-    eventId: 'e1', eventLabel: 'Sat vs Lakeshore', eventDay: 'Sat, Apr 24', childId: 'c-ava', child: 'Ava', answer: 'out', prior: null,
-    parent: 'Priya', hasNote: true, markWord: null, count: '9 of 13 in · 1 out · 1 maybe', ...over,
+    eventId: 'e1', eventLabel: 'Sat vs Lakeshore', eventDay: 'Sat, Apr 24', childId: 'c-ava', child: 'Ava', answer: 'absent', prior: null,
+    parent: 'Priya', hasNote: true, count: '9 of 13 in · 1 out · 1 maybe', ...over,
   });
   it('the words as drawn, and never the note’s words', () => {
     assert.deepEqual(coachBellWords({ kind: 'event', items: [item({})] }),
       { title: 'Ava’s family said Out for Sat vs Lakeshore', body: 'Priya left a note · now 9 of 13 in · 1 out · 1 maybe' });
-    assert.deepEqual(coachBellWords({ kind: 'event', items: [item({ child: 'Maya', prior: 'in', markWord: 'In', hasNote: false })] }),
-      { title: 'Maya’s family changed to Out for Sat vs Lakeshore', body: 'Was In · your mark still says In' });
+    assert.deepEqual(coachBellWords({ kind: 'event', items: [item({ child: 'Maya', prior: 'late', hasNote: false, count: null })] }),
+      { title: 'Maya’s family changed to Out for Sat vs Lakeshore', body: 'Was Late' });
+    assert.doesNotMatch(readCode(BELL_MODULE), /markWord/, 'one record cannot disagree with itself: no "your mark still says"');
     assert.doesNotMatch(readCode(BELL_MODULE), /\.note\b|'note'|note:/, 'the bell never reads a note');
   });
   it('bundling: the same event folds into one line; one family across events folds into one line; else a new line', () => {

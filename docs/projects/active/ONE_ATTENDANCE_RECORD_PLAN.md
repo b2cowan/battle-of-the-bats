@@ -217,6 +217,48 @@ on; stage explicit pathspecs only; update the Progress block below; stop at the 
     (other sessions' uncommitted fixes mask some); the one failure this work caused on the way — the sheet guard naming the rows' state by
     its old spelling — is fixed in commit A.
 
+- 2026-11-13 — **S2 owner calls RULED** (start of S2, as recommended): (a) **a standing Maybe stays OFF Remind's list** — ruling 6
+  governs Remind (a Maybe is an answer); ruling 2 governs stats only. (b) **Stats count STARTED events only** — an advance answer on
+  an event not yet started counts in no stat, whoever set it (also retires the older coach-advance-mark case). (c) S2 may edit
+  `lib/family-availability-words.ts` and commit only its own hunks (the §526 "paused" hunk stays out); `FamilyAnswersSettingRow.tsx`
+  is not touched. (d) **Inactive players: answers only** (owner, as recommended) — a parent of an INACTIVE roster entry can't answer
+  and sees no pill; the family reach itself (team page, schedule, recap) is unchanged.
+- 2026-11-13 — **S2 the screens BUILT** (commit below). No migration.
+  - **One vocabulary:** the family answers in the record's own words (`AnswerStatus` = attending · late · maybe · absent; null clears);
+    `FamilyAnswer`, `isFamilyAnswer`, `statusOfFamilyAnswer`/`familyAnswerOfStatus` are gone (`isAnswerStatus`, `answerOfStatus`). The
+    four words are `ATTENDANCE_WORD`'s, so a family's Late and a coach's Late are one spelling.
+  - **Family page:** In · Late · Maybe · Out; the sheet's line "Out · Coach, today · earlier: In (You, Nov 1)" (`W.setLine`; the row's
+    `setBy` replaces `byFirstName`/`dayWords` in the payload allow-list); a coach is "Coach", never named; the other parent named only
+    while connected. **Tapping YOUR answer again clears it; the same answer set by the coach or the other parent is agreed with, not
+    cleared** (it would otherwise let a parent's "yes, Out" wipe the coach's Out). The interim In-over-Late guard is DELETED.
+    Inactive entries refused in the writer and offered no pill (`childSeasons` reads active entries only).
+  - **Attendance window:** one answer per player with "Set by" (phone caption / desk column: "Adasmom, today · “note” · earlier: In
+    (Coach, Nov 1)"); the lines come from the room's family read AND every attendance PATCH reply (`lines`, `answerLinesForReply` —
+    attendance-capability route only), and a row with an unsaved pick shows no line until its save lands. "Family said", "Use N family
+    answers", Undo, the amber line and the "N changed" door part are gone. The Families card counts the record: answered = a family set
+    it, haven't / no parent = Not marked; "No parent in the app yet" now reads who is connected (a coach's marks no longer trip it).
+  - **Confirming taps are sent** (window and console): a tap on the answer the screen shows is sent even when unchanged, because neither
+    re-reads while open; a confirm made during another save survives that save's merge.
+  - **Maybe:** `attendanceChoices` adds Maybe to the RSVP sheet only where families can answer before the start (C3), and shows a
+    standing Maybe ticked-but-disabled after it; dashed `CircleDashed` look on the badge, the sheet and the console. Console: a Maybe
+    lights Not marked dashed with a "Maybe" tag, is never counted "here", and the count adds "· N maybe".
+  - **Record-alone reads:** `headcountOf` takes the status only; Remind unchanged (a Maybe is an answer, ruling a); the bell's prior is
+    any setter's status (a parent's In over the coach's Late is a change) and `markWord` is gone; the lineup pool word reads the status
+    (`lineupTagWord(status)`), `lineupFamilyOuts` = a lineup player whose current Out a FAMILY set, and both callers leave those players
+    out of the book's "marked Out but still in the lineup" (no double sentence); `familyLineupFlagEventIds` deleted (the book's own
+    triangle covers it).
+  - **Stats (ruling b):** `getRepPlayerAttendanceSummary`, `getRepTeamAttendanceReliability`, `getRepTeamAttendanceMarks` take
+    `starts_at <= now` (`startedBy`), so totals, receipts and the month chart agree. `computePracticeMisses` (pure, test-only consumer)
+    untouched.
+  - **Words changed that S3's /legal + /docs must re-read:** the switch's `on` / `off` / `turnedOff` (they promised "your own marks stay
+    yours"; now "one answer per player… the parent sees yours"); the RSVP box hint "Families don't see your mark" → "A tap replaces the
+    answer. The family sees it, but never your note."; `answerAgain` deleted.
+  - **Tests:** the four family-availability unit files rewritten (86 tests) — 167/167 across every attendance file; typecheck 0 errors;
+    ESLint 0 errors on every changed file; spelling gate clean. Full suite: 22 failures on the working tree, none in these files (proof
+    on a clean copy of the commit in the commit entry).
+  - **For S3:** dev bell lines filed before S2 hold `answer: 'in'|'out'` in their metadata; a fold into one reads "undefined" for that
+    item (dev only, never on prod; a fresh line is fine). Help + family help, demos/UAT seeds, the walk.
+
 ## 5. The walk (owner 2026-11-13: concise, one action per step, ~20–50 boxes)
 
 Rewrites §526 from section 4 on, plus short re-checks for sections 1–3 covering only what changed for families (Late,

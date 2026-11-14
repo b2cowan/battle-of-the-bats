@@ -19,7 +19,7 @@ import { scheduleDayLabel } from './family-schedule-format';
  *   notifyCoachesOfFamilyAnswer(...)   called by the parent's save route after a successful write
  *
  * ⚠ WHEN: a family's Out at any time, an Out taken back at any time (owner, Session 4), or any change (a cleared answer too)
- *   inside the 48 hours before the event (`coachBellFires`). Never a first In or Maybe, never a note-only re-send.
+ *   inside the 48 hours before the event (`coachBellFires`). Never a first In, Late or Maybe, never a note-only re-send.
  * ⚠ TO WHOM: the team's coaches who can mark attendance (the `attendance` capability; head coach and assistants by default),
  *   never the parent who answered (a coach who is also a parent). Bell only: the kind's defaults are bell on, email off, push off
  *   (it is not in the push defaults, and `notify()` emails staff only for payment failures), and each coach's own Account →
@@ -83,8 +83,7 @@ export async function notifyCoachesOfFamilyAnswer(params: {
     const slug = (org.data as { slug: string } | null)?.slug;
     if (!playerRow || !slug) return;
 
-    // One attendance record (mig 483): the family's answer IS the player's attendance now, so there is no coach mark left saying
-    // something else ("your mark still says In" is gone; Session 2 retires the word with the rest of the drift rules).
+    // One attendance record (mig 483): the family's answer IS the player's attendance, so no coach mark is left saying something else.
     const count = counts?.[event.id] ? FW.headcount(counts[event.id]) : null;
 
     const item: CoachBellItem = {
@@ -99,7 +98,6 @@ export async function notifyCoachesOfFamilyAnswer(params: {
       prior: params.change.prior,
       parent: parentNames.get(params.actorUserId) ?? null,
       hasNote: params.change.hasNote,
-      markWord: null,
       count,
     };
     const base = `/${slug}/coaches/teams/${params.teamId}`;

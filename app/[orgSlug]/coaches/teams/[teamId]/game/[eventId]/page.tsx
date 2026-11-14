@@ -443,11 +443,14 @@ export default function CoachGameConsolePage({
   // ── Attendance (existing batch PATCH; one-tap rows; schedule vocabulary verbatim) ─────────
   const setAttendance = async (playerId: string, status: RepAttendanceStatus) => {
     const prev = att[playerId] ?? { status: 'unknown' as RepAttendanceStatus, note: null };
-    if (!can.attendance || prev.status === status) return;
+    if (!can.attendance) return;
+    // A tap on the answer the console shows is SENT too (One attendance record): the console doesn't re-read while open, so a
+    // family may have changed it since — the tap says "this one", latest wins (a no-op on the server when nothing moved).
+    const changed = prev.status !== status;
     const seq = (attSeqRef.current.get(playerId) ?? 0) + 1;
     attSeqRef.current.set(playerId, seq);
     setAtt(a => ({ ...a, [playerId]: { status, note: prev.note } }));
-    setAttChangeCount(n => n + 1);
+    if (changed) setAttChangeCount(n => n + 1);
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/attendance`, {
         method: 'PATCH',
@@ -462,7 +465,7 @@ export default function CoachGameConsolePage({
       // Roll back ONLY if no later tap on this player has superseded this one.
       if (attSeqRef.current.get(playerId) === seq) {
         setAtt(a => ({ ...a, [playerId]: prev }));
-        setAttChangeCount(n => Math.max(0, n - 1));
+        if (changed) setAttChangeCount(n => Math.max(0, n - 1));
       }
       return;
     }
@@ -983,8 +986,10 @@ export default function CoachGameConsolePage({
     );
   };
 
-  const attendingCount = (data?.players ?? []).filter(p => (att[p.id]?.status ?? 'unknown') !== 'absent').length;
+  // "Here" = everyone not Out and not Maybe (a Maybe is a family's doubt, never counted here; One attendance record S2).
+  const attendingCount = (data?.players ?? []).filter(p => !['absent', 'maybe'].includes(att[p.id]?.status ?? 'unknown')).length;
   const outCount = (data?.players ?? []).filter(p => att[p.id]?.status === 'absent').length;
+  const maybeCount = (data?.players ?? []).filter(p => att[p.id]?.status === 'maybe').length;
 
   const whoRunsTheBench = data?.headCoachName?.trim()
     ? `${data.headCoachName.trim()} runs the bench.`
@@ -1672,12 +1677,19 @@ export default function CoachGameConsolePage({
             <p className={styles.gdAttCount}>
               {attendingCount} here
               {outCount > 0 ? ` · ${outCount} ${ATTENDANCE_WORD.absent.toLowerCase()}` : ''}
+              {maybeCount > 0 ? ` · ${maybeCount} ${ATTENDANCE_WORD.maybe.toLowerCase()}` : ''}
             </p>
             {(data.players).map(p => {
               const current = att[p.id]?.status ?? 'unknown';
+              // A Maybe is not a choice on the console (it counts as Not marked, ruling 2): Not marked lights with Maybe's dashed
+              // edge and the name carries the tag, so the coach sees the family's doubt and taps what happened.
+              const maybe = current === 'maybe';
               return (
                 <div key={p.id} className={styles.gdAttRow}>
-                  <span className={styles.gdName}>{playerDisplayName(p)}</span>
+                  <span className={styles.gdName}>
+                    {playerDisplayName(p)}
+                    {maybe && <span className={styles.gdAttMaybe}>{ATTENDANCE_WORD.maybe}</span>}
+                  </span>
                   <span className={styles.gdAttSeg} role="group" aria-label={`Attendance for ${playerName(p)}`}>
                     {ATTENDANCE_OPTIONS.map(option => {
                       const Icon = option.icon;
@@ -1687,9 +1699,9 @@ export default function CoachGameConsolePage({
                           type="button"
                           className={styles.gdAttOpt}
                           data-status={option.value}
-                          data-on={current === option.value ? 'yes' : undefined}
+                          data-on={current === option.value ? 'yes' : maybe && option.value === 'unknown' ? 'maybe' : undefined}
                           onClick={() => void setAttendance(p.id, option.value)}
-                          aria-pressed={current === option.value}
+                          aria-pressed={current === option.value || (maybe && option.value === 'unknown')}
                         >
                           <Icon size={12} aria-hidden /> {option.label}
                         </button>

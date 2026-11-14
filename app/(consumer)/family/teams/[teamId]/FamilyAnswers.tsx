@@ -3,25 +3,24 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import styles from './FamilyAnswers.module.css';
 import { scheduleDayLabel, scheduleRowTitle, scheduleTimeLabel } from '@/lib/family-schedule-format';
 import {
-  FAMILY_ANSWER_NOTE_MAX, FAMILY_AVAILABILITY_WORDS as W, type FamilyAnswer,
+  ANSWER_STATUSES, FAMILY_ANSWER_NOTE_MAX, FAMILY_AVAILABILITY_WORDS as W, type AnswerStatus,
 } from '@/lib/family-availability-words';
 import type { FamilyAnswerFields, FamilyAnswerRow, FamilyAnswersView } from '@/lib/family-availability';
 import type { FamilyScheduleEntry } from '@/lib/family-view';
 
 /**
- * The parent's In / Out / Maybe (Signed-in family accounts Stage 4b, Part 3; drawing tab 7). The server decided every row
- * (`readFamilyAnswers`: the account's OWN children only); this draws the pill on the schedule row, one line per child when
- * siblings share the team, the started and reminder states, and the sheet. A tap saves; tapping the current answer again clears
- * it. Nothing here can reach another family's answer: the rows hold none.
+ * The parent's In / Late / Maybe / Out (Signed-in family accounts Stage 4b, Part 3; One attendance record S2, rulings 1 and 4).
+ * The server decided every row (`readFamilyAnswers`: the account's OWN children only); this draws the pill on the schedule row, one
+ * line per child when siblings share the team, the started and reminder states, and the sheet with who set the answer and when
+ * ("Out · Coach, today · earlier: In (You, Nov 1)"). A tap saves; tapping YOUR OWN current answer again clears it (another's — the
+ * coach's or the other parent's — stays: a tap on it only agrees). Nothing here can reach another family's answer: the rows hold none.
  */
 
-const CHOICES: { answer: FamilyAnswer; icon: string }[] = [
-  { answer: 'in', icon: '✓' },
-  { answer: 'out', icon: '⊘' },
-  { answer: 'maybe', icon: '?' },
-];
+const ICON: Record<AnswerStatus, string> = { attending: '✓', late: '◷', maybe: '?', absent: '⊘' };
 
-const PILL_CLASS: Record<FamilyAnswer, string> = { in: styles.pillIn, out: styles.pillOut, maybe: styles.pillMaybe };
+const PILL_CLASS: Record<AnswerStatus, string> = {
+  attending: styles.pillIn, late: styles.pillLate, maybe: styles.pillMaybe, absent: styles.pillOut,
+};
 
 const keyOf = (r: { eventId: string; childId: string }) => `${r.eventId}|${r.childId}`;
 
@@ -81,7 +80,7 @@ export function useFamilyAnswers({ view, teamId, teamName, focusEventId }: {
         type="button"
         className={styles.hit}
         disabled={!row.open}
-        aria-label={W.pillLabel(row.child, scheduleRowTitle(entry, teamName), row.answer)}
+        aria-label={W.pillLabel(row.child, scheduleRowTitle(entry, teamName), row.answer, row.setBy)}
         onClick={() => openSheet(entry, row)}
       >
         <Pill row={row} />
@@ -140,7 +139,8 @@ function AnswerSheet({ row, entry, teamId, teamName, otherParent, onSaved, lates
   const ref = useRef<HTMLDialogElement | null>(null);
   const titleId = useId();
   const noteId = useId();
-  const [note, setNote] = useState(row.mine ? row.note ?? '' : '');
+  // The account's OWN note (the row never holds another's), whoever set the answer.
+  const [note, setNote] = useState(row.note ?? '');
   // What is in the box right now, readable by a save that runs later.
   const noteNow = useRef(note);
   const choosing = useRef(false);
@@ -158,13 +158,15 @@ function AnswerSheet({ row, entry, teamId, teamName, otherParent, onSaved, lates
   // starts a save while the tap is still landing. So nothing is locked; both go on the hook's queue, and each one decides what to
   // send WHEN IT RUNS, from the latest confirmed row (not from a guess made at tap time), so a failed save leaves nothing to
   // roll back and the tap carries whatever the box holds by then. A second choice tap is ignored until the first has answered.
-  function choose(answer: FamilyAnswer) {
+  function choose(answer: AnswerStatus) {
     if (choosing.current) return;
     choosing.current = true;
     enqueue(async () => {
       try {
-        // Tapping the current answer again clears it (and its note).
-        await send(latest().answer === answer ? null : answer, noteNow.current);
+        // Tapping YOUR current answer again clears it (and its note). The same answer set by the coach or the other parent is
+        // agreed with, not cleared: it is sent as it is, so only the note can change (the record keeps who set it).
+        const cur = latest();
+        await send(cur.answer === answer && cur.mine ? null : answer, noteNow.current);
       } finally {
         choosing.current = false;
       }
@@ -175,12 +177,12 @@ function AnswerSheet({ row, entry, teamId, teamName, otherParent, onSaved, lates
     enqueue(async () => {
       const cur = latest();
       // The note rides with an answer: with none yet it waits in the box for the tap that gives it one.
-      if (!cur.answer || noteNow.current.trim() === (cur.mine ? cur.note ?? '' : '').trim()) return;
+      if (!cur.answer || noteNow.current.trim() === (cur.note ?? '').trim()) return;
       await send(cur.answer, noteNow.current);
     });
   }
 
-  async function send(answer: FamilyAnswer | null, withNote: string): Promise<void> {
+  async function send(answer: AnswerStatus | null, withNote: string): Promise<void> {
     setError(null); setStatus(W.sheet.saving);
     try {
       const res = await fetch(`/api/family/teams/${encodeURIComponent(teamId)}/events/${encodeURIComponent(row.eventId)}/availability`, {
@@ -202,9 +204,8 @@ function AnswerSheet({ row, entry, teamId, teamName, otherParent, onSaved, lates
     }
   }
 
-  const otherLine = row.answer && !row.mine && row.dayWords
-    ? W.sheet.otherAnswered(row.byFirstName, row.answer, row.dayWords, row.otherHasNote)
-    : null;
+  // Ruling 4: who set the answer and when, the coach's change included ("Out · Coach, today · earlier: In (You, Nov 1)").
+  const setLine = row.answer && row.setBy ? W.setLine(row.answer, row.setBy) : null;
 
   return (
     <dialog
@@ -226,21 +227,22 @@ function AnswerSheet({ row, entry, teamId, teamName, otherParent, onSaved, lates
           <button type="button" className={styles.close} onClick={() => ref.current?.close()}>{W.sheet.close}</button>
         </div>
 
-        {otherLine && <p className={styles.soft}>{otherLine}</p>}
+        {setLine && <p className={styles.soft}>{setLine}</p>}
+        {row.otherHasNote && <p className={styles.soft}>{W.sheet.otherNote}</p>}
 
-        {CHOICES.map(c => {
-          const on = row.answer === c.answer;
+        {ANSWER_STATUSES.map(answer => {
+          const on = row.answer === answer;
           return (
             <button
-              key={c.answer}
+              key={answer}
               type="button"
               className={`${styles.choice} ${on ? styles.choiceOn : ''}`}
               aria-pressed={on}
               disabled={!row.open}
-              onClick={() => choose(c.answer)}
+              onClick={() => choose(answer)}
             >
-              <span className={styles.choiceIcon} aria-hidden>{c.icon}</span>
-              {W.answer[c.answer]}
+              <span className={styles.choiceIcon} aria-hidden>{ICON[answer]}</span>
+              {W.answer[answer]}
               {on && <span className={styles.tick} aria-hidden>✓</span>}
             </button>
           );
