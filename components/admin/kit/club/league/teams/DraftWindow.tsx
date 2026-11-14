@@ -127,7 +127,7 @@ export default function DraftWindow({ board, ratings, again, together, onTogethe
   }
   const owing = players.filter(p => p.owes != null).map(p => `${p.firstName} ${p.lastName}`);
   // The Friends row (tab 3): what the deal will do with each confirmed request, counted per request (a pair is two).
-  let friendsLine: string | null = null;
+  let friendsLine: { main: string; notes: string[] } | null = null;
   if (friends && hasFriends) {
     const g = keepTogetherGroups(draftPlayers(), teamIds, { together: keepTogether, friends: links });
     const lines = (o: string) => links.filter(l => g.links.get(l.id) === o).reduce((n, l) => n + l.requestIds.length, 0);
@@ -142,8 +142,18 @@ export default function DraftWindow({ board, ratings, again, together, onTogethe
   const review = board.notDrafted.review;
   const waiting = board.notDrafted.waitlisted;
 
+  const teamsFact = unevenSizes
+    ? (keepFriends ? W.draft.teamsLineGroups(unevenSizes, keepTogether) : W.draft.teamsLineFamilies(unevenSizes))
+    : W.draft.teamsLine(sizes, players.length);
+  const playersFact = { main: W.draft.playersLine(players.length), notes: W.draft.playersNotes(owing) };
+  const lockedFact = locked.length > 0 ? W.draft.lockedLine(locked.length) : null;
+  const ratingsFact = W.draft.ratingsLine(rated, players.length);
+
+  // A window wide enough to read at a glance (a form, 640): the two switches stand FIRST, because they change the figures
+  // below them (team sizes, friend groups, how it deals) and a switch under a scroll is a switch nobody finds. Each fact is
+  // a short headline with its small print one point to a line, never a paragraph.
   return (
-    <KitDialog kind="question" title={W.draft.title(division)} onClose={onClose} busy={busy}
+    <KitDialog kind="form" size="medium" title={W.draft.title(division)} onClose={onClose} busy={busy}
       footerStart={<span>{W.draft.foot}</span>}
       footer={(
         <>
@@ -151,27 +161,39 @@ export default function DraftWindow({ board, ratings, again, together, onTogethe
           <button type="button" className="btn btn-lime" disabled={busy} onClick={run}>{busy ? W.draft.working : W.draft.button}</button>
         </>
       )}>
-      <dl className={css.facts}>
-        <dt>{W.draft.players}</dt>
-        <dd>{W.draft.playersLine(players.length, owing)}</dd>
-        <dt>{W.draft.notDrafted}</dt>
-        <dd>
-          {review.length === 0 && waiting === 0 && W.draft.nobodyOut}
-          {review.length > 0 && <>{W.draft.reviewLine(review.map(r => r.name))} <Link href={registrationsHref} className={ck.link}>{W.reviewLink}</Link></>}
-          {review.length > 0 && waiting > 0 && ' · '}
-          {waiting > 0 && W.draft.waitLine(waiting)}
-        </dd>
-        <dt>{W.draft.teams}</dt>
-        <dd>{unevenSizes ? (keepFriends ? W.draft.teamsLineGroups(unevenSizes, keepTogether) : W.draft.teamsLineFamilies(unevenSizes)) : W.draft.teamsLine(sizes, players.length)}</dd>
-        {locked.length > 0 && <><dt>{W.draft.locked}</dt><dd>{W.draft.lockedLine(locked.length)}</dd></>}
-        <dt>{W.draft.ratings}</dt>
-        <dd>{W.draft.ratingsLine(rated, players.length)}</dd>
-        {friendsLine && <><dt>{W.draft.friends}</dt><dd>{friendsLine} <Link href={friendsHref} className={ck.link}>{W.draft.friendsLink}</Link></dd></>}
-        <dt>{W.draft.how}</dt>
-        <dd>{keepTogether && keepFriends ? W.draft.howLineBoth : keepFriends ? W.draft.howLineFriends : keepTogether ? W.draft.howLineFamilies : W.draft.howLine}</dd>
+      {familiesSwitch && <div className={css.draftSwitchFirst}>{familiesSwitch}</div>}
+      <dl className={css.draftFacts}>
+        <Fact label={W.draft.players} main={playersFact.main} notes={playersFact.notes} />
+        <Fact label={W.draft.notDrafted}
+          main={review.length === 0 && waiting === 0 ? W.draft.nobodyOut : undefined}
+          notes={[
+            ...(review.length > 0 ? [W.draft.reviewLine(review.map(r => r.name))] : []),
+            ...(waiting > 0 ? [W.draft.waitLine(waiting)] : []),
+          ]}
+          link={review.length > 0 ? { href: registrationsHref, text: W.reviewLink } : undefined} />
+        <Fact label={W.draft.teams} main={teamsFact.main} notes={teamsFact.note ? [teamsFact.note] : []} />
+        {lockedFact && <Fact label={W.draft.locked} main={lockedFact.main} notes={[lockedFact.note]} />}
+        <Fact label={W.draft.ratings} main={ratingsFact.main} notes={ratingsFact.note ? [ratingsFact.note] : []} />
+        {friendsLine && <Fact label={W.draft.friends} main={friendsLine.main} notes={friendsLine.notes} link={{ href: friendsHref, text: W.draft.friendsLink }} />}
+        <Fact label={W.draft.how} notes={W.draft.howSteps(keepTogether, keepFriends)} plain />
       </dl>
-      {familiesSwitch}
       {error && <p className={css.error} role="alert">{error}</p>}
     </KitDialog>
+  );
+}
+
+/** One row of the draft window's facts: a headline, then its small print one point to a line, then an optional link. */
+function Fact({ label, main, notes, link, plain = false }: {
+  label: string; main?: string; notes: readonly string[]; link?: { href: string; text: string }; plain?: boolean;
+}) {
+  return (
+    <>
+      <dt>{label}</dt>
+      <dd>
+        {main && <span className={css.factMain}>{main}</span>}
+        {notes.map(n => <span key={n} className={plain ? css.factStep : css.factNote}>{n}</span>)}
+        {link && <Link href={link.href} className={`${ck.link} ${css.factLink}`}>{link.text}</Link>}
+      </dd>
+    </>
   );
 }

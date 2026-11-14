@@ -118,13 +118,12 @@ export function playerMenu(
 }
 
 /**
- * The row's places (A2; 5b option B): RTG only for a reader who sees ratings, Note only for a reader the read gave notes
- * to, the ⋯ only for one who runs the league. Together and $ are everyone's.
+ * The row's places (A2): RTG only for a reader who sees ratings, then the name, the marks cluster (it takes only what
+ * its marks need), Age, and the ⋯ only for one who runs the league.
  */
-function columns(rights: BoardRights, notes: boolean): CSSProperties {
+function columns(rights: BoardRights): CSSProperties {
   const cols = [
-    rights.seeRatings && 'var(--col-rating)', 'minmax(0, 1fr)', 'var(--col-together)', notes && 'var(--col-mark)',
-    'var(--col-mark)', 'var(--col-age)', rights.run && 'var(--col-more)',
+    rights.seeRatings && 'var(--col-rating)', 'minmax(0, 1fr)', 'auto', 'var(--col-age)', rights.run && 'var(--col-more)',
   ].filter(Boolean).join(' ');
   return { '--cols': cols } as CSSProperties;
 }
@@ -138,17 +137,16 @@ function RatingChip({ rating }: { rating: number | null }) {
 }
 
 /**
- * The column headings, in the table recipe (A2); the same grid as the rows beneath them. Each mark's place is headed by
- * its symbol (5b option B), and the hover names it: RTG (A15: a rating, 5 strongest — "RK" would read backwards).
+ * The column headings, in the table recipe (A2); the same grid as the rows beneath them. The marks have NO headings
+ * (owner 2026-11-12): they sit in one cluster flush against Age, so a lone Together and a lone Note land in the same
+ * place, and the name keeps the room. RTG (A15: a rating, 5 strongest — "RK" would read backwards).
  */
-function ColHead({ rights, notes }: { rights: BoardRights; notes: boolean }) {
+function ColHead({ rights }: { rights: BoardRights }) {
   return (
     <div className={css.colHead} aria-hidden>
       {rights.seeRatings && <span title={W.col.ratingHint}>{W.col.rating}</span>}
       <span>{W.col.player}</span>
-      <span className={css.place} title={W.col.togetherHint}>{W.col.together}</span>
-      {notes && <span className={css.place} title={W.col.note}><FileText size={13} /></span>}
-      <span className={css.place} title={W.col.owing}>$</span>
+      <span />
       <span className={css.right}>{W.col.age}</span>
       {rights.run && <span />}
     </div>
@@ -333,9 +331,11 @@ function PlayerRow({ p, props, kit, overlay = false }: { p: BoardPlayer; props: 
     <div id={overlay ? undefined : rowId(p.id)} className={`${css.kid}${moved ? ` ${css.kidMoved}` : ''}${lit ? ` ${css.kidLit}` : ''}`}>
       {rights.seeRatings && <RatingChip rating={rating} />}
       <span className={css.kidName}>{name}</span>
-      <TogetherPlace p={p} props={props} kit={kit} />
-      {props.notes && <NotePlace p={p} props={props} />}
-      <OwingPlace p={p} props={props} />
+      <span className={css.marks}>
+        <TogetherPlace p={p} props={props} kit={kit} />
+        {props.notes && <NotePlace p={p} props={props} />}
+        <OwingPlace p={p} props={props} />
+      </span>
       <span className={css.age}><span aria-hidden>{p.age ?? '–'}</span><span className={css.srOnly}>{W.kid.age(p.age)}</span></span>
       {rights.run && (items.length > 0 ? (
         <CoachToolbarMenu
@@ -557,7 +557,7 @@ function DeskBoard(props: BoardProps) {
   return (
     <DndContext sensors={sensors} collisionDetection={stickyAware} autoScroll={AUTO_SCROLL}
       onDragStart={(e: DragStartEvent) => setDragId(String(e.active.id))} onDragEnd={onEnd} onDragCancel={() => setDragId(null)}>
-      <div className={`${css.board}${folded ? ` ${css.boardFolded}` : ''}`} style={columns(rights, !!props.notes)}>
+      <div className={`${css.board}${folded ? ` ${css.boardFolded}` : ''}`} style={columns(rights)}>
         {folded ? (
           <DropCard id="pool" className={css.poolBar} enabled={rights.run} label={W.pool.title}>
             <b>{W.pool.folded}</b> · {W.pool.foldedCount(players.length)}
@@ -574,7 +574,7 @@ function DeskBoard(props: BoardProps) {
             </div>
             <div className={css.poolList}>
               {/* Inside the list (sticky at its top), so the list's scrollbar narrows the headings as it does the rows. */}
-              <ColHead rights={rights} notes={!!props.notes} />
+              <ColHead rights={rights} />
               {tools.shown.length === 0 ? <p className={css.poolEmpty}>{W.pool.noMatch}</p> : tools.shown.map(row)}
             </div>
             {props.published && <p className={css.poolFoot}>{W.pool.hint}</p>}
@@ -588,14 +588,14 @@ function DeskBoard(props: BoardProps) {
                 <TeamHead team={team} members={members} props={props} />
                 {members.length === 0
                   ? <div className={css.emptyDrop}>{rights.run ? W.card.empty : W.pool.empty}</div>
-                  : <div className={css.kids}><ColHead rights={rights} notes={!!props.notes} />{members.map(row)}</div>}
+                  : <div className={css.kids}><ColHead rights={rights} />{members.map(row)}</div>}
                 <LeftLines team={team} props={props} />
               </DropCard>
             );
           })}
         </div>
       </div>
-      <DragOverlay>{dragging ? <div className={css.overlay} style={columns(rights, !!props.notes)}><PlayerRow p={dragging} props={props} kit={kit} overlay /></div> : null}</DragOverlay>
+      <DragOverlay>{dragging ? <div className={css.overlay} style={columns(rights)}><PlayerRow p={dragging} props={props} kit={kit} overlay /></div> : null}</DragOverlay>
     </DndContext>
   );
 }
@@ -623,7 +623,7 @@ function PhoneBoard(props: BoardProps) {
   if (open === 'pool' || team) {
     const members = team ? players.filter(p => p.teamId === team.id) : tools.shown;
     return (
-      <div className={css.phoneTeam} style={columns(props.rights, !!props.notes)}>
+      <div className={css.phoneTeam} style={columns(props.rights)}>
         <button type="button" className={css.backBtn} onClick={() => setOpen(null)}>
           <ChevronLeft size={18} aria-hidden />{W.back}
         </button>
@@ -639,7 +639,7 @@ function PhoneBoard(props: BoardProps) {
           )}
           {members.length === 0
             ? <p className={css.quiet}>{team ? W.card.empty : pool.length > 0 ? W.pool.noMatch : W.pool.empty}</p>
-            : <div className={css.kids}><ColHead rights={props.rights} notes={!!props.notes} />{members.map(p => <PlayerRow key={p.id} p={p} props={props} kit={kit} />)}</div>}
+            : <div className={css.kids}><ColHead rights={props.rights} />{members.map(p => <PlayerRow key={p.id} p={p} props={props} kit={kit} />)}</div>}
           {team && <LeftLines team={team} props={props} />}
         </section>
       </div>

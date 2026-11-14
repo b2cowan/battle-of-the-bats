@@ -178,51 +178,74 @@ export const TEAMS_WORDS = {
   draft: {
     title: (division: string) => `Run the draft for ${division}`,
     players: 'Players',
-    playersLine: (n: number, owing: readonly string[]) =>
-      `${n} accepted${owing.length ? `, including ${namesCapped(owing)}, who still ${owing.length === 1 ? 'owes' : 'owe'}` : ''}. Every accepted player holds their spot.`,
+    // Each fact is a short headline and, under it, the small print one point to a line (the window reads at a glance).
+    playersLine: (n: number) => `${n} accepted`,
+    playersNotes: (owing: readonly string[]) => [
+      ...(owing.length ? [`Still ${owing.length === 1 ? 'owes' : 'owe'}: ${namesCapped(owing)}.`] : []),
+      'Every accepted player holds their spot.',
+    ],
     notDrafted: 'Not drafted',
     reviewLine: (names: readonly string[]) =>
       `${namesCapped(names)} ${names.length === 1 ? 'is' : 'are'} still to review and ${names.length === 1 ? 'isn’t' : 'aren’t'} drafted.`,
     waitLine: (n: number) => `${n} on the waitlist ${n === 1 ? 'isn’t' : 'aren’t'} drafted; a player who gets a spot later appears under Not on a team.`,
     nobodyOut: 'Nobody to review and nobody on the waitlist.',
     teams: 'Teams',
-    teamsLine: (sizes: readonly { name: string; size: number }[], n: number) =>
-      `${sizes.map(s => `${s.name} ${s.size}`).join(' · ')}${sizes.length > 0 && n % sizes.length !== 0 ? ` (${players(n)} don’t divide evenly by ${sizes.length})` : ''}`,
+    teamsLine: (sizes: readonly { name: string; size: number }[], n: number) => ({
+      main: sizes.map(s => `${s.name} ${s.size}`).join(' · '),
+      note: sizes.length > 0 && n % sizes.length !== 0 ? `${players(n)} don’t divide evenly by ${sizes.length}` : null,
+    }),
     locked: 'Locked',
-    lockedLine: (n: number) => `${n} locked: they stay on their team and count toward its average.`,
+    lockedLine: (n: number) => ({ main: `${n} locked`, note: 'They stay on their team and count toward its average.' }),
     ratings: 'Ratings',
     ratingsLine: (rated: number, total: number) =>
-      rated === 0 ? 'Nobody is rated, so players are dealt at random, evenly.'
-        : rated === total ? `All ${total} rated` : `${rated} of ${total} rated · the other ${total - rated} count as a 3`,
+      rated === 0 ? { main: 'Nobody is rated', note: 'Players are dealt at random, evenly.' }
+        : rated === total ? { main: `All ${total} rated`, note: null }
+          : { main: `${rated} of ${total} rated`, note: `The other ${total - rated} count as a 3.` },
     how: 'How it deals',
-    howLine: 'Strongest first, and the order reverses each round. Ties and the first pick are drawn at random.',
+    // The deal as short steps, one to a line: which ones show depends on the two switches.
+    howSteps: (families: boolean, friends: boolean) => {
+      const groups = families && friends ? 'Families and friends' : friends ? 'Friends' : families ? 'Families' : null;
+      return [
+        groups ? `${groups} first.` : null,
+        `${groups ? 'Then everyone else, strongest first' : 'Strongest first'}, and the order reverses each round.`,
+        groups ? 'Then single players swap teams where that evens out the averages.' : null,
+        'Ties and the first pick are drawn at random.',
+      ].filter((s): s is string => s !== null);
+    },
     // Families together (A7, /marketing 2026-10-26): on by default; off deals each child on their own, as before.
+    // The Locked row says locked players stay put, so the switches do not repeat it.
     familiesSwitch: 'Keep families together',
-    familiesLine: 'Brothers and sisters signed up under one parent email go to the same team. Locked players stay where they are.',
-    teamsLineFamilies: (sizes: readonly number[]) =>
-      `Sizes ${nameList(sizes.map(String))}: keeping families together, the teams can’t come out even. Turn it off to deal each child on their own.`,
+    familiesLine: 'Brothers and sisters signed up under one parent email go to the same team.',
+    teamsLineFamilies: (sizes: readonly number[]) => ({
+      main: `Sizes ${nameList(sizes.map(String))}`,
+      note: 'Keeping families together, the teams can’t come out even. Turn it off to deal each child on their own.',
+    }),
     // Friends together (Board Ready Stage 1 Part 3, drawing tab 3 bottom; A9): the switch shows only when the division has a
     // confirmed request; on by default; the choice holds for the visit, so Draft again uses it.
     friends: 'Friends',
-    friendsLine: (f: { confirmed: number; groups: number; overCap: number; locked: number; apart: number; waiting: number }) => [
-      `${f.confirmed} confirmed ${f.confirmed === 1 ? 'request makes' : 'requests make'} ${f.groups} ${f.groups === 1 ? 'group' : 'groups'}.`,
-      f.overCap ? `${f.overCap} can’t be kept: the group would pass 3 children.` : null,
-      f.locked ? `${f.locked} can’t be kept: the children are locked to different teams.` : null,
-      f.apart ? `${f.apart} ${f.apart === 1 ? 'is' : 'are'} kept apart.` : null,
-      f.waiting ? `${f.waiting} ${f.waiting === 1 ? 'is' : 'are'} still to confirm and ${f.waiting === 1 ? 'is' : 'are'} left out.` : null,
-    ].filter(Boolean).join(' '),
-    friendsWaitingOnly: (n: number) => `No confirmed requests yet. ${n} ${n === 1 ? 'is' : 'are'} still to confirm and ${n === 1 ? 'is' : 'are'} left out.`,
+    friendsLine: (f: { confirmed: number; groups: number; overCap: number; locked: number; apart: number; waiting: number }) => ({
+      main: `${f.confirmed} confirmed ${f.confirmed === 1 ? 'request makes' : 'requests make'} ${f.groups} ${f.groups === 1 ? 'group' : 'groups'}`,
+      notes: [
+        f.overCap ? `${f.overCap} can’t be kept: the group would pass 3 children.` : null,
+        f.locked ? `${f.locked} can’t be kept: the children are locked to different teams.` : null,
+        f.apart ? `${f.apart} ${f.apart === 1 ? 'is' : 'are'} kept apart.` : null,
+        f.waiting ? `${f.waiting} ${f.waiting === 1 ? 'is' : 'are'} still to confirm and ${f.waiting === 1 ? 'is' : 'are'} left out.` : null,
+      ].filter((s): s is string => s !== null),
+    }),
+    friendsWaitingOnly: (n: number) => ({
+      main: 'No confirmed requests yet',
+      notes: [`${n} ${n === 1 ? 'is' : 'are'} still to confirm and ${n === 1 ? 'is' : 'are'} left out.`],
+    }),
     friendsLink: 'Open friend requests',
     friendsSwitch: 'Keep friends together',
-    friendsSwitchLine: 'Confirmed friend requests go to the same team, in groups of up to 3 children with brothers and sisters. Locked players stay where they are.',
-    howLineBoth: 'Families and friends first, then everyone else, strongest first, and the order reverses each round. Then single players swap teams where that evens out the averages. Ties and the first pick are drawn at random.',
-    howLineFriends: 'Friends first, then everyone else, strongest first, and the order reverses each round. Then single players swap teams where that evens out the averages. Ties and the first pick are drawn at random.',
+    friendsSwitchLine: 'Confirmed friend requests go to the same team, in groups of up to 3 children with brothers and sisters.',
     // Names only the switches the window shows: a division with no brothers or sisters has the friends switch alone.
-    teamsLineGroups: (sizes: readonly number[], families: boolean) =>
-      `Sizes ${nameList(sizes.map(String))}: keeping groups together, the teams can’t come out even. ${families
+    teamsLineGroups: (sizes: readonly number[], families: boolean) => ({
+      main: `Sizes ${nameList(sizes.map(String))}`,
+      note: `Keeping groups together, the teams can’t come out even. ${families
         ? 'Turn off Keep families together and Keep friends together to deal each child on their own.'
         : 'Turn off Keep friends together to deal each child on their own.'}`,
-    howLineFamilies:'Families first, then everyone else, strongest first, and the order reverses each round. Then single players swap teams where that evens out the averages. Ties and the first pick are drawn at random.',
+    }),
     foot: 'Nothing is sent. Families hear when you publish.',
     button: 'Run the draft',
     working: 'Dealing…',

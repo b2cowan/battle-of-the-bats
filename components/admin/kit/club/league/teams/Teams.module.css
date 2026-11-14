@@ -5,7 +5,7 @@
 
 /* The player row's column sizes (A2), on the screen so every row reads them: the board, a phone's open group, and the
    drag's floating copy, which renders outside the board. */
-.screen { min-width: 0; --col-rating: 30px; --col-age: 34px; --col-more: 36px; --col-together: 76px; --col-mark: 28px; }
+.screen { min-width: 0; --col-rating: 30px; --col-age: 34px; --col-more: 36px; }
 /* Under the season's tab row (Club Tier Stage 13i), so it no longer tucks up under a page title of its own. */
 .headSub { margin: 0 0 1rem; font-size: var(--type-support); color: var(--text-secondary); }
 
@@ -101,7 +101,7 @@
 .balance { display: flex; flex-wrap: wrap; gap: 0.35rem 1.25rem; margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
 .balance b { color: var(--text-primary); font-weight: 650; font-variant-numeric: tabular-nums; }
 
-/* ── The board at real size (HOUSE_LEAGUE_DRAFT_BOARD_AT_SCALE A1, A11): the pool's own 344px column, sticky once
+/* ── The board at real size (HOUSE_LEAGUE_DRAFT_BOARD_AT_SCALE A1, A11): the pool's own 372px column, sticky once
    scrolled past the steps with its list scrolling inside it, and the teams in their own grid beside it (2 across at
    every width: the screen stops at 1200px). Folded, the pool is one sticky line and the teams take the full width.
    The row's columns: `--cols` is set by the board from the reader's rights (no Rating column without ratings, no ⋯
@@ -123,7 +123,10 @@
   flex: 1 1 auto;
   min-width: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(264px, 1fr));
+  /* At most three across, and the teams share the whole width: each column is at least a third of the row (less the two
+     gaps) and never under 264px, auto-fit drops any column that has no team, and 1fr stretches the rest. ⚠ Not a fixed
+     max (420px): auto-repeat counts columns by that max, so a 1,160px board fit only two and wrapped the third team. */
+  grid-template-columns: repeat(auto-fit, minmax(max(264px, calc((100% - 24px) / 3)), 1fr));
   gap: 12px;
   align-items: start;
 }
@@ -133,8 +136,8 @@
   z-index: 2;
   display: flex;
   flex-direction: column;
-  flex: 0 0 344px;
-  width: 344px;
+  flex: 0 0 372px;
+  width: 372px;
   min-height: 0;
   /* As tall as its players, and never taller than the window: a six-player season's pool is short. */
   max-height: var(--pool-room);
@@ -283,7 +286,7 @@
 .kidMoved { background: rgba(var(--info-rgb), 0.07); }
 /* A family's mark pressed (A6): its children light up wherever they are, in the board's own olive. */
 .kidLit { background: var(--home-olive-soft); box-shadow: inset 3px 0 0 var(--home-olive); }
-.kidName { padding: 0.35rem 0; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); overflow-wrap: anywhere; }
+.kidName { padding: 0.35rem 0; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); overflow-wrap: break-word; min-width: 0; }
 .kidSub { font-size: var(--type-support); color: var(--text-tertiary); }
 .age { text-align: right; font-size: var(--type-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .states { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: -4px 0 8px; }
@@ -318,6 +321,11 @@
 .markApart, .markApart:hover { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.12); }
 .markApart.markOn { box-shadow: 0 0 0 1.5px var(--warning); }
 /* A mark's fixed place in the row (5b option B): the mark sits at its start, so a column of them lines up. */
+/* The marks (Together · Note · $) ride in ONE cluster flush against Age, nearest Age last, with no headings of their own
+   (owner 2026-11-12): a lone Together and a lone Note land in the same spot, and the name gets whatever the cluster does
+   not use. A place with nothing in it takes no room. */
+.marks { display: flex; align-items: center; justify-content: flex-end; gap: 2px; min-width: 0; }
+.marks > .place:empty { display: none; }
 .place { display: inline-flex; align-items: center; min-width: 0; }
 .colHead .place { color: var(--text-secondary); }
 .pop {
@@ -532,9 +540,9 @@
 .moveList li:last-child .moveRow { border-bottom: 0; }
 .moveHere { background: var(--home-olive-soft); cursor: default; }
 
-/* Too narrow for the pool (344) beside one team (264): a desk window just over the rail's breakpoint with the full
+/* Too narrow for the pool (372) beside one team (264): a desk window just over the rail's breakpoint with the full
    rail, or a narrow tablet. The pool sits above the teams, full width, its list scrolling inside a shorter box. */
-@media (min-width: 901px) and (max-width: 1000px), (min-width: 641px) and (max-width: 720px) {
+@media (min-width: 901px) and (max-width: 1030px), (min-width: 641px) and (max-width: 750px) {
   .board:not(.boardFolded) { flex-direction: column; align-items: stretch; }
   .pool { position: static; width: auto; flex: none; max-height: 60vh; }
 }
@@ -546,15 +554,15 @@
 }
 /* A touch width (a tablet gets the desk board): every row and its ⋯ clear the 44px floor. */
 @media (max-width: 768px) {
-  .screen { --col-more: 44px; --col-mark: 32px; }
+  .screen { --col-more: 44px; }
   .kid { min-height: 44px; }
   .more.more { width: 44px; height: 44px; }
   .mark { min-width: 32px; height: 32px; }
 }
 @media (max-width: 640px) {
-  /* 5b on a phone: seven places in a ~330px card. Narrower RTG and Together places and a tighter gap leave the name the
+  /* 5b on a phone: seven places in a ~330px card. Narrower RTG and Age places and a tighter gap leave the name the
      most room the 32px marks and the 44px ⋯ allow (/review 2026-11-12); a long name wraps, as it always has. */
-  .screen { --col-age: 30px; --col-rating: 24px; --col-together: 64px; }
+  .screen { --col-age: 30px; --col-rating: 24px; }
   .colHead, .kid { column-gap: 4px; padding-left: 10px; }
   .colHead .place { white-space: nowrap; }
   .kid { min-height: 52px; padding-right: 0; }
@@ -573,6 +581,19 @@
 
 /* The draft window's families switch (A7): the house switch row, standing in its own box under the facts. */
 .draftSwitch { margin-top: 1rem; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+/* The setup window stands the switches FIRST (they change the figures under them), then the facts: a headline per
+   fact with its small print one point to a line. The window is a 640 form; a phone shows it full screen. */
+.draftSwitchFirst .draftSwitch { margin-top: 0; margin-bottom: 1.1rem; }
+.draftFacts { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 0.85rem 1rem; margin: 0; font-size: var(--type-body); }
+.draftFacts dt { font-weight: 600; color: var(--text-secondary); }
+.draftFacts dd { margin: 0; display: flex; flex-direction: column; gap: 0.15rem; color: var(--text-primary); }
+.factMain { font-weight: 600; }
+.factNote, .factStep { color: var(--text-secondary); line-height: 1.4; }
+.factLink { align-self: flex-start; }
+@media (max-width: 640px) {
+  .draftFacts { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+  .draftFacts dd { margin-bottom: 0.75rem; }
+}
 
 /* ── Team changes after publishing (TC·2 to TC·6): the "Not told" chip and the Review and email window ── */
 .notTold {
