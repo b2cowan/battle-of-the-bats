@@ -1,6 +1,6 @@
 # One attendance record — plan
 
-**Status:** RULED 2026-11-13 (owner, mid-walk §526). S1 the record committed `54272a665` + `f554a73ea` 2026-11-13; S2 next. PM brief: `ONE_ATTENDANCE_RECORD_PM_BRIEF.md`.
+**Status:** RULED 2026-11-13 (owner, mid-walk §526). S1 the record committed `54272a665` + `f554a73ea` 2026-11-13; S2 the screens committed `bfdaa885e` 2026-11-13; S3 next. PM brief: `ONE_ATTENDANCE_RECORD_PM_BRIEF.md`.
 **Supersedes** Signed-in Family Stage 4b's two-record design (`SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md`, committed
 `22db0210d` … `7fa87f3f7`; `COACH_AVAILABILITY_RSVP_PLAN.md` §governing constraint 1 and :136-137; the accounts plan's
 Stage 4b ask 3). Everything else Stage 4b ruled (the switch, Remind's cap, the bell's 48 h rule, consent 0.2, ask 14's
@@ -223,7 +223,15 @@ on; stage explicit pathspecs only; update the Progress block below; stop at the 
   `lib/family-availability-words.ts` and commit only its own hunks (the §526 "paused" hunk stays out); `FamilyAnswersSettingRow.tsx`
   is not touched. (d) **Inactive players: answers only** (owner, as recommended) — a parent of an INACTIVE roster entry can't answer
   and sees no pill; the family reach itself (team page, schedule, recap) is unchanged.
-- 2026-11-13 — **S2 the screens BUILT** (commit below). No migration.
+- 2026-11-13 — **S2 the screens COMMITTED `bfdaa885e`** (26 files; `family-availability-words.ts` without the §526 "paused" hunk,
+  TODO.md this line only). No migration. Proof on CLEAN copies: typecheck 0 errors; full suite — the parent `9d05cd40a` and the commit
+  fail the identical 34 tests (other sessions' work), no new failure. /design ran before the commit (findings 2–7 applied: the Set-by
+  line clamps to two lines with a desk tooltip, a ticked-but-disabled Maybe keeps full contrast and the card fill, the desk RSVP
+  panel scrolls instead of clipping, dead drift CSS removed, the console's Maybe tag takes the console chip idiom). **Owner calls
+  open:** (1) the family pill pair — Maybe is an amber FILL and Late an amber RING, the reverse of the coach side (Late amber tint,
+  Maybe dashed); /design recommends the family Maybe go dashed and Late take the fill, which restyles the approved Maybe; (2) dashed
+  edge = "Maybe, undecided" widens the dashed rule logged 2026-09-30 ("left the list / projected"). Device check: the Late ◷ glyph.
+  Dev server restart owed before the walk. `/review` offered.
   - **One vocabulary:** the family answers in the record's own words (`AnswerStatus` = attending · late · maybe · absent; null clears);
     `FamilyAnswer`, `isFamilyAnswer`, `statusOfFamilyAnswer`/`familyAnswerOfStatus` are gone (`isAnswerStatus`, `answerOfStatus`). The
     four words are `ATTENDANCE_WORD`'s, so a family's Late and a coach's Late are one spelling.
