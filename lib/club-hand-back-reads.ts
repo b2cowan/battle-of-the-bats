@@ -246,9 +246,9 @@ export interface PracticeHandBack {
    *  nothing to ask: the club billed nothing for the time, the team has nothing left to ask back, or an ask was made. */
   askCents: number | null;
   /** The ask over it made later — the latest waiting or answered one (a withdrawn ask leaves nothing). */
-  late: { id: string; state: 'waiting' | 'accepted' | 'declined'; askedOn: string; closedOn: string | null; cents: number; count: number; reason: string | null } | null;
+  late: { id: string; state: 'waiting' | 'accepted' | 'declined'; askedOn: string; closedOn: string | null; cents: number | null; count: number; reason: string | null } | null;
   /** What the money did: the ask with its tick, or the late ask, the club accepted. */
-  settled: { on: string; creditedCents: number; toPayCents: number } | null;
+  settled: { on: string; creditedCents: number | null; toPayCents: number | null } | null;
 }
 
 type HbRow = {

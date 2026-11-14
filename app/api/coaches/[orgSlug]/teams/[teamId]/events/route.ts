@@ -23,7 +23,7 @@ import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { resolveRepEventWhere } from '@/lib/rep-event-where';
 import { clashesForSavedRepEvents, getClubVenuesForTeam } from '@/lib/venue-clash-lookup';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canViewSchedule, canManageSchedule } from '@/lib/coach-capabilities';
+import { denyUnless, canViewSchedule, canManageSchedule, canViewMoney } from '@/lib/coach-capabilities';
 import { syncTournamentGameMirrorSafely } from '@/lib/rep-tournament-game-mirror';
 import {
   generateWeeklyOccurrences, reviewRecurrenceOccurrences,
@@ -35,6 +35,7 @@ import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { isVisibleToFamilies } from '@/lib/family-access';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { clubSourcesFor } from '@/lib/club-schedule-coach';
+import { withoutClubMoney } from '@/lib/club-hand-back-money';
 import { scheduleHeadcounts } from '@/lib/family-availability-coach';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -147,7 +148,8 @@ export const GET = withObservability(async (req: Request,
     places,
     clubVenues,
     usualFacilityByVenue,
-    clubSources,
+    // ⚖ Hand-back dollars read only to someone who can open Money (owner 2026-11-14, Q-A).
+    clubSources: canViewMoney(capabilities) ? clubSources : withoutClubMoney(clubSources),
     // The team's arrival habit (mig 307) — what a NEW game / practice's Arrival starts at.
     arrivalDefaults: { game: team.arrivalBeforeGameMin, practice: team.arrivalBeforePracticeMin },
     // Whether a cancel / restore reaches families (`notifyFamiliesOfGameUpdate`'s own gate): the event window asks

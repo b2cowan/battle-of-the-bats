@@ -6914,7 +6914,7 @@ const coachesHelp: HelpPageContent = {
                 <HelpDef term="Already gone">Once the club gives the time away, the practice says so (<em>The club has given this time to another team, so it can&rsquo;t come back to you</em>) and stays struck on your schedule.</HelpDef>
                 <HelpDef term="Ask the club for $432.00 back">For when you left the tick off. It asks for every practice of that hand-back still handed back, at what the club billed for each; there&rsquo;s nothing to choose. The time stays given back whatever the club answers. While it waits, those practices show <strong>Money asked</strong> in amber, the practice has <strong>Withdraw the ask</strong>, and <strong>Money &rsaquo; Club</strong> lists it as a request reading <strong>Awaiting the club</strong>. Accepted, the figure comes off what your team owes, or the club owes it to you; declined, nothing changes. It never closes by date. Only someone who can use the team&rsquo;s money can ask or withdraw.</HelpDef>
               </HelpDefs>
-              <HelpNote variant="tip" title="Without money access">The practice says who can ask the club, and for how much. When someone without money access hands back time the club billed, the team&rsquo;s money people get a notice, and can ask from the practice.</HelpNote>
+              <HelpNote variant="tip" title="Without money access">The practice says who can ask the club, but not the dollar amounts: those, here and on the ask and the club&rsquo;s answer, show only to people who can open the team&rsquo;s money. When someone without money access hands back time the club billed, the team&rsquo;s money people get a notice, and can ask from the practice.</HelpNote>
             </>
           ),
         },

@@ -59,7 +59,7 @@ export async function clubSourcesFor(orgId: string, events: readonly Pick<RepTea
 
 /** A waiting ask on a club practice (Stage 11d, specimen 2): the amber "Hand-back asked" pill and "what was asked". A
  *  LATE ask (part C) sits on practices already handed back: the amber "Money asked" pill and its own line. */
-export interface ClubSourceAsk { id: string; askedAt: string; count: number; first: string; last: string; cents: number; late: boolean }
+export interface ClubSourceAsk { id: string; askedAt: string; count: number; first: string; last: string; cents: number | null; late: boolean }
 export interface ClubSourceRead {
   scheduleId: string; scheduleName: string; handedBackTeamId: string | null; ask: ClubSourceAsk | null;
   /** Part C: the hand-back that took this (cancelled) practice, for its end — null on any other practice. */

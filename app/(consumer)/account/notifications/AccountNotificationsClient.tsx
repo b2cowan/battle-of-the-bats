@@ -46,8 +46,10 @@ export type NotificationCard = {
 };
 
 /** The club scheduler's notices to a club team's staff who see the schedule (Club Tier 11a) — "Your club" lists them:
- *  a schedule sent for review, a final one, its changes, and the bill it made. */
-const CLUB_SCHEDULE_EVENTS: NotificationEventType[] = ['club_schedule_review', 'club_schedule_final', 'club_schedule_changes', 'club_bill_arrived', 'club_guardians_asked', 'club_payment_handed_off'];
+ *  a schedule sent for review, a final one, and its changes. The bill it made is the money holder's alone (owner
+ *  2026-11-14, Q-B): the send never tells staff without Money, so they are not offered a switch that can do nothing. */
+const CLUB_SCHEDULE_EVENTS: NotificationEventType[] = ['club_schedule_review', 'club_schedule_final', 'club_schedule_changes', 'club_guardians_asked', 'club_payment_handed_off'];
+const CLUB_BILL_EVENTS: NotificationEventType[] = ['club_bill_arrived'];
 
 /** The five notices a club sends a team's money people (Stage 3a) — "Your club" lists them. */
 const CLUB_MONEY_EVENTS: NotificationEventType[] = [
@@ -173,7 +175,7 @@ function CoachCard({ card }: { card: NotificationCard }) {
   const clubTeam = card.clubTeam === true;
   const clubMoney = clubTeam && card.clubMoney === true;
   const clubEvents = useMemo<NotificationEventType[]>(
-    () => (clubMoney ? ['club_season_changed', 'club_coach_listed', ...CLUB_SCHEDULE_EVENTS, ...CLUB_MONEY_EVENTS, ...CLUB_HAND_BACK_EVENTS] : ['club_season_changed', 'club_coach_listed', ...CLUB_SCHEDULE_EVENTS]),
+    () => (clubMoney ? ['club_season_changed', 'club_coach_listed', ...CLUB_SCHEDULE_EVENTS, ...CLUB_BILL_EVENTS, ...CLUB_MONEY_EVENTS, ...CLUB_HAND_BACK_EVENTS] : ['club_season_changed', 'club_coach_listed', ...CLUB_SCHEDULE_EVENTS]),
     [clubMoney],
   );
   // Families say if they're coming (Stage 4b, Part 8): the "Family answers" row, only where such a bell can arrive.

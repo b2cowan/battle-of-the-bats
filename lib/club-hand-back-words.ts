@@ -104,8 +104,9 @@ export const HAND_BACK_WORDS = {
   pill: 'Hand-back asked',
   /** The practice's end: "You asked the club on Oct 12 to hand back 4 practices, Mar 7 – Mar 28, with $432.00 back.
    *  It hasn't answered yet; until it does, they're yours." */
-  askedLine: (p: { askedOn: string; count: number; first: string; last: string; cents: number }) =>
-    `You asked the club on ${shortDay(p.askedOn)} to hand back ${pluralize(p.count, 'practice')}, ${p.first === p.last ? shortDay(p.first) : `${shortDay(p.first)} – ${shortDay(p.last)}`}, with ${money(p.cents)} back. It hasn’t answered yet; until it does, ${p.count === 1 ? 'it’s' : 'they’re'} yours.`,
+  askedLine: (p: { askedOn: string; count: number; first: string; last: string; cents: number | null }) =>
+    // `cents` null: the viewer can't open Money, so the figure is left out (owner 2026-11-14, Q-A).
+    `You asked the club on ${shortDay(p.askedOn)} to hand back ${pluralize(p.count, 'practice')}, ${p.first === p.last ? shortDay(p.first) : `${shortDay(p.first)} – ${shortDay(p.last)}`}${p.cents == null ? '' : `, with ${money(p.cents)} back`}. It hasn’t answered yet; until it does, ${p.count === 1 ? 'it’s' : 'they’re'} yours.`,
   withdrawDoor: 'Withdraw the ask',
   withdrawQuestion: 'Withdraw your ask?',
   /** `late`: an ask made after the hand-back (part C) — its practices were already handed back. */
@@ -289,8 +290,8 @@ export const HAND_BACK_WORDS = {
   takeBackDoor: 'Take it back',
   /** The practice's end while a late ask waits (C2): "You asked the club on Oct 18 for $432.00 back for the 4 practices you
    *  handed back on Oct 16. It hasn’t answered yet." */
-  lateAskedLine: (p: { askedOn: string; cents: number; count: number; on: string }) =>
-    `You asked the club on ${shortDay(p.askedOn)} for ${money(p.cents)} back for ${p.count === 1 ? 'the practice' : `the ${p.count} practices`} you handed back on ${shortDay(p.on)}. It hasn’t answered yet.`,
+  lateAskedLine: (p: { askedOn: string; cents: number | null; count: number; on: string }) =>
+    `You asked the club on ${shortDay(p.askedOn)} for ${p.cents == null ? 'money' : money(p.cents)} back for ${p.count === 1 ? 'the practice' : `the ${p.count} practices`} you handed back on ${shortDay(p.on)}. It hasn’t answered yet.`,
 
   // Take back which practices? (C3, Ask 11)
   takeBackQuestion: 'Take back which practices?',
@@ -414,8 +415,10 @@ function askedBy(p: { askedBy: string | null; askedOn: string }): string { retur
  */
 export function handedBackSentence(p: {
   kind: 'landed' | 'asked'; on: string; days: readonly string[]; thisDay: string; slot: HandedBackSlot; canTakeBack: boolean;
-  late: { state: 'waiting' | 'accepted' | 'declined'; closedOn: string | null; cents: number; reason: string | null } | null;
-  settled: { on: string; creditedCents: number; toPayCents: number } | null;
+  late: { state: 'waiting' | 'accepted' | 'declined'; closedOn: string | null; cents: number | null; reason: string | null } | null;
+  settled: { on: string; creditedCents: number | null; toPayCents: number | null } | null;
+  /** Null: nothing to ask. 0: there is something to ask but the viewer can't open Money, so the figure is withheld
+   *  (owner 2026-11-14, Q-A — the same goes for a null `cents` or settled figure: the sentence says it without the dollars). */
   askCents: number | null; canMoney: boolean; teamName: string;
 }): string {
   const others = p.days.filter(d => d !== p.thisDay);
@@ -426,6 +429,7 @@ export function handedBackSentence(p: {
   if (p.kind === 'asked' && p.settled) {
     // An ask with its tick, accepted: the club's answer was the hand-back — one sentence, its date once.
     const { creditedCents: c, toPayCents: t, on } = p.settled;
+    if (c == null || t == null) return `The club accepted your hand-back of this practice${others.length ? ` and ${pluralize(others.length, 'other')}` : ''} on ${shortDay(on)}.`;
     const what = c && t ? `it took ${money(c)} off what ${p.teamName} owes for ${them}, and owes it the other ${money(t)}`
       : c ? `it took ${money(c)} off what ${p.teamName} owes for ${them}`
       : `it owes ${p.teamName} ${money(t)} for ${them}`;
@@ -433,6 +437,7 @@ export function handedBackSentence(p: {
   }
   if (p.settled) {
     const { creditedCents: c, toPayCents: t, on } = p.settled;
+    if (c == null || t == null) return `${lead}. The club accepted your ask for the money on ${shortDay(on)}.`;
     const settledWords = c && t ? `The club took ${money(c)} off what ${p.teamName} owes for ${them} on ${shortDay(on)}, and owes it the other ${money(t)}.`
       : c ? `The club took ${money(c)} off what ${p.teamName} owes for ${them} on ${shortDay(on)}.`
       : `The club accepted: it owes ${p.teamName} ${money(t)} for ${them}.`;
@@ -444,9 +449,11 @@ export function handedBackSentence(p: {
     : p.canTakeBack ? `${lead}${others.length ? ` (${dayRange(others)})` : ''}. Your families see it as cancelled. Until the club gives the time to another team, you can take it back.`
     : `${lead}. Your families see it as cancelled.`;
   const tail = p.late?.state === 'declined'
-    ? `The club declined your ask for ${money(p.late.cents)} back${p.late.closedOn ? ` on ${shortDay(p.late.closedOn)}` : ''}${p.late.reason ? `: “${p.late.reason}”` : '.'}`
-    : !p.late && !p.canMoney && p.askCents
-      ? `${possessive(p.teamName)} money people can ask the club for the ${money(p.askCents)} ${p.days.length === 1 ? 'this practice costs' : `these ${p.days.length} practices cost`}.`
+    ? `The club declined your ask for ${p.late.cents == null ? 'money' : money(p.late.cents)} back${p.late.closedOn ? ` on ${shortDay(p.late.closedOn)}` : ''}${p.late.reason ? `: “${p.late.reason}”` : '.'}`
+    : !p.late && !p.canMoney && p.askCents != null
+      ? p.askCents > 0
+        ? `${possessive(p.teamName)} money people can ask the club for the ${money(p.askCents)} ${p.days.length === 1 ? 'this practice costs' : `these ${p.days.length} practices cost`}.`
+        : `${possessive(p.teamName)} money people can ask the club for the money back for ${p.days.length === 1 ? 'this practice' : `these ${p.days.length} practices`}.`
       : '';
   return tail ? `${head} ${tail}` : head;
 }
