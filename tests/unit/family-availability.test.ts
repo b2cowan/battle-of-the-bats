@@ -236,7 +236,14 @@ describe('the one writer’s change and repeat rules (mig 483; behaviour held by
     assert.match(functionBody(readCode(MODULE), 'childSeasons'), /\.in\('id', entries\.map\(e => e\.entryId\)\)\.eq\('status', 'active'\)/);
   });
   it('a family write always replaces the family’s note (a second parent’s change clears the first’s); a clear clears it', () => {
-    assert.match(write, /p_family_note: params\.answer === null \? null : cleaned\.note,\s*\n\s*p_set_family_note: true,/);
+    assert.match(write, /p_family_note: params\.answer === null \? null : cleaned\.note,/);
+    // A bare "agree" sends no note, and then the other parent's note is left alone.
+    assert.match(write, /p_set_family_note: params\.answer === null \|\| params\.note !== undefined,/);
+  });
+  it('a family CLEAR takes away a family’s answer only: a coach’s answer set since the page loaded stays (review of S2)', () => {
+    assert.match(write, /p_only_if_set_by: params\.answer === null \? 'family' : null,/);
+    // The bell reads what the record holds now, so a refused clear is never told as a clear.
+    assert.match(write, /next: answerOfStatus\(result\.row\.status\),/);
   });
   it('the start passing between the gate and the write reads as closed, never as a failure', () => {
     assert.match(write, /if \(error\?\.message\?\.includes\('attendance_closed'\)\) return \{ ok: false, code: 'closed' \};/);
@@ -251,7 +258,7 @@ describe('the sheet — a tap is never dropped (source)', () => {
   });
   it('a tap carries the note and decides AT RUN TIME from the latest confirmed row (nothing to roll back after a failure)', () => {
     // Tapping YOUR answer again clears it; the same answer set by the coach or the other parent is agreed with, not cleared.
-    assert.match(sheet, /const cur = latest\(\);\s*\n\s*await send\(cur\.answer === answer && cur\.mine \? null : answer, noteNow\.current\);/);
+    assert.match(sheet, /const cur = latest\(\);\s*\n[^]*?const agreeing = cur\.answer === answer && !cur\.mine;\s*\n\s*await send\(cur\.answer === answer && cur\.mine \? null : answer, agreeing && !noteNow\.current\.trim\(\) \? undefined : noteNow\.current\);/);
     assert.doesNotMatch(sheet, /intent\.current|noteSaved\.current/, 'no guessed state to drift');
   });
   it('the note box saves through the same queue, and a closed answer locks the sheet', () => {

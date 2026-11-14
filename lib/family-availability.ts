@@ -96,11 +96,30 @@ export async function liveSetting(team: TeamRow | null): Promise<LiveFamilyAnswe
   return setting;
 }
 
+/**
+ * A parent's first name by account id, from the auth admin API (one HTTP call each). One attendance record S2 put this on the
+ * coach window's AUTOSAVE (every tap's reply carries the who/when lines) and the game console's every tap, so a roster of answered
+ * players meant a burst of auth calls per tap. A found name is remembered for a few minutes (a first name rarely changes, and a
+ * stale one for that long costs nothing); a miss or an error is never remembered.
+ */
+const FIRST_NAME_TTL_MS = 10 * 60 * 1000;
+const FIRST_NAME_CACHE_MAX = 500;
+const firstNameCache = new Map<string, { name: string | null; at: number }>();
+
 export async function firstNames(userIds: readonly string[]): Promise<Map<string, string | null>> {
   const out = new Map<string, string | null>();
+  const now = Date.now();
   await Promise.all([...new Set(userIds)].map(async id => {
+    const hit = firstNameCache.get(id);
+    if (hit && now - hit.at < FIRST_NAME_TTL_MS) { out.set(id, hit.name); return; }
     const { data, error } = await supabaseAdmin.auth.admin.getUserById(id);
-    out.set(id, error || !data?.user ? null : firstNameOf(data.user.user_metadata));
+    const found = !error && !!data?.user;
+    const name = found ? firstNameOf(data.user.user_metadata) : null;
+    out.set(id, name);
+    if (found) {
+      if (firstNameCache.size >= FIRST_NAME_CACHE_MAX) firstNameCache.delete(firstNameCache.keys().next().value as string);
+      firstNameCache.set(id, { name, at: now });
+    }
   }));
   return out;
 }
@@ -286,7 +305,8 @@ interface EventRow { id: string; team_id: string; program_year_id: string; event
  * refuses a family write after the start on its own too (ruling 2), so no door can get round the lock.
  *
  * Latest wins: the answer replaces whatever is there (a coach's included), and the one before it is kept as "earlier" only when it
- * changed. A family write always replaces the family's note (a second parent's change clears the first's, ask 6); it never writes
+ * changed. A family write replaces the family's note when it carries one (a second parent's change clears the first's, ask 6; an
+ * "agree" that sends no note leaves it); a clear only takes away a FAMILY's answer, never a coach's. It never writes
  * the coach's note or the coach's audit column. Reach is to THIS team's roster entry, so a call-up (no family link) stays the
  * coach's alone.
  */
@@ -335,7 +355,11 @@ export async function writeFamilyAnswer(params: {
     // The answer IS the status (null clears it to Not marked); the family page picks Late itself (ruling 1).
     p_status: params.answer ?? 'unknown',
     p_family_note: params.answer === null ? null : cleaned.note,
-    p_set_family_note: true,
+    // A clear always blanks the note; an answer writes the note only when the request carries one (a bare "agree" with another
+    // parent's answer leaves their note alone).
+    p_set_family_note: params.answer === null || params.note !== undefined,
+    // A family CLEAR takes away a family's answer only: a coach's answer set since this page loaded (it never re-reads) stays.
+    p_only_if_set_by: params.answer === null ? 'family' : null,
   });
   // The start passed between the gate above and the write: the database's own lock refused it.
   if (error?.message?.includes('attendance_closed')) return { ok: false, code: 'closed' };
@@ -347,7 +371,8 @@ export async function writeFamilyAnswer(params: {
     row: rowOf(ev.id, params.childId, result.row, true, params.userId, noName, now),
     change: {
       prior: answerOfStatus(result.prior),
-      next: params.answer,
+      // What the record holds now (a refused clear leaves the coach's answer, and the bell must not call that a clear).
+      next: answerOfStatus(result.row.status),
       hasNote: params.answer !== null && !!cleaned.note,
       startsAt: ev.starts_at,
     },

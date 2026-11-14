@@ -133,6 +133,7 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   let maybeOpen: boolean | null = null;
+  let standingMaybe: Set<string> | null = null;
   const rows: CoachAttendanceEntry[] = [];
   const seen = new Set<string>();
   for (const raw of entries!) {
@@ -152,7 +153,14 @@ export const PATCH = withObservability(async (req: Request,
     }
     if (hasStatus && status === 'maybe') {
       maybeOpen ??= await maybeIsOffered(teamId, team, event);
-      if (!maybeOpen) return NextResponse.json({ error: 'Maybe is only for events families can still answer' }, { status: 400 });
+      if (!maybeOpen) {
+        // A Maybe the player ALREADY holds is not a new one: a re-sent tap on it moves nothing, and refusing it would reject the
+        // whole batch (every other player's tap with it).
+        standingMaybe ??= new Set((await getRepTeamEventAttendance(eventId)).filter(a => a.status === 'maybe').map(a => a.playerId));
+        if (!standingMaybe.has(playerId)) {
+          return NextResponse.json({ error: 'Maybe is only for events families can still answer' }, { status: 400 });
+        }
+      }
     }
     if (hasNote && entry.note !== null && typeof entry.note !== 'string') {
       return NextResponse.json({ error: 'Invalid attendance note' }, { status: 400 });

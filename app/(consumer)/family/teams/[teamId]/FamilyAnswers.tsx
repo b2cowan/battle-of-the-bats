@@ -166,7 +166,9 @@ function AnswerSheet({ row, entry, teamId, teamName, otherParent, onSaved, lates
         // Tapping YOUR current answer again clears it (and its note). The same answer set by the coach or the other parent is
         // agreed with, not cleared: it is sent as it is, so only the note can change (the record keeps who set it).
         const cur = latest();
-        await send(cur.answer === answer && cur.mine ? null : answer, noteNow.current);
+        // An "agree" with a blank box sends NO note, so it never wipes the note the other parent left (a typed note is sent).
+        const agreeing = cur.answer === answer && !cur.mine;
+        await send(cur.answer === answer && cur.mine ? null : answer, agreeing && !noteNow.current.trim() ? undefined : noteNow.current);
       } finally {
         choosing.current = false;
       }
@@ -182,13 +184,14 @@ function AnswerSheet({ row, entry, teamId, teamName, otherParent, onSaved, lates
     });
   }
 
-  async function send(answer: AnswerStatus | null, withNote: string): Promise<void> {
+  /** `withNote` undefined = leave the family's note as it is (an agree with a blank box); null/'' with an answer clears it. */
+  async function send(answer: AnswerStatus | null, withNote: string | undefined): Promise<void> {
     setError(null); setStatus(W.sheet.saving);
     try {
       const res = await fetch(`/api/family/teams/${encodeURIComponent(teamId)}/events/${encodeURIComponent(row.eventId)}/availability`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: row.childId, answer, note: answer ? withNote : null }),
+        body: JSON.stringify({ childId: row.childId, answer, ...(answer === null ? { note: null } : withNote !== undefined ? { note: withNote } : {}) }),
       });
       const data = await res.json().catch(() => ({})) as { row?: FamilyAnswerFields; error?: string };
       if (!res.ok || !data.row) {

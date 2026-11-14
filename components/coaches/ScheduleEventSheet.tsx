@@ -752,7 +752,10 @@ export default function ScheduleEventSheet({
     // Open games only (the rule decides).
     const said = lineupFamily ? new Map(lineupFamily.answers.map(a => [a.playerId, a])) : null;
     const familyOuts = said ? lineupFamilyOuts(attendanceRows.map(r => ({
-      playerId: r.player.id, status: r.status, family: said.get(r.player.id) ?? null,
+      // Only while the Out on screen IS the family's own: a coach who has since set (or re-tapped) it owns it, and the book's
+      // sentence is the right one (the family list is read once, when the window opens).
+      playerId: r.player.id, status: r.status,
+      family: r.setByKind === 'family' && r.status === r.savedStatus && !r.confirmed ? said.get(r.player.id) ?? null : null,
     })), lineupEntryIds, lineupFamily!.savedAt, familyEventOpen(ev, nowMs)) : [];
     const familyOutIds = new Set(familyOuts.map(o => o.playerId));
     const out = attendanceRows

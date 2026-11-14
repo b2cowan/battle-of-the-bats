@@ -86,7 +86,24 @@ describe('a started game stops flagging a family Out (owner, Session 4: match th
   it('every surface passes the rule (the builder, the event window), not a guard of its own', () => {
     assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/lineups/[eventId]/page.tsx'),
       /lineupFamilyOuts\([^)]*familyEventOpen\(event, nowMs\)\)/);
-    assert.match(readCode('components/coaches/ScheduleEventSheet.tsx'), /lineupFamilyOuts\([\s\S]{0,400}?familyEventOpen\(ev, nowMs\)\)/);
+    assert.match(readCode('components/coaches/ScheduleEventSheet.tsx'), /lineupFamilyOuts\([\s\S]{0,600}?familyEventOpen\(ev, nowMs\)\)/);
+  });
+
+  it('the window words an Out as the family’s only while the Out on screen is the family’s own (review of S2)', () => {
+    assert.match(readCode('components/coaches/ScheduleEventSheet.tsx'),
+      /family: r\.setByKind === 'family' && r\.status === r\.savedStatus && !r\.confirmed \? said\.get\(r\.player\.id\) \?\? null : null,/);
+  });
+
+  it('a Maybe the player already holds is not refused after the start (it would reject the whole batch) (review of S2)', () => {
+    const route = readCode('app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/attendance/route.ts');
+    assert.match(route, /standingMaybe \?\?= new Set\(\(await getRepTeamEventAttendance\(eventId\)\)\.filter\(a => a\.status === 'maybe'\)/);
+    assert.match(route, /if \(!standingMaybe\.has\(playerId\)\) \{\s*\n\s*return NextResponse\.json\(\{ error: 'Maybe is only for events families can still answer' \}/);
+  });
+
+  it('parent first names are remembered a few minutes, so an autosave does not make one auth call per answered player (review of S2)', () => {
+    const mod = readCode('lib/family-availability.ts');
+    assert.match(mod, /const FIRST_NAME_TTL_MS = 10 \* 60 \* 1000;/);
+    assert.match(mod, /if \(found\) \{[^]*?firstNameCache\.set\(id, \{ name, at: now \}\);/);
   });
 });
 
