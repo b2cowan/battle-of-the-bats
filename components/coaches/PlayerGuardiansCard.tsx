@@ -137,8 +137,11 @@ export default function PlayerGuardiansCard({
   const invited = rows.filter(r => r.status === 'invited');
   const atCap = connected.length >= maxPerPlayer;
   return (
+    // The wrapper gives the fold the same 0.75rem gap its sibling sections (CoachPageSection) carry; the fold itself has none,
+    // so Documents sat flush beneath it. The panel's own bottom margin is dropped: the fold body already pads it.
+    <div style={{ marginBottom: '0.75rem' }}>
     <CoachCollapseSection sectionId="guardians" title="Guardians" defaultOpen={false}>
-    <div className={styles.panel}>
+    <div className={styles.panel} style={{ marginBottom: 0 }}>
       {/* The profile page's collapse summary carries the visible "Guardians" title now; this h2
           stays for the DOCUMENT OUTLINE only (the 2026-07-31 staff lesson: the repeated-header
           rule is about the visible header, never the outline). The count remains
@@ -197,28 +200,32 @@ export default function PlayerGuardiansCard({
               <Users size={14} aria-hidden /> Invite a guardian
             </button>
           ) : (
-            <div className={styles.row}>
-              <div className={styles.rowMain}>
-                <div className={styles.rowSub}>
-                  We’ll email them an invitation. It works for 30 days.
-                </div>
+            <div>
+              <div className={styles.rowSub}>
+                We’ll email them an invitation. It works for 30 days.
+              </div>
+              {/* Field and button share one line and one height (stretch). They used to sit in a row whose
+                  button centred against the hint + field together, so it floated above the field's middle. */}
+              <div style={{ display: 'flex', alignItems: 'stretch', gap: '0.7rem', flexWrap: 'wrap' }}>
                 <input
                   className={styles.linkOut}
-                  style={{ width: '100%', fontFamily: 'inherit', fontSize: '0.85rem' }}
+                  style={{ flex: '1 1 12rem', minWidth: 0, fontFamily: 'inherit', fontSize: '0.85rem' }}
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
                   placeholder="parent@example.com"
                   autoComplete="off"
+                  aria-label="Guardian's email address"
                 />
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  style={{ marginTop: '0.6rem', justifyContent: 'center' }}
+                  onClick={invite}
+                  disabled={busy === 'invite' || !inviteEmail.trim()}
+                >
+                  {busy === 'invite' ? 'Sending…' : 'Send invitation'}
+                </button>
               </div>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                onClick={invite}
-                disabled={busy === 'invite' || !inviteEmail.trim()}
-              >
-                {busy === 'invite' ? 'Sending…' : 'Send invitation'}
-              </button>
             </div>
           )}
         </>
@@ -227,5 +234,6 @@ export default function PlayerGuardiansCard({
       {error && <p className={styles.error} role="alert">{error}</p>}
     </div>
     </CoachCollapseSection>
+    </div>
   );
 }

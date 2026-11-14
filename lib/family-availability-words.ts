@@ -161,6 +161,11 @@ export const FAMILY_AVAILABILITY_COACH_WORDS = {
     turnedOff: 'Families stop seeing In / Late / Maybe / Out. Every answer already given stays as the player’s attendance.',
     nobodyYet: 'No parent is in the app yet. Answers appear once you invite parents from each player’s Guardians on the Roster.',
     staffOnly: 'Families can’t see the schedule, so they can’t answer. Set Schedule visibility to Families or Public first.',
+    /** The row's words while Schedule visibility is Staff only and the control is paused (nothing lit). `saved` is the choice that
+     *  comes back (null when it was Off). */
+    paused: (saved: string | null) =>
+      'Paused: families can’t see the schedule, so they can’t answer. Set Schedule visibility to Families or Public to use this.' +
+      (saved ? ` Your choice (${saved}) comes back then.` : ''),
     readOnly: (choice: string) => `${choice} — only coaches who manage the schedule can change it.`,
     failed: SAVE_FAILED,
   },

@@ -58,7 +58,7 @@ export function FamilyAnswersSettingRow({ orgSlug, teamId, data, scheduleStaffOn
   }
 
   const help = scheduleStaffOnly
-    ? W.staffOnly
+    ? W.paused(data.value === 'off' ? null : W.choice[data.value])
     : data.value === 'off'
       ? (justTurnedOff ? W.turnedOff : W.off)
       : data.connected === 0
@@ -79,11 +79,14 @@ export function FamilyAnswersSettingRow({ orgSlug, teamId, data, scheduleStaffOn
                 <button
                   key={v}
                   type="button"
-                  aria-pressed={data.value === v}
-                  className={`${styles.segBtn}${data.value === v ? ' ' + styles.segBtnActive : ''}`}
+                  // Staff only (owner, 2026-11-13, Stage 4b walk, call 9): the whole control is paused — nothing lit, nothing
+                  // pressable — because the saved choice does nothing while families can't see the schedule. The saved
+                  // value is untouched, so setting Schedule visibility back to Families lights it again.
+                  aria-pressed={!scheduleStaffOnly && data.value === v}
+                  className={`${styles.segBtn}${!scheduleStaffOnly && data.value === v ? ' ' + styles.segBtnActive : ''}`}
+                  style={scheduleStaffOnly ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
                   onClick={() => choose(v)}
-                  // Staff only: Off stays choosable (a coach can always turn it off); the two "on" choices can't be taken.
-                  disabled={saving || (scheduleStaffOnly && v !== 'off')}
+                  disabled={saving || scheduleStaffOnly}
                 >
                   {W.choice[v]}
                 </button>
