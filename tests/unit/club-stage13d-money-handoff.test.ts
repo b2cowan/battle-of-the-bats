@@ -202,6 +202,10 @@ describe('the tournament’s "In the club’s book" (13d-11 A, tab 5 note 1)', (
     assert.match(readCode('app/api/admin/tournament-dashboard/route.ts'),
       /const clubBookP = canOpenModule\(ctx, ctx\.org, 'module_accounting'\)\s*\?\s*readEventBook\(/);
   });
+  it('the page copies the answer\'s book into what it shows (found in the walk: without this line the row never appeared)', () => {
+    const page = readCode('app/[orgSlug]/admin/tournaments/dashboard/page.tsx');
+    assert.match(page, /clubBook: data\?\.clubBook \?\? null,/);
+  });
   it('the first row stays word for word; the new row is under it', () => {
     assert.equal(DRAFT_BOARD_WORDS.feesNotSet, 'Not set up — payments aren’t tracked here');
     const board = readCode('app/[orgSlug]/admin/tournaments/dashboard/WeeksBeforeBoard.tsx');

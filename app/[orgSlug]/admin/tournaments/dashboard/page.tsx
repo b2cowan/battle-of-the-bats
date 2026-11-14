@@ -421,6 +421,7 @@ export default function AdminDashboard() {
           },
           checkIn: data?.checkIn ?? EMPTY_STATS.checkIn,
           payment: data?.payment ?? EMPTY_STATS.payment,
+          clubBook: data?.clubBook ?? null,
           registrationAttention: data?.registrationAttention ?? EMPTY_STATS.registrationAttention,
           registrationHealth: data?.registrationHealth ?? null,
         });
