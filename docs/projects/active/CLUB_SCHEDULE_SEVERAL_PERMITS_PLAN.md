@@ -14,7 +14,7 @@
 > separate permit that wants to be part of the same schedule": earlier payments stay the same and only the new amount is added to the teams
 > it touches; no recalculation; so the drawing's "gap said in the Send window" sentence is dropped). Build prompt:
 > [CLUB_SCHEDULE_SEVERAL_PERMITS_BUILD_PROMPT.md](CLUB_SCHEDULE_SEVERAL_PERMITS_BUILD_PROMPT.md), five sessions + a close, order **A → B → D → C → E**.
-> 13d is committed (walk §528 owed); **Session C waits for that walk to pass or its findings to be fixed.** P12 A: the Permits-page
+> 13d is committed and walk §528 PASSED 47/47 on 2026-11-14 (no findings), so Session C's gate is met. (Was: Session C waits for that walk to pass or its findings to be fixed.) P12 A: the Permits-page
 > "Free time" view is a later door, not built here.
 > **2026-11-13 · DRAWN, round 1:** https://claude.ai/artifact/GLdh4E19UsKzBkLdH9UACU (source
 > `CLUB_SCHEDULE_SEVERAL_PERMITS_DRAWINGS.html`). Drawn on one two-town fixture computed in the page (Milton $40,

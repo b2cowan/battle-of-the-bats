@@ -59,7 +59,7 @@ All **A** (the drawing's recommendation) except **P9 = B**. Read the drawing's a
 **A → B → D → C → E → Close.** Not the lettering's order, because of two dependencies:
 
 - **D needs A** (found rows carry their permit). **E needs C** (Add time on a sent schedule bills a correction at a stored per-permit rate, which C creates). B is independent of C and D.
-- **Session C does not start until the Stage 13d walk (§528) has passed or its findings are fixed** (owner 2026-11-14: 13d is committed, not yet walked). C reprices the bill that 13d's
+- **Session C's gate is MET: the Stage 13d walk (§528) PASSED 47/47 on 2026-11-14, no findings.** (Was: C does not start until it passed or its findings were fixed.) C reprices the bill that 13d's
   Bill-window warning and the budget line's "being billed" both read. Ask the owner for the §528 result at the start of C. A, B and D do not wait for it.
 - ⚠ **Uncommitted work sits in the Bill window and the Send window today** [V: `git status` 2026-11-14 shows `BillWindow.tsx`, `SendWindow.tsx`, `Schedules.module.css` and
   `lib/club-schedule-words.ts` modified, and none of it is 13d's or this project's]. **Do not commit it as yours.** Ask the owner whose it is before editing those files. If it is still

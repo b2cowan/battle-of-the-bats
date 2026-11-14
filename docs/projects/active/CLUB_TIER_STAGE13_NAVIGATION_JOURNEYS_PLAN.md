@@ -895,6 +895,11 @@ ahead of the owner's rulings.
   after the walk (`fx-teardown-13d.mjs`). Not walked: House league's time page and Generate games' Ask button (same gate, unit-tested), the Bill window's
   over-the-line warning (no bill here is over its line).
 
+- 2026-11-14 — **13d WALK §528 PASSED 47/47.** 12 of 13 parts marked pass; Part 9 (the phone) ticked 3/3 with no verdict recorded (read as passed on its ticks).
+  No findings. The three calls (one instruction or two in the Bill window, "(draft)" on the Budget caption, where This morning's card lands with several
+  permits) were not answered in the paste-back. **Owed:** `check:layout --changed` on the touched screens; teardown of `navj-club-13d` on the owner's word.
+  13d is DONE; several-permits Session C's gate is met.
+
 ## 11. The external review, cross-checked (2026-11-07)
 
 Source: `CLUB_TIER_PRODUCT_IA_REVIEW.md` (an outside reviewer's first look; its IDs are written **R-F-nn** here so they
