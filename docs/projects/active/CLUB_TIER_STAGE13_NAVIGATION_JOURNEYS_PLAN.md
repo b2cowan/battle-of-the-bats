@@ -729,6 +729,13 @@ ahead of the owner's rulings.
   slots a day; the dome's 25 of 65 / 175 of 450 exactly as drawn; this week empty (Next Tue, Nov 17). Three calls in it (the View
   menu at three views, Slots sums, "See them"'s landing). Header Phase 4's walk §501 had passed (15/15), so nothing waited on it.
   Teardown on "13c walk done". **Next:** the owner walks §502; then the staging layout sweep.
+- 2026-11-13 — **§502 PASSED 53/53** (all 13 parts and Z1, no issues, no calls raised); `navj-club-13c` and its 14 accounts
+  removed the same day (read back: org gone, 0 accounts). 13c's staging layout sweep is still to run.
+- 2026-11-13 — **"Send the bill" committed `64bb5544d`** (13c follow-up): a schedule finalized with no bill can still be
+  billed by its own send; the schedule stays final (mig 481, dev 2026-11-13). Open owner call from its review: a Sunday handed
+  back before the late bill and then taken back is never billed (options in the commit message).
+- 2026-11-13 — **Money terms go only to people who can open Money, committed** `507f4505b` (the send engine) + `39eb59955`
+  (the Send window), help `655e79d86`; walk §527 published (`c55b5be02`). Plan: `LATE_BILL_MONEY_AUDIENCE_PLAN.md`.
 - 2026-11-13 — **13d DRAWING PUBLISHED:** https://claude.ai/artifact/QgEYgkVT7rJK3bHTvgAHtx
   ([CLUB_TIER_STAGE13D_DRAWINGS.html](CLUB_TIER_STAGE13D_DRAWINGS.html), captures in `stage13d-shots/`), from
   [CLUB_TIER_STAGE13D_DRAWING_PROMPT.md](CLUB_TIER_STAGE13D_DRAWING_PROMPT.md). Eight tabs (what changes, time given, Ask for time,

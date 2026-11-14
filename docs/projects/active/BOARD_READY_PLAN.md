@@ -603,7 +603,7 @@ board's two questions:
     House league), `/marketing` words pass (6 changes), `/docs` (the draft guide's "Keep friends together", a draft FAQ,
     the board article's Together and RTG, two Registrations topics), `/review` (high-risk; fixed: a kept-apart pair joined
     through a shared friend; then the "apart" outcome, so an undone split reads "Kept apart in the draft"; the phone grid
-    tightened). Walk **§518** (https://claude.ai/artifact/LLFzexk8mG9RZZPmk1R9MK), fixture `.probe/friends/part3-walk-fixture.sql`
+    tightened). Walk **§518** (https://claude.ai/artifact/LLFzexk8mG9RZZPmk1R9MK) ✅ 48/48 2026-11-12, fixture `.probe/friends/part3-walk-fixture.sql`
     after Part 2's.
     Build decisions (not drawn, owner may overrule): the result shows only when ONE division is picked (All divisions
     keeps the queue's bands); result rows keep their ⋯ instead of the drawn chevron, so Delete request… stays reachable;
@@ -612,16 +612,16 @@ board's two questions:
     all are, amber "x of n" when not; in the pool, the group's size); the Together window's third status "Apart"; the
     after-draft view keeps the amber count as it was (requests still to confirm); keep-apart works before and after
     publishing.
-    Owner calls (open): (1) the form's "only to put friends on the same team" is literally narrower than "Keep apart"
+    Owner calls — RULED 2026-11-12, all three as /legal recommended; (1) and (2) BUILT 2026-11-12, committed `81e3967e0` 2026-11-14 (form line, Can’t honour hint, the draft guide’s quoted line): (1) reword the form sentence to "only to decide which team they play on"; (2) add the Can’t honour hint "Keep it to the team placement. Don’t write anything about a family’s circumstances."; (3) leave the after-draft lock and hand-move reasons as built. Original text of the calls: (1) the form's "only to put friends on the same team" is literally narrower than "Keep apart"
     (same data, same purpose; `/legal`: keep it and say "team placement" in the policy, or reword to "only to decide which
     team they play on"); (2) a field hint on Can't honour's note ("Don't record anything about a family's circumstances",
     `/legal`); (3) the after-draft reasons show the registrar a lock and a hand move, which the board keeps to the runners
     (9c·2a) — drawn and ruled in tab 6, built as drawn.
     Left (review, low): the board read loads the season's registrations and requests on every load (two queries, no N+1);
     a registrar's decision landing between the draft's read and its write can have its cleared outcome overwritten (the
-    fingerprint does not cover friend requests); the 361 px phone row is unrendered (walk §518 Q8 checks it).
-    **Doc follow-ups due before the Parts 1–3 promote (`/legal`):** privacy policy draft §5/§9 friend-request lines (none
-    today); club data-processing terms. `/legal` wrote `docs/agents/legal/FRIEND_REQUESTS_PRIVACY.md`.
+    fingerprint does not cover friend requests); the 361 px phone row was unrendered (walk §518 Q8 looked at it 2026-11-12 and passed).
+    **Doc follow-ups due before the Parts 1–3 promote (`/legal`):** privacy policy draft §5/§9 friend-request lines (WRITTEN 2026-11-12, draft v0.2; the
+    three owner calls answered in `FRIEND_REQUESTS_PRIVACY.md`, owner to rule); club data-processing terms (not started). `/legal` wrote `docs/agents/legal/FRIEND_REQUESTS_PRIVACY.md`.
   - ⛔ **RELEASE ORDER (Part 3):** mig 473 after 461/471/472 and BEFORE Part 3's code (its reads select `draft_outcome`).
 
 ### Stage 2 — Group email to coaches and volunteers (item 3)
