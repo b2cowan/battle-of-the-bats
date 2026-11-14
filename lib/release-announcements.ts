@@ -18,7 +18,9 @@ export interface Announcement {
   line: string;
 }
 
-export const ANNOUNCEMENTS: Announcement[] = [];
+export const ANNOUNCEMENTS: Announcement[] = [
+  { date: '2026-11-14', line: 'New: two-step sign-in under Account, Sign-in & security. Organizers and coaches also get a clearer sidebar and top bar.' },
+];
 
 /** The newest announced release, or null. */
 export const LATEST_ANNOUNCED: Announcement | null = ANNOUNCEMENTS[0] ?? null;
