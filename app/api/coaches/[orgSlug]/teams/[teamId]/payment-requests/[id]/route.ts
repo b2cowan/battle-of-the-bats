@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
-import { mapClubRequest, resolveMoneyInMeaning } from '@/lib/coach-club-money';
+import { mapClubRequest, resolveMoneyInMeaning, resolveRequestMethod } from '@/lib/coach-club-money';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canManageSchedule, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { withdrawAsk } from '@/lib/club-hand-back';
@@ -91,7 +91,7 @@ export const PATCH = withObservability(async (req: Request,
 
   const { data: existing, error: fetchErr } = await supabaseAdmin
     .from('rep_team_payment_requests')
-    .select('id, team_id, status, club_hand_back_id, club_schedule_send_id')
+    .select('id, team_id, status, club_hand_back_id, club_schedule_send_id, payment_method')
     .eq('id', id)
     .eq('org_id', team.orgId)
     .single();
@@ -109,6 +109,10 @@ export const PATCH = withObservability(async (req: Request,
   if (existing.status !== 'pending') {
     return NextResponse.json({ error: 'This request has already been reviewed, so it can no longer be changed.' }, { status: 409 });
   }
+  /* How the money should move (Stage 13d-9). An old request's words come back unchanged when the coach didn't touch them
+     (never rewritten); anything new must be one of this direction's methods. */
+  const method = resolveRequestMethod(requestType, paymentMethod, existing.payment_method ?? null);
+  if (!method.ok) return NextResponse.json({ error: method.error }, { status: 400 });
 
   /* ⚠⚠ THE WRITE RE-ASSERTS EVERY CONDITION THE READ ABOVE CHECKED — pending, org and team — and
      that is not belt-and-braces, it is the correctness of the rule.
@@ -130,7 +134,7 @@ export const PATCH = withObservability(async (req: Request,
       money_in_meaning: meaning.value,
       amount,
       description:    description.trim(),
-      payment_method: paymentMethod?.trim() || null,
+      payment_method: method.value,
       notes:          notes?.trim() || null,
       budget_item_id:     item.item?.id ?? null,
       budget_category_id: item.item?.categoryId ?? null,

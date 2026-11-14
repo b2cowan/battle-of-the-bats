@@ -14,6 +14,10 @@
  * or the client bundle grows a service-role graph (the lesson `coach-budget-item-usage.ts` is split
  * out to record).
  */
+import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from './types';
+import { formatStoredDate } from './timezone';
+import { fmt } from './coach-money-summary';
+import { methodWord } from './club-money-words';
 
 /** The two directions, from the TEAM's side. Stored values — do not rename without a migration. */
 export type ClubRequestType = 'payment_to_org' | 'charge_to_org';
@@ -317,4 +321,100 @@ export function resolveMoneyInMeaning(
     return { ok: false, error: 'Say whether this is new money or the club paying you back.' };
   }
   return { ok: true, value: given };
+}
+
+/* ══ HOW THE MONEY SHOULD MOVE — the coach's answer, in the codes Approve reads (Club Tier Stage 13d-9, owner 2026-11-13) ══
+ *
+ * The coach's request asked "Payment method" both ways and saved the display word ("Card", "E-Transfer"); the treasurer's
+ * Approve pre-fills only from the product's one method list (`DUES_PAYMENT_METHODS`), so it never pre-filled. The coach is
+ * now asked what the treasurer needs, by direction, and the answer is saved as the code.
+ *
+ * ⚠ CARD ONLY FOR PAYING THE CLUB. The club doesn't pay a team by card; a coach who meant "I paid the vendor by card" is
+ * the walk's own example of the old question being read as something else.
+ *
+ * ⚠⚠ A REQUEST FILED BEFORE THIS READS "AS FILED" AND IS NEVER REWRITTEN. Its stored value is the old word (never a code:
+ * the old form's words are capitalised, the codes are not), so "not a code" is exactly "filed under the old question". */
+
+const REQUEST_METHODS: Record<ClubRequestType, readonly DuesPaymentMethod[]> = {
+  charge_to_org:  ['cash', 'etransfer', 'cheque', 'other'],
+  payment_to_org: ['cash', 'etransfer', 'cheque', 'card', 'other'],
+};
+
+/** The methods a coach may answer with, in the order the form offers them. */
+export function clubRequestMethods(requestType: ClubRequestType): readonly DuesPaymentMethod[] {
+  return REQUEST_METHODS[requestType];
+}
+
+/** Filed under the old "Payment method" question: a stored value that isn't one of the product's codes. */
+export function requestMethodAsFiled(stored: string | null | undefined): boolean {
+  return !!stored && !(DUES_PAYMENT_METHODS as readonly string[]).includes(stored);
+}
+
+export const CLUB_REQUEST_METHOD_WORDS = {
+  /** The coach's question, by direction. */
+  ask: { charge_to_org: 'How should the club pay you?', payment_to_org: 'How are you paying the club?' } as Record<ClubRequestType, string>,
+  /** The coach reading their own answer back. */
+  coachRead: { charge_to_org: 'How you’d like the club to pay you', payment_to_org: 'How you’re paying the club' } as Record<ClubRequestType, string>,
+  /** The treasurer reading it. */
+  clubRead: { charge_to_org: 'How they’d like to be paid', payment_to_org: 'How it’s coming' } as Record<ClubRequestType, string>,
+  /** Either reader, on a request filed before the question changed. */
+  asFiled: 'Payment method (as filed)',
+  /** The old word in the coach's own picker, kept until they choose another. */
+  asFiledOption: (word: string) => `${word} (as filed)`,
+  hint: (requestType: ClubRequestType) => `${joinOr(REQUEST_METHODS[requestType].map(m => DUES_PAYMENT_METHOD_LABEL[m]))}. Optional.`,
+  refuse: 'Choose how the money should move from the list.',
+} as const;
+
+function joinOr(words: string[]): string {
+  return words.length < 2 ? words.join('') : `${words.slice(0, -1).join(', ')} or ${words[words.length - 1]}`;
+}
+
+/** The label a reader sees over a request's method. */
+export function requestMethodLabel(
+  r: { requestType: ClubRequestType; paymentMethod: string | null },
+  reader: 'coach' | 'club',
+): string {
+  if (requestMethodAsFiled(r.paymentMethod)) return CLUB_REQUEST_METHOD_WORDS.asFiled;
+  return (reader === 'coach' ? CLUB_REQUEST_METHOD_WORDS.coachRead : CLUB_REQUEST_METHOD_WORDS.clubRead)[r.requestType];
+}
+
+/**
+ * The answer, validated for both write doors. Empty is no answer (it is optional). A correction that sends back an old
+ * request's words unchanged keeps them, so they survive an edit that never touched them; anything else must be a method
+ * this direction offers.
+ */
+export function resolveRequestMethod(
+  requestType: ClubRequestType,
+  raw: unknown,
+  stored: string | null = null,
+): { ok: true; value: string | null } | { ok: false; error: string } {
+  const given = typeof raw === 'string' ? raw.trim() : raw;
+  if (given === '' || given === null || given === undefined) return { ok: true, value: null };
+  // Only an OLD word is kept this way: a stored code still has to suit the direction (Card turned round to "the club pays us").
+  if (requestMethodAsFiled(stored) && given === stored) return { ok: true, value: stored };
+  if (typeof given !== 'string' || !(REQUEST_METHODS[requestType] as readonly string[]).includes(given)) {
+    return { ok: false, error: CLUB_REQUEST_METHOD_WORDS.refuse };
+  }
+  return { ok: true, value: given };
+}
+
+/* ══ PAID — how and when the club moved it (Stage 13d-10, owner 2026-11-13) ══
+ * Approving is paying, in one step: the club records the day, method and reference (mig 315), and the coach's screen already
+ * loads them. Only on an approved request with the day recorded; an approval before 3a has none and keeps reading "Approved". */
+export function requestPaidFacts(
+  r: Pick<ClubRequest, 'requestType' | 'status' | 'amount' | 'paidOn' | 'paidMethod' | 'paidReference'>,
+): { label: string; value: string; sub: string | null } | null {
+  if (r.status !== 'approved' || !r.paidOn) return null;
+  const on = formatStoredDate(r.paidOn);
+  const how = methodWord(r.paidMethod);
+  const ref = r.paidReference?.trim() || null;
+  if (r.requestType === 'payment_to_org') {
+    return { label: 'Received', value: ['The club received it on ' + on, how, ref ? `reference ${ref}` : null].filter(Boolean).join(' · '), sub: null };
+  }
+  return { label: 'Paid', value: `${fmt(r.amount)}${how ? ` by ${how}` : ''} on ${on}`, sub: ref ? `Reference ${ref}` : null };
+}
+
+/** The list row's chip: "Paid" with the day it moved, once the club recorded it. */
+export function requestPaidOn(r: Pick<ClubRequest, 'status' | 'paidOn'>): string | null {
+  return r.status === 'approved' && r.paidOn ? r.paidOn : null;
 }

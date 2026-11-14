@@ -637,7 +637,7 @@ export async function teamAccountRead(
     id: r.id, programYearId: r.program_year_id, requestType: r.request_type, status: r.status,
     amount: Number(r.amount), description: r.description,
     decidedOn: r.status === 'approved' ? (r.paid_on ?? (r.reviewed_at ? orgDayKey(r.reviewed_at) : null)) : null,
-    paidMethod: methodWord(r.paid_method) ?? r.payment_method ?? null,
+    paidMethod: methodWord(r.paid_method) ?? methodWord(r.payment_method),
     moneyInMeaning: r.money_in_meaning ?? null,
   }));
   const computed = teamAccount(bills, requests, seasons.map(s => s.id), today);

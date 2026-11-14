@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
-import { mapClubRequest, resolveMoneyInMeaning } from '@/lib/coach-club-money';
+import { mapClubRequest, resolveMoneyInMeaning, resolveRequestMethod } from '@/lib/coach-club-money';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tellClubOfNewRequest } from '@/lib/club-money-moves';
@@ -116,6 +116,9 @@ export const POST = withObservability(async (req: Request,
      the same thing, and a body field silently dropped is how a caller comes to believe it landed. */
   const meaning = resolveMoneyInMeaning(requestType, body?.moneyInMeaning);
   if (!meaning.ok) return NextResponse.json({ error: meaning.error }, { status: 400 });
+  // How the money should move (Stage 13d-9): one of this direction's methods, saved as the code Approve pre-fills from.
+  const method = resolveRequestMethod(requestType, paymentMethod);
+  if (!method.ok) return NextResponse.json({ error: method.error }, { status: 400 });
 
   /* ⚠⚠ WHAT THIS REQUEST IS FOR (mig 250). Without it, an approved request reached NO part of Budget
      vs. Actual — the report reads neither this table nor the allocations, so on a club-run team the
@@ -142,7 +145,7 @@ export const POST = withObservability(async (req: Request,
       money_in_meaning: meaning.value,
       amount,
       description:     description.trim(),
-      payment_method:  paymentMethod?.trim() || null,
+      payment_method:  method.value,
       notes:           notes?.trim() || null,
       /* ⚠ NO `budget_line_id` FROM THE CALLER (Club Tier Stage 3b, owner's go 2026-10-06). It is the CLUB's
          plan line (`org_budget_lines`), and it was stored straight from the body, unchecked — so a request

@@ -21,7 +21,7 @@ import KitDialog from '../KitDialog';
 import { Callout, RepChip, RowAction } from '../RepKit';
 import { REQUEST_DIRECTION_WORD, UNLINKED_APPROVAL, lockedRecordWords, methodWord, requestStatusWord } from '@/lib/club-money-words';
 import fy from './FiscalYear.module.css';
-import { clubMoneyInWord } from '@/lib/coach-club-money';
+import { clubMoneyInWord, requestMethodLabel } from '@/lib/coach-club-money';
 import { formatShortWeekdayDate, tournamentToday } from '@/lib/timezone';
 import { HAND_BACK_WORDS as HB, shortDay } from '@/lib/club-hand-back-words';
 import { requestIsSettled } from '@/lib/club-money-figures';
@@ -149,7 +149,8 @@ export function RequestWindow({ r, canMove, onAsk, onClose }: {
         !out ? ['Filed by the coach as', filed.legacy ? '— (filed before we asked)' : filed.word === 'New money' ? 'New money for the season' : 'Money back for a cost'] : null,
         budget ? ['In the team’s budget', budget] : null,
         ['Asked by', `${r.askedBy ?? 'A coach'} · ${day(r.createdAt)}`],
-        r.paymentMethod ? [out ? 'How it’s coming' : 'How they’d like it', methodWord(r.paymentMethod) ?? r.paymentMethod] : null,
+        // What the coach answered, by direction (13d-9); a request filed under the old question reads "(as filed)".
+        r.paymentMethod ? [requestMethodLabel(r, 'club'), methodWord(r.paymentMethod) ?? r.paymentMethod] : null,
         decided ? ['Decided', decided] : null,
         r.status === 'approved' && r.paidReference ? ['Reference', r.paidReference] : null,
       ]} />

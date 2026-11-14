@@ -20,13 +20,14 @@ import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
 import { useSharedMoneyRead, useBumpMoneyRevision, useOnMoneyRevisionBump } from '@/lib/coach-money-refresh';
 import {
-  CLUB_MONEY_ITEM_DIRECTION, CLUB_MONEY_IN_ASK, clubMoneyInWord, clubRequestItemDirection,
+  CLUB_MONEY_ITEM_DIRECTION, CLUB_MONEY_IN_ASK, CLUB_REQUEST_METHOD_WORDS as RMW, clubMoneyInWord, clubRequestItemDirection,
+  clubRequestMethods, requestMethodAsFiled, requestMethodLabel, requestPaidFacts, requestPaidOn,
   type ClubMoneyInMeaning, type ClubRequest, type ClubRequestType,
 } from '@/lib/coach-club-money';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { clubBillFigures, clubInstallmentDue, clubInstallmentLeftTeamOn, clubInstallmentReceivedOn, clubInstallmentState, requestIsSettled, requestWaitsOnClub } from '@/lib/club-money-figures';
 import { HAND_BACK_WORDS as HB } from '@/lib/club-hand-back-words';
-import { coachSentLine, howItCame } from '@/lib/club-money-words';
+import { coachSentLine, howItCame, methodWord } from '@/lib/club-money-words';
 import refusal from '@/components/coaches/CoachSeasonRefusalNotice.module.css';
 import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type RepAllocationInstallment, type BudgetCategoryWithItems } from '@/lib/types';
 import { CLUB_MONEY_COLUMNS, clubMoneyRows } from '@/lib/coach-money-exports';
@@ -111,7 +112,8 @@ type PanelRequest = ClubRequest & {
   } | null;
 };
 
-const PAYMENT_METHODS = ['Cash', 'E-Transfer', 'Cheque', 'Card', 'Other'];
+/* ⚰ `PAYMENT_METHODS` (the display words, saved as typed) STOOD HERE. The answer is the product's method code now, by
+   direction (`clubRequestMethods`, Stage 13d-9), so the treasurer's Approve pre-fills from it. */
 
 /** A bill's figures before its installments have been walked — one pass fills all three. */
 const EMPTY_FIGURES = {
@@ -367,10 +369,10 @@ function ClubFilingControl({
   );
 }
 
-function StatusBadge({ status, on }: { status: string; on?: string | null }) {
+function StatusBadge({ status, on, paid = false }: { status: string; on?: string | null; paid?: boolean }) {
   const chip = STATUS_CHIP[status] ?? { cls: 'badgeDraft', label: status };
-  // "Credited Oct 14" — a credit's day is its whole answer (specimen 5).
-  const label = status === 'credited' && on ? HB.statusCredited(on.slice(0, 10)) : chip.label;
+  // "Credited Oct 14" — a credit's day is its whole answer (specimen 5). "Paid" — an approval the club recorded paying (13d-10).
+  const label = status === 'credited' && on ? HB.statusCredited(on.slice(0, 10)) : paid ? 'Paid' : chip.label;
   return (
     <span className={`${styles.badge} ${styles[chip.cls]}`}>
       {requestWaitsOnClub(status) && <Clock size={11} aria-hidden />} {label}
@@ -1881,6 +1883,8 @@ export function ClubPanel({
                     ) : shownRequests.map(r => {
                       const pending = r.status === 'pending';
                       const canEdit = pending && canWriteMoney;
+                      const paidOn = requestPaidOn(r);
+                      const statusOn = paidOn ?? (r.status !== 'credited' ? r.reviewedAt : null);
                       return (
                         <tr
                           key={r.id}
@@ -1930,8 +1934,10 @@ export function ClubPanel({
                           </td>
                           <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>{fmt(r.amount)}</td>
                           <td className={`${styles.td} ${styles.clubStatusCell}`} data-label="Status">
-                            <StatusBadge status={r.status} on={r.reviewedAt} />
-                            {r.reviewedAt && r.status !== 'credited' && <span className={styles.clubReviewedOn}> {fmtDate(r.reviewedAt)}</span>}
+                            {/* "Paid Oct 19" once the club recorded paying it (13d-10): the day the money moved, not the
+                                day it was approved. An approval before the club recorded days keeps "Approved". */}
+                            <StatusBadge status={r.status} on={r.reviewedAt} paid={!!paidOn} />
+                            {statusOn && <span className={styles.clubReviewedOn}> {fmtDate(statusOn)}</span>}
                           </td>
                           <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
                             {/* ⚠⚠ ONE DOOR GLYPH ON EVERY ROW OF THIS SCREEN (owner, §134 walk). This
@@ -2332,6 +2338,10 @@ export function ClubPanel({
                     onChange={side => {
                       setFormType(side);
                       if (side === 'payment_to_org') setFormMeaning(null);
+                      // Card is only for paying the club (13d-9): turned round, an answer this side doesn't offer clears.
+                      // An old request's own words stay until the coach picks another.
+                      if (formMethod && !requestMethodAsFiled(formMethod)
+                        && !(clubRequestMethods(side) as readonly string[]).includes(formMethod)) setFormMethod('');
                       clearFormItem();
                     }}
                   />
@@ -2508,17 +2518,42 @@ export function ClubPanel({
                 )}
               </div>
 
+              {/* ⚖ THE COACH IS ASKED WHAT THE TREASURER NEEDS (Stage 13d-9, owner 2026-11-13): by direction, saved as the
+                  code Approve pre-fills from, read back in the words the coach chose — never the code. A request filed under
+                  the old question keeps its words, "(as filed)", until the coach picks another. */}
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="club-method">Payment method</label>
                 {readOnly ? (
-                  <p className={styles.recordValue}>{formMethod || '—'}</p>
+                  <>
+                    <span className={styles.label}>{requestMethodLabel({ requestType: formType, paymentMethod: formMethod || null }, 'coach')}</span>
+                    <p className={styles.recordValue}>{methodWord(formMethod) ?? '—'}</p>
+                  </>
                 ) : (
-                  <select id="club-method" className={styles.select} value={formMethod} onChange={e => setFormMethod(e.target.value)}>
-                    <option value="">— optional —</option>
-                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <>
+                    <label className={styles.label} htmlFor="club-method">{RMW.ask[formType]}</label>
+                    <select id="club-method" className={styles.select} value={formMethod} onChange={e => setFormMethod(e.target.value)}>
+                      <option value="">— optional —</option>
+                      {formMethod && !(clubRequestMethods(formType) as readonly string[]).includes(formMethod) && (
+                        <option value={formMethod}>{RMW.asFiledOption(methodWord(formMethod) ?? formMethod)}</option>
+                      )}
+                      {clubRequestMethods(formType).map(m => <option key={m} value={m}>{methodWord(m)}</option>)}
+                    </select>
+                    <span className={styles.formHint}>{RMW.hint(formType)}</span>
+                  </>
                 )}
               </div>
+
+              {/* ⚖ PAID — how and when the club moved it (Stage 13d-10). The club recorded the day, method and reference at
+                  Approve and this screen already loads them; a plain row like the window's other facts. */}
+              {readOnly && editing && (() => {
+                const paid = requestPaidFacts(editing);
+                return paid && (
+                  <div className={`${styles.field} ${styles.formGridFull}`}>
+                    <span className={styles.label}>{paid.label}</span>
+                    <p className={styles.recordValue}>{paid.value}</p>
+                    {paid.sub && <span className={styles.formHint}>{paid.sub}</span>}
+                  </div>
+                );
+              })()}
 
               {/* An empty Notes box is worth offering while a request can still be written; on a
                   reviewed one it would be a labelled dash saying nothing. */}

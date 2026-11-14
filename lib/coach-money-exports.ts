@@ -37,7 +37,7 @@ import { KIND_LABEL, SPONSOR_STANDING_LABEL, sponsorStanding } from './coach-fun
 import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
 import { clubMoneyInWord, type ClubMoneyInMeaning, type ClubRequestType } from './coach-club-money';
 import { clubInstallmentState, clubInstallmentDue } from './club-money-figures';
-import { CLUB_SENT_WAITING_WORD } from './club-money-words';
+import { CLUB_SENT_WAITING_WORD, methodWord } from './club-money-words';
 import { BOARD_TEAMS_EXPORT_COLUMNS } from './club-budget-report';
 import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
 import type { CommitmentStanding } from './payable-standing';
@@ -1168,7 +1168,8 @@ export function paymentRequestRows(
     category: r.budgetCategoryName ?? '',
     item: r.budgetItemName ?? '',
     amount: r.amount,
-    method: r.paymentMethod ?? '',
+    // The coach's words, never the stored code (13d-9 saves the code).
+    method: methodWord(r.paymentMethod) ?? '',
     status: REQUEST_STATUS_LABEL[r.status]
       ?? (r.status.charAt(0).toUpperCase() + r.status.slice(1)),
     reviewed: r.reviewedAt ? r.reviewedAt.slice(0, 10) : '',
