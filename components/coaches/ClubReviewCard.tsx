@@ -1,14 +1,19 @@
 'use client';
 /**
- * THE CLUB'S PROPOSAL, ON A TEAM'S OVERVIEW (Club Tier Stage 11a, part B — hub Stages 10 + 11, specimen 14 step 5 "The
- * coach reviews"; Ask 24, amending Stage 11 Ask 1: an optional review round that NEVER blocks).
+ * THE CLUB'S PROPOSALS, IN A TEAM'S OVERVIEW TAIL (Club Tier Stage 11a, part B — hub Stages 10 + 11, specimen 14 step 5
+ * "The coach reviews"; Ask 24, amending Stage 11 Ask 1: an optional review round that NEVER blocks).
  *
- *   the card   — where a head coach already looks (`CoachClubArrivalCard`'s pattern: the accent card, a kicker, a
- *                title, a line, one action): "The club has a proposal for 15U AAA" · "Winter dome · Sundays: 25 Sundays
- *                and a $2,700.00 bill. Reply by Tue, Sep 22." · Review it. Once answered it SAYS the answer and offers
- *                to change it — either answer can be changed until the club finalizes (the drawing's tag); it is gone
- *                once the schedule is final (the read returns only schedules in review).
- *   the window — the bell and the email open the same window (they land on this Overview): "The club's proposal ·
+ *   the list   — RE-PLACED by the owner 2026-11-14 (Overview drawings A1–A6, artifact claude.ai/artifact/6CBLokgyfhJ7eZTE3GgYro).
+ *                It used to be one full accent card PER proposal ABOVE the One Thing card, each with its own lime "Review
+ *                it" — two proposals pushed game day two thirds of the way down the window. Now: ONE row per schedule
+ *                in review, in the Overview's tail (Chunk I rule 8: everything that is not today's work is ONE tail;
+ *                rule 6: full width is the anchor's and the board's). A label that counts what still needs a reply
+ *                ("2 waiting on your reply" · "Answered · waiting for the club"); each row is the schedule's name, what it
+ *                holds, and on the right the reply-by — "⚠ Your reply was due …" in amber when it has passed (amber, not
+ *                red: the reply-by never blocks), late rows first. An answered row goes quiet and sorts last but stays,
+ *                so the answer can be changed until the club finalizes; it is gone once the schedule is final (the read
+ *                returns only schedules in review). The whole row opens the window (the row list's own button row).
+ *   the window — the bell and the email open the same window (they land on this list, `#club-proposals`): "The club's proposal ·
  *                Winter dome · Sundays · reply by Tue, Sep 22" (never "From the club", which the coach's Money says of
  *                money the club pays — P11-03, the /design review); Your time (the slots as a pattern); Your bill (its
  *                share and payments, each payment naming the slots it covers — Ask 23); "Nothing is on your schedule or
@@ -17,14 +22,15 @@
  *
  * ⚖ WHO: a HEAD COACH of the team (the review carries the team's bill) — the route answers nothing for anyone else.
  */
-import { useCallback, useEffect, useState } from 'react';
-import { CoachCard } from '@/components/coaches/kit';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { TriangleAlert } from 'lucide-react';
+import { CoachRow, CoachRowList } from '@/components/coaches/CoachRowList';
 import QuestionShell, { QuestionReason } from './QuestionShell';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './CoachClubArrivalCard.module.css';
 import own from './ClubSlot.module.css';
 import { fmt } from '@/lib/coach-money-summary';
-import { formatShortWeekdayDate, formatStoredDate } from '@/lib/timezone';
+import { formatShortWeekdayDate, formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { joinWithAnd } from '@/lib/utils';
 import { SCHEDULE_COACH_WORDS as C, moneyCents, slotCountWords } from '@/lib/club-schedule-words';
 
@@ -43,10 +49,14 @@ interface Review {
   reply: { answer: 'looks_good' | 'ask_for_change'; words: string | null; at: string } | null;
 }
 
-export default function ClubReviewCard({ orgSlug, teamId, teamName }: { orgSlug: string; teamId: string; teamName: string }) {
+/** Where the bell and the review email land (lib/club-schedule-send.ts): the list sits below the fold on a phone. */
+export const CLUB_PROPOSALS_ANCHOR = 'club-proposals';
+
+export default function ClubReviewCard({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [open, setOpen] = useState<Review | null>(null);
-  const [said, setSaid] = useState<{ scheduleId: string; text: string } | null>(null);
+  // What the last answer said, NAMING its schedule: one line under the whole list, so with two proposals it must say which.
+  const [said, setSaid] = useState<{ scheduleName: string; text: string } | null>(null);
   const url = `/api/coaches/${encodeURIComponent(orgSlug)}/teams/${encodeURIComponent(teamId)}/club-schedules`;
   const load = useCallback(() => {
     let cancelled = false;
@@ -58,28 +68,59 @@ export default function ClubReviewCard({ orgSlug, teamId, teamName }: { orgSlug:
   }, [url]);
   useEffect(() => load(), [load]);
 
+  // Landing from the bell or the email (`…#club-proposals`): the rows arrive after the page has painted, so the
+  // browser's own jump to the anchor found nothing — bring the list into view once, when it first has rows.
+  const landed = useRef(false);
+  useEffect(() => {
+    if (landed.current || !reviews.length || window.location.hash !== `#${CLUB_PROPOSALS_ANCHOR}`) return;
+    landed.current = true;
+    document.getElementById(CLUB_PROPOSALS_ANCHOR)?.scrollIntoView({ block: 'start' });
+  }, [reviews.length]);
+
   if (!reviews.length) return null;
+  // The reply-by is a calendar day, compared with today's in the platform's org zone (`ORG_TIME_ZONE`, the zone
+  // `formatShortWeekdayDate` shows it in) — both `YYYY-MM-DD`. Late only re-labels and re-sorts; it never blocks.
+  const today = tournamentToday();
+  const isLate = (r: Review) => !r.reply && r.replyBy !== null && r.replyBy < today;
+  const rank = (r: Review) => (r.reply ? 2 : isLate(r) ? 0 : 1);
+  const rows = [...reviews].sort((a, b) => rank(a) - rank(b) || (a.replyBy ?? '9999-12-31').localeCompare(b.replyBy ?? '9999-12-31'));
+  const waiting = reviews.filter(r => !r.reply).length;
+  const titleId = `${CLUB_PROPOSALS_ANCHOR}-title`;
   return (
     <>
-      {reviews.map(r => (
-        <CoachCard key={r.scheduleId} accent className={css.card} role="status">
-          <span className={css.kicker}>{C.reviewEyebrow}</span>
-          <p className={css.title}>{C.reviewCardTitle(teamName)}</p>
-          <p className={css.body}>
-            {C.reviewCardBody(r.scheduleName, slotCountWords(r.slots, r.days, r.oneWeekday), r.bill ? moneyCents(r.bill.cents) : null, r.replyBy ? formatShortWeekdayDate(r.replyBy) : null)}
-            {r.reply && <> {C.reviewCardAnswered(r.reply.answer)}</>}
-          </p>
-          {said?.scheduleId === r.scheduleId && open === null && <p className={css.body} role="status">{said.text}</p>}
-          <div>
-            <button type="button" className={`btn ${r.reply ? 'btn-outline' : 'btn-lime'} btn-sm`} onClick={() => { setSaid(null); setOpen(r); }}>
-              {r.reply ? C.changeAnswer : C.reviewIt}
-            </button>
-          </div>
-        </CoachCard>
-      ))}
+      {/* A plain block, not a named <section>: the label names the LIST (one name, one thing). */}
+      <div id={CLUB_PROPOSALS_ANCHOR} className={css.block}>
+        <div className={css.head}>
+          <h2 className={css.kicker} id={titleId}>{C.proposalsLabel(reviews.length)}</h2>
+          <span className={css.count}>{C.proposalsWaiting(waiting, reviews.length)}</span>
+        </div>
+        <CoachRowList labelledBy={titleId}>
+          {rows.map(r => (
+            <CoachRow
+              key={r.scheduleId}
+              as="button"
+              aria-haspopup="dialog"
+              onClick={() => { setSaid(null); setOpen(r); }}
+              className={css.proposalRow}
+              title={r.scheduleName}
+              titleWeight={r.reply ? 'plain' : undefined}
+              caption={C.proposalHolds(slotCountWords(r.slots, r.days, r.oneWeekday), r.bill ? moneyCents(r.bill.cents) : null)}
+              trail={r.reply
+                ? <span className={css.said}>{C.proposalAnswered(r.reply.answer)}</span>
+                : r.replyBy
+                  ? isLate(r)
+                    ? <span className={css.late}><TriangleAlert size={13} aria-hidden /> {C.proposalReplyLate(formatShortWeekdayDate(r.replyBy))}</span>
+                    : <span className={css.by}>{C.proposalReplyBy(formatShortWeekdayDate(r.replyBy))}</span>
+                  : null}
+              door="chevron"
+            />
+          ))}
+        </CoachRowList>
+        {said && open === null && <p className={css.saidLine} role="status"><strong>{said.scheduleName}</strong> · {said.text}</p>}
+      </div>
       {open && (
         <ReviewWindow review={open} url={url} onClose={() => setOpen(null)}
-          onAnswered={text => { setSaid({ scheduleId: open.scheduleId, text }); setOpen(null); load(); }} />
+          onAnswered={text => { setSaid({ scheduleName: open.scheduleName, text }); setOpen(null); load(); }} />
       )}
     </>
   );

@@ -1927,7 +1927,16 @@ export default function TeamOverviewPage({
     // Only once the read has landed — `null` is "not known yet", and a card that guesses about the
     // lineup is the whole defect this row exists to remove. Only Ready (a coach's own act, F02)
     // reads as done; Draft and Needs review still prompt the coach the same as Not started.
-    if (nextLineupBadge !== null) {
+    //
+    // ⚠ NOT STARTED DRAWS NO CHIP (owner, 2026-11-14, Overview drawings A8). With no lineup at all,
+    // the chip and the card's lime "Build lineup" said the same thing and opened the same page —
+    // and on a phone the chip was a whole 44px door row. Keyed on the BADGE, not on the primary:
+    // the primary stays Build lineup for a draft and for needs-review too (`lineupOutstanding` in
+    // lib/coach-overview.ts), and those chips stay because they say what the button doesn't. A
+    // coach WITHOUT the lineup duty keeps it: their card never offers Build lineup, so for them the
+    // chip is the only place the card says the lineup isn't started — not a duplicate.
+    const buttonSaysNotStarted = nextLineupBadge === 'not_started' && chipCaps.lineups;
+    if (nextLineupBadge !== null && !buttonSaysNotStarted) {
       const lineupHref = chipCaps.lineups ? anchorHref('build_lineup') : null;
       prepChips.push(nextLineupBadge === 'ready'
         ? { key: 'lineup', state: 'done', href: lineupHref, body: <><CheckCircle2 size={13} aria-hidden /> Lineup ready</> }
@@ -2060,13 +2069,8 @@ export default function TeamOverviewPage({
         </p>
       )}
 
-      {/* A club team's one-time card (Club Tier Stage 2, specimens 4 and 6): the club started a new
-          season, or welcomed a coach it invited. Never a season door — the club holds those. */}
-      {!isTeamWorkspace && <CoachClubArrivalCard orgSlug={orgSlug} teamId={teamId} />}
-
-      {/* The club's proposal (Club Tier 11a, specimen 14 step 5): a head coach's review of a schedule the club sent for
-          review — their slots and their bill, Looks good / Ask for a change. Gone once the club finalizes. */}
-      {!isTeamWorkspace && <ClubReviewCard key={teamId} orgSlug={orgSlug} teamId={teamId} teamName={assignment.teamName ?? 'Your team'} />}
+      {/* The club's arrival card and its proposals stood HERE, above the one thing, until 2026-11-14: one accent card
+          per proposal pushed game day two thirds of the way down the window. They are rows in THE TAIL now (below). */}
 
       {/* ══ THE ONE THING ══════════════════════════════════════════════════════
           Exactly one card. Which one is the resolver's decision; this renders it in one of three
@@ -2117,8 +2121,23 @@ export default function TeamOverviewPage({
               ))}
             </>
           ) : null}
-          answers={(anchor.answers.length > 0 || (anchor.kind === 'preseason' && !tourSeen)) ? (
+          answers={(prepChips.length > 0 || anchor.answers.length > 0 || (anchor.kind === 'preseason' && !tourSeen)) ? (
             <>
+              {/* The prep chips ride the META row, on the right where the other kinds keep their
+                  answers (owner, 2026-11-14, Overview drawings A7): they had a fourth row and a
+                  divider only because they were added after the 08-12 three-row arrangement, and
+                  game-shaped cards carry no text answers (lib/coach-overview.ts), so the slot was
+                  empty. Same chips, same doors, same order; their own group so they keep the chip
+                  gap and wrap together, left-aligned, when the line is full. ≤640 they stand down
+                  for the phone's doors below, exactly as before. */}
+              {prepChips.length > 0 && (
+                <div className={styles.oneChips}>
+                  {prepChips.map(c => (c.href
+                    ? <Link key={c.key} href={c.href} className={styles.oneChip} data-state={c.state}>{c.body}</Link>
+                    : <span key={c.key} className={styles.oneChip} data-state={c.state}>{c.body}</span>
+                  ))}
+                </div>
+              )}
               {anchor.answers.map(answer => {
                 if (answer === 'not_yet' || answer === 'got_it') {
                   return (
@@ -2203,18 +2222,9 @@ export default function TeamOverviewPage({
           )}
 
           {/* Readiness rides the card on BOTH working shapes — it is the whole reason a coach
-              opens the portal on a game morning, and it used to sit three scrolls down.
-              Chunk C's two extra facts (call time, uniform) ride here too. Everything about WHAT
-              this row contains and who gets a tappable version of it is decided in `prepChips`
-              above; this only draws it. */}
-          {prepChips.length > 0 && (
-            <div className={styles.oneChips}>
-              {prepChips.map(c => (c.href
-                ? <Link key={c.key} href={c.href} className={styles.oneChip} data-state={c.state}>{c.body}</Link>
-                : <span key={c.key} className={styles.oneChip} data-state={c.state}>{c.body}</span>
-              ))}
-            </div>
-          )}
+              opens the portal on a game morning, and it used to sit three scrolls down. Above 640
+              the chips draw on the meta row (the `answers` slot above, A7 2026-11-14); what they
+              contain and who gets a tappable version is decided in `prepChips`. */}
           {/* The phone's doors (B4) — one 44px row per destination, in the row idiom the board's
               rows use below; the first chip's state colours the door, the chips that share its
               page follow as a sentence ("10 of 12 in · 1 late · 1 out"). ≤640 only. */}
@@ -2385,14 +2395,22 @@ export default function TeamOverviewPage({
           single ruled line on desktop. Replaces four scattered bands (the full-width tournament
           strip, the fan-view link floating on the page ground, the last-season card and the
           this-week strip) that between them out-weighted the coach's actual numbers. */}
-      {overviewFanView && (
-        <div className={styles.tail}>
-          {/* The SAME component the free portal renders, in its row layout — so the lifecycle
-              states, their labels and the ⇄ Fan view door stay in one place. A hand-rolled row here
-              would have meant a future state landing on one tier only. */}
-          <CoachLiveEventCard event={overviewFanView} layout="row" />
-        </div>
-      )}
+      {/* Always mounted: the club's two blocks decide for themselves (each fetches, and renders nothing for a
+          standalone portal, a dismissed arrival or no schedule in review), so the page cannot know up front whether
+          the tail has anything — `.tail:empty` hides the rule when it does not. */}
+      <div className={styles.tail}>
+        {/* The SAME component the free portal renders, in its row layout — so the lifecycle
+            states, their labels and the ⇄ Fan view door stay in one place. A hand-rolled row here
+            would have meant a future state landing on one tier only. */}
+        {overviewFanView && <CoachLiveEventCard event={overviewFanView} layout="row" />}
+        {/* A club team's one-time arrival (Club Tier Stage 2, specimens 4 and 6): the club started a new season, or
+            welcomed a coach it invited — one row with "Got it" (owner 2026-11-14, Overview drawings A4). Never a season
+            door — the club holds those. */}
+        {!isTeamWorkspace && <CoachClubArrivalCard orgSlug={orgSlug} teamId={teamId} />}
+        {/* The club's proposals (Club Tier 11a, specimen 14 step 5; re-placed 2026-11-14, drawings A1–A6): one row per
+            schedule in review, opening Looks good / Ask for a change. Head coach only; gone once the club finalizes. */}
+        {!isTeamWorkspace && <ClubReviewCard key={teamId} orgSlug={orgSlug} teamId={teamId} />}
+      </div>
 
       {/* The "run local tournaments here too" banner stood here until 2026-09-13. It showed to every
           staff member and walked the ones without the right into a "Forbidden"; hosting now has one

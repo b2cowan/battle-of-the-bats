@@ -1045,12 +1045,15 @@ export const SCHEDULE_COACH_WORDS = {
   formFromClub: 'The club’s schedule',
   formFromClubHint: (schedule: string) => `Time and place come from ${schedule}. Only the club can move or remove this practice.`,
   formYourPlan: 'Your practice plan',
-  reviewCardTitle: (team: string) => `The club has a proposal for ${team}`,
-  reviewCardBody: (schedule: string, slots: string, bill: string | null, replyBy: string | null) =>
-    `${schedule}: ${slots}${bill ? ` and a ${bill} bill` : ''}.${replyBy ? ` Reply by ${replyBy}.` : ''}`,
-  reviewCardAnswered: (answer: 'looks_good' | 'ask_for_change') => (answer === 'looks_good' ? 'You said it looks good.' : 'You asked for a change.'),
-  reviewIt: 'Review it',
-  changeAnswer: 'Change your answer',
+  // The proposals' rows in the Overview's tail (owner 2026-11-14, Overview drawings A1–A6): one row per proposal under
+  // a label that counts what still needs a reply. Never "From the club" (Money says that of money the club pays).
+  proposalsLabel: (n: number) => (n === 1 ? 'The club’s proposal' : 'The club’s proposals'),
+  proposalsWaiting: (waiting: number, total: number) =>
+    waiting === 0 ? 'Answered · waiting for the club' : total === 1 ? 'Waiting on your reply' : `${waiting} waiting on your reply`,
+  proposalHolds: (slots: string, bill: string | null) => (bill ? `${slots} · ${bill} bill` : slots),
+  proposalReplyBy: (day: string) => `Reply by ${day}`,
+  proposalReplyLate: (day: string) => `Your reply was due ${day}`,
+  proposalAnswered: (answer: 'looks_good' | 'ask_for_change') => (answer === 'looks_good' ? 'You said it looks good' : 'You asked for a change'),
   reviewEyebrow: 'Club proposal',
   reviewFrom: 'The club’s proposal',
   replyByWords: (day: string) => `reply by ${day}`,

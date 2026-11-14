@@ -1,0 +1,748 @@
+<title>Club Proposals on Overview</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+/* Layout: sticky numbered tabs → View row → one framed specimen at TRUE SIZE with its explanation above it.
+   Document chrome is theme-aware; the product frames always show the warm coach portal, as shipped. */
+:root {
+  /* document chrome */
+  --bg: #EEF0EA; --fg: #1E2219; --muted: #555C4C; --line: #CBD0C2; --panel: #FFFFFF; --accent: #3E4F12;
+  --chip-new: #1F6B3A; --chip-res: #7A4C00; --chip-same: #5A5F55; --chip-bad: #A3321C;
+  /* the product (warm coach portal tokens, copied from globals.css) */
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink-soft: #4A4235; --p-dim: #615A54;
+  --p-line: rgba(70,55,30,0.12); --p-line-strong: rgba(70,55,30,0.20);
+  --p-olive: #57651E; --p-olive-soft: rgba(87,101,30,0.10); --p-warning: #835006;
+  --p-warning-soft: rgba(131,80,6,0.08); --p-win: #2F6B2A; --p-lime: #D9F99D; --p-grid: rgba(70,55,30,0.045);
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #171A14; --fg: #E6E9DF; --muted: #A9B09C; --line: #353B2E; --panel: #20241B; --accent: #C5DA7A;
+  --chip-new: #7FD39A; --chip-res: #F0B861; --chip-same: #A9AFA2; --chip-bad: #F08A72; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #171A14; --fg: #E6E9DF; --muted: #A9B09C; --line: #353B2E; --panel: #20241B; --accent: #C5DA7A;
+  --chip-new: #7FD39A; --chip-res: #F0B861; --chip-same: #A9AFA2; --chip-bad: #F08A72; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--font); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.doc { padding-block: 22px 10px; max-width: 1400px; margin: 0 auto; }
+header.doc h1 { font-size: 22px; margin: 0 0 4px; text-wrap: balance; letter-spacing: -0.01em; }
+header.doc p { margin: 0; color: var(--muted); max-width: 76ch; }
+
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.tabs .in { max-width: 1400px; margin: 0 auto; display: flex; gap: 4px; overflow-x: auto; padding-block: 8px 0; }
+.tabs button { font: 600 13.5px var(--font); color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; padding: 8px 12px 10px; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible, .pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.viewrow { max-width: 1400px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; padding-block: 12px; }
+.viewrow label { font: 600 12px var(--font); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-right: 8px; }
+/* The shipped ViewSwitch: ONE white rounded track, the chosen option in soft olive */
+.seg { display: inline-flex; flex-wrap: wrap; background: #fff; border: 1px solid var(--p-line-strong); border-radius: 999px; padding: 3px; }
+.seg button { font: 600 12.5px var(--font); color: var(--p-ink-soft); background: none; border: 0; border-radius: 999px; padding: 5px 13px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--p-olive-soft); color: var(--p-olive); }
+
+main { max-width: 1400px; margin: 0 auto; padding-block: 4px 60px; }
+.panel[hidden] { display: none !important; }
+.explain { max-width: 82ch; margin: 0 0 16px; }
+.explain h2 { font-size: 17px; margin: 0 0 6px; text-wrap: balance; }
+.explain p { margin: 0 0 8px; }
+.explain ul { margin: 0 0 8px; padding-left: 20px; }
+.explain li { margin-bottom: 4px; }
+.kicker-doc { font: 600 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.scroller { overflow-x: auto; padding-bottom: 8px; }
+.frame-label { font: 600 11px var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.sizenote { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; max-width: 90ch; }
+.changed { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 0 0 16px; max-width: 82ch; }
+.changed h3 { margin: 0 0 4px; font-size: 14px; }
+.changed ul { margin: 0; padding-left: 20px; }
+
+/* Tags and pins: every highlight opens its explanation on click */
+.mk, .pin { cursor: pointer; font: 700 10px var(--mono); letter-spacing: 0.06em; border-radius: 4px; border: 1.5px solid currentColor; background: var(--panel); padding: 1px 6px; vertical-align: middle; }
+.mk.new { color: var(--chip-new); } .mk.res { color: var(--chip-res); } .mk.same { color: var(--chip-same); } .mk.bad { color: var(--chip-bad); }
+.pin { display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; border-radius: 50%; color: #fff; background: #3E4F12; border-color: #3E4F12; font-size: 11px; }
+.pin.bad { background: #A3321C; border-color: #A3321C; }
+.tagrow { position: absolute; z-index: 3; display: flex; gap: 6px; }
+
+/* ── The product frame (desktop) ── */
+.dk { position: relative; width: 1360px; height: 900px; background: var(--p-paper); background-image: linear-gradient(var(--p-grid) 1px, transparent 1px), linear-gradient(90deg, var(--p-grid) 1px, transparent 1px); background-size: 28px 28px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 47px 1fr; font-family: var(--font); color: var(--p-ink); }
+.dk .brand { grid-row: 1; grid-column: 1; background: #fff; border-right: 1px solid var(--p-line); border-bottom: 1px solid var(--p-line); display: flex; align-items: center; gap: 10px; padding: 0 18px; font-weight: 700; font-size: 16px; }
+.dk .brand small { font: 700 10px var(--mono); letter-spacing: 0.1em; color: var(--p-ink-soft); border-left: 1px solid var(--p-line); padding-left: 12px; }
+.dk .top { grid-row: 1; grid-column: 2; background: #fff; border-bottom: 1px solid var(--p-line); display: flex; align-items: center; justify-content: space-between; padding: 0 28px 0 32px; }
+.dk .top h3 { margin: 0; font-size: 16px; font-weight: 700; }
+.dk .ctx { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.dk .gd { font: 700 11px var(--mono); color: var(--p-olive); background: var(--p-olive-soft); border: 1px solid rgba(87,101,30,0.3); border-radius: 999px; padding: 1px 8px; }
+.dk .ico { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--p-ink-soft); display: inline-block; margin-left: 14px; }
+.dk .side { grid-row: 2; grid-column: 1; background: #fff; border-right: 1px solid var(--p-line); padding: 10px 0; font-size: 14px; }
+.dk .team { display: flex; align-items: center; gap: 9px; padding: 6px 16px 12px; font-weight: 700; border-bottom: 1px solid var(--p-line); margin-bottom: 8px; }
+.dk .badge { background: #1D3FA8; color: #fff; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 4px 3px; }
+.dk .nav { padding: 7px 20px; display: flex; gap: 10px; align-items: center; color: var(--p-ink-soft); }
+.dk .nav::before { content: ""; width: 12px; height: 12px; border: 1.4px solid var(--p-ink-soft); border-radius: 3px; flex: none; }
+.dk .nav.on { background: var(--p-olive-soft); color: var(--p-olive); font-weight: 600; }
+.dk .nav.on::before { border-color: var(--p-olive); }
+.dk .grp { font: 700 10px var(--mono); letter-spacing: 0.1em; color: var(--p-ink-soft); padding: 12px 20px 4px; }
+.dk .page { grid-row: 2; grid-column: 2; overflow: hidden; padding: 0 32px; }
+.col { width: 960px; max-width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-top: 32px; }
+
+.setup { align-self: flex-end; display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--p-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; }
+.setup b { color: var(--p-olive); }
+.setup .ring { width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--p-line-strong); border-top-color: var(--p-ink); }
+
+/* kit card */
+.card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 15px 17px; display: flex; flex-direction: column; gap: 7px; position: relative; }
+.card.acc { border-left: 3px solid var(--p-olive); }
+.card.win { border-left: 3px solid var(--p-win); }
+.k { font: 700 11px var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-ink-soft); }
+.t { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.35; }
+.b { margin: 0; font-size: 12px; line-height: 1.5; color: var(--p-ink-soft); }
+.btn-lime { align-self: flex-start; background: var(--p-lime); color: #1B2408; border: 1px solid #B8DA6A; font: 700 12px var(--font); border-radius: 6px; padding: 6px 12px; }
+.gday { padding: 18px 20px; gap: 10px; }
+.gday .head { display: flex; justify-content: space-between; align-items: center; }
+.gday .k { color: var(--p-win); display: flex; align-items: center; gap: 7px; }
+.gday .k::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--p-win); }
+.gday .main { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.gday h4 { margin: 0; font-size: 20px; font-weight: 700; }
+.gday .where { font-size: 14px; color: var(--p-ink-soft); }
+.gday .go { background: var(--p-lime); color: #1B2408; font: 700 14px var(--font); border-radius: 7px; padding: 0 18px; min-height: 40px; display: inline-flex; align-items: center; border: 1px solid #B8DA6A; white-space: nowrap; }
+.gday .chips { border-top: 1px solid var(--p-line); padding-top: 12px; display: flex; gap: 8px; }
+/* RESTYLED game card: the chips ride the time-and-place line; no fourth row, no divider */
+.gday.g2 { gap: 6px; padding: 16px 20px 17px; }
+.gday.g2 h4 { margin: 0; }
+.gday .k.when { color: var(--p-dim); font-weight: 700; }
+.gday .k.when::before { display: none; }
+.gbox.tab { width: 660px; }
+.gbox.tab .card { width: 620px; }
+.gbox.tab .chip { min-height: 44px; }
+.gday .mrow { display: flex; justify-content: space-between; align-items: center; gap: 6px 16px; flex-wrap: wrap; }
+.gday .chips2 { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip.done { color: var(--p-win); border-color: rgba(47,107,42,0.32); background: rgba(47,107,42,0.09); }
+.chip.fact { color: var(--p-dim); }
+.scoreline { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.scoreline span { font-size: 14px; color: var(--p-dim); font-weight: 700; }
+/* the phone's door rows (shipped: one 44px row per destination) */
+.doors { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--p-line); padding-top: 7px; margin-top: 2px; }
+.door { display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding: 4px 10px 4px 12px; border: 1px solid var(--p-line-strong); border-radius: 10px; background: rgba(70,55,30,0.04); font-size: 14px; font-weight: 600; color: var(--p-ink-soft); }
+.door.warn { color: var(--p-warning); border-color: rgba(131,80,6,0.34); background: var(--p-warning-soft); }
+.door .chev { width: 16px; height: 16px; opacity: 0.7; }
+.gstack { display: flex; flex-direction: column; gap: 22px; }
+.gbox { position: relative; width: 1000px; padding-left: 40px; }
+.gbox .card { width: 960px; }
+.chip { font-size: 12px; font-weight: 600; border: 1px solid var(--p-line-strong); border-radius: 999px; display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; white-space: nowrap; color: var(--p-ink-soft); background: rgba(70,55,30,0.04); }
+.chip.warn { color: var(--p-warning); border-color: rgba(131,80,6,0.35); background: var(--p-warning-soft); }
+
+/* the board */
+.boardlbl { font: 700 11px var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-ink-soft); margin-top: 8px; }
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.tile { background: #fff; border: 1px solid var(--p-line); border-radius: 8px; padding: 13px 15px; min-height: 92px; box-shadow: 0 1px 2px rgba(36,30,21,0.06); }
+.tile .k { font-size: 10px; }
+.tile .v { font-size: 20px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.tile .s { font-size: 12px; color: var(--p-dim); }
+
+/* ── The row list (drawn from the shipped CoachRowList / CoachRow) ── */
+.rl { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.rl .row { display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; align-items: center; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--p-line); cursor: pointer; }
+.rl .row:first-of-type { border-top: 0; }
+.rl .row:hover { background: var(--p-olive-soft); }
+.rl .nm { display: block; font-size: 14px; font-weight: 600; color: var(--p-ink); }
+.rl .dt { display: block; font-size: 12px; color: var(--p-dim); margin-top: 1px; }
+.rl .by { font-size: 12px; color: var(--p-ink-soft); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rl .by.late { color: var(--p-warning); font-weight: 600; }
+.rl .by.said { color: var(--p-dim); }
+.rl .chev { width: 16px; height: 16px; color: var(--p-dim); }
+.rl .row.answered .nm { font-weight: 400; color: var(--p-ink-soft); }
+/* B · framed card with its eyebrow (round 1's box, rows now two-line) */
+.cp { padding: 14px 0 0; gap: 0; }
+.cp .eye { display: flex; justify-content: space-between; align-items: center; padding: 0 16px 10px; }
+.cp .rl { border: 0; border-top: 1px solid var(--p-line); border-radius: 0 0 8px 8px; }
+.count { font-size: 12px; font-weight: 600; color: var(--p-ink-soft); }
+/* A · in the tail: the tail's hairline, the list's label, then the framed row list */
+.tail { border-top: 1px solid var(--p-line-strong); margin-top: 6px; padding-top: 14px; display: flex; flex-direction: column; gap: 8px; position: relative; }
+.tail .eye { display: flex; justify-content: space-between; align-items: center; }
+
+/* the fold */
+.fold { position: absolute; left: 0; right: 0; border-top: 2px dashed #A3321C; z-index: 4; pointer-events: none; }
+.fold span { position: absolute; right: 10px; top: -22px; font: 700 10px var(--mono); letter-spacing: 0.05em; color: #fff; background: #A3321C; padding: 2px 7px; border-radius: 4px; }
+.below { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(36,30,21,0.07); z-index: 2; pointer-events: none; }
+
+/* show only what differs */
+body.diff .same-x { opacity: 0.22; filter: grayscale(1); transition: opacity .15s; }
+
+/* ── Phone frames ── */
+.phones { display: flex; gap: 32px; align-items: flex-start; width: max-content; }
+.ph { position: relative; width: 390px; height: 844px; background: var(--p-paper); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; font-family: var(--font); color: var(--p-ink); flex: none; }
+.ph .bar { height: 52px; background: #fff; border-bottom: 1px solid var(--p-line); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-weight: 700; font-size: 16px; }
+.ph .bar .r { display: flex; gap: 14px; }
+.ph .bar .ico { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--p-ink-soft); }
+.ph .body { padding: 14px 14px 0; display: flex; flex-direction: column; gap: 12px; }
+.ph .setup { align-self: flex-start; }
+.ph .card { padding: 14px 15px; }
+.ph .btn-lime { width: 100%; text-align: center; padding: 11px; font-size: 14px; }
+.ph .gday { gap: 6px; }
+.ph .gday .main { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ph .gday h4 { font-size: 20px; margin: 0; flex: 1 1 9rem; }
+.ph .gday .go { flex: 1 1 auto; display: flex; justify-content: center; align-items: center; min-height: 44px; padding: 0 12px; font-size: 14px; }
+.ph .cp { padding: 13px 0 0; }
+.ph .cp .eye { padding: 0 15px 9px; }
+.ph .rl .row { grid-template-columns: minmax(0, 1fr) 16px; gap: 10px; padding: 11px 15px; align-items: start; }
+.ph .rl .by { display: block; margin-top: 2px; white-space: normal; }
+.ph .board { grid-template-columns: 1fr 1fr; gap: 10px; }
+.ph .tile { min-height: 74px; padding: 11px 13px; }
+.ph .tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 62px; background: #fff; border-top: 1px solid var(--p-line); display: grid; grid-template-columns: repeat(5, 1fr); z-index: 5; }
+.ph .tabbar div { display: grid; place-items: center; font-size: 10px; color: var(--p-ink-soft); padding-top: 8px; }
+.ph .tabbar div::before { content: ""; width: 16px; height: 16px; border: 1.5px solid currentColor; border-radius: 4px; }
+.ph .tabbar .on { color: var(--p-olive); font-weight: 600; }
+
+/* asks */
+.asks { display: grid; gap: 14px; max-width: 900px; }
+.ask { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.ask h3 { margin: 0 0 6px; font-size: 15.5px; text-wrap: balance; }
+.ask p { margin: 0 0 8px; }
+.ask ol { margin: 0; padding-left: 20px; }
+.ask li { margin-bottom: 5px; }
+.rec { font-weight: 700; color: var(--accent); }
+.keep { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; max-width: 900px; margin-top: 18px; }
+.keep h3 { margin: 0 0 6px; font-size: 15px; }
+.keep ul { margin: 0; padding-left: 20px; }
+.keep code { font: 12.5px var(--mono); }
+
+/* specimens up close */
+.specs { display: grid; gap: 26px; }
+.specbox { position: relative; width: 1000px; padding-left: 40px; }
+.specbox .rl, .specbox .tail { width: 960px; }
+
+/* the explanation window */
+.ov { position: fixed; inset: 0; background: rgba(10,12,8,0.45); z-index: 20; display: grid; place-items: center; padding: 20px max(16px, env(safe-area-inset-left, 0px)); }
+.ov .box { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 12px; max-width: 540px; width: 100%; padding: 18px 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+.ov h4 { margin: 0 0 8px; font-size: 16px; }
+.ov p { margin: 0 0 10px; }
+.ov button { font: 600 13px var(--font); background: var(--accent); color: var(--panel); border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+@media (max-width: 720px) { header.doc h1 { font-size: 19px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</defs></svg>
+
+<header class="doc wrap">
+  <p class="kicker-doc">Coaches Portal · team Overview · drawn 2026-11-14 · round 3 (the game card gets smaller too)</p>
+  <h1>A lighter Overview on game day</h1>
+  <p>You asked whether three short notices should fill the whole Overview, and then whether the game card itself needs to be so big. Neither should dominate. The club’s proposals become one row each in a small list, and the game card loses a row without losing any information. Every tag and numbered pin opens an explanation when you click it.</p>
+</header>
+
+<nav class="tabs wrap" aria-label="Sections"><div class="in" role="tablist">
+  <button role="tab" data-tab="whole-screen" aria-selected="true">1 · Where it sits</button>
+  <button role="tab" data-tab="game-card" aria-selected="false">2 · The game card, smaller</button>
+  <button role="tab" data-tab="up-close" aria-selected="false">3 · The rows up close</button>
+  <button role="tab" data-tab="phone" aria-selected="false">4 · Phone</button>
+  <button role="tab" data-tab="asks" aria-selected="false">5 · Asks</button>
+</div></nav>
+
+<div class="viewrow wrap" id="viewrow">
+  <div id="baWrap"><label>Showing</label><span class="seg" role="group" aria-label="Which layout">
+    <button type="button" data-ba="before" aria-pressed="false">Today</button>
+    <button type="button" data-ba="tail" aria-pressed="true">A · At the bottom (recommended)</button>
+    <button type="button" data-ba="under" aria-pressed="false">B · Under the game card</button>
+  </span></div>
+  <div id="dfWrap"><label>View</label><span class="seg" role="group" aria-label="View">
+    <button type="button" data-df="all" aria-pressed="true">Everything</button>
+    <button type="button" data-df="diff" aria-pressed="false">Show only what differs</button>
+  </span></div>
+</div>
+
+<main class="wrap">
+
+<!-- ═══════════ 1 · WHERE IT SITS ═══════════ -->
+<section class="panel" data-panel="whole-screen">
+  <div class="changed">
+    <h3>What changed since round 1</h3>
+    <ul>
+      <li><b>Round 3: the game card is smaller</b> in layouts A and B (tab 2). It goes from about 185px to about 135px tall on a desktop, from about 195px to about 150px on a tablet, and drops one 44px row on a phone. After the design review, the lineup chip drops only when no lineup has been started. Today’s layout still shows the card as it ships. I also corrected the phone frames: they now show the phone’s tappable readiness rows, which round 2 left out.</li>
+      <li><b>The recommendation moved.</b> Round 1 put the proposals in a box between the game card and the team board (now option B). The design review showed that breaks two July 30 Overview rules: the full width belongs only to the day’s card and the team board, and everything that isn’t today’s work goes in one quiet list at the bottom. A reply that can wait a day is exactly that, so A puts the proposals in that bottom list.</li>
+      <li>Each proposal is now two short lines (name, then what it holds), drawn from the portal’s shipped row list rather than a new one.</li>
+      <li>A late reply uses the ⚠ amber warning the game card already uses, not a new dot.</li>
+      <li>All text is on the portal’s type sizes. States that were missing are now drawn: “You asked for a change” and “all answered”.</li>
+    </ul>
+  </div>
+  <div class="explain">
+    <h2>Three layouts at true size</h2>
+    <p>The column is 960 wide, as it ships. The dashed red line is where your window ended in the screenshot you sent. Use <b>Showing</b> to switch layouts.</p>
+    <ul>
+      <li><b>Today:</b> the proposals come first, the game starts about two thirds of the way down, and the team board is below the window.</li>
+      <li><b>A · At the bottom:</b> the game card and the board are back together at the top. The proposals are in the bottom list, near the edge of a desktop window. On a phone they are below the first screen (tab 3).</li>
+      <li><b>B · Under the game card:</b> the proposals are visible on any screen, but they push the team board down and add a third full-width band. That needs your ruling to change the July 30 rule.</li>
+    </ul>
+  </div>
+
+  <p class="frame-label">Coach portal · desktop · true size · 1360 wide</p>
+  <div class="scroller">
+    <!-- TODAY -->
+    <div class="dk" data-ba-show="before" hidden>
+      <div class="brand same-x">FieldLogicHQ <small>COACH</small></div>
+      <div class="top same-x"><h3>Overview</h3><div class="ctx">UAT Rep Club · 2026 Season <span class="gd">Game day</span> Elmira Eagles · 8:00 p.m.<span class="ico"></span><span class="ico"></span><span class="ico"></span></div></div>
+      <div class="side same-x">
+        <div class="team"><span class="badge">15U</span>15U AAA</div>
+        <div class="nav on">Overview</div>
+        <div class="grp">SEASON</div><div class="nav">Schedule</div><div class="nav">Practice plans</div><div class="nav">Lineups</div><div class="nav">Tournaments</div>
+        <div class="grp">PROGRESS</div><div class="nav">Skills &amp; goals</div><div class="nav">Insights</div>
+        <div class="grp">MONEY</div><div class="nav">Money</div>
+        <div class="grp">COMMUNICATION</div><div class="nav">Email families</div>
+        <div class="grp">TEAM</div><div class="nav">Roster</div>
+      </div>
+      <div class="page"><div class="col">
+        <span class="setup same-x"><span class="ring"></span>Season setup <b>2/5</b> ⌄</span>
+        <div class="card acc">
+          <div class="tagrow" style="right:14px;top:12px"><button class="pin bad" data-title="1 · Two cards, one headline" data-note="Both cards say “The club has a proposal for 15U AAA”. The team name is already at the top of the page, so the large text tells the coach nothing new. What tells the two apart (the proposal’s name) is in the small grey line underneath.">1</button></div>
+          <span class="k">Club proposal</span><p class="t">The club has a proposal for 15U AAA</p>
+          <p class="b">Dome sharing walk: 25 Sundays and a $2,700.00 bill. Reply by Fri, Nov 20.</p>
+          <span class="btn-lime">Review it</span>
+        </div>
+        <div class="card acc">
+          <div class="tagrow" style="right:14px;top:12px"><button class="pin bad" data-title="2 · Late, and it doesn’t say so" data-note="“Reply by Wed, Nov 4” was ten days ago, but this card looks exactly like the one due next week. Today the card repeats the date and never says the reply is late.">2</button></div>
+          <span class="k">Club proposal</span><p class="t">The club has a proposal for 15U AAA</p>
+          <p class="b">Winter dome 2026–27: 5 Sundays. Reply by Wed, Nov 4.</p>
+          <span class="btn-lime">Review it</span>
+        </div>
+        <div class="card win gday same-x">
+          <div class="tagrow" style="left:-34px;top:16px"><button class="pin bad" data-title="3 · Today’s game is pushed down" data-note="This is the one card the Overview exists to show on game day: who, when, where, and Build lineup. In your screenshot it starts about two thirds of the way down the window, under two notices that can wait until tomorrow. It is also the third lime button on the screen, and the portal’s rule is one lime button per screen, the one thing to do.">3</button></div>
+          <div class="head"><span class="k">Game day</span><span class="k when">Today</span></div>
+          <div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div><div class="where">8:00 p.m. · Lakeshore Dome</div>
+          <div class="chips"><span class="chip">3 out</span><span class="chip warn">⚠ Lineup not started</span></div>
+        </div>
+        <div class="boardlbl same-x">Your team at a glance</div>
+        <div class="board same-x">
+          <div class="tile"><div class="k">Record</div><div class="v">7-3-1</div><div class="s">11 games</div></div>
+          <div class="tile"><div class="k">Roster</div><div class="v">15 players</div><div class="s">3 out today</div></div>
+          <div class="tile"><div class="k">Practice</div><div class="v">Tue, Nov 17</div><div class="s">Plan not started</div></div>
+          <div class="tile"><div class="k">Tournaments</div><div class="v">1 entered</div><div class="s">Dec 5–7</div></div>
+          <div class="tile"><div class="k">Dues</div><div class="v">$640.00</div><div class="s">to collect</div></div>
+          <div class="tile"><div class="k">Budget</div><div class="v">$3,180.00</div><div class="s">left to spend</div></div>
+        </div>
+      </div></div>
+      <div class="below" style="top:660px"></div>
+      <div class="fold" style="top:660px"><span>BOTTOM OF YOUR WINDOW</span></div>
+    </div>
+
+    <!-- A · IN THE TAIL -->
+    <div class="dk" data-ba-show="tail">
+      <div class="brand same-x">FieldLogicHQ <small>COACH</small></div>
+      <div class="top same-x"><h3>Overview</h3><div class="ctx">UAT Rep Club · 2026 Season <span class="gd">Game day</span> Elmira Eagles · 8:00 p.m.<span class="ico"></span><span class="ico"></span><span class="ico"></span></div></div>
+      <div class="side same-x">
+        <div class="team"><span class="badge">15U</span>15U AAA</div>
+        <div class="nav on">Overview</div>
+        <div class="grp">SEASON</div><div class="nav">Schedule</div><div class="nav">Practice plans</div><div class="nav">Lineups</div><div class="nav">Tournaments</div>
+        <div class="grp">PROGRESS</div><div class="nav">Skills &amp; goals</div><div class="nav">Insights</div>
+        <div class="grp">MONEY</div><div class="nav">Money</div>
+        <div class="grp">COMMUNICATION</div><div class="nav">Email families</div>
+        <div class="grp">TEAM</div><div class="nav">Roster</div>
+      </div>
+      <div class="page"><div class="col">
+        <span class="setup same-x"><span class="ring"></span>Season setup <b>2/5</b> ⌄</span>
+        <div class="card win gday g2">
+          <div class="tagrow" style="left:-70px;top:16px"><button class="mk res" data-title="RESTYLED · the day’s card, smaller" data-note="The day’s card goes back to the top and is now the only lime button on the screen. It is also smaller: the readiness chips move up onto the time-and-place line, so the fourth row and its divider go, and “Lineup not started” drops while the button already says Build lineup. See tab 2.">RESTYLED</button></div>
+          <div class="head"><span class="k">Game day</span><span class="k when">Today</span></div>
+          <div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div>
+          <div class="mrow"><span class="where">8:00 p.m. · Lakeshore Dome</span><span class="chips2"><span class="chip">3 out</span></span></div>
+        </div>
+        <div class="boardlbl same-x">Your team at a glance</div>
+        <div class="board same-x">
+          <div class="tile"><div class="k">Record</div><div class="v">7-3-1</div><div class="s">11 games</div></div>
+          <div class="tile"><div class="k">Roster</div><div class="v">15 players</div><div class="s">3 out today</div></div>
+          <div class="tile"><div class="k">Practice</div><div class="v">Tue, Nov 17</div><div class="s">Plan not started</div></div>
+          <div class="tile"><div class="k">Tournaments</div><div class="v">1 entered</div><div class="s">Dec 5–7</div></div>
+          <div class="tile"><div class="k">Dues</div><div class="v">$640.00</div><div class="s">to collect</div></div>
+          <div class="tile"><div class="k">Budget</div><div class="v">$3,180.00</div><div class="s">left to spend</div></div>
+        </div>
+        <div class="tail">
+          <div class="tagrow" style="left:-42px;top:14px"><button class="mk new" data-title="NEW · the proposals join the bottom list" data-note="The Overview already ends with one quiet list for everything that isn’t today’s work (today it holds a tournament’s row when the team has one). The club’s proposals become rows in it, under a label that names them and counts the ones waiting. They appear only while a proposal is in review and go away when the club finalizes, as today. The cost: on a phone the list is below the first screen, so the coach relies on the bell and the email to bring them here, which they already do.">NEW</button></div>
+          <div class="eye"><span class="k">The club’s proposals</span><span class="count">2 waiting on your reply</span></div>
+          <div class="rl" role="list" aria-label="The club’s proposals">
+            <div class="row" role="listitem"><div><span class="nm">Winter dome 2026–27</span><span class="dt">5 Sundays</span></div><span class="by late">⚠ Your reply was due Wed, Nov 4</span><svg class="chev"><use href="#chev"/></svg></div>
+            <div class="row" role="listitem"><div><span class="nm">Dome sharing walk</span><span class="dt">25 Sundays · $2,700.00 bill</span></div><span class="by">Reply by Fri, Nov 20</span><svg class="chev"><use href="#chev"/></svg></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="below" style="top:660px"></div>
+      <div class="fold" style="top:660px"><span>BOTTOM OF YOUR WINDOW</span></div>
+    </div>
+
+    <!-- B · UNDER THE DAY'S CARD -->
+    <div class="dk" data-ba-show="under" hidden>
+      <div class="brand same-x">FieldLogicHQ <small>COACH</small></div>
+      <div class="top same-x"><h3>Overview</h3><div class="ctx">UAT Rep Club · 2026 Season <span class="gd">Game day</span> Elmira Eagles · 8:00 p.m.<span class="ico"></span><span class="ico"></span><span class="ico"></span></div></div>
+      <div class="side same-x">
+        <div class="team"><span class="badge">15U</span>15U AAA</div>
+        <div class="nav on">Overview</div>
+        <div class="grp">SEASON</div><div class="nav">Schedule</div><div class="nav">Practice plans</div><div class="nav">Lineups</div><div class="nav">Tournaments</div>
+        <div class="grp">PROGRESS</div><div class="nav">Skills &amp; goals</div><div class="nav">Insights</div>
+        <div class="grp">MONEY</div><div class="nav">Money</div>
+        <div class="grp">COMMUNICATION</div><div class="nav">Email families</div>
+        <div class="grp">TEAM</div><div class="nav">Roster</div>
+      </div>
+      <div class="page"><div class="col">
+        <span class="setup same-x"><span class="ring"></span>Season setup <b>2/5</b> ⌄</span>
+        <div class="card win gday g2">
+          <div class="head"><span class="k">Game day</span><span class="k when">Today</span></div>
+          <div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div>
+          <div class="mrow"><span class="where">8:00 p.m. · Lakeshore Dome</span><span class="chips2"><span class="chip">3 out</span></span></div>
+        </div>
+        <div class="card cp">
+          <div class="tagrow" style="left:-42px;top:12px"><button class="mk res" data-title="B · a third full-width band" data-note="Round 1’s placement. Always visible, but it sits between the day’s card and the team board. The July 30 rules keep the full width for those two and say the board sits directly under the day’s card. Choosing B means changing that rule, and every later notice would have the same claim to this spot.">RULE CHANGE</button></div>
+          <div class="eye"><span class="k">The club’s proposals</span><span class="count">2 waiting on your reply</span></div>
+          <div class="rl" role="list" aria-label="The club’s proposals">
+            <div class="row" role="listitem"><div><span class="nm">Winter dome 2026–27</span><span class="dt">5 Sundays</span></div><span class="by late">⚠ Your reply was due Wed, Nov 4</span><svg class="chev"><use href="#chev"/></svg></div>
+            <div class="row" role="listitem"><div><span class="nm">Dome sharing walk</span><span class="dt">25 Sundays · $2,700.00 bill</span></div><span class="by">Reply by Fri, Nov 20</span><svg class="chev"><use href="#chev"/></svg></div>
+          </div>
+        </div>
+        <div class="boardlbl same-x">Your team at a glance</div>
+        <div class="board same-x">
+          <div class="tile"><div class="k">Record</div><div class="v">7-3-1</div><div class="s">11 games</div></div>
+          <div class="tile"><div class="k">Roster</div><div class="v">15 players</div><div class="s">3 out today</div></div>
+          <div class="tile"><div class="k">Practice</div><div class="v">Tue, Nov 17</div><div class="s">Plan not started</div></div>
+          <div class="tile"><div class="k">Tournaments</div><div class="v">1 entered</div><div class="s">Dec 5–7</div></div>
+          <div class="tile"><div class="k">Dues</div><div class="v">$640.00</div><div class="s">to collect</div></div>
+          <div class="tile"><div class="k">Budget</div><div class="v">$3,180.00</div><div class="s">left to spend</div></div>
+        </div>
+      </div></div>
+      <div class="below" style="top:660px"></div>
+      <div class="fold" style="top:660px"><span>BOTTOM OF YOUR WINDOW</span></div>
+    </div>
+  </div>
+  <p class="sizenote">The board’s figures are made up for the drawing; the board itself doesn’t change. The sidebar and top bar are simplified. Not drawn: the club’s one-time welcome card (a new season, or a coach the club invited) still sits above the game card in every layout here. See Ask A4.</p>
+</section>
+
+<!-- ═══════════ 2 · THE GAME CARD, SMALLER ═══════════ -->
+<section class="panel" data-panel="game-card" hidden>
+  <div class="explain">
+    <h2>The same facts in three rows instead of four</h2>
+    <p>Games are often, so this card sits on the Overview a lot. It should stay the first thing on the page and the one lime button, because a game morning is when coaches open the portal most. But it doesn’t need four rows to say who, when, where and what’s left to do. Two changes:</p>
+    <ul>
+      <li><b>The readiness chips move up onto the time-and-place line.</b> On a desktop that line has room to spare, and the separate row and its divider go. On the August 12 pass that last shrank this card, the other cards already put their quick answers on this line; game day kept a fourth row only because its chips came later.</li>
+      <li><b>“Lineup not started” drops, in that one state only.</b> When no lineup exists, the chip and the Build lineup button say the same thing and open the same page. The button stays Build lineup until a coach marks the lineup ready, so “Lineup still a draft” and “Lineup needs review” keep their chips: they say something the button doesn’t. “Lineup ready” keeps its chip too.</li>
+    </ul>
+    <p><b>The cost of the second change:</b> on the morning the lineup is the problem, the amber warning goes and only the lime button says it. The chips also stop listing every prep item. And when a draft is saved, its chip appears in the lineup’s usual place in the row, so the call-time and uniform chips shift one place to the right. That is ask A8.</p>
+    <p><b>What stays:</b> the kicker, the headline size, the lime button and the green edge. The score row after the game and the arm-care warnings still appear when they have something to say. They are what a coach opens the portal for on a game morning (the August 12 ruling), so they still earn their height.</p>
+  </div>
+  <div class="scroller"><div class="gstack">
+    <div>
+      <p class="frame-label">Desktop · today · about 185px</p>
+      <div class="gbox"><div class="card win gday">
+        <div class="head"><span class="k">Game day</span><span class="k when">Today</span></div>
+        <div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div><div class="where">8:00 p.m. · Lakeshore Dome</div>
+        <div class="chips"><span class="chip">3 out</span><span class="chip warn">⚠ Lineup not started</span></div>
+      </div></div>
+    </div>
+    <div>
+      <p class="frame-label">Desktop · proposed · about 135px</p>
+      <div class="gbox"><div class="card win gday g2">
+        <div class="tagrow" style="left:-36px;top:14px"><button class="pin" data-title="1 · Chips ride the time-and-place line" data-note="The chips that had their own row under a divider now sit at the right end of the time-and-place line. Same chips, same colours, same links: “3 out” still opens attendance. If a morning has more chips than fit, the line wraps instead of cutting them off.">1</button></div>
+        <div class="head"><span class="k">Game day</span><span class="k when">Today</span></div>
+        <div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div>
+        <div class="mrow"><span class="where">8:00 p.m. · Lakeshore Dome</span><span class="chips2"><span class="chip">3 out</span> <button class="pin" data-title="2 · “Lineup not started” says what the button says" data-note="When no lineup has been started, the amber chip and the Build lineup button are the same message and the same link, so the chip drops. Only in that state: the button stays Build lineup for a draft and for a lineup that needs review too, and those chips stay because they say something the button doesn’t. The cost is that the amber warning goes on the morning the lineup is the problem, and only the lime button says it.">2</button></span></div>
+      </div></div>
+    </div>
+    <div>
+      <p class="frame-label">Desktop · proposed · a busier morning (lineup built, call time and uniform set)</p>
+      <div class="gbox"><div class="card win gday g2">
+        <div class="head"><span class="k">Game day</span><span class="k when">Today</span></div>
+        <div class="main"><h4>vs Elmira Eagles</h4><span class="go">Take attendance →</span></div>
+        <div class="mrow"><span class="where">8:00 p.m. · Lakeshore Dome</span><span class="chips2"><span class="chip done">✓ Lineup ready</span><span class="chip fact">Call 7:15 p.m.</span><span class="chip fact">Home kit</span></span></div>
+      </div></div>
+    </div>
+    <div>
+      <p class="frame-label">Desktop · proposed · the fullest morning (six chips: the line wraps and the chips start a line of their own)</p>
+      <div class="gbox"><div class="card win gday g2">
+        <div class="head"><span class="k">Game day</span><span class="k when">Today</span></div>
+        <div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div>
+        <div class="mrow"><span class="where">8:00 p.m. · Lakeshore Dome · Elmira Fall Classic</span><span class="chips2"><span class="chip">9 of 15 in</span><span class="chip">2 out</span><span class="chip">4 maybe</span><span class="chip warn">⚠ Lineup still a draft</span><span class="chip fact">Call 7:15 p.m.</span><span class="chip fact">Home kit</span></span></div>
+      </div></div>
+    </div>
+    <div>
+      <p class="frame-label">Tablet · proposed · 620 wide (no sidebar), chips at the 44px tablet size · about 150px, from about 195px today</p>
+      <div class="gbox tab"><div class="card win gday g2">
+        <div class="head"><span class="k">Game day</span><span class="k when">Today</span></div>
+        <div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div>
+        <div class="mrow"><span class="where">8:00 p.m. · Lakeshore Dome</span><span class="chips2"><span class="chip">12 of 15 in</span><span class="chip">3 out</span><span class="chip warn">⚠ Lineup still a draft</span><span class="chip fact">Call 7:15 p.m.</span></span></div>
+      </div></div>
+    </div>
+    <div>
+      <p class="frame-label">Desktop · proposed · after the game (the score row still earns its place)</p>
+      <div class="gbox"><div class="card win gday g2">
+        <div class="head"><span class="k">Game day</span><span class="k when">Today</span></div>
+        <div class="main"><h4>vs Elmira Eagles</h4></div>
+        <div class="mrow"><span class="where">8:00 p.m. · Lakeshore Dome</span><span class="chips2"><span class="chip done">✓ Lineup ready</span><span class="chip">12 of 15 in · 3 out</span></span></div>
+        <div class="scoreline">7 – 4 <span>· Win</span></div>
+      </div></div>
+    </div>
+    <div style="display:flex;gap:32px;flex-wrap:wrap">
+      <div>
+        <p class="frame-label">Phone · today · about 230px</p>
+        <div class="ph" style="height:auto;padding:14px 14px 16px;border-radius:14px"><div class="card win gday"><div class="head"><span class="k">Game day</span><span class="k when">Today</span></div><div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div><div class="where">8:00 p.m. · Lakeshore Dome</div><div class="doors"><span class="door">3 out <svg class="chev"><use href="#chev"/></svg></span><span class="door warn">⚠ Lineup not started <svg class="chev"><use href="#chev"/></svg></span></div></div></div>
+      </div>
+      <div>
+        <p class="frame-label">Phone · proposed · about 180px</p>
+        <div class="ph" style="height:auto;padding:14px 14px 16px;border-radius:14px"><div class="card win gday g2"><div class="head"><span class="k">Game day</span><span class="k when">Today</span></div><div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div><div class="where">8:00 p.m. · Lakeshore Dome</div><div class="doors"><span class="door">3 out <svg class="chev"><use href="#chev"/></svg></span></div></div></div>
+      </div>
+    </div>
+  </div></div>
+  <p class="sizenote">On a phone the chips are already tappable rows at the 44px minimum (the September 21 phone ruling), so they can’t move onto the time line. The saving there comes from dropping the duplicate lineup row. Heights are measured from this drawing and will differ by a few pixels in the product.</p>
+</section>
+
+<!-- ═══════════ 3 · THE ROWS UP CLOSE ═══════════ -->
+<section class="panel" data-panel="up-close" hidden>
+  <div class="explain">
+    <h2>One row per proposal, and the whole row opens it</h2>
+    <p>Drawn as they would sit in the bottom list (layout A), at the true column width. In layout B the same rows sit inside a card. Click a numbered pin to read what it does. Clicking a row opens the review window the coach sees today; the window doesn’t change.</p>
+  </div>
+  <div class="specs">
+    <div>
+      <p class="frame-label">1 · Two proposals, one past its reply date (your screenshot’s data)</p>
+      <div class="scroller"><div class="specbox"><div class="tail">
+        <div class="eye"><span class="k">The club’s proposals <button class="pin" data-title="1 · The list names itself, and counts" data-note="The label reads “The club’s proposals” (singular when there is one), matching the review window’s own title, “The club’s proposal”. It never says “From the club”, because the coach’s Money screen already uses those words for money the club pays. The count on the right says how many still need an answer.">1</button></span><span class="count">2 waiting on your reply</span></div>
+        <div class="rl" role="list" aria-label="The club’s proposals">
+          <div class="row" role="listitem"><div><span class="nm">Winter dome 2026–27 <button class="pin" data-title="2 · The row leads with what’s proposed" data-note="The proposal’s own name on the first line (the thing that tells two proposals apart), and what it holds underneath: the number of Sundays and, when there is one, the bill. The team name is dropped because the page is already that team’s. This is the portal’s shipped row list (name, caption under it, one item on the right, chevron), not a new kind of row.">2</button></span><span class="dt">5 Sundays</span></div><span class="by late">⚠ Your reply was due Wed, Nov 4 <button class="pin" data-title="3 · Late says late" data-note="When the reply-by date has passed and the club hasn’t finalized, the right side reads “⚠ Your reply was due Wed, Nov 4” in amber, the same warning the game card uses for “Lineup not started”, and late rows sort first. Amber, not red: the club’s reply-by date never blocks anything, so this is a reminder, not a debt. The coach can still answer until the club finalizes. See A3: the portal has a written rule that red means overdue, so you should know both rules exist.">3</button></span><svg class="chev"><use href="#chev"/></svg></div>
+          <div class="row" role="listitem"><div><span class="nm">Dome sharing walk</span><span class="dt">25 Sundays · $2,700.00 bill</span></div><span class="by">Reply by Fri, Nov 20</span><span style="display:flex;gap:6px;align-items:center"><svg class="chev"><use href="#chev"/></svg><button class="pin" data-title="4 · The whole row opens the window" data-note="The row is one button: clicking anywhere on it opens the same review window as today’s “Review it” button (Your time, Your bill, Ask for a change, Looks good). There are no buttons inside the row and one chevron at the end, per the portal’s list rule. Dropping the lime “Review it” buttons leaves Build lineup as the screen’s only lime button. On hover the row tints soft olive, like every other list in the portal.">4</button></span></div>
+        </div>
+      </div></div></div>
+    </div>
+
+    <div>
+      <p class="frame-label">2 · One waiting, two answered</p>
+      <div class="scroller"><div class="specbox"><div class="tail">
+        <div class="eye"><span class="k">The club’s proposals</span><span class="count">1 waiting on your reply</span></div>
+        <div class="rl" role="list" aria-label="The club’s proposals">
+          <div class="row" role="listitem"><div><span class="nm">Dome sharing walk</span><span class="dt">25 Sundays · $2,700.00 bill</span></div><span class="by">Reply by Fri, Nov 20</span><svg class="chev"><use href="#chev"/></svg></div>
+          <div class="row answered" role="listitem"><div><span class="nm">Winter dome 2026–27 <button class="pin" data-title="5 · An answer stays until the club finalizes" data-note="Today’s card says “You said it looks good.” or “You asked for a change.” and lets the coach change the answer until the club finalizes. That rule stays. The row goes quiet (regular-weight name, grey right side) and sorts last, and clicking it opens the window to change the answer. It goes away when the club finalizes, as today.">5</button></span><span class="dt">5 Sundays</span></div><span class="by said">You said it looks good</span><svg class="chev"><use href="#chev"/></svg></div>
+          <div class="row answered" role="listitem"><div><span class="nm">Spring field time</span><span class="dt">8 Saturdays · $960.00 bill</span></div><span class="by said">You asked for a change</span><svg class="chev"><use href="#chev"/></svg></div>
+        </div>
+      </div></div></div>
+    </div>
+
+    <div>
+      <p class="frame-label">3 · Everything answered</p>
+      <div class="scroller"><div class="specbox"><div class="tail">
+        <div class="eye"><span class="k">The club’s proposal</span><span class="count">Answered · waiting for the club <button class="pin" data-title="6 · Nothing waiting on you" data-note="When every proposal has an answer, the count says so instead of “0 waiting”. “Waiting for the club” is the same wording the coach already sees for things the club holds. The row stays (quiet) so the coach can still change the answer, and goes away when the club finalizes.">6</button></span></div>
+        <div class="rl" role="list" aria-label="The club’s proposal">
+          <div class="row answered" role="listitem"><div><span class="nm">Dome sharing walk</span><span class="dt">25 Sundays · $2,700.00 bill</span></div><span class="by said">You said it looks good</span><svg class="chev"><use href="#chev"/></svg></div>
+        </div>
+      </div></div></div>
+    </div>
+
+    <div>
+      <p class="frame-label">4 · Only one proposal, not answered yet</p>
+      <div class="scroller"><div class="specbox"><div class="tail">
+        <div class="eye"><span class="k">The club’s proposal</span><span class="count">Waiting on your reply</span></div>
+        <div class="rl" role="list" aria-label="The club’s proposal">
+          <div class="row" role="listitem"><div><span class="nm">Dome sharing walk</span><span class="dt">25 Sundays · $2,700.00 bill</span></div><span class="by">Reply by Fri, Nov 20</span><svg class="chev"><use href="#chev"/></svg></div>
+        </div>
+      </div></div></div>
+      <p class="sizenote">One proposal takes about 90px including its label, at the bottom of the page. Today’s card for the same proposal is about 140px and sits above the game.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 3 · PHONE ═══════════ -->
+<section class="panel" data-panel="phone" hidden>
+  <div class="explain">
+    <h2>On a phone the trade-off is clearest</h2>
+    <p>All three frames are 390 wide, an iPhone at true size. The dashed line is about where a phone’s browser bars cover the page. Scroll sideways to see all three, or open this page on your phone.</p>
+    <ul>
+      <li><b>Today:</b> the game card’s Build lineup button is off the first screen.</li>
+      <li><b>A · At the bottom:</b> the game card and the first board tiles fill the first screen. The proposals are one scroll down, and the bell and the email bring the coach to them.</li>
+      <li><b>B · Under the game card:</b> the game card and both proposals fit, and the team board moves to the second screen.</li>
+    </ul>
+  </div>
+  <div class="scroller"><div class="phones">
+    <div>
+      <p class="frame-label">Today</p>
+      <div class="ph">
+        <div class="bar same-x">15U AAA <span class="r"><span class="ico"></span><span class="ico"></span></span></div>
+        <div class="body">
+          <span class="setup same-x"><span class="ring"></span>Season setup <b>2/5</b> ⌄</span>
+          <div class="card acc"><span class="k">Club proposal</span><p class="t">The club has a proposal for 15U AAA</p><p class="b">Dome sharing walk: 25 Sundays and a $2,700.00 bill. Reply by Fri, Nov 20.</p><span class="btn-lime">Review it</span></div>
+          <div class="card acc"><span class="k">Club proposal</span><p class="t">The club has a proposal for 15U AAA</p><p class="b">Winter dome 2026–27: 5 Sundays. Reply by Wed, Nov 4.</p><span class="btn-lime">Review it</span></div>
+          <div class="card win gday"><div class="head"><span class="k">Game day</span><span class="k when">Today</span></div><div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div><div class="where">8:00 p.m. · Lakeshore Dome</div><div class="doors"><span class="door">3 out <svg class="chev"><use href="#chev"/></svg></span><span class="door warn">⚠ Lineup not started <svg class="chev"><use href="#chev"/></svg></span></div></div>
+        </div>
+        <div class="tabbar same-x"><div class="on">Overview</div><div>Schedule</div><div>Lineups</div><div>Money</div><div>More</div></div>
+        <div class="below" style="top:664px"></div>
+        <div class="fold" style="top:664px"><span>BROWSER BARS</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="frame-label">A · At the bottom (recommended)</p>
+      <div class="ph">
+        <div class="bar same-x">15U AAA <span class="r"><span class="ico"></span><span class="ico"></span></span></div>
+        <div class="body">
+          <span class="setup same-x"><span class="ring"></span>Season setup <b>2/5</b> ⌄</span>
+          <div class="card win gday g2"><div class="head"><span class="k">Game day</span><span class="k when">Today</span></div><div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div><div class="where">8:00 p.m. · Lakeshore Dome</div><div class="doors"><span class="door">3 out <svg class="chev"><use href="#chev"/></svg></span></div></div>
+          <div class="boardlbl same-x">Your team at a glance</div>
+          <div class="board same-x">
+            <div class="tile"><div class="k">Record</div><div class="v">7-3-1</div></div>
+            <div class="tile"><div class="k">Roster</div><div class="v">15</div></div>
+            <div class="tile"><div class="k">Practice</div><div class="v">Tue</div></div>
+            <div class="tile"><div class="k">Tournaments</div><div class="v">1</div></div>
+            <div class="tile"><div class="k">Dues</div><div class="v">$640</div></div>
+            <div class="tile"><div class="k">Budget</div><div class="v">$3,180</div></div>
+          </div>
+          <div class="tail">
+            <div class="eye"><span class="k">The club’s proposals</span><span class="count">2 waiting on your reply</span></div>
+            <div class="rl" role="list" aria-label="The club’s proposals">
+              <div class="row" role="listitem"><div><span class="nm">Winter dome 2026–27</span><span class="dt">5 Sundays</span><span class="by late">⚠ Your reply was due Wed, Nov 4</span></div><svg class="chev"><use href="#chev"/></svg></div>
+              <div class="row" role="listitem"><div><span class="nm">Dome sharing walk</span><span class="dt">25 Sundays · $2,700.00 bill</span><span class="by">Reply by Fri, Nov 20</span></div><svg class="chev"><use href="#chev"/></svg></div>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar same-x"><div class="on">Overview</div><div>Schedule</div><div>Lineups</div><div>Money</div><div>More</div></div>
+        <div class="below" style="top:664px"></div>
+        <div class="fold" style="top:664px"><span>BROWSER BARS</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="frame-label">B · Under the game card</p>
+      <div class="ph">
+        <div class="bar same-x">15U AAA <span class="r"><span class="ico"></span><span class="ico"></span></span></div>
+        <div class="body">
+          <span class="setup same-x"><span class="ring"></span>Season setup <b>2/5</b> ⌄</span>
+          <div class="card win gday g2"><div class="head"><span class="k">Game day</span><span class="k when">Today</span></div><div class="main"><h4>vs Elmira Eagles</h4><span class="go">Build lineup →</span></div><div class="where">8:00 p.m. · Lakeshore Dome</div><div class="doors"><span class="door">3 out <svg class="chev"><use href="#chev"/></svg></span></div></div>
+          <div class="card cp">
+            <div class="eye"><span class="k">The club’s proposals</span><span class="count">2 waiting on your reply</span></div>
+            <div class="rl" role="list" aria-label="The club’s proposals">
+              <div class="row" role="listitem"><div><span class="nm">Winter dome 2026–27</span><span class="dt">5 Sundays</span><span class="by late">⚠ Your reply was due Wed, Nov 4</span></div><svg class="chev"><use href="#chev"/></svg></div>
+              <div class="row" role="listitem"><div><span class="nm">Dome sharing walk</span><span class="dt">25 Sundays · $2,700.00 bill</span><span class="by">Reply by Fri, Nov 20</span></div><svg class="chev"><use href="#chev"/></svg></div>
+            </div>
+          </div>
+          <div class="boardlbl same-x">Your team at a glance</div>
+          <div class="board same-x">
+            <div class="tile"><div class="k">Record</div><div class="v">7-3-1</div></div>
+            <div class="tile"><div class="k">Roster</div><div class="v">15</div></div>
+          </div>
+        </div>
+        <div class="tabbar same-x"><div class="on">Overview</div><div>Schedule</div><div>Lineups</div><div>Money</div><div>More</div></div>
+        <div class="below" style="top:664px"></div>
+        <div class="fold" style="top:664px"><span>BROWSER BARS</span></div>
+      </div>
+    </div>
+  </div></div>
+  <p class="sizenote">On a phone each row stacks: the name, then what it holds, then the reply date, with the chevron in the corner. The list keeps its frame, per the portal’s phone-list ruling (P1, 2026-09-29). The phone’s top bar and tab bar are simplified.</p>
+</section>
+
+<!-- ═══════════ 4 · ASKS ═══════════ -->
+<section class="panel" data-panel="asks" hidden>
+  <div class="explain">
+    <h2>Nine calls for you</h2>
+    <p>Answer them by number in the chat, for example “A1 a, A2–A9 rec”. Nothing gets built until you say go. A7 to A9 are about the game card (tab 2).</p>
+  </div>
+  <div class="asks">
+    <div class="ask"><h3>A1 · Where do the club’s proposals sit?</h3>
+      <ol type="a"><li><span class="rec">Recommended:</span> in the bottom list (layout A). This follows the July 30 rules as written: the day’s card and the team board stay together at the top, and a reply that can wait a day goes to the list for everything that isn’t today’s work. The cost: on a phone the proposals are one scroll down, so the bell and the email do the reminding, which they already do.</li>
+      <li>Under the game card (layout B, round 1’s recommendation). Always visible, but it changes the July 30 rule that only the day’s card and the board get the full width, and it pushes the board down. Once one kind of notice holds that spot, the next one will claim it too.</li>
+      <li>Let a proposal take the day’s card. The July 30 rules do have a “question” form for a decision only this coach can make, which a proposal is. But game day never gives up the card, and the existing order puts the one question card it has today below the next event. In season, a proposal would almost never get the card, so this adds a priority rule for little gain. Not drawn.</li></ol></div>
+    <div class="ask"><h3>A2 · A button on each row, or the whole row?</h3>
+      <ol type="a"><li><span class="rec">Recommended:</span> the whole row opens the window, with a chevron at the end (pin 4). This is the portal’s list rule, and it leaves Build lineup as the only lime button on the screen.</li>
+      <li>Keep a “Review it” button on each row, white rather than lime. It makes the action more obvious, but puts a button inside a list row, which the list rule rules out.</li></ol></div>
+    <div class="ask"><h3>A3 · How does a late reply look?</h3>
+      <p>Two written rules point different ways. One says red in this portal means something has gone wrong: money owed, overdue, a save that was refused. Another says amber means needs attention or late. A late reply is past its date, but it never blocks the club.</p>
+      <ol type="a"><li><span class="rec">Recommended:</span> amber “⚠ Your reply was due Wed, Nov 4”, with late rows first (pin 3). It is the same warning the game card uses, and it keeps red for money.</li>
+      <li>Red, the way Money shows something overdue.</li>
+      <li>No change: keep saying “Reply by Wed, Nov 4”.</li></ol></div>
+    <div class="ask"><h3>A4 · The club’s welcome card</h3>
+      <p>The one-time card the club shows when it starts a new season or welcomes a coach the club invited still sits above the game card in every layout here. It has the same problem: something that isn’t today’s work sitting above the day’s card.</p>
+      <ol type="a"><li><span class="rec">Recommended:</span> fix it in the same change. It moves under the same rule as the proposals (the bottom list in A, under the game card in B), as one row that goes away once read. Otherwise the headline claim, that the game card is back on top, is only true for teams without one.</li>
+      <li>Leave it for later and note it in the plan.</li></ol></div>
+    <div class="ask"><h3>A5 · What happens to an answered proposal?</h3>
+      <ol type="a"><li><span class="rec">Recommended:</span> it stays as a quiet row (“You said it looks good” or “You asked for a change”) until the club finalizes, sorted last (rows up close, 2 and 3). This keeps today’s rule that the coach can change the answer until then.</li>
+      <li>It leaves the Overview once answered, and the coach changes the answer from the bell or the email. Cleaner, but it removes the only way back to the answer from the Overview.</li></ol></div>
+    <div class="ask"><h3>A6 · Only if you pick A1(a): the bottom list’s look</h3>
+      <p>The bottom list today is a single ruled line on a desktop (a tournament’s row with no frame). The portal’s list rule says a list keeps a white frame with hairlines between rows, and you chose the frame every time the two were compared.</p>
+      <ol type="a"><li><span class="rec">Recommended:</span> the proposals sit in a framed list under their label, as drawn, and the tournament row stays as it is. They read as two separate things, which they are.</li>
+      <li>One frame for the whole bottom list: the tournament row and the proposals together, with a label for each group.</li></ol></div>
+    <div class="ask"><h3>A7 · Game card: chips on the time-and-place line?</h3>
+      <ol type="a"><li><span class="rec">Recommended:</span> yes, on a desktop and tablet (tab 2, pin 1). The card loses a row and a divider, and nothing is hidden. The phone keeps its tappable rows.</li>
+      <li>Keep the chips on their own row.</li></ol></div>
+    <div class="ask"><h3>A8 · Game card: drop “Lineup not started” when no lineup exists?</h3>
+      <p>What it gives up: the amber warning on the morning the lineup is the problem (the lime Build lineup button says it instead), a chip row that lists every prep item, and a fixed chip order (a draft’s chip appears once one is saved).</p>
+      <ol type="a"><li><span class="rec">Recommended:</span> yes, in that one state only (pin 2). On a phone it removes a whole 44px row on the morning a coach is most likely to open the portal. Draft, needs review and ready keep their chips.</li>
+      <li>Keep it. Choose this if you want the amber warning beside the action; A7 alone still saves the desktop row.</li></ol></div>
+    <div class="ask"><h3>A9 · Game card: keep the headline and button their size?</h3>
+      <p>The other way to make the card dominate less is to shrink the type: a 16px headline like every other card, and a smaller button.</p>
+      <ol type="a"><li><span class="rec">Recommended:</span> keep them. With A7 and A8 the card is about 30% shorter but still reads as the page’s one headline. Shrunk type would make game day look like any other notice, and a game morning is when coaches open the portal most.</li>
+      <li>Shrink the headline to 16px as well. This saves about 6px more and makes the card noticeably quieter.</li></ol></div>
+  </div>
+  <div class="keep">
+    <h3>What doesn’t change</h3>
+    <ul>
+      <li>The review window itself: Your time, Your bill, Ask for a change, Looks good.</li>
+      <li>Only the team’s head coach sees the proposals, as with today’s cards.</li>
+      <li>The bell and the email still bring the coach to this Overview.</li>
+      <li>A proposal goes away once the club finalizes it.</li>
+      <li>The game card’s information: every chip, the score row and the arm-care warnings. Only its layout changes (A7–A9).</li>
+      <li>The season setup chip and the team board.</li>
+    </ul>
+  </div>
+  <div class="keep">
+    <h3>For the build</h3>
+    <ul>
+      <li>Rows are the shipped <code>CoachRowList</code> / <code>CoachRow</code>, with each row as a button that opens a dialog: title = schedule name, caption = slots and bill, trail = reply-by or the answer, chevron door. Write no new row class.</li>
+      <li>The list is labelled by its eyebrow. Late text uses the warning token with the ⚠ glyph; the caption and the trail are at the support size.</li>
+      <li>Wording comes from the existing coach-side schedule words file. It never says “From the club”.</li>
+      <li>Game card (A7): the chips move into the One Thing card’s meta-row answers slot, which is empty on every game branch, as their own group (chip gap, wraps to a new line left-aligned). Above 640 only; the phone keeps its door rows. The chips now come before the score row, and the first-screen guard test that checks the chip row is hidden on a phone needs updating with the move.</li>
+      <li>Game card (A8): key the drop on the lineup badge being not started, not on the primary being Build lineup, because the primary is Build lineup for every not-ready state.</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-labelledby="ovT"><div class="box"><h4 id="ovT"></h4><p id="ovB"></p><button type="button" id="ovX">Close</button></div></div>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('[data-tab]');
+  var panels = document.querySelectorAll('[data-panel]');
+  var baWrap = document.getElementById('baWrap'), dfWrap = document.getElementById('dfWrap'), viewrow = document.getElementById('viewrow');
+  function show(name) {
+    var found = false;
+    panels.forEach(function (p) { var on = p.getAttribute('data-panel') === name; p.hidden = !on; if (on) found = true; });
+    if (!found) { name = 'whole-screen'; panels.forEach(function (p) { p.hidden = p.getAttribute('data-panel') !== name; }); }
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', t.getAttribute('data-tab') === name ? 'true' : 'false'); });
+    baWrap.hidden = name !== 'whole-screen';
+    dfWrap.hidden = !(name === 'whole-screen' || name === 'phone');
+    viewrow.hidden = baWrap.hidden && dfWrap.hidden;
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { var n = t.getAttribute('data-tab'); show(n); try { history.replaceState(null, '', '#' + n); } catch (e) {} }); });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  show(location.hash ? location.hash.slice(1) : 'whole-screen');
+
+  document.querySelectorAll('[data-ba]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var v = b.getAttribute('data-ba');
+      document.querySelectorAll('[data-ba]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      document.querySelectorAll('[data-ba-show]').forEach(function (f) { f.hidden = f.getAttribute('data-ba-show') !== v; });
+    });
+  });
+  document.querySelectorAll('[data-df]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('[data-df]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      document.body.classList.toggle('diff', b.getAttribute('data-df') === 'diff');
+    });
+  });
+
+  var ov = document.getElementById('ov'), ovT = document.getElementById('ovT'), ovB = document.getElementById('ovB'), last = null;
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-note]') : null;
+    if (!el) return;
+    e.preventDefault(); e.stopPropagation();
+    last = el;
+    ovT.textContent = el.getAttribute('data-title') || el.textContent;
+    ovB.textContent = el.getAttribute('data-note');
+    ov.hidden = false;
+    document.getElementById('ovX').focus();
+  }, true);
+  function close() { ov.hidden = true; if (last) last.focus(); }
+  document.getElementById('ovX').addEventListener('click', close);
+  ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !ov.hidden) close(); });
+})();
+</script>

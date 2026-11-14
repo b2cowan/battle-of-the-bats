@@ -2598,14 +2598,15 @@ a.insightsStat:focus-visible { outline-offset: -2px; }
    ⚠ These chips REPLACED a plain text strip plus a separate row of text answers. Each one now
    carries its item's state AND its door, which is what stops the card offering work it has just
    reported as finished. Colour is the state, so the row is readable before a word of it is. */
+/* The prep chips, on the META row's right (owner 2026-11-14, Overview drawings A7) — no row, no
+   divider of their own any more. Their own group inside `.oneAnswers`: the chip gap, not the
+   answers' 1.1rem, and they wrap together, left-aligned, when the meta line is full. */
 .oneChips {
   display: flex;
   align-items: center;
   gap: 0.35rem;
   flex-wrap: wrap;
-  margin-top: 0.55rem;
-  padding-top: 0.55rem;
-  border-top: 1px solid var(--border-2);
+  min-width: 0;
 }
 .oneChip {
   display: inline-flex;
@@ -2658,6 +2659,9 @@ a.oneChip:hover { border-color: currentColor; }
 .oneDoors { display: none; }
 @media (max-width: 640px) {
   .oneChips { display: none; }
+  /* A game card's answers slot holds only the chips: with them hidden, the empty group must not
+     take a wrapped line of its own on the meta row. */
+  .oneAnswers:has(> .oneChips:only-child) { display: none; }
   .oneMetaPhoneFact { display: inline; }
   /* No orphan dot: a fact that begins the line (no venue, no time) draws none. */
   .oneMeta > .oneMetaPhoneFact:first-child .oneMetaDot { display: none; }
@@ -2794,6 +2798,8 @@ a.oneChip:hover { border-color: currentColor; }
   padding-top: 0.35rem;
   border-top: 1px solid var(--border-2);
 }
+/* The tail is always mounted (the club's blocks fetch for themselves); with nothing in it, no rule. */
+.tail:empty { display: none; }
 
 /* NOTE: the tournament row's chip is deliberately NOT defined here. That row renders through
    `CoachLiveEventCard` (layout="row"), which owns the lifecycle states and their chip language for

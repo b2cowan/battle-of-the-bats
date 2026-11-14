@@ -817,7 +817,9 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
   const people = await schedulePeople(c.orgId, audience.map(t => t.id), c.senderId, kind);
   const toldCorrections = opts.corrections !== false;
   const replyBy = kind === 'review' ? (opts.replyBy && isCalendarDate(opts.replyBy) ? opts.replyBy : row.reply_by ?? addCalendarDays(tournamentToday(), 7)) : null;
-  const scheduleLink = (t: string) => `/${c.orgSlug}/coaches/teams/${t}/${kind === 'review' ? '' : 'schedule'}`.replace(/\/$/, '');
+  // A review lands on the Overview's list of the club's proposals (`#club-proposals`, components/coaches/ClubReviewCard.tsx):
+  // since 2026-11-14 it is a row list in the Overview's tail, below the fold on a phone, not a card at the top.
+  const scheduleLink = (t: string) => (kind === 'review' ? `/${c.orgSlug}/coaches/teams/${t}#club-proposals` : `/${c.orgSlug}/coaches/teams/${t}/schedule`);
   const firstDay = c.slots[0]?.day ?? row.starts_on, lastDay = c.slots[c.slots.length - 1]?.day ?? row.ends_on;
   const venueNames = [...new Set(c.slots.map(s => c.places.venueName.get(s.venueId) ?? ''))].filter(Boolean);
   const slotCount = new Map<string, number>();
@@ -1170,7 +1172,7 @@ async function tellTeams(sctx: SchedulerCtx, scheduleName: string, kind: SendKin
     for (const t of preview.teams.filter(x => teamIds.includes(x.teamId))) {
       const staff = audience.get(t.teamId) ?? [];
       if (!staff.length) continue;
-      const link = `/${org.slug}/coaches/teams/${t.teamId}${kind === 'review' ? '' : '/schedule'}`;
+      const link = `/${org.slug}/coaches/teams/${t.teamId}${kind === 'review' ? '#club-proposals' : '/schedule'}`;
       const moneyLink = moneySectionHref(`/${org.slug}/coaches/teams/${t.teamId}`, 'club');
       for (const b of teamBells({ kind, orgName: org.name, scheduleName, replyBy: preview.replyBy, team: t, staff })) {
         await notify({

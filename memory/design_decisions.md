@@ -7,6 +7,34 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-14 — A COACH TEAM'S OVERVIEW: THE CLUB'S CARDS ARE ROWS IN THE TAIL, AND THE GAME CARD LOSES ITS CHIP ROW (owner approved drawings `claude.ai/artifact/6CBLokgyfhJ7eZTE3GgYro` v4, A1–A9 all as recommended)
+
+**Decision:** (A1) The club's proposals leave the top of the Overview: one row per schedule in review, in the TAIL below
+the board, under a mono label ("The club's proposal(s)") with a count on its right ("2 waiting on your reply" ·
+"Waiting on your reply" · "Answered · waiting for the club"). (A2) The whole row opens the review window (CoachRow as a
+button, chevron door) — no button inside the row, no lime. (A3) A passed reply-by reads "⚠ Your reply was due Wed, Nov 4"
+in amber (`--warning`), late rows first. (A4) The club's one-time arrival card moves to the tail too, as one static row
+with "Got it" beside it. (A5) An answered proposal stays as a quiet row ("You said it looks good" / "You asked for a
+change", 400-weight name, sorted last) until the club finalizes. (A6) Each club block is its own framed row list under
+its label; the tournament row keeps its own form. (A7) Above 640 the game-shaped One Thing card's prep chips ride the META
+row (the `answers` slot, empty on every game branch) — no fourth row, no divider; ≤640 the phone's door rows are unchanged.
+(A8) The lineup chip is NOT drawn when the badge is `not_started` AND the coach has the lineup duty (the lime Build lineup
+already says it); draft, needs review and ready keep theirs, and a coach without the duty keeps "not started". (A9) The
+headline and the lime keep their size. The bell and the review email land on `#club-proposals`.
+**Rationale:** two proposals pushed game day two thirds of the way down the window and the board below the fold — the
+club cards sat above the One Thing outside the 2026-07-30 resolver, against its rule 6 (full width is the anchor's and
+the board's) and rule 8 (everything that isn't today's work is ONE tail). A reply that never blocks (Stage 11 Ask 24) is
+tail material; the bell and the email do the reminding. Amber not red: red in this portal is money owed or something gone
+wrong (written rule, coaches.module.css), and a reply-by blocks nothing — the owner heard both rules. The game card is on
+the Overview most days; its height came from layout (the chips were added after the 08-12 three-row arrangement and got
+a row of their own) and from saying "lineup not started" twice, not from information — so it shrank (~185 → ~135px
+desktop, ~195 → ~150 tablet, one 44px row on a phone) without demoting game day's type. Round 1 had put the proposals in a
+box between the anchor and the board; /design caught that it broke rules 6 and 8, so it stayed only as option B.
+**Trade accepted (A8):** on the morning the lineup is the problem the amber chip goes and only the lime says it; the chip
+row stops listing every prep item; a draft's chip appears mid-row when saved.
+**Applies to:** the coach team Overview (`app/[orgSlug]/coaches/teams/[teamId]/page.tsx`), `ClubReviewCard`,
+`CoachClubArrivalCard`, `.oneChips`/`.tail` in `coaches.module.css`, the review link in `lib/club-schedule-send.ts`.
+
 ### 2026-11-14 — AN OPENED NOTIFICATION READS AS LABELLED ROWS: 5.5REM LABELS BESIDE THEIR ANSWER AT EVERY WIDTH; A DEADLINE IS A ROW, THE INSTRUCTION ONE LINE; LISTS FOLD AT 6 (owner, Notifications read at a glance Stage 1, paste-back "Yes, as recommended" on Q1–Q8; drawing https://claude.ai/artifact/4oPRNGetZWQ2ei483Gs2i5 v2, /design applied)
 
 **Decision:** (Q1) The label column is a fixed 5.5rem on a computer, labels at most 11 characters, sentence case, quiet ink, semibold (as built for house league's time); on a phone the label stays **beside** its answer and a list under a row runs the sheet's full width. (Q2) A date the reader must meet is a row ("Answer by"); what to do is one plain line under the rows, starting with a verb; once the notice is settled, the settled line replaces that line. (Q3) A list shows 6 lines, then "Show N more" opens the rest in place; the notice keeps up to 30 lines. (Q4) The three kinds that carry their amount or due date in the title keep it there. (Q5) "Score submitted"'s one line carries the game, the score and who entered it. (Q6) "A refund didn't reach the card" gets one wording, filled in by every sender; titles keep the team or the child. (Q7) `/legal` runs on the moved-games email before Stage 3; Stage 2 checks each kind's email as it shortens it. (Q8) "A game changed" keeps its sentence. (Q9, ruled after the paste-back) On a phone, when an opened notice is taller than its sheet, the button row is pinned at the sheet's foot under a hairline and the message scrolls above it; a notice that fits is unchanged.

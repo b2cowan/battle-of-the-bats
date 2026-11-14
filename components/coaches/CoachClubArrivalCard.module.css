@@ -1,10 +1,24 @@
-/* The club team's one-time Overview card (Club Tier Stage 2, specimens 4 and 6) — the kit's card with
-   the portal's olive accent edge; a white card, never a tinted panel (2026-09-21). Tokens only. */
-.card {
-  --card-accent: var(--home-olive, var(--primary-light));
-  margin-bottom: 0.9rem;
+/* THE CLUB'S BLOCKS IN A TEAM'S OVERVIEW TAIL (owner 2026-11-14, Overview drawings A1–A6): the club's one-time arrival
+   row (Club Tier Stage 2) and the club's proposals (Stage 11a) — each a mono label over the portal's framed row list.
+   They used to be accent cards ABOVE the One Thing; the tail is where everything that is not today's work lives
+   (Chunk I rule 8). Tokens only. */
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  /* The bell and the email land on #club-proposals: clear the sticky team bar when it scrolls into view. */
+  scroll-margin-top: 5rem;
+}
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
 }
 .kicker {
+  margin: 0;
   font-family: var(--font-data);
   font-size: var(--type-label);
   font-weight: 700;
@@ -12,16 +26,39 @@
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-.title {
-  margin: 0;
-  font-size: var(--type-heading);
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--text-primary);
-}
-.body {
-  margin: 0;
+/* "2 waiting on your reply" · "Answered · waiting for the club" */
+.count {
   font-size: var(--type-support);
-  line-height: 1.5;
+  font-weight: 600;
   color: var(--text-secondary);
+}
+
+/* A proposal row's right side: the reply-by, the late reminder, or the coach's answer. */
+.by { font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; }
+/* Amber, not red: the club's reply-by never blocks anything (Stage 11 Ask 24); red is for money owed. The ⚠ is the
+   glyph the game card's own "to do" chips wear. */
+.late {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--warning);
+  white-space: nowrap;
+}
+.late svg { flex: none; }
+.said { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+.saidLine { margin: 0; font-size: var(--type-support); color: var(--text-secondary); }
+
+/* ≤640 the row list puts its trail beside the title; a reply-by that long squeezed the proposal's name into three
+   lines. On these rows it takes the last line instead — name, what it holds, then the date (the drawing's phone
+   frame). The chevron is the corner's at this width, so it does not move with it. */
+@media (max-width: 640px) {
+  .proposalRow > span:has(> .by),
+  .proposalRow > span:has(> .late),
+  .proposalRow > span:has(> .said) {
+    order: 6;
+    flex-basis: 100%;
+    margin-left: 0;
+  }
 }
