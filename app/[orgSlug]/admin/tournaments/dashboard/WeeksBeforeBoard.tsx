@@ -117,7 +117,7 @@ function AddCard({ items, open, onToggle, onAdd }: {
 
 export default function WeeksBeforeBoard({
   base, daysUntil, tournamentId, orgQuery, subscriptionHref, paymentTools, inviteOnly,
-  reg, followUps, pay, fees, chat, chatSettled, onRetryChat, canRemind, comms, health, onOpenHealth, regHealth, onOpenRegHealth,
+  reg, followUps, pay, fees, clubBook = null, chat, chatSettled, onRetryChat, canRemind, comms, health, onOpenHealth, regHealth, onOpenRegHealth,
   teams, divisions, panels, customizing, onReorder, onHide, onShow,
 }: {
   /** An invite-only event (the free tournament tier, screen 4): the Registration card is the Teams card, and the Payments
@@ -136,6 +136,9 @@ export default function WeeksBeforeBoard({
   followUps: FollowUp[];
   pay: { hasFeeSchedule: boolean; totalExpected: number; totalCollected: number; counts: { paid: number; depositPaid: number; pending: number; pastDue: number } };
   fees: BoardFees;
+  /** The event's book in the club's Ledger (Club Tier 13d-11, Ask 16 A): a second row under the card's own, for someone
+   *  who holds Accounting only (the route reads it for no one else) — no door anyone can't open, no Accounting nav row. */
+  clubBook?: { href: string; moneyIn: number; floatIn: number } | null;
   chat: ChatAdoption | null;
   /** This event's read has landed (a Try again re-read is not in flight). */
   chatSettled: boolean;
@@ -307,7 +310,11 @@ export default function WeeksBeforeBoard({
     }
     return (
       <ClubSection list title={W.payments} meta={pay.hasFeeSchedule ? W.payFigure(pay.totalCollected, pay.totalExpected) : undefined}>
-        <ClubRowList inset label={W.payments}>{row}</ClubRowList>
+        <ClubRowList inset label={W.payments}>
+          {row}
+          {/* The first row stays word for word (13d-11 A): it is about team fees here; this one says whose book it is. */}
+          {clubBook && <ClubRow as="link" href={clubBook.href} title={W.clubBook(clubBook.moneyIn)} caption={W.clubBookLine(clubBook.floatIn)} chevron />}
+        </ClubRowList>
       </ClubSection>
     );
   }

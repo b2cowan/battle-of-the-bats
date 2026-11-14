@@ -10,6 +10,8 @@
  * own tile and nothing else.
  */
 
+import { fmt } from './coach-money-summary';
+
 export type ClubBandPart = 'cash' | 'owed' | 'week' | 'needs';
 
 export interface ClubBand {
@@ -76,3 +78,24 @@ export const CLUB_BAND_WORDS = {
   retry: 'Try again',
   tileFailed: 'Didn’t load',
 } as const;
+
+/**
+ * OWED TO THE CLUB, ADDED UP ONCE (Stage 13b's band; Stage 13d-5 put the same figure on Accounting's Overview): the teams'
+ * Owed plus house league's Still owing, to the cent, and its caption — each half said only when there is something in it.
+ * The band and the Overview both call this, so "one figure, one name, both screens" holds by construction.
+ * `players`: the Overview says how many players owe house league ("(12 players)"); the band says that on its Needs line.
+ */
+export function owedToTheClub(owed: NonNullable<ClubBand['owed']>, opts: { players?: boolean } = {}): {
+  total: number; overdue: number; caption: string;
+} {
+  const { teams, league } = owed;
+  const total = Math.round(((teams?.amount ?? 0) + (league?.amount ?? 0)) * 100) / 100;
+  const overdue = teams && teams.overdue > 0 ? teams.overdue : 0;
+  const caption = [
+    teams && teams.amount > 0 ? CLUB_BAND_WORDS.owed.teams(fmt(teams.amount), overdue ? fmt(overdue) : null) : null,
+    league && league.amount > 0
+      ? `${CLUB_BAND_WORDS.owed.league(fmt(league.amount))}${opts.players && league.players > 0 ? ` (${league.players} ${league.players === 1 ? 'player' : 'players'})` : ''}`
+      : null,
+  ].filter(Boolean).join(' · ');
+  return { total, overdue, caption };
+}

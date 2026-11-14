@@ -56,6 +56,8 @@ import { LoadFailed, useDeferredLoad, useLatestRead } from '@/components/admin/k
 import { money, moneyFetch, jsonInit, refusalText } from '@/components/admin/kit/club/money/MoneyKit';
 import YearPill, { useClubYear } from '@/components/admin/kit/club/money/YearPill';
 import BudgetPlanList, { lineHasUndated, planFoldKeys, type WhenFilter } from '@/components/admin/kit/club/money/BudgetPlanList';
+import { useDraftBills } from '@/components/admin/kit/club/money/DraftBills';
+import { draftBillsByLine } from '@/lib/club-draft-bill';
 import {
   AddLineWindow, BudgetLineWindow, CategoriesWindow, FromTheTeamsWindow, TeamWordsWindow,
 } from '@/components/admin/kit/club/money/BudgetWindows';
@@ -198,6 +200,9 @@ export default function BudgetTab() {
   const plan = read?.plan ?? null;
   const allLines = useMemo(() => (plan ? [...plan.revenue.categories, ...plan.expenses.categories].flatMap(c => c.lines) : []), [plan]);
   const openLine = allLines.find(l => l.id === lineId) ?? null;
+  // Schedules' bills not sent yet, by line (Stage 13d-3): the caption under a line's name. Read once with the plan.
+  const drafts = useDraftBills(q, null, !!slug);
+  const beingBilled = useMemo(() => draftBillsByLine(drafts?.bills ?? []), [drafts]);
   const hasUndated = allLines.some(lineHasUndated);
   const changed = useCallback((text: string | null) => { if (text) setNotice({ tone: 'good', text }); void load(); }, [load, setNotice]);
 
@@ -369,6 +374,7 @@ export default function BudgetTab() {
               plan={plan}
               locked={plan.year.locked}
               carriedFrom={read.year.carriedFrom}
+              beingBilled={beingBilled}
               when={hasUndated ? when : 'all'}
               closed={closed}
               onToggle={toggle(setClosed)}
@@ -407,6 +413,7 @@ export default function BudgetTab() {
           canMove={canMove}
           locked={plan.year.locked}
           categories={categories ?? []}
+          drafts={drafts ? { bills: beingBilled.get(openLine.id) ?? [], opensSchedules: drafts.opensSchedules } : null}
           onOpenPermit={setPermitFromLine}
           onChanged={changed}
           onClose={() => setLineId(null)}

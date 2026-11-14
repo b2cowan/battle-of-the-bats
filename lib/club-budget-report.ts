@@ -44,7 +44,7 @@ import {
 import { CLUB_SENT_WAITING_WORD, HELD_BY_THE_TEAM_WORD, OUTSIDE_YOUR_GROUPS_WORD, REQUEST_STATUS_WORD, TEAMS_CASH_TOTAL_WORD, lastYearsBillsWord, netForYearWord } from './club-money-words';
 import { formatStoredDate } from './timezone';
 import {
-  allocationYear, bandCollected, clubBillFigures, clubCashOnHand, clubMovement, clubYearOf, clubYearSpan,
+  allocationYear, bandCollected, collectedByBook, clubBillFigures, clubCashOnHand, clubMovement, clubYearOf, clubYearSpan,
   clubActualMovement, closingBalance, countsAsActual, headroom, isClubBook, lineAllocated, netForYear, notAllocated, offPlan,
   otherBooksMovement, owedByTheTeams, planned, spent, sumMoney, teamsCashTotal, teamsWithMoneyLate, teamsWithRequestWaiting,
   waitingOnYou, clubInstallmentDue, requestWaitsOnClub,
@@ -543,6 +543,8 @@ export interface ClubReport {
   lineSources: Record<string, LineSource>;
   /** Where each counted line sits on the book (the panel's door to the Ledger). */
   lineBooks: Record<string, { ledgerId: string; bookName: string }>;
+  /** Total revenue's Actual by the book it landed on (`collectedByBook`, Stage 13d-5) — what Revenue includes. */
+  revenueByBook: { ledgerId: string; kind: string; name: string; amount: number }[];
   band: {
     /** The band's Collected (Total revenue's Actual), of the revenue planned. */
     collected: { amount: number; planned: number };
@@ -786,8 +788,11 @@ export function buildClubReport(input: ClubReportInput): ClubReport {
   const flow = (lens: 'budget' | 'scheduled' | 'actual') =>
     clubCashFlow(months, revenueGrid, monthGrid, otherBooks[lens], lens, input.openingBalance, cashOnHand);
 
+  const bookOf = new Map(counted.map(l => [l.ledgerId, { kind: l.bookKind, name: l.bookName }]));
+  const revenueByBook = [...collectedByBook(counted)].map(([ledgerId, amount]) => ({ ledgerId, ...bookOf.get(ledgerId)!, amount }));
+
   return {
-    year, today, statement, lineSources, lineBooks, band,
+    year, today, statement, lineSources, lineBooks, revenueByBook, band,
     headroom: headroom(report.expenses.budgeted, band.spent.amount),
     toDate: { revenuePlanned: sumBudgetedOn(report.revenue, today), expensesPlanned: sumBudgetedOn(report.expenses, today) },
     pending,
@@ -848,6 +853,9 @@ export interface BoardSummary {
   /** The year against the budget — READ from Budget vs. Actual's report, never computed again. */
   againstBudget: {
     revenue: { planned: number; plannedToDate: number; actual: number };
+    /** What Revenue's Actual includes from the books beside the General ledger (Stage 13d-5): house league's fees (every
+     *  season's book, summed) and each tournament's book — the report's own `revenueByBook`, never typed. */
+    revenueIncludes: { leagueFees: number; tournaments: { name: string; amount: number }[] };
     /** From the teams, split: what the allocations brought in and what came on request — and its plan (the allocations). */
     fromTheTeams: { planned: number; allocations: number; onRequest: number };
     expenses: { planned: number; plannedToDate: number; actual: number };
@@ -905,6 +913,11 @@ export function buildBoardSummary(input: {
 
   const againstBudget = {
     revenue: { planned: statement.revenue.budgeted, plannedToDate: report.toDate.revenuePlanned, actual: statement.revenue.actual },
+    revenueIncludes: {
+      leagueFees: sumMoney(report.revenueByBook.filter(b => b.kind === 'league_season')),
+      tournaments: report.revenueByBook.filter(b => b.kind === 'tournament' && Math.abs(b.amount) > 0.005)
+        .map(b => ({ name: b.name, amount: b.amount })),
+    },
     fromTheTeams: {
       planned: itemActual(statement.revenue, FROM_THE_TEAMS_ID, null, 'budgeted'),
       allocations: itemActual(statement.revenue, FROM_THE_TEAMS_ID, null),

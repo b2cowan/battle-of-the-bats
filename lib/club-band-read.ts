@@ -41,8 +41,13 @@ const settle = async <T>(part: ClubBandPart, failed: ClubBandPart[], read: () =>
   try { return await read(); } catch { if (!failed.includes(part)) failed.push(part); return undefined; }
 };
 
-/** House league's Still owing, summed over the live seasons — each season's own figure (the Money page's), never a new query. */
-async function leagueOwing(ctx: AuthContextWithRole): Promise<{ amount: number; players: number; firstSeasonId: string | null }> {
+/** House league's Still owing, summed over the live seasons — each season's own figure (the Money page's), never a new query.
+ *  `seasons` keeps each live season's own figure: Accounting's Overview names one line per season under the club's books
+ *  (Stage 13d-5, drawing tab 5 note 4), and its "Owed to the club" reads this same sum — one figure, both screens. */
+export async function leagueOwing(ctx: AuthContextWithRole): Promise<{
+  amount: number; players: number; firstSeasonId: string | null;
+  seasons: { id: string; name: string; owing: number; players: number }[];
+}> {
   const seasons = liveLeagueSeasons(await getLeagueSeasons(ctx.org.id));
   const per = await Promise.all(seasons.map(async season => {
     // The ledger read and the registration → debits chain are independent: start both, join once.
@@ -53,12 +58,13 @@ async function leagueOwing(ctx: AuthContextWithRole): Promise<{ amount: number; 
     ]);
     const clearing = new Map(Object.entries(debits).filter(([, d]) => d.state === 'clearing').map(([id, d]) => [id, d.shareCents]));
     const m = seasonMoney(regs, season, lines, clearing);
-    return { id: season.id, owing: m.owing, players: m.owingPlayers };
+    return { id: season.id, name: season.name, owing: m.owing, players: m.owingPlayers };
   }));
   return {
     amount: per.reduce((sum, s) => sum + Math.round(s.owing * 100), 0) / 100,
     players: per.reduce((sum, s) => sum + s.players, 0),
     firstSeasonId: (per.find(s => s.players > 0 || s.owing > 0) ?? per[0])?.id ?? null,
+    seasons: per,
   };
 }
 

@@ -19,7 +19,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { fmt } from '@/lib/coach-money-summary';
 import { formatShortWeekdayDate } from '@/lib/timezone';
 import { kit } from '@/components/coaches/kit';
-import { CLUB_BAND_WORDS as W, type ClubBand as Band, type ClubBandPart } from '@/lib/club-band-view';
+import { CLUB_BAND_WORDS as W, owedToTheClub, type ClubBand as Band, type ClubBandPart } from '@/lib/club-band-view';
 import ck from './ClubKit.module.css';
 import styles from './ClubBand.module.css';
 
@@ -78,13 +78,12 @@ export default function ClubBand({ slug, base, ready }: {
   // ── Owed to the club: the teams' Owed (Accounting's) and house league's Still owing, each its own existing figure ──
   let owed: React.ReactNode = failedTile('owed', W.owed.label);
   if (band.owed && !readFailed('owed')) {
-    const { teams, league } = band.owed;
-    const total = Math.round(((teams?.amount ?? 0) + (league?.amount ?? 0)) * 100) / 100;
-    const overdue = teams && teams.overdue > 0 ? fmt(teams.overdue) : null;
-    const desk = [
-      teams && teams.amount > 0 ? W.owed.teams(fmt(teams.amount), overdue) : null,
-      league && league.amount > 0 ? W.owed.league(fmt(league.amount)) : null,
-    ].filter(Boolean).join(' · ');
+    const { teams } = band.owed;
+    // The one sum and caption Accounting's Overview reads too (`owedToTheClub`, Stage 13d-5).
+    const added = owedToTheClub(band.owed);
+    const total = added.total;
+    const overdue = added.overdue ? fmt(added.overdue) : null;
+    const desk = added.caption;
     owed = (
       <DoorTile key="owed" label={W.owed.label} href={`${base}${teams ? '/accounting/teams' : '/accounting'}`}
         figure={total > 0 ? fmt(total) : W.owed.nothing} words={total <= 0} tone={overdue ? 'warn' : undefined}>

@@ -224,6 +224,12 @@ export const WEEKS_BEFORE_WORDS = {
   noDivisionsLine: 'Teams register into a division',
   payments: 'Payments',
   payFigure: (collected: number, expected: number) => `${boardMoney(collected)} of ${boardMoney(expected)}`,
+  /** The event's book in the club's Ledger (Club Tier 13d-11), for someone who holds Accounting: money in, and a float
+   *  moved in from the club's own books named apart so the figure isn't inflated. */
+  clubBook: (moneyIn: number) => (moneyIn > 0.005 ? `In the club’s book: ${boardMoney(moneyIn)} in` : 'In the club’s book: nothing in yet'),
+  clubBookLine: (floatIn: number) => (floatIn > 0.005
+    ? `${boardMoney(floatIn)} float moved in · opens the event’s book in Ledger`
+    : 'Opens the event’s book in Ledger'),
   paidLine: (paid: number, deposits: number) =>
     [paid > 0 ? `${paid} paid in full` : '', deposits > 0 ? `${deposits} paid a deposit` : ''].filter(Boolean).join(' · ') || 'Nobody has paid yet',
   owingLine: (unpaid: number, pastDue: number) =>

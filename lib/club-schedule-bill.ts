@@ -39,6 +39,16 @@ export interface BillSlot {
 
 export type PaymentPlan = 'one' | 'monthly' | 'two_months' | 'dates';
 
+/**
+ * A BILL NOT SENT YET (Club Tier Stage 13d-3, Ask 15 A): a draft or in-review schedule carrying a bill (a plan set, no
+ * allocation made). It reserves NOTHING on its line — what a line has committed is its allocations, billed less credited
+ * (`lineAllocatedCents` in club-schedule-send.ts, the one definition `lineAllocated`), and Finalize (or "Send the
+ * bill") is what turns this into one. Accounting reads it as "being billed (draft)" and warns; it never counts it.
+ */
+export const BILL_PENDING_STATES = ['draft', 'in_review'] as const;
+export const billIsPending = (row: { state: string; bill_plan: string | null; allocation_id: string | null }): boolean =>
+  (BILL_PENDING_STATES as readonly string[]).includes(row.state) && !!row.bill_plan && !row.allocation_id;
+
 /** Each team's priced minutes — Σ a slot's minutes × its field's share, a shared slot split evenly among its teams. */
 export function pricedMinutes(slots: readonly BillSlot[]): Map<string, number> {
   const out = new Map<string, number>();

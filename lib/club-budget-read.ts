@@ -5,7 +5,7 @@ import { fetchAll, fetchAllIn } from './supabase-paging';
 import { getBookTotals, getClubOwnedLedgers } from './db';
 import { loadClubLoop, seasonsHoldingPayout, type ClubLoop } from './club-money-reads';
 import { teamCashHeld } from './club-team-cash';
-import { carriedOpening, clubYearSpan, isClubBook, openingBalance, requestWaitsOnClub, sumMoney } from './club-money-figures';
+import { carriedOpening, clubMovement, clubYearSpan, collectedByBook, isClubBook, openingBalance, requestWaitsOnClub, sumMoney } from './club-money-figures';
 import {
   buildClubPlan, buildClubReport, buildBoardSummary, withPeriodViews,
   type ClubAllocationFacts, type ClubBook, type ClubBookLineFacts, type ClubPlan, type ClubPlanLineFacts, type ClubPlanWithPeriods,
@@ -181,6 +181,24 @@ async function readBookLines(books: readonly ClubBook[], narrow: (q: any) => any
       budgetItemId: r.budget_item_id ?? null, budgetItemName: r.budget_items?.name ?? null,
     };
   });
+}
+
+/**
+ * A CLUB TOURNAMENT'S BOOK, AS ITS DASHBOARD SAYS IT (Club Tier Stage 13d-11, Ask 16 A; drawing tab 5 note 1): the event's
+ * book in the club's Ledger, every POSTED line. Money in is `collectedByBook` — Total revenue's own rule, so the card and
+ * the Overview's "includes …" read alike; a float moved in from the club's own books (`clubMovement` → own_transfer) is
+ * named apart, never counted as money in. Null when the event has no book or nothing is on it.
+ */
+export async function readEventBook(orgId: string, tournamentId: string): Promise<{ ledgerId: string; moneyIn: number; floatIn: number } | null> {
+  const { data: ledger, error } = await supabaseAdmin.from('accounting_ledgers').select('id, name')
+    .eq('org_id', orgId).eq('entity_type', 'tournament').eq('entity_id', tournamentId).maybeSingle();
+  if (error) throw error;
+  if (!ledger) return null;
+  const lines = await readBookLines([{ id: ledger.id as string, kind: 'tournament', name: (ledger.name as string) ?? '', balance: 0 }],
+    q => q.eq('status', 'posted'));
+  if (!lines.length) return null;
+  const floatIn = sumMoney(lines.filter(l => l.entryType === 'transfer_in' && clubMovement(l) === 'own_transfer'));
+  return { ledgerId: ledger.id as string, moneyIn: collectedByBook(lines).get(ledger.id as string) ?? 0, floatIn };
 }
 
 /** The budget library's order (sort, then name) for every category the club can see. */

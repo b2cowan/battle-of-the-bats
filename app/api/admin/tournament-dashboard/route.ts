@@ -35,6 +35,8 @@ import { normalizeHiddenPublicPages, visiblePublicPages, PUBLIC_PAGE_OPTIONS } f
 import { DEFAULT_SPORT } from '@/lib/sports';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { lowerEntry } from '@/lib/tournament-teams';
+import { canOpenModule } from '@/lib/member-access';
+import { readEventBook } from '@/lib/club-budget-read';
 
 type GameRow = {
   id: string;
@@ -165,6 +167,13 @@ export const GET = withObservability(async (req: Request) => {
   }
 
   const t = tournament as TournamentFeeRow;
+
+  // "In the club's book" (Club Tier Stage 13d-11, Ask 16 A): the event's book in the club's Ledger, read only for someone
+  // who holds Accounting — anyone else's Payments card stays exactly as it was, with no door they can't open. Started
+  // now, beside the board's other reads; a failed read is no row.
+  const clubBookP = canOpenModule(ctx, ctx.org, 'module_accounting')
+    ? readEventBook(ctx.org.id, tournamentId).catch(() => null)
+    : Promise.resolve(null);
 
   const [divisionsRes, teamsRes, gamesRes, announcementsRes, teamPaymentsRes, poolSlotsRes, venuesRes, rulesRes, lanesRes] = await Promise.all([
     supabaseAdmin
@@ -887,7 +896,10 @@ export const GET = withObservability(async (req: Request) => {
     };
   }
 
+  const clubBook = await clubBookP;
+
   return Response.json({
+    clubBook,
     coinTossNeeded,
     chatAdoption,
     fees,

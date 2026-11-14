@@ -31,6 +31,7 @@ import sch from './Schedules.module.css';
 import DateInput from '@/components/shared/DateInput';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
+import BillLineNotice from './BillLineNotice';
 
 interface BillFromLine { id: string; description: string; categoryName: string; itemName: string | null; planned: number; allocated: number; left: number }
 
@@ -270,6 +271,12 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
           <span className={ck.hint}>{pricing?.fullHour == null ? W.billNoPermitHint : W.billPartHint}</span>
         </label>
       </div>
+      {/* Accounting's allocations on the line, a bill bigger than what's left, and a permit's line it can't offer —
+          said, never silent (13d-4 A). Warns only: nothing below changes for it. */}
+      {lines && (
+        <BillLineNotice q={q} lineId={lineId} billCents={totalCents > 0 ? totalCents : null}
+          droppedLineId={!savedLineId && pricing?.lineId && !lines.lines.some(l => l.id === pricing.lineId) ? pricing.lineId : null} />
+      )}
       {part && (
         <label className={ck.field} htmlFor="bill-amount">
           <span className={ck.label}>{W.billAmount}<span className={repKit.req} aria-hidden>*</span></span>

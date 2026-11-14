@@ -437,6 +437,7 @@ export default function BudgetVsActualTab() {
           q={q}
           orgSlug={slug}
           canMove={canMove}
+          locked={plan.year.locked}
           categories={categories ?? []}
           onOpenPermit={setPermitFromLine}
           onChanged={text => { if (text) setNotice({ tone: 'good', text }); void load(); }}

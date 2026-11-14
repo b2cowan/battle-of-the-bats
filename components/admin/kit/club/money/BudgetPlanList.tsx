@@ -39,6 +39,7 @@ import { REVENUE_EMPTY_PROMPT, whenSummary } from '@/lib/coach-budget-periods-vi
 import {
   FROM_THE_TEAMS_WORD, YEAR_LINE_WORDS, carriedOpeningWords, netForYearWord, notAllocatedCaption, openingBalanceRowWord,
 } from '@/lib/club-money-words';
+import { DRAFT_BILL_WORDS, type DraftBill } from '@/lib/club-draft-bill';
 import { LockMark } from './YearPill';
 import fy from './FiscalYear.module.css';
 import { clubYearSpan, sumMoney } from '@/lib/club-money-figures';
@@ -79,8 +80,10 @@ function WhenChip({ periods, total, className }: { periods: readonly ClubPlanPer
 
 const sumOf = (xs: readonly number[]) => sumMoney(xs.map(amount => ({ amount })));
 
-export default function BudgetPlanList({ plan, when, closed, onToggle, onOpenLine, onOpenTeams, locked = false, carriedFrom = null }: {
+export default function BudgetPlanList({ plan, when, closed, onToggle, onOpenLine, onOpenTeams, locked = false, carriedFrom = null, beingBilled }: {
   plan: ClubPlan;
+  /** Each cost line's schedule bills not sent yet (Stage 13d-3): the caption under its name says "being billed (draft)". */
+  beingBilled?: ReadonlyMap<string, readonly DraftBill[]>;
   /** The year is CLOSED (Ask 1): an unbilled part reads "the club paid it". */
   locked?: boolean;
   /** The year before, when it is closed: the opening row is its closing, locked (Ask 4). */
@@ -138,6 +141,7 @@ export default function BudgetPlanList({ plan, when, closed, onToggle, onOpenLin
     const funding = l.direction === 'in';
     const billed = !funding && l.allocations.length > 0;
     const left = !funding && billed && (l.notAllocated ?? 0) > 0.005;
+    const drafts = !funding && !locked ? beingBilled?.get(l.id) ?? [] : [];
     return (
       <tr key={l.id} className={shared.rowTappable}
         onClick={() => { if (window.getSelection()?.toString()) return; onOpenLine(l.id); }}>
@@ -145,7 +149,8 @@ export default function BudgetPlanList({ plan, when, closed, onToggle, onOpenLin
           <span className={shared.moneyGridExpandSpacer} />
           <span className={bud.lineStack}>
             <span className={bud.lineName}>{l.description}</span>
-            {left && <span className={cr.notAllocated}>{locked
+            {drafts.length > 0 && <span className={`${cr.notAllocated} ${cr.draftBillSub}`}>{DRAFT_BILL_WORDS.caption(drafts)}</span>}
+            {left && !drafts.length && <span className={cr.notAllocated}>{locked
               ? `${money(l.notAllocated ?? 0)} not allocated · ${YEAR_LINE_WORDS.clubPaid}`
               : notAllocatedCaption(l.notAllocated ?? 0)}</span>}
             <WhenChip periods={l.periods} total={l.planned} className={bud.whenUnderName} />

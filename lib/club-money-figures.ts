@@ -807,6 +807,20 @@ export function bandCollected(lines: readonly ActualLine[]): number {
 }
 
 /**
+ * WHAT REVENUE INCLUDES (Club Tier Stage 13d-5): the band's Collected, by the book each line landed on — the same lines
+ * and the same rule (`clubActualMovement`: a float moved between the club's own books is no revenue, a house-league
+ * refund nets its fees), so the parts add up to Total revenue's Actual and can never disagree with it. Keyed by ledger id.
+ */
+export function collectedByBook(lines: readonly (ActualLine & { ledgerId: string })[]): Map<string, number> {
+  const c = new Map<string, number>();
+  for (const l of lines) {
+    const m = clubActualMovement(l);
+    if (m?.side === 'in') c.set(l.ledgerId, (c.get(l.ledgerId) ?? 0) + cents(m.amount));
+  }
+  return new Map([...c].map(([id, v]) => [id, dollars(v)]));
+}
+
+/**
  * OFF-PLAN. Spending on a word the year's plan has no line for, plus spending filed to no word yet
  * ("Not filed"). The coach's "nobody budgeted this". Hidden at zero.
  */

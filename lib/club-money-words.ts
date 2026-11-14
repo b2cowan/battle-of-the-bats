@@ -473,6 +473,13 @@ export const emptyYearWords = (year: string, from: string | null) => ({
 export const LINE_ALLOCATIONS_WORD = 'Allocated to teams';
 export const allocationRowCaption = (teams: string, otherTeams: number, allocated: number, collected: number) =>
   `${[teams, otherTeams > 0 ? `${otherTeams} more ${otherTeams === 1 ? 'team' : 'teams'}` : ''].filter(Boolean).join(' · ')} · ${fmt(allocated)} allocated · ${fmt(collected)} collected`;
+/** An allocation's teams: "9U A, 10U A and 11U AA" up to three; else "9 teams". Teams outside the reader's groups are
+ *  counted, never named (B11). The line window's rows and the Bill window's warning (Stage 13d-4) both say it. */
+export function teamsPhrase(a: { teamNames: readonly string[]; otherTeams: number }): string {
+  const n = a.teamNames.length + a.otherTeams;
+  if (a.otherTeams === 0 && a.teamNames.length > 0 && a.teamNames.length <= 3) return joinWithAnd(a.teamNames);
+  return pluralize(n, 'team');
+}
 export const NOT_ALLOCATED_LEAD = 'The club pays this part itself unless you allocate it.';
 
 /** The board summary (the Overview tab) — Ask 1. */
@@ -508,6 +515,26 @@ export const SUMMARY_WORDS = {
     `Held by the teams: ${fmt(total)} in all. The coaches’ own books, never in the club’s figures.`,
   phoneYear: (spent: number, plannedOut: number, collected: number, plannedIn: number, headroom: number) =>
     `Spent ${fmt(spent)} of ${fmt(plannedOut)} · collected ${fmt(collected)} of ${fmt(plannedIn)} · headroom ${fmt(headroom)}`,
+} as const;
+
+/**
+ * "OWED TO THE CLUB" ON ACCOUNTING'S OVERVIEW (Club Tier Stage 13d-5, Ask 5 A; drawing tab 5 notes 2-4). The owner's band's
+ * figure, name and caption (`owedToTheClub`, lib/club-band-view.ts). Here: what Revenue includes from the other books, and
+ * the line under the books that opens a live season's Money page.
+ */
+export const OWED_TO_THE_CLUB_WORDS = {
+  /** Under Revenue: the money from the books beside the General ledger — null when there is none. */
+  revenueIncludes: (inc: { leagueFees: number; tournaments: readonly { name: string; amount: number }[] }) => {
+    const parts = [
+      Math.abs(inc.leagueFees) > 0.005 ? `house league fees ${fmt(inc.leagueFees)}` : null,
+      ...inc.tournaments.map(t => `${t.name} ${fmt(t.amount)}`),
+    ].filter(Boolean);
+    return parts.length ? `includes ${parts.join(' · ')}` : null;
+  },
+  /** Said on the Overview's figure when house league's half could not be read, so the teams' part is never taken for the whole. */
+  leagueDidntLoad: 'House league’s part didn’t load.',
+  seasonDoor: (season: string, owing: number) =>
+    `House league money: ${season} · ${owing > 0.005 ? `${fmt(owing)} still owing` : 'nothing owing'}`,
 } as const;
 
 /** A team's cash, as the club reads it (D1, Ask 4e): whose figure, and from which season. */

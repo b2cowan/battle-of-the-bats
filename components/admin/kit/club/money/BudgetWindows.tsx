@@ -43,6 +43,8 @@ import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { NoticePill, SavePill, repKit, useDeferredLoad, useLatestRead } from '../RepKit';
 import AllocationWindow from './AllocationWindow';
+import { BeingBilledRows, FairSharesWindow, useDraftBills, type DraftBillsRead } from './DraftBills';
+import { DRAFT_BILL_WORDS, type DraftBill } from '@/lib/club-draft-bill';
 import { RecordFacts } from '@/components/coaches/kit';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import TeamBudgetItems from '@/components/accounting/TeamBudgetItems';
@@ -50,7 +52,7 @@ import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { NO_DATE_LABEL, whenSummary, whenMonthsText } from '@/lib/coach-budget-periods-view';
 import { formatMonthLong, type MonthKey } from '@/lib/coach-budget-months';
 import {
-  CLUB_BUDGET_REFUSAL, FROM_THE_TEAMS_WORD, LINE_ALLOCATIONS_WORD, NOT_ALLOCATED_LEAD, YEAR_LINE_WORDS, allocationRowCaption,
+  CLUB_BUDGET_REFUSAL, FROM_THE_TEAMS_WORD, LINE_ALLOCATIONS_WORD, NOT_ALLOCATED_LEAD, YEAR_LINE_WORDS, allocationRowCaption, teamsPhrase,
 } from '@/lib/club-money-words';
 import { formatStoredDate } from '@/lib/timezone';
 import { clubYearMonths, type ClubPlanPeriod, type PlanAllocationRow, type PlanLineRow } from '@/lib/club-budget-report';
@@ -229,16 +231,6 @@ function FiledUnderField({ id, categories, value, onChange, direction, orgSlug, 
 
 // ── A line: read first, edit whole ──────────────────────────────────────────────────────────────
 
-/** "9U A, 10U A and 11U AA" up to three; else "9 teams". Teams outside the reader's groups are counted, never named. */
-function teamsPhrase(a: PlanAllocationRow): string {
-  const n = a.teamNames.length + a.otherTeams;
-  if (a.otherTeams === 0 && a.teamNames.length > 0 && a.teamNames.length <= 3) {
-    const t = a.teamNames;
-    return t.length === 1 ? t[0] : `${t.slice(0, -1).join(', ')} and ${t[t.length - 1]}`;
-  }
-  return `${n} ${n === 1 ? 'team' : 'teams'}`;
-}
-
 /** The allocations a line carries — each opens the allocation's window in this one's place (Stage 3d, Ask 5). */
 export function AllocationRows({ rows, onOpen }: { rows: readonly PlanAllocationRow[]; onOpen: (allocationId: string) => void }) {
   return (
@@ -305,8 +297,10 @@ function PaysFor({ rows, planned, onOpen }: { rows: readonly LinePermitRow[]; pl
   );
 }
 
-export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = false, categories, onOpenPermit, onChanged, onClose }: {
+export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = false, categories, onOpenPermit, onChanged, onClose, drafts: given = null }: {
   line: PlanLineRow; year: FiscalYearRef; q: string; orgSlug: string; canMove: boolean;
+  /** The line's schedule bills not sent yet, when the host already read them (the Budget tab) — otherwise read here. */
+  drafts?: DraftBillsRead | null;
   /** A "Pays for" row: the host turns this window into the permit's (× turns it back) — Club Tier 10a. */
   onOpenPermit?: (permitId: string) => void;
   /** The line's fiscal year is CLOSED (Ask 1): it reads with its two writes gone (no pencil — `canMove` is false —
@@ -319,6 +313,11 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
 }) {
   const isCost = line.direction === 'out';
   const paysFor = useLinePermits(q, line.id, isCost);
+  /** A schedule's bill not sent yet that names this line (Stage 13d-3): "Being billed (draft)", and its fair shares. */
+  const read = useDraftBills(q, line.id, isCost && !locked && !given);
+  const drafts = given ?? read;
+  const draftBills = isCost && !locked ? drafts?.bills ?? [] : [];
+  const [shares, setShares] = useState<DraftBill | null>(null);
   const [editing, setEditing] = useState(false);
   const [removing, setRemoving] = useState(false);
   /** The window turned into New allocation (Ask 6), and what it made — said once in the floating pill on return. */
@@ -401,6 +400,7 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
       <AllocationWindow
         q={q}
         line={{ id: line.id, description: line.description, left: line.notAllocated ?? 0, allocated: line.allocated ?? 0, yearName: year.name }}
+        drafts={drafts}
         onCancel={() => setAllocating(false)}
         onMade={text => { setAllocating(false); setMade(text); onChanged(null); }}
       />
@@ -445,6 +445,7 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
             {isCost && paysFor && paysFor.length > 0 && (
               <PaysFor rows={paysFor} planned={line.planned} onOpen={onOpenPermit} />
             )}
+            {isCost && <BeingBilledRows bills={draftBills} onOpen={b => { setMade(null); setShares(b); }} />}
             {isCost && (
               <section className={cr.recordSection} aria-label={LINE_ALLOCATIONS_WORD}>
                 <h3 className={cr.recordSectionTitle}>{LINE_ALLOCATIONS_WORD}</h3>
@@ -455,7 +456,10 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
                   <div className={cr.leftBox}>
                     <span className={cr.leftBoxText}>
                       <span className={cr.leftBoxFigure}>{money(line.notAllocated)} not allocated</span>
-                      <span className={cr.leftBoxSub}>{locked ? YEAR_LINE_WORDS.clubPaidLead : NOT_ALLOCATED_LEAD}</span>
+                      <span className={cr.leftBoxSub}>{locked ? YEAR_LINE_WORDS.clubPaidLead
+                        // While a schedule bills it, "the club pays this part itself" isn't true (13d drawing tab 4 note 2).
+                        : draftBills.length ? DRAFT_BILL_WORDS.notAllocated(draftBills, Math.round((line.notAllocated ?? 0) * 100))
+                        : NOT_ALLOCATED_LEAD}</span>
                     </span>
                     {canMove && (
                       <button type="button" className="btn btn-outline" onClick={() => setAllocating(true)}>
@@ -490,6 +494,9 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
           </>
         )}
       </KitDialog>
+      {shares && (
+        <FairSharesWindow bill={shares} opensSchedules={drafts?.opensSchedules ?? false} onClose={() => setShares(null)} />
+      )}
       {removing && (
         <RemoveLineQuestion line={line} year={year} q={q} onClose={() => setRemoving(false)}
           onRemoved={text => { setRemoving(false); onChanged(text); onClose(); }} />

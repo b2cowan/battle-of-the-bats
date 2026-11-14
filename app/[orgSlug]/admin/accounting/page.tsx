@@ -64,8 +64,9 @@ import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/compone
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 import { fmt as fmtSigned } from '@/lib/coach-money-summary';
 import { LEDGER_KIND_WORD, type LedgerKind } from '@/lib/club-ledger';
+import { CLUB_BAND_WORDS, owedToTheClub } from '@/lib/club-band-view';
 import {
-  STILL_OPEN_WORDS, SUMMARY_WORDS, TEAMS_CARD_WORDS, YEAR_END_WORDS, fiscalYearSpanWords, netForYearWord, stillOpenFromWord,
+  OWED_TO_THE_CLUB_WORDS, STILL_OPEN_WORDS, SUMMARY_WORDS, TEAMS_CARD_WORDS, YEAR_END_WORDS, fiscalYearSpanWords, netForYearWord, stillOpenFromWord,
 } from '@/lib/club-money-words';
 import { clubYearEndFile } from '@/lib/club-money-reports';
 import type { StillOpenRow } from '@/lib/club-fiscal-reads';
@@ -81,6 +82,20 @@ import BankOverviewLine, { type BankMarks } from '@/components/admin/kit/club/mo
 
 /** The Overview's read (Stage 3c): the fiscal year read, the Year pill, the summary — and the year's own reads
  *  session 2 draws (the ended year's door, "From 2025–26, still open", a closed year's year-end report). */
+/** "Owed to the club" (Stage 13d-5): the owner's band's own sum and caption (`owedToTheClub`) over this page's two reads —
+ *  the teams' Owed and house league's Still owing. Without house league money to read, the teams' Owed as it always read. */
+function owedFigure(p: BoardSummary['position'], league: Read['leagueOwed'], leagueFailed = false): { total: number; caption: string } {
+  if (!league) {
+    const caption = SUMMARY_WORDS.owedCaption(p.owedByTheTeams.overdue.amount, p.owedByTheTeams.sent.amount);
+    return { total: p.owedByTheTeams.amount, caption: leagueFailed ? `${caption} ${OWED_TO_THE_CLUB_WORDS.leagueDidntLoad}`.trim() : caption };
+  }
+  const o = owedToTheClub({
+    teams: { amount: p.owedByTheTeams.amount, overdue: p.owedByTheTeams.overdue.amount },
+    league: { amount: league.amount, players: league.players },
+  }, { players: true });
+  return { total: o.total, caption: o.caption || CLUB_BAND_WORDS.owed.nothing };
+}
+
 interface Read {
   year: FiscalYearRead;
   years: FiscalYearOption[];
@@ -91,6 +106,11 @@ interface Read {
   /** Bank balance check BC5a: each account's latest check, as today reads it (the line right of "Where the club stands");
    *  null when the bank couldn't be read (the line is left out). */
   bank: BankMarks | null;
+  /** House league's Still owing over the live seasons (Stage 13d-5) — the owner's band's own sum, each season's figure
+   *  beside it; null where the reader can't open a season's Money page. */
+  leagueOwed: { amount: number; players: number; seasons: { id: string; name: string; owing: number; players: number }[] } | null;
+  /** True when house league's read broke (as opposed to "nothing to read"): the figure says its part is missing. */
+  leagueFailed?: boolean;
 }
 
 const KIND_TONE: Record<LedgerKind, ChipTone> = { org: 'good', tournament: 'neutral', league_season: 'neutral', team: 'info' };
@@ -160,6 +180,8 @@ export default function AccountingOverviewPage() {
      the cash, its own row saying it is not the club's — `boardTeamsExportRows`), and the page's position,
      year and books as the PDF's opening block and the Excel's notes. */
   const yearEnd = read?.yearEnd ?? null;
+  const leagueOwed = read?.leagueOwed ?? null;
+  const leagueFailed = !!read?.leagueFailed;
   const buildExport = useCallback((): ClubMoneyFile => {
     if (yearEnd) {
       const built = clubYearEndFile(yearEnd);
@@ -187,7 +209,9 @@ export default function AccountingOverviewPage() {
     const a = summary.againstBudget;
     const rows = boardTeamsExportRows(summary);
     const kinds: (MoneyRowKind | undefined)[] = rows.map((_, i) => (i >= rows.length - 2 ? 'total' : undefined));
-    const position = `Where the club stands, ${formatStoredDate(summary.today, { withYear: true, longMonth: true })}: Cash on hand ${fmtSigned(p.cashOnHand)} (the club’s own books, never a team’s) · Owed by the teams ${money(p.owedByTheTeams.amount)} (${SUMMARY_WORDS.owedCaption(p.owedByTheTeams.overdue.amount, p.owedByTheTeams.sent.amount)}) · Waiting on you ${money(p.waitingOnYou.amount)} (${SUMMARY_WORDS.waitingCaption(p.waitingOnYou.count, p.waitingOnYou.holdingPayout)}).`;
+    // One figure, one name (13d-5): the file says what the screen says.
+    const owed = owedFigure(p, leagueOwed, leagueFailed);
+    const position = `Where the club stands, ${formatStoredDate(summary.today, { withYear: true, longMonth: true })}: Cash on hand ${fmtSigned(p.cashOnHand)} (the club’s own books, never a team’s) · ${CLUB_BAND_WORDS.owed.label} ${money(owed.total)} (${owed.caption}) · Waiting on you ${money(p.waitingOnYou.amount)} (${SUMMARY_WORDS.waitingCaption(p.waitingOnYou.count, p.waitingOnYou.holdingPayout)}).`;
     const yearLine = `${summary.year.name} against the budget: revenue ${money(a.revenue.actual)} of ${money(a.revenue.planned)} planned (from the teams ${money(a.fromTheTeams.allocations)} on allocations and ${money(a.fromTheTeams.onRequest)} on request) · expenses ${money(a.expenses.actual)} of ${money(a.expenses.planned)} planned (paid to teams on request ${money(a.paidToTeamsOnRequest)}; off-plan ${money(a.offPlan)}) · ${netForYearWord(summary.year.name)} ${fmtSigned(a.net.actual)} against ${fmtSigned(a.net.planned)} planned.`;
     const booksLine = `The club’s books: ${summary.books.map(b => `${b.name} ${fmtSigned(b.balance)}`).join(' · ')} — Cash on hand ${fmtSigned(p.cashOnHand)}.`;
     return {
@@ -203,7 +227,7 @@ export default function AccountingOverviewPage() {
         label: 'Where the club stands, and the year against the budget',
         rows: [
           ['Cash on hand · the club’s books, today', fmtSigned(p.cashOnHand)],
-          ['Owed by the teams', money(p.owedByTheTeams.amount)],
+          [CLUB_BAND_WORDS.owed.label, money(owed.total)],
           ['Waiting on you', money(p.waitingOnYou.amount)],
           [`Revenue ${summary.year.name} · ${summary.year.lastDay < summary.today ? 'actual' : 'so far'} of planned`, `${money(a.revenue.actual)} of ${money(a.revenue.planned)}`],
           [`Expenses ${summary.year.name} · ${summary.year.lastDay < summary.today ? 'actual' : 'so far'} of planned`, `${money(a.expenses.actual)} of ${money(a.expenses.planned)}`],
@@ -219,7 +243,7 @@ export default function AccountingOverviewPage() {
       },
       emptyMessage: 'There is nothing to report yet.',
     };
-  }, [summary, words, yearEnd, read?.summary.today, currentOrg?.name]);
+  }, [summary, words, yearEnd, leagueOwed, leagueFailed, read?.summary.today, currentOrg?.name]);
   const exportFailed = useCallback((text: string) => setNotice({ tone: 'bad', text }), [setNotice]);
   const runExport = useClubMoneyFile(q, slug, buildExport, exportFailed);
 
@@ -228,6 +252,9 @@ export default function AccountingOverviewPage() {
 
   const p = summary.position;
   const a = summary.againstBudget;
+  const league = read.leagueOwed ?? null;
+  const owed = owedFigure(p, league, leagueFailed);
+  const revenueIncludes = OWED_TO_THE_CLUB_WORDS.revenueIncludes(a.revenueIncludes);
   const bookHref = (id: string) => `${base}/ledger?book=${id}`;
   const bookIds = new Set(summary.books.filter(b => b.kind === 'tournament').map(b => b.entityId));
   const tournamentsWithoutBook = tournaments.filter(t => t.status !== 'archived' && !bookIds.has(t.id));
@@ -261,8 +288,9 @@ export default function AccountingOverviewPage() {
               caption: SUMMARY_WORDS.cashCaption(summary.books.length, p.pending.moneyOut, p.pending.count),
             },
             {
-              key: 'owed', label: 'Owed by the teams', figure: money(p.owedByTheTeams.amount),
-              caption: SUMMARY_WORDS.owedCaption(p.owedByTheTeams.overdue.amount, p.owedByTheTeams.sent.amount),
+              // The owner's band's "Owed to the club" (13d-5): the teams' Owed plus house league's Still owing, the same two
+              // reads summed — one figure, one name, both screens. Plain text: the season's door is the line under the books.
+              key: 'owed', label: CLUB_BAND_WORDS.owed.label, figure: money(owed.total), caption: owed.caption,
             },
             {
               key: 'waiting', label: 'Waiting on you', figure: money(p.waitingOnYou.amount), tone: p.waitingOnYou.count > 0 ? 'warn' : 'plain',
@@ -295,6 +323,8 @@ export default function AccountingOverviewPage() {
               </thead>
               <tbody>
                 <tr><td className={moneyKit.what}>Revenue</td><td className={repKit.num}>{money(a.revenue.planned)}</td><td className={repKit.num}>{money(a.revenue.actual)}</td></tr>
+                {/* What Revenue includes from the books beside the General ledger (13d-5): the year's report, never typed. */}
+                {revenueIncludes && <tr><td colSpan={3} className={`${repKit.dim} ${cr.revenueIncludes}`}>{revenueIncludes}</td></tr>}
                 <tr><td className={repKit.dim}>From the teams, on allocations</td><td className={repKit.num}>{money(a.fromTheTeams.planned)}</td><td className={repKit.num}>{money(a.fromTheTeams.allocations)}</td></tr>
                 <tr><td className={repKit.dim}>From the teams, on request</td><td className={repKit.num} /><td className={repKit.num}>{money(a.fromTheTeams.onRequest)}</td></tr>
                 <tr><td className={moneyKit.what}>Expenses</td><td className={repKit.num}>{money(a.expenses.planned)}</td><td className={repKit.num}>{money(a.expenses.actual)}</td></tr>
@@ -336,6 +366,13 @@ export default function AccountingOverviewPage() {
             ))}
           </ClubRowList>
         )}
+        {/* House league money (13d-5, T5): one line per live season, opening its Money page — a door under the card, never
+            a link in a cell, never House league's season list (a treasurer can't open it). No nav row. */}
+        {(league?.seasons ?? []).map(s => (
+          <Link key={s.id} href={`/${slug}/admin/house-league/seasons/${s.id}/money`} className={kit.footLink}>
+            {OWED_TO_THE_CLUB_WORDS.seasonDoor(s.name, s.owing)} <ChevronRight size={14} aria-hidden />
+          </Link>
+        ))}
       </ClubSection>
 
       {win === 'close' && read.endedOpen && (

@@ -54,6 +54,8 @@ import { toCents, toDollars } from '@/lib/coach-register';
 import { NEW_ALLOCATION_WORDS as W } from '@/lib/club-money-words';
 import { FormError, jsonInit, money, moneyFetch, moneyKit, parseAmount, refusalText } from './MoneyKit';
 import cr from './ClubReport.module.css';
+import { DraftBillNotice, FairSharesWindow, useDraftBills, type DraftBillsRead } from './DraftBills';
+import type { DraftBill } from '@/lib/club-draft-bill';
 import LoadingState from '@/components/shared/LoadingState';
 import { possessive } from '@/lib/utils';
 
@@ -103,10 +105,12 @@ const positive = (s: string): number | null => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
-export default function AllocationWindow({ q, line, onMade, onCancel }: {
+export default function AllocationWindow({ q, line, drafts, onMade, onCancel }: {
   q: string;
   /** From a line (its window turned into this form); absent from the Allocations tab (the form asks Bill from). */
   line?: AllocateFromLine;
+  /** The line's bills not sent yet, when the line window already read them (Stage 13d-3) — otherwise read here. */
+  drafts?: DraftBillsRead | null;
   /** Created: the sentence the floating pill says, once. */
   onMade: (text: string, allocationId: string) => void;
   /** Cancel, ×, Escape, Back: nothing is made (from a line, back to the line). */
@@ -131,6 +135,13 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
     id: picked.id, description: picked.description, left: picked.left, allocated: picked.allocated, yearName: billFrom?.year.name ?? '',
   } : null);
   const offPlan = !line && pick === 'off';
+  /* A schedule not sent yet billing the line picked (Stage 13d-3, Ask 15 A; drawing tab 4 notes 4-5): the warning under
+     the choice, the moment it's picked. It WARNS, never blocks — Bill stays live (a deposit, a different season). */
+  // Read once for every line (a club has a handful of drafts) and narrowed here, so a new pick costs no request.
+  const readDrafts = useDraftBills(q, null, !drafts);
+  const draftRead = drafts ?? readDrafts;
+  const lineDrafts = source ? draftRead?.bills.filter(b => b.lineId === source.id) ?? [] : [];
+  const [shares, setShares] = useState<DraftBill | null>(null);
 
   // ── The teams ──
   const [teams, setTeams] = useState<TeamOption[] | null>(null);
@@ -496,6 +507,7 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
   const title = line ? W.fromLineTitle(line.description) : W.title;
 
   return (
+    <>
     <KitDialog
       kind="form"
       size="wide"
@@ -531,6 +543,7 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
           {billFrom && billFrom.lines.length === 0 && <span className={ck.hint}>{W.noLinesLeft(billFrom.year.name)}</span>}
         </label>
       )}
+      <DraftBillNotice bills={lineDrafts} onOpen={setShares} />
       <div className={moneyKit.allocFields}>
         <label className={ck.field} htmlFor="na-name">
           <span className={ck.label}>{W.name}<span className={repKit.req} aria-hidden>*</span></span>
@@ -617,5 +630,9 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
         <input id="na-notes" className={ck.input} value={notes} maxLength={500} placeholder={W.notesHint} onChange={e => setNotes(e.target.value)} />
       </label>
     </KitDialog>
+    {shares && (
+      <FairSharesWindow bill={shares} opensSchedules={draftRead?.opensSchedules ?? false} onClose={() => setShares(null)} />
+    )}
+    </>
   );
 }

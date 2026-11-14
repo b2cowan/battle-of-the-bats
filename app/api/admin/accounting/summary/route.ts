@@ -8,6 +8,8 @@ import { teamIdsInScope } from '@/lib/club-team-route';
 import { tournamentToday } from '@/lib/timezone';
 import { clubPlanYears, readBoardSummary } from '@/lib/club-budget-read';
 import { bankMarks } from '@/lib/bank-club-steps';
+import { leagueOwing } from '@/lib/club-band-read';
+import { houseLeagueAccess } from '@/lib/house-league-access';
 
 /**
  * GET /api/admin/accounting/summary?year=2026-09-01 — the board summary for a FISCAL YEAR, which IS the Overview tab (Club Tier
@@ -41,6 +43,10 @@ import { bankMarks } from '@/lib/bank-club-steps';
  * ⚖ Bank balance check BC5a (ask 4; owner 2026-11-06): `bank` — each live account's latest check as TODAY reads it, for
  *   the line beside "Where the club stands" (never the year's: that band is today on every year). `never` + `canMove`:
  *   the no-account state (a writer's door to the first check; a reader sees no line).
+ *
+ * ⚖ Stage 13d-5 (owner 2026-11-13): `leagueOwed` — house league's Still owing over the live seasons, the owner's band's
+ *   own read (`leagueOwing`, lib/club-band-read.ts), so the Overview's "Owed to the club" is the band's figure by
+ *   construction; each season's own figure for its line under the books. Null without house league money to read.
  */
 export const GET = withObservability(async (req: Request) => {
   const gate = await resolveClubMoney(req, { scope: 'books', write: false });
@@ -51,12 +57,18 @@ export const GET = withObservability(async (req: Request) => {
   const { setting, year } = await resolveFiscalYear(req, ctx.org.id, today);
   const canMove = canMoveClubMoney(ctx, ctx.org);
   const scope = teamIdsInScope(ctx);
-  const [summary, years, read, extra, bank] = await Promise.all([
+  // House league's half of "Owed to the club" (Stage 13d-5): the owner's band's own sum, read only where the reader can
+  // open a season's Money page (the door under the books). A read that fails leaves the figure as the teams' alone.
+  const seesLeagueMoney = houseLeagueAccess(ctx, ctx.org).readMoney;
+  let leagueFailed = false;
+  const [summary, years, read, extra, bank, league] = await Promise.all([
     readBoardSummary(ctx.org.id, year, setting, scope, today),
     clubPlanYears(ctx.org.id, setting, today),
     describeFiscalYear(ctx.org.id, year, setting, today, canMove),
     overviewYearReads(ctx.org.id, { year, setting, today, canMove, scope }),
     bankMarks(ctx),
+    seesLeagueMoney ? leagueOwing(ctx).catch(() => { leagueFailed = true; return null; }) : null,
   ]);
-  return NextResponse.json({ year: read, years, summary, ...extra, bank });
+  // `leagueFailed`: the read broke (not "no house league"), so the figure says the league's part is missing, as the band's tile does.
+  return NextResponse.json({ year: read, years, summary, ...extra, bank, leagueOwed: league, leagueFailed });
 }, { route: '/api/admin/accounting/summary' });

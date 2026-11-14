@@ -154,6 +154,9 @@ type DashboardStats = {
   registrationAttention: RegistrationAttentionSummary;
   /** Registration health, scored by the route with the Teams page's own call (owner 2026-10-21); null until a read lands. */
   registrationHealth: RegistrationHealthView | null;
+  /** The event's book in the club's Ledger (Club Tier 13d-11) — only for someone who holds Accounting, and only when
+   *  something is on it; absent for everyone else, whose Payments card is as it was. */
+  clubBook?: { ledgerId: string; moneyIn: number; floatIn: number } | null;
 };
 
 // ── Layout customization ─────────────────────────────────────────────────────
@@ -730,6 +733,9 @@ export default function AdminDashboard() {
             followUps={registrationFollowUps}
             pay={visibleStats.payment}
             fees={visibleStats.fees}
+            clubBook={visibleStats.clubBook && currentOrg?.slug
+              ? { ...visibleStats.clubBook, href: `/${currentOrg.slug}/admin/accounting/ledger?book=${visibleStats.clubBook.ledgerId}` }
+              : null}
             chat={visibleStats.chatAdoption}
             chatSettled={statsSettledFor === statsAttemptKey}
             onRetryChat={() => setStatsReloadKey(k => k + 1)}
