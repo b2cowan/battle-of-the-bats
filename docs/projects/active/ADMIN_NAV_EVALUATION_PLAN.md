@@ -1023,7 +1023,7 @@ store.~~ **Superseded for the event by the Phase 2 gate ruling below.**
   - **Walk §524 PASSED on the owner's ruling 2026-11-14** (prelim walk of that day: 30 of 35 machine-checked; C2.1, C2.4 and
     C7.1 ruled a walk-wording error — the event is in the sidebar's drop-down and the top bar names the page, as intended;
     C7.3 set aside as demo-only; C7.4 passed with the walk). The Phase 6 build is closed by it.
-  - **Owed:** `fixture.mjs undo`; the full layout sweep at the next release, on staging; commit with the owner's yes.
+  - **Fixture undone 2026-11-14** (`fixture.mjs undo`: the two memberships and three season rows removed, status reads empty). **Owed:** the full layout sweep at the next release, on staging.
 
 ## 6. The /design pass (2026-11-09) — what it changed in the drawings
 - **The whole cell opens the list** when there is more than one to choose from (the chevron is its sign); a club's cell
