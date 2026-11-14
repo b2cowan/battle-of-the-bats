@@ -117,7 +117,7 @@ export const FRIEND_WORDS = {
   care: 'Only name a child whose family is happy for you to.',
   // /legal re-check 2026-11-11 (Part 2): the seats that read these are the ones that work sign-ups AND teams (A11), so
   // the line says both; it never names fewer people than can see the names.
-  privacy: 'Only the club staff who work on sign-ups and teams see these names, and only to put friends on the same team. They are deleted after the season.',
+  privacy: 'Only the club staff who work on sign-ups and teams see these names, and only to decide which team they play on. They are deleted after the season.',
   parentLine: (parent: string) => `parent ${parent}`,
   codeWord: 'friend code',
   // "Your sign-up" and the confirmation (tab 2)

@@ -447,7 +447,7 @@ export const FRIEND_QUEUE_WORDS = {
     note: 'Note',
     notePlaceholder: 'A few words for the record',
     noteNeeded: 'Add a short note.',
-    hint: 'Only people who can open Registrations see this. The family is not told.',
+    hint: 'Only people who can open Registrations see this. The family is not told. Keep any note to the team placement — don’t write anything about a family’s circumstances.',
     cancel: 'Cancel',
     go: 'Can’t honour',
     working: 'Saving…',
