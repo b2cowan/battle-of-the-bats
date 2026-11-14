@@ -17,7 +17,7 @@ Sat · 12:00–1:00 p.m. · Diamond B, Mar 13 – Apr 3"), so the one fact the r
 sentence. Found by the owner on "The club gave house league time" (2026-11-14); he asked for a review of every
 kind rather than fixing them one at a time.
 
-## The reference case (built 2026-11-14, uncommitted)
+## The reference case (built 2026-11-14, committed `50622af4e` 2026-11-14)
 
 `house_league_time_given`: the notification stores its facts (`metadata.timeChange`); the opened message — the
 reader and the bell's drawer, which share one block — draws them as labelled rows (Season · Schedule · Gives /
