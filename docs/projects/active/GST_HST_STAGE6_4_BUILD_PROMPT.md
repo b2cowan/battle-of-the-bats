@@ -540,4 +540,22 @@ Research reads, not a professional's sign-off. **Both applied to §6 on 2026-11-
     safe; the 6.4 walk's trial case answers it.
   - **Stripe Checkout as a side door (§4.2):** `billing_address_collection` is set nowhere; `TAXED_CHECKOUT` sets
     `customer_update: { name: 'auto' }` only (never `address`). Part B confirms in test mode.
-- [ ] The 6.4 walk
+- [x] The 6.4 walk — PUBLISHED 2026-11-13, ledger §525, https://claude.ai/artifact/8H3Mk3Y6DWD2EeN5YUzRoc (source `GST_HST_STAGE6_4_WALK.html`;
+  10 parts, 82 steps; fixture `scripts/seed-gst-6-4-walk-fixture.mjs` setup/status/settle/run-daily/trial-preview/switch/window/nextseason-undo/teardown,
+  tested end to end with an undeliverable `.local` inbox and torn down). Owner walk owed. Facts found while building it:
+  - **Where Stripe's test webhooks go:** the test-mode destinations point at the DEPLOYED dev site (`dev.fieldlogichq.ca`), not localhost, and `origin/dev`
+    does not hold Part A/B (the local branch is 86 commits ahead). That site's older code writes a purchase's tax record first, with `billing_reason` empty,
+    and `recordInvoiceTax` never rewrites a record's reason, so a purchase made on dev today never qualifies for the purchase email. The walk's `settle`
+    command copies the reason from Stripe onto the walk's records and the daily job's catch-up then sends the email; the "within a minute" send and the
+    suppressed stand-alone "Welcome back" cannot be walked until dev is pushed (owner call, listed on the walk). On production, 6.4's own code writes the record,
+    so this is a dev-environment gap, not a product one — but note the same race exists if a deployed older site ever shares a database with newer code.
+  - **Defect found (Part B code, not fixed, a ruling step in walk Part F):** a yearly plan whose cancel was set only in Stripe has no upcoming invoice
+    (`invoice_upcoming_none`); the reminder asks for the preview before it checks the cancel flag, so the account is counted `failed` every day
+    (step shows not ok, `captureError` alert), though no email goes out. An app-made cancel is caught earlier by `readPendingEnding`.
+  - **Reminder fixture, proved on dev:** a yearly subscription made with `billing_cycle_anchor` 33 days out and no proration is accepted by Stripe, qualifies,
+    and sent one email per owner for a two-owner account (logged), the queued $123.45 fee item on the subscription present; a second run sent 0.
+    Stripe Tax works in test mode (Ontario HST 13%: $39.00 + $5.07). Sandbox prices equal plan-config.
+  - **§6 trial-preview tax question: still unanswered** — the walk's Part C step C7 (`trial-preview`) asks the owner's own trial and the answer is pasted back.
+  - **Not walkable on dev:** the next-season reminder (its first charge is the fixed 1 October 2027), and the next-season choice itself needs the card
+    window opened (`window on`, optional Part I, uat-plus-org, `.local` mail).
+  - Four test-mode charge records from the fixture's own test run (no organization on them) remain in Bookkeeping; the walk's teardown leaves records on purpose.

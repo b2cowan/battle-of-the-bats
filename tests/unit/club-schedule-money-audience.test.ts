@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { describe, it } from 'node:test';
 import {
   STAFF_PRESETS, canViewMoney, canViewSchedule, resolveCoachCapabilities, type CoachCapabilities,
 } from '../../lib/coach-capabilities.ts';
 import {
-  bellGroups, carriesMoney, emailFor, inSendAudience, teamBells, teamEmails, unreachableWhy, type TeamBell,
+  bellGroups, carriesMoney, emailFor, emailForPerson, inSendAudience, teamBells, teamEmails, unreachableWhy, type TeamBell,
 } from '../../lib/club-schedule-money-audience.ts';
 import { billNotToldSentence, unreachableSentence, type EmailWords } from '../../lib/club-schedule-words.ts';
 import type { SendKind } from '../../lib/club-schedule-send.ts';
@@ -262,5 +263,57 @@ describe('carriesMoney uses the words\' own truthiness', () => {
     assert.equal(carriesMoney({ bill: null, billedCents: null, lost: { creditCents: 0, payCents: 0 } }), false);
     assert.equal(carriesMoney({ bill: null, billedCents: null, lost: { creditCents: 0, payCents: 1 } }), true);
     assert.equal(carriesMoney({ bill: BILL, billedCents: null, lost: null }), true);
+  });
+});
+
+/**
+ * ONLY THE HEAD COACH ANSWERS A REVIEW (owner 2026-11-14, Q-E). The review email and bell tell everyone with schedule access
+ * about the proposal, but only the head coach has the card to answer on (the card route returns nothing for anyone else).
+ * An Assistant or Helper reads the same email without the reply sentence and the "Review it" link, and their bell has no
+ * "Reply by". Every other send, and the head coach's own review, are unchanged.
+ */
+describe('Q-E: the reply line belongs to the head coach', () => {
+  const people = (['head', 'assistant', 'helper', 'readOnlyMoney'] as Who[]).map(w => ({ ...person(w), isHeadCoach: w === 'head' }));
+  const team = emails('review', people);
+  const mailFor = (who: Who, kind: SendKind = 'review') => emailForPerson(kind, '2026-12-01', team, { money: canViewMoney(CAPS[who]), isHeadCoach: who === 'head' });
+  it('the head coach reads the reply sentence and the link, as before', () => {
+    const w = mailFor('head');
+    assert.ok((w.outro ?? '').endsWith('Reply by Tue, Dec 1: Looks good, or Ask for a change.'));
+    assert.match(w.link?.label ?? '', /^Review it on/);
+  });
+  it('an Assistant, a Helper and a read-only Money Assistant read neither', () => {
+    for (const who of ['assistant', 'helper', 'readOnlyMoney'] as Who[]) {
+      const w = mailFor(who);
+      assert.ok(!/Looks good|Ask for a change|Reply/.test(text(w)), who);
+      assert.equal(w.link, null, who);
+      assert.match(w.outro ?? '', /^Nothing is on your schedule/, who);
+    }
+  });
+  it('nothing else about their email moves: the same slots, and the money rule still holds', () => {
+    const head = mailFor('head'), helper = mailFor('helper');
+    assert.deepEqual(helper.lists.map(l => l.items), emailFor(team, { money: false }).lists.map(l => l.items));
+    assert.ok(!MONEY_WORDS.test(text(helper).replace('Nothing is on your schedule until the club finalizes it.', '')), 'no money word reaches a person without Money');
+    assert.match(text(head), /Club tab/, 'the head coach still reads the bill');
+  });
+  it('only a review is touched', () => {
+    for (const kind of ['final', 'changes'] as SendKind[]) {
+      const t = emails(kind, people);
+      const a = emailForPerson(kind, null, t, { money: false, isHeadCoach: false }), b = emailFor(t, { money: false });
+      assert.deepEqual(a, b, kind);
+    }
+  });
+  it('the bell: "Reply by" only for the head coach, in both the money and the plain group', () => {
+    const staff = people;
+    const review = bells('review', staff).filter(b => b.eventType === 'club_schedule_review');
+    const replyTo = (who: Who) => review.find(b => b.userIds.includes(`u-${who}`))!;
+    assert.ok(replyTo('head').body.includes('Reply by Tue, Dec 1.'));
+    for (const who of ['assistant', 'helper', 'readOnlyMoney'] as Who[]) assert.ok(!/Reply/.test(replyTo(who).body), who);
+    assert.ok(replyTo('readOnlyMoney').body.includes('$2,700.00 bill'), 'a Money holder who is not the head coach still reads the bill');
+    assert.ok(!replyTo('helper').body.includes('$'), 'a person without Money reads no figure');
+  });
+  it('the send and the window both go through the one rule', () => {
+    const send = fs.readFileSync('lib/club-schedule-send.ts', 'utf8');
+    assert.ok(send.includes('emailForPerson(kind, preview.replyBy, t, p)'));
+    assert.ok(fs.readFileSync('components/admin/kit/club/schedules/SendWindow.tsx', 'utf8').includes('withoutReviewReply('));
   });
 });

@@ -27,7 +27,7 @@ import ck from '../ClubKit.module.css';
 import { Callout, repKit, useLatestRead } from '../RepKit';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import { addCalendarDays, formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
-import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, billPhrase, moneyCents as money, type EmailWords } from '@/lib/club-schedule-words';
+import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, billPhrase, moneyCents as money, withoutReviewReply, type EmailWords } from '@/lib/club-schedule-words';
 import { isStale, oneWeekdayOf, type ScheduleView } from '@/lib/club-schedule-view';
 import type { SendKind } from '@/lib/club-schedule-send';
 import { getsPlainEmail } from '@/lib/club-schedule-money-audience';
@@ -186,9 +186,12 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   const cut = statement.indexOf('. ');
   const title = kind === 'bill' ? W.billSendTitle : kind === 'changes' ? W.changesTitle : start === 'final' ? W.finalizeTitle : kind === 'review' ? W.reviewTitle : W.sendTitle;
   const lv = useSendLevel(title);
+  // Only the head coach answers a review (owner 2026-11-14, Q-E): an email that goes only to others reads without the reply.
+  const forThem = (to: readonly { isHeadCoach: boolean }[], words: EmailWords) =>
+    kind === 'review' && to.length > 0 && !to.some(r => r.isHeadCoach) ? withoutReviewReply(words, shown?.replyBy ?? null) : words;
   const mail = lv.level !== 'email' ? null
-    : variant === 'plain' && plainTeam?.plainSample ? { to: getsPlain(plainTeam), words: plainTeam.plainSample }
-    : doorTeam?.sample ? { to: getsSample(doorTeam), words: doorTeam.sample } : null;
+    : variant === 'plain' && plainTeam?.plainSample ? { to: getsPlain(plainTeam), words: forThem(getsPlain(plainTeam), plainTeam.plainSample) }
+    : doorTeam?.sample ? { to: getsSample(doorTeam), words: forThem(getsSample(doorTeam), doorTeam.sample) } : null;
   const lime = !shown ? W.sendTo(0)
     : kind === 'bill' ? W.billSendGo(people)
     : kind === 'review' ? W.sendToCoaches(people)

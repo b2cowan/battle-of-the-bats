@@ -395,9 +395,9 @@ describe('money terms go only to people who can open Money (owner 2026-11-13, CA
     assert.match(people, /senderEligible: mine\.length > 0 && mine\.every\(/, 'the reason is worked out on the people the filter kept, and "only you" means nobody else is eligible');
     assert.match(people, /money: canViewMoney\(caps\)/);
   });
-  it('every email goes through emailFor, and every bell through teamBells with the Money-marked staff', () => {
+  it('every email goes through emailForPerson, and every bell through teamBells with the Money-marked staff', () => {
     const send = functionBody(code, 'sendSchedule');
-    assert.match(send, /const w = emailFor\(t, p\);/);
+    assert.match(send, /const w = emailForPerson\(kind, preview\.replyBy, t, p\);/);
     assert.ok(!/t\.sample\b/.test(send), 'no email is sent from a team\'s sample without asking who it is for');
     const tell = functionBody(code, 'tellTeams');
     assert.match(tell, /for \(const b of teamBells\(\{/);

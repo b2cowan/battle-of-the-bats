@@ -317,6 +317,20 @@ const billList = (bill: { cents: number; installments: Installment[] }): EmailWo
   ({ title: `The bill: ${billPhrase(bill.cents, bill.installments.length)}, for the time your team got.`, items: bill.installments.map(paymentLine) });
 
 /** [marketing] What a team's coaches receive when the schedule is sent for review or final (specimens 9 and 14). */
+/** The review email's last sentence (with its leading space): the head coach's way to answer the club's proposal. */
+export const reviewReplyLine = (replyBy: string | null) =>
+  replyBy ? ` Reply by ${formatShortWeekdayDate(replyBy)}: Looks good, or Ask for a change.` : ' Reply Looks good, or Ask for a change.';
+
+/**
+ * The review email for someone who is NOT the team's head coach (owner 2026-11-14, Q-E): only the head coach answers the
+ * club's proposal, and the card to answer on is theirs alone, so an Assistant or Helper reads the same email without the
+ * reply sentence and without the "Review it" link to a card they can't see. Nothing else changes, and no new words.
+ */
+export function withoutReviewReply(w: EmailWords, replyBy: string | null): EmailWords {
+  const line = reviewReplyLine(replyBy);
+  return { ...w, link: null, outro: w.outro?.endsWith(line) ? w.outro.slice(0, -line.length) : w.outro };
+}
+
 export function teamEmail(p: {
   kind: 'review' | 'final';
   orgName: string;
@@ -344,7 +358,7 @@ export function teamEmail(p: {
       paragraphs: [`${p.orgName} proposes ${pluralize(p.slotCount, 'slot')} for ${p.teamName} at ${p.venueName}, ${range}:`],
       lists,
       link: { label: `Review it on ${possessive(p.teamName)} Overview →`, path: p.link },
-      outro: `Nothing is on your schedule${p.bill ? ' or your Club tab' : ''} until the club finalizes it.${p.replyBy ? ` Reply by ${formatShortWeekdayDate(p.replyBy)}: Looks good, or Ask for a change.` : ' Reply Looks good, or Ask for a change.'}`,
+      outro: `Nothing is on your schedule${p.bill ? ' or your Club tab' : ''} until the club finalizes it.${reviewReplyLine(p.replyBy)}`,
     };
   }
   return {

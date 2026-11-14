@@ -4,7 +4,7 @@ import { fetchAll, fetchAllIn, inParallel } from './supabase-paging';
 import { resolveCoachUserIdentities, resolvePersonNamer } from './db';
 import { listActiveStaffForTeams, resolveMembershipCapabilities } from './coach-membership';
 import { canViewMoney, canViewSchedule } from './coach-capabilities';
-import { emailFor, inSendAudience, teamBells, teamEmails, unreachableWhy } from './club-schedule-money-audience';
+import { emailForPerson, inSendAudience, teamBells, teamEmails, unreachableWhy } from './club-schedule-money-audience';
 import { loadHeadCoaches } from './club-team-board';
 import { notify } from './notify';
 import { houseLeagueRunnerUserIds } from './notify-recipients';
@@ -213,11 +213,11 @@ async function schedulePeople(orgId: string, teamIds: readonly string[], senderI
 
 /** Every staff member of a team who sees the schedule (the notices' audience — a bell needs no email), each marked
  *  whether they can open Money: a bell that names a figure goes only to them (`teamBells`). */
-async function scheduleUserIds(teamIds: readonly string[]): Promise<Map<string, { userId: string; money: boolean }[]>> {
-  const out = new Map<string, { userId: string; money: boolean }[]>(teamIds.map(t => [t, []]));
+async function scheduleUserIds(teamIds: readonly string[]): Promise<Map<string, { userId: string; money: boolean; isHeadCoach: boolean }[]>> {
+  const out = new Map<string, { userId: string; money: boolean; isHeadCoach: boolean }[]>(teamIds.map(t => [t, []]));
   for (const m of await listActiveStaffForTeams(teamIds)) {
     const caps = resolveMembershipCapabilities(m);
-    if (canViewSchedule(caps)) out.get(m.teamId)?.push({ userId: m.userId, money: canViewMoney(caps) });
+    if (canViewSchedule(caps)) out.get(m.teamId)?.push({ userId: m.userId, money: canViewMoney(caps), isHeadCoach: caps.isHeadCoach });
   }
   return out;
 }
@@ -1030,7 +1030,7 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
   // The emails: one per team's person, colleague mail, reply-to the sender (never a recipient — the preview left them out).
   // ⚖ Each person gets the email for them: the money one only if they can open Money (owner 2026-11-13).
   const sends = teams.flatMap(t => t.recipients.map(p => {
-    const w = emailFor(t, p);
+    const w = emailForPerson(kind, preview.replyBy, t, p);
     return { teamId: t.teamId, email: p.email, subject: w.subject, html: emailHtml(w) };
   }));
   const results = await inParallel(sends, 5, s => sendEmail(s.email, s.subject, s.html, { kind: 'club_schedule_coach', replyTo: sctx.ctx.user.email ?? null }));

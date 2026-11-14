@@ -1,5 +1,5 @@
 import { canViewMoney, canViewSchedule, type CoachCapabilities } from './coach-capabilities';
-import { SCHEDULE_NOTICES, billEmail, changesEmail, teamEmail, type EmailWords, type ScheduleUnreachableWhy } from './club-schedule-words';
+import { SCHEDULE_NOTICES, billEmail, changesEmail, teamEmail, withoutReviewReply, type EmailWords, type ScheduleUnreachableWhy } from './club-schedule-words';
 import type { Installment } from './club-schedule-bill';
 import type { CreditMove } from './club-hand-back-words';
 import type { SendKind } from './club-schedule-send';
@@ -115,6 +115,16 @@ export function emailFor(team: { sample: EmailWords; plainSample: EmailWords | n
 }
 
 /**
+ * The review email carries the head coach's way to answer (Looks good / Ask for a change) — and only the head coach can
+ * (owner 2026-11-14, Q-E). Anyone else on the team reads it without the reply sentence and its link. Any other send is
+ * unchanged. The one rule: the send and the Send window's doors both read it.
+ */
+export function emailForPerson(kind: SendKind, replyBy: string | null, team: { sample: EmailWords; plainSample: EmailWords | null }, person: { money: boolean; isHeadCoach: boolean }): EmailWords {
+  const w = emailFor(team, person);
+  return kind === 'review' && !person.isHeadCoach ? withoutReviewReply(w, replyBy) : w;
+}
+
+/**
  * Who gets which bell. `everyone` — the slots bell (final, changes). `money` — a bill bell (`club_bill_arrived`) and the
  * review bell WITH its "and a $ bill"; empty when the team has no bill. `plain` — the review bell without the bill: the
  * people without Money when there is a bill, else everyone (one bell, one `notify`).
@@ -138,7 +148,7 @@ export function teamBells(p: {
   kind: SendKind;
   orgName: string; scheduleName: string; replyBy: string | null;
   team: { teamName: string; slots: number; lines: string[]; bill: Bill | null; billedCents: number | null };
-  staff: readonly { userId: string; money: boolean }[];
+  staff: readonly { userId: string; money: boolean; isHeadCoach?: boolean }[];
 }): TeamBell[] {
   const t = p.team;
   const billBell = (userIds: string[], cents: number, first: Installment | null, payments: number): TeamBell =>
@@ -148,9 +158,13 @@ export function teamBells(p: {
   const out: TeamBell[] = [];
   if (p.kind === 'review') {
     const g = bellGroups({ staff: p.staff, hasBill: !!t.bill?.cents });
-    const review = (billCents: number | null) => SCHEDULE_NOTICES.review({ orgName: p.orgName, scheduleName: p.scheduleName, teamName: t.teamName, slots: t.slots, billCents, replyBy: p.replyBy });
-    out.push(slotsBell('club_schedule_review', g.money, review(t.bill?.cents ?? null)));
-    out.push(slotsBell('club_schedule_review', g.plain, review(null)));
+    const review = (billCents: number | null, replyBy: string | null) => SCHEDULE_NOTICES.review({ orgName: p.orgName, scheduleName: p.scheduleName, teamName: t.teamName, slots: t.slots, billCents, replyBy });
+    // Only the head coach answers the proposal (owner 2026-11-14, Q-E): everyone else's bell has no "Reply by".
+    const heads = new Set(p.staff.filter(s => s.isHeadCoach).map(s => s.userId));
+    for (const [ids, cents] of [[g.money, t.bill?.cents ?? null], [g.plain, null]] as const) {
+      out.push(slotsBell('club_schedule_review', ids.filter(id => heads.has(id)), review(cents, p.replyBy)));
+      out.push(slotsBell('club_schedule_review', ids.filter(id => !heads.has(id)), review(cents, null)));
+    }
   } else if (p.kind === 'final' || p.kind === 'bill') {
     const g = bellGroups({ staff: p.staff, hasBill: !!t.bill });
     // The late bill is only a bill: the schedule and its practices were told at Finalize.
