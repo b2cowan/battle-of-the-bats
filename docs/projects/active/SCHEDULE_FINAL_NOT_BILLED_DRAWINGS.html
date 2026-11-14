@@ -1,0 +1,422 @@
+<title>Final and Not Billed Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky tab row, one section at a time, true-size warm product frames on a cool document ground. Round 2: the status pill is the change; billing is secondary. */
+:root {
+  --doc-bg: #E9ECEF; --doc-card: #F7F8F9; --doc-ink: #1B2127; --doc-dim: #4F5963; --doc-line: #C9D0D6;
+  --doc-accent: #1F5F8B; --doc-accent-soft: #DCE9F2; --doc-new: #0F6B3E; --doc-new-soft: #D6EEE0; --doc-chg: #8A4B00; --doc-chg-soft: #F6E3C8;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  /* The product's warm portal, as it ships (frames keep these in both themes: a specimen, not the page). */
+  --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink-soft: #4A4235; --dim: #615A54;
+  --line: rgba(70,55,30,.12); --line-strong: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10);
+  --amber-ink: #6B4105; --amber: #F59E0B; --good-ink: #1E6B3A; --good-fill: rgba(30,125,60,.08); --good-line: rgba(30,125,60,.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+    --doc-accent: #7DB8E0; --doc-accent-soft: #1F3342; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+  --doc-accent: #7DB8E0; --doc-accent-soft: #1F3342; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--doc-bg); }
+.wrap { max-width: 1120px; margin: 0 auto; }
+h1 { font-size: 1.35rem; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+h2 { font-size: 1.1rem; margin: 0 0 .25rem; text-wrap: balance; }
+h3 { font-size: .95rem; margin: 0 0 .2rem; }
+p { margin: 0 0 .6rem; max-width: 68ch; }
+.dim { color: var(--doc-dim); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--doc-bg); padding: 14px 0 0; border-bottom: 1px solid var(--doc-line); }
+.top .sub { color: var(--doc-dim); font-size: .85rem; margin: .15rem 0 .6rem; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; }
+.tab { font: inherit; font-weight: 600; font-size: .88rem; padding: .55rem .9rem; background: transparent; color: var(--doc-dim); border: 0; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; min-height: 44px; }
+.tab[aria-selected="true"] { color: var(--doc-ink); border-bottom-color: var(--doc-accent); }
+.tab:focus-visible, .sw button:focus-visible, .mk:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: .7rem; margin: 16px 0 6px; flex-wrap: wrap; }
+.viewrow b { font-size: .8rem; color: var(--doc-dim); font-weight: 600; }
+/* ONE white track, chosen option in soft olive — drawn from the shipped view switch. */
+.sw { display: inline-flex; background: #fff; border: 1px solid var(--line-strong); border-radius: 10px; padding: 3px; gap: 2px; }
+.sw button { font: inherit; font-size: .85rem; font-weight: 600; padding: .35rem .8rem; border: 0; border-radius: 7px; background: transparent; color: #4A4235; cursor: pointer; min-height: 34px; }
+.sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+section.pane { display: none; padding-top: 6px; }
+section.pane.on { display: block; }
+.lede { font-size: .95rem; margin-top: 14px; }
+.stage { margin: 14px 0 26px; }
+.cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem .8rem; margin-bottom: 6px; }
+.cap h3 { margin: 0; }
+.tag { font-family: var(--font-mono); font-size: .66rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: .1rem .45rem; border-radius: 4px; }
+.tag.new { background: var(--doc-new-soft); color: var(--doc-new); }
+.tag.chg { background: var(--doc-chg-soft); color: var(--doc-chg); }
+.tag.same { background: var(--doc-line); color: var(--doc-dim); }
+.scroller { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); padding: 12px; }
+.note { font-size: .86rem; color: var(--doc-dim); margin: 8px 0 0; max-width: 78ch; }
+.note b { color: var(--doc-ink); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.pair > * { min-width: 0; }
+.card { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.asks { display: grid; gap: 12px; }
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.ask .rec { font-size: .85rem; color: var(--doc-new); font-weight: 600; margin: 0; }
+.ask ul { margin: .3rem 0 .4rem 1.1rem; padding: 0; font-size: .88rem; }
+table.m { border-collapse: collapse; width: 100%; font-size: .85rem; min-width: 640px; }
+table.m th, table.m td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--doc-line); vertical-align: middle; }
+table.m th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--doc-dim); font-weight: 600; }
+
+/* ───────── product frames (warm portal), true size ───────── */
+.frame { width: 1000px; background: var(--paper); border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; color: var(--ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.45; position: relative; }
+.frame.phone { width: 390px; }
+.pbar { display: flex; align-items: center; gap: .6rem; padding: .7rem 1.1rem; background: var(--card); border-bottom: 1px solid var(--line); }
+.pbar .back { color: var(--ink-soft); font-size: .88rem; white-space: nowrap; }
+.pbar .div { width: 1px; height: 22px; background: var(--line-strong); }
+.pbar .name { font-weight: 700; font-size: 1.05rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 1 auto; }
+.pbar .sp { flex: 1; }
+.pbar .vs { font-size: .8rem; border: 1px solid var(--line-strong); border-radius: 999px; padding: .25rem .7rem; color: var(--ink-soft); white-space: nowrap; flex: none; }
+.pbar .chips, .nameLine .chips { display: inline-flex; gap: .5rem; flex: none; align-items: center; flex-wrap: nowrap; }
+.pbody { padding: 1rem 1.1rem 0; max-height: 560px; overflow: hidden; position: relative; }
+.frame.phone .pbody { max-height: 520px; padding: .8rem .9rem 0; }
+.pbody::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: linear-gradient(transparent, var(--paper)); pointer-events: none; }
+.meta { margin: 0 0 .8rem; font-size: .8rem; color: var(--dim); max-width: none; }
+.meta .door { color: var(--olive); font-weight: 600; }
+.att { background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 .8rem; }
+.att .h { display: flex; justify-content: space-between; padding: .6rem .9rem; border-bottom: 1px solid var(--line); font-weight: 700; }
+.att .h span { font-weight: 400; color: var(--dim); font-size: .8rem; }
+.att .r { display: flex; gap: .8rem; padding: .6rem .9rem; align-items: flex-start; font-size: .85rem; }
+.att .r .tok { font-family: var(--font-mono); font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line-strong); border-radius: 6px; padding: .12rem .4rem; white-space: nowrap; }
+.att .r .btn { margin-left: auto; background: #D5F27A; color: #2A3410; font-weight: 700; padding: .4rem .8rem; border-radius: 8px; white-space: nowrap; }
+/* The shipped chip (RepKit .chip) and its tones. Draft = neutral, In review = olive outline, Changed since sent = amber. */
+.chip { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: .14rem .5rem; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-soft); background: var(--olive-soft); white-space: nowrap; line-height: 1.4; }
+.chip.warn { color: var(--amber-ink); background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.3); }
+.chip.review { color: var(--olive); border-color: var(--olive); }
+.chip.good { color: var(--good-ink); background: var(--good-fill); border-color: var(--good-line); }
+.band { display: inline-grid; grid-template-columns: repeat(4, auto); background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin-bottom: .9rem; }
+.band .t { min-width: 8.5rem; padding: .5rem 1rem .5rem .75rem; border-right: 1px solid var(--line); }
+.band .t:last-child { border-right: 0; }
+.band .l { display: flex; align-items: center; gap: .3rem; font-family: var(--font-mono); font-size: .66rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--dim); }
+.band .v { font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; margin-top: .1rem; }
+.band .v.quiet { color: var(--ink-soft); }
+.band .v.amb { color: var(--amber-ink); }
+.rd { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .8rem .9rem; }
+.rd .tt { font-weight: 700; font-size: 1.05rem; }
+.rd .ss { color: var(--ink-soft); font-size: .85rem; }
+/* The Schedules list */
+.lh { padding: 1rem 1.1rem .4rem; }
+.lh .tt { font-weight: 700; font-size: 1.25rem; }
+.lh .ss { color: var(--ink-soft); font-size: .85rem; max-width: 60ch; }
+table.list { width: calc(100% - 2.2rem); margin: .4rem 1.1rem 0; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: .85rem; }
+table.list th { text-align: left; font-family: var(--font-mono); font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); padding: .5rem .8rem; border-bottom: 1px solid var(--line); font-weight: 700; }
+table.list td { padding: .6rem .8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.list tr.bandrow td { background: rgba(87,101,30,.06); font-family: var(--font-mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--ink-soft); padding: .35rem .8rem; }
+.nameLine { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .25rem .5rem; }
+.nameLine b { font-weight: 650; }
+.sub2 { display: block; color: var(--dim); font-size: .78rem; margin-top: .1rem; }
+.num { font-variant-numeric: tabular-nums; }
+.phlist { background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin: .6rem 0 0; }
+.phlist .band2 { font-family: var(--font-mono); font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--ink-soft); padding: .4rem .8rem; background: rgba(87,101,30,.06); }
+.phlist .row { padding: .6rem .8rem; border-top: 1px solid var(--line); font-size: .85rem; }
+.phlist .row .cap2 { display: block; color: var(--dim); font-size: .76rem; }
+.ph-head { display: flex; align-items: center; gap: .5rem; padding: .7rem .9rem; background: var(--card); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.ph-head .name { font-weight: 700; font-size: .98rem; flex: 1; min-width: 0; }
+.ph-head .small { flex-basis: 100%; padding-left: 1.4rem; margin-top: -.1rem; display: flex; gap: .4rem; flex-wrap: wrap; }
+.ph-day { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .7rem .8rem; margin-top: .7rem; font-size: .85rem; }
+
+/* markers + diff modes */
+.mk { position: absolute; z-index: 5; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); cursor: pointer; display: grid; place-items: center; box-shadow: 0 0 0 3px rgba(31,95,139,.25); }
+.rel, .hl { position: relative; }
+.hl { outline: 2px dashed var(--doc-new); outline-offset: 3px; border-radius: 6px; }
+.show-diff .same { opacity: .22; filter: grayscale(1); }
+.sw-note { font-size: .8rem; color: var(--doc-dim); }
+@media (max-width: 560px) { .tab { padding: .55rem .65rem; } }
+@media (prefers-reduced-motion: no-preference) { .pane.on { animation: fade .15s ease-out; } @keyframes fade { from { opacity: .6; } to { opacity: 1; } } }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <h1>Schedules: Final and Not Billed</h1>
+    <div class="sub">Round 2 drawings for review. Nothing is built. Frames are true size: open this page on the screen you use; scroll a frame sideways if your window is narrower.</div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-t="whole" aria-selected="true">1 · The schedule page</button>
+      <button class="tab" role="tab" data-t="list" aria-selected="false">2 · The list</button>
+      <button class="tab" role="tab" data-t="marks" aria-selected="false">3 · The pill, in detail</button>
+      <button class="tab" role="tab" data-t="phone" aria-selected="false">4 · Phone</button>
+      <button class="tab" role="tab" data-t="asks" aria-selected="false">5 · Asks</button>
+    </div>
+  </div>
+
+  <!-- ═════════ 1 · THE SCHEDULE PAGE ═════════ -->
+  <section class="pane on" id="p-whole">
+    <p class="lede"><b>What changed since round 1.</b> The status is the point. A schedule's state tells the club whether coaches know about it and whether work is outstanding, so <b>every schedule shows its state as a pill in the header: Draft, In review or Final.</b> Whether it was billed is a second question, answered inside the schedule, so the "Not billed" chip and the extra words in the top line are gone.</p>
+    <p class="dim">This reverses the earlier rule that a sent schedule says nothing more. That rule is why a final schedule shows no status today.</p>
+
+    <div class="viewrow" id="vr1"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+      <span class="sw-note">Click a numbered dot to jump to that change.</span>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Today</h3><span class="tag same">As shipped</span><span class="sw-note">Final, no bill, club administrator. Drawn simplified: the sidebar, the strip's right-hand buttons and the grid below the first card are left out.</span></div>
+      <div class="scroller"><div class="frame">
+        <div class="pbar"><span class="back">← Schedules</span><span class="div"></span><span class="name">Saturdays at Kinsmen, December 2026</span><span class="sp"></span><span class="vs">View site</span></div>
+        <div class="pbody">
+          <p class="meta same"><span class="door">From the permit Saturday diamonds, December 2026 ›</span> · Kinsmen Park · Diamond A, Diamond B · Saturdays, Nov 28 – Dec 19, 2026 · sent Nov 9</p>
+          <div class="att same"><div class="h">Needs attention <span>1 item</span></div><div class="r"><span class="tok">Outside the permit</span><div><b>Sat, Dec 5 and Sat, Dec 12 are dates off on the permit</b><br>6 practices on this schedule sit on those days. The teams still have them.</div><span class="btn">Take Dec 5 and Dec 12 off</span></div></div>
+          <div class="band">
+            <div class="t same"><div class="l">Handed out</div><div class="v">20 of 46</div></div>
+            <div class="t"><div class="l">The bill <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="v">$400.00</div></div>
+            <div class="t same"><div class="l">Short</div><div class="v amb">26</div></div>
+            <div class="t same"><div class="l">Clashes</div><div class="v amb">2</div></div>
+          </div>
+          <div class="rd same"><div class="tt">Read the schedule</div><div class="ss">Start with the repeating pattern; open Grid for a date or an edit.</div></div>
+        </div>
+      </div></div>
+      <p class="note">No state anywhere on the page. The tile shows the permit's $400.00 as if it were an invoice.</p>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Proposed</h3><span class="tag chg">Changed</span><span class="sw-note">Same schedule, same viewer</span></div>
+      <div class="scroller"><div class="frame">
+        <div class="pbar"><span class="back">← Schedules</span><span class="div"></span><span class="name">Saturdays at Kinsmen, December 2026</span><span class="chip good hl">Final<button class="mk" style="right:-12px;top:-9px" data-go="pill" aria-label="Change 1, the Final pill">1</button></span><span class="sp"></span><span class="vs">View site</span></div>
+        <div class="pbody">
+          <p class="meta same"><span class="door">From the permit Saturday diamonds, December 2026 ›</span> · Kinsmen Park · Diamond A, Diamond B · Saturdays, Nov 28 – Dec 19, 2026 · sent Nov 9</p>
+          <div class="att same"><div class="h">Needs attention <span>1 item</span></div><div class="r"><span class="tok">Outside the permit</span><div><b>Sat, Dec 5 and Sat, Dec 12 are dates off on the permit</b><br>6 practices on this schedule sit on those days. The teams still have them.</div><span class="btn">Take Dec 5 and Dec 12 off</span></div></div>
+          <div class="band">
+            <div class="t same"><div class="l">Handed out</div><div class="v">20 of 46</div></div>
+            <div class="t hl rel"><div class="l">The bill <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="v quiet">Not billed</div><button class="mk" style="right:-12px;top:-14px" data-go="tile" aria-label="Change 3, the Bill tile">3</button></div>
+            <div class="t same"><div class="l">Short</div><div class="v amb">26</div></div>
+            <div class="t same"><div class="l">Clashes</div><div class="v amb">2</div></div>
+          </div>
+          <div class="rd same"><div class="tt">Read the schedule</div><div class="ss">Start with the repeating pattern; open Grid for a date or an edit.</div></div>
+        </div>
+      </div></div>
+      <p class="note"><b>Reading it cold:</b> the header says the schedule is Final, the top line is exactly as before, and the Bill tile no longer passes the permit's price off as a bill. The tile is the one place billing is mentioned, because the schedule has to be open to look (dot 3, and Ask 3 asks whether to keep it).</p>
+      <p class="note"><b>Nothing is pushed down on a computer.</b> The pill sits in the header beside the name, where "Draft", "In review" and "Changed since sent" already appear. A phone is covered in tab 4.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 2 · THE LIST ═════════ -->
+  <section class="pane" id="p-list">
+    <p class="lede">The list is where this matters most. Today the Schedules list shows a pill for a draft, a review, or a change, and <b>nothing for a final schedule</b>, so a scan of the list cannot tell "coaches have this" from "something is missing". The rows are grouped by date (In use now, Coming up, Ended), not by state, so the pill adds information the groups do not.</p>
+    <div class="viewrow" id="vr2"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Today</h3><span class="tag same">As shipped</span></div>
+      <div class="scroller"><div class="frame">
+        <div class="lh"><div class="tt">Schedules</div><div class="ss">A schedule hands the club's time out to its teams.</div></div>
+        <table class="list">
+          <thead><tr><th>Schedule</th><th>Dates</th><th>Teams</th><th>Handed out</th><th>Last sent</th></tr></thead>
+          <tbody>
+            <tr class="bandrow"><td colspan="5">In use now</td></tr>
+            <tr><td><span class="nameLine"><b>Midweek dome nights, winter</b><span class="chip review">In review</span></span><span class="sub2">Lions Dome</span></td><td>Oct 6 – Mar 25</td><td class="num">5</td><td class="num">38<span class="sub2">4 open</span></td><td>Nov 12 by Dana Kowalski</td></tr>
+            <tr class="bandrow"><td colspan="5">Coming up</td></tr>
+            <tr><td><span class="nameLine"><b>Saturdays at Kinsmen, December 2026</b></span><span class="sub2">Kinsmen Park</span></td><td>Nov 28 – Dec 19</td><td class="num">3</td><td class="num">20<span class="sub2">26 open</span></td><td>Nov 9 by Dana Kowalski</td></tr>
+            <tr><td><span class="nameLine"><b>Saturday playoffs</b><span class="chip warn">Changed since sent</span></span><span class="sub2">Kinsmen Park</span></td><td>Dec 5 – Dec 19</td><td class="num">4</td><td class="num">12<span class="sub2">0 open</span></td><td>Nov 2 by Dana Kowalski</td></tr>
+            <tr><td><span class="nameLine"><b>Spring practice block</b><span class="chip">Draft</span></span><span class="sub2">Kinsmen Park, Lions Field</span></td><td>Apr 6 – May 30</td><td class="num">4</td><td class="num">0<span class="sub2">60 open</span></td><td>Not sent</td></tr>
+            <tr class="bandrow"><td colspan="5">Ended</td></tr>
+            <tr><td><span class="nameLine"><b>Fall evenings, September</b></span><span class="sub2">Lions Field</span></td><td>Sep 8 – Oct 31</td><td class="num">4</td><td class="num">52<span class="sub2">0 open</span></td><td>Sep 2 by Jordan Reyes</td></tr>
+          </tbody>
+        </table>
+        <div style="height:14px"></div>
+      </div></div>
+      <p class="note">Three of these five schedules were sent to coaches and one of them has changed. You cannot tell which from the list, except by remembering which have a pill.</p>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Proposed</h3><span class="tag chg">Changed</span><span class="sw-note">Every row now carries its state</span></div>
+      <div class="scroller"><div class="frame">
+        <div class="lh"><div class="tt">Schedules</div><div class="ss">A schedule hands the club's time out to its teams.</div></div>
+        <table class="list">
+          <thead><tr><th>Schedule</th><th>Dates</th><th>Teams</th><th>Handed out</th><th>Last sent</th></tr></thead>
+          <tbody>
+            <tr class="bandrow"><td colspan="5">In use now</td></tr>
+            <tr><td><span class="nameLine"><b>Midweek dome nights, winter</b><span class="chip review">In review</span></span><span class="sub2">Lions Dome</span></td><td class="same">Oct 6 – Mar 25</td><td class="num same">5</td><td class="num same">38<span class="sub2">4 open</span></td><td class="same">Nov 12 by Dana Kowalski</td></tr>
+            <tr class="bandrow"><td colspan="5">Coming up</td></tr>
+            <tr><td><span class="nameLine rel hl"><b>Saturdays at Kinsmen, December 2026</b><span class="chip good">Final</span><button class="mk" style="right:-14px;top:-12px" data-go="pill" aria-label="Change 2, the Final pill on the list">2</button></span><span class="sub2">Kinsmen Park</span></td><td class="same">Nov 28 – Dec 19</td><td class="num same">3</td><td class="num same">20<span class="sub2">26 open</span></td><td class="same">Nov 9 by Dana Kowalski</td></tr>
+            <tr><td><span class="nameLine"><b>Saturday playoffs</b><span class="chips hl"><span class="chip good">Final</span><span class="chip warn">Changed since sent</span></span></span><span class="sub2">Kinsmen Park</span></td><td class="same">Dec 5 – Dec 19</td><td class="num same">4</td><td class="num same">12<span class="sub2">0 open</span></td><td class="same">Nov 2 by Dana Kowalski</td></tr>
+            <tr><td><span class="nameLine"><b>Spring practice block</b><span class="chip">Draft</span></span><span class="sub2">Kinsmen Park, Lions Field</span></td><td class="same">Apr 6 – May 30</td><td class="num same">4</td><td class="num same">0<span class="sub2">60 open</span></td><td class="same">Not sent</td></tr>
+            <tr class="bandrow"><td colspan="5">Ended</td></tr>
+            <tr><td><span class="nameLine"><b>Fall evenings, September</b><span class="chip good hl">Final</span></span><span class="sub2">Lions Field</span></td><td class="same">Sep 8 – Oct 31</td><td class="num same">4</td><td class="num same">52<span class="sub2">0 open</span></td><td class="same">Sep 2 by Jordan Reyes</td></tr>
+          </tbody>
+        </table>
+        <div style="height:14px"></div>
+      </div></div>
+      <p class="note"><b>Now every row answers "do coaches have this?"</b> Draft = not sent. In review = sent, waiting on coaches. Final = sent and settled. Amber = it has changed since it was sent and the coaches have the old version. A schedule that is final and unchanged has just the one pill.</p>
+      <p class="note"><b>One thing to look at:</b> an <i>ended</i> schedule that is Final shows the pill too. That is accurate, but it means the Ended group is a column of green pills. Ask 1 covers whether Final should be green or neutral.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 3 · THE PILL, IN DETAIL ═════════ -->
+  <section class="pane" id="p-marks">
+    <div class="stage" id="s-pill">
+      <div class="cap"><h2>1 and 2 · The state pill, everywhere the schedule's name appears</h2><span class="tag chg">Changed</span></div>
+      <p>One pill per state, in the same place everywhere: after the schedule's name, in the header and on every list row. The set is closed: Draft, In review, Final, and the amber "Changed since sent" beside Final when it applies.</p>
+      <div class="scroller"><table class="m">
+        <thead><tr><th>State</th><th>Pill</th><th>What it tells the club</th><th>vs today</th></tr></thead>
+        <tbody>
+          <tr class="same"><td>Draft</td><td><span class="chip">Draft</span></td><td>Not sent. Coaches do not know about it.</td><td>Unchanged</td></tr>
+          <tr class="same"><td>Sent for review</td><td><span class="chip review">In review</span></td><td>Coaches have it and can answer. Work is waiting on them.</td><td>Unchanged</td></tr>
+          <tr class="hl"><td><b>Final</b></td><td><span class="chip good">Final</span></td><td>Sent and settled. Coaches know about it, nothing is outstanding.</td><td><b>New. Nothing today.</b></td></tr>
+          <tr class="hl"><td><b>Final, then edited</b></td><td><span style="display:inline-flex;gap:.5rem;flex-wrap:nowrap"><span class="chip good">Final</span><span class="chip warn">Changed since sent</span></span></td><td>Coaches have the <i>old</i> version. Changes need sending.</td><td>The amber pill stays; Final now shows beside it.</td></tr>
+        </tbody></table></div>
+      <p class="note"><b>Why show both Final and amber, instead of letting amber replace it?</b> The schedule is still Final: the coaches received it and it was never reopened. The amber says there is outstanding work on top. If amber replaced Final, a glance would read "something is wrong" with no sign of what state it is in. This is Ask 2.</p>
+      <p class="note"><b>Who sees it:</b> everyone who can open a schedule, with no money access needed. The state is not a money fact.</p>
+
+      <div class="cap" style="margin-top:20px"><h3>The Final pill's look</h3><span class="tag chg">Ask 1</span></div>
+      <div class="pair">
+        <div class="card"><h3>A · Green (the shipped "good" tone)</h3><p style="margin:.3rem 0"><span class="chip good">Final</span> <span class="chip warn">Changed since sent</span></p><p class="note" style="margin:0">Reads as "settled" at a glance, and is clearly different from the grey Draft and the olive In review. The cost: the Ended group becomes a column of green.</p></div>
+        <div class="card"><h3>B · Neutral grey, like Draft</h3><p style="margin:.3rem 0"><span class="chip">Final</span> <span class="chip warn">Changed since sent</span></p><p class="note" style="margin:0">Quietest. But Draft and Final look identical and differ only by the word, which makes the list harder to scan, and scanning is the whole point.</p></div>
+      </div>
+
+      <div class="cap" style="margin-top:20px"><h3>The tightest case: a long name with both pills, on a computer</h3><span class="tag new">Stress test</span></div>
+      <div class="scroller"><div class="frame" style="width:1000px">
+        <div class="pbar"><span class="back">← Schedules</span><span class="div"></span><span class="name">Saturday and Sunday diamonds at Kinsmen Park and Lions Field, Fall 2026 Playoffs</span><span class="chips"><span class="chip good">Final</span><span class="chip warn">Changed since sent</span></span><span class="sp"></span><span class="vs">View site</span></div>
+      </div></div>
+      <p class="note">Schedule names are typed by the club, so a long one is real. The pills never give way; a long name shortens with "…" to make room, and the full name is still at the head of the page and in the browser tab. The shipped strip already does this for "Changed since sent" today.</p>
+    </div>
+
+    <div class="stage" id="s-tile">
+      <div class="cap"><h2>3 · The Bill tile, the one place billing is said</h2><span class="tag chg">Changed</span><span class="tag chg">Ask 3</span></div>
+      <p>You ruled that billing is secondary: people open a schedule to see it. The catch is that once they open it, the tile shows the permit's price in the same place and the same type as a real bill. A schedule finalized with no bill and a schedule that was billed look identical, both reading $400.00. This is the smallest fix that stops that.</p>
+      <div class="pair">
+        <div>
+          <div class="cap"><h3>Billed</h3><span class="tag same">Unchanged</span></div>
+          <div class="scroller"><div class="band same"><div class="t"><div class="l">The bill <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="v">$400.00</div></div></div></div>
+          <p class="note">A real bill keeps its dollar figure.</p>
+        </div>
+        <div>
+          <div class="cap"><h3>Final, not billed</h3><span class="tag chg">Changed</span></div>
+          <div class="scroller"><div class="band hl"><div class="t"><div class="l">The bill <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div><div class="v quiet">Not billed</div></div></div></div>
+          <p class="note">Was $400.00 today. Same tile, same size, still the door to Fair shares and the "Bill the teams" button. The permit's price is still there, labelled as an estimate. Shown only to people who see money.</p>
+        </div>
+      </div>
+      <p class="note"><b>Parked, not in this change:</b> a dashboard summary of permits the club paid for against what was billed to coaches. That is an accounting question, and we can take it up separately.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 4 · PHONE ═════════ -->
+  <section class="pane" id="p-phone">
+    <p class="lede">On a phone the pill goes where the other states already go: last on the small line under the name in the pinned bar, and in each row of the list. A phone can read a schedule and send changes, so the state is the thing a phone user most needs to see.</p>
+    <div class="pair">
+      <div class="stage">
+        <div class="cap"><h3>Schedule page · today</h3><span class="tag same">As shipped</span></div>
+        <div class="scroller"><div class="frame phone">
+          <div class="ph-head"><span class="back">←</span><span class="name">Saturdays at Kinsmen, December 2026</span></div>
+          <div class="pbody">
+            <p class="meta"><span class="door">From the permit Saturday diamonds, December 2026 ›</span> · Kinsmen Park · Diamond A, Diamond B · Saturdays, Nov 28 – Dec 19, 2026 · sent Nov 9</p>
+            <div class="att"><div class="h">Needs attention <span>1 item</span></div><div class="r"><span class="tok">Outside the permit</span><div><b>Sat, Dec 5 and Sat, Dec 12 are dates off on the permit</b></div></div></div>
+            <div class="ph-day">Sat, Dec 5 · Diamond A · 11:00 a.m.</div>
+          </div>
+        </div></div>
+      </div>
+      <div class="stage">
+        <div class="cap"><h3>Schedule page · proposed</h3><span class="tag chg">Changed</span></div>
+        <div class="scroller"><div class="frame phone">
+          <div class="ph-head"><span class="back">←</span><span class="name">Saturdays at Kinsmen, December 2026</span><div class="small"><span class="chip good hl">Final</span></div></div>
+          <div class="pbody">
+            <p class="meta"><span class="door">From the permit Saturday diamonds, December 2026 ›</span> · Kinsmen Park · Diamond A, Diamond B · Saturdays, Nov 28 – Dec 19, 2026 · sent Nov 9</p>
+            <div class="att"><div class="h">Needs attention <span>1 item</span></div><div class="r"><span class="tok">Outside the permit</span><div><b>Sat, Dec 5 and Sat, Dec 12 are dates off on the permit</b></div></div></div>
+            <div class="ph-day">Sat, Dec 5 · Diamond A · 11:00 a.m.</div>
+          </div>
+        </div></div>
+        <p class="note"><b>The cost, stated:</b> a final schedule's phone bar gains a small line, about 17px, and the bar stays pinned while you scroll. Draft and In review already do this, so the rule becomes the same for every state. The drawing approximates the bar; the build uses the real one.</p>
+      </div>
+      <div class="stage">
+        <div class="cap"><h3>List · proposed</h3><span class="tag chg">Changed</span></div>
+        <div class="scroller"><div class="frame phone">
+          <div class="ph-head"><span class="name">Schedules</span></div>
+          <div class="pbody" style="padding-top:0">
+            <div class="phlist">
+              <div class="band2">In use now</div>
+              <div class="row"><span class="nameLine"><b>Midweek dome nights, winter</b><span class="chip review">In review</span></span><span class="cap2">Lions Dome · Oct 6 – Mar 25</span><span class="cap2">5 teams · 38 handed out</span></div>
+              <div class="band2">Coming up</div>
+              <div class="row"><span class="nameLine"><b>Saturdays at Kinsmen, December 2026</b><span class="chip good hl">Final</span></span><span class="cap2">Kinsmen Park · Nov 28 – Dec 19</span><span class="cap2">3 teams · 20 handed out</span></div>
+              <div class="row"><span class="nameLine"><b>Saturday playoffs</b><span class="chips hl"><span class="chip good">Final</span><span class="chip warn">Changed since sent</span></span></span><span class="cap2">Kinsmen Park · Dec 5 – Dec 19</span><span class="cap2">4 teams · 12 handed out</span></div>
+              <div class="row"><span class="nameLine"><b>Spring practice block</b><span class="chip">Draft</span></span><span class="cap2">Kinsmen Park · Apr 6 – May 30</span><span class="cap2">4 teams · 0 handed out</span></div>
+            </div>
+          </div>
+        </div></div>
+        <p class="note">Same pills in the same place as a computer. On a phone the title and pill wrap together when the name is long.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 5 · ASKS ═════════ -->
+  <section class="pane" id="p-asks">
+    <p class="lede">Your direction settled most of round 1. These are the calls that remain. Each has my recommendation.</p>
+    <div class="asks">
+      <div class="card">
+        <h3>What your ruling already decided (shown so it can be corrected)</h3>
+        <ul style="margin:.3rem 0 0 1.1rem;padding:0;font-size:.88rem">
+          <li>Every schedule shows its state as a pill: Draft, In review, <b>Final</b>. A final schedule is no longer silent.</li>
+          <li>The pill is on the schedule's header <b>and on every row of the Schedules list</b>.</li>
+          <li>"Not billed" is not a header pill, not a list pill and not in the top line. Billing is read inside the schedule.</li>
+          <li>Not billed gets no to-do in Needs attention.</li>
+          <li>The permits-paid-by-club against billed-to-coaches summary is parked for the accounting conversation.</li>
+        </ul>
+      </div>
+      <div class="ask">
+        <h3>Ask 1 · What does the Final pill look like?</h3>
+        <ul><li><b>A · Green</b>, the shipped "good" tone. Easy to tell from Draft (grey) and In review (olive) down a list. The Ended group will read as a column of green.</li><li><b>B · Neutral grey</b>, the same as Draft. Quietest, but Draft and Final differ only by the word.</li></ul>
+        <p class="rec">Recommend A.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 2 · When a final schedule has been edited, show "Final" as well as the amber pill?</h3>
+        <ul><li><b>A · Both</b>, Final first then amber. The state stays visible and the amber adds the outstanding work.</li><li><b>B · Amber replaces Final.</b> One pill, but you lose the state while it is changed.</li></ul>
+        <p class="rec">Recommend A. It does put two pills on a changed row, which fits on the list and in the header.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 3 · Keep the Bill tile change, so an unbilled schedule stops showing $400.00?</h3>
+        <ul><li><b>A · Yes.</b> The tile reads "Not billed" when the schedule is final with no bill. It is the only place billing is mentioned, and it only appears once someone opens the schedule.</li><li><b>B · Leave it.</b> Park it with the accounting conversation. The tile keeps showing the permit's price as if it were a bill.</li></ul>
+        <p class="rec">Recommend A. It is a small change, and it is the original reason you could not tell your test schedule had no bill.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 4 · Accept the phone cost?</h3>
+        <ul><li><b>A · Yes.</b> The pill goes on the phone's pinned bar like the other states, adding about 17px to a final schedule's bar.</li><li><b>B · Not on the bar.</b> A phone shows the pill on the list only, and the schedule page keeps today's bar.</li></ul>
+        <p class="rec">Recommend A, for consistency. A state that shows on every other schedule and not on the final ones would be the original defect again.</p>
+      </div>
+      <div class="card">
+        <h3>Who sees what</h3>
+        <p style="margin:0">Draft, In review, Final and Changed since sent: everyone who can open the schedules, on a computer and a phone. "Not billed" on the Bill tile: people who see money, on a computer.</p>
+      </div>
+      <div class="card">
+        <h3>After you approve</h3>
+        <p style="margin:0">Your walk step ("It is Final, has no bill, and the Fair shares area has a Bill the teams door") becomes checkable: a Final pill in the header and on the list, a "Not billed" tile, and the Bill the teams door one click away in Fair shares. The in-app help for Schedules gets updated, and the demo clubs follow on their own. I will log the new rule (every schedule shows its state) so later screens follow it.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var names = ['whole', 'list', 'marks', 'phone', 'asks'];
+  var tabs = document.querySelectorAll('.tab');
+  function show(name, scrollTo) {
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.t === name)); });
+    document.querySelectorAll('section.pane').forEach(function (p) { p.classList.toggle('on', p.id === 'p-' + name); });
+    try { history.replaceState(null, '', '#' + name); } catch (e) { /* hash only */ }
+    if (scrollTo) { var el = document.getElementById(scrollTo); if (el) setTimeout(function () { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30); }
+    else window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.t); }); });
+  var map = { pill: 's-pill', tile: 's-tile' };
+  document.querySelectorAll('.mk').forEach(function (b) { b.addEventListener('click', function () { show('marks', map[b.dataset.go]); }); });
+  document.querySelectorAll('.viewrow').forEach(function (row) {
+    var pane = row.closest('section');
+    row.querySelectorAll('button[data-v]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        row.querySelectorAll('button[data-v]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        pane.classList.toggle('show-diff', b.dataset.v === 'diff');
+      });
+    });
+  });
+  var h = (location.hash || '').replace('#', '');
+  if (names.indexOf(h) > -1) show(h);
+  window.addEventListener('hashchange', function () { var n = (location.hash || '').replace('#', ''); if (names.indexOf(n) > -1) show(n); });
+})();
+</script>

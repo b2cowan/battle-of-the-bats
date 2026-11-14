@@ -143,6 +143,9 @@
 /* The place's status chip, last on the small line: snug to the words' line like the tournament's (`.meta .chip`). */
 .meta .metaChip { display: inline-flex; padding-block: 0; }
 .meta .metaChip > span { line-height: 1; padding-block: 0.05rem; }
+/* A schedule that is Final AND Changed since sent hands TWO pills in one wrapper; each is snug like a single one, so that
+   state's small line is no taller than the others (2026-11-14). */
+.meta .metaChip > span > span { line-height: 1; padding-block: 0.05rem; }
 
 /* The tab row pinned inside the bar (`HubTabBar inBar`): it sits on the bar's own bottom line, so the bar gives up its
    bottom padding. */

@@ -102,9 +102,9 @@ export default function SchedulePage() {
   const [read, setRead] = useState<PageRead | null>(null);
   const [failed, setFailed] = useState<{ notFound: boolean; text: string } | null>(null);
   usePageTitle(read?.schedule.name ?? W.title);
-  // The ONE state chip, only where it says something (a sent schedule with nothing waiting says nothing more).
-  const stateChip = read && (read.schedule.state !== 'final' || read.schedule.changedSinceSent)
-    ? <ScheduleStateChip state={read.schedule.state} changed={read.schedule.changedSinceSent} /> : undefined;
+  // THE STATE PILL: every schedule wears its state in the header — Draft, In review, Final (and the amber Changed since sent
+  // beside Final). Owner ruling 2026-11-14: a final schedule is no longer silent; the list wears the same pill.
+  const stateChip = read ? <ScheduleStateChip state={read.schedule.state} changed={read.schedule.changedSinceSent} /> : undefined;
   // ⚖ Admin header Phase 3 (A8, round 5): the header names the schedule ("← Schedules │ name", its chip); the address gave
   // "Schedule" and the way back at once, this hands over the name once the schedule has loaded.
   useHandNamedPlace(read ? { title: read.schedule.name, chip: stateChip } : null);

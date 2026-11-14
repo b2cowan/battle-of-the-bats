@@ -51,6 +51,10 @@
 .bandLabel { display: block; font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); } /* type-ok: eyebrow */
 .bandValue { display: block; margin-top: 0.1rem; font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--text-primary); overflow-wrap: anywhere; }
 .bandValue.amber { color: var(--badge-warning-ink); }
+/* The Bill tile on a final schedule with no bill: "Not billed" in the secondary ink, same size, so the permit's price is never read as an invoice. */
+.bandValue.bandValueQuiet { color: var(--text-secondary); }
+/* Final beside the amber Changed since sent: two pills, one small gap, never wrapping (the strip's chips do not give way). */
+.stateChips { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: nowrap; }
 /* Fair shares B: the four figures in ONE row above the toolbar, each tile as wide as its figure needs (sidebar hub,
    screen 6) — the band stays one joined band, hairlines between. */
 .bandAcross { display: inline-grid; grid-template-columns: repeat(4, auto); }

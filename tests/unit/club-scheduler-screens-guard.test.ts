@@ -423,8 +423,18 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     assert.match(server, /fromPermit: startedFrom && fromPrices\.found \? \{ id: startedFrom, name: fromPrices\.permitName \?\? '' \} : null,/, 'its name, never its money');
     assert.doesNotMatch(page, /aria-label="This schedule’s path"|className=\{sch\.path\}/, 'no path line (option B was not ruled)');
   });
+  it('every schedule wears its state (2026-11-14): Final is a pill on the header AND the list, beside the amber Changed since sent — and billing is never a state', () => {
+    const list = readCode(LIST);
+    assert.match(parts, /: <RepChip tone="good">\{SCHEDULE_WORDS\.final\}<\/RepChip>;/, 'an unchanged final schedule wears the shipped good-tone chip alone');
+    assert.match(parts, /<span className=\{sch\.stateChips\}><RepChip tone="good">\{SCHEDULE_WORDS\.final\}<\/RepChip><RepChip tone="warn">\{SCHEDULE_WORDS\.changedSinceSent\}<\/RepChip><\/span>/, 'Changed since sent sits BESIDE Final, never instead of it');
+    assert.doesNotMatch(parts, /state === 'final'\) return changed \? [^:]+: null/, 'a final schedule is never silent again');
+    assert.match(page, /const stateChip = read \? <ScheduleStateChip state=\{read\.schedule\.state\} changed=\{read\.schedule\.changedSinceSent\} \/> : undefined;/, 'the header wears the pill for every state');
+    assert.equal((list.match(/<ScheduleStateChip state=\{r\.state\} changed=\{r\.changedSinceSent\} \/>/g) ?? []).length, 2, 'the list wears it on a computer row and a phone row');
+    assert.doesNotMatch(parts + page + list, /tileNotBilled|Not billed/, '"Not billed" is a Bill-tile figure, never a state pill, a header chip or a list row mark');
+    assert.match(fair, /value: finalNoBill \? W\.tileNotBilled : money\(billTotal\), quiet: finalNoBill/, 'the Bill tile is the one place it is said');
+  });
   it('the band’s door is the Bill tile for a money reader and the Open tile for anyone else — nobody loses Fair shares', () => {
-    assert.match(fair, /\{ \.\.\.\(showBill \? \{ key: 'bill', label: W\.tileBill, value: money\(billTotal\) \} : \{ key: 'open', label: W\.tileOpen, value: String\(t\.open\) \}\), door: true \}/);
+    assert.match(fair, /\{ \.\.\.\(showBill \? \{ key: 'bill', label: W\.tileBill, value: finalNoBill \? W\.tileNotBilled : money\(billTotal\), quiet: finalNoBill \} : \{ key: 'open', label: W\.tileOpen, value: String\(t\.open\) \}\), door: true \}/);
     assert.match(fair, /'door' in t && t\.door && onOpen \? \{ \.\.\.t, onOpen \} : t/);
     assert.match(parts, /<button key=\{t\.key\} type="button" className=\{`\$\{sch\.bandTile\} \$\{sch\.bandDoor\}`\} onClick=\{t\.onOpen\}>/);
     // 13c: a schedule finalized WITHOUT a bill can still be billed (Send the bill, mig 481), so the door is the money reader's

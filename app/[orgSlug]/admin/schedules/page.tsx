@@ -9,8 +9,8 @@
  *   the page   — the 1200 column. The lede says what a schedule is, and New schedule is the one lime at its end. A table:
  *                Schedule (its name — the link — with the places under it) · Dates · Teams · Handed out (open under it) ·
  *                Last sent ("Sep 2 by Jordan Reyes" / "Not sent") · one chevron; band rows In use now · Coming up · Ended;
- *                ONE state chip only where it needs saying — Draft, In review (olive), the amber Changed since sent; a sent
- *                schedule says nothing more.
+ *                ONE state pill on EVERY row (owner ruling 2026-11-14) — Draft, In review (olive), Final (green), and the
+ *                amber Changed since sent beside Final; the state is what tells the club whether coaches know about it.
  *   a phone    — one frame, band rows, hairlined rows with the corner chevron (the 2026-09-29 phone-list ruling).
  *                ⚖ NEW SCHEDULE IS ABSENT AT PHONE WIDTH (§5.9): building a winter of dome nights is desk work, and a
  *                door that dead-ends is the bug. A phone reads a schedule and sends its changes.

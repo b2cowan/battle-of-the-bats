@@ -110,10 +110,12 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
     : W.clashGroupLines(clashGroups(clashes));
   const shortLines = [...shorts].map(([id, n]) => W.shortLine(nameOf(id), n, scope));
   const t = fairness.totals;
+  // A schedule finalized with no bill: the permit's price is an estimate, not a bill — the tile says so (2026-11-14).
+  const finalNoBill = showBill && schedule.state === 'final' && !view.bill;
   const tiles = [
     { key: 'handed', label: W.tileHandedOut, value: W.ofSlots(t.handedOut, t.seats) },
     // The door to Fair shares and the bill (13c C4): The bill for a money reader, Open for anyone else.
-    { ...(showBill ? { key: 'bill', label: W.tileBill, value: money(billTotal) } : { key: 'open', label: W.tileOpen, value: String(t.open) }), door: true },
+    { ...(showBill ? { key: 'bill', label: W.tileBill, value: finalNoBill ? W.tileNotBilled : money(billTotal), quiet: finalNoBill } : { key: 'open', label: W.tileOpen, value: String(t.open) }), door: true },
     { key: 'short', label: W.tileShort, value: String(t.short), amber: t.short > 0 },
     { key: 'clashes', label: W.tileClashes, value: String(t.clashes), amber: t.clashes > 0 },
   ];
@@ -137,7 +139,7 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
   const billDoor = view.bill ? W.billDoor(view.bill.dues.length) : W.billTeamsDoor;
   // A schedule finalized with no bill reads the permit's estimate in its Bill column — said once, so it isn't mistaken for a
   // bill that went out (13c). The door beside it makes one, without reopening the schedule.
-  const unbilled = showBill && schedule.state === 'final' && !view.bill ? W.billLateNote : null;
+  const unbilled = finalNoBill ? W.billLateNote : null;
   return { results, shorts, columns, groupsOf, withGroups, tiles, lines: [...clashLines, ...shortLines], kept, notes, billDoor, unbilled };
 }
 

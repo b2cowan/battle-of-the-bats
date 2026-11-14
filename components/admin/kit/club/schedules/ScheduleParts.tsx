@@ -6,10 +6,17 @@ import { RepChip } from '../RepKit';
 import { SCHEDULE_WORDS } from '@/lib/club-schedule-words';
 import sch from './Schedules.module.css';
 
-/** The one state chip, only where it needs saying: Draft · In review (olive) · the amber Changed since sent. A sent
- *  schedule with nothing waiting says nothing more. */
+/** THE STATE PILL — every schedule wears its state, wherever its name is read (owner ruling 2026-11-14, replacing "a sent
+ *  schedule with nothing waiting says nothing more"): Draft (grey) · In review (olive) · Final (green). A final schedule that
+ *  has been edited since it was sent wears the amber Changed since sent BESIDE Final, never instead of it — the coaches
+ *  still hold a settled schedule, with outstanding work on top. Whether it was billed is not a state: it reads inside the
+ *  schedule, on the Bill tile. */
 export function ScheduleStateChip({ state, changed }: { state: 'draft' | 'in_review' | 'final'; changed: boolean }) {
-  if (state === 'final') return changed ? <RepChip tone="warn">{SCHEDULE_WORDS.changedSinceSent}</RepChip> : null;
+  if (state === 'final') {
+    return changed
+      ? <span className={sch.stateChips}><RepChip tone="good">{SCHEDULE_WORDS.final}</RepChip><RepChip tone="warn">{SCHEDULE_WORDS.changedSinceSent}</RepChip></span>
+      : <RepChip tone="good">{SCHEDULE_WORDS.final}</RepChip>;
+  }
   if (state === 'in_review') return <span className={sch.reviewChip}>{SCHEDULE_WORDS.inReview}</span>;
   return <RepChip>{SCHEDULE_WORDS.draft}</RepChip>;
 }
@@ -35,14 +42,14 @@ export function JoinedBand({ tiles, label, across = false }: {
   label: string; across?: boolean;
   /** `onOpen`: the tile is a door (13c Session C, C4 — the Bill tile opens Fair shares and the bill), its label wearing
    *  the shipped door arrow. */
-  tiles: { key: string; label: string; value: ReactNode; amber?: boolean; onOpen?: () => void }[];
+  tiles: { key: string; label: string; value: ReactNode; amber?: boolean; quiet?: boolean; onOpen?: () => void }[];
 }) {
   return (
     <div className={`${sch.band}${across ? ` ${sch.bandAcross}` : ''}`} role="group" aria-label={label}>
       {tiles.map(t => {
         const inner = <>
           <span className={sch.bandLabel}>{t.label}{t.onOpen && <ArrowRight size={13} aria-hidden className={sch.bandArrow} />}</span>
-          <span className={`${sch.bandValue}${t.amber ? ` ${sch.amber}` : ''}`}>{t.value}</span>
+          <span className={`${sch.bandValue}${t.amber ? ` ${sch.amber}` : ''}${t.quiet ? ` ${sch.bandValueQuiet}` : ''}`}>{t.value}</span>
         </>;
         return t.onOpen
           ? <button key={t.key} type="button" className={`${sch.bandTile} ${sch.bandDoor}`} onClick={t.onOpen}>{inner}</button>

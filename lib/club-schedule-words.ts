@@ -30,6 +30,7 @@ export const SCHEDULE_WORDS = {
   draft: 'Draft',
   inReview: 'In review',
   changedSinceSent: 'Changed since sent',
+  final: 'Final',
   // Stage 11c Ask 5: the same each week ranks Best overall · Another mix · Youngest earliest; Moved around ranks three
   // mixes that all move. "Prime time rotated" retired in both.
   strategy: { best: 'Best overall', youngest: 'Youngest earliest', mix: 'Another mix', third: 'A third mix' } satisfies Record<DraftStrategy, string>,
@@ -729,6 +730,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   tileShort: 'Short',
   tileClashes: 'Clashes',
   tileBill: 'The bill',
+  /** The Bill tile's figure on a final schedule with no bill: the permit's price is not a bill (owner ruling 2026-11-14). */
+  tileNotBilled: 'Not billed',
   ofSlots: (a: number, b: number) => `${a} of ${b}`,
   colThisWeek: 'A week',
   colPrimeTime: 'Prime time',
