@@ -1,11 +1,44 @@
 # Families say if they're coming (Stage 4b) — the answer record, the reminder email, the coach bell
-**Last verified:** 2026-11-13 (words and sender read in code; migs 476, 477, 480, 482 read in full; CASL text NOT re-fetched — the 2026-11-06 reading in
+**Last verified:** 2026-11-14 for the "One attendance record" section below (read from migs 483/484/485, `lib/family-availability.ts`, the coach attendance route); 2026-11-13 for everything under it (words and sender read in code; migs 476, 477, 480, 482 read in full; CASL text NOT re-fetched — the 2026-11-06 reading in
 `CASL_SECOND_PARENT_EMAIL.md` is relied on; PIPEDA clauses 4.3 / 4.5 / 4.7 cited from the principles, text not re-fetched this session)
 **Re-verify by:** the migrations reach production; the guardian tier goes on for real families; the reminder gains any offer, price, link or sign-up
 line; house-league answers ship (ask 4); Bill C-36; first Québec customer
 **Depends on facts:** `LEGAL_FACTS.md` § two privacy roles (FieldLogicHQ = service provider for the club's records) and § consent and email
 mechanics; `drafts/GUARDIAN_CONSENT_STAGE4.md`; the build prompt `docs/projects/active/SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md` (rulings 1–15, O1–O4,
 Progress block, Session 4 rulings)
+
+## ⚠ UPDATE 2026-11-14 — ONE ATTENDANCE RECORD (owner ruling 2026-11-13; `docs/projects/active/ONE_ATTENDANCE_RECORD_PLAN.md`)
+**The model this file was written against is gone.** The family's answer is no longer "a separate record" in its own table
+(`event_availability_answers`, dropped by mig 485): it is the coach's attendance row, set by a parent OR a coach, latest change wins, with who
+set it, when, the answer before it, a family note and the coach's own private note on the same row (mig 483). Read the rest of this file with
+these corrections — each one re-reads a statement below that is now false:
+1. **"Answers deleted 60 days after the season" is false.** Mig 484 (the nightly clean-up, watched, owner go C4) NULLs the family note 30 days
+   after the event and NULLs *who set it* and *the previous answer* 60 days after the season's last event. It **never deletes** an attendance row:
+   the answer stays as the club's attendance record. The privacy draft §9 now says so.
+2. **"A new day deletes answers" is false** (owner call C1: nothing is cleared on a new day; mig 485 drops that trigger).
+3. **"An answer never changes the coach's attendance record" is false.** The privacy draft §5 said it; it now says the answer *is* the attendance.
+4. **New disclosure, ruling 4:** a parent sees the coach's change to their OWN child's answer ("Coach, today · earlier: In (You, Nov 1)") — never a
+   teammate, never the coach's private note, and a coach is never named (the payload's `whoFor` returns "Coach"). Checked in
+   `lib/family-availability.ts` (`rowOf`, `whoFor`; a parent's CLEAR only removes a family's answer) and pinned by `tests/unit/family-availability.test.ts`.
+   **No message goes to a family when a coach changes an answer** — checked: the coach attendance route sends none.
+5. **The answer sheet's hint now tells the parent** their answer is also the child's attendance and a coach can change it
+   (`FAMILY_AVAILABILITY_WORDS.sheet.privacy` — word change made 2026-11-14). **The Leave and Stop confirm** (`family-home-words.ts` `leave.answersStay`)
+   said "your answers stay … until the season is over", which understates (the answer stays as attendance; only the *name* goes at the clock): now "The
+   answers stay as {child}'s attendance in the team's record, and your first name stays beside them until 60 days after the season's last event."
+   Mig 485 still blanks a leaving parent's notes at once (unless the same account keeps another verified link to the child; not on a merge) and leaves who-set-it for the clock, as before. The Leave/Stop confirm now also appears when the parent's name survives only as the "earlier" answer (2026-11-14 review).
+6. **A deleted account:** the FK nulls `set_by_user_id`, `previous_by_user_id` and `family_note_by_user_id`; the note's words go too (mig 485's
+   writer-gone trigger); the answer stays with kind "family" and no person.
+
+**Owner questions (none blocks the walk):**
+- **Q1 — the consent box (0.2).** It says coaches *see* answers; it does not say the answer becomes the child's attendance record that a coach can
+  change. The answer sheet's hint now does, which is where a parent reads it before each answer. Raising the consent text to 0.3 for new joiners is the
+  stricter route; worth it only if the owner wants the consent record itself to carry it. Not done (a consent-version change is the owner's call).
+- **Q2 — a leaving parent's first name** still shows on the coach's side beside their answers until 60 days after the season's last event (unchanged
+  from 4b; now stated in the Leave/Stop confirm and §9). Same lawyer's-eye item as before.
+- **Q3 — a Maybe or a family In that nobody corrects** counts in attendance stats once the event starts (owner ruling 2). Not a legal point; recorded
+  because an attendance record about a child can now contain a parent's guess.
+
+**Not re-checked:** CASL / PIPEDA text (not re-fetched). The Remind email is unchanged by this work (it now skips any player with an answer, so fewer emails).
 
 ## Question(s) this answers
 1. Is anything in the rendered words, the reminder email or the bell a legal problem (CASL, PIPEDA), read against the drawing's tab 9?

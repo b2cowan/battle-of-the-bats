@@ -29,6 +29,10 @@
   §3: the two-step records, the support-reset request record, and the account and set-up emails. §5: what a club's owners and
   admins see about two-step. §9: how long those records are kept (with the account or the club; no separate limit). §10: the
   two-step paragraph and the reset paths. Finding 5 and §10 note 3 reworded (not closed). Read against `TWO_STEP_SIGNIN_PRIVACY.md`.
+- 0.2 · 2026-11-13 · Families say if they're coming (Signed-in family Stage 4b; **text goes live only when the guardian tier is on for real
+  families and migrations 476, 477, 480 and 482 are on production**). §5: the paragraph on parents saying whether a player is coming and on the
+  reminder email. §9: how long the answers and notes are kept. **Rewritten 2026-11-14 for One attendance record** (the answer is the player's attendance, a coach can change it, nothing clears on a new day, the clean-up never deletes an answer). New finding 11 (the in-app bell lines have no retention clock). Read against
+  `FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md`.
 
 > **How to read this draft.** `[square brackets]` = a fact the owner fills in (only the mailing address is
 > left, and that one is optional — §2 note). `> NOTE` blocks are for the owner and are deleted before publication. The law this is written to is **PIPEDA**
@@ -170,13 +174,20 @@ To keep it stopped we keep that address on a short list for that club for as lon
 emailed about the stop; the club's registrar can see that the address was stopped and when. Receipts and refunds go to the
 person who paid, not to the second address.
 
-**Two-step sign-in, and what your club sees.** A club's owners and admins (no other role) can see, for each person in the
-club, whether two-step sign-in is on and when it was set up. Where the club requires it for a role, they also see how many
-days that person has left to set it up, or that the time has passed. The club's Overview shows its owners and admins a short
-list of the people who still need to set it up (up to three names, with their role and the earliest date), and the members
-list the club can download carries the same column. **The club never sees your codes, your authenticator app or your
-devices.** If an owner or admin resets your two-step sign-in, it is only when your account is used for that club alone; if
-your account reaches anywhere else, the club is told only that FieldLogicHQ support must do it, with no reason given.
+**Parents saying whether a player is coming.** When a team's coach turns it on, a parent who has joined the team in the app can
+say In, Late, Maybe or Out for each upcoming game or practice the coach has chosen, and may add one short note (up to 200 characters).
+That answer **is the player's attendance for that event**: there is one answer per player and event, kept in the team's attendance
+record, and the latest change wins, whether a parent or a coach who takes attendance made it. Parents can change it only until the
+event starts. We store the answer, who set it (a parent's account, or "coach") and when, the answer before it if it changed, and the
+parent's note. The coaches of that team who take attendance see the answer, who set it and when, the note and the parent's first
+name; the coach's own private note about a player is never shown to a family. A parent sees, for their own child only, who set the
+answer and when, including a coach's change ("Coach, today"), and never another child's answer. The child's other connected parent
+sees the answer, the first name and the day, and that a note was left, but not what it says. Other families never see it, and other
+staff of the team (those who open the lineup or the practice plan, but do not take attendance) see the answer and whether a family or a coach set it, never a parent's name or note. We do not send a parent a message when a coach changes an answer. A coach can also press
+**Remind**. That sends an in-app note, and an email to the account's own address, to each connected parent of a player who has no
+answer yet (a player the coach has already marked is not reminded). The email says an event is coming and the coach asked whether the player is coming; it has
+no answer link, never goes to an address that has not joined, and has the club's unsubscribe link. A parent who has unsubscribed
+from the club's emails still gets the in-app note. We ask parents not to put health details in a note.
 
 **What we do with it:** store it, keep it secure, display it to the people the club authorizes, send the emails the club
 asks us to send, and help the club when it asks for support. **We do not sell it, we do not use it for advertising, and
@@ -223,6 +234,11 @@ If you can't reach the club, contact us (§2) and we will pass your request on a
 >    registrars and the public board page never see it. The last sentence discloses a narrow inference (the account reaches
 >    somewhere beyond the club) — accepted by the ask 3 ruling, so say it plainly rather than hide it. If the Overview or
 >    export ever shows a role other than owner/admin, or a code/app/device fact, this paragraph is wrong first.
+> 9. **Parents-saying-if-they're-coming paragraph (added 2026-11-13; Stage 4b closeout; REWRITTEN 2026-11-14 for One attendance record — publish with the tier and migs 476, 477, 479, 480, 482, 483, 484, 485 in that order).** The 2026-11-13 text said an answer "is a separate record ... never changes the coach's own attendance record" — FALSE since mig 483 (one record, latest change wins; ruling 1 of `ONE_ATTENDANCE_RECORD_PLAN.md`), so §5 and §9 now say the opposite. A parent seeing the coach's change on their OWN child is ruling 4 (the payload names a coach only as "Coach", never the coach's note: `lib/family-availability.ts` `rowOf` / `whoFor`; guard tests in `tests/unit/family-availability.test.ts`); "no message when a coach changes an answer" was checked: the coach attendance route sends none.
+>    Sources and line references: `FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md` ("What the product does today"). "Other staff of the team see
+>    only totals" is ask 11 (the `attendance` capability; guard test g) — the club administrator's rep schedule shows neither; if either ever
+>    shows a name or note, this paragraph is wrong first. "Never changes the coach's attendance record" is ruling 3 and the guard that a family
+>    can never write it. "Which parent gave it" = the account id; the first name is read from that account at display time.
 
 ## 6. Who we share personal information with
 
@@ -325,6 +341,15 @@ and email addresses.
   turn two-step off or replace your phone; the record of codes recently accepted is cleared the next time you enter a code.
   A **support reset request** and the note of why are kept with your account or your organization, with no separate time
   limit.
+- **A parent's answers about whether a player is coming** (§5). The words of a note are deleted 30 days after the event. The answer
+  itself is the player's attendance record, which is the club's: it is kept as the team's attendance, and this clean-up never deletes
+  it. Who set the answer (a parent's account) and the answer before it are removed 60 days after the last event on the team's
+  calendar for that season; this happens whether or not the club has closed the season, and a coach adding an event later moves the
+  date. A parent who is no longer connected to a child (they left, the club removed them, or they stopped the emails) and has no other connection to that child has their notes
+  about that child deleted at once, but their answers stay as the child's attendance, and their first name stays beside them until
+  that date; a parent whose account is deleted loses their notes, and the answers stay without their name. If a club joins two records
+  of the same child, the attendance goes with the child. If an event moves to a new day, its answers are kept, and parents and coaches
+  update them by hand. The in-app notes the coach receives about answers are kept like any other in-app note (no end date today).
 - **Error reports** are deleted after 30 days; the detailed log of records our staff opened, after 90 days; performance
   measurements, after one year. The list of pages our staff visit in our own tools is kept with no set end date today.
 
@@ -356,6 +381,16 @@ and email addresses.
 >    rows and reset-request rows cascade with the person or the club. "Backup codes are removed when you turn two-step off"
 >    rests on the turn-off route's last step (`turn-off/route.ts`, `lib/two-step-reset.ts`): re-check it at promote. No
 >    separate limit exists for the free-text Why (LEGAL_INDEX L16): same open question as the staff change-log reasons.
+> 9. **Answers-and-notes retention (added 2026-11-13; REWRITTEN 2026-11-14 for One attendance record — publish with migs 476, 477, 479, 480, 482, 483, 484, 485 on production, in that order).** The old clauses "answers deleted 60 days after the season" and "a new day deletes answers" are NO LONGER TRUE (mig 484 blanks who-set-it and the previous answer and never deletes an attendance row; mig 485 drops the new-day trigger, owner call C1); the bullet above was rewritten from 483/484/485, not from the 2026-11-13 reading below, which is kept for history only:
+>    Each clause read from the migration, not the plan: notes 30 days after the event (476 `:151-155`); answers 60 days after the season's
+>    last event, any type and any status, closed or not, grouped by the team's program year (476 `:157-175`, dictionary: one program year per
+>    team per year); nightly at 08:35 GMT (477); a new day deletes answers (480 `:29-35`); a connection that ends nulls that parent's notes
+>    on that child unless the same account still holds another verified link to it, and not on a merge (480 `:47-72`); a deleted account
+>    loses the note by trigger and the answer stays with no "who" (476 `:52`, 480 `:75-88`); a merge keeps the answers (482 `:68-78`).
+>    **True as written and automatic.** Not verified: that the purge has run on dev (the build record says it is scheduled and the fixtures
+>    pass; I did not query the job), and how long the database host keeps routine backups (same open question as finding 2). A leaving
+>    parent's first name stays beside their answers until the date above; "their answers stay" includes it, and the owner may want it said
+>    in plain words (lawyer's-eye item).
 
 ## 10. How we protect information
 
@@ -477,6 +512,10 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca · [mailing address]
 8. **Low** — feedback keeps IP address and browser type unredacted (disclosed in §3; is the IP needed?).
 9. **Low** — the tax records never end (blank the name and address after six years).
 10. **Low (new 2026-11-08)** — the staff page trail has no end date (prune at 90 days).
+11. **Low (new 2026-11-13)** — the coach's in-app lines about families' answers (child's first name, parent's first name, the answer; kept in
+    the notification record) have no retention clock and outlive the 60-day clean-up; and no notification kind is hidden from a coach who has
+    since been removed (`app/api/notifications/route.ts:55-96` reads by user and bell scope, not by membership). §9 says so in one sentence.
+    Fix at the root for every kind, not per kind (`/plan`).
 
 ## For a lawyer's eye
 
@@ -492,4 +531,9 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca · [mailing address]
   which doesn't exist yet. `BREACH_PROCEDURE.md` treats the club as in control of its information (OPC guidance).
 - **§9 — retention.** "May be deleted" is honest but is the clause a regulator would test against PIPEDA 4.5.3; the staff
   page trail with no end date is the same question.
+- **§5 / §9 — parents' answers and notes (2026-11-13; updated 2026-11-14).** A free-text note about a child written by a parent, kept 30 days; the
+  answer is now the player's attendance record, kept (the club's), with who set it and the answer before it removed 60 days after the season's last
+  event. The periods are the owner's, not a statutory figure (PIPEDA 4.5), and a leaving parent's first name stays beside their answers until then
+  and is still named on the coach's side after they leave. Whether both are reasonable, whether a tick-box consent covers the note, and whether a
+  parent's answer becoming the club's attendance record needs saying in the consent box itself (0.2 does not; the answer sheet's hint now does) is the question.
 - **§14 — a Québec family in an Ontario club.** Law 25 may reach that information even with no Québec customer.

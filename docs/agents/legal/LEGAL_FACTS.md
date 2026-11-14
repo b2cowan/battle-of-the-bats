@@ -41,6 +41,13 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
 - **About a person who is not a user:** a second parent's email address, typed by the first parent on a house-league sign-up,
   unconfirmed; gets copies of sign-up emails with no unsubscribe link (shipped Stage 3, 2026-11-03; see
   `CASL_SECOND_PARENT_EMAIL.md`). `drafts/PRIVACY_POLICY.md` does not yet mention it.
+- **About a child, written by a parent or a coach (Stage 4b, built on dev 2026-11-13, guardian tier off; ONE ATTENDANCE RECORD 2026-11-13/14):** the
+  player's attendance answer for an event — In / Late / Maybe / Out — set by a connected parent OR a coach (latest change wins), with who set it (account
+  id, shown as first name to coaches; a coach shows to a parent only as "Coach"), when, the answer before it, an optional one-line family note (200
+  characters) and the coach's own private note; plus a reminder email to the account's own address and an in-app bell line for the coach. Family note
+  deleted 30 days after the event; who-set-it and the previous answer removed 60 days after the team's last event of the season; the answer itself
+  stays as the club's attendance record, never deleted by the clean-up (migs 476/477/479/480/482/483/484/485; not on production). Topic: `FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md`; possibly stale because of it:
+  `drafts/PRIVACY_POLICY.md` §5/§9, `drafts/GUARDIAN_CONSENT_STAGE4.md`.
 - No public sharing of a child's data (`BUSINESS_DECISIONS.md` ~L2871); no one-to-one adult–minor
   messaging (`docs/projects/active/COACH_PORTAL_CHUNK_D_COUNSEL_PACKET.md` ~L188).
 - **Known gaps on file:** no player-information retention or purge rule (TODO, raised 2026-07-17); the
