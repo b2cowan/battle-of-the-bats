@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import KitDialog from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import css from './Registrations.module.css';
@@ -20,15 +20,19 @@ export interface FamilyAppActions {
  * In the app since {date} · Invited {date} with Send again · Not invited yet · Left / Removed with Send again. Absent while
  * the guardian tier is off (the read attaches nothing), and for a player 18 or older.
  */
-export function FamilyAppStatusLine({ status, which, today, actions }: {
+export function FamilyAppStatusLine({ status, which, today, actions, children, extra }: {
   status: FamilyAddressStatus | null | undefined;
   which: 'first' | 'second';
   today: string;
   actions: FamilyAppActions | null;
+  /** The address itself: it sits on the first line beside the pill. */
+  children?: ReactNode;
+  /** An extra door for the line of links under it (the second parent's Change). */
+  extra?: ReactNode;
 }) {
   const [busy, setBusy] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
-  if (!status) return null;
+  if (!status) return <>{children}{extra}</>;
 
   const label = status.kind === 'joined' ? W.inApp(regDay(status.at, today))
     : status.kind === 'invited' ? W.invited(regDay(status.at, today))
@@ -46,14 +50,22 @@ export function FamilyAppStatusLine({ status, which, today, actions }: {
   }
 
   return (
-    <span className={css.familyStatus}>
-      <span className={`${ck.chip} ${status.kind === 'joined' ? ck.chipGood : ''}`}>{label}</span>
-      {canSend && (
-        <button type="button" className={`${ck.link} ${css.secondDoor}`} onClick={() => void send()} disabled={busy}>
-          {busy ? W.sending : W.sendAgain}
-        </button>
+    <span className={css.familyStack}>
+      <span className={css.familyMain}>
+        <span className={`${ck.chip} ${status.kind === 'joined' ? ck.chipGood : ''}`}>{label}</span>
+        {children}
+      </span>
+      {(canSend || extra) && (
+        <span className={css.familyLinks}>
+          {canSend && (
+            <button type="button" className={`${ck.link} ${css.secondDoor}`} onClick={() => void send()} disabled={busy}>
+              {busy ? W.sending : W.sendAgain}
+            </button>
+          )}
+          {extra}
+        </span>
       )}
-      {said && <span className={ck.hint} role="status">{said}</span>}
+      {said && <span className={`${ck.hint} ${css.secondHint}`} role="status">{said}</span>}
     </span>
   );
 }

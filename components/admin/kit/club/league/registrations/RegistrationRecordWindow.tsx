@@ -14,7 +14,7 @@ import { Facts } from '../../money/MoneyKit';
 import { REG_RECORD_WORDS as W, REGS_WORDS } from '@/lib/house-league-money-words';
 import { formatLeagueMoney, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
 import { endedKind, isOpenReg, owesNow, regDay, registrationHistory, type PriceChange, type RegsSeason, type RowActionKey } from '@/lib/house-league-registrations';
-import type { LeagueRegistration } from '@/lib/types';
+import type { FamilyAddressStatus, LeagueRegistration } from '@/lib/types';
 import FeeCell from './FeeCell';
 import CardRefundBlock from './CardRefundBlock';
 import DisputeBlock, { disputeShows } from '../../DisputeBlock';
@@ -34,11 +34,11 @@ const SP = SECOND_PARENT_WORDS.staff;
  * Add / Change opening a box in place. The record still reads first; this one fact is typed because ask 6 ruled it
  * editable here, and nothing else on the record became so. Saving applies to the whole sign-up and sends nothing.
  */
-function SecondParentFact({ reg, onSave, status }: {
+function SecondParentFact({ reg, onSave, family }: {
   reg: LeagueRegistration;
   onSave: ((value: string) => Promise<string | null>) | null;
-  /** Stage 4a (Part 8.1): the address's place in the app, under it (absent while the guardian tier is off). */
-  status?: React.ReactNode;
+  /** Stage 4a (Part 8.1): the address's place in the app, beside it (absent while the guardian tier is off). */
+  family: { status: FamilyAddressStatus | null | undefined; today: string; actions: FamilyAppActions | null };
 }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState('');
@@ -58,17 +58,17 @@ function SecondParentFact({ reg, onSave, status }: {
   }
 
   if (!editing) {
+    const door = onSave && (
+      <button type="button" className={`${ck.link} ${css.secondDoor}`}
+        onClick={() => { setEditing(true); setValue(reg.guardianEmail2 ?? ''); setError(null); }}>
+        {reg.guardianEmail2 ? SP.change : SP.add}
+      </button>
+    );
     return (
-      <>
-        {reg.guardianEmail2 && status}
+      <FamilyAppStatusLine status={reg.guardianEmail2 ? family.status : null} which="second"
+        today={family.today} actions={family.actions} extra={door}>
         {shown}
-        {onSave && (
-          <button type="button" className={`${ck.link} ${css.secondDoor}`}
-            onClick={() => { setEditing(true); setValue(reg.guardianEmail2 ?? ''); setError(null); }}>
-            {reg.guardianEmail2 ? SP.change : SP.add}
-          </button>
-        )}
-      </>
+      </FamilyAppStatusLine>
     );
   }
   return (
@@ -77,8 +77,10 @@ function SecondParentFact({ reg, onSave, status }: {
         <input className={ck.input} type="email" autoComplete="off" value={value} disabled={saving} autoFocus
           aria-label={SECOND_PARENT_WORDS.label} onChange={e => setValue(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void save(); } }} />
-        <button type="button" className="btn btn-outline" disabled={saving} onClick={() => { setEditing(false); setError(null); }}>{SP.cancel}</button>
-        <button type="button" className="btn btn-lime" disabled={saving} onClick={() => void save()}>{SP.save}</button>
+        <span className={css.secondActions}>
+          <button type="button" className="btn btn-outline" disabled={saving} onClick={() => { setEditing(false); setError(null); }}>{SP.cancel}</button>
+          <button type="button" className="btn btn-lime" disabled={saving} onClick={() => void save()}>{SP.save}</button>
+        </span>
       </span>
       <span className={`${ck.hint} ${css.secondHint}`}>{SP.editHint}</span>
       {error && <span className={repKit.formError} role="alert">{error}</span>}
@@ -144,11 +146,11 @@ export default function RegistrationRecordWindow({
     reg.status === 'waitlisted' && reg.waitlistPosition != null ? [F.position, REGS_WORDS.waitingPosition(reg.waitlistPosition)] as const : null,
     [F.guardian, model.guardian] as const,
     [F.email, reg.guardianEmail.trim()
-      ? <><FamilyAppStatusLine status={reg.familyApp?.first} which="first" today={today} actions={onFamily} />{reg.guardianEmail}</>
+      ? <FamilyAppStatusLine status={reg.familyApp?.first} which="first" today={today} actions={onFamily}>{reg.guardianEmail}</FamilyAppStatusLine>
       : REGS_WORDS.noEmail] as const,
     // Signed-in family accounts Stage 3 (ask 6): under Email, a dash when none; the desk adds or changes it here.
     [SP.row, <SecondParentFact key="second" reg={reg} onSave={onSecondEmail}
-      status={<FamilyAppStatusLine status={reg.familyApp?.second} which="second" today={today} actions={onFamily} />} />] as const,
+      family={{ status: reg.familyApp?.second, today, actions: onFamily }} />] as const,
     reg.guardianPhone ? [F.phone, reg.guardianPhone] as const : null,
     reg.playerDateOfBirth ? [F.born, regDay(reg.playerDateOfBirth, today)] as const : null,
     [reg.source === 'admin_manual' ? F.addedByHand : F.signedUp, regDay(reg.registeredAt, today)] as const,

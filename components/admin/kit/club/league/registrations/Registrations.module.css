@@ -255,8 +255,10 @@
 .recordFee { margin: 0 0 0.5rem; }
 /* Signed-in family accounts Stage 3: the "Second parent" fact's Add / Change door and its edit (the See them fix's shape). */
 .secondDoor { margin-left: 0.5rem; padding: 0; background: none; border: 0; cursor: pointer; }
-.secondFix { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem; }
-.secondFix input { flex: 1 1 14rem; min-width: 0; }
+.secondFix { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem; }
+.secondFix input { width: 100%; min-width: 0; }
+/* Cancel, then Save, under the box and aligned right (Save is the last, rightmost action). */
+.secondActions { display: flex; justify-content: flex-end; gap: 0.5rem; }
 /* The hint sits inside the fact's bold value column; it reads as a quiet note, not as part of the value. */
 .secondHint { display: block; font-weight: 400; }
 @media (max-width: 640px) {
@@ -325,7 +327,11 @@
 
 /* ── Signed-in family accounts Stage 4a (Part 8.1): one status to the LEFT of each address (the values are right-aligned, so the
    pill reads as a lead-in and the addresses stay flush right); it wraps above only when the window is too narrow ── */
-.familyStatus { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin-right: 0.5rem; vertical-align: middle; }
+/* An address's value: pill + address, then the links (Send again · Change), then any confirmation — one right-aligned stack. */
+.familyStack { display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
+.familyMain { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.25rem 0.5rem; }
+.familyLinks { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0 0.75rem; }
+.familyLinks .secondDoor { margin-left: 0; }
 
 /* ── Friend requests (Board Ready Stage 1 Part 2; drawing tab 4) ── */
 /* The match cell's lead: the name and its chips on one wrapping line. */
