@@ -1,0 +1,376 @@
+<title>__PREWALK_TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one inspection sheet, a single column. The tally band on top, then three tabs — what failed, what is left
+   for the owner, what the machine checked — and the paste-back at the foot. Template for scripts/prewalk-report.mjs. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #17211e; --muted: #586764; --line: #d7dfdc;
+  --accent: #0f5c4e; --accent-ink: #ffffff;
+  --good: #1c7044; --good-bg: #e2f2e9; --bad: #b0261e; --bad-bg: #fbe8e6; --mine: #7d5200; --mine-bg: #fcf0d4;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1514; --surface: #171f1d; --ink: #e7eeeb; --muted: #9baba7; --line: #2a3633;
+    --accent: #5fd0b9; --accent-ink: #06231d;
+    --good: #72d69c; --good-bg: #143122; --bad: #ff8d83; --bad-bg: #3a1916; --mine: #f0c264; --mine-bg: #382b0b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1514; --surface: #171f1d; --ink: #e7eeeb; --muted: #9baba7; --line: #2a3633;
+  --accent: #5fd0b9; --accent-ink: #06231d;
+  --good: #72d69c; --good-bg: #143122; --bad: #ff8d83; --bad-bg: #3a1916; --mine: #f0c264; --mine-bg: #382b0b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 900px; margin: 0 auto; padding-block: 24px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: 26px; font-weight: 600; }
+h2 { font-size: 18px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.meta { color: var(--muted); font-size: 13px; }
+header.top { display: grid; gap: 6px; }
+.warn { background: var(--bad-bg); color: var(--bad); border: 1px solid var(--bad); border-radius: 8px; padding: 10px 14px; font-weight: 500; }
+
+.tally { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.tally div { padding: 12px 16px; border-left: 1px solid var(--line); display: grid; gap: 2px; min-width: 0; }
+.tally div:first-child { border-left: 0; }
+.tally b { font: 600 24px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.tally span { font-size: 12.5px; color: var(--muted); }
+.tally .g b { color: var(--good); } .tally .b b { color: var(--bad); } .tally .m b { color: var(--mine); }
+@media (max-width: 560px) {
+  .tally { grid-template-columns: 1fr; }
+  .tally div { border-left: 0; border-top: 1px solid var(--line); grid-template-columns: 1fr auto; align-items: baseline; }
+  .tally div:first-child { border-top: 0; }
+  .tally b { font-size: 18px; order: 2; } .tally span { font-size: 14px; color: var(--ink); }
+}
+
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+.tabs button { font: 500 14px var(--body); color: var(--ink); background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--surface); border-color: var(--line); font-weight: 600; }
+.tabs button:focus-visible, .btn:focus-visible, .thumb:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tabs .n { font-variant-numeric: tabular-nums; color: var(--muted); margin-left: 4px; }
+
+.panel { display: grid; gap: 14px; }
+.lead { color: var(--muted); max-width: 68ch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.signin { display: grid; gap: 6px; font-size: 14px; }
+.signin code, .step code { font-family: var(--mono); font-size: 0.92em; overflow-wrap: anywhere; }
+.parthead { display: flex; gap: 10px; justify-content: space-between; align-items: baseline; flex-wrap: wrap; }
+.parthead .who { color: var(--muted); font-size: 13px; }
+
+.step { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; padding-top: 12px; border-top: 1px solid var(--line); min-width: 0; }
+.step:first-of-type { border-top: 0; padding-top: 0; }
+.step .id { font: 600 12.5px var(--mono); color: var(--muted); padding-top: 3px; min-width: 44px; }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .do, .step .see { max-width: 70ch; overflow-wrap: anywhere; }
+.step .see { color: var(--ink); }
+.tag { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+.why { font-size: 13.5px; border-radius: 6px; padding: 6px 10px; }
+.why.mine { background: var(--mine-bg); color: var(--mine); }
+.why.bad { background: var(--bad-bg); color: var(--bad); }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 13.5px; color: var(--muted); }
+.checks li { display: grid; grid-template-columns: 18px 1fr; overflow-wrap: anywhere; }
+.checks .ok::before { content: "✓"; color: var(--good); font-weight: 600; }
+.checks .no::before { content: "✗"; color: var(--bad); font-weight: 600; }
+.checks .no { color: var(--bad); }
+.ticks { display: flex; gap: 6px 18px; flex-wrap: wrap; }
+.ticks label { display: flex; gap: 8px; align-items: center; font-weight: 500; cursor: pointer; min-height: 32px; }
+.ticks input { width: 18px; height: 18px; accent-color: var(--accent); }
+.shots { display: flex; gap: 8px; flex-wrap: wrap; }
+.thumb { border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 4px; cursor: zoom-in; display: grid; gap: 3px; max-width: 100%; font: 12px var(--body); color: var(--muted); text-align: left; }
+.thumb img { width: 168px; max-width: 100%; height: auto; display: block; border-radius: 3px; }
+.thumb.big { cursor: zoom-out; width: 100%; }
+.thumb.big img { width: 100%; }
+
+details.part { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+details.part > summary { padding: 12px 16px; cursor: pointer; font: 600 15px var(--display); display: flex; justify-content: space-between; gap: 12px; }
+details.part > summary .n { font: 500 13px var(--body); color: var(--muted); }
+details.part > .in { padding: 0 16px 16px; display: grid; gap: 12px; }
+
+.verdict { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.btn { font: 500 14px var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+.btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+textarea { width: 100%; min-height: 60px; font: 14px/1.45 var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; resize: vertical; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.out { white-space: pre-wrap; font: 13px/1.5 var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; max-height: 340px; overflow: auto; overflow-wrap: anywhere; }
+.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); font-size: 14px; max-width: 72ch; }
+.empty { color: var(--muted); padding: 8px 0; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Prelim walk · run by machine</span>
+    <h1 id="h1"></h1>
+    <p class="meta" id="meta"></p>
+  </header>
+  <div class="warn" id="partial" hidden>This run stopped before the end. Nothing here counts as ticked until it is run again to the end.</div>
+
+  <div class="tally" aria-label="How the run came out">
+    <div class="g"><b id="nChecked">0</b><span>Checked by machine</span></div>
+    <div class="b"><b id="nFailed">0</b><span>Failed</span></div>
+    <div class="m"><b id="nMine">0</b><span>Left for you</span></div>
+    <div><b id="nCalls">0</b><span>Your calls</span></div>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" id="tab-failed" data-tab="failed">Failed<span class="n" id="tn-failed"></span></button>
+    <button type="button" role="tab" id="tab-mine" data-tab="mine">Left for you<span class="n" id="tn-mine"></span></button>
+    <button type="button" role="tab" id="tab-checked" data-tab="checked">Checked by machine<span class="n" id="tn-checked"></span></button>
+    <button type="button" role="tab" id="tab-about" data-tab="about">About this run</button>
+  </div>
+
+  <section class="panel" id="p-failed" role="tabpanel" aria-labelledby="tab-failed">
+    <p class="lead">The script did the step and did not see what the walk says you should see. Each one is either a defect or a step that no longer matches the screen. These are not yours to walk; they come back fixed or explained.</p>
+    <div id="failedHost" class="panel"></div>
+  </section>
+
+  <section class="panel" id="p-mine" role="tabpanel" aria-labelledby="tab-mine" hidden>
+    <p class="lead">Your walk is now only these steps. Everything under “Checked by machine” counts as ticked.</p>
+    <div class="card signin" id="signin" hidden></div>
+    <div id="mineHost" class="panel"></div>
+    <div class="card" id="callsCard" hidden>
+      <h2>Your calls</h2>
+      <p class="lead">Not part of the count. Tick the answer; add the why in the notes if you want.</p>
+      <div id="callsHost" class="panel"></div>
+    </div>
+    <div class="card">
+      <h2>Paste-back</h2>
+      <p class="lead" id="progress"></p>
+      <div class="row">
+        <button class="btn primary" type="button" id="copy">Copy the summary</button>
+        <button class="btn" type="button" id="clear">Clear my ticks</button>
+        <span class="meta" id="copied" aria-live="polite"></span>
+      </div>
+      <div class="out" id="out" tabindex="0"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-checked" role="tabpanel" aria-labelledby="tab-checked" hidden>
+    <p class="lead">For each step the script did what the walk says, then checked what you should see. Open a part to read each check and its screenshot. Press a screenshot to enlarge it.</p>
+    <div id="checkedHost" class="panel"></div>
+  </section>
+
+  <section class="panel" id="p-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+    <div class="card">
+      <h2>What the machine changed</h2>
+      <p id="fixture" class="lead"></p>
+      <ul class="plain" id="writes"></ul>
+    </div>
+    <div class="card">
+      <h2>How to read this page</h2>
+      <ul class="plain">
+        <li>A step is “checked” only when the script made every check the step asks for and each one held. It then counts as ticked (your ruling, November 14, 2026).</li>
+        <li>A step the script could only partly judge stays yours, and says what part it did check.</li>
+        <li>A machine cannot judge whether wording is right, how a screen feels under a thumb, or how something looks. Those steps, and every call, are always yours.</li>
+        <li>The run used its own copy of the product on this computer, built from the code named at the top. It did not use your dev server.</li>
+      </ul>
+      <p class="meta" id="walkLink"></p>
+    </div>
+  </section>
+</div>
+
+<script id="data" type="application/json">__PREWALK_DATA__</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("data").textContent);
+  var KEY = "prewalk-" + D.key;
+  var state = { ticks: {}, verdicts: {}, notes: {}, tab: "" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); for (var k in got) state[k] = got[k]; } } catch (e) { /* storage is a convenience */ }
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+
+  var all = [];
+  D.parts.forEach(function (p) { p.steps.forEach(function (s) { s.part = p; all.push(s); }); });
+  var counted = all.filter(function (s) { return s.kind !== "call"; });
+  var calls = all.filter(function (s) { return s.kind === "call"; });
+  var checked = counted.filter(function (s) { return s.status === "checked"; });
+  var failed = counted.filter(function (s) { return s.status === "failed"; });
+  var mine = counted.filter(function (s) { return s.status === "yours"; });
+
+  $("h1").textContent = D.walk + " · " + D.title;
+  $("meta").textContent = "Run " + D.ranAt + " · code " + D.code + " · " + counted.length + " steps in the walk";
+  $("partial").hidden = D.complete;
+  $("nChecked").textContent = checked.length; $("nFailed").textContent = failed.length;
+  $("nMine").textContent = mine.length; $("nCalls").textContent = calls.length;
+  $("tn-failed").textContent = failed.length; $("tn-mine").textContent = mine.length + (calls.length ? " + " + calls.length : ""); $("tn-checked").textContent = checked.length;
+
+  function shots(s) {
+    var box = el("div", "shots");
+    (s.shots || []).forEach(function (sh) {
+      var b = el("button", "thumb"); b.type = "button";
+      var img = document.createElement("img"); img.loading = "lazy"; img.src = "shots/" + sh.file; img.alt = "Screenshot, " + sh.device + ", step " + s.id;
+      b.appendChild(img); b.appendChild(txt("span", "", sh.device + " · " + sh.url));
+      b.addEventListener("click", function () { b.classList.toggle("big"); });
+      box.appendChild(b);
+    });
+    return box;
+  }
+  function checksList(s) {
+    var ul = el("ul", "checks");
+    (s.checks || []).forEach(function (c) { ul.appendChild(txt("li", c.ok ? "ok" : "no", c.label + (c.kind === "readback" ? " (read back from the saved record)" : "") + (c.detail ? " — " + c.detail : ""))); });
+    return ul;
+  }
+  function stepBody(s) {
+    var body = el("div", "body");
+    if (s.who) body.appendChild(txt("span", "meta", s.who));
+    body.appendChild(el("div", "do", "<span class=\"tag\">Do</span>" + s.do));
+    if (s.see) body.appendChild(el("div", "see", "<span class=\"tag\">See</span>" + s.see));
+    return body;
+  }
+  function stepRow(s, body) { var row = el("div", "step"); row.appendChild(txt("span", "id", s.id)); row.appendChild(body); return row; }
+  function tick(id, label) {
+    var lab = el("label"); var box = document.createElement("input"); box.type = "checkbox"; box.id = "t-" + id; box.checked = !!state.ticks[id];
+    box.addEventListener("change", function () { state.ticks[id] = box.checked; persist(); summary(); });
+    lab.appendChild(box); lab.appendChild(document.createTextNode(label)); return lab;
+  }
+
+  // Failed
+  if (!failed.length) $("failedHost").appendChild(txt("p", "empty", "Nothing failed."));
+  else {
+    var fc = el("div", "card");
+    failed.forEach(function (s) { var b = stepBody(s); b.appendChild(txt("div", "why bad", s.reason || "A check did not hold.")); b.appendChild(checksList(s)); b.appendChild(shots(s)); fc.appendChild(stepRow(s, b)); });
+    $("failedHost").appendChild(fc);
+  }
+
+  // Sign-in card
+  if (D.signIn && D.signIn.length) {
+    var si = $("signin"); si.hidden = false; si.appendChild(txt("h2", "", "Sign in as"));
+    D.signIn.forEach(function (a) { si.appendChild(el("div", "", a)); });
+    si.appendChild(txt("p", "meta", "Dev-only sign-ins. Keep this page private."));
+  }
+
+  // Left for the owner, by part
+  var mineParts = D.parts.filter(function (p) { return p.steps.some(function (s) { return s.kind !== "call" && s.status === "yours"; }); });
+  if (!mineParts.length) $("mineHost").appendChild(txt("p", "empty", failed.length ? "Nothing is left for you until the failed steps come back." : "Nothing is left for you. The machine checked every step."));
+  mineParts.forEach(function (p) {
+    var card = el("div", "card");
+    var head = el("div", "parthead"); head.appendChild(txt("h2", "", p.id + " · " + p.title)); if (p.who) head.appendChild(txt("span", "who", p.who)); card.appendChild(head);
+    p.steps.forEach(function (s) {
+      if (s.kind === "call" || s.status !== "yours") return;
+      var b = stepBody(s);
+      b.appendChild(txt("div", "why mine", "Yours because: " + (s.reason || "it needs your eyes")));
+      if (s.checks && s.checks.length) { b.appendChild(txt("span", "meta", "What the machine did check:")); b.appendChild(checksList(s)); }
+      b.appendChild(shots(s));
+      var t = el("div", "ticks");
+      if (s.kind === "optional") { t.appendChild(tick(s.id + "::did", "Did it")); t.appendChild(tick(s.id + "::skip", "Skipped it")); }
+      else t.appendChild(tick(s.id, "Seen, as the step says"));
+      b.appendChild(t);
+      card.appendChild(stepRow(s, b));
+    });
+    var v = el("div", "verdict");
+    [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (o) {
+      var bt = txt("button", "btn", o[1]); bt.type = "button"; bt.setAttribute("aria-pressed", state.verdicts[p.id] === o[0] ? "true" : "false");
+      bt.addEventListener("click", function () {
+        state.verdicts[p.id] = state.verdicts[p.id] === o[0] ? "" : o[0]; persist();
+        Array.prototype.forEach.call(v.querySelectorAll("button"), function (x, i) { x.setAttribute("aria-pressed", state.verdicts[p.id] === ["pass", "issue", "call"][i] ? "true" : "false"); });
+        summary();
+      });
+      v.appendChild(bt);
+    });
+    card.appendChild(v);
+    var ta = document.createElement("textarea"); ta.id = "n-" + p.id; ta.placeholder = "Notes on " + p.id; ta.setAttribute("aria-label", "Notes on " + p.id); ta.value = state.notes[p.id] || "";
+    ta.addEventListener("input", function () { state.notes[p.id] = ta.value; persist(); summary(); });
+    card.appendChild(ta);
+    $("mineHost").appendChild(card);
+  });
+
+  // Calls: one box per option, never in the count
+  if (calls.length) {
+    $("callsCard").hidden = false;
+    calls.forEach(function (s) {
+      var b = stepBody(s); var t = el("div", "ticks");
+      (s.options && s.options.length ? s.options : ["Keep", "Change"]).concat(["Something else (say what in the notes)"]).forEach(function (o, i) { t.appendChild(tick(s.id + "::opt" + i, o)); });
+      b.appendChild(shots(s)); b.appendChild(t);
+      $("callsHost").appendChild(stepRow(s, b));
+    });
+    var cn = document.createElement("textarea"); cn.id = "n-calls"; cn.placeholder = "Notes on your calls"; cn.setAttribute("aria-label", "Notes on your calls"); cn.value = state.notes.calls || "";
+    cn.addEventListener("input", function () { state.notes.calls = cn.value; persist(); summary(); });
+    $("callsHost").appendChild(cn);
+  }
+
+  // Checked by machine, folded by part
+  if (!checked.length) $("checkedHost").appendChild(txt("p", "empty", "The machine checked no step to the end."));
+  D.parts.forEach(function (p) {
+    var mineHere = p.steps.filter(function (s) { return s.kind !== "call" && s.status === "checked"; });
+    if (!mineHere.length) return;
+    var d = el("details", "part"); var sum = el("summary"); sum.appendChild(txt("span", "", p.id + " · " + p.title)); sum.appendChild(txt("span", "n", mineHere.length + " of " + p.steps.filter(function (s) { return s.kind !== "call"; }).length + " checked")); d.appendChild(sum);
+    var inn = el("div", "in");
+    mineHere.forEach(function (s) { var b = stepBody(s); b.appendChild(checksList(s)); b.appendChild(shots(s)); inn.appendChild(stepRow(s, b)); });
+    d.appendChild(inn); $("checkedHost").appendChild(d);
+  });
+
+  // About
+  $("fixture").textContent = D.fixtureNote || "The run left no note about the test data.";
+  if (!D.writes.length) $("writes").appendChild(txt("li", "", "The run saved nothing."));
+  D.writes.forEach(function (w) { $("writes").appendChild(txt("li", "", w.step + ": " + w.what)); });
+  if (D.walkUrl) { var a = document.createElement("a"); a.href = D.walkUrl; a.textContent = "The walk as written"; a.target = "_blank"; a.rel = "noopener"; $("walkLink").appendChild(a); }
+
+  // Tabs
+  var tabs = ["failed", "mine", "checked", "about"];
+  function showTab(name) {
+    tabs.forEach(function (t) { $("p-" + t).hidden = t !== name; $("tab-" + t).setAttribute("aria-selected", t === name ? "true" : "false"); });
+    state.tab = name; persist();
+  }
+  tabs.forEach(function (t) { $("tab-" + t).addEventListener("click", function () { showTab(t); }); });
+  showTab(tabs.indexOf(state.tab) >= 0 ? state.tab : failed.length ? "failed" : "mine");
+
+  // Paste-back
+  function dealt(s) { return s.kind === "optional" ? !!(state.ticks[s.id + "::did"] || state.ticks[s.id + "::skip"]) : !!state.ticks[s.id]; }
+  function summary() {
+    var done = mine.filter(dealt).length;
+    $("progress").textContent = "You have ticked " + done + " of " + mine.length + ". With the machine’s " + checked.length + ", that is " + (done + checked.length) + " of " + counted.length + " steps.";
+    var L = [];
+    L.push("Prelim walk " + D.walk + " · " + D.title);
+    L.push("Machine run " + D.ranAt + " · code " + D.code + (D.complete ? "" : " · RUN STOPPED EARLY"));
+    L.push("Machine: " + checked.length + " checked · " + failed.length + " failed · " + mine.length + " left for the owner (of " + counted.length + ")");
+    L.push("Owner: ticked " + done + " of " + mine.length + " → " + (done + checked.length) + " of " + counted.length + " in all");
+    failed.forEach(function (s) { L.push("FAILED (machine) " + s.id + " — " + (s.reason || "")); });
+    mineParts.forEach(function (p) {
+      var ps = p.steps.filter(function (s) { return s.kind !== "call" && s.status === "yours"; });
+      var v = state.verdicts[p.id];
+      L.push("");
+      L.push(p.id + " " + p.title + " [" + (v === "pass" ? "PASS" : v === "issue" ? "ISSUE" : v === "call" ? "NEEDS A CALL" : "no verdict") + "] " + ps.filter(dealt).length + "/" + ps.length);
+      ps.forEach(function (s) {
+        var mark = s.kind === "optional" ? (state.ticks[s.id + "::did"] ? "[did it]" : state.ticks[s.id + "::skip"] ? "[skipped]" : "[ ]") : (state.ticks[s.id] ? "[x]" : "[ ]");
+        L.push("  " + mark + " " + s.id);
+      });
+      if (state.notes[p.id]) L.push("  notes: " + state.notes[p.id]);
+    });
+    if (calls.length) {
+      L.push(""); L.push("Calls (not counted):");
+      calls.forEach(function (s) {
+        var opts = (s.options && s.options.length ? s.options : ["Keep", "Change"]).concat(["Something else"]);
+        var picked = opts.filter(function (o, i) { return state.ticks[s.id + "::opt" + i]; });
+        L.push("  " + s.id + " → " + (picked.length ? picked.join(" + ") : "not answered"));
+      });
+      if (state.notes.calls) L.push("  notes: " + state.notes.calls);
+    }
+    $("out").textContent = L.join("\n");
+  }
+  summary();
+
+  $("copy").addEventListener("click", function () {
+    var text = $("out").textContent;
+    function fallback() { var r = document.createRange(); r.selectNodeContents($("out")); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); $("copied").textContent = "Selected. Press Ctrl+C to copy."; }
+    try { navigator.clipboard.writeText(text).then(function () { $("copied").textContent = "Copied."; }, fallback); } catch (e) { fallback(); }
+  });
+  var armed = false;
+  $("clear").addEventListener("click", function () {
+    if (!armed) { armed = true; $("clear").textContent = "Press again to clear"; return; }
+    state.ticks = {}; state.verdicts = {}; state.notes = {}; persist(); location.reload();
+  });
+})();
+</script>
