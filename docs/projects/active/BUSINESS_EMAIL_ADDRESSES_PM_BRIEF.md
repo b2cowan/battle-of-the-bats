@@ -1,54 +1,53 @@
 # PM brief — Real email addresses on our own domain
 
-**Priority:** medium-high — the "contact us" address we already show customers goes nowhere today.
-**Status:** queued 2026-10-26, waiting for the owner to start. Plan: `BUSINESS_EMAIL_ADDRESSES_PLAN.md`.
+**Priority:** high. The contact address we already show customers goes nowhere today: mail to it bounces.
+It is also a prerequisite for publishing the Terms (GST/HST step 6.7).
+**Status:** started 2026-11-12; research done; one owner decision open. Plan: `BUSINESS_EMAIL_ADDRESSES_PLAN.md`.
 
 ## What changes for people
 
-- **Customers** can write to `support@fieldlogichq.ca` (or `hello@`) and get a human reply that comes
-  back from that same address. Today a reply to one of our emails disappears.
-- **Us:** support mail arrives in one place we actually read, and we can answer as "support" rather than
-  from a personal Gmail.
-- **Nothing changes in how the product's own emails are sent** — those already go out as
-  `noreply@fieldlogichq.ca` and keep working.
+- **Customers** can write to `support@fieldlogichq.ca`, `hello@` or `privacy@` and it reaches us. Today the
+  sender gets a bounce. Our reply comes back from `support@`, never from a personal Gmail.
+- **The owner** keeps reading everything in the Gmail inbox he uses today, sorted by a label per address.
+- **Nothing changes in how the product's own emails are sent.** They go out as `noreply@` and keep working.
 
 ## Why it matters
 
-A customer-facing address that nobody reads loses signups, payment questions and cancellations
-silently, and looks unprofessional on a site that asks clubs to trust us with their money. It is also a
-prerequisite for any future support process or the privacy/billing contact lines.
+Every product email invites a reply to `hello@`, and about fifteen screens and emails print it. Those replies
+bounce, so signups, payment questions and cancellations are lost silently. A site asking clubs to trust it with
+money cannot have a dead contact address. The Terms and privacy policy also need a working contact line before
+they publish, and anti-spam law (CASL) needs one on commercial email.
 
-## What the Google list got right and wrong
+## What we found (2026-11-12)
 
-It lists full mailbox products, but most of what we need is cheaper: **receive** support mail and
-**reply** as the support address. We already pay for the sending half (Resend). The work is picking the
-cheapest way to receive, and proving replies don't land in spam. One option on the list (Cloudflare
-forwarding) probably doesn't fit because our domain's records live in AWS.
+- **Receiving is free and quick.** A free forwarder fits our domain setup with no change to product email.
+  About twenty minutes in the AWS console.
+- **Replying "as support@" from Gmail is going away.** Google ends that feature in January 2027 and may refuse
+  new setups now. The free plan from October would have worked for about two months.
+- **The product half is mostly ready.** One shared contact address already exists. A few billing "Contact us"
+  links and email fallbacks still show the Gmail address and get fixed in this project.
 
-## Expected customer impact
+## Ruled 2026-11-12
 
-Low visible change, high trust and recovery value: questions that were lost get answered.
+- **Free receiving now.** Mail to support@, hello@ and privacy@ lands in Gmail.
+- **Own domain mailboxes later**, after a handful of paying clients.
+- Until then, replies go out from the Gmail address. That is accepted at today's near-zero volume, but the mailbox
+  should exist before we answer a paying client.
+
+## The options as they were laid out (kept for when the mailbox decision comes back)
+
+**How should replies leave?**
+- **A (recommended):** a real mailbox, about C$15 a year (Zoho Mail Lite). Mail still lands in Gmail, and replies go
+  out from the phone's Gmail app or the provider's site as `support@`.
+- **B:** free, but two apps. Reply from a separate mail program. One reply from the wrong app shows a customer the
+  Gmail address.
+- **C:** answer from our own admin. Free to run, but a real build.
+
+A needs the October "close to zero" spend ruling revisited, because the free path it assumed is being removed.
+
+Separately: **turn on free receiving now** so the bounce stops while the reply decision is made (recommended).
 
 ## Success looks like
 
-Write to support from an outside address → it arrives → our reply lands in their inbox (not spam),
-showing `support@`. No page or email names a dead address. Monthly cost inside a ceiling the owner sets.
-
-## Scope and timing (ruled 2026-10-26)
-
-A team of one: every address (support, info, feedback, hello, noreply) forwards into the one inbox already
-in use, and replies go out as the address the customer wrote to. Runs **right after Support Console Stage 5**,
-which ships first with replies going to the existing Gmail inbox. The setup itself (no app code) can be
-done any quiet moment earlier.
-
-## Decisions made (2026-10-26)
-
-- **Public addresses:** `support@` (help, everywhere a customer looks), `hello@` (general and marketing),
-  `privacy@` (privacy policy and terms only). `noreply@` stays send-only. No `info@`, `feedback@`,
-  `billing@`, `security@` or `sales@` yet.
-- **Goal:** no customer ever sees the Gmail address; the product sounds professional.
-- **Spend:** close to zero. No live clients, little mail expected.
-
-## Decisions still waiting on the owner
-
-None. The plan is ready to start when the owner is.
+Write to support from an outside address. It arrives, and our reply lands in their inbox (not spam) showing
+`support@`, and it still works after January 2027. No page or email names the Gmail address or a dead one.
