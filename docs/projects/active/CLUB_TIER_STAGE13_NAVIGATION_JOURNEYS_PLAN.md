@@ -729,6 +729,71 @@ ahead of the owner's rulings.
   slots a day; the dome's 25 of 65 / 175 of 450 exactly as drawn; this week empty (Next Tue, Nov 17). Three calls in it (the View
   menu at three views, Slots sums, "See them"'s landing). Header Phase 4's walk §501 had passed (15/15), so nothing waited on it.
   Teardown on "13c walk done". **Next:** the owner walks §502; then the staging layout sweep.
+- 2026-11-13 — **13d DRAWING PUBLISHED:** https://claude.ai/artifact/QgEYgkVT7rJK3bHTvgAHtx
+  ([CLUB_TIER_STAGE13D_DRAWINGS.html](CLUB_TIER_STAGE13D_DRAWINGS.html), captures in `stage13d-shots/`), from
+  [CLUB_TIER_STAGE13D_DRAWING_PROMPT.md](CLUB_TIER_STAGE13D_DRAWING_PROMPT.md). Eight tabs (what changes, time given, Ask for time,
+  the bill on the line, money the treasurer can't see, a coach's request, phone, asks); "Today" = captures of a fresh
+  Harbourtown copy `navj-club-13d` on a local production build (+ the 13c fixture's sent schedule and admin2), "With 13d" =
+  drawn at true size. Ran /ux (7 findings applied: a treasurer dead end to the season list, the ask's sending/failure states,
+  no-permit card, More's unread count, the coach's "received" twin, "no amount yet", the tournament door) and /design (18
+  applied: the shipped notification row, white callouts, no links in cells, 390 phone frames, pinned sheet footers,
+  "E-Transfer"). Asks 14–16 and C6 not re-asked. **Settled from the code, which changes the ruled work:** (1) there is no
+  "give time" action — time is given at Finalize and send, or by a change that adds it, and neither tells house league; the
+  existing "changes" bell (owners, admins, league admins, sender out) is the pattern, bell-only adds no email; (2) Ask 15 A
+  closes one of four double-bill routes — the Bill window doesn't see Accounting's allocations and silently falls back to "No
+  budget line"; the copy's "Fall ball diamond fees 2026" ($1,800, 15U AAA + 13U AAA) shows it; (3) the league admin's "Club
+  time · not divided" tile would repeat the fix-now line 16 px above it; (4) "given" counts any house-league time in the
+  season's dates, another season's included (F-L5-6); (5) the coach's "Payment method" is saved in display words, so Approve
+  never pre-fills, and the coach's window prints the raw code; (6) "do not add a third owed query" lives in
+  `lib/club-band-read.ts`, not the guard test the prompt named. Homes settled with a recommendation each: F-T5-1 / F-O6-8 /
+  F-T3-1 → the treasurer's Overview reuses the band's "Owed to the club" + a Revenue caption (13d-5); F-L5-6 → 13d (13d-7);
+  registrar notice + "joined" notice → not 13d (13d-8); F-T4-10 → 13d (13d-10); F-O6-5 stays 13e; F-O2-15 not drawn.
+  **Asks 13d-1…11 owed.** Sequencing: the uncommitted Bill window / schedule-words work in the tree must commit before 13d's
+  Bill window warning; 13d before the several-permits build. The copy `navj-club-13d` and its 14 accounts were removed the same day
+  (`.probe/nav-journeys/fx-teardown-13d.mjs`; read back: org gone, 0 accounts). Note for the next local production build: run
+  `.probe/p5-prodbuild.cjs` from an upper-case `C:\` path — built from `c:\` the bundle held two copies of Next's pathname
+  context and every page failed to hydrate. **Next:** owner rules 13d-1…11, then the 13d build prompt.
+- 2026-11-13 — **13d RULED, BUILD PROMPT WRITTEN.** Owner: 13d-1 … 13d-11 **all A** (a bell, no email; Ask for time = This morning card + one
+  bell; treasurer reads fair shares in a read-only window from the line; the Bill window sees Accounting's allocations; "Owed to the club" on the
+  treasurer's Overview; the "Club time" tile NOT built; a draft season asks too and "given" stops counting another season's time; the registrar and
+  "joined" notices NOT 13d; the coach is asked what the club needs; the coach reads "Paid …"; the tournament card's first row left as is).
+  [CLUB_TIER_STAGE13D_BUILD_PROMPT.md](CLUB_TIER_STAGE13D_BUILD_PROMPT.md): three sessions (A time · B money · C the coach's request), one walk.
+  Watch in the prompt: Ask for time needs a stored ask (migration 486+, dictionary + snapshots with it); 13d-7 changes the shared "given" count that
+  gates Generate games; the Bill window piece waits on the uncommitted Bill window work in the tree; the 13c guard "no Ask for time button (13d)"
+  is re-pinned, not deleted. /legal: bell only, so no new mail.
+- 2026-11-13 — **13d Session A (time) BUILT** (13d-1, -2, -6, -7). Owner calls this session: **decision 2 = "not divided by others"** (a season's
+  "given" = time in its dates that no OTHER season has divided — House league's time window's own rule; undivided time in two seasons' dates, or a
+  no-dates draft, reads "given" for each until one divides it: nothing in the data says which season undivided time was meant for);
+  **decision 1 = the leftover Bill window work is Session B's to take** into its own commit before the warning; **decision 3** settled from the
+  code (both doors exist: `?new=1&permit=` and Permits; the card shows only to schedule builders). Built: the time-given bell
+  (`house_league_time_given`, owners/admins/league admins, sender out, one per season, door "Open House league's time", bell only); WHO IS TOLD's
+  house league line; "Ask for time" on the season line, House league's time and Generate games (league admin only, live or getting-ready season,
+  once, again after 7 days, full-width 44 px on a phone); the owner's one bell (`house_league_time_asked`); This morning's "House league asks for
+  time" card (owners and admins, Accounting or not; clears itself; no Dismiss); the "Club time" placeholder note deleted (13d-6). Code:
+  `lib/league-time-handoff.ts` (words, 7-day rule, door), `lib/league-time-handoff-server.ts`, route `…/seasons/[seasonId]/time-ask`.
+  **Departures from the prompt:** (1) the existing house-league bell fires only when practices or games MOVE, so Finalize and a change to
+  undivided time told nobody; the new bell is its own path, same recipient list (now one helper, `houseLeagueRunnerUserIds`). (2) **The ask is a
+  server-only table, `league_season_time_asks`** (not columns on `league_seasons`: /review found a season row is public past draft, so the
+  asker's id and time would have been on the public API; verified on dev: anon read refused 42501). (3) **A column the prompt didn't name,
+  `club_schedule_sends.league_slot_ids`**: a hand drag that moves undivided time from house league to a team leaves no trace without it, so
+  "taken back" could not be told; written from the schedule itself on every Finalize / Send the changes. Older sends have none: "given" falls
+  back to time made/handed since that send, nothing reads as taken back. (4) Grows/shrinks is decided by TOTAL hours (ten Tuesdays given and
+  one taken back is a gain); a move that gives and takes the same hours is no bell. (5) The ask's bell goes to owners only, as ruled; admins see
+  the card. (6) "Ask an owner or an admin to give house league time." is retired (the button replaced it). (7) "May ask" is one field on the
+  house league gate (`askForTime`), read by the route and all three buttons; "has time" is one answer (`seasonTimeFacts`) for the season
+  line, the ask and the card. **Migration 486 dev only 2026-11-13** (dictionary + snapshots refreshed); ⚠ prod order: 486 BEFORE the 13d code —
+  every send preview reads `league_slot_ids` (a table + a column: visible to the drift check, no MANUAL_PROD_STEPS entry). /simplify (4
+  lenses) and /review (4 lenses: 9 confirmed and fixed, 1 High refuted by a live probe; known lows recorded: a season whose divided slots are
+  all past still reads "given", as the season line always did; a schedule re-finalized would re-announce its time). Tests:
+  `tests/unit/club-stage13d-time-handoff.test.ts` (25) + re-pinned 13c guard, season-page, scheduler-guard and start-from pins; the unit
+  suite's other 22 failures name other sessions' files. ⚠ `npm run typecheck` runs out of memory at the default 4 GB
+  heap on this tree; it passes clean with `NODE_OPTIONS=--max-old-space-size=8192`. **/legal (2026-11-13): nothing to change before ship** — no
+  new mail (bell only, verified), SET NULL on the asker's account is right, the Send window naming league admins is in-club visibility. One
+  optional owner call: add to the privacy draft's §3 "Your use of the product" "…and, for example, which staff member asked the club for house
+  league time, and when." (not applied: the draft carries another session's edits). **/docs done** (house league's time + Generate games,
+  the Overview's This morning, Schedules' send + house league, Notifications; search words with the prose). **Committed `ff171af17`
+  2026-11-13** (41 files; the help files' and the snapshot's other-session edits left out). **Owed:** `check:layout --changed` with fixtures
+  (a season with no time, one asking), the dev server restart; the walk is once, after Session C.
 
 ## 11. The external review, cross-checked (2026-11-07)
 

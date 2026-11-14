@@ -1,0 +1,1169 @@
+<title>Stage 13d Hand-offs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the house drawings sheet. Sticky numbered tabs; one View row (Today / With 13d, Everything / Show only what
+   differs); each tab shows the real capture from the club copy (Today) or the drawn change (With 13d) at true size, with
+   numbered notes that answer to pins on the frame. Cool slate chrome so the warm product frames read as specimens. */
+:root {
+  --bg: #E7EAEE; --surface: #FFFFFF; --fg: #1A1F25; --muted: #56606B; --rule: #D0D6DC;
+  --accent: #2D5B86; --accent-soft: rgba(45, 91, 134, 0.10);
+  --new: #2D5B86; --re: #7A4E12; --same: #6B7480; --warn: #9A3B1E;
+  --shadow: 0 1px 2px rgba(20, 30, 40, 0.08), 0 10px 28px rgba(20, 30, 40, 0.12);
+  --doc-font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --doc-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  /* the product's shipped warm tokens (fixed: a specimen looks the same in either theme) */
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink2: #4A4235; --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12); --p-line2: rgba(70, 55, 30, 0.20); --p-fill: rgba(70, 55, 30, 0.06);
+  --p-olive: #57651E; --p-olive-soft: rgba(87, 101, 30, 0.10); --p-lime: #D9F99D;
+  --p-amber: #835006; --p-amber-soft: rgba(131, 80, 6, 0.08); --p-amber-line: rgba(131, 80, 6, 0.32);
+  --p-red: #B03A22; --p-good: #2A5222; --p-blue: #2B4F7A;
+  --p-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --p-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+    --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14); --new: #8EB9E2; --re: #E2B36E; --same: #9AA4AE; --warn: #F0A58C;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+  --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14); --new: #8EB9E2; --re: #E2B36E; --same: #9AA4AE; --warn: #F0A58C;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-font); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.doc { max-width: 1500px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 56px; }
+.dochead { display: grid; gap: 4px; margin-bottom: 14px; }
+.eyebrow { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.dochead h1 { margin: 0; font-size: 24px; line-height: 1.2; text-wrap: balance; }
+.dochead p { margin: 0; color: var(--muted); max-width: 86ch; }
+
+.stabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--rule); display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+.stabs::-webkit-scrollbar { display: none; }
+.stabs button { border: 0; background: none; color: var(--muted); cursor: pointer; white-space: nowrap; font: 600 14px/1 var(--doc-font); padding: 16px 12px 14px; border-bottom: 2px solid transparent; }
+.stabs button:hover { color: var(--fg); }
+.stabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+button:focus-visible, a:focus-visible, .ask input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding: 12px 0 16px; }
+.viewrow[hidden] { display: none; }
+.vgroup { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vgroup > span { font: 600 11px/1 var(--doc-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 2px; background: var(--surface); border: 1px solid var(--rule); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; color: var(--muted); cursor: pointer; font: 600 13px/1 var(--doc-font); padding: 8px 13px; border-radius: 999px; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.vnote { font-size: 13px; color: var(--muted); }
+
+.lede { margin: 4px 0 14px; max-width: 92ch; }
+.lede b { color: var(--fg); }
+.sub-h { font: 600 12px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 26px 0 8px; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.sub-h:first-of-type { margin-top: 8px; }
+.sub-h em { font: 400 13px/1.4 var(--doc-font); text-transform: none; letter-spacing: 0; color: var(--muted); font-style: normal; }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 24px; align-items: start; }
+.stage.wide { grid-template-columns: minmax(0, 1fr); }
+.stage.wide .notes { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.fcol { min-width: 0; display: grid; gap: 8px; }
+.fscroll { overflow-x: auto; max-width: 100%; padding: 14px 4px 18px 14px; }
+.cap { width: max-content; max-width: none; display: block; box-shadow: var(--shadow); border-radius: 10px; }
+.notes { min-width: 0; display: grid; gap: 8px; align-content: start; margin: 0; padding: 0; list-style: none; }
+.nt { text-align: left; border: 1px solid var(--rule); background: var(--surface); color: var(--fg); border-radius: 10px; padding: 10px 12px; cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; font: 14px/1.5 var(--doc-font); width: 100%; }
+.nt:hover { border-color: var(--accent); }
+.nt.flash { box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+.nt .nn { grid-row: span 3; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 12px/1 var(--doc-mono); color: #fff; background: #6B7480; }
+.nt.new .nn { background: #2D5B86; }
+.nt.re .nn { background: #9A6418; }
+.nt b { font-weight: 600; }
+.nt .tx { color: var(--muted); font-size: 13.5px; }
+.tag { justify-self: start; font: 600 10.5px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--rule); color: var(--same); }
+.nt.new .tag { color: var(--new); border-color: var(--new); }
+.nt.re .tag { color: var(--re); border-color: var(--re); }
+.show-today .v-new, .show-new .v-today { display: none !important; }
+.prose { max-width: 96ch; }
+.prose h2 { margin: 20px 0 6px; font-size: 19px; line-height: 1.25; }
+.prose h2:first-child { margin-top: 0; }
+.prose p { margin: 0 0 10px; }
+.prose ul, .prose ol { margin: 0 0 12px; padding-left: 20px; }
+.prose li { margin-bottom: 6px; }
+.v { font: 700 10.5px/1 var(--doc-mono); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--new); color: var(--new); margin-right: 4px; vertical-align: 1px; }
+.src { display: block; font: 12px/1.4 var(--doc-mono); color: var(--muted); }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 0 0 12px; max-width: 96ch; }
+.callout.push { border-left-color: var(--warn); }
+.callout h3 { margin: 0 0 4px; font-size: 15px; }
+.callout p { margin: 0 0 6px; }
+.callout p:last-child { margin: 0; }
+.tblwrap { overflow-x: auto; max-width: 100%; margin-bottom: 18px; }
+.who { border-collapse: collapse; background: var(--surface); border: 1px solid var(--rule); font-size: 13.5px; min-width: 1060px; }
+.who th, .who td { border-bottom: 1px solid var(--rule); padding: 8px 10px; text-align: left; vertical-align: top; }
+.who th { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.who td:first-child { font-weight: 600; white-space: nowrap; }
+.who .no { color: var(--muted); }
+.who .y { color: var(--new); font-weight: 600; }
+.fx { border-collapse: collapse; background: var(--surface); border: 1px solid var(--rule); font-size: 14px; min-width: 880px; }
+.fx th, .fx td { border-bottom: 1px solid var(--rule); padding: 9px 12px; text-align: left; vertical-align: top; }
+.fx th { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.fx td:first-child { white-space: nowrap; font-weight: 600; }
+
+/* asks */
+.asks { display: grid; gap: 14px; max-width: 940px; }
+.ask { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; }
+.ask h3 { margin: 0; font-size: 16px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.ask h3 .n { font: 700 12px/1 var(--doc-mono); color: var(--accent); }
+.ask h3 .ids { font: 500 11.5px/1 var(--doc-mono); color: var(--muted); }
+.ask p { margin: 0; color: var(--muted); }
+.ask .opts { display: grid; gap: 8px; }
+.ask label { display: flex; cursor: pointer; position: relative; }
+.ask input { position: absolute; opacity: 0; pointer-events: none; }
+.ask label span { flex: 1; border: 1px solid var(--rule); border-radius: 8px; padding: 9px 12px; font-size: 14px; background: var(--bg); }
+.ask label span b { font-weight: 600; }
+.ask input:checked + span { border-color: var(--accent); background: var(--accent-soft); }
+.ask .go { font-size: 13px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; justify-self: start; font-weight: 600; font-family: inherit; }
+.answers { display: grid; gap: 8px; max-width: 940px; margin-top: 18px; }
+.answers textarea { width: 100%; min-height: 110px; font: 13px/1.5 var(--doc-mono); background: var(--surface); color: var(--fg); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+.copyrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.copyrow button { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 8px 12px; font: 600 13px/1 var(--doc-font); cursor: pointer; }
+.copyrow span { color: var(--muted); font-size: 13px; }
+/* a 1280 frame plus the notes column needs ~1690 px: below that the notes sit under the frame */
+@media (max-width: 1720px) { .stage { grid-template-columns: minmax(0, 1fr); } .stage .notes { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
+.seg button:disabled { opacity: 0.45; cursor: default; }
+
+/* ═════════════ PRODUCT SPECIMEN (shipped warm-theme values) ═════════════ */
+.fr { background: var(--p-paper); color: var(--p-ink); font: 14px/1.4 var(--p-sans); overflow: hidden; box-shadow: var(--shadow); border-radius: 10px; font-variant-numeric: tabular-nums; position: relative; flex: none; }
+.fr * { box-sizing: border-box; }
+.fr svg.i { flex: none; }
+.ground { background-color: var(--p-paper); background-image: linear-gradient(rgba(87,101,30,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(87,101,30,0.06) 1px, transparent 1px); background-size: 40px 40px; }
+.fr.desk { display: grid; grid-template-rows: 48px minmax(0, 1fr); }
+.fr.desk.tabbed { grid-template-rows: 48px 45px minmax(0, 1fr); }
+.fr .body { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; }
+.fr .main { min-width: 0; overflow: hidden; position: relative; }
+.differs .fr [data-same] { opacity: 0.18; filter: grayscale(1); }
+.strip { display: grid; grid-template-columns: 240px minmax(0, 1fr); background: var(--p-card); border-bottom: 1px solid var(--p-line); position: relative; z-index: 3; }
+.strip .lc { display: flex; align-items: center; padding: 0 1.25rem; border-right: 1px solid var(--p-line); gap: 0.75rem; }
+.strip .rc { display: flex; align-items: center; gap: 0.9rem; padding: 0 1rem 0 2rem; min-width: 0; }
+.brand { display: inline-flex; align-items: center; gap: 6px; font: 700 15px/1 var(--p-sans); letter-spacing: -0.018em; color: var(--p-ink); }
+.brand em { font-style: normal; color: var(--p-olive); }
+.sdiv { width: 1px; height: 14px; background: var(--p-line2); }
+.area { font: 700 10px/1 var(--p-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--p-dim); }
+.pt { font: 700 17px/1.2 var(--p-sans); white-space: nowrap; }
+.backl { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--p-ink2); font: 500 14px/1 var(--p-sans); }
+.vr { width: 1px; height: 22px; background: var(--p-line); }
+.doors { margin-left: auto; display: flex; gap: 0.9rem; align-items: center; color: var(--p-ink2); }
+.vpill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.38rem 0.75rem; border: 1px solid var(--p-line); border-radius: 999px; background: rgba(36,30,21,0.05); font: 650 12.5px/1.1 var(--p-sans); color: var(--p-ink); }
+.door { position: relative; display: inline-grid; place-items: center; }
+.door .dot { position: absolute; top: -3px; right: -4px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 999px; background: var(--p-red); color: #fff; font: 700 9.5px/15px var(--p-sans); text-align: center; }
+.chip { display: inline-flex; align-items: center; font: 700 10px/1.4 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 0.14rem 0.5rem; border-radius: 999px; white-space: nowrap; }
+.chip.open { color: var(--p-olive); background: rgba(217,249,157,0.45); border: 1px solid rgba(87,101,30,0.35); }
+.chip.amb { color: var(--p-amber); background: var(--p-amber-soft); border: 1px solid var(--p-amber-line); }
+.chip.good { color: var(--p-good); background: rgba(52,102,42,0.08); border: 1px solid rgba(52,102,42,0.28); }
+.chip.neu { color: var(--p-ink2); background: var(--p-fill); border: 1px solid var(--p-line2); }
+.chip.to { color: var(--p-red); background: rgba(176,58,34,0.07); border: 1px solid rgba(176,58,34,0.35); border-radius: 4px; }
+.chip.from { color: var(--p-olive); background: var(--p-olive-soft); border: 1px solid rgba(87,101,30,0.35); border-radius: 4px; }
+.rail { background: var(--p-card); border-right: 1px solid var(--p-line); display: flex; flex-direction: column; overflow: hidden; }
+.rail .cell { min-height: 45px; padding: 0.55rem 1rem; border-bottom: 1px solid var(--p-line); font: 700 14px/1.2 var(--p-sans); display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.5rem; }
+.rail .cell .ab { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--p-line2); display: grid; place-items: center; font: 700 10px/1 var(--p-sans); flex: none; }
+.rail .sec { font: 700 11px/1 var(--p-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim); padding: 0.9rem 1.25rem 0.4rem; }
+.rail .it { display: flex; align-items: center; gap: 0.55rem; padding: 0.56rem 1.25rem; color: var(--p-ink2); font-size: 14px; }
+.rail .it.on { background: var(--p-olive-soft); color: var(--p-olive); font-weight: 600; }
+.cnt { margin-left: auto; min-width: 1.3rem; height: 1.15rem; padding: 0 0.35rem; border-radius: 999px; display: inline-grid; place-items: center; font: 700 10px/1 var(--p-mono); color: var(--p-amber); background: rgba(131,80,6,0.11); border: 1px solid var(--p-amber-line); }
+.tabsband { background: var(--p-card); border-bottom: 1px solid var(--p-line); display: grid; grid-template-columns: 240px minmax(0, 1fr); }
+.tabsband .lc2 { border-right: 1px solid var(--p-line); }
+.tabsrow { display: flex; gap: 0.2rem; padding: 0 1.15rem; }
+.tab { display: inline-flex; align-items: center; gap: 0.4rem; height: 45px; padding: 0 0.85rem; font: 500 15px/1 var(--p-sans); color: var(--p-ink2); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.on { color: var(--p-olive); border-bottom-color: var(--p-olive); font-weight: 600; }
+.pad { padding: 1.4rem 2rem 2rem; display: grid; gap: 1rem; align-content: start; }
+.eye { font: 700 11px/1 var(--p-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-ink2); }
+.card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; }
+.fr small, .fr .dim { font-size: 12.5px; color: var(--p-dim); }
+.fr a, .lk { color: var(--p-olive); font-weight: 600; text-decoration: none; }
+.u { text-decoration: underline; text-underline-offset: 2px; }
+.amb { color: var(--p-amber); }
+.red { color: var(--p-red); }
+.btn { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 38px; padding: 0 0.95rem; border-radius: 8px; background: var(--p-card); border: 1px solid var(--p-line2); font: 600 14px/1 var(--p-sans); color: var(--p-ink); white-space: nowrap; }
+.btn.lime { background: var(--p-lime); border-color: transparent; }
+.btn.sm { min-height: 32px; font-size: 13px; padding: 0 0.75rem; }
+/* This morning cards */
+.morn { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
+.morn.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mc { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 1rem 1.05rem; display: grid; gap: 0.4rem; align-content: start; min-height: 118px; position: relative; }
+.mc .tl { display: flex; justify-content: space-between; gap: 0.5rem; font: 700 11px/1.3 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink); }
+.mc .tl svg { color: var(--p-dim); }
+.mc .n { font: 800 24px/1.1 var(--p-sans); }
+.mc .n.amb { color: var(--p-amber); }
+.mc p { margin: 0; font-size: 13px; color: var(--p-ink2); }
+.cband { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.cband.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cband > div { padding: 0.95rem 1rem; border-right: 1px solid var(--p-line); display: grid; gap: 4px; align-content: start; position: relative; }
+.cband > div:last-child { border-right: 0; }
+.cband .k { font: 600 11px/1.2 var(--p-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink2); display: flex; justify-content: space-between; }
+.cband .bv { font: 700 24px/1.15 var(--p-sans); }
+.cband .bv.amb { color: var(--p-amber); }
+.cband p { margin: 0; font-size: 13px; color: var(--p-ink2); line-height: 1.4; }
+.fband { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.fband > div { padding: 0.85rem 1rem; border-right: 1px solid var(--p-line); display: grid; gap: 3px; }
+.fband > div:last-child { border-right: 0; }
+.fband .k { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink); }
+.fband .bv { font: 700 21px/1.2 var(--p-sans); }
+.fband small { font-size: 12.5px; }
+.timeln { margin: 0; font-size: 14px; color: var(--p-ink2); display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.asked { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 13px; color: var(--p-good); }
+/* notifications page (shipped: a 720 px centred column; filter pills left, an Unread | All track right; the whole row is
+   one button that opens the reader — glyph, title, two-line body, time under it, the unread dot at the right end) */
+.npage { max-width: 720px; width: 100%; margin: 0 auto; display: grid; gap: 0.9rem; }
+.nfil { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.nfil .pl { display: inline-flex; align-items: center; min-height: 32px; padding: 0 0.8rem; border-radius: 999px; border: 1px solid var(--p-line2); background: var(--p-card); font: 600 13px/1 var(--p-sans); color: var(--p-ink2); }
+.nfil .pl.on { background: var(--p-olive-soft); color: var(--p-olive); border-color: rgba(87,101,30,0.35); }
+.nfil .trk { margin-left: auto; display: inline-flex; gap: 2px; background: var(--p-card); border: 1px solid var(--p-line2); border-radius: 999px; padding: 3px; }
+.nfil .trk span { padding: 0.4rem 0.75rem; border-radius: 999px; font: 600 13px/1 var(--p-sans); color: var(--p-ink2); }
+.nfil .trk span.on { background: var(--p-olive-soft); color: var(--p-olive); }
+.nrow { display: grid; grid-template-columns: 18px minmax(0, 1fr) 10px; gap: 0.7rem; padding: 0.85rem 1rem; align-items: start; border-bottom: 1px solid var(--p-line); }
+.nrow:last-child { border-bottom: 0; }
+.nrow .ud { width: 8px; height: 8px; border-radius: 50%; background: var(--p-olive); margin-top: 0.4rem; }
+.nrow .ic { color: var(--p-olive); padding-top: 1px; }
+.nrow .ttl { font-weight: 600; font-size: 14px; }
+.nrow p { margin: 0.15rem 0 0.3rem; font-size: 12.8px; color: var(--p-ink2); line-height: 1.45; }
+.nrow p.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nrow .meta { font-size: 12px; color: var(--p-dim); }
+.empty { padding: 2.5rem 1rem; text-align: center; color: var(--p-dim); }
+/* windows */
+.scrim { position: absolute; inset: 0; background: rgba(36,30,21,0.36); z-index: 4; }
+.dlg { position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); background: var(--p-card); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.dlg .dh { display: flex; align-items: flex-start; gap: 0.75rem; padding: 1.05rem 1.5rem 0.85rem; }
+.dlg .dh .tt { flex: 1; display: grid; gap: 4px; }
+.dlg .dh .tt .ey { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-ink2); }
+.dlg .dh .tt b { font-size: 17px; }
+.dlg .db { padding: 0.2rem 1.5rem 1.2rem; display: grid; gap: 0.9rem; align-content: start; overflow: hidden; }
+.dlg .df { display: flex; gap: 0.5rem; justify-content: flex-end; padding: 0.8rem 1.5rem; border-top: 1px solid var(--p-line); }
+.dlg .df.split { justify-content: space-between; }
+.facts { background: rgba(70,55,30,0.05); border: 1px solid var(--p-line); border-radius: 8px; padding: 0.8rem 0.95rem; display: grid; gap: 0.45rem; font-size: 14px; }
+.facts .r { display: flex; justify-content: space-between; gap: 1rem; }
+.facts .r span:first-child { color: var(--p-ink2); }
+.facts .r b { font-weight: 650; }
+.flab { font: 600 13px/1.3 var(--p-sans); color: var(--p-ink); margin-bottom: 0.3rem; }
+.lbl { font: 700 11px/1 var(--p-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-ink2); margin-bottom: 0.45rem; }
+.rows { border: 1px solid var(--p-line); border-radius: 8px; overflow: hidden; }
+.rows .rw { display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; gap: 0.75rem; align-items: center; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--p-line); min-height: 56px; }
+.rows .rw:last-child { border-bottom: 0; }
+.rows .rw b { font-weight: 650; display: block; }
+.rows .rw .s { font-size: 12.5px; color: var(--p-dim); }
+.rows .rw .s.amb { color: var(--p-amber); }
+.rows .rw.held { background: var(--p-card); }
+/* the shipped callout: a white card with an amber edge (tinted panels were retired) */
+.notice { border: 1px solid var(--p-line); border-left: 3px solid var(--p-amber); background: var(--p-card); border-radius: 8px; padding: 0.7rem 0.85rem; display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 0.5rem; font-size: 13.5px; line-height: 1.45; color: var(--p-ink2); }
+.notice svg { color: var(--p-amber); margin-top: 1px; }
+.notice b { color: var(--p-ink); }
+.notice .dr { display: flex; gap: 1rem; margin-top: 0.35rem; }
+.field { display: grid; gap: 0.35rem; }
+.field label { font-size: 13px; font-weight: 600; }
+.inp { min-height: 38px; border: 1px solid var(--p-line2); border-radius: 7px; background: rgba(70,55,30,0.05); padding: 0 0.75rem; display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: var(--p-ink); gap: 0.5rem; }
+.inp.on { border-color: var(--p-olive); box-shadow: 0 0 0 1px var(--p-olive); }
+.inp .ph { color: var(--p-dim); }
+.choice2 { min-height: 48px; padding: 0.4rem 0.75rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.choice2 b { display: block; font-weight: 600; font-size: 14px; }
+.choice2 small { display: block; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tbl th { font: 700 11px/1 var(--p-sans); letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-ink2); text-align: left; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--p-line); }
+.tbl td { padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--p-line); }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl .r { text-align: right; }
+.tbl .b td { font-weight: 650; }
+.tbl .sub td:first-child { color: var(--p-ink2); }
+.tbl .cap2 td { padding-top: 0; font-size: 12.5px; color: var(--p-dim); }
+.kv { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 0.55rem 1rem; font-size: 14px; }
+.kv .k { color: var(--p-ink2); }
+.kv .nw { font-weight: 600; }
+.who2 .rw2 { display: grid; grid-template-columns: 120px minmax(0, 1fr) auto; gap: 0.75rem; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--p-line); font-size: 13.5px; align-items: center; }
+.who2 .rw2:last-child { border-bottom: 0; }
+.dcard { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.dcard .dh2 { display: flex; justify-content: space-between; align-items: baseline; padding: 1rem 1.15rem 0.6rem; }
+.dcard .dh2 b { font-size: 17px; }
+.dcard .dh2 small { font: 600 11px/1 var(--p-mono); color: var(--p-ink2); }
+.drow { display: grid; grid-template-columns: minmax(0, 1fr) 16px; gap: 0.6rem; align-items: center; padding: 0.75rem 1.15rem; border-top: 1px solid var(--p-line); min-height: 48px; }
+.drow b { font-weight: 600; display: block; }
+.drow .s { font-size: 12.5px; color: var(--p-dim); }
+/* phone */
+.fr.ph { width: 404px; border-radius: 28px; border: 7px solid #2A2D31; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.ph .pbar { background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 0.4rem 0.6rem 0.4rem 1rem; display: flex; align-items: center; gap: 0.35rem; min-height: 52px; }
+.ph .pbar .nm { font: 700 16.5px/1.2 var(--p-sans); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ph .gl { width: 44px; height: 44px; display: grid; place-items: center; color: var(--p-ink2); flex: none; }
+.ph .ptabs { display: flex; gap: 0.1rem; overflow: hidden; background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 0 0.6rem; }
+.ph .ptabs span { padding: 0.75rem 0.6rem; font: 500 14px/1 var(--p-sans); color: var(--p-ink2); white-space: nowrap; border-bottom: 2px solid transparent; }
+.ph .ptabs span.on { color: var(--p-olive); border-bottom-color: var(--p-olive); font-weight: 600; }
+.ph .ppad { padding: 0.9rem 1rem 96px; display: grid; gap: 0.8rem; align-content: start; }
+.bnav { position: absolute; left: 0; right: 0; bottom: 0; min-height: 72px; padding: 0.45rem 0 0.6rem; display: flex; justify-content: space-around; background: rgba(248,244,237,0.97); border-top: 1px solid var(--p-line); z-index: 6; }
+.bt { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; color: var(--p-dim); position: relative; }
+.bt .w { width: 46px; height: 30px; border-radius: 999px; display: grid; place-items: center; }
+.bt.on { color: var(--p-olive); }
+.bt.on .w { background: var(--p-olive-soft); }
+.bt .lb { font: 700 10px/1 var(--p-sans); }
+.bt .dot { position: absolute; top: -4px; left: 55%; min-width: 16px; height: 16px; border-radius: 999px; background: var(--p-lime); color: #3F4A12; font: 700 9.5px/16px var(--p-sans); text-align: center; padding: 0 3px; }
+.pfig { display: grid; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.pfig > div { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--p-line); }
+.pfig > div:last-child { border-bottom: 0; }
+.pfig .k { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink); }
+.pfig b { font: 700 17px/1.2 var(--p-sans); }
+.psheet { position: absolute; inset: 0; z-index: 7; background: var(--p-card); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.psheet .dh { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.75rem 0.6rem 0.75rem 1rem; border-bottom: 1px solid var(--p-line); }
+.psheet .dh .tt { flex: 1; display: grid; gap: 3px; }
+.psheet .dh .tt .ey { font: 700 10.5px/1.2 var(--p-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-ink2); }
+.psheet .dh .tt b { font-size: 16.5px; }
+.psheet .db { padding: 0.9rem 1rem 1rem; display: grid; gap: 0.85rem; align-content: start; overflow: hidden; }
+.psheet .df { display: flex; gap: 0.5rem; padding: 0.7rem 1rem; border-top: 1px solid var(--p-line); }
+.psheet .df .btn { flex: 1; justify-content: center; min-height: 44px; }
+
+/* highlights and pins */
+.hl { position: relative; }
+.hl.new { box-shadow: 0 0 0 2px #2D5B86; border-radius: 8px; }
+.hl.re { box-shadow: 0 0 0 2px #9A6418; border-radius: 8px; }
+.hl.same { outline: 1.5px dashed #6B7480; outline-offset: 2px; border-radius: 8px; }
+.hl.flash { animation: flash 1.2s ease-out 1; }
+@keyframes flash { 0%, 60% { background-color: rgba(45, 91, 134, 0.18); } 100% { background-color: transparent; } }
+.pin { position: absolute; top: -11px; left: -11px; z-index: 6; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; font: 700 11px/1 var(--doc-mono); color: #fff; background: #6B7480; cursor: pointer; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.pin::after { content: ""; position: absolute; inset: -11px; }
+.pin.new { background: #2D5B86; }
+.pin.re { background: #9A6418; }
+span.hl { display: inline-flex; }
+.ex { font: 700 9.5px/1 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: #6B7480; padding: 3px 5px; border-radius: 3px; vertical-align: 2px; margin-left: 0.4rem; }
+@media (prefers-reduced-motion: reduce) { .hl.flash { animation: none; outline: 3px solid var(--accent); } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-chevd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 3.1a4 4 0 0 1 0 7.8M22 21a7 7 0 0 0-4-6.3"/></symbol>
+  <symbol id="i-dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+  <symbol id="i-org" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21.7 18-8-14a2 2 0 0 0-3.5 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0z"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3h13v4H9v3h7v4H9v7H5z"/></symbol>
+</svg>
+
+<div class="doc show-new" id="doc">
+  <header class="dochead">
+    <span class="eyebrow">Club tier · Stage 13d · drawing for rulings · 2026-11-13</span>
+    <h1>Hand-offs between people</h1>
+    <p>When one person in the club does something for another, the other person should hear about it, hear it truly, and have a way to ask. Asks 14, 15 and 16 are ruled. This page draws what they look like on today's screens and settles what's still open. "Today" is a capture of a fresh Harbourtown copy on a local production build; "With 13d" is the drawn change, at true size.</p>
+  </header>
+
+  <nav class="stabs" role="tablist" aria-label="Sections">
+    <button role="tab" data-t="overview" aria-selected="true">1 · What changes</button>
+    <button role="tab" data-t="given" aria-selected="false">2 · Time given</button>
+    <button role="tab" data-t="ask" aria-selected="false">3 · Ask for time</button>
+    <button role="tab" data-t="bill" aria-selected="false">4 · The bill on the line</button>
+    <button role="tab" data-t="book" aria-selected="false">5 · Money the treasurer can't see</button>
+    <button role="tab" data-t="coach" aria-selected="false">6 · A coach's request</button>
+    <button role="tab" data-t="phone" aria-selected="false">7 · Phone</button>
+    <button role="tab" data-t="asks" aria-selected="false">8 · Asks</button>
+  </nav>
+
+  <div class="viewrow" id="viewrow" hidden>
+    <div class="vgroup"><span>Show</span>
+      <div class="seg" role="group" aria-label="Today or with 13d">
+        <button type="button" data-show="today" aria-pressed="false">Today</button>
+        <button type="button" data-show="new" aria-pressed="true">With 13d</button>
+      </div>
+    </div>
+    <div class="vgroup"><span>View</span>
+      <div class="seg" role="group" aria-label="Everything or only what differs">
+        <button type="button" data-view="all" aria-pressed="true">Everything</button>
+        <button type="button" data-view="differs" aria-pressed="false">Show only what differs</button>
+      </div>
+    </div>
+    <span class="vnote">Pins on a frame open their note; a note lights its part of the frame.</span>
+  </div>
+
+<!-- ═══════════════════════════ 1 · WHAT CHANGES ═══════════════════════════ -->
+<section data-sec="overview">
+  <div class="prose">
+    <p class="lede">Six hand-offs, each one person's work reaching another. Every one of them was walked on 2026-11-06 and re-opened today on a fresh club copy. All four Highs still reproduce. <b>Three things in the code change what the ruled answers have to do</b>, and they're in the red boxes below.</p>
+  </div>
+
+  <div class="callout push">
+    <h3>1. There is no "give house league time" button. Time is given when a schedule is finalized.</h3>
+    <p>House league gets its time as one of the holders in a club schedule. It counts as "given" once that schedule is final. Today, finalizing tells the rep coaches and nobody in house league. "Send the changes" tells the league admin only when games or practices moved; new time on its own tells nobody. <b>So the league admin's notice (Ask 14) fires at those two moments</b>: Finalize and send, and a change that adds or takes back house league time.</p>
+    <p>The copy shows it: the sent schedule "Saturdays at Kinsmen, December 2026" gave house league 2 hours a week, and the schedule page says "2 house-league games on Dec 5 are for the league admins to move". Jules Moreau (league admin) has "No notifications yet".</p>
+  </div>
+  <div class="callout push">
+    <h3>2. Ask 15 closes one of four ways to bill a team twice. This club has already done one of the other three.</h3>
+    <p>Schedules and Accounting each check only whether the budget line has room left. Neither sees what the other has billed, and a draft reserves nothing. On this copy, Accounting has already billed "Fall ball diamond fees 2026" ($1,800.00 to 15U AAA and 13U AAA) on Diamond permits. A schedule made from the Fall diamonds 2026 permit sees "$450.00 left", is refused when it's sent, and then the builder picks "No budget line". <b>That bills those two teams twice and nothing says so.</b> Ask 15 A warns in New allocation, but not in the Bill window. Ask 4 on tab 8 is whether 13d closes the Bill window side too.</p>
+  </div>
+  <div class="callout push">
+    <h3>3. The league admin's "Club time · not divided" tile would say a sentence that's already on that page.</h3>
+    <p>13b left a "Club time" tile for 13d on the league admin's This morning. Since then, fix-now put "The club has given this season time. None of it is divided into games or practices yet. House league's time →" on the same Overview, 16 px above This morning. A tile would repeat it. Ask 6 recommends not building it.</p>
+  </div>
+
+  <h2 class="prose" style="margin:22px 0 8px;font-size:19px">Who sees what, with 13d</h2>
+  <div class="tblwrap"><table class="who">
+    <thead><tr><th>Person</th><th>"Time given" notice</th><th>"Ask for time"</th><th>The ask on This morning</th><th>Draft bill on the budget line</th><th>Warnings before a second bill</th><th>Tournament: the club's book</th><th>House league owed, in Accounting</th></tr></thead>
+    <tbody>
+      <tr><td>Owner (Morgan Ellis)</td><td class="y">Yes, unless they sent it</td><td class="no">— (gives it)</td><td class="y">Yes, with a door to Schedules</td><td class="y">Yes</td><td class="y">New allocation and the Bill window</td><td class="y">Yes</td><td class="y">Yes</td></tr>
+      <tr><td>Admin with Accounting</td><td class="y">Yes, unless they sent it</td><td class="no">—</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Both</td><td class="y">Yes</td><td class="y">Yes</td></tr>
+      <tr><td>Admin without Accounting (Sam Okafor)</td><td class="y">Yes</td><td class="no">—</td><td class="y">Yes: they can give time</td><td class="no">No: can't open Accounting</td><td class="no">No: can't bill</td><td class="no">Card unchanged, no dead link</td><td class="no">No</td></tr>
+      <tr><td>League admin (Jules Moreau)</td><td class="y">Yes: the one it's for</td><td class="y">Yes, no names listed (C6 A)</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+      <tr><td>Registrar (Riley Okonkwo)</td><td class="no">No: can't divide time</td><td class="no">No</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">Can't open tournaments</td><td class="no">— (reads the season's Money already)</td></tr>
+      <tr><td>Treasurer (Avery Chen)</td><td class="no">No</td><td class="no">No</td><td class="no">—</td><td class="y">Yes, and the fair shares, read only</td><td class="y">New allocation</td><td class="no">Can't open tournaments</td><td class="y">Yes, with a door to the season's Money</td></tr>
+      <tr><td>Coach (Coaches Portal)</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="no">— (tab 6 is their only change)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 class="prose" style="margin:22px 0 8px;font-size:19px">What I settled from the code and the copy</h2>
+  <div class="tblwrap"><table class="fx">
+    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+    <tbody>
+      <tr><td>Who gets a club bell today</td><td><span class="v">V</span>When games or practices move, owners, admins and league admins get a bell, the sender excluded. The same list fits "time given". Email copies of a bell are off by default (only a failed payment emails owners and admins), so a bell adds no new email.<span class="src">lib/club-schedule-send.ts:1077-1106 · lib/notify.ts:81-89</span></td></tr>
+      <tr><td>What "given" means</td><td><span class="v">V</span>House league slots of a final schedule, still to come, inside the season's dates, <b>whichever season they serve</b>. Two seasons whose dates overlap share one count, so a new season can read "given" with nothing of its own (F-L5-6's other half).<span class="src">lib/league-time-server.ts:44-80</span></td></tr>
+      <tr><td>The no-time sentence on a phone</td><td><span class="v">V</span>"Ask an owner or an admin to give house league time" is hidden below 900 px. On a phone the league admin reads "The club hasn't given this season any time yet." and nothing after it.<span class="src">app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx:286-291</span></td></tr>
+      <tr><td>What a draft bill is, after "Send the bill"</td><td><span class="v">V</span>A draft or in-review schedule with a bill set (line, amount, plan). It reserves nothing on its line. At Finalize, or at "Send the bill" on a final schedule with none, it becomes an allocation named after the schedule. Accounting never says it came from a schedule.<span class="src">lib/club-schedule-send.ts:273-305 · BillWindow.tsx:80-82</span></td></tr>
+      <tr><td>The treasurer and Schedules</td><td><span class="v">V</span>Refused: "Schedules isn't one of your pages… Morgan Ellis (owner) and the club's admins open it." Yet the permit tells them "“Saturdays at Kinsmen, December 2026” hands this time out, so the permit stays." They read the name and can't open it.<span class="src">captures: treasurer-schedules-url, treasurer-permit-saturday-dec</span></td></tr>
+      <tr><td>The tournament Payments card</td><td><span class="v">V</span>Tournament admin only. No other portal draws it. On the copy: "Not set up — payments aren't tracked here", while the event's book holds $1,440.00 of registrations and a $500.00 float.<span class="src">WeeksBeforeBoard.tsx:286-313 · capture owner-tournament-dashboard</span></td></tr>
+      <tr><td>Revenue and house league</td><td><span class="v">V</span>House league and tournament money already counts in the Overview's Revenue (the club's books include them). What's missing is <b>money families still owe</b>: $1,740.00 from 12 players, shown on the owner's band and nowhere in Accounting.<span class="src">lib/club-money-figures.ts:639 · capture treasurer-accounting-overview</span></td></tr>
+      <tr><td>"Do not add a third owed query"</td><td><span class="v">V</span>That rule lives in the club band's read, not in the guard test the prompt names. The guard pins one definition each of Collected, Outstanding, Overdue, Next due, Sent and Balance. 13d adds no query either way: it reuses the band's own house league sum.<span class="src">lib/club-band-read.ts:24-63 · tests/unit/club-money-one-definition-guard.test.ts</span></td></tr>
+      <tr><td>The coach's payment method</td><td><span class="v">V</span>One field, "Payment method", for both directions, saved in display words ("Card", "E-Transfer"). The treasurer's Approve only pre-fills from its own codes, so a coach's answer never pre-fills. The coach's own window prints the raw code ("etransfer").<span class="src">panel.tsx:114, 2512 · RequestWindows.tsx:152, 169-179</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout">
+    <h3>Where 13d sits, and what has to land first</h3>
+    <p>After 13c (walked §502, 53/53) and before 13e. <b>Before the several-permits build</b>, which re-prices the bill 13d puts on the treasurer's line (owner, 2026-11-13). The late-bill money-audience work is committed, but the tree still holds <b>uncommitted changes to the Bill window and the schedule words</b> (a two-line "Bill from" choice, "No budget line / Off-plan"). That work has to commit before 13d's Bill window warning is built on top of it.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 2 · TIME GIVEN ═══════════════════════════ -->
+<section data-sec="given" hidden>
+  <p class="lede"><b>Ask 14 A, the first half.</b> When an owner or an admin sends a schedule that gives house league time, the people who divide that time are told by a bell that opens House league's time. Today the league admin's notices page is empty, and the schedule's send list names only the three rep coaches.</p>
+
+  <div class="sub-h">The league admin's notifications · 1280 <em>Jules Moreau, after the owner sends "Saturdays at Kinsmen, December 2026"</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13d-shots/leagueadmin-notifications-1280.webp" width="1280" height="900" alt="Today: the league admin's notifications page reads No notifications yet"></div>
+      <div class="fscroll v-new">
+        <div class="fr desk ground" style="width:1280px;height:470px">
+          <div class="strip" data-same>
+            <div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Club</span></div>
+            <div class="rc"><span class="pt">Notifications</span><span class="doors"><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><span class="door"><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><span class="dot">1</span></span><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div>
+          </div>
+          <div class="body">
+            <nav class="rail" data-same>
+              <div class="cell"><span class="ab">HM</span>Harbourtown Minor Ball</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-grid"/></svg>Overview</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>Calendar</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-file"/></svg>Permits</div>
+              <div class="sec">Programs</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>House league<span class="cnt">15</span></div>
+              <div class="sec">Club</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-org"/></svg>Organization</div>
+            </nav>
+            <div class="main"><div class="pad"><div class="npage">
+              <div class="nfil" data-same><span class="pl on">All</span><span class="pl">Needs attention</span><span class="pl">Activity</span><span class="trk"><span>Unread</span><span class="on">All</span></span></div>
+              <div class="card hl new" data-hl="given-1">
+                <button class="pin new" type="button" data-n="1" aria-label="Note 1">1</button>
+                <div class="nrow">
+                  <span class="ic"><svg class="i" width="17" height="17"><use href="#i-clock"/></svg></span>
+                  <div><span class="hl new" data-hl="given-2" style="border-radius:4px"><button class="pin new" type="button" data-n="2" aria-label="Note 2" style="top:-4px;left:-48px">2</button><span class="ttl">The club gave house league time</span></span>
+                    <p class="clamp">“Saturdays at Kinsmen, December 2026” gives 2026 Fall House League 2 hours a week: Saturdays at Kinsmen Park, Dec 5 – Dec 19. Divide it into games and practices.</p>
+                    <span class="meta">Just now · Morgan Ellis</span></div>
+                  <span class="ud"></span>
+                </div>
+              </div>
+            </div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt new" type="button" data-for="given-1"><span class="nn">1</span><b>A bell when time is given</b><span class="tag">New</span><span class="tx">Sent at Finalize and send, and at Send the changes when house league's time grows or shrinks. One per season the time falls in. It goes to owners, admins and league admins, the sender left out, the same list that hears about moved games today. The hours come from House league's time window ("Hours add up across facilities"), so the two never disagree.</span></button></li>
+      <li><button class="nt new" type="button" data-for="given-2"><span class="nn">2</span><b>The row opens the notice; its one door opens House league's time</b><span class="tag">New</span><span class="tx">As every notice does: the row opens the reader, and the reader's door is "Open House league's time", the window that already says "Given by the club in Saturdays at Kinsmen, December 2026 · Nov 28 – Dec 19, 2026 · Kinsmen Park". The season line ("None of it is divided… House league's time →") is fix-now's and stays as it is.</span></button></li>
+      <li><button class="nt" type="button" data-for="given-0"><span class="nn">·</span><b>Bell only, no email</b><span class="tag">Ask 1</span><span class="tx">Email copies of bells are off by default; a person can turn this one on in their notification settings, like any other. A default-on email would be new mail to staff, and /legal (CASL) reads the words before the build hands off. Recommended: the bell alone.</span></button></li>
+    </ol>
+  </div>
+
+  <div class="sub-h">The schedule's Send window, WHO IS TOLD · crop <em>F-O3-4: a schedule with rep teams and house league</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll">
+        <div class="fr" style="width:640px;background:var(--p-card)">
+          <div style="padding:1.1rem 1.4rem;display:grid;gap:0.75rem">
+            <div class="lbl" data-same>Who is told</div>
+            <div class="rows who2">
+              <div class="rw2" data-same><b>14U AA</b><span>Taylor Brooks</span><small>email and bell</small></div>
+              <div class="rw2" data-same><b>15U AA</b><span>Sam Whitford</span><small>email and bell</small></div>
+              <div class="rw2" data-same><b>13U AAA</b><span>Priya Nair</span><small>email and bell</small></div>
+              <div class="rw2 hl new" data-hl="given-3" style="border-radius:0"><button class="pin new" type="button" data-n="3" aria-label="Note 3" style="top:6px;left:-28px">3</button><b>House league</b><span>Jules Moreau, league admin: 2 hours a week to divide</span><small>bell</small></div>
+            </div>
+            <p style="margin:0;font-size:13px;color:var(--p-ink2)" data-same>Sending makes 12 slots real bookings: on 3 teams' schedules, on the club calendar and in the clash check. Families see their team's slots on the team's schedule. Nothing is emailed to a family.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt new" type="button" data-for="given-3"><span class="nn">3</span><b>House league gets a line in WHO IS TOLD</b><span class="tag">New</span><span class="tx">Today the preview lists the three rep coaches and nothing for house league, so the sender can't tell whether anyone there hears. The line names the league admin(s) by name (the sender's own window, not the league admin's: C6's "no names" was about the league admin's screen) and says it's a bell. With no league admin, it reads "House league: owners and admins, by a bell".</span></button></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 3 · ASK FOR TIME ═══════════════════════════ -->
+<section data-sec="ask" hidden>
+  <p class="lede"><b>Ask 14 A, the second half, and C6 A.</b> With no time, the league admin gets an "Ask for time" button, with no names listed. The ask lands on the owner's and admins' This morning until time is given. Only an owner or an admin gives time. The copy has time now, so "Today" shows the season with its line hidden (the time is divided); the drawn "With 13d" shows the season before any time, where the line and button sit.</p>
+
+  <div class="sub-h">The league admin's season Overview · 1280 <em>2026 Fall House League with no time yet</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13d-shots/leagueadmin-hl-overview-1280.webp" width="1280" height="1602" alt="Today: the season Overview, dates line, This morning tiles and the figures band"></div>
+      <div class="fscroll v-new">
+        <div class="fr desk tabbed ground" style="width:1280px;height:520px">
+          <div class="strip" data-same>
+            <div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Club</span></div>
+            <div class="rc"><span class="backl"><svg class="i" width="16" height="16"><use href="#i-back"/></svg>Seasons</span><span class="vr"></span><span class="pt">2026 Fall House League</span><svg class="i" width="16" height="16"><use href="#i-chevd"/></svg><span class="chip open">Registration open</span><span class="doors"><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div>
+          </div>
+          <div class="tabsband" data-same><div class="lc2"><div class="rail" style="border:0;height:100%"><div class="cell" style="margin:0;border:0"><span class="ab">HM</span>Harbourtown Minor Ball</div></div></div><div class="tabsrow"><span class="tab on">Overview</span><span class="tab">Registrations <span class="cnt" style="margin:0">15</span></span><span class="tab">Teams &amp; draft</span><span class="tab">Schedule</span><span class="tab">Standings</span><span class="tab">Money</span><span class="tab">Email families</span></div></div>
+          <div class="body">
+            <nav class="rail" data-same>
+              <div class="it" style="margin-top:0.5rem"><svg class="i" width="15" height="15"><use href="#i-grid"/></svg>Overview</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>Calendar</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-file"/></svg>Permits</div>
+              <div class="sec">Programs</div>
+              <div class="it on"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>House league<span class="cnt">15</span></div>
+              <div class="sec">Club</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-org"/></svg>Organization</div>
+            </nav>
+            <div class="main"><div class="pad" style="padding-top:1.1rem;gap:0.9rem">
+              <small data-same>Dec 4, 2026 – Feb 11, 2027 · Baseball</small>
+              <div class="hl new" data-hl="ask-1" style="padding:0.15rem 0.3rem;margin:-0.15rem -0.3rem"><button class="pin new" type="button" data-n="1" aria-label="Note 1">1</button>
+                <p class="timeln"><span>The club hasn’t given this season any time yet.</span><span class="btn sm"><svg class="i" width="14" height="14"><use href="#i-clock"/></svg>Ask for time</span></p>
+              </div>
+              <div class="hl new" data-hl="ask-2" style="padding:0.15rem 0.3rem;margin:-0.15rem -0.3rem;justify-self:start"><button class="pin new" type="button" data-n="2" aria-label="Note 2">2</button>
+                <p class="timeln"><span class="dim">After pressing it:</span><span>The club hasn’t given this season any time yet.</span><span class="asked"><svg class="i" width="14" height="14"><use href="#i-check"/></svg>Asked Nov 13. The owner and admins see it on their Overview.</span></p>
+              </div>
+              <div class="eye" data-same>This morning</div>
+              <div class="morn two" data-same>
+                <div class="mc"><div class="tl">To review<svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></div><div class="n">15</div><p>registrations · oldest Oct 31</p></div>
+                <div class="mc"><div class="tl">Teams<svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></div><div class="n">8</div><p>8 players not on a team</p></div>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt new" type="button" data-for="ask-1"><span class="nn">1</span><b>"Ask for time" beside the sentence</b><span class="tag">New</span><span class="tx">One quiet button where the sentence already sits, replacing "Ask an owner or an admin to give house league time." No names (C6 A). The same button goes in House league's time window and Generate games, which both say "An owner or an admin gives it." today. The 13c guard "no Ask for time button (13d)" is re-pinned to say it is there.</span></button></li>
+      <li><button class="nt new" type="button" data-for="ask-2"><span class="nn">2</span><b>Pressed, it says what happened</b><span class="tag">New</span><span class="tx">Once per season. It stays "Asked Nov 13" until time is given; then the line becomes fix-now's "given, not divided" line with its door. Asking again is allowed after 7 days, so a forgotten ask can be nudged without spamming. While it sends, the button reads "Asking…" and can't be pressed twice; if it fails, the button stays with "The ask didn't go. Try again." The answer reaches them as the "time given" bell (tab 2), so the loop closes without a second message.</span></button></li>
+      <li><button class="nt" type="button" data-for="ask-0"><span class="nn">·</span><b>No "Club time" tile below</b><span class="tag">Ask 6</span><span class="tx">This morning stays To review · Teams. A "Club time · not divided" tile would repeat the line 16 px above it (measured on the copy). Recommended: retire the tile and its placeholder test.</span></button></li>
+    </ol>
+  </div>
+
+  <div class="sub-h">Where it lands: the owner's Overview, This morning · 1280 <em>the admin without Accounting (Sam Okafor) sees it too: they can give time</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13d-shots/owner-overview-1280.webp" width="1280" height="1025" alt="Today: the owner's Overview with the club band and six This morning cards"></div>
+      <div class="fscroll v-new">
+        <div class="fr desk ground" style="width:1280px;height:640px">
+          <div class="strip" data-same>
+            <div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Club</span></div>
+            <div class="rc"><span class="pt">Overview</span><span class="doors"><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><span class="door"><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><span class="dot">1</span></span><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div>
+          </div>
+          <div class="body">
+            <nav class="rail" data-same>
+              <div class="cell"><span class="ab">HM</span>Harbourtown Minor Ball</div>
+              <div class="it on"><svg class="i" width="15" height="15"><use href="#i-grid"/></svg>Overview</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>Calendar</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-file"/></svg>Permits<span class="cnt">8</span></div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-list"/></svg>Schedules</div>
+              <div class="sec">Programs</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-users"/></svg>Rep teams</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>House league<span class="cnt">15</span></div>
+              <div class="sec">Club</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-dollar"/></svg>Accounting<span class="cnt">3</span></div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-users"/></svg>Families<span class="cnt">2</span></div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-globe"/></svg>Public site</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-org"/></svg>Organization</div>
+            </nav>
+            <div class="main"><div class="pad" style="padding-top:1.3rem;gap:0.8rem">
+              <div class="eye" data-same>The club today · Fri, Nov 13</div>
+              <div class="cband" data-same>
+                <div><span class="k">Cash on hand<svg class="i" width="12" height="12"><use href="#i-arrow"/></svg></span><span class="bv">$2,870.00</span><p>in the club's 4 books</p></div>
+                <div><span class="k">Owed to the club<svg class="i" width="12" height="12"><use href="#i-arrow"/></svg></span><span class="bv amb">$12,690.00</span><p>teams $10,950.00 ($3,450.00 overdue) · house league $1,740.00</p></div>
+                <div><span class="k">This week<svg class="i" width="12" height="12"><use href="#i-arrow"/></svg></span><span class="bv">Nothing booked</span><p>Next: Mon, Nov 23 · Harbourtown Invitational 2026</p></div>
+                <div><span class="k">Needs someone</span><p>2 teams have no head coach<br>12 players owe house league fees<br>52 rep-team forms missing</p></div>
+              </div>
+              <div class="eye" style="margin-top:0.6rem" data-same>This morning</div>
+              <div class="morn">
+                <div class="mc" data-same><div class="tl">Tryout applications<svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></div><div class="n">0</div><p>nothing waiting</p></div>
+                <div class="mc" data-same><div class="tl">Payment requests<svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></div><div class="n">3</div><p>oldest waiting 93 days · 3 holding up a payout</p></div>
+                <div class="mc" data-same><div class="tl">Installments due<svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></div><div class="n">12</div><p>in the next 14 days · 7 overdue</p></div>
+                <div class="mc" data-same><div class="tl">Assistant coaches<svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></div><div class="n">0</div><p>nothing waiting</p></div>
+                <div class="mc" data-same><div class="tl">League registrations<svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></div><div class="n">15</div><p>waiting for review</p></div>
+                <div class="mc" data-same><div class="tl">Outside the permit<svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></div><div class="n">8</div><p>bookings on Sat, Dec 5 and Sat, Dec 12 · Kinsmen Park</p></div>
+                <div class="mc hl new" data-hl="ask-3"><button class="pin new" type="button" data-n="3" aria-label="Note 3">3</button><div class="tl">House league asks for time<svg class="i" width="13" height="13"><use href="#i-arrow"/></svg></div><div class="n">1</div><p>2026 Fall House League · asked Nov 13 by its league admin</p></div>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt new" type="button" data-for="ask-3"><span class="nn">3</span><b>The ask, as a This morning card</b><span class="tag">New</span><span class="tx">After the cards that exist, like "Outside the permit" (13c), and only while true. The figure counts seasons asking. Its door opens Schedules, where time is given. With one permit and no schedule yet, it opens New schedule on that permit. With no permit at all, its line reads "asked Nov 13 · add a permit to give time" and it opens Permits. After 7 days the line says how long it has waited ("asked 9 days ago"). It shows for owners and admins, Accounting or not: giving time isn't money.</span></button></li>
+      <li><button class="nt new" type="button" data-for="ask-0"><span class="nn">·</span><b>When it clears</b><span class="tag">New</span><span class="tx">By itself, the moment that season has time given (the same count fix-now reads), or when the season finishes. There's no Dismiss: an ask that's turned down should reach the league admin as an answer, and that's a conversation, not a button. The owner also gets a bell when the ask is made (Ask 2).</span></button></li>
+      <li><button class="nt" type="button" data-for="ask-0"><span class="nn">·</span><b>F-L5-6, the new season</b><span class="tag">Ask 7</span><span class="tx">A draft season shows the same line and the same button: the new season's hand-off is this one. Recommended with it: "given" counts only time no other season is using, so a spring season made while winter runs doesn't read "given" off winter's slots.</span></button></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 4 · THE BILL ON THE LINE ═══════════════════════════ -->
+<section data-sec="bill" hidden>
+  <p class="lede"><b>Ask 15 A.</b> The schedule bills; while it's a draft, its bill shows on the budget line as "being billed (draft)", and New allocation warns on a line a draft holds. It warns and never blocks. The treasurer can't open Schedules, so they read the fair shares in a <b>read-only window opened from the line</b> (Ask 3). The figures for the draft are an example: this copy has no draft schedule. Everything else is the copy's own.</p>
+
+  <div class="sub-h">The treasurer's budget line window · 1280 <em>Dome time — winter dome ($27,000.00 planned; the Winter dome permit is on it)</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13d-shots/treasurer-budget-line-window-1280.webp" width="1280" height="1202" alt="Today: the Diamond permits line window, Pays for, Allocated to teams and $450 not allocated"></div>
+      <div class="fscroll v-new">
+        <div class="fr desk ground" style="width:1280px;height:820px">
+          <div class="strip" data-same>
+            <div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Club</span></div>
+            <div class="rc"><span class="pt">Accounting</span><span class="doors"><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div>
+          </div>
+          <div class="body">
+            <nav class="rail" data-same>
+              <div class="cell"><span class="ab">HM</span>Harbourtown Minor Ball</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-grid"/></svg>Overview</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-file"/></svg>Permits</div>
+              <div class="sec">Club</div>
+              <div class="it on"><svg class="i" width="15" height="15"><use href="#i-dollar"/></svg>Accounting<span class="cnt">3</span></div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-org"/></svg>Organization</div>
+            </nav>
+            <div class="main"><div class="tabsrow" style="background:var(--p-card);border-bottom:1px solid var(--p-line)" data-same><span class="tab">Overview</span><span class="tab on">Budget</span><span class="tab">Teams</span><span class="tab">Ledger</span><span class="tab">Bank</span><span class="tab">Allocations</span><span class="tab">Payment requests</span><span class="tab">Budget vs. Actual</span></div></div>
+          </div>
+          <div class="scrim" style="top:0"></div>
+          <div class="dlg" style="width:640px;top:80px;bottom:24px">
+            <div class="dh"><div class="tt"><span class="ey">Budget line · 2026–27</span><b>Dome time — winter dome</b></div><svg class="i" width="18" height="18" style="color:var(--p-dim)"><use href="#i-pencil"/></svg><svg class="i" width="18" height="18" style="color:var(--p-dim)"><use href="#i-x"/></svg></div>
+            <div class="db">
+              <div class="facts" data-same><div class="r"><span>Planned</span><b>$27,000.00</b></div><div class="r"><span>Allocated</span><b>$0.00</b></div><div class="r"><span class="dim">Filed under · When</span><span class="dim">as today, unchanged</span></div></div>
+              <div data-same><div class="lbl">Pays for</div><div class="rows"><div class="rw"><span><b>Winter dome 2026–27</b></span><span>$27,000.00</span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div></div></div>
+              <div class="hl new" data-hl="bill-1"><button class="pin new" type="button" data-n="1" aria-label="Note 1" style="left:-28px">1</button>
+                <div class="lbl">Being billed (draft)</div>
+                <div class="rows"><div class="rw held"><span><b>Winter dome 2026–27 <span class="ex">Example</span></b><span class="s amb">A draft schedule · $27,000.00 to 6 teams when it's sent · not billed yet</span></span><span class="lk">Fair shares</span><svg class="i" width="15" height="15" style="color:var(--p-olive)"><use href="#i-chev"/></svg></div></div>
+              </div>
+              <div data-same><div class="lbl">Allocated to teams</div><div class="rows"><div class="rw" style="min-height:44px"><span class="s">Nothing allocated yet.</span><span></span><span></span></div></div></div>
+              <div class="hl re" data-hl="bill-2"><button class="pin re" type="button" data-n="2" aria-label="Note 2" style="left:-28px">2</button>
+                <div class="rows"><div class="rw"><span><b>$27,000.00 not allocated</b><span class="s">A draft schedule is billing all of it. Allocating it here too bills the same teams twice.</span></span><span class="btn sm">Allocate $27,000.00</span><span></span></div></div>
+              </div>
+            </div>
+            <div class="df" data-same><span class="btn">Done</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt new" type="button" data-for="bill-1"><span class="nn">1</span><b>"Being billed (draft)" on the line</b><span class="tag">New</span><span class="tx">Any draft or in-review schedule whose bill names this line. Each row says what it would bill and to how many teams, and opens the fair shares (window below). A draft with no price yet reads "Draft · no amount yet". The budget table's row for the line gets the same words as its caption ("$27,000.00 being billed (draft)"; not drawn). Today shows the Diamond permits line because the copy has no draft schedule: the window's shape is the same. Once sent, it becomes an ordinary allocation, which says "from the schedule …" in Allocated to teams.</span></button></li>
+      <li><button class="nt re" type="button" data-for="bill-2"><span class="nn">2</span><b>"Not allocated" stops saying the club pays it</b><span class="tag">Restyled</span><span class="tx">Today: "The club pays this part itself unless you allocate it." That's untrue while a draft bills it. Allocate stays: warns, never blocks (Stage 6a).</span></button></li>
+    </ol>
+  </div>
+
+  <div class="sub-h">The fair shares, read only · 1280 <em>opened from the line; Accounting's own window, never Schedules</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll">
+        <div class="fr desk ground" style="width:1280px;height:790px">
+          <div class="strip" data-same>
+            <div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Club</span></div>
+            <div class="rc"><span class="pt">Accounting</span><span class="doors"><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div>
+          </div>
+          <div class="body"><nav class="rail" data-same></nav><div class="main"></div></div>
+          <div class="scrim" style="top:48px"></div>
+          <div class="dlg hl new" data-hl="bill-3" style="width:640px;top:70px;bottom:24px;overflow:visible"><button class="pin new" type="button" data-n="3" aria-label="Note 3">3</button>
+            <div class="dh"><div class="tt"><span class="ey">Schedule · draft · read only</span><b>Winter dome 2026–27 · fair shares <span class="ex">Example</span></b></div><svg class="i" width="18" height="18" style="color:var(--p-dim)"><use href="#i-x"/></svg></div>
+            <div class="db">
+              <p style="margin:0;font-size:13.5px;color:var(--p-ink2)">Each team pays for the hours it holds. An owner or an admin changes this in Schedules; nothing here is billed until they send it.</p>
+              <div class="facts"><div class="r"><span>The bill</span><b>$27,000.00 · Dome time — winter dome</b></div><div class="r"><span>Hours</span><b>200 hours · $135.00 an hour</b></div><div class="r"><span>Payment plan</span><b>Two monthly payments</b></div></div>
+              <div class="card"><table class="tbl"><thead><tr><th>Team</th><th class="r">Hours</th><th class="r">Fair share</th></tr></thead><tbody>
+                <tr><td>14U AA</td><td class="r">40</td><td class="r">$5,400.00</td></tr>
+                <tr><td>15U AA</td><td class="r">40</td><td class="r">$5,400.00</td></tr>
+                <tr><td>15U AAA</td><td class="r">36</td><td class="r">$4,860.00</td></tr>
+                <tr><td>13U AAA</td><td class="r">36</td><td class="r">$4,860.00</td></tr>
+                <tr><td>12U AA</td><td class="r">24</td><td class="r">$3,240.00</td></tr>
+                <tr><td>11U AA</td><td class="r">24</td><td class="r">$3,240.00</td></tr>
+                <tr class="b"><td>6 teams</td><td class="r">200</td><td class="r">$27,000.00</td></tr>
+              </tbody></table></div>
+            </div>
+            <div class="df"><span class="btn">Done</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt new" type="button" data-for="bill-3"><span class="nn">3</span><b>Fair shares, for the treasurer</b><span class="tag">New</span><span class="tx">The Bill tile's own figures (13c), drawn as Accounting's window: read only, no Schedules link (the treasurer would land on "Schedules isn't one of your pages"). Owners and admins see the same window here, plus "Open the schedule". On a phone it's a full-screen sheet with the teams as rows (tab 7). Alternative (Ask 3 B): a "Being billed" group on Allocations.</span></button></li>
+    </ol>
+  </div>
+
+  <div class="sub-h">New allocation, on a line a draft holds · 1280 crop <em>the treasurer picks Dome time — winter dome</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13d-shots/treasurer-new-allocation-window-1280.webp" width="1280" height="944" alt="Today: New allocation with Bill from, Name, Amount, Split and the team list"></div>
+      <div class="fscroll v-new">
+        <div class="fr" style="width:800px;background:var(--p-card)">
+          <div class="dlg" style="position:static;transform:none;width:800px;box-shadow:none;border-radius:0">
+            <div class="dh" data-same><div class="tt"><span class="ey">Allocations</span><b>New allocation</b></div><svg class="i" width="18" height="18" style="color:var(--p-dim)"><use href="#i-x"/></svg></div>
+            <div class="db">
+              <div class="field" data-same><label>Bill from *</label><div class="inp on"><span>Dome time — winter dome · $27,000.00 left</span><svg class="i" width="15" height="15"><use href="#i-chevd"/></svg></div></div>
+              <div class="notice hl new" data-hl="bill-4"><button class="pin new" type="button" data-n="4" aria-label="Note 4">4</button><svg class="i" width="16" height="16"><use href="#i-warn"/></svg><div><b>A draft schedule is billing this line.</b> “Winter dome 2026–27” bills $27,000.00 to 6 teams when it's sent. Billing them here as well would charge the same dome time twice.<div class="dr"><span class="lk">See its fair shares</span></div></div></div>
+              <div class="g2" data-same><div class="field"><label>Name *</label><div class="inp"></div></div><div class="field"><label>Amount *</label><div class="inp" style="justify-content:flex-end"><span class="ph">$0.00</span></div></div></div>
+            </div>
+            <div class="df split hl" data-hl="bill-5" style="border-radius:0"><button class="pin" type="button" data-n="5" aria-label="Note 5" style="top:6px;left:6px">5</button><span class="btn" style="margin-left:24px">Cancel</span><span class="btn lime">Bill 7 teams</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt new" type="button" data-for="bill-4"><span class="nn">4</span><b>The warning, under the choice</b><span class="tag">New</span><span class="tx">Shown the moment a line with a draft is picked. The same notice opens "Allocate $27,000.00" from the line window. It names the schedule and the amount; it doesn't name teams the draft hasn't sent to.</span></button></li>
+      <li><button class="nt" type="button" data-for="bill-5"><span class="nn">5</span><b>Bill stays live</b><span class="tag">Unchanged</span><span class="tx">Warns, never blocks. A treasurer may be billing something the schedule doesn't cover (a deposit, a different season).</span></button></li>
+    </ol>
+  </div>
+
+  <div class="sub-h">The other side: the owner's Bill window · crop <em>Ask 4: a schedule from Fall diamonds 2026 bills the Diamond permits line, which Accounting already bills</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll">
+        <div class="fr" style="width:640px;background:var(--p-card)">
+          <div style="padding:1.1rem 1.4rem 1.3rem;display:grid;gap:0.75rem">
+            <div class="field" data-same><label>Bill from</label><div class="inp choice2"><span><b>Diamond permits — city fields</b><small>2026–27 · $9,000.00 planned, $450.00 left</small></span><svg class="i" width="15" height="15"><use href="#i-chevd"/></svg></div></div>
+            <div class="notice hl new" data-hl="bill-6"><button class="pin new" type="button" data-n="6" aria-label="Note 6">6</button><svg class="i" width="16" height="16"><use href="#i-warn"/></svg><div><b>Accounting already bills this line.</b> “Fall ball diamond fees 2026” charged 15U AAA and 13U AAA $1,800.00, and “Diamond fees 2026” charged 5 teams $6,750.00. If those were for this time, billing it here charges those teams twice.<div class="dr"><span class="lk">See the line</span></div></div></div>
+            <div class="notice hl new" data-hl="bill-7"><button class="pin new" type="button" data-n="7" aria-label="Note 7">7</button><svg class="i" width="16" height="16"><use href="#i-warn"/></svg><div><b>This bill is $3,200.00; the line has $450.00 left.</b> Pick another line, or bill it off-plan: the teams are billed and no line's budget is used.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt new" type="button" data-for="bill-6"><span class="nn">6</span><b>The Bill window sees Accounting's allocations</b><span class="tag">Ask 4</span><span class="tx">The mirror of note 4: allocations already on the line, by name, amount and teams. On this copy, 15U AAA and 13U AAA would be billed for fall diamonds twice. Owner and admins with Accounting only (no one else can bill).</span></button></li>
+      <li><button class="nt new" type="button" data-for="bill-7"><span class="nn">7</span><b>No silent switch to "No budget line"</b><span class="tag">Ask 4</span><span class="tx">Today, when the permit's line can't be billed, the window quietly offers no line, and a sent bill on no line is invisible to every line's Allocated figure. It says so instead. Off-plan stays possible; it's named.</span></button></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 5 · MONEY THE TREASURER CAN'T SEE ═══════════════════════════ -->
+<section data-sec="book" hidden>
+  <p class="lede"><b>Ask 16 A, T5, and the three findings with no home.</b> A club tournament's Payments card shows the event's book to people who hold Accounting. The treasurer reaches house league money from the figures that include it, by links, never a nav row. And Accounting's Overview stops leaving out the $1,740.00 families owe house league.</p>
+
+  <div class="sub-h">The tournament dashboard · 1280 <em>Harbourtown Invitational 2026, the owner. Tournament admin portal only.</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13d-shots/owner-tournament-dashboard-1280.webp" width="1280" height="900" alt="Today: the Payments card reads Not set up — payments aren't tracked here"></div>
+      <div class="fscroll v-new">
+        <div class="fr desk ground" style="width:1280px;height:420px">
+          <div class="strip" data-same>
+            <div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Events</span></div>
+            <div class="rc"><span class="pt">Dashboard</span><span class="doors"><small>Nov 23–25, 2026</small><span class="chip open">Open</span><span class="vr"></span><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div>
+          </div>
+          <div class="body">
+            <nav class="rail" data-same>
+              <div class="cell"><span class="ab">HI</span>Harbourtown Invitational 2026<svg class="i" width="15" height="15" style="margin-left:auto;color:var(--p-dim)"><use href="#i-chevd"/></svg></div>
+              <div class="sec">Operations</div>
+              <div class="it on"><svg class="i" width="15" height="15"><use href="#i-gauge"/></svg>Dashboard</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-users"/></svg>Teams</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-cal"/></svg>Schedule</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-trophy"/></svg>Results</div>
+            </nav>
+            <div class="main"><div class="pad" style="grid-template-columns:1fr 1fr;align-items:start">
+              <div class="dcard" data-same><div class="dh2"><b>Registration</b><small>4 of 8 spots · 4 this week</small></div><div class="drow"><span><b>75/100 · Registration health</b><span class="s">Review · 1 issue</span></span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div><div class="drow"><span><b>15U</b><span class="s">4 of 8 accepted</span></span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div><div class="drow"><span><b>4 missing email</b></span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+              <div class="dcard"><div class="dh2" data-same><b>Payments</b></div>
+                <div class="drow" data-same style="border-top:0"><span><b>Not set up — payments aren’t tracked here</b></span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div>
+                <div class="drow hl new" data-hl="book-1" style="border-radius:0"><button class="pin new" type="button" data-n="1" aria-label="Note 1" style="top:6px;left:6px">1</button><span style="padding-left:18px"><b>In the club's book: $1,440.00 in</b><span class="s">$500.00 float moved in · opens the event's book in Ledger</span></span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt new" type="button" data-for="book-1"><span class="nn">1</span><b>"In the club's book", for Accounting holders</b><span class="tag">New</span><span class="tx">Only on a club's tournament whose book has anything in it, and only for someone who holds Accounting. It opens the event's book in the club's Ledger. A transfer (the float) is named apart from money in, so the figure isn't inflated. No Accounting row in the tournament nav (B4 kept). Someone without Accounting (Sam Okafor) sees the card as it is today, with no dead link. The treasurer can't open tournaments at all, so they reach this book from Accounting, where it already is.</span></button></li>
+      <li><button class="nt" type="button" data-for="book-0"><span class="nn">·</span><b>The row above it</b><span class="tag">Ask 11</span><span class="tx">"Not set up — payments aren't tracked here" is about team fees on the platform, and its wording has been an open call since 2026-10-13. With a club-book line under it, it still reads true. Recommended: leave it; the new line says whose book it is.</span></button></li>
+    </ol>
+  </div>
+
+  <div class="sub-h">The treasurer's Accounting Overview · 1280 <em>F-T5-1 · F-O6-8 · F-T5-7 · F-T3-1</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13d-shots/treasurer-accounting-overview-1280.webp" width="1280" height="1471" alt="Today: Cash on hand, Owed by the teams, Waiting on you, the budget table and the club's books"></div>
+      <div class="fscroll v-new">
+        <div class="fr desk ground" style="width:1280px;height:880px">
+          <div class="strip" data-same>
+            <div class="lc"><span class="brand"><svg class="i" width="18" height="18"><use href="#i-logo"/></svg>FieldLogic<em>HQ</em></span><span class="sdiv"></span><span class="area">Club</span></div>
+            <div class="rc"><span class="pt">Accounting</span><span class="doors"><span class="vpill"><svg class="i" width="14" height="14"><use href="#i-globe"/></svg>View site</span><svg class="i" width="18" height="18"><use href="#i-bell"/></svg><svg class="i" width="19" height="19"><use href="#i-help"/></svg><svg class="i" width="18" height="18"><use href="#i-user"/></svg></span></div>
+          </div>
+          <div class="body">
+            <nav class="rail" data-same>
+              <div class="cell"><span class="ab">HM</span>Harbourtown Minor Ball</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-grid"/></svg>Overview</div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-file"/></svg>Permits</div>
+              <div class="sec">Club</div>
+              <div class="it on"><svg class="i" width="15" height="15"><use href="#i-dollar"/></svg>Accounting<span class="cnt">3</span></div>
+              <div class="it"><svg class="i" width="15" height="15"><use href="#i-org"/></svg>Organization</div>
+            </nav>
+            <div class="main">
+              <div class="tabsrow" style="background:var(--p-card);border-bottom:1px solid var(--p-line)" data-same><span class="tab on">Overview</span><span class="tab">Budget</span><span class="tab">Teams</span><span class="tab">Ledger</span><span class="tab">Bank</span><span class="tab">Allocations</span><span class="tab">Payment requests</span><span class="tab">Budget vs. Actual</span></div>
+              <div class="pad" style="padding-top:1.1rem;gap:0.8rem">
+                <div class="eye" data-same>Where the club stands · today, Nov 13</div>
+                <div class="cband three">
+                  <div data-same><span class="k">Cash on hand</span><span class="bv">$2,870.00</span><p>the club's 4 books · $1,060.00 in 2 lines not yet cleared</p></div>
+                  <div class="hl re" data-hl="book-2" style="border-radius:0"><button class="pin re" type="button" data-n="2" aria-label="Note 2" style="top:6px;left:6px">2</button><span class="k">Owed to the club</span><span class="bv">$12,690.00</span><p>teams $10,950.00 ($3,450.00 overdue) · house league $1,740.00 (12 players)</p></div>
+                  <div data-same><span class="k">Waiting on you</span><span class="bv amb">$920.00</span><p>3 requests · 3 holding up a payout</p></div>
+                </div>
+                <div class="card" style="padding:0.9rem 1rem">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem" data-same><b style="font-size:16px">2026–27 against the budget</b><small>To Nov 13</small></div>
+                  <div style="border:1px solid var(--p-line);border-radius:8px;overflow:hidden">
+                  <table class="tbl">
+                    <thead data-same><tr><th></th><th class="r">Planned</th><th class="r">So far</th></tr></thead>
+                    <tbody>
+                      <tr class="b" data-same><td>Revenue</td><td class="r">$16,550.00</td><td class="r">$8,045.00</td></tr>
+                      <tr class="cap2 hl new" data-hl="book-3"><td colspan="3"><button class="pin new" type="button" data-n="3" aria-label="Note 3" style="top:-4px;left:-8px">3</button>includes house league fees $2,355.00 · Harbourtown Invitational 2026 $1,440.00</td></tr>
+                      <tr class="sub" data-same><td>From the teams, on allocations</td><td class="r">$11,550.00</td><td class="r">$2,400.00</td></tr>
+                      <tr class="sub" data-same><td>From the teams, on request</td><td></td><td class="r">$350.00</td></tr>
+                      <tr class="b" data-same><td>Expenses</td><td class="r">$46,000.00</td><td class="r">$5,510.00</td></tr>
+                      <tr class="sub" data-same><td>Paid to teams on request</td><td></td><td class="r">$120.00</td></tr>
+                      <tr class="sub" data-same><td>Off-plan</td><td></td><td class="r">$3,660.00</td></tr>
+                      <tr class="b" data-same><td>Net for 2026–27</td><td class="r">($29,450.00)</td><td class="r">$2,535.00</td></tr>
+                    </tbody>
+                  </table>
+                  </div>
+                  <p style="margin:0.6rem 0 0;font-size:13px;color:var(--p-ink2)" data-same>Headroom: $40,490.00 of the year's planned spending is left.</p>
+                </div>
+                <div class="card">
+                  <div style="display:flex;justify-content:space-between;padding:0.85rem 1rem" data-same><b style="font-size:16px">The club's books</b><small>4 ledgers</small></div>
+                  <table class="tbl">
+                    <tbody>
+                      <tr data-same><td>Harbourtown Minor Ball — General</td><td><span class="chip neu">Club</span></td><td></td><td class="r">($1,425.00)</td></tr>
+                      <tr data-same><td>Harbourtown Invitational 2026</td><td><span class="chip neu">Tournament</span></td><td></td><td class="r">$1,940.00</td></tr>
+                      <tr data-same><td>2026 Fall House League</td><td><span class="chip neu">House league</span></td><td></td><td class="r">$1,155.00</td></tr>
+                      <tr data-same><td>2026 Early Fall League</td><td><span class="chip neu">House league</span></td><td></td><td class="r">$1,200.00</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="hl new" data-hl="book-4" style="justify-self:start;padding:0.2rem 0.4rem;margin:-0.2rem -0.4rem"><button class="pin new" type="button" data-n="4" aria-label="Note 4">4</button><span class="lk" style="display:inline-flex;align-items:center;gap:0.3rem">House league money: 2026 Fall House League · $1,740.00 still owing<svg class="i" width="14" height="14"><use href="#i-chev"/></svg></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt re" type="button" data-for="book-2"><span class="nn">2</span><b>"Owed by the teams" becomes the owner's "Owed to the club"</b><span class="tag">Restyled · Ask 5</span><span class="tx">The same figure the owner's band shows: teams plus each live season's Still owing, summed (no new query). The caption stays plain text, as on the owner's band; the door to the season is the line under the club's books (note 4). F-T5-1 and F-O6-8's home. The two "Outstanding" labels elsewhere stay 13e's (F-O6-5).</span></button></li>
+      <li><button class="nt new" type="button" data-for="book-3"><span class="nn">3</span><b>Revenue says what it includes</b><span class="tag">New · Ask 5</span><span class="tx">The money is already in Revenue (F-T3-1 was half right): fees received on the house league books and money on the tournament's book. One plain caption names them; their doors are the books' own rows below and the house league line (note 4). A treasurer can't open tournaments, so the tournament's door is its book in Ledger. Amounts on the drawing are the books' balances today; the build reads them from the year's report.</span></button></li>
+      <li><button class="nt new" type="button" data-for="book-4"><span class="nn">4</span><b>One line under the books: house league money</b><span class="tag">New</span><span class="tx">The shipped pattern is a door under the card ("Budget vs. Actual ›"), never a link in a cell. It opens the live season's Money page, where the treasurer can already read who owes (today only if they know the address). With two live seasons, one line each; never House league's season list, which a treasurer can't open. The books' rows still open their books. T5: a link from the figures, no nav row.</span></button></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 6 · A COACH'S REQUEST ═══════════════════════════ -->
+<section data-sec="coach" hidden>
+  <p class="lede"><b>F-T4-7 and F-T4-10: the one place 13d reaches the Coaches Portal.</b> The coach's request asks "Payment method" in both directions and saves it in words the treasurer's Approve can't read. After approval the coach sees "approved" and not how they were paid, though the club recorded it. D1 and D3 stand: this is the coach's own request screen, not the club looking into a coach's books.</p>
+
+  <div class="sub-h">The coach's request window · 390 <em>Priya Nair, 13U AAA: "Umpire clinic, two coaches" · $120.00, money back from the club, approved. Today shows 15U AAA's request to the club (the same window); the dates are the copy's own.</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13d-shots/coach15aaa-request-window-390.webp" width="390" height="2021" alt="Today: the coach's request window shows Payment method etransfer"></div>
+      <div class="fscroll v-new" style="display:flex;gap:28px">
+        <div class="fr ph" style="height:760px;grid-template-rows:auto minmax(0,1fr) auto;background:var(--p-card)">
+          <div class="pbar" data-same style="align-items:flex-start"><span class="gl"><svg class="i" width="20" height="20"><use href="#i-back"/></svg></span><span style="flex:1;min-width:0;padding-top:0.55rem"><span class="nm" style="display:block">Club request</span><small>Raised Nov 13, 2026 · approved Nov 13, 2026</small></span></div>
+          <div class="ppad" style="padding-bottom:1rem">
+            <div data-same><div class="flab">Direction</div><span class="chip from">↙ From club</span></div>
+            <div data-same><div class="flab">Description</div><div>Umpire clinic, two coaches</div></div>
+            <div data-same><div class="flab">Amount</div><div>$120.00</div></div>
+            <div class="hl re" data-hl="coach-1" style="padding:0.3rem;margin:-0.3rem"><button class="pin re" type="button" data-n="1" aria-label="Note 1" style="left:-26px">1</button><div class="flab">How you'd like the club to pay you</div><div>E-Transfer</div></div>
+            <div class="hl new" data-hl="coach-2" style="padding:0.3rem;margin:-0.3rem"><button class="pin new" type="button" data-n="2" aria-label="Note 2" style="left:-26px">2</button><div class="flab">Paid</div><div>$120.00 by E-Transfer on Oct 19</div><small>Reference 6602</small></div>
+          </div>
+          <div class="psheet" style="position:static;display:block"><div class="df" data-same><span class="btn">Close</span></div></div>
+        </div>
+        <div class="fr ph" style="height:760px;grid-template-rows:auto minmax(0,1fr) auto;background:var(--p-card)">
+          <div class="pbar" data-same><span class="gl"><svg class="i" width="20" height="20"><use href="#i-back"/></svg></span><span class="nm">Make a request</span></div>
+          <div class="ppad" style="padding-bottom:1rem">
+            <div class="field" data-same><label>Direction</label><div class="inp"><span>The club pays us</span><svg class="i" width="15" height="15"><use href="#i-chevd"/></svg></div></div>
+            <div class="field" data-same><label>Description</label><div class="inp"><span>Umpire clinic, two coaches</span></div></div>
+            <div class="field" data-same><label>Amount</label><div class="inp"><span>$120.00</span></div></div>
+            <div class="field hl re" data-hl="coach-3" style="padding:0.3rem;margin:-0.3rem"><button class="pin re" type="button" data-n="3" aria-label="Note 3" style="left:-26px">3</button><label>How should the club pay you?</label><div class="inp"><span>E-Transfer</span><svg class="i" width="15" height="15"><use href="#i-chevd"/></svg></div><small>Cash, E-Transfer, Cheque or Other. Optional.</small></div>
+          </div>
+          <div class="psheet" style="position:static;display:block"><div class="df" data-same><span class="btn">Cancel</span><span class="btn lime">Send</span></div></div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt re" type="button" data-for="coach-1"><span class="nn">1</span><b>The answer, in the coach's own words</b><span class="tag">Restyled</span><span class="tx">Today the window prints "Payment method · etransfer", the raw code. It reads the same words the coach chose.</span></button></li>
+      <li><button class="nt new" type="button" data-for="coach-2"><span class="nn">2</span><b>Paid: how, when, the reference</b><span class="tag">New · Ask 10</span><span class="tx">Approving money back is paying it, in one step. The club records the date, method and reference, and the coach's screen already loads them. They're just not shown. With this, the list row reads "Paid Oct 19" instead of "Approved". Money to the club gets the twin: "The club received it on Nov 3 · E-Transfer · reference 7710". Plain rows, as the window's other facts. (Dates are the copy's own; its seed backdates the payment.)</span></button></li>
+      <li><button class="nt re" type="button" data-for="coach-3"><span class="nn">3</span><b>The coach is asked what the treasurer needs</b><span class="tag">Restyled · Ask 9</span><span class="tx">"The club pays us": "How should the club pay you?" (Cash, E-Transfer, Cheque, Other). "We pay the club": "How are you paying the club?" The answer is saved the way Approve reads it, so it pre-fills. Today it never does: "Card" and "E-Transfer" aren't Approve's words. Card stays an option only for paying the club.</span></button></li>
+    </ol>
+  </div>
+
+  <div class="sub-h">The treasurer reads it · crop <em>Payment requests, the same request</em></div>
+  <div class="stage">
+    <div class="fcol">
+      <div class="fscroll v-today"><img class="cap" src="stage13d-shots/treasurer-payment-request-window-1280.webp" width="1280" height="900" alt="Today: the treasurer's request window reads How they'd like it: E-Transfer"></div>
+      <div class="fscroll v-new">
+        <div class="fr" style="width:640px;background:var(--p-card)">
+          <div style="padding:1.1rem 1.4rem 1.3rem">
+            <div class="facts">
+              <div class="r" data-same><span>Direction</span><b>From club — the club pays 13U AAA</b></div>
+              <div class="r" data-same><span>For</span><b>Umpire clinic, two coaches</b></div>
+              <div class="r" data-same><span>Filed by the coach as</span><b>Money back for a cost</b></div>
+              <div class="r" data-same><span>Asked by</span><b>Priya Nair · Nov 13</b></div>
+              <div class="r hl re" data-hl="coach-4" style="border-radius:4px"><button class="pin re" type="button" data-n="4" aria-label="Note 4" style="top:-4px;left:-30px">4</button><span>How they'd like to be paid</span><b>E-Transfer</b></div>
+              <div class="r" data-same><span>Decided</span><b>Approved Oct 19 by Avery Chen · E-Transfer</b></div>
+              <div class="r" data-same><span>Reference</span><b>6602</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li><button class="nt re" type="button" data-for="coach-4"><span class="nn">4</span><b>The line now says what the coach answered</b><span class="tag">Restyled</span><span class="tx">"How they'd like it" was true only if the coach read "Payment method" as a wish. Sometimes they meant how they paid the vendor (the walk's "Card"). Asked plainly, the answer arrives as said. Money to the club keeps "How it's coming". Requests filed before the change read "Payment method (as filed)".</span></button></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 7 · PHONE ═══════════════════════════ -->
+<section data-sec="phone" hidden>
+  <p class="lede"><b>Every new thing at 390, with the bottom bar.</b> Nothing new needs its own phone shape. The notice is a row; the ask is a This morning card in the two-column grid the phone already uses; the line window and the fair shares are full-screen sheets with rows. The league admin gains the most: on a phone today, the no-time line stops at "…any time yet." with no next step.</p>
+  <div class="sub-h">League admin · owner · treasurer <em>the More sheet doesn't change for anyone</em></div>
+  <div class="fscroll v-today" style="display:flex;gap:24px;align-items:flex-start">
+    <img class="cap" src="stage13d-shots/leagueadmin-notifications-390.webp" width="390" height="844" alt="Today: the league admin's notifications on a phone, empty">
+    <img class="cap" src="stage13d-shots/owner-overview-390.webp" width="390" height="1917" alt="Today: the owner's Overview on a phone">
+    <img class="cap" src="stage13d-shots/treasurer-accounting-overview-390.webp" width="390" height="1483" alt="Today: the treasurer's Accounting Overview on a phone">
+  </div>
+  <div class="fscroll v-new" style="display:flex;gap:24px;align-items:flex-start">
+    <!-- league admin season -->
+    <div class="fr ph ground" style="height:760px">
+      <div class="pbar" data-same><span class="gl"><svg class="i" width="20" height="20"><use href="#i-back"/></svg></span><span class="nm">2026 Fall House League</span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-globe"/></svg></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-help"/></svg></span></div>
+      <div style="position:relative;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr)">
+        <div class="ptabs" data-same><span class="on">Overview</span><span>Registrations</span><span>Teams &amp; draft</span><span>Sched…</span></div>
+        <div class="ppad">
+          <small data-same>Dec 4, 2026 – Feb 11, 2027 · Baseball</small>
+          <div class="hl new" data-hl="phone-1" style="padding:0.4rem;margin:-0.4rem;display:grid;gap:0.5rem"><button class="pin new" type="button" data-n="1" aria-label="Note 1">1</button>
+            <p class="timeln" style="margin:0">The club hasn’t given this season any time yet.</p>
+            <span class="btn" style="justify-content:center;min-height:44px"><svg class="i" width="15" height="15"><use href="#i-clock"/></svg>Ask for time</span>
+          </div>
+          <div class="eye" data-same>This morning</div>
+          <div class="morn two" data-same style="gap:0.6rem">
+            <div class="mc" style="min-height:104px;padding:0.8rem"><div class="tl">To review</div><div class="n">15</div><p>registrations · oldest Oct 31</p></div>
+            <div class="mc" style="min-height:104px;padding:0.8rem"><div class="tl">Teams</div><div class="n">8</div><p>8 players not on a team</p></div>
+          </div>
+        </div>
+        <div class="bnav" data-same><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-grid"/></svg></span><span class="lb">Overview</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="lb">Calendar</span></span><span class="bt on"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="lb">House league</span><span class="dot">15</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-dots"/></svg></span><span class="lb">More</span></span></div>
+      </div>
+    </div>
+    <!-- league admin bell -->
+    <div class="fr ph ground" style="height:760px">
+      <div class="pbar" data-same><span class="nm">Notifications</span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-globe"/></svg></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-help"/></svg></span></div>
+      <div style="position:relative;min-height:0">
+        <div class="ppad">
+          <div class="nfil" data-same><span class="pl on">All</span><span class="pl">Needs attention</span><span class="pl">Activity</span></div>
+          <div class="card hl new" data-hl="phone-2"><button class="pin new" type="button" data-n="2" aria-label="Note 2">2</button>
+            <div class="nrow" style="padding:0.85rem 0.9rem">
+              <span class="ic"><svg class="i" width="17" height="17"><use href="#i-clock"/></svg></span>
+              <div><div class="ttl">The club gave house league time</div><p class="clamp">“Saturdays at Kinsmen, December 2026” gives 2026 Fall House League 2 hours a week: Saturdays at Kinsmen Park, Dec 5 – Dec 19. Divide it into games and practices.</p><span class="meta">Just now · Morgan Ellis</span></div>
+              <span class="ud"></span>
+            </div>
+          </div>
+        </div>
+        <div class="bnav" data-same><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-grid"/></svg></span><span class="lb">Overview</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="lb">Calendar</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="lb">House league</span><span class="dot">15</span></span><span class="bt on"><span class="w"><svg class="i" width="20" height="20"><use href="#i-dots"/></svg></span><span class="lb">More</span></span></div>
+      </div>
+    </div>
+    <!-- owner this morning -->
+    <div class="fr ph ground" style="height:760px">
+      <div class="pbar" data-same><span class="nm">Harbourtown Minor Ball</span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-globe"/></svg></span><span class="gl"><svg class="i" width="19" height="19"><use href="#i-help"/></svg></span></div>
+      <div style="position:relative;min-height:0">
+        <div class="ppad" style="gap:0.6rem">
+          <div class="eye" data-same>This morning</div>
+          <div class="morn two" style="gap:0.55rem">
+            <div class="mc" data-same style="min-height:112px;padding:0.8rem"><div class="tl">Installments due</div><div class="n">12</div><p>in the next 14 days · 7 overdue</p></div>
+            <div class="mc" data-same style="min-height:112px;padding:0.8rem"><div class="tl">Assistant coaches</div><div class="n">0</div><p>nothing waiting</p></div>
+            <div class="mc" data-same style="min-height:112px;padding:0.8rem"><div class="tl">League registrations</div><div class="n">15</div><p>waiting for review</p></div>
+            <div class="mc" data-same style="min-height:112px;padding:0.8rem"><div class="tl">Outside the permit</div><div class="n">8</div><p>bookings on Sat, Dec 5 and Sat, Dec 12</p></div>
+            <div class="mc hl new" data-hl="phone-3" style="min-height:112px;padding:0.8rem"><button class="pin new" type="button" data-n="3" aria-label="Note 3">3</button><div class="tl">House league asks for time</div><div class="n">1</div><p>2026 Fall House League · asked Nov 13</p></div>
+          </div>
+        </div>
+        <div class="bnav" data-same><span class="bt on"><span class="w"><svg class="i" width="20" height="20"><use href="#i-grid"/></svg></span><span class="lb">Overview</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-cal"/></svg></span><span class="lb">Calendar</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-users"/></svg></span><span class="lb">Rep teams</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-dollar"/></svg></span><span class="lb">Accounting</span><span class="dot">3</span></span><span class="bt"><span class="w"><svg class="i" width="20" height="20"><use href="#i-dots"/></svg></span><span class="lb">More</span></span></div>
+      </div>
+    </div>
+    <!-- treasurer line sheet -->
+    <div class="fr ph" style="height:760px;background:var(--p-card);grid-template-rows:minmax(0,1fr)">
+      <div class="psheet" style="position:relative">
+        <div class="dh" data-same><div class="tt"><span class="ey">Budget line · 2026–27</span><b>Dome time — winter dome</b></div><span class="gl"><svg class="i" width="20" height="20"><use href="#i-x"/></svg></span></div>
+        <div class="db">
+          <div class="pfig" data-same><div><span class="k">Planned</span><b>$27,000.00</b></div><div><span class="k">Allocated</span><b>$0.00</b></div></div>
+          <div class="hl new" data-hl="phone-4"><button class="pin new" type="button" data-n="4" aria-label="Note 4">4</button><div class="lbl">Being billed (draft)</div><div class="rows"><div class="rw held" style="grid-template-columns:minmax(0,1fr) 16px;min-height:64px"><span><b>Winter dome 2026–27 <span class="ex">Example</span></b><span class="s amb">Draft · $27,000.00 to 6 teams when it's sent</span></span><svg class="i" width="15" height="15"><use href="#i-chev"/></svg></div></div></div>
+          <div data-same><div class="lbl">Allocated to teams</div><div class="rows"><div class="rw" style="grid-template-columns:1fr;min-height:44px"><span class="s">Nothing allocated yet.</span></div></div></div>
+          <div class="rows" data-same><div class="rw" style="grid-template-columns:1fr;gap:0.6rem"><span><b>$27,000.00 not allocated</b><span class="s">A draft schedule is billing all of it.</span></span><span class="btn" style="justify-content:center;min-height:44px">Allocate $27,000.00</span></div></div>
+        </div>
+        <div class="df" data-same><span class="btn">Done</span></div>
+      </div>
+    </div>
+    <!-- fair shares sheet -->
+    <div class="fr ph" style="height:760px;background:var(--p-card);grid-template-rows:minmax(0,1fr)">
+      <div class="psheet hl new" data-hl="phone-5" style="position:relative"><button class="pin new" type="button" data-n="5" aria-label="Note 5" style="top:6px;left:6px">5</button>
+        <div class="dh"><div class="tt"><span class="ey">Schedule · draft · read only</span><b>Winter dome 2026–27 · fair shares</b></div><span class="gl"><svg class="i" width="20" height="20"><use href="#i-x"/></svg></span></div>
+        <div class="db">
+          <small>An owner or an admin changes this in Schedules. Nothing is billed until they send it.</small>
+          <div class="pfig"><div><span class="k">The bill</span><b>$27,000.00</b></div><div><span class="k">Hours</span><b>200 · $135.00 an hour</b></div></div>
+          <div class="rows">
+            <div class="rw" style="grid-template-columns:minmax(0,1fr) auto;min-height:48px"><span><b>14U AA</b><span class="s">40 hours</span></span><span>$5,400.00</span></div>
+            <div class="rw" style="grid-template-columns:minmax(0,1fr) auto;min-height:48px"><span><b>15U AA</b><span class="s">40 hours</span></span><span>$5,400.00</span></div>
+            <div class="rw" style="grid-template-columns:minmax(0,1fr) auto;min-height:48px"><span><b>15U AAA</b><span class="s">36 hours</span></span><span>$4,860.00</span></div>
+            <div class="rw" style="grid-template-columns:minmax(0,1fr) auto;min-height:48px"><span><b>13U AAA</b><span class="s">36 hours</span></span><span>$4,860.00</span></div>
+            <div class="rw" style="grid-template-columns:minmax(0,1fr) auto;min-height:48px"><span class="s">2 more teams</span><svg class="i" width="15" height="15"><use href="#i-chevd"/></svg></div>
+          </div>
+        </div>
+        <div class="df"><span class="btn">Done</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="stage wide" style="margin-top:14px">
+    <ol class="notes">
+      <li><button class="nt new" type="button" data-for="phone-1"><span class="nn">1</span><b>A real next step on a phone</b><span class="tag">New</span><span class="tx">Full-width 44 px button under the sentence. Today the phone drops the second sentence, so the league admin has nothing to do.</span></button></li>
+      <li><button class="nt new" type="button" data-for="phone-2"><span class="nn">2</span><b>The notice as a row</b><span class="tag">New</span><span class="tx">Its door is a 44 px row, like every phone door. Reached from More › Notifications (N7: first in the sheet). Until it's read, the More tab carries the unread count (the shipped bar already does this), which is how a phone learns there's something new.</span></button></li>
+      <li><button class="nt new" type="button" data-for="phone-3"><span class="nn">3</span><b>The ask in the phone's grid</b><span class="tag">New</span><span class="tx">The two-column This morning grid the phone already uses (the capture shows six cards). The seventh card sits alone in its row, as Outside the permit did before it.</span></button></li>
+      <li><button class="nt new" type="button" data-for="phone-4"><span class="nn">4</span><b>The line window as a sheet</b><span class="tag">New</span><span class="tx">Figures as rows (the phone rule), then Being billed with one tap to the shares.</span></button></li>
+      <li><button class="nt new" type="button" data-for="phone-5"><span class="nn">5</span><b>Fair shares as rows</b><span class="tag">New</span><span class="tx">Team and hours on the left, the share on the right; past four teams, the rest fold. Read only, no Schedules link.</span></button></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 8 · ASKS ═══════════════════════════ -->
+<section data-sec="asks" hidden>
+  <p class="lede">Only what's open. <b>Asks 14, 15, 16 and C6 are ruled and not re-asked</b>; these are how to carry them out, and where the findings with no home go. Each has a recommendation (A) and the alternative. Pick, then copy the short answer back.</p>
+  <div class="asks" id="asks">
+    <div class="ask" data-q="1"><h3><span class="n">13d-1</span>When time is given, how is the league admin told?<span class="ids">F-O3-7 · tab 2</span></h3>
+      <div class="opts"><label><input type="radio" name="q1" value="A" checked><span><b>A · A bell (recommended).</b> Email copies stay off by default; anyone can turn this one on, like every other notice. Nothing new for /legal.</span></label><label><input type="radio" name="q1" value="B"><span><b>B · A bell and an email, on by default.</b> New mail to staff: /legal reads the words (CASL: transactional, to a signed-in staff member) before the build hands off.</span></label></div><button class="go" type="button" data-goto="given">See it on tab 2</button></div>
+    <div class="ask" data-q="2"><h3><span class="n">13d-2</span>How does "Ask for time" reach the owner and admins?<span class="ids">Ask 14 A · tab 3</span></h3>
+      <div class="opts"><label><input type="radio" name="q2" value="A" checked><span><b>A · This morning card, plus one bell when it's asked (recommended).</b> The card holds it until time is given; the bell reaches someone who isn't on the Overview that week.</span></label><label><input type="radio" name="q2" value="B"><span><b>B · The This morning card only</b>, as ruled and no more.</span></label></div><button class="go" type="button" data-goto="ask">See it on tab 3</button></div>
+    <div class="ask" data-q="3"><h3><span class="n">13d-3</span>Where does the treasurer read a draft bill's fair shares?<span class="ids">F-T2-3 · tab 4</span></h3>
+      <div class="opts"><label><input type="radio" name="q3" value="A" checked><span><b>A · A read-only window opened from the budget line (recommended).</b> The line is where their question starts ("what is this line committed to?").</span></label><label><input type="radio" name="q3" value="B"><span><b>B · A "Being billed" group at the top of Allocations.</b> Puts drafts beside real charges, which blurs "billed" and "not yet".</span></label></div><button class="go" type="button" data-goto="bill">See it on tab 4</button></div>
+    <div class="ask" data-q="4"><h3><span class="n">13d-4</span>Does 13d close the double bill from the Schedules side too?<span class="ids">F-T2-4 · tab 4, notes 6–7</span></h3>
+      <div class="opts"><label><input type="radio" name="q4" value="A" checked><span><b>A · Yes (recommended).</b> The Bill window names Accounting's allocations on its line, and says so instead of silently offering "No budget line". Warns, never blocks. Needs the uncommitted Bill window work committed first.</span></label><label><input type="radio" name="q4" value="B"><span><b>B · Leave it to the several-permits build</b>, which rewrites the bill anyway. Until then this club can bill 15U AAA and 13U AAA twice for fall diamonds.</span></label></div><button class="go" type="button" data-goto="bill">See it on tab 4</button></div>
+    <div class="ask" data-q="5"><h3><span class="n">13d-5</span>Where does house league money owed go in Accounting?<span class="ids">F-T5-1 · F-O6-8 · F-T3-1 · tab 5</span></h3>
+      <div class="opts"><label><input type="radio" name="q5" value="A" checked><span><b>A · In 13d: the treasurer's "Owed by the teams" becomes the owner's "Owed to the club"</b> (teams + house league, the band's own sum), and Revenue names what it includes. One figure, one name, both screens (recommended).</span></label><label><input type="radio" name="q5" value="B"><span><b>B · In 13d, a fourth tile</b> "Owed by house league families" beside the three.</span></label><label><input type="radio" name="q5" value="C"><span><b>C · Leave it to 13e</b> (numbers open their lines).</span></label></div><button class="go" type="button" data-goto="book">See it on tab 5</button></div>
+    <div class="ask" data-q="6"><h3><span class="n">13d-6</span>The league admin's "Club time · not divided" tile, held for 13d by 13b<span class="ids">tab 3</span></h3>
+      <div class="opts"><label><input type="radio" name="q6" value="A" checked><span><b>A · Don't build it (recommended).</b> The season line says the same thing on the same page, 16 px above, with its door. The placeholder comment and test go.</span></label><label><input type="radio" name="q6" value="B"><span><b>B · Build it</b> as a third This morning tile while time is given and not divided.</span></label></div><button class="go" type="button" data-goto="ask">See it on tab 3</button></div>
+    <div class="ask" data-q="7"><h3><span class="n">13d-7</span>A new season with no time<span class="ids">F-L5-6 · tab 3</span></h3>
+      <div class="opts"><label><input type="radio" name="q7" value="A" checked><span><b>A · In 13d: the same "Ask for time" on a draft season, and "given" counts only time no other season uses (recommended).</b> Otherwise a spring season made while winter runs reads "given" off winter's slots.</span></label><label><input type="radio" name="q7" value="B"><span><b>B · The button only</b>; leave how "given" is counted.</span></label></div><button class="go" type="button" data-goto="ask">See it on tab 3</button></div>
+    <div class="ask" data-q="8"><h3><span class="n">13d-8</span>Two notices nobody owns: the registrar when time is divided, and the owner when a league admin or registrar joins<span class="ids">13a prompt · walk O1</span></h3>
+      <div class="opts"><label><input type="radio" name="q8" value="A" checked><span><b>A · Neither in 13d (recommended).</b> The registrar doesn't divide or publish time; the public schedule is their answer. "Someone joined" is for every role, not a hand-off: its own small item.</span></label><label><input type="radio" name="q8" value="B"><span><b>B · Both in 13d.</b></span></label></div></div>
+    <div class="ask" data-q="9"><h3><span class="n">13d-9</span>The coach's "Payment method"<span class="ids">F-T4-7 · Coaches Portal · tab 6</span></h3>
+      <div class="opts"><label><input type="radio" name="q9" value="A" checked><span><b>A · Ask the coach what the club needs (recommended):</b> "How should the club pay you?" or "How are you paying the club?", saved so Approve pre-fills.</span></label><label><input type="radio" name="q9" value="B"><span><b>B · Keep the coach's question; the treasurer reads "How they paid".</b> True, but Approve still never pre-fills.</span></label></div><button class="go" type="button" data-goto="coach">See it on tab 6</button></div>
+    <div class="ask" data-q="10"><h3><span class="n">13d-10</span>After approval, the coach sees how and when they were paid<span class="ids">F-T4-10 · Coaches Portal · tab 6</span></h3>
+      <div class="opts"><label><input type="radio" name="q10" value="A" checked><span><b>A · In 13d (recommended):</b> "Paid · $120.00 by E-Transfer on Oct 19 · Reference 6602". The record already exists and the coach's screen already loads it. It sits on the same window as 13d-9.</span></label><label><input type="radio" name="q10" value="B"><span><b>B · Out</b>; it isn't in the ladder's words. Later, with 13f.</span></label></div><button class="go" type="button" data-goto="coach">See it on tab 6</button></div>
+    <div class="ask" data-q="11"><h3><span class="n">13d-11</span>The tournament card's first row, open since 2026-10-13<span class="ids">Ask 16 A · tab 5</span></h3>
+      <div class="opts"><label><input type="radio" name="q11" value="A" checked><span><b>A · Leave "Not set up — payments aren't tracked here" as it is (recommended).</b> The new line under it says it's the club's book.</span></label><label><input type="radio" name="q11" value="B"><span><b>B · Reword it to "Team fees aren't tracked in this event"</b> when a club-book line shows.</span></label></div><button class="go" type="button" data-goto="book">See it on tab 5</button></div>
+  </div>
+  <div class="answers">
+    <div class="copyrow"><button type="button" id="copy">Copy my answers</button><span id="copied">Paste them back into the chat.</span></div>
+    <textarea id="ans" readonly aria-label="Your answers"></textarea>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  var doc = document.getElementById('doc');
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.stabs button'));
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section[data-sec]'));
+  var viewrow = document.getElementById('viewrow');
+  var COMPARE = { given: 1, ask: 1, bill: 1, book: 1, coach: 1, phone: 1 };
+  function show(name, scroll) {
+    if (!secs.some(function (s) { return s.getAttribute('data-sec') === name; })) name = 'overview';
+    secs.forEach(function (s) { s.hidden = s.getAttribute('data-sec') !== name; });
+    tabs.forEach(function (b) {
+      var on = b.getAttribute('data-t') === name;
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on) { try { b.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {} }
+    });
+    viewrow.hidden = !COMPARE[name];
+    if (location.hash.slice(1) !== name) { try { history.replaceState(null, '', '#' + name); } catch (e) { location.hash = name; } }
+    if (scroll) window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-t'), true); }); });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1), false); });
+  show(location.hash.slice(1) || 'overview', false);
+
+  document.querySelectorAll('[data-show]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var v = b.getAttribute('data-show');
+      doc.classList.toggle('show-today', v === 'today'); doc.classList.toggle('show-new', v === 'new');
+      document.querySelectorAll('[data-show]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      // "Show only what differs" dims the drawn frames; the Today captures are pictures, so it has nothing to dim there.
+      var dif = document.querySelector('[data-view="differs"]');
+      if (dif) { dif.disabled = v === 'today'; dif.title = v === 'today' ? 'Works on the With 13d drawings' : ''; }
+      if (v === 'today') { doc.classList.remove('differs'); document.querySelectorAll('[data-view]').forEach(function (x) { x.setAttribute('aria-pressed', x.getAttribute('data-view') === 'all' ? 'true' : 'false'); }); }
+    });
+  });
+  document.querySelectorAll('[data-view]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      doc.classList.toggle('differs', b.getAttribute('data-view') === 'differs');
+      document.querySelectorAll('[data-view]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    });
+  });
+
+  function flash(el) { if (!el) return; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1300); }
+  document.addEventListener('click', function (e) {
+    var pin = e.target.closest('.pin');
+    if (pin) {
+      e.preventDefault();
+      var host = pin.closest('[data-hl]'); if (!host) return;
+      var note = document.querySelector('.nt[data-for="' + host.getAttribute('data-hl') + '"]');
+      if (note) { note.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); flash(note); }
+      return;
+    }
+    var nt = e.target.closest('.nt');
+    if (nt) {
+      var id = nt.getAttribute('data-for');
+      var hl = document.querySelector('[data-hl="' + id + '"]');
+      if (hl) {
+        if (doc.classList.contains('show-today')) { var nb = document.querySelector('[data-show="new"]'); if (nb) nb.click(); }
+        hl.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' }); flash(hl);
+      }
+      flash(nt);
+      return;
+    }
+    var go = e.target.closest('[data-goto]');
+    if (go) { show(go.getAttribute('data-goto'), true); }
+  });
+
+  var ans = document.getElementById('ans');
+  function answers() {
+    var parts = [];
+    document.querySelectorAll('.ask[data-q]').forEach(function (a) {
+      var q = a.getAttribute('data-q'); var c = a.querySelector('input:checked');
+      parts.push('13d-' + q + ' ' + (c ? c.value : '?'));
+    });
+    ans.value = 'Stage 13d asks: ' + parts.join(', ');
+  }
+  document.querySelectorAll('.ask input').forEach(function (i) { i.addEventListener('change', answers); });
+  answers();
+  document.getElementById('copy').addEventListener('click', function () {
+    var done = document.getElementById('copied');
+    try {
+      navigator.clipboard.writeText(ans.value).then(function () { done.textContent = 'Copied. Paste them back into the chat.'; }, function () { ans.select(); done.textContent = 'Select-all is on: copy with your keyboard.'; });
+    } catch (e) { ans.select(); done.textContent = 'Select-all is on: copy with your keyboard.'; }
+  });
+})();
+</script>

@@ -142,3 +142,11 @@ no "was" bill figure: the product keeps no earlier bill to quote, and a sent bil
 coaches and families are unchanged. **Why:** the permit, the schedule and its bill were three places that did not point at each
 other, so a pulled date reached the schedule only if someone remembered it. **Success:** from a schedule, one click reaches its
 permit, its pulled dates and their fix, and its bill; nothing is moved or sent until the admin chooses.
+
+**13d Session A, house league's time between people (built 2026-11-13; walk once, after Session C).** When an owner or admin sends a
+schedule that gives house league time (or takes some back), the league admin gets a bell that says how many hours a week, where and
+when, and opens House league's time; the Send window's "Who is told" names them. A season with no time gives the league admin an **Ask
+for time** button (also on a getting-ready season, also on a phone), which lands on the owner's and admins' This morning as "House league
+asks for time" until the season has time, plus one bell to the owner. A season no longer reads "given" off time another season has
+already divided. **Why:** the league admin used to learn of time by luck, and a season with none was a dead end. **Success:** time given
+reaches the league admin the same day; an ask reaches someone who can give time, and clears itself when it is answered.
