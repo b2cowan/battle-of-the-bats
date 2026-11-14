@@ -4,6 +4,11 @@
 > with a note (`/tasks since Monday`, `/tasks with prompts`, `/tasks updated list from the last one`) it skips the questions. Or paste everything below the line into a new Claude Code session on `dev`.
 > Written 2026-10-16 from the coordinating session that had been producing these lists by hand. It is a living reference
 > (`docs/agents/ops/`): when the owner changes how they want the list, update this file.
+>
+> **The daily view is `/brief`, not this list** (owner, 2026-11-14). The Morning Brief
+> (`docs/agents/ops/OWNER_BRIEF.md`) carries today's three to five priorities in order. This list is the full
+> working plan (waves, parallel work, prompts). When the two would order the same items differently, the brief's
+> latest order is the owner's most recent call: follow it here, and say so if you think it is wrong.
 
 ---
 
