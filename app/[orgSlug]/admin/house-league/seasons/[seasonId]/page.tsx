@@ -3,7 +3,7 @@
  * A HOUSE-LEAGUE SEASON'S OWN PAGE — its Overview (Club Tier Stage 9a, Part 4; owner 9a·4, 9a·6, Q16, S1·b; frames B, C, D;
  * words HOUSE_LEAGUE_STAGE9A_COPY.md §3–§5).
  *
- *   the header — the season's name, dates · sport, what is happening (the pill), View public page;
+ *   the header — the season's name, dates · sport, what is happening (the pill), View season page;
  *   one next step — a getting-ready season leads with its checklist and "Open registration" (absent until the three steps
  *     are done); a closed one with "Start season"; Close / Reopen registration sit on the Registration block;
  *   the figures band — Players · To review · Waitlist · Teams, one joined band (the money figure is 9b-2's, not built);
@@ -24,7 +24,6 @@ import { Check, ExternalLink, Minus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { friendRequestsOn } from '@/lib/league-friends';
-import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
 import { ClubSection, EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
 import { NotYours } from '@/components/admin/kit/club/NotYours';
@@ -120,16 +119,16 @@ export default function SeasonOverviewPage() {
 
   const season = detail?.season;
   // ⚖ The season's frame names the season (Club Tier Stage 13i, A4: "← Seasons", its name and switch, the status pill),
-  // so the Overview tab keeps only its own action, View public page.
-  const header = (
-    <TabActions>
+  // so the Overview tab keeps only its own action, View season page — on the dates line, not a row of its own.
+  const seasonPage = (
+    <>
       {season && season.status !== 'draft' && orgSlug ? (
         <a
           href={`/${orgSlug}/league/${season.slug}`}
           target="_blank"
           rel="noopener noreferrer"
           className={`btn btn-outline ${ck.iconOnlyPhone}`}
-          aria-label="View public page"
+          aria-label="View season page"
           onClick={() => {
             // §13 League Starter first-value signal (share), the free floor only. Fire-and-forget.
             if (currentOrg && isFreeFloorLeague(currentOrg)) {
@@ -137,19 +136,19 @@ export default function SeasonOverviewPage() {
             }
           }}
         >
-          <ExternalLink size={14} aria-hidden /><span className={ck.btnWord}>View public page</span>
+          <ExternalLink size={14} aria-hidden /><span className={ck.btnWord}>View season page</span>
         </a>
       ) : null}
-    </TabActions>
+    </>
   );
 
-  if (orgLoading || loading) return <PageLoading header={header} label="Loading the season…" />;
+  if (orgLoading || loading) return <PageLoading label="Loading the season…" />;
   if (access && !access.read) {
     return <NotYours page="houseLeague" />;
   }
-  if (failed === 'missing') return <div className={repKit.page}>{header}<EmptyCard title="We couldn’t find this season." /></div>;
+  if (failed === 'missing') return <div className={repKit.page}><EmptyCard title="We couldn’t find this season." /></div>;
   if (failed || !detail || !season) {
-    return <div className={repKit.page}>{header}<LoadFailed title="We couldn’t load the season." onRetry={() => { setLoading(true); void load(); }} /></div>;
+    return <div className={repKit.page}><LoadFailed title="We couldn’t load the season." onRetry={() => { setLoading(true); void load(); }} /></div>;
   }
 
   const { divisions, summary } = detail;
@@ -234,9 +233,9 @@ export default function SeasonOverviewPage() {
 
   return (
     <div className={repKit.page}>
-      {header}
       <p className={s.sub}>
         <span>{[dates ?? 'Dates not set', sport].join(' · ')}</span>
+        {seasonPage}
       </p>
       {startedFrom && (
         <p className={s.startedLine}>

@@ -10,7 +10,7 @@
 }
 
 /* ── The header's line under the title: dates · sport, then the pill ── */
-.sub { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.6rem; margin: -0.35rem 0 1rem; color: var(--text-secondary); font-size: var(--type-support); }
+.sub { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.35rem 0.6rem; margin: 0 0 1rem; color: var(--text-secondary); font-size: var(--type-support); }
 
 /* A finished season (Q16): one quiet line at the top of the body, never a banner. */
 .lockLine { margin: 0 0 0.9rem; font-size: var(--type-support); color: var(--text-secondary); }
