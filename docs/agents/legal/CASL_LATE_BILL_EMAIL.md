@@ -46,6 +46,20 @@ All are admin-facing (the Send window); none reaches a coach's inbox. The build 
 - "See {Name}’s email, with the bill" — the first door's name, beside §6's "See the email {Name} gets, without the bill". ⚠ The second door names only the first person when two coaches don't get the bill (the row line names both).
 - "Bill not emailed · N teams" — the callout's heading.
 
+### Reviewed 2026-11-14 — opt-in notice emails shortened to one line (Notifications read at a glance, Stage 2, ruling Q7)
+The generic notice email (`lib/notify.ts` `notificationEmailHtml`: title, the notice's body, a View button) is off by default
+and switched on per kind by the recipient. Stage 2 shortened the body of four kinds that can carry it (`team_money_sent`,
+`club_payment_not_received`, `club_hand_back_asked`, `club_hand_back_unasked`); `club_bill_arrived` and `club_schedule_review`
+kept theirs. Not re-fetched: the statute (finding 1's reading unchanged).
+- **CASL: not owed.** Removing detail adds no offer, price, promotion or link, so the "most likely not a CEM" reading in
+  finding 1 holds for the shorter emails exactly as for the longer ones. Nothing to add (no identification block, no unsubscribe
+  beyond what the product already has); keep it that way: a one-line email must not gain a promotional line to "fill it out".
+- **Product promise: none broken.** The kinds' settings descriptions (`NOTIFICATION_EVENT_DESCRIPTIONS`) describe the event, not
+  what the email contains, and no help article promises the email carries the details. The detail is one click away (View).
+- **Note, not a finding:** the four emails now name less (the method and reference of a payment a team says it sent, the
+  method and date of a payment that never arrived, what an asked hand-back waits on, that the money can be asked back). Fine for
+  a notice whose View button opens the record; if a club ever asks for the email to stand alone, that is a product call.
+
 ## Sources
 - [Canada's Anti-Spam Legislation (S.C. 2010, c. 23) — ss.1(2), 6(1)–(3), 6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-13
 - [Electronic Commerce Protection Regulations (SOR/2013-221) — s.3](https://laws-lois.justice.gc.ca/eng/regulations/SOR-2013-221/page-1.html) — accessed 2026-11-13

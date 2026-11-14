@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import { CARD_REFUND_WORDS, PRICE_WORDS } from '../../lib/house-league-money-words.ts';
-import { LEAGUE_ONLINE_NOTICE_WORDS as LW, ONLINE_NOTICE_WORDS as NW } from '../../lib/online-payment-words.ts';
+import { LEAGUE_ONLINE_NOTICE_WORDS as LW, notRecordedNotice } from '../../lib/online-payment-words.ts';
 
 /**
  * Stage 12c, the /review of 2026-10-26: defects found after the walks, each pinned so it cannot come back.
@@ -79,12 +79,16 @@ describe('"Whose was it?" never books a Stripe refund that failed', () => {
 
 describe('the notices say which rail the money came by, and the dates are the org\'s day', () => {
   it('a bank debit that couldn\'t be recorded is a bank debit refunded to the bank account', () => {
-    assert.match(NW.notRecordedBody('U11 · deposit', '$100', 'x', true), /paid by bank debit[\s\S]*Refund it to the bank account/);
-    assert.match(NW.notRecordedBody('U11 · deposit', '$100', 'x'), /paid by card[\s\S]*Refund it to the card/);
+    // One wording for every case (Notifications read at a glance, Stage 2): the one line names the rail; the next step refunds to it.
+    const team = (bank: boolean) => notRecordedNotice({ amount: '$100', bank, day: null, payer: null, forWhat: 'U11 · deposit', reason: 'x', team: true });
+    assert.equal(team(true).body, '$100 by bank debit. The money is in the club’s Stripe balance.');
+    assert.equal(team(true).facts.next, 'Refund it to the bank account from the team’s record or in Stripe.');
+    assert.equal(team(false).facts.next, 'Refund it to the card from the team’s record or in Stripe.');
     assert.equal(LW.unrecordedTitle('Henry Grant', true), 'A bank debit for Henry Grant couldn’t be recorded');
     assert.equal(LW.unrecordedTitle('Henry Grant'), 'A card payment for Henry Grant couldn’t be recorded');
-    assert.match(LW.unrecordedBody('Pat', '$150', null, 'Henry', 'x', true), /by bank debit[\s\S]*Refund it to the bank account/);
-    assert.match(LW.unrecordedSignupBody('Fall', '$150', 'x', true), /by bank debit[\s\S]*bank account/);
+    const child = notRecordedNotice({ amount: '$150', bank: true, day: null, payer: 'Pat', forWhat: 'Henry', reason: 'x', team: false });
+    assert.match(child.body, /by bank debit/);
+    assert.equal(child.facts.next, 'Refund it to the bank account.');
     assert.doesNotMatch(LW.unrecordedSignupTitleBank, /card/i);
   });
   it('no customer-visible date is made by slicing a timestamp\'s UTC day (an evening reads a day late)', () => {

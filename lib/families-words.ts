@@ -9,6 +9,7 @@
 import { formatStoredDate, orgDayKey, tournamentToday, utcToZonedInputs } from './timezone';
 import { formatTime, joinWithAnd, pluralize, possessive } from './utils';
 import { HANDOFF_ACTIONS } from './notification-view';
+import { FACT_LABELS, factRow, noticeFacts } from './notification-facts';
 import type { FamilyListKey } from './families-lists';
 
 /** ⚠ Three messages for one family in any rolling 24 hours (Ask 9). The SAME number is `v_cap` in
@@ -769,8 +770,19 @@ export const FAMILY_HANDOFF_COACH_WORDS = {
   failed: 'That couldn’t be saved. Please try again.',
   /** The club person who sent it hears a Not received (their bell). */
   adminTitle: (coach: string, child: string, amount: string) => `${coach} says ${possessive(child)} ${amount} never arrived`,
-  adminBody: (team: string, method: string | null, receivedDay: string) =>
-    `${possessive(team)} head coach says the payment you sent (${method ? `${method.toLowerCase()}, ` : ''}${receivedDay}) never reached the team. Nothing was recorded.`,
+  /** `club_payment_not_received`, opened (Notifications read at a glance, Stage 2): the one line, then Amount · For · Team ·
+   *  Received · How · Book. [marketing] */
+  admin: (p: { team: string; child: string; amount: string; method: string | null; receivedDay: string }) => ({
+    body: `${possessive(p.team)} head coach says it never reached the team. Nothing was recorded.`,
+    facts: noticeFacts([
+      factRow(FACT_LABELS.amount, p.amount, { lead: true }),
+      factRow(FACT_LABELS.for, p.child),
+      factRow(FACT_LABELS.team, p.team),
+      factRow(FACT_LABELS.received, p.receivedDay),
+      factRow(FACT_LABELS.how, p.method),
+      factRow(FACT_LABELS.book, 'Nothing was recorded'),
+    ]),
+  }),
   /** A coach's save that names a hand-off which no longer waits. */
   refusedAnswered: 'The club’s payment was already answered: recorded, or marked not received.',
   refusedOther: 'That payment from the club isn’t for this player.',

@@ -52,8 +52,12 @@
   overflow-wrap: anywhere;
 }
 
-/* A LABELLED NOTICE (house league's time, 2026-11-14): label left in sentence case (the admin's type rule), the answer right; each row under a
-   hairline so the eye drops straight to the one wanted. On a phone the label sits above its answer. */
+/* A LABELLED NOTICE — the shared rows every opened notice with stored facts wears (Notifications read at a glance,
+   Stage 2; drawing tab 1, owner rulings Q1–Q3, 2026-11-14). Label left in sentence case, 14px semibold, quiet ink —
+   never the eyebrow's small capitals (the admin's type rule); a fixed 5.5rem column (labels are at most 11 characters,
+   test-held); the answer right in primary ink; each row under a hairline so the eye drops straight to the one wanted.
+   ⚖ On a phone the label STAYS BESIDE its answer (Q1, A — the reference case stacked below 480px until Stage 2);
+   only a list under a row runs the full width. */
 .facts { margin: 12px 0 0; padding: 0; }
 .fact {
   display: grid;
@@ -77,12 +81,31 @@
   color: var(--text-primary);
   overflow-wrap: anywhere;
 }
-.factHours { font-weight: 600; }
-.factLines { list-style: none; margin: 2px 0 0; padding: 0; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+/* A value's bold lead (an amount, a count, a deadline) and its quieter detail. */
+.factLead { font-weight: 600; }
+.factDetail { color: var(--text-secondary); }
+/* A list under a row: on a computer it starts at the answer's edge; on a phone it spans the full width (Q1). */
+.factSpan { grid-column: 2; min-width: 0; }
+.factLines { list-style: none; margin: 2px 0 0; padding: 0; font-size: var(--type-body, 0.875rem); line-height: 1.5; color: var(--text-secondary); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .factLines li { padding: 1px 0; }
+/* The fold (Q3): a quiet text control in the accent, the product's other folds' voice. */
+.factFold {
+  padding: 2px 0 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body, 0.875rem);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--home-olive, var(--logic-lime));
+  cursor: pointer;
+}
+.factFold:hover { text-decoration: underline; }
+.factFold:focus-visible { outline: 2px solid var(--home-olive, var(--logic-lime)); outline-offset: 2px; border-radius: 2px; }
 .factNext { margin: 4px 0 0; font-size: var(--type-body, 0.875rem); line-height: 1.5; color: var(--text-secondary); }
-@media (max-width: 480px) {
-  .fact { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 900px) {
+  .factSpan { grid-column: 1 / -1; }
+  .factFold { min-height: var(--tap-min, 44px); }
 }
 
 /* A bundle opens as its members, newest first — each one's own words and time. */
@@ -141,6 +164,22 @@
 /* ON A PHONE (the reader's sheet, at the nav breakpoint): the way on spans the sheet at the thumb's
    reach, 48px; Done, Close and the trash share the row beneath at the tap floor, the trash a square.
    The drawer never draws here — it exists only beside the top strip, above 900px. */
+/* ⚖ PINNED AT THE SHEET'S FOOT (Q9, owner 2026-11-14): when the opened message is taller than the phone sheet, the
+   reader pins the button row at the foot under a hairline and the message scrolls above it — the frame's pinned-foot
+   convention (`data-sheet-foot`: the sheet gives up its bottom padding and the foot pads itself by `--sheet-foot-pad`).
+   The pinned row takes exactly the room the unpinned one did (16px above it, the sheet's padding under it), so pinning
+   never changes whether the message fits. A message that fits is never pinned, so it is unchanged. */
+.actionsPinned {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: 0;
+  padding-top: 15px;
+  padding-bottom: var(--sheet-foot-pad, 14px);
+  border-top: 1px solid var(--home-line, var(--white-10));
+  background: var(--home-card, var(--bg-2));
+}
+
 @media (max-width: 900px) {
   .actions > button { flex: 1 1 0; min-height: var(--tap-min, 44px); }
   .onward.onward { flex: 1 1 100%; min-height: 48px; }

@@ -215,7 +215,7 @@ describe('the /review of the whole (2026-10-26)', () => {
     assert.match(carry, /reg\.status !== 'declined' && reg\.status !== 'withdrawn'\) \{[\s\S]*?outcome: 'void'/);
     assert.match(carry, /t\?\.status === 'accepted'\) \{[\s\S]*?outcome: 'void'/);
     assert.match(carry, /r\.state === 'failed'\) throw/);
-    assert.match(carry, /raiseSendBackFailed\(onlinePaymentId, d\.online_payment_item_id, refundId\)/);
+    assert.match(carry, /raiseSendBackFailed\(onlinePaymentId, d\.online_payment_item_id, refundId, !!d\.fee_back\)/);
   });
   it('a cleared bank debit refunds to the bank account from the ending window; a reversed one offers nothing', () => {
     const land = readCode('lib/online-payment-landing.ts');

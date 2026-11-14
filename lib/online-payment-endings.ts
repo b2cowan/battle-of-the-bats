@@ -7,6 +7,7 @@ import { addCalendarDays, daysBetweenDateStrings, formatStoredDate, tournamentTo
 import type { OrgPlan } from './types';
 import { PLAN_CONFIG } from './plan-config';
 import { LEAVING_WORDS } from './online-payment-words';
+import { FACT_LABELS, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
 import { OPEN_DISPUTE_STATUSES } from './online-payment-dispute';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
 
@@ -244,6 +245,34 @@ export function endingNotice(e: UpcomingEnding, clubName: string, o: PaymentsOut
   return {
     title: LEAVING_WORDS.ending.title(dateLong),
     body: LEAVING_WORDS.ending.body(LEAVING_WORDS.ending.compSentence(PLAN_CONFIG[e.targetPlan]?.label ?? e.targetPlan, dateLong), owe),
+  };
+}
+
+/**
+ * The owner's `payments_ending` bell, read at a glance (Notifications read at a glance, Stage 2): the one line is the
+ * ending's own first sentence; the rows say when it stops (a plan move) or what happens if it isn't paid (a failed
+ * subscription payment), why, that Pay now becomes the club's "How to pay" text, who still owes, and that payouts stay.
+ * ⚠ The Payouts card keeps `endingNotice`'s paragraph: only the bell changes.
+ */
+export function endingBell(e: UpcomingEnding, clubName: string, o: PaymentsOutstanding | null): { title: string; body: string; facts: NoticeFacts } {
+  const E = LEAVING_WORDS.ending;
+  const { title } = endingNotice(e, clubName, o);
+  const shared = [
+    factRow(FACT_LABELS.payNow, E.bell.payNow),
+    factRow(FACT_LABELS.stillOwe, o ? E.bell.owing(o.familiesOwing, o.teamsOwing) : null),
+    factRow(FACT_LABELS.payouts, E.bell.payouts),
+  ];
+  if (e.kind === 'failed') {
+    return {
+      title, body: E.failedLine(clubName),
+      facts: noticeFacts([factRow(FACT_LABELS.reason, E.bell.failedReason), factRow(FACT_LABELS.ifNotPaid, E.bell.ifNotPaid(clubName)), ...shared]),
+    };
+  }
+  const dateLong = formatStoredDate(e.firstDayOff, { longMonth: true });
+  const plan = PLAN_CONFIG[e.targetPlan]?.label ?? e.targetPlan;
+  return {
+    title, body: E.compSentence(plan, dateLong),
+    facts: noticeFacts([factRow(FACT_LABELS.stops, dateLong, { lead: true }), factRow(FACT_LABELS.reason, E.bell.planReason(plan)), ...shared]),
   };
 }
 

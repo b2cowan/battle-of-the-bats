@@ -22,6 +22,8 @@ import { formatStoredDate } from './timezone';
 import { joinWithAnd, pluralize, possessive } from './utils';
 import { hoursAWeek } from './league-time';
 import { dayRange } from './club-hand-back-words';
+import { FACT_LABELS, type NoticeFacts } from './notification-facts';
+import { TIME_GIVEN_NEXT, timeChangeAsFacts, type TimeChangeBlock } from './league-time-notice';
 
 /** Asking again is allowed this many days after an ask (drawing tab 3, note 2). */
 export const ASK_AGAIN_DAYS = 7;
@@ -39,23 +41,9 @@ export interface TimePiece { minutes: number; detail: string; /** `detail`, one 
 
 const range = (p: TimePiece) => dayRange([p.firstDay, p.lastDay]);
 
-/** One half of an opened time notice: "Gives · 2 hours a week · Mar 13 – Apr 3" over its slots, one to a line. */
-export interface TimeChangeBlock { label: string; hours: string; range: string; lines: string[] }
-/** What the opened notice lays out, stored on the notification so the reader can draw it as labelled rows instead of a paragraph. */
-export interface TimeChangeFacts { schedule: string; season: string; grows: boolean; blocks: TimeChangeBlock[] }
-
-const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every(x => typeof x === 'string');
-
-/** Read a notification's stored facts back, or null for anything else (a notice sent before this layout keeps its paragraph). */
-export function readTimeChangeFacts(meta: unknown): TimeChangeFacts | null {
-  const f = (meta as { timeChange?: unknown } | null | undefined)?.timeChange as Partial<TimeChangeFacts> | undefined;
-  if (!f || typeof f.schedule !== 'string' || typeof f.season !== 'string' || typeof f.grows !== 'boolean' || !Array.isArray(f.blocks) || !f.blocks.length) return null;
-  const blocks = f.blocks.filter((b): b is TimeChangeBlock =>
-    !!b && typeof b.label === 'string' && typeof b.hours === 'string' && typeof b.range === 'string' && strings(b.lines));
-  return blocks.length === f.blocks.length ? { schedule: f.schedule, season: f.season, grows: f.grows, blocks } : null;
-}
-
-const BELL_LABELS = { season: 'Season', schedule: 'Schedule', gives: 'Gives', takes: 'Takes back' } as const;
+// The opened notice's rows, and the reader for one stored the first way (`metadata.timeChange`), live in
+// lib/league-time-notice.ts: the message block reads them on every admin page and must not load this module's reach.
+export { readTimeChangeFacts } from './league-time-notice';
 
 export const TIME_HANDOFF_WORDS = {
   /** The league admin's bell (drawing tab 2, notes 1-2). The row opens the reader; the reader's door names House league's time. */
@@ -75,17 +63,17 @@ export const TIME_HANDOFF_WORDS = {
       }
       return `“${p.schedule}” takes back ${takes} from ${p.season}.${p.given ? ` It gives ${gives}.` : ''}`;
     },
-    /** The opened notice's labelled rows. */
-    labels: BELL_LABELS,
     /** [marketing] The next step, under the rows, only when the week grew. */
-    next: 'Divide it into games and practices.',
-    facts: (p: { schedule: string; season: string; grows: boolean; given: TimePiece | null; taken: TimePiece | null }): TimeChangeFacts => {
+    next: TIME_GIVEN_NEXT,
+    /** The opened notice's labelled rows (`metadata.facts`, the shared shape): Season, Schedule, then Gives (and Takes
+     *  back) with the hours as the bold lead, the dates as its quieter detail, and each slot on its own line under it. */
+    facts: (p: { schedule: string; season: string; grows: boolean; given: TimePiece | null; taken: TimePiece | null }): NoticeFacts => {
       const block = (label: string, t: TimePiece | null): TimeChangeBlock[] => (t ? [{ label, hours: hoursAWeek(t.minutes), range: range(t), lines: t.lines }] : []);
-      const L = BELL_LABELS;
-      return {
+      const L = FACT_LABELS;
+      return timeChangeAsFacts({
         schedule: p.schedule, season: p.season, grows: p.grows,
-        blocks: p.grows ? [...block(L.gives, p.given), ...block(L.takes, p.taken)] : [...block(L.takes, p.taken), ...block(L.gives, p.given)],
-      };
+        blocks: p.grows ? [...block(L.gives, p.given), ...block(L.takesBack, p.taken)] : [...block(L.takesBack, p.taken), ...block(L.gives, p.given)],
+      });
     },
   },
   /** The Send window's WHO IS TOLD line (drawing tab 2, note 3). Names the league admins (the sender's own window, not the

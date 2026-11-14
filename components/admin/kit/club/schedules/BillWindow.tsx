@@ -60,7 +60,7 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
   const [lineId, setLineId] = useState<string>(existing?.lineId ?? pricing?.lineId ?? '');
   const [part, setPart] = useState<boolean>(existing?.amount != null || pricing?.fullHour == null);
   const [amountText, setAmountText] = useState(existing?.amount != null ? existing.amount.toFixed(2) : '');
-  const [plan, setPlan] = useState<PaymentPlan>(existing?.plan ?? 'two_months');
+  const [plan, setPlan] = useState<PaymentPlan>(existing?.plan ?? 'one');
   const firstOfStart = `${view.schedule.startsOn.slice(0, 7)}-01`;
   // A bill made late opens on today, never on a start-of-schedule date that has already passed.
   const firstDefault = late && firstOfStart < tournamentToday() ? tournamentToday() : firstOfStart;
@@ -284,13 +284,11 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
         </label>
       )}
       <div className={sch.pair}>
-        <label className={ck.field} htmlFor="bill-split">
-          <span className={ck.label}>{W.billSplit}</span>
-          <select id="bill-split" className={ck.select} value="time" onChange={() => {}}>
-            <option value="time">{W.billSplitTime}</option>
-          </select>
+        <div className={ck.field}>
+          <span className={ck.label} id="bill-split-label">{W.billSplit}</span>
+          <p className={sch.fixedValue} aria-labelledby="bill-split-label">{W.billSplitTime}</p>
           <span className={ck.hint}>{pricing?.fullHour != null ? W.billSplitHint(fmt(pricing.fullHour), half) : W.billSplitHintPlain}</span>
-        </label>
+        </div>
         <div className={ck.field}>
           <span className={ck.label} id="bill-pay-label">{W.billPayments}</span>
           <div className={sch.pair}>
@@ -310,7 +308,7 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
               <button type="button" className={sch.door} onClick={() => setDates(ds => [...ds, ''])}>{W.billAddDate}</button>
             </div>
           )}
-          <span className={ck.hint}>{W.billPaymentsHint[plan]}</span>
+          <span className={ck.hint}>{W.billPaymentsCount(plan, dues.length, isCalendarDate(firstDue) ? formatStoredDate(firstDue) : null)}</span>
         </div>
       </div>
       {rows.length > 0 ? table : <p className={ck.hint}>{problem() ?? W.billNoTimeYet}</p>}

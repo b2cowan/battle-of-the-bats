@@ -19,7 +19,11 @@ import { bankReturnReason } from './bank-debit';
 import { sendDebitReturnedEmail, sendDebitReversedEmail, sendDebitStartedEmail } from './bank-debit-email';
 import { platformDisputeFees, recordDisputeFees, recordForeignCardFee, recordReturnedDebitFee } from './platform-stripe-fees';
 import { possessive } from './utils';
-import { DEBIT_NOTICE_WORDS as DW, DISPUTE_WORDS, LEAGUE_ONLINE_NOTICE_WORDS as LW, OVER_WORDS as OW, cardLabel, disputeDue, disputeWhyFull, leagueUnrecordedWhy, ONLINE_NOTICE_WORDS as W, money as formatMoney, reasonFull } from './online-payment-words';
+import {
+  DEBIT_NOTICE_WORDS as DW, DISPUTE_WORDS, LEAGUE_ONLINE_NOTICE_WORDS as LW, OVER_WORDS as OW, cardLabel, disputeDue, leagueUnrecordedWhy,
+  ONLINE_NOTICE_WORDS as W, money as formatMoney, notRecordedNotice, refundFailedNotice,
+} from './online-payment-words';
+import type { NoticeFacts } from './notification-facts';
 import { formatStoredDate } from './timezone';
 import type { Organization, OrgRole } from './types';
 
@@ -74,6 +78,8 @@ async function raiseOnce(p: {
     | 'card_refund_whose' | 'card_refund_still_enrolled' | 'card_refund_unmatched' | 'debit_returned' | 'debit_reversed'
     | 'online_payment_over' | 'card_disputed' | 'card_dispute_lost';
   subjectKey: string; subjectId: string; title: string; body: string; link: string;
+  /** The rows the opened notice draws; with them `body` is the one line (Notifications read at a glance, Stage 2). */
+  facts?: NoticeFacts;
   /** More facts the notice's resolver reads (never part of its one-open-copy key, mig 366/374). */
   extra?: Record<string, string>;
 }): Promise<void> {
@@ -83,7 +89,8 @@ async function raiseOnce(p: {
     // ⚠ No plan guard (12d-2, ask 4): a club wound down by a downgrade keeps its account connected, and its debits,
     // refunds and disputes still finish — their items must keep arriving. Only events on the club's own account raise
     // these, so a club that never connected never gets one.
-    metadata: { ...p.extra, [p.subjectKey]: p.subjectId },
+    // `facts` is never a one-open-copy key (mig 403's COALESCE names only subject ids).
+    metadata: { ...p.extra, ...(p.facts ? { facts: p.facts } : {}), [p.subjectKey]: p.subjectId },
   });
 }
 
@@ -221,9 +228,10 @@ async function raiseLeagueUnrecorded(op: OnlineRow): Promise<void> {
       org, userIds: people, eventType: 'online_payment_not_recorded',
       subjectKey: 'onlinePaymentItemId', subjectId: u.id,
       title: twice ? LW.unrecordedTitleTwice(possessive(child)) : LW.unrecordedTitle(child, op.rail === 'bank_debit'),
-      body: twice
-        ? LW.unrecordedBodyTwice(guardian, date, possessive(child), op.rail === 'bank_debit')
-        : LW.unrecordedBody(guardian, formatMoney(Number(u.amount)), date, child, leagueUnrecordedWhy(u.land_error), op.rail === 'bank_debit'),
+      ...notRecordedNotice({
+        amount: formatMoney(Number(u.amount)), bank: op.rail === 'bank_debit', day: date, payer: guardian, forWhat: child,
+        reason: leagueUnrecordedWhy(u.land_error), team: false,
+      }),
       link: recordHref(org, op, { regId: u.registration_id, at: twice ? 'card' : 'fee' }),
     });
   }
@@ -334,15 +342,17 @@ async function raiseDebitNotice(op: DebitRow, kind: 'returned' | 'reversed'): Pr
   const emailed = !!op.payer_email;
   const receiptNo = op.receipt_no != null ? String(op.receipt_no) : '';
   const eventType = kind === 'returned' ? 'debit_returned' as const : 'debit_reversed' as const;
+  // One wording per kind (Notifications read at a glance, Stage 2): both senders pass facts to the kind's one entry.
+  const words = (who: { team: string } | { children: string; one: boolean }, owed: string) => (kind === 'returned'
+    ? DW.returned({ who, total, last4: op.bank_last4, day, reason: op.return_reason, emailed })
+    : DW.reversed({ who, receiptNo, total, day, owed, emailed }));
   if (op.flow === 'tournament_team' && op.team_id) {
     const { data: team } = await supabaseAdmin.from('teams').select('name').eq('id', op.team_id).maybeSingle();
     const name = (team?.name as string | null) ?? '';
     await raiseOnce({
       org, userIds: await refundPeople(org), eventType, subjectKey: 'onlinePaymentId', subjectId: op.id,
       title: kind === 'returned' ? DW.returnedTitleTeam(possessive(name)) : DW.reversedTitleTeam(possessive(name)),
-      body: kind === 'returned'
-        ? DW.returnedBodyTeam(total, op.bank_last4, day, reasonFull(op.return_reason), possessive(name), emailed)
-        : DW.reversedBody(receiptNo, total, day, 'tournament', DW.owesAgain(name, formatMoney(Number(op.base_amount)), false), emailed),
+      ...words({ team: name }, formatMoney(Number(op.base_amount))),
       link: recordHref(org, op), extra: { teamId: op.team_id },
     });
     return;
@@ -359,9 +369,7 @@ async function raiseDebitNotice(op: DebitRow, kind: 'returned' | 'reversed'): Pr
     org, userIds: await leagueRefundPeople(org), eventType, subjectKey: 'onlinePaymentId', subjectId: op.id,
     title: kind === 'returned' ? DW.returnedTitle(childList(names))
       : one ? DW.reversedTitleOne(possessive(names[0] ?? '')) : DW.reversedTitleMany(childList(names)),
-    body: kind === 'returned'
-      ? DW.returnedBody(total, op.bank_last4, day, reasonFull(op.return_reason), one ? DW.heldOne(possessive(names[0] ?? '')) : DW.heldMany, emailed)
-      : DW.reversedBody(receiptNo, total, day, 'season', DW.owesAgain(childList(names), owed, !one), emailed),
+    ...words({ children: childList(names), one }, owed),
     link: recordHref(org, op, one ? { regId: kids[0].registration_id } : undefined),
     extra: { registrationIds: kids.map(k => k.registration_id!).join(',') },
   });
@@ -455,11 +463,13 @@ export async function disputeAnswerer(orgId: string): Promise<{ ids: string[]; u
 /** The words' "who": a child, the children, or the team; and the payer whose bank it is. */
 async function disputeWho(op: DisputedPay): Promise<{
   name: string; who: string; many: string | null; payer: string; record: string; team: boolean; regIds: string[]; firstReg: string | null;
+  /** The guardian's name as a row reads it ("Paid by · Pat Doe"), or null when it isn't known (a team's cardholder). */
+  payerName: string | null;
 }> {
   if (op.flow === 'tournament_team') {
     const { data: team } = op.team_id ? await supabaseAdmin.from('teams').select('name').eq('id', op.team_id).maybeSingle() : { data: null };
     const name = (team?.name as string | undefined) ?? op.description.split(' · ')[0];
-    return { name, who: possessive(name), many: null, payer: DISPUTE_WORDS.payerUnknown, record: possessive(name), team: true, regIds: [], firstReg: null };
+    return { name, who: possessive(name), many: null, payer: DISPUTE_WORDS.payerUnknown, record: possessive(name), team: true, regIds: [], firstReg: null, payerName: null };
   }
   const { data: items } = await supabaseAdmin.from('online_payment_items').select('registration_id').eq('online_payment_id', op.id).order('created_at');
   const regIds = [...new Set(((items ?? []) as Array<{ registration_id: string | null }>).map(i => i.registration_id).filter((x): x is string => !!x))];
@@ -474,7 +484,7 @@ async function disputeWho(op: DisputedPay): Promise<{
   const many = kids.length > 1 ? childList(kids.map(k => k.player_first_name ?? '').filter(Boolean)) : null;
   return {
     name: full, who: possessive(full), many, payer: guardian ? possessive(guardian) : DISPUTE_WORDS.payerUnknown,
-    record: possessive(full), team: false, regIds, firstReg: regIds[0] ?? null,
+    record: possessive(full), team: false, regIds, firstReg: regIds[0] ?? null, payerName: guardian || null,
   };
 }
 
@@ -562,24 +572,23 @@ async function raiseDisputed(org: Organization, op: DisputedPay, d: DisputeRow):
   const title = who.many ? DISPUTE_WORDS.itemTitleMany(who.many) : DISPUTE_WORDS.itemTitle(who.who);
   const receipt = String(op.receipt_no ?? '');
   const amount = formatMoney(Number(d.amount));
-  const due = disputeDue(d.due_by, { clock: true });
   const link = recordHref(org, op, who.firstReg && !who.many ? { regId: who.firstReg } : undefined);
   const extra: Record<string, string> = op.team_id ? { teamId: op.team_id } : who.regIds.length ? { registrationIds: who.regIds.join(',') } : {};
+  // One wording for the four cases (dispute or inquiry, the answerer's copy or the desk's): the facts, passed once.
+  const words = (answers: string | null) => DISPUTE_WORDS.item({
+    payer: who.payerName, receiptNo: receipt, amount, reason: d.reason, held: formatMoney(disputeHeld(d)), inquiry,
+    due: disputeDue(d.due_by, { clock: true }), dueDay: disputeDue(d.due_by), answers,
+  });
   if (!d.answered) {
     await raiseOnce({
       org, userIds: answerer.ids, eventType: 'card_disputed', subjectKey: 'onlineDisputeId', subjectId: d.id, title, link,
-      body: inquiry
-        ? DISPUTE_WORDS.itemBodyInquiry(who.payer, receipt, disputeWhyFull(d.reason), due)
-        : DISPUTE_WORDS.itemBody(who.payer, receipt, amount, disputeWhyFull(d.reason), formatMoney(disputeHeld(d)), due),
+      ...words(null),
       extra: { ...extra, answerer: 'yes' },
     });
   }
-  const name = answerer.name ?? 'The owner';
   await raiseOnce({
     org, userIds: desk, eventType: 'card_disputed', subjectKey: 'onlineDisputeId', subjectId: d.id, title, link,
-    body: inquiry
-      ? DISPUTE_WORDS.itemBodyOthersInquiry(who.payer, receipt, amount, name, due)
-      : DISPUTE_WORDS.itemBodyOthers(who.payer, receipt, amount, name, due),
+    ...words(answerer.name ?? 'The owner'),
     extra,
   });
 }
@@ -606,7 +615,7 @@ async function raiseDisputeLost(org: Organization, op: DisputedPay, d: DisputeRo
     await raiseOnce({
       org, userIds: people, eventType: 'card_dispute_lost', subjectKey: 'onlineDisputeId', subjectId: d.id,
       title: DISPUTE_WORDS.lostTitle(who.who),
-      body: DISPUTE_WORDS.lostBody(receipt, day, 'tournament', DW.owesAgain(name, formatMoney(Number(taken.amount ?? d.amount)), false), true),
+      ...DISPUTE_WORDS.lostNotice({ who: { team: name }, receiptNo: receipt, amount: formatMoney(Number(taken.amount ?? d.amount)), day, owed: formatMoney(Number(taken.amount ?? d.amount)) }),
       link: recordHref(org, op), extra: op.team_id ? { teamId: op.team_id } : {},
     });
     return;
@@ -619,8 +628,10 @@ async function raiseDisputeLost(org: Organization, op: DisputedPay, d: DisputeRo
   await raiseOnce({
     org, userIds: people, eventType: 'card_dispute_lost', subjectKey: 'onlineDisputeId', subjectId: d.id,
     title: one ? DISPUTE_WORDS.lostTitle(who.who) : DISPUTE_WORDS.lostTitleMany(childList(names)),
-    body: DISPUTE_WORDS.lostBody(receipt, day, 'season',
-      DW.owesAgain(childList(names), formatMoney(kids.reduce((s, k) => s + Number(k.amount), 0)), !one), false),
+    ...DISPUTE_WORDS.lostNotice({
+      who: { children: childList(names), one }, receiptNo: receipt, day,
+      amount: formatMoney(kids.reduce((s, k) => s + Number(k.amount), 0)), owed: formatMoney(kids.reduce((s, k) => s + Number(k.amount), 0)),
+    }),
     link: recordHref(org, op, one ? { regId: kids[0].registrationId } : undefined),
     extra: { registrationIds: kids.map(k => k.registrationId).join(',') },
   });
@@ -711,20 +722,32 @@ async function refuseWhileDisputed(onlinePaymentId: string): Promise<void> {
   throw new DisputeOpenError(DISPUTE_WORDS.noRefund(flow === 'tournament_team'));
 }
 
-/** A send-back that couldn't go: the refund-didn't-reach item, for the bank account, to whoever may refund. */
-async function raiseSendBackFailed(onlinePaymentId: string, itemId: string | null, refundId: string | null): Promise<void> {
-  const { data: op } = await supabaseAdmin.from('online_payments')
-    .select('org_id, season_id, tournament_id, team_id, bank_last4, base_amount, description').eq('id', onlinePaymentId).maybeSingle();
+/** A send-back that couldn't go: the refund-didn't-reach item, for the bank account, to whoever may refund. It was never
+ *  sent (Stripe refused it, or no refund could be opened), so it says "couldn’t be sent", never "came back".
+ *  ⚖ The amount is the send-back's own (Stage 2, owner Q6: "confirm whether that is the refund's amount; fix it if not"):
+ *  the refund row's when one was opened; otherwise what the send-back would have been — a team's whole payment with the
+ *  payment fee when it goes back and the family paid it (mig 382's `online_payment_refund_open`), a child's share. Until
+ *  2026-11-14 a team's said the payment's base amount alone, short by the fee whenever the fee went back. */
+async function raiseSendBackFailed(onlinePaymentId: string, itemId: string | null, refundId: string | null, feeBack: boolean): Promise<void> {
+  const [{ data: op }, { data: refund }] = await Promise.all([
+    supabaseAdmin.from('online_payments')
+      .select('org_id, season_id, tournament_id, team_id, bank_last4, base_amount, fee_amount, fee_payer, description').eq('id', onlinePaymentId).maybeSingle(),
+    refundId ? supabaseAdmin.from('online_payment_refunds').select('amount').eq('id', refundId).maybeSingle() : Promise.resolve({ data: null }),
+  ]);
   const org = op ? await orgById(op.org_id as string) : null;
   if (!op || !org) return;
-  const account = `the account ending ${op.bank_last4 ?? ''}`;
+  const refunded = refund?.amount != null ? Number(refund.amount) : null;
+  const notice = (amount: number, whose: { team: string } | { child: string }) => refundFailedNotice({
+    amount: formatMoney(amount), bank: true, card: null, bankLast4: (op.bank_last4 as string | null) ?? null, whose, sent: false,
+  });
   const extra: Record<string, string> = refundId ? { refundId } : { onlinePaymentId };
   if (itemId) {
     const { data: item } = await supabaseAdmin.from('online_payment_items').select('description, registration_id, amount').eq('id', itemId).maybeSingle();
     const child = ((item?.description as string | undefined) ?? '').split(' · ')[0];
+    const { title, body, facts } = notice(refunded ?? Number(item?.amount ?? 0), { child });
     await raiseOnce({
       org, userIds: await leagueRefundPeople(org), eventType: 'card_refund_failed', subjectKey: 'onlinePaymentItemId', subjectId: itemId,
-      title: LW.refundFailedTitle(child, true), body: LW.refundFailedBody(formatMoney(Number(item?.amount ?? 0)), account, true),
+      title, body, facts,
       link: recordHref(org, { tournament_id: null, season_id: (op.season_id as string | null) ?? null }, { regId: (item?.registration_id as string | null) ?? null, at: 'card' }),
       extra,
     });
@@ -732,9 +755,11 @@ async function raiseSendBackFailed(onlinePaymentId: string, itemId: string | nul
   }
   const { data: team } = op.team_id ? await supabaseAdmin.from('teams').select('name').eq('id', op.team_id as string).maybeSingle() : { data: null };
   const name = (team?.name as string | undefined) ?? (op.description as string).split(' · ')[0];
+  const fee = feeBack && op.fee_payer === 'family' ? Number(op.fee_amount ?? 0) : 0;
+  const { title, body, facts } = notice(refunded ?? Number(op.base_amount) + fee, { team: name });
   await raiseOnce({
     org, userIds: await refundPeople(org), eventType: 'card_refund_failed', subjectKey: 'onlinePaymentId', subjectId: onlinePaymentId,
-    title: W.refundFailedTitleTeam(name, true), body: W.refundFailedBody(formatMoney(Number(op.base_amount)), account, name, true),
+    title, body, facts,
     link: recordHref(org, { tournament_id: (op.tournament_id as string | null) ?? null, season_id: null }), extra: refundId ? { refundId } : {},
   });
 }
@@ -807,7 +832,7 @@ async function carryOutDecisions(onlinePaymentId: string): Promise<void> {
       // goes back, so a person sends it another way.
       const refundId = (err as { refundId?: string | null } | null)?.refundId ?? null;
       await supabaseAdmin.from('online_payment_clear_decisions').update({ outcome: 'failed', outcome_at: new Date().toISOString(), refund_id: refundId }).eq('id', d.id);
-      await raiseSendBackFailed(onlinePaymentId, d.online_payment_item_id, refundId).catch(() => null);
+      await raiseSendBackFailed(onlinePaymentId, d.online_payment_item_id, refundId, !!d.fee_back).catch(() => null);
       console.error('[online-payment-landing] a send-back after clearing failed:', err instanceof Error ? err.message : String(err));
     }
   }
@@ -913,7 +938,7 @@ export async function landCheckoutSession(stripeAccountId: string, sessionId: st
         org, userIds: await refundPeople(org), eventType: 'online_payment_not_recorded',
         subjectKey: 'onlinePaymentId', subjectId: op.id,
         title: W.notRecordedTitle,
-        body: W.notRecordedBody(op.description, formatMoney(Number(op.total_amount)), error.message, bank),
+        ...notRecordedNotice({ amount: formatMoney(Number(op.total_amount)), bank, day: null, payer: null, forWhat: op.description, reason: error.message, team: true }),
         link: recordHref(org, op),
       });
     }
@@ -1046,7 +1071,7 @@ async function landLeague(
         org, userIds: await leagueRefundPeople(org), eventType: 'online_payment_not_recorded',
         subjectKey: 'onlinePaymentId', subjectId: op.id,
         title: op.rail === 'bank_debit' ? LW.unrecordedSignupTitleBank : LW.unrecordedSignupTitle,
-        body: LW.unrecordedSignupBody(op.description, formatMoney(Number(op.total_amount)), error.message, op.rail === 'bank_debit'),
+        ...notRecordedNotice({ amount: formatMoney(Number(op.total_amount)), bank: op.rail === 'bank_debit', day: null, payer: null, forWhat: op.description, reason: error.message, team: false }),
         link: recordHref(org, op),
       });
     }
@@ -1153,7 +1178,7 @@ async function raiseOverpaidNow(onlinePaymentId: string): Promise<void> {
     org, userIds: await overPeople(org), eventType: 'online_payment_over',
     subjectKey: 'onlinePaymentId', subjectId: op.id as string,
     title: op.over_whole ? OW.titleTwice(name, extra) : OW.titleMore(name, extra),
-    body: op.over_whole ? OW.bodyTwice(amount, receipt, day, bank) : OW.bodyMore(amount, receipt, day, extra, bank),
+    ...OW.notice({ amount, receiptNo: receipt, day, extra, bank, whole: !!op.over_whole }),
     link: overHref(org, { id: op.id as string, tournament_id: (op.tournament_id as string | null) ?? null, team_id: (op.team_id as string | null) ?? null }),
   });
 }
@@ -1190,7 +1215,7 @@ export async function expireCheckoutSession(sessionId: string, stripeAccountId: 
 type RefundOutcome = { state: 'succeeded' | 'pending' | 'failed'; refundId: string };
 
 /** The returned-refund item's words for a team (12c words §1.6): which refund, to which card, whose team. */
-async function teamRefundFailedWords(refundId: string, onlinePaymentId: string): Promise<{ org_id: string; tournament_id: string | null; title: string; body: string } | null> {
+async function teamRefundFailedWords(refundId: string, onlinePaymentId: string, sent: boolean): Promise<{ org_id: string; tournament_id: string | null; title: string; body: string; facts: NoticeFacts } | null> {
   const [{ data: op }, { data: r }] = await Promise.all([
     supabaseAdmin.from('online_payments').select('org_id, tournament_id, team_id, description, card_brand, card_last4, bank_last4, rail').eq('id', onlinePaymentId).maybeSingle(),
     supabaseAdmin.from('online_payment_refunds').select('amount').eq('id', refundId).maybeSingle(),
@@ -1199,16 +1224,18 @@ async function teamRefundFailedWords(refundId: string, onlinePaymentId: string):
   const { data: team } = op.team_id ? await supabaseAdmin.from('teams').select('name').eq('id', op.team_id as string).maybeSingle() : { data: null };
   const name = (team?.name as string | undefined) ?? (op.description as string).split(' · ')[0];
   const bank = op.rail === 'bank_debit';
-  const card = bank ? `the account ending ${op.bank_last4 ?? ''}` : cardLabel(op.card_brand as string | null, op.card_last4 as string | null);
   return {
     org_id: op.org_id as string, tournament_id: (op.tournament_id as string | null) ?? null,
-    title: W.refundFailedTitleTeam(name, bank), body: W.refundFailedBody(formatMoney(Number(r?.amount ?? 0)), card, name, bank),
+    ...refundFailedNotice({
+      amount: formatMoney(Number(r?.amount ?? 0)), bank, card: cardLabel(op.card_brand as string | null, op.card_last4 as string | null),
+      bankLast4: (op.bank_last4 as string | null) ?? null, whose: { team: name }, sent,
+    }),
   };
 }
 
 async function refundFailed(refundId: string, stripeRefundId: string | null, reason: string, onlinePaymentId: string): Promise<void> {
   await supabaseAdmin.rpc('online_payment_refund_failed', { p_refund: refundId, p_stripe_refund: stripeRefundId, p_reason: reason });
-  const data = await teamRefundFailedWords(refundId, onlinePaymentId);
+  const data = await teamRefundFailedWords(refundId, onlinePaymentId, stripeRefundId != null);
   const org = data ? await orgById(data.org_id) : null;
   if (!org || !data) return;
   await raiseOnce({
@@ -1216,6 +1243,7 @@ async function refundFailed(refundId: string, stripeRefundId: string | null, rea
     subjectKey: 'onlinePaymentId', subjectId: onlinePaymentId,
     title: data.title,
     body: data.body,
+    facts: data.facts,
     link: data.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournamentId=${data.tournament_id}` : `/${org.slug}/admin`,
   });
 }
@@ -1327,10 +1355,10 @@ async function leagueRefundFailed(refundId: string, stripeRefundId: string | nul
   await raiseOnce({
     org, userIds: await leagueRefundPeople(org), eventType: 'card_refund_failed',
     subjectKey: 'onlinePaymentItemId', subjectId: r.online_payment_item_id as string,
-    title: LW.refundFailedTitle(child, op.rail === 'bank_debit'),
-    body: LW.refundFailedBody(formatMoney(Number(r.amount)),
-      op.rail === 'bank_debit' ? `the account ending ${op.bank_last4 ?? ''}` : cardLabel(op.card_brand as string | null, op.card_last4 as string | null),
-      op.rail === 'bank_debit'),
+    ...refundFailedNotice({
+      amount: formatMoney(Number(r.amount)), bank: op.rail === 'bank_debit', card: cardLabel(op.card_brand as string | null, op.card_last4 as string | null),
+      bankLast4: (op.bank_last4 as string | null) ?? null, whose: { child }, sent: stripeRefundId != null,
+    }),
     link: recordHref(org, { tournament_id: null, season_id: (op.season_id as string | null) ?? null },
       { regId: (item?.registration_id as string | null) ?? null, at: 'card' }),
     extra: { refundId },
@@ -1493,7 +1521,7 @@ async function teamPartRefundFailed(refundId: string, stripeRefundId: string | n
   await supabaseAdmin.rpc('online_payment_refund_failed', { p_refund: refundId, p_stripe_refund: stripeRefundId, p_reason: reason });
   const [{ data: r }, op] = await Promise.all([
     supabaseAdmin.from('online_payment_refunds').select('booked_at').eq('id', refundId).maybeSingle(),
-    teamRefundFailedWords(refundId, onlinePaymentId),
+    teamRefundFailedWords(refundId, onlinePaymentId, stripeRefundId != null),
   ]);
   if (!r?.booked_at || !op) return; // refused before it was booked: nothing changed, and the window said so
   const org = await orgById(op.org_id);
@@ -1501,7 +1529,7 @@ async function teamPartRefundFailed(refundId: string, stripeRefundId: string | n
   await raiseOnce({
     org, userIds: await refundPeople(org), eventType: 'card_refund_failed',
     subjectKey: 'onlinePaymentId', subjectId: onlinePaymentId,
-    title: op.title, body: op.body,
+    title: op.title, body: op.body, facts: op.facts,
     link: op.tournament_id ? `/${org.slug}/admin/tournaments/registrations?tournamentId=${op.tournament_id}` : `/${org.slug}/admin`,
     extra: { refundId },
   });
@@ -1678,12 +1706,12 @@ export async function recordLeagueRefundRows(
     const enrolled = !!g && !!it.entry_id && (g.status === 'active' || g.status === 'pending_review' || g.status === 'waitlisted');
     if (!enrolled) { toEmail.push(r.id as string); continue; }
     const base = Number(r.amount) - Number(r.fee_refunded);
-    const card = op.rail === 'bank_debit' ? `the account ending ${op.bank_last4 ?? ''}` : cardLabel(op.card_brand, op.card_last4);
+    const card = op.rail === 'bank_debit' ? (op.bank_last4 ? `the account ending ${op.bank_last4}` : 'the bank account') : cardLabel(op.card_brand, op.card_last4);
     const at = (r.stripe_created_at as string | null) ?? (r.created_at as string);
     await raiseOnce({
       org, userIds: people, eventType: 'card_refund_still_enrolled', subjectKey: 'enrolledRefundId', subjectId: r.id as string,
       title: LW.enrolledTitle(`${g!.player_first_name} ${g!.player_last_name}`, g!.player_first_name),
-      body: LW.enrolledBody(formatMoney(Number(r.amount)), card, formatStoredDate(at, { withYear: false }), g!.player_first_name, formatMoney(base)),
+      ...LW.enrolled({ amount: formatMoney(Number(r.amount)), to: card, day: formatStoredDate(at, { withYear: false }), childFirst: g!.player_first_name, owing: formatMoney(base) }),
       link: recordHref(org, { tournament_id: null, season_id: op.season_id }, { regId: g!.id, at: 'card' }),
       extra: { registrationId: g!.id, childFirst: g!.player_first_name },
     });

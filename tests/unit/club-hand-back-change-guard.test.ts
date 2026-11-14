@@ -257,10 +257,11 @@ describe('7 · the words, as drawn', () => {
   it('C4: the club\'s Answer for a late ask, and the two bells', () => {
     assert.equal(H.answerTitleLate('15U AA', 4, 7), '15U AA asks for money back for 4 Sundays');
     assert.equal(H.timeOpen, 'Their time is already open.');
-    assert.deepEqual(H.bellUnasked({ name: 'Riley Chen', count: 4, scheduleName: 'Winter dome · Sundays', first: '2027-02-07', cents: 43_200 }), {
-      title: 'Riley Chen handed back 4 practices without asking for money',
-      body: 'Winter dome · Sundays · from Sun, Feb 7. The club billed $432.00 for them: you can ask for it back from the practice.',
-    });
+    const unasked = H.bellUnasked({ name: 'Riley Chen', count: 4, scheduleName: 'Winter dome · Sundays', first: '2027-02-07', cents: 43_200 });
+    assert.equal(unasked.title, 'Riley Chen handed back 4 practices without asking for money');
+    // The one line; the ask moved under the rows (Notifications read at a glance, Stage 2).
+    assert.equal(unasked.body, 'Winter dome · Sundays · from Sun, Feb 7. The club billed $432.00 for them.');
+    assert.equal(unasked.facts.next, 'You can ask for it back from the practice.');
   });
 });
 

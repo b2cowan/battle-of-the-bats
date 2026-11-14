@@ -1436,7 +1436,6 @@ export default function ScheduleEventSheet({
           rows: familyByPlayer,
           lines: familyAnswers.lines,
           summary: familySummary,
-          inviteHref: `${base}/roster`,
           remind: {
             // Open = not started, not cancelled (read when the window opened; the clock closes it at the start).
             open: familyAnswers.state === 'open' && familyEventOpen(ev, nowMs),

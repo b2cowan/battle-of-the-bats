@@ -496,7 +496,8 @@ describe('step 4 · the record sheets on the frame', () => {
 
   it('the notification reader, on both portals’ pages: a menu on the frame owning its keys; the computer keeps its dialog', () => {
     const reader = readCode('components/notifications/NotificationReader.tsx');
-    assert.ok(reader.includes('<SheetFrame grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={titleId}>'));
+    // `ref`: the reader measures whether its message outgrows the sheet, and only then pins its buttons (Q9, 2026-11-14).
+    assert.ok(reader.includes('<SheetFrame ref={sheetRef} grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={titleId}>'));
     assert.ok(reader.includes("<div data-notification-reader style={{ display: 'contents' }}>"));
     assert.ok(reader.includes('useDialogFloor(!isPhoneNav, panelRef, { onClose, opener });'), 'one floor at a time — the dialog’s own above 900');
     assert.doesNotMatch(reader, /CoachesBottomNav|sheetAnchor|addEventListener\('pointerdown'/,

@@ -35,6 +35,31 @@
   line-height: 1.5;
 }
 
+/* Where attendance is taken — one quiet line between the figures and the roster, in the same
+   voice as `.note` above. The link is the only coloured thing on it. */
+.markLine {
+  margin: 0 0 0.6rem;
+  font-size: var(--type-support);
+  color: var(--white-45);
+  line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.75rem;
+}
+.markLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 600;
+  color: var(--blueprint-light);
+  text-decoration: none;
+}
+.markLink:hover { text-decoration: underline; }
+@media (max-width: 640px) {
+  .markLink { min-height: var(--tap-min, 44px); }
+}
+
 /* The player's name is the drill-in to their profile. It fills the cell's height rather than
    the text's, so the tap target is the row (48px+) and not a 21px word — the whole row used
    to be one <a>, and a real <table> cannot nest that. The cell surrenders its vertical

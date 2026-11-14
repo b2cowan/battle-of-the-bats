@@ -56,14 +56,19 @@ export default function SeasonTrendChart({
   // (memory/decision 3a) — a deliberate departure from the shared Sparkline's literal "render
   // nothing", which fits a 52×16 inline mark, not a card the page already reserves height for.
   if (points.length === 0) {
+    // The wrapper gives the empty card the same 1.1rem of air under it that `.chartCard` has when
+    // the chart is drawn — without it the card sat flush against whatever followed (the Dashboard's
+    // "What stands out" card touched it).
     return (
-      <CoachEmptyState
-        quiet
-        compact
-        icon={<TrendingUp size={18} aria-hidden />}
-        headline={`No scored ${sampleNoun}s yet`}
-        description={emptyDescription}
-      />
+      <div className={styles.emptyWrap}>
+        <CoachEmptyState
+          quiet
+          compact
+          icon={<TrendingUp size={18} aria-hidden />}
+          headline={`No scored ${sampleNoun}s yet`}
+          description={emptyDescription}
+        />
+      </div>
     );
   }
 

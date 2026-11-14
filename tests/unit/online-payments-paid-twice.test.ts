@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { functionBody, readCode } from './_source-code.ts';
-import { LEAGUE_ONLINE_NOTICE_WORDS as LW, OVER_WORDS as O, PAY_OPEN_WORDS as P, howPaidWords, leagueUnrecordedWhy } from '../../lib/online-payment-words.ts';
+import { LEAGUE_ONLINE_NOTICE_WORDS as LW, OVER_WORDS as O, PAY_OPEN_WORDS as P, howPaidWords, leagueUnrecordedWhy, notRecordedNotice } from '../../lib/online-payment-words.ts';
 import { paymentLine, type FeeSchedule, type TeamRecord } from '../../lib/tournament-teams.ts';
 import { canRefundOnline } from '../../lib/online-payment-access.ts';
 
@@ -30,11 +30,13 @@ describe('over by part, over by all (ask 10, words §2.2)', () => {
     assert.equal(O.pillMore('$200.00'), '$200.00 more than owed');
     assert.equal(O.titleTwice('Riverside Rockets 12U', '$400.00'), 'Riverside Rockets 12U paid $400.00 twice');
     assert.equal(O.titleMore('Riverside Rockets 12U', '$200.00'), 'Riverside Rockets 12U paid $200.00 more than it owed');
-    assert.equal(O.bodyTwice('$412.00', '1041', 'Nov 3', false),
-      'A card payment of $412.00 (receipt 1041) landed on Nov 3 after the team had already paid in full. The money is in the club’s Stripe balance. Refund it to the card.');
-    assert.equal(O.bodyMore('$309.00', '1042', 'Nov 3', '$200.00', false),
-      'A card payment of $309.00 (receipt 1042) landed on Nov 3, $200.00 more than the team owed. The money is in the club’s Stripe balance. Refund the extra $200.00 to the card.');
-    assert.match(O.bodyTwice('$412.00', '1041', 'Nov 3', true), /^A bank debit of .* Refund it to the bank account\.$/);
+    const twice = (bank: boolean) => O.notice({ amount: '$412.00', receiptNo: '1041', day: 'Nov 3', extra: '$412.00', bank, whole: true });
+    const more = O.notice({ amount: '$309.00', receiptNo: '1042', day: 'Nov 3', extra: '$200.00', bank: false, whole: false });
+    assert.equal(twice(false).body, '$412.00 landed on Nov 3 after the team had already paid in full.');
+    assert.equal(twice(false).facts.next, 'Refund it to the card.');
+    assert.equal(more.body, '$309.00 landed on Nov 3, $200.00 more than the team owed.');
+    assert.equal(more.facts.next, 'Refund the extra $200.00 to the card.');
+    assert.equal(twice(true).facts.next, 'Refund it to the bank account.');
     assert.equal(O.tagTwice, 'Paid after the team had already paid in full. Refund it from ⋯.');
     assert.equal(O.tagMore('$200.00'), 'Paid more than the team owed. Refund the extra $200.00 from ⋯.');
   });
@@ -173,9 +175,11 @@ describe('house league unchanged (12b refuses a second payment at landing)', () 
   it('the landing still refuses a fee already received, and only that reason gets the plain "paid twice" label', () => {
     assert.match(readCode('supabase/migrations/387_a_bank_debit_at_the_desk.sql'), /'already_received'::text/);
     assert.equal(LW.unrecordedTitleTwice('Henry Grant’s'), 'Henry Grant’s fee was paid twice');
-    assert.equal(LW.unrecordedBodyTwice('Pat Grant', 'Nov 3', 'Henry Grant’s'),
-      'Pat Grant paid by card on Nov 3, after Henry Grant’s fee was already marked received. The money is in the club’s Stripe balance. Refund it to the card.');
-    assert.match(LW.unrecordedBodyTwice(null, null, 'Henry Grant’s', true), /^The family paid by bank debit, after .* Refund it to the bank account\.$/);
+    // Its words are the kind's one entry (Notifications read at a glance, Stage 2): the reason row says the fee was already received.
+    const n = notRecordedNotice({ amount: '$150.00', bank: false, day: 'Nov 3', payer: 'Pat Grant', forWhat: 'Henry Grant', reason: leagueUnrecordedWhy('already_received'), team: false });
+    assert.equal(n.body, '$150.00 by card on Nov 3. The money is in the club’s Stripe balance.');
+    assert.equal(n.facts.rows.find(r => r.label === 'Reason')?.value, 'The fee was already marked received');
+    assert.equal(n.facts.next, 'Refund it to the card.');
     const raise = functionBody(LANDING, 'raiseLeagueUnrecorded');
     assert.match(raise, /const twice = u\.land_error === 'already_received';/);
     assert.match(raise, /at: twice \? 'card' : 'fee'/, 'its first door is the refund to the card');

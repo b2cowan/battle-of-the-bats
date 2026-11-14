@@ -1177,7 +1177,8 @@ async function tellTeams(sctx: SchedulerCtx, scheduleName: string, kind: SendKin
       const moneyLink = moneySectionHref(`/${org.slug}/coaches/teams/${t.teamId}`, 'club');
       for (const b of teamBells({ kind, orgName: org.name, scheduleName, replyBy: preview.replyBy, team: t, staff })) {
         await notify({
-          orgId: org.id, userIds: b.userIds, excludeUserIds: [sctx.ctx.user.id], metadata: { teamId: t.teamId, scheduleId: preview.scheduleId },
+          orgId: org.id, userIds: b.userIds, excludeUserIds: [sctx.ctx.user.id],
+          metadata: { teamId: t.teamId, scheduleId: preview.scheduleId, ...(b.facts ? { facts: b.facts } : {}) },
           eventType: b.eventType, title: b.title, body: b.body, link: b.toMoney ? moneyLink : link,
         });
       }

@@ -18,6 +18,7 @@ import type { DraftMeasure, DraftStrategy, ShareWarning, SlotPattern } from './c
 import type { ClosingRow, Installment } from './club-schedule-bill';
 import type { SendKind } from './club-schedule-send';
 import { HAND_BACK_WORDS, type CreditMove } from './club-hand-back-words';
+import { FACT_LABELS, factRow, noticeFacts } from './notification-facts';
 
 /** Cents said as money — the schedule's one spelling, on every screen and in every email. */
 export const moneyCents = (cents: number) => fmt(cents / 100);
@@ -434,9 +435,17 @@ export function changesEmail(p: {
 
 /** [marketing] Each notice's title and body. */
 export const SCHEDULE_NOTICES = {
+  /** The body was already one line; the opened notice reads Team · Slots · Bill (people who can open Money) · Reply by
+   *  (the head coach, who answers), then the head coach's next step (Notifications read at a glance, Stage 2). */
   review: (p: { orgName: string; scheduleName: string; teamName: string; slots: number; billCents: number | null; replyBy: string | null }) => ({
     title: `${p.orgName} sent ${p.scheduleName} for review`,
     body: `${p.teamName} · ${pluralize(p.slots, 'slot')}${p.billCents ? ` and a ${moneyCents(p.billCents)} bill` : ''}.${p.replyBy ? ` Reply by ${formatShortWeekdayDate(p.replyBy)}.` : ''}`,
+    facts: noticeFacts([
+      factRow(FACT_LABELS.team, p.teamName),
+      factRow(FACT_LABELS.slots, String(p.slots)),
+      factRow(FACT_LABELS.bill, p.billCents ? moneyCents(p.billCents) : null, { lead: true }),
+      factRow(FACT_LABELS.replyBy, p.replyBy ? formatShortWeekdayDate(p.replyBy) : null, { lead: true }),
+    ], p.replyBy ? 'Say it looks good, or ask for a change.' : null),
   }),
   final: (p: { scheduleName: string; teamName: string; slots: number }) => ({
     title: `${p.scheduleName} is on ${possessive(p.teamName)} schedule`,
@@ -446,9 +455,16 @@ export const SCHEDULE_NOTICES = {
     title: `${p.scheduleName} changed for ${p.teamName}`,
     body: `${pluralize(p.changes, 'change')} on ${possessive(p.teamName)} schedule.`,
   }),
+  /** The body was already one line; the opened notice reads Bill · Schedule · Payments · First due (Stage 2). */
   bill: (p: { orgName: string; teamName: string; cents: number; scheduleName: string; first: Installment | null; payments: number }) => ({
     title: `${p.orgName} billed ${p.teamName} ${moneyCents(p.cents)}`,
     body: `For ${p.scheduleName} · ${pluralize(p.payments, 'payment')}${p.first ? `, the first ${fmt(p.first.amount)} due ${formatStoredDate(p.first.dueDate, { withYear: false })}` : ''}.`,
+    facts: noticeFacts([
+      factRow(FACT_LABELS.bill, moneyCents(p.cents), { lead: true }),
+      factRow(FACT_LABELS.schedule, p.scheduleName),
+      factRow(FACT_LABELS.payments, String(p.payments)),
+      factRow(FACT_LABELS.firstDue, p.first ? fmt(p.first.amount) : null, { lead: true, detail: p.first ? formatStoredDate(p.first.dueDate, { withYear: false }) : '' }),
+    ]),
   }),
   reply: (p: { teamName: string; scheduleName: string; answer: 'looks_good' | 'ask_for_change'; words: string | null }) => ({
     title: p.answer === 'looks_good' ? `${p.teamName} replied: Looks good` : `${p.teamName} asked for a change`,
@@ -958,12 +974,16 @@ export const SCHEDULE_SCREEN_WORDS = {
   billMonthly: 'Monthly',
   billTwoMonths: 'Every two months',
   billDates: 'Dates I choose',
-  billFirstDue: 'From',
-  billPaymentsHint: {
-    one: 'One payment for all of the time',
-    monthly: 'Each payment is the time that team gets in its month',
-    two_months: 'Each payment is the time that team gets in its two months',
-    dates: 'Each payment is the time that team gets up to the next date',
+  billFirstDue: 'First payment due',
+  /** What the Payments choice comes to, said plainly under it: how many payments, and when the first falls due. */
+  billPaymentsCount: (plan: 'one' | 'monthly' | 'two_months' | 'dates', payments: number, first: string | null): string => {
+    if (!payments) return '';
+    if (plan === 'dates') return payments === 1 ? 'One payment, on that date.' : `${payments} payments, on the dates you chose.`;
+    if (!first) return '';
+    if (plan === 'one' || payments === 1) {
+      return plan === 'one' ? `One payment, due ${first}.` : `One payment, due ${first}. The schedule ends before the next one would fall due.`;
+    }
+    return `${payments} payments: the first due ${first}, then ${plan === 'monthly' ? 'every month' : 'every two months'}.`;
   },
   billAddDate: 'Add a date',
   billTeamCaption: (full: number, half: number, shared: number, other: number, hours: number) => {
@@ -1028,7 +1048,9 @@ export const SCHEDULE_SCREEN_WORDS = {
   notSentYet: 'Not sent yet.',
   seeEmail: (who: string) => `See ${possessive(who)} email`,
   // [marketing] Owner 2026-11-13: a team where some coaches can't open Money — they get the same email without the bill.
-  plainGets: (names: string[]) => `${joinWithAnd(names)} ${names.length === 1 ? 'gets' : 'get'} it without the bill.`,
+  // (The team's row no longer names them; only this door to the plain email remains.)
+  // Owner 2026-11-13: a team's row names its head coach only; the rest of the staff is a small count under it.
+  alsoTold: (n: number) => `+ ${n} more ${n === 1 ? 'coach' : 'coaches'} on the team`,
   seePlainEmail: (who: string) => `See the email ${who} gets, without the bill`,
   /** /design 2026-11-13: beside the door above, the first door says it is the one with the bill. */
   seeMoneyEmail: (who: string) => `See ${possessive(who)} email, with the bill`,

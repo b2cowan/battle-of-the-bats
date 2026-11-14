@@ -29,6 +29,7 @@ import {
 } from './club-schedule-coach';
 import type { AuthContextWithRole } from './api-auth';
 import type { NotificationEventType, Organization, OrgRole, RepTeamEvent } from './types';
+import type { NoticeFacts } from './notification-facts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -176,8 +177,10 @@ export async function askHandBack(p: {
 async function tellClubOfAsk(p: {
   org: Organization; scheduleId: string; teamGroupId: string | null; actorUserId: string | null; handBackId: string; requestId: string | null;
   eventType: NotificationEventType; title: string; body: string; answerable: boolean;
+  /** The rows the opened notice draws (Notifications read at a glance, Stage 2), stored as `metadata.facts`. */
+  facts?: NoticeFacts;
   /** The same notice without the figure, for a builder who can't move club money (a money read — /review 2026-10-13). */
-  quiet?: { title: string; body: string };
+  quiet?: { title: string; body: string; facts?: NoticeFacts };
 }): Promise<void> {
   try {
     const { data: sched, error } = await supabaseAdmin.from('club_schedules').select('created_by, sent_by, finalized_by').eq('id', p.scheduleId).maybeSingle();
@@ -205,10 +208,11 @@ async function tellClubOfAsk(p: {
       groups.set(key, group);
     }
     for (const { link, quiet, userIds } of groups.values()) {
-      const words = quiet && p.quiet ? p.quiet : { title: p.title, body: p.body };
+      const words = quiet && p.quiet ? p.quiet : { title: p.title, body: p.body, facts: p.facts };
       await notify({
         orgId: p.org.id, eventType: p.eventType, title: words.title, body: words.body, userIds,
-        excludeUserIds: p.actorUserId ? [p.actorUserId] : [], link, metadata: { scheduleId: p.scheduleId, handBackId: p.handBackId },
+        excludeUserIds: p.actorUserId ? [p.actorUserId] : [], link,
+        metadata: { scheduleId: p.scheduleId, handBackId: p.handBackId, ...(words.facts ? { facts: words.facts } : {}) },
       });
     }
   } catch (e) {
@@ -650,12 +654,12 @@ export async function tellMoneyOfUnasked(p: { org: Pick<Organization, 'id' | 'sl
     const hb = read.get(first.slot_id);
     if (!hb?.askCents) return;
     const base = `/${p.org.slug}/coaches/teams/${p.teamId}`;
+    const { title, body, facts } = W.bellUnasked({ name: nameOf(p.actorUserId) ?? 'A coach', count: hb.days.length, scheduleName: hb.scheduleName, first: hb.days[0], cents: hb.askCents });
     await notify({
-      orgId: p.org.id, eventType: 'club_hand_back_unasked',
-      ...W.bellUnasked({ name: nameOf(p.actorUserId) ?? 'A coach', count: hb.days.length, scheduleName: hb.scheduleName, first: hb.days[0], cents: hb.askCents }),
+      orgId: p.org.id, eventType: 'club_hand_back_unasked', title, body,
       userIds, excludeUserIds: [p.actorUserId],
       link: first.event_id ? sheetAddressFor(base, first.event_id, null) : `${base}/schedule`,
-      metadata: { teamId: p.teamId, handBackId: p.handBackId },
+      metadata: { teamId: p.teamId, handBackId: p.handBackId, facts },
     });
   } catch (e) {
     console.error('[club-hand-back] the money people\'s notice failed (the hand-back landed):', e);

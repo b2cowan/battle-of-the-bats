@@ -173,8 +173,8 @@ export async function tellTimeGiven(p: { orgId: string; orgSlug: string; senderI
       title: s.grows ? W.bell.givenTitle : W.bell.takenTitle,
       body: W.bell.body({ schedule: p.scheduleName, season: s.seasonName, grows: s.grows, given: s.given, taken: s.taken }),
       link: `/${p.orgSlug}/admin/house-league/seasons/${s.seasonId}/schedule?time=1`,
-      // `timeChange`: what the opened notice draws as labelled rows (the body is only the one-line summary).
-      metadata: { seasonId: s.seasonId, sendId: p.sendId, timeChange: W.bell.facts({ schedule: p.scheduleName, season: s.seasonName, grows: s.grows, given: s.given, taken: s.taken }) },
+      // `facts`: what the opened notice draws as labelled rows, the shared shape (the body is only the one-line summary).
+      metadata: { seasonId: s.seasonId, sendId: p.sendId, facts: W.bell.facts({ schedule: p.scheduleName, season: s.seasonName, grows: s.grows, given: s.given, taken: s.taken }) },
     })));
   } catch (e) {
     console.error('[league-time-handoff] the time-given notice failed (the send went):', e);

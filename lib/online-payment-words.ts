@@ -7,6 +7,39 @@
  */
 import { formatStoredDate, utcToZonedInputs } from './timezone';
 import { formatTime, pluralize, possessive } from './utils';
+import { FACT_LABELS as L, factRow, noticeFacts, type FactRow, type NoticeFacts } from './notification-facts';
+
+/**
+ * ══ THE DESK'S MONEY NOTICES, READ AT A GLANCE (Notifications read at a glance, Stage 2; drawing tabs 2–3, owner rulings
+ * Q2, Q6, 2026-11-14). Each kind has ONE words entry that every sender of it calls with facts only, and it returns the
+ * one line (`body`: the list rows, the push and any email read it) and the rows the opened notice draws (`facts`, stored
+ * as `metadata.facts`). The rows' labels are the shared vocabulary (`FACT_LABELS`). Every line, row value and next step
+ * here is draft copy owed to /marketing. [marketing]
+ */
+export interface NoticeText { body: string; facts: NoticeFacts }
+
+/** A reason fragment (": the account is closed") as a row's own sentence ("The account is closed"). */
+const asSentence = (fragment: string) => {
+  const s = fragment.replace(/^:\s*/, '').trim();
+  return s ? `${s[0].toUpperCase()}${s.slice(1)}` : '';
+};
+const railWord = (bank: boolean) => (bank ? 'bank debit' : 'card');
+const railTarget = (bank: boolean) => (bank ? 'bank account' : 'card');
+/** "Receipt 1042, $450.00": the payment, as the one lines name it. */
+const receiptLead = (receiptNo: string, amount: string) => (receiptNo ? `Receipt ${receiptNo}, ${amount}` : amount);
+const amountRow = (amount: string, receiptNo: string): FactRow[] => factRow(L.amount, amount, { lead: true, detail: receiptNo ? `receipt ${receiptNo}` : '' });
+const MONEY_IN_STRIPE = 'In the club’s Stripe balance';
+const bookRow = (book: 'season' | 'tournament') => factRow(L.book, `Out of the ${book === 'season' ? 'season’s' : 'tournament’s'} book`);
+/** Who owes again: the figure leads only when it differs from the Amount row's (a figure is never written twice). */
+const owesAgainRow = (who: string, owed: string, amount: string) =>
+  (owed === amount ? factRow(L.owesAgain, who) : factRow(L.owesAgain, owed, { lead: true, detail: who }));
+/** Who a returned payment was for: a team, or the children (first names already joined; `one` when there is one). */
+export type MoneyNoticeWho = { team: string } | { children: string; one: boolean };
+const isTeam = (w: MoneyNoticeWho): w is { team: string } => 'team' in w;
+const whoName = (w: MoneyNoticeWho) => (isTeam(w) ? w.team : w.children);
+const toldRow = (w: MoneyNoticeWho, emailed: boolean) =>
+  factRow(isTeam(w) ? L.team : L.family, emailed ? 'Emailed a way to pay' : 'No email address on file');
+const tellYourself = (w: MoneyNoticeWho, emailed: boolean) => (emailed ? null : `Tell the ${isTeam(w) ? 'team' : 'family'} yourself.`);
 
 /** "$1,234.50" — online payments always show cents (a receipt is exact). */
 export function money(dollars: number): string {
@@ -114,20 +147,56 @@ export const ONLINE_NOTICE_WORDS = {
     `Stripe needs something more from you${byDeadline}. Online payments stay on until then. Nothing already paid is affected.`,
   byDeadline: (iso: string) => ` by ${formatStoredDate(iso, { withYear: false })}`,
   notRecordedTitle: 'An online payment isn’t in the team’s record',
-  // 12c: a bank debit lands through the same door once it clears, so the notice says which rail the money came by.
-  notRecordedBody: (description: string, amount: string, reason: string, bank = false) =>
-    `${description}: ${amount} was paid by ${bank ? 'bank debit' : 'card'}, but it couldn’t be added to the team’s record (${reason}). Refund it to the ${bank ? 'bank account' : 'card'} from the team’s record or in Stripe.`,
   // The organizer's "Payment received" bell: a team paid online and it is in the team's record. Told on every payment
   // (a part payment included); a bank debit is told the day it clears, never when it starts.
   receivedTitle: (team: string) => `Payment received: ${team}`,
   receivedBody: (amount: string, bank = false) => `${amount} was paid online by ${bank ? 'bank debit' : 'card'}.`,
-  refundFailedTitle: 'A refund didn’t reach the card',
-  // 12c words §1.6: a team can have a part refund and a later one, so the item names which.
-  // 12c words §3.6/§3.9: a refund to a bank account says the account (`card` is then "the account ending 1234").
-  refundFailedBody: (amount: string, card: string, team: string, bank = false) =>
-    `${amount} to ${card} was returned, for example because the ${bank ? 'account' : 'card'} was closed. Send ${team} the money another way, then record the refund.`,
-  refundFailedTitleTeam: (team: string, bank = false) => `${possessive(team)} refund didn’t reach the ${bank ? 'bank account' : 'card'}`,
 } as const;
+
+/**
+ * "An online payment isn’t in the team’s record" and its house-league twins (`online_payment_not_recorded`): ONE
+ * wording for its three senders and four cases (a team's landing, a child's share, a child's fee paid twice, a whole
+ * sign-up). The titles stay each case's own (`ONLINE_NOTICE_WORDS.notRecordedTitle`, `LEAGUE_ONLINE_NOTICE_WORDS.unrecorded*`).
+ * `team`: the money is refunded from the team's record or in Stripe; otherwise from the registration.
+ */
+export function notRecordedNotice(p: {
+  amount: string; bank: boolean; day: string | null; payer: string | null; forWhat: string; reason: string; team: boolean;
+}): NoticeText {
+  return {
+    body: `${p.amount} by ${railWord(p.bank)}${p.day ? ` on ${p.day}` : ''}. The money is in the club’s Stripe balance.`,
+    facts: noticeFacts([
+      factRow(L.amount, p.amount, { lead: true, detail: `by ${railWord(p.bank)}` }),
+      factRow(L.paidBy, p.payer),
+      factRow(L.paid, p.day),
+      factRow(L.for, p.forWhat),
+      factRow(L.reason, asSentence(p.reason)),
+      factRow(L.money, MONEY_IN_STRIPE),
+    ], p.team ? `Refund it to the ${railTarget(p.bank)} from the team’s record or in Stripe.` : `Refund it to the ${railTarget(p.bank)}.`),
+  };
+}
+
+/**
+ * "A refund didn’t reach the card" (`card_refund_failed`, owner ruling Q6, 2026-11-14): ONE words entry; all five senders
+ * pass facts only — the amount, where it went, whose it was, card or bank, and whether it was sent and came back or could
+ * not be sent at all (a send-back after a debit cleared that Stripe refused, or that no refund could be opened for). The
+ * title keeps its two forms, "Ridge 12U’s refund…" / "Henry Doe’s refund…": the whose is the point.
+ */
+export function refundFailedNotice(p: {
+  amount: string; bank: boolean; card: string | null; bankLast4: string | null; whose: { team: string } | { child: string }; sent: boolean;
+}): NoticeText & { title: string } {
+  const name = 'team' in p.whose ? p.whose.team : p.whose.child;
+  const to = p.bank ? (p.bankLast4 ? `the account ending ${p.bankLast4}` : 'the bank account') : (p.card || 'the card');
+  return {
+    title: `${possessive(name)} refund didn’t reach the ${railTarget(p.bank)}`,
+    body: p.sent ? `${p.amount} to ${to} came back.` : `${p.amount} to ${to} couldn’t be sent.`,
+    facts: noticeFacts([
+      factRow(L.amount, p.amount, { lead: true }),
+      factRow(L.sentTo, asSentence(to)),
+      factRow(L.for, 'team' in p.whose ? p.whose.team : `${possessive(p.whose.child)} family`),
+      factRow(L.reason, p.sent ? `It came back, for example because the ${p.bank ? 'account' : 'card'} was closed` : 'It couldn’t be sent'),
+    ], 'Send the money another way, then record the refund.'),
+  };
+}
 
 /**
  * THE REFUND BLOCK (Club Tier Stage 12c, words CLUB_TIER_STAGE12C_REFUND_VISIBLE_COPY.md §4): one block, the same in every
@@ -165,12 +234,8 @@ export function leagueUnrecordedWhy(refusal: string): string {
 export const LEAGUE_ONLINE_NOTICE_WORDS = {
   // 12c: a bank debit lands through the same door once it clears, so these say which rail the money came by.
   unrecordedTitle: (child: string, bank = false) => `A ${bank ? 'bank debit' : 'card payment'} for ${child} couldn’t be recorded`,
-  unrecordedBody: (guardian: string | null, amount: string, date: string | null, child: string, why: string, bank = false) =>
-    `${guardian ?? 'The family'} paid ${amount} by ${bank ? 'bank debit' : 'card'}${date ? ` on ${date}` : ''} for ${child}, but it couldn’t go on the registration: ${why}. The money is in the club’s Stripe balance. Refund it to the ${bank ? 'bank account' : 'card'}.`,
-  // 12d words §2.3: only the "already marked received" reason gets a plain label; every other reason keeps the words above.
+  // 12d words §2.3: only the "already marked received" reason gets a plain label; its words are `notRecordedNotice`'s.
   unrecordedTitleTwice: (childPossessive: string) => `${childPossessive} fee was paid twice`,
-  unrecordedBodyTwice: (guardian: string | null, date: string | null, childPossessive: string, bank = false) =>
-    `${guardian ?? 'The family'} paid by ${bank ? 'bank debit' : 'card'}${date ? ` on ${date}` : ''}, after ${childPossessive} fee was already marked received. The money is in the club’s Stripe balance. Refund it to the ${bank ? 'bank account' : 'card'}.`,
   // Derived: the whole landing threw (the season is gone, Stripe's amount differs) — no child's share is on a registration.
   // The desk's "Payment received" bell: a family paid online and it is on the registration (a bank debit, the day it clears).
   receivedTitle: 'Payment received: house league',
@@ -178,12 +243,6 @@ export const LEAGUE_ONLINE_NOTICE_WORDS = {
     `${description}: ${amount} was paid online by ${bank ? 'bank debit' : 'card'}.`,
   unrecordedSignupTitle: 'A house-league card payment couldn’t be recorded',
   unrecordedSignupTitleBank: 'A house-league bank debit couldn’t be recorded',
-  unrecordedSignupBody: (description: string, amount: string, reason: string, bank = false) =>
-    `${description}: ${amount} was paid by ${bank ? 'bank debit' : 'card'}, but it couldn’t go on the registrations (${reason}). The money is in the club’s Stripe balance. Refund it to the ${bank ? 'bank account' : 'card'}.`,
-  // 12b copy §7: a child's card refund Stripe returned (it was booked when Stripe accepted it).
-  refundFailedTitle: (child: string, bank = false) => `${possessive(child)} refund didn’t reach the ${bank ? 'bank account' : 'card'}`,
-  refundFailedBody: (amount: string, card: string, bank = false) =>
-    `${amount} to ${card} was returned, for example because the ${bank ? 'account' : 'card'} was closed. Send the family the money another way, then record the refund.`,
   // 12c words §5 (a refund made in Stripe records itself; a person is asked only these). The 12b
   // `refundedInStripeBody` ("record the refund by hand") is retired: it had no door on an ended row (F4).
   whoseTitle: (amount: string, guardian: string | null) =>
@@ -191,8 +250,16 @@ export const LEAGUE_ONLINE_NOTICE_WORDS = {
   whoseBody: (children: string, total: string, receiptNo: string) =>
     `It paid for ${children} (${total}, receipt ${receiptNo}), so we can’t tell whose fee it was. Choose the child, and it goes on that registration. Until then it isn’t in the season’s book.`,
   enrolledTitle: (child: string, childFirst: string) => `${possessive(child)} fee was refunded in Stripe, and ${childFirst} is still enrolled`,
-  enrolledBody: (amount: string, card: string, day: string, childFirst: string, owing: string) =>
-    `${amount} went back to ${card} on ${day}. It’s recorded, and ${childFirst} owes ${owing} again. Withdraw ${childFirst}, email the family the pay link, or keep ${childFirst} enrolled. The family is emailed once you choose.`,
+  /** `card_refund_still_enrolled`: its one sender. The three choices are also the notice's buttons. */
+  enrolled: (p: { amount: string; to: string; day: string; childFirst: string; owing: string }): NoticeText => ({
+    body: `${p.amount} went back to ${p.to} on ${p.day}. ${p.childFirst} owes ${p.owing} again.`,
+    facts: noticeFacts([
+      factRow(L.amount, p.amount, { lead: true }),
+      factRow(L.sentTo, asSentence(p.to)),
+      factRow(L.refunded, p.day),
+      factRow(L.owesAgain, p.owing, { lead: true, detail: p.childFirst }),
+    ], `Withdraw ${p.childFirst}, email the family the pay link, or keep ${p.childFirst} enrolled; the family is emailed once you choose.`),
+  }),
   noMatchTitle: 'A refund in Stripe matches no payment we recorded',
   noMatchBody: (amount: string, day: string) =>
     `${amount} was refunded in Stripe on ${day}, on a payment we haven’t recorded yet. It goes on the registration as soon as that payment arrives. If it’s still here tomorrow, the club’s owner can check the payment in Stripe.`,
@@ -497,7 +564,18 @@ export const LEAVING_WORDS = {
     compSentence: (targetPlan: string, dateLong: string) => `Your organization moves to the free ${targetPlan} plan on ${dateLong}.`,
     // Derived (owner 2026-10-27: a failed payment is warned the day it fails, with no date): owed to /marketing.
     failedTitle: 'Online payments stop if the subscription payment doesn’t go through',
+    failedLine: (clubName: string) => `${possessive(clubName)} subscription payment didn’t go through.`,
     failedSentence: (clubName: string) => `${possessive(clubName)} subscription payment didn’t go through. If it still doesn’t, ${clubName} is suspended and online payments stop.`,
+    /** The owner's bell, opened (Notifications read at a glance, Stage 2). [marketing] The Payouts card keeps `body`. */
+    bell: {
+      planReason: (targetPlan: string) => `Moving to the free ${targetPlan} plan`,
+      failedReason: 'The subscription payment didn’t go through',
+      ifNotPaid: (clubName: string) => `${clubName} is suspended and online payments stop`,
+      payNow: 'Becomes your “How to pay” text',
+      payouts: 'Stay connected',
+      /** "23 families and 2 teams", or nothing. */
+      owing: (families: number, teams: number) => [families ? pluralize(families, 'family', 'families') : null, teams ? pluralize(teams, 'team') : null].filter(Boolean).join(' and '),
+    },
     failedSubject: (clubName: string) => `Online payments for ${clubName} stop if the subscription payment doesn’t go through`,
   },
   // Derived (console words, owed to /marketing): what the operator's cancel or plan change stops, from the same count.
@@ -850,17 +928,35 @@ export const reasonShort = (code: string | null | undefined) => (code ? BANK_REA
 export const DEBIT_NOTICE_WORDS = {
   returnedTitle: (children: string) => `A bank debit for ${children} was returned`,
   returnedTitleTeam: (teamPossessive: string) => `${teamPossessive} bank debit was returned`,
-  returnedBody: (total: string, last4: string | null, day: string, reasonFull: string, held: string, emailed: boolean) =>
-    `${total}${last4 ? ` from the account ending ${last4}` : ''} didn’t go through (${day}${reasonFull}). Nothing was taken, and ${held} still held. ${emailed ? 'We emailed the family a way to pay.' : 'There’s no email address on file, so tell the family yourself.'}`,
-  returnedBodyTeam: (total: string, last4: string | null, day: string, reasonFull: string, teamPossessive: string, emailed: boolean) =>
-    `${total}${last4 ? ` from the account ending ${last4}` : ''} didn’t go through (${day}${reasonFull}). Nothing was taken. ${teamPossessive} place is still held. ${emailed ? 'We emailed the team’s contact a way to pay.' : 'There’s no email address on file, so tell the team yourself.'}`,
-  heldOne: (childPossessive: string) => `${childPossessive} spot is`,
-  heldMany: 'their spots are',
+  /** `debit_returned` (drawing tab 2): the amount leads with "nothing was taken"; the account, the day and the bank's
+   *  reason each get a row (no reason from the bank, no row); the spot (a team's place) is still held; whether the family
+   *  (the team's contact) was emailed, and when it wasn't, the next step says to tell them. */
+  returned: (p: { who: MoneyNoticeWho; total: string; last4: string | null; day: string; reason: string | null; emailed: boolean }): NoticeText => ({
+    body: `${p.total} didn’t go through on ${p.day}. Nothing was taken.`,
+    facts: noticeFacts([
+      factRow(L.amount, p.total, { lead: true, detail: 'nothing was taken' }),
+      factRow(L.account, p.last4 ? `Ending ${p.last4}` : null),
+      factRow(L.returned, p.day),
+      factRow(L.reason, asSentence(reasonFull(p.reason))),
+      factRow(isTeam(p.who) ? L.place : p.who.one ? L.spot : L.spots, 'Still held'),
+      toldRow(p.who, p.emailed),
+    ], tellYourself(p.who, p.emailed)),
+  }),
   reversedTitleOne: (childPossessive: string) => `${childPossessive} bank payment was returned after it cleared`,
   reversedTitleMany: (children: string) => `A bank payment for ${children} was returned after it cleared`,
   reversedTitleTeam: (teamPossessive: string) => `${teamPossessive} bank payment was returned after it cleared`,
-  reversedBody: (receiptNo: string, total: string, day: string, book: 'season' | 'tournament', owesAgain: string, emailed: boolean) =>
-    `The bank reversed receipt ${receiptNo} (${total}) on ${day}. It’s out of the ${book === 'season' ? 'season’s' : 'tournament’s'} book, and ${owesAgain}. ${emailed ? 'We emailed the family a way to pay.' : 'There’s no email address on file, so tell the family yourself.'}`,
+  /** `debit_reversed`: the payment, the day, out of which book, who owes what again, whether they were emailed. A team's
+   *  copy says "team", never "family" (it used to reuse the family's sentence). */
+  reversed: (p: { who: MoneyNoticeWho; receiptNo: string; total: string; day: string; owed: string; emailed: boolean }): NoticeText => ({
+    body: `${receiptLead(p.receiptNo, p.total)}. The bank took it back on ${p.day}.`,
+    facts: noticeFacts([
+      amountRow(p.total, p.receiptNo),
+      factRow(L.returned, p.day),
+      bookRow(isTeam(p.who) ? 'tournament' : 'season'),
+      owesAgainRow(whoName(p.who), p.owed, p.total),
+      toldRow(p.who, p.emailed),
+    ], tellYourself(p.who, p.emailed)),
+  }),
   owesAgain: (who: string, amount: string, many: boolean) => `${who} ${many ? 'owe' : 'owes'} ${amount} again`,
   /** The family's own sentence (§2.2 reversedBody's `{owesAgain}`). */
   owingAgain: (amount: string) => `${amount} is owing again`,
@@ -880,10 +976,17 @@ export const OVER_WORDS = {
   menuKeep: 'Keep it',
   titleTwice: (team: string, extra: string) => `${team} paid ${extra} twice`,
   titleMore: (team: string, extra: string) => `${team} paid ${extra} more than it owed`,
-  bodyTwice: (amount: string, receiptNo: string, day: string, bank: boolean) =>
-    `A ${bank ? 'bank debit' : 'card payment'} of ${amount} (receipt ${receiptNo}) landed on ${day} after the team had already paid in full. The money is in the club’s Stripe balance. Refund it to the ${bank ? 'bank account' : 'card'}.`,
-  bodyMore: (amount: string, receiptNo: string, day: string, extra: string, bank: boolean) =>
-    `A ${bank ? 'bank debit' : 'card payment'} of ${amount} (receipt ${receiptNo}) landed on ${day}, ${extra} more than the team owed. The money is in the club’s Stripe balance. Refund the extra ${extra} to the ${bank ? 'bank account' : 'card'}.`,
+  /** `online_payment_over`, its one sender: "paid twice" (`whole`: the team had already paid in full) or "more than owed". */
+  notice: (p: { amount: string; receiptNo: string; day: string; extra: string; bank: boolean; whole: boolean }): NoticeText => ({
+    body: `${p.amount} landed on ${p.day}${p.whole ? ' after the team had already paid in full' : `, ${p.extra} more than the team owed`}.`,
+    facts: noticeFacts([
+      amountRow(p.amount, p.receiptNo),
+      factRow(L.paid, p.day),
+      p.whole ? factRow(L.extra, 'All of it', { lead: true, detail: 'the team had already paid in full' })
+        : factRow(L.extra, p.extra, { lead: true, detail: 'more than the team owed' }),
+      factRow(L.money, MONEY_IN_STRIPE),
+    ], p.whole ? `Refund it to the ${railTarget(p.bank)}.` : `Refund the extra ${p.extra} to the ${railTarget(p.bank)}.`),
+  }),
   // The settled lines live with the others (SETTLED_WORDS.overRefunded / overKept / overEntryRaised).
   // The refund window it opens (12c's, set; words §2.2 `refund.twice.*` / `refund.more.*`).
   allSub: (howPaid: string | null) => (howPaid ? `Paid twice: the team had already paid ${howPaid}` : 'Paid twice: the team had already paid in full'),
@@ -957,7 +1060,6 @@ export const disputeWhyShort = (reason: string | null | undefined) => (reason ? 
 export const endSentence = (s: string) => (s.endsWith('.') ? s : `${s}.`);
 /** " Answer in Stripe by {due}.", or nothing when the bank allows no answer (no due date: /review 2026-10-27). */
 const answerIn = (due: string) => (due ? ` Answer in Stripe by ${endSentence(due)}` : '');
-const answersIt = (name: string, due: string) => (due ? ` ${name} answers it in Stripe by ${endSentence(due)}` : '');
 
 /** `{due}` on a screen ("Nov 11") and with the clock ("Nov 11 at 7:59 p.m."), in the club's zone; `full` adds the year
  *  (an email, words "Dates"). */
@@ -1032,18 +1134,49 @@ export const DISPUTE_WORDS = {
   // §1.4 Needs attention. `who` is "{childPossessive}" / "{teamNamePossessive}"; `payer` is "{guardianPossessive}".
   itemTitle: (who: string) => `${who} card payment is disputed`,
   itemTitleMany: (children: string) => `A card payment for ${children} is disputed`,
-  itemBody: (payer: string, receiptNo: string, amount: string, whyFull: string, held: string, due: string) =>
-    `${payer} bank is disputing receipt ${receiptNo} (${amount})${whyFull}. Stripe has taken ${held} from the club’s Stripe balance until the bank decides.${answerIn(due)}`,
-  itemBodyInquiry: (payer: string, receiptNo: string, whyFull: string, due: string) =>
-    `${payer} bank is asking about receipt ${receiptNo}${whyFull}. Nothing has been taken. Answering can stop it becoming a dispute.${answerIn(due)}`,
-  itemBodyOthers: (payer: string, receiptNo: string, amount: string, name: string, due: string) =>
-    `${payer} bank is disputing receipt ${receiptNo} (${amount}).${answersIt(name, due)} If the club wins, nothing changes here.`,
-  itemBodyOthersInquiry: (payer: string, receiptNo: string, amount: string, name: string, due: string) =>
-    `${payer} bank is asking about receipt ${receiptNo} (${amount}).${answersIt(name, due)}`,
+  /**
+   * `card_disputed` (drawing tab 3): ONE entry for its four cases. The answerer's copy (`answers` null) carries the
+   * bank's reason (no reason, no row), what Stripe holds (the figure leads only when it differs from the Amount row's;
+   * an inquiry takes nothing) and the deadline as a row, "Answer by" (Q2, A), with the instruction as the line under the
+   * rows. The desk's quieter copy says who answers and by when, and that a win changes nothing here.
+   * `payer`: the guardian's name, or null when it isn't known (a team's cardholder) — no row then.
+   */
+  item: (p: {
+    payer: string | null; receiptNo: string; amount: string; reason: string | null; held: string; inquiry: boolean;
+    due: string; dueDay: string; answers: string | null;
+  }): NoticeText => {
+    const lead = receiptLead(p.receiptNo, p.amount);
+    const head = [amountRow(p.amount, p.receiptNo), factRow(L.paidBy, p.payer)];
+    if (p.answers != null) {
+      return {
+        body: `${lead}.${p.dueDay ? ` ${p.answers} answers it in Stripe by ${p.dueDay}.` : ''}`,
+        facts: noticeFacts([...head, factRow(L.whoAnswers, `${p.answers}, in Stripe`), factRow(L.answerBy, p.due, { lead: true })],
+          p.inquiry ? null : 'If the club wins, nothing changes here.'),
+      };
+    }
+    const until = 'until the bank decides';
+    const held = p.inquiry ? factRow(L.held, 'Nothing has been taken')
+      : p.held === p.amount ? factRow(L.held, `From the club’s Stripe balance, ${until}`)
+        : factRow(L.held, p.held, { lead: true, detail: `from the club’s Stripe balance, ${until}` });
+    return {
+      body: `${lead}.${answerIn(p.due)}`,
+      facts: noticeFacts([...head, factRow(L.reason, asSentence(disputeWhyFull(p.reason))), held, factRow(L.answerBy, p.due, { lead: true })],
+        !p.due ? null : p.inquiry ? 'Answer it in Stripe: answering can stop it becoming a dispute.' : 'Answer it in Stripe.'),
+    };
+  },
   lostTitle: (who: string) => `${who} dispute was lost`,
   lostTitleMany: (children: string) => `The dispute for ${children} was lost`,
-  lostBody: (receiptNo: string, day: string, book: 'season' | 'tournament', owesAgain: string, team: boolean) =>
-    `The bank took back receipt ${receiptNo} on ${day}. It’s out of the ${book === 'season' ? 'season’s' : 'tournament’s'} book, and ${owesAgain}. We haven’t emailed the ${team ? 'team' : 'family'}.`,
+  /** `card_dispute_lost`: the payment, the day the bank took it, out of which book, who owes again; nobody was emailed. */
+  lostNotice: (p: { who: MoneyNoticeWho; receiptNo: string; amount: string; day: string; owed: string }): NoticeText => ({
+    body: `${receiptLead(p.receiptNo, p.amount)}. The bank took it back on ${p.day}.`,
+    facts: noticeFacts([
+      amountRow(p.amount, p.receiptNo),
+      factRow(L.returned, p.day),
+      bookRow(isTeam(p.who) ? 'tournament' : 'season'),
+      owesAgainRow(whoName(p.who), p.owed, p.amount),
+      factRow(isTeam(p.who) ? L.team : L.family, 'Not emailed'),
+    ]),
+  }),
   /** "{guardianPossessive}" when the payer is not named. */
   payerUnknown: 'The cardholder’s',
   // §1.5 money.

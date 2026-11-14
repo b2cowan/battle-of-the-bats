@@ -530,7 +530,9 @@ export default function AllocationWindow({ q, line, drafts, onMade, onCancel }: 
         <label className={ck.field} htmlFor="na-from">
           <span className={ck.label}>{W.billFrom}<span className={repKit.req} aria-hidden>*</span></span>
           <select id="na-from" className={ck.select} value={pick} onChange={e => (e.target.value === 'off' ? setPick('off') : pickLine(e.target.value))}>
-            <option value="">{billFrom ? W.billFromPick(billFrom.year.name) : 'Loading…'}</option>
+            {/* The prompt shows in the closed box but is never a choice: picking it only un-chose the line, and
+                "none" is the off-plan row below, not this one. */}
+            <option value="" disabled>{billFrom ? W.billFromPick(billFrom.year.name) : 'Loading…'}</option>
             {billFrom && billFrom.lines.length > 0 && (
               <optgroup label={W.billFromLines(billFrom.year.name)}>
                 {billFrom.lines.map(l => <option key={l.id} value={l.id}>{l.description} · {W.lineLeft(money(l.left))}</option>)}

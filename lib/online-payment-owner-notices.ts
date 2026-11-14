@@ -8,7 +8,7 @@ import { getOrganizationBySlugForServer } from './server-organizations';
 import { payoutsPath } from './online-payment-account';
 import { formatStoredDate } from './timezone';
 import { LEAVING_WORDS, PAYMENTS_TERMS_VERSION, TERMS_WORDS, termsVersionDate } from './online-payment-words';
-import { closePagesIfPaymentsEnded, endingNotice, readOutstanding, upcomingEnding } from './online-payment-endings';
+import { closePagesIfPaymentsEnded, endingBell, readOutstanding, upcomingEnding } from './online-payment-endings';
 import type { Organization } from './types';
 import { PLAN_CONFIG } from './plan-config';
 import { orgOwnerEmails, orgOwnerUserIds } from './notify-recipients';
@@ -148,11 +148,12 @@ export async function sendEndingWarnings(now: Date = new Date()): Promise<{ warn
         .eq('org_id', org.id).or(`ending_warned_for.is.null,ending_warned_for.neq."${ending.at}"`).select('org_id');
       if (!claimed?.length) continue;
       const outstanding = await readOutstanding(org.id).catch(() => null);
-      const notice = endingNotice(ending, org.name, outstanding);
+      // The bell reads at a glance (one line + rows); the Payouts card keeps the ending's paragraph (`endingNotice`).
+      const notice = endingBell(ending, org.name, outstanding);
       await notify({
         orgId: org.id, userIds: people.userIds, eventType: 'payments_ending',
         title: notice.title, body: notice.body, link: payoutsPath(org),
-        metadata: { endingFor: ending.at, endingKind: ending.kind },
+        metadata: { endingFor: ending.at, endingKind: ending.kind, facts: notice.facts },
       });
       const owe = outstanding ? LEAVING_WORDS.oweToday(outstanding.familiesOwing, outstanding.teamsOwing) : '';
       const subject = ending.kind === 'comp'

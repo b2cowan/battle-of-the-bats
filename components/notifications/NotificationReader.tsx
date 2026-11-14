@@ -1,5 +1,5 @@
 'use client';
-import { useId, useRef, type RefObject } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import type { ActivityEntry } from '@/lib/notification-view';
 import NotificationMessage from './NotificationMessage';
 import type { NotificationFeed } from './useNotificationFeed';
@@ -73,9 +73,12 @@ export default function NotificationReader({
 }) {
   const isPhoneNav = useIsPhoneNav();
   const panelRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   // The centred dialog's own floor; wherever the bar shows the frame's is the floor.
   useDialogFloor(!isPhoneNav, panelRef, { onClose, opener });
+  const pinned = useOutgrows(isPhoneNav, sheetRef, bodyRef);
 
   const message = (
     <NotificationMessage
@@ -85,14 +88,15 @@ export default function NotificationReader({
       onDone={n => { void feed.clearRow(n); onClose(); }}
       onDelete={members => { feed.deleteRows(members); onClose(); }}
       onClose={onClose}
+      pinActions={isPhoneNav && pinned}
     />
   );
 
   if (isPhoneNav) {
     return (
       <div data-notification-reader style={{ display: 'contents' }}>
-        <SheetFrame grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={titleId}>
-          <div className={own.body}>{message}</div>
+        <SheetFrame ref={sheetRef} grabCloses onClose={onClose} opener={opener} role="dialog" aria-labelledby={titleId}>
+          <div ref={bodyRef} className={own.body}>{message}</div>
         </SheetFrame>
       </div>
     );
@@ -105,4 +109,26 @@ export default function NotificationReader({
       </div>
     </div>
   );
+}
+
+/** ⚖ THE PHONE SHEET'S BUTTONS WHEN A NOTICE OUTGROWS IT (Q9, A — owner 2026-11-14; moved games measured 131px below
+ *  the sheet's first view): is the sheet's message taller than the sheet? Then the message pins its button row at the
+ *  sheet's foot and scrolls above it; a message that fits is unchanged. Re-measured whenever the sheet or the message
+ *  changes size (a list opened in place, a rotated phone). The pinned row takes the same room as the unpinned one, so
+ *  pinning never flips the answer. This is the reader's use of the frame, not a change to every sheet. */
+function useOutgrows(active: boolean, sheetRef: RefObject<HTMLElement | null>, bodyRef: RefObject<HTMLElement | null>): boolean {
+  const [outgrows, setOutgrows] = useState(false);
+  useLayoutEffect(() => {
+    const sheet = sheetRef.current;
+    const body = bodyRef.current;
+    if (!active || !sheet || !body) { setOutgrows(false); return; }
+    const measure = () => setOutgrows(sheet.scrollHeight > sheet.clientHeight + 1);
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(sheet);
+    ro.observe(body);
+    return () => ro.disconnect();
+  }, [active, sheetRef, bodyRef]);
+  return outgrows;
 }

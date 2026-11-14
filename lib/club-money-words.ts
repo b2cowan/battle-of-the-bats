@@ -21,6 +21,7 @@ import { fmt } from './coach-money-summary';
 import { sumMoney } from './club-money-figures';
 import { MONTH_NAMES_LONG, formatMonthLong, type MonthKey } from './coach-budget-months';
 import { joinWithAnd, pluralize, possessive } from './utils';
+import { FACT_LABELS, factRow, noticeFacts } from './notification-facts';
 
 /** The product's one method list (the dues tokens) — the club's money moves take exactly these. */
 export function isClubMoneyMethod(v: unknown): v is DuesPaymentMethod {
@@ -291,10 +292,21 @@ export const CLUB_MONEY_NOTICE = {
     body: `${p.what}. You can file a new request.${reasonLine(p.reason)}`,
   }),
   /** To the club's accounting people (the Accounting rows). */
-  sent: (p: { teamName: string; amount: number; what: string; sentOn: string; how: string | null }) => ({
-    title: `${p.teamName} says they sent ${fmt(p.amount)}`,
-    body: `${p.what} · sent ${formatStoredDate(p.sentOn, { withYear: false })}${p.how ? ` · ${p.how}` : ''}. Confirm it when it arrives.`,
-  }),
+  /** `team_money_sent` (Notifications read at a glance, Stage 2): the one line names what it pays and when it was sent;
+   *  the opened notice reads Amount · For · Sent · How, then the ask. [marketing] */
+  sent: (p: { teamName: string; amount: number; what: string; sentOn: string; how: string | null }) => {
+    const day = formatStoredDate(p.sentOn, { withYear: false });
+    return {
+      title: `${p.teamName} says they sent ${fmt(p.amount)}`,
+      body: `${p.what}, sent ${day}.`,
+      facts: noticeFacts([
+        factRow(FACT_LABELS.amount, fmt(p.amount), { lead: true }),
+        factRow(FACT_LABELS.for, p.what),
+        factRow(FACT_LABELS.sent, day),
+        factRow(FACT_LABELS.how, p.how),
+      ], 'Confirm it when it arrives.'),
+    };
+  },
   newRequest: (p: { teamName: string; amount: number; what: string; toClub: boolean }) => ({
     title: `${p.teamName} filed a ${fmt(p.amount)} request`,
     body: `${p.toClub ? REQUEST_DIRECTION_WORD.payment_to_org : REQUEST_DIRECTION_WORD.charge_to_org} · ${p.what}`,
@@ -971,7 +983,7 @@ export const NEW_ALLOCATION_WORDS = {
   eyebrow: 'Allocations',
   title: 'New allocation',
   billFrom: 'Bill from',
-  billFromPick: (year: string) => `Choose a line on the ${year} plan, or none`,
+  billFromPick: (year: string) => `Choose a line on the ${year} plan`,
   billFromLines: (year: string) => `${year} plan · cost lines with something left`,
   billFromNone: 'Not on the plan',
   offPlan: 'An off-plan bill',

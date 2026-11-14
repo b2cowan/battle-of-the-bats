@@ -15,7 +15,7 @@ import MonthlyAttendanceChart from '@/components/charts/MonthlyAttendanceChart';
 import type { MonthlyAttendanceBucket } from '@/lib/coach-monthly-attendance';
 import type { RepTeamEvent } from '@/lib/types';
 import styles from '../../../../coaches.module.css';
-import { CoachCard, kit } from '@/components/coaches/kit';
+import { kit } from '@/components/coaches/kit';
 import att from './attendance.module.css';
 
 /** Event types attendance is taken on — the games plus practices and multi-day tournaments,
@@ -374,34 +374,6 @@ export function AttendancePanel({
         </div>
       ) : (
         <>
-          {/* Batch 4 — record first, review second. The review found this page explained what it
-              would show but never linked to where attendance is actually taken; the round trip
-              back from the game panel is the matching half. */}
-          {markTargetLoading ? (
-            // Card-shaped placeholder, not a message — the slot holds its size and says nothing it
-            // might have to take back.
-            <CoachCard accent className={styles.nowCard} aria-busy="true" aria-label="Looking for your next game or practice">
-              <SkeletonBlock w="110px" h="0.7rem" />
-              <SkeletonBlock w="min(360px, 85%)" h="1.35rem" />
-              <SkeletonBlock w="170px" h="0.9rem" />
-              <SkeletonBlock w="150px" h="30px" />
-            </CoachCard>
-          ) : markTarget ? (
-            // Reuses the Overview "Right now" anchor-card family rather than a parallel set of
-            // classes — same eyebrow / headline / meta / CTA shape, so the two read as one pattern.
-            <CoachCard accent className={styles.nowCard}>
-              <p className={styles.nowEyebrow}>Take attendance</p>
-              <p className={styles.nowHeadline}>{eventDisplayTitle(markTarget)}</p>
-              <p className={styles.nowMeta}>{formatEventWhen(markTarget.startsAt)}</p>
-              <div className={styles.nowActions}>
-                <Link href={`${base}/schedule?event=${markTarget.id}&tab=attendance`} className="btn btn-lime btn-sm">
-                  Take attendance <ArrowRight size={14} aria-hidden />
-                </Link>
-              </div>
-            </CoachCard>
-          ) : null /* Lookup failed, or the events are gone but their figures remain. Either way
-                      we do not know the schedule is empty, so we do not say it is. */}
-
           {error ? (
             <p className={styles.errorText}>{error}</p>
           ) : (
@@ -452,6 +424,26 @@ export function AttendancePanel({
                   nothing is recorded yet, `monthly` is simply empty and the note two blocks below
                   already says so — a second "nothing yet" card here would repeat it. */}
               {monthly.length > 0 && <MonthlyAttendanceChart buckets={monthly} />}
+
+              {/* ── Where attendance is taken — ONE QUIET LINE (owner, 2026-11-14) ──────────────
+                  This was a full "Take attendance" card at the top of the tab. This tab is where a
+                  coach reads the season's history, and one game's call to action is not its headline.
+                  The shortcut survives (a report that never says where the record is made was the
+                  original Batch 4 finding) but as a line of text between the figures and the roster.
+                  Loading holds a one-line slot; a failed lookup, or events gone while their figures
+                  remain, renders nothing — we do not know the schedule is empty, so we do not say so. */}
+              {markTargetLoading ? (
+                <div className={att.markLine} aria-busy="true" aria-label="Looking for your next game or practice">
+                  <SkeletonBlock w="min(320px, 80%)" h="0.8rem" />
+                </div>
+              ) : markTarget ? (
+                <p className={att.markLine}>
+                  <span>{eventDisplayTitle(markTarget)} · {formatEventWhen(markTarget.startsAt)}</span>
+                  <Link href={`${base}/schedule?event=${markTarget.id}&tab=attendance`} className={att.markLink}>
+                    Take attendance <ArrowRight size={13} aria-hidden />
+                  </Link>
+                </p>
+              ) : null}
 
               {/* Replaces the second empty state. It sits ABOVE the table because it is the
                   caption for the dashes underneath — read the other way round, a coach meets a

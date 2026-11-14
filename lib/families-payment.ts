@@ -472,11 +472,14 @@ export async function markHandoffNotReceived(p: { org: { id: string; slug: strin
   if (h.sent_by && h.sent_by !== p.userId && (await isActiveMember(p.org.id, h.sent_by))) {
     try {
       const coach = (await resolvePersonNamer(p.org.id, [p.userId]))(p.userId) ?? 'The head coach';
+      const { body, facts } = CW.admin({
+        team: p.teamName, child: h.player_name, amount: fmt(Number(h.amount)),
+        method: h.method ? methodWord(h.method) ?? h.method : null, receivedDay: shortDay(h.received_date),
+      });
       await notify({
         orgId: p.org.id, userIds: [h.sent_by], excludeUserIds: [p.userId], eventType: 'club_payment_not_received',
-        title: CW.adminTitle(coach, h.player_name, fmt(Number(h.amount))),
-        body: CW.adminBody(p.teamName, h.method ? methodWord(h.method) ?? h.method : null, shortDay(h.received_date)),
-        link: `/${p.org.slug}/admin/families/${h.person_id}`, metadata: { handoffId: h.id, personId: h.person_id },
+        title: CW.adminTitle(coach, h.player_name, fmt(Number(h.amount))), body,
+        link: `/${p.org.slug}/admin/families/${h.person_id}`, metadata: { handoffId: h.id, personId: h.person_id, facts },
       });
     } catch (e) {
       console.error('[families-payment] the sender could not be told (Not received stands):', e);

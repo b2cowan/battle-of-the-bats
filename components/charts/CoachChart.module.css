@@ -10,6 +10,9 @@
    a literal hex here would silently undo that correction; see the token's own header comment in
    `app/globals.css` for why that is explicitly the wrong move for a component. */
 
+/* The empty state's wrapper — same space under it as the drawn chart card below. */
+.emptyWrap { margin-bottom: 1.1rem; }
+
 .chartCard {
   container-type: inline-size;
   background: var(--white-8);

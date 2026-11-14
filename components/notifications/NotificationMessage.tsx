@@ -1,5 +1,5 @@
 'use client';
-import type { Ref } from 'react';
+import { useState, type Ref } from 'react';
 import { ArrowRight, Check, Trash2 } from 'lucide-react';
 import type { AppNotification, NotificationEventType } from '@/lib/types';
 import { NOTIFICATION_EVENT_LABELS, notificationCategory } from '@/lib/notification-labels';
@@ -9,7 +9,8 @@ import {
   BUNDLE_NOUN, HANDOFF_ACTIONS, entryMembers, handoffNotReceivedLink, iconFor, notificationDestination, notificationStamp,
   type ActivityEntry,
 } from '@/lib/notification-view';
-import { TIME_HANDOFF_WORDS, readTimeChangeFacts } from '@/lib/league-time-handoff';
+import { readTimeChangeFacts } from '@/lib/league-time-notice';
+import { FACT_FOLD_WORDS, FACT_LIST_FOLD, readNoticeFacts, type FactList, type NoticeFacts } from '@/lib/notification-facts';
 import buttons from './notification-buttons.module.css';
 import styles from './NotificationMessage.module.css';
 
@@ -51,6 +52,7 @@ export default function NotificationMessage({
   onDone,
   onDelete,
   onClose,
+  pinActions = false,
 }: {
   /** What was opened — one notification, or a same-day bundle of one kind. */
   entry: ActivityEntry;
@@ -66,6 +68,8 @@ export default function NotificationMessage({
   onDelete: (members: AppNotification[]) => void;
   /** A frame that closes from its button row passes this, and Close joins the row before the trash. */
   onClose?: () => void;
+  /** The phone sheet's message is taller than the sheet: pin the button row at its foot (Q9). The reader decides. */
+  pinActions?: boolean;
 }) {
   const members = entryMembers(entry);
   const lead = members[0];
@@ -89,9 +93,11 @@ export default function NotificationMessage({
         : lead.eventType === 'card_refund_failed' ? REFUND_NOTICE_ACTIONS.anotherWay : null;
   const goLabel = handoff ? HANDOFF_ACTIONS.recordIt : refundLabel ?? notificationDestination(link, portal);
   const goLink = enrolled ? withAnswer(enrolled, 'withdraw') : link;
-  // House league's time notice, sent since 2026-11-14, carries its facts: drawn as labelled rows, not a paragraph. An older
-  // one (or any other kind) has none and keeps its body.
-  const timeFacts = entry.kind === 'item' && lead.eventType === 'house_league_time_given' ? readTimeChangeFacts(lead.metadata) : null;
+  // A notice that stores its facts (the shared shape, `metadata.facts`) opens as labelled rows, not a paragraph; one sent
+  // before its kind stored them keeps its body (ruling 4). House league's time notices sent on Nov 14 stored the first,
+  // bespoke shape and are read onto the shared one.
+  const facts = entry.kind !== 'item' ? null
+    : readNoticeFacts(lead.metadata) ?? (lead.eventType === 'house_league_time_given' ? readTimeChangeFacts(lead.metadata) : null);
   const kind = NOTIFICATION_EVENT_LABELS[lead.eventType as NotificationEventType] ?? 'Notification';
   const title = entry.kind === 'bundle'
     ? `${members.length} ${BUNDLE_NOUN[entry.eventType] ?? 'notifications'}`
@@ -111,7 +117,7 @@ export default function NotificationMessage({
       <h2 id={titleId} ref={titleRef} tabIndex={-1} className={styles.title}>{title}</h2>
 
       {entry.kind === 'item' ? (
-        timeFacts ? <TimeChangeRows facts={timeFacts} /> : lead.body ? <p className={styles.body}>{lead.body}</p> : null
+        facts ? <FactRows facts={facts} settled={!!settled} /> : lead.body ? <p className={styles.body}>{lead.body}</p> : null
       ) : (
         <ul className={styles.members}>
           {members.map(m => (
@@ -135,7 +141,7 @@ export default function NotificationMessage({
         </p>
       )}
 
-      <div className={styles.actions}>
+      <div className={`${styles.actions}${pinActions ? ` ${styles.actionsPinned}` : ''}`} data-sheet-foot={pinActions ? '' : undefined}>
         {goLink && goLabel && (
           <a href={goLink} className={`${buttons.btn} ${buttons.primary} ${styles.onward}`}>
             {goLabel} <ArrowRight size={16} aria-hidden />
@@ -169,27 +175,47 @@ export default function NotificationMessage({
   );
 }
 
-/** "The club gave house league time", opened: Season, Schedule, then Gives (and Takes back) with the hours and dates on the label's
- *  line and each slot under it, so the one fact wanted is found by its label, not by reading a sentence (owner 2026-11-14). */
-function TimeChangeRows({ facts }: { facts: NonNullable<ReturnType<typeof readTimeChangeFacts>> }) {
-  const L = TIME_HANDOFF_WORDS.bell.labels;
+/** A notice's stored facts, opened (drawing tab 1, owner rulings Q1–Q3, 2026-11-14): label → value rows, each under a
+ *  hairline, so the one fact wanted is found by its label, not by reading a sentence. A value may be a bold lead with a
+ *  quieter detail; a list under a row runs the full width on a phone and folds past 6; the next-step line sits under the
+ *  rows until the notice is settled, when the settled line takes its place (Q2). */
+function FactRows({ facts, settled }: { facts: NoticeFacts; settled: boolean }) {
   return (
     <>
       <dl className={styles.facts}>
-        <div className={styles.fact}><dt>{L.season}</dt><dd>{facts.season}</dd></div>
-        <div className={styles.fact}><dt>{L.schedule}</dt><dd>{facts.schedule}</dd></div>
-        {facts.blocks.map(b => (
-          <div key={b.label} className={styles.fact}>
-            <dt>{b.label}</dt>
+        {facts.rows.map((r, i) => (
+          <div key={`${i}-${r.label}`} className={styles.fact}>
+            <dt>{r.label}</dt>
             <dd>
-              <span className={styles.factHours}>{b.hours}</span>{b.range && <> · {b.range}</>}
-              {b.lines.length > 0 && <ul className={styles.factLines}>{b.lines.map(l => <li key={l}>{l}</li>)}</ul>}
+              {r.lead ? <span className={styles.factLead}>{r.value}</span> : r.value}
+              {r.detail && <span className={styles.factDetail}> · {r.detail}</span>}
             </dd>
+            {r.list && <FactListLines list={r.list} />}
           </div>
         ))}
       </dl>
-      {facts.grows && <p className={styles.factNext}>{TIME_HANDOFF_WORDS.bell.next}</p>}
+      {facts.next && !settled && <p className={styles.factNext}>{facts.next}</p>}
     </>
+  );
+}
+
+/** A list under a row: 6 lines, then "Show N more <noun>" opens the rest in place ("Show fewer <noun>"), Q3 B. */
+function FactListLines({ list }: { list: FactList }) {
+  const [open, setOpen] = useState(false);
+  const hidden = list.lines.length - FACT_LIST_FOLD;
+  const shown = hidden > 0 && !open ? list.lines.slice(0, FACT_LIST_FOLD) : list.lines;
+  return (
+    <div className={styles.factSpan}>
+      <ul className={styles.factLines}>
+        {shown.map((l, i) => <li key={`${i}-${l}`}>{l}</li>)}
+        {list.overflow && (open || hidden <= 0) && <li>{list.overflow}</li>}
+      </ul>
+      {hidden > 0 && (
+        <button type="button" className={styles.factFold} aria-expanded={open} onClick={() => setOpen(o => !o)}>
+          {open ? FACT_FOLD_WORDS.fewer(list.noun) : FACT_FOLD_WORDS.more(hidden, list.noun)}
+        </button>
+      )}
+    </div>
   );
 }
 

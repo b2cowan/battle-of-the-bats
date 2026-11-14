@@ -210,12 +210,18 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
     if (kind === 'review') return t.bill ? `${slots} · ${billPhrase(t.bill.cents, t.bill.installments.length)}` : slots;
     return i === 0 ? `${W.staffNote} · ${slots}` : slots;
   };
-  // A mixed team's row says who gets it without the bill (owner 2026-11-13) — on its own line under the team's line
-  // (/design 2026-11-13: appended, it pushed a phone row to three lines).
+  // The row does NOT name who gets it without the bill (owner 2026-11-13): the question is whether the team is told and
+  // whether someone on it can see the money — a head coach always can. The one "See the email … gets" door stays below.
+  // Twenty teams is a long list: a row names the head coach(es) only (or the first person, with no head coach marked);
+  // the rest of the staff is a small count on the second line (owner 2026-11-13).
+  const leads = (t: PreviewTeam) => {
+    const heads = t.recipients.filter(r => r.isHeadCoach);
+    return heads.length ? heads : t.recipients.slice(0, 1);
+  };
   const teamSub = (t: PreviewTeam, i: number) => {
-    const plain = getsPlain(t).map(r => r.name ?? r.email);
     const line = teamLine(t, i);
-    return plain.length ? <>{line}{line && <br />}{W.plainGets(plain)}</> : line;
+    const more = t.recipients.length - leads(t).length;
+    return more > 0 ? <>{line}{line && <br />}{W.alsoTold(more)}</> : line;
   };
 
   return (
@@ -272,7 +278,7 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
               <SendRows>
                 {teams.map((t, i) => (
                   <SendRow key={t.teamId}
-                    title={<><b>{t.teamName}</b> · {t.recipients.map(r => r.name ?? r.email).join(', ')}</>}
+                    title={<><b>{t.teamName}</b> · {leads(t).map(r => r.name ?? r.email).join(', ')}</>}
                     sub={teamSub(t, i)}
                     pick={{
                       checked: !unticked.has(t.teamId),

@@ -4,6 +4,7 @@ import type { Installment } from './club-schedule-bill';
 import type { CreditMove } from './club-hand-back-words';
 import type { SendKind } from './club-schedule-send';
 import type { NotificationEventType } from './types';
+import type { NoticeFacts } from './notification-facts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -138,7 +139,11 @@ export function bellGroups(p: { staff: readonly { userId: string; money: boolean
 }
 
 /** One bell to write: its audience, its words, and whether it opens the team's Money › Club tab (a bill) or its schedule. */
-export interface TeamBell { eventType: NotificationEventType; userIds: string[]; title: string; body: string; toMoney: boolean }
+export interface TeamBell {
+  eventType: NotificationEventType; userIds: string[]; title: string; body: string; toMoney: boolean;
+  /** The rows the opened notice draws (Notifications read at a glance, Stage 2), stored as `metadata.facts`. */
+  facts?: NoticeFacts;
+}
 
 /**
  * A team's bells for one send. Each is ONE `notify` call — its title and body fan out to push and the opt-in email copy
@@ -153,7 +158,7 @@ export function teamBells(p: {
   const t = p.team;
   const billBell = (userIds: string[], cents: number, first: Installment | null, payments: number): TeamBell =>
     ({ eventType: 'club_bill_arrived', userIds, toMoney: true, ...SCHEDULE_NOTICES.bill({ orgName: p.orgName, teamName: t.teamName, cents, scheduleName: p.scheduleName, first, payments }) });
-  const slotsBell = (eventType: NotificationEventType, userIds: string[], words: { title: string; body: string }): TeamBell =>
+  const slotsBell = (eventType: NotificationEventType, userIds: string[], words: { title: string; body: string; facts?: NoticeFacts }): TeamBell =>
     ({ eventType, userIds, toMoney: false, ...words });
   const out: TeamBell[] = [];
   if (p.kind === 'review') {

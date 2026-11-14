@@ -133,9 +133,19 @@ describe('pickFanViewRegistration — the premium tail row', () => {
     assert.deepEqual(resolveRowFanView(completed), { orgSlug: 'milton', tournamentSlug: 't-done' });
   });
 
-  it('can still return a finished-but-unarchived event (status active) — the chip says so', () => {
-    const stale = entry('stale', { startDate: '2026-07-01', endDate: '2026-07-02' });
+  it('still names a just-finished event the organizer has not closed (status active) — the chip says so', () => {
+    const stale = entry('stale', { startDate: '2026-07-26', endDate: '2026-07-28' });
     assert.equal(pickFanViewRegistration([stale], TODAY)?.name, 'stale');
+  });
+
+  it('lets go of an unclosed event once its last day is more than 3 days behind', () => {
+    // Ended 2026-07-26: four days before TODAY. The record page and list row keep it; the Overview does not.
+    const old = entry('old', { startDate: '2026-07-24', endDate: '2026-07-26' });
+    assert.equal(pickFanViewRegistration([old], TODAY), null);
+    // ...and a stale event never hides the next real one.
+    const next = entry('next', { startDate: '2026-08-15', endDate: '2026-08-16' });
+    assert.equal(pickFanViewRegistration([old, next], TODAY)?.name, 'next');
+    assert.deepEqual(resolveRowFanView(old), { orgSlug: 'milton', tournamentSlug: 't-old' });
   });
 
   it('skips an entry with no org or tournament slug', () => {

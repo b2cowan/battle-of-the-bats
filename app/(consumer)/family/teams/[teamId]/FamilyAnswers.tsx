@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 import styles from './FamilyAnswers.module.css';
 import { scheduleDayLabel, scheduleRowTitle, scheduleTimeLabel } from '@/lib/family-schedule-format';
 import {
@@ -227,7 +228,10 @@ function AnswerSheet({ row, entry, teamId, teamName, otherParent, onSaved, lates
               {[scheduleRowTitle(entry, teamName), scheduleDayLabel(entry.startsAt), scheduleTimeLabel(entry.startsAt)].join(' · ')}
             </p>
           </div>
-          <button type="button" className={styles.close} onClick={() => ref.current?.close()}>{W.sheet.close}</button>
+          {/* The portal's × is a plain glyph — no outline, no box (owner ruling 2026-10-07); the word stays as the accessible name. */}
+          <button type="button" className={styles.close} aria-label={W.sheet.close} onClick={() => ref.current?.close()}>
+            <X size={18} aria-hidden />
+          </button>
         </div>
 
         {setLine && <p className={styles.soft}>{setLine}</p>}

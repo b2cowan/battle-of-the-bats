@@ -155,15 +155,17 @@
   min-height: 44px;
   display: grid;
   place-items: center;
-  padding: 0 0.6rem;
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 0;
   color: var(--home-ink-soft);
   background: transparent;
-  border: 1px solid var(--home-line-strong);
-  border-radius: var(--home-radius-sm);
+  border: 0;
   cursor: pointer;
+}
+
+@media (hover: hover) {
+  .close:hover {
+    color: var(--home-ink);
+  }
 }
 
 .soft {

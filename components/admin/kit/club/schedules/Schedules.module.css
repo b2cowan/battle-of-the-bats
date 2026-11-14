@@ -107,6 +107,9 @@
 .door:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
 .door:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.15rem; }
+/* A value the window fixes (Bill the teams' Split): plain text, no box, so it does not look like a choice. It keeps
+   the 36px a form field has, so the line beside it sits level. */
+.fixedValue { display: flex; align-items: center; min-height: 36px; margin: 0; font-size: var(--type-body, 1rem); font-weight: 600; color: var(--text-primary); }
 .chip {
   display: inline-flex; align-items: center; gap: 0.3rem;
   min-height: var(--admin-control-h); padding: 0 0.75rem;

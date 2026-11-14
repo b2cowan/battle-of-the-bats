@@ -7,6 +7,7 @@ import { canOpenModule } from './member-access';
 import { moneySectionHref } from './coach-money-links';
 import { notify } from './notify';
 import type { NotificationEventType, OrgRole, Organization } from './types';
+import type { NoticeFacts } from './notification-facts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -149,6 +150,8 @@ export async function tellClubAccounting(p: {
   title: string;
   body: string;
   link: string;
+  /** The rows the opened notice draws (Notifications read at a glance, Stage 2); with them `body` is the one line. */
+  facts?: NoticeFacts;
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   try {
@@ -162,7 +165,7 @@ export async function tellClubAccounting(p: {
       userIds,
       excludeUserIds: p.actorUserId ? [p.actorUserId] : [],
       link: p.link,
-      metadata: { teamId: p.teamId, ...(p.metadata ?? {}) },
+      metadata: { teamId: p.teamId, ...(p.metadata ?? {}), ...(p.facts ? { facts: p.facts } : {}) },
     });
   } catch (e) {
     console.error(`[club-money-notify] ${p.event} to the club failed (the money move landed):`, e);

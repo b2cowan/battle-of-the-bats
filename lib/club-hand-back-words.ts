@@ -17,6 +17,18 @@ import { formatShortWeekdayDate, utcToZonedInputs } from './timezone';
 import { fmt } from './coach-money-summary';
 import { weekdayCount, weekdayOne, weekdayPlural } from './permit-words';
 import type { HandedBackSlot } from './club-hand-back-reads';
+import { FACT_LABELS, factRow, noticeFacts } from './notification-facts';
+
+/** A hand-back ask's bell, opened (Notifications read at a glance, Stage 2): Team · Schedule · Practices (the count, then the
+ *  days) · Money back (never for a builder who can't move club money: `cents` null), then where it stands. [marketing] */
+function askFacts(p: { teamName: string; count: number; cents: number | null; scheduleName: string; first: string; last: string }, next: string) {
+  return noticeFacts([
+    factRow(FACT_LABELS.team, p.teamName),
+    factRow(FACT_LABELS.schedule, p.scheduleName),
+    factRow(FACT_LABELS.practices, String(p.count), { lead: true, detail: dayRange([p.first, p.last], formatShortWeekdayDate) }),
+    factRow(FACT_LABELS.moneyBack, p.cents == null ? null : money(p.cents), { lead: true }),
+  ], next);
+}
 
 const money = (cents: number) => fmt(cents / 100);
 /** "Sun, Mar 7" without the weekday: "Mar 7". */
@@ -259,7 +271,8 @@ export const HAND_BACK_WORDS = {
   /** `cents` null: the same notice for a builder who can't move club money — never the figure (a money read). */
   bellAsked: (p: { teamName: string; count: number; cents: number | null; scheduleName: string; first: string; last: string }) => ({
     title: `${p.teamName} asks to hand back ${pluralize(p.count, 'practice')}${p.cents == null ? ', with money back' : `, with ${money(p.cents)} back`}`,
-    body: `${p.scheduleName}: ${p.first === p.last ? formatShortWeekdayDate(p.first) : `${formatShortWeekdayDate(p.first)} – ${formatShortWeekdayDate(p.last)}`}. ${p.count === 1 ? 'The practice stays' : 'The practices stay'} ${possessive(p.teamName)} until someone who holds the club’s Accounting answers.`,
+    body: `${p.scheduleName}: ${dayRange([p.first, p.last], formatShortWeekdayDate)}.`,
+    facts: askFacts(p, `${p.count === 1 ? 'The practice stays' : 'The practices stay'} ${possessive(p.teamName)} until someone who holds the club’s Accounting answers.`),
   }),
   bellWithdrawn: (p: { teamName: string; count: number; scheduleName: string }) => ({
     title: `${p.teamName} withdrew its hand-back`,
@@ -338,7 +351,8 @@ export const HAND_BACK_WORDS = {
   // Bells (C4)
   bellAskedLate: (p: { teamName: string; count: number; cents: number | null; scheduleName: string; first: string; last: string }) => ({
     title: `${p.teamName} asks for ${p.cents == null ? 'money' : money(p.cents)} back for ${pluralize(p.count, 'practice')} it handed back`,
-    body: `${p.scheduleName}: ${dayRange([p.first, p.last], formatShortWeekdayDate)}. Their time is already open; only the money waits for someone who holds the club’s Accounting.`,
+    body: `${p.scheduleName}: ${dayRange([p.first, p.last], formatShortWeekdayDate)}.`,
+    facts: askFacts(p, 'Their time is already open; only the money waits for someone who holds the club’s Accounting.'),
   }),
   bellWithdrawnLate: (p: { teamName: string; count: number; scheduleName: string }) => ({
     title: `${p.teamName} withdrew its ask for money back`,
@@ -359,7 +373,13 @@ export const HAND_BACK_WORDS = {
   /** Ask 13: to the team's people who can use its money, when someone who can't handed back time the club billed. */
   bellUnasked: (p: { name: string; count: number; scheduleName: string; first: string; cents: number }) => ({
     title: `${p.name} handed back ${pluralize(p.count, 'practice')} without asking for money`,
-    body: `${p.scheduleName} · from ${formatShortWeekdayDate(p.first)}. The club billed ${money(p.cents)} for ${p.count === 1 ? 'it' : 'them'}: you can ask for it back from the practice.`,
+    body: `${p.scheduleName} · from ${formatShortWeekdayDate(p.first)}. The club billed ${money(p.cents)} for ${p.count === 1 ? 'it' : 'them'}.`,
+    facts: noticeFacts([
+      factRow(FACT_LABELS.schedule, p.scheduleName),
+      factRow(FACT_LABELS.from, formatShortWeekdayDate(p.first)),
+      factRow(FACT_LABELS.practices, String(p.count)),
+      factRow(FACT_LABELS.billed, money(p.cents), { lead: true }),
+    ], 'You can ask for it back from the practice.'),
   }),
 
   // ── The schedule's page (part B, specimen 3 — Asks 3, 4; /design D1, D4, D5) ──

@@ -123,12 +123,13 @@ describe('the room’s Families card counts the record (one attendance record)',
 });
 
 describe('the words the coach reads (tab 2; ruling 4)', () => {
-  it('who set it and when, the family’s note, and the answer before — one line', () => {
+  it('the list line is who set it and when — never the note or the answer before (owner 2026-11-14); the sheet keeps the history', () => {
     const l = { ...who('family', 'Priya', 'Tue'), familyNote: 'away at a tournament', previous: { ...who('coach', null, 'Mon'), status: 'attending' as const } };
-    assert.equal(CW.setLine(l), 'Priya, Tue · “away at a tournament” · earlier: In (Coach, Mon)');
-    assert.equal(CW.setLine({ ...who('coach', null, 'today'), familyNote: null, previous: { ...who('family', 'Adasmom', 'Nov 1'), status: 'attending' } }),
-      'Coach, today · earlier: In (Adasmom, Nov 1)', 'the ruling’s own example');
+    assert.equal(CW.setLine(l), 'Priya, Tue');
+    assert.equal(CW.setLine({ ...who('coach', null, 'today'), familyNote: null, previous: { ...who('family', 'Adasmom', 'Nov 1'), status: 'attending' } }), 'Coach, today');
     assert.equal(CW.setLine({ ...who('family', null, 'Tue'), familyNote: null, previous: null }), 'A parent, Tue', 'never an address (O2)');
+    assert.equal(CW.box.meta({ ...who('coach', null, 'today'), familyNote: null, previous: { ...who('family', 'Adasmom', 'Nov 1'), status: 'attending' } }),
+      'Coach, today · earlier: In (Adasmom, Nov 1)', 'the sheet’s who box still reads the answer before (ruling 4)');
     assert.equal(CW.box.meta({ ...who('family', 'Sam', 'Wed'), familyNote: 'late from school', previous: null }), 'Sam, Wed');
     assert.equal(CW.box.note({ ...who('family', 'Sam', 'Wed'), familyNote: 'late from school', previous: null }), '“late from school”');
     assert.equal(CW.box.hint, 'A tap replaces the answer. The family sees it, but never your note.');

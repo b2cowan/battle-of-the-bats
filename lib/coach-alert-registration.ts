@@ -10,6 +10,7 @@
  */
 
 import { sortByCoachLifecycle } from './coach-tournament-lifecycle';
+import { tournamentToday } from './timezone';
 
 export interface AlertHistoryEntry {
   registration: { id: string; status: string };
@@ -106,6 +107,20 @@ export interface FanViewRegistration {
 }
 
 /**
+ * Days after an event's last day that the Overview row still names it. The record page and the list
+ * rows keep the event and its Fan view door; only the Overview row lets go.
+ */
+export const OVERVIEW_EVENT_GRACE_DAYS = 3;
+
+function endedLongAgo(lastDay: string | null, today: string): boolean {
+  if (!lastDay) return false;
+  const last = Date.parse(`${lastDay}T00:00:00Z`);
+  const now = Date.parse(`${today}T00:00:00Z`);
+  if (!Number.isFinite(last) || !Number.isFinite(now)) return false;
+  return Math.round((now - last) / 86_400_000) > OVERVIEW_EVENT_GRACE_DAYS;
+}
+
+/**
  * The premium Overview tail's "your tournament" row ("The Flip" P3): the team's current published
  * event — ANY registration status, since a pending/waitlisted coach can still watch the public
  * event. A finished event's flip lives on its record page + list rows only (owner call 2026-07-23,
@@ -118,13 +133,19 @@ export interface FanViewRegistration {
  * completed event no longer passes this `active` filter, so the chip is for callers that hand one in). What it must never do is return a FUTURE
  * event while a live one is running: hence the lifecycle ordering below (DF-2). The callers pass
  * history in `registeredAt` order, which is not an ordering this function can trust.
+ *
+ * ⚠ 2026-11-14: "can legitimately return a past event" now has a limit — an event whose last day is more
+ * than `OVERVIEW_EVENT_GRACE_DAYS` behind is skipped, so an organizer who never closes an event cannot
+ * leave it on the Overview wearing "Game day" for weeks beside today's real game day.
  */
 export function pickFanViewRegistration(
   history: AlertHistoryEntry[],
   today?: string,
 ): FanViewRegistration | null {
-  const entry = liveFirst(history, today).find(
-    e => e.tournament?.status === 'active' && !!e.org?.slug && !!e.tournament?.slug,
+  const now = today ?? tournamentToday();
+  const entry = liveFirst(history, now).find(
+    e => e.tournament?.status === 'active' && !!e.org?.slug && !!e.tournament?.slug
+      && !endedLongAgo(e.tournament?.endDate ?? e.tournament?.startDate ?? null, now),
   );
   if (!entry) return null;
   const tournament = entry.tournament!;

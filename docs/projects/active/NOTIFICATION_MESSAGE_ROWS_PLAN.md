@@ -5,8 +5,36 @@
 (`NOTIFICATION_MESSAGE_ROWS_STAGE2_BUILD_PROMPT.md`)** — https://claude.ai/artifact/4oPRNGetZWQ2ei483Gs2i5 (v2, `/design` applied; source
 `NOTIFICATION_MESSAGE_ROWS_MOCKUP.html`). Q1–Q7 as the drawing prompt asked; Q8 = "A game changed" keeps its sentence
 (tab 6's verdict); Q9 = the phone sheet's buttons when a notice outgrows it (moved games measured 131px below the first
-view). `/legal` owed before Stage 3 for the moved-games email (Q7). Nothing built beyond the reference case below.
+view). `/legal` owed before Stage 3 for the moved-games email (Q7).
 PM brief: `NOTIFICATION_MESSAGE_ROWS_PM_BRIEF.md`.
+**Stage 2 BUILT 2026-11-14, commit owed** (see "Stage 2 as built" below). Next: the owner's browser check, then Stage 3.
+
+## Stage 2 as built (2026-11-14)
+
+- **The shared shape** `lib/notification-facts.ts` (`metadata.facts`: rows, an optional list under a row, an optional next
+  step; `readNoticeFacts` reads it back all-or-nothing; `FACT_LABELS` is the one vocabulary, test-held at ≤ 11 characters).
+  The message block draws it for ANY kind that stores it (`FactRows`, `FactListLines` in `NotificationMessage.tsx`); the
+  settled line replaces the next step; lists fold at 6, at most 30 stored. On a phone the label stays beside its answer.
+- **House league's time** stores the shared shape; a notice sent with the first shape (`metadata.timeChange`) still opens as
+  rows (`lib/league-time-notice.ts`). That module is apart from `lib/league-time-handoff.ts` on purpose: the message block
+  importing the handoff module reached the coach portal's ~945KB stylesheet (notification-open-in-place-guard).
+- **Q9:** the phone reader measures its sheet and pins the button row (`data-sheet-foot`) only when the message outgrows it.
+- **The fifteen money kinds** each have ONE words entry that every sender calls with facts. Two fixes found on the way:
+  - `card_refund_failed` sender B (a team's bank send-back) said the payment's base amount: now the refund row's amount, or
+    the whole payment plus the fee when the fee goes back and the family paid it. A send-back that could not go (Stripe
+    refused, or no refund could be opened) and a refund Stripe refused at creation now say "couldn’t be sent", never
+    "came back". Sender A (a child's) uses the refund row's amount when there is one.
+  - `debit_reversed` for a team said "We emailed the family"; it now says "team".
+  - `payments_ending`: the bell has its own one line and rows; the Payouts card keeps `endingNotice`'s paragraph.
+- **Label call made in the build (raise if wrong):** the refund rows use "Reason", not the drawing's Q6 "Why" (one word per idea).
+- **`team_money_sent`** was listed in Stage 4 below and in the Stage 2 prompt's fifteen; built here (a club money notice).
+- **Email check (Q7):** the nine online-payment kinds have email off with no setting — nothing changes. Six club kinds can
+  email when switched on (generic email prints the body): `club_bill_arrived` and `club_schedule_review` kept their body;
+  `team_money_sent`, `club_payment_not_received`, `club_hand_back_asked`, `club_hand_back_unasked` got shorter. `/legal`
+  2026-11-14: not a commercial message, nothing owed (`docs/agents/legal/CASL_LATE_BILL_EMAIL.md`, last section).
+- **Words** are draft copy tagged `[marketing]` in the words files, owed to the one /marketing pass.
+- Tests: `tests/unit/notification-facts.test.ts` (new), and the reference case's, dispute, paid-twice, 12c review, desk,
+  hand-back and sheet-frame guards updated.
 Census (every kind, its real wording, its group, where it is built): `NOTIFICATION_MESSAGE_ROWS_CENSUS.md`.
 
 ## Why
@@ -77,7 +105,7 @@ submitted it; "Family answers" already stores its facts.
 3. **The list kinds (C)** — family answers (facts already stored), moved games, insights digest, hand-back
    answered, refund whose; champions crowned needs each champion's division, which the body does not carry today.
 4. **The remaining few-facts kinds (B)** — coach and league notices (game moved, practice plan, registration,
-   withdrawal request, assistant-coach approval, season started, team money sent).
+   withdrawal request, assistant-coach approval, season started). Team money sent was built in Stage 2.
 5. **Tidy-up** — the six never-sent kinds; "Score submitted".
 6. **One walk** for the whole change, then `/docs` for any help article that quotes a notification's wording.
 

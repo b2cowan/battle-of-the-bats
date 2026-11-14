@@ -104,16 +104,18 @@ export const FAMILY_AVAILABILITY_WORDS = {
     saved: 'Saved',
     failed: SAVE_FAILED,
     closed: ANSWERS_CLOSED,
-    tapHint: 'A tap saves. Tap your answer again to clear it.',
-    /** /legal's hint (tab 7). The other-parent sentence only when another parent is connected. */
+    tapHint: 'Tap your answer again to clear it.',
+    /**
+     * /legal's hint (tab 7), cut short at the owner's request 2026-11-14. It still names every disclosure /legal required: what the
+     * coaches see (answer, note, first name, day), that they can change the answer (One attendance record, ruling 4), what the other
+     * parent sees, and the health-details request. "Who changed it and when" is dropped: the line over the choices already shows it.
+     * The other-parent sentence only when another parent is connected.
+     */
     privacy: (child: string, otherParent: string | null) =>
       [
-        'Your team’s coaches see your answer, your note, your first name and the day you answered.',
-        // /legal (One attendance record, ruling 4): the answer IS the attendance, so the parent is told the coach can change it.
-        `Your answer is also ${possessive(child)} attendance: the coaches can change it, and you’ll see who did and when.`,
-        otherParent ? `${otherParent === OTHER_PARENT ? 'The other parent' : `${otherParent}, ${possessive(child)} other parent,`} sees your answer and first name, but not your note.` : null,
-        'Other families see none of it.',
-        'Please don’t put health details here; tell the coach directly.',
+        'Coaches see your answer, note, first name and the day you answered, and can change the answer.',
+        otherParent ? `${otherParent === OTHER_PARENT ? 'The other parent' : `${otherParent}, ${possessive(child)} other parent,`} sees your answer and first name, not your note.` : null,
+        'Please don’t add health details; tell the coach directly.',
       ].filter(Boolean).join(' '),
     /** The other parent's note: that there is one, never its words. */
     otherNote: 'The other parent left a note for the coach.',
@@ -193,11 +195,11 @@ export const FAMILY_AVAILABILITY_COACH_WORDS = {
   card: {
     title: 'Families',
     nobody: 'No parent is in the app yet, so no family can answer.',
-    invite: 'Invite parents from the Roster →',
   },
-  /** Who set a player's answer and when, the family's note, and the answer before (ruling 4): the grey line under a player
-   *  (phone) and the "Set by" column (desk). "Adasmom, today · “leaving early” · earlier: In (Coach, Nov 1)". */
-  setLine: (l: CoachAnswerLine) => setLineWords(l, 'A parent', l.familyNote),
+  /** Who set a player's answer, and when: the grey line under a player (phone) and the "Set by" column (desk). Only the latest —
+   *  the note is a mark beside it and the player's sheet holds the words; the answer before it is the sheet's too (`box.meta`).
+   *  Owner 2026-11-14. */
+  setLine: (l: CoachAnswerLine) => `${whoWord(l, 'A parent')}, ${l.day}`,
   desk: { player: 'Player', setBy: 'Set by', answer: 'Answer' },
   /** The lineup (Session 3, Part 6; drawing tab 5). Names are the builder's own player names. */
   lineup: {
@@ -305,12 +307,12 @@ export const FAMILY_REMIND_COACH_WORDS = {
   when: (remindedAt: string, againAt: string, nowMs: number) =>
     `${endSentence(`Reminded ${orgDayKey(remindedAt) === orgDayKey(new Date(nowMs).toISOString()) ? '' : 'yesterday '}at ${clockOf(remindedAt)}`)} ${endSentence(`You can remind again ${orgDayKey(againAt) === orgDayKey(new Date(nowMs).toISOString()) ? 'today' : 'tomorrow'} at ${clockOf(againAt)}`)}`,
   /** The card's counts when every family the coach hasn't marked has answered (tab 4, frame 3). */
-  nobodyLeft: 'every family you haven’t marked has answered',
+  nobodyLeft: 'nobody left to remind',
   loading: 'Checking who to remind…',
   failed: 'That didn’t send. Try again in a moment.',
   readFailed: 'Couldn’t check who to remind. Try again in a moment.',
   closed: ANSWERS_CLOSED,
-  nobody: 'Every family you haven’t marked has answered, so there’s nobody to remind.',
+  nobody: 'Nobody left to remind: every family has answered or you’ve marked them.',
 } as const;
 
 // ── The coach's bell (Session 3, Part 8; drawing tab 6). Never the note's words: "left a note" only. ──────────────────────────

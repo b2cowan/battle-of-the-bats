@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import { CheckCircle2, CircleHelp, StickyNote } from 'lucide-react';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import LoadingState from '@/components/shared/LoadingState';
@@ -58,8 +57,6 @@ export interface RoomFamilyView {
   /** Per player with an answer: who set it, when, the family's note, the one before (the server's; each save's reply refreshes it). */
   lines: Record<string, CoachAnswerLine>;
   summary: RoomFamilySummary;
-  /** The Roster, where parents are invited from each player's Guardians card. */
-  inviteHref: string;
   /** Remind (Part 7): only while the event is open (not started, not cancelled). The panel reads the server's own preview. */
   remind: {
     open: boolean; endpoint: string; remindedAt: string | null; nowMs: number;
@@ -170,13 +167,18 @@ export default function ScheduleAttendanceRoom({
             <span>{FW.desk.player}</span><span>{FW.desk.setBy}</span><span>{FW.desk.answer}</span>
           </div>
         )}
-        <CoachRowList label="Attendance" inset className={styles.attendanceRows}>
+        <CoachRowList label="Attendance" inset className={family && desk ? `${styles.attendanceRows} ${styles.attFamilyDesk}` : styles.attendanceRows}>
           {filteredRows.map(row => {
             // A family's Maybe renders as Maybe (One attendance record), never as a missing option.
             const cur = attendanceOption(row.status);
             const StatusIcon = cur.icon;
             const name = playerDisplayName(row.player);
             const said = family ? setByWords(family, row) : null;
+            // With the family column the note is only SAID to exist (the row opens to read it), beside who set the answer.
+            const hasNote = !!(row.note || (family && family.lines[row.player.id]?.familyNote));
+            const noteMark = hasNote
+              ? <span className={styles.attendanceNoteFlag} title="Has a note" aria-hidden><StickyNote size={13} /></span>
+              : null;
             return (
               <CoachRow
                 key={row.player.id}
@@ -186,11 +188,11 @@ export default function ScheduleAttendanceRoom({
                 onClick={e => setRsvpEditId(row.player.id, e.currentTarget)}
                 title={name}
                 // The grey line under the name is who set the answer and when, and the family's note (phone).
-                caption={said && !desk ? <span className={styles.attFamilyLine}>{said}</span> : undefined}
+                caption={(said || noteMark) && !desk ? <span className={styles.attFamilyLine}>{said}{noteMark}</span> : undefined}
                 trail={
                   <>
-                    {family && desk && <span className={styles.attFamilyCell} title={said ?? undefined}>{said ?? ''}</span>}
-                    {row.note && (
+                    {family && desk && <span className={styles.attFamilyCell}><span className={styles.attFamilyText}>{said ?? ''}</span>{noteMark}</span>}
+                    {row.note && !(family && desk) && (
                       <span className={styles.attendanceNoteFlag} title={row.note} aria-hidden>
                         <StickyNote size={13} />
                       </span>
@@ -230,25 +232,25 @@ function setByWords(family: RoomFamilyView, row: AttendanceRoomRow): string | nu
 /** The Families card at the top of the room (tab 2): the counts, the Roster's invite, and Remind. */
 function FamiliesCard({ family }: { family: RoomFamilyView }) {
   const { summary } = family;
-  const parts = FW.familyParts({ answered: summary.answered, haveNot: summary.haveNot, noParent: summary.noParent });
+  // A family with no parent in the app is NOT counted here and has no invite link (owner 2026-11-14): a parent who never
+  // wants the app would otherwise show it to the coach on every open, all season. The Roster is where parents are invited,
+  // and the Remind panel still names the players it cannot reach.
+  const parts = FW.familyParts({ answered: summary.answered, haveNot: summary.haveNot });
   // Who has a parent in the app (one record: a coach's answer no longer hides a family from these counts).
-  const players = [...family.rows.values()];
-  const inApp = players.filter(r => r.connected).length;
-  const nobody = inApp === 0;
-  const fewInApp = players.length - inApp > inApp;
+  const nobody = ![...family.rows.values()].some(r => r.connected);
   // Tab 4, frame 3: open, and every family the coach hasn't marked has answered: Remind goes and the card says so.
   const nobodyLeft = family.remind.open && !nobody && summary.remind.length === 0;
-  const lineParts = nobodyLeft
-    ? [FAMILY_REMIND_COACH_WORDS.nobodyLeft, ...FW.familyParts({ answered: 0, haveNot: 0, noParent: summary.noParent })]
-    : parts;
+  const lineParts = nobodyLeft ? [FAMILY_REMIND_COACH_WORDS.nobodyLeft] : parts;
+  // Nobody is connected: one muted line, not a card with a link — there is nothing here for the coach to act on.
+  if (nobody) return <p className={styles.attFamiliesLine}>{FW.card.nobody}</p>;
+  // Nothing to count and nothing to send: no card.
+  if (lineParts.length === 0 && !family.remind.open) return null;
   return (
     <section className={styles.attFamilies} aria-label={FW.card.title}>
       <p className={styles.attFamiliesLine}>
         <strong>{FW.card.title}</strong>
-        {!nobody && lineParts.length > 0 && <> · {lineParts.join(' · ')}</>}
+        {lineParts.length > 0 && <> · {lineParts.join(' · ')}</>}
       </p>
-      {nobody && <p className={styles.attFamiliesLine}>{FW.card.nobody}</p>}
-      {(nobody || fewInApp) && <Link href={family.inviteHref} className={styles.attFamiliesLinkBtn}>{FW.card.invite}</Link>}
       {family.remind.open && (
         <FamilyRemindPanel
           endpoint={family.remind.endpoint}

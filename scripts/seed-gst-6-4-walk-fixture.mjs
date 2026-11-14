@@ -12,7 +12,8 @@
  *   +w64r / +w64s   the two owners of "Walk64 Reminder Club" (Tournament Plus, yearly, renews in 33 days, a queued fee) — Part F
  *   +w64x  owner of "Walk64 Cancelled Reminder" (yearly, renews in 33 days, a cancel set in Stripe)  — Part F
  *   +w64m  owner of "Walk64 Monthly Reminder" (monthly, renews in about a month)                     — Part F
- *   +w64o  owner of "Walk64 Quebec Club" (Club · Association, monthly, live test subscription)         — Part G
+ *   +w64o  owner of "Walk64 Quebec Club" (Club · Association) and "Walk64 Quebec Up Club" (Club), both monthly, live test
+ *          subscriptions, each with an Ontario billing address on file — Part G
  *   +w64k  owner of "Walk64 Comeback Club" (cancelled; Stripe still knows its old subscription)        — Part H
  *
  *   node --env-file=.env.local scripts/seed-gst-6-4-walk-fixture.mjs setup --inbox you@example.com
@@ -75,7 +76,10 @@ const CLUBS = [
   { key: 'reminder', name: 'Walk64 Reminder Club', slug: 'walk64-reminder-club', plan: 'tournament_plus', cycle: 'annual', kind: 'anchor33', fee: true, owners: ['w64r', 'w64s'] },
   { key: 'cancelled', name: 'Walk64 Cancelled Reminder', slug: 'walk64-cancelled-reminder', plan: 'tournament_plus', cycle: 'annual', kind: 'anchor33', cancelSet: true, owners: ['w64x'] },
   { key: 'monthly', name: 'Walk64 Monthly Reminder', slug: 'walk64-monthly-reminder', plan: 'tournament_plus', cycle: 'monthly', kind: 'live', owners: ['w64m'] },
-  { key: 'quebec', name: 'Walk64 Quebec Club', slug: 'walk64-quebec-club', plan: 'club_large', cycle: 'monthly', kind: 'live', owners: ['w64o'] },
+  // Both Quebec clubs get an Ontario billing address on file: the billing page's "Billing address" button only shows when one exists.
+  // The walk's G5 edits it to Québec. club_large is the plan with a move DOWN (scheduled for the renewal); club has the move UP.
+  { key: 'quebec', name: 'Walk64 Quebec Club', slug: 'walk64-quebec-club', plan: 'club_large', cycle: 'monthly', kind: 'live', owners: ['w64o'], address: true },
+  { key: 'quebecup', name: 'Walk64 Quebec Up Club', slug: 'walk64-quebec-up-club', plan: 'club', cycle: 'monthly', kind: 'live', owners: ['w64o'], address: true },
   { key: 'comeback', name: 'Walk64 Comeback Club', slug: 'walk64-comeback-club', plan: 'tournament_plus', cycle: 'monthly', kind: 'ended', owners: ['w64k'] },
 ];
 const ONTARIO = { line1: '100 Queen St W', city: 'Toronto', state: 'ON', postal_code: 'M5H 2N2', country: 'CA' };
@@ -200,6 +204,11 @@ async function setup() {
       subscription_amount_cents: c.price.unit_amount, subscription_currency: c.price.currency,
     }).select('id').single());
     c.orgId = org.id;
+    if (c.address) {
+      die(`address ${c.name}`, (await db.from('billing_locations').insert({
+        org_id: org.id, country: 'CA', region_code: 'ON', line1: ONTARIO.line1, city: ONTARIO.city, postal_code: ONTARIO.postal_code, confirmed_at: iso(now),
+      })).error);
+    }
     for (const tag of c.owners) {
       die(`owner ${tag}`, (await db.from('organization_members').insert({
         organization_id: org.id, user_id: user[tag].id, role: 'owner', status: 'active',
@@ -237,6 +246,7 @@ async function settle() {
 
 // ── run-daily ───────────────────────────────────────────────────────────────────────────────────────────────────
 async function runDaily() {
+  await settle(); // every run settles first, so the walk needs one command, not two
   const secret = process.env.CRON_SECRET;
   if (!secret) { console.error('CRON_SECRET is not set in .env.local.'); process.exit(1); }
   head(`Running the daily job on ${BASE} (all its steps; the secret is read from .env.local and never printed)`);

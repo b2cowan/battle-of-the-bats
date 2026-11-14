@@ -255,13 +255,23 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [ ] `/design` on the drawing; rule P1–P13; write `CLUB_SCHEDULE_SEVERAL_PERMITS_BUILD_PROMPT.md`.
 
 ### Phase 1 (Session A) — rows remember their permit; several permits on New schedule
-> **Built 2026-11-14** (Session A of the build prompt). Mig **487** `487_each_row_of_time_remembers_its_permit.sql`
+> **Built 2026-11-14, committed `673670185` (2026-11-14)** (Session A of the build prompt; /simplify and /review both run, below). Mig **487** `487_each_row_of_time_remembers_its_permit.sql`
 > applied to DEV twice (4 blocks took their permit, 0 left NULL; `tests/sql/several-permits-fixture.sql` 5/5); prod step
 > in `MANUAL_PROD_STEPS.json` (count first, at the apply); /dba Finding #50 decided all three migrations' shapes.
 > Guard 1: `tests/unit/club-schedule-several-permits-guard.test.ts`; the overlap rule `lib/club-schedule-permit-rows.ts`
 > (+ its test). Schedule/permit unit tests 732/732. Not run: `check:layout --changed` (the shared tick-list field widened
 > it to a 361-screen sweep, which never runs on the dev server, and the UAT club fixture was out of state); a browser
 > pass on New schedule, the top line and the permit's "used by" is owed.
+> **/simplify + /review (2026-11-14):** no Critical or High finding; one-permit and older schedules send the same time, weights
+> and prices. Fixed before the commit: a request that never says a row's permit now keeps the stored one (only an explicit
+> "no permit" clears it); the form's price permit is the first ticked permit that still has rows; ticking a permit at another
+> venue moves the facilities with it. **Left open for the owner:** a partial-hour overlap drops the later permit's whole row for
+> the shared days (hours the first permit never held are lost; trimming the hours would keep them). Left as Low:
+> the backfill is not safe to re-run once the code is live (and the fixture does not test it); a permit deleted mid-save gives
+> a 500 not "permit gone"; split rows can pass the server's 40-row cap; hints that over-claim ("came off", "widened"); the guard
+> test misses camelCase readers. Not run: `check:layout`, `verify:changed` (other sessions' red ratchets: platform-admin styles,
+> bank-table parity, index coverage). The commit left out the owner's Bill-window words and `.fixedValue` rule and the other
+> sessions' pieces of the words, send and stylesheet files.
 > **Decisions made in the build (owner may overrule):**
 > - Two ticked permits on the same park and hour: the permit **ticked first** keeps the evenings; a later permit's rows
 >   lose exactly those days, settled when the time is sent (`settleOverlaps`), never by cutting the rows the admin edits,

@@ -103,19 +103,22 @@ describe('how a dispute reads (words §1.1–§1.2)', () => {
   });
 
   it('no "Answer in Stripe by ." when the bank allows no answer (no due date)', () => {
-    assert.equal(D.itemBody('Grace Kim’s', '1041', '$150.00', '', '$150.00', ''),
-      'Grace Kim’s bank is disputing receipt 1041 ($150.00). Stripe has taken $150.00 from the club’s Stripe balance until the bank decides.');
-    assert.equal(D.itemBodyOthers('Grace Kim’s', '1041', '$150.00', 'Sam Lee', ''),
-      'Grace Kim’s bank is disputing receipt 1041 ($150.00). If the club wins, nothing changes here.');
+    const item = (due: string, dueDay: string, answers: string | null) =>
+      D.item({ payer: 'Grace Kim', receiptNo: '1041', amount: '$150.00', reason: null, held: '$150.00', inquiry: false, due, dueDay, answers });
+    assert.equal(item('', '', null).body, 'Receipt 1041, $150.00.');
+    assert.equal(item('', '', null).facts.next, undefined, 'no instruction to answer when there is nothing to answer');
+    assert.ok(!item('', '', null).facts.rows.some(r => r.label === 'Answer by'));
+    assert.equal(item('', '', 'Sam Lee').body, 'Receipt 1041, $150.00.');
+    assert.equal(item('', '', 'Sam Lee').facts.next, 'If the club wins, nothing changes here.');
     assert.equal(M.button(null), 'Open the registrations');
   });
 
   it('a sentence that ends on a clock absorbs its own full stop (Part 2’s lesson)', () => {
     assert.equal(endSentence('Nov 11 at 7:59 p.m.'), 'Nov 11 at 7:59 p.m.');
-    assert.equal(D.itemBody('Grace Kim’s', '1041', '$150.00', '', '$150.00', 'Nov 11 at 7:59 p.m.'),
-      'Grace Kim’s bank is disputing receipt 1041 ($150.00). Stripe has taken $150.00 from the club’s Stripe balance until the bank decides. Answer in Stripe by Nov 11 at 7:59 p.m.');
-    assert.equal(D.itemBodyOthers('Grace Kim’s', '1041', '$150.00', 'Sam Lee', 'Nov 11 at 7:59 p.m.'),
-      'Grace Kim’s bank is disputing receipt 1041 ($150.00). Sam Lee answers it in Stripe by Nov 11 at 7:59 p.m. If the club wins, nothing changes here.');
+    const item = (answers: string | null) =>
+      D.item({ payer: 'Grace Kim', receiptNo: '1041', amount: '$150.00', reason: null, held: '$150.00', inquiry: false, due: 'Nov 11 at 7:59 p.m.', dueDay: 'Nov 11', answers });
+    assert.equal(item(null).body, 'Receipt 1041, $150.00. Answer in Stripe by Nov 11 at 7:59 p.m.');
+    assert.equal(item('Sam Lee').body, 'Receipt 1041, $150.00. Sam Lee answers it in Stripe by Nov 11.');
   });
 
   it('no refund while it’s open, in both flows; an inquiry never blocks (Stripe settles one by a refund)', () => {
