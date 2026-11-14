@@ -260,7 +260,7 @@ a.noticeRow:hover { background: var(--home-olive-soft); }
 .noticeDoors { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.85rem; }
 .noticeDoor { display: inline-flex; align-items: center; gap: 0.2rem; font-size: var(--type-support); font-weight: 600; color: var(--home-olive-ink, var(--text-primary)); text-decoration: none; }
 .noticeDoor:hover { text-decoration: underline; text-underline-offset: 3px; }
-.noticeFine { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.noticeFine { margin: 1.15rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
 /* Phone: the rows fold under "All 8 bookings ▾" so the doors and the Use band stay on the first screen. */
 .noticeFold {
   display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.7rem; padding: 0; border: 0; background: none;

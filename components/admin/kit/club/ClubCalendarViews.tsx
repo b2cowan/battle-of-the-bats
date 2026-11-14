@@ -79,15 +79,17 @@ function OutsideGlyph({ b }: { b: CalendarBooking }) {
 const dayMarked = (outside: OutsideMarks | null, day: string, drawn: readonly CalendarBooking[] | undefined) =>
   !!outside && day in outside.days && !!drawn?.some(b => outside.keys.has(b.key));
 
-/** The day's mark: the chip in the permit's one word, then "See the permit ›" for a reader who can open Permits. */
+/** The day's mark: the chip in the permit's one word. For a reader who can open Permits the chip IS the door to the
+ *  permit (no second "See the permit ›" row); for everyone else it is the plain chip. */
 function DayMark({ day, drawn }: { day: string; drawn: readonly CalendarBooking[] | undefined }) {
   const outside = useContext(OutsideMarksContext);
   if (!dayMarked(outside, day, drawn)) return null;
   const href = outside!.days[day];
   return (
     <span className={cal.outsideMark}>
-      <RepChip tone="warn">{PW.outside}</RepChip>
-      {href && <Link href={href} className={cal.outsideLink}>{PW.seeThePermit} ›</Link>}
+      {href
+        ? <Link href={href} className={cal.outsideLink} title={PW.seeThePermit} aria-label={`${PW.outside} — ${PW.seeThePermit}`}><RepChip tone="warn">{PW.outside}</RepChip></Link>
+        : <RepChip tone="warn">{PW.outside}</RepChip>}
     </span>
   );
 }
@@ -339,7 +341,7 @@ export function BookingWindow({ b, onClose }: { b: CalendarBooking; onClose: () 
       {pairBlock(W.clashesWithHeading, exact)}
       {pairBlock(W.mayClashHeading, busy)}
       {/* Once, here, never on the row (Club Tier 10a, Ask 3): the time is outside the club's permit there. Quiet. */}
-      {b.permit && <WhereLine tone="quiet" mark="clock" rest={permitCalendarLine(b.permit, b.sport)} />}
+      {b.permit && <div className={cal.permitNote}><WhereLine tone="quiet" mark="clock" rest={permitCalendarLine(b.permit, b.sport)} /></div>}
     </KitDialog>
   );
 }

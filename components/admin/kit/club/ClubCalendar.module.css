@@ -44,18 +44,19 @@
 .dayBody { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.5rem; }
 /* What a permit's date off took (Club Tier 13c Session B, B2): the day's chip in the permit's one word with its door, and
    the 14 px warning beside each booking still standing — the clash mark's amber. Drawn only on the club Calendar. */
-.outsideMark { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; text-transform: none; letter-spacing: 0; font-family: var(--font-sans); font-weight: 400; }
-.outsideLink { font-size: var(--type-support); font-weight: 650; color: var(--home-olive); text-decoration: none; }
-.outsideLink:hover { text-decoration: underline; }
+.outsideMark { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-left: 0.75rem; text-transform: none; letter-spacing: 0; font-family: var(--font-sans); font-weight: 400; }
+/* The chip itself is the door to the permit: no underline, a quiet lift on hover. */
+.outsideLink { display: inline-flex; text-decoration: none; border-radius: 999px; cursor: pointer; }
+.outsideLink:hover { filter: brightness(0.95); }
+.outsideLink:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .outsideGlyph { display: inline-flex; vertical-align: -2px; margin-left: 0.3rem; color: var(--home-amber); }
-.pdayHead .outsideMark { margin-left: 0.6rem; }
 /* A Week column (140 px at tablet widths) is narrower than the chip and its door: the mark takes its own line under the
    date and its words may wrap, so the column never spills (check:layout @768). */
-.dayHead .outsideMark { flex-basis: 100%; min-width: 0; }
+.dayHead .outsideMark { flex-basis: 100%; min-width: 0; margin-left: 0; }
 .dayHead .outsideMark > * { max-width: 100%; white-space: normal; }
 /* Touch widths: the door is a full tap target (the 44 px floor), as every other door on a tablet or phone is. */
 @media (max-width: 1100px) {
-  .outsideLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  .outsideLink { align-items: center; min-height: var(--tap-min, 44px); }
 }
 .dayEmpty { font-size: var(--type-support); color: var(--text-tertiary); padding: 0.25rem 0.1rem; }
 
@@ -123,6 +124,8 @@
 .read dt { color: var(--text-tertiary); }
 .read dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
 .read small { display: block; margin-top: 0.15rem; font-size: var(--type-support); color: var(--text-tertiary); }
+/* The permit note under the facts: air above it so it doesn't crowd the last row's grey sub-line. */
+.permitNote { margin-top: 0.75rem; }
 /* "Clashes with": one WHITE block with an amber edge (tinted panels are retired). */
 .pair { margin-top: 0.9rem; padding: 0.6rem 0.75rem; border: 1px solid var(--home-line); border-left: 3px solid var(--home-amber); border-radius: 8px; background: var(--card-bg); font-size: var(--type-body); }
 .pairHead { margin: 0 0 0.3rem; font-family: var(--font-display); font-size: var(--type-support); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-amber); }
