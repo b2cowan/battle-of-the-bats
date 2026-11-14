@@ -156,7 +156,8 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   // /design 2026-11-13: both doors open ONE team's two emails, so the pair compares like with like — a ticked mixed team
   // when there is one, else the first team (one door).
   const plainTeam = ticked.find(t => t.plainSample) ?? null;
-  const doorTeam = plainTeam ?? sample;
+  // With no mixed team ticked the door opens a ticked team's email, never one the sender has unticked.
+  const doorTeam = plainTeam ?? ticked.find(t => t.sample) ?? sample;
   const sampleName = doorTeam ? (getsSample(doorTeam).find(r => r.isHeadCoach)?.name ?? getsSample(doorTeam)[0]?.name ?? doorTeam.teamName) : null;
   const plainName = plainTeam ? (getsPlain(plainTeam)[0]?.name ?? getsPlain(plainTeam)[0]?.email ?? plainTeam.teamName) : null;
   const [variant, setVariant] = useState<'money' | 'plain'>('money');

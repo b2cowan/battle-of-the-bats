@@ -124,6 +124,7 @@ describe('the scheduler rides League Plus and both Club bands, checked on the se
   it('a bill is money: adding one asks the money rule, and the preview refuses a send without it', () => {
     assert.match(readCode('app/api/admin/schedules/[scheduleId]/route.ts'), /if \(!r\.canMoney\) return schedulerRefusal\(403, 'bill_money', R\.billMoney\)/);
     assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'billBlockers'), /if \(!canMoney\) return \[\{ code: 'bill_money', error: R\.billMoney \}\]/);
+    assert.ok(readCode('lib/club-schedule-send.ts').includes("correction.losses.size > 0 && !sctx.canMoney) correctionBlocked = { code: 'bill_money', error: R.creditMoney }"), 'a credit is money: Send the changes with credits only meets the Money check too');
     const view = functionBody(readCode('lib/club-schedule-server.ts'), 'scheduleView');
     assert.match(view, /bill: canMoney \? billViewOf\(/, 'the bill reads only to a money reader');
     // Stage 11d part B: what each team pays, the plain hand-backs and the bill as made read only to a money reader too, and

@@ -252,6 +252,7 @@ describe('why a team can\'t be reached, and what the window says', () => {
   });
   it('the warning under a team whose bill reaches nobody', () => {
     assert.equal(billNotToldSentence('15U AAA'), '15U AAA’s bill goes on its Money › Club tab; nobody with Money access is emailed about it.');
+    assert.equal(billNotToldSentence('15U AAA', true), '15U AAA’s credit goes on its Money › Club tab; nobody with Money access is emailed about it.');
   });
 });
 

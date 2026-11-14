@@ -59,7 +59,7 @@ import { readHouseholds, sendPracticeChangeNotices, type Household } from './clu
  * pattern, `lib/club-money-reminders.ts`). Three sends, one shape (Ask 9 — one send window and one log for every club
  * send):
  *
- *   · REVIEW (Ask 24) — each team's coaches see their slots and their bill and answer Looks good / Ask for a change.
+ *   · REVIEW (Ask 24) — each team's coaches see their slots (and the bill, if they can open Money) and answer Looks good / Ask for a change.
  *     Nothing is booked or billed. The schedule reads In review; edits stay free; a team that never answers holds nothing.
  *   · FINAL — Finalize: every practice on each team's running season AND the bill as one allocation, in ONE database
  *     step (`club_schedule_finalize` — both happen or neither does, P11-05), then the emails and the notices.
@@ -785,12 +785,15 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
         if (settled.locked && !correctionBlocked) correctionBlocked = { code: 'year_closed', error: HAND_BACK_WORDS.refuse.yearClosed(settled.locked) };
         if (settled.lost.payCents > 0 && !settled.lost.request.programYearId && !correctionBlocked) correctionBlocked = { code: 'season_closed', error: R.seasonClosed(teamName(t)) };
       }
+      // Crediting a team is money too: a sender without Money can't send changes that take time from one (the gains check
+      // below only ever met a bill). They turn "Bill the corrections" off to send the changes without it.
+      if (correction.losses.size > 0 && !sctx.canMoney) correctionBlocked = { code: 'bill_money', error: R.creditMoney };
       teamValues = Object.fromEntries(now);
       const gainTotal = [...correction.gains.values()].reduce((a, b) => a + b, 0);
       if (gainTotal > 0) {
         const today = tournamentToday();
         const blocked = await billBlockers(c, sctx.canMoney, gainTotal, today);
-        correctionBlocked = blocked[0] ?? null;
+        correctionBlocked = correctionBlocked ?? blocked[0] ?? null;
         const periods = paymentPeriods(row.bill_plan ?? 'one', { firstDue: row.bill_first_due ?? today, dates: row.bill_dates, lastDay: row.ends_on });
         splits = [...correction.gains].map(([t, cents]) => {
           const installments = correctionInstallments(cents, t, plan!.gainedSlots.get(t) ?? [], periods, today);
@@ -844,7 +847,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
       bill: teamBill, billedCents, lost: teamLost,
       link: scheduleLink(t.id), moneyLink: moneySectionHref(`/${c.orgSlug}/coaches/teams/${t.id}`, 'club'),
     });
-    if (told.billNotTold) billNotTold.push({ teamId: t.id, teamName: t.name, sentence: billNotToldSentence(t.name) });
+    if (told.billNotTold) billNotTold.push({ teamId: t.id, teamName: t.name, sentence: billNotToldSentence(t.name, !teamBill && !billedCents) });
     teams.push({ teamId: t.id, teamName: t.name, recipients: p.people, slots, lines, bill: teamBill, billedCents, lost: teamLost, sample: told.sample, plainSample: told.plainSample });
   }
 

@@ -99,6 +99,8 @@ export const SCHEDULE_REFUSALS = {
   slotFull: (n: number) => `A slot holds ${pluralize(n, 'team')} at once.`,
   seasonClosed: (team: string) => `${team} has no season running, so it can’t be booked or billed. Start its winter season first, or untick it.`,
   billMoney: 'Only the people who hold the club’s Accounting can add a bill to a schedule.',
+  /** A change that takes time from a team credits it, which is money too: a sender without Money turns the switch off instead. */
+  creditMoney: 'Only the people who hold the club’s Accounting can credit a team for time it lost. Ask one of them to send these changes, or turn off “Bill the corrections”: the changes go out, but the team isn’t credited for the time it lost.',
   billNoPrice: 'Type what the teams pay: no permit prices this time.',
   billNoTime: 'Hand out some time before billing it.',
   billYearClosed: 'The bill would count in a closed fiscal year. Pick an open year’s budget line, or later payment dates.',
@@ -273,8 +275,8 @@ const UNREACHABLE_BILL_ONLY_YOU = 'has nobody with Money access but you';
 
 /** [marketing] Under a Finalize / Send the changes team that is emailed its slots but has nobody who can open Money:
  *  "15U AAA’s bill goes on its Money › Club tab; nobody with Money access is emailed about it." (owner 2026-11-13) */
-export const billNotToldSentence = (team: string) =>
-  `${possessive(team)} bill goes on its Money › Club tab; nobody with Money access is emailed about it.`;
+export const billNotToldSentence = (team: string, creditOnly = false) =>
+  `${possessive(team)} ${creditOnly ? 'credit' : 'bill'} goes on its Money › Club tab; nobody with Money access is emailed about it.`;
 
 /** [marketing] specimen 9: "12U AA has a head coach invitation nobody has accepted yet. Its 36 slots go on its schedule; …" */
 export function unreachableSentence(team: string, why: ScheduleUnreachableWhy, slots: number, kind: SendKind): string {
