@@ -167,9 +167,18 @@ function LoginForm() {
         // step, never a forward the server would refuse.
         const twoStepStatus = await readTwoStepStatus();
         if (!active) return;
-        if (twoStepStatus?.hasFactor && (!twoStepStatus.passed || searchParams.get('step') === 'code')) {
+        const handedOffForCode = searchParams.get('step') === 'code';
+        if (twoStepStatus?.hasFactor && handedOffForCode) {
           setTwoStep({ email: twoStepStatus.email ?? user.email ?? null });
           setCheckingAuth(false);
+          return;
+        }
+        // Password matched earlier but the code never did, and nothing handed the person here to type it (a plain
+        // "Sign in" click, or Back out of the code step): that sign-in was never finished, so start fresh at the
+        // password rather than resuming a half-done one with no way to see it is half-done. This device only.
+        if (twoStepStatus?.hasFactor && !twoStepStatus.passed) {
+          await createClient().auth.signOut({ scope: 'local' });
+          if (active) setCheckingAuth(false);
           return;
         }
         const dest = await resolveLoginDestination(consumeNextOnce(searchParams.get('next')));
