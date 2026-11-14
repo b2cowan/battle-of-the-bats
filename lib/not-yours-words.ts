@@ -54,7 +54,7 @@ export const NOT_YOURS_PAGES: Record<NotYoursPage, PageWords> = {
   // An ADMIN opens Settings for its two-step card (Board Ready two-step, Part 3); every other card there stays the owner's.
   settings: { title: 'Settings', what: 'It holds the club’s name, web address, contact email and logo.', who: 'owner' },
   billing: { title: PLAN_BILLING_TITLE, what: 'It holds the club’s plan, its subscription and how it’s paid.', who: 'owner' },
-  auditLog: { title: 'Audit log', what: 'It records who changed what on the club’s board.', who: 'owner' },
+  auditLog: { title: 'Audit log', what: 'It records changes to who has access to the club’s board and what they can do.', who: 'owner' },
   members: { title: 'Members', what: 'It’s the club’s board: who is on it and what each person opens.', who: 'grant' },
   schedules: { title: 'Schedules', what: 'It’s where the club hands out its field time to its programs.', who: 'ownerOrAdmin' },
   calendar: { title: 'Calendar', what: 'It shows the games, practices and events of the programs you open.', who: 'grant' },

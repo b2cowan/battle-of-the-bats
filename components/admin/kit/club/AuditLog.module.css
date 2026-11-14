@@ -6,6 +6,11 @@
   .phone { display: block; }
 }
 .when { white-space: nowrap; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.scope {
+  margin: 0 0 0.85rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
 .none {
   margin: 0;
   padding: 0.85rem 1rem;

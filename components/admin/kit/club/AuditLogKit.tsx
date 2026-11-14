@@ -138,6 +138,13 @@ export default function AuditLogKit() {
         }
       />
 
+      {/* What this log covers, said up front so a change it doesn't record isn't mistaken for a missing one. */}
+      <p className={styles.scope}>
+        Lists changes to who has access and what they can do: invites, removals, role and access changes,
+        suspensions, and two-step sign-in settings. Other activity (schedule and score edits, money, family
+        records, sign-ins) isn’t listed here.
+      </p>
+
       {status === 'error' ? (
         <div className={`${ck.notice} ${ck.noticeBad}`} role="alert">
           <AlertTriangle size={15} aria-hidden />
