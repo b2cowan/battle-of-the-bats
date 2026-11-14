@@ -12,8 +12,14 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 3.5rem 1rem 2.5rem;
+  /* Sits a little lower on tall windows so the column is not jammed against the top with the rest of the paper empty. */
+  padding: clamp(3.5rem, 10vh, 6.5rem) 1rem 2.5rem;
 }
+
+/* This screen only: more air between the heading and its sentence, and a looser heading line, than the shared account
+   step gives. The other account doors keep the shared spacing. */
+.headBlock h1 { margin-bottom: 0.875rem; line-height: 1.15; }
+.headBlock p { line-height: 1.55; }
 
 /* Ask 3A: FieldLogicHQ's mark, centred above the head. */
 .mark {

@@ -694,6 +694,9 @@
   padding: 1.1rem 1.1rem 1rem;
   width: min(440px, calc(100vw - 2rem));
   box-shadow: var(--home-shadow-sm);
+  /* `margin: auto` is what centres a modal dialog; the global `* { margin: 0 }` reset zeroed it, which left the window in
+     the top-left corner (the same fix PublicDisclosure.module.css carries). */
+  margin: auto;
 }
 
 .confirm::backdrop {

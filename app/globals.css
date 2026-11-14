@@ -1099,6 +1099,7 @@ html[data-user-theme="warm"]:has([data-coach-warm-enabled]) body { background: #
    a long admin board) — their wrappers carry the tokens for the scrollers INSIDE them, never for <html>'s own.
    Dark keeps the white fallback, which is visible on its ground. */
 html:has([data-warm-base="marketing"]),
+html:not([data-user-theme="dark"]):has([data-warm-base="pref"]),
 html[data-user-theme="warm"]:has([data-coach-warm-enabled]),
 html:has([data-guest-kit]) {
   --home-line-strong: rgba(70, 55, 30, 0.20);

@@ -92,7 +92,7 @@ export default function TermsAcceptScreen({ email, updated, plans, fixedWarm }: 
     <div className={fixedWarm ? styles.paperWarm : styles.paper} data-terms-screen>
       <div className={accountForm.column}>
         <div className={styles.mark}><BrandLockup href={null} tone={fixedWarm ? 'warm' : 'follow'} size={18} /></div>
-        <StartHead title={words.title} sub={sub} />
+        <div className={styles.headBlock}><StartHead title={words.title} sub={sub} /></div>
 
         <form className={accountForm.form} onSubmit={accept}>
           <TermsTickRow tick={tick} id="terms-screen-box" disabled={saving} />

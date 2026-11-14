@@ -2,10 +2,10 @@
    than the tax line beside it (secondary ink, not tertiary) because it is the one people are agreeing to. Read BEFORE the
    button: a window's body end, under a table after its tax line. */
 .line {
-  margin: 0.6rem 0 0;
+  margin: 1rem 0 0.25rem; /* room off the choice above and the foot's rule below (owner 2026-11-12: "quite crammed") */
   max-width: 64ch;
   font-size: var(--type-support);
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text-secondary);
   text-align: left;
 }
