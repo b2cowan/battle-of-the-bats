@@ -2816,6 +2816,11 @@
   },
   {
     "tablename": "org_time_blocks",
+    "indexname": "org_time_blocks_from_permit_idx",
+    "indexdef": "CREATE INDEX org_time_blocks_from_permit_idx ON public.org_time_blocks USING btree (from_permit_id) WHERE (from_permit_id IS NOT NULL)"
+  },
+  {
+    "tablename": "org_time_blocks",
     "indexname": "org_time_blocks_permit_idx",
     "indexdef": "CREATE INDEX org_time_blocks_permit_idx ON public.org_time_blocks USING btree (permit_id)"
   },

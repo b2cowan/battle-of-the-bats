@@ -9,7 +9,7 @@ import type { RepTeamEvent } from './types';
 import { slotPatterns } from './club-schedule-engine';
 import { slotFigure, teamInstallments, type Installment } from './club-schedule-bill';
 import { SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, patternLine, placeWords } from './club-schedule-words';
-import { billSlotsOf, computeBill, liveSlots, loadSchedule, readClubTeams, readPrices, type ScheduleRow } from './club-schedule-server';
+import { billSlotsOf, computeBill, liveSlots, loadSchedule, readClubTeams, schedulePrices, type ScheduleRow } from './club-schedule-server';
 import { readClubPlaces } from './permit-lookup';
 import { tellBuilders } from './club-schedule-send';
 import { practiceHandBacks, waitingAsksOfTeam, type PracticeHandBack } from './club-hand-back-reads';
@@ -115,7 +115,7 @@ export async function teamReviews(orgId: string, teamId: string): Promise<Review
     const loaded = await loadSchedule(orgId, id);
     if (!loaded) return null;
     const [prices, reply] = await Promise.all([
-      readPrices(orgId, loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id),
+      schedulePrices(orgId, loaded),
       latestReply(orgId, id, teamId),
     ]);
     const { slots, assignments } = liveSlots(loaded, prices.weightOf);
@@ -284,14 +284,14 @@ export interface HandBackSlot { eventId: string; slotId: string; startsAt: strin
 export async function practiceFigures(orgId: string, scheduleId: string, practices: readonly ClubPractice[]): Promise<{ figures: HandBackSlot[]; row: ScheduleRow } | null> {
   const loaded = await loadSchedule(orgId, scheduleId);
   if (!loaded) return null;
-  const prices = await readPrices(orgId, loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id);
+  const prices = await schedulePrices(orgId, loaded);
   const scale = loaded.row.bill_scale == null ? null : Number(loaded.row.bill_scale);
   const slotById = new Map(loaded.slots.filter(s => !s.removed).map(s => [s.id, s]));
   const figures: HandBackSlot[] = [];
   for (const p of practices) {
     const slot = slotById.get(p.club_schedule_slot_id);
     if (!slot) continue;
-    const f = slotFigure({ startMs: Date.parse(slot.startsAt), endMs: Date.parse(slot.endsAt), weight: prices.weightOf(slot.facilityId), teams: slot.teamIds.length, scale });
+    const f = slotFigure({ startMs: Date.parse(slot.startsAt), endMs: Date.parse(slot.endsAt), weight: prices.weightOf(slot.facilityId, slot.permitId), teams: slot.teamIds.length, scale });
     figures.push({ eventId: p.id, slotId: slot.id, startsAt: slot.startsAt, endsAt: slot.endsAt, pricedMinutes: Math.round(f.pricedMinutes * 10_000) / 10_000, cents: f.cents });
   }
   return { figures, row: loaded.row };

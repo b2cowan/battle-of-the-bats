@@ -526,7 +526,44 @@ export const SCHEDULE_SCREEN_WORDS = {
   startFromPermit: 'Start from the permit',
   copiedFrom: (name: string) => `Step 1 of 2 · settings · copied from ${name}`,
   copyFailed: 'That schedule couldn’t be read. Try again.',
-  filledIn: (words: string) => `Filled in: ${words}`,
+  // ── A schedule on several permits, Session A (drawing CLUB_SCHEDULE_SEVERAL_PERMITS_DRAWINGS.html, tab 1; owner rulings
+  //    2026-11-14, N1–N4 A). [marketing] at the project's close, with the plan's "Words for /marketing" list. ──
+  /** The tick-list field beside Name: every permit the club holds, each with its issuer and dates under its name. */
+  permits: 'Permits',
+  /** The field with nothing ticked (dimmed). */
+  noPermitTyped: 'No permit: type the time below',
+  /** Under the field, while a permit is ticked. */
+  permitsHint: 'Each permit brings its own time and dates off. Untick one to take its time off again.',
+  /** Under the field, on a copied schedule before a permit is ticked (N3 A). */
+  permitReplacesCopy: 'Picking a permit replaces the copied time. The teams, their shares and the rules stay.',
+  /** Under the field, just after a permit is unticked (/ux 1): its rows and dates off came off, edits and all. */
+  permitCameOff: (permit: string, rows: number, datesOff: number) => {
+    const what = [pluralize(rows, 'row'), datesOff ? (datesOff === 1 ? 'its date off' : `its ${datesOff} dates off`) : ''].filter(Boolean);
+    return `${possessive(permit)} ${joinWithAnd(what)} came off. Ticking it again brings back the permit’s time, not your changes to it.`;
+  },
+  /** A permit's option in the list: its second line. */
+  permitOption: (issuer: string | null, dates: string) => [issuer, dates].filter(Boolean).join(' · '),
+  /** A card of rows: its permit, its issuer, its dates. */
+  permitCard: (issuer: string | null, dates: string) => [issuer, dates].filter(Boolean).join(' · '),
+  /** The card of rows copied from last year, before a permit replaces them (drawing, frame "copy"). */
+  copiedCard: (name: string) => `Copied from ${name}, a year on`,
+  /** The card of rows typed here, with no permit. */
+  typedCard: 'Typed here',
+  /** Under a row's place, when it came from no permit. */
+  rowNoPermit: 'No permit',
+  /** Under To, while the picker set the dates over several permits (drawing note 4). */
+  datesWidened: (permits: number) => (permits === 2 ? 'Widened to cover both permits' : 'Widened to cover every permit'),
+  /** Under To, after a permit came off and the dates went back to what is left. */
+  datesBackTo: (permit: string) => `Back to ${possessive(permit)} dates`,
+  /** Two ticked permits holding the same park at the same hour (/ux 8; Add time's statement, tab 3): the evenings stay
+   *  on the permit already ticked. "Tue, May 25 and Thu, May 27 at Kinsmen Park are on this schedule already, from
+   *  Milton spring 2027." */
+  overlapLead: (days: string, many: boolean, park: string, permit: string) =>
+    `${days} at ${park} ${many ? 'are' : 'is'} on this schedule already, from ${permit}.`,
+  overlapDays: (shown: readonly string[], more: number) =>
+    (more > 0 ? `${shown.join(', ')} and ${more} more ${more === 1 ? 'day' : 'days'}` : joinWithAnd(shown)),
+  overlapTail: (startsOn: string | null) =>
+    `They stay as they are, priced there.${startsOn ? ` The new time starts ${startsOn}.` : ''}`,
   venue: 'Venue',
   chooseVenue: 'Choose a venue',
   facilities: 'Facilities',
@@ -793,6 +830,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   // ── The page is the path (Club Tier 13c Session C, C4 = A; drawing CLUB_TIER_STAGE13C_DRAWINGS.html, the schedule page) ──
   /** [marketing] The top line's door: "From the permit {name} ›" before the place, the dates and who sent it. */
   metaFrom: 'From the permit',
+  /** [marketing] Several permits behind the rows (a schedule on several permits, tab 6): "From the permits A › and B ›". */
+  metaFromMany: 'From the permits',
   /** [marketing] The drafts step, only while a draft is short and the per-day setting is why (hub tab 13, Change 3 — the
    *  safety net beside fix-now 3's hint): "7 teams short: 47 of 450 slots handed out. The rules allow 1 practice a team a
    *  day, and Lakeshore Dome has 18 places a Sunday for 7 teams." Then a door back to the setting. */

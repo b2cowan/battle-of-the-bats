@@ -6,9 +6,10 @@ import { andList } from '@/lib/tournament-board-words';
 import { readClubPlaces, readPermitTimes } from '@/lib/permit-lookup';
 import { isUuid } from '@/lib/utils';
 import {
-  buildEngineInput, draftToSave, loadSchedule, readClubTeams, readName, readPrices, readScheduleRequest, resolveScheduler, saveScheduleStep,
-  scheduleList, schedulerRefusal, timePayload,
+  buildEngineInput, draftToSave, loadSchedule, readClubTeams, readName, readRequestPrices, readScheduleRequest, resolveScheduler,
+  saveScheduleStep, scheduleList, schedulerRefusal, timePayload,
 } from '@/lib/club-schedule-server';
+import { permitIssuers } from '@/lib/permit-server';
 import { sendSchedule } from '@/lib/club-schedule-send';
 import { HOUSE_LEAGUE } from '@/lib/club-schedule-holders';
 import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
@@ -57,8 +58,11 @@ export const GET = withObservability(async (req: Request) => {
       .select('id, name, display_order').eq('org_id', orgId).order('display_order').order('name').range(a, b)),
   ]);
   // Each schedule's venues, for its row on the opening screen ("Oct 4, 2026 – Mar 28, 2027 · Lakeshore Dome").
-  const blocks = await fetchAllIn<{ schedule_id: string; org_venue_id: string }>(schedules.map(s => s.id), (c, a, b) => supabaseAdmin
-    .from('org_time_blocks').select('schedule_id, org_venue_id').eq('org_id', orgId).in('schedule_id', c).order('id').range(a, b));
+  const [issuers, blocks] = await Promise.all([
+    permitIssuers(orgId, permits.permits),
+    fetchAllIn<{ schedule_id: string; org_venue_id: string }>(schedules.map(s => s.id), (c, a, b) => supabaseAdmin
+      .from('org_time_blocks').select('schedule_id, org_venue_id').eq('org_id', orgId).in('schedule_id', c).order('id').range(a, b)),
+  ]);
   const venuesOf = (id: string) => andList([...new Set(blocks.filter(b => b.schedule_id === id)
     .map(b => places.venueName.get(b.org_venue_id)).filter((n): n is string => !!n))]);
   return NextResponse.json({
@@ -69,8 +73,11 @@ export const GET = withObservability(async (req: Request) => {
     places: [...places.venueName].map(([venueId, venueName]) => ({
       venueId, venueName, facilities: (places.byVenue.get(venueId) ?? []).map(id => ({ id, name: places.facilityName.get(id) ?? '' })),
     })),
-    // "Start from a permit": its time only (a permit's money reads to Accounting, never here — the bill reads its prices).
-    permits: permits.permits.map(p => ({ id: p.id, name: p.name, startsOn: p.startsOn, endsOn: p.endsOn, blocks: p.blocks, datesOff: p.datesOff })),
+    // The Permits tick list: each permit's time and its issuer (the option's second line, "Town of Milton · Mar 2 – May
+    // 29, 2027") — never its money (a permit's money reads to Accounting, never here — the bill reads its prices).
+    permits: permits.permits.map(p => ({
+      id: p.id, name: p.name, issuer: issuers.get(p.id) ?? null, startsOn: p.startsOn, endsOn: p.endsOn, blocks: p.blocks, datesOff: p.datesOff,
+    })),
     schedules: schedules.map(s => ({ id: s.id, name: s.name, startsOn: s.starts_on, endsOn: s.ends_on, venues: venuesOf(s.id) })),
   });
 }, { route: '/api/admin/schedules' });
@@ -89,14 +96,16 @@ export const POST = withObservability(async (req: Request) => {
   if ((given(body.startedFromPermitId) && !permitId) || (given(body.startedFromScheduleId) && !fromSchedule)) {
     return schedulerRefusal(400, 'bad_start', 'Pick what the schedule starts from again.');
   }
-  const [asked, prices, from] = await Promise.all([
+  const [asked, from] = await Promise.all([
     readScheduleRequest(orgId, body, { houseLeague: r.houseLeague, repTeams: r.repTeams }),
-    readPrices(orgId, permitId),
     // "Last year's schedule" — one of THIS club's (a plain link, never another club's id).
     fromSchedule ? supabaseAdmin.from('club_schedules').select('id').eq('id', fromSchedule).eq('org_id', orgId).maybeSingle() : null,
   ]);
   if (!asked.ok) return asked.response;
+  // The price permit (the first ticked, kept as started_from_permit_id for one release) and every row's own permit.
+  const { prices, gone } = await readRequestPrices(orgId, permitId, asked.value.time.blocks);
   if (permitId && !prices.found) return schedulerRefusal(409, 'permit_gone', R.permitGone);
+  if (gone) return gone;
   if (from?.error) throw from.error;
   if (fromSchedule && !from?.data) return schedulerRefusal(409, 'schedule_gone', R.notFound);
 
@@ -106,7 +115,7 @@ export const POST = withObservability(async (req: Request) => {
   if (whole) {
     const ids = asked.value.settings.teamIds;
     if (!r.houseLeague || ids.length !== 1 || ids[0] !== HOUSE_LEAGUE) return schedulerRefusal(400, 'bad_draft', R.notSaved);
-    const built = await buildEngineInput(orgId, { time: asked.value.time, settings: asked.value.settings, teams: asked.value.running, storedSlots: [], permitId, places: asked.value.places });
+    const built = await buildEngineInput(orgId, { time: asked.value.time, settings: asked.value.settings, teams: asked.value.running, storedSlots: [], permitId, places: asked.value.places, prices });
     if (!built.ok) return schedulerRefusal(400, built.code, built.error);
     assignments = built.input.slots.filter(s => !built.input.held.has(s.key)).map(s => ({ slotKey: s.key, teamIds: [HOUSE_LEAGUE] }));
   }

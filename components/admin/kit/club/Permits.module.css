@@ -201,6 +201,11 @@
   flex: none;
 }
 .pickTickOn { background: var(--home-olive); border-color: var(--home-olive); }
+/* An option with a second line (New schedule's Permits: "Town of Milton · Mar 2 – May 29, 2027"). */
+.pickOptionTwo { align-items: flex-start; }
+.pickOptionTwo .pickTick { margin-top: 0.15rem; }
+.pickOptionText { display: flex; flex-direction: column; min-width: 0; }
+.pickOptionDetail { font-size: var(--type-support); color: var(--text-tertiary); }
 .pickSep { height: 1px; margin: 0.3rem 0; background: var(--home-line); }
 
 @media (max-width: 768px) {

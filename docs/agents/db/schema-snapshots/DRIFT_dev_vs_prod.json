@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-14",
-  "total": 679,
+  "total": 683,
   "counts": {
     "tables": 23,
-    "columns": 325,
-    "indexes": 102,
-    "constraints": 91,
-    "rls": 138
+    "columns": 326,
+    "indexes": 103,
+    "constraints": 92,
+    "rls": 139
   },
   "items": [
     {
@@ -179,6 +179,10 @@
     },
     {
       "key": "check:only-dev:org_public_site_content.org_public_site_content_mailing_address_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_time_blocks.org_time_blocks_from_permit_on_schedule",
       "sig": ""
     },
     {
@@ -955,6 +959,10 @@
     },
     {
       "key": "column:only-dev:org_public_site_content.mailing_address",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.from_permit_id",
       "sig": ""
     },
     {
@@ -2010,6 +2018,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:org_time_blocks.org_time_blocks_from_permit_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_after_id_fkey",
       "sig": ""
     },
@@ -2391,6 +2403,10 @@
     },
     {
       "key": "index:only-dev:legal_acceptances_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_blocks_from_permit_idx",
       "sig": ""
     },
     {

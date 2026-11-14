@@ -1473,7 +1473,8 @@ async function addClubDatesOff() {
     },
   }).select('id').single());
   const block = await one('13c schedule block', db.from('org_time_blocks').insert({
-    org_id: orgId, schedule_id: sched.id, org_venue_id: kinsmen.id, weekdays: [6], start_time: '09:00', end_time: '15:00', sort_order: 0,
+    // The row remembers the permit it came from (a schedule on several permits, mig 487): its top line and "used by" read it.
+    org_id: orgId, schedule_id: sched.id, org_venue_id: kinsmen.id, from_permit_id: permit.id, weekdays: [6], start_time: '09:00', end_time: '15:00', sort_order: 0,
   }).select('id').single());
   die('13c schedule block facilities', (await db.from('org_time_block_facilities').insert(
     ['Diamond A', 'Diamond B'].map(d => ({ org_id: orgId, block_id: block.id, facility_id: fac[d] })))).error);

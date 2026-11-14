@@ -18,7 +18,7 @@
  * covers is never listed on a permit (owner 2026-10-11 — the booking says so where it is made; see permit-time.ts §3).
  */
 import { supabaseAdmin } from './supabase-admin';
-import { fetchAllIn } from './supabase-paging';
+import { fetchAll, fetchAllIn } from './supabase-paging';
 import { addCalendarDays, zonedWallClockToUtc } from './timezone';
 import { fiscalYearOf, fiscalYearOptions, type FiscalSetting, type FiscalYear, type FiscalYearOption } from './club-fiscal-year';
 import { readClubBookings } from './venue-clash-lookup';
@@ -162,6 +162,13 @@ async function issuerNames(orgId: string, permits: readonly PermitRecord[]): Pro
 }
 const issuerOf = (p: PermitRecord, names: Map<string, string>) => (p.issuerPayeeId && names.get(p.issuerPayeeId)) || p.issuerName || null;
 
+/** Each permit's issuer, by permit id, as the Permits view names it (New schedule's picker: "Town of Milton · Mar 2 –
+ *  May 29, 2027", a schedule on several permits). */
+export async function permitIssuers(orgId: string, permits: readonly PermitRecord[]): Promise<Map<string, string | null>> {
+  const names = await issuerNames(orgId, permits);
+  return new Map(permits.map(p => [p.id, issuerOf(p, names)]));
+}
+
 /** The club's bookings over a set of permits' dates, as the use reads them. */
 async function permitUseOf(orgId: string, permits: readonly PermitRecord[], t: PermitTimes): Promise<Map<string, PermitUse>> {
   const out = new Map<string, PermitUse>();
@@ -215,12 +222,25 @@ export async function readPermitsYear(orgId: string, opts: {
 
 // ── A permit's window (specimen 2) ─────────────────────────────────────────────────────────────────────
 
-/** The club schedules that hand a permit's time out: started from it, or billed at its prices (Club Tier Stage 11a). */
+/** The club schedules that hand a permit's time out: ANY of their rows came from it (a schedule on several permits, mig
+ *  487 — the house-league schedule that hands out its Saturdays included), or it started them or prices their bill
+ *  (Club Tier Stage 11a; kept for one release as the fallback). The permit's "used by" and its delete guard read this. */
 export async function schedulesHandingOut(orgId: string, permitId: string): Promise<{ id: string; name: string }[]> {
-  const { data, error } = await supabaseAdmin.from('club_schedules').select('id, name').eq('org_id', orgId)
-    .or(`started_from_permit_id.eq.${permitId},bill_permit_id.eq.${permitId}`).order('name');
-  if (error) throw error;
-  return (data ?? []) as { id: string; name: string }[];
+  const [linked, rows] = await Promise.all([
+    supabaseAdmin.from('club_schedules').select('id, name').eq('org_id', orgId)
+      .or(`started_from_permit_id.eq.${permitId},bill_permit_id.eq.${permitId}`),
+    fetchAll<{ schedule_id: string | null }>((a, b) => supabaseAdmin.from('org_time_blocks').select('schedule_id')
+      .eq('org_id', orgId).eq('from_permit_id', permitId).order('id').range(a, b)),
+  ]);
+  if (linked.error) throw linked.error;
+  const out = new Map(((linked.data ?? []) as { id: string; name: string }[]).map(x => [x.id, x]));
+  const more = [...new Set(rows.map(x => x.schedule_id).filter((x): x is string => !!x && !out.has(x)))];
+  if (more.length) {
+    const { data, error } = await supabaseAdmin.from('club_schedules').select('id, name').eq('org_id', orgId).in('id', more);
+    if (error) throw error;
+    for (const x of (data ?? []) as { id: string; name: string }[]) out.set(x.id, x);
+  }
+  return [...out.values()].sort((a, z) => a.name.localeCompare(z.name, 'en-CA', { numeric: true }));
 }
 
 export async function readPermitWindow(orgId: string, permitId: string, opts: {

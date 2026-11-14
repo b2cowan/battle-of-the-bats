@@ -58,8 +58,8 @@ import { ViewSwitch } from '@/components/coaches/kit';
 import { spreadGroupFigure } from '@/lib/club-bill-split';
 import { formatTimeRange, pluralize, possessive } from '@/lib/utils';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
-import { formatShortWeekdayDate, formatStoredDate, isCalendarDate } from '@/lib/timezone';
-import { WEEKDAY_OPTIONS, facilityListWords, renewedName, weekdayPlural, weekdaysShort } from '@/lib/permit-words';
+import { formatShortWeekdayDate, isCalendarDate } from '@/lib/timezone';
+import { WEEKDAY_OPTIONS, facilityListWords, renewedName } from '@/lib/permit-words';
 import { rulesOn, type ScheduleSettings } from '@/lib/club-schedule-settings';
 import {
   EMPTY_SETTINGS, figureOf as figureIn, groupsIn, newKey, positive, ruleApplies, ruleIsWhole, settingsDraftOf, settingsOf as settingsFromDraft, teamsIn, wholeWeekly,
@@ -73,6 +73,7 @@ import {
 import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import type { DraftMeasure, TeamResult } from '@/lib/club-schedule-engine';
 import { HOUSE_LEAGUE, isProgramHolder } from '@/lib/club-schedule-holders';
+import { permitsSpan, settleOverlaps } from '@/lib/club-schedule-permit-rows';
 import type { DateOff, TimeBlock } from '@/lib/permit-time';
 import { Statement, Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
@@ -86,7 +87,8 @@ interface InputTeam { id: string; name: string; groupId: string | null; groupNam
 /** House league's group in the table (Stage 11b): its own heading, after the rep teams' groups. */
 const PROGRAMS = '__programs__';
 interface InputPlace { venueId: string; venueName: string; facilities: { id: string; name: string }[] }
-interface InputPermit { id: string; name: string; startsOn: string; endsOn: string; blocks: TimeBlock[]; datesOff: DateOff[] }
+/** A permit as the Permits tick list reads it: its time, and its issuer for the option's second line (never its money). */
+interface InputPermit { id: string; name: string; issuer: string | null; startsOn: string; endsOn: string; blocks: TimeBlock[]; datesOff: DateOff[] }
 export interface NewInputs {
   nothingToSchedule: boolean;
   canMoney: boolean;
@@ -110,14 +112,23 @@ interface HoursRow {
   place?: { venueId: string; facilityIds: string[] };
   /** A block's own dates inside the schedule's (stored, not offered on the form): kept, or the slots would run past them. */
   dates?: { fromDate: string | null; untilDate: string | null };
+  /** The permit the row came from (a schedule on several permits, mig 487) — what prices it; absent for a typed row. */
+  permitId?: string | null;
+  /** That permit's own dates: sent as the row's only while several permits are ticked, so each permit's time keeps to
+   *  its own dates inside the widened From and To (one permit: the row follows the schedule's dates, as before). */
+  permitDates?: { fromDate: string; untilDate: string };
 }
-interface OffRow { key: string; day: string; note: string }
+/** A date off; `permitId`: the permit it came with, so unticking that permit takes it away again. */
+interface OffRow { key: string; day: string; note: string; permitId?: string }
 
 /** The time, and the settings part (`SettingsDraft` — its conversions to and from the saved settings are one module's). */
 interface Draft extends SettingsDraft {
   name: string;
-  /** The permit the schedule is linked to (its page lists the schedule; Bill reads its price) — '' for none. */
-  permitId: string;
+  /** The permits ticked, in the order they were ticked (a schedule on several permits; the first ticked keeps evenings two
+   *  permits share, and is the price permit until Session C). Empty for none. */
+  permitIds: string[];
+  /** From or To typed by hand: the permits never move a typed date (drawing tab 1, note 4). */
+  datesTyped: { start: boolean; end: boolean };
   /** The schedule copied a year on — '' for none. Both can be set: last year's teams on this year's permit. */
   copyFrom: string;
   venueId: string;
@@ -129,7 +140,7 @@ interface Draft extends SettingsDraft {
 }
 
 const EMPTY: Draft = {
-  name: '', permitId: '', copyFrom: '', venueId: '', facilityIds: [], startsOn: '', endsOn: '',
+  name: '', permitIds: [], datesTyped: { start: false, end: false }, copyFrom: '', venueId: '', facilityIds: [], startsOn: '', endsOn: '',
   rows: [{ key: 'row-0', weekdays: [], start: '', end: '' }], datesOff: [],
   ...EMPTY_SETTINGS,
 };
@@ -146,13 +157,21 @@ const DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', '
 
 const withCurrent = (list: number[], current: number) => (list.includes(current) ? list : [...list, current].sort((a, b) => a - b));
 
+/** A block's facilities, listed (none listed = every facility at its venue, read now). */
+const facilitiesOf = (b: TimeBlock, places: readonly InputPlace[]) =>
+  (b.facilityIds.length ? [...b.facilityIds] : places.find(p => p.venueId === b.venueId)?.facilities.map(f => f.id) ?? []);
+
+/** A row of hours with nothing in it yet. */
+const emptyRow = (): HoursRow => ({ key: newKey('row'), weekdays: [], start: '', end: '' });
+
 /** The time as the form holds it, from a set of blocks (a permit's, or a schedule's): the shared place on top, each
- *  block a row of hours — a block on another place keeps its own. */
-function timeFromBlocks(blocks: readonly TimeBlock[], places: readonly InputPlace[], shift: (day: string) => string = d => d): Pick<Draft, 'venueId' | 'facilityIds' | 'rows'> {
+ *  block a row of hours — a block on another place keeps its own, and so does a block a permit gave (Settings…: it keeps
+ *  its permit through a regenerate, mig 487). */
+function timeFromBlocks(blocks: readonly (TimeBlock & { permitId?: string | null })[], places: readonly InputPlace[], shift: (day: string) => string = d => d): Pick<Draft, 'venueId' | 'facilityIds' | 'rows'> {
   const venueId = blocks[0]?.venueId ?? '';
   const venue = places.find(p => p.venueId === venueId);
   const every = (venue?.facilities ?? []).map(f => f.id);
-  const facsOf = (b: TimeBlock) => (b.facilityIds.length ? [...b.facilityIds] : places.find(p => p.venueId === b.venueId)?.facilities.map(f => f.id) ?? []);
+  const facsOf = (b: TimeBlock) => facilitiesOf(b, places);
   const first = blocks[0] ? facsOf(blocks[0]) : every;
   const same = (b: TimeBlock) => b.venueId === venueId && facsOf(b).slice().sort().join() === first.slice().sort().join();
   return {
@@ -161,12 +180,36 @@ function timeFromBlocks(blocks: readonly TimeBlock[], places: readonly InputPlac
     rows: blocks.length
       ? blocks.map(b => ({
         key: newKey('row'), weekdays: [...b.weekdays], start: b.startTime.slice(0, 5), end: b.endTime.slice(0, 5),
-        ...(same(b) ? {} : { place: { venueId: b.venueId, facilityIds: facsOf(b) } }),
+        ...(same(b) && !b.permitId ? {} : { place: { venueId: b.venueId, facilityIds: facsOf(b) } }),
+        ...(b.permitId ? { permitId: b.permitId } : {}),
         ...(b.fromDate || b.untilDate ? { dates: { fromDate: b.fromDate ? shift(b.fromDate) : null, untilDate: b.untilDate ? shift(b.untilDate) : null } } : {}),
       }))
-      : [{ key: newKey('row'), weekdays: [], start: '', end: '' }],
+      : [emptyRow()],
   };
 }
+
+/** A permit's time as the form's rows (a schedule on several permits): each row names its place and remembers the permit,
+ *  with the permit's own dates beside it. */
+function rowsOfPermit(p: InputPermit, places: readonly InputPlace[]): HoursRow[] {
+  return p.blocks.map(b => ({
+    key: newKey('row'), weekdays: [...b.weekdays], start: b.startTime.slice(0, 5), end: b.endTime.slice(0, 5),
+    place: { venueId: b.venueId, facilityIds: facilitiesOf(b, places) }, permitId: p.id,
+    permitDates: { fromDate: p.startsOn, untilDate: p.endsOn },
+    ...(b.fromDate || b.untilDate ? { dates: { fromDate: b.fromDate, untilDate: b.untilDate } } : {}),
+  }));
+}
+/** A permit's dates off as the form's rows, each remembering the permit. */
+const offsOfPermit = (p: InputPermit): OffRow[] => offRows(p.datesOff).map(o => ({ ...o, permitId: p.id }));
+/** The form started from one permit (its page's "Start a schedule from it"): its time, dates and dates off. */
+function fromPermit(p: InputPermit, places: readonly InputPlace[]): Partial<Draft> {
+  const rows = rowsOfPermit(p, places);
+  return {
+    permitIds: [p.id], startsOn: p.startsOn, endsOn: p.endsOn, venueId: rows[0]?.place?.venueId ?? '',
+    rows: rows.length ? rows : [emptyRow()], datesOff: offsOfPermit(p),
+  };
+}
+/** A row of hours the admin has filled in. */
+const rowDone = (r: HoursRow) => r.weekdays.length > 0 && !!r.start && !!r.end && r.end > r.start;
 
 /** A "Facilities by group" rule keeps only the facilities the time now holds — the server refuses a rule naming another
  *  venue's (last year's schedule copied onto this year's permit somewhere else, or the Venue changed by hand). The rule
@@ -236,6 +279,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const addMenuStyle = useAnchoredMenu(adding, addRef, addMenuRef, { minWidth: 300, narrowMinWidth: 220, align: 'start' });
   const [noSeasonOpen, setNoSeasonOpen] = useState(false);
   const [step, setStep] = useState<'settings' | 'drafts'>('settings');
+  /** The permit just unticked: the hint says what came off with it (/ux 1). */
+  const [cameOff, setCameOff] = useState<{ name: string; rows: number; offs: number } | null>(null);
   /** Past the opening screen — a copy picked, or Start blank. */
   const [started, setStarted] = useState(false);
   /** The opening screen (0): only when there is one to copy, never in Settings… */
@@ -243,6 +288,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   /** The inputs are still on their way — the window can't yet say which level it opens on. */
   const opening = !editing && !inputs && !inputsFailed;
   const set = useCallback((patch: Partial<Draft>) => setDraft(d => ({ ...d, ...patch })), []);
+  const permitById = useMemo(() => new Map((inputs?.permits ?? []).map(x => [x.id, x])), [inputs]);
 
   // ── The inputs, and where the form starts ──
   useEffect(() => {
@@ -278,19 +324,57 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
-  function fromPermit(p: InputPermit, places: readonly InputPlace[]): Partial<Draft> {
-    return {
-      permitId: p.id, startsOn: p.startsOn, endsOn: p.endsOn, ...timeFromBlocks(p.blocks, places),
-      datesOff: offRows(p.datesOff),
-    };
-  }
-
-  /** Permit: its time in one pick, and the link the schedule keeps. No permit drops the link and leaves the form as it is. */
-  function pickPermit(id: string) {
+  /**
+   * PERMITS — a tick list (a schedule on several permits; drawing tab 1). Each tick ADDS that permit's rows and dates off;
+   * unticking takes only that permit's away — the admin's edits to them too, which the hint says (/ux 1). From and To
+   * follow the permits unless typed. The first tick on a copy, or on a form with no time typed, REPLACES the time (N3 A:
+   * this year's time is the permits'; the copy's teams, shares and rules stay). A typed row stays, its place now said.
+   */
+  function togglePermits(next: string[]) {
     if (!inputs) return;
-    const p = id ? inputs.permits.find(x => x.id === id) : null;
-    if (!p) { set({ permitId: '' }); return; }
-    setDraft(d => fieldsInTime({ ...d, ...fromPermit(p, inputs.places), name: d.name.trim() ? d.name : p.name }, inputs.places));
+    const byId = permitById;
+    const removedNow = draft.permitIds.filter(id => !next.includes(id));
+    const addedNow = next.filter(id => !draft.permitIds.includes(id));
+    if (removedNow.length === 1 && !addedNow.length) {
+      const id = removedNow[0];
+      setCameOff({ name: byId.get(id)?.name ?? '', rows: draft.rows.filter(r => r.permitId === id).length, offs: draft.datesOff.filter(o => o.permitId === id).length });
+    } else setCameOff(null);
+    setDraft(d => {
+      const ids = next.filter(id => byId.has(id));
+      const added = ids.filter(id => !d.permitIds.includes(id));
+      const removed = d.permitIds.filter(id => !ids.includes(id));
+      let rows = d.rows, datesOff = d.datesOff;
+      const offDays = new Set(datesOff.filter(o => o.permitId && removed.includes(o.permitId)).map(o => o.day));
+      rows = rows.filter(r => !r.permitId || !removed.includes(r.permitId));
+      datesOff = datesOff.filter(o => !o.permitId || !removed.includes(o.permitId));
+      for (const id of added) {
+        const p = byId.get(id)!;
+        const fresh = !d.permitIds.length && id === added[0] && (!!d.copyFrom || !rows.some(rowDone));
+        if (fresh) { rows = rowsOfPermit(p, inputs.places); datesOff = offsOfPermit(p); continue; }
+        rows = [
+          ...rows.filter(r => r.weekdays.length || r.start || r.end)
+            .map(r => (r.place || !d.venueId ? r : { ...r, place: { venueId: d.venueId, facilityIds: [...d.facilityIds] } })),
+          ...rowsOfPermit(p, inputs.places),
+        ];
+        datesOff = [...datesOff, ...offsOfPermit(p).filter(o => !datesOff.some(x => x.day === o.day))];
+      }
+      // A day the permit that came off had first, that another ticked permit is off too, stays off — now that one's.
+      for (const id of ids) for (const o of offsOfPermit(byId.get(id)!)) if (offDays.has(o.day) && !datesOff.some(x => x.day === o.day)) datesOff = [...datesOff, o];
+      if (!rows.length) rows = [emptyRow()];
+      const span = permitsSpan(ids.map(id => byId.get(id)!));
+      const first = ids.length ? byId.get(ids[0]) : undefined;
+      // The shared Venue and its facilities move together: a permit at another venue never leaves a copy's facilities behind.
+      const placed = rows.find(r => r.place)?.place;
+      const moved = !!placed && placed.venueId !== d.venueId;
+      return fieldsInTime({
+        ...d, permitIds: ids, rows, datesOff,
+        startsOn: span && !d.datesTyped.start ? span.startsOn : d.startsOn,
+        endsOn: span && !d.datesTyped.end ? span.endsOn : d.endsOn,
+        venueId: moved ? placed.venueId : d.venueId,
+        facilityIds: moved ? [...placed.facilityIds] : d.facilityIds,
+        name: d.name.trim() || !first ? d.name : first.name,
+      }, inputs.places);
+    });
   }
 
   /** The latest Copy pick — a read that lands after a later pick is dropped, never applied over it. */
@@ -311,8 +395,9 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const v = r.data;
     setDraft(d => fieldsInTime({
       ...d, ...settingsDraftOf(v.schedule.settings, running, yearOn),
-      ...(d.permitId ? {} : {
-        ...timeFromBlocks(v.time.blocks, inputs.places, yearOn),
+      ...(d.permitIds.length ? {} : {
+        // Last year's rows come as typed time ("No permit"): this year's permits replace them (N3 A).
+        ...timeFromBlocks(v.time.blocks.map(b => ({ ...b, permitId: null })), inputs.places, yearOn),
         startsOn: yearOn(v.schedule.startsOn), endsOn: yearOn(v.schedule.endsOn),
         datesOff: offRows(v.time.datesOff, yearOn),
       }),
@@ -342,29 +427,44 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const percentHundredths = draft.method === 'percentage'
     ? inOrder.reduce((s, t) => s + Math.round((positive(draft.values[t.id]) ?? 0) * 100), 0) : 10000;
 
-  /** The schedule's time as the routes read it. */
-  const timeBody = useMemo(() => {
+  /** The permits behind the rows, in the order they were ticked (Settings…: in the rows' order). */
+  const permitOrder = useMemo(() => [...new Set([...draft.permitIds, ...draft.rows.map(r => r.permitId).filter((x): x is string => !!x)])],
+    [draft.permitIds, draft.rows]);
+  /** The rows as blocks, each with its permit — and, with several permits, each permit's own dates and the evenings two
+   *  of them share settled: the permit ticked first keeps them (`settleOverlaps`, P4 A), and the form says so. */
+  const settled = useMemo(() => {
     const facilityIds = venue && venue.facilities.length ? draft.facilityIds : [];
-    return {
-      startsOn: draft.startsOn, endsOn: draft.endsOn,
-      blocks: draft.rows
-        .filter(r => r.weekdays.length && r.start && r.end && r.end > r.start)
-        .map(r => ({
-          venueId: r.place?.venueId ?? draft.venueId, facilityIds: r.place?.facilityIds ?? facilityIds,
-          weekdays: r.weekdays, startTime: r.start, endTime: r.end, fromDate: r.dates?.fromDate ?? null, untilDate: r.dates?.untilDate ?? null,
-        })),
-      datesOff: draft.datesOff.filter(o => isCalendarDate(o.day)).map(o => ({ day: o.day, note: o.note.trim() || null })),
-    };
-  }, [draft.startsOn, draft.endsOn, draft.rows, draft.datesOff, draft.venueId, draft.facilityIds, venue]);
+    const several = permitOrder.length > 1;
+    const blocks = draft.rows.filter(rowDone).map(r => ({
+      venueId: r.place?.venueId ?? draft.venueId, facilityIds: r.place?.facilityIds ?? facilityIds,
+      weekdays: r.weekdays, startTime: r.start, endTime: r.end,
+      fromDate: r.dates?.fromDate ?? (several ? r.permitDates?.fromDate ?? null : null),
+      untilDate: r.dates?.untilDate ?? (several ? r.permitDates?.untilDate ?? null : null),
+      permitId: r.permitId ?? null,
+    }));
+    return several ? settleOverlaps(blocks, permitOrder, { startsOn: draft.startsOn, endsOn: draft.endsOn }) : { blocks, overlaps: [] };
+  }, [draft.rows, draft.venueId, draft.facilityIds, draft.startsOn, draft.endsOn, venue, permitOrder]);
+  /** The schedule's time as the routes read it. */
+  const timeBody = useMemo(() => ({
+    startsOn: draft.startsOn, endsOn: draft.endsOn, blocks: settled.blocks,
+    datesOff: draft.datesOff.filter(o => isCalendarDate(o.day)).map(o => ({ day: o.day, note: o.note.trim() || null })),
+  }), [draft.startsOn, draft.endsOn, draft.datesOff, settled]);
+  const rowsDone = draft.rows.filter(rowDone).length;
+  const mixedPlaces = draft.rows.some(r => r.place);
+  /** The rows sit in cards, each naming its place, once a permit gives the time or the places mix (N2 A: the read-only
+   *  line of places goes); otherwise the Venue and Facilities fields, as before. */
+  const cards = draft.rows.some(r => r.permitId) || mixedPlaces;
 
   /** The settings as the routes read them — `previewOnly` asks with only the teams whose figure is whole. */
   const settingsBody = useCallback((onlyWhole: boolean): ScheduleSettings =>
     settingsFromDraft(draft, inOrder.filter(t => !onlyWhole || figureIn(draft, t.id) != null).map(t => t.id)), [draft, inOrder]);
 
   const timeReady = isCalendarDate(draft.startsOn) && isCalendarDate(draft.endsOn) && draft.endsOn >= draft.startsOn
-    && timeBody.blocks.length > 0 && timeBody.blocks.length === draft.rows.length && !!draft.venueId
-    && (!venue?.facilities.length || draft.facilityIds.length > 0 || draft.rows.some(r => r.place));
-  const permitId = draft.permitId || (editing?.schedule.startedFromPermitId ?? null);
+    && timeBody.blocks.length > 0 && rowsDone === draft.rows.length
+    && (cards || (!!draft.venueId && (!venue?.facilities.length || draft.facilityIds.length > 0)));
+  /** The price permit (the first ticked; until Session C, one permit's hour prices the bill) — Settings…: as saved. */
+  const permitId = editing ? editing.schedule.startedFromPermitId
+    : draft.permitIds.find(id => draft.rows.some(r => r.permitId === id)) ?? draft.permitIds[0] ?? null;
   const fromScheduleId = draft.copyFrom || null;
 
   // ── The server's count (`previewOnly`), as the form changes ──
@@ -404,10 +504,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   /** Why Generate can't go yet, in words — or null. */
   const problem = (): string | null => {
     if (!draft.name.trim()) return W.needName;
-    if (!draft.venueId) return W.needVenue;
-    if (venue?.facilities.length && !draft.facilityIds.length && !draft.rows.some(r => r.place)) return W.needFacility;
+    if (!cards && !draft.venueId) return W.needVenue;
+    if (!cards && venue?.facilities.length && !draft.facilityIds.length) return W.needFacility;
     if (!isCalendarDate(draft.startsOn) || !isCalendarDate(draft.endsOn) || draft.endsOn < draft.startsOn) return W.needDates;
-    if (timeBody.blocks.length !== draft.rows.length || !timeBody.blocks.length) return W.needHours;
+    if (rowsDone !== draft.rows.length || !timeBody.blocks.length) return W.needHours;
     if (!inOrder.length) return W.needTeams;
     if (wholeHouseLeague) return null;
     if (draft.method !== 'even' && tickedWithFigure.length !== inOrder.length) return W.needFigures;
@@ -506,19 +606,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     set({ [list]: (draft[list] as { key: string }[]).map(x => (x.key === key ? { ...x, ...(patch as object) } : x)) } as Partial<Draft>);
   const dropFrom = (list: ListName, key: string) => set({ [list]: (draft[list] as { key: string }[]).filter(x => x.key !== key) } as Partial<Draft>);
   const setRow = (key: string, patch: Partial<HoursRow>) => patchIn('rows', key, patch);
-  const mixedPlaces = draft.rows.some(r => r.place);
-  const permit = draft.permitId ? inputs?.permits.find(p => p.id === draft.permitId) : null;
-  const filledWords = permit && venue ? [
-    venue.venueName,
-    allNames.length ? facilityListWords(allNames) : '',
-    `${formatStoredDate(draft.startsOn, { withYear: false })} – ${formatStoredDate(draft.endsOn, { withYear: false })}`,
-    ...draft.rows.map(r => `${r.weekdays.length === 1 ? weekdayPlural(r.weekdays[0]) : weekdaysShort(r.weekdays)} ${formatTimeRange(r.start, r.end)}`),
-    ...(draft.datesOff.length ? [`${draft.datesOff.map(o => formatStoredDate(o.day, { withYear: false })).join(', ')} off`] : []),
-  ].filter(Boolean).join(', ') : null;
 
   // ── The opening screen (0) ──
   /** Opened from a permit's page: the permit already picked, named on the screen (/design D4). */
-  const startPermit = inputs && draft.permitId ? inputs.permits.find(p => p.id === draft.permitId) ?? null : null;
+  const startPermit = inputs && draft.permitIds.length ? inputs.permits.find(p => p.id === draft.permitIds[0]) ?? null : null;
   const copiedFrom = draft.copyFrom ? inputs?.schedules.find(s => s.id === draft.copyFrom)?.name ?? null : null;
   const openingBody = choosing && (
     <div className={sch.opening}>
@@ -534,6 +625,74 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     </div>
   );
 
+  // ── The time's pieces (a schedule on several permits: the rows in cards, the dates after them — drawing tab 1) ──
+  const permitOptions = (inputs?.permits ?? []).map(x => ({ id: x.id, label: x.name, detail: W.permitOption(x.issuer, scheduleDates(x.startsOn, x.endsOn)) }));
+  const permitsHint = cameOff ? W.permitCameOff(cameOff.name, cameOff.rows, cameOff.offs)
+    : draft.permitIds.length ? W.permitsHint : draft.copyFrom ? W.permitReplacesCopy : W.permitHint;
+  /** Under To: the dates the permits set ("Widened to cover both permits"), or where they went back to. */
+  const remaining = draft.permitIds.length === 1 ? permitById.get(draft.permitIds[0]) : undefined;
+  const datesHint = draft.datesTyped.end ? null
+    : draft.permitIds.length > 1 ? W.datesWidened(draft.permitIds.length)
+      : cameOff && remaining ? W.datesBackTo(remaining.name) : null;
+  const rowPlaceWords = (r: HoursRow) => {
+    const v = places.find(x => x.venueId === (r.place?.venueId ?? draft.venueId));
+    const names = (v?.facilities ?? []).filter(f => (r.place?.facilityIds ?? draft.facilityIds).includes(f.id)).map(f => f.name);
+    return `${v?.venueName ?? ''}${names.length ? ` · ${facilityListWords(names)}` : ''}`;
+  };
+  const cardGroups = cards ? [
+    ...permitOrder.map(id => {
+      const x = permitById.get(id);
+      return { key: id, title: x?.name ?? W.typedCard, sub: x ? W.permitCard(x.issuer, scheduleDates(x.startsOn, x.endsOn)) : null, rows: draft.rows.filter(r => r.permitId === id) };
+    }),
+    { key: '__typed', title: copiedFrom ? W.copiedCard(copiedFrom) : W.typedCard, sub: null, rows: draft.rows.filter(r => !r.permitId) },
+  ].filter(g => g.rows.length) : [];
+  const rowFields = (r: HoursRow, withPlace: boolean) => {
+    const i = draft.rows.indexOf(r);
+    return (
+      <div key={r.key} className={`${sch.dayRow}${withPlace ? ` ${sch.placeRow}` : ''}`}>
+        {withPlace && <span className={sch.rowPlace}>{rowPlaceWords(r)}{!r.permitId && <small>{W.rowNoPermit}</small>}</span>}
+        <PickField id={`ns-days-${i}`} label={W.days} required options={WEEKDAY_OPTIONS} selected={r.weekdays.map(String)}
+          onChange={ids => setRow(r.key, { weekdays: ids.map(Number).sort((a, b) => a - b) })} placeholder={W.chooseDays} />
+        <label className={ck.field} htmlFor={`ns-rs-${i}`}>
+          <span className={ck.label}>{W.from}<span className={repKit.req} aria-hidden>*</span></span>
+          <TimeInput id={`ns-rs-${i}`} step={300} className={ck.input} value={r.start} onChange={v => setRow(r.key, { start: v })} />
+        </label>
+        <label className={ck.field} htmlFor={`ns-re-${i}`}>
+          <span className={ck.label}>{W.until}<span className={repKit.req} aria-hidden>*</span></span>
+          <TimeInput id={`ns-re-${i}`} step={300} className={ck.input} value={r.end} onChange={v => setRow(r.key, { end: v })} />
+        </label>
+        <button type="button" className={sch.remove} aria-label={W.removeHours(i + 1)} disabled={draft.rows.length === 1}
+          onClick={() => dropFrom('rows', r.key)}>
+          <X size={15} aria-hidden />
+        </button>
+      </div>
+    );
+  };
+  // A row added here is typed time (no permit) at the last row's place, its hours copied (drawing note: "a row typed here").
+  const lastRow = draft.rows[draft.rows.length - 1];
+  const addHoursDoor = (
+    <button type="button" className={sch.door} onClick={() => set({ rows: [...draft.rows, {
+      key: newKey('row'), weekdays: [], start: lastRow?.start ?? '', end: lastRow?.end ?? '',
+      ...(cards && lastRow ? { place: lastRow.place ?? { venueId: draft.venueId, facilityIds: [...draft.facilityIds] } } : {}),
+    }] })}>
+      <Plus size={14} aria-hidden />{W.addHours}
+    </button>
+  );
+  const datesPair = (
+    <div className={sch.pair}>
+      <label className={ck.field} htmlFor="ns-start">
+        <span className={ck.label}>{W.from}<span className={repKit.req} aria-hidden>*</span></span>
+        <DateInput id="ns-start" className={ck.input} value={draft.startsOn} onChange={v => set({ startsOn: v, datesTyped: { ...draft.datesTyped, start: true } })} />
+      </label>
+      <label className={ck.field} htmlFor="ns-end">
+        <span className={ck.label}>{W.to}<span className={repKit.req} aria-hidden>*</span></span>
+        <DateInput id="ns-end" className={ck.input} value={draft.endsOn} min={draft.startsOn || undefined} rangeStart={draft.startsOn || undefined}
+          onChange={v => set({ endsOn: v, datesTyped: { ...draft.datesTyped, end: true } })} />
+        {datesHint && <span className={ck.hint}>{datesHint}</span>}
+      </label>
+    </div>
+  );
+
   const timeSection = (
     <section className={sch.section} aria-labelledby="ns-time">
       <h3 id="ns-time" className={sch.sectionTitle}>{W.sectionTime}</h3>
@@ -543,22 +702,34 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           <input id="ns-name" className={ck.input} value={draft.name} maxLength={120} placeholder={W.namePlaceholder} onChange={e => set({ name: e.target.value })} />
         </label>
         {!editing && (
-          <label className={ck.field} htmlFor="ns-permit">
-            <span className={ck.label}>{W.permit}</span>
-            <select id="ns-permit" className={ck.select} value={draft.permitId} onChange={e => pickPermit(e.target.value)} aria-describedby="ns-permit-hint">
-              <option value="">{W.noPermit}</option>
-              {(inputs?.permits ?? []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-            <span id="ns-permit-hint" className={ck.hint}>{filledWords ? W.filledIn(filledWords) : W.permitHint}</span>
-          </label>
+          <div>
+            <PickField id="ns-permits" label={W.permits} options={permitOptions} selected={draft.permitIds} onChange={togglePermits} placeholder={W.noPermitTyped} />
+            <span className={ck.hint}>{permitsHint}</span>
+          </div>
         )}
       </div>
-      {mixedPlaces ? (
-        <p className={sch.read}>{draft.rows.map(r => {
-          const v = places.find(p => p.venueId === (r.place?.venueId ?? draft.venueId));
-          const names = (v?.facilities ?? []).filter(f => (r.place?.facilityIds ?? draft.facilityIds).includes(f.id)).map(f => f.name);
-          return `${v?.venueName ?? ''}${names.length ? ` · ${facilityListWords(names)}` : ''}`;
-        }).filter((x, i, a) => a.indexOf(x) === i).join('; ')}</p>
+      {settled.overlaps.map(o => {
+        const days = o.days.map(d => formatShortWeekdayDate(d));
+        const shown = days.length > 4 ? days.slice(0, 3) : days;
+        return (
+          <Statement key={`${o.permitId}|${o.keptBy}|${o.venueId}`}
+            lead={W.overlapLead(W.overlapDays(shown, days.length - shown.length), days.length > 1, places.find(x => x.venueId === o.venueId)?.venueName ?? '', permitById.get(o.keptBy)?.name ?? '')}
+            rest={W.overlapTail(o.startsOn ? formatShortWeekdayDate(o.startsOn) : null)} />
+        );
+      })}
+      {cards ? (
+        <>
+          <div className={sch.permitCards}>
+            {cardGroups.map(g => (
+              <div key={g.key} className={sch.permitCard}>
+                <p className={sch.permitCardHead}><strong>{g.title}</strong>{g.sub && <span>{g.sub}</span>}</p>
+                {g.rows.map(r => rowFields(r, true))}
+              </div>
+            ))}
+          </div>
+          {addHoursDoor}
+          {datesPair}
+        </>
       ) : (
         <>
           <label className={ck.field} htmlFor="ns-venue">
@@ -592,39 +763,11 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
               </div>
             </div>
           )}
+          {datesPair}
+          {draft.rows.map(r => rowFields(r, false))}
+          {addHoursDoor}
         </>
       )}
-      <div className={sch.pair}>
-        <label className={ck.field} htmlFor="ns-start">
-          <span className={ck.label}>{W.from}<span className={repKit.req} aria-hidden>*</span></span>
-          <DateInput id="ns-start" className={ck.input} value={draft.startsOn} onChange={v => set({ startsOn: v })} />
-        </label>
-        <label className={ck.field} htmlFor="ns-end">
-          <span className={ck.label}>{W.to}<span className={repKit.req} aria-hidden>*</span></span>
-          <DateInput id="ns-end" className={ck.input} value={draft.endsOn} min={draft.startsOn || undefined} rangeStart={draft.startsOn || undefined} onChange={v => set({ endsOn: v })} />
-        </label>
-      </div>
-      {draft.rows.map((r, i) => (
-        <div key={r.key} className={sch.dayRow}>
-          <PickField id={`ns-days-${i}`} label={W.days} required options={WEEKDAY_OPTIONS} selected={r.weekdays.map(String)}
-            onChange={ids => setRow(r.key, { weekdays: ids.map(Number).sort((a, b) => a - b) })} placeholder={W.chooseDays} />
-          <label className={ck.field} htmlFor={`ns-rs-${i}`}>
-            <span className={ck.label}>{W.from}<span className={repKit.req} aria-hidden>*</span></span>
-            <TimeInput id={`ns-rs-${i}`} step={300} className={ck.input} value={r.start} onChange={v => setRow(r.key, { start: v })} />
-          </label>
-          <label className={ck.field} htmlFor={`ns-re-${i}`}>
-            <span className={ck.label}>{W.until}<span className={repKit.req} aria-hidden>*</span></span>
-            <TimeInput id={`ns-re-${i}`} step={300} className={ck.input} value={r.end} onChange={v => setRow(r.key, { end: v })} />
-          </label>
-          <button type="button" className={sch.remove} aria-label={W.removeHours(i + 1)} disabled={draft.rows.length === 1}
-            onClick={() => dropFrom('rows', r.key)}>
-            <X size={15} aria-hidden />
-          </button>
-        </div>
-      ))}
-      <button type="button" className={sch.door} onClick={() => set({ rows: [...draft.rows, { key: newKey('row'), weekdays: [], start: draft.rows[draft.rows.length - 1]?.start ?? '', end: draft.rows[draft.rows.length - 1]?.end ?? '' }] })}>
-        <Plus size={14} aria-hidden />{W.addHours}
-      </button>
       <div className={sch.pair}>
         <label className={ck.field} htmlFor="ns-len">
           <span className={ck.label}>{W.slotLength}</span>

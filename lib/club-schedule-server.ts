@@ -14,10 +14,11 @@ import { readClubPlaces, readPermitTimes, type ClubPlaces } from './permit-looku
 import { facilityListWords } from './permit-words';
 import { readClubBookings } from './venue-clash-lookup';
 import { readAmount } from './club-bill-split';
-import { clock, fieldPrices, overlappingBlocks, shareOf, weekdayOf, type DateOff, type TimeBlock } from './permit-time';
+import { clock, fieldPrices, overlappingBlocks, shareOf, weekdayOf, type DateOff } from './permit-time';
 import {
   ageOf, cutSlots, heldSlots, isPrimeSlot, seatCounts, shareTargets, slotKeyOf, teamResults, teamTwice,
-  type EngineInput, type EngineTeam, type PoolBooking, type ScheduleTime, type Slot, type TeamBooking, type TeamResult,
+  type EngineInput, type EngineTeam, type PoolBooking, type ScheduleBlock, type ScheduleTime, type Slot, type TeamBooking, type TeamResult,
+  type WeightOf,
 } from './club-schedule-engine';
 import { readScheduleSettings, defaultSettings, isClock, sharingPools, slotRoom, type ScheduleSettings, type SettingsRefusal } from './club-schedule-settings';
 import {
@@ -218,6 +219,8 @@ export interface StoredSlot {
   venueId: string;
   facilityId: string | null;
   blockId: string | null;
+  /** Its row's permit (`org_time_blocks.from_permit_id`, mig 487) — what prices it; null for a typed row. */
+  permitId: string | null;
   startsAt: string;
   endsAt: string;
   teamIds: string[];
@@ -230,23 +233,23 @@ export interface StoredSlot {
 export interface LoadedSchedule {
   row: ScheduleRow;
   settings: ScheduleSettings;
-  time: ScheduleTime & { blockIds: string[] };
+  time: ScheduleTime & { blocks: readonly ScheduleBlock[]; blockIds: string[] };
   slots: StoredSlot[];
 }
 
 /** The schedule's own blocks (the one model of time), in its order, with their facilities. */
 async function readScheduleTime(orgId: string, scheduleId: string, row: Pick<ScheduleRow, 'starts_on' | 'ends_on'>): Promise<LoadedSchedule['time']> {
   const [blocks, offs] = await Promise.all([
-    fetchAll<{ id: string; org_venue_id: string; weekdays: number[]; start_time: string; end_time: string; from_date: string | null; until_date: string | null; sort_order: number; org_time_block_facilities: { facility_id: string }[] | null }>((a, b) => supabaseAdmin
-      .from('org_time_blocks').select('id, org_venue_id, weekdays, start_time, end_time, from_date, until_date, sort_order, org_time_block_facilities(facility_id)')
+    fetchAll<{ id: string; org_venue_id: string; from_permit_id: string | null; weekdays: number[]; start_time: string; end_time: string; from_date: string | null; until_date: string | null; sort_order: number; org_time_block_facilities: { facility_id: string }[] | null }>((a, b) => supabaseAdmin
+      .from('org_time_blocks').select('id, org_venue_id, from_permit_id, weekdays, start_time, end_time, from_date, until_date, sort_order, org_time_block_facilities(facility_id)')
       .eq('org_id', orgId).eq('schedule_id', scheduleId).order('sort_order').order('id').range(a, b)),
     fetchAll<{ day: string; note: string | null }>((a, b) => supabaseAdmin.from('org_time_dates_off')
       .select('day, note').eq('org_id', orgId).eq('schedule_id', scheduleId).order('day').range(a, b)),
   ]);
   return {
     startsOn: row.starts_on, endsOn: row.ends_on,
-    blocks: blocks.map((b): TimeBlock => ({
-      id: b.id, venueId: b.org_venue_id, facilityIds: (b.org_time_block_facilities ?? []).map(f => f.facility_id),
+    blocks: blocks.map((b): ScheduleBlock => ({
+      id: b.id, venueId: b.org_venue_id, permitId: b.from_permit_id, facilityIds: (b.org_time_block_facilities ?? []).map(f => f.facility_id),
       weekdays: [...(b.weekdays ?? [])].map(Number).sort((x, y) => x - y), startTime: clock(b.start_time), endTime: clock(b.end_time),
       fromDate: b.from_date, untilDate: b.until_date,
     })),
@@ -280,13 +283,15 @@ export async function loadSchedule(orgId: string, scheduleId: string): Promise<L
       .eq('org_id', orgId).eq('schedule_id', scheduleId).order('starts_at').order('id').range(a, b)),
   ]);
   const read = readScheduleSettings(row.settings);
+  const permitOfBlock = new Map(time.blocks.map(b => [b.id, b.permitId ?? null]));
   return {
     row,
     settings: read.ok ? read.value : defaultSettings(),
     time,
     slots: slotRows.map((s): StoredSlot => ({
       id: s.id, key: slotKeyOf(s.org_venue_id, s.facility_id, Date.parse(s.starts_at)), venueId: s.org_venue_id, facilityId: s.facility_id,
-      blockId: s.block_id, startsAt: s.starts_at, endsAt: s.ends_at, teamIds: holdersOf(s),
+      blockId: s.block_id, permitId: s.block_id ? permitOfBlock.get(s.block_id) ?? null : null,
+      startsAt: s.starts_at, endsAt: s.ends_at, teamIds: holdersOf(s),
       locked: s.locked, movedByHand: s.moved_by_hand,
       handedBack: s.handed_back_at ? { at: s.handed_back_at, by: s.handed_back_by, teamId: s.handed_back_team_id } : null,
       removed: !!s.removed_at,
@@ -294,35 +299,98 @@ export async function loadSchedule(orgId: string, scheduleId: string): Promise<L
   };
 }
 
-/** The permit's prices for the schedule's time: each facility's share and an hour of a full field (null without one).
- *  `found`: the permit asked for is still the club's (false when none was asked for). */
+/** The prices of a schedule's time: each facility's share and an hour of a full field (null without one).
+ *  `found`: the PRICE permit asked for is still the club's (false when none was asked for). */
 export interface Prices {
-  found: boolean; weightOf: (facilityId: string | null) => number; fullHour: number | null; permitCost: number | null; permitName: string | null;
+  found: boolean;
+  /** A facility's share on its ROW's permit (a schedule on several permits, mig 487) — the price permit's for a row with
+   *  none; 1 with neither. */
+  weightOf: WeightOf;
+  fullHour: number | null; permitCost: number | null; permitName: string | null;
   /** The permit's own budget line — what Bill the teams bills from by default (money readers only, through `pricing`). */
   lineId: string | null;
+  /** Every permit read that is still the club's (the price permit and the rows'): its name, by id. */
+  names: ReadonlyMap<string, string>;
 }
 
-const NO_PRICES: Prices = { found: false, weightOf: () => 1, fullHour: null, permitCost: null, permitName: null, lineId: null };
+const NO_PRICES: Prices = { found: false, weightOf: () => 1, fullHour: null, permitCost: null, permitName: null, lineId: null, names: new Map() };
 
-export async function readPrices(orgId: string, permitId: string | null): Promise<Prices> {
-  if (!permitId) return NO_PRICES;
-  const times = await readPermitTimes(orgId, { ids: [permitId] });
-  const p = times.permits[0];
-  if (!p) return NO_PRICES;
-  const shares = new Map(Object.entries(p.shares));
-  const prices = fieldPrices(p, times.venueFacilities, shares, p.cost);
-  return { found: true, weightOf: f => shareOf(shares, f), fullHour: prices.fullHour, permitCost: p.cost, permitName: p.name, lineId: p.budgetLineId };
+/**
+ * THE PRICES (Ask 23; a schedule on several permits, Session A). `permitId` is the PRICE permit — `pricePermitOf`, the
+ * bill's else the one the schedule started from: it gives the hour, the cost, the name and the line (one rate until
+ * Session C prices each permit's time at its own). `rowPermits` are the schedule's rows' permits: each slot's WEIGHT is
+ * its own row's permit's share of its facility (the drawing's P4 A: "the row's own permit prices it", never a lookup),
+ * the price permit's for a row with none. ⚠ A price permit NONE of the rows came from (a schedule billed from another
+ * permit, before mig 487) still weighs every row, so no figure a sent schedule already shows moves.
+ */
+export async function readPrices(orgId: string, permitId: string | null, rowPermits: readonly (string | null | undefined)[] = []): Promise<Prices> {
+  const rows = [...new Set(rowPermits.filter((x): x is string => !!x))];
+  const ids = [...new Set([...(permitId ? [permitId] : []), ...rows])];
+  if (!ids.length) return NO_PRICES;
+  const times = await readPermitTimes(orgId, { ids });
+  const shares = new Map(times.permits.map(x => [x.id, new Map(Object.entries(x.shares))]));
+  const names = new Map(times.permits.map(x => [x.id, x.name]));
+  const byRow = !permitId || !rows.length || rows.includes(permitId);
+  const weightOf: WeightOf = (f, row) => {
+    const own = byRow && row ? shares.get(row) : undefined;
+    const set = own ?? (permitId ? shares.get(permitId) : undefined);
+    return set ? shareOf(set, f) : 1;
+  };
+  const p = permitId ? times.permits.find(x => x.id === permitId) : undefined;
+  if (!p) return { ...NO_PRICES, weightOf, names };
+  const prices = fieldPrices(p, times.venueFacilities, shares.get(p.id)!, p.cost);
+  return { found: true, weightOf, fullHour: prices.fullHour, permitCost: p.cost, permitName: p.name, lineId: p.budgetLineId, names };
+}
+
+/** The permit that prices a schedule's hour (until Session C): the bill's, else the one it started from (mig 487 keeps
+ *  `started_from_permit_id` for one release as this fallback). */
+export const pricePermitOf = (row: Pick<ScheduleRow, 'bill_permit_id' | 'started_from_permit_id'>): string | null =>
+  row.bill_permit_id ?? row.started_from_permit_id;
+
+/** A saved schedule's prices: its price permit, and each of its rows' permits. */
+export function schedulePrices(orgId: string, loaded: Pick<LoadedSchedule, 'row' | 'time'>): Promise<Prices> {
+  return readPrices(orgId, pricePermitOf(loaded.row), loaded.time.blocks.map(b => b.permitId));
+}
+
+/**
+ * THE SCHEDULE'S PERMITS: the distinct permits behind its rows, in the order their time starts (the top line's order;
+ * the drawing, tab 6) — and, for one release (mig 487), the permit it started from when no row names one. Every reader of
+ * "a schedule's permit" asks this, never one column (`tests/unit/club-schedule-several-permits-guard.test.ts`).
+ */
+export function schedulePermitIds(row: Pick<ScheduleRow, 'starts_on' | 'started_from_permit_id'>, blocks: readonly ScheduleBlock[]): string[] {
+  const starts = new Map<string, string>();
+  for (const b of blocks) {
+    if (!b.permitId) continue;
+    const from = b.fromDate ?? row.starts_on;
+    const was = starts.get(b.permitId);
+    if (was === undefined || from < was) starts.set(b.permitId, from);
+  }
+  const ids = [...starts].sort((a, z) => a[1].localeCompare(z[1])).map(([id]) => id);
+  return ids.length ? ids : row.started_from_permit_id ? [row.started_from_permit_id] : [];
+}
+
+/** A request's rows naming a permit the club doesn't have (deleted under the form, or another club's): a refusal, or null. */
+export function permitGone(prices: Pick<Prices, 'names'>, blocks: readonly ScheduleBlock[]): Response | null {
+  return blocks.some(b => b.permitId && !prices.names.has(b.permitId)) ? refusal(409, 'permit_gone', R.permitGone) : null;
+}
+
+/** A request's prices — the price permit and each sent row's own permit — with the refusal when a row names a permit
+ *  that is gone, so a route cannot read the one and forget the other. */
+export async function readRequestPrices(orgId: string, permitId: string | null, blocks: readonly ScheduleBlock[]): Promise<{ prices: Prices; gone: Response | null }> {
+  const prices = await readPrices(orgId, permitId, blocks.map(b => b.permitId));
+  return { prices, gone: permitGone(prices, blocks) };
 }
 
 /** A stored slot as the engine reads it: its club day and clock worked out from its instants, its prime and its price. */
-export function engineSlotOf(s: Pick<StoredSlot, 'key' | 'venueId' | 'facilityId' | 'startsAt' | 'endsAt'>, blockIndex: number, settings: ScheduleSettings, weightOf: (f: string | null) => number): Slot {
+export function engineSlotOf(s: Pick<StoredSlot, 'key' | 'venueId' | 'facilityId' | 'startsAt' | 'endsAt'> & { permitId?: string | null }, blockIndex: number, settings: ScheduleSettings, weightOf: WeightOf): Slot {
   const start = utcToZonedInputs(s.startsAt), end = utcToZonedInputs(s.endsAt);
   const weekday = weekdayOf(start.date);
   return {
     key: s.key, venueId: s.venueId, facilityId: s.facilityId, blockIndex, day: start.date, weekday, week: mondayOfDay(start.date),
     startClock: start.time, endClock: end.time, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt),
     pos: `${weekday}|${start.time}|${s.venueId}|${s.facilityId ?? ''}`,
-    prime: isPrimeSlot(settings.prime, weekday, start.time, end.time), weight: weightOf(s.facilityId),
+    prime: isPrimeSlot(settings.prime, weekday, start.time, end.time), weight: weightOf(s.facilityId, s.permitId ?? null),
+    ...(s.permitId ? { permitId: s.permitId } : {}),
   };
 }
 
@@ -340,6 +408,8 @@ export async function engineContext(orgId: string, p: {
   fromMs: number;
   toMs: number;
   permitId: string | null;
+  /** The rows' permits: each slot is weighed by its own (a schedule on several permits). */
+  rowPermits?: readonly (string | null | undefined)[];
   places?: ClubPlaces;
   prices?: Prices;
 }): Promise<{ places: ClubPlaces; pool: PoolBooking[]; teamBookings: Map<string, TeamBooking[]>; prices: Prices }> {
@@ -358,7 +428,7 @@ export async function engineContext(orgId: string, p: {
       .from('rep_tryout_sessions').select('team_id, starts_at, ends_at, status').eq('org_id', orgId).in('team_id', c)
       .gte('starts_at', new Date(p.fromMs - 86_400_000).toISOString()).lte('starts_at', new Date(p.toMs + 86_400_000).toISOString())
       .order('id').range(a, b)) : Promise.resolve([]),
-    p.prices ?? readPrices(orgId, p.permitId),
+    p.prices ?? readPrices(orgId, p.permitId, p.rowPermits),
   ]);
   const ownEvent = (slot: string | null | undefined) => !!slot && own.has(slot);
   const poolBookings: PoolBooking[] = pool.bookings
@@ -382,7 +452,7 @@ export async function engineContext(orgId: string, p: {
 }
 
 /** The time and the settings, checked the way the save checks them (a refusal in words, or the slots it holds). */
-export function checkTime(time: ScheduleTime, settings: ScheduleSettings, places: ClubPlaces, weightOf: (f: string | null) => number): { ok: true; slots: Slot[] } | Refused {
+export function checkTime(time: ScheduleTime, settings: ScheduleSettings, places: ClubPlaces, weightOf: WeightOf): { ok: true; slots: Slot[] } | Refused {
   if (!time.blocks.length) return no('no_time', R.noTime);
   for (const b of time.blocks) {
     if (!places.venueName.has(b.venueId)) return no('place_gone', 'A venue in this schedule isn’t in the Venue library any more.');
@@ -404,11 +474,13 @@ export async function buildEngineInput(orgId: string, p: {
   storedSlots: readonly StoredSlot[];
   permitId: string | null;
   places?: ClubPlaces;
+  prices?: Prices;
 }): Promise<{ ok: true; input: EngineInput; prices: Prices; places: ClubPlaces; pool: PoolBooking[] } | Refused> {
   const ticked = p.settings.teamIds.map(id => p.teams.find(t => t.id === id)).filter((t): t is ClubTeam => !!t);
   const fromMs = Date.parse(`${p.time.startsOn}T00:00:00Z`) - 86_400_000, toMs = Date.parse(`${p.time.endsOn}T23:59:59Z`) + 86_400_000;
   const ctx = await engineContext(orgId, {
     slotIds: p.storedSlots.map(s => s.id), teamIds: ticked.map(t => t.id), fromMs, toMs, permitId: p.permitId, places: p.places,
+    rowPermits: p.time.blocks.map(b => b.permitId), prices: p.prices,
   });
   const checked = checkTime(p.time, p.settings, ctx.places, ctx.prices.weightOf);
   if (!checked.ok) return checked;
@@ -502,7 +574,7 @@ export function billViewOf(row: ScheduleRow, bill: BillNow | null, prices: Price
 }
 
 /** The live slots as the engine and the bill read them. */
-export function liveSlots(loaded: LoadedSchedule, weightOf: (f: string | null) => number): { slots: Slot[]; assignments: Map<string, string[]>; stored: StoredSlot[] } {
+export function liveSlots(loaded: LoadedSchedule, weightOf: WeightOf): { slots: Slot[]; assignments: Map<string, string[]>; stored: StoredSlot[] } {
   const blockIndex = new Map(loaded.time.blockIds.map((id, i) => [id, i]));
   const stored = loaded.slots.filter(s => !s.removed);
   return {
@@ -519,7 +591,8 @@ export interface ScheduleView {
     replyBy: string | null; changedSinceSent: boolean;
     sent: { at: string; by: string | null } | null; finalized: { at: string; by: string | null } | null;
   };
-  time: { blocks: TimeBlock[]; datesOff: DateOff[] };
+  /** Each block with the permit it came from (`permitId`), so Settings… keeps every row's permit through a regenerate. */
+  time: { blocks: ScheduleBlock[]; datesOff: DateOff[] };
   places: { venueId: string; venueName: string; facilities: { id: string; name: string }[] }[];
   teams: { id: string; name: string; groupId: string | null; groupName: string | null; color: string | null; season: ClubTeam['season'] }[];
   slots: SlotView[];
@@ -534,9 +607,10 @@ export interface ScheduleView {
    * and its budget line. MONEY: null unless `canMoney` (as `bill` is), and null without a permit.
    */
   pricing: { permitId: string; permitName: string | null; fullHour: number | null; permitCost: number | null; lineId: string | null } | null;
-  /** The permit this schedule was started from, while it is still the club's — the top line's door (13c Session C, C4 =
-   *  A: "From the permit {name} ›"). Its name only, never its money; null for a schedule not started from a permit. */
-  fromPermit: { id: string; name: string } | null;
+  /** The permits behind the schedule's rows, still the club's, in the order their time starts — the top line's doors (13c
+   *  C4; a schedule on several permits, the drawing's tab 6: "From the permits A › and B ›"). Names only, never money;
+   *  empty for a schedule with no permit. */
+  fromPermits: { id: string; name: string }[];
   /** The club's team order — the order every bill shares its rounding cents in (`computeBill`, the send); a screen that
    *  works a bill out passes it, so its table and what Finalize bills agree to the cent. */
   teamOrder: string[];
@@ -610,25 +684,27 @@ async function houseLeagueSlots(orgId: string, slotIds: readonly string[]): Prom
 /** THE SCHEDULE'S PAGE: the schedule, its time, every slot (held and clashing marked), fairness, the bill. */
 export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMoney: boolean, opts: { houseLeague?: boolean } = {}): Promise<ScheduleView> {
   const row = loaded.row;
-  const permitId = row.bill_permit_id ?? row.started_from_permit_id;
+  const permitId = pricePermitOf(row);
   const live = loaded.slots.filter(s => !s.removed);
   const fromMs = Math.min(...live.map(s => Date.parse(s.startsAt)), Date.parse(`${row.starts_on}T00:00:00Z`));
   const toMs = Math.max(...live.map(s => Date.parse(s.endsAt)), Date.parse(`${row.ends_on}T23:59:59Z`));
   // Once the schedule made its bill, a money reader reads the money side — what each team pays and the bill as Finalize
   // made it, in one read — and the plain hand-backs that leave a bill as it was (Stage 11d part B — S11D-05's two numbers).
   const billed = canMoney && row.state === 'final' && !!row.allocation_id;
-  // The permit it started from (13c C4, the top line's door): the one the prices read, unless a bill is priced from another.
-  const startedFrom = row.started_from_permit_id;
-  const [teams, ctx, nameOf, waiting, money, plainBacks, otherStart] = await Promise.all([
+  // The permits behind its rows (the top line's doors): the prices read their names.
+  const fromIds = schedulePermitIds(row, loaded.time.blocks);
+  const [teams, ctx, nameOf, waiting, money, plainBacks] = await Promise.all([
     // House league is always named when a slot holds it, whether or not the club still has house league.
     readClubTeams(orgId, { houseLeague: true }),
-    engineContext(orgId, { slotIds: loaded.slots.map(s => s.id), teamIds: [], fromMs, toMs, permitId }),
+    engineContext(orgId, { slotIds: loaded.slots.map(s => s.id), teamIds: [], fromMs, toMs, permitId, rowPermits: loaded.time.blocks.map(b => b.permitId) }),
     resolvePersonNamer(orgId, [row.sent_by, row.finalized_by]),
     row.state === 'final' ? waitingAsksOfSchedule(orgId, row.id) : Promise.resolve([]),
     billed ? scheduleMoney(orgId, row.id, row.allocation_id!) : Promise.resolve(null),
     billed ? keptHandBacks(orgId, row.id, new Map(live.map(s => [s.id, s.teamIds]))) : Promise.resolve([]),
-    startedFrom && startedFrom !== permitId ? readPrices(orgId, startedFrom) : Promise.resolve(null),
   ]);
+  // A permit only the fallback names (no row came from it, and it doesn't price the time): its name, read alone.
+  const unread = fromIds.filter(id => !ctx.prices.names.has(id));
+  const names = unread.length ? new Map([...ctx.prices.names, ...(await readPrices(orgId, null, unread)).names]) : ctx.prices.names;
   const { slots, assignments, stored } = liveSlots(loaded, ctx.prices.weightOf);
   const held = heldSlots(slots, ctx.pool);
   const houseLeagueOf = await houseLeagueSlots(orgId, stored.filter(s => s.teamIds.some(isProgramHolder)).map(s => s.id));
@@ -648,7 +724,6 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
   const handedOut = stored.filter(s => s.teamIds.length > 0).length;
   const clashes = slots.filter(s => held.has(s.key) && (assignments.get(s.key) ?? []).length).length;
   const placeIds = [...new Set(loaded.time.blocks.map(b => b.venueId))];
-  const fromPrices = otherStart ?? ctx.prices;
   return {
     schedule: {
       id: row.id, name: row.name, state: row.state, startsOn: row.starts_on, endsOn: row.ends_on, version: row.version,
@@ -691,7 +766,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
     pricing: canMoney && permitId && ctx.prices.found
       ? { permitId, permitName: ctx.prices.permitName, fullHour: ctx.prices.fullHour, permitCost: ctx.prices.permitCost, lineId: ctx.prices.lineId }
       : null,
-    fromPermit: startedFrom && fromPrices.found ? { id: startedFrom, name: fromPrices.permitName ?? '' } : null,
+    fromPermits: fromIds.filter(id => names.has(id)).map(id => ({ id, name: names.get(id)! })),
     canMoney,
     houseLeague: !!opts.houseLeague,
     // An ask with no Sunday left to count (every one started, or came back to the team) lapses at the next sweep, and
@@ -767,6 +842,8 @@ export function timePayload(time: ScheduleTime & { blockIds?: (string | null)[] 
     blocks: time.blocks.map((b, i) => ({
       id: time.blockIds?.[i] ?? null, venueId: b.venueId, facilityIds: b.facilityIds, weekdays: b.weekdays,
       startTime: clock(b.startTime), endTime: clock(b.endTime), fromDate: b.fromDate, untilDate: b.untilDate,
+      // Absent (a request that never said) keeps the row's permit in the save; null (a typed row) clears it.
+      ...(b.permitId === undefined ? {} : { permitId: b.permitId }),
     })),
     datesOff: time.datesOff.map(d => ({ day: d.day, note: d.note })),
   };
@@ -840,7 +917,7 @@ export function readTimeBody(body: Record<string, unknown>): { ok: true; time: S
   if (endsOn < startsOn) return bad('The last day is before the first.');
   if ((Date.parse(endsOn) - Date.parse(startsOn)) / 86_400_000 > 400) return bad('A schedule runs at most 400 days.');
   if (!Array.isArray(body.blocks) || !body.blocks.length || body.blocks.length > 40) return no('no_time', R.noTime);
-  const blocks: TimeBlock[] = [], blockIds: (string | null)[] = [];
+  const blocks: ScheduleBlock[] = [], blockIds: (string | null)[] = [];
   for (const raw of body.blocks as Record<string, unknown>[]) {
     const venueId = raw?.venueId, facilityIds = raw?.facilityIds, weekdays = raw?.weekdays;
     if (!isUuid(venueId)) return bad('Each row of hours needs its venue.');
@@ -850,7 +927,11 @@ export function readTimeBody(body: Record<string, unknown>): { ok: true; time: S
     const fromDate = typeof raw.fromDate === 'string' && isCalendarDate(raw.fromDate) ? raw.fromDate : null;
     const untilDate = typeof raw.untilDate === 'string' && isCalendarDate(raw.untilDate) ? raw.untilDate : null;
     const id = isUuid(raw.id) ? raw.id : null;
-    blocks.push({ id: id ?? `new-${blocks.length}`, venueId, facilityIds: [...new Set(facilityIds as string[])], weekdays: [...new Set(weekdays as number[])].sort((a, b) => a - b), startTime: raw.startTime, endTime: raw.endTime, fromDate, untilDate });
+    // The permit the row came from (mig 487): none for a typed row; the route checks it is still the club's (`permitGone`).
+    if (raw.permitId != null && raw.permitId !== '' && !isUuid(raw.permitId)) return bad('Pick the permits again.');
+    // A request that leaves `permitId` out (a browser tab from before mig 487) stays undefined, so the save keeps what is stored.
+    const permitId = raw.permitId === undefined ? undefined : isUuid(raw.permitId) ? raw.permitId : null;
+    blocks.push({ id: id ?? `new-${blocks.length}`, venueId, permitId, facilityIds: [...new Set(facilityIds as string[])], weekdays: [...new Set(weekdays as number[])].sort((a, b) => a - b), startTime: raw.startTime, endTime: raw.endTime, fromDate, untilDate });
     blockIds.push(id);
   }
   const datesOff: DateOff[] = [];

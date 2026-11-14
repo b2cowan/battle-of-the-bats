@@ -14562,6 +14562,15 @@
     "ordinal_position": 13
   },
   {
+    "table_name": "org_time_blocks",
+    "column_name": "from_permit_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
     "table_name": "org_time_dates_off",
     "column_name": "id",
     "data_type": "uuid",

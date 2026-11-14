@@ -14564,6 +14564,15 @@
         "column_default": null
       },
       {
+        "table_name": "org_time_blocks",
+        "pos": 14,
+        "column_name": "from_permit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_time_dates_off",
         "pos": 1,
         "column_name": "id",
@@ -33836,6 +33845,13 @@
       },
       {
         "table_name": "org_time_blocks",
+        "column_name": "from_permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "org_time_blocks_from_permit_id_fkey"
+      },
+      {
+        "table_name": "org_time_blocks",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -40132,6 +40148,11 @@
       },
       {
         "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_from_permit_idx",
+        "indexdef": "CREATE INDEX org_time_blocks_from_permit_idx ON public.org_time_blocks USING btree (from_permit_id) WHERE (from_permit_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_time_blocks",
         "indexname": "org_time_blocks_permit_idx",
         "indexdef": "CREATE INDEX org_time_blocks_permit_idx ON public.org_time_blocks USING btree (permit_id)"
       },
@@ -46266,6 +46287,12 @@
         "table_name": "org_time_blocks",
         "detail": "org_time_blocks_dates",
         "check_clause": "((from_date IS NULL) OR (until_date IS NULL) OR (until_date >= from_date))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_blocks",
+        "detail": "org_time_blocks_from_permit_on_schedule",
+        "check_clause": "((from_permit_id IS NULL) OR (schedule_id IS NOT NULL))"
       },
       {
         "kind": "CHECK",

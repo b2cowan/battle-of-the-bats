@@ -17,6 +17,7 @@
  * The callers gate the plan (permits ride the Venue library: `hasOrgVenueLibrary`) and the reader; nothing here writes.
  */
 import { addCalendarDays, daysBetweenDateStrings, zonedWallClockToUtc } from './timezone';
+import { joinWithAnd } from './utils';
 import { readDatesOffAhead, readPermitTimes, type ClubPlaces, type PermitTimes } from './permit-lookup';
 import { readClubBookings } from './venue-clash-lookup';
 import { calendarPrograms, readClubCalendar, MAX_CALENDAR_DAYS, type CalendarReader } from './club-calendar';
@@ -123,31 +124,51 @@ export interface ScheduleSlotPlace extends BookingPlace { key: string; teamIds: 
  * tournament scope never matters here: only house league's bookings are described).
  */
 export async function readScheduleOutside(reader: CalendarReader, opts: {
-  permitId: string; slots: readonly ScheduleSlotPlace[]; today: string; nowMs: number;
+  /** EVERY permit behind the schedule (its rows' permits — a schedule on several permits, mig 487), in their order. */
+  permitIds: readonly string[]; slots: readonly ScheduleSlotPlace[]; today: string; nowMs: number;
 }): Promise<ScheduleOutside | null> {
   // Bounded by the schedule's own held days: a permit whose dates off fall outside them stops at the first small read.
   const held = opts.slots.filter(s => s.teamIds.length > 0 && s.endMs > opts.nowMs);
-  if (!held.length) return null;
+  if (!held.length || !opts.permitIds.length) return null;
   const days = held.map(s => clubDayOf(s.startMs)).sort();
   const from = days[0] > opts.today ? days[0] : opts.today;
-  const { taken, times } = await readDatesOffTaken(reader.org.id, { from, through: days[days.length - 1], nowMs: opts.nowMs, permitIds: [opts.permitId] });
-  const permit = times.permits.find(p => p.id === opts.permitId);
-  if (!permit) return null;
-  const hit = datesOffTaken(permit, held, times.permits, times.venueFacilities as VenueFacilities, { from, through: days[days.length - 1], nowMs: opts.nowMs })
-    .filter(d => d.bookings.length);
-  if (!hit.length) return null;
-  const pulled = new Set(hit.map(d => d.day));
-  const leagueDays: TakenDay[] = (taken.get(opts.permitId) ?? [])
-    .filter(d => pulled.has(d.day))
-    .map(d => ({ day: d.day, bookings: d.bookings.filter(b => b.program === 'league') }))
-    .filter(d => d.bookings.length);
+  const through = days[days.length - 1];
+  const { taken, times } = await readDatesOffTaken(reader.org.id, { from, through, nowMs: opts.nowMs, permitIds: [...opts.permitIds] });
+  // Each permit's own dates off, asked of every held slot: the one rule answers only where THAT permit holds the slot's
+  // place and hour, so Town A's long weekend never names Town B's park (and a slot another permit still covers is not one).
+  const byDay = new Map<string, { note: string | null; slotKeys: Set<string> }>();
+  const names: string[] = [];
+  const leagueByDay = new Map<string, TakenDay['bookings']>();
+  for (const id of opts.permitIds) {
+    const permit = times.permits.find(p => p.id === id);
+    if (!permit) continue;
+    const hit = datesOffTaken(permit, held, times.permits, times.venueFacilities as VenueFacilities, { from, through, nowMs: opts.nowMs })
+      .filter(d => d.bookings.length);
+    if (!hit.length) continue;
+    names.push(permit.name);
+    const noteOf = new Map(permit.datesOff.map(d => [d.day, d.note]));
+    for (const d of hit) {
+      const was = byDay.get(d.day) ?? byDay.set(d.day, { note: noteOf.get(d.day) ?? null, slotKeys: new Set() }).get(d.day)!;
+      if (!was.note) was.note = noteOf.get(d.day) ?? null;
+      for (const b of d.bookings) was.slotKeys.add(b.key);
+    }
+    const pulled = new Set(hit.map(d => d.day));
+    for (const d of taken.get(id) ?? []) {
+      if (!pulled.has(d.day)) continue;
+      const league = d.bookings.filter(b => b.program === 'league');
+      if (!league.length) continue;
+      const list = leagueByDay.get(d.day) ?? leagueByDay.set(d.day, []).get(d.day)!;
+      for (const b of league) if (!list.includes(b)) list.push(b);
+    }
+  }
+  if (!byDay.size) return null;
+  const leagueDays: TakenDay[] = [...leagueByDay].sort((a, z) => a[0].localeCompare(z[0])).map(([day, bookings]) => ({ day, bookings }));
   // House league's door as the permit's own notice draws it: the season's schedule, else that day on the Calendar.
   const notice = leagueDays.length ? await describeDatesOffTaken(reader, leagueDays, times) : null;
   const door = notice?.doors.find(d => d.kind === 'season') ?? notice?.doors.find(d => d.kind === 'calendar') ?? null;
-  const noteOf = new Map(permit.datesOff.map(d => [d.day, d.note]));
   return {
-    permitName: permit.name,
-    days: hit.map(d => ({ day: d.day, note: noteOf.get(d.day) ?? null, slotKeys: d.bookings.map(s => s.key) })),
+    permitName: joinWithAnd(names),
+    days: [...byDay].sort((a, z) => a[0].localeCompare(z[0])).map(([day, d]) => ({ day, note: d.note, slotKeys: [...d.slotKeys] })),
     league: leagueDays.flatMap(d => d.bookings.map(kindOf)),
     leagueDays: leagueDays.map(d => d.day),
     leagueHref: door?.href ?? null,

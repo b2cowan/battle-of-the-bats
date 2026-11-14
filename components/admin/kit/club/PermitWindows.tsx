@@ -83,7 +83,8 @@ export function PickField({ id, label, required, options, selected, onChange, ev
   id: string;
   label: string;
   required?: boolean;
-  options: readonly { id: string; label: string }[];
+  /** `detail`: a second line under the option's name (New schedule's Permits: its issuer and dates). */
+  options: readonly { id: string; label: string; detail?: string }[];
   selected: readonly string[];
   onChange: (next: string[]) => void;
   /** With it, ticking none means every option (a block's facilities); without, none is none (its days). */
@@ -124,9 +125,9 @@ export function PickField({ id, label, required, options, selected, onChange, ev
             {options.map(o => {
               const on = selected.includes(o.id);
               return (
-                <button key={o.id} type="button" role="option" aria-selected={on} className={own.pickOption} onClick={() => toggle(o.id)}>
+                <button key={o.id} type="button" role="option" aria-selected={on} className={`${own.pickOption}${o.detail ? ` ${own.pickOptionTwo}` : ''}`} onClick={() => toggle(o.id)}>
                   <span className={`${own.pickTick}${on ? ` ${own.pickTickOn}` : ''}`}>{on && <Check size={11} aria-hidden />}</span>
-                  {o.label}
+                  {o.detail ? <span className={own.pickOptionText}>{o.label}<span className={own.pickOptionDetail}>{o.detail}</span></span> : o.label}
                 </button>
               );
             })}

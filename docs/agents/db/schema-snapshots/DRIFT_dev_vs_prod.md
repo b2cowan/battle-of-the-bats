@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-14 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 679 divergence(s)** across dev/prod.
+**⚠️ 683 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 17 | 6 | — |
-| Columns | 265 | 59 | 1 |
-| Indexes | 76 | 26 | 0 |
-| Constraints | 63 | 28 | — |
-| RLS / CHECK | 106 | 26 | 0 (RLS state) |
+| Columns | 266 | 59 | 1 |
+| Indexes | 77 | 26 | 0 |
+| Constraints | 64 | 28 | — |
+| RLS / CHECK | 107 | 26 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (17)
@@ -41,7 +41,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (265)
+### Only in DEV (266)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -140,6 +140,7 @@
 - `org_children.emergency_contact_phone`
 - `org_children.medical_notes`
 - `org_public_site_content.mailing_address`
+- `org_time_blocks.from_permit_id`
 - `organizations.is_test_organization`
 - `organizations.logo_aspect`
 - `organizations.renewal_reminded_for`
@@ -373,7 +374,7 @@
 - `family_links.rep_team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (76)
+### Only in DEV (77)
 - `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
@@ -416,6 +417,7 @@
 - `league_season_time_asks_pkey`
 - `legal_acceptances_pkey`
 - `legal_acceptances_user_idx`
+- `org_time_blocks_from_permit_idx`
 - `platform_charge_tax_looks_chain_idx`
 - `platform_charge_tax_looks_invoice_idx`
 - `platform_charge_tax_looks_pkey`
@@ -483,7 +485,7 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (63)
+### Only in DEV (64)
 - `bank_check_waiting.bank_check_waiting_added_by_fkey`
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
@@ -521,6 +523,7 @@ _none_
 - `league_season_time_asks.league_season_time_asks_season_id_fkey`
 - `legal_acceptances.legal_acceptances_pkey`
 - `legal_acceptances.legal_acceptances_user_id_fkey`
+- `org_time_blocks.org_time_blocks_from_permit_id_fkey`
 - `platform_charge_tax_looks.platform_charge_tax_looks_after_id_fkey`
 - `platform_charge_tax_looks.platform_charge_tax_looks_pkey`
 - `platform_charge_tax_looks.platform_charge_tax_looks_put_back_of_fkey`
@@ -582,7 +585,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (106)
+### CHECK only in DEV (107)
 - `bank_check_waiting.bank_check_waiting_added_shape`
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
@@ -620,6 +623,7 @@ _none_
 - `legal_acceptances.legal_acceptances_text_shape`
 - `legal_acceptances.legal_acceptances_version_shape`
 - `org_public_site_content.org_public_site_content_mailing_address_check`
+- `org_time_blocks.org_time_blocks_from_permit_on_schedule`
 - `platform_charge_tax_looks.platform_charge_tax_looks_keys_shape`
 - `platform_charge_tax_looks.platform_charge_tax_looks_looked_by_check`
 - `platform_charge_tax_looks.platform_charge_tax_looks_not_itself`

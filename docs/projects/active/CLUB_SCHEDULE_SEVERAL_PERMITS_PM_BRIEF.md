@@ -38,4 +38,11 @@ naming pass), so 13h names its new words.
 - A bill per permit matches each permit's own price per hour; a one-rate bill gives every team the same hourly rate;
   both total the same.
 
+**Where it stands (2026-11-14).** The first of five build sessions is done on dev. New schedule takes several permits:
+each one ticked brings its own rows, which show their park and sit under that permit's card, and unticking one takes
+away only its time. The schedule's top line names every permit behind it, and a permit's "used by" names every schedule
+that hands out any of its time. A one-permit schedule works and prices exactly as before. Still to come, in order: dates
+off by park, Find the time, the bill priced per permit, then Add time. Until the bill session, a schedule on several
+permits bills at the first permit's hourly rate, so its bill is not ready to walk.
+
 Plan: `docs/projects/active/CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`.

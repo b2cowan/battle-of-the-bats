@@ -255,23 +255,48 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [ ] `/design` on the drawing; rule P1–P13; write `CLUB_SCHEDULE_SEVERAL_PERMITS_BUILD_PROMPT.md`.
 
 ### Phase 1 (Session A) — rows remember their permit; several permits on New schedule
-- [ ] **Migration first:** `org_time_blocks.from_permit_id` (FK → `org_permits`, ON DELETE SET NULL; set only on
+> **Built 2026-11-14** (Session A of the build prompt). Mig **487** `487_each_row_of_time_remembers_its_permit.sql`
+> applied to DEV twice (4 blocks took their permit, 0 left NULL; `tests/sql/several-permits-fixture.sql` 5/5); prod step
+> in `MANUAL_PROD_STEPS.json` (count first, at the apply); /dba Finding #50 decided all three migrations' shapes.
+> Guard 1: `tests/unit/club-schedule-several-permits-guard.test.ts`; the overlap rule `lib/club-schedule-permit-rows.ts`
+> (+ its test). Schedule/permit unit tests 732/732. Not run: `check:layout --changed` (the shared tick-list field widened
+> it to a 361-screen sweep, which never runs on the dev server, and the UAT club fixture was out of state); a browser
+> pass on New schedule, the top line and the permit's "used by" is owed.
+> **Decisions made in the build (owner may overrule):**
+> - Two ticked permits on the same park and hour: the permit **ticked first** keeps the evenings; a later permit's rows
+>   lose exactly those days, settled when the time is sent (`settleOverlaps`), never by cutting the rows the admin edits,
+>   so unticking the first gives them back. The statement uses Add time's words, one per later permit and park.
+> - A row takes its permit's own dates **only while several permits are ticked**; with one, rows follow the schedule's
+>   dates exactly as before (so a one-permit schedule sends the same time it always did).
+> - "+ Add hours" with permits ticked adds a **typed** row (no permit) at the last row's place, in a "Typed here" card;
+>   it survives an untick (drawing: "a row typed here (no permit) … stay").
+> - The price permit (until Session C) is the first permit ticked (`started_from_permit_id`); each slot's WEIGHT is its
+>   own row's permit's share. A schedule billed from a permit none of its rows came from (pre-487) keeps that permit's
+>   weights for every row, so no sent figure moves (0 such schedules on dev).
+> - ⚠ Interim, accepted by the owner 2026-11-14: until Session C, a several-permit schedule's bill prices every hour at
+>   the first permit's full-hour rate (each field still weighed by its own permit). Don't walk a several-permit bill
+>   before C.
+> - **Correction to the build prompt ("disagree" item 3):** the Overview, Calendar and house-league Schedule-health
+>   readers never read the schedule's permit link (all three call `readDatesOffTaken`, which reads every permit the club
+>   holds) — nothing to change there. The one single-column reader of Outside the permit was the schedule page's own
+>   (`?outside=1`), now every permit behind the rows.
+- [x] **Migration first:** `org_time_blocks.from_permit_id` (FK → `org_permits`, ON DELETE SET NULL; set only on
       schedule-owned blocks). Backfill from `club_schedules.started_from_permit_id` where the block matches the
       permit's venue and facilities, else null. Keep `started_from_permit_id` for one release as a read fallback, then
       retire it (decide with `/dba`). `bill_permit_id` becomes the fallback price permit for rows with no permit.
-- [ ] `DATA_DICTIONARY.md` + `npm run refresh:snapshots` (dev+prod), same unit of work.
-- [ ] `lib/club-schedule-server.ts`: `readPrices` → reads several permits at once; `weightOf(facilityId, permitId)`;
+- [x] `DATA_DICTIONARY.md` + `npm run refresh:snapshots` (dev+prod), same unit of work.
+- [x] `lib/club-schedule-server.ts`: `readPrices` → reads several permits at once; `weightOf(facilityId, permitId)`;
       `engineContext`/`buildEngineInput`/`draftToSave` weigh each slot by its row's permit; the save (mig 392 function)
       writes `from_permit_id` per block.
-- [ ] `NewScheduleWindow.tsx`: a multi-pick that adds and removes rows by permit; rows show their permit; dates widen.
+- [x] `NewScheduleWindow.tsx`: a multi-pick that adds and removes rows by permit; rows show their permit; dates widen.
       The `startedFromPermitId` body becomes a permit per row.
-- [ ] Reads that become "every permit behind the schedule":
+- [x] Reads that become "every permit behind the schedule":
   - `schedulesHandingOut` (`lib/permit-server.ts`) and the permit delete guard;
   - the schedule's top line / "From the permit ›" door;
   - the "Outside the permit" read (`[scheduleId]/route.ts` `?outside=1`, `lib/permit-dates-off.ts`
     `readScheduleOutside`);
   - the Overview, Calendar and house-league Schedule health readers of it.
-- [ ] Guard: a test that no reader of a schedule's permit uses a single column after this session.
+- [x] Guard: a test that no reader of a schedule's permit uses a single column after this session.
 
 ### Phase 2 (Session B) — dates off with venues
 - [ ] **Migration:** `org_time_dates_off_venues (dates_off_id, org_venue_id)`; no rows = all venues. Replace the
@@ -359,5 +384,8 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [ ] P1–P13 (§7), ruled in the drawing session.
 - [ ] Should a team's club bill feed the coach's dues planning? Out of scope (§5). Raise separately if the owner wants
       it; it meets the 11-06 "coach books stay the team's" ruling.
-- [ ] `/dba` on the three migrations (per-row permit, dates-off venues, per-permit bill rates) and when to retire
-      `started_from_permit_id` / `bill_scale`.
+- [x] `/dba` on the three migrations (per-row permit, dates-off venues, per-permit bill rates) and when to retire
+      `started_from_permit_id` / `bill_scale` — **decided 2026-11-14, `DB_ARCHITECTURE_REVIEW.md` Finding #50**: mig 2 is a join
+      table with a NO ACTION venue FK (a cascade would silently widen a date off to All venues); mig 3 keeps `bill_scale` as
+      the one rate and the no-permit rate, and the rates table holds per-permit rows only (with the permit's name, SET NULL);
+      `started_from_permit_id` retires in its own migration after C and E are on prod.

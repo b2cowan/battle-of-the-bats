@@ -5571,6 +5571,16 @@
   },
   {
     "table_name": "org_time_blocks",
+    "constraint_name": "org_time_blocks_from_permit_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "from_permit_id",
+    "foreign_table": "org_permits",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_blocks",
     "constraint_name": "org_time_blocks_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",

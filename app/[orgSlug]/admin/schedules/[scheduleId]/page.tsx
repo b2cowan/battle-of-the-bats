@@ -7,7 +7,7 @@
  * See docs/projects/active/CLUB_SCHEDULE_LANDING_UX_PLAN.md for the reviewed presentation.
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { AlertTriangle, ChevronRight, MoreHorizontal, Undo2 } from 'lucide-react';
@@ -168,7 +168,7 @@ export default function SchedulePage() {
   // The answer is kept with the version it was read for, so another version's is never shown.
   const [outsideRead, setOutsideRead] = useState<{ version: number; outside: ScheduleOutside | null } | null>(null);
   const permitsLink = usePermitsLink();
-  const outsideVersion = read?.fromPermit && permitsLink ? read.schedule.version : null;
+  const outsideVersion = read?.fromPermits.length && permitsLink ? read.schedule.version : null;
   const outside = outsideVersion != null && outsideRead?.version === outsideVersion ? outsideRead.outside : null;
   const beginOutside = useLatestRead();
   const loadOutside = useCallback(async () => {
@@ -597,9 +597,20 @@ export default function SchedulePage() {
   return (
     <div className={ck.pageWide}>
       {header}
-      {/* ⚖ 13c Session C (C4 = A): the page is the path — the permit it started from is a door in the top line. No path line. */}
+      {/* ⚖ 13c Session C (C4 = A): the page is the path — each permit behind its rows is a door in the top line, in the order
+          its time starts ("From the permits A › and B ›"; a schedule on several permits, tab 6). No path line. On a phone
+          each door is its own 44 px row, so the joining words go. */}
       <p className={sch.meta}>
-        {v.fromPermit && permitsLink && <>{W.metaFrom} <Link href={permitDoor(permitsLink.href, [v.fromPermit.id])} className={`${sch.door} ${sch.metaDoor}`} data-permit-door>{v.fromPermit.name} ›</Link> · </>}
+        {v.fromPermits.length > 0 && permitsLink && <>
+          {v.fromPermits.length === 1 ? W.metaFrom : W.metaFromMany}{' '}
+          {v.fromPermits.map((fp, i) => (
+            <Fragment key={fp.id}>
+              {!isPhone && i > 0 && (i === v.fromPermits.length - 1 ? ' and ' : ', ')}
+              <Link href={permitDoor(permitsLink.href, [fp.id])} className={`${sch.door} ${sch.metaDoor}`} data-permit-door>{fp.name} ›</Link>
+            </Fragment>
+          ))}
+          {' · '}
+        </>}
         {meta}
       </p>
       {failed && <LoadFailed title={failed.text} onRetry={() => void load()} />}

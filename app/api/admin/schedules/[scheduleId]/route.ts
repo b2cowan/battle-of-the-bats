@@ -3,8 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { clearSettled } from '@/lib/needs-attention';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import {
-  draftToSave, editSlotsStep, loadSchedule, readBill, readClubTeams, readName, readPrices, readScheduleRequest, repTeamsRefusal, resolveScheduler,
-  roomChecker, saveScheduleStep, scheduleView, schedulerRefusal, timePayload,
+  draftToSave, editSlotsStep, loadSchedule, pricePermitOf, readBill, readClubTeams, readName, readRequestPrices, readScheduleRequest,
+  repTeamsRefusal, resolveScheduler, roomChecker, saveScheduleStep, schedulePermitIds, schedulePrices, scheduleView, schedulerRefusal, timePayload,
 } from '@/lib/club-schedule-server';
 import { changesSummary, sendLog } from '@/lib/club-schedule-send';
 import { scheduleReplies } from '@/lib/club-schedule-coach';
@@ -49,13 +49,14 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   // row. Its OWN read, asked after the page has read (the measured-gate rule of Session B), so the page never waits on it
   // and a failure is the row's alone. Permits ride the Venue library's plans.
   if (new URL(req.url).searchParams.get('outside') === '1') {
-    const permitId = loaded.row.started_from_permit_id;
+    // Every permit behind the schedule's rows (a schedule on several permits), never one column.
+    const permitIds = schedulePermitIds(loaded.row, loaded.time.blocks);
     const noStore = { headers: { 'Cache-Control': 'no-store' } };
-    if (!permitId || !hasOrgVenueLibrary(r.ctx.org.planId)) return NextResponse.json({ outside: null, version: loaded.row.version }, noStore);
+    if (!permitIds.length || !hasOrgVenueLibrary(r.ctx.org.planId)) return NextResponse.json({ outside: null, version: loaded.row.version }, noStore);
     const outside = await readScheduleOutside(
       { org: r.ctx.org, member: { role: r.ctx.role, capabilities: r.ctx.capabilities }, userId: r.ctx.user.id, assignedTournamentIds: null },
       {
-        permitId, today: tournamentToday(), nowMs: Date.now(),
+        permitIds, today: tournamentToday(), nowMs: Date.now(),
         slots: loaded.slots.filter(s => !s.removed).map(s => ({
           key: s.key, venueId: s.venueId, facilityId: s.facilityId, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), teamIds: s.teamIds,
         })),
@@ -97,11 +98,11 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     }
 
     if (body.action === 'regenerate') {
-      const [asked, prices] = await Promise.all([
-        readScheduleRequest(orgId, body, { houseLeague: r.houseLeague, repTeams: r.repTeams }),
-        readPrices(orgId, loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id),
-      ]);
+      const asked = await readScheduleRequest(orgId, body, { houseLeague: r.houseLeague, repTeams: r.repTeams });
       if (!asked.ok) return asked.response;
+      // The rows the regenerate sends, each priced by its own permit (a schedule on several permits).
+      const { prices, gone } = await readRequestPrices(orgId, pricePermitOf(loaded.row), asked.value.time.blocks);
+      if (gone) return gone;
       // The slots locked or moved by hand are kept exactly (Ask 19) — whatever the draft says of them.
       const kept = new Map(loaded.slots.filter(s => !s.removed && (s.locked || s.movedByHand)).map(s => [s.key, s]));
       const draft = draftToSave(asked.value, prices, body.assignments, kept);
@@ -121,7 +122,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       const crowds = (body.edits as Record<string, unknown>[]).some(e => Array.isArray(e?.teamIds) && e.teamIds.length > 1);
       const [teams, prices] = await Promise.all([
         readClubTeams(orgId, { houseLeague: r.houseLeague, repTeams: r.repTeams }),
-        crowds ? readPrices(orgId, loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id) : null,
+        crowds ? schedulePrices(orgId, loaded) : null,
       ]);
       const running = new Set(teams.filter(x => x.season).map(x => x.id));
       // A team already on the schedule may stay where it is (its season ended mid-schedule): only NEW time needs a season.
@@ -158,7 +159,8 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       if (prices) {
         const room = roomChecker(loaded.settings, teams);
         for (const x of edits) {
-          const full = (x.teamIds?.length ?? 0) > 1 ? room(x.teamIds!, prices.weightOf(bySlot.get(x.slotId)!.facilityId)) : null;
+          const slot = bySlot.get(x.slotId)!;
+          const full = (x.teamIds?.length ?? 0) > 1 ? room(x.teamIds!, prices.weightOf(slot.facilityId, slot.permitId)) : null;
           if (full) return schedulerRefusal(409, 'slot_full', full);
         }
       }

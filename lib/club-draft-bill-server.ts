@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { inParallel } from './supabase-paging';
 import { BILL_PENDING_STATES, billIsPending } from './club-schedule-bill';
 import { teamsOnly } from './club-schedule-holders';
-import { billSlotsOf, computeBill, liveSlots, loadSchedule, readClubTeams, readPrices } from './club-schedule-server';
+import { billSlotsOf, computeBill, liveSlots, loadSchedule, pricePermitOf, readClubTeams, readPrices } from './club-schedule-server';
 import type { DraftBill, DraftBillTeam } from './club-draft-bill';
 
 /**
@@ -37,11 +37,13 @@ export async function readDraftBills(orgId: string, opts: { lineId?: string | nu
   const teamName = new Map(teams.map(t => [t.id, t.name]));
   const teamOrder = teams.map(t => t.id);
   const scope = opts.scope ?? null;
-  // Drafts priced from the same permit read its prices once.
-  const pricesOf = new Map<string | null, ReturnType<typeof readPrices>>();
-  const pricesFor = (permitId: string | null) => {
-    if (!pricesOf.has(permitId)) pricesOf.set(permitId, readPrices(orgId, permitId));
-    return pricesOf.get(permitId)!;
+  // Drafts priced from the same permits (the price permit and the rows') read their prices once.
+  const pricesOf = new Map<string, ReturnType<typeof readPrices>>();
+  const pricesFor = (permitId: string | null, rowPermits: readonly (string | null | undefined)[]) => {
+    const rows = [...new Set(rowPermits.filter((x): x is string => !!x))].sort();
+    const key = [permitId ?? '', ...rows].join('|');
+    if (!pricesOf.has(key)) pricesOf.set(key, readPrices(orgId, permitId, rows));
+    return pricesOf.get(key)!;
   };
 
   const bills = await inParallel(rows, 4, async (r): Promise<DraftBill | null> => {
@@ -50,7 +52,7 @@ export async function readDraftBills(orgId: string, opts: { lineId?: string | nu
     if (!loaded || !billIsPending(loaded.row) || !loaded.row.bill_line_id) return null;
     const row = loaded.row;
     const lineId = loaded.row.bill_line_id;
-    const prices = await pricesFor(row.bill_permit_id ?? row.started_from_permit_id);
+    const prices = await pricesFor(pricePermitOf(row), loaded.time.blocks.map(b => b.permitId));
     const { slots, assignments } = liveSlots(loaded, prices.weightOf);
     const bill = computeBill(row, billSlotsOf(slots, assignments), prices.fullHour, teamOrder);
     if (!bill) return null;

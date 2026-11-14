@@ -416,11 +416,14 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
   const genRoute = readCode('app/api/admin/schedules/generate/route.ts');
   const server = readCode('lib/club-schedule-server.ts');
   const outside = readCode('lib/permit-dates-off.ts');
-  it('the top line opens the permit the schedule started from — a door, no path line (C4 = A)', () => {
-    // The Permits place's own gate and link (the rail's row), and its one-permit door — absent where Permits is.
-    assert.match(page, /\{v\.fromPermit && permitsLink && <>\{W\.metaFrom\} <Link href=\{permitDoor\(permitsLink\.href, \[v\.fromPermit\.id\]\)\}/);
+  it('the top line opens each permit behind the schedule\'s rows — a door each, no path line (C4 = A; several permits, tab 6)', () => {
+    // The Permits place's own gate and link (the rail's row), and one door per permit — absent where Permits is.
+    assert.match(page, /\{v\.fromPermits\.length > 0 && permitsLink && <>/);
+    assert.match(page, /\{v\.fromPermits\.length === 1 \? W\.metaFrom : W\.metaFromMany\}/);
+    assert.match(page, /<Link href=\{permitDoor\(permitsLink\.href, \[fp\.id\]\)\} className=\{`\$\{sch\.door\} \$\{sch\.metaDoor\}`\} data-permit-door>\{fp\.name\} ›<\/Link>/);
     assert.match(page, /const permitsLink = usePermitsLink\(\);/);
-    assert.match(server, /fromPermit: startedFrom && fromPrices\.found \? \{ id: startedFrom, name: fromPrices\.permitName \?\? '' \} : null,/, 'its name, never its money');
+    assert.match(server, /fromPermits: fromIds\.filter\(id => names\.has\(id\)\)\.map\(id => \(\{ id, name: names\.get\(id\)! \}\)\),/, 'names, never money; read from the rows');
+    assert.match(server, /const fromIds = schedulePermitIds\(row, loaded\.time\.blocks\);/);
     assert.doesNotMatch(page, /aria-label="This schedule’s path"|className=\{sch\.path\}/, 'no path line (option B was not ruled)');
   });
   it('every schedule wears its state (2026-11-14): Final is a pill on the header AND the list, beside the amber Changed since sent — and billing is never a state', () => {
@@ -446,8 +449,10 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
   it('Needs attention’s "Outside the permit" row comes from the ONE rule, its own read, after the page has read (C2)', () => {
     assert.match(route, /searchParams\.get\('outside'\) === '1'/);
     assert.match(route, /readScheduleOutside\(/);
-    assert.match(outside, /const hit = datesOffTaken\(permit, held, times\.permits, times\.venueFacilities as VenueFacilities, \{ from, through: days\[days\.length - 1\], nowMs: opts\.nowMs \}\)/,
+    assert.match(outside, /const hit = datesOffTaken\(permit, held, times\.permits, times\.venueFacilities as VenueFacilities, \{ from, through, nowMs: opts\.nowMs \}\)/,
       'the schedule’s slots are asked the shared question — no second "on a date off"');
+    assert.match(route, /const permitIds = schedulePermitIds\(loaded\.row, loaded\.time\.blocks\);/, 'every permit behind the schedule, never one column');
+    assert.match(outside, /for \(const id of opts\.permitIds\) \{/, 'each permit\'s own dates off');
     assert.match(page, /moneyFetch<\{ outside: ScheduleOutside \| null; version: number \}>\(`\/api\/admin\/schedules\/\$\{encodeURIComponent\(scheduleId\)\}\?\$\{q\}&outside=1`\)/);
     assert.match(page, /setOutsideRead\(\{ version: r\?\.ok \? r\.data\.version : outsideVersion,/, 'tagged with the version the server read');
     assert.match(page, /useDeferredLoad\(outsideVersion != null, loadOutside\);/, 'after the page has read, the kit’s read pattern');

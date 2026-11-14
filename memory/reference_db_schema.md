@@ -1050,8 +1050,8 @@ block_id (uuid) → org_time_blocks.id NOT NULL, facility_id (uuid) → org_venu
 - Indexes: org_time_block_facilities_facility_idx, org_time_block_facilities_org_idx
 
 ### org_time_blocks
-id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org_permits.id, org_venue_id (uuid) → org_venues.id NOT NULL, weekdays NOT NULL, start_time (time without time zone) NOT NULL, end_time (time without time zone) NOT NULL, from_date, until_date, sort_order, created_at, updated_at, schedule_id (uuid) → club_schedules.id
-- Indexes: org_time_blocks_permit_idx, org_time_blocks_schedule_idx, org_time_blocks_venue_fk_idx, org_time_blocks_venue_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org_permits.id, org_venue_id (uuid) → org_venues.id NOT NULL, weekdays NOT NULL, start_time (time without time zone) NOT NULL, end_time (time without time zone) NOT NULL, from_date, until_date, sort_order, created_at, updated_at, schedule_id (uuid) → club_schedules.id, from_permit_id (uuid) → org_permits.id
+- Indexes: org_time_blocks_from_permit_idx, org_time_blocks_permit_idx, org_time_blocks_schedule_idx, org_time_blocks_venue_fk_idx, org_time_blocks_venue_idx
 
 ### org_time_dates_off
 id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org_permits.id, day NOT NULL, note, schedule_id (uuid) → club_schedules.id

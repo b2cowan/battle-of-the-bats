@@ -33,9 +33,10 @@ import {
   placeWords, unreachableSentence, billNotToldSentence, moneyCents, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
 } from './club-schedule-words';
 import {
-  billSlotsOf, computeBill, liveSlots, readBill, readClubTeams, readPrices, stepRefusal, teamNamer,
+  billSlotsOf, computeBill, liveSlots, readBill, readClubTeams, schedulePrices, stepRefusal, teamNamer,
   type BillTerms, type ClubTeam, type LoadedSchedule, type SchedulerCtx,
 } from './club-schedule-server';
+import type { WeightOf } from './club-schedule-engine';
 import { HOUSE_LEAGUE, teamsOnly } from './club-schedule-holders';
 import { houseLeagueHeldSince, usesOf } from './league-time-server';
 import { heldHouseLeagueSlotIds, tellTimeGiven, timeHandoffFor, type SendTimeHandoff } from './league-time-handoff-server';
@@ -236,18 +237,18 @@ interface Context {
   slots: Slot[];
   assignments: Map<string, string[]>;
   slotIdOf: Map<string, string>;
-  weightOf: (f: string | null) => number;
+  weightOf: WeightOf;
   fullHour: number | null;
   venueAddress: Map<string, string | null>;
 }
 
 async function contextFor(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<Context> {
   const orgId = sctx.ctx.org.id;
-  const permitId = loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id;
+  // The price permit, and each row's own permit (a schedule on several permits).
   const [teams, places, prices, venues] = await Promise.all([
     readClubTeams(orgId),
     readClubPlaces(orgId),
-    readPrices(orgId, permitId),
+    schedulePrices(orgId, loaded),
     fetchAll<{ id: string; address: string | null }>((a, b) => supabaseAdmin.from('org_venues')
       .select('id, address').eq('org_id', orgId).order('id').range(a, b)),
   ]);

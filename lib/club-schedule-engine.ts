@@ -47,11 +47,15 @@ const MIN = 60_000;
 
 // ── 1. The slots ─────────────────────────────────────────────────────────────────────────────────
 
+/** A schedule's block: a block of time, and the permit it came from (`org_time_blocks.from_permit_id`, mig 487) — null or
+ *  absent for time typed by hand or copied. A slot cut from it is priced by that permit (a schedule on several permits). */
+export type ScheduleBlock = TimeBlock & { permitId?: string | null };
+
 /** A schedule's time: its own blocks and dates off (`org_time_blocks.schedule_id`, `org_time_dates_off.schedule_id`). */
 export interface ScheduleTime {
   startsOn: string;
   endsOn: string;
-  blocks: readonly TimeBlock[];
+  blocks: readonly ScheduleBlock[];
   datesOff: readonly DateOff[];
 }
 
@@ -77,9 +81,14 @@ export interface Slot {
   /** Its place in a week — weekday, start, venue, facility — what "the same slot every week" means. */
   pos: string;
   prime: boolean;
-  /** What an hour of it is worth against a full field (the permit's share: 1 = Full, 0.5 = Half). */
+  /** What an hour of it is worth against a full field (its row's permit's share: 1 = Full, 0.5 = Half). */
   weight: number;
+  /** The permit its row came from (null: typed by hand, priced by the schedule's fallback price permit). */
+  permitId?: string | null;
 }
+
+/** A facility's price share — on the permit a row came from (`permitId`), else the schedule's price permit. */
+export type WeightOf = (facilityId: string | null, permitId?: string | null) => number;
 
 export const slotKeyOf = (venueId: string, facilityId: string | null, startMs: number) => `${venueId}|${facilityId ?? ''}|${startMs}`;
 
@@ -100,8 +109,8 @@ export function cutSlots(time: ScheduleTime, opts: {
   changeoverMinutes: number;
   prime: PrimeTime | null;
   venueFacilities: VenueFacilities;
-  /** The facility's price share (the permit's); 1 when there is no permit. */
-  weightOf?: (facilityId: string | null) => number;
+  /** The facility's price share on the block's permit (or the schedule's); 1 when there is no permit. */
+  weightOf?: WeightOf;
 }): Slot[] {
   const asPermit = { id: 'schedule', startsOn: time.startsOn, endsOn: time.endsOn, blocks: time.blocks, datesOff: time.datesOff };
   const len = opts.slotMinutes, step = opts.slotMinutes + opts.changeoverMinutes;
@@ -129,7 +138,8 @@ export function cutSlots(time: ScheduleTime, opts: {
             key, venueId: block.venueId, facilityId: unit, blockIndex, day, weekday, week, startClock, endClock,
             startMs, endMs, pos: `${weekday}|${startClock}|${block.venueId}|${unit ?? ''}`,
             prime: isPrimeSlot(opts.prime, weekday, startClock, endClock),
-            weight: opts.weightOf ? opts.weightOf(unit) : 1,
+            weight: opts.weightOf ? opts.weightOf(unit, block.permitId ?? null) : 1,
+            ...(block.permitId ? { permitId: block.permitId } : {}),
           });
         }
       }

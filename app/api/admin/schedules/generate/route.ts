@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { isUuid } from '@/lib/utils';
 import { generateDrafts, seatCounts, shareTargets, slotsTeamsCanHold, teamsCanHold } from '@/lib/club-schedule-engine';
-import { buildEngineInput, loadSchedule, readScheduleRequest, repTeamsRefusal, resolveScheduler, schedulerRefusal, teamNamer } from '@/lib/club-schedule-server';
+import {
+  buildEngineInput, loadSchedule, pricePermitOf, readRequestPrices, readScheduleRequest, repTeamsRefusal, resolveScheduler, schedulerRefusal,
+  teamNamer,
+} from '@/lib/club-schedule-server';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, measureLines, warningLine } from '@/lib/club-schedule-words';
 
 // ---------------------------------------------------------------------------
@@ -34,10 +37,12 @@ export const POST = withObservability(async (req: Request) => {
   const closed = loaded ? repTeamsRefusal(r, loaded) : null;
   if (closed) return closed;
   const { time, teams, places, settings } = asked.value;
-  const permitId = isUuid(body.startedFromPermitId) ? body.startedFromPermitId
-    : loaded?.row.bill_permit_id ?? loaded?.row.started_from_permit_id ?? null;
+  // The price permit; each row is weighed by its own permit (a schedule on several permits).
+  const permitId = isUuid(body.startedFromPermitId) ? body.startedFromPermitId : loaded ? pricePermitOf(loaded.row) : null;
+  const { prices, gone } = await readRequestPrices(orgId, permitId, time.blocks);
+  if (gone) return gone;
 
-  const built = await buildEngineInput(orgId, { time, settings, teams, storedSlots: loaded?.slots ?? [], permitId, places });
+  const built = await buildEngineInput(orgId, { time, settings, teams, storedSlots: loaded?.slots ?? [], permitId, places, prices });
   if (!built.ok) return schedulerRefusal(400, built.code, built.error);
   const { input } = built;
   const nameOf = teamNamer(teams);
