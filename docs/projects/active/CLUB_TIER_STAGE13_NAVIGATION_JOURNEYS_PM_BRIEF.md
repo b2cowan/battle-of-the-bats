@@ -150,3 +150,15 @@ for time** button (also on a getting-ready season, also on a phone), which lands
 asks for time" until the season has time, plus one bell to the owner. A season no longer reads "given" off time another season has
 already divided. **Why:** the league admin used to learn of time by luck, and a season with none was a dead end. **Success:** time given
 reaches the league admin the same day; an ask reaches someone who can give time, and clears itself when it is answered.
+
+**13d Session B, money between people (built 2026-11-13; walk once, after Session C).** A schedule can bill the teams for its time, but
+until it is sent that bill was invisible to the treasurer, who could bill the same teams a second time from Accounting. Now a budget line
+says **"Being billed (draft)"** with what it would bill and to how many teams, and opens a read-only **Fair shares** window (the treasurer
+reads it without being sent to Schedules, which they can't open; owners and admins also get "Open the schedule"). **New allocation**
+warns under the choice when the line has a draft, and still saves. The other way round, a schedule's **Bill window** names what Accounting
+already bills on its line and says when the bill is more than the line has left, instead of quietly switching to "No budget line". The
+treasurer's Overview now reads **"Owed to the club"** (the teams plus house league, the same figure the owner's home shows), Revenue says
+what it includes, and a line under the books opens each live house league season's money. A club tournament's **Payments card** gains
+**"In the club's book"** for people who hold Accounting; an admin without Accounting sees the card exactly as before. **Why:** each of these
+was money that crossed from one person's screen to another's by luck. **Success:** the treasurer can see a schedule's bill before it is
+sent, nobody is billed twice without a warning first, and the club's owed figure reads the same on both screens. Nothing blocks a save.

@@ -794,6 +794,53 @@ ahead of the owner's rulings.
   the Overview's This morning, Schedules' send + house league, Notifications; search words with the prose). **Committed `ff171af17`
   2026-11-13** (41 files; the help files' and the snapshot's other-session edits left out). **Owed:** `check:layout --changed` with fixtures
   (a season with no time, one asking), the dev server restart; the walk is once, after Session C.
+- 2026-11-13 — **13d Session B (money) BUILT** (13d-3, -4, -5, -11). Built: **"Being billed (draft)"** on a budget line (the line window's
+  rows, the Budget table's caption, and "Not allocated" no longer says the club pays it while a draft bills it); the **read-only Fair shares
+  window** (treasurer: no Schedules link; owner and admin: "Open the schedule"); **New allocation warns** under Bill from (and from the
+  line's Allocate), never blocks; **the Bill window names Accounting's allocations** on its line, a bill bigger than what is left, and a
+  permit line it can't offer (no silent "No budget line"); the Overview's **"Owed to the club"** (the owner band's own sum, now one helper
+  `owedToTheClub`, used by both) with a door to each live house league season's Money page under the books, and **Revenue's "includes …"
+  caption** (`collectedByBook`, Collected's own rule); the tournament Payments card's **"In the club's book"** row (Accounting holders
+  only). Code: `lib/club-draft-bill.ts` (shapes + every sentence), `lib/club-draft-bill-server.ts` (the reader), routes
+  `…/accounting/being-billed` and `…/accounting/line-billed`, `DraftBills.tsx`, `BillLineNotice.tsx`; no migration. **Commit `7912fa1b3`
+  2026-11-13**, after `9d05cd40a` (the leftover Bill window work, committed alone first on the owner's yes; decision 1 had been ruled that
+  morning). **Departures from the prompt:** (1) the leftover Bill window work went in its own commit first. (2) The draft reader runs
+  `computeBill` directly (not the page's bill view), so a draft with no amount still lists the teams and hours that hold time. (3) "Owed
+  to the club" is added up once (`owedToTheClub`, `club-band-view.ts`) and the owner's band calls it too — its figure and caption are
+  unchanged; the treasurer's caption adds "(N players)", the band's doesn't (it says players on its Needs line). (4) Revenue's caption is
+  desk only (the phone keeps its one Budget-vs-Actual row). (5) The Bill window's words live in `lib/club-draft-bill.ts`, not
+  `club-schedule-words.ts` (another session was editing it). (6) The tournament row uses the dashboard's own money style ($1,440, no
+  cents); the drawing showed cents. (7) Known lows: "See the line" opens the Budget tab on the Year pill's year (a line in another year
+  won't open); the tournament row's money is all-time while the Overview's "includes" is the year's. (8) Skipped from /simplify (recorded,
+  not done): one "which permit prices this bill" rule across 8 call sites; one "a line's fiscal year" lookup across 5; reusing bill-from's
+  read in the Bill window (would break "one read", owner 2026-11-13). (9) Help: "The club's books, and the Overview" and "Billing the
+  teams for a shared cost" were already over the length standard and grew slightly; not restructured. **/simplify** (4 lenses) applied.
+  **/review (high; 3 lenses: correctness + contract, security + gates, regression):** no Critical or High. **Applied:** an in-review
+  schedule with no amount read "Draft · no amount yet" (now "In review · …"); the Overview said "Owed to the club" over the teams' part
+  alone when house league's read failed, with no sign (the response now says so and the figure adds "House league's part didn't load.",
+  as the band's tile does); Budget vs. Actual's line window didn't know a closed year was locked, so a draft showed there (now passes
+  `locked`); a draft that would bill no team (no time given yet) listed as "being billed" and warned of a double bill (now not listed);
+  a comment in the Bill window notice that claimed a deliberate "No budget line" is not nagged (it is nagged; the comment now says so).
+  **Known lows, recorded not fixed:** the Bill window's "Accounting already bills this line" lists an allocation at its gross amount,
+  so a fully credited one still warns (the warning is hedged "if that was for this time"); on the Budget table a line with a draft shows
+  the draft's caption in place of its "$X not allocated" caption (the figure is in the line window); the draft reader loads each
+  pending schedule on every Budget load and every New allocation open (a handful in practice; a cap or one set-based read if a club
+  keeps many); the folded "N teams outside your groups" row carries that group's hours and share, so one hidden team's figure is
+  readable by elimination (B11 says counted, never named; meets it as worded); the board-report export carries "Owed to the club" but
+  not the "includes" line; "Owed" is today's figure on a closed year too and doesn't say so (the band's rule); a league read now runs
+  on every Overview read including a Year-pill change; the Overview's caption for a house league club no longer carries "$X sent,
+  waiting for you". Known: the Bill window and New allocation's links leave a window with typed input, as any link there does.
+  **Owner call (for /marketing):** the Bill window's "bill is bigger than the line" warning says "Pick another line, or bill it
+  off-plan", while the send's own refusal says "Raise the line, bill a part of the cost, or bill from another line" — one instruction or
+  two? **/legal and /accounting: not required** (nothing new collected, no mail, no notice; nothing FieldLogicHQ charges changed;
+  Revenue's definition is unchanged, "includes" is a split of it). **/docs done** (accounting.tsx, tournaments.tsx, org.tsx's
+  `club-schedules-t-bill`; search words with the prose). Tests: `tests/unit/club-stage13d-money-handoff.test.ts` (25); the guard set
+  (money-one-definition, budget-report, 13b band, 13c-B, nav-standard) 189/189; typecheck clean at the 8 GB heap; spelling clean. The
+  unit suite's known failure that isn't Session B's: club-accounting-teams-guard "only the Team pill and the season switch…"
+  (another session's SeasonFrame). **Owed:** `check:layout` could not run ("uat-club-org" has finished onboarding, so the sweep's
+  fixture is unavailable — repair is clearing its `onboarding_completed_at` on dev) — run it on Budget, Allocations, the Overview, a
+  schedule's Bill window and the tournament dashboard; the dev server restart (files added); fixtures for the walk (a draft schedule with
+  a bill, a tournament whose book has money); the walk is once, after Session C.
 
 ## 11. The external review, cross-checked (2026-11-07)
 
