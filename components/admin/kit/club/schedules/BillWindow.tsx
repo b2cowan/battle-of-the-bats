@@ -29,6 +29,8 @@ import { NO_GROUP, isStale, viewBillSlots, type ScheduleView } from '@/lib/club-
 import { Statement } from './ScheduleParts';
 import sch from './Schedules.module.css';
 import DateInput from '@/components/shared/DateInput';
+import SublinedChoice from '@/components/coaches/SublinedChoice';
+import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 interface BillFromLine { id: string; description: string; categoryName: string; itemName: string | null; planned: number; allocated: number; left: number }
 
@@ -238,15 +240,27 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
     >
       <FormError>{error}</FormError>
       <div className={sch.pair}>
-        <label className={ck.field} htmlFor="bill-from">
-          <span className={ck.label}>{W.billFrom}</span>
-          <select id="bill-from" className={ck.select} value={lineId} onChange={e => setLineId(e.target.value)} disabled={!lines}>
-            <option value="">{lines ? W.billNoLine : W.billLoading}</option>
-            {(lines?.lines ?? []).map(l => <option key={l.id} value={l.id}>{`${l.description}${lines?.year ? ` · ${lines.year}` : ''}`}</option>)}
-            {lineId && lines && !lines.lines.some(l => l.id === lineId) && <option value={lineId}>{W.billNoLine}</option>}
-          </select>
+        <div className={ck.field}>
+          <label className={ck.label} htmlFor="bill-from">{W.billFrom}</label>
+          {/* The portal's two-line dropdown (the Role picker's shape): the line's name, what it has planned and left on the
+              line beneath. A native select cannot carry a second line. */}
+          <SublinedChoice
+            id="bill-from" label={W.billFrom} variant="toolbar" disabled={!lines}
+            triggerClassName={`${ck.select} ${shared.convChoiceToolbarField}`}
+            placeholder={W.billLoading}
+            value={lines ? lineId : null}
+            onChange={setLineId}
+            options={[
+              { value: '', name: W.billNoLineName, sub: W.billNoLineSub },
+              ...(lines?.lines ?? []).map(l => ({
+                value: l.id, name: l.description,
+                sub: `${lines?.year ? `${lines.year} · ` : ''}${W.billFromOther(fmt(l.planned), fmt(l.left))}`,
+              })),
+              ...(lineId && lines && !lines.lines.some(l => l.id === lineId) ? [{ value: lineId, name: W.billNoLineName, sub: W.billNoLineSub }] : []),
+            ]}
+          />
           {line && <span className={ck.hint}>{(lineId === pricing?.lineId ? W.billFromHint : W.billFromOther)(fmt(line.planned), fmt(line.left))}</span>}
-        </label>
+        </div>
         <label className={ck.field} htmlFor="bill-for">
           <span className={ck.label}>{W.billFor}</span>
           <select id="bill-for" className={ck.select} value={part ? 'part' : 'whole'} onChange={e => setPart(e.target.value === 'part')} disabled={pricing?.fullHour == null}>

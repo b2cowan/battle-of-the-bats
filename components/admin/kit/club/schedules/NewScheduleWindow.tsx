@@ -1375,7 +1375,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           busy={busy}
           footer={(
             <>
-              <button type="button" className="btn btn-outline" onClick={() => setAsking(false)} disabled={busy}>{W.regenKeep}</button>
+              <button type="button" className="btn btn-outline" onClick={() => setAsking(false)} disabled={busy}>{W.regenBack}</button>
               <button type="button" className="btn btn-lime" onClick={() => void keep()} disabled={busy}>{W.regenGo}</button>
             </>
           )}

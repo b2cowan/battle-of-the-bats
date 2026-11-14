@@ -670,7 +670,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   settingsBack: 'Settings',
   keepDraft: 'Keep this draft',
   regenTitle: (name: string) => `Regenerate ${name}?`,
-  regenLead: 'The new settings make a new draft of the slots nobody has placed.',
+  regenLead: 'The draft you picked replaces every slot nobody placed by hand.',
   regenKept: (locked: number, moved: number) => {
     const parts = [locked ? `the ${pluralize(locked, 'slot')} you locked` : '', moved ? `the ${moved} you moved by hand` : ''].filter(Boolean);
     if (!parts.length) return '';
@@ -678,8 +678,11 @@ export const SCHEDULE_SCREEN_WORDS = {
     return `${capFirst(said)} stay where they are.`;
   },
   regenNotSent: 'It hasn’t been sent, so no team is told.',
-  regenSent: 'It has been sent: the change waits on its page until you send the changes.',
+  regenSent: 'It has already been sent, so no team is told until you send the changes from its page.',
   regenKeep: 'Keep it',
+  // The regenerate question's way out. Not "Keep it": the button that opened this question is "Keep this draft",
+  // so "Keep it" read as the opposite of what it does (owner, 2026-11-13).
+  regenBack: 'Go back',
   regenGo: 'Regenerate',
   notKept: (n: number) => `${pluralize(n, 'slot')} locked or moved by hand ${n === 1 ? 'isn’t' : 'aren’t'} in the new time, so ${n === 1 ? 'it goes' : 'they go'}.`,
 
@@ -878,7 +881,9 @@ export const SCHEDULE_SCREEN_WORDS = {
   billFrom: 'Bill from',
   billFromHint: (planned: string, left: string) => `The permit’s budget line · ${planned} planned, ${left} left`,
   billFromOther: (planned: string, left: string) => `${planned} planned, ${left} left`,
-  billNoLine: 'No budget line (off-plan)',
+  /** The "Bill from" dropdown's no-line row: the name, then what it means on the line beneath. */
+  billNoLineName: 'No budget line',
+  billNoLineSub: 'Off-plan: no line’s budget is used',
   billFor: 'Bill the teams for',
   billWhole: (amount: string) => `The time at the permit’s price · ${amount}`,
   billWholeTime: 'The time at the permit’s price',

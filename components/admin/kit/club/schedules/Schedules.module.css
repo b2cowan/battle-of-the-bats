@@ -259,10 +259,10 @@
 .attentionGroup { border-top: 1px solid var(--home-line); font-size: var(--type-support); font-weight: 700; color: var(--text-primary); }
 .attentionGroup:first-child { border-top: 0; }
 .attentionCount { padding: 0.1rem 0.45rem; border-radius: 999px; background: rgba(var(--home-amber-rgb), 0.14); color: var(--badge-warning-ink); }
-.attentionRow { display: grid; grid-template-columns: 6.7rem minmax(0, 1fr) auto; align-items: start; gap: 0.75rem; padding: 0.6rem 0.85rem; border-top: 1px solid var(--home-line); font-size: var(--type-body); }
+.attentionRow { display: grid; grid-template-columns: 9rem minmax(0, 1fr) auto; align-items: start; gap: 0.75rem; padding: 0.6rem 0.85rem; border-top: 1px solid var(--home-line); font-size: var(--type-body); }
 .attentionGroup + .attentionRow { border-top: 0; }
 /* The chip recipe in the amber of "changed since sent". The row is a grid so the chip is as wide as its words
-   ("Hand-back ask" / "Unsent change" fit the 6.7rem column at 10 px) and never stretches to the column. */
+   (the longest, "Outside the permit", is ~8.6rem at 10 px, so the column is 9rem) and never stretches to the column. */
 .attentionKind {
   justify-self: start; display: inline-flex; align-items: center; white-space: nowrap;
   padding: 0.14rem 0.5rem; border-radius: 999px; line-height: 1.4;
