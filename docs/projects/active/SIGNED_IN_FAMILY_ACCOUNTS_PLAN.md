@@ -336,6 +336,52 @@ Stop line must still carry a working unsubscribe"). The reminder goes to the par
 (the club's Unsubscribe, no Stop line), so ask 14 already holds for it. **Nothing in the 3b footer changes.** For the closeout: /legal and
 /marketing re-read the Stop line's lead ("A parent added your email…") for parents who have since joined.
 
+### Stage 4c — One "Guardians" section on a rep player's page · QUEUED 2026-11-13 (owner ask; needs a drawing session) · after 4b
+
+**Why (owner, 2026-11-13, walking Stage 4b Part 0):** a coach's player page, tab Family & paperwork, shows two cards that look like
+the same thing: **Guardian contact** (name, email, phone typed on the roster record — where dues reminders and team emails go) and
+**Guardians** (parents invited to the family app: "0 connected", Invite a guardian). The owner could not tell them apart and called it
+redundant: *"I can add guardians and from there send invites to the app."* The titles never say that one is an address-book entry and
+the other is app access; Safety sits between them, which makes them read as unrelated.
+
+**Direction (the owner's ask, recorded as asked — not yet drawn or ruled):** ONE section, "Guardians". A coach adds a guardian (name,
+email, phone) in it, and the same row carries the app step: *Not in the app · Invited, waiting · In the app*, with **Invite to the
+app** on the row. Adding a guardian and inviting them is one motion; the invite no longer opens a separate card that re-asks for an email
+the coach already typed.
+
+**What the drawing session must settle** (the risks the merge hides — raised before the work, per AGENCY_RULES):
+1. **It is a change to the SCREEN, not (first) to the record.** The roster record holds ONE guardian (name/email/phone); the app
+   connects up to 2 accounts (`maxPerPlayer`). Dues reminders, team emails, tryout accept, import/export and the Families attach all
+   read that single guardian today. Merging the data model is a migration and a reader-by-reader census; merging the screen is not.
+   Recommended first cut: the section shows the roster-record guardian as the **first row** (the "primary contact") and any further
+   connected/invited adults as further rows; nothing downstream changes. Owner to rule whether a SECOND guardian entered as a contact
+   (not yet invited) is wanted, because the record has nowhere to keep one.
+2. **A guardian with no app stays possible.** The family app is switched per club/plan (`GUARDIAN_TIER_ENABLED`); a rep team without it,
+   or a parent who will never sign in, must still have a contact row. Today that card is always there; the Guardians card is hidden
+   when the switch is off. One section must degrade to "contact only" with no empty "Invite" button.
+3. **Editing an invited guardian's email.** Today the contact email can change freely; an invitation is tied to an address and a
+   connected parent is tied to an account. Rule what editing the email on an Invited row does (cancel + reinvite) and on an In-the-app
+   row (blocked, "they sign in with this address").
+4. **Safety stays its own card.** Emergency contact name/phone is a different job (who to call at the field), not a guardian.
+5. **Call-ups never get the app step** (call-up guardian contact is phone-only, never emailed — `COACH_CALL_UPS_PLAN.md` R6).
+6. **Everything that names the old cards must move together:** the Stage 4b / 4a walks ("open Guardians, Invite a guardian"), the
+   coaches' help article "Inviting a guardian from a player's page" (`premium-family-guardians`), the Roster list's family column, the
+   page's Family tab deep link (`family → guardian`), and the demo tours.
+7. **Do it after the 4b walk and its commit**, so the walk is not rewritten under the owner mid-walk.
+
+**Interim wording fix, if the owner wants it sooner than 4c:** rename "Guardian contact" to "Contact on file" and "Guardians" to "Family
+app access", add one line explaining the difference, and put the two cards together (Safety below). Not built.
+
+### Stage 4d — Where a connected parent lands after signing in · QUEUED 2026-11-13 (owner question, Stage 4b walk Part 0)
+
+**Found while walking:** a parent who accepted an invitation and later signs in lands on Home (/discover), which reads "Nothing here yet
+— follow a team, tournament, or organization" with no team on it. Their team is reachable only through the person icon, then "Your
+family" (Stage 4a ruling 11, `/api/family/me`). The sign-in destination (`lib/auth-destination.ts`) knows nothing of family links, and
+Home's cards read workspaces and follows only; "Your teams" lives on /following, which Home links to only when the person follows
+something. First arrival is fine (the accept page sends them to the family page); every later sign-in is the gap. No other plan in
+this repo covers it (searched the nav plans). **Open for a drawing session:** (a) sign-in sends a connected parent straight to their
+family page (one team opens that team), (b) Home gains a "Your teams" card above the empty line, or both. Same session as Stage 4c.
+
 ### Stage 5 — Next season pre-filled for a signed-in parent · needs Stage 4
 
 A returning parent who is signed in gets next season's form filled in; the public form stays for everyone else. Never a sent

@@ -1,5 +1,10 @@
 # Availability & RSVP — Implementation Plan
 
+> ⚠ **SUPERSEDED IN PART 2026-11-13 (owner ruling, mid-walk §526):** the two-record design — "the coach's book is never
+> written by families", "Use N family answers", "no `maybe` in the book" — is replaced by ONE shared attendance answer that
+> families and coaches both set, latest change wins, families locked at the start. See
+> [ONE_ATTENDANCE_RECORD_PLAN.md](ONE_ATTENDANCE_RECORD_PLAN.md). Where this plan and that one disagree, that one wins.
+
 **Status (2026-11-13): Drawn + ruled 2026-11-13 (all 15 asks A); BUILT on `dev` as Signed-in family accounts Stage 4b** — Session 1
 `22db0210d` + `7dd71b435` (watched automation) + records `8b21c44cd`; Session 2 `b5d121f0c`; Session 3 `fdae0e4f0` + records
 `8e7c7520b`; Session 4 (closeout: the owner's Session 4 rulings, consent 0.2, the Remind daily cap, mig 482) built 2026-11-13, its
@@ -14,7 +19,13 @@ gets an account when their child is PLACED ON A TEAM…" point 4): a parent repl
 nowhere else. This is **Stage 4b** of `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md`. **Not buildable yet:** the parent's sheet is drawn (4b sheet in
 `SIGNED_IN_FAMILY_STAGE4_DRAWINGS.html`), the **coach's headcount is not** — 4b needs its own drawing session (the coach's per-event chip, the
 drawer lane, the nudge, the lineup tag) before a build prompt is written.
-**Date:** 2026-08-03 · rewritten 2026-11-08
+**RULED 2026-11-13 (all 15 asks A; rulings in `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` Stage 4). Build prompt:
+`SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md`. The prompt and the plan's ruled block win over §3.3–3.5 and §6 below.**
+**Coach side DRAWN 2026-11-12** — page https://claude.ai/artifact/UkYTNt3NtTbKrKP1GZoAiJ (source
+`SIGNED_IN_FAMILY_STAGE4B_DRAWINGS.html`; `/ux`, `/design`, `/legal` applied before publish). 15 asks, the four that change the shape first
+(asking = one team switch; reminder reach; how the book takes answers; house league). **Nothing below is ruled by the drawing** — §2 and §3.3 are
+corrected to the code; the build prompt is written after the owner rules.
+**Date:** 2026-08-03 · rewritten 2026-11-08 · drawn 2026-11-12
 **Tier:** Premium coaches portal (rep teams) — and, once drawn, any team whose children have a connected parent. Riding the family layer, which
 is switched on per club/team and, for the signed-in app, by `GUARDIAN_TIER_ENABLED` (OFF until the owner turns it on).
 **PM brief:** `COACH_AVAILABILITY_RSVP_PM_BRIEF.md`
@@ -50,9 +61,9 @@ half-built today: coaches can already pencil per-player statuses into the schedu
 |---|---|---|
 | The family page | `app/(consumer)/family/teams/[teamId]` (`FamilyTeamClient`), read by `lib/family-home.ts` / `lib/family-team-schedule.ts` | Schedule rows already render for both rep and house-league teams; the In/Out/Maybe control lives here |
 | A parent's reach | `lib/family-access.ts` `getFamilyReach` | The only authority for "which of this account's children are on this event's team" |
-| Coach-side RSVP editor | `schedule/page.tsx` attendance tab (`ATTENDANCE_OPTIONS`, `.rsvpEditor`, warm RSVP palette TH-5) | The coach's book; gains a "family answers" lane + Accept-all |
+| Coach-side attendance | ⚠ **Corrected 2026-11-12:** no attendance tab and no `.rsvpEditor` any more (removed 2026-09-21). The event window (`ScheduleEventSheet`) has door rows; Attendance opens `ScheduleAttendanceRoom` (count chips that filter, All in, Reset, one `CoachRow` per player) and a tap raises `CoachRsvpSheet` (four choices, autosave). Words In / Late / Out / No reply (`ATTENDANCE_WORD`, also Game day's Who's here) | The room gains a Families card + a family line per player; the sheet a family box |
 | Attendance model | `rep_team_event_attendance` + batch PATCH route | Untouched; pre-fill writes go through the existing PATCH |
-| Lineup ↔ attendance drift warning | `schedule/page.tsx` | Extended to read family responses ("2 marked Out since you built this lineup") |
+| Lineup ↔ attendance drift warning | `_LineupEditor.tsx` status strip, `LineupCheck.tsx`, the sheet's Lineup row (`lineupRowWords`), the schedule row's ⚠ | Extended to read family responses. ⚠ **Corrected 2026-11-12:** there is no "Not playing" pool; the pool is "Not in the lineup" (every unplaced player, no status), shared with the template editor |
 | Family email chokepoint | `lib/family-email.ts` `sendFamilyEmail` | Any nudge email routes through this; raw `sendEmail` is forbidden here |
 | Family notify | `lib/family-notify.ts` (bell + email, no push) | New kinds ride the same rail |
 | Bulk reminder precedent | dues `send-reminders` / `remind-unpaid` routes | Template for "Nudge non-responders" |
@@ -89,9 +100,20 @@ Changing an answer is allowed until the event starts; a cancelled event shows no
 sees nothing and a stale tab's write is refused (the server re-derives reach on every write). Rep teams: the existing premium family-layer gate
 applies. A house-league team has no "From the coach" card; whether it gets the control is decided in the 4b drawing.
 
-### 3.3 Coach surfaces (NOT DRAWN — needs the 4b drawing session)
+### 3.3 Coach surfaces (DRAWN 2026-11-12, RULED 2026-11-13, BUILT — superseded by the drawing and the build prompt)
 
-Carried forward from the first draft as the starting point for that session, not as decisions:
+> **Superseded (2026-11-13):** §3.3–3.5 are the pre-ruling sketch. What was built is the drawing
+> (https://claude.ai/artifact/UkYTNt3NtTbKrKP1GZoAiJ, tabs 1–9) as ruled, and the build prompt's Progress block.
+
+**Drawn** on https://claude.ai/artifact/UkYTNt3NtTbKrKP1GZoAiJ. What the drawing recommends, each subject to its ask (tab 10 of the page):
+the count on the schedule row's second line ("9 of 13 in · 1 out · 1 maybe", the coach's mark first, then the family's answer; red only when
+outs leave fewer players than field positions); a Families card + a grey "Family said …" line per player in the attendance room, with
+"Use N family answers" (copies into unmarked players only, Undo) instead of per-row Accept buttons; one team switch (Off / Games / Games and
+practices) instead of a per-event ask; Remind to connected parents of unanswered, unmarked players only; Out / Maybe words in the lineup pool and
+an after-saved warning; a coach bell that never carries the note; house league as its own later stage. The bullets below are the pre-drawing
+starting point, kept for the record; where they differ, the drawing and the owner's rulings win.
+
+Pre-drawing starting point (superseded by the drawing):
 - **Schedule list rows:** a headcount chip per upcoming event (`9 in · 2 out · 1 maybe · 3 ?`), escalating when `in` is below a sport-aware floor.
 - **Event drawer, attendance tab:** each player row shows the family answer, note and who/when under the coach's own status pills; one-tap **Accept**
   per row and **Accept all answers** (in→attending, out→absent, maybe→untouched) through the existing batch PATCH. Drift badge when they disagree.
@@ -161,7 +183,10 @@ defaulting OFF; the owner flips personal teams first.
 calls (O1–O4 and Session 4's rulings 1–11) are in the build prompt's Progress block. What is still open for the owner is listed in the
 walk (§526, its last part).
 
-1. **4b drawing session:** the coach's chips, drawer lane, nudge and lineup tag are undrawn; draw them before a build prompt is written.
+0. **2026-11-12:** questions 1–5 are now numbered asks on the drawing (1 → drawn; 2 → ask 4; 3 → ask 1; 4 → ask 7; 5 → ask 6), alongside
+   ten more the drawing raised (reminder reach, the book, the /legal tick-box line, the count, renaming "No reply", a moved event, who sees and
+   acts, the bell, the lineup, the second parent's Stop line, retention). Record the owner's answers here when given.
+1. **4b drawing session:** ~~undrawn~~ drawn 2026-11-12.
 2. Do house-league teams get the control and a coach headcount (the house-league coach's page is deliberately unchanged in 4a)?
 3. Should practices default to auto-ask on create while games stay manual?
 4. Sport-aware "enough players" floor: `fieldPositions.length` as the red-chip threshold, or coach-configurable?

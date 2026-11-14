@@ -19,6 +19,10 @@ https://claude.ai/artifact/QmPoKvcyF3Bg1xpjCWw54C
   email about the sign-up, with a line saying who added them; receipts and refunds still go to whoever paid. The coach and the
   club see it; it is never put on the marketing list.
 - **Next season**, a signed-in parent finds the form filled in.
+- **Queued (owner ask 2026-11-13, Stage 4c): one "Guardians" section on a coach's player page.** Today the page has two cards that
+  look alike: the contact details a coach types, and the list of parents invited to the app. The coach will add a guardian once and
+  invite them to the app from the same row, with a status on it (not in the app, invited, in the app). A parent who never uses the
+  app still just has a contact row. Needs a drawing session first; comes after the Stage 4b walk.
 
 ## Why it matters
 
