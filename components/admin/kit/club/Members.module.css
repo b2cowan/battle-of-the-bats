@@ -27,6 +27,9 @@
   .twoFields { grid-template-columns: minmax(0, 1fr); }
 }
 .accessBlock { margin-top: 0.4rem; }
+/* The Two-step sign-in field follows the access block's closing note. Without its own step above, its label sat
+   as close to that note as to its own value and read as the note's heading. */
+.twoStepField { margin-top: 1.25rem; }
 .accessTitle {
   margin: 0 0 0.4rem;
   font-family: var(--font-sans, system-ui, sans-serif);

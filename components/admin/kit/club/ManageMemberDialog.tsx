@@ -571,7 +571,7 @@ export default function ManageMemberDialog({
         )}
 
         {twoStep && (
-          <div className={ck.field}>
+          <div className={`${ck.field} ${styles.twoStepField}`}>
             <span className={ck.label}>Two-step sign-in</span>
             <p className={styles.readValue}>{twoStep.on ? (twoStep.since ? `On since ${formatStoredDate(twoStep.since)}` : 'On') : 'Off'}</p>
             {twoStep.door === 'own_first' && (

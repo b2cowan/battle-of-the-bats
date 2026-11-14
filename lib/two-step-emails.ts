@@ -92,7 +92,7 @@ export function twoStepRequirementOffEmail(p: {
     subject: `${p.orgName} no longer requires two-step sign-in for ${whom}`,
     html: warmEmailDocument([
       warmEmailHeading(`${org} no longer requires two-step sign-in for ${whom}`),
-      warmEmailParagraph(`${owner} turned off ${esc(possessive(p.orgName))} requirement on ${esc(whenWords(p.atIso))}. People who already have two-step sign-in on keep it. New ${p.which === 'board' ? 'board members' : 'coaches'} won’t be asked to set it up.`),
+      warmEmailParagraph(`${owner} turned off ${esc(possessive(p.orgName))} requirement on ${esc(whenWords(p.atIso))} People who already have two-step sign-in on keep it. New ${p.which === 'board' ? 'board members' : 'coaches'} won’t be asked to set it up.`),
       warmEmailParagraph(`If you didn’t expect this, check with ${owner}. If you think someone else is using the owner’s account, write to ${esc(FIELDLOGICHQ_CONTACT_EMAIL)}.`),
       warmEmailSmall(NO_LINK),
     ].join('')),
@@ -112,7 +112,7 @@ export function twoStepOwnerResetConfirmEmail(p: { orgName: string | null; confi
       warmEmailButton('Confirm the reset', p.confirmUrl),
       warmEmailParagraph(`Once you confirm, ${tell}the reset happens 24 hours later. Signing in with a code from your authenticator app, or a backup code, during that time cancels it.`),
       warmEmailParagraph(`If you didn’t ask for this, don’t press the button: nothing changes. Write to ${esc(FIELDLOGICHQ_CONTACT_EMAIL)} so we know.`),
-      warmEmailSmall(`The button works until ${esc(whenWords(p.expiresIso))}.`),
+      warmEmailSmall(`The button works until ${esc(whenWords(p.expiresIso))}`),
     ].join('')),
   };
 }
@@ -126,7 +126,7 @@ export function twoStepOwnerResetNoticeEmail(p: { orgName: string; ownerName: st
     subject: `Two-step sign-in for ${possessive(p.orgName)} owner will be reset`,
     html: warmEmailDocument([
       warmEmailHeading(`Two-step sign-in for ${esc(possessive(p.orgName))} owner will be reset`),
-      warmEmailParagraph(`${owner} asked FieldLogicHQ support to reset their two-step sign-in. It will be reset on ${esc(whenWords(p.runsIso))}.`),
+      warmEmailParagraph(`${owner} asked FieldLogicHQ support to reset their two-step sign-in. It will be reset on ${esc(whenWords(p.runsIso))}`),
       warmEmailParagraph(`If you think this isn’t right, reply to this email or write to ${esc(FIELDLOGICHQ_CONTACT_EMAIL)} before then. We’ll hold the reset until we’ve checked with ${owner}.`),
       warmEmailSmall(NO_LINK),
     ].join('')),

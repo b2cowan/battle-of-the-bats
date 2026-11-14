@@ -48,7 +48,7 @@ function ConfirmReset() {
   if (done) {
     return (
       <StartColumn>
-        <StartHead title="The reset is confirmed" sub={`Your two-step sign-in will be reset on ${whenWords(done)}.`} />
+        <StartHead title="The reset is confirmed" sub={`Your two-step sign-in will be reset on ${whenWords(done)}`} />
         <div className={accountForm.form}>
           <div className={accountForm.callout}>
             <strong>Found your phone?</strong>{' '}

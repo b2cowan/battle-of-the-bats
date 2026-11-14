@@ -67,11 +67,11 @@ export type OwnedClub = { id: string; name: string };
 export async function ownedClubs(userId: string): Promise<OwnedClub[]> {
   const { data } = await supabaseAdmin
     .from('organization_members')
-    .select('organization_id, created_at, organizations(id, name, account_kind, plan_id)')
+    .select('organization_id, accepted_at, organizations(id, name, account_kind, plan_id)')
     .eq('user_id', userId)
     .eq('role', 'owner')
     .eq('status', 'active')
-    .order('created_at', { ascending: true })
+    .order('accepted_at', { ascending: true })
     .returns<{ organization_id: string; organizations: { id: string; name: string; account_kind: string | null; plan_id: string | null } | null }[]>();
   // A coach's own team workspace has no one else to tell, and is not a club the email can name.
   return (data ?? []).flatMap(r => (r.organizations && !isTeamWorkspaceOrg({ accountKind: r.organizations.account_kind, planId: r.organizations.plan_id })
