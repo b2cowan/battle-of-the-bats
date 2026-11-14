@@ -8,7 +8,7 @@
 .callout {
   margin: 0;
   padding: 0.6rem 0.75rem;
-  border-left: 3px solid var(--warning, #c98a12);
+  border-left: 3px solid var(--warning, #c98a12); /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
   background: rgba(var(--warning-rgb, 201, 138, 18), 0.08);
   border-radius: var(--home-radius-sm, 6px);
   color: var(--text-primary);
@@ -25,24 +25,24 @@
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--home-line-strong, rgba(0, 0, 0, 0.22));
   border-radius: var(--home-radius-sm, 6px);
-  background: var(--card-bg, #fff);
+  background: var(--card-bg, #fff); /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
   color: var(--text-primary);
   font: inherit;
   font-size: 1rem;
 }
-.field:focus { outline: 2px solid var(--home-olive, #5c6b2e); outline-offset: 1px; }
-.field[aria-invalid='true'] { border-color: var(--danger, #b42318); }
+.field:focus { outline: 2px solid var(--home-olive, #5c6b2e); outline-offset: 1px; } /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
+.field[aria-invalid='true'] { border-color: var(--danger, #b42318); } /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
 /* The data face for a recorded code (/design ask D: a named exception). */
 .data { font-family: var(--font-data, ui-monospace, monospace); letter-spacing: 0.08em; }
 
-.fieldError { color: var(--danger, #b42318); font-size: var(--type-support, 0.85rem); }
+.fieldError { color: var(--danger, #b42318); font-size: var(--type-support, 0.85rem); } /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
 
 .textBtn {
   background: none;
   border: none;
   padding: 0.35rem 0;
   min-height: var(--tap-min, 44px);
-  color: var(--home-olive, #5c6b2e);
+  color: var(--home-olive, #5c6b2e); /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
   font: inherit;
   font-size: var(--type-support, 0.9rem);
   font-weight: 600;
@@ -81,13 +81,13 @@
   max-width: calc(100vw - 2rem);
   padding: 0.7rem 0.9rem;
   border-radius: var(--home-radius-sm, 8px);
-  background: var(--card-bg, #fff);
+  background: var(--card-bg, #fff); /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
   border: 1px solid var(--home-line-strong, rgba(0, 0, 0, 0.22));
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
   color: var(--text-primary);
   font-size: var(--type-support, 0.9rem);
 }
-.setUpNotice a { color: var(--home-olive, #5c6b2e); font-weight: 700; }
+.setUpNotice a { color: var(--home-olive, #5c6b2e); font-weight: 700; } /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
 .setUpClose {
   background: none;
   border: none;

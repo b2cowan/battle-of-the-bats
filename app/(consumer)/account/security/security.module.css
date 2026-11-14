@@ -31,7 +31,7 @@
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
   background: var(--home-olive-soft, rgba(92, 107, 46, 0.12));
-  color: var(--home-olive, #5c6b2e);
+  color: var(--home-olive, #5c6b2e); /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -85,7 +85,7 @@
   display: grid;
   gap: 0.2rem;
   padding: 0.75rem 0.9rem;
-  border-left: 3px solid var(--warning, #c98a12);
+  border-left: 3px solid var(--warning, #c98a12); /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
   background: rgba(var(--warning-rgb, 201, 138, 18), 0.09);
   border-radius: var(--home-radius-sm, 8px);
   color: var(--home-ink);
@@ -101,7 +101,7 @@
   color: var(--home-ink);
 }
 .noticeGood { background: var(--home-olive-soft, rgba(92, 107, 46, 0.12)); }
-.noticeBad { background: rgba(var(--danger-rgb, 180, 35, 24), 0.08); border-left: 3px solid var(--danger, #b42318); }
+.noticeBad { background: rgba(var(--danger-rgb, 180, 35, 24), 0.08); border-left: 3px solid var(--danger, #b42318); } /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
 
 .dialogText { margin: 0; }
 
@@ -114,7 +114,7 @@
   padding: 0.55rem 2.75rem 0.55rem 0.75rem;
   border: 1px solid var(--home-line-strong, rgba(0, 0, 0, 0.22));
   border-radius: var(--home-radius-sm, 6px);
-  background: var(--card-bg, #fff);
+  background: var(--card-bg, #fff); /* token-exempt: fallback for a token defined only inside the warm portal scopes, so no root token to use */
   color: var(--text-primary);
   font: inherit;
   font-size: 1rem;
