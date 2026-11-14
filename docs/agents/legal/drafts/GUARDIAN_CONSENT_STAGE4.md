@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | **0.3** (rep-team invitations; written 2026-11-14, owner ruled, not yet built); 0.2 and 0.1 stay the words earlier joiners accepted |
+| **Version** | **0.3** (rep-team invitations; written 2026-11-14, owner ruled, BUILT 2026-11-14); 0.2 and 0.1 stay the words earlier joiners accepted |
 | **Status** | draft — not owner-approved, not reviewed by a lawyer; rendered by the product (switched off) as the words it ships with (Stage 4a built 2026-11-08) |
 | **Effective date** | — (not published) |
 | **Last reviewed** | 2026-11-14 |

@@ -107,12 +107,15 @@ describe('a started game stops flagging a family Out (owner, Session 4: match th
   });
 });
 
-describe('consent 0.2 for rep-team invitations (owner, Session 4; /legal draft "(a) 0.2")', () => {
-  it('a rep invitation shows and STORES the 0.2 lines under v0.2; a house-league one stays exactly 0.1', () => {
+describe('consent 0.3 for rep-team invitations (owner 2026-11-14, walk §529 call 3; /legal draft "(a) 0.3")', () => {
+  it('a rep invitation shows and STORES the 0.3 lines under v0.3; a house-league one stays exactly 0.1', () => {
     const rep = beforeYouJoinWords('Riverdale', ['Leo'], true);
     assert.equal(rep.version, GUARDIAN_CONSENT_VERSION_REP);
-    assert.match(rep.who.you, /If Leo’s coach turns it on, you can also say here whether Leo is coming to a game or practice\./);
-    assert.match(rep.who.staff, /Coaches also see your answers, any note you add, your first name and when you answered\./);
+    assert.match(rep.version, /v0\.3$/, 'the version moved with the words');
+    assert.match(rep.who.you, /If Leo’s coach turns it on, you can also say here whether Leo is coming to a game or practice\. Your answer is also Leo’s attendance for it, and stays in the team’s record\. Nothing about other children\./);
+    assert.match(rep.who.staff, /Coaches also see your answers, any note you add, your first name and when you answered, and can change an answer\. You’ll see when they do\./);
+    const many = beforeYouJoinWords('Riverdale', ['Leo', 'Ava'], true);
+    assert.match(many.who.you, /Your answers are also each child’s attendance for it, and stay in the team’s record\./);
     assert.match(rep.who.others, /Leo’s other parent, if they’ve joined, sees your first name and your answer, but not your note\./);
     const text = guardianConsentText(rep);
     assert.ok(text.startsWith(GUARDIAN_CONSENT_VERSION_REP), 'the record leads with the version it shows');

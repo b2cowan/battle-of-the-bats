@@ -32,7 +32,7 @@ these corrections — each one re-reads a statement below that is now false:
 **Owner questions (none blocks the walk):**
 - **Q1 — the consent words (0.2). RULED 2026-11-14 (owner, walk §529 call 3): raise to 0.3 for new joiners.** The 0.2 lines say coaches *see* answers; they
   do not say the answer becomes the child's attendance record that a coach can change. Wording, rules and the treatment of earlier joiners are in
-  `drafts/GUARDIAN_CONSENT_STAGE4.md` "(a) 0.3" (two sentences in the "Who sees what" lines, not the boxes). **Not built.**
+  `drafts/GUARDIAN_CONSENT_STAGE4.md` "(a) 0.3" (two sentences in the "Who sees what" lines, not the boxes). **Built 2026-11-14.**
 - **Q2 — a leaving parent's first name** still shows on the coach's side beside their answers until 60 days after the season's last event (unchanged
   from 4b; now stated in the Leave/Stop confirm and §9). Same lawyer's-eye item as before.
 - **Q3 — a Maybe or a family In that nobody corrects** counts in attendance stats once the event starts (owner ruling 2). Not a legal point; recorded

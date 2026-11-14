@@ -19,9 +19,11 @@ import { possessive } from './utils';
 
 /** Stored with every consent record (/legal condition 4: the wording version). 0.1 = the words a house-league invitation shows. */
 export const GUARDIAN_CONSENT_VERSION = 'GUARDIAN_CONSENT_STAGE4 v0.1';
-/** Draft 0.2 "(a) 0.2" (Stage 4b, owner 2026-11-13): an invitation with a REP-team child adds the In / Out / Maybe lines. New joins
- *  only; a parent who joined earlier reads the same facts in the answer sheet's hint. The version travels with the words. */
-export const GUARDIAN_CONSENT_VERSION_REP = 'GUARDIAN_CONSENT_STAGE4 v0.2';
+/** Draft 0.3 "(a) 0.3" (One attendance record, owner 2026-11-14, walk §529 call 3): an invitation with a REP-team child shows the
+ *  In / Out / Maybe lines (0.2) PLUS "your answer is also the child's attendance … a coach can change it, you'll see when". New joins
+ *  only; a parent who joined earlier (0.2) reads the same facts in the answer sheet's hint, and their stored record keeps 0.2's words.
+ *  The version travels with the words — never a 0.3 header over 0.2 words or the reverse. */
+export const GUARDIAN_CONSENT_VERSION_REP = 'GUARDIAN_CONSENT_STAGE4 v0.3';
 
 /** Shown above the boxes while the words are a draft. Nothing on a real page may claim a review is under way (the old notice,
  *  "being confirmed with our privacy advisor", was false from 2026-11-04). */
@@ -71,7 +73,7 @@ export function beforeYouJoinWords(club: string, children: readonly string[], re
   const theirs = poss(names);
   const team = several ? 'teams' : 'team';
   const answers = rep
-    ? ` If ${several ? 'their coaches turn' : `${theirs} coach turns`} it on, you can also say here whether ${names} ${several ? 'are' : 'is'} coming to a game or practice.`
+    ? ` If ${several ? 'their coaches turn' : `${theirs} coach turns`} it on, you can also say here whether ${names} ${several ? 'are' : 'is'} coming to a game or practice. ${several ? 'Your answers are also each child’s attendance for it, and stay in the team’s record.' : `Your answer is also ${theirs} attendance for it, and stays in the team’s record.`}`
     : '';
   return {
     version: rep ? GUARDIAN_CONSENT_VERSION_REP : GUARDIAN_CONSENT_VERSION,
@@ -82,7 +84,7 @@ export function beforeYouJoinWords(club: string, children: readonly string[], re
     who: {
       you: `You see ${theirs} ${team}, coach, practice and game times and places, and your sign-up.${answers} Nothing about other children.`,
       staff: rep
-        ? `${theirs} coaches and ${poss(club)} staff see the name, email and phone number on ${theirs} ${several ? 'sign-ups' : 'sign-up'}. Coaches also see your answers, any note you add, your first name and when you answered. ${club} can also see that you joined, sees if you leave, and can remove you.`
+        ? `${theirs} coaches and ${poss(club)} staff see the name, email and phone number on ${theirs} ${several ? 'sign-ups' : 'sign-up'}. Coaches also see your answers, any note you add, your first name and when you answered, and can change an answer. You’ll see when they do. ${club} can also see that you joined, sees if you leave, and can remove you.`
         : `${theirs} coaches and ${poss(club)} staff see the name, email and phone number on ${theirs} ${several ? 'sign-ups' : 'sign-up'}. ${club} can also see that you joined, and can remove you.`,
       others: rep
         ? `Other families can’t see you or ${names} here. ${theirs} other parent, if they’ve joined, sees your first name and your answer, but not your note.`
