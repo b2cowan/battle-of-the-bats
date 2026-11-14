@@ -841,6 +841,43 @@ ahead of the owner's rulings.
   fixture is unavailable — repair is clearing its `onboarding_completed_at` on dev) — run it on Budget, Allocations, the Overview, a
   schedule's Bill window and the tournament dashboard; the dev server restart (files added); fixtures for the walk (a draft schedule with
   a bill, a tournament whose book has money); the walk is once, after Session C.
+- 2026-11-14 — **13d Session C (the coach's request) BUILT, COMMITTED `cec8115cd` 2026-11-14** (13d-9, -10). Built: the coach's request asks **"How should the club
+  pay you?"** (From the club: Cash, E-Transfer, Cheque, Other) or **"How are you paying the club?"** (To the club: adds Card), saved
+  as the product's method code (`DUES_PAYMENT_METHODS`), so the treasurer's Approve pre-fills; read back in the coach's words ("How
+  you'd like the club to pay you" / "How you're paying the club"), never the code. The treasurer's window reads **"How they'd like to
+  be paid"** / **"How it's coming"**; a request filed before reads **"Payment method (as filed)"** on both sides, its words never
+  rewritten. After approval the coach's window shows **"Paid · $120.00 by E-Transfer on {date}"** with "Reference {ref}" under it
+  (money to the club: **"Received · The club received it on {date} · {method} · reference {ref}"**), and the list row reads **"Paid
+  {date}"** (the payment day) instead of "Approved {date}". Code: one block in `lib/coach-club-money.ts` (the list by direction,
+  `resolveRequestMethod`, the "as filed" test, every label, the Paid facts); both coach write routes validate through it; no new
+  read, no migration. **Departures from the prompt:** (1) the server now refuses a method that isn't this direction's code (400,
+  "Choose how the money should move from the list."); an edit that sends an old request's words back unchanged keeps them, and only
+  an old word gets that pass (a stored `card` turned round to "the club pays us" is refused; the form clears it on the flip). (2) An
+  old pending request opened for editing shows its words as "{word} (as filed)" in the picker until the coach picks another. (3)
+  Two readers that printed the stored value raw now print words: the coach's Club-money export (`coach-money-exports.ts`) and the
+  club's team-account statement fallback (`club-money-reads.ts`). (4) The coach demo's three sample requests now store codes
+  (`lib/demo-coach.ts`), so its approvals don't read "as filed" (the world changed: it reseeds itself; no tour anchor moved). (5)
+  An approval with no recorded payment day (before mig 315) keeps "Approved {date}". (6) Hint under the picker, as drawn: "Cash,
+  E-Transfer, Cheque or Other. Optional." **Known, not fixed:** the dev fixture `seed-club-fixture.mjs` already stored codes
+  under the old question, so its requests read as answered to the new one (seed data only; real requests saved words). **/docs
+  done** (coaches.tsx "Money between your team and your club": the question, Paid; accounting.tsx "Answering a request": the
+  pre-fill and the labels; search words with the prose; the coach article was already ~1,500 words, over the length standard, and
+  grew slightly, not restructured). **/legal and /accounting: not required** (the coach answers what they already answered, in a
+  different form; no new collection, no mail; nothing FieldLogicHQ charges). Tests: `tests/unit/club-stage13d-coach-request.test.ts`
+  (14); typecheck clean at the 8 GB heap; spelling clean; the unit suite's 22 failures name other sessions' files (none of this
+  session's). **Owed:** `check:layout` on the coach's Club tab and Payment requests could not run (`--changed` widens to every
+  screen because of another session's `app/globals.css`, which is a whole sweep the dev server may not take; and `uat-club-org`'s
+  finished onboarding still blocks the fixture) — run it with the walk's fixtures or on staging; the walk, once, now that A–C are
+  built. **/simplify + /review (standard) done 2026-11-14.** /simplify: the private `requestMethodWord` is gone (`methodWord` from
+  `club-money-words` is imported instead: its imports reach nothing that imports `coach-club-money`, and the coach panel already
+  loaded it); `requestPaidFacts` takes the shared `fmt` for the amount; the panel works out the row's paid day once. /review
+  lenses, all held: a PATCH that sends an old request's words back keeps them, a code turned to a direction that doesn't offer it
+  is refused, empty stays null (tests); no other writer saves a method on a request (the hand-back and Send the changes paths store
+  none, so null; the dev fixture stores codes); no third reader prints the stored value raw (the coach register book and the
+  ledger already go through the word; the ledger's "detail" is the ledger entry's own method, not the request's); the Paid row
+  and the list's "Paid {date}" need `status = approved` plus the day, so a reversed request reads "Reversed"; on a phone the
+  Paid row and the method field are plain rows. **Known low, not fixed:** none new. Gates after: 14/14, typecheck clean at 8 GB,
+  spelling clean, full unit suite 22 failures, none in a file this session touched.
 
 ## 11. The external review, cross-checked (2026-11-07)
 

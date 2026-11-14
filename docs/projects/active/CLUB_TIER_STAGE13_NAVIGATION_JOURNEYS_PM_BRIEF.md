@@ -162,3 +162,12 @@ what it includes, and a line under the books opens each live house league season
 **"In the club's book"** for people who hold Accounting; an admin without Accounting sees the card exactly as before. **Why:** each of these
 was money that crossed from one person's screen to another's by luck. **Success:** the treasurer can see a schedule's bill before it is
 sent, nobody is billed twice without a warning first, and the club's owed figure reads the same on both screens. Nothing blocks a save.
+
+**13d Session C, the coach's request (built 2026-11-14; the one walk for 13d is next).** A coach asking the club for money was asked
+"Payment method", which some read as "how I paid the vendor", and the answer was saved in words the treasurer's Approve couldn't read, so
+it never filled in. Now the coach is asked what the treasurer needs: **"How should the club pay you?"** (or, sending money, **"How are you
+paying the club?"**), and Approve starts from that answer. The treasurer reads it as **"How they'd like to be paid"** / **"How it's
+coming"**; older requests say **"Payment method (as filed)"** and keep their words. After approval the coach finally sees how they were
+paid: **"Paid · $120.00 by E-Transfer on Oct 19"** with the reference, and the list row reads **"Paid Oct 19"** instead of "Approved".
+**Why:** the club already recorded the payment; the coach just couldn't see it, and the treasurer re-typed what the coach had already said.
+**Success:** Approve is pre-filled for every new request, and a coach never has to ask the club "did you pay us, and how?".
