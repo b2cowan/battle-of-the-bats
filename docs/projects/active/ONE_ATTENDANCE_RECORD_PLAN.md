@@ -267,6 +267,28 @@ on; stage explicit pathspecs only; update the Progress block below; stop at the 
   - **For S3:** dev bell lines filed before S2 hold `answer: 'in'|'out'` in their metadata; a fold into one reads "undefined" for that
     item (dev only, never on prod; a fresh line is fine). Help + family help, demos/UAT seeds, the walk.
 
+- 2026-11-14 — **S2 REVIEWED (`/review`, high-risk tier); fixes COMMITTED `3756e37d8`** (6 files, no migration). Four finders (stats bound ·
+  family payload + writer · lineup + Maybe) plus the coach window's save read in the main loop. **Held up, no change:** the window's
+  changed-rows save (a confirm made during another save survives the merge and is sent next; a confirm never reaches a row the coach did
+  not tap; All in / Reset flush first and then take the server's rows); the attendance PATCH's `lines` and the room's family read are both
+  behind the attendance capability; the parent payload never names a coach, never carries the coach's note, never another family's answer,
+  names the other parent only while connected; the stats bound is one helper on all three reads and the exact complement of the family lock
+  (`starts_at` is a non-null timestamptz); the lineup sentence is never doubled and the schedule triangle still covers a family Out.
+  **Fixed:** (1) a parent's CLEAR now takes away only a family's answer (`p_only_if_set_by 'family'`) — the page never re-reads, so a stale
+  "tap your own answer" turned a coach's Late into Not marked; the coach's bell now reads the record after the write; (2) a bare "agree"
+  with the other parent's answer sends no note (it wiped their note); (3) `firstNames` remembers a found name 10 min — the autosave reply
+  and every console tap did one auth call per answered player; (4) a Maybe the player already holds is not refused after the start (the
+  route refused it and rejected the WHOLE batch); (5) the event window words a lineup Out as the family's only while the Out on screen is
+  the family's own. Four source guards added. **Left, for the owner / S3:** (a) stats reads have no paging — a Supabase select silently stops
+  at 1,000 rows (pre-existing; ~25 players × 40+ started events); the three reads could truncate at different rows — wants `fetchAll`;
+  (b) an unconfirmed advance family In/Out counts as attended/absent once the start passes (ruling 2 as written — a known consequence);
+  (c) the save reply names a connected other parent "the other parent" until reload, after an agree (cosmetic); (d) Maybe can be set on a
+  call-up (harmless); (e) the autosave retries a failing save every ~0.7 s (pre-existing for any error); (f) no unit test pins the three
+  reads' `startedBy` agreement; (g) `roster/[playerId]/page.tsx` attendance rate counts Late in the denominator only (pre-existing). The
+  two open design calls (family Late/Maybe pill pair; dashed = Maybe) untouched. **Proof:** typecheck 0 errors; ESLint + spelling clean;
+  90 family-availability tests pass; full suite on clean copies — `bfdaa885e` and the fix commit fail the same 34 tests (same names).
+  Dev server restart owed (a shared module changed).
+
 ## 5. The walk (owner 2026-11-13: concise, one action per step, ~20–50 boxes)
 
 Rewrites §526 from section 4 on, plus short re-checks for sections 1–3 covering only what changed for families (Late,
