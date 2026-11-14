@@ -1,0 +1,1482 @@
+<title>A Schedule on Several Permits</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: a drawings sheet in the house layout. Sticky numbered section tabs, one View row of switches, then a product
+   frame drawn at true size from the shipped warm theme, with its numbered notes. Cool slate chrome so the warm frames
+   read as specimens, not as the page. */
+:root {
+  --bg: #E7EAEE;
+  --surface: #FFFFFF;
+  --fg: #1A1F25;
+  --muted: #56606B;
+  --rule: #D0D6DC;
+  --accent: #2D5B86;
+  --accent-soft: rgba(45, 91, 134, 0.10);
+  --new: #2D5B86;
+  --re: #7A4E12;
+  --same: #6B7480;
+  --shadow: 0 1px 2px rgba(20, 30, 40, 0.08), 0 10px 28px rgba(20, 30, 40, 0.12);
+  --doc-font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --doc-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  /* the product's shipped warm tokens (fixed: a specimen looks the same in either theme) */
+  --p-paper: #F8F4ED;
+  --p-card: #FFFFFF;
+  --p-ink: #241E15;
+  --p-ink2: #4A4235;
+  --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12);
+  --p-line2: rgba(70, 55, 30, 0.20);
+  --p-fill: rgba(70, 55, 30, 0.08);
+  --p-olive: #57651E;
+  --p-olive-soft: rgba(87, 101, 30, 0.10);
+  --p-lime: #D9F99D;
+  --p-amber: #835006;
+  --p-amber-soft: rgba(131, 80, 6, 0.08);
+  --p-amber-line: rgba(131, 80, 6, 0.32);
+  --p-red: #B03A22;
+  --p-good: #2A5222;
+  --p-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --p-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+    --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14); --new: #8EB9E2; --re: #E2B36E; --same: #9AA4AE;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+  --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14); --new: #8EB9E2; --re: #E2B36E; --same: #9AA4AE;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-font); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.doc { max-width: 1490px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+.dochead { display: grid; gap: 4px; margin-bottom: 14px; }
+.dochead .eyebrow { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.dochead h1 { margin: 0; font-size: 24px; line-height: 1.2; text-wrap: balance; }
+.dochead p { margin: 0; color: var(--muted); max-width: 80ch; }
+
+.stabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--rule);
+  display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+.stabs::-webkit-scrollbar { display: none; }
+.stabs button { border: 0; background: none; color: var(--muted); cursor: pointer; white-space: nowrap; font: 600 14px/1 var(--doc-font); padding: 14px 12px 12px; border-bottom: 2px solid transparent; }
+.stabs button:hover { color: var(--fg); }
+.stabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+button:focus-visible, .ask input:focus-visible + span, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 12px 0 16px; }
+.vgroup { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vgroup > span { font: 600 11px/1 var(--doc-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 2px; }
+.seg button { border: 0; background: none; color: var(--muted); cursor: pointer; font: 600 13px/1 var(--doc-font); padding: 8px 11px; border-radius: 6px; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+
+.lede { margin: 0 0 14px; max-width: 86ch; }
+.lede b { color: var(--fg); }
+.stage { display: grid; grid-template-columns: minmax(0, auto) minmax(300px, 1fr); gap: 28px; align-items: start; }
+.stage.desk { grid-template-columns: minmax(0, 1fr); }
+.fcol { min-width: 0; display: grid; gap: 8px; justify-items: start; }
+.fcap { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.fcap b { color: var(--fg); font-weight: 600; }
+.fscroll { width: 100%; max-width: 100%; }
+.fscroll.actual { overflow-x: auto; }
+.fwrap { position: relative; }
+.fwrap > .fr { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.notes { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.stage.desk .notes { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+.nt { text-align: left; border: 1px solid var(--rule); background: var(--surface); color: var(--fg); border-radius: 10px; padding: 10px 12px; cursor: pointer; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font: 14px/1.5 var(--doc-font); }
+.nt:hover { border-color: var(--accent); }
+.nt.flash { box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+.nt .nn { grid-row: span 3; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 12px/1 var(--doc-mono); color: #fff; background: var(--same); }
+.nt.new .nn { background: var(--new); }
+.nt.re .nn { background: var(--re); }
+.nt b { font-weight: 600; }
+.nt .tx { color: var(--muted); font-size: 13.5px; }
+.tag { justify-self: start; font: 600 10.5px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--rule); color: var(--same); }
+.nt.new .tag { color: var(--new); border-color: var(--new); }
+.nt.re .tag { color: var(--re); border-color: var(--re); }
+.prose { max-width: 92ch; }
+.prose h2 { margin: 18px 0 6px; font-size: 19px; line-height: 1.25; }
+.prose h2:first-child { margin-top: 0; }
+.prose h3 { margin: 14px 0 4px; font-size: 15px; }
+.prose p { margin: 0 0 10px; }
+.prose ul { margin: 0 0 12px; padding-left: 20px; }
+.prose li { margin-bottom: 5px; }
+.prose code { font: 12.5px var(--doc-mono); background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; padding: 0 4px; }
+.mk { font: 700 11px/1 var(--doc-mono); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--rule); color: var(--muted); margin-right: 4px; }
+.mk.v { color: var(--new); border-color: var(--new); }
+.tblwrap { overflow-x: auto; max-width: 100%; margin-bottom: 16px; }
+.who { border-collapse: collapse; background: var(--surface); border: 1px solid var(--rule); font-size: 14px; min-width: 860px; }
+.who th, .who td { border-bottom: 1px solid var(--rule); padding: 9px 12px; text-align: left; vertical-align: top; }
+.who th { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.who td:first-child { font-weight: 600; white-space: nowrap; }
+.who .no { color: var(--muted); }
+.who .nw { color: var(--new); font-weight: 600; }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 0 0 14px; max-width: 92ch; }
+
+/* asks */
+.asks { display: grid; gap: 14px; max-width: 900px; }
+.ask { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; }
+.ask h3 { margin: 0; font-size: 16px; display: flex; gap: 10px; align-items: baseline; }
+.ask h3 .n { font: 700 12px/1 var(--doc-mono); color: var(--accent); }
+.ask p { margin: 0; color: var(--muted); }
+.ask .opts { display: grid; gap: 8px; }
+.ask label { display: flex; cursor: pointer; position: relative; }
+.ask input { position: absolute; opacity: 0; pointer-events: none; }
+.ask label span { flex: 1; border: 1px solid var(--rule); border-radius: 8px; padding: 9px 12px; font-size: 14px; background: var(--bg); }
+.ask label span b { font-weight: 600; }
+.ask input:checked + span { border-color: var(--accent); background: var(--accent-soft); }
+.ask .gol { font-size: 13px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; justify-self: start; font-weight: 600; }
+.answers { display: grid; gap: 8px; max-width: 900px; margin-top: 16px; }
+.answers textarea { width: 100%; min-height: 120px; font: 13px/1.5 var(--doc-mono); background: var(--surface); color: var(--fg); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+.copyrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.copyrow button { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 8px 12px; font: 600 13px/1 var(--doc-font); cursor: pointer; }
+.copyrow span { color: var(--muted); font-size: 13px; }
+
+@media (max-width: 980px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+
+/* ═════════════ PRODUCT SPECIMEN (shipped warm-theme values) ═════════════ */
+.fr { background: var(--p-paper); color: var(--p-ink); font: 14px/1.4 var(--p-sans); overflow: hidden; box-shadow: var(--shadow); border-radius: 10px; font-variant-numeric: tabular-nums; position: relative; }
+.fr * { box-sizing: border-box; }
+.fr.ph { border-radius: 26px; border: 6px solid #2A2D31; }
+.fr.crop { border-radius: 10px; }
+.ground { background-color: var(--p-paper); background-image: linear-gradient(rgba(87,101,30,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(87,101,30,0.07) 1px, transparent 1px); background-size: 40px 40px; }
+.fr .sc { overflow-y: auto; overflow-x: hidden; position: relative; min-height: 0; scrollbar-width: thin; }
+.fr.desk { display: grid; grid-template-rows: 48px minmax(0, 1fr); }
+.fr.desk .dbody { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; }
+.differs .fr [data-same] { opacity: 0.2; filter: grayscale(1); }
+
+/* top strip (Phase 2D, as ruled) */
+.strip { display: grid; grid-template-columns: 240px minmax(0, 1fr); background: var(--p-card); border-bottom: 1px solid var(--p-line); position: relative; z-index: 6; min-width: 0; }
+.strip .lcell { display: flex; align-items: center; padding: 0 1.25rem; border-right: 1px solid var(--p-line); gap: 0.6rem; }
+.strip .rcell { display: flex; align-items: center; gap: 0.9rem; padding: 0 1rem 0 2rem; min-width: 0; }
+.brand { display: inline-flex; align-items: center; gap: 6px; font: 700 15px/1 var(--p-sans); letter-spacing: -0.018em; }
+.sdiv { width: 1px; height: 12px; background: var(--p-line2); }
+.area { font: 700 10px/1 var(--p-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim); }
+.place { display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1; }
+.pn { font: 700 16px/1.2 var(--p-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.back { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--p-ink2); font: 600 14px/1 var(--p-sans); flex: none; }
+.vr { width: 1px; height: 22px; background: var(--p-line); flex: none; }
+.doors { margin-left: auto; display: flex; gap: 0.65rem; align-items: center; flex: none; }
+.door { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; color: var(--p-dim); }
+.pill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.32rem 0.72rem; border: 1px solid var(--p-line); border-radius: 999px; background: rgba(36,30,21,0.05); font: 650 12px/1.1 var(--p-sans); white-space: nowrap; }
+.chip { display: inline-flex; align-items: center; font: 700 10px/1.4 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 0.14rem 0.5rem; border-radius: 999px; white-space: nowrap; flex: none; }
+.chip.pend { color: var(--p-amber); background: var(--p-amber-soft); border: 1px solid var(--p-amber-line); }
+.chip.good { color: var(--p-good); background: rgba(52,102,42,0.08); border: 1px solid rgba(52,102,42,0.28); }
+.chip.neutral { color: var(--p-ink2); background: var(--p-olive-soft); border: 1px solid var(--p-line2); }
+
+/* sidebar (13i shape, club cell on top per 2D) */
+.rail { background: var(--p-card); border-right: 1px solid var(--p-line); display: flex; flex-direction: column; overflow: hidden; }
+.rail .clubhead { height: 45px; flex: none; padding: 0 1.25rem; border-bottom: 1px solid var(--p-line); font: 700 14px/1.25 var(--p-sans); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.rail .clubhead svg { color: var(--p-olive); }
+.rail .sec { font: 700 11px/1 var(--p-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim); padding: 0.85rem 1.25rem 0.35rem; min-height: 1.6rem; }
+.rail .it { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; color: var(--p-dim); font-size: 14px; position: relative; }
+.rail .it.on { background: var(--p-olive-soft); color: var(--p-olive); font-weight: 600; }
+.rail .foot { margin-top: auto; border-top: 1px solid var(--p-line); padding-top: 0.4rem; padding-bottom: 0.5rem; }
+.rail .foot .it { font-size: 12px; padding-block: 0.4rem; }
+.cnt { margin-left: auto; min-width: 1.15rem; height: 1.15rem; padding: 0 0.3rem; border-radius: 999px; display: inline-grid; place-items: center; font: 700 10px/1 var(--p-mono); color: var(--p-amber); background: rgba(131,80,6,0.11); border: 1px solid var(--p-amber-line); }
+
+/* tab band under the strip */
+.tb { position: sticky; top: 0; z-index: 5; background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 0 2rem; }
+.tabrow { display: flex; gap: 0.15rem; margin: 0 -0.85rem; }
+.tab { display: inline-flex; align-items: center; min-height: 44px; padding: 0.55rem 0.85rem; font: 600 14px/1 var(--p-sans); color: var(--p-dim); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.on { color: var(--p-olive); border-bottom-color: var(--p-olive); }
+
+/* page */
+.pad { padding: 1.5rem 2rem 3rem; }
+.meta { font-size: 13px; color: var(--p-dim); margin: 0 0 0.75rem; }
+.tbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem; }
+.tbar .sp { flex: 1; }
+.btn { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 38px; padding: 0 0.85rem; border-radius: 8px; background: var(--p-fill); border: 1px solid var(--p-line); font: 600 14px/1 var(--p-sans); color: var(--p-ink); white-space: nowrap; }
+.btn.pri { background: var(--p-lime); border-color: transparent; }
+.btn.out { background: var(--p-card); border-color: var(--p-line2); }
+.btn.dis { opacity: 0.45; }
+.btn.sm { min-height: 32px; font-size: 13px; padding: 0 0.7rem; }
+.sel { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 38px; padding: 0 0.7rem; border-radius: 8px; background: var(--p-card); border: 1px solid var(--p-line2); font-size: 14px; white-space: nowrap; color: var(--p-ink); }
+.vpill { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 34px; padding: 0 0.75rem; border-radius: 999px; background: var(--p-olive-soft); border: 1px solid rgba(87,101,30,0.35); font-size: 13px; color: var(--p-olive); }
+.vpill b { color: var(--p-ink); font-weight: 600; }
+.yp { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 34px; padding: 0 0.7rem; border-radius: 999px; background: rgba(87,101,30,0.08); border: 1px solid rgba(87,101,30,0.35); font-size: 13px; white-space: nowrap; }
+.yp .k { color: var(--p-dim); }
+.yp .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--p-olive); }
+.vsw { display: inline-flex; background: var(--p-card); border: 1px solid var(--p-line2); border-radius: 999px; padding: 3px; }
+.vsw span { padding: 0.45rem 0.85rem; border-radius: 999px; font: 600 13px/1 var(--p-sans); color: var(--p-ink2); }
+.vsw span.on { background: var(--p-olive-soft); color: var(--p-ink); }
+.card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; }
+.mono { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); }
+.fr small { font-size: 12px; color: var(--p-dim); }
+.fr a, .lk { color: var(--p-olive); font-weight: 600; text-decoration: none; }
+.amb { color: var(--p-amber); }
+
+/* schedule page */
+.na { padding: 0; margin-bottom: 1rem; }
+.na .h { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-bottom: 1px solid var(--p-line); }
+.na .h b { font-size: 16px; }
+.na .row { display: grid; grid-template-columns: 130px minmax(0, 1fr) auto; gap: 0.75rem; padding: 0.85rem 1rem; align-items: start; border-bottom: 1px solid var(--p-line); }
+.na .row:last-child { border-bottom: 0; }
+.na .row .t { font-weight: 600; }
+.na .row p { margin: 0.15rem 0 0; font-size: 13px; color: var(--p-ink2); }
+.tiles { display: inline-grid; grid-template-columns: repeat(4, 144px); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; margin-bottom: 1rem; }
+.tile { padding: 12px 14px; border-right: 1px solid var(--p-line); display: flex; flex-direction: column; gap: 4px; }
+.tile:last-child { border-right: 0; }
+.tv { font: 700 18px/1.2 var(--p-sans); }
+.tile small { line-height: 1.3; }
+.rs { padding: 1rem; }
+.rs h3 { margin: 0; font-size: 16px; }
+.warns { display: grid; gap: 0.45rem; margin: 0.9rem 0; font-size: 13px; }
+.warns div { display: flex; gap: 0.45rem; align-items: center; }
+.split2 { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr); gap: 1rem; }
+.lt .lh { display: flex; justify-content: space-between; padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--p-line); font-weight: 700; }
+.lt .lh small { font-weight: 400; }
+.lt .lr { display: grid; grid-template-columns: 140px 190px 1fr auto; gap: 0.5rem; padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--p-line); align-items: center; font-size: 13px; }
+.lt .lr:last-child { border-bottom: 0; }
+.lt .lr .f b { display: block; font-size: 13px; }
+.cnt2 { font: 600 11px/1 var(--p-sans); padding: 0.25rem 0.45rem; border-radius: 999px; background: var(--p-olive-soft); color: var(--p-olive); }
+.cnt2.a { background: var(--p-amber-soft); color: var(--p-amber); }
+.dd .dr { padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--p-line); font-size: 13px; display: grid; gap: 2px; }
+.dd .dr:last-child { border-bottom: 0; }
+.dd .dr b { font-size: 13px; }
+/* the path line (new) */
+.path { display: flex; align-items: stretch; gap: 0; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; margin: 0 0 1rem; overflow: hidden; }
+.path .st { flex: 1; min-width: 0; padding: 0.6rem 0.9rem; display: grid; gap: 2px; border-right: 1px solid var(--p-line); position: relative; }
+.path .st:last-child { border-right: 0; }
+.path .st .k { font: 700 10.5px/1.2 var(--p-mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-dim); }
+.path .st .v { font-weight: 600; font-size: 13.5px; color: var(--p-olive); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.path .st .s { font-size: 12px; color: var(--p-dim); }
+.path .st .s.amb { color: var(--p-amber); font-weight: 600; }
+.path .st.here { background: var(--p-olive-soft); box-shadow: inset 0 -2px 0 var(--p-olive); }
+.path .st.here .v { color: var(--p-ink); }
+.path .arr { position: absolute; right: -7px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; background: var(--p-card); border-top: 1px solid var(--p-line); border-right: 1px solid var(--p-line); rotate: 45deg; z-index: 1; }
+.path .st.here .arr { background: #EEF0E4; }
+
+/* dialogs over a frame */
+.scrim { position: absolute; inset: 48px 0 0 0; background: rgba(36,30,21,0.32); z-index: 7; }
+.dlg { position: absolute; z-index: 8; left: 50%; transform: translateX(-50%); top: 68px; bottom: 20px; width: 640px; background: var(--p-card); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.dlg .dh { display: flex; align-items: flex-start; gap: 0.75rem; padding: 1.1rem 1.5rem 0.9rem; border-bottom: 1px solid var(--p-line); }
+.dlg .dh .tt { flex: 1; display: grid; gap: 4px; }
+.dlg .dh .tt b { font-size: 17px; }
+.dlg .db { padding: 1rem 1.5rem 1.5rem; display: grid; gap: 1rem; align-content: start; }
+.dlg .df { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.5rem; padding: 0.75rem 1.5rem; border-top: 1px solid var(--p-line); align-items: center; font-size: 13px; }
+.dlg .df .pn2 { border: 1px solid var(--p-line2); border-radius: 8px; padding: 0.4rem 0.7rem; display: grid; font-size: 12px; }
+.dlg .df .pn2 b { font-size: 13px; }
+.kv { display: grid; grid-template-columns: 150px 1fr; gap: 0.35rem 1rem; font-size: 14px; }
+.kv .k { color: var(--p-ink2); }
+.kv b { font-weight: 600; }
+.box { border: 1px solid var(--p-line2); border-radius: 10px; padding: 0.75rem 0.85rem; display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+.box b { display: block; }
+.band3 { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--p-line2); border-radius: 10px; overflow: hidden; }
+.band3 > div { padding: 0.75rem 0.9rem; border-right: 1px solid var(--p-line); display: grid; gap: 3px; }
+.band3 > div:last-child { border-right: 0; }
+.band2 { display: grid; grid-template-columns: repeat(2, 1fr); border: 1px solid var(--p-line2); border-radius: 10px; overflow: hidden; }
+.band2 > div { padding: 0.75rem 0.9rem; border-right: 1px solid var(--p-line); display: grid; gap: 3px; }
+.band2 > div:last-child { border-right: 0; }
+.big { font: 700 22px/1.15 var(--p-sans); }
+.secl { display: flex; justify-content: space-between; font: 700 11px/1 var(--p-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-ink2); }
+.secl span { font-weight: 500; letter-spacing: 0.02em; }
+/* the pulled-dates notice (new) */
+.notice { border: 1px solid var(--p-line); border-left: 3px solid var(--p-amber); background: var(--p-card); border-radius: 8px; padding: 0.85rem 0.95rem; display: grid; gap: 0.55rem; }
+.notice .nh { display: flex; gap: 0.5rem; align-items: flex-start; color: var(--p-amber); }
+.notice .nh b { color: var(--p-ink); font-size: 14px; }
+.notice .nh p { margin: 2px 0 0; font-size: 12px; color: var(--p-ink2); }
+.notice .nday { font: 700 11px/1 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink2); margin-top: 0.15rem; }
+.notice ul { list-style: none; margin: 0; padding: 0; border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card); }
+.notice li { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto 16px; gap: 0.5rem; padding: 0.45rem 0.65rem; border-bottom: 1px solid var(--p-line); font-size: 14px; align-items: center; min-height: 44px; }
+.notice li:last-child { border-bottom: 0; }
+.notice li > span:first-child { font-size: 12px; color: var(--p-ink2); }
+.notice li .w small { display: block; }
+.notice li .chv { color: var(--p-dim); }
+.notice .ndoors { display: grid; gap: 0.35rem; }
+.notice .ndoors a { font-size: 14px; }
+.notice .fine { font-size: 12px; color: var(--p-dim); margin: 0; }
+.notice .fold { display: flex; align-items: center; justify-content: space-between; min-height: 44px; border: 1px solid var(--p-line); border-radius: 8px; padding: 0 0.75rem; font-size: 14px; font-weight: 600; }
+/* the permit form */
+.fg { display: grid; gap: 0.3rem; }
+.fg label { font-size: 13px; font-weight: 600; }
+.inp { min-height: 38px; border: 1px solid var(--p-line2); border-radius: 7px; background: rgba(70,55,30,0.05); padding: 0 0.7rem; display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: var(--p-ink); }
+.inp.ph2 { color: var(--p-dim); }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.g3 { display: grid; grid-template-columns: 180px 1fr 36px; gap: 0.6rem; align-items: center; }
+.xb { width: 36px; height: 36px; display: grid; place-items: center; color: var(--p-dim); }
+.offnote { grid-column: 1 / -1; display: flex; gap: 7px; font-size: 12px; line-height: 1.4; color: var(--p-amber); margin: -0.2rem 0 0.2rem; align-items: flex-start; }
+.offnote b { color: var(--p-amber); font-weight: 650; }
+.saved { position: absolute; right: 1.2rem; bottom: 4.6rem; z-index: 9; background: var(--p-card); border: 1px solid var(--p-line2); border-radius: 999px; padding: 0.35rem 0.8rem; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; gap: 0.35rem; align-items: center; color: var(--p-good); }
+/* lists */
+.ptbl .hd, .ptbl .r { display: grid; grid-template-columns: 1.35fr 1.4fr 1.2fr 0.55fr 0.75fr 0.8fr 24px; gap: 0 12px; align-items: center; padding: 0 16px; }
+.ptbl .hd { min-height: 40px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); border-bottom: 1px solid var(--p-line); }
+.ptbl .gp { padding: 9px 16px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); background: var(--p-paper); border-bottom: 1px solid var(--p-line); }
+.ptbl .r { min-height: 66px; border-bottom: 1px solid var(--p-line); padding-block: 10px; }
+.ptbl .r:last-child { border-bottom: 0; }
+.ptbl .r > span { display: grid; gap: 2px; min-width: 0; }
+.ptbl .r .rt { text-align: right; justify-items: end; }
+.ptbl .r b { font-weight: 700; }
+.flag { display: inline-flex; gap: 0.3rem; align-items: center; font: 600 12px/1.2 var(--p-sans); color: var(--p-amber); }
+/* overview */
+.eye { font: 700 11px/1 var(--p-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-ink2); margin: 1.5rem 0 0.6rem; }
+.eye:first-child { margin-top: 0; }
+.brief { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
+.bcard { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 0.95rem 1.05rem; display: flex; flex-direction: column; gap: 0.35rem; min-height: 118px; }
+.bcard .tl { display: flex; justify-content: space-between; font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); }
+.bcard .n { font: 800 24px/1.1 var(--p-sans); }
+.bcard .n.amb { color: var(--p-amber); }
+.bcard p { margin: 0; font-size: 13px; color: var(--p-ink2); }
+.cband { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.cband > div { padding: 0.8rem 1rem; border-right: 1px solid var(--p-line); display: grid; gap: 4px; }
+.cband > div:last-child { border-right: 0; }
+.hatch { height: 22px; border-radius: 4px; background: repeating-linear-gradient(135deg, rgba(70,55,30,0.08) 0 6px, transparent 6px 12px); width: 70%; }
+.progs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.pcard { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 0.9rem 1rem; display: grid; gap: 0.3rem; font-size: 13px; color: var(--p-ink2); }
+.pcard .tl { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink); display: flex; gap: 0.4rem; align-items: center; }
+/* calendar */
+/* the shipped ViewSwitch: one white track, 999px, 3px padding, 2px gap; the chosen view olive-soft, 34px high */
+.segc { display: inline-flex; gap: 2px; background: var(--p-card); border: 1px solid var(--p-line2); border-radius: 999px; padding: 3px; }
+.segc span { display: inline-flex; align-items: center; min-height: 34px; padding: 0 0.95rem; border-radius: 999px; color: var(--p-ink2); font: 600 14px/1 var(--p-sans); }
+.segc span.on { background: var(--p-olive-soft); color: var(--p-olive); }
+.dnav { display: inline-flex; align-items: center; gap: 0.25rem; }
+.dnav .ar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--p-line2); background: var(--p-card); color: var(--p-ink2); }
+.dnav b { font: 600 14px/1 var(--p-sans); padding: 0 0.45rem; white-space: nowrap; }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
+.day { min-height: 470px; border-radius: 8px; border: 1px solid var(--p-line); background: var(--p-card); padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.day.today { border-color: var(--p-olive); box-shadow: inset 0 2px 0 var(--p-olive); }
+.dh2 { font: 700 11px/1.25 var(--p-sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--p-ink2); padding: 0.15rem 0.1rem 0.25rem; }
+.day.today .dh2 { color: var(--p-olive); }
+.day .none { color: var(--p-dim); padding: 0 0.1rem; }
+.nextln { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin: 0 0 0.75rem; font-size: 14px; color: var(--p-ink2); }
+.nextln b { color: var(--p-ink); }
+.clist .dayh { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; padding: 0.65rem 0.95rem; border-bottom: 1px solid var(--p-line); font: 700 11px/1.25 var(--p-sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--p-ink2); background: var(--p-paper); }
+.clist .cr { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 0.75rem; padding: 0.65rem 0.95rem; border-bottom: 1px solid var(--p-line); font-size: 14px; align-items: center; }
+.clist .cr:last-child { border-bottom: 0; }
+.clist .cr .wg { color: var(--p-amber); display: inline-flex; vertical-align: -2px; margin-left: 0.35rem; }
+.clist .cr b { font-weight: 650; }
+.clist .cr small { display: block; }
+/* season health crop */
+.hl-card { padding: 1rem 1.1rem; display: grid; gap: 0.6rem; }
+.hl-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 0.6rem; font-size: 13.5px; align-items: start; padding: 0.55rem 0; border-top: 1px solid var(--p-line); }
+/* new schedule crop */
+.ftbl { border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; background: var(--p-card); }
+.ftbl .r { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 0.75rem; padding: 0 0.85rem; min-height: 38px; align-items: center; border-bottom: 1px solid var(--p-line); font-size: 13.5px; }
+.ftbl .r.g { background: var(--p-paper); }
+.ftbl .r.hd { font: 700 12px/1 var(--p-sans); letter-spacing: 0.05em; text-transform: uppercase; color: var(--p-ink2); min-height: 34px; }
+.ftbl .r .c { text-align: right; font-weight: 400; }
+.ftbl .r .c small { font-weight: 400; }
+.ftbl .r .nm { display: flex; gap: 0.55rem; align-items: center; }
+.ftbl .r .nm.in { padding-left: 1.4rem; }
+.ftbl .r.tot { font-weight: 700; border-top: 1px solid var(--p-line2); }
+.ftbl .note { padding: 0.5rem 0.85rem; font-size: 12.5px; color: var(--p-ink2); }
+/* a native 18px checkbox with accent-color olive */
+.ck { width: 18px; height: 18px; border-radius: 3px; background: var(--p-olive); display: grid; place-items: center; color: #fff; flex: none; }
+.ck.off { background: var(--p-card); border: 1.5px solid #767676; }
+.ck.part { background: var(--p-lime); }
+.hint { font-size: 12.5px; color: var(--p-dim); }
+
+/* phone */
+.fr.ph { display: grid; grid-template-rows: minmax(0, 1fr); }
+.ph .pbar { position: sticky; top: 0; z-index: 5; background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 0.45rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; min-height: 52px; }
+.ph .pbar .nm { font: 700 16px/1.2 var(--p-sans); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ph .gl { width: 44px; height: 44px; display: grid; place-items: center; color: var(--p-ink2); flex: none; margin-block: -4px; }
+.ph .ppad { padding: 0.9rem 1rem 100px; display: grid; gap: 0.75rem; align-content: start; }
+.bnav { position: absolute; left: 0; right: 0; bottom: 0; min-height: 72px; padding: 0.4rem 0 0.6rem; display: flex; justify-content: space-around; background: rgba(248,244,237,0.96); border-top: 1px solid var(--p-line); z-index: 7; }
+.bt { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.25rem; color: var(--p-dim); }
+.bt .w { width: 46px; height: 30px; border-radius: 999px; display: grid; place-items: center; }
+.bt.on { color: var(--p-olive); }
+.bt.on .w { background: var(--p-olive-soft); }
+.bt .lb { font: 700 10px/1 var(--p-sans); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 72px; top: 92px; background: var(--p-card); border-radius: 16px 16px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.18); z-index: 6; overflow: hidden; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.sheet .hdl { width: 40px; height: 4px; border-radius: 4px; background: var(--p-line2); margin: 8px auto 4px; }
+.sheet .sb { padding: 0.25rem 0 1rem; overflow: hidden; }
+.sheet .sg { font: 700 11px/1 var(--p-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim); padding: 0.85rem 1.1rem 0.35rem; min-height: 1.5rem; }
+.sheet .sr { display: flex; align-items: center; gap: 0.75rem; min-height: 46px; padding: 0 1.1rem; font-size: 15px; border-bottom: 1px solid var(--p-line); position: relative; }
+.sheet .sr .cv { margin-left: auto; color: var(--p-dim); }
+.sheet .tiles3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding: 0.5rem 1rem 0.25rem; }
+.sheet .tl3 { border: 1px solid var(--p-line); border-radius: 10px; padding: 0.7rem 0.4rem; display: grid; justify-items: center; gap: 0.35rem; font: 600 12.5px/1.2 var(--p-sans); text-align: center; color: var(--p-ink); }
+.sheet .tl3 svg { color: var(--p-olive); }
+.pdlg { position: absolute; inset: 0 0 0 0; background: var(--p-card); z-index: 8; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.pdlg .dh { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.6rem 0.5rem 0.6rem 1rem; border-bottom: 1px solid var(--p-line); }
+.pdlg .dh .tt { flex: 1; display: grid; gap: 3px; padding-top: 0.45rem; }
+.pdlg .dh .tt b { font-size: 16px; }
+.pdlg .db { padding: 0.9rem 1rem 1.5rem; display: grid; gap: 0.85rem; align-content: start; }
+.ph .notice li { grid-template-columns: 64px minmax(0, 1fr); }
+.ph .notice li .st2 { grid-column: 2; }
+.ph .notice .ndoors a { display: flex; align-items: center; min-height: 44px; border-top: 1px solid var(--p-line); justify-content: space-between; }
+.prow { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-card); padding: 0.55rem 0.85rem; font-size: 14px; }
+.pgrp { display: grid; gap: 2px; font-size: 14px; color: var(--p-dim); padding: 0.35rem 0.1rem; }
+.pgrp.today { color: var(--p-ink); font-weight: 700; }
+.ptool { display: flex; gap: 0.4rem; align-items: center; }
+.ptool .ib { width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; border: 1px solid var(--p-line2); background: var(--p-card); color: var(--p-ink2); flex: none; }
+.ptool .ib.dis { opacity: 0.45; }
+
+/* highlights and pins */
+.hl { position: relative; border-radius: 8px; }
+.hl.new { box-shadow: 0 0 0 2px var(--new); }
+.hl.re { box-shadow: 0 0 0 2px var(--re); }
+.hl.same { box-shadow: 0 0 0 1.5px dashed var(--same); outline: 1.5px dashed var(--same); outline-offset: 2px; box-shadow: none; }
+.hl.flash { animation: flash 1.2s ease-out 1; }
+@keyframes flash { 0%, 60% { background-color: rgba(45, 91, 134, 0.18); } 100% { background-color: transparent; } }
+.pin { position: absolute; top: -11px; left: -11px; z-index: 4; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; font: 700 11px/1 var(--doc-mono); color: #fff; background: var(--same); cursor: pointer; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.pin.new { background: #2D5B86; }
+.pin.re { background: #9A6418; }
+.pin.same { background: #6B7480; }
+span.hl { display: inline-flex; }
+.rail .pin, .sheet .pin, .clist .pin, .tiles .pin, .ptbl .pin, .lt .pin, .ftbl .pin { top: 2px; left: 2px; }
+@media (prefers-reduced-motion: reduce) { .hl.flash { animation: none; outline: 3px solid var(--accent); } * { scroll-behavior: auto !important; } }
+
+/* ═════════════ added for this drawing: windows drawn alone at true width, over a scrim ═════════════ */
+.cropbg { padding: 28px; background-color: #9C968C; background-image: linear-gradient(rgba(36,30,21,0.18), rgba(36,30,21,0.18)); border-radius: 10px; }
+.win { background: var(--p-card); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.22); display: grid; overflow: hidden; color: var(--p-ink); font: 14px/1.4 var(--p-sans); }
+.win .dh { display: flex; align-items: flex-start; gap: 0.75rem; padding: 1.1rem 1.5rem 0.9rem; border-bottom: 1px solid var(--p-line); }
+.win .dh .tt { flex: 1; display: grid; gap: 4px; }
+.win .dh .tt b { font-size: 17px; }
+.win .dh .idl { font-size: 13px; color: var(--p-dim); }
+.win .db { padding: 1rem 1.5rem 1.4rem; display: grid; gap: 1rem; align-content: start; }
+.win .df { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-top: 1px solid var(--p-line); font-size: 13px; color: var(--p-ink2); }
+.win .df .sp { flex: 1; }
+.sect { display: grid; gap: 0.85rem; }
+.sect > h4 { margin: 0; font-size: 16px; }
+.fld { display: grid; gap: 0.3rem; min-width: 0; align-content: start; }
+.fld > .lb { font-size: 13px; font-weight: 600; display: flex; gap: 0.5rem; align-items: baseline; }
+.fld .req { color: var(--p-red); }
+.ctl { min-height: 38px; border: 1px solid var(--p-line2); border-radius: 7px; background: rgba(70,55,30,0.05); padding: 0 0.7rem; display: flex; align-items: center; gap: 0.5rem; justify-content: space-between; font-size: 14px; color: var(--p-ink); white-space: nowrap; overflow: hidden; }
+.ctl .v { overflow: hidden; text-overflow: ellipsis; }
+.ctl.dimv { color: var(--p-dim); }
+.ctl.open { border-color: var(--p-olive); box-shadow: 0 0 0 2px var(--p-olive-soft); }
+.hnt { font-size: 12.5px; color: var(--p-dim); line-height: 1.4; }
+.pr2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; }
+.pr3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+.pmenu { border: 1px solid var(--p-line2); border-radius: 8px; background: var(--p-card); box-shadow: 0 10px 24px rgba(0,0,0,0.12); padding: 0.3rem 0; }
+.pmenu .po { display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.45rem 0.75rem; font-size: 14px; }
+.pmenu .po small { display: block; }
+.pmenu .sepl { height: 1px; background: var(--p-line); margin: 0.3rem 0; }
+.tk { width: 16px; height: 16px; border-radius: 3px; border: 1.5px solid #767676; flex: none; display: grid; place-items: center; margin-top: 2px; background: var(--p-card); }
+.tk.on { background: var(--p-olive); border-color: var(--p-olive); color: #fff; }
+.door2 { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--p-olive); font: 600 14px/1.2 var(--p-sans); white-space: nowrap; }
+.door2.sm { font-size: 13px; }
+.tgrp { border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; background: var(--p-card); }
+.tgrp .gh { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.85rem; background: var(--p-paper); border-bottom: 1px solid var(--p-line); font-size: 13px; color: var(--p-ink2); flex-wrap: wrap; }
+.tgrp .gh b { font-size: 13.5px; color: var(--p-ink); }
+.tgrp .gh .sp { flex: 1; }
+.trow { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) 96px 96px 30px; gap: 0.6rem; padding: 0.55rem 0.85rem; align-items: end; border-bottom: 1px solid var(--p-line); font-size: 13.5px; }
+.trow:last-child { border-bottom: 0; }
+.trow .pl { align-self: center; }
+.trow .pl b { display: block; font-size: 13.5px; }
+.trow .ctl { min-height: 34px; font-size: 13.5px; }
+.xg { width: 30px; height: 34px; display: grid; place-items: center; color: var(--p-dim); }
+.chp { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.32rem 0.7rem; border-radius: 999px; border: 1px solid var(--p-line2); background: var(--p-card); font: 600 13px/1.2 var(--p-sans); color: var(--p-ink2); white-space: nowrap; }
+.chp.on { background: var(--p-olive-soft); border-color: rgba(87,101,30,0.45); color: var(--p-olive); }
+.chps { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.flt { display: grid; grid-template-columns: 1.15fr 1.25fr 1fr; gap: 0.75rem 1rem; padding: 0.85rem; border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-paper); }
+.flt .wide { grid-column: 1 / -1; }
+.frows { border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; background: var(--p-card); }
+.frows .fh, .frows .fr2 { display: grid; grid-template-columns: 26px minmax(0, 1.05fr) minmax(0, 1.05fr) minmax(0, 1.4fr); gap: 0.6rem; padding: 0.6rem 0.85rem; align-items: start; }
+.frows .fh { font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); border-bottom: 1px solid var(--p-line); min-height: 36px; align-items: center; }
+.frows .fh .rt, .frows .fr2 .rt { text-align: right; justify-self: end; }
+.frows .fr2 { border-bottom: 1px solid var(--p-line); font-size: 13.5px; min-height: 52px; }
+.frows .fr2:last-child { border-bottom: 0; }
+.frows .fr2 b { display: block; font-weight: 650; }
+.frows .fr2 small { display: block; }
+.frows .fr2.gone { background: repeating-linear-gradient(135deg, rgba(70,55,30,0.05) 0 6px, transparent 6px 12px); }
+.frows .fr2.gone > * { opacity: 0.38; }
+.frows .fr2 .amb { font-size: 12px; font-weight: 600; }
+.frows .count { padding: 0.5rem 0.85rem; font-size: 12.5px; color: var(--p-ink2); background: var(--p-paper); border-bottom: 1px solid var(--p-line); display: flex; justify-content: space-between; gap: 0.5rem; }
+.stmt { border: 1px solid var(--p-line); border-left: 3px solid var(--p-olive); border-radius: 8px; padding: 0.7rem 0.9rem; font-size: 13.5px; background: var(--p-card); display: grid; gap: 0.3rem; }
+.stmt b { font-weight: 650; }
+.stmt.warn { border-left-color: var(--p-amber); }
+.stmt p { margin: 0; color: var(--p-ink2); }
+.empt { border: 1px dashed var(--p-line2); border-radius: 10px; padding: 1.4rem 1rem; text-align: center; display: grid; gap: 0.5rem; justify-items: center; color: var(--p-ink2); font-size: 14px; background: var(--p-card); }
+.empt b { color: var(--p-ink); }
+.bt2 { width: 100%; border-collapse: collapse; font-size: 13.5px; background: var(--p-card); }
+.bt2 th { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--p-line); white-space: nowrap; }
+.bt2 td { padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--p-line); vertical-align: top; }
+.bt2 .n { text-align: right; white-space: nowrap; }
+.bt2 td small { display: block; }
+.bt2 tr.tot td { font-weight: 700; border-top: 1px solid var(--p-line2); border-bottom: 0; }
+.bt2 tr.gp td { background: var(--p-paper); font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); }
+.bwrap { border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.closing { font-size: 13px; color: var(--p-ink2); margin: -0.4rem 0 0; }
+.up { color: var(--p-red); font-weight: 600; }
+.dn { color: var(--p-good); font-weight: 600; }
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+.cmp > div > .mono { display: block; margin-bottom: 0.4rem; }
+.tmenu { width: 340px; border: 1px solid var(--p-line2); border-radius: 10px; background: var(--p-card); box-shadow: 0 14px 34px rgba(0,0,0,0.16); padding: 0.35rem 0; position: absolute; right: 0; top: 44px; z-index: 6; }
+.tmenu .mi { display: grid; gap: 2px; padding: 0.5rem 0.9rem; font-size: 14px; }
+.tmenu .mi small { font-size: 12px; }
+.tmenu .mi.on { background: var(--p-olive-soft); }
+.tmenu .sepl { height: 1px; background: var(--p-line); margin: 0.3rem 0; }
+.ppick { display: inline-flex; flex-wrap: wrap; gap: 0.3rem 0.5rem; align-items: baseline; }
+.lnk2 { color: var(--p-olive); font-weight: 600; }
+.mband { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border: 1px solid var(--p-line2); border-radius: 10px; overflow: hidden; background: var(--p-card); }
+.mband > div { padding: 0.7rem 0.9rem; border-right: 1px solid var(--p-line); display: grid; gap: 3px; }
+.mband > div:last-child { border-right: 0; }
+.mband .big { font: 700 20px/1.15 var(--p-sans); }
+.prow2 { display: flex; align-items: center; gap: 0.6rem; min-height: 52px; padding: 0.5rem 0.85rem; border-bottom: 1px solid var(--p-line); font-size: 14px; }
+.prow2:last-child { border-bottom: 0; }
+.prow2 .lbx { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.prow2 .fig { font-weight: 700; }
+.prow2 .cv { color: var(--p-dim); }
+.vchk { display: grid; gap: 0; border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.vchk .vr2 { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--p-line); font-size: 14px; }
+.vchk .vr2:last-child { border-bottom: 0; }
+.vchk .vr2 small { display: block; }
+.offrow { display: grid; grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr) 30px; gap: 0.6rem; align-items: start; }
+.offrow .ctl { min-height: 36px; }
+.atp { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 36px; padding: 0 0.7rem; border: 1px solid var(--p-line2); border-radius: 7px; background: rgba(70,55,30,0.05); font-size: 13.5px; color: var(--p-ink); white-space: nowrap; overflow: hidden; }
+.atp .k { color: var(--p-dim); }
+.offsrc { grid-column: 1 / -1; font-size: 12px; color: var(--p-dim); margin-top: -0.3rem; }
+.relpos { position: relative; }
+.whoT { min-width: 940px; }
+/* a highlight inside a window keeps its label clear of the pin: the ring grows outward, the content does not move */
+.win .db .hl.new, .win .db .hl.re, .win .db .hl.same { padding: 5px 6px 5px 16px; margin: -5px -6px -5px -16px; }
+.win .frows .hl, .win .vchk .hl, .win .bwrap .hl { padding: 0; margin: 0; }
+.frows .pin, .vchk .pin, .na .pin, .bt2 .pin { top: 4px; left: 4px; }
+.nt .tag { align-self: start; }
+.lt .lr { grid-template-columns: 230px 170px 1fr auto; }
+.ptop { display: grid; border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-card); overflow: hidden; }
+.ptop .k { font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); padding: 0.7rem 0.85rem 0.3rem; }
+.ptop .dr2 { display: flex; align-items: center; min-height: 44px; padding: 0 0.85rem; border-top: 1px solid var(--p-line); color: var(--p-olive); font-weight: 600; font-size: 14px; }
+.ptop .dr2 .cv { margin-left: auto; color: var(--p-dim); }
+.ptop .fact { padding: 0.5rem 0.85rem 0.7rem; border-top: 1px solid var(--p-line); font-size: 13px; color: var(--p-ink2); }
+.offrow { grid-template-columns: 184px minmax(0, 1fr) minmax(0, 1fr) 30px; }
+@media (max-width: 760px) { .cmp { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<div class="doc">
+  <header class="dochead">
+    <span class="eyebrow">Club Tier · A schedule on several permits · drawing round 1, 2026-11-13</span>
+    <h1>A schedule on several permits</h1>
+    <p>One spring season on two towns’ permits, a fourth month added after it was sent, time found by narrowing, dates off by park, and a bill priced per permit or at one rate. Drawn on one fixture: Harbourtown Minor Ball, four rep teams and a house league. Every figure below is computed on this page from that fixture. Windows are drawn alone at true width (New schedule and the bill 800 px, Send 520 px); the schedule page is a 1440 × 900 laptop; the phone is 390 × 844. Stage 13d is not built yet, so its treasurer view is drawn from its ruled plan.</p>
+  </header>
+  <nav class="stabs" role="tablist" aria-label="Sections" id="stabs"></nav>
+  <div class="viewrow" id="viewrow"></div>
+  <main id="main"></main>
+</div>
+
+<script>
+(function () {
+  var KEY = 'severalPermitsDrawings1';
+  var S = { tab: 'pick', mode: 'after', view: 'all', size: 'fit', scr: {} };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || '{}'); for (var k in saved) if (k in S) S[k] = saved[k]; } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+  var TABS = [['fixture', '0 · The fixture'], ['pick', '1 · Several permits'], ['find', '2 · Find the time'], ['add', '3 · Add time'], ['off', '4 · Dates off by park'],
+    ['bill', '5 · Price the time'], ['tops', '6 · The tops'], ['reach', '7 · What it reaches'], ['asks', '8 · Asks']];
+
+  var P = {
+    arrowL: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+    chevD: '<path d="m6 9 6 6 6-6"/>', chevR: '<path d="m9 18 6-6-6-6"/>', chevL: '<path d="m15 18-6-6 6-6"/>',
+    globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+    bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
+    grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    list: '<path d="M3 3v18h18"/><path d="M7 15h4M7 11h8M7 7h11"/>',
+    permit: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M12 15v4"/>',
+    dollar: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    family: '<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3 21v-1a5 5 0 0 1 10 0v1M14 21v-1a3 3 0 0 1 6 0v1"/>',
+    building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
+    house: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+    help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>',
+    panel: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',
+    dots: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>', x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    warn: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+    pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>', down: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+    refresh: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/>', filter: '<path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>',
+    calClock: '<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4M8 2v4M3 10h5"/><circle cx="16" cy="16" r="6"/><path d="M16 14v2l1 1"/>',
+    calDays: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',
+    arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'
+  };
+  function ic(n, size, sw) { size = size || 16; sw = sw || 1.8;
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[n] + '</svg>'; }
+  var LOGO = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v4H9.5v3H17v4H9.5v7H5z" fill="#57651E"/></svg>';
+  var CLUB = 'Harbourtown Minor Ball';
+  var A = S.mode === 'after';
+
+  /* ── highlight helpers ── */
+  function hl(n, kind, html, tag, extra) { tag = tag || 'div';
+    return '<' + tag + ' class="hl ' + kind + (extra ? ' ' + extra : '') + '" data-k="' + n + '"><button type="button" class="pin ' + kind + '" data-pin="' + n + '" aria-label="Note ' + n + '">' + n + '</button>' + html + '</' + tag + '>'; }
+  function same(html) { return '<div data-same>' + html + '</div>'; }
+
+  /* ── desktop chrome ── */
+  function strip(o) {
+    var name = (o.back ? '<span class="back">' + ic('arrowL', 15) + o.back + '</span><i class="vr"></i>' : '') + '<span class="pn">' + o.name + '</span>' + (o.chip || '');
+    return '<div class="strip"' + (o.hlStrip ? '' : ' data-same') + '><span class="lcell"><span class="brand">' + LOGO + 'FieldLogicHQ</span><i class="sdiv"></i><span class="area">Admin</span></span>' +
+      '<span class="rcell"><span class="place">' + (o.hlStrip ? hl(o.hlStrip, 'new', name, 'span') : name) + '</span><span class="doors"><span class="pill">' + ic('globe', 15) + 'View site</span><span class="door">' + ic('bell', 16) + '</span><span class="door">' + ic('user', 17) + '</span></span></span></div>';
+  }
+  function railRows(role, on, permits, pinN) {
+    function it(key, icon, label, cnt) {
+      var cls = 'it' + (on === key ? ' on' : '');
+      var inner = ic(icon, 14) + label + (cnt ? '<span class="cnt">' + cnt + '</span>' : '');
+      if (key === 'permits' && permits === 'new') return hl(pinN || 1, 'new', '<div class="' + cls + '">' + inner + '</div>');
+      return '<div class="' + cls + '" data-same>' + inner + '</div>';
+    }
+    var withP = permits === 'new' || permits === 'plain';
+    var pc = (role === 'owner' || role === 'admin') ? null : null;
+    var r = [];
+    if (role === 'owner' || role === 'admin') {
+      r.push(it('overview', 'grid', 'Overview'), it('calendar', 'calClock', 'Calendar'));
+      if (withP) r.push(it('permits', 'permit', 'Permits', pc));
+      r.push(it('schedules', 'list', 'Schedules'));
+      r.push('<div class="sec" data-same>Programs</div>', it('rep', 'users', 'Rep teams'), it('hl', 'calDays', 'House league'), it('tour', 'trophy', 'Tournaments'));
+      r.push('<div class="sec" data-same>Club</div>', it('acc', 'dollar', 'Accounting', '3'));
+      if (role === 'owner') r.push(it('fam', 'family', 'Families'));
+      r.push(it('pub', 'globe', 'Public site'), it('org', 'building', 'Organization'));
+    } else if (role === 'treasurer') {
+      r.push(it('overview', 'grid', 'Overview'));
+      if (withP) r.push(it('permits', 'permit', 'Permits'));
+      r.push('<div class="sec" data-same>Club</div>', it('acc', 'dollar', 'Accounting', '3'), it('org', 'building', 'Organization'));
+    } else if (role === 'league') {
+      r.push(it('overview', 'grid', 'Overview'), it('calendar', 'calClock', 'Calendar'));
+      if (withP) r.push(it('permits', 'permit', 'Permits'));
+      r.push('<div class="sec" data-same></div>', it('hl', 'calDays', 'House league'), '<div class="sec" data-same></div>', it('org', 'building', 'Organization'));
+    }
+    var foot = '<div class="foot" data-same>' + (role === 'owner' ? '<div class="it">' + ic('card', 14) + 'Plan &amp; billing</div>' : '') + '<div class="it">' + ic('help', 14) + 'Help</div><div class="it">' + ic('panel', 14) + 'Collapse sidebar</div></div>';
+    return '<aside class="rail"><div class="clubhead" data-same>' + ic('building', 16) + '<span>' + CLUB + '</span></div>' + r.join('') + foot + '</aside>';
+  }
+  function desk(o) {
+    return '<div class="fr desk" style="width:1440px;height:' + (o.h || 900) + 'px">' + strip(o.strip) +
+      '<div class="dbody">' + railRows(o.role, o.on, o.permits, o.railPin) + '<div class="sc ground">' + (o.band || '') + '<div class="pad">' + o.body + '</div></div></div>' +
+      (o.overlay ? '<div class="scrim"></div>' + o.overlay : '') + (o.extra || '') + '</div>';
+  }
+  function band(tabs, onKey, pinN, kind) {
+    var row = '<div class="tabrow">' + tabs.map(function (t) { return '<span class="tab' + (t === onKey ? ' on' : '') + '">' + t + '</span>'; }).join('') + '</div>';
+    return '<div class="tb">' + (pinN ? hl(pinN, kind || 'new', row) : '<div data-same>' + row + '</div>') + '</div>';
+  }
+
+  /* ── phone chrome ── */
+  function phone(o) {
+    var bar = o.role === 'treasurer' ? [['grid', 'Overview'], ['dollar', 'Accounting'], ['more', 'More']] :
+      o.role === 'league' ? [['grid', 'Overview'], ['cal', 'Calendar'], ['house', 'House league'], ['more', 'More']] :
+      [['grid', 'Overview'], ['cal', 'Calendar'], ['users', 'Rep teams'], ['dollar', 'Accounting'], ['more', 'More']];
+    var nav = '<nav class="bnav" data-same>' + bar.map(function (b) { return '<span class="bt' + (b[1] === o.on ? ' on' : '') + '"><span class="w">' + ic(b[0], 19) + '</span><span class="lb">' + b[1] + '</span></span>'; }).join('') + '</nav>';
+    return '<div class="fr ph" style="width:390px;height:844px"><div class="sc ground"><div class="pbar" data-same>' + (o.back ? '<span class="gl">' + ic('arrowL', 18) + '</span>' : '') + '<span class="nm">' + o.name + '</span><span class="gl">' + ic('bell', 18) + '</span></div><div class="ppad">' + o.body + '</div></div>' + (o.overlay || '') + nav + '</div>';
+  }
+
+  P.search = '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>';
+  P.trash = '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>';
+
+  /* ════════════ THE FIXTURE — every figure on this page is computed here ════════════ */
+  var DAY = 864e5;
+  function D(s) { return Date.parse(s + 'T12:00:00Z'); }
+  function iso(t) { return new Date(t).toISOString().slice(0, 10); }
+  function wdOf(t) { return new Date(t).getUTCDay(); }
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var WDS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var WDL = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
+  function md(s) { var d = new Date(D(s)); return MON[d.getUTCMonth()] + ' ' + d.getUTCDate(); }
+  function wmd(s) { return WDS[wdOf(D(s))] + ', ' + md(s); }
+  function fullD(s) { return wmd(s) + ', ' + new Date(D(s)).getUTCFullYear(); }
+  function range(a, b) { return md(a) + ' – ' + md(b) + ', ' + new Date(D(b)).getUTCFullYear(); }
+  function money(c) { var neg = c < 0; c = Math.abs(Math.round(c)); var d = Math.floor(c / 100), r = c % 100;
+    return (neg ? '−' : '') + '$' + String(d).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + (r < 10 ? '0' : '') + r; }
+  function tm(m) { var h = Math.floor(m / 60), mi = m % 60; return ((h % 12) || 12) + ':' + (mi < 10 ? '0' : '') + mi + ' ' + (h >= 12 ? 'p.m.' : 'a.m.'); }
+  function span(a, b) { var A = tm(a), B = tm(b), sa = A.split(' '), sb = B.split(' '); return sa[1] === sb[1] ? sa[0] + '–' + B : A + '–' + B; }
+  function hrs(min) { return String(Math.round(min / 6) / 10).replace(/\.0$/, '') + ' h'; }
+  function pl(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  function list(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+  function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
+  function days(a, b, fn) { for (var t = D(a); t <= D(b); t += DAY) fn(iso(t), wdOf(t)); }
+
+  var CLUBNAME = 'Harbourtown Minor Ball';
+  var SCHED = 'Spring rep practices 2027';
+  var HL = 'Spring house league 2027';
+  var TODAY1 = '2027-02-01', TODAY2 = '2027-05-10';
+  var FAC = {
+    KA: { n: 'Diamond A', v: 'Kinsmen Park', k: 'diamond' }, KB: { n: 'Diamond B', v: 'Kinsmen Park', k: 'diamond' },
+    LF: { n: 'Field 1', v: 'Lions Park', k: 'field' },
+    P1: { n: 'Diamond 1', v: 'Prospect Park', k: 'diamond' }, P2: { n: 'Diamond 2', v: 'Prospect Park', k: 'diamond' },
+    GYM: { n: 'Gym', v: 'Harbourtown Secondary', k: 'gym' }
+  };
+  var KIND = { diamond: 'Diamonds', field: 'Fields', gym: 'Gyms' };
+  /* blocks: [facilities, weekdays, start, end] in minutes; rate = what the permit charges a full field, an hour; cost = rate × held hours */
+  var PM = {
+    A: { name: 'Milton spring 2027', issuer: 'Town of Milton', ref: 'P-2027-0412', from: '2027-03-02', to: '2027-05-29', rate: 40, off: [['2027-03-27', 'Easter weekend']],
+      blocks: [[['KA', 'KB'], [2, 4], 1080, 1200], [['KA', 'KB'], [6], 540, 780], [['LF'], [2], 1080, 1260]] },
+    B: { name: 'Halton Hills spring 2027', issuer: 'Town of Halton Hills', ref: 'HH-27-118', from: '2027-04-05', to: '2027-06-25', rate: 60, off: [['2027-05-24', 'Victoria Day']],
+      blocks: [[['P1', 'P2'], [1, 3], 1080, 1200], [['P1'], [4], 1200, 1320]] },
+    C: { name: 'Milton June 2027', issuer: 'Town of Milton', ref: 'P-2027-0688', from: '2027-05-25', to: '2027-06-30', rate: 50, off: [],
+      blocks: [[['KA', 'KB'], [2, 4], 1080, 1200], [['LF'], [2], 1080, 1260]] },
+    G: { name: 'School gym, winter 2027', issuer: 'Halton District School Board', ref: 'HDSB-W27-31', from: '2027-01-11', to: '2027-03-26', rate: null, off: [['2027-02-15', 'Family Day']],
+      blocks: [[['GYM'], [1, 3], 1140, 1260]] }
+  };
+  function isOff(p, ds) { return p.off.some(function (o) { return o[0] === ds; }); }
+  function facsOf(b) { return b[0].map(function (f) { return FAC[f].n; }); }
+  function placeOf(b) { return FAC[b[0][0]].v + ' · ' + list(facsOf(b)); }
+  function venuesOf(pk) { var v = []; PM[pk].blocks.forEach(function (b) { b[0].forEach(function (f) { if (v.indexOf(FAC[f].v) < 0) v.push(FAC[f].v); }); }); return v; }
+  function heldMin(pk) { var p = PM[pk], m = 0; days(p.from, p.to, function (ds, w) { if (isOff(p, ds)) return; p.blocks.forEach(function (b) { if (b[1].indexOf(w) >= 0) m += b[0].length * (b[3] - b[2]); }); }); return m; }
+  function costC(pk) { return PM[pk].rate == null ? null : Math.round(PM[pk].rate * heldMin(pk) / 60 * 100); }
+  function rateC(pk) { return PM[pk].rate * 100; }
+  function daysWords(ws) { var n = ws.map(function (w) { return WDS[w]; }); return n.join(', '); }
+
+  var TEAMS = ['11U AA', '13U AA', '13U AAA', '15U AA'];
+  /* the season as the generator handed it out: [permit, weekday, facility, start, end, team, from?, to?] — 2-hour practices, one team a diamond */
+  var PAT = [
+    ['A', 2, 'KA', 1080, 1200, '11U AA'], ['A', 2, 'KB', 1080, 1200, '13U AA'],
+    ['A', 4, 'KA', 1080, 1200, '13U AAA', null, '2027-04-04'], ['A', 4, 'KB', 1080, 1200, '15U AA', null, '2027-04-04'],
+    ['A', 4, 'KA', 1080, 1200, '11U AA', '2027-04-05'], ['A', 4, 'KB', 1080, 1200, '13U AAA', '2027-04-05'],
+    ['B', 1, 'P1', 1080, 1200, '15U AA'], ['B', 1, 'P2', 1080, 1200, '13U AA'], ['B', 3, 'P1', 1080, 1200, '15U AA'], ['B', 3, 'P2', 1080, 1200, '13U AAA'],
+    ['B', 4, 'P1', 1200, 1320, '15U AA']
+  ];
+  /* the fourth month, added on May 10 from Milton June 2027 (Kinsmen only; its Lions Park row is taken out) */
+  var PAT_C = [['C', 2, 'KA', 1080, 1200, '11U AA', '2027-06-01'], ['C', 4, 'KA', 1080, 1200, '11U AA', '2027-06-01'],
+    ['C', 2, 'KB', 1080, 1200, '13U AA', '2027-06-01'], ['C', 4, 'KB', 1080, 1200, '13U AAA', '2027-06-01']];
+  function slotsOf(pat) { var out = []; pat.forEach(function (r) { var p = PM[r[0]]; var a = r[6] || p.from, b = r[7] || p.to;
+    if (D(a) < D(p.from)) a = p.from; if (D(b) > D(p.to)) b = p.to;
+    days(a, b, function (ds, w) { if (w !== r[1] || isOff(p, ds)) return; out.push({ d: ds, f: r[2], s: r[3], e: r[4], team: r[5], p: r[0] }); }); }); return out; }
+  var SL = slotsOf(PAT), SLC = slotsOf(PAT_C);
+
+  /* the split: largest remainder, ties to the earlier team (lib/club-bill-split.ts shareCents) */
+  function shareCents(total, w) { var W = sum(w); if (W <= 0) return w.map(function () { return 0; });
+    var raw = w.map(function (x) { return total * x / W; }), fl = raw.map(Math.floor), left = total - sum(fl);
+    var idx = raw.map(function (r, i) { return [r - Math.floor(r), i]; }).sort(function (a, b) { return b[0] - a[0] || a[1] - b[1]; });
+    for (var i = 0; i < left; i++) fl[idx[i][1]]++; return fl; }
+  var PERIODS = [['2027-03-01', '2027-04-30'], ['2027-05-01', '2027-06-30']];
+  function tally(slots) { var t = {}; TEAMS.forEach(function (n) { t[n] = { min: 0, val: 0, by: {}, n: 0, nBy: {}, per: [0, 0], perMin: [0, 0] }; });
+    slots.forEach(function (s) { var m = s.e - s.s, x = t[s.team], v = m / 60 * rateC(s.p); x.min += m; x.n++; x.val += v;
+      x.by[s.p] = (x.by[s.p] || 0) + m; x.nBy[s.p] = (x.nBy[s.p] || 0) + 1; var pi = D(s.d) < D(PERIODS[1][0]) ? 0 : 1; x.per[pi] += v; x.perMin[pi] += m; });
+    return t; }
+  /* mode 'each' = each permit's price (shares by priced dollars); 'one' = one rate for all (shares by priced time). Same total either way (P1). */
+  function bill(slots, mode, amount) { var t = tally(slots), M = sum(TEAMS.map(function (n) { return t[n].min; })), V = sum(TEAMS.map(function (n) { return t[n].val; }));
+    var timePrice = Math.round(V), total = amount != null ? amount : timePrice;
+    var sh = shareCents(total, TEAMS.map(function (n) { return mode === 'one' ? t[n].min : t[n].val; }));
+    var o = { t: t, M: M, timePrice: timePrice, total: total, rateHour: timePrice / (M / 60), shares: {}, inst: {} };
+    TEAMS.forEach(function (n, i) { o.shares[n] = sh[i]; o.inst[n] = shareCents(sh[i], mode === 'one' ? t[n].perMin : t[n].per); });
+    return o; }
+  var B_EACH = bill(SL, 'each'), B_ONE = bill(SL, 'one');
+  var PART = 800000, BP_EACH = bill(SL, 'each', PART), BP_ONE = bill(SL, 'one', PART);
+  var PERMITS_COST = costC('A') + costC('B');
+  var ONE_RATE_MIN = B_EACH.timePrice / B_EACH.M; // cents per full-field minute, stored as the one rate
+  /* a correction at stored rates: each permit's price → that permit's rate; one rate → the stored one rate (sharesAtRate) */
+  function correction(slots, mode) { var t = tally(slots), mins = TEAMS.map(function (n) { return t[n].min; });
+    if (mode === 'one') { var tot = Math.round(sum(mins) * ONE_RATE_MIN); return { t: t, total: tot, sh: shareCents(tot, mins) }; }
+    var vals = TEAMS.map(function (n) { return t[n].val; }), tot2 = Math.round(sum(vals)); return { t: t, total: tot2, sh: shareCents(tot2, vals) }; }
+  var COR_EACH = correction(SLC, 'each'), COR_ONE = correction(SLC, 'one');
+  var C_TIME_COST = Math.round(sum(SLC.map(function (s) { return (s.e - s.s) / 60 * rateC('C'); })));
+  var PAST = SL.filter(function (s) { return D(s.d) < D(TODAY2); }).length;
+  var HH_LEFT = SL.filter(function (s) { return s.p === 'B' && D(s.d) >= D(TODAY2); });
+  var HH_PAST = SL.filter(function (s) { return s.p === 'B' && D(s.d) < D(TODAY2); }).length;
+  var CRED_EACH = correction(HH_LEFT, 'each'), CRED_ONE = correction(HH_LEFT, 'one');
+
+  /* other bookings the finder subtracts: [facility, from, to, weekday, start, end, by, draft?] */
+  var BOOK = [
+    ['GYM', '2027-01-11', '2027-03-26', 1, 1140, 1260, 'Winter gym practices 2027', false],
+    ['KA', '2027-03-02', '2027-03-02', 2, 1080, 1200, 'Spring tryouts 2027', false],
+    ['KA', '2027-03-04', '2027-03-04', 4, 1080, 1200, 'Spring tryouts 2027', false],
+    ['KA', '2027-03-06', '2027-05-29', 6, 540, 780, HL, true], ['KB', '2027-03-06', '2027-05-29', 6, 540, 780, HL, true],
+    ['KB', '2027-04-08', '2027-04-29', 4, 1080, 1200, HL, true]
+  ];
+  function bookOn(fac, ds, draft, extra) { var w = wdOf(D(ds)), out = [];
+    BOOK.forEach(function (b) { if (b[0] === fac && b[7] === draft && b[3] === w && D(ds) >= D(b[1]) && D(ds) <= D(b[2])) out.push([b[4], b[5], b[6]]); });
+    if (!draft && extra) extra.forEach(function (s) { if (s.f === fac && s.d === ds) out.push([s.s, s.e, SCHED]); });
+    return out; }
+  function minus(ivs, bks) { var cur = ivs.slice(); bks.forEach(function (b) { var nx = []; cur.forEach(function (iv) {
+    if (b[1] <= iv[0] || b[0] >= iv[1]) { nx.push(iv); return; } if (b[0] > iv[0]) nx.push([iv[0], b[0]]); if (b[1] < iv[1]) nx.push([b[1], iv[1]]); }); cur = nx; }); return cur; }
+  function longest(ivs) { return ivs.reduce(function (m, iv) { return Math.max(m, iv[1] - iv[0]); }, 0); }
+  /* THE FINDER: every facility the club holds on any permit in the window, minus the permits' dates off, minus what is booked,
+     with other schedules' drafts counted as taken and named (P7). One row per facility; a day two permits both hold is listed once (P4). */
+  function finder(f) { var rows = {}, order = [];
+    f.permits.forEach(function (pk) { var p = PM[pk]; p.blocks.forEach(function (b) { b[0].forEach(function (fac) {
+      if (f.kinds && f.kinds.indexOf(FAC[fac].k) < 0) return;
+      var a = D(f.from) > D(p.from) ? f.from : p.from, z = D(f.to) < D(p.to) ? f.to : p.to; if (D(a) > D(z)) return;
+      days(a, z, function (ds, w) { if (b[1].indexOf(w) < 0 || (f.days && f.days.indexOf(w) < 0) || isOff(p, ds)) return;
+        var s = b[2], e = b[3]; if (f.s != null) { s = Math.max(s, f.s); e = Math.min(e, f.e); } if (e - s < f.min) return;
+        var r = rows[fac]; if (!r) { r = rows[fac] = { fac: fac, permits: [], days: {}, pat: {} }; order.push(fac); }
+        if (r.permits.indexOf(pk) < 0) r.permits.push(pk);
+        var dr = r.days[ds] || (r.days[ds] = { iv: [], ps: [] }); if (dr.ps.indexOf(pk) < 0) dr.ps.push(pk);
+        if (!dr.iv.some(function (iv) { return iv[0] === s && iv[1] === e; })) dr.iv.push([s, e]);
+        var key = s + '|' + e; r.pat[key] = r.pat[key] || []; if (r.pat[key].indexOf(w) < 0) r.pat[key].push(w); }); }); }); });
+    return order.map(function (fac) { var r = rows[fac]; r.held = 0; r.free = 0; r.draft = 0; r.draftBy = null; r.freeMin = 0; r.both = [];
+      Object.keys(r.days).sort().forEach(function (ds) { var dr = r.days[ds]; r.held++;
+        var free = minus(dr.iv, bookOn(r.fac, ds, false, f.extra)); if (longest(free) < f.min) return;
+        var free2 = minus(free, bookOn(r.fac, ds, true)); if (longest(free2) >= f.min) { r.free++; r.freeMin += sum(free2.map(function (iv) { return iv[1] - iv[0]; })); if (dr.ps.length > 1) r.both.push(ds); }
+        else { r.draft++; r.draftBy = bookOn(r.fac, ds, true)[0][2]; } });
+      var keys = Object.keys(r.pat).sort(function (a, b) { return Math.min.apply(null, r.pat[a]) - Math.min.apply(null, r.pat[b]); });
+      r.words = keys.map(function (k) { var se = k.split('|').map(Number); return r.pat[k].sort().map(function (w) { return WDS[w]; }).join(' & ') + ' ' + span(se[0], se[1]); }).join(' · ');
+      r.evening = keys.every(function (k) { return +k.split('|')[0] >= 1020; });
+      return r; }); }
+  var F_BASE = { from: TODAY1, to: '2027-04-30', days: null, s: null, e: null, kinds: null, min: 60, permits: ['A', 'B', 'G'] };
+  function fx(o) { var r = {}; for (var k in F_BASE) r[k] = F_BASE[k]; for (var j in o) r[j] = o[j]; return r; }
+  var FSTEPS = [fx({}), fx({ days: [2, 4] }), fx({ days: [2, 4], s: 1080, e: 1200 }), fx({ days: [2, 4], s: 1080, e: 1200, kinds: ['diamond'] })];
+  var F_NONE = fx({ days: [5, 0] });
+  var F_MAY = { from: TODAY2, to: '2027-06-30', days: [2, 4], s: 1080, e: 1200, kinds: null, min: 60, permits: ['A', 'B', 'C'], extra: SL };
+
+  /* ════════════ SPECIMEN PIECES (drawn from the shipped components) ════════════ */
+  function win(o) {
+    return '<div class="win" style="width:' + (o.w || 800) + 'px">' +
+      '<div class="dh"' + (o.hlHead ? '' : ' data-same') + '>' + (o.back ? '<span class="door" style="margin:-4px 0 0 -8px">' + ic('arrowL', 18) + '</span>' : '') +
+      '<span class="tt"><span class="mono">' + o.eyebrow + '</span><b>' + o.title + '</b>' + (o.idl ? '<span class="idl">' + o.idl + '</span>' : '') + '</span><span class="door">' + ic('x', 18) + '</span></div>' +
+      '<div class="db">' + o.body + '</div>' +
+      (o.foot ? '<div class="df"' + (o.footSame ? ' data-same' : '') + '><span>' + (o.footStart || '') + '</span><span class="sp"></span>' + o.foot + '</div>' : '') + '</div>';
+  }
+  function crop(inner, w) { return '<div class="fr crop cropbg" style="width:' + ((w || 800) + 56) + 'px">' + inner + '</div>'; }
+  function fld(label, inner, hint, req) { return '<div class="fld"><span class="lb">' + label + (req ? '<span class="req">*</span>' : '') + '</span>' + inner + (hint ? '<span class="hnt">' + hint + '</span>' : '') + '</div>'; }
+  function sel(v, cls) { return '<div class="ctl' + (cls ? ' ' + cls : '') + '"><span class="v">' + v + '</span>' + ic('chevD', 14) + '</div>'; }
+  function dt(v) { return '<div class="ctl"><span class="v">' + v + '</span>' + ic('cal', 14) + '</div>'; }
+  function tx(v, dim) { return '<div class="ctl' + (dim ? ' dimv' : '') + '"><span class="v">' + v + '</span></div>'; }
+  function btn(t, k) { return '<span class="btn ' + (k || 'out') + '">' + t + '</span>'; }
+  function tick(on) { return '<span class="tk' + (on ? ' on' : '') + '">' + (on ? ic('check', 11, 3) : '') + '</span>'; }
+  function addDoor(t) { return '<span class="door2 sm">' + ic('plus', 14) + t + '</span>'; }
+
+  /* time rows: one card per permit (its place shown on each row), then any typed here */
+  function timeRows(b, pk) { return '<div class="trow"><span class="pl"><b>' + placeOf(b) + '</b></span>' + fld('Days', sel(daysWords(b[1])), '', true) +
+    fld('From', tx(tm(b[2])), '', true) + fld('Until', tx(tm(b[3])), '', true) + '<span class="xg">' + ic('x', 15) + '</span></div>'; }
+  function permitGroup(pk, o) { o = o || {}; var p = PM[pk];
+    var bl = o.blocks ? o.blocks.map(function (i) { return p.blocks[i]; }) : p.blocks;
+    var dates = o.from ? range(o.from, o.to) : range(p.from, p.to);
+    return '<div class="tgrp"><div class="gh"><b>' + p.name + '</b><span>' + p.issuer + '</span><span>·</span><span>' + dates + '</span>' +
+      (o.note ? '<span class="sp"></span><span class="amb" style="font-weight:600">' + o.note + '</span>' : '') + '</div>' + bl.map(function (b) { return timeRows(b, pk); }).join('') + '</div>'; }
+  function typedGroup(title, rows) { return '<div class="tgrp"><div class="gh"><b>' + title + '</b></div>' + rows.map(function (r) {
+    return '<div class="trow"><span class="pl"><b>' + r[0] + '</b><small>No permit</small></span>' + fld('Days', sel(r[1]), '', true) + fld('From', tx(r[2]), '', true) + fld('Until', tx(r[3]), '', true) + '<span class="xg">' + ic('x', 15) + '</span></div>'; }).join('') + '</div>'; }
+  function offRow(day, why, applies, src) { return '<div class="offrow">' + dt(fullD(day)) + tx(why || 'Why (optional)', !why) +
+    (applies ? '<span class="atp"><span class="k">Applies to</span><b style="font-weight:600">' + applies + '</b>' + ic('chevD', 13) + '</span>' : '<span></span>') +
+    '<span class="xg">' + ic('x', 15) + '</span>' + (src ? '<span class="offsrc">' + src + '</span>' : '') + '</div>'; }
+  function permitsPick(picks, open) { var v = picks.length ? picks.map(function (k) { return PM[k].name; }).join(', ') : '';
+    return '<div class="fld"><span class="lb">Permits</span>' + (v ? sel(v, open ? 'open' : '') : sel('No permit: type the time below', 'dimv' + (open ? ' open' : ''))) + '</div>'; }
+  function permitsMenu(picks, set) { return '<div class="pmenu">' + set.map(function (k) { return '<div class="po">' + tick(picks.indexOf(k) >= 0) + '<span>' + PM[k].name + '<small>' + PM[k].issuer + ' · ' + range(PM[k].from, PM[k].to) + '</small></span></div>'; }).join('') + '</div>'; }
+
+  /* ── New schedule, several permits ── */
+  function nsTime(o) {
+    var b = '<div class="sect"><h4 data-same>The time</h4>';
+    var nameF = fld('Name', tx(o.name || SCHED), '', true);
+    var permitF;
+    if (o.today) permitF = fld('Permit', sel(PM[o.today].name), o.todayHint);
+    else { permitF = permitsPick(o.picks, o.menu) + (o.menu ? '<div style="margin-top:-0.35rem">' + permitsMenu(o.picks, o.set || ['A', 'B', 'C', 'G']) + '</div>' : '') +
+      (o.pickHint ? '<span class="hnt">' + o.pickHint + '</span>' : '');
+      permitF = '<div class="fld">' + (o.pin1 ? hl(o.pin1, o.pin1k || 'new', permitF) : permitF) + '</div>'; }
+    b += '<div class="pr2"><div data-same>' + nameF + '</div>' + permitF + '</div>';
+    if (o.findDoor) b += hl(o.findDoor, 'new', '<span class="door2">' + ic('search', 15) + 'Find the time across every permit ›</span>', 'span');
+    b += o.rows;
+    b += '<div data-same>' + addDoor('Add hours') + '</div>';
+    var dates = '<div class="pr2">' + fld('From', dt(fullD(o.from)), '', true) + fld('To', dt(fullD(o.to)), o.datesHint || '', true) + '</div>';
+    b += o.pinDates ? hl(o.pinDates, 're', dates) : '<div data-same>' + dates + '</div>';
+    b += '<div class="pr2" data-same>' + fld('Slot length', sel('120 min'), 'Each team’s time on a facility') + fld('Changeover', sel('None'), 'Between slots on one facility') + '</div>';
+    var offs = '<div class="fld"><span class="lb">Dates off</span><div style="display:grid;gap:0.5rem">' + (o.offs || '') + '</div>' + addDoor('Add a date off') + '</div>';
+    b += o.pinOff ? hl(o.pinOff, 'new', offs) : '<div data-same>' + offs + '</div>';
+    if (o.sumLine) b += '<p class="hnt" data-same style="margin:0;font-size:13px;color:var(--p-ink2)">' + o.sumLine + '</p>';
+    return b + '</div>';
+  }
+  function slotCount(groups) { var n = 0, facs = {}, parks = {}; groups.forEach(function (g) { var p = PM[g[0]]; g[1].forEach(function (i) { var bl = p.blocks[i];
+    days(g[2] || p.from, g[3] || p.to, function (ds, w) { if (bl[1].indexOf(w) < 0 || isOff(p, ds)) return; n += bl[0].length * Math.floor((bl[3] - bl[2]) / 120); });
+    bl[0].forEach(function (f) { facs[f] = 1; parks[FAC[f].v] = 1; }); }); });
+    return n + ' slots · ' + pl(Object.keys(facs).length, 'facility', 'facilities') + ' at ' + pl(Object.keys(parks).length, 'park', 'parks'); }
+  function nsWin(o) { return crop(win({ w: 800, eyebrow: o.eyebrow || 'Schedules', title: o.title || 'New schedule', idl: o.idl || 'Step 1 of 2 · settings', body: nsTime(o) + '<div class="sect" data-same><h4>Who, and how much</h4><span class="hnt">4 rep teams · Evenly · The same each week (unchanged; not drawn)</span></div>',
+    foot: btn('Cancel') + btn('Generate drafts', 'pri'), footStart: o.footStart || '', footSame: true })); }
+
+  var ALLA = [0, 1, 2], ALLB = [0, 1];
+  function offsBoth(applies) { return offRow(PM.A.off[0][0], PM.A.off[0][1], applies ? list(venuesOf('A')) : null, applies ? 'From ' + PM.A.name : null) +
+    offRow(PM.B.off[0][0], PM.B.off[0][1], applies ? list(venuesOf('B')) : null, applies ? 'From ' + PM.B.name : null); }
+
+  var SCR = {};
+  SCR.pick = [
+    { key: 'two', label: 'Two permits', cap: 'Owner · Schedules › New schedule · window 800 px', today: true,
+      r: function (after) {
+        if (!after) return nsWin({ today: 'B', todayHint: 'Filled in: Prospect Park, Diamond 1, Diamond 2, ' + range(PM.B.from, PM.B.to) + ', Mon, Wed 6:00–8:00 p.m., Thu 8:00–10:00 p.m., ' + md(PM.B.off[0][0]) + ' off',
+          rows: '<p class="hnt" style="margin:0;font-size:14px;color:var(--p-ink2)">Prospect Park · Diamond 1, Diamond 2; Prospect Park · Diamond 1</p>' +
+            '<div class="tgrp">' + PM.B.blocks.map(function (b) { return '<div class="trow" style="grid-template-columns:minmax(0,1fr) 110px 110px 30px">' + fld('Days', sel(daysWords(b[1])), '', true) + fld('From', tx(tm(b[2])), '', true) + fld('Until', tx(tm(b[3])), '', true) + '<span class="xg">' + ic('x', 15) + '</span></div>'; }).join('') + '</div>',
+          from: PM.B.from, to: PM.B.to, offs: offRow(PM.B.off[0][0], PM.B.off[0][1]), sumLine: slotCount([['B', ALLB]]) });
+        return nsWin({ picks: ['A', 'B'], pin1: 1, pickHint: 'Each permit brings its own time and dates off. Untick one to take its time off again.', findDoor: 2,
+          rows: hl(3, 'new', permitGroup('A') + '<div style="height:0.6rem"></div>' + permitGroup('B')), from: PM.A.from, to: PM.B.to, pinDates: 4, datesHint: 'Widened to cover both permits',
+          offs: offsBoth(true), pinOff: 5, sumLine: slotCount([['A', ALLA], ['B', ALLB]]) }); },
+      nT: [[0, 'same', 'Today: the second pick replaces the first', 'The admin picked Milton spring 2027, then Halton Hills spring 2027. The Permit dropdown holds one permit, so Milton’s time, dates and Easter date off are gone and Halton Hills’ fill the form. Nothing says it happened.'],
+        [0, 'same', 'Today: a row hides its place', 'The two hours rows are on different facilities, so the Venue and Facilities fields give way to one read-only line above the rows. A row itself shows only days and hours.'],
+        [0, 'same', 'Today: the link can’t change later', 'The Permit dropdown is shown only when the schedule is made. Settings… carries the permit invisibly.']],
+      nA: [[1, 'new', 'Permits: a multi-pick', 'The permit form’s own tick-list field (the Days picker’s shape), so it opens as the one field everyone already knows. Each tick adds that permit’s time and dates off; unticking takes only that permit’s time and dates off away.'],
+        [2, 'new', 'Find the time, a door under the picker', 'Not an entry inside the tick list: a list of choices that also holds an action reads as a seventh permit. The door opens the finder (tab 2) in this window. Ask N1.'],
+        [3, 'new', 'Rows grouped by the permit they came from', 'Each card is one permit (name, issuer, its own dates); each row names its place. The read-only mixed-places line goes: it said the places once, the rows now say them where they apply (Ask N2). Rows stay editable: an admin can narrow a permit’s days or hours here. Two ticked permits that hold the same park at the same hour get the statement Add time draws (tab 3): which permit those evenings stay on (UX 8).'],
+        [4, 'new', 'From and To widen', 'Mar 2 (Milton’s first day) to Jun 25 (Halton Hills’ last). Typed dates are kept; only a date the picker set moves when a permit is added or taken off.'],
+        [5, 'new', 'Each permit’s date off covers its own parks', 'Easter weekend closes Milton’s parks, Victoria Day closes Prospect Park. Drawn in full on tab 4 (P5).'],
+        [0, 'same', 'Unchanged', 'Name, Add hours, Slot length, Changeover, the summary line, Who and how much, the foot. The summary line counts both permits’ time: ' + slotCount([['A', ALLA], ['B', ALLB]]) + '.']] },
+    { key: 'menu', label: 'The picker open', cap: 'Owner · New schedule · the Permits field open', today: false,
+      r: function () { return nsWin({ picks: ['A', 'B'], menu: true, set: ['A', 'B', 'G'], pin1: 1, rows: '<div data-same>' + permitGroup('A') + '</div>', from: PM.A.from, to: PM.B.to, offs: offsBoth(true), sumLine: slotCount([['A', ALLA], ['B', ALLB]]) }); },
+      nA: [[1, 'new', 'The list is the club’s permits, ticked', 'Each with its issuer and dates under the name, so two permits from one town read apart. The school gym is in the list too: anything the club holds. Ticking none means no permit: the admin types the time.'],
+        [0, 'same', 'The shipped field', 'The permit form’s tick-list field (PermitWindows PickField), with a second line per option. That second line is new to the field; the build adds it to the shared field, not a copy.']] },
+    { key: 'remove', label: 'Untick one', cap: 'Owner · New schedule · Milton spring 2027 unticked', today: false,
+      r: function () { return nsWin({ picks: ['B'], pin1: 1, pin1k: 're', pickHint: 'Milton spring 2027’s 3 rows and its date off came off. Ticking it again brings back the permit’s time, not your changes to it.', rows: permitGroup('B'), from: PM.B.from, to: PM.B.to, pinDates: 2, datesHint: 'Back to Halton Hills’ dates',
+        offs: offRow(PM.B.off[0][0], PM.B.off[0][1], list(venuesOf('B')), 'From ' + PM.B.name), sumLine: slotCount([['B', ALLB]]) }); },
+      nA: [[1, 'new', 'Only that permit’s time goes', 'Its three rows and its Easter date off, nothing else, even a row the admin had narrowed. Ticking it again brings back the permit’s own time, not those edits, and the hint says so (UX 1). A row typed here (no permit) and Halton Hills’ rows stay.'],
+        [2, 're', 'The dates follow, unless typed', 'From and To go back to cover what is left. A date the admin typed is never moved.'],
+        [0, 'same', 'After Finalize', 'This is the form before the schedule exists. Taking a permit off a sent schedule is drawn on tab 3 (P11): it goes through Settings… and Send the changes.']] },
+    { key: 'copy', label: 'Copy last year, then two permits', cap: 'Owner · New schedule · copied from Spring rep practices 2026', today: true,
+      r: function (after) {
+        var copied = typedGroup('Copied from Spring rep practices 2026, a year on', [['Kinsmen Park · Diamond A, Diamond B', 'Tue, Thu', '6:00 p.m.', '8:00 p.m.'], ['Prospect Park · Diamond 1', 'Mon, Wed', '6:00 p.m.', '8:00 p.m.']]);
+        if (!after) return nsWin({ today: 'A', todayHint: 'Fills in the venue, facilities, dates, hours and dates off from the permit.', idl: 'Step 1 of 2 · settings · copied from Spring rep practices 2026',
+          rows: '<div>' + copied + '</div>', from: '2027-03-03', to: '2027-06-26', offs: '', sumLine: '' });
+        return nsWin({ idl: 'Step 1 of 2 · settings · copied from Spring rep practices 2026', picks: [], menu: true, set: ['A', 'B', 'C', 'G'], pin1: 1,
+          pickHint: 'Picking a permit replaces the copied time. The teams, their shares and the rules stay.',
+          rows: hl(2, 're', copied), from: '2027-03-03', to: '2027-06-26', offs: '', sumLine: '' }); },
+      nT: [[0, 'same', 'Today: a copy brings last year’s time, a year on', 'Rows, dates off and dates move 364 days. Picking a permit then replaces all of it, so a copy and a permit work, but only one permit.']],
+      nA: [[1, 'new', 'Picking replaces the copied time', 'The 2026-10-12 reason holds (“a club’s second year wants both”): last year’s teams, shares and rules; this year’s permits. The first tick replaces the copied rows, the second adds to the first. Ask N3: replace (drawn) or keep the copied rows beside the permits’ time.'],
+        [2, 're', 'Copied rows say what they are', 'A card titled with where they came from, “No permit” on each row. They price from no permit until one is picked, the same as typed rows today.']] }
+  ];
+
+  /* ── Find the time ── */
+  var CHIPDAYS = [1, 2, 3, 4, 5, 6, 0];
+  function finderWin(f, o) { o = o || {}; var rows = finder(f);
+    var dayCh = '<div class="chps">' + CHIPDAYS.map(function (w) { var on = f.days && f.days.indexOf(w) >= 0; return '<span class="chp' + (on ? ' on' : '') + '">' + (on ? ic('check', 12, 2.4) : '') + WDS[w] + '</span>'; }).join('') + '</div>';
+    var kinds = ['diamond', 'field', 'gym'].filter(function (k) { return f.permits.some(function (pk) { return PM[pk].blocks.some(function (b) { return b[0].some(function (x) { return FAC[x].k === k; }); }); }); });
+    var kindCh = '<div class="chps">' + kinds.map(function (k) { var on = f.kinds && f.kinds.indexOf(k) >= 0; return '<span class="chp' + (on ? ' on' : '') + '">' + (on ? ic('check', 12, 2.4) : '') + KIND[k] + '</span>'; }).join('') + '</div>';
+    var filt = '<div class="flt">' + fld('From', dt(fullD(f.from))) + fld('To', dt(fullD(f.to))) + fld('Shortest time', sel('1 hour'), 'A day counts when this much is free') +
+      '<div class="wide">' + fld('Days', dayCh, f.days ? '' : 'Every day the permits hold') + '</div>' +
+      fld('From', f.s != null ? tx(tm(f.s)) : tx('Any time', true)) + fld('Until', f.e != null ? tx(tm(f.e)) : tx('Any time', true)) + fld('Kind', kindCh) + '</div>';
+    if (o.pinFilter) filt = hl(o.pinFilter, 'new', filt);
+    var freeH = sum(rows.map(function (r) { return r.freeMin; }));
+    var list2;
+    if (!rows.length) list2 = hl(o.pinEmpty || 1, 'new', '<div class="empt"><b>Nothing the club holds is free on ' + list(f.days.map(function (w) { return WDL[w]; })) + ' from ' + md(f.from) + ' to ' + md(f.to) + '.</b><span>The permits hold time on ' + list(['Mon', 'Tue', 'Wed', 'Thu', 'Sat']) + ' in these dates.</span><span style="display:flex;gap:1rem"><span class="door2 sm">Clear the days</span><span class="door2 sm">Widen the dates</span></span></div>');
+    else list2 = '<div class="frows"><div class="count"><span><b>' + pl(rows.length, 'facility', 'facilities') + '</b> the club holds in these dates · ' + hrs(freeH) + ' free</span></div>' +
+      '<div class="fh"><span></span><span>Facility</span><span>Permit</span><span class="rt">Free</span></div>' +
+      rows.map(function (r, i) { var on = o.ticked && o.ticked.indexOf(r.fac) >= 0;
+        var right = '<b>' + pl(r.free, r.evening ? 'evening' : 'day', r.evening ? 'evenings' : 'days') + ' free of ' + r.held + '</b><small>' + r.words + ' · ' + hrs(r.freeMin) + '</small>' +
+          (r.draft ? '<small class="amb">' + pl(r.draft, 'held', 'held') + ' by a draft (' + r.draftBy + ')</small>' : '');
+        var perm = '<b>' + list(r.permits.map(function (k) { return PM[k].name; })) + '</b><small>' + list(r.permits.map(function (k) { return PM[k].issuer; }).filter(function (x, j, a) { return a.indexOf(x) === j; })) + '</small>' +
+          (r.both.length ? '<small class="amb">' + list(r.both.map(wmd)) + (r.both.length === 1 ? ' is' : ' are') + ' on both</small><span style="display:inline-flex;margin-top:4px">' + sel('Priced by ' + PM[r.permits[r.permits.length - 1]].name) + '</span>' : '');
+        var row = '<div class="fr2' + (o.gone && o.gone.indexOf(r.fac) >= 0 ? ' gone' : '') + '">' + tick(on) + '<span><b>' + FAC[r.fac].n + '</b><small>' + FAC[r.fac].v + '</small></span><span>' + perm + '</span><span class="rt">' + right + '</span></div>';
+        if (o.pinRow && o.pinRow[0] === r.fac) return hl(o.pinRow[1], o.pinRow[2] || 'new', row);
+        if (o.pinDraft && r.draft) return hl(o.pinDraft, 'new', row);
+        if (o.pinBoth && r.both.length) return hl(o.pinBoth, 'new', row);
+        return row; }).join('') + '</div>';
+    var n = (o.ticked || []).length;
+    return crop(win({ w: 800, eyebrow: o.eyebrow || 'New schedule', title: 'Find the time', back: true, idl: o.idl || 'Every facility the club holds on a permit. Free means nothing is booked there and no other schedule’s draft holds it.', hlHead: true,
+      body: filt + list2, footStart: n ? 'Each comes in as a time row with its permit, in the dates above.' : 'Tick the time to bring into the schedule.',
+      foot: btn('Back') + '<span class="btn pri' + (n ? '' : ' dis') + '">' + (n ? 'Add ' + n + ' to the schedule' : 'Add to the schedule') + '</span>' })); }
+  function findNotes(i) {
+    var r = finder(FSTEPS[i]), prev = i ? finder(FSTEPS[i - 1]) : null;
+    var goneN = prev ? prev.filter(function (p) { return !r.some(function (x) { return x.fac === p.fac; }); }).map(function (p) { return FAC[p.fac].v + ' · ' + FAC[p.fac].n; }) : [];
+    var say = ['Every facility on any permit the club holds between ' + md(TODAY1) + ' (today) and ' + md(FSTEPS[0].to) + ': ' + r.length + ' facilities at ' + list(r.map(function (x) { return FAC[x.fac].v; }).filter(function (x, j, a) { return a.indexOf(x) === j; })) + '. The school gym is a permit too, so it is here; its Mondays are taken by Winter gym practices 2027.',
+      'Tuesdays and Thursdays. ' + (goneN.length ? list(goneN) + (goneN.length === 1 ? ' holds' : ' hold') + ' no Tuesday or Thursday, so ' + (goneN.length === 1 ? 'it goes' : 'they go') + '.' : ''),
+      '6:00 to 8:00 p.m. ' + (goneN.length ? list(goneN) + '’s Thursday is 8:00 to 10:00 p.m., so it goes. Lions Park’s Tuesday 6:00 to 9:00 p.m. stays, cut to the two hours asked for.' : ''),
+      'Diamonds only. ' + (goneN.length ? list(goneN) + ' is a field, so it goes.' : '') + ' Two rows left: the time the owner asked for, in four choices.'];
+    return [[1, 'new', 'The filters narrow as they are set', say[i]],
+      [2, 'new', 'What a row says', 'The facility and its park; the permit (and the town); then how many ' + (r[0] && r[0].evening ? 'evenings' : 'days') + ' are free of those the permit holds in the filters, the pattern and the hours free. Taken means booked: finalized practices, house league games and practices, tryouts and tournament games, the same bookings the permit’s Used figure already counts.'],
+      [3, 'new', 'Time a draft holds is not free, and says whose', i ? 'Kinsmen Diamond B: ' + (r.filter(function (x) { return x.fac === 'KB'; })[0] || { draft: 0 }).draft + ' Thursdays held by the draft ' + HL + ' (its house-league practices). A draft is not booked anywhere else in the product, so without this line two admins could hand out the same Thursday (P7).' : 'Kinsmen’s Saturdays: held by the draft ' + HL + '. A draft is not booked anywhere else in the product; this line is the only place it shows.']]; }
+  SCR.find = [0, 1, 2, 3].map(function (i) { var lab = ['1 · Everything held', '2 · Tue and Thu', '3 · 6–8 p.m.', '4 · Diamonds'][i];
+    return { key: 's' + i, label: lab, cap: 'Owner · New schedule › Find the time · ' + fullD(TODAY1) + ' · window 800 px', today: false,
+      r: function () { return finderWin(FSTEPS[i], { pinFilter: 1, pinRow: [finder(FSTEPS[i])[0].fac, 2], pinDraft: 3, ticked: i === 3 ? ['KA', 'KB'] : [] }); }, nA: findNotes(i) }; });
+  SCR.find.push(
+    { key: 'none', label: 'Nothing found', cap: 'Owner · Find the time · Fridays and Sundays', today: false,
+      r: function () { return finderWin(F_NONE, { pinEmpty: 1 }); },
+      nA: [[1, 'new', 'An empty result says why and offers the way out', 'It names the days asked for and the days the permits do hold in these dates, so the admin knows it is the days, not the dates. Two doors undo the narrowing; nothing else is offered. A club holding no permit in the dates reads “The club holds no permit between Feb 1 and Apr 30.”, with “Add a permit ›” for the people who can save one (UX 4).']] },
+    { key: 'picked', label: 'Picked into the schedule', cap: 'Owner · New schedule · after “Add 2 to the schedule”', today: false,
+      r: function () { return nsWin({ picks: ['A'], pin1: 1, pickHint: 'Found in Find the time. Tick a permit to bring all of its time.', findDoor: 0,
+        rows: hl(2, 'new', permitGroup('A', { blocks: [0], from: PM.A.from, to: '2027-04-30', note: '4 Thursdays on Diamond B are held by the draft ' + HL })),
+        from: PM.A.from, to: '2027-04-30', offs: '', sumLine: slotCount([['A', [0], PM.A.from, '2027-04-30']]) }); },
+      nA: [[1, 'new', 'The permit is ticked, with only the time found', 'Milton spring 2027 shows as picked because a row came from it. Ticking it in the list brings the rest of its time; unticking takes the found row away too.'],
+        [2, 'new', 'The found time is an ordinary row that remembers its permit', 'Its dates are the finder’s dates cut to the permit (' + range(PM.A.from, '2027-04-30') + '), and it prices at Milton’s price. The draft-held Thursdays come with it and are said on the card; the drafts step then warns on them like a clash (Ask P7b).'],
+        [0, 'same', 'Then the ordinary flow', 'Slot length, changeover, teams and Generate drafts are unchanged. Back from the finder keeps everything typed in New schedule, and opening the finder again keeps its filters; while a filter recomputes, the list shows the one loading line (UX 6).']] },
+    { key: 'both', label: 'Two permits hold it', cap: 'Owner · ' + SCHED + ' › Add time › Find the time · ' + fullD(TODAY2), today: false,
+      r: function () { return finderWin(F_MAY, { eyebrow: 'Add time', idl: 'Every facility the club holds on a permit. Free means nothing is booked there and no other schedule’s draft holds it.', pinBoth: 1, pinRow: ['KA', 2, 're'] }); },
+      nA: [[1, 'new', 'Time two permits hold is listed once (P4)', 'Milton’s spring and June permits both hold Lions Park on ' + list(finder(F_MAY).filter(function (r) { return r.both.length; })[0].both.map(wmd)) + '. The row lists both permits and asks which prices that day; it starts on the newer permit. A slot is priced by its row’s permit, never by a lookup.'],
+        [2, 're', 'This schedule’s own practices are taken', 'Inside Add time the finder subtracts this schedule’s sent practices too, so Kinsmen shows only June free: May is full with 11U AA, 13U AA and 13U AAA.']] },
+    { key: 'phone', label: 'On a phone', cap: 'Owner · 390 × 844 · the schedule page', today: false, kind: 'phone',
+      r: function () { return phoneSched(true); },
+      nA: [[1, 'same', 'The finder is a computer’s job, like New schedule', 'Settled 2026 (§5.9 of the scheduler plan): New schedule is absent at phone width (“building a winter of dome nights is desk work, and a door that dead-ends is the bug”), and every editing item on the schedule page is absent on a phone. Find the time and Add time live inside those, so a phone shows neither and needs no message: absent, not disabled.'],
+        [0, 'same', 'What a phone does keep', 'Reading the schedule, its two permits on the top line, Needs attention and Send the changes. A read-only “Free time” on the Permits page (P12, later) is the phone-shaped version, if a president wants it.']] }
+  );
+
+  /* ── the schedule page (desktop) ── */
+  var SENT = 'sent Mar 1 by Dana Kowalski';
+  function topLine(kind, pin) { var t;
+    if (kind === 'today') t = 'From the permit <a>' + PM.A.name + ' ›</a> · Kinsmen Park · Diamond A, Diamond B · Tuesdays and Thursdays, ' + range(PM.A.from, PM.A.to) + ' · 4 teams · ' + SENT;
+    else { var ps = kind === 'three' ? ['A', 'B', 'C'] : ['A', 'B'];
+      t = 'From the permits ' + list(ps.map(function (k) { return '<a>' + PM[k].name + ' ›</a>'; })) + ' · Kinsmen Park · Diamond A, Diamond B; Prospect Park · Diamond 1, Diamond 2 · Mon to Thu, ' + range(PM.A.from, kind === 'three' ? PM.C.to : PM.B.to) + ' · 4 teams · ' + SENT; }
+    t = '<p class="meta" style="margin:0">' + t + '</p>';
+    return pin ? hl(pin, kind === 'today' ? 'same' : 're', t) + '<div style="height:0.75rem"></div>' : '<div data-same>' + t + '</div><div style="height:0.75rem"></div>'; }
+  function weekRows() { var seen = {}, out = [];
+    PAT.forEach(function (r) { var k = r[1] + r[2] + r[3]; if (seen[k]) return; seen[k] = 1; out.push([r[1], r[2], r[3], r[4], r[5], r[0]]); });
+    out.sort(function (a, b) { return a[0] - b[0] || (a[1] < b[1] ? -1 : 1); });
+    return out.slice(0, 8).map(function (r) { return '<div class="lr"><span class="f"><b>' + WDS[r[0]] + ' · ' + FAC[r[1]].n + '</b><small>' + FAC[r[1]].v + ' · ' + PM[r[5]].name + '</small></span><span>' + span(r[2], r[3]) + '</span><b>' + r[4] + '</b><span class="cnt2">' + SL.filter(function (s) { return s.f === r[1] && wdOf(D(s.d)) === r[0] && s.s === r[2]; }).length + '</span></div>'; }).join(''); }
+  function schedPage(o) {
+    var p = topLine(o.top || 'after', o.pinTop);
+    if (o.attn) p += o.attn;
+    var tiles = '<div class="tiles" data-same><div class="tile"><span class="mono">Handed out</span><span class="tv">' + SL.length + ' of ' + SL.length + '</span></div><div class="tile"><span class="mono">The bill <span style="color:var(--p-olive);opacity:0.45;vertical-align:-2px">' + ic('arrowR', 13) + '</span></span><span class="tv">' + money(B_EACH.total) + '</span></div><div class="tile"><span class="mono">Short</span><span class="tv">0</span></div><div class="tile"><span class="mono">Clashes</span><span class="tv">0</span></div></div>';
+    p += tiles;
+    var tools = '<span class="relpos" style="display:inline-flex"><span class="btn out' + (o.menu ? '" style="border-color:var(--p-olive)' : '') + '">' + ic('dots', 15) + 'Tools' + ic('chevD', 13) + '</span>' + (o.menu || '') + '</span>';
+    var rs = '<div class="card rs"><div data-same><h3>Read the schedule</h3><small>Start with the repeating pattern; open Grid for a date or an edit.</small></div>' +
+      '<div class="tbar" style="margin-top:0.75rem"><span class="vpill" data-same>View <b>Overview</b>' + ic('chevD', 13) + '</span><span style="margin-left:4rem;font-weight:700;font-size:16px" data-same>' + range(PM.A.from, PM.B.to) + '</span><span class="sp"></span>' + tools + '<span class="btn out" data-same>' + ic('down', 15) + 'Export</span></div>' +
+      '<div class="card lt" data-same><div class="lh">A typical week<small>' + pl(11, 'time row', 'time rows') + '</small></div>' + weekRows() + '</div></div>';
+    p += rs;
+    return desk({ role: 'owner', on: 'schedules', permits: 'plain', strip: { back: 'Schedules', name: SCHED, chip: o.chip ? '<span class="chip pend">Changed since sent</span>' : '' }, body: p, h: o.h || 900 });
+  }
+  function toolsMenu(pin) { var m = '<div class="tmenu">' + (pin ? hl(pin, 'new', '<div class="mi on"><b>Add time…</b><small>Another permit’s time, or time you find. Nothing already on the schedule moves.</small></div>') : '') +
+    '<div data-same><div class="mi"><span>Settings…</span><small>The time, the teams and their shares, the rules</small></div><div class="mi"><span>Regenerate the unlocked slots…</span></div><div class="sepl"></div><div class="mi"><span>Send log</span></div></div></div>'; return m; }
+
+  /* ── Add time ── */
+  var C_TEAM = TEAMS.map(function (n) { return [n, COR_EACH.t[n].n]; }).filter(function (x) { return x[1]; });
+  function addWin() {
+    var b = '<div class="pr2">' + permitsPick(['C'], false) + '<div class="fld"><span class="lb">On this schedule</span><div class="ctl dimv" style="background:transparent;border-style:dashed"><span class="v">' + PM.A.name + ', ' + PM.B.name + '</span></div></div></div>';
+    b += '<span class="door2">' + ic('search', 15) + 'Find the time across every permit ›</span>';
+    b += hl(1, 'new', permitGroup('C', { blocks: [0], note: 'Lions Park row taken out' }));
+    b += hl(2, 'new', '<div class="stmt"><b>' + list(['Tue, May 25', 'Thu, May 27']) + ' at Kinsmen Park are on this schedule already, from ' + PM.A.name + '.</b><p>They stay as they are, priced there. The new time starts Tue, Jun 1.</p></div>');
+    b += '<div class="pr2">' + fld('From', dt(fullD(PM.A.from)), '', true) + hl(3, 're', fld('To', dt(fullD(PM.C.to)), 'Widened from ' + fullD(PM.B.to), true)) + '</div>';
+    b += hl(4, 'new', '<div class="stmt"><b>Only the new time is scheduled. Nothing already on the schedule moves, locked or not, and nothing before today can.</b><p>Drafts are made for June’s new evenings, toward each team’s practices a week. They wait in Changed since sent until you send the changes, and Send the changes bills them.</p></div>');
+    return crop(win({ w: 800, eyebrow: SCHED, title: 'Add time', idl: 'Step 1 of 2 · the new time', body: b, foot: btn('Cancel') + btn('Generate drafts for the new time', 'pri') }));
+  }
+  function addDrafts() { var t = COR_EACH.t;
+    var rows = C_TEAM.map(function (x) { return '<tr><td><b>' + x[0] + '</b></td><td>' + pl(x[1], 'practice', 'practices') + '<small>' + list(SLC.filter(function (s) { return s.team === x[0]; }).map(function (s) { return WDL[wdOf(D(s.d))]; }).filter(function (v, i, a) { return a.indexOf(v) === i; })) + ' · Kinsmen Park</small></td><td class="n">' + hrs(t[x[0]].min) + '</td></tr>'; }).join('');
+    var b = '<div class="stmt"><b>' + pl(SLC.length, 'new practice', 'new practices') + ', ' + range(SLC[0].d, SLC.map(function (s) { return s.d; }).sort().pop()) + '</b><p>Kinsmen Park, Diamond A and Diamond B, from ' + PM.C.name + '. The other ' + SL.length + ' practices stay exactly where they were sent.</p></div>' +
+      hl(1, 'new', '<div class="bwrap"><table class="bt2"><thead><tr><th>Team</th><th>New</th><th class="n">Hours</th></tr></thead><tbody>' + rows + '<tr class="tot"><td>' + pl(C_TEAM.length, 'team', 'teams') + '</td><td>' + SLC.length + '</td><td class="n">' + hrs(sum(SLC.map(function (s) { return s.e - s.s; }))) + '</td></tr></tbody></table></div>') +
+      '<p class="hnt" style="margin:0">15U AA keeps its Halton Hills evenings and gets nothing new: it already has three a week.</p>';
+    return crop(win({ w: 800, eyebrow: SCHED, title: 'Add time', idl: 'Step 2 of 2 · drafts for the new time', body: b, foot: btn('Back to the new time') + btn('Keep this draft', 'pri') })); }
+  function unsentAttn(pin) { var first = SLC[0];
+    var row = '<div class="row"><span class="chip pend">Unsent change</span><div><div class="t">' + SLC.length + ' changes since you sent it on Mar 1</div><p>' + first.team + ' · new ' + wmd(first.d) + ', ' + tm(first.s) + ' · Kinsmen Park · ' + FAC[first.f].n + '</p><p class="lk" style="font-size:13px">All ' + SLC.length + ' changes</p><p>The teams still have what you sent them. Send the changes to put these on their schedules and tell their coaches.</p></div><span class="btn pri">Send the changes</span></div>';
+    return '<div class="card na"><div class="h"><b>Needs attention</b><small>1 item</small></div>' + (pin ? hl(pin, 'same', row) : row) + '</div>'; }
+  function sendWin(mode) { var c = mode === 'one' ? COR_ONE : COR_EACH;
+    var who = C_TEAM.map(function (x) { var i = TEAMS.indexOf(x[0]); return '<div class="vr2">' + tick(true) + '<span><b>' + x[0] + '</b> · 2 coaches<small>' + pl(x[1], 'new practice', 'new practices') + ' from Jun 1 · a correction of ' + money(c.sh[i]) + '</small></span></div>'; }).join('');
+    var b = '<div class="stmt" data-same><p>The changes reach ' + C_TEAM.length + ' teams’ schedules. Only those teams’ coaches are told. Nothing else on the schedule moves.</p></div>' +
+      '<div class="secl">Who is told · ' + (C_TEAM.length * 2) + ' people<span></span></div>' + hl(1, 're', '<div class="vchk">' + who + '</div>') +
+      '<div class="vchk" data-same><div class="vr2">' + tick(true) + '<span><b>Bill the corrections</b><small>A team that gained time gets a small bill for it, and a team that lost time has it taken off what it owes, on the same budget line.</small></span></div></div>' +
+      hl(2, 'new', '<div class="stmt' + (mode === 'one' ? ' warn' : '') + '">' + (mode === 'one'
+        ? '<b>At the bill’s one rate, ' + money(ONE_RATE_MIN * 60) + ' a full field, an hour: ' + money(c.total) + '.</b><p>' + PM.C.name + ' charges ' + money(C_TIME_COST) + ' for this time, so the teams pay ' + money(c.total - C_TIME_COST) + ' more than it costs. The bill’s rate is its term; it doesn’t change.</p>'
+        : '<b>At ' + PM.C.name + '’s price, ' + money(rateC('C')) + ' a full field, an hour: ' + money(c.total) + '.</b><p>That price is kept with the bill from this send on, like the other two permits’ prices kept at Finalize.</p>') + '</div>') +
+      '<p class="hnt" style="margin:0" data-same>Each team’s coaches get one email listing what changed for that team; a reply comes to you. Last sent Mar 1 by Dana Kowalski.</p>';
+    return crop(win({ w: 520, eyebrow: SCHED, title: 'Send the changes', body: b, foot: btn('Cancel') + btn('Send to ' + (C_TEAM.length * 2) + ' people', 'pri'), footSame: true }), 520); }
+  function hhCounts() { return TEAMS.map(function (n) { return [n, HH_LEFT.filter(function (s) { return s.team === n; }).length]; }).filter(function (x) { return x[1]; }).sort(function (a, b) { return b[1] - a[1]; }); }
+  function removeQ() { var c = hhCounts();
+    var b = '<p style="margin:0;font-size:14px">Its ' + HH_LEFT.length + ' practices from today, ' + wmd(TODAY2) + ', come off: ' + list(c.map(function (x) { return x[0] + ' ' + x[1]; })) + '.</p>' +
+      hl(1, 'new', '<p style="margin:0;font-size:14px">The ' + HH_PAST + ' played before today stay on the schedule, and so does what the teams were billed for them.</p>') +
+      '<p style="margin:0;font-size:14px;color:var(--p-ink2)">The change waits in Changed since sent. Send the changes tells the coaches and credits ' + money(CRED_EACH.total) + ' at the permit’s price.</p>';
+    return crop(win({ w: 416, eyebrow: 'Settings', title: 'Take ' + PM.B.name + ' off?', body: b, foot: btn('Back') + btn('Take it off', 'pri') }), 416); }
+  function regenQ(after) {
+    var b = after ? hl(1, 'new', '<p style="margin:0;font-size:14px">The draft you picked replaces every slot from today on that nobody placed by hand. The ' + PAST + ' practices before today stay as they were sent.</p>')
+      : '<p style="margin:0;font-size:14px">The draft you picked replaces every slot nobody placed by hand.</p>';
+    return crop(win({ w: 416, eyebrow: 'Settings', title: 'Regenerate ' + SCHED + '?', body: b, foot: btn('Back') + btn('Keep this draft', 'pri'), footSame: true }), 416); }
+  SCR.add = [
+    { key: 'door', label: 'The door', kind: 'desk', cap: 'Owner · ' + SCHED + ' · sent · ' + fullD(TODAY2) + ' · Tools open', today: false,
+      r: function () { return schedPage({ menu: toolsMenu(1) }); },
+      nA: [[1, 'new', 'Add time sits beside Settings…, first in Tools', 'Two doors, two promises. Add time only adds: nothing on the schedule moves. Settings… changes what is there and may regenerate. Inside Settings… the promise would be lost in a window that can move everything (Ask S1). Taking a permit off is a change to what is there, so it stays in Settings… (P11).'],
+        [0, 'same', 'Unchanged', 'Tools keeps Settings…, Regenerate and Send log in their places. Every editing item is still absent on a phone.']] },
+    { key: 'win', label: 'Add time', cap: 'Owner · ' + SCHED + ' › Add time · ' + fullD(TODAY2) + ' · window 800 px', today: false,
+      r: addWin,
+      nA: [[1, 'new', 'The same picker, the same rows', 'Milton June 2027 (May 25 – Jun 30) ticked; its Lions Park row taken out, because the teams don’t need it. The same tick list and rows as New schedule, and the same Find the time door.'],
+        [2, 'new', 'Where two permits hold the same evenings', 'Milton spring and Milton June both hold Kinsmen on May 25 and May 27. They are already on the schedule, priced by Milton spring; they stay (P4).'],
+        [3, 're', 'The end date widens', 'Jun 25 to Jun 30. Nothing else about the schedule’s settings is in this window.'],
+        [4, 'new', 'The promise, said where it is made', 'Only the new rows get slots. Nothing already on the schedule moves, and nothing before today can (P10). On a draft or in-review schedule the new slots simply join the drafts. If no team needs more time, step 2 says “No team needs more time from this permit” and offers only Back (UX 5).']] },
+    { key: 'drafts', label: 'Drafts for the new time', cap: 'Owner · Add time · step 2', today: false, r: addDrafts,
+      nA: [[1, 'new', 'What the new time gives each team', 'Generated toward each team’s practices a week, on the new rows only. 11U AA had nothing in June (Milton spring ended May 29); it gets two evenings a week. Today’s ranked draft cards are the same here; drawn short.']] },
+    { key: 'waiting', label: 'Waiting to be sent', kind: 'desk', cap: 'Owner · ' + SCHED + ' · after Keep this draft', today: false,
+      r: function () { return schedPage({ chip: true, top: 'three', pinTop: 1, attn: unsentAttn(2) }); },
+      nA: [[1, 're', 'Three permits on the top line', 'Milton June 2027 joins as soon as the time is kept: the schedule’s permits are the permits behind its rows.'],
+        [2, 'same', 'The new month waits like any change', 'Changed since sent, the Unsent change row and Send the changes: all as built. The ' + SLC.length + ' new practices are the ' + SLC.length + ' changes.']] },
+    { key: 'send', label: 'Send · each permit’s price', cap: 'Owner · Send the changes · the bill priced by each permit · window 520 px', today: false,
+      r: function () { return sendWin('each'); },
+      nA: [[1, 're', 'Each team’s correction', 'As built, at the new permit’s price: ' + list(C_TEAM.map(function (x) { return x[0] + ' ' + money(COR_EACH.sh[TEAMS.indexOf(x[0])]); })) + '.'],
+        [2, 'new', 'Which price, said once (P9)', 'Milton June 2027 had no price kept with the bill, because it wasn’t on the schedule at Finalize. Its price today is used, and kept from this send on, so a later correction on it bills the same.']] },
+    { key: 'send1', label: 'Send · one rate', cap: 'Owner · Send the changes · the bill at one rate · window 520 px', today: false,
+      r: function () { return sendWin('one'); },
+      nA: [[1, 're', 'Each team’s correction', 'At the bill’s one rate: ' + list(C_TEAM.map(function (x) { return x[0] + ' ' + money(COR_ONE.sh[TEAMS.indexOf(x[0])]); })) + '.'],
+        [2, 'new', 'The one rate keeps its term, and says the gap', 'The bill’s rate (' + money(ONE_RATE_MIN * 60) + ') is a term, so June’s time bills at it. June costs ' + money(rateC('C')) + ' an hour, so the teams pay ' + money(COR_ONE.total - C_TIME_COST) + ' more than the permit charges for it. The window says so; nothing is blocked (P9).']] },
+    { key: 'remove', label: 'Take a permit off', cap: 'Owner · Settings… · Halton Hills spring 2027 unticked · ' + fullD(TODAY2) + ' · window 416 px', today: false,
+      r: removeQ,
+      nA: [[1, 'new', 'Past practices stay (P11)', 'Halton Hills’ ' + HH_LEFT.length + ' practices from today on come off; its ' + HH_PAST + ' played ones stay, and so does their bill. The credit is ' + money(CRED_EACH.total) + ' at Halton Hills’ price (' + money(CRED_ONE.total) + ' if the bill is at one rate).'],
+        [0, 'same', 'Then Send the changes, as built', 'Credits come off each team’s latest unpaid payments first; a team that has paid is owed back through Payment requests.']] },
+    { key: 'regen', label: 'Past practices never move', cap: 'Owner · Settings… › Keep this draft · the regenerate question · window 416 px', today: true,
+      r: regenQ,
+      nT: [[0, 'same', 'Today: a final schedule can reshuffle the past (F1)', 'Regenerate keeps only locked or hand-moved slots. On a sent schedule, every other slot can move, days already played included. The only protection is to lock each week first.']],
+      nA: [[1, 'new', 'Nothing before today moves (P10)', 'On a final schedule, Regenerate, Add time and “Take … off” leave every slot before today as sent. The sentence says so where the admin decides, with the count (' + PAST + ' practices before ' + md(TODAY2) + ').']] }
+  ];
+
+  /* ── Dates off by park ── */
+  function venuesMenu(allOn) { var vs = ['Kinsmen Park', 'Prospect Park'];
+    return '<div class="pmenu" style="width:300px">' + '<div class="po">' + tick(allOn) + '<span><b>All venues</b><small>Every park this schedule uses</small></span></div><div class="sepl"></div>' +
+      vs.map(function (v) { return '<div class="po">' + tick(!allOn && v === 'Kinsmen Park') + '<span>' + v + '<small>' + (v === 'Kinsmen Park' ? 'Diamond A, Diamond B · Tue, Thu' : 'Diamond 1, Diamond 2 · Mon, Wed, Thu') + '</small></span></div>'; }).join('') + '</div>'; }
+  function offsWin(o) {
+    var rows = o.today ? offRow('2027-04-22', 'Club AGM') + offRow(PM.A.off[0][0], PM.A.off[0][1]) + offRow(PM.B.off[0][0], PM.B.off[0][1])
+      : hl(1, 'new', offRow('2027-04-22', 'Club AGM', o.menu ? 'Kinsmen Park' : 'All venues')) + (o.menu ? '<div style="margin:-0.2rem 0 0 calc(150px + 1.2rem + (100% - 150px - 30px - 1.8rem) / 2)">' + venuesMenu(false) + '</div>' : '') +
+        hl(2, 'new', offRow(PM.A.off[0][0], PM.A.off[0][1], list(venuesOf('A').filter(function (v) { return v === 'Kinsmen Park'; })), 'From ' + PM.A.name) + offRow(PM.B.off[0][0], PM.B.off[0][1], list(venuesOf('B')), 'From ' + PM.B.name));
+    var b = '<div class="sect"><div class="fld"><span class="lb">Dates off</span><div style="display:grid;gap:0.55rem">' + rows + '</div>' + addDoor('Add a date off') + '</div></div>';
+    return crop(win({ w: 800, eyebrow: SCHED, title: 'Settings', idl: 'Step 1 of 2 · settings · the dates off (the rest of the window as on tab 1)', body: b, foot: btn('Cancel') + btn('Generate drafts', 'pri'), footSame: true }));
+  }
+  function attnTwo(scoped) {
+    function row(pin, pk, ds, teams, why) { var p = PM[pk], v = pk === 'A' ? 'Kinsmen Park' : 'Prospect Park';
+      return hl(pin, 'new', '<div class="row"><span class="chip pend">Outside the permit</span><div><div class="t">' + fullD(ds) + ' is a date off on ' + p.name + '</div><p>' + why + '. ' + pl(teams.length, 'practice', 'practices') + ' on this schedule sit' + (teams.length === 1 ? 's' : '') + ' on that day at ' + v + ': ' + list(teams) + '. The teams still have them.</p></div><span class="btn ' + (pin === 1 ? 'pri' : 'out') + '">Take ' + md(ds) + ' off ' + v + '</span></div>'); }
+    var on13 = SL.filter(function (s) { return s.d === '2027-05-13'; });
+    var k13 = on13.filter(function (s) { return FAC[s.f].v === 'Kinsmen Park'; }).map(function (s) { return s.team; });
+    var on19 = SL.filter(function (s) { return s.d === '2027-05-19'; }).map(function (s) { return s.team; });
+    return '<div class="card na"><div class="h"><b>Needs attention</b><small>2 items</small></div>' + row(1, 'A', '2027-05-13', k13, 'The town added it on May 4 for a town event at Kinsmen Park') + row(2, 'B', '2027-05-19', on19, 'The town added it on May 6 for field repairs') + '</div>'; }
+  var P13 = SL.filter(function (s) { return s.d === '2027-05-13' && FAC[s.f].v === 'Prospect Park'; })[0];
+  SCR.off = [
+    { key: 'rows', label: 'The row', cap: 'Owner · New schedule or Settings… · Dates off · window 800 px', today: true,
+      r: function (after) { return offsWin({ today: !after }); },
+      nT: [[0, 'same', 'Today: a date off closes every park on the schedule', 'A row is a day and why. Typing Easter weekend for Milton’s parks also closes Prospect Park, and Victoria Day for Prospect also closes Kinsmen (F2).']],
+      nA: [[1, 'new', '“Applies to: All venues”, by default (owner 2026-11-13)', 'A date typed here starts on every park, as the owner ruled. The club’s AGM evening closes everything.'],
+        [2, 'new', 'A permit’s date off covers only its own parks (P5)', 'Easter weekend came from Milton spring 2027, so it applies to Milton’s park on this schedule; Victoria Day came from Halton Hills, so only Prospect Park. The line under each says where it came from. Venue by venue, never field by field (P6).']] },
+    { key: 'menu', label: 'Choosing the parks', cap: 'Owner · Dates off · “Applies to” open', today: false,
+      r: function () { return offsWin({ menu: true }); },
+      nA: [[1, 'new', 'The parks this schedule uses, ticked', 'Drawn as the permit form’s own tick-list field (its “Every facility” choice becomes “All venues”), opening under the row like every other field. The owner asked for “a window to choose its venues”; this is the shipped small window for exactly that. If a full window was meant, it is Ask N4’s alternative.'],
+        [0, 'same', 'What unticking does', 'Kinsmen Park only: Prospect Park’s practices that evening stay. The generator and the hand-edit warnings honour it: a date off blocks only the parks it names. “All venues” stays all as parks are added (Add time); a list of named parks does not grow (UX 2). A schedule on one park shows no “Applies to” at all (UX 7).']] },
+    { key: 'attn', label: 'Two permits, two dates off', kind: 'desk', cap: 'Owner · ' + SCHED + ' · ' + fullD(TODAY2), today: false,
+      r: function () { return schedPage({ attn: attnTwo(true) }); },
+      nA: [[1, 'new', 'Outside the permit reads every permit behind the schedule', 'Milton added Thu, May 13 after the schedule was sent. Its row names Milton and only Kinsmen’s practices. “Take May 13 off Kinsmen Park” adds the day for Milton’s park only, so ' + P13.team + '’s Thursday ' + span(P13.s, P13.e) + ' at Prospect Park stays. Today’s “Take … off” would close every park and take it too.'],
+        [2, 'new', 'The second permit’s date off, its own row', 'Halton Hills added Wed, May 19. Today the schedule reads only the permit it started from, so this row would never appear. The first row keeps the lime; the second is outline, one lime a screen.'],
+        [0, 'same', 'Unchanged', 'The chip, the house-league line when games sit there, and the hand-off: “Take … off” opens Settings… with Regenerate, and nothing moves until the admin keeps a draft and sends. Past days never move (P10).']] }
+  ];
+
+  /* ── The bill ── */
+  function teamCap(n, b) { var t = b.t[n]; var parts = ['A', 'B'].filter(function (k) { return t.by[k]; }).map(function (k) { return hrs(t.by[k]) + ' ' + (k === 'A' ? 'Milton' : 'Halton Hills'); });
+    return pl(t.n, 'slot', 'slots') + ' · ' + parts.join(' + '); }
+  function billTable(b, o) { o = o || {};
+    var rows = TEAMS.map(function (n) { var d = o.vs ? b.shares[n] - o.vs.shares[n] : 0;
+      return '<tr><td><b>' + n + '</b><small>' + teamCap(n, b) + '</small></td><td class="n"><b>' + money(b.shares[n]) + '</b>' + (o.vs ? '<small class="' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '+' : '') + money(d) + '</small>' : '') + '</td>' +
+        (o.noInst ? '' : b.inst[n].map(function (c) { return '<td class="n">' + (c ? money(c) : '—') + '</td>'; }).join('')) + '</tr>'; }).join('');
+    var tot = '<tr class="tot"' + (o.vs ? ' data-same' : '') + '><td>' + pl(TEAMS.length, 'team', 'teams') + '</td><td class="n">' + money(b.total) + '</td>' + (o.noInst ? '' : [0, 1].map(function (i) { return '<td class="n">' + money(sum(TEAMS.map(function (n) { return b.inst[n][i]; }))) + '</td>'; }).join('')) + '</tr>';
+    return '<div class="bwrap"><table class="bt2"><thead><tr><th>Team</th><th class="n">Share</th>' + (o.noInst ? '' : PERIODS.map(function (p) { return '<th class="n">' + md(p[0]) + '</th>'; }).join('')) + '</tr></thead><tbody>' + rows + tot + '</tbody></table></div>'; }
+  function closing(b) { var d = PERMITS_COST - b.total;
+    return '<p class="closing">' + (d > 1 ? money(d) + ' less than the permits’ ' + money(PERMITS_COST) + ': the club covers the rest.' : 'Matches the permits’ ' + money(PERMITS_COST) + ': nothing left for the club to cover.') + '</p>'; }
+  function billWin(mode, o) { o = o || {}; var b = mode === 'one' ? (o.part ? BP_ONE : B_ONE) : (o.part ? BP_EACH : B_EACH);
+    var x = '<div class="pr2" data-same>' + fld('Bill from', sel('Field rentals · diamonds'), 'Both permits’ budget line · ' + money(PERMITS_COST) + ' planned, ' + money(PERMITS_COST) + ' left') +
+      fld('Bill the teams for', sel(o.part ? 'A part of it' : 'The time at the permits’ prices · ' + money(B_EACH.timePrice)), 'Or a part of it, when the club covers some') + '</div>';
+    var price = fld('Price the time', sel(mode === 'one' ? 'One rate for all' : 'Each permit’s price'),
+      mode === 'one' ? money(B_EACH.timePrice) + ' over ' + hrs(B_EACH.M) + ' of full fields: ' + money(B_ONE.rateHour) + ' a full field, an hour, wherever the team played'
+        : PM.A.name + ' ' + money(rateC('A')) + ' a full field, an hour · ' + PM.B.name + ' ' + money(rateC('B')));
+    var amt = o.part ? fld('Amount', tx(money(PART)), '', true) : '<div></div>';
+    x += '<div class="pr2">' + hl(1, 'new', price) + '<div data-same>' + amt + '</div></div>';
+    x += '<div class="pr2">' + hl(2, 're', fld('Split', sel('By the time each team got'), o.part ? (mode === 'one' ? 'The amount, shared by the hours each team got' : 'The amount, shared by what each team’s time costs at its permit’s price') : (mode === 'one' ? 'Each field at the one rate; a half field at half of it' : 'Each field at its permit’s price; a half field at half of it'))) +
+      '<div class="pr2" data-same>' + fld('Payments', sel('Every two months')) + fld('From', dt(fullD(PERIODS[0][0]))) + '</div></div>';
+    x += hl(3, 're', billTable(b));
+    x += '<div data-same>' + closing(b) + '</div>';
+    x += '<div class="stmt" data-same><b>The bill goes to the teams with the schedule.</b><p>Nothing is billed until you finalize. Then each team’s share arrives on its Money › Club tab with its 2 payments, filed under Field rentals where the team’s budget has it.</p></div>';
+    return crop(win({ w: 800, eyebrow: SCHED, title: 'Bill the teams', body: x, foot: btn('Cancel') + btn('Add the bill to the schedule', 'pri'), footSame: true })); }
+  function sideBySide(part) { var e = part ? BP_EACH : B_EACH, o1 = part ? BP_ONE : B_ONE;
+    var h = '<div class="win" style="width:1040px"><div class="db"><div class="cmp"><div><span class="mono">Each permit’s price' + (part ? ' · a part, ' + money(PART) : '') + '</span>' + billTable(e, { noInst: true }) + '</div>' +
+      '<div><span class="mono">One rate for all' + (part ? ' · a part, ' + money(PART) : ' · ' + money(o1.rateHour) + ' an hour') + '</span>' + hl(1, 'new', billTable(o1, { noInst: true, vs: e })) + '</div></div>' +
+      '<div data-same>' + closing(e) + '</div></div></div>';
+    return '<div class="fr crop cropbg" style="width:1096px">' + h + '</div>'; }
+  function fairWin(mode) { var b = mode === 'one' ? B_ONE : B_EACH;
+    var rows = TEAMS.map(function (n) { var t = b.t[n]; return '<tr><td><b>' + n + '</b></td><td class="n">' + t.n + '</td><td class="n">' + (t.by.A ? hrs(t.by.A) : '—') + '</td><td class="n">' + (t.by.B ? hrs(t.by.B) : '—') + '</td><td class="n"><b>' + money(b.shares[n]) + '</b></td></tr>'; }).join('');
+    var band = '<div class="mband" data-same><div><span class="mono">Handed out</span><span class="big">' + SL.length + ' of ' + SL.length + '</span></div><div><span class="mono">The bill</span><span class="big">' + money(b.total) + '</span></div><div><span class="mono">Short</span><span class="big">0</span></div><div><span class="mono">Clashes</span><span class="big">0</span></div></div>';
+    var x = band + '<div class="secl">Fair shares by team<span></span></div>' + hl(1, 'new', '<div class="bwrap"><table class="bt2"><thead><tr><th>Team</th><th class="n">Slots</th><th class="n">Hours · Milton spring</th><th class="n">Hours · Halton Hills</th><th class="n">Bill</th></tr></thead><tbody>' + rows + '</tbody></table></div>') +
+      '<p class="hnt" style="margin:0" data-same>A shared slot and a half field each count half a facility. The bill is priced at ' + (mode === 'one' ? 'one rate for all' : 'each permit’s price') + '.</p>';
+    return crop(win({ w: 800, eyebrow: SCHED, title: 'Fair shares and the bill', body: x, foot: btn('Close'), footSame: true })); }
+  function coachLine(mode) { var b = mode === 'one' ? B_ONE : B_EACH, n = '13U AA', s = b.shares[n];
+    var h = '<div style="width:880px;padding:1.25rem;background:var(--p-paper)"><div class="secl" style="margin-bottom:0.5rem">13U AA · Money › Club<span></span></div><div class="card"><div class="bt2wrap"><table class="bt2"><thead><tr><th>What</th><th>Files under</th><th class="n">Amount</th><th>Status</th></tr></thead><tbody>' +
+      '<tr><td>' + hl(1, 'same', '<span style="display:grid"><b>' + SCHED + '</b><small>$0.00 paid of ' + money(s) + '</small></span>', 'span') + '</td><td>Field rentals</td><td class="n">' + money(s) + '</td><td><span class="chip neutral">Due ' + md(PERIODS[0][0]) + '</span></td></tr>' +
+      '<tr data-same><td><b>Club registration fee</b><small>$450.00 paid of $450.00</small></td><td>Club fees</td><td class="n">—</td><td><span class="chip good">Paid</span></td></tr></tbody></table></div></div>' +
+      '<div class="secl" style="margin:1rem 0 0.5rem">The club’s proposal, before Finalize · the coach’s review window<span></span></div><div class="card" style="padding:0.9rem 1rem;display:grid;gap:0.5rem">' +
+      '<div class="mband" style="grid-auto-columns:minmax(0,1fr)"><div><span class="mono">Your share</span><span class="big">' + money(s) + '</span>' + hl(2, 're', '<small>' + (mode === 'one' ? 'By the time you got, at one rate for every team' : 'By the time you got, at each permit’s price') + '</small>', 'span') + '</div><div><span class="mono">Payments</span><span class="big">2</span><small>' + md(PERIODS[0][0]) + ' and ' + md(PERIODS[1][0]) + '</small></div></div></div></div>';
+    return '<div class="fr crop">' + h + '</div>'; }
+  function treasLine() { var h = '<div style="width:900px;padding:1.25rem;background:var(--p-paper)"><div class="secl" style="margin-bottom:0.5rem">Treasurer · Accounting › Budget · 2027<span></span></div><div class="card">' +
+    '<div class="bt2wrap"><table class="bt2"><thead><tr><th>Line</th><th class="n">Planned</th><th class="n">Allocated</th><th class="n">Left</th></tr></thead><tbody>' +
+    '<tr><td><b>Field rentals · diamonds</b>' + hl(1, 'new', '<small class="amb">Being billed: ' + money(B_EACH.total) + ' (draft) · ' + SCHED + ' ›</small>', 'span') + '</td><td class="n">' + money(PERMITS_COST) + '</td><td class="n">$0.00</td><td class="n">' + money(PERMITS_COST) + '</td></tr>' +
+    '<tr data-same><td><b>Equipment</b></td><td class="n">$4,000.00</td><td class="n">$1,250.00</td><td class="n">$2,750.00</td></tr></tbody></table></div></div></div>';
+    return '<div class="fr crop">' + h + '</div>'; }
+  var DIFF11 = B_ONE.shares['11U AA'] - B_EACH.shares['11U AA'], DIFF15 = B_ONE.shares['15U AA'] - B_EACH.shares['15U AA'];
+  SCR.bill = [
+    { key: 'each', label: 'Each permit’s price', cap: 'Owner · ' + SCHED + ' › Bill the teams · draft · window 800 px', today: false, r: function () { return billWin('each'); },
+      nA: [[1, 'new', '“Price the time”, a dropdown (P2)', 'Each permit’s price is the default: a slot costs what its permit charges for that field. Shown only when the schedule’s time has more than one price; a one-permit schedule never sees it (absent, not disabled). Changed while the schedule is In review, the coaches’ figures change with it; the build checks what today’s review does when any bill term changes after the send, and uses the same answer (UX 3).'],
+        [2, 're', 'The Split hint names the price', 'The split is unchanged (by the time each team got); the hint says which price each hour carries.'],
+        [3, 're', 'Each team’s caption gives its hours by permit', '15U AA: ' + teamCap('15U AA', B_EACH) + ', so ' + money(B_EACH.shares['15U AA']) + '. 11U AA played only at Milton: ' + money(B_EACH.shares['11U AA']) + '. Payments follow each team’s priced time in each two months.'],
+        [0, 'same', 'Unchanged', 'Bill from (both permits sit on one budget line here), Bill the teams for (now “the permits’ prices”), Payments, the closing row against both permits’ cost (' + money(PERMITS_COST) + '), the statement and the foot.']] },
+    { key: 'one', label: 'One rate for all', cap: 'Owner · Bill the teams · One rate for all', today: false, r: function () { return billWin('one'); },
+      nA: [[1, 'new', 'One rate: the same total, re-shared (P1)', money(B_EACH.timePrice) + ' over ' + hrs(B_EACH.M) + ' = ' + money(B_ONE.rateHour) + ' a full field, an hour. The club recovers exactly the same; only who pays which part changes. The average of the two prices ($50.00) would have billed ' + money(B_EACH.M / 60 * 5000) + ' and the bill would no longer match the permits.'],
+        [2, 're', 'The Split hint names the one rate', 'A half field at half of it, the way the permit’s own field prices already work.'],
+        [3, 're', 'Same hours, different shares', '11U AA pays ' + money(B_ONE.shares['11U AA']) + ' (' + money(DIFF11) + ' more); 15U AA pays ' + money(B_ONE.shares['15U AA']) + ' (' + money(-DIFF15) + ' less). The total and the closing row don’t move.']] },
+    { key: 'both', label: 'Side by side', cap: 'Owner · the two ways on the same fixture · shares only', today: false, kind: 'wide', r: function () { return sideBySide(false); },
+      nA: [[1, 'new', 'What the choice does, in one look', 'Each team’s change against Each permit’s price. The totals are equal to the cent; the shares add up to it both ways. Show only what differs dims the totals and the closing row, which are the same.']] },
+    { key: 'part', label: 'A part of it', cap: 'Owner · the two ways with “A part of it”, ' + money(PART), today: false, kind: 'wide', r: function () { return sideBySide(true); },
+      nA: [[1, 'new', 'A typed part is shared the way the time is priced (P3)', 'With each permit’s price, ' + money(PART) + ' is shared by what each team’s time costs, so 15U AA’s Halton Hills hours still weigh more. With one rate, by hours, as today. The club covers ' + money(PERMITS_COST - PART) + ' either way.']] },
+    { key: 'fair', label: 'Fair shares', cap: 'Owner · the schedule’s Bill tile › Fair shares and the bill · window 800 px', today: false, r: function () { return fairWin('each'); },
+      nA: [[1, 'new', 'Hours by permit, only when there is more than one', 'Two columns of hours replace the single Hours column, so “why does 15U AA pay more?” is answered in the table. One permit: one Hours column, as built.'],
+        [0, 'same', 'Unchanged', 'The joined band, the note and the window.']] },
+    { key: 'coach', label: 'The coach', cap: 'Head coach · 13U AA · Money › Club and the review window', today: false, r: function () { return coachLine('each'); },
+      nA: [[1, 'same', 'The club line on Money › Club is unchanged', 'One allocation, the schedule’s name, its amount. The coach sees the figure, never the permits. Coach books stay the team’s (2026-11-06): nothing here reaches family dues.'],
+        [2, 're', 'The review window says how the club priced it', 'Before Finalize the coach reads “Your share · By the time you got”. With more than one price it adds which way the club priced it, so a coach comparing with another team’s figure knows why it differs.']] },
+    { key: 'treas', label: 'The treasurer (13d)', cap: 'Treasurer · Accounting › Budget · drawn from Stage 13d’s ruled plan (not built)', today: false, r: treasLine,
+      nA: [[1, 'new', '13d’s draft bill on the budget line, unchanged by this project', 'Stage 13d (Ask 15, ruled 2026-11-06) shows a draft schedule’s bill on its budget line and warns before billing the same line twice. The two ways of pricing give the same total (' + money(B_EACH.total) + '), so 13d’s line reads the same whichever the admin picks. Its words are 13d’s; they are not fixed yet.']] }
+  ];
+
+  /* ── The tops ── */
+  function permitWin(pk, after) { var p = PM[pk];
+    var x = '<div data-same><div class="secl" style="margin-bottom:0.6rem">The permit<span></span></div><div class="kv"><span class="k">Issuer</span><b>' + p.issuer + '</b><span class="k">Reference</span><b>' + p.ref + '</b><span class="k">For</span><b>The club</b><span class="k">Dates</span><b>' + range(p.from, p.to) + '</b></div></div>' +
+      '<div data-same><div class="secl" style="margin-bottom:0.5rem">The time<span>' + hrs(heldMin(pk)) + ' held</span></div>' + p.blocks.map(function (b) { return '<div class="box" style="margin-bottom:0.4rem"><span><b>' + placeOf(b) + '</b><small>' + daysWords(b[1]) + ' · ' + span(b[2], b[3]) + '</small></span></div>'; }).join('') + '<small>Dates off: ' + p.off.map(function (o) { return md(o[0]) + ' (' + o[1] + ')'; }).join(', ') + '.</small></div>' +
+      '<div data-same><div class="secl" style="margin-bottom:0.5rem">Cost<span></span></div><div class="band2"><div><span class="mono">Cost</span><span class="big">' + money(costC(pk)) + '</span></div><div><span class="mono">A full field, an hour</span><span class="big">' + money(rateC(pk)) + '</span></div></div></div>';
+    var used = after ? '<p style="margin:0;font-size:13px;color:var(--p-ink2)"><a>' + SCHED + ' ›</a> and <a>' + HL + ' ›</a> hand this time out, so the permit stays.</p>'
+      : '<p style="margin:0;font-size:13px;color:var(--p-ink2)"><a>' + SCHED + ' ›</a> hands this time out, so the permit stays.</p>';
+    x += after ? hl(1, 're', used) : '<div>' + used + '</div>';
+    return crop(win({ w: 640, eyebrow: 'Permit · 2027', title: p.name, body: x }), 640); }
+  function guardWin() { var p = PM.B;
+    var x = '<div data-same><div class="secl" style="margin-bottom:0.5rem">The time<span>' + hrs(heldMin('B')) + ' held</span></div>' + p.blocks.map(function (b) { return '<div class="box" style="margin-bottom:0.4rem"><span><b>' + placeOf(b) + '</b><small>' + daysWords(b[1]) + ' · ' + span(b[2], b[3]) + '</small></span></div>'; }).join('') + '</div>' +
+      hl(1, 'new', '<p style="margin:0;font-size:13px;color:var(--p-ink2)"><a>' + SCHED + ' ›</a> hands this time out, so the permit stays.</p>') +
+      hl(2, 're', '<div class="stmt warn"><b>Refused if someone tries anyway:</b><p>“' + SCHED + ' hands out this permit’s time, so the permit can’t be deleted.”</p></div>');
+    return crop(win({ w: 640, eyebrow: 'Permit · 2027', title: p.name, body: x }), 640); }
+  function phoneSched(noEdit) {
+    var b = hl(1, noEdit ? 'same' : 're', '<div class="ptop"><span class="k">From the permits</span>' + ['A', 'B'].map(function (k) { return '<span class="dr2">' + PM[k].name + '<span class="cv">' + ic('chevR', 15) + '</span></span>'; }).join('') + '<span class="fact">4 teams · ' + SENT + '</span></div>') +
+      '<div class="card" data-same><div class="prow2"><span class="lbx">Handed out</span><span class="fig">' + SL.length + ' of ' + SL.length + '</span><span class="cv">' + ic('chevR', 15) + '</span></div><div class="prow2"><span class="lbx">The bill<small>Fair shares and the bill</small></span><span class="fig">' + money(B_EACH.total) + '</span><span class="cv">' + ic('chevR', 15) + '</span></div><div class="prow2"><span class="lbx">Short</span><span class="fig">0</span></div><div class="prow2"><span class="lbx">Clashes</span><span class="fig">0</span></div></div>' +
+      '<div class="card" data-same style="padding:0.85rem 1rem;display:grid;gap:0.35rem"><b>Needs attention</b><small>Nothing waits.</small></div>' +
+      '<div class="card" data-same style="padding:0.85rem 1rem;display:grid;gap:0.35rem"><b>A typical week</b><small>Mon · Diamond 1 · 15U AA · 6:00–8:00 p.m.</small><small>Tue · Diamond A · 11U AA · 6:00–8:00 p.m.</small><small>…</small></div>';
+    return phone({ role: 'owner', on: 'More', back: true, name: SCHED, body: b }); }
+  SCR.tops = [
+    { key: 'top', label: 'The schedule’s top line', kind: 'desk', cap: 'Owner · ' + SCHED + ' · sent', today: true,
+      r: function (after) { return schedPage({ top: after ? 'after' : 'today', pinTop: 1 }); },
+      nT: [[1, 'same', 'Today: one permit, by its own column', '“From the permit Milton spring 2027 ›”, read from the permit the schedule started from. A second permit could not be named.']],
+      nA: [[1, 're', '“From the permits … and … ›”', 'Each permit is its own door, in the order its time starts. Three or more: a list (“A ›, B › and C ›”, drawn on tab 3). The places after them are every park on the rows. Read from the rows, so it can never disagree with them.']] },
+    { key: 'used', label: 'The permit’s “used by”', cap: 'Owner · Permits › Milton spring 2027 · record window 640 px', today: true,
+      r: function (after) { return permitWin('A', after); },
+      nT: [[0, 'same', 'Today: only a schedule that started from it, or bills from it', 'The house-league season’s schedule, which hands out Milton’s Saturdays, would not be named, so the list undercounts what leans on the permit.']],
+      nA: [[1, 're', 'Every schedule with a row from this permit', 'Read from the rows. Both the rep schedule and the house-league schedule hand Milton’s time out, so both are named, each a door.']] },
+    { key: 'guard', label: 'The delete guard', cap: 'Owner · Permits › Halton Hills spring 2027 · record window 640 px', today: false,
+      r: guardWin,
+      nA: [[1, 'new', 'A permit any row came from can’t be deleted', 'Today Halton Hills could never be on this schedule. After, its rows make it “used”, so the Delete door is absent, the same rule as today’s started-from permit.'],
+        [2, 're', 'The refusal names the schedule', 'The words are today’s; the schedule list now comes from the rows. A permit removed from every schedule (Settings… or before Finalize) can be deleted again.']] },
+    { key: 'phone', label: 'On a phone', cap: 'Owner · 390 × 844', today: false, kind: 'phone',
+      r: function () { return phoneSched(false); },
+      nA: [[1, 're', 'On a phone the permits are rows', 'The desktop’s one line becomes a short card: “From the permits”, then each permit a 44 px row with its chevron, then the facts. The figures are the phone’s rows (owner rule 2026-11-12), unchanged.']] }
+  ];
+
+  /* ════════════ the static tabs ════════════ */
+  function fixtureHtml() {
+    var rows = ['A', 'B', 'G', 'C'].map(function (k) { var p = PM[k];
+      return '<tr><td>' + p.name + (k === 'C' ? '<br><small class="no">added May 10 (tab 3)</small>' : '') + '</td><td>' + p.issuer + '</td><td>' + p.blocks.map(function (b) { return placeOf(b) + ' · ' + daysWords(b[1]) + ' ' + span(b[2], b[3]); }).join('<br>') + '</td><td>' + range(p.from, p.to) + '</td><td>' + (p.off.length ? p.off.map(function (o) { return md(o[0]) + ' (' + o[1] + ')'; }).join(', ') : '—') + '</td><td>' + hrs(heldMin(k)) + '</td><td>' + (p.rate ? money(costC(k)) + '<br><small class="no">' + money(rateC(k)) + ' a full field, an hour</small>' : 'No cost entered') + '</td></tr>'; }).join('');
+    var teams = TEAMS.map(function (n) { var t = B_EACH.t[n]; return '<tr><td>' + n + '</td><td>' + PAT.filter(function (r) { return r[5] === n; }).map(function (r) { return WDS[r[1]] + ' ' + FAC[r[2]].v + ' ' + FAC[r[2]].n + (r[6] ? ' from ' + md(r[6]) : '') + (r[7] ? ' until ' + md(r[7]) : ''); }).join('<br>') + '</td><td>' + t.n + '</td><td>' + (t.by.A ? hrs(t.by.A) : '—') + '</td><td>' + (t.by.B ? hrs(t.by.B) : '—') + '</td><td>' + money(B_EACH.shares[n]) + '</td><td>' + money(B_ONE.shares[n]) + '</td></tr>'; }).join('');
+    return '<p class="lede">One club for the whole drawing. Change a number in this page’s fixture and every frame recomputes. The arithmetic is the shipped arithmetic: a slot’s priced minutes are its minutes × its field’s weight ÷ the teams in it; the split is the largest remainder, ties to the earlier team.</p>' +
+      '<div class="tblwrap"><table class="who whoT"><thead><tr><th>Permit</th><th>Issuer</th><th>The time</th><th>Dates</th><th>Dates off</th><th>Held</th><th>Cost</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<div class="tblwrap"><table class="who"><thead><tr><th>Rep team</th><th>Its week (2-hour practices, one team a diamond)</th><th>Slots</th><th>Milton</th><th>Halton Hills</th><th>Each permit’s price</th><th>One rate</th></tr></thead><tbody>' + teams +
+      '<tr><td>Total</td><td></td><td>' + SL.length + '</td><td>' + hrs(sum(TEAMS.map(function (n) { return B_EACH.t[n].by.A || 0; }))) + '</td><td>' + hrs(sum(TEAMS.map(function (n) { return B_EACH.t[n].by.B || 0; }))) + '</td><td>' + money(B_EACH.total) + '</td><td>' + money(B_ONE.total) + '</td></tr></tbody></table></div>' +
+      '<div class="prose"><ul><li><b>Today in the fixture</b> is ' + fullD(TODAY1) + ' when the schedule is made (tabs 1, 2, 5) and ' + fullD(TODAY2) + ' when June is added and dates off arrive (tabs 3, 4).</li>' +
+      '<li><b>Also booked:</b> Winter gym practices 2027 (final) on the gym’s Mondays; Spring tryouts 2027 on Kinsmen Diamond A, Mar 2 and Mar 4; the draft ' + HL + ' on Kinsmen’s Saturday mornings and Diamond B’s Thursdays in April.</li>' +
+      '<li><b>House league is never billed.</b> Kinsmen’s Saturdays and Lions Park’s Tuesdays are not on the rep schedule, so the club covers ' + money(PERMITS_COST - B_EACH.total) + ' of the two permits’ ' + money(PERMITS_COST) + '.</li>' +
+      '<li><b>The two ways of pricing</b> give ' + money(B_EACH.total) + ' both times; one rate is ' + money(B_ONE.rateHour) + ' a full field, an hour.</li></ul></div>';
+  }
+  function reachHtml() {
+    var R = [
+      ['New schedule (create)', 'Admin, owner', 'Permits multi-pick; rows grouped by permit with their place; From/To follow; Find the time door; dates off gain Applies to', 'A, B, D'],
+      ['Settings… (same window)', 'Admin, owner', 'The same, plus taking a permit off; the Regenerate question says the past stays', 'A, E'],
+      ['The schedule page', 'Admin, owner', 'Top line names every permit; Tools gains Add time…; Needs attention reads every permit; the warnings’ lead line and Different on a date mark each permit’s dates off', 'A, B, E'],
+      ['Bill the teams', 'Owner, admins who hold Accounting (an admin without it sees “Open”; the treasurer can’t open Schedules and meets the bill in 13d)', 'Price the time; hints; captions by permit; closing row against all permits; the late bill (Send the bill) gets the same', 'C'],
+      ['Fair shares and the bill', 'Money readers', 'Hours by permit when more than one', 'C'],
+      ['Send the changes', 'Admin, owner', 'Corrections and credits at each slot’s permit’s kept price, or the one rate, with the gap said', 'C, E'],
+      ['Permits: the permit window', 'Everyone who can open permits', '“Used by” and the delete guard read the rows', 'A'],
+      ['Overview: Outside the permit · N (13c)', 'Owner, unscoped admin', 'Counts dates off from every permit behind each schedule; a date off scoped to one park counts only that park’s practices', 'A, B'],
+      ['Calendar day mark (13c)', 'Owner, admins, league admin, registrar', 'Reads permit dates off against bookings: unchanged, but checked in the build', 'B (check)'],
+      ['House league · Schedule health (13c)', 'League admin', 'Its outside-the-permit read must use every permit too; same reader', 'A'],
+      ['Coach: the review window (before Finalize)', 'Head coach', 'Figures per the chosen way; the share caption names it', 'C'],
+      ['Coach: hand-back figures', 'Head coach', 'A slot handed back is valued at its permit’s kept price, not one rate', 'C'],
+      ['Coach: Money › Club', 'Coaches who can open Money', 'Unchanged (the amount is what the club billed)', '—'],
+      ['Treasurer: 13d budget line', 'Treasurer', 'Unchanged by the choice (same total); 13d must be built first', '—'],
+      ['The schedule’s export notes', 'Admin, owner', 'Name every permit and its price', 'C'],
+      ['Help: Schedules and Permits guides', 'Everyone', 'Several permits, Add time, Find the time, dates off by park, Price the time; one permit per issuer (F3)', 'Words'],
+      ['The demos', 'Public', 'Follow the product; a demo club with two towns at its next curation cycle', 'Not a gate']
+    ];
+    var t = '<p class="lede">Every screen a change in this drawing reaches, before anything is promised. Session letters are the build split proposed in the plan (A rows remember their permit, B dates off by park, C the bill, D the finder, E Add time and the past).</p>' +
+      '<div class="tblwrap"><table class="who whoT"><thead><tr><th>Screen</th><th>Who</th><th>What changes</th><th>Session</th></tr></thead><tbody>' + R.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    t += '<div class="prose"><h2>Plan §2, checked against the code today</h2><p><span class="mk v">V</span> opened this session · <span class="mk">H</span> from a helper’s read, not opened by me.</p><ul>' +
+      '<li><span class="mk v">V</span>Picking a permit replaces the whole time; only a typed name survives (<code>NewScheduleWindow.tsx:281-294</code>). The Permit dropdown exists only on create (<code>:545-554</code>).</li>' +
+      '<li><span class="mk v">V</span><b>Correction to §2:</b> a time row has no visible place. Its place is kept out of sight, and mixed places show only as one read-only line above the rows (<code>:556-561, 607-624</code>). So “rows carrying their permit” also means rows showing their place: new, not a restyle.</li>' +
+      '<li><span class="mk v">V</span>Dates-off rows are a day and why; no venue (<code>:644-667</code>).</li>' +
+      '<li><span class="mk v">V</span>The bill’s arithmetic: priced minutes, one cent-rounding of the whole time, the largest-remainder split, the rate stored as cents per full-field minute (<code>lib/club-schedule-bill.ts:43-79, 88-91</code>). The closing row compares with one permit’s cost (<code>lib/club-schedule-words.ts:243-251</code>).</li>' +
+      '<li><span class="mk v">V</span><b>Correction to §2:</b> field weights are not only Full 1 / Half 0.5. Since 2026-10-11 a field can be “A percent” of a full field, so “one rate” has to keep each field’s weight: a 75% field pays 75% of the one rate.</li>' +
+      '<li><span class="mk v">V</span>New schedule is absent at phone width, by ruling (<code>app/[orgSlug]/admin/schedules/page.tsx:15-16, 89</code>).</li>' +
+      '<li><span class="mk v">V</span>A send checks what it wrote against every booking and the permits, never fatally (<code>lib/club-schedule-send.ts:1119-1132</code>).</li>' +
+      '<li><span class="mk v">V</span>The rules include “Facilities for a group” (<code>lib/club-schedule-words.ts:590</code>), so a club can keep Prospect Park for its older teams; that matters for the one-rate argument.</li>' +
+      '<li><span class="mk">H</span>Regenerate keeps only locked or hand-moved slots, past days included (server :418; save function soft-removes the rest). F1 stands.</li>' +
+      '<li><span class="mk">H</span>“Used by” and the delete guard match <i>started from</i> or <i>bills from</i> (<code>lib/permit-server.ts:219-224</code>); the outside-permit read uses started-from only (<code>[scheduleId]/route.ts:52</code>).</li>' +
+      '<li><span class="mk">H</span><code>bill_scale</code> is written at Finalize and at the late bill, never by Send the changes; the coach’s hand-back figures and the hand-back reads also use it. All are readers this project must move.</li>' +
+      '<li><span class="mk">H</span><b>Correction to §9:</b> the late-bill Money-audience build is committed (<code>507f4505b</code>, <code>39eb59955</code>), and it changed only the send engine and the Send window. Three small uncommitted edits sit in the Bill window, New schedule and the schedule styles (another session’s: the two-line Bill from field, a button word, a column width); this drawing is drawn on top of them.</li>' +
+      '<li><span class="mk">H</span>Stage 13d is ruled (Ask 15, 2026-11-06) but not built; no build prompt exists. The build waits for it (owner 2026-11-13).</li></ul>' +
+      '<h2>The reviews, applied before publishing</h2><p><b>/ux</b> (9 findings, all applied as notes on the frames): unticking a permit drops edits to its rows, now said in the hint; “All venues” stays all as Add time adds parks; Price the time changed while In review follows today’s rule for any bill change after a review is sent (checked in the build); the finder’s no-permit state; Add time with nothing to add; the finder keeps the form and its filters, with one loading line; no “Applies to” on a one-park schedule; two ticked permits that overlap get Add time’s statement; and a correction to this tab: the treasurer cannot open Bill the teams (it meets the bill in 13d).</p>' +
+      '<p><b>/design</b> (6 findings, applied to the frames): pins no longer cover a field’s label; the date-off dates show in full; the phone’s top line is a card of 44 px permit rows, not a wrapped sentence; “A typical week” no longer wraps a permit’s name into three lines; the finder’s definition of “free” moved to the window’s subtitle; “Applies to” wears the filled look of the tick-list field it is. Kept and not changed: table headings in the mono label face (as every schedule drawing since 11c); one lime per screen holds on every frame.</p>' +
+      '<h2>The bill-amend project</h2><p>Read: <code>CLUB_BILL_AMEND_AFTER_MADE_PLAN.md</code> (no drawing yet). It changes the dates and amounts of a team’s <i>unpaid</i> payments and never a team’s share. Prices kept per permit are what a team’s value is measured with; a re-spread never touches them. Three things the two must agree on, listed as build guards rather than a conflict: Send the changes measures a team’s <i>value</i>, never its payment pattern; after an amend, “each payment is that team’s time in its months” stops being true for that bill, and the Bill window’s read-only view must not claim it; the coach’s Money tab reads the amended dates. <b>Recommendation: keep the two sessions separate</b> (Ask N5).</p></div>';
+    return t;
+  }
+
+  var ASKS = [
+    { id: 'S1', t: 'Add time: beside Settings…, or inside it?', go: 'add:door',
+      ctx: 'Two doors that both change a schedule’s time can confuse. They make different promises: Add time adds and moves nothing; Settings… changes what is there and may regenerate every unlocked slot. This changes the shape of Session E.',
+      o: [['A', 'Beside: “Add time…” first in Tools, Settings… unchanged below it.', 'Each door keeps one promise, said where it is made. Taking a permit off is a change to what is there, so it stays in Settings… (P11).'],
+        ['B', 'Inside Settings…: its time section gains “Add a permit” and the save asks “only the new time, or regenerate?”.', 'One door. But the promise is hidden in the window that can move everything, and a save that adds a permit and also changes shares has no clean answer.']] },
+    { id: 'P10', t: 'Fix F1 here: a sent schedule never moves a practice already played?', go: 'add:regen',
+      ctx: 'Today Regenerate on a sent schedule keeps only locked or hand-moved slots, so days already played can be reshuffled unless every week was locked. Add time must not share it, and “Take … off” uses the same save.',
+      o: [['A', 'Yes, in this project: Regenerate, Add time and “Take … off” never move a slot before today on a sent schedule.', 'The regenerate question says how many stay (' + PAST + ' in the fixture). One guard, tested.'],
+        ['B', 'Only Add time is protected; Regenerate stays as built.', 'Smaller; the admin keeps locking weeks by hand, and the finding stays open.']] },
+    { id: 'P9', t: 'Add time on a billed schedule: at what price?', go: 'add:send1',
+      ctx: 'June’s permit wasn’t on the schedule when the bill was made. With each permit’s price, its own price is used; with one rate, the bill’s rate is a term that doesn’t change. In the fixture June costs ' + money(C_TIME_COST) + '; at one rate the teams pay ' + money(COR_ONE.total) + '.',
+      o: [['A', 'Each permit’s price: the new permit’s price at that send, kept from then on. One rate: the bill’s rate, with the gap said in the Send window.', 'Terms never change; the window tells the admin the teams pay ' + money(COR_ONE.total - C_TIME_COST) + ' more than June costs.'],
+        ['B', 'One rate bills a new permit’s time at that permit’s own price.', 'Matches the town’s charge, but the bill then holds two ways of pricing, and coaches see a rate that changed mid-season.']] },
+    { id: 'P1', t: 'What does “one rate for all” mean?', go: 'bill:one',
+      ctx: 'Asked of the fixture: Milton $40.00 an hour, Halton Hills $60.00.',
+      o: [['A', 'The time at the permits’ prices ÷ all priced hours: ' + money(B_ONE.rateHour) + ' an hour. Same total, re-shared.', 'The club recovers the same either way; the closing row keeps one meaning. Only who pays which part moves.'],
+        ['B', 'The average of the permits’ prices: $50.00.', 'Bills ' + money(B_EACH.M / 60 * 5000) + ', which no longer matches what the permits cost for that time; the club covers a different amount depending on the button.']] },
+    { id: 'P2', t: 'Is “one rate” worth a control, and where does the choice live?', go: 'bill:both',
+      ctx: 'From the fixture: with each permit’s price 11U AA pays ' + money(B_EACH.shares['11U AA']) + ' and 15U AA ' + money(B_EACH.shares['15U AA']) + '; one rate moves ' + money(DIFF11) + ' onto 11U AA and ' + money(-DIFF15) + ' off 15U AA. If the club keeps Prospect Park for its older teams (the “Facilities for a group” rule), each permit’s price is fair: they need the bigger diamonds and that town charges more. If the generator simply put them there, a team’s bill depends on where the draft landed, and a regenerate can change it; then one rate is the answer a president can defend. Both happen, so the choice is real.',
+      o: [['A', 'Keep it on the Bill window, per schedule, shown only when the time has more than one price. Default: each permit’s price.', 'The choice sits beside the figures it changes; a one-permit club never sees it.'],
+        ['B', 'A club setting (Organization › Settings), the same for every schedule.', 'A policy no coach can say was picked to favour a team; but a club with a dome schedule and a spring schedule can’t treat them differently.'],
+        ['C', 'As A, but the default is one rate for all.', 'Fits a club that lets the generator place teams; surprises a club that kept the expensive park for the teams who need it.']] },
+    { id: 'P3', t: 'A typed part: how is it shared?', go: 'bill:part',
+      ctx: '“A part of it” (the teams pay ' + money(PART) + ', the club covers the rest).',
+      o: [['A', 'With each permit’s price, by what each team’s time costs; with one rate, by hours (today’s behaviour).', 'The part keeps the shape of the way the club chose.'],
+        ['B', 'By hours, whichever way is chosen.', 'Simpler; with each permit’s price the part then ignores the prices it was chosen for.']] },
+    { id: 'P7', t: 'The finder and other schedules’ drafts', go: 'find:s3',
+      ctx: 'A draft is booked nowhere else in the product. Two admins could find the same Tuesday. If both drafts exist before either saves, the first to Finalize wins; the second schedule’s page then shows it under Clashes and in its warnings, and its own Finalize reply counts the clash (the send checks what it wrote). So no new screen is needed at Finalize.',
+      o: [['A', 'Count other drafts as taken, named on the row (“4 held by a draft (Spring house league 2027)”). No toggle. No new warning at Finalize.', 'The row already carries the fact; a toggle would be a second control for it.'],
+        ['B', 'As A, plus the plan’s “Show time held by drafts” toggle and a warning on the Finalize window when a slot sits on another draft’s time.', 'More said, sooner; one more control and one more sentence in a window that is already long.']] },
+    { id: 'P7b', t: 'A found row that includes days a draft holds', go: 'find:picked',
+      ctx: 'Kinsmen Diamond B’s Tuesdays and Thursdays come in as one row, 4 of whose Thursdays the house-league draft holds.',
+      o: [['A', 'Bring them in, say so on the card, and the drafts step warns on them like a clash.', 'Nothing hidden; the admin decides with the drafts in front of them.'],
+        ['B', 'Leave those days out, as dates off for that park.', 'Cleaner drafts, but a date off nobody typed, which then outlives the other draft if it is deleted.']] },
+    { id: 'P4', t: 'Two permits hold the same field and hour', go: 'find:both',
+      ctx: 'Milton spring and Milton June both hold Lions Park on Tue, May 25.',
+      o: [['A', 'The row’s own permit prices the slot. The finder lists the time once, names both permits and asks which prices it, starting on the newer one.', 'Never a lookup; the admin sees the choice once.'],
+        ['B', 'Always the cheaper permit.', 'No question, but a slot’s price then depends on what other permits say, and changes if one is edited.']] },
+    { id: 'P5', t: 'A permit’s dates off cover its own parks only', go: 'off:rows',
+      ctx: 'Typed dates off start on All venues (owner ruled). This is about the ones copied from a permit, and “Take … off”.',
+      o: [['A', 'A permit’s copied date off, and “Take … off”, apply to that permit’s parks on the schedule.', 'Easter weekend at Milton leaves Prospect Park’s evenings alone.'],
+        ['B', 'They apply to every park, as typed ones do.', 'Today’s behaviour; F2 stays.']] },
+    { id: 'P6', t: 'Dates off by park, or by field?', go: 'off:menu',
+      ctx: 'A town closes a park far more often than one diamond.',
+      o: [['A', 'Park (venue) only.', 'One short list of the schedule’s parks.'],
+        ['B', 'Field by field.', 'Finer, at the cost of a long list and a harder sentence on the row.']] },
+    { id: 'P11', t: 'Taking a permit off a sent schedule', go: 'add:remove',
+      ctx: 'In the fixture, Halton Hills on ' + md(TODAY2) + ': ' + HH_LEFT.length + ' practices from today, ' + HH_PAST + ' already played.',
+      o: [['A', 'Allowed, in Settings…: practices from today on come off through Send the changes, with credits; the played ones and their bill stay.', 'The same rule as every other change to a sent schedule.'],
+        ['B', 'Not allowed after Finalize.', 'Simpler, but a town that cancels a permit leaves the admin removing practices one by one.']] },
+    { id: 'P12', t: 'Where the finder lives', go: 'find:s0',
+      ctx: '13c parked “free time by week across permits” (F-O6-4) on the Permits page. This project absorbs it; no second version.',
+      o: [['A', 'Inside New schedule and Add time first. A read-only “Free time” on the Permits page later, on the same reading.', 'Builds the reading once, where it is acted on.'],
+        ['B', 'The Permits page view in this project too.', 'The president’s view arrives sooner; one more screen (and a phone shape) in this build.']] },
+    { id: 'P13', t: 'The permits plan’s “paying for time per slot”', go: '',
+      ctx: 'Read in place: it sits in §8 between “requesting or paying for permits through the platform” and “municipal integrations; public booking”. It means paying a town as you book. Per-field prices on the club’s bill were ruled in by Asks 21 and 23.',
+      o: [['A', 'Confirmed: it means paying a town as you book; pricing the club’s bill per permit doesn’t reopen it.', 'Nothing in this project books or pays a town.'],
+        ['B', 'Reopen §8.', '—']] },
+    { id: 'N1', t: 'Find the time: a door, or the first choice in the picker?', go: 'pick:two',
+      ctx: 'The plan put “Any permit — find the time” first in the permit picker. The picker is now a tick list of permits.',
+      o: [['A', 'A door under the picker: “Find the time across every permit ›”.', 'A tick list of choices that also holds an action reads as one more permit to tick.'],
+        ['B', 'The first entry in the list, as planned.', 'One place to look; an entry that doesn’t tick.']] },
+    { id: 'N2', t: 'The read-only mixed-places line', go: 'pick:two',
+      ctx: 'Today a line above the rows lists the places, because a row can’t show its own.',
+      o: [['A', 'It goes: each row shows its place, under its permit’s card.', 'Said once, where it applies.'],
+        ['B', 'It stays and gains the permits, as the plan says.', 'The places said twice.']] },
+    { id: 'N3', t: 'A copied schedule, then a permit', go: 'pick:copy',
+      ctx: 'A copy brings last year’s time a year on. Today a permit pick replaces it.',
+      o: [['A', 'The first permit ticked replaces the copied time; the teams, shares and rules stay.', 'This year’s time is the permits’; last year’s rows were a guess at it.'],
+        ['B', 'The copied rows stay beside the permits’ rows.', 'Nothing is lost, but the admin removes last year’s rows by hand, and they price from no permit.']] },
+    { id: 'N4', t: 'Choosing a date off’s parks: the tick-list field or a window?', go: 'off:menu',
+      ctx: 'Owner 2026-11-13: “a window to choose its venues, defaulting to All”. Drawn as the permit form’s own tick-list field, which opens a small list under the row. This asks only about its form; the default is ruled.',
+      o: [['A', 'The tick-list field, with “All venues” first.', 'The shipped control for “every one, or some”; no window over a window.'],
+        ['B', 'A full window opened from the row.', 'Room for a sentence per park; a window on top of New schedule.']] },
+    { id: 'N5', t: 'Draw the bill-amend project with this one?', go: 'reach',
+      ctx: 'Read its plan: it changes a team’s unpaid payments, never its share. Per-permit prices don’t touch that. Three build guards, no real conflict (tab 7).',
+      o: [['A', 'Keep the two separate; this build carries the three guards.', 'No reason to make either wait for the other.'],
+        ['B', 'Merge the two drawing sessions.', 'One sitting on the bill screens; a bigger drawing.']] },
+    { id: 'N6', t: 'Two permits on two budget lines', go: 'bill:each',
+      ctx: 'In the fixture both permits sit on one line. When they don’t, “Bill from” has to start somewhere.',
+      o: [['A', 'Start on the line of the permit with the most priced time, and say so under the field.', 'One sensible default, said; the admin can pick another.'],
+        ['B', 'No default: the admin picks a line every time.', 'Never wrong by default; one more step on every bill.']] }
+  ];
+  var RULED = 'Ruled already, not asked again: <b>several permits per schedule</b>; the admin <b>chooses</b> each permit’s price or one rate; a date off opens a choice of venues, <b>defaulting to All</b>; Outside the permit, “used by”, the delete guard and the New schedule picker learn several permits; the <b>“any permit” finder</b> narrowing as criteria are added (owner 2026-11-13). Kept rules: the schedule owns its own time; prices follow the permit until the bill is made; bill terms never change; a sent schedule changes only through Send the changes, so <b>permit edits are surfaced, never pushed</b> (the plan’s P8 is answered by this rule and drawn on tab 4); house league is never billed; coach books stay the team’s. Shape-changing asks first.';
+  function asksHtml() {
+    var ans = {}; try { ans = JSON.parse(localStorage.getItem(KEY + 'a') || '{}'); } catch (e) {}
+    var h = '<p class="lede">' + RULED + '</p><div class="asks">';
+    ASKS.forEach(function (a) {
+      h += '<section class="ask"><h3><span class="n">' + a.id + '</span>' + a.t + '</h3><p>' + a.ctx + '</p><div class="opts">' + a.o.map(function (o, i) {
+        var id = a.id + '-' + o[0];
+        return '<label for="' + id + '"><input type="radio" id="' + id + '" name="' + a.id + '" value="' + o[0] + '"' + (ans[a.id] === o[0] ? ' checked' : '') + '><span><b>' + o[0] + (i === 0 ? ' (recommended)' : '') + ' · ' + o[1] + '</b><br>' + o[2] + '</span></label>';
+      }).join('') + '</div>' + (a.go ? '<button type="button" class="gol" data-goask="' + a.go + '">See it drawn ›</button>' : '') + '</section>';
+    });
+    h += '</div><div class="answers"><b>Paste this back into the chat</b><textarea id="pasteback" readonly></textarea><div class="copyrow"><button type="button" id="copyans">Copy</button><span id="copymsg">Pick an answer above, or leave one blank to take the recommendation.</span></div></div>';
+    return h;
+  }
+  function pasteText() { var ans = {}; try { ans = JSON.parse(localStorage.getItem(KEY + 'a') || '{}'); } catch (e) {}
+    return 'Several permits drawing asks: ' + ASKS.map(function (a) { return a.id + ' ' + (ans[a.id] || 'A (rec)'); }).join(', '); }
+  var STATIC = { fixture: fixtureHtml, reach: reachHtml, asks: asksHtml };
+
+  var LEDE = {
+    pick: 'One schedule holds as many permits as the season sits on. Each permit is a tick; its time comes in as rows that remember it, and goes out again when it is unticked.',
+    find: 'The owner’s example, frame by frame: everything the club holds in the next three months, then Tuesdays and Thursdays, then 6:00 to 8:00 p.m., then diamonds. Each frame is computed from the permits and the bookings in the fixture.',
+    add: 'May 10: the town issues a June permit for Kinsmen Park. The schedule was sent on Mar 1 with its bill. Adding June must move nothing already sent and bill only the new time.',
+    off: 'Two towns, two sets of closures. A date off names the parks it closes; one copied from a permit closes only that permit’s parks.',
+    bill: 'The same ' + SL.length + ' practices, priced two ways. The total is ' + money(B_EACH.total) + ' both times; only the shares between teams change. Show only what differs on “Side by side” leaves the shares.',
+    tops: 'Where a schedule names its permits, and where a permit names its schedules: both read from the rows, so they can’t disagree.'
+  };
+
+  /* ════════════ rendering ════════════ */
+  var main = document.getElementById('main');
+  function seg(name, items, cur, attr) {
+    return '<div class="vgroup"><span>' + name + '</span><div class="seg">' + items.map(function (i) { return '<button type="button" data-' + attr + '="' + i[0] + '" aria-pressed="' + (i[0] === cur) + '">' + i[1] + '</button>'; }).join('') + '</div></div>';
+  }
+  function curScreen() { var list = SCR[S.tab]; if (!list) return null; var cur = S.scr[S.tab] || list[0].key; return list.filter(function (s) { return s.key === cur; })[0] || list[0]; }
+  function renderTabs() { document.getElementById('stabs').innerHTML = TABS.map(function (t) { return '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (t[0] === S.tab) + '">' + t[1] + '</button>'; }).join(''); }
+  function renderView() {
+    var list = SCR[S.tab], v = document.getElementById('viewrow');
+    if (!list) { v.innerHTML = ''; return; }
+    var sc = curScreen();
+    var html = (list.length > 1 ? seg('Screen', list.map(function (s) { return [s.key, s.label]; }), sc.key, 'scr') : '');
+    if (sc.today) html += seg('Show', [['today', 'Today'], ['after', 'After']], S.mode, 'mode');
+    html += seg('Highlight', [['all', 'Everything'], ['diff', 'Show only what differs']], S.view, 'view');
+    if (sc.kind === 'desk') html += seg('Size', [['fit', 'Fit'], ['actual', 'True size']], S.size, 'size');
+    v.innerHTML = html;
+  }
+  function noteHtml(n) {
+    var kind = n[1], lab = kind === 'new' ? 'New' : kind === 're' ? 'Restyled' : 'Unchanged';
+    return '<button type="button" class="nt ' + kind + '" data-note="' + n[0] + '"><span class="nn">' + (n[0] || '·') + '</span><span class="tag">' + lab + '</span><b>' + n[2] + '</b><span class="tx">' + n[3] + '</span></button>';
+  }
+  function renderMain() {
+    var list = SCR[S.tab];
+    if (!list) { document.body.classList.remove('differs'); main.innerHTML = STATIC[S.tab](); wireStatic(); return; }
+    var sc = curScreen(), after = !sc.today || S.mode === 'after';
+    document.body.classList.toggle('differs', S.view === 'diff' && after);
+    var frame = sc.r(after), notes = ((after ? sc.nA : sc.nT) || []).map(noteHtml).join('');
+    var desk = sc.kind === 'desk' || sc.kind === 'wide';
+    main.innerHTML = (LEDE[S.tab] ? '<p class="lede">' + LEDE[S.tab] + '</p>' : '') +
+      '<div class="stage' + (desk ? ' desk' : '') + '"><div class="fcol"><div class="fcap"><b>' + (sc.today ? (after ? 'After' : 'Today') : 'Proposed') + '</b><span>' + sc.cap + '</span></div>' +
+      '<div class="fscroll' + (sc.kind === 'desk' && S.size === 'actual' ? ' actual' : '') + '"><div class="fwrap" id="fwrap">' + frame + '</div></div></div><div class="notes" id="notes">' + notes + '</div></div>';
+    fit();
+  }
+  function fit() {
+    var w = document.getElementById('fwrap'); if (!w) return;
+    var fr = w.firstElementChild; if (!fr) return;
+    fr.style.transform = 'none';
+    var stage = w.closest('.stage'), one = stage.classList.contains('desk') || window.matchMedia('(max-width: 980px)').matches;
+    var fw = fr.offsetWidth, fh = fr.offsetHeight, avail = one ? stage.clientWidth : Math.max(320, stage.clientWidth - 360 - 28);
+    var s = (S.size === 'actual' && fw === 1440) ? 1 : Math.min(1, avail / fw);
+    fr.style.transform = 'scale(' + s + ')';
+    w.style.width = (fw * s) + 'px'; w.style.height = (fh * s) + 'px';
+  }
+  function flashFrame(n) {
+    main.querySelectorAll('.hl[data-k="' + n + '"]').forEach(function (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); });
+    var w = document.getElementById('fwrap'); if (w) { try { w.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
+  }
+  function flashNote(n) {
+    var el = main.querySelector('.nt[data-note="' + n + '"]'); if (!el) return;
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+    try { el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { el.scrollIntoView(); }
+    setTimeout(function () { el.classList.remove('flash'); }, 1600);
+  }
+  function render() { renderTabs(); renderView(); renderMain(); }
+  function wireStatic() {
+    var ta = document.getElementById('pasteback'); if (!ta) return;
+    ta.value = pasteText();
+    main.querySelectorAll('.ask input').forEach(function (inp) { inp.addEventListener('change', function () {
+      var ans = {}; try { ans = JSON.parse(localStorage.getItem(KEY + 'a') || '{}'); } catch (e) {}
+      ans[inp.name] = inp.value; try { localStorage.setItem(KEY + 'a', JSON.stringify(ans)); } catch (e) {}
+      ta.value = pasteText(); }); });
+    document.getElementById('copyans').addEventListener('click', function () {
+      var msg = document.getElementById('copymsg');
+      try { navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = 'Copied.'; }, function () { ta.select(); msg.textContent = 'Selected: press Ctrl+C or ⌘C.'; }); }
+      catch (e) { ta.select(); msg.textContent = 'Selected: press Ctrl+C or ⌘C.'; }
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-tab],[data-scr],[data-mode],[data-view],[data-size],[data-pin],[data-note],[data-goask]');
+    if (!t) return;
+    if (t.dataset.tab) { S.tab = t.dataset.tab; save(); render(); window.scrollTo(0, 0); return; }
+    if (t.dataset.scr) { S.scr[S.tab] = t.dataset.scr; save(); renderView(); renderMain(); return; }
+    if (t.dataset.mode) { S.mode = t.dataset.mode; save(); renderView(); renderMain(); return; }
+    if (t.dataset.view) { S.view = t.dataset.view; save(); renderView(); renderMain(); return; }
+    if (t.dataset.size) { S.size = t.dataset.size; save(); renderView(); renderMain(); return; }
+    if (t.dataset.pin) { flashNote(t.dataset.pin); return; }
+    if (t.dataset.note) { if (t.dataset.note !== '0') flashFrame(t.dataset.note); return; }
+    if (t.dataset.goask) { var g = t.dataset.goask.split(':'); S.tab = g[0]; if (g[1]) S.scr[g[0]] = g[1]; S.mode = 'after'; save(); render(); window.scrollTo(0, 0); }
+  });
+  window.addEventListener('resize', fit);
+  if (!TABS.some(function (t) { return t[0] === S.tab; })) S.tab = 'pick';
+  render();
+})();
+</script>
