@@ -109,6 +109,8 @@ export const FAMILY_AVAILABILITY_WORDS = {
     privacy: (child: string, otherParent: string | null) =>
       [
         'Your team’s coaches see your answer, your note, your first name and the day you answered.',
+        // /legal (One attendance record, ruling 4): the answer IS the attendance, so the parent is told the coach can change it.
+        `Your answer is also ${possessive(child)} attendance: the coaches can change it, and you’ll see who did and when.`,
         otherParent ? `${otherParent === OTHER_PARENT ? 'The other parent' : `${otherParent}, ${possessive(child)} other parent,`} sees your answer and first name, but not your note.` : null,
         'Other families see none of it.',
         'Please don’t put health details here; tell the coach directly.',

@@ -101,13 +101,13 @@ describe('ask 5 and 6 — the parent’s sheet words', () => {
   it('/legal’s hint names who sees what; the other-parent sentence only when one is connected', () => {
     assert.equal(
       W.sheet.privacy('Ava', 'Priya'),
-      'Your team’s coaches see your answer, your note, your first name and the day you answered. Priya, Ava’s other parent, sees your answer and first name, but not your note. Other families see none of it. Please don’t put health details here; tell the coach directly.',
+      'Your team’s coaches see your answer, your note, your first name and the day you answered. Your answer is also Ava’s attendance: the coaches can change it, and you’ll see who did and when. Priya, Ava’s other parent, sees your answer and first name, but not your note. Other families see none of it. Please don’t put health details here; tell the coach directly.',
     );
     assert.equal(
       W.sheet.privacy('Ava', null),
-      'Your team’s coaches see your answer, your note, your first name and the day you answered. Other families see none of it. Please don’t put health details here; tell the coach directly.',
+      'Your team’s coaches see your answer, your note, your first name and the day you answered. Your answer is also Ava’s attendance: the coaches can change it, and you’ll see who did and when. Other families see none of it. Please don’t put health details here; tell the coach directly.',
     );
-    assert.match(W.sheet.privacy('Ava', W.otherParentFallback), /^Your team’s coaches see your answer, your note, your first name and the day you answered\. The other parent sees your answer and first name/);
+    assert.match(W.sheet.privacy('Ava', W.otherParentFallback), /^Your team’s coaches see your answer, your note, your first name and the day you answered. Your answer is also Ava’s attendance: the coaches can change it, and you’ll see who did and when. The other parent sees your answer and first name/);
   });
   it('the day, never the clock time (ask 6)', () => {
     const now = new Date('2027-04-22T16:00:00Z'); // Thu, Apr 22 in Toronto
@@ -247,6 +247,19 @@ describe('the one writer’s change and repeat rules (mig 483; behaviour held by
   });
   it('the start passing between the gate and the write reads as closed, never as a failure', () => {
     assert.match(write, /if \(error\?\.message\?\.includes\('attendance_closed'\)\) return \{ ok: false, code: 'closed' \};/);
+  });
+});
+
+describe('the save reply names a connected other parent (source)', () => {
+  const mod = readCode(MODULE);
+  it('the reply is drawn with names for a CONNECTED other parent on the row — never the coach, never a parent who left', () => {
+    const reply = functionBody(mod, 'nameOfInReply');
+    assert.match(reply, /kind === 'family' && by && by !== userId/, 'only another family account is ever named; the coach never is');
+    assert.match(reply, /\.eq\('status', 'verified'\)/, 'a parent who left or was removed reads as “the other parent” (the page’s own rule)');
+    const write = functionBody(mod, 'writeFamilyAnswer');
+    // The answer is already stored when the name is looked up: a failed lookup must fall back to "the other parent", never fail the save.
+    assert.match(write, /const nameOf = await nameOfInReply\(result\.row, params\.childId, params\.userId\)\.catch\(\(\) => noName\);/);
+    assert.match(write, /rowOf\(ev\.id, params\.childId, result\.row, true, params\.userId, nameOf, now\)/);
   });
 });
 

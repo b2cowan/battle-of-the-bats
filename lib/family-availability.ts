@@ -227,6 +227,27 @@ export type FamilyAnswerFields = Omit<FamilyAnswerRow, 'child'>;
 
 const noName = () => null;
 
+/**
+ * A save's reply names the CONNECTED other parent who set (or previously set) the row, the same rule the page's read applies
+ * (`readFamilyAnswers`): after a parent agrees with the other parent's answer the reply still reads "Sam", not "the other parent".
+ * Costs a read only when someone other than the signed-in parent is on the row (a coach is never named).
+ */
+async function nameOfInReply(
+  row: BookRow, childId: string, userId: string,
+): Promise<(userId: string, childId: string) => string | null> {
+  const others = new Set<string>();
+  for (const [kind, by] of [[row.set_by_kind, row.set_by_user_id], [row.previous_by_kind, row.previous_by_user_id]]) {
+    if (kind === 'family' && by && by !== userId) others.add(by);
+  }
+  if (others.size === 0) return noName;
+  const { data, error } = await supabaseAdmin.from('family_links').select('user_id')
+    .eq('child_id', childId).eq('status', 'verified').in('user_id', [...others]);
+  if (error) throw error;
+  // Only a parent STILL connected is looked up, so a name is only ever found for one (the page's own rule).
+  const names = await firstNames(((data ?? []) as { user_id: string }[]).map(l => l.user_id));
+  return by => names.get(by) ?? null;
+}
+
 /** Who set one answer, as THIS parent reads it: "You", the other parent's first name (still connected; else null and the words say
  *  "the other parent"), or "Coach" for anyone on the coach's side (a coach is never named to a family). */
 function whoFor(
@@ -273,15 +294,19 @@ export async function answeredByAccounts(userIds: readonly string[], childIds: r
   const players = ((entries ?? []) as { id: string }[]).map(e => e.id);
   if (players.length === 0) return false;
   const users = [...userIds];
-  const [set, noted] = await Promise.all([
+  const [set, earlier, noted] = await Promise.all([
     supabaseAdmin.from('rep_team_event_attendance').select('id', { count: 'exact', head: true })
       .in('player_id', players).eq('set_by_kind', 'family').in('set_by_user_id', users),
+    // The parent's name also lives on as the "earlier" answer once a coach or the other parent changed it (blanked on the same clock).
+    supabaseAdmin.from('rep_team_event_attendance').select('id', { count: 'exact', head: true })
+      .in('player_id', players).eq('previous_by_kind', 'family').in('previous_by_user_id', users),
     supabaseAdmin.from('rep_team_event_attendance').select('id', { count: 'exact', head: true })
       .in('player_id', players).in('family_note_by_user_id', users),
   ]);
   if (set.error) throw set.error;
+  if (earlier.error) throw earlier.error;
   if (noted.error) throw noted.error;
-  return (set.count ?? 0) + (noted.count ?? 0) > 0;
+  return (set.count ?? 0) + (earlier.count ?? 0) + (noted.count ?? 0) > 0;
 }
 
 // ── The one writer ────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -366,9 +391,12 @@ export async function writeFamilyAnswer(params: {
   if (error) throw error;
   const result = data as { row: BookRow; prior: RepAttendanceStatus | null } | null;
   if (!result?.row) throw new Error('The answer could not be saved.');
+  // The answer is already stored: a failed name lookup must never turn it into a failed save (and skip the coach's bell). The name is
+  // cosmetic, so on any error the reply simply says "the other parent".
+  const nameOf = await nameOfInReply(result.row, params.childId, params.userId).catch(() => noName);
   return {
     ok: true,
-    row: rowOf(ev.id, params.childId, result.row, true, params.userId, noName, now),
+    row: rowOf(ev.id, params.childId, result.row, true, params.userId, nameOf, now),
     change: {
       prior: answerOfStatus(result.prior),
       // What the record holds now (a refused clear leaves the coach's answer, and the bell must not call that a clear).

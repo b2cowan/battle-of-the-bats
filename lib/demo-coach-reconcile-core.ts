@@ -700,9 +700,12 @@ async function clearAttendanceAtEventsStillAhead(
     .map(e => e.id);
   if (!aheadIds.length) return 0;
 
+  // ⚖ One attendance record (owner call C1: nothing is cleared on a new day): a FAMILY's advance answer at a future event is a plan the
+  // product keeps, so this clears only what the shifted clock invented (marks nobody set, a coach's or the seed's), never a family's.
   const { error: deleteError, count } = await db.from('rep_team_event_attendance')
     .delete({ count: 'exact' })
-    .eq('program_year_id', programYearId).in('event_id', aheadIds);
+    .eq('program_year_id', programYearId).in('event_id', aheadIds)
+    .or('set_by_kind.is.null,set_by_kind.neq.family');
   if (deleteError) throw new Error(`rep_team_event_attendance: ${deleteError.message}`);
   return count ?? 0;
 }

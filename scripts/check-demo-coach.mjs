@@ -139,9 +139,13 @@ const datedEvents = (rows) => (rows ?? [])
  * past/future boundary so the two can never disagree about which side "today" falls on.
  */
 async function checkAttendanceMatchesTiming(programYearId, events, label) {
-  const { data: attendance } = await db.from('rep_team_event_attendance')
-    .select('event_id').eq('program_year_id', programYearId);
-  const taken = new Set((attendance ?? []).map(a => a.event_id));
+  const { data: attendance, error: attendanceError } = await db.from('rep_team_event_attendance')
+    .select('event_id, set_by_kind').eq('program_year_id', programYearId);
+  // A read that failed (e.g. set_by_kind, mig 483, missing on this database) must go red, never pass on an empty list.
+  check(!attendanceError, `the attendance read worked${attendanceError ? ` (${attendanceError.message})` : ''}`);
+  // A family's advance answer at a future event is real (One attendance record, call C1: nothing clears on a new day), so only the
+  // marks the shifted clock could have invented count against "nothing is invented" — never a family-set one.
+  const taken = new Set((attendance ?? []).filter(a => a.set_by_kind !== 'family').map(a => a.event_id));
   // `<= today`, matching the seed's own `happened` rule exactly. Splitting on `<` would leave an
   // event dated TODAY asserted by neither half — a hole that opens roughly one night in seven,
   // on precisely the row most likely to be mid-transition.

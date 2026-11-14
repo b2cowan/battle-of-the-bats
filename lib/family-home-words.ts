@@ -122,10 +122,10 @@ export const FAMILY_HOME_WORDS = {
       `You’ll stop seeing ${teams.length ? theTeams(teams) : `${possessive(child)} team`} here, and your calendar link stops showing its games. ${club} may still email you about ${possessive(child)} sign-up. To stop those too, use ${stopLabel} at the bottom of one. You can join again only if ${club} sends you a new invitation.`,
     cancel: 'Cancel',
     confirm: 'Leave',
-    /** Stage 4b (/legal closeout, owner 2026-11-13): only when this parent has In / Out / Maybe answers on the child (mig 480 clears
-     *  the leaving parent's notes; the answers stay until the season's purge). */
+    /** Stage 4b (/legal closeout, owner 2026-11-13): only when this parent has In / Late / Maybe / Out answers on the child (mig 485 clears
+     *  the leaving parent's notes; the answers stay as the player's attendance, the first name until the season clock, mig 484). */
     answersStay: (children: readonly string[]) =>
-      `Any notes you added to ${possessive(nameList(children))} answers are deleted; your answers stay in the team’s record until the season is over.`,
+      `Any notes you added to ${possessive(nameList(children))} answers are deleted. The answers stay as ${possessive(nameList(children))} attendance in the team’s record, and your first name stays beside them until 60 days after the season’s last event.`,
   },
 
   /** Part 7 · drawing 6.2: one address per parent. */

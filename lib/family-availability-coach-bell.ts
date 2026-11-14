@@ -9,8 +9,16 @@ import { scheduleHeadcounts } from './family-availability-coach';
 import {
   COACH_BELL_BUNDLE_MS, coachBellFires, mergeCoachBell, type CoachBellBundle, type CoachBellItem,
 } from './family-availability-rules';
-import { FAMILY_AVAILABILITY_COACH_WORDS as FW, coachBellEventLabel, coachBellWords } from './family-availability-words';
+import { FAMILY_AVAILABILITY_COACH_WORDS as FW, coachBellEventLabel, coachBellWords, type AnswerStatus } from './family-availability-words';
 import { scheduleDayLabel } from './family-schedule-format';
+
+/** Bell lines filed on DEV before One attendance record S2 hold the old family vocabulary ('in' | 'out'); a fold into one would read
+ *  "changed to undefined". Map them to the record's words as the line is read (dev only: nothing of the old kind ever reached prod). Delete this shim once no unread dev line from before 2026-11-14 can remain
+ *  (a line folds only within the hour, so any time after that day's dev bell has been read or cleared). */
+const OLD_ANSWER_WORD: Record<string, AnswerStatus> = { in: 'attending', out: 'absent' };
+const currentAnswer = (a: AnswerStatus | null): AnswerStatus | null => (a && Object.hasOwn(OLD_ANSWER_WORD, a) ? OLD_ANSWER_WORD[a] : a);
+const withCurrentAnswerWords = (bundle: CoachBellBundle): CoachBellBundle =>
+  ({ ...bundle, items: bundle.items.map(i => ({ ...i, answer: currentAnswer(i.answer), prior: currentAnswer(i.prior) })) });
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -117,7 +125,7 @@ export async function notifyCoachesOfFamilyAnswer(params: {
       if (!r.metadata?.bundle) continue;
       stampOf.set(r.id, r.created_at);
       const list = openByCoach.get(r.user_id) ?? [];
-      list.push({ id: r.id, bundle: r.metadata.bundle });
+      list.push({ id: r.id, bundle: withCurrentAnswerWords(r.metadata.bundle) });
       openByCoach.set(r.user_id, list);
     }
 

@@ -263,3 +263,11 @@ describe('Part 8 — the coach’s bell', () => {
     assert.match(functionBody(readCode('lib/family-availability-coach.ts'), 'marksFamilyAnswersInOrg'), /if \(!GUARDIAN_TIER_ENABLED\) return false/);
   });
 });
+
+describe('a dev bell line filed before One attendance record still folds into words (S3)', () => {
+  it('the unread line is read through the old-to-current answer mapping, so a fold never says "undefined"', () => {
+    const src = readCode(BELL_MODULE);
+    assert.match(src, /const OLD_ANSWER_WORD: Record<string, AnswerStatus> = \{ in: 'attending', out: 'absent' \};/);
+    assert.match(src, /list\.push\(\{ id: r\.id, bundle: withCurrentAnswerWords\(r\.metadata\.bundle\) \}\);/);
+  });
+});

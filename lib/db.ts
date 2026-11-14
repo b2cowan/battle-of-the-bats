@@ -4,6 +4,7 @@ import { countsOnRoster, rosterCountOf, seasonRecordOf } from './team-season-fig
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll } from './supabase-paging';
+import { foldAttendanceReliability, type AttendanceReliabilityEntry, type AttendanceStatRow } from './attendance-stat-fold';
 import { copySetupRows, takeBackSetupRows, PopulateFailed, type SetupAreas, type SetupCopied, type SetupLedger } from './tournament-setup-copy';
 import type { MeasurableTypeCreateFields } from './development-input';
 import { accountedCellKeys, scopeCompleteness } from './development-session-view';
@@ -5457,22 +5458,45 @@ export interface RepPlayerAttendanceSummary {
  * Every attendance stat read below takes this bound (the per-player summary, the team roll-up, the receipts and the month chart),
  * so the totals and the sessions behind them can never disagree about which sessions counted.
  */
-const startedBy = () => new Date().toISOString();
+/**
+ * ⚠ THE ONE READ BEHIND EVERY ATTENDANCE STAT (the per-player summary, the team roll-up, the receipts and the month chart).
+ * It carries both rules the stats share, so they live in one place and the three reads cannot drift apart:
+ *   - the STARTED bound (taken ONCE per read, so every page of it uses the same instant), and
+ *   - PAGING — a Supabase select stops at 1,000 rows without an error (a roster of ~25 players × 40+ started events passes that
+ *     in a season or two), so it is read with `fetchAll` under a stable `.order('id')` that keeps the pages from skipping or
+ *     repeating a row while the book is still (offset paging is not a snapshot: a row written or deleted mid-read can shift one page
+ *     boundary, which is acceptable for a stat), and so the three reads cut off — if ever — at the same place.
+ * `select` names the columns; the event embed must be `rep_team_events!inner(...)` so the event filters apply.
+ */
+async function readStartedAttendanceRows<T = any>(
+  programYearId: string,
+  select: string,
+  narrow: { playerId?: string; eventTypes?: string[] } = {},
+): Promise<T[]> {
+  const now = new Date().toISOString();
+  return fetchAll<T>((from, to) => {
+    let query = supabaseAdmin
+      .from('rep_team_event_attendance')
+      .select(select)
+      .eq('program_year_id', programYearId)
+      .eq('rep_team_events.status', 'scheduled')
+      .lte('rep_team_events.starts_at', now);
+    if (narrow.playerId) query = query.eq('player_id', narrow.playerId);
+    if (narrow.eventTypes) query = query.in('rep_team_events.event_type', narrow.eventTypes);
+    return query.order('id', { ascending: true }).range(from, to);
+  });
+}
 
 /** Season attendance for ONE player: status counts + the 10 most-recent sessions.
- *  Counts only non-cancelled events that have STARTED (`startedBy`). */
+ *  Counts only non-cancelled events that have STARTED. */
 export async function getRepPlayerAttendanceSummary(
   playerId: string, programYearId: string,
 ): Promise<RepPlayerAttendanceSummary> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_team_event_attendance')
-    .select('status, rep_team_events!inner(id, name, event_type, starts_at, status)')
-    .eq('player_id', playerId)
-    .eq('program_year_id', programYearId)
-    .eq('rep_team_events.status', 'scheduled')
-    .lte('rep_team_events.starts_at', startedBy());
-  if (error) throw error;
-  const rows = (data ?? []) as any[];
+  const rows = await readStartedAttendanceRows(
+    programYearId,
+    'status, rep_team_events!inner(id, name, event_type, starts_at, status)',
+    { playerId },
+  );
   const summary: RepPlayerAttendanceSummary = { total: 0, attending: 0, absent: 0, late: 0, unknown: 0, recent: [] };
   for (const r of rows) {
     summary.total++;
@@ -5503,58 +5527,19 @@ export async function getRepPlayerAttendanceSummary(
  *  route's receipts depend on agreeing with these totals exactly. */
 export const ATTENDANCE_GAME_TYPES = ['league_game', 'tournament_game', 'external_tournament'];
 
-export interface RepAttendanceCategoryStat {
-  attended: number; // showed up (attending OR late)
-  known: number;    // events with a definite yes/no (attending, late, or absent) — the fair denominator
-  recorded: number; // all recorded events incl. no-reply/unknown
-}
-
-export interface RepPlayerAttendanceReliability {
-  playerId: string;
-  games: RepAttendanceCategoryStat;
-  practices: RepAttendanceCategoryStat;
-}
-
-const blankAttendanceStat = (): RepAttendanceCategoryStat => ({ attended: 0, known: 0, recorded: 0 });
-
 /**
  * Season attendance reliability for EVERY player on a program year, in ONE query — the team-wide
  * roll-up behind the Roster → Attendance view. Counts only non-cancelled (scheduled) events that have
- * STARTED (`startedBy`: an advance answer on an upcoming event is a plan, not attendance). "attended" = attending or late; "known" excludes no-reply so an untracked
+ * STARTED (an advance answer on an upcoming event is a plan, not attendance). "attended" = attending or late; "known" excludes no-reply so an untracked
  * RSVP never counts against a player. Returns a map keyed by player_id (players with no recorded
  * attendance simply won't appear — the caller shows them as "not tracked yet").
  */
 export async function getRepTeamAttendanceReliability(
   programYearId: string,
-): Promise<Map<string, RepPlayerAttendanceReliability>> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_team_event_attendance')
-    .select('player_id, status, rep_team_events!inner(event_type, status)')
-    .eq('program_year_id', programYearId)
-    .eq('rep_team_events.status', 'scheduled')
-    .lte('rep_team_events.starts_at', startedBy());
-  if (error) throw error;
+): Promise<Map<string, AttendanceReliabilityEntry>> {
+  const rows = await readStartedAttendanceRows<AttendanceStatRow>(programYearId, 'player_id, status, rep_team_events!inner(event_type)');
 
-  const byPlayer = new Map<string, RepPlayerAttendanceReliability>();
-  for (const r of (data ?? []) as any[]) {
-    const ev = r.rep_team_events;
-    if (!ev) continue;
-    const isGame = ATTENDANCE_GAME_TYPES.includes(ev.event_type);
-    const isPractice = ev.event_type === 'practice';
-    if (!isGame && !isPractice) continue; // team_event etc. — neither a game nor a practice
-
-    let entry = byPlayer.get(r.player_id);
-    if (!entry) {
-      entry = { playerId: r.player_id, games: blankAttendanceStat(), practices: blankAttendanceStat() };
-      byPlayer.set(r.player_id, entry);
-    }
-    const bucket = isGame ? entry.games : entry.practices;
-    bucket.recorded++;
-    if (r.status === 'attending' || r.status === 'late') { bucket.attended++; bucket.known++; }
-    else if (r.status === 'absent') { bucket.known++; }
-    // 'unknown' (no reply) counts toward recorded only — never against the player.
-  }
-  return byPlayer;
+  return foldAttendanceReliability(rows, ATTENDANCE_GAME_TYPES);
 }
 
 /** One attendance mark on one event, with the event detail a receipt needs. */
@@ -5586,16 +5571,13 @@ export interface RepAttendanceMarkRow {
 export async function getRepTeamAttendanceMarks(
   programYearId: string,
 ): Promise<RepAttendanceMarkRow[]> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_team_event_attendance')
-    .select('player_id, status, rep_team_events!inner(id, name, opponent, starts_at, event_type, status)')
-    .eq('program_year_id', programYearId)
-    .in('rep_team_events.event_type', [...ATTENDANCE_GAME_TYPES, 'practice'])
-    .eq('rep_team_events.status', 'scheduled')
-    // The roll-up's own bound (`startedBy`): a receipt never lists a session its total did not count.
-    .lte('rep_team_events.starts_at', startedBy());
-  if (error) throw error;
-  return ((data ?? []) as any[])
+  // The roll-up's own read (same bound, same paging): a receipt never lists a session its total did not count.
+  const rows = await readStartedAttendanceRows(
+    programYearId,
+    'player_id, status, rep_team_events!inner(id, name, opponent, starts_at, event_type, status)',
+    { eventTypes: [...ATTENDANCE_GAME_TYPES, 'practice'] },
+  );
+  return rows
     .filter(r => r.rep_team_events)
     .map(r => ({
       eventId: r.rep_team_events.id as string,
