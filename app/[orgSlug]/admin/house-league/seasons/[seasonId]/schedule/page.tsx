@@ -716,7 +716,10 @@ export default function SchedulePage() {
 
   // Who may (the one house-league gate, Stage 9a, Q16/Q17): the people who run the league, on a live season; everyone
   // else who opens house league reads. A control a person can't use is absent.
-  const canManage = !!useSeasonAccess(season)?.run;
+  const seasonAccess = useSeasonAccess(season);
+  const canManage = !!seasonAccess?.run;
+  // Stage 13d (A3): the league admin's "Ask for time" in House league's time and Generate games (the one gate decides).
+  const canAsk = !!seasonAccess?.askForTime;
   const hasAccess = !!useHouseLeagueAccess()?.read;
 
   // House league's time (Club Tier Stage 11b Part 3): the time line reads it; Tools, the line and `?time=1` (the club
@@ -1188,7 +1191,7 @@ export default function SchedulePage() {
   // a window unmounted by that swap would stand and drop its Back step twice (/review 2026-10-27, ?time=1).
   const timeWindow = timeOpen && season ? (
     <HouseLeagueTimeWindow orgSlug={orgSlug} seasonId={seasonId} seasonName={season.name}
-      canDivide={canManage} schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null} openOn={timeOn ?? undefined}
+      canDivide={canManage} canAsk={canAsk} schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null} openOn={timeOn ?? undefined}
       onClose={() => {
         setTimeOpen(false);
         setTimeOn(null);
@@ -1484,6 +1487,7 @@ export default function SchedulePage() {
           api={`/api/admin/house-league/seasons/${seasonId}`}
           orgQuery={orgQuery}
           schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null}
+          canAsk={canAsk}
           onTimeChanged={loadLeagueTime}
           onOpenTime={(divisionId, through) => {
             setGenerate(null);

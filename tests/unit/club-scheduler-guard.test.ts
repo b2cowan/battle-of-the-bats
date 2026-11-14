@@ -103,7 +103,9 @@ describe('the scheduler rides League Plus and both Club bands, checked on the se
     assert.ok(send.indexOf('club_schedule_apply_changes') < send.indexOf('tellHouseLeague('), 'house league hears after the step');
     // The bell reaches everyone who runs house league — owners and admins too (owner 2026-10-27), never the sender.
     const tell = functionBody(readCode('lib/club-schedule-send.ts'), 'tellHouseLeague');
-    assert.match(tell, /\.in\('role', \[\.\.\.LEAGUE_RUNNER_ROLES\]\)/);
+    // Stage 13d: the list lives in one helper (owners, admins, league admins), shared with the time-given bell.
+    assert.match(tell, /const userIds = await houseLeagueRunnerUserIds\(org\.id\);/);
+    assert.match(readCode('lib/notify-recipients.ts'), /export async function houseLeagueRunnerUserIds[\s\S]*?\.in\('role', \[\.\.\.LEAGUE_RUNNER_ROLES\]\)/);
     assert.match(tell, /excludeUserIds: \[sctx\.ctx\.user\.id\]/);
     // The families' email is a service notice through the batched sender, never the suppression-dropping audience.
     const mail = readCode('lib/club-schedule-league-mail.ts');

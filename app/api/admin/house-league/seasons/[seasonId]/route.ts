@@ -27,7 +27,8 @@ import { loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { seasonMoney } from '@/lib/league-money';
 import { seedLeagueSeasonBudget } from '@/lib/house-league-budget';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
-import { houseLeagueSlotCount } from '@/lib/league-time-server';
+import { seasonTimeFacts } from '@/lib/league-time-server';
+import { readTimeAsk } from '@/lib/league-time-handoff-server';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 
 // Two steps go back (Club Tier Stage 9a; owner 2026-10-24): Reopen registration only while registration is closed and play
@@ -83,11 +84,10 @@ export const GET = withObservability(async (_req: Request,
     // The club's time for this season (Stage 13 fix-now 4, F-O3-7): has the club GIVEN house league time in the season
     // (the program's own time, a head count of what the time window reads), and has the league admin DIVIDED any of it
     // (a slot use)? Asked only where the club's schedule exists, and not of a finished season. A failed count is null.
+    // Stage 13d (A3): and when did the season last ask for time ("Asked Nov 13"; a failed read is no ask, never a wrong one).
     schedulerOn && !isFinishedLeagueSeason(season)
-      ? Promise.all([
-        houseLeagueSlotCount(ctx!.org.id, season),
-        supabaseAdmin.from('league_slot_uses').select('slot_id', { count: 'exact', head: true }).eq('season_id', seasonId),
-      ]).then(([given, uses]) => (uses.error ? null : { given, divided: uses.count ?? 0 }), () => null)
+      ? Promise.all([seasonTimeFacts(ctx!.org.id, season), readTimeAsk(ctx!.org.id, seasonId)])
+        .then(([facts, askedAt]) => ({ ...facts, askedAt }), () => null)
       : Promise.resolve(null),
   ]);
 
@@ -159,7 +159,7 @@ export const GET = withObservability(async (_req: Request,
     // season any time yet."; given but not divided → a door to House league's time; divided → no line. Null where the
     // club's schedule does not exist (nothing to give) or a count failed (a note is never shown on a guess). Who reads
     // which second sentence is the page's, from the one gate's answer (an owner or an admin gives the time).
-    clubTime: timeUses ? { given: timeUses.given > 0 || timeUses.divided > 0, divided: timeUses.divided > 0 } : null,
+    clubTime: timeUses,
   });
 }, { route: '/api/admin/house-league/seasons/[seasonId]' });
 

@@ -217,13 +217,19 @@ describe('"The club hasn\'t given this season any time yet" only when it hasn\'t
   const server = readCode('lib/league-time-server.ts');
   const page = readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx');
   it('"given" reads the program\'s own time — the time window\'s set, as a head count — not only what was divided', () => {
-    assert.match(route, /houseLeagueSlotCount\(ctx!\.org\.id, season\)/);
-    assert.match(route, /given: timeUses\.given > 0 \|\| timeUses\.divided > 0, divided: timeUses\.divided > 0/);
-    const count = server.slice(server.indexOf('export async function houseLeagueSlotCount'), server.indexOf('export async function usesOf'));
+    // Stage 13d: the season line, the ask and This morning's card read ONE answer (`seasonTimeFacts`).
+    assert.match(route, /seasonTimeFacts\(ctx!\.org\.id, season\)/);
+    const facts = server.slice(server.indexOf('export async function seasonTimeFacts'), server.indexOf('export async function houseLeagueHeldSince'));
+    assert.match(facts, /houseLeagueSlotCount\(orgId, season\)/);
+    assert.match(facts, /return \{ given: given > 0 \|\| divided, divided \};/);
+    const count = server.slice(server.indexOf('export async function houseLeagueSlotCount'), server.indexOf('export async function seasonTimeFacts'));
     assert.match(count, /\{ count: 'exact', head: true \}/, 'a head count: this runs on every season read');
     assert.doesNotMatch(count, /fetchAll/, 'never a page-through');
     // The window's rows and the head count start from ONE definition of house league's time, so the sets cannot differ.
-    assert.match(count, /liveHouseLeagueSlots\(orgId, 'id', \{ count: 'exact', head: true \}\)/);
+    // Stage 13d-7 A: two head counts from it — all of it, less what ANOTHER season has divided (the window's own rule).
+    assert.match(count, /const head = \{ count: 'exact', head: true \} as const;/);
+    assert.match(count, /let all = liveHouseLeagueSlots\(orgId, 'id', head\);/);
+    assert.match(count, /let others = liveHouseLeagueSlots\(orgId, 'id, league_slot_uses!inner\(season_id\)', head\)\.neq\('league_slot_uses\.season_id', season\.id\);/);
     const rows = server.slice(server.indexOf('export async function houseLeagueSlotRows'), server.indexOf('export async function houseLeagueSlotCount'));
     assert.match(rows, /liveHouseLeagueSlots\(orgId, columns\)/);
     const shared = server.slice(server.indexOf('function liveHouseLeagueSlots'), server.indexOf('export async function houseLeagueSlotRows'));

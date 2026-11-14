@@ -6,7 +6,7 @@
  * reads (its counts, its divisions, its Money band: the same `seasonMoney` the band above it shows, so the two never disagree).
  * Pure: the page draws what this returns. A tile with no existing figure for the role is not here.
  *
- *   League admin — To review (oldest date) · Teams (players not on a team). "Club time" is 13d's hand-off, not built here.
+ *   League admin — To review (oldest date) · Teams (players not on a team).
  *   Registrar    — To review (oldest date) · Still owing (players, never families) · Waitlist (the division that is full).
  *                  "Find a child or a parent" is 13e's, not built here.
  *

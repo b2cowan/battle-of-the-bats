@@ -500,7 +500,13 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     const genWin = readCode('components/admin/kit/club/league/schedule/GenerateGamesWindow.tsx');
     assert.match(timeWin, /\{empty && \(schedulesHref\s*\? <div className=\{s\.empty\}><p className=\{s\.emptyNote\}>\{W\.noneGivenClub\}/, 'a reader who opens Schedules keeps today’s sentence and door');
     assert.match(genWin, /\{schedulesHref\s*\? <><p className=\{s\.emptyNote\}>\{noneGiven \? LEAGUE_TIME_WORDS\.noneGivenClub/);
-    assert.doesNotMatch(timeWin + genWin, /Ask for time/, 'no Ask for time button (13d)');
+    // Stage 13d (A3, re-pinned from 13c's "no Ask for time button"): the sentence keeps its words and gains the ask beside it —
+    // for whoever divides the time and can't open Schedules (never the registrar, never an owner or an admin, who give it).
+    assert.match(timeWin, /\{canAsk && <AskForTime api=\{`\/api\/admin\/house-league\/seasons\/\$\{seasonId\}`\}/, 'the time window asks (13d)');
+    assert.match(genWin, /\{canAsk && noneGiven && <AskForTime api=\{api\} orgQuery=\{orgQuery\} askedAt=\{time\.askedAt \?\? null\} \/>\}/, 'Generate games asks (13d)');
+    const seasonPage = readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx');
+    assert.match(seasonPage, /\{!access\?\.askForTime\s*\? <span className=\{s\.deskOnly\}> \{SF\.noTimeHowAdmin\}<\/span>\s*: <>\{' '\}<AskForTime\b/, 'the season line asks; the owner and admin keep their sentence (13d)');
+    assert.doesNotMatch(seasonPage, /<span className=\{s\.deskOnly\}>[^<]*<AskForTime/, 'the button is never hidden with the desk-only sentence on a phone');
   });
   it('the drafts’ short warning says why and goes back to the setting, only when the setting is why (hub tab 13)', () => {
     assert.match(form, /const shortWhy = pick && gen\?\.summary\.dayLimit && pickShort\?\.kind === 'shares' && pickShort\.short\.length/);

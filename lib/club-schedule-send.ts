@@ -7,6 +7,7 @@ import { canViewMoney, canViewSchedule } from './coach-capabilities';
 import { emailFor, inSendAudience, teamBells, teamEmails, unreachableWhy } from './club-schedule-money-audience';
 import { loadHeadCoaches } from './club-team-board';
 import { notify } from './notify';
+import { houseLeagueRunnerUserIds } from './notify-recipients';
 import { clearSettled } from './needs-attention';
 import { isScheduleBuilder } from './club-schedule-gate';
 import { escapeHtml, sendEmail, wrap, SITE_URL } from './email';
@@ -36,9 +37,10 @@ import {
   type BillTerms, type ClubTeam, type LoadedSchedule, type SchedulerCtx,
 } from './club-schedule-server';
 import { HOUSE_LEAGUE, teamsOnly } from './club-schedule-holders';
-import { usesOf } from './league-time-server';
+import { houseLeagueHeldSince, usesOf } from './league-time-server';
+import { heldHouseLeagueSlotIds, tellTimeGiven, timeHandoffFor, type SendTimeHandoff } from './league-time-handoff-server';
+import type { LeagueTimeLine } from './league-time-handoff';
 import { coachTeamPath } from './house-league-coach-invites';
-import { LEAGUE_RUNNER_ROLES } from './house-league-access';
 import { formatVenueLocation } from './venue-label';
 import { weekdayOf } from './permit-time';
 import {
@@ -137,6 +139,9 @@ export interface SendPreview {
   /** Stage 11b Part 5 (h4): Send the changes' house-league rows — null when nothing house-league changes. `games`: House
    *  League 9d-2b Part 5's division games rows (they email nobody from here). */
   league: { teams: PreviewLeagueTeam[]; games: PreviewLeagueGames[]; seen: string } | null;
+  /** Stage 13d (A2): WHO IS TOLD's house league line — the league admins by name (none: owners and admins) and the week's
+   *  hours this send gives or takes back. Null when the send gives house league nothing (no season hears a bell). */
+  leagueTime: LeagueTimeLine | null;
 }
 
 /** A house-league division's games the send moves or takes off their time, one row per slot (9d-2b Part 5; 9d2·13,
@@ -436,15 +441,10 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
   const gameDivision = new Map(gameDivisions.map(d => [d.id, d]));
   // Time house league came to hold since the last send — a slot made since, or given to house league since (a hand drag
   // on the grid swaps holders, it makes no slot) — is the only place a moved use can have gone (/review 2026-10-27).
-  const [{ practicesTold: told }, made, held] = await Promise.all([
+  const [{ practicesTold: told }, heldSince] = await Promise.all([
     lastSends(c.orgId, c.loaded.row.id),
-    fetchAllIn<{ id: string; created_at: string }>(slotIds, (ch, a, b) => supabaseAdmin
-      .from('club_schedule_slots').select('id, created_at').eq('org_id', c.orgId).in('id', ch).order('id').range(a, b)),
-    fetchAllIn<{ slot_id: string; created_at: string }>(slotIds, (ch, a, b) => supabaseAdmin
-      .from('club_schedule_slot_programs').select('slot_id, created_at').eq('org_id', c.orgId).in('slot_id', ch).order('slot_id').range(a, b)),
+    houseLeagueHeldSince(c.orgId, slotIds),
   ]);
-  const heldSince = new Map(made.map(s => [s.id, Date.parse(s.created_at)]));
-  for (const p of held) heldSince.set(p.slot_id, Math.max(heldSince.get(p.slot_id) ?? 0, Date.parse(p.created_at)));
   const sinceSent = (id: string) => !told || (heldSince.get(id) ?? 0) > Date.parse(told.sent_at);
 
   const slots: LeagueSlot[] = c.loaded.slots.map(s => ({
@@ -656,8 +656,8 @@ async function lostTime(orgId: string, scheduleId: string, teamId: string, cents
 /** The last send that the teams were told (final or changes) — the corrections' baseline and "Last sent". Only sends whose
  *  step LANDED: a claim whose step was refused (or never ran) is no send. */
 async function lastSends(orgId: string, scheduleId: string) {
-  const sends = await fetchAll<{ id: string; kind: SendKind; sent_at: string; sent_by: string | null; team_values: Record<string, number> }>((a, b) => supabaseAdmin
-    .from('club_schedule_sends').select('id, kind, sent_at, sent_by, team_values').eq('org_id', orgId).eq('schedule_id', scheduleId)
+  const sends = await fetchAll<{ id: string; kind: SendKind; sent_at: string; sent_by: string | null; team_values: Record<string, number>; league_slot_ids: string[] | null }>((a, b) => supabaseAdmin
+    .from('club_schedule_sends').select('id, kind, sent_at, sent_by, team_values, league_slot_ids').eq('org_id', orgId).eq('schedule_id', scheduleId)
     .not('landed_at', 'is', null).order('sent_at', { ascending: false }).range(a, b));
   // A late bill's row carries the baseline too (its `team_values`): the next Send the changes measures from what it billed.
   const told = sends.find(s => s.kind === 'final' || s.kind === 'changes' || s.kind === 'bill') ?? null;
@@ -676,7 +676,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
    *  its credit (the emails, the correction bell, the window's line) — the step already skips them itself under the same
    *  switch. ⚠ Only what is told: the plan, the splits, the baseline and the `lost` map the step reads are untouched. */
   corrections?: boolean;
-} = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> }; lost?: Map<string, LostTime>; half?: LeagueHalf | null; billTerms?: BillTerms | null }> {
+} = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> }; lost?: Map<string, LostTime>; half?: LeagueHalf | null; billTerms?: BillTerms | null; timeHandoff?: SendTimeHandoff | null }> {
   // ⚖ A FINAL SCHEDULE'S FIRST BILL, MADE LATER (mig 481): its terms ride with the REQUEST, not the schedule — nothing is
   // stored until the send lands, so a window closed halfway leaves nothing half-billed. The schedule is read as if it
   // carried them, so the bill is worked out by the one `computeBill` Finalize uses.
@@ -695,7 +695,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
       }
     }
   }
-  const [c, { last, told }] = await Promise.all([contextFor(sctx, loaded), lastSends(sctx.ctx.org.id, loaded.row.id)]);
+  const [c, { last, told, practicesTold }] = await Promise.all([contextFor(sctx, loaded), lastSends(sctx.ctx.org.id, loaded.row.id)]);
   const row = loaded.row;
   if (kind === 'bill') {
     if (asked.row.state !== 'final') blockers.push({ code: 'not_final', error: R.billNotFinal });
@@ -850,7 +850,13 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
 
   const finalRows = kind === 'final' ? scheduled.flatMap(t => t.season ? c.slots.filter(s => (c.assignments.get(s.key) ?? []).includes(t.id)).map(s => rowFor(c, s, t.id, t.season!.id)) : []) : undefined;
   // House league's half (Stage 11b Part 5): only a final schedule's changes move its practices.
-  const half = kind === 'changes' && row.state === 'final' ? await leagueHalf(c) : null;
+  // Stage 13d (A1, A2), beside it: the house league time this send gives or takes back, per season — the WHO IS TOLD line and
+  // the bells read this one answer. A failed read is no line and no bell, never a failed preview.
+  const [half, timeHandoff] = await Promise.all([
+    kind === 'changes' && row.state === 'final' ? leagueHalf(c) : Promise.resolve(null),
+    timeHandoffFor({ orgId: c.orgId, kind, state: row.state, senderId: c.senderId, slots: c.loaded.slots, places: c.places, lastTold: practicesTold })
+      .catch(e => { console.error('[club-schedule-send] house league’s time could not be read for the send:', e); return null; }),
+  ]);
   const leagueTeams = half?.teams ?? [];
   const changedTeams = plan ? plan.byTeam.size : 0;
   const statement = kind === 'review' ? W.reviewStatement(replyBy)
@@ -865,7 +871,8 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
     recipientCount: teams.reduce((n, t) => n + t.recipients.length, 0) + leagueTeams.reduce((n, t) => n + t.coaches.length, 0)
       + new Set(leagueTeams.flatMap(t => t.households)).size,
     league: half ? { teams: leagueTeams, games: half.games, seen: half.seen } : null,
-    plan, finalRows, splits, rate, teamValues, correction, lost, half, billTerms,
+    leagueTime: timeHandoff?.told?.line ?? null,
+    plan, finalRows, splits, rate, teamValues, correction, lost, half, billTerms, timeHandoff,
   };
 }
 
@@ -1034,6 +1041,11 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
   // the league admins (Stage 11b Part 5; 9d2·2, 9d2·13).
   const league = half && leagueDone ? await tellHouseLeague(sctx, row.name, half, leagueTeams, sendId) : { people: 0, failed: 0, teams: 0 };
 
+  // Stage 13d (A1): the time this send gave or took back — a bell per season to whoever runs house league (never the sender).
+  if (preview.timeHandoff) {
+    await tellTimeGiven({ orgId, orgSlug: sctx.ctx.org.slug, senderId: actor, scheduleName: row.name, sendId, handoff: preview.timeHandoff });
+  }
+
   // The log, completed with who was actually told (its money landed with the step).
   const changesLog = kind === 'changes' ? [
     ...[...(preview.plan?.byTeam ?? new Map())].map(([teamId, list]) => ({ teamId, changes: list.length })),
@@ -1042,6 +1054,9 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
   const { error: logError } = await supabaseAdmin.from('club_schedule_sends').update({
     team_ids: reached, people_count: sent + league.people, failed_count: results.length - sent + league.failed,
     reply_by: preview.replyBy, changes: changesLog,
+    // Stage 13d (mig 486): house league's slots as this send left them — the next Send the changes' "given / taken back".
+    // From the schedule itself, never from the bell's read: a failed read costs a bell, never the next send's baseline.
+    ...(kind === 'final' || kind === 'changes' ? { league_slot_ids: heldHouseLeagueSlotIds(loaded.slots) } : {}),
   }).eq('id', sendId);
   if (logError) console.error('[club-schedule-send] the send log could not be completed (the send went):', logError);
 
@@ -1077,10 +1092,7 @@ async function tellHouseLeague(sctx: SchedulerCtx, scheduleName: string, half: L
   try {
     // Everyone who runs house league — owners and admins as well as league admins (owner 2026-10-27: a club whose owner
     // runs house league with no league admin is told too); never the sender (`excludeUserIds`).
-    const { data, error } = await supabaseAdmin.from('organization_members').select('user_id')
-      .eq('organization_id', org.id).eq('status', 'active').in('role', [...LEAGUE_RUNNER_ROLES]);
-    if (error) throw error;
-    const userIds = (data ?? []).map(m => m.user_id as string);
+    const userIds = await houseLeagueRunnerUserIds(org.id);
     if (userIds.length) {
       for (const [seasonId] of half.seasons) {
         const mine = half.teams.filter(t => t.seasonId === seasonId);

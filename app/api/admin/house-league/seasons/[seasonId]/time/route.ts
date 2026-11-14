@@ -5,6 +5,7 @@ import { getLeagueSeasonById } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { readLeagueTime, saveLeagueTime } from '@/lib/league-time-server';
 import { LEAGUE_TIME_REFUSALS, readChangesBody } from '@/lib/league-time';
+import { readTimeAsk } from '@/lib/league-time-handoff-server';
 
 /**
  * HOUSE LEAGUE'S TIME (Club Tier Stage 11b Part 3, frame k2) — lib/league-time-server.ts holds the rules.
@@ -21,7 +22,9 @@ export const GET = withObservability(async (req: NextRequest, { params }: { para
   if (err || !ctx) return err!;
   const season = await getLeagueSeasonById(seasonId, ctx.org.id);
   if (!season) return NextResponse.json({ error: LEAGUE_TIME_REFUSALS.notFound, code: 'not_found' }, { status: 404 });
-  return NextResponse.json(await readLeagueTime(ctx.org.id, season));
+  // Stage 13d (A3): the season's ask rides with the read ("Asked Nov 13" in the window and in Generate games).
+  const [time, askedAt] = await Promise.all([readLeagueTime(ctx.org.id, season), readTimeAsk(ctx.org.id, season.id)]);
+  return NextResponse.json({ ...time, askedAt });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/time' });
 
 export const POST = withObservability(async (req: NextRequest, { params }: { params: Promise<{ seasonId: string }> }) => {

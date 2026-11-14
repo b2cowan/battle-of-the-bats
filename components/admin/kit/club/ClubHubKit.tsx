@@ -60,6 +60,7 @@ import { NOT_YOURS_WORDS } from '@/lib/not-yours-words';
 import { LEAGUE_RUNNER_ROLES } from '@/lib/house-league-access';
 import { PERMIT_WORDS as PW, outsideCardWords } from '@/lib/permit-words';
 import { permitDoor } from '@/lib/permit-dates-off-view';
+import { TIME_HANDOFF_WORDS, timeAskHref } from '@/lib/league-time-handoff';
 
 /** The org's own word for itself on its hub: a Club is a club; a League Plus org, a league. */
 function orgNoun(planId: string | undefined): string {
@@ -270,6 +271,17 @@ export default function ClubHubKit() {
     extraCards.push({
       key: 'outside-permit', label: PW.outside, n: outside.count, sub: outsideCardWords(outside.count, outside.days, outside.venues),
       href: permitDoor(permitsLink.href, outside.permitIds),
+    });
+  }
+  // "House league asks for time" (Stage 13d, A4; drawing tab 3 note 3): after the cards that exist, only while true. The brief
+  // carries it to owners and admins only (Accounting or not: giving time isn't money). Its door opens where time is given —
+  // Schedules, New schedule on the club's one permit, or Permits with no permit (a door only when Permits opens for them).
+  const asks = brief?.timeAsks;
+  if (asks?.seasons.length) {
+    const door = asks.door.kind === 'permits' && !permitsLink ? { kind: 'schedules' as const } : asks.door;
+    extraCards.push({
+      key: 'time-asks', label: TIME_HANDOFF_WORDS.card.label, n: asks.seasons.length,
+      sub: TIME_HANDOFF_WORDS.card.sub(asks.seasons, asks.door.kind === 'permits'), href: timeAskHref(base, door),
     });
   }
   const anythingWaits = briefCards.some(c => (brief?.counts[c.key] ?? 0) > 0) || extraCards.length > 0;

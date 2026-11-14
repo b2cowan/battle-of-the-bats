@@ -3960,6 +3960,46 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "league_season_time_asks",
+    "constraint_name": "league_season_time_asks_asked_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "asked_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "constraint_name": "league_season_time_asks_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "constraint_name": "league_season_time_asks_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "season_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "constraint_name": "league_season_time_asks_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "league_seasons",
     "constraint_name": "league_seasons_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -3998,16 +4038,6 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
-  },
-  {
-    "table_name": "league_seasons",
-    "constraint_name": "league_seasons_time_asked_by_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "time_asked_by",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
   },
   {
     "table_name": "league_slot_uses",

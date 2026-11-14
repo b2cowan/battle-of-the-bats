@@ -69,6 +69,11 @@ export interface HouseLeagueAccess {
    * With no club's schedule (the free League plan) there is no time to keep to, and whoever runs the season places anywhere.
    */
   placeAnywhere: boolean;
+  /**
+   * Ask the club for house league time (Club Tier Stage 13d, A3): whoever runs a live or getting-ready season on a plan with
+   * the club's schedule and does NOT give time — a league admin. An owner or an admin gives it (Ask 14 A), so never asks.
+   */
+  askForTime: boolean;
   /** Move the season between statuses, including reopening a finished one. */
   changeStatus: boolean;
   /** Work registrations: approve, waitlist, decline, withdraw, notes, add by hand. */
@@ -107,6 +112,7 @@ export function houseLeagueAccess(
     readMoney: opens || holdsBooks,
     run: runner && !finished,
     placeAnywhere: runner && !finished && (!clubSchedulerOn(org.planId) || isScheduleBuilder(member.role)),
+    askForTime: runner && !finished && clubSchedulerOn(org.planId) && !isScheduleBuilder(member.role),
     changeStatus: runner,
     register: desk && !finished,
     takeFees: desk,

@@ -1,11 +1,11 @@
 {
   "generated": "2026-11-13",
-  "total": 671,
+  "total": 679,
   "counts": {
-    "tables": 22,
-    "columns": 323,
-    "indexes": 100,
-    "constraints": 88,
+    "tables": 23,
+    "columns": 325,
+    "indexes": 102,
+    "constraints": 91,
     "rls": 138
   },
   "items": [
@@ -890,15 +890,23 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_season_time_asks.asked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_time_asks.asked_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_time_asks.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_season_time_asks.season_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_seasons.friend_requests_max",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:league_seasons.time_asked_at",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:league_seasons.time_asked_by",
       "sig": ""
     },
     {
@@ -1978,7 +1986,19 @@
       "sig": ""
     },
     {
-      "key": "constraint:only-dev:league_seasons.league_seasons_time_asked_by_fkey",
+      "key": "constraint:only-dev:league_season_time_asks.league_season_time_asks_asked_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_time_asks.league_season_time_asks_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_time_asks.league_season_time_asks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_season_time_asks.league_season_time_asks_season_id_fkey",
       "sig": ""
     },
     {
@@ -2358,6 +2378,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_season_time_asks_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_season_time_asks_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:legal_acceptances_pkey",
       "sig": ""
     },
@@ -2627,6 +2655,10 @@
     },
     {
       "key": "table:only-dev:league_friend_requests",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:league_season_time_asks",
       "sig": ""
     },
     {

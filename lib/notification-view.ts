@@ -29,6 +29,8 @@ export const EVENT_ICONS: Record<string, string> = {
   house_league_registration_new:     '📋',
   house_league_withdraw_request:     '↩️',
   club_schedule_league_changes:      '🔁',
+  house_league_time_given:           '🕒',
+  house_league_time_asked:           '🙋',
   chat_message:                      '💬',
   chat_mention:                      '📣',
   tryout_offer_response:             '🤝',
@@ -365,6 +367,11 @@ function adminDestination(rest: string, query: URLSearchParams): string | null {
   if (/^\/tournaments\/results\/?$/.test(rest)) return opens('gameId') ? 'Open the game' : `Open ${ADMIN_PAGE.results}`;
   if (/^\/tournaments\/check-in\/?$/.test(rest)) return `Open ${ADMIN_PAGE.checkIn}`;
   if (/^\/house-league\/seasons\/[^/]+\/registrations\/?$/.test(rest)) return `Open ${ADMIN_PAGE.leagueRegistrations}`;
+  // Stage 13d: the time-given bell lands on the season's schedule with House league's time open (`?time=1`).
+  if (/^\/house-league\/seasons\/[^/]+\/schedule\/?$/.test(rest) && opens('time')) return 'Open House league’s time';
+  // Stage 13d: the ask's bell opens where time is given — Schedules, New schedule on the club's one permit, or Permits.
+  if (/^\/schedules\/?$/.test(rest)) return opens('new') ? 'Open New schedule' : 'Open Schedules';
+  if (/^\/permits\/?$/.test(rest)) return 'Open Permits';
   if (/^\/org\/billing\/?$/.test(rest)) return `Open ${ADMIN_PAGE.billing}`;
   if (/^\/rep-teams\/?$/.test(rest)) return `Open ${ADMIN_PAGE.repTeams}`;
   if (/^\/rep-teams\/bring-in\/?$/.test(rest)) return `Open ${ADMIN_PAGE.bringIn}`;

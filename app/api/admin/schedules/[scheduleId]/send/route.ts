@@ -65,6 +65,8 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     // Stage 11b Part 5 (h4): the house-league teams' rows, coaches and family counts, their emails, and the plan's
     // fingerprint the POST returns (no money in any of it).
     league: p.league,
+    // Stage 13d (A2): WHO IS TOLD's house league line — who hears the time-given bell and the week's hours (no money).
+    leagueTime: p.leagueTime,
     // Stage 11d, Ask 8: a loss is settled at the send (credited, or owed back) — never "owed back: its coach asks".
     correction: money && p.correction ? { billed: Object.fromEntries(p.correction.gains), lost: Object.fromEntries(p.correction.losses) } : null,
   });

@@ -3439,6 +3439,12 @@ export type NotificationEventType =
   // The club's Send the changes moved or cancelled house-league practices (Club Tier 11b Part 5, ruling 9d2·13): the league
   // admins are told in the bell. A 'know' kind; TS-union change only (no DB CHECK on event_type).
   | 'club_schedule_league_changes'
+  // Club Tier Stage 13d (Ask 14 A, 13d-1 A): a send gave (or took back) house league time — owners, admins and league admins,
+  // the sender left out, one per season; its door opens House league's time. Bell only (email copy off by default).
+  | 'house_league_time_given'
+  // Stage 13d (13d-2 A): a league admin pressed "Ask for time" — one bell to the owner(s). The ask itself waits on the
+  // owner's and admins' This morning until the season has time. 'know' kinds; TS-union change only (no DB CHECK).
+  | 'house_league_time_asked'
   // Coach Chat (Project 1 — Tournament Chat). These default push ON (the chat-app model).
   | 'chat_message'
   // A targeted @mention — a DISTINCT, higher-priority event so it still reaches a coach who has muted

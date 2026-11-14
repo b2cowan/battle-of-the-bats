@@ -2,7 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { canGate } from './volunteer-jobs';
 import { hasCapability } from './roles';
-import { canHouseLeague } from './house-league-access';
+import { LEAGUE_RUNNER_ROLES, canHouseLeague } from './house-league-access';
 import { isDemoOrganizerEmail } from './demo-org';
 import type { Organization, OrgRole } from './types';
 
@@ -84,6 +84,18 @@ export async function checkInUserIds(orgId: string, tournamentId: string): Promi
     .eq('organization_id', orgId).eq('status', 'active');
   if (error) throw error;
   return scopedToTournament(((data ?? []) as Member[]).filter(m => m.user_id && canGate(m.role, m.capabilities)), tournamentId);
+}
+
+/**
+ * EVERYONE WHO RUNS HOUSE LEAGUE — owners, admins and league admins (LEAGUE_RUNNER_ROLES; owner 2026-10-27: a club whose owner
+ * runs house league with no league admin is told too). The list that hears the club's changes to house league's practices
+ * and games (Stage 11b Part 5) and the time it gives (Stage 13d). ⚠ Never hand `notify()` an EMPTY list.
+ */
+export async function houseLeagueRunnerUserIds(orgId: string): Promise<string[]> {
+  const { data, error } = await supabaseAdmin.from('organization_members').select('user_id')
+    .eq('organization_id', orgId).eq('status', 'active').in('role', [...LEAGUE_RUNNER_ROLES]);
+  if (error) throw error;
+  return [...new Set((data ?? []).map(m => m.user_id as string).filter(Boolean))];
 }
 
 /**

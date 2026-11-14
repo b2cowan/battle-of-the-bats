@@ -91,6 +91,24 @@ export interface LeagueTime {
   sources: LeagueTimeSource[];
   divisions: LeagueTimeDivision[];
   practices: LeagueTimePractice[];
+  /** Stage 13d (A3): when the season last asked the club for time — the window's and Generate games' "Ask for time". The
+   *  route adds it; absent on an older read. */
+  askedAt?: string | null;
+}
+
+/**
+ * IS THIS SLOT THE SEASON'S TIME? (Stage 13d-7 A, owner 2026-11-13) — inside the season's dates (a season with no dates takes
+ * every day) and not divided by ANOTHER season (a slot another season has divided is that season's alone). The one rule:
+ * House league's time draws it (`readLeagueTime`), the time-given bell attributes by it, and `houseLeagueSlotCount` counts
+ * it in SQL (pinned to this rule in tests). Undivided time belongs to house league as a whole, so every season whose dates
+ * hold it reads it (ruled, decision 2).
+ */
+export function seasonHoldsSlot(
+  season: { id: string; startDate: string | null; endDate: string | null }, day: string, usedBySeasonId: string | null,
+): boolean {
+  if (season.startDate && day < season.startDate) return false;
+  if (season.endDate && day > season.endDate) return false;
+  return !usedBySeasonId || usedBySeasonId === season.id;
 }
 
 export const keyOfUse = (u: LeagueUse | null) => (u ? `${u.divisionId}:${u.kind}` : 'open');

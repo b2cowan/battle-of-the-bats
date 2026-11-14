@@ -32,6 +32,7 @@ import { isStale, oneWeekdayOf, type ScheduleView } from '@/lib/club-schedule-vi
 import type { SendKind } from '@/lib/club-schedule-send';
 import { getsPlainEmail } from '@/lib/club-schedule-money-audience';
 import { HAND_BACK_WORDS, type CreditMove } from '@/lib/club-hand-back-words';
+import { TIME_HANDOFF_WORDS, type LeagueTimeLine } from '@/lib/league-time-handoff';
 import { Statement } from './ScheduleParts';
 import { EmailWordsSample, MailView, SendDoor, SendDoors, SendRow, SendRows, useSendLevel } from '../SendParts';
 import sch from './Schedules.module.css';
@@ -68,6 +69,9 @@ interface Preview {
     games?: { key: string; name: string; line: string; sub: string }[];
     seen: string;
   } | null;
+  /** Stage 13d (A2): who hears the time-given bell, and the week's hours this send gives or takes back. Null: house league
+   *  gets nothing from this send, so the line is held off. */
+  leagueTime?: LeagueTimeLine | null;
 }
 
 
@@ -126,6 +130,7 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   // still move — the send is the schedule's, the email is the row's).
   const league = shown?.league?.teams ?? [];
   const leagueGames = shown?.league?.games ?? [];
+  const leagueTime = shown?.leagueTime ?? null;
   const leagueTicked = league.filter(t => !unticked.has(t.teamId));
   const gamesOnly = kind === 'changes' && ticked.length === 0 && leagueTicked.length === 0 && leagueGames.length > 0;
   // A family with children on two ticked teams gets one email: households are counted once (opaque keys from the server).
@@ -257,7 +262,7 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
               {shown.blockers.map(b => <span key={b.code + b.error} className={repKit.calloutSub}>{b.error}</span>)}
             </Callout>
           )}
-          {(teams.length > 0 || league.length > 0 || leagueGames.length > 0) && (
+          {(teams.length > 0 || league.length > 0 || leagueGames.length > 0 || !!leagueTime) && (
             <>
               <p className={repKit.factsLabel}>{head}</p>
               <SendRows>
@@ -285,6 +290,17 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
                 {leagueGames.map(g => (
                   <SendRow key={g.key} title={<><b>{g.name}</b> · {g.line}</>} sub={g.sub} />
                 ))}
+                {/* Stage 13d (A2, drawing tab 2 note 3): "House league · Jules Moreau, league admin: 2 hours a week to divide" over
+                    "bell". No tick: the bell goes with the send. With no league admin, owners and admins hear it. */}
+                {leagueTime && (() => {
+                  const T = TIME_HANDOFF_WORDS.whoTold, named = leagueTime.leagueAdmins.length > 0;
+                  const what = T.what(leagueTime.givenMinutes, leagueTime.takenMinutes);
+                  return (
+                    <SendRow
+                      title={<><b>{T.title}</b>{named ? <> · {T.who(leagueTime.leagueAdmins)}: {what}</> : <>: {T.who([])}, {T.byBell}</>}</>}
+                      sub={named ? T.how : what} />
+                  );
+                })()}
               </SendRows>
             </>
           )}

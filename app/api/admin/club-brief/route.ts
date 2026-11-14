@@ -16,6 +16,9 @@ import { readFeesOwed } from '@/lib/fee-invoices-owed';
 import { canHouseLeague } from '@/lib/house-league-access';
 import { countLeagueRegistrationsWaiting } from '@/lib/league-registrations-waiting';
 import type { OrgRole } from '@/lib/types';
+import { canOpenClubSchedules } from '@/lib/club-schedule-gate';
+import { readTimeAsksCard } from '@/lib/league-time-handoff-server';
+import type { TimeAsksCard } from '@/lib/league-time-handoff';
 
 /**
  * GET /api/admin/club-brief — "this morning": the president's brief on the club hub (Stage 1,
@@ -243,6 +246,15 @@ export const GET = withObservability(async (req: Request) => {
     })());
   }
 
+  // ── House league asks for time (Stage 13d, A4): an owner or an admin — Accounting or not, giving time isn't money — on a
+  // plan with the club's schedule. Present only while a live season asks with no time given; a failed read leaves it ABSENT.
+  let timeAsks: TimeAsksCard | null = null;
+  if (canOpenClubSchedules({ planId: org.planId, role: ctx.role })) {
+    reads.push((async () => {
+      try { timeAsks = await readTimeAsksCard(org.id); } catch (e) { console.error('[club-brief] the house league asks read failed:', e); }
+    })());
+  }
+
   const [shape] = await Promise.all([shapeRead, ...reads]);
   // A count that failed is not a zero — say so rather than print a calm 0 (the brief is a to-do list).
   if (fail.error) return captureAndJson(fail.error, { error: 'Could not read this morning’s brief.' }, 500);
@@ -256,5 +268,6 @@ export const GET = withObservability(async (req: Request) => {
       : {}),
     detail,
     ...(feesOwed ? { feesOwed } : {}),
+    ...(timeAsks ? { timeAsks } : {}),
   });
 }, { route: '/api/admin/club-brief' });

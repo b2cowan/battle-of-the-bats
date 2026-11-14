@@ -2027,6 +2027,9 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:club_schedule_sends.landed_at -->
 **`landed_at`** (timestamptz, null until the send's step lands) — set INSIDE the step (`club_schedule_send_review`, `club_schedule_finalize`, `club_schedule_apply_changes`, `club_schedule_bill_late`; each raises `changed` when its claimed row is gone, rolling the step back). A row without it is a claim whose step was refused or never ran: it still holds the 60-second claim window, but it is never "Last sent", never the next send's baseline, never a review round a reply answers, never in the send log's list.
 
+<!-- dict:col:club_schedule_sends.league_slot_ids -->
+**`league_slot_ids`** (uuid[], nullable; **mig 486**, Club Tier Stage 13d Session A, A1) — the schedule's **house league slots** (live, still to come) as this send left them, written by the send log's completion (TypeScript, after the step) on **Finalize and send** and **Send the changes**; null on review and late-bill sends and on every send before 13d. The next Send the changes compares the schedule's house league slots against the last such send's list to say what time it **gave** or **took back** (the league admins' "The club gave house league time" bell and the Send window's house league line, [lib/league-time-handoff-server.ts](../../../lib/league-time-handoff-server.ts)). Without it a slot handed from house league to a rep team in place (a hand drag swaps holders and makes no slot) left no trace. When the last send has none (older sends), "given" falls back to slots made or handed to house league since that send, and nothing reads as taken back. Not a foreign key (a slot may be deleted later; a stale id simply no longer matches). _Dev/prod:_ dev-applied 2026-11-13; prod owed with the 13d code.
+
 ### Hand-backs and their asks: `club_schedule_hand_backs` + `club_schedule_hand_back_slots`
 <!-- dict:table:club_schedule_hand_backs -->
 <!-- dict:table:club_schedule_hand_back_slots -->
@@ -7386,6 +7389,21 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 | `picks[]` | committed picks `{round, pickNumber, teamId, registrationId}`; flushed to `league_registrations.team_id` via `bulkAssignTeams` on finalize |
 
 ---
+
+## `league_season_time_asks`
+<!-- dict:table:league_season_time_asks -->
+
+**Purpose (mig 486, Club Tier Stage 13d Session A — Ask 14 A, 13d-2 A; build prompt `docs/projects/active/CLUB_TIER_STAGE13D_BUILD_PROMPT.md` A3/A4):** a house league season **asking the club for time**. A league admin whose season has no house league time presses **Ask for time** (the season line, House league's time, Generate games); the ask waits on the owner's and the admins' This morning ("House league asks for time") and rings the owner once, until the season has time or finishes. One row per season. Code: [lib/league-time-handoff-server.ts](../../../lib/league-time-handoff-server.ts) (`askForTime`, `readTimeAsk`, `readTimeAsksCard`, `tellTimeGiven`).
+
+**Who reads, who writes:** server-only — RLS on, no policies, nothing to `anon`/`authenticated`, `service_role` grants (mig 326's shape). ⚖ **A table of its own, not columns on `league_seasons`** (/review 2026-11-13): `league_seasons` is readable by anyone once a season is past draft ("public can read non-draft seasons", mig 020), so columns there would have put the asker's account id and the ask's time on the public API. Written only by the ask route (`…/house-league/seasons/[seasonId]/time-ask`, the one gate's `askForTime`: a league admin on a live or getting-ready season on a plan with the club's schedule — never an owner or an admin, who give time): the first ask is an **insert** (the season is the key, so two presses make one row); asking again is an **update only where `asked_at` is 7 days old**. **Deleted** by the send whose house league time GROWS the season (Finalize and send / Send the changes, `tellTimeGiven`), so an ask answered and later taken back never resurfaces. Readers ALSO require "no time given" (`seasonTimeFacts`, the season line's own answer) and a live season, so a stale row never shows.
+
+**Fields:**
+
+<!-- dict:col:league_season_time_asks.season_id -->
+<!-- dict:col:league_season_time_asks.org_id -->
+<!-- dict:col:league_season_time_asks.asked_at -->
+<!-- dict:col:league_season_time_asks.asked_by -->
+**`season_id`** (uuid, PK; FK → `league_seasons.id` ON DELETE CASCADE) / **`org_id`** (uuid, NOT NULL; FK → `organizations.id` ON DELETE CASCADE; index `(org_id, asked_at)` — the card's read) / **`asked_at`** (timestamptz, NOT NULL, default now — when it last asked; "Asked Nov 13", "asked 9 days ago") / **`asked_by`** (uuid, nullable; FK → `auth.users.id` ON DELETE SET NULL — the league admin who asked; **never shown to the league admin** (13c C6 A), the owner's card reads "by its league admin", not a name). _Dev/prod:_ dev-applied 2026-11-13; prod owed BEFORE the 13d code.
 
 ## `league_divisions`
 <!-- dict:table:league_divisions -->

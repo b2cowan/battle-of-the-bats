@@ -329,8 +329,8 @@ export const START_FROM_WORDS = {
   /** §11 `mk.noTime`'s first sentence: the product's own (`lib/league-time.ts`), said of this season. */
   noTime: 'The club hasn’t given this season any time yet.',
   noTimeHowAdmin: 'It gives it in the club’s Schedules; games and practices can be made once it has.',
-  /** A league admin cannot open Schedules, so the sentence never sends them there (Stage 13 fix-now 4, F-O3-7). */
-  noTimeHowLeagueAdmin: 'Ask an owner or an admin to give house league time.',
+  /* A league admin cannot open Schedules (Stage 13 fix-now 4, F-O3-7): since 13d they ASK — "Ask for time" stands where
+     "Ask an owner or an admin to give house league time." stood (lib/league-time-handoff.ts). */
   /** Given but not yet divided (Stage 13 fix-now 4): the club has given house league time in the season, and none of it is
    *  a division's games or practices yet. Read only by the people who divide it; its door opens House league's time. */
   timeNotDivided: 'The club has given this season time. None of it is divided into games or practices yet.',

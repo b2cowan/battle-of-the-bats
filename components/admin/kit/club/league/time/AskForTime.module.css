@@ -1,0 +1,11 @@
+/* "Ask for time" (Club Tier Stage 13d, Session A, A3; drawing tab 3 notes 1-2, tab 7 note 1). One quiet button where the
+   league admin's no-time sentence sits; on a phone a full-width 44 px control under it — never hidden with the sentence. */
+.ask { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.6rem; vertical-align: middle; }
+.button { white-space: nowrap; }
+.said { color: var(--text-secondary); }
+.failed { color: var(--danger-text); font-size: var(--type-support); }
+
+@media (max-width: 640px) {
+  .ask { display: flex; width: 100%; margin-top: 0.5rem; }
+  .button { width: 100%; min-height: 44px; justify-content: center; }
+}

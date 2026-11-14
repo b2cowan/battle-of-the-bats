@@ -2,24 +2,25 @@
 
 **Generated:** 2026-11-13 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 671 divergence(s)** across dev/prod.
+**⚠️ 679 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 16 | 6 | — |
-| Columns | 263 | 59 | 1 |
-| Indexes | 74 | 26 | 0 |
-| Constraints | 60 | 28 | — |
+| Tables | 17 | 6 | — |
+| Columns | 265 | 59 | 1 |
+| Indexes | 76 | 26 | 0 |
+| Constraints | 63 | 28 | — |
 | RLS / CHECK | 106 | 26 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (16)
+### Only in DEV (17)
 - `bank_check_waiting`
 - `event_availability_reminders`
 - `family_calendar_feeds`
 - `family_invitations`
 - `family_invite_stops`
 - `league_friend_requests`
+- `league_season_time_asks`
 - `legal_acceptances`
 - `platform_charge_tax_looks`
 - `platform_charge_tax_records`
@@ -40,7 +41,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (263)
+### Only in DEV (265)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -122,9 +123,11 @@
 - `league_registrations.told_at`
 - `league_registrations.told_team_id`
 - `league_season_notices.skipped_count`
+- `league_season_time_asks.asked_at`
+- `league_season_time_asks.asked_by`
+- `league_season_time_asks.org_id`
+- `league_season_time_asks.season_id`
 - `league_seasons.friend_requests_max`
-- `league_seasons.time_asked_at`
-- `league_seasons.time_asked_by`
 - `legal_acceptances.accepted_at`
 - `legal_acceptances.box_text`
 - `legal_acceptances.door`
@@ -370,7 +373,7 @@
 - `family_links.rep_team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (74)
+### Only in DEV (76)
 - `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
@@ -409,6 +412,8 @@
 - `league_friend_requests_slot_uniq`
 - `league_registrations_friend_code_uniq`
 - `league_registrations_told_team_idx`
+- `league_season_time_asks_org_idx`
+- `league_season_time_asks_pkey`
 - `legal_acceptances_pkey`
 - `legal_acceptances_user_idx`
 - `platform_charge_tax_looks_chain_idx`
@@ -478,7 +483,7 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (60)
+### Only in DEV (63)
 - `bank_check_waiting.bank_check_waiting_added_by_fkey`
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
@@ -510,7 +515,10 @@ _none_
 - `league_friend_requests.league_friend_requests_season_id_fkey`
 - `league_friend_requests.league_friend_requests_slot_uniq`
 - `league_registrations.league_registrations_told_team_fk`
-- `league_seasons.league_seasons_time_asked_by_fkey`
+- `league_season_time_asks.league_season_time_asks_asked_by_fkey`
+- `league_season_time_asks.league_season_time_asks_org_id_fkey`
+- `league_season_time_asks.league_season_time_asks_pkey`
+- `league_season_time_asks.league_season_time_asks_season_id_fkey`
 - `legal_acceptances.legal_acceptances_pkey`
 - `legal_acceptances.legal_acceptances_user_id_fkey`
 - `platform_charge_tax_looks.platform_charge_tax_looks_after_id_fkey`

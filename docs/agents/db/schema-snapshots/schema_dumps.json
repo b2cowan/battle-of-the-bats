@@ -9965,6 +9965,42 @@
         "column_default": "0"
       },
       {
+        "table_name": "league_season_time_asks",
+        "pos": 1,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "pos": 3,
+        "column_name": "asked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "pos": 4,
+        "column_name": "asked_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_seasons",
         "pos": 1,
         "column_name": "id",
@@ -10224,24 +10260,6 @@
         "udt_name": "int2",
         "is_nullable": "NO",
         "column_default": "2"
-      },
-      {
-        "table_name": "league_seasons",
-        "pos": 31,
-        "column_name": "time_asked_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "league_seasons",
-        "pos": 32,
-        "column_name": "time_asked_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
       },
       {
         "table_name": "league_slot_uses",
@@ -33068,18 +33086,32 @@
         "constraint_name": "league_season_notices_season_id_fkey"
       },
       {
+        "table_name": "league_season_time_asks",
+        "column_name": "asked_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_season_time_asks_asked_by_fkey"
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_season_time_asks_org_id_fkey"
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_season_time_asks_season_id_fkey"
+      },
+      {
         "table_name": "league_seasons",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "league_seasons_org_id_fkey"
-      },
-      {
-        "table_name": "league_seasons",
-        "column_name": "time_asked_by",
-        "foreign_table": null,
-        "foreign_column": null,
-        "constraint_name": "league_seasons_time_asked_by_fkey"
       },
       {
         "table_name": "league_slot_uses",
@@ -39284,6 +39316,16 @@
         "indexdef": "CREATE INDEX league_season_notices_send_idx ON public.league_season_notices USING btree (club_schedule_send_id) WHERE (club_schedule_send_id IS NOT NULL)"
       },
       {
+        "tablename": "league_season_time_asks",
+        "indexname": "league_season_time_asks_org_idx",
+        "indexdef": "CREATE INDEX league_season_time_asks_org_idx ON public.league_season_time_asks USING btree (org_id, asked_at)"
+      },
+      {
+        "tablename": "league_season_time_asks",
+        "indexname": "league_season_time_asks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_season_time_asks_pkey ON public.league_season_time_asks USING btree (season_id)"
+      },
+      {
         "tablename": "league_seasons",
         "indexname": "league_seasons_org_id_slug_key",
         "indexdef": "CREATE UNIQUE INDEX league_seasons_org_id_slug_key ON public.league_seasons USING btree (org_id, slug)"
@@ -45328,6 +45370,12 @@
       {
         "kind": "RLS",
         "table_name": "league_season_notices",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_season_time_asks",
         "detail": "ENABLED",
         "check_clause": null
       },

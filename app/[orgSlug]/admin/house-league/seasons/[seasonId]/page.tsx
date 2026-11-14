@@ -52,6 +52,7 @@ import { sportLabel } from '@/lib/sports';
 import { pluralize } from '@/lib/utils';
 import type { LeagueSeason } from '@/lib/types';
 import Link from 'next/link';
+import AskForTime from '@/components/admin/kit/club/league/time/AskForTime';
 import { formatLeagueMoney, type SeasonMoney } from '@/lib/league-money';
 import { TILE_WORDS } from '@/lib/house-league-money-words';
 
@@ -76,7 +77,7 @@ interface SeasonDetail {
   money?: SeasonMoney;
   /** Has the club given this season any of its time (9f-2 mk.noTime), and has any of it been divided into a division's
    *  games or practices (Stage 13 fix-now 4)? Null where the club's schedule does not exist. */
-  clubTime?: { given: boolean; divided: boolean } | null;
+  clubTime?: { given: boolean; divided: boolean; askedAt?: string | null } | null;
 }
 
 export default function SeasonOverviewPage() {
@@ -283,10 +284,18 @@ export default function SeasonOverviewPage() {
           {foot && <p className={s.emptyLine}>{foot}</p>}
         </ClubSection>
       )}
+      {/* Stage 13d (A3, A6; drawing tab 3 note 1, tab 7 note 1): the league admin's "Ask for time" replaces "Ask an owner or an
+          admin…", on a live or getting-ready season — beside the sentence on a desk, full width under it on a phone (never
+          hidden with the second sentence). An owner or an admin gives time, so they keep their sentence and no button. */}
       {showNoTime && (
         <p className={s.timeNote}>
           {SF.noTime}
-          <span className={s.deskOnly}> {access?.placeAnywhere ? SF.noTimeHowAdmin : SF.noTimeHowLeagueAdmin}</span>
+          {!access?.askForTime
+            ? <span className={s.deskOnly}> {SF.noTimeHowAdmin}</span>
+            : <>{' '}<AskForTime
+                /* org-slug-ok: the control adds `orgQuery` to its one call */
+                api={`/api/admin/house-league/seasons/${seasonId}`} orgQuery={`?orgSlug=${encodeURIComponent(orgSlug)}`}
+                askedAt={clubTime?.askedAt ?? null} /></>}
         </p>
       )}
       {showUndivided && (

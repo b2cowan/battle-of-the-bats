@@ -17,6 +17,7 @@ import type { LeagueTeam } from '@/lib/types';
 import s from '../time/LeagueTime.module.css';
 import g from './GenerateGames.module.css';
 import { SeePermitDoor } from './useLeagueLine';
+import AskForTime from '../time/AskForTime';
 
 /**
  * GENERATE GAMES (House League Stage 9d-2a step 5; frames c1–c4, k3, k4; ruling 9d2·3 + the owner's amendment, plan
@@ -47,7 +48,7 @@ async function readReply<T>(r: Response | null) {
 const slotCount = (row: LeagueTimeRow) => row.parts.reduce((n, p) => n + p.slotIds.length, 0);
 
 export default function GenerateGamesWindow({
-  seasonName, divisions, divisionId: first, through: firstThrough, time, api, orgQuery, schedulesHref, onTimeChanged, onOpenTime, onSeePermit, onSaved, onClose,
+  seasonName, divisions, divisionId: first, through: firstThrough, time, api, orgQuery, schedulesHref, canAsk, onTimeChanged, onOpenTime, onSeePermit, onSaved, onClose,
 }: {
   seasonName: string;
   /** The divisions Generate can take: two teams or more, no games yet. */
@@ -61,6 +62,8 @@ export default function GenerateGamesWindow({
   orgQuery: string;
   /** The club's Schedules, for an owner or an admin (k4's door); null for a league admin. */
   schedulesHref: string | null;
+  /** Stage 13d (A3): the one gate's `askForTime` — the league admin's "Ask for time" when nothing is given. */
+  canAsk: boolean;
   /** House league's time changed (k3's Give): the page reads it again. */
   onTimeChanged: () => Promise<unknown>;
   /** A door to House league's time on this division's game time; the page opens Generate again when it closes. */
@@ -262,6 +265,8 @@ export default function GenerateGamesWindow({
             ? <><p className={s.emptyNote}>{noneGiven ? LEAGUE_TIME_WORDS.noneGivenClub : LEAGUE_TIME_WORDS.noneLeftClub}</p>
                 <p className={ck.hint}>{noneGiven ? LEAGUE_TIME_WORDS.noneGivenClubHint : W.noneLeftClubHint}</p></>
             : <p className={s.emptyNote}>{noneGiven ? LEAGUE_TIME_WORDS.noneGivenLeagueAdmin : W.noneLeftLeagueAdmin}</p>}
+          {/* Stage 13d (A3): nothing given at all — the league admin asks (an owner or an admin gives; no names, C6 A). */}
+          {canAsk && noneGiven && <AskForTime api={api} orgQuery={orgQuery} askedAt={time.askedAt ?? null} />}
           {!schedulesHref && otherHolds && (
             <button type="button" className={s.lineDoor} onClick={() => onOpenTime(division.id, through)}>{W.takeBack}</button>
           )}

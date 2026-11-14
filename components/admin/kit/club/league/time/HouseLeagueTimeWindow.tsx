@@ -17,6 +17,7 @@ import {
 } from '@/lib/league-time';
 import { formatTimeRange } from '@/lib/utils';
 import s from './LeagueTime.module.css';
+import AskForTime from './AskForTime';
 
 /**
  * HOUSE LEAGUE'S TIME (Club Tier Stage 11b Part 3, frame k2; words HOUSE_LEAGUE_STAGE9D2_11B_COPY.md). Everything the
@@ -45,7 +46,7 @@ type Level =
   | { kind: 'choose'; pick: string | null }
   | { kind: 'piece'; use: LeagueUse; stage: PieceStage };
 
-export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, canDivide, schedulesHref, openOn, onClose, onChanged }: {
+export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, canDivide, canAsk, schedulesHref, openOn, onClose, onChanged }: {
   orgSlug: string;
   seasonId: string;
   seasonName: string;
@@ -55,6 +56,8 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
   canDivide: boolean;
   /** The club's Schedules, when this member builds them (an owner or an admin on a plan with the scheduler). */
   schedulesHref: string | null;
+  /** Stage 13d (A3): the one gate's `askForTime` — the league admin's "Ask for time" beside the no-time sentence. */
+  canAsk: boolean;
   onClose: () => void;
   /** A Save landed: the page reads its time line again. */
   onChanged?: () => void;
@@ -199,7 +202,13 @@ export default function HouseLeagueTimeWindow({ orgSlug, seasonId, seasonName, c
       {!time && !failed && <LoadingState inline label="Loading house league’s time…" />}
       {empty && (schedulesHref
         ? <div className={s.empty}><p className={s.emptyNote}>{W.noneGivenClub}</p><p className={ck.hint}>{W.noneGivenClubHint}</p></div>
-        : <div className={s.empty}><p className={s.emptyNote}>{W.noneGivenLeagueAdmin}</p></div>)}
+        : <div className={s.empty}>
+            <p className={s.emptyNote}>{W.noneGivenLeagueAdmin}</p>
+            {/* Stage 13d (A3): the one gate's `askForTime` (a league admin, never the registrar) — no names (C6 A). */}
+            {/* org-slug-ok: the control adds `orgQuery` to its one call */}
+            {canAsk && <AskForTime api={`/api/admin/house-league/seasons/${seasonId}`}
+              orgQuery={`?orgSlug=${encodeURIComponent(orgSlug)}`} askedAt={time?.askedAt ?? null} />}
+          </div>)}
       {time && time.sources.map(source => (
         <section key={source.scheduleId} className={s.source}>
           {/* The schedule's name is the door to the club's schedule, a week at a time (drawings tab 5, a). */}

@@ -7,7 +7,7 @@ import { weekdayOf } from './permit-time';
 import { addCalendarDays, utcToZonedInputs, zonedWallClockToUtc } from './timezone';
 import { HOUSE_LEAGUE } from './club-schedule-holders';
 import {
-  groupLeagueTime, LEAGUE_TIME_REFUSALS as R,
+  groupLeagueTime, seasonHoldsSlot, LEAGUE_TIME_REFUSALS as R,
   type LeagueTime, type LeagueTimeChange, type LeagueTimeSchedule, type LeagueTimeSlot, type LeagueUseKind,
 } from './league-time';
 import type { SeasonGameSlot } from './league-season-calendar';
@@ -66,17 +66,57 @@ export async function houseLeagueSlotRows(orgId: string, season: LeagueSeason, i
  * house league's live slots of final schedules, still to come, inside the season's dates. It runs on every season read,
  * so it never pages the rows through; the dates are club days, bounded at the club's midnight. "Given" is true before the
  * league admin divides any of it into a division's games or practices (that is `league_slot_uses`, counted apart).
+ * ⚖ NOT ANOTHER SEASON'S (Stage 13d-7 A, owner 2026-11-13): a slot ANOTHER season has divided is that season's, exactly as
+ * House league's time draws it (`readLeagueTime`, "Another season's slot is that season's to divide"), so the season line,
+ * the window, the time-given bell and Generate games read one set. Both counts start from the one definition above.
+ * Known and ruled (decision 2, 2026-11-13): time NOBODY has divided yet belongs to house league as a whole, so it reads
+ * "given" for every season whose dates hold it (a draft with no dates takes every day) until one season divides it.
  * A failed count throws: the caller shows no line rather than a guess.
  */
-export async function houseLeagueSlotCount(orgId: string, season: Pick<LeagueSeason, 'seasonStartDate' | 'seasonEndDate'>): Promise<number> {
+export async function houseLeagueSlotCount(orgId: string, season: Pick<LeagueSeason, 'id' | 'seasonStartDate' | 'seasonEndDate'>): Promise<number> {
   const from = season.seasonStartDate ? zonedWallClockToUtc(season.seasonStartDate, '00:00') : null;
   const until = season.seasonEndDate ? zonedWallClockToUtc(addCalendarDays(season.seasonEndDate, 1), '00:00') : null;
-  let q = liveHouseLeagueSlots(orgId, 'id', { count: 'exact', head: true });
-  if (from) q = q.gte('starts_at', from);
-  if (until) q = q.lt('starts_at', until);
-  const { count, error } = await q;
-  if (error) throw error;
-  return count ?? 0;
+  const head = { count: 'exact', head: true } as const;
+  let all = liveHouseLeagueSlots(orgId, 'id', head);
+  let others = liveHouseLeagueSlots(orgId, 'id, league_slot_uses!inner(season_id)', head).neq('league_slot_uses.season_id', season.id);
+  if (from) { all = all.gte('starts_at', from); others = others.gte('starts_at', from); }
+  if (until) { all = all.lt('starts_at', until); others = others.lt('starts_at', until); }
+  const [a, b] = await Promise.all([all, others]);
+  if (a.error) throw a.error;
+  if (b.error) throw b.error;
+  return Math.max(0, (a.count ?? 0) - (b.count ?? 0));
+}
+
+/**
+ * DOES THIS SEASON HAVE THE CLUB'S TIME? (Stage 13 fix-now 4; Stage 13d) — the one answer the season line, the ask and This
+ * morning's card read: `given` = the club gave it time no other season has divided, or it has divided some itself;
+ * `divided` = some is a division's games or practices. Two head counts and one more; a failed count throws.
+ */
+export async function seasonTimeFacts(orgId: string, season: Pick<LeagueSeason, 'id' | 'seasonStartDate' | 'seasonEndDate'>): Promise<{ given: boolean; divided: boolean }> {
+  const [given, uses] = await Promise.all([
+    houseLeagueSlotCount(orgId, season),
+    supabaseAdmin.from('league_slot_uses').select('slot_id', { count: 'exact', head: true }).eq('org_id', orgId).eq('season_id', season.id),
+  ]);
+  if (uses.error) throw uses.error;
+  const divided = (uses.count ?? 0) > 0;
+  return { given: given > 0 || divided, divided };
+}
+
+/**
+ * WHEN EACH SLOT CAME TO BE HOUSE LEAGUE'S (Stage 11b Part 5's "new since the last send"): the later of the slot's making and
+ * its program row (a hand drag swaps holders and makes no slot). Read by the send's house-league half and by Stage 13d's
+ * time-given fallback for a send from before `league_slot_ids` (mig 486), so the two never disagree.
+ */
+export async function houseLeagueHeldSince(orgId: string, slotIds: readonly string[]): Promise<Map<string, number>> {
+  const [made, held] = await Promise.all([
+    fetchAllIn<{ id: string; created_at: string }>(slotIds, (c, a, b) => supabaseAdmin
+      .from('club_schedule_slots').select('id, created_at').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
+    fetchAllIn<{ slot_id: string; created_at: string }>(slotIds, (c, a, b) => supabaseAdmin
+      .from('club_schedule_slot_programs').select('slot_id, created_at').eq('org_id', orgId).in('slot_id', c).order('slot_id').range(a, b)),
+  ]);
+  const since = new Map(made.map(x => [x.id, Date.parse(x.created_at)]));
+  for (const p of held) since.set(p.slot_id, Math.max(since.get(p.slot_id) ?? 0, Date.parse(p.created_at)));
+  return since;
 }
 
 /** Each slot's use, by slot. */
@@ -117,8 +157,9 @@ export async function readLeagueTime(orgId: string, season: LeagueSeason): Promi
     readClubPlaces(orgId),
   ]);
   const uses = await usesOf(orgId, rows.map(r => r.id));
-  // Another season's slot is that season's to divide.
-  const mine = rows.filter(r => { const u = uses.get(r.id); return !u || u.season_id === season.id; });
+  // Another season's slot is that season's to divide (the one rule, `seasonHoldsSlot`; the rows are already in its dates).
+  const holder = { id: season.id, startDate: season.seasonStartDate, endDate: season.seasonEndDate };
+  const mine = rows.filter(r => seasonHoldsSlot(holder, utcToZonedInputs(r.starts_at).date, uses.get(r.id)?.season_id ?? null));
   const scheduleIds = [...new Set(mine.map(r => r.schedule_id))];
   const schedules = scheduleIds.length
     ? await fetchAllIn<{ id: string; name: string; starts_on: string; ends_on: string }>(scheduleIds, (c, a, b) => supabaseAdmin

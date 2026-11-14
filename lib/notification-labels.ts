@@ -23,6 +23,8 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   house_league_registration_new:     'House league registration',
   house_league_withdraw_request:     'House league withdrawal request',
   club_schedule_league_changes:      'The club changed house league’s practices',
+  house_league_time_given:           'The club gave house league time',
+  house_league_time_asked:           'House league asks for time',
   chat_message:                      'Chat message',
   // Intentionally NOT in NOTIFICATION_SECTIONS — an @mention is always delivered (not user-mutable here).
   chat_mention:                      'Chat @mention',
@@ -122,6 +124,8 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   house_league_registration_new:     'A player submits a house league season registration.',
   house_league_withdraw_request:     'A family asks to withdraw a child from a house league season.',
   club_schedule_league_changes:      'The club sent changes to its schedule that moved or cancelled house-league practices.',
+  house_league_time_given:           'The club sends a schedule that gives house league time, or takes some back.',
+  house_league_time_asked:           'A league admin asks the club for house league time.',
   chat_message:                      'A new message is posted in a tournament chat you are part of.',
   chat_mention:                      'Someone @mentions you in a tournament chat (always delivered).',
   tryout_offer_response:             'A tryout family accepts or declines an offer via their link — you confirm the roster spot.',
@@ -223,7 +227,7 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
   {
     label: 'House league',
     module: 'module_house_league',
-    eventTypes: ['house_league_registration_new', 'house_league_withdraw_request', 'club_schedule_league_changes'],
+    eventTypes: ['house_league_registration_new', 'house_league_withdraw_request', 'club_schedule_league_changes', 'house_league_time_given', 'house_league_time_asked'],
   },
   // ⚖ While chat is paused (2026-10-18, lib/chat-pause.ts) there is no chat to be told about: the row is not shown.
   // The stored preference is kept for the return.
@@ -425,6 +429,9 @@ export const NOTIFICATION_CATEGORY = {
   // A family's ask to withdraw: a decision for the desk; clears itself when the registration ends (9b-2).
   house_league_withdraw_request:      'act',
   club_schedule_league_changes:       'know',
+  // Stage 13d: the time-given bell and the owner's ask bell are reads; the ask's action lives on This morning (it clears there).
+  house_league_time_given:            'know',
+  house_league_time_asked:            'know',
   coach_insights_digest:              'know',
   // A coach sent the practice plan — a read, not a decision to make.
   practice_plan_sent:                 'know',
