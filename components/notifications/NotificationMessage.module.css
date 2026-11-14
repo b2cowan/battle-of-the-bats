@@ -52,6 +52,39 @@
   overflow-wrap: anywhere;
 }
 
+/* A LABELLED NOTICE (house league's time, 2026-11-14): label left in sentence case (the admin's type rule), the answer right; each row under a
+   hairline so the eye drops straight to the one wanted. On a phone the label sits above its answer. */
+.facts { margin: 12px 0 0; padding: 0; }
+.fact {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 2px 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--home-line, var(--white-10));
+}
+.fact:first-child { border-top: 0; padding-top: 0; }
+.fact dt {
+  margin: 0;
+  font-size: var(--type-body, 0.875rem);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+.fact dd {
+  margin: 0;
+  font-size: var(--type-body, 0.875rem);
+  line-height: 1.5;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.factHours { font-weight: 600; }
+.factLines { list-style: none; margin: 2px 0 0; padding: 0; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.factLines li { padding: 1px 0; }
+.factNext { margin: 4px 0 0; font-size: var(--type-body, 0.875rem); line-height: 1.5; color: var(--text-secondary); }
+@media (max-width: 480px) {
+  .fact { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* A bundle opens as its members, newest first — each one's own words and time. */
 /* A SETTLED ONE (Needs attention clears itself, A2 — owner 2026-10-16; /design D1): a plain line under the
    reader's own hairline, never a tinted box — the house states a status as a line (the plan-lock line), and the

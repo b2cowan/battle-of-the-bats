@@ -7,7 +7,8 @@ import { boardNames } from './member-names';
 import { HOUSE_LEAGUE } from './club-schedule-holders';
 import { FINISHED_LEAGUE_SEASON_STATUSES } from './house-league-access';
 import { houseLeagueHeldSince, seasonTimeFacts, usesOf } from './league-time-server';
-import { groupLeagueTime, leagueTimeMinutes, partsWords, seasonHoldsSlot, type LeagueTimeSlot } from './league-time';
+import { groupLeagueTime, leagueTimeMinutes, partsShapes, partsWords, seasonHoldsSlot, type LeagueTimeSlot } from './league-time';
+import { facilityListWords } from './permit-words';
 import { weekdayOf } from './permit-time';
 import { utcToZonedInputs } from './timezone';
 import type { ClubPlaces } from './permit-lookup';
@@ -78,7 +79,9 @@ function pieceOf(slots: readonly LeagueTimeSlot[], places: ClubPlaces): TimePiec
     venueOf: v => places.venueName.get(v) ?? '',
   });
   const parts = sources.flatMap(src => src.stretches.flatMap(st => st.rows.flatMap(r => r.parts)));
-  return { minutes: leagueTimeMinutes(sources), detail: partsWords(parts), firstDay: days[0], lastDay: days[days.length - 1] };
+  // One line per slot shape: the opened notice lists them; `detail` keeps them on one line for the Send window.
+  const lines = partsShapes(parts).map(sh => `${sh.when} · ${facilityListWords(sh.places)}`);
+  return { minutes: leagueTimeMinutes(sources), detail: partsWords(parts), lines, firstDay: days[0], lastDay: days[days.length - 1] };
 }
 
 /** A schedule slot in the window's shape (its club day and clock worked out once), with its whole length for the net. */
@@ -170,7 +173,8 @@ export async function tellTimeGiven(p: { orgId: string; orgSlug: string; senderI
       title: s.grows ? W.bell.givenTitle : W.bell.takenTitle,
       body: W.bell.body({ schedule: p.scheduleName, season: s.seasonName, grows: s.grows, given: s.given, taken: s.taken }),
       link: `/${p.orgSlug}/admin/house-league/seasons/${s.seasonId}/schedule?time=1`,
-      metadata: { seasonId: s.seasonId, sendId: p.sendId },
+      // `timeChange`: what the opened notice draws as labelled rows (the body is only the one-line summary).
+      metadata: { seasonId: s.seasonId, sendId: p.sendId, timeChange: W.bell.facts({ schedule: p.scheduleName, season: s.seasonName, grows: s.grows, given: s.given, taken: s.taken }) },
     })));
   } catch (e) {
     console.error('[league-time-handoff] the time-given notice failed (the send went):', e);

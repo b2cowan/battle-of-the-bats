@@ -1,0 +1,1093 @@
+<title>Notification message rows</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a drawings document in the house layout (sticky numbered tabs, a View row, one section at a time); product
+   frames are drawn at true size from the shipped stylesheets, on a cool document ground so they read as specimens. */
+:root {
+  --doc-bg: #E9EDF1; --doc-surface: #FFFFFF; --doc-ink: #16202B; --doc-ink-2: #4A5666; --doc-line: #D3DAE2;
+  --doc-accent: #2B57C9; --doc-accent-soft: rgba(43,87,201,.10); --doc-new: #1D7348; --doc-old: #9A4A1C; --doc-keep: #5B6675;
+  --sw-on-bg: rgba(87,101,30,.12); --sw-on-ink: #57651E; --doc-shadow: 0 1px 2px rgba(20,30,45,.08), 0 10px 28px rgba(20,30,45,.12);
+  --f-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-display: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  /* The product's two skins (globals.css warm block + dark ladder), resolved. */
+  --w-card:#FFFFFF; --w-paper:#F8F4ED; --w-ink:#241E15; --w-ink2:#4A4235; --w-ink3:#615A54; --w-fl:#241E15;
+  --w-line:rgba(70,55,30,.12); --w-line-strong:rgba(70,55,30,.20); --w-olive:#57651E; --w-olive14:rgba(87,101,30,.14);
+  --w-olive-soft:rgba(87,101,30,.10); --w-lime:#D9F99D; --w-lime-ink:#241E15; --w-lime16:rgba(87,101,30,.16); --w-warn:#835006;
+  --w-blue:#57651E; --w-unread:rgba(87,101,30,.06); --w-seg:#F8F4ED; --w-scrim:rgba(36,30,21,.34); --w-sheet-dim:rgba(36,30,21,.28);
+  --w-dialog-edge:rgba(87,101,30,.30); --w-pg-edge:rgba(87,101,30,.20); --w-grab:rgba(70,55,30,.22); --w-backdrop:rgba(0,0,0,.6);
+  --d-card:#111827; --d-paper:#0A0A0A; --d-ink:rgba(255,255,255,.9); --d-ink2:rgba(255,255,255,.7); --d-ink3:#94A3B8; --d-fl:#F1F5F9;
+  --d-line:rgba(255,255,255,.08); --d-line-strong:rgba(30,58,138,.25); --d-olive:#D9F99D; --d-olive14:rgba(217,249,157,.14);
+  --d-olive-soft:rgba(30,58,138,.18); --d-lime:#D9F99D; --d-lime-ink:#0A0A0A; --d-lime16:rgba(217,249,157,.16); --d-warn:#F59E0B;
+  --d-blue:#3B63D9; --d-unread:rgba(30,58,138,.10); --d-seg:rgba(255,255,255,.05); --d-scrim:rgba(13,17,26,.55); --d-sheet-dim:rgba(13,17,26,.45);
+  --d-dialog-edge:rgba(30,58,138,.30); --d-pg-edge:rgba(30,58,138,.20); --d-grab:rgba(255,255,255,.18); --d-backdrop:rgba(0,0,0,.6);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg:#11151B; --doc-surface:#1A2028; --doc-ink:#E5E9EF; --doc-ink-2:#A1ACB9; --doc-line:#2B343F;
+  --doc-accent:#8FA9FF; --doc-accent-soft:rgba(143,169,255,.14); --doc-new:#5CC98D; --doc-old:#F0925F; --doc-keep:#9AA5B2;
+  --sw-on-bg:rgba(217,249,157,.14); --sw-on-ink:#D9F99D; --doc-shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --doc-bg:#11151B; --doc-surface:#1A2028; --doc-ink:#E5E9EF; --doc-ink-2:#A1ACB9; --doc-line:#2B343F;
+  --doc-accent:#8FA9FF; --doc-accent-soft:rgba(143,169,255,.14); --doc-new:#5CC98D; --doc-old:#F0925F; --doc-keep:#9AA5B2;
+  --sw-on-bg:rgba(217,249,157,.14); --sw-on-ink:#D9F99D; --doc-shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--f-sans); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-surface); }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+
+.masthead { background: var(--doc-surface); border-bottom: 1px solid var(--doc-line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 22px 14px; }
+.wrap { max-width: 1280px; margin: 0 auto; }
+.kicker { font-family: var(--f-mono); font-size: 12px; font-weight: 500; color: var(--doc-ink-2); margin: 0 0 6px; }
+h1 { font-family: var(--f-display); font-size: 34px; line-height: 1.05; font-weight: 700; margin: 0; text-wrap: balance; }
+.lede { margin: 8px 0 0; max-width: 72ch; color: var(--doc-ink-2); }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--doc-surface); border-bottom: 1px solid var(--doc-line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: thin; }
+.tab { flex: none; border: 0; background: none; padding: 12px 12px 10px; color: var(--doc-ink-2); font-weight: 600; font-size: 14px; cursor: pointer;
+  border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab:hover { color: var(--doc-ink); }
+.tab[aria-selected="true"] { color: var(--doc-ink); border-bottom-color: var(--doc-accent); }
+.tab b { font-family: var(--f-mono); font-weight: 500; margin-right: 4px; color: var(--doc-ink-2); }
+.viewrow { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding: 8px 0 10px; border-top: 1px solid var(--doc-line); }
+.vgroup { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--doc-ink-2); }
+.vgroup > span { font-weight: 600; }
+.track { display: inline-flex; padding: 2px; border: 1px solid var(--doc-line); border-radius: 8px; background: var(--doc-surface); }
+.track button { border: 0; background: none; padding: 5px 11px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--doc-ink-2); cursor: pointer; }
+.track button[aria-pressed="true"] { background: var(--sw-on-bg); color: var(--sw-on-ink); }
+
+main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+section.panel { max-width: 1280px; margin: 0 auto; }
+.intro { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px 28px; margin-bottom: 22px; }
+.intro h2 { font-family: var(--f-display); font-size: 28px; line-height: 1.1; margin: 0 0 6px; text-wrap: balance; }
+.intro p { margin: 6px 0 0; max-width: 68ch; }
+.facts-doc { margin: 10px 0 0; display: grid; grid-template-columns: max-content minmax(0,1fr); gap: 4px 14px; font-size: 14px; }
+.facts-doc dt { color: var(--doc-ink-2); font-weight: 600; }
+.facts-doc dd { margin: 0; }
+.verdict { background: var(--doc-surface); border: 1px solid var(--doc-line); border-left: 3px solid var(--doc-accent); border-radius: 8px; padding: 14px 16px; align-self: start; }
+.verdict h3 { margin: 0 0 4px; font-size: 13px; font-family: var(--f-mono); font-weight: 500; color: var(--doc-ink-2); }
+.verdict p { margin: 4px 0 0; }
+code, .mono { font-family: var(--f-mono); font-size: .9em; }
+
+.kgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 28px; align-items: start; }
+.knotes { position: sticky; top: 112px; background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 8px; padding: 14px 16px; max-height: calc(100vh - 130px); overflow: auto; }
+.knotes h3 { margin: 0 0 8px; font-size: 15px; }
+.knotes ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.knotes li { display: grid; grid-template-columns: 22px minmax(0,1fr); gap: 8px; font-size: 14px; }
+.knotes li .n { width: 20px; height: 20px; border-radius: 50%; background: var(--doc-accent); color: var(--doc-surface); font: 700 11px/20px var(--f-mono); text-align: center; border: 0; padding: 0; cursor: pointer; }
+.specs { display: grid; gap: 26px; min-width: 0; }
+.fig { margin: 0; min-width: 0; }
+.cap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 8px; font-size: 13px; color: var(--doc-ink-2); }
+.cap strong { color: var(--doc-ink); font-size: 14px; }
+.scroller { overflow-x: auto; padding: 4px 4px 14px; margin: -4px; }
+.pair { display: flex; gap: 24px; align-items: flex-start; }
+.pair > .fig { flex: none; }
+.mk { border: 1px solid currentColor; background: none; border-radius: 4px; font: 700 10.5px/1 var(--f-mono); letter-spacing: .04em; padding: 3px 5px; cursor: pointer; }
+.mk.new { color: var(--doc-new); } .mk.re { color: var(--doc-accent); } .mk.keep { color: var(--doc-keep); } .mk.old { color: var(--doc-old); }
+.truesize { font-family: var(--f-mono); font-size: 11.5px; color: var(--doc-ink-2); }
+.note-p { margin: 6px 0 0; font-size: 13.5px; color: var(--doc-ink-2); max-width: 70ch; }
+
+/* ───────── PRODUCT SPECIMENS (true size, from the shipped stylesheets) ───────── */
+.frame { --p-card:var(--w-card); --p-paper:var(--w-paper); --p-ink:var(--w-ink); --p-ink2:var(--w-ink2); --p-ink3:var(--w-ink3); --p-fl:var(--w-fl);
+  --p-line:var(--w-line); --p-line-strong:var(--w-line-strong); --p-olive:var(--w-olive); --p-olive14:var(--w-olive14); --p-olive-soft:var(--w-olive-soft);
+  --p-lime:var(--w-lime); --p-lime-ink:var(--w-lime-ink); --p-lime16:var(--w-lime16); --p-warn:var(--w-warn); --p-blue:var(--w-blue); --p-unread:var(--w-unread);
+  --p-seg:var(--w-seg); --p-scrim:var(--w-scrim); --p-sheet-dim:var(--w-sheet-dim); --p-dialog-edge:var(--w-dialog-edge); --p-pg-edge:var(--w-pg-edge);
+  --p-grab:var(--w-grab); --p-backdrop:var(--w-backdrop);
+  font-family: var(--f-sans); color: var(--p-ink); font-size: 14px; line-height: 1.5; position: relative; -webkit-font-smoothing: antialiased; }
+body.skin-dark .frame { --p-card:var(--d-card); --p-paper:var(--d-paper); --p-ink:var(--d-ink); --p-ink2:var(--d-ink2); --p-ink3:var(--d-ink3); --p-fl:var(--d-fl);
+  --p-line:var(--d-line); --p-line-strong:var(--d-line-strong); --p-olive:var(--d-olive); --p-olive14:var(--d-olive14); --p-olive-soft:var(--d-olive-soft);
+  --p-lime:var(--d-lime); --p-lime-ink:var(--d-lime-ink); --p-lime16:var(--d-lime16); --p-warn:var(--d-warn); --p-blue:var(--d-blue); --p-unread:var(--d-unread);
+  --p-seg:var(--d-seg); --p-scrim:var(--d-scrim); --p-sheet-dim:var(--d-sheet-dim); --p-dialog-edge:var(--d-dialog-edge); --p-pg-edge:var(--d-pg-edge);
+  --p-grab:var(--d-grab); --p-backdrop:var(--d-backdrop); }
+.frame p, .frame h2, .frame ul, .frame dl { margin: 0; }
+
+/* The message block — NotificationMessage.module.css */
+.m { --label-w: 5.5rem; }
+.m-eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; padding-right: var(--eyebrow-inset, 0px); font-family: var(--f-mono); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--p-ink3); position: relative; }
+.m-ic { font-size: 16px; letter-spacing: 0; line-height: 1; }
+.m-stamp { font-family: var(--f-sans); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.m-title { margin-top: 8px !important; font-size: 16px; font-weight: 700; line-height: 1.3; color: var(--p-ink); text-wrap: balance; position: relative; }
+.m-body { margin-top: 8px !important; font-size: 14px; line-height: 1.55; color: var(--p-ink2); white-space: pre-line; overflow-wrap: anywhere; }
+.m-facts { margin-top: 12px !important; padding: 0; }
+.m-fact { display: grid; grid-template-columns: var(--label-w) minmax(0, 1fr); gap: 2px 12px; padding: 8px 0; border-top: 1px solid var(--p-line); position: relative; }
+.m-fact:first-child { border-top: 0; padding-top: 0; }
+.m-fact dt { margin: 0; font-size: 14px; font-weight: 600; color: var(--p-ink3); line-height: 1.5; }
+.m-fact dd { margin: 0; font-size: 14px; line-height: 1.5; color: var(--p-ink); overflow-wrap: anywhere; }
+.m-lead { font-weight: 600; }
+.m-sub { color: var(--p-ink2); }
+.m-span { grid-column: 2; position: relative; }
+.m-lines { list-style: none; padding: 0; margin: 2px 0 0 !important; color: var(--p-ink2); font-variant-numeric: tabular-nums; }
+.m-lines li { padding: 1px 0; }
+.m-lines .m-lead { color: var(--p-ink); }
+.m-lines li.more { display: none; }
+.m-span.open .m-lines li.more { display: list-item; }
+.m-fold { border: 0; background: none; padding: 2px 0 0; color: var(--p-olive); font: 600 14px/1.5 var(--f-sans); cursor: pointer; }
+.m-fold:hover { text-decoration: underline; }
+.m-next { margin-top: 4px !important; font-size: 14px; line-height: 1.5; color: var(--p-ink2); position: relative; }
+.m-next.emph { font-weight: 600; color: var(--p-warn); }
+.m-settled { display: flex; align-items: flex-start; gap: 10px; margin-top: 14px !important; padding-top: 12px; border-top: 1px solid var(--p-line); font-size: 14px; line-height: 1.45; color: var(--p-ink2); position: relative; }
+.m-settled svg { flex: none; margin-top: 2px; color: var(--p-olive); }
+.m-settled b { font-weight: 600; color: var(--p-ink); }
+.m-members { list-style: none; padding: 0; margin-top: 10px !important; }
+.m-member { padding: 10px 0; border-top: 1px solid var(--p-line); }
+.m-member:first-child { border-top: 0; padding-top: 4px; }
+.m-member .mt { font-size: 14px; font-weight: 600; color: var(--p-ink); }
+.m-member .mb { margin-top: 3px; font-size: 14px; line-height: 1.5; color: var(--p-ink2); }
+.m-member .mtm { margin-top: 3px; font-family: var(--f-mono); font-size: 12px; color: var(--p-ink3); }
+.m-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; position: relative; }
+.lab-above .m-fact { grid-template-columns: minmax(0, 1fr); }
+.lab-above .m-span { grid-column: 1; }
+
+/* notification-buttons.module.css */
+.b { display: inline-flex; align-items: center; justify-content: center; gap: 5.6px; min-height: 34px; padding: 7.2px 14.4px; border-radius: 6px;
+  font: 600 14px/1.2 var(--f-sans); border: 1px solid var(--p-line-strong); background: var(--p-card); color: var(--p-ink2); white-space: nowrap; }
+.b.pri { background: var(--p-lime); color: var(--p-lime-ink); font-weight: 700; border-color: transparent; }
+.b.trash { width: 34px; padding: 0; margin-left: auto; }
+.fr-phone .m-actions .b { flex: 1 1 0; min-height: 44px; }
+.fr-phone .m-actions .b.pri { flex: 1 1 100%; min-height: 48px; }
+.fr-phone .m-actions .b.trash { flex: 0 0 auto; width: 44px; }
+.fr-phone .m-span { grid-column: 1 / -1; }
+
+/* Pins: numbered, clickable, in the frame's own side padding so they never move the drawing. */
+.pin { position: absolute; left: calc(-1 * var(--pin-off, 21px)); top: 1px; width: 18px; height: 18px; border-radius: 50%; border: 0; padding: 0;
+  background: var(--doc-accent); color: #fff; font: 700 10.5px/18px var(--f-mono); text-align: center; cursor: pointer; z-index: 3; box-shadow: 0 0 0 2px var(--p-card); }
+.fr-phone { --pin-off: 13px; }
+.fr-phone .pin { width: 13px; height: 16px; line-height: 16px; font-size: 9.5px; border-radius: 5px; }
+.fr-phone .m-span.m-span { grid-column: 1 / -1; }
+.fr-phone dd.m-span.m-span { grid-column: 2; }
+/* A pin on a list row sits at the row's right edge (its body clips, and its left is the icon). */
+.pin.pin-r { left: auto; right: 8px; top: 10px; }
+.pg-row { position: relative; }
+
+/* The bell's drawer — notifications.module.css */
+.scr { position: relative; overflow: hidden; border-radius: 6px; box-shadow: var(--doc-shadow); background: var(--p-paper); }
+.scr-drawer { width: 880px; height: 600px; }
+.topstrip { position: absolute; inset: 0 0 auto; height: 48px; background: var(--p-card); border-bottom: 1px solid var(--p-line); display: flex; align-items: center; gap: 12px; padding: 0 16px; font-size: 14px; font-weight: 600; color: var(--p-ink); }
+.topstrip .sp { flex: 1; }
+.topstrip .bell { width: 34px; height: 34px; border-radius: 7px; display: grid; place-items: center; background: var(--p-olive-soft); color: var(--p-olive); }
+.dz { position: absolute; top: 48px; left: 0; right: 0; bottom: 0; }
+.dz-page { position: absolute; inset: 0; padding: 20px; }
+.dz-page i { display: block; height: 12px; border-radius: 3px; background: var(--p-line-strong); margin: 0 0 12px; }
+.dz-scrim { position: absolute; inset: 0; background: var(--p-scrim); }
+.drawer { position: absolute; top: 0; right: 0; bottom: 0; display: flex; background: var(--p-card); border-left: 1px solid var(--p-line-strong); box-shadow: -14px 0 40px rgba(0,0,0,.18); }
+.pane { width: 440px; border-right: 1px solid var(--p-line-strong); position: relative; overflow: auto; }
+.pane-in { padding: 20px 24px 24px; --eyebrow-inset: 40px; --pin-off: 21px; }
+.xbtn { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 7px; display: grid; place-items: center; color: var(--p-ink2); background: var(--p-card); z-index: 2; }
+.list { width: 380px; display: flex; flex-direction: column; min-height: 0; }
+.l-head { min-height: 58px; padding: 0 12px 0 20px; display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--p-line); }
+.l-head h4 { margin: 0; flex: 1; font: 700 20px/1.1 var(--f-sans); color: var(--p-ink); }
+.ico { width: 34px; height: 34px; border-radius: 7px; display: grid; place-items: center; color: var(--p-ink2); }
+.l-tools { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--p-line); }
+.seg { display: inline-flex; border: 1px solid var(--p-line-strong); border-radius: 7px; overflow: hidden; }
+.seg span { min-height: 32px; padding: 0 16px; display: flex; align-items: center; font: 600 14px var(--f-sans); background: var(--p-seg); color: var(--p-ink3); }
+.seg span.on { background: var(--p-lime16); box-shadow: inset 0 0 0 1px var(--p-olive); color: var(--p-olive); }
+.l-body { flex: 1; overflow: hidden; }
+.l-sec, .l-day { display: flex; align-items: baseline; gap: 6px; font: 700 12px/1.3 var(--f-display); text-transform: uppercase; letter-spacing: .05em; }
+.l-sec { padding: 9.6px 20px 6.4px; color: var(--p-warn); }
+.l-sec .ct { font-family: var(--f-mono); font-size: 10.2px; }
+.l-sec .hint { margin-left: auto; font: 500 12px var(--f-sans); text-transform: none; letter-spacing: 0; color: var(--p-ink3); }
+.l-day { padding: 8px 20px 4px; color: var(--p-ink2); }
+.l-row { display: flex; gap: 10.4px; padding: 12px 20px; border-bottom: 1px solid var(--p-line); position: relative; }
+.l-row .ic { font-size: 16px; line-height: 1.25; flex: none; }
+.l-row .tx { flex: 1; min-width: 0; }
+.l-t { font-size: 13.1px; font-weight: 600; color: var(--p-fl); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.l-row.read .l-t { font-weight: 400; color: var(--p-ink2); }
+.l-row.sel .l-t { font-weight: 600; color: var(--p-fl); }
+.l-b { font-size: 12px; color: var(--p-ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.l-m { display: flex; gap: 8px; align-items: center; margin-top: 4px; font-family: var(--f-mono); font-size: 10.9px; color: var(--p-ink3); }
+.l-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--p-blue); margin-top: 5px; flex: none; }
+.l-row.unread { background: var(--p-unread); }
+.l-row.act { box-shadow: inset 2px 0 0 var(--p-warn); }
+.l-row.sel { background: var(--p-olive14); box-shadow: inset 3px 0 0 var(--p-olive); }
+.pill { height: 28px; padding: 0 11.2px; border-radius: 999px; font: 650 12px var(--f-sans); border: 1px solid var(--p-line-strong); background: var(--p-card); color: var(--p-ink2); display: inline-flex; align-items: center; gap: 4px; }
+
+/* The reader on a computer — NotificationReader.module.css (≥901px) */
+.scr-dialog { width: 880px; height: 560px; }
+.dlg-back { position: absolute; inset: 0; background: var(--p-backdrop); }
+.dlg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 480px; max-height: calc(100% - 4rem); overflow: auto; padding: 17.6px 21.6px 20px; background: var(--p-card); border: 1px solid var(--p-dialog-edge); border-radius: 12px; --pin-off: 19px; }
+
+/* The Notifications page list — notifications-page.module.css */
+.pg { width: 720px; border: 1px solid var(--p-pg-edge); border-radius: 10px; background: var(--p-card); overflow: hidden; }
+.pg-day { padding: 9.6px 17.6px 4.8px; background: var(--p-paper); font: 700 12px/1.3 var(--f-display); text-transform: uppercase; letter-spacing: .05em; color: var(--p-ink2); }
+.pg-row { display: flex; gap: 12.8px; padding: 13.6px 17.6px; border-top: 1px solid var(--p-line); }
+.pg-row .ic { font-size: 16.8px; line-height: 1.25; flex: none; }
+.pg-row .tx { flex: 1; min-width: 0; }
+.pg-t { font-size: 14.08px; font-weight: 600; color: var(--p-ink); }
+.pg-row.read .pg-t { font-weight: 500; color: var(--p-ink2); }
+.pg-b { font-size: 12.8px; color: var(--p-ink2); margin-top: 2px !important; overflow-wrap: anywhere; }
+.pg-row.read .pg-b { color: var(--p-ink3); }
+.pg-m { display: flex; gap: 12px; align-items: center; margin-top: 5px; font-size: 12px; color: var(--p-ink3); font-variant-numeric: tabular-nums; }
+.pg-row .pill { height: 30px; padding: 0 12.8px; }
+.pg-row.act { box-shadow: inset 2px 0 0 var(--p-warn); }
+
+/* The phone — SheetFrame + the Notifications page at phone width */
+.scr-phone { width: 375px; height: 760px; border-radius: 28px; }
+.ph-status { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; font: 600 14px var(--f-sans); color: var(--p-ink); background: var(--p-card); }
+.ph-head { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--p-card); border-bottom: 1px solid var(--p-line); }
+.ph-head h4 { margin: 0; font: 700 20px/1.1 var(--f-sans); color: var(--p-ink); }
+.ph-head .seg span { min-height: 30px; padding: 0 12px; font-size: 13px; }
+.ph-page { padding: 12px 12px 0; }
+.ph-page .pg { width: auto; }
+.ph-page .pg-row { padding: 12px 14px; }
+.ph-foot { position: absolute; left: 0; right: 0; bottom: 0; height: var(--foot, 72px); background: var(--p-card); border-top: 1px solid var(--p-line); display: flex; justify-content: space-around; align-items: center; padding-bottom: 8px; }
+.ph-foot i { width: 22px; height: 22px; border-radius: 6px; background: var(--p-line-strong); display: block; }
+.ph-foot i.on { background: var(--p-olive); }
+.ph-dim { position: absolute; inset: 0; background: var(--p-sheet-dim); }
+.sheet { position: absolute; left: 0; right: 0; bottom: var(--foot, 72px); max-height: calc((760px - var(--foot, 72px)) * .75); display: flex; flex-direction: column;
+  padding: 6px 8px 14px; background: var(--p-card); border: 1px solid var(--p-line-strong); border-bottom: 0; border-radius: 18px 18px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.35); }
+.grab { height: 44px; margin-top: -6px; display: grid; place-items: center; flex: none; }
+.grab i { width: 38px; height: 4px; border-radius: 2px; background: var(--p-grab); display: block; }
+.sheet-body { overflow: auto; padding: 0 12px 2px; min-height: 0; }
+.sheet-foot { flex: none; padding: 0 12px; border-top: 1px solid var(--p-line); }
+.sheet-foot .m-actions { margin-top: 10px; }
+.home-ind { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); width: 120px; height: 5px; border-radius: 3px; background: var(--p-ink); opacity: .35; z-index: 5; }
+
+/* Pane-only and phone-width minis (asks + extra states) */
+.mini { width: 440px; background: var(--p-card); border: 1px solid var(--p-line-strong); border-radius: 6px; padding: 20px 24px 24px; box-shadow: var(--doc-shadow); --pin-off: 21px; }
+.mini.ph { width: 375px; padding: 16px 20px 20px; border-radius: 18px 18px 0 0; --pin-off: 19px; }
+
+/* Show only what differs */
+body.differs .cmp-same, body.differs .chrome { opacity: .18; filter: saturate(.2); transition: opacity .2s; }
+body.differs .cmp-diff { outline: 2px dashed var(--doc-accent); outline-offset: 3px; border-radius: 3px; }
+
+/* Asks */
+.asks { display: grid; gap: 30px; }
+.ask { background: var(--doc-surface); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px 20px 20px; }
+.ask h3 { margin: 0; font-size: 19px; line-height: 1.3; text-wrap: balance; }
+.ask h3 .q { font-family: var(--f-mono); font-weight: 500; color: var(--doc-accent); margin-right: 6px; }
+.ask > p { margin: 8px 0 0; max-width: 78ch; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+.opt { border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px 14px; }
+.opt.rec { border-color: var(--doc-new); box-shadow: inset 0 0 0 1px var(--doc-new); }
+.opt h4 { margin: 0; font-size: 15px; }
+.opt h4 .tagrec { font: 700 10.5px var(--f-mono); color: var(--doc-new); margin-left: 6px; letter-spacing: .04em; }
+.opt p { margin: 6px 0 0; font-size: 14px; color: var(--doc-ink-2); }
+.previews { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 16px; }
+.previews .fig { flex: none; }
+.rec-line { margin-top: 14px; padding: 10px 12px; border-radius: 8px; background: var(--doc-accent-soft); font-size: 14px; }
+.rec-line b { color: var(--doc-ink); }
+.tbl-wrap { overflow-x: auto; margin-top: 12px; }
+table.t { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+table.t th { text-align: left; font-weight: 600; color: var(--doc-ink-2); padding: 8px 10px; border-bottom: 1px solid var(--doc-line); vertical-align: bottom; }
+table.t td { padding: 9px 10px; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+table.t td.flag { color: var(--doc-old); font-weight: 600; }
+.found { margin: 10px 0 0; padding-left: 20px; }
+.found li { margin: 6px 0; max-width: 80ch; }
+.sheet-tbl td textarea { width: 100%; min-width: 200px; min-height: 58px; font: 14px/1.4 var(--f-sans); padding: 7px 9px; border: 1px solid var(--doc-line); border-radius: 6px; background: var(--doc-bg); color: var(--doc-ink); resize: vertical; }
+.sheet-tbl td .take { margin-top: 6px; border: 1px solid var(--doc-line); background: var(--doc-surface); color: var(--doc-ink); border-radius: 6px; padding: 4px 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.copybar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.copybar button { border: 0; background: var(--doc-accent); color: var(--doc-surface); border-radius: 6px; padding: 9px 16px; font-weight: 600; cursor: pointer; }
+#copy-out { width: 100%; min-height: 120px; font: 13px/1.45 var(--f-mono); margin-top: 10px; padding: 10px; border: 1px solid var(--doc-line); border-radius: 6px; background: var(--doc-bg); color: var(--doc-ink); }
+
+/* The explanation window — every pin and tag opens it */
+.ov { position: fixed; inset: 0; z-index: 50; background: rgba(10,14,20,.45); display: grid; place-items: center; padding: 16px; }
+.ov[hidden], [hidden] { display: none !important; }
+.ov-card { background: var(--doc-surface); color: var(--doc-ink); width: min(520px, 100%); border-radius: 10px; padding: 18px 20px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.ov-card h3 { margin: 0 0 6px; font-size: 17px; }
+.ov-card p { margin: 0; white-space: pre-line; }
+.ov-card button { margin-top: 14px; border: 1px solid var(--doc-line); background: var(--doc-surface); color: var(--doc-ink); border-radius: 6px; padding: 7px 16px; font-weight: 600; cursor: pointer; }
+
+@media (max-width: 1180px) { .kgrid { grid-template-columns: minmax(0, 1fr); } .knotes { position: static; max-height: none; } }
+@media (max-width: 760px) { .intro { grid-template-columns: minmax(0, 1fr); } h1 { font-size: 28px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">Drawing · Stage 1 · Sat, Nov 14, 2026 · nothing built from this yet</p>
+    <h1>Notifications that read at a glance</h1>
+    <p class="lede">An opened notification shows its facts as labelled rows instead of one paragraph. The list row, the push and the email carry one line. Tab 1 shows the pattern. Tabs 2 to 6 show five real kinds, before and after, in the frames their readers really see. Tab 7 holds your rulings. Every frame is drawn at true size from the shipped stylesheets. Click any numbered pin or tag to read what it points at.</p>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="wrap">
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" data-tab="pattern"><b>1</b>The pattern</button>
+      <button class="tab" role="tab" data-tab="debit"><b>2</b>A bank debit returned</button>
+      <button class="tab" role="tab" data-tab="dispute"><b>3</b>A card disputed</button>
+      <button class="tab" role="tab" data-tab="games"><b>4</b>Moved games</button>
+      <button class="tab" role="tab" data-tab="answers"><b>5</b>Family answers</button>
+      <button class="tab" role="tab" data-tab="game"><b>6</b>A game changed</button>
+      <button class="tab" role="tab" data-tab="asks"><b>7</b>Asks</button>
+    </nav>
+    <div class="viewrow" id="viewrow">
+      <div class="vgroup"><span>View</span><div class="track" data-sw="view"><button id="v-all" aria-pressed="true" data-v="all">Everything</button><button id="v-diff" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+      <div class="vgroup"><span>Frame</span><div class="track" data-sw="frame"><button id="f-comp" aria-pressed="true" data-v="computer">Computer</button><button id="f-phone" aria-pressed="false" data-v="phone">Phone</button></div></div>
+      <div class="vgroup"><span>Skin</span><div class="track" data-sw="skin"><button id="s-warm" aria-pressed="true" data-v="warm">Warm</button><button id="s-dark" aria-pressed="false" data-v="dark">Dark</button></div></div>
+    </div>
+  </div>
+</div>
+
+<main>
+<!-- ───────────── 1 · THE PATTERN ───────────── -->
+<section class="panel" data-panel="pattern" hidden>
+  <div class="intro">
+    <div>
+      <h2>One opened notice, in rows</h2>
+      <p>The block every frame wears stays the same block: the eyebrow (kind and time), the title, then the message, then the buttons (Open · Done · Close · Delete, in that order, unchanged). Only the message changes. Where it used to be one paragraph, it becomes <b>labelled rows</b>, with an optional <b>list under a row</b> and an optional <b>next-step line</b>. When a Needs-attention notice is handled, the <b>settled line</b> takes the next step’s place.</p>
+      <p>Drawn on the reference case built on Nov 14 (“The club gave house league time”), because it already has every part. The pins number the parts. The Before is that reference case as built. The After is the pattern, and it changes the reference case in two small places (pins 3 and 4).</p>
+    </div>
+    <div class="verdict">
+      <h3>What a notice is made of</h3>
+      <dl class="facts-doc">
+        <dt>Rows</dt><dd>label → value; the value may be a bold lead and a quieter detail</dd>
+        <dt>List</dt><dd>optional, under one row; folds past 6 lines (Q3)</dd>
+        <dt>Next step</dt><dd>optional, one plain line, starts with a verb (Q2)</dd>
+        <dt>One line</dt><dd>the summary that list rows, push and email read</dd>
+        <dt>Old notices</dt><dd>keep their paragraph (ruling 4)</dd>
+      </dl>
+    </div>
+  </div>
+  <div class="kgrid">
+    <div class="specs" id="spec-pattern"></div>
+    <aside class="knotes" id="notes-pattern"></aside>
+  </div>
+</section>
+
+<!-- ───────────── 2 · DEBIT ───────────── -->
+<section class="panel" data-panel="debit" hidden>
+  <div class="intro">
+    <div>
+      <h2>A bank debit was returned</h2>
+      <dl class="facts-doc">
+        <dt>Who receives it</dt><dd>whoever may refund: the house-league desk for a family’s debit, the tournament’s refunders for a team’s. Drawn: the house-league desk, Admin portal.</dd>
+        <dt>The question</dt><dd>the money rows; where Needs attention and the settled line sit relative to the rows</dd>
+      </dl>
+    </div>
+    <div class="verdict">
+      <h3>Answer</h3>
+      <p>Six facts in three sentences become six rows, led by the amount. <b>Needs attention is not inside the opened notice</b>: it is the list’s section heading and the amber edge on the row. The rows sit above the settled line and the buttons. When it settles, the next-step line goes and the settled line takes its place (third specimen).</p>
+    </div>
+  </div>
+  <div class="kgrid"><div class="specs" id="spec-debit"></div><aside class="knotes" id="notes-debit"></aside></div>
+</section>
+
+<!-- ───────────── 3 · DISPUTE ───────────── -->
+<section class="panel" data-panel="dispute" hidden>
+  <div class="intro">
+    <div>
+      <h2>A card payment was disputed</h2>
+      <dl class="facts-doc">
+        <dt>Who receives it</dt><dd>two copies: the person who set up payouts (they answer it, so theirs carries the deadline), and, more quietly, the desk (theirs says who answers). Drawn: the person who set up payouts, Admin portal.</dd>
+        <dt>The question</dt><dd>a deadline as a row versus a highlighted line; the amount held</dd>
+      </dl>
+    </div>
+    <div class="verdict">
+      <h3>Answer</h3>
+      <p>The deadline is a row, <b>Answer by</b>, because it is looked up like any other fact. The instruction is one plain line under the rows. No highlight: the amber edge on the row already says it is urgent. <b>Held</b> gets its own row, because how much the club is out of pocket while it waits is the second thing a treasurer asks. The other two treatments are drawn in Q2.</p>
+    </div>
+  </div>
+  <div class="kgrid"><div class="specs" id="spec-dispute"></div><aside class="knotes" id="notes-dispute"></aside></div>
+</section>
+
+<!-- ───────────── 4 · GAMES ───────────── -->
+<section class="panel" data-panel="games" hidden>
+  <div class="intro">
+    <div>
+      <h2>The club changed house league’s practices</h2>
+      <dl class="facts-doc">
+        <dt>Who receives it</dt><dd>house league’s runners: owners, admins and league admins, never the person who sent it. Admin portal.</dd>
+        <dt>The question</dt><dd>a list of up to 6 moved games, and what happens past 6</dd>
+      </dl>
+    </div>
+    <div class="verdict">
+      <h3>Answer</h3>
+      <p>The counts become rows, and the game lines become a list under <b>Games</b>. Past 6, the notice offers <b>“Show 3 more games”</b>, which opens the rest in place, instead of “and 3 more”, which names games you can’t see. Try it in the After. The “wait in Changes to send” sentence becomes the next-step line. This is the only kind that already writes line breaks, so its Before is the least bad. On a phone it is taller than the sheet, before and after (switch Frame to Phone); Q9 asks what the buttons do then.</p>
+    </div>
+  </div>
+  <div class="kgrid"><div class="specs" id="spec-games"></div><aside class="knotes" id="notes-games"></aside></div>
+</section>
+
+<!-- ───────────── 5 · ANSWERS ───────────── -->
+<section class="panel" data-panel="answers" hidden>
+  <div class="intro">
+    <div>
+      <h2>Family answers</h2>
+      <dl class="facts-doc">
+        <dt>Who receives it</dt><dd>the team’s coaches who can see attendance. Coaches Portal, warm skin.</dd>
+        <dt>The question</dt><dd>a folded list of children and answers plus the headcount, in the coach’s portal</dd>
+      </dl>
+    </div>
+    <div class="verdict">
+      <h3>Answer</h3>
+      <p>One child per line: the name, the answer and what it was before. The headcount gets its own row, <b>Now</b>. The facts are already stored, so nothing new is kept. The list row does not change while three or fewer children answered, because today’s line already is a one-line summary. A note’s words are never shown, only that one was left (as today).</p>
+    </div>
+  </div>
+  <div class="kgrid"><div class="specs" id="spec-answers"></div><aside class="knotes" id="notes-answers"></aside></div>
+</section>
+
+<!-- ───────────── 6 · GAME ───────────── -->
+<section class="panel" data-panel="game" hidden>
+  <div class="intro">
+    <div>
+      <h2>A game changed</h2>
+      <dl class="facts-doc">
+        <dt>Who receives it</dt><dd>the free coaches of the team. Bell only: no email, no push to the coach.</dd>
+        <dt>The question</dt><dd>the smallest few-facts case. Does a three-row notice read better than its sentence?</dd>
+      </dl>
+    </div>
+    <div class="verdict">
+      <h3>Answer: no. Keep the sentence.</h3>
+      <p>“Now Sat, Jul 18, 3:15 p.m. at Diamond 4 · Riverdale Classic” is already one line and already the summary. It was written for a coach in a parking lot (its code says so). The rows triple its height to say the same three facts, and they split “when” from “where”, which a coach reads together. My recommendation is that this kind keeps its sentence and leaves the 28. That is your call, Q8.</p>
+    </div>
+  </div>
+  <div class="kgrid"><div class="specs" id="spec-game"></div><aside class="knotes" id="notes-game"></aside></div>
+</section>
+
+<!-- ───────────── 7 · ASKS ───────────── -->
+<section class="panel" data-panel="asks" hidden>
+  <div class="intro">
+    <div>
+      <h2>Your rulings</h2>
+      <p>Nine questions. Q1 to Q7 were asked for. Q8 comes from tab 6. Q9 comes from measuring the phone sheet during the design review. Each has its options and my recommendation, and the decision sheet at the bottom has a box for your answer. Your answers stay in this browser. “Copy my answers” gives you text to paste back.</p>
+    </div>
+    <div class="verdict">
+      <h3>Not re-opened</h3>
+      <p>Scope = all 28 · one line for list rows, push and email · draw before build · old notices keep their paragraph · the fixes ride along. (Q8 asks about one kind <i>inside</i> the 28 because tab 6 was asked to say so.)</p>
+    </div>
+  </div>
+
+  <div class="asks">
+    <article class="ask" id="q1">
+      <h3><span class="q">Q1</span>Labels: what they look like, how wide, and where they sit on a phone</h3>
+      <p><b>Style</b> is not really open: sentence case, 14px semibold, quiet ink, as built on Nov 14. The small-capitals eyebrow face is ruled out by the admin type rule. Two things are open: the label column’s width on a computer, and whether a phone puts the label beside its answer or above it.</p>
+      <div class="opts">
+        <div class="opt rec"><h4>Width A · 5.5rem, fixed <span class="tagrec">RECOMMENDED</span></h4><p>As built. Every label in the five kinds fits (“Tournament” is the longest, about 80px). A fixed edge lets the eye learn where answers start. Rule: a label is one or two short words, 11 characters at most, checked in the words file.</p></div>
+        <div class="opt"><h4>Width B · 7rem, fixed</h4><p>More air on a computer, but it takes 24px from the answer column on a 335px phone sheet, where moved-game lines already wrap.</p></div>
+        <div class="opt"><h4>Width C · as wide as each notice’s longest label</h4><p>Tightest, but the answers start at a different edge on every notice, and the bell is read one notice after another.</p></div>
+      </div>
+      <div class="previews" data-preview="q1w"></div>
+      <div class="opts">
+        <div class="opt rec"><h4>Phone A · label beside, lists full width <span class="tagrec">RECOMMENDED</span></h4><p>Measured on tab 1’s notice: with labels above (as built) its buttons end 75px below the sheet’s first view; beside, the whole notice fits. A list under a row runs the sheet’s full width. The product’s other read-rows already keep the label beside on a phone (the club calendar’s, a family’s record). Changes the Nov 14 reference case, which stacks.</p></div>
+        <div class="opt"><h4>Phone B · label above its answer</h4><p>As built on Nov 14. Every row becomes two lines, and the scan down the left edge is lost.</p></div>
+      </div>
+      <div class="previews" data-preview="q1p"></div>
+    </article>
+
+    <article class="ask" id="q2">
+      <h3><span class="q">Q2</span>The next step or a deadline: a row, a line under the rows, or emphasis</h3>
+      <div class="opts">
+        <div class="opt rec"><h4>A · The date is a row, the instruction a line <span class="tagrec">RECOMMENDED</span></h4><p>A date the reader must meet is a fact (“Answer by · Nov 20 at 11:59 p.m.”), looked up like the others. What to do is one plain line under the rows, starting with a verb. When the notice is settled, the line is replaced by the settled line, so an instruction never outlives its task.</p></div>
+        <div class="opt"><h4>B · Both in one line under the rows</h4><p>“Answer in Stripe by Nov 20 at 11:59 p.m.” The sentence reads well, but the date is buried in a sentence again.</p></div>
+        <div class="opt"><h4>C · The line, emphasised</h4><p>Bold, in the warning ink. It says “urgent” twice, since the amber edge on the list row already says it. The house states a status once.</p></div>
+      </div>
+      <div class="previews" data-preview="q2"></div>
+    </article>
+
+    <article class="ask" id="q3">
+      <h3><span class="q">Q3</span>Long lists: how many lines before they fold, and what the fold says</h3>
+      <div class="opts">
+        <div class="opt"><h4>A · 6 lines, then “and 3 more”</h4><p>As today. Simple, but it names games you can’t see, and the onward button opens the whole schedule, not those three.</p></div>
+        <div class="opt rec"><h4>B · 6 lines, then “Show 3 more games” <span class="tagrec">RECOMMENDED</span></h4><p>The rest open in place, and the fold names its noun like the product’s other folds (“Show 2 more hand-back asks”). The notice keeps up to 30 lines; past 30 the last line reads “and 12 more on the schedule”. Six lines fit the drawer and the dialog comfortably. On a phone this kind outgrows the sheet with or without the fold (measured: the buttons end 131px below the sheet’s first view; today’s paragraph is already 33px below). That is Q9.</p></div>
+        <div class="opt"><h4>C · Never fold</h4><p>Fine at 9, a wall at 25. A phone sheet scrolls past its buttons.</p></div>
+      </div>
+      <div class="previews" data-preview="q3"></div>
+    </article>
+
+    <article class="ask" id="q4">
+      <h3><span class="q">Q4</span>The three kinds that keep their amount or due date in the title</h3>
+      <p>All three are one-fact notices, so none of them is among the 28 that get rows. Their wording, from the code:</p>
+      <div class="tbl-wrap"><table class="t">
+        <thead><tr><th>Kind</th><th>Title</th><th>Body</th><th>Who</th></tr></thead>
+        <tbody>
+          <tr><td>The club received a payment</td><td>Riverdale Minor received $432.00 from Ridge 12U</td><td>Winter dome, 2 of 4 is paid.</td><td>the team’s money people</td></tr>
+          <tr><td>The club received a family’s payment</td><td>The club received $150.00 for Henry</td><td>E-Transfer, Nov 8. Record it in the team’s book when it reaches you.</td><td>head coaches</td></tr>
+          <tr><td>A payment reminder</td><td>$450.00 is due Jun 1 for Riverdale Classic</td><td>Riverdale Minor Ball sent a reminder for Ridge 12U</td><td>free coaches</td></tr>
+        </tbody>
+      </table></div>
+      <div class="opts">
+        <div class="opt rec"><h4>A · Leave it in the title <span class="tagrec">RECOMMENDED</span></h4><p>The amount is the news. The list row shows the title first and in bold, so the figure is what you scan. These are one-fact kinds; giving them rows would grow the scope.</p></div>
+        <div class="opt"><h4>B · Move it to a row</h4><p>The title becomes “Ridge 12U paid the club”. The amount is gone from every list row, push and lock screen.</p></div>
+        <div class="opt"><h4>C · Both</h4><p>Says the figure twice in a three-line notice.</p></div>
+      </div>
+    </article>
+
+    <article class="ask" id="q5">
+      <h3><span class="q">Q5</span>“Score submitted”: what it should carry</h3>
+      <p>Today it says only who entered it: “Submitted by scorekeeper kim@example.com”. On a tournament day these fold into one bundle (“12 scores submitted”), and a bundle opens as its members’ one-line bodies, never rows. So today you would read the same sentence twelve times.</p>
+      <div class="opts">
+        <div class="opt rec"><h4>A · The one line carries the game and score <span class="tagrec">RECOMMENDED</span></h4><p>“Ridge 12U 5, Hawks 3 · U13 Boys · by kim@example.com”. It reads right in a bundle, a list row and a push. Cost: one extra read when it is sent (the two team names and the division; today only their ids are in hand).</p></div>
+        <div class="opt"><h4>B · Rows (Game · Score · Division · Entered by)</h4><p>Only seen when a single score is opened; a bundle never shows rows. Same extra read.</p></div>
+        <div class="opt"><h4>C · Leave it</h4><p>The link opens the game. The bundle stays unreadable.</p></div>
+      </div>
+      <div class="previews" data-preview="q5"></div>
+    </article>
+
+    <article class="ask" id="q6">
+      <h3><span class="q">Q6</span>One kind, five senders: “A refund didn’t reach the card”</h3>
+      <p>Five places send it. The words differ by who is owed (a team or a family) and by card or bank. The links differ too. And one sender states the payment’s whole amount rather than the refund’s (likely right for a whole send-back; to be checked in Stage 2). From the code:</p>
+      <div class="tbl-wrap"><table class="t">
+        <thead><tr><th>Sender</th><th>Title</th><th>Body</th><th>Opens</th></tr></thead>
+        <tbody>
+          <tr><td>A · a family’s bank send-back</td><td>Henry’s refund didn’t reach the bank account</td><td>$150.00 to the account ending 6789 was returned, for example because the account was closed. Send the family the money another way, then record the refund.</td><td>the registration</td></tr>
+          <tr><td>B · a team’s bank send-back</td><td>Ridge 12U’s refund didn’t reach the bank account</td><td>$450.00 to the account ending 6789 was returned, … Send Ridge 12U the money another way, then record the refund. <i>(the payment’s whole amount)</i></td><td>the team’s record</td></tr>
+          <tr><td>C · a team’s card refund</td><td>Ridge 12U’s refund didn’t reach the card</td><td>$150.00 to Visa •••• 4242 was returned, for example because the card was closed. Send Ridge 12U the money another way, then record the refund.</td><td>Teams</td></tr>
+          <tr><td>D · a family’s card refund</td><td>Henry’s refund didn’t reach the card</td><td>$150.00 to Visa •••• 4242 was returned, … Send the family the money another way, then record the refund.</td><td>the registration</td></tr>
+          <tr><td>E · part of a team’s refund</td><td colspan="2">same words as C</td><td>Teams</td></tr>
+        </tbody>
+      </table></div>
+      <div class="opts">
+        <div class="opt rec"><h4>Proposed · one wording, the facts filled in <span class="tagrec">RECOMMENDED</span></h4><p>One words entry for the kind. Every sender passes facts only: amount, where it went, who it was for, card or bank. The title keeps its two forms (“Henry’s refund…” / “Ridge 12U’s refund…”), because the whose is the point. Rows: Amount · Sent to · For · Why. Next step: “Send the money another way, then record the refund.” One line: “$150.00 to Visa •••• 4242 came back.”</p></div>
+      </div>
+      <div class="previews" data-preview="q6"></div>
+    </article>
+
+    <article class="ask" id="q7">
+      <h3><span class="q">Q7</span>Email copy: what the one-line rule does to each of the five</h3>
+      <p>Checked in the code. Every notice that emails uses one generic email: the title as its heading, the notification’s body as its paragraph, and a View button. So the one-line rule shortens any email that is switched on. Separately written emails (to a family, to the person who set up payouts) are not touched.</p>
+      <div class="tbl-wrap"><table class="t">
+        <thead><tr><th>Kind</th><th>Its email today</th><th>What the one-line rule does</th><th>/legal</th></tr></thead>
+        <tbody>
+          <tr><td>A bank debit was returned</td><td>None from this notice: email is off and no setting turns it on. The family gets its own email (“Your bank debit didn’t go through”), a separate template.</td><td>Nothing anyone receives changes. Only the list row gets shorter.</td><td>not owed</td></tr>
+          <tr><td>A card payment was disputed</td><td>None from this notice (off, no setting). The person who set up payouts gets a separate dispute email of its own.</td><td>Nothing changes in any email.</td><td>not owed</td></tr>
+          <tr><td>Moved games</td><td>Off unless switched on (House league, in notification settings). When on, it prints this body. Today its game lines run together into one paragraph, because the email drops line breaks.</td><td>Someone who switched it on would get the one-line summary and View, and no game lines. A material change.</td><td class="flag">owed before Stage 3</td></tr>
+          <tr><td>Family answers</td><td>Off unless switched on (“Family answers”, the coach’s Account page). Prints the body.</td><td>No change while three or fewer children answered. With more, the names fold to “and 4 more”. Minor.</td><td>not owed</td></tr>
+          <tr><td>A game changed</td><td>None: these go straight to the coach’s bell. Fans’ push uses the same sentence.</td><td>Nothing, if Q8 keeps the sentence.</td><td>not owed</td></tr>
+        </tbody>
+      </table></div>
+      <div class="rec-line"><b>Recommendation:</b> run <code>/legal</code> (anti-spam, CASL) on the shorter moved-games email before Stage 3 builds it, and have Stage 2 repeat this check for each of the other 23 kinds as it shortens them. The rule itself stands (ruling 2). The email loses its lines for the few who switched it on, and /legal confirms nothing more is owed.</div>
+    </article>
+
+    <article class="ask" id="q8">
+      <h3><span class="q">Q8</span>“A game changed”: rows, or keep its sentence (from tab 6)</h3>
+      <div class="opts">
+        <div class="opt rec"><h4>A · Keep the sentence <span class="tagrec">RECOMMENDED</span></h4><p>It is already one line, and already what a lock screen and a list row should say. It leaves the 28 for the one-fact group; the other variants (cancelled, back on, several) are one-fact already.</p></div>
+        <div class="opt"><h4>B · Rows (Now · Where · Tournament)</h4><p>Three rows for one sentence. Drawn on tab 6 so you can judge.</p></div>
+      </div>
+    </article>
+
+    <article class="ask" id="q9">
+      <h3><span class="q">Q9</span>On a phone, when an opened notice is taller than its sheet, where do the buttons go?</h3>
+      <p>Found by measuring every phone specimen during the design review. Five of the kinds fit the sheet (at most three quarters of the screen above the bottom bar). Moved games does not: its buttons end 131px below the sheet’s first view after the change, and 33px below today. The 28 include a few more lists (insights, a hand-back answer with several payments), so this will come up again.</p>
+      <div class="opts">
+        <div class="opt rec"><h4>A · Pin the button row to the sheet’s foot <span class="tagrec">RECOMMENDED</span></h4><p>Only when the message scrolls. The message scrolls above a hairline, and the way on stays under the thumb. This follows the Oct 13 rule that a phone sheet’s foot keeps the door, and the Oct 9 rule that a window’s foot is pinned. It changes the reader’s frame for every kind, which is the Sheet Frame project’s.</p></div>
+        <div class="opt"><h4>B · Fold harder on a phone</h4><p>3 lines instead of 6. It still doesn’t fit (about 65px short), and it hides more of what you opened the notice to see.</p></div>
+        <div class="opt"><h4>C · Leave it scrolling</h4><p>As today. The buttons are a scroll away on the longest notices only.</p></div>
+      </div>
+      <div class="previews" data-preview="q9"></div>
+    </article>
+
+    <article class="ask" id="found">
+      <h3>Found while drawing (inputs to Stage 2, no ruling needed)</h3>
+      <ul class="found">
+        <li>Two money notices have no icon of their own and wear the plain bell: “A bank debit was returned” and “A card payment was disputed”.</li>
+        <li>The notification email drops line breaks: the moved-games email runs its game lines into one paragraph today.</li>
+        <li>The moved-games button says only “Open”: its link names no panel, so it can’t say where it goes.</li>
+        <li>“A game changed” writes its clock with its own formatter, not the house one. The spelling matches today (“3:15 p.m.”), but it can drift.</li>
+        <li>The census’s family-answers example was wrong: the code writes “now 11 of 14 in · 2 out · 1 maybe”, not “now 11 In”. Corrected in the census.</li>
+        <li>One “refund didn’t reach” sender states the payment’s whole amount (Q6, sender B). Probably right for a whole send-back; check it in Stage 2.</li>
+      </ul>
+    </article>
+
+    <article class="ask" id="sheet">
+      <h3>Decision sheet</h3>
+      <div class="tbl-wrap"><table class="t sheet-tbl">
+        <thead><tr><th>Ask</th><th>Options</th><th>Recommendation</th><th>Your answer</th></tr></thead>
+        <tbody id="sheet-body"></tbody>
+      </table></div>
+      <div class="copybar"><button type="button" id="copy-btn">Copy my answers</button><span id="copy-msg" class="truesize" aria-live="polite"></span></div>
+      <textarea id="copy-out" readonly hidden aria-label="Your answers as text"></textarea>
+    </article>
+  </div>
+</section>
+</main>
+
+<div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-labelledby="ov-t">
+  <div class="ov-card"><h3 id="ov-t"></h3><p id="ov-p"></p><button type="button" id="ov-x">Close</button></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const ARROW = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+  const CHECK = (s) => '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  const TRASH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+  const X = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+  const GEAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+  const BELL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  // ───────────── The five kinds (+ the reference case). Words are verbatim from the code; values are made up. ─────────────
+  const HL_BG = [
+    { sec: "act", ic: "🔔", t: "Stripe needs something to keep online payments on", b: "Stripe needs something more from you by Dec 1. Online payments stay on until then. Nothing already paid is affected.", time: "Nov 13", unread: true },
+    { sec: "Today", ic: "🕒", t: "The club gave house league time", b: "“Winter dome 2026–27” gives Spring 2026 2 hours a week. It takes back 1 hour a week.", time: "8:05 a.m.", read: true },
+    { sec: "Today", ic: "💳", t: "Payment received", b: "Riverside U10 · Henry Doe: $150.00 was paid online by bank debit.", time: "7:30 a.m.", read: true },
+  ];
+  const COACH_BG = [
+    { sec: "act", ic: "💵", t: "The club received $150.00 for Henry", b: "E-Transfer, Nov 8. Record it in the team’s book when it reaches you.", time: "Nov 9", unread: true },
+    { sec: "Today", ic: "🙋", t: "Ava’s family said Out for Tue, Nov 17 practice", b: "Chris Lee answered · now 10 of 14 in · 4 out", time: "6:55 a.m.", read: true },
+  ];
+  const FREE_BG = [
+    { sec: "Today", ic: "⏰", t: "$450.00 is due Jul 17 for Riverdale Classic", b: "Riverdale Minor Ball sent a reminder for Ridge 12U", time: "9:00 a.m.", read: true },
+    { sec: "Earlier", ic: "✅", t: "Riverdale Minor Ball accepted Ridge 12U", b: "Riverdale Classic · Jul 17–19", time: "Jul 2", read: true },
+  ];
+
+  const K = {
+    pattern: {
+      who: "House league · league admin · Admin portal", portal: "admin", foot: 72, bg: HL_BG.filter(r => r.ic !== "🕒"),
+      ic: "🕒", kind: "The club gave house league time", stamp: "Sat, Nov 14 · 8:05 a.m.", rowTime: "8:05 a.m.", act: false, go: "Open House league’s time",
+      title: "The club gave house league time",
+      summary: "“Winter dome 2026–27” gives Spring 2026 2 hours a week. It takes back 1 hour a week.",
+      before: { label: "As built on Nov 14 (the reference case)", phoneAbove: true, flatRange: true, rows: [
+        { l: "Season", v: "Spring 2026" }, { l: "Schedule", v: "Winter dome 2026–27" },
+        { l: "Gives", lead: "2 hours a week", sub: "Mar 13 – Apr 3", list: ["Sat · 11:00 a.m.–12:00 p.m. · Diamond A", "Sat · 12:00–1:00 p.m. · Diamond B"] },
+        { l: "Takes back", lead: "1 hour a week", sub: "Mar 13 – Apr 3", list: ["Sun · 9:00–10:00 a.m. · Diamond A"] },
+      ], next: "Divide it into games and practices." },
+      after: {
+        pins: { eyebrow: "The eyebrow: the kind in the feed’s own words, then the day and the clock. UNCHANGED.", title: "The title: unchanged. A notice’s title is still what the list row leads with.", actions: "The buttons: Open · Done · Close · Delete, in that order, unchanged. Close appears only where the frame closes from its button row (the dialog and the phone sheet; the drawer’s pane has its own ×). Done appears only on a single Needs-attention notice." },
+        rows: [
+          { l: "Season", v: "Spring 2026", pin: "Labelled rows. The label sits on the left in sentence case, quiet ink, 14px semibold. The answer sits on the right in primary ink. A hairline separates rows, so the eye drops straight to the one wanted. Label column 5.5rem, as built (Q1)." },
+          { l: "Schedule", v: "Winter dome 2026–27" },
+          { l: "Gives", lead: "2 hours a week", sub: "Mar 13 – Apr 3", listPin: "A list under a row, one item per line, in quiet ink with tabular figures. On a computer it starts at the answer’s edge. On a phone it runs the sheet’s full width (Q1). Past 6 lines it folds (Q3).", list: ["Sat · 11:00 a.m.–12:00 p.m. · Diamond A", "Sat · 12:00–1:00 p.m. · Diamond B"],
+            leadPin: "CHANGES THE REFERENCE CASE (1 of 2): a row’s answer can be a bold lead and a quieter detail. As built, the date range prints in primary ink beside the bold hours; in the pattern the detail is in the secondary ink, so the lead (the hours, an amount, a count) is what you see first." },
+          { l: "Takes back", lead: "1 hour a week", sub: "Mar 13 – Apr 3", list: ["Sun · 9:00–10:00 a.m. · Diamond A"] },
+        ],
+        next: "Divide it into games and practices.", nextPin: "The next-step line: optional, one plain line under the rows, starting with a verb. It is dropped once a Needs-attention notice is settled; the settled line (tab 2) takes its place.",
+      },
+      notesExtra: [
+        "CHANGES THE REFERENCE CASE (2 of 2), phone only: switch Frame to Phone. As built, the label sits above its answer below 480px. In the pattern it stays beside (Q1), and lists run the full width.",
+        "The one line (list row, push, email) for this kind is unchanged: it was already a one-line summary.",
+        "For the build: the house-league time rows become the shared rows block in the message component; any kind fills it with label → value rows, an optional list and an optional next step. The buttons stay the notification surfaces’ own (not the coach portal’s).",
+      ],
+    },
+
+    debit: {
+      who: "House-league desk · Admin portal", portal: "admin", foot: 72, bg: HL_BG,
+      ic: "🔔", kind: "A bank debit was returned", stamp: "Sat, Nov 14 · 9:42 a.m.", rowTime: "9:42 a.m.", act: true, go: "Open Registrations",
+      title: "A bank debit for Henry was returned",
+      summary: "$450.00 didn’t go through on Nov 8. Nothing was taken.",
+      summaryPin: "The one line (list rows, push, email): the amount, the day, and that no money moved. Henry is in the title, so the line doesn’t repeat him. Draft words for /marketing.",
+      before: { body: "$450.00 from the account ending 6789 didn’t go through (Nov 8: there wasn’t enough money in the account). Nothing was taken, and Henry’s spot is still held. We emailed the family a way to pay." },
+      after: { rows: [
+        { l: "Amount", lead: "$450.00", sub: "nothing was taken", pin: "The amount leads, with “nothing was taken” beside it, because the first question is “did we lose money?”" },
+        { l: "Account", v: "Ending 6789", pin: "The account, the day and the bank’s reason each get a row. Today they share one bracket: “(Nov 8: there wasn’t enough money in the account)”." },
+        { l: "Returned", v: "Nov 8" },
+        { l: "Reason", v: "There wasn’t enough money in the account", pin: "“Reason”, the same label the dispute uses: one word for one idea across every kind (/design). With no reason from the bank, the row is left out." },
+        { l: "Spot", v: "Still held", pin: "“Still held” answers the second question: is Henry still registered? With several children it reads “Their spots: still held”. On a team’s debit the label is “Place”." },
+        { l: "Family", v: "Emailed a way to pay", pin: "Whether the family was told. With no email on file this reads “No email address on file”, and the next-step line says “Tell the family yourself.”" },
+      ], pins: { actions: "Needs attention is not drawn inside the opened notice. It is the list’s section heading and the amber edge on the row. The rows sit above the settled line and the buttons; Done stays (a single Needs-attention notice)." } },
+      extras: [
+        { cap: "No email on file", tag: ["new", "The same notice when the family has no email address: the Family row says so, and the next-step line tells the desk what to do."], spec: { rows: "same-but-family", next: "Tell the family yourself." } },
+        { cap: "Settled", tag: ["new", "Once the family pays, the notice clears itself (Needs attention, Oct 16). The settled line sits under the rows; the next-step line is gone; Done is gone with Needs attention."], spec: { settled: "Paid in full.", noDone: true } },
+      ],
+    },
+
+    dispute: {
+      who: "The person who set up payouts · Admin portal", portal: "admin", foot: 72, bg: HL_BG,
+      ic: "🔔", kind: "A card payment was disputed", stamp: "Sat, Nov 14 · 8:16 a.m.", rowTime: "8:16 a.m.", act: true, go: "Open Registrations",
+      title: "Henry Doe’s card payment is disputed",
+      summary: "Receipt 1042, $450.00. Answer in Stripe by Nov 20 at 11:59 p.m.",
+      summaryPin: "The one line: which payment, how much, and the deadline. On a phone lock screen the deadline is the reason to look. Draft words for /marketing.",
+      before: { body: "Pat Doe’s bank is disputing receipt 1042 ($450.00): the cardholder says they didn’t make this payment. Stripe has taken $450.00 from the club’s Stripe balance until the bank decides. Answer in Stripe by Nov 20 at 11:59 p.m." },
+      after: { rows: [
+        { l: "Amount", lead: "$450.00", sub: "receipt 1042", pin: "The amount and the receipt number, so the desk can find the payment." },
+        { l: "Paid by", v: "Pat Doe" },
+        { l: "Reason", v: "The cardholder says they didn’t make this payment", pin: "The bank’s reason, in the words used today. With no reason given, the row is left out." },
+        { l: "Held", v: "From the club’s Stripe balance, until the bank decides", pin: "What is held, and until when: how much the club is out of pocket while it waits. It is the same $450.00 as the Amount row, so the figure isn’t written twice; if Stripe ever holds a different figure, the row leads with it (/design). An inquiry (nothing taken) reads “Held · Nothing has been taken”." },
+        { l: "Answer by", lead: "Nov 20 at 11:59 p.m.", pin: "The deadline is a row (Q2, A). Its answer is the bold lead; no highlight. The amber edge on the list row already says it is urgent. The clock is the house’s, with the club’s time zone." },
+      ], next: "Answer it in Stripe.", nextPin: "The instruction, one line, starting with a verb. On the desk’s copy this line reads “If the club wins, nothing changes here.” (see the desk’s copy)." },
+      extras: [
+        { cap: "The desk’s copy", tag: ["new", "The quieter copy for the desk: the same rows, then who answers it and by when, and the reassurance as the line under the rows."], spec: { rows: [
+          { l: "Amount", lead: "$450.00", sub: "receipt 1042" }, { l: "Paid by", v: "Pat Doe" },
+          { l: "Who answers", v: "Pat Smith, in Stripe" }, { l: "Answer by", lead: "Nov 20 at 11:59 p.m." },
+        ], next: "If the club wins, nothing changes here." }, summary: "Receipt 1042, $450.00. Pat Smith answers it in Stripe by Nov 20." },
+        { cap: "Settled", tag: ["new", "Answered: the instruction is gone, the settled line says what happened."], spec: { settled: "Answered in Stripe. The bank decides.", noDone: true } },
+      ],
+    },
+
+    games: {
+      who: "House league · league admin · Admin portal", portal: "admin", foot: 72, bg: HL_BG,
+      ic: "🔁", kind: "The club changed house league’s practices", stamp: "Sat, Nov 14 · 10:03 a.m.", rowTime: "10:03 a.m.", act: false, go: "Open",
+      title: "Winter dome changed house league’s practices and game time",
+      summary: "U10, U12 and U14: 3 practices moved, 8 games moved and 1 game needs a new date.",
+      summaryPin: "The one line: today’s first sentence, unchanged. The waiting sentence and the game lines move into the opened notice.",
+      before: { body: "U10, U12 and U14: 3 practices moved, 8 games moved and 1 game needs a new date. 9 games wait in Changes to send. Families hear once you send them.\n\nU12 · Sun, Nov 15: Field 2 → Field 4\nU12 · Sun, Nov 22: Field 2 → Field 4\nU12 · Sun, Nov 29: Field 2 → Field 4\nU14 · Sun, Nov 15: 11:00 a.m. → 1:00 p.m.\nU14 · Sun, Nov 22: 11:00 a.m. → 1:00 p.m.\nU14 · Sun, Nov 29: 11:00 a.m. → 1:00 p.m.\nand 3 more" },
+      after: { rows: [
+        { l: "Schedule", v: "Winter dome", pin: "Which schedule sent it. Today it is only in the title." },
+        { l: "Divisions", v: "U10, U12 and U14" },
+        { l: "Practices", lead: "3 moved" },
+        { l: "Games", lead: "8 moved", sub: "· 1 needs a new date", pin: "The game counts, then one line per game: division · day: from → to.", fold: 6, foldNoun: "games",
+          listPin: "Past 6 lines: “Show 3 more games” opens the rest in place (Q3, B). Click it. It names its noun like the product’s other folds (“Show 2 more hand-back asks”). The notice keeps up to 30 lines; past 30 the last reads “and 12 more on the schedule”.",
+          list: ["U12 · Sun, Nov 15: Field 2 → Field 4", "U12 · Sun, Nov 22: Field 2 → Field 4", "U12 · Sun, Nov 29: Field 2 → Field 4", "U14 · Sun, Nov 15: 11:00 a.m. → 1:00 p.m.", "U14 · Sun, Nov 22: 11:00 a.m. → 1:00 p.m.", "U14 · Sun, Nov 29: 11:00 a.m. → 1:00 p.m.", "U10 · Sat, Nov 21: Diamond A → Diamond B", "U10 · Sat, Nov 28: Diamond A → Diamond B", "U10 · Sat, Dec 5, 9:00 a.m. · Diamond A: time taken back"] },
+      ], next: "9 games wait in Changes to send. Families hear once you send them.", nextPin: "The next step: the games waiting to send, and who hears when. Today’s words, moved under the rows.",
+        pins: { actions: "The way on says only “Open”: this notice’s link names no panel, so the button can’t say where it goes. Found while drawing (tab 7)." } },
+    },
+
+    answers: {
+      who: "Head coach · Coaches Portal", portal: "coach", foot: 72, bg: COACH_BG,
+      ic: "🙋", kind: "Family answers", stamp: "Sat, Nov 14 · 7:48 a.m.", rowTime: "7:48 a.m.", act: false, go: "Open Schedule",
+      title: "3 families changed their answers for Sat vs Lakeshore",
+      summary: "Maya (In), Leo (Out) and Sam (Maybe) · now 11 of 14 in · 2 out · 1 maybe",
+      summaryPin: "The one line stays today’s line while three or fewer children answered. With more, it names three and counts the rest: “Maya, Leo, Sam and 4 more · now 11 of 14 in”.",
+      before: { body: "Maya (In), Leo (Out) and Sam (Maybe) · now 11 of 14 in · 2 out · 1 maybe" },
+      after: { rows: [
+        { l: "Answers", v: "", pin: "One child per line: the name, the answer, and what it was before (or that a note was left). Never the note’s words. Folds past 6 children, like any list (Q3).",
+          list: [["Maya", "In", "was Out"], ["Leo", "Out", "Dana Park left a note"], ["Sam", "Maybe", "was In"]], listOnly: true, fold: 6, foldNoun: "answers" },
+        { l: "Now", lead: "11 of 14 in", sub: "· 2 out · 1 maybe", pin: "The headcount after these answers, its own row, so a coach checking “do we have nine?” finds it by its label." },
+      ] },
+      extras: [
+        { cap: "One family changed", tag: ["new", "The single-change shape: “Sam’s family changed to Out for Sat vs Lakeshore”. Rows: Answer (with what it was), From, Now."], spec: { title: "Sam’s family changed to Out for Sat vs Lakeshore", rows: [
+          { l: "Answer", lead: "Out", sub: "· was In" }, { l: "From", v: "Dana Park · left a note" }, { l: "Now", lead: "11 of 14 in", sub: "· 3 out" },
+        ] }, summary: "Was In · Dana Park left a note · now 11 of 14 in · 3 out" },
+      ],
+    },
+
+    game: {
+      who: "Free coach · Coaches Portal (free)", portal: "coach", foot: 72, bg: FREE_BG,
+      ic: "🔁", kind: "A game changed", stamp: "Wed, Jul 15 · 7:12 p.m.", rowTime: "7:12 p.m.", act: false, go: "Open the tournament",
+      title: "Ridge 12U’s 2:00 p.m. game vs Hawks moved",
+      summary: "Now Sat, Jul 18, 3:15 p.m. at Diamond 4 · Riverdale Classic",
+      summaryPin: "The one line is today’s sentence, unchanged either way.",
+      before: { body: "Now Sat, Jul 18, 3:15 p.m. at Diamond 4 · Riverdale Classic" },
+      afterLabel: "As rows (not recommended)",
+      after: { rows: [
+        { l: "Now", lead: "Sat, Jul 18, 3:15 p.m.", pin: "Rows split “when” from “where”. A coach reads them together (“3:15 at Diamond 4”), so the sentence reads faster." },
+        { l: "Where", v: "Diamond 4" },
+        { l: "Tournament", v: "Riverdale Classic", pin: "“Tournament” is the longest label in the five kinds (about 80px), and it fits the 5.5rem column (Q1)." },
+      ] },
+      notesExtra: ["Verdict: keep the sentence (Q8). The rows are three times as tall and say nothing the sentence doesn’t."],
+    },
+  };
+  // The no-email variant reuses the debit rows with the Family row changed.
+  K.debit.extras[0].spec.rows = K.debit.after.rows.map(r => r.l === "Family" ? { l: "Family", v: "No email address on file" } : Object.assign({}, r, { pin: undefined }));
+  // A state drawn without rows of its own (settled) wears the After's rows, unpinned.
+  Object.values(K).forEach(k => (k.extras || []).forEach(x => {
+    if (!x.spec.rows && !x.spec.body) x.spec.rows = k.after.rows.map(r => Object.assign({}, r, { pin: undefined, leadPin: undefined, listPin: undefined }));
+  }));
+
+  // ───────────── Renderers ─────────────
+  function makePins() { return { n: 0, notes: [] }; }
+  function pin(pc, note) {
+    if (!pc || !note) return "";
+    pc.n += 1; pc.notes.push(note);
+    return '<button type="button" class="pin" data-n="' + pc.n + '" data-note="' + esc(note) + '" aria-label="Note ' + pc.n + '">' + pc.n + "</button>";
+  }
+  function valueHTML(r, flat) {
+    if (r.lead !== undefined) {
+      const sub = r.sub ? (flat ? " · " + esc(r.sub) : ' <span class="m-sub">' + (r.sub.charAt(0) === "·" ? "" : "· ") + esc(r.sub) + "</span>") : "";
+      return '<span class="m-lead">' + esc(r.lead) + "</span>" + sub;
+    }
+    return esc(r.v || "");
+  }
+  function rowsHTML(rows, o, pc) {
+    let h = '<dl class="m-facts' + (o.diff ? " cmp-diff" : "") + '">';
+    rows.forEach((r) => {
+      h += '<div class="m-fact">' + pin(pc, r.pin) + pin(pc, r.leadPin) + "<dt>" + esc(r.l) + "</dt>";
+      const fold = r.list && r.fold && r.list.length > r.fold ? r.fold : 0;
+      const item = (l) => Array.isArray(l) ? esc(l[0]) + ' · <span class="m-lead">' + esc(l[1]) + "</span>" + (l[2] ? " · " + esc(l[2]) : "") : esc(l);
+      const noun = r.foldNoun ? " " + r.foldNoun : "";
+      const lines = r.list ? '<ul class="m-lines"' + (r.listOnly ? ' style="margin-top:0"' : "") + ">" + r.list.map((l, i) => "<li" + (fold && i >= fold ? ' class="more"' : "") + ">" + item(l) + "</li>").join("") + "</ul>"
+        + (fold ? '<button type="button" class="m-fold" data-more="' + (r.list.length - fold) + '" data-noun="' + esc(noun) + '">Show ' + (r.list.length - fold) + " more" + esc(noun) + "</button>" : "") : "";
+      // A row that IS a list (family answers) keeps it in the answer column; a list under a row with its own answer spans below it.
+      h += "<dd" + (r.listOnly ? ' class="m-span"' : "") + ">" + (r.listOnly ? pin(pc, r.listPin) + lines : valueHTML(r, o.flatRange)) + "</dd>";
+      if (r.list && !r.listOnly) h += '<div class="m-span">' + pin(pc, r.listPin) + lines + "</div>";
+      h += "</div>";
+    });
+    return h + "</dl>";
+  }
+  /** One opened notice: eyebrow, title, message, settled, buttons. */
+  function msgHTML(k, s, o) {
+    const pc = o.pc;
+    const title = s.title || k.title;
+    const cmp = o.cmp;
+    let h = '<div class="m' + (s.phoneAbove && o.frame === "phone" ? " lab-above" : "") + '"' + (o.labelW ? ' style="--label-w:' + o.labelW + '"' : "") + ">";
+    const P = s.pins || {};
+    h += '<p class="m-eyebrow' + (cmp ? " cmp-same" : "") + '">' + pin(pc, P.eyebrow) + '<span class="m-ic" aria-hidden="true">' + k.ic + "</span><span>" + esc(k.kind) + '</span><span class="m-stamp">· ' + esc(k.stamp) + "</span></p>";
+    h += '<h2 class="m-title' + (cmp && o.titleSame ? " cmp-same" : cmp ? " cmp-diff" : "") + '">' + pin(pc, P.title) + esc(title) + "</h2>";
+    if (s.members) {
+      h += '<ul class="m-members' + (cmp ? " cmp-diff" : "") + '">' + s.members.map(m => '<li class="m-member"><p class="mt">' + esc(m.t) + '</p><p class="mb">' + esc(m.b) + '</p><p class="mtm">' + esc(m.time) + "</p></li>").join("") + "</ul>";
+    } else if (s.rows) {
+      h += rowsHTML(s.rows, { diff: cmp, flatRange: s.flatRange }, pc);
+      if (s.next && !s.settled) h += '<p class="m-next' + (s.nextEmph ? " emph" : "") + (cmp ? " cmp-diff" : "") + '">' + pin(pc, s.nextPin) + esc(s.next) + "</p>";
+    } else if (s.body) {
+      h += '<p class="m-body' + (cmp ? " cmp-diff" : "") + '">' + esc(s.body) + "</p>";
+    }
+    if (s.settled) h += '<p class="m-settled">' + pin(pc, s.settledPin) + CHECK(16) + "<span><b>" + esc(s.settled) + "</b></span></p>";
+    if (!o.noActions) {
+      const done = k.act && !s.noDone && !s.settled && !s.members;
+      h += '<div class="m-actions' + (cmp ? " cmp-same" : "") + '">' + pin(pc, P.actions);
+      h += '<span class="b pri">' + esc(k.go) + " " + ARROW + "</span>";
+      if (done) h += '<span class="b">' + CHECK(14) + " Done</span>";
+      if (o.close) h += '<span class="b">Close</span>';
+      h += '<span class="b trash" title="Delete">' + TRASH + "</span></div>";
+    }
+    return h + "</div>";
+  }
+  function listRowHTML(r, extraCls) {
+    const cls = ["l-row", r.read ? "read" : "", r.unread ? "unread" : "", r.sec === "act" ? "act" : "", r.sel ? "sel" : "", extraCls || ""].join(" ");
+    let h = '<div class="' + cls + '"><span class="ic" aria-hidden="true">' + r.ic + '</span><div class="tx"><p class="l-t' + (r.selCmp ? " cmp-same" : "") + '">' + esc(r.t) + "</p>";
+    h += '<p class="l-b' + (r.selCmp ? (r.bodySame ? " cmp-same" : " cmp-diff") : "") + '">' + esc(r.b) + "</p>";
+    h += pin(r.pc, r.pinNote).replace('class="pin"', 'class="pin pin-r"');
+    h += '<div class="l-m"><span>' + esc(r.time) + "</span>" + (r.sec === "act" ? '<span class="pill">' + CHECK(12) + " Done</span>" : "") + "</div></div>";
+    if (r.unread) h += '<span class="l-dot" aria-hidden="true"></span>';
+    return h + "</div>";
+  }
+  function selRow(k, v, pc) {
+    const body = v === "after" ? k.summary : (k.before.body || k.summary);
+    const same = (k.before.body || k.summary) === k.summary;
+    return { sec: k.act ? "act" : "Today", ic: k.ic, t: k.title, b: body, time: k.rowTime, sel: true, read: true, selCmp: true, bodySame: same, pc: v === "after" ? pc : null, pinNote: v === "after" ? k.summaryPin : null };
+  }
+  function drawerListHTML(k, v, pc) {
+    const rows = k.bg.slice();
+    const sel = selRow(k, v, pc);
+    const act = rows.filter(r => r.sec === "act"); const rest = rows.filter(r => r.sec !== "act");
+    if (sel.sec === "act") act.unshift(sel); else rest.unshift(sel);
+    let h = '<div class="list"><div class="l-head chrome"><h4>Notifications</h4><span class="ico">' + GEAR + '</span><span class="ico">' + X + '</span></div>';
+    h += '<div class="l-tools chrome"><span class="seg"><span>Unread</span><span class="on">All</span></span><span class="b" style="min-height:32px">' + CHECK(14) + " Mark all read</span></div><div class=\"l-body\">";
+    if (act.length) {
+      h += '<div class="l-sec chrome">Needs attention <span class="ct">' + act.length + '</span><span class="hint">clears when it’s handled</span></div>';
+      act.forEach(r => { h += listRowHTML(r, r.sel ? "" : "chrome"); });
+    }
+    let last = null;
+    rest.forEach(r => { if (r.sec !== last) { h += '<div class="l-day chrome">' + esc(r.sec) + "</div>"; last = r.sec; } h += listRowHTML(r, r.sel ? "" : "chrome"); });
+    return h + "</div></div>";
+  }
+  function drawerHTML(k, s, v, pc) {
+    let h = '<div class="frame scr scr-drawer">';
+    h += '<div class="topstrip chrome"><span>' + (k.portal === "coach" ? "Ridge 12U" : "Riverdale Minor") + '</span><span class="sp"></span><span class="bell">' + BELL + "</span></div>";
+    h += '<div class="dz"><div class="dz-page chrome"><i style="width:40px"></i><i style="width:30px"></i><i style="width:36px"></i></div><div class="dz-scrim chrome"></div>';
+    h += '<div class="drawer"><div class="pane"><span class="xbtn chrome">' + X + '</span><div class="pane-in">' + msgHTML(k, s, { pc: pc, frame: "pane", cmp: true, titleSame: true }) + "</div></div>";
+    h += drawerListHTML(k, v, pc) + "</div></div></div>";
+    return h;
+  }
+  function pageListHTML(k, v, rows, pc, phone) {
+    const sel = selRow(k, v, pc);
+    const act = rows.filter(r => r.sec === "act"); const rest = rows.filter(r => r.sec !== "act");
+    if (sel.sec === "act") act.unshift(sel); else rest.unshift(sel);
+    const row = (r) => {
+      let h = '<div class="pg-row ' + (r.read ? "read " : "") + (r.sec === "act" ? "act " : "") + (r.sel ? "" : "chrome") + '"><span class="ic" aria-hidden="true">' + r.ic + '</span><div class="tx"><p class="pg-t' + (r.selCmp ? " cmp-same" : "") + '">' + esc(r.t) + "</p>";
+      h += '<p class="pg-b' + (r.selCmp ? (r.bodySame ? " cmp-same" : " cmp-diff") : "") + '">' + esc(r.b) + "</p>";
+      if (r.sel && v === "after" && !phone) h += pin(pc, "On the Notifications page the row shows its body in full. So today a long paragraph fills the row; after, the row reads one line.").replace('class="pin"', 'class="pin pin-r"');
+      h += '<div class="pg-m"><span>' + esc(r.time) + "</span>" + (r.sec === "act" ? '<span class="pill">' + CHECK(12) + " Done</span>" : "") + "</div></div></div>";
+      return h;
+    };
+    let h = '<div class="pg">';
+    if (act.length) { h += '<div class="pg-day chrome" style="color:var(--p-warn)">Needs attention</div>' + act.map(row).join(""); }
+    let last = null;
+    rest.forEach(r => { if (r.sec !== last) { h += '<div class="pg-day chrome">' + esc(r.sec) + "</div>"; last = r.sec; } h += row(r); });
+    return h + "</div>";
+  }
+  function pageFig(k, v, pc) {
+    return '<div class="frame">' + pageListHTML(k, v, k.bg.slice(0, 1), pc, false) + "</div>";
+  }
+  function phoneHTML(k, s, v, pc, pinFoot) {
+    const foot = k.foot;
+    if (pinFoot) {
+      // Q9 · A: the message scrolls above a hairline; the button row is pinned at the sheet's foot.
+      const msg = msgHTML(k, s, { pc: pc, frame: "phone", close: true });
+      const cut = msg.lastIndexOf('<div class="m-actions');
+      let h = '<div class="frame fr-phone scr scr-phone" style="--foot:' + foot + 'px"><div class="ph-status"><span>9:41</span><span>●●● ▮</span></div>';
+      h += '<div class="ph-head"><h4>Notifications</h4></div><div class="ph-page">' + pageListHTML(k, "after", k.bg, null, true) + "</div>";
+      h += '<div class="ph-foot"><i></i><i></i><i class="on"></i><i></i><i></i></div><div class="ph-dim"></div>';
+      h += '<div class="sheet"><div class="grab"><i></i></div><div class="sheet-body">' + msg.slice(0, cut) + '</div></div><div class="sheet-foot">' + msg.slice(cut).replace(/<\/div>$/, "") + "</div></div></div>";
+      return h;
+    }
+    let h = '<div class="frame fr-phone scr scr-phone" style="--foot:' + foot + 'px">';
+    h += '<div class="ph-status chrome"><span>9:41</span><span>●●● ▮</span></div>';
+    h += '<div class="ph-head chrome"><h4>Notifications</h4><span class="seg"><span>Unread</span><span class="on">All</span></span></div>';
+    h += '<div class="ph-page">' + pageListHTML(k, v, k.bg, pc, true) + "</div>";
+    if (foot) h += '<div class="ph-foot chrome"><i></i><i></i><i class="on"></i><i></i><i></i></div>';
+    h += '<div class="ph-dim chrome"></div>';
+    h += '<div class="sheet"><div class="grab chrome"><i></i></div><div class="sheet-body">' + msgHTML(k, s, { pc: pc, frame: "phone", close: true, cmp: true, titleSame: true }) + "</div></div>";
+    if (!foot) h += '<div class="home-ind"></div>';
+    return h + "</div>";
+  }
+  function dialogHTML(k, s, pc) {
+    let h = '<div class="frame scr scr-dialog"><div style="position:absolute;inset:0;padding:22px 80px" class="chrome">' + pageListHTML(k, "after", k.bg, null, false) + "</div>";
+    h += '<div class="dlg-back chrome"></div><div class="dlg">' + msgHTML(k, s, { pc: pc, frame: "dialog", close: true }) + "</div></div>";
+    return h;
+  }
+  function miniHTML(k, s, o) {
+    o = o || {};
+    const ph = o.phone;
+    return '<div class="frame mini' + (ph ? " ph fr-phone" : "") + '">' + msgHTML(k, s, { pc: o.pc, frame: ph ? "phone" : "pane", close: ph, labelW: o.labelW, noActions: o.noActions }) + "</div>";
+  }
+  const tag = (cls, label, note) => '<button type="button" class="mk ' + cls + '" data-title="' + esc(label) + '" data-note="' + esc(note) + '">' + label + "</button>";
+  const cap = (strong, rest, tags) => '<p class="cap"><strong>' + strong + "</strong>" + (rest ? "<span>" + rest + "</span>" : "") + (tags || "") + "</p>";
+
+  // ───────────── Kind sections ─────────────
+  let FRAME = "computer";
+  function renderKind(key) {
+    const k = K[key];
+    const pc = makePins();
+    const box = document.getElementById("spec-" + key);
+    const before = Object.assign({}, k.before);
+    const after = Object.assign({}, k.after);
+    const afterLabel = k.afterLabel || "After · proposed";
+    const beforeLabel = k.before.label || "Before · as it ships";
+    const tagsBefore = tag("keep", "AS IT SHIPS", key === "pattern" ? "The reference case as built on Nov 14 (labelled rows for this one kind only)." : "Today’s notice: its body is one paragraph, drawn by the shipped message block.");
+    const tagsAfter = tag("re", "RESTYLED", "The message becomes labelled rows. The eyebrow, the title and the buttons are UNCHANGED.") + tag("keep", "UNCHANGED", "Eyebrow, title, buttons and their order, the frame. Switch View to “Show only what differs” to dim them.");
+    let h = "";
+    if (FRAME === "computer") {
+      h += '<div class="fig">' + cap(beforeLabel, '<span class="truesize">' + esc(k.who) + " · bell drawer · true size (pane 440 + list 380)</span>", tagsBefore) + '<div class="scroller">' + drawerHTML(k, before, "before", null) + "</div></div>";
+      h += '<div class="fig">' + cap(afterLabel, '<span class="truesize">same frame · true size</span>', tagsAfter) + '<div class="scroller">' + drawerHTML(k, after, "after", pc) + "</div></div>";
+      if (key === "pattern") {
+        h += '<div class="fig">' + cap("The same block in the reader on a computer", '<span class="truesize">the dialog the Notifications page opens · 480 wide · true size</span>', tag("keep", "UNCHANGED FRAME", "The reader’s frame is the Sheet Frame project’s; only the message inside it changes. Close joins the button row here because the dialog closes from it.")) + '<div class="scroller">' + dialogHTML(k, after, null) + "</div></div>";
+      } else {
+        h += '<div class="fig">' + cap("The row on the Notifications page", '<span class="truesize">720 wide · true size · Before above, After below</span>', tag("re", "ONE LINE", "Ruling 2: the list row carries the one-line summary. On this page the row shows its body in full (the drawer cuts it to one line), so this is where the change shows most.")) + '<div class="scroller" style="display:grid;gap:10px">' + pageFig(k, "before", null) + pageFig(k, "after", pc) + "</div></div>";
+      }
+      (k.extras || []).forEach((x) => {
+        const s = Object.assign({}, x.spec, { title: x.spec.title });
+        h += '<div class="fig">' + cap(x.cap, '<span class="truesize">the drawer’s pane only · 440 wide</span>', tag(x.tag[0], "NEW STATE", x.tag[1])) + '<div class="scroller">' + miniHTML(k, s) + "</div>" + (x.summary ? '<p class="note-p">Its one line: “' + esc(x.summary) + "”</p>" : "") + "</div>";
+      });
+    } else {
+      h += '<div class="scroller"><div class="pair">';
+      h += '<div class="fig">' + cap(beforeLabel, "", tagsBefore) + phoneHTML(k, before, "before", null) + "</div>";
+      h += '<div class="fig">' + cap(afterLabel, "", tagsAfter) + phoneHTML(k, after, "after", pc) + "</div>";
+      h += "</div></div>";
+      h += '<p class="note-p truesize">' + esc(k.who) + " · phone 375 × 760 · the reader’s sheet over the Notifications page, true size. The sheet is at most three quarters of the screen above the bottom bar; past that it scrolls.</p>";
+      if ((k.extras || []).length) {
+        h += '<div class="scroller"><div class="pair">';
+        (k.extras || []).forEach((x) => { h += '<div class="fig">' + cap(x.cap, "", tag(x.tag[0], "NEW STATE", x.tag[1])) + miniHTML(k, Object.assign({}, x.spec), { phone: true }) + "</div>"; });
+        h += "</div></div>";
+      }
+    }
+    box.innerHTML = h;
+    const notes = document.getElementById("notes-" + key);
+    let n = '<h3>What the pins say</h3><ol>';
+    pc.notes.forEach((t, i) => { n += '<li><button type="button" class="n" data-note="' + esc(t) + '" data-n="' + (i + 1) + '">' + (i + 1) + "</button><span>" + esc(t) + "</span></li>"; });
+    n += "</ol>";
+    if (k.notesExtra) n += '<ul class="found">' + k.notesExtra.map(t => "<li>" + esc(t) + "</li>").join("") + "</ul>";
+    notes.innerHTML = n;
+  }
+
+  // ───────────── Ask previews ─────────────
+  function fig(capText, inner, note) { return '<div class="fig">' + cap(capText, note ? '<span class="truesize">' + note + "</span>" : "") + inner + "</div>"; }
+  function renderAsks() {
+    const d = K.dispute, g = K.games;
+    const dRows = d.after.rows.map(r => Object.assign({}, r, { pin: undefined }));
+    const base = { rows: dRows, next: d.after.next };
+    document.querySelector('[data-preview="q1w"]').innerHTML =
+      fig("A · 5.5rem", miniHTML(d, base, { labelW: "5.5rem", noActions: true }), "as built") +
+      fig("B · 7rem", miniHTML(d, base, { labelW: "7rem", noActions: true })) +
+      fig("C · the longest label", miniHTML(d, base, { labelW: "4.7rem", noActions: true }), "“Answer by”, this notice");
+    const gRows = g.after.rows.map(r => Object.assign({}, r, { pin: undefined, listPin: undefined }));
+    document.querySelector('[data-preview="q1p"]').innerHTML =
+      fig("Phone A · beside", miniHTML(g, { rows: gRows, next: g.after.next }, { phone: true }), "375 wide") +
+      fig("Phone B · above", miniHTML(g, { rows: gRows, next: g.after.next, phoneAbove: true }, { phone: true }), "as built on Nov 14");
+    document.querySelector('[data-preview="q2"]').innerHTML =
+      fig("A · a row + a line", miniHTML(d, base)) +
+      fig("B · one line under the rows", miniHTML(d, { rows: dRows.filter(r => r.l !== "Answer by"), next: "Answer in Stripe by Nov 20 at 11:59 p.m." })) +
+      fig("C · the line, emphasised", miniHTML(d, { rows: dRows.filter(r => r.l !== "Answer by"), next: "Answer in Stripe by Nov 20 at 11:59 p.m.", nextEmph: true }));
+    const games = gRows.find(r => r.l === "Games");
+    const plainRows = gRows.map(r => r.l === "Games" ? Object.assign({}, r, { fold: 0, list: r.list.slice(0, 6).concat(["and 3 more"]) }) : r);
+    const allRows = gRows.map(r => r.l === "Games" ? Object.assign({}, r, { fold: 0 }) : r);
+    document.querySelector('[data-preview="q3"]').innerHTML =
+      fig("A · “and 3 more”", miniHTML(g, { rows: plainRows }, { noActions: true })) +
+      fig("B · “Show 3 more games” (click it)", miniHTML(g, { rows: gRows }, { noActions: true })) +
+      fig("C · never fold", miniHTML(g, { rows: allRows }, { noActions: true }));
+    void games;
+    const score = { ic: "🏆", kind: "Score submitted", stamp: "Sat, Nov 14 · 2:41 p.m.", act: false, go: "Open", title: "3 scores submitted" };
+    document.querySelector('[data-preview="q5"]').innerHTML =
+      fig("Today · a day’s bundle, opened", miniHTML(score, { members: [
+        { t: "Score submitted", b: "Submitted by scorekeeper kim@example.com", time: "Sat, Nov 14 · 2:41 p.m." },
+        { t: "Score submitted", b: "Submitted by scorekeeper kim@example.com", time: "Sat, Nov 14 · 1:12 p.m." },
+        { t: "Score submitted", b: "Submitted by scorekeeper raj@example.com", time: "Sat, Nov 14 · 11:58 a.m." },
+      ] })) +
+      fig("A · the one line carries the game", miniHTML(score, { members: [
+        { t: "Score submitted", b: "Ridge 12U 5, Hawks 3 · U13 Boys · by kim@example.com", time: "Sat, Nov 14 · 2:41 p.m." },
+        { t: "Score submitted", b: "Lakeshore 2, Stars 7 · U13 Boys · by kim@example.com", time: "Sat, Nov 14 · 1:12 p.m." },
+        { t: "Score submitted", b: "Riverdale 4, Ridge 11U 4 · U11 Girls · by raj@example.com", time: "Sat, Nov 14 · 11:58 a.m." },
+      ] }));
+    const gAfter = { rows: gRows, next: g.after.next };
+    document.querySelector('[data-preview="q9"]').innerHTML =
+      fig("C · today’s frame (scrolls)", phoneHTML(g, gAfter, "after", null)) +
+      fig("A · buttons pinned at the foot", phoneHTML(g, gAfter, "after", null, true));
+    const rf = { ic: "🔔", kind: "A refund didn’t reach the card", stamp: "Sat, Nov 14 · 9:10 a.m.", act: true, go: "Record the refund sent another way", title: "Ridge 12U’s refund didn’t reach the card" };
+    document.querySelector('[data-preview="q6"]').innerHTML =
+      fig("Proposed · team (C, E)", miniHTML(rf, { rows: [
+        { l: "Amount", lead: "$150.00" }, { l: "Sent to", v: "Visa •••• 4242" }, { l: "For", v: "Ridge 12U" }, { l: "Why", v: "It came back, for example because the card was closed" },
+      ], next: "Send the money another way, then record the refund." })) +
+      fig("Proposed · family, bank (A)", miniHTML(Object.assign({}, rf, { title: "Henry’s refund didn’t reach the bank account" }), { rows: [
+        { l: "Amount", lead: "$150.00" }, { l: "Sent to", v: "The account ending 6789" }, { l: "For", v: "Henry’s family" }, { l: "Why", v: "It came back, for example because the account was closed" },
+      ], next: "Send the money another way, then record the refund." }));
+  }
+
+  // ───────────── Decision sheet ─────────────
+  const ASKS = [
+    ["Q1 · label width (computer)", "A 5.5rem fixed · B 7rem fixed · C each notice’s longest label", "A · 5.5rem, labels at most 11 characters"],
+    ["Q1 · label on a phone", "A beside, lists full width · B above", "A · beside"],
+    ["Q2 · next step / deadline", "A date = a row, instruction = a line · B one line · C emphasised line", "A · and the line is replaced by the settled line"],
+    ["Q3 · long lists", "A 6 + “and 3 more” · B 6 + “Show 3 more games” (keep up to 30) · C never fold", "B · fold at 6"],
+    ["Q4 · amount in the title (3 kinds)", "A leave it · B move to a row · C both", "A · leave it in the title"],
+    ["Q5 · “Score submitted”", "A one line = game, score, by whom · B rows · C leave", "A · one extra read at send"],
+    ["Q6 · “A refund didn’t reach the card”, five senders", "One wording, facts passed in · keep as is", "One wording; titles keep team / child"],
+    ["Q7 · email copy", "/legal on the moved-games email before Stage 3 · skip", "Run /legal before Stage 3; Stage 2 checks each kind’s email"],
+    ["Q8 · “A game changed”", "A keep the sentence (leaves the 28) · B rows", "A · keep the sentence"],
+    ["Q9 · phone sheet taller than the screen", "A pin the buttons at the sheet’s foot when it scrolls · B fold to 3 on a phone · C leave it", "A · pin them (a Sheet Frame change)"],
+  ];
+  const STORE = "nmr-answers-v1";
+  function loadAnswers() { try { return JSON.parse(localStorage.getItem(STORE) || "{}"); } catch (e) { return {}; } }
+  function saveAnswers(a) { try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) { /* storage blocked: answers live on the page only */ } }
+  function renderSheet() {
+    const a = loadAnswers();
+    document.getElementById("sheet-body").innerHTML = ASKS.map((r, i) =>
+      "<tr><td><b>" + esc(r[0]) + "</b></td><td>" + esc(r[1]) + "</td><td>" + esc(r[2]) + '</td><td><textarea id="ans-' + i + '" data-i="' + i + '" aria-label="Your answer to ' + esc(r[0]) + '">' + esc(a[i] || "") + '</textarea><button type="button" class="take" data-take="' + i + '">Take the recommendation</button></td></tr>').join("");
+  }
+  document.addEventListener("input", (e) => {
+    const t = e.target; if (!t.matches || !t.matches("#sheet-body textarea")) return;
+    const a = loadAnswers(); a[t.dataset.i] = t.value; saveAnswers(a);
+  });
+
+  // ───────────── Switches, tabs, pins ─────────────
+  const TABS = ["pattern", "debit", "dispute", "games", "answers", "game", "asks"];
+  function showTab(name) {
+    if (!TABS.includes(name)) name = "pattern";
+    document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+    document.querySelectorAll("section.panel").forEach(s => { s.hidden = s.dataset.panel !== name; });
+    if (location.hash.slice(1) !== name) { try { history.replaceState(null, "", "#" + name); } catch (e) { location.hash = name; } }
+    window.scrollTo({ top: 0 });
+  }
+  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+  window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
+
+  function setSwitch(group, v) {
+    document.querySelectorAll('[data-sw="' + group + '"] button').forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+    if (group === "view") document.body.classList.toggle("differs", v === "diff");
+    if (group === "skin") document.body.classList.toggle("skin-dark", v === "dark");
+    if (group === "frame") { FRAME = v; ["pattern", "debit", "dispute", "games", "answers", "game"].forEach(renderKind); }
+  }
+  document.querySelectorAll(".track button").forEach(b => b.addEventListener("click", () => setSwitch(b.parentElement.dataset.sw, b.dataset.v)));
+
+  const ov = document.getElementById("ov");
+  let lastFocus = null;
+  function openNote(title, text) {
+    lastFocus = document.activeElement;
+    document.getElementById("ov-t").textContent = title; document.getElementById("ov-p").textContent = text;
+    ov.hidden = false; document.getElementById("ov-x").focus();
+  }
+  function closeNote() { ov.hidden = true; if (lastFocus) lastFocus.focus(); }
+  document.getElementById("ov-x").addEventListener("click", closeNote);
+  ov.addEventListener("click", (e) => { if (e.target === ov) closeNote(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !ov.hidden) closeNote(); });
+  document.addEventListener("click", (e) => {
+    const p = e.target.closest(".pin, .knotes .n, .mk");
+    if (p) { e.preventDefault(); e.stopPropagation(); openNote(p.dataset.title || ("Note " + p.dataset.n), p.dataset.note); return; }
+    const f = e.target.closest(".m-fold");
+    if (f) { const span = f.closest(".m-span"); const open = span.classList.toggle("open"); f.textContent = open ? "Show fewer" + f.dataset.noun : "Show " + f.dataset.more + " more" + f.dataset.noun; return; }
+    const t = e.target.closest("[data-take]");
+    if (t) { const i = t.dataset.take; const ta = document.getElementById("ans-" + i); ta.value = "Yes, as recommended: " + ASKS[i][2]; const a = loadAnswers(); a[i] = ta.value; saveAnswers(a); }
+  }, true);
+
+  document.getElementById("copy-btn").addEventListener("click", () => {
+    const a = loadAnswers();
+    const text = "Notification message rows · owner rulings\n" + ASKS.map((r, i) => r[0] + ": " + ((document.getElementById("ans-" + i) || {}).value || a[i] || "(no answer)")).join("\n");
+    const out = document.getElementById("copy-out"); out.value = text; out.hidden = false;
+    const msg = document.getElementById("copy-msg");
+    const fallback = () => { out.focus(); out.select(); msg.textContent = "Selected below: copy it with your keyboard."; };
+    try { navigator.clipboard.writeText(text).then(() => { msg.textContent = "Copied. Paste it back into the chat."; }, fallback); } catch (e) { fallback(); }
+  });
+
+  ["pattern", "debit", "dispute", "games", "answers", "game"].forEach(renderKind);
+  renderAsks();
+  renderSheet();
+  showTab(location.hash.slice(1) || "pattern");
+})();
+</script>

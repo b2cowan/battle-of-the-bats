@@ -35,9 +35,27 @@ export const canAskAgain = (askedAt: string | null, now: number = Date.now()) =>
 
 /** Some given or taken-back time, as the bell and the Send window say it. `minutes` is House league's time window's own
  *  figure (a week's minutes, the parts summed: "Hours add up across facilities"), so the two never disagree. */
-export interface TimePiece { minutes: number; detail: string; firstDay: string; lastDay: string }
+export interface TimePiece { minutes: number; detail: string; /** `detail`, one slot shape to a line (the opened notice lists them). */ lines: string[]; firstDay: string; lastDay: string }
 
 const range = (p: TimePiece) => dayRange([p.firstDay, p.lastDay]);
+
+/** One half of an opened time notice: "Gives · 2 hours a week · Mar 13 – Apr 3" over its slots, one to a line. */
+export interface TimeChangeBlock { label: string; hours: string; range: string; lines: string[] }
+/** What the opened notice lays out, stored on the notification so the reader can draw it as labelled rows instead of a paragraph. */
+export interface TimeChangeFacts { schedule: string; season: string; grows: boolean; blocks: TimeChangeBlock[] }
+
+const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every(x => typeof x === 'string');
+
+/** Read a notification's stored facts back, or null for anything else (a notice sent before this layout keeps its paragraph). */
+export function readTimeChangeFacts(meta: unknown): TimeChangeFacts | null {
+  const f = (meta as { timeChange?: unknown } | null | undefined)?.timeChange as Partial<TimeChangeFacts> | undefined;
+  if (!f || typeof f.schedule !== 'string' || typeof f.season !== 'string' || typeof f.grows !== 'boolean' || !Array.isArray(f.blocks) || !f.blocks.length) return null;
+  const blocks = f.blocks.filter((b): b is TimeChangeBlock =>
+    !!b && typeof b.label === 'string' && typeof b.hours === 'string' && typeof b.range === 'string' && strings(b.lines));
+  return blocks.length === f.blocks.length ? { schedule: f.schedule, season: f.season, grows: f.grows, blocks } : null;
+}
+
+const BELL_LABELS = { season: 'Season', schedule: 'Schedule', gives: 'Gives', takes: 'Takes back' } as const;
 
 export const TIME_HANDOFF_WORDS = {
   /** The league admin's bell (drawing tab 2, notes 1-2). The row opens the reader; the reader's door names House league's time. */
@@ -46,14 +64,28 @@ export const TIME_HANDOFF_WORDS = {
     /** [marketing] Send the changes took more than it gave. */
     takenTitle: 'The club took back house league time',
     /** `grows`: the season's week gained hours (a send that gives and takes the same hours tells nobody). */
+    /** The one-line summary: the list rows, the push and the email copy read this. The slots and dates live in `facts`, which the
+     *  opened notice draws as labelled rows (owner 2026-11-14: "its hard to pull out the relevant information at a glance"). */
     body: (p: { schedule: string; season: string; grows: boolean; given: TimePiece | null; taken: TimePiece | null }) => {
-      const gives = p.given ? `${hoursAWeek(p.given.minutes)}: ${p.given.detail}, ${range(p.given)}` : '';
-      const takes = p.taken ? `${hoursAWeek(p.taken.minutes)}: ${p.taken.detail}, ${range(p.taken)}` : '';
+      const gives = p.given ? hoursAWeek(p.given.minutes) : '';
+      const takes = p.taken ? hoursAWeek(p.taken.minutes) : '';
       if (p.grows) {
         // [marketing] the second sentence only when the same send also took some back.
-        return `“${p.schedule}” gives ${p.season} ${gives}. ${p.taken ? `It takes back ${takes}. ` : ''}Divide it into games and practices.`;
+        return `“${p.schedule}” gives ${p.season} ${gives}.${p.taken ? ` It takes back ${takes}.` : ''}`;
       }
       return `“${p.schedule}” takes back ${takes} from ${p.season}.${p.given ? ` It gives ${gives}.` : ''}`;
+    },
+    /** The opened notice's labelled rows. */
+    labels: BELL_LABELS,
+    /** [marketing] The next step, under the rows, only when the week grew. */
+    next: 'Divide it into games and practices.',
+    facts: (p: { schedule: string; season: string; grows: boolean; given: TimePiece | null; taken: TimePiece | null }): TimeChangeFacts => {
+      const block = (label: string, t: TimePiece | null): TimeChangeBlock[] => (t ? [{ label, hours: hoursAWeek(t.minutes), range: range(t), lines: t.lines }] : []);
+      const L = BELL_LABELS;
+      return {
+        schedule: p.schedule, season: p.season, grows: p.grows,
+        blocks: p.grows ? [...block(L.gives, p.given), ...block(L.takes, p.taken)] : [...block(L.takes, p.taken), ...block(L.gives, p.given)],
+      };
     },
   },
   /** The Send window's WHO IS TOLD line (drawing tab 2, note 3). Names the league admins (the sender's own window, not the
@@ -68,9 +100,10 @@ export const TIME_HANDOFF_WORDS = {
       givenMinutes > 0 ? `${hoursAWeek(givenMinutes)} to divide` : '',
       takenMinutes > 0 ? `${hoursAWeek(takenMinutes)} taken back` : '',
     ].filter(Boolean).join(', '),
-    how: 'bell',
-    /** With no league admin: "House league: owners and admins, by a bell" (the build prompt's words). */
-    byBell: 'by a bell',
+    /** [marketing] 2026-11-14: was a lone "bell", which read as a stray word. Says how they hear: a notification, no email. */
+    how: 'Told by notification, not email',
+    /** With no league admin: "House league: owners and admins, by notification, not email". */
+    byBell: 'by notification, not email',
   },
   /** The ask, on the league admin's screens (drawing tab 3, notes 1-2). */
   ask: {

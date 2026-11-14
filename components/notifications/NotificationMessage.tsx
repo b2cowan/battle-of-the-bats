@@ -9,6 +9,7 @@ import {
   BUNDLE_NOUN, HANDOFF_ACTIONS, entryMembers, handoffNotReceivedLink, iconFor, notificationDestination, notificationStamp,
   type ActivityEntry,
 } from '@/lib/notification-view';
+import { TIME_HANDOFF_WORDS, readTimeChangeFacts } from '@/lib/league-time-handoff';
 import buttons from './notification-buttons.module.css';
 import styles from './NotificationMessage.module.css';
 
@@ -88,6 +89,9 @@ export default function NotificationMessage({
         : lead.eventType === 'card_refund_failed' ? REFUND_NOTICE_ACTIONS.anotherWay : null;
   const goLabel = handoff ? HANDOFF_ACTIONS.recordIt : refundLabel ?? notificationDestination(link, portal);
   const goLink = enrolled ? withAnswer(enrolled, 'withdraw') : link;
+  // House league's time notice, sent since 2026-11-14, carries its facts: drawn as labelled rows, not a paragraph. An older
+  // one (or any other kind) has none and keeps its body.
+  const timeFacts = entry.kind === 'item' && lead.eventType === 'house_league_time_given' ? readTimeChangeFacts(lead.metadata) : null;
   const kind = NOTIFICATION_EVENT_LABELS[lead.eventType as NotificationEventType] ?? 'Notification';
   const title = entry.kind === 'bundle'
     ? `${members.length} ${BUNDLE_NOUN[entry.eventType] ?? 'notifications'}`
@@ -107,7 +111,7 @@ export default function NotificationMessage({
       <h2 id={titleId} ref={titleRef} tabIndex={-1} className={styles.title}>{title}</h2>
 
       {entry.kind === 'item' ? (
-        lead.body ? <p className={styles.body}>{lead.body}</p> : null
+        timeFacts ? <TimeChangeRows facts={timeFacts} /> : lead.body ? <p className={styles.body}>{lead.body}</p> : null
       ) : (
         <ul className={styles.members}>
           {members.map(m => (
@@ -161,6 +165,30 @@ export default function NotificationMessage({
           <Trash2 size={16} aria-hidden />
         </button>
       </div>
+    </>
+  );
+}
+
+/** "The club gave house league time", opened: Season, Schedule, then Gives (and Takes back) with the hours and dates on the label's
+ *  line and each slot under it, so the one fact wanted is found by its label, not by reading a sentence (owner 2026-11-14). */
+function TimeChangeRows({ facts }: { facts: NonNullable<ReturnType<typeof readTimeChangeFacts>> }) {
+  const L = TIME_HANDOFF_WORDS.bell.labels;
+  return (
+    <>
+      <dl className={styles.facts}>
+        <div className={styles.fact}><dt>{L.season}</dt><dd>{facts.season}</dd></div>
+        <div className={styles.fact}><dt>{L.schedule}</dt><dd>{facts.schedule}</dd></div>
+        {facts.blocks.map(b => (
+          <div key={b.label} className={styles.fact}>
+            <dt>{b.label}</dt>
+            <dd>
+              <span className={styles.factHours}>{b.hours}</span>{b.range && <> · {b.range}</>}
+              {b.lines.length > 0 && <ul className={styles.factLines}>{b.lines.map(l => <li key={l}>{l}</li>)}</ul>}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {facts.grows && <p className={styles.factNext}>{TIME_HANDOFF_WORDS.bell.next}</p>}
     </>
   );
 }

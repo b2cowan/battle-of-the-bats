@@ -11,7 +11,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  ASK_AGAIN_DAYS, TIME_HANDOFF_WORDS as W, canAskAgain, timeAskDoor, timeAskHref,
+  ASK_AGAIN_DAYS, TIME_HANDOFF_WORDS as W, canAskAgain, readTimeChangeFacts, timeAskDoor, timeAskHref,
 } from '../../lib/league-time-handoff.ts';
 import { seasonHoldsSlot } from '../../lib/league-time.ts';
 import { houseLeagueAccess } from '../../lib/house-league-access.ts';
@@ -26,17 +26,33 @@ describe('the time-given bell (A1, 13d-1 A)', () => {
   it('names the schedule, the season, the week’s hours and the dates, and says what to do', () => {
     const body = W.bell.body({
       schedule: 'Saturdays at Kinsmen, December 2026', season: '2026 Fall House League', grows: true,
-      given: { minutes: 120, detail: 'Sat · 9:00–11:00 a.m. · Kinsmen Park', firstDay: '2026-12-05', lastDay: '2026-12-19' }, taken: null,
+      given: { minutes: 120, detail: 'Sat · 9:00–11:00 a.m. · Kinsmen Park', lines: ['Sat · 9:00–11:00 a.m. · Kinsmen Park'], firstDay: '2026-12-05', lastDay: '2026-12-19' }, taken: null,
     });
-    assert.equal(body, '“Saturdays at Kinsmen, December 2026” gives 2026 Fall House League 2 hours a week: Sat · 9:00–11:00 a.m. · Kinsmen Park, Dec 5 – Dec 19. Divide it into games and practices.');
+    assert.equal(body, '“Saturdays at Kinsmen, December 2026” gives 2026 Fall House League 2 hours a week.');
     assert.equal(W.bell.givenTitle, 'The club gave house league time');
   });
   it('a send that takes more than it gives says it took time back', () => {
     const body = W.bell.body({
       schedule: 'Winter dome', season: 'Winter 2027', grows: false, given: null,
-      taken: { minutes: 60, detail: 'Sun · 6:00–7:00 p.m. · Dome', firstDay: '2027-01-10', lastDay: '2027-01-10' },
+      taken: { minutes: 60, detail: 'Sun · 6:00–7:00 p.m. · Dome', lines: ['Sun · 6:00–7:00 p.m. · Dome'], firstDay: '2027-01-10', lastDay: '2027-01-10' },
     });
-    assert.equal(body, '“Winter dome” takes back 1 hour a week: Sun · 6:00–7:00 p.m. · Dome, Jan 10 from Winter 2027.');
+    assert.equal(body, '“Winter dome” takes back 1 hour a week from Winter 2027.');
+  });
+  it('opens as labelled rows: season, schedule, then what it gives (and takes back) with each slot on its own line', () => {
+    const given = { minutes: 120, detail: 'a; b', lines: ['Sat · 11:00 a.m.–12:00 p.m. · Diamond A', 'Sat · 12:00–1:00 p.m. · Diamond B'], firstDay: '2027-03-13', lastDay: '2027-04-03' };
+    const taken = { minutes: 60, detail: 'c', lines: ['Sun · 6:00–7:00 p.m. · Dome'], firstDay: '2027-01-10', lastDay: '2027-01-10' };
+    const facts = W.bell.facts({ schedule: 'House league Saturdays, spring 2027', season: '2027 Spring House League', grows: true, given, taken });
+    assert.deepEqual(facts.blocks.map(b => [b.label, b.hours, b.range, b.lines.length]), [['Gives', '2 hours a week', 'Mar 13 – Apr 3', 2], ['Takes back', '1 hour a week', 'Jan 10', 1]]);
+    // Gives first when the week grew; Takes back first when it shrank.
+    assert.deepEqual(W.bell.facts({ schedule: 's', season: 'x', grows: false, given, taken }).blocks.map(b => b.label), ['Takes back', 'Gives']);
+    // It round-trips through the notification's metadata; a notice from before this layout (or junk) reads as null and keeps its paragraph.
+    assert.deepEqual(readTimeChangeFacts({ timeChange: JSON.parse(JSON.stringify(facts)) }), facts);
+    assert.equal(readTimeChangeFacts({ seasonId: 's1' }), null);
+    assert.equal(readTimeChangeFacts({ timeChange: { schedule: 's', season: 'x', grows: true, blocks: [{ label: 'Gives' }] } }), null);
+    assert.equal(readTimeChangeFacts(null), null);
+    // The reader draws them for this kind only, and the notice stores them.
+    assert.match(readCode('components/notifications/NotificationMessage.tsx'), /lead\.eventType === 'house_league_time_given' \? readTimeChangeFacts\(lead\.metadata\) : null/);
+    assert.match(readCode('lib/league-time-handoff-server.ts'), /timeChange: W\.bell\.facts\(/);
   });
   it('goes to whoever runs house league, the sender left out, one notify per told season; its door opens House league’s time', () => {
     const src = readCode('lib/league-time-handoff-server.ts');
@@ -87,7 +103,8 @@ describe('WHO IS TOLD gains a house league line (A2)', () => {
     assert.match(readCode('lib/league-time-handoff-server.ts'), /await boardNames\(p\.orgId, \['league_admin'\]\)/);
     assert.equal(`${W.whoTold.title} · ${W.whoTold.who(['Jules Moreau'])}: ${W.whoTold.what(120, 0)}`, 'House league · Jules Moreau, league admin: 2 hours a week to divide');
     assert.equal(W.whoTold.who(['A', 'B']), 'A and B, league admins');
-    assert.equal(`${W.whoTold.title}: ${W.whoTold.who([])}, ${W.whoTold.byBell}`, 'House league: owners and admins, by a bell');
+    assert.equal(`${W.whoTold.title}: ${W.whoTold.who([])}, ${W.whoTold.byBell}`, 'House league: owners and admins, by notification, not email');
+    assert.equal(W.whoTold.how, 'Told by notification, not email');
   });
   it('is held off for a send that gives house league nothing', () => {
     const send = readCode('lib/club-schedule-send.ts');
