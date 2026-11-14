@@ -1,6 +1,6 @@
 # One attendance record — plan
 
-**Status:** RULED 2026-11-13 (owner, mid-walk §526). S1 the record committed `54272a665` + `f554a73ea` 2026-11-13; S2 the screens committed `bfdaa885e` 2026-11-13; S3 next. PM brief: `ONE_ATTENDANCE_RECORD_PM_BRIEF.md`.
+**Status:** RULED 2026-11-13 (owner, mid-walk §526). S1 the record committed `54272a665` + `f554a73ea` 2026-11-13; S2 the screens committed `bfdaa885e` 2026-11-13; S3 the closeout committed `6e9d5fc77` 2026-11-14 with its legal text in `ff92f1afd` (owner walk §529 owed). PM brief: `ONE_ATTENDANCE_RECORD_PM_BRIEF.md`.
 **Supersedes** Signed-in Family Stage 4b's two-record design (`SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md`, committed
 `22db0210d` … `7fa87f3f7`; `COACH_AVAILABILITY_RSVP_PLAN.md` §governing constraint 1 and :136-137; the accounts plan's
 Stage 4b ask 3). Everything else Stage 4b ruled (the switch, Remind's cap, the bell's 48 h rule, consent 0.2, ask 14's
@@ -288,6 +288,73 @@ on; stage explicit pathspecs only; update the Progress block below; stop at the 
   two open design calls (family Late/Maybe pill pair; dashed = Maybe) untouched. **Proof:** typecheck 0 errors; ESLint + spelling clean;
   90 family-availability tests pass; full suite on clean copies — `bfdaa885e` and the fix commit fail the same 34 tests (same names).
   Dev server restart owed (a shared module changed).
+
+- 2026-11-14 — **S3 the closeout BUILT, committed `6e9d5fc77` (legal text `ff92f1afd`).** No migration. Steps in the owner's order:
+  1. **Stats cut-off fixed.** The three attendance stat reads (a player's summary, the team roll-up, the receipts and month-chart marks) now go
+     through ONE read in `lib/db.ts` that carries the started-events bound (taken once per read) and pages with `fetchAll` under a stable
+     `.order('id')`. The roll-up's arithmetic moved to `lib/attendance-stat-fold.ts` (pure) and counts through `classifyAttendanceMark`, the
+     rule the receipts and the month chart already used, so the three can no longer disagree. Tests: a source guard (all three go through the
+     helper; one `now`; paged; ordered) and a 1,350-row run where totals, receipts and the chart agree through a fake server that stops at 1,000
+     rows (`tests/unit/attendance-stats-paging.test.ts`). A real-database check: `scripts/seed-attendance-large-roster-fixture.mjs` (walk Part 7)
+     adds ~1,300 past rows to 15U AAA and prints its own figures from its own paged reads; proved here setup → 1,309 rows → teardown → 0.
+  2. **The two design calls**, as ruled: the family page's Late is an amber fill and Maybe a dashed 1px edge on no fill in neutral ink, matching the
+     coach's RSVP sheet and the game console (already drawn that way); the dashed rule is widened and logged at the top of `memory/design_decisions.md`
+     (2026-11-14). `/design` ran: contrast Late ≈ 5.0:1 on its tint, dashed edge ≈ 9:1, no clash with the focus ring; two notes only (a closed answer is
+     a neutral grey chip; the family sheet's ticked choice stays olive for every answer).
+  3. **Review leftover fixed:** the save reply now names a CONNECTED other parent after an agree (`nameOfInReply`; never a coach, never a parent who
+     left; a failed lookup falls back to "the other parent" and never fails a stored save). Left on purpose as listed: Maybe on a call-up, the autosave
+     retry loop, Late in the roster page's rate denominator.
+  4. **Help** (`/docs`): the whole "Families say if they're coming" section rewritten for the one record (one answer per player, set-by and when, latest
+     wins, lock at the start, Maybe, two notes, All in / Reset / Remind, nothing cleared on a new day, stats count started events only), plus the
+     attendance and lineup one-liners and four FAQs; keywords and search text carry the new terms. No parent help surface exists, so what a parent
+     sees lives there.
+  5. **/legal:** the privacy draft's §5 and §9 promised the OLD model ("a separate record … never changes the coach's own record", "answers deleted",
+     "a new day deletes answers") and are rewritten from migs 483 to 485; the topic file carries an UPDATE section with the corrections and three owner
+     questions (Q1 the consent box 0.2 does not say a coach can change the answer, the sheet's hint now does; Q2 a leaving parent's first name stays
+     on the coach's side until the clock; Q3 an uncorrected parent's guess counts once started). Two product words changed: the answer sheet's hint
+     (a coach can change the answer, and you will see who and when) and the Leave/Stop confirm (the answers stay as attendance; the first name stays 60
+     days past the season's last event; the confirm now also shows when the name survives only as the "earlier" answer). **The legal draft files held
+     other sessions' uncommitted hunks as well as mine; owner ruled 2026-11-14: commit mine plus the Stage 4b text (`ff92f1afd`; the 4b text of
+     2026-11-13 was never committed and my rewrite sits inside it), leave the friend-requests, audit-log and club-schedule hunks to their sessions.**
+  6. **Docs of record:** DATA_DICTIONARY and the snapshots were already current from S1 (`check:dictionary` ✓; snapshots refreshed); MANUAL_PROD_STEPS carries
+     483/484/485 and now names "453 first" in the order; the Owner QA Ledger has §529 and marks §526 sections 4 to 14 superseded.
+  7. **Demos and UAT:** the census found no seed or spec that still names the old table or words. The one real conflict: the demo reconcile deleted
+     EVERY attendance row at future demo events, family answers included (contradicts "a new day clears nothing"); it now spares family-set rows, and
+     `check:demos` ignores them. The seeds' marked rows carry no setter, so no "earlier" shows in the shop window: `/demos`' call, nothing built. Dev
+     bell lines filed before S2 now read through a one-line old-to-new mapping (dev only; delete it once no such unread line can remain).
+  8. **`/simplify`** (four angles): removed the now-duplicate interfaces and the clock wrapper, made the paged read generic, shortened the name lookup
+     and the bell mapping, narrowed the roll-up's select. Skipped on purpose: one shared "connected parent's name" helper between the page read and the
+     reply (two small copies of a 10-line rule, different inputs), and reading the marks once for both the totals and the receipts (a bigger change to the
+     route). **`/review`** (high-risk tier, four lenses: paging and stats · privacy and the legal text · help text against code · demo, bell, fixture
+     regressions): no Critical or High. **Fixed:** a failed name lookup could turn a stored answer into a failed save and skip the coach's bell; the demo
+     check could pass vacuously on a failed read; eleven help sentences that overstated the product (who the Remind report names, what "haven't"
+     counts, which changes ring the bell, the note-clearing rule, the Maybe timing, the lineup words' audience, retention wording); the privacy text's
+     "other staff see only totals" and "notes deleted at once" (a parent with another connection keeps theirs). **Left:** offset paging is not a snapshot
+     (a row written mid-read can shift one page: acceptable for a stat; wording corrected); the unconfirmed-In / lineup-only staff seeing "a family set
+     this" without a name; a parent's clear of an answer that no longer exists returns an error instead of nothing (hand-built request only).
+  9. **Walk:** §526 sections 4 to 14 replaced by §529 (https://claude.ai/artifact/XvMU9P4N76krc7oSgnbMh1; 8 parts, 50 steps, 5 calls outside the count).
+  - **Proof (2026-11-14, before the commit):** typecheck 0 errors; ESLint 0 errors on the touched files; spelling and dictionary gates clean; every
+    attendance, family-availability, receipts, monthly-attendance and help test file passes (137/137). Not run: `verify:changed` (its ESLint run crashes on a
+    plugin-config error over the shared tree), `check:layout` (no dev server up).
+  - **Proof on clean copies:** the full `npm test` on a clean copy of the parent (`04402a69c`) and of commit A (`6e9d5fc77`): both run with the same
+    34 failing tests (95 lines of output) with identical names, none in attendance, family answers or help; A adds 11 passing tests (17,084 → 17,095) and
+    no failure. A also typechecks with 0 errors on a clean copy. (The working tree run showed 22 failures against 34 on the clean copies; the reason was not
+    investigated. What matters here is that both clean copies fail identically.)
+  - **Second review (2026-11-14, standard tier, three lenses: paging and stats · family answers, bell shim, demo check · help text against code):** no
+    Critical or High. **Fixed (help text, `lib/help-content/coaches.tsx`):** Reset clears every answer a COACH set (it said "you set"); a parent's
+    different answer replaces the earlier parent's note even with a blank box (it said "a note typed with the new answer"); the Remind confirm names only
+    players you marked; "nobody to remind" and the event row no longer promise a no-parent count they don't show; Maybe added to the coach's choice list;
+    the "Can I stop that?" answer now names the Sharing switch; retired search terms ('use family answers', 'undo') removed. **Left, on purpose:** the read
+    instant is taken once per read, so an event that starts in the milliseconds between the totals read and the receipts read could appear in one and not
+    the other (Low; the old per-call clock had the same gap); `check:demos` no longer counts a past game whose only mark is a family's as "attendance
+    taken" (Low, arguably more honest); the product's own card words `nobodyLeft`/`nobody` say "has answered" when the family may simply have been
+    marked (a product word: own change, not a help fix); the help does not say a leaving parent's first name stays for 60 days (add if `/docs` agrees).
+  - **Owed:** dev server restart before the walk (shared modules and a stylesheet changed); the walk §529; the prod promote in the order named above;
+    the five owner calls in the walk; the three legal owner questions (Q1–Q3, topic file); the privacy draft's findings-note numbering skips 8 until the
+    friend-requests text is committed by its own session.
+  - **Commits:** A `6e9d5fc77` (code, tests, the fixture script, the help section, the pill CSS, the design log entry, MANUAL_PROD_STEPS, the §529 ledger
+    block and §526 superseded lines, the walk file; 19 files); B `ff92f1afd` (the four legal files, mine plus Stage 4b only); C = this entry and the TODO
+    line. `lib/attendance-stat-fold.ts` and `tests/unit/attendance-stats-paging.test.ts` are in A.
 
 ## 5. The walk (owner 2026-11-13: concise, one action per step, ~20–50 boxes)
 
