@@ -29,6 +29,9 @@
   §3: the two-step records, the support-reset request record, and the account and set-up emails. §5: what a club's owners and
   admins see about two-step. §9: how long those records are kept (with the account or the club; no separate limit). §10: the
   two-step paragraph and the reset paths. Finding 5 and §10 note 3 reworded (not closed). Read against `TWO_STEP_SIGNIN_PRIVACY.md`.
+- 0.2 · 2026-11-12 · House-league friend requests (Board Ready Stage 1, Parts 1–3; **text goes live with their promote**).
+  §5: the paragraph on friends a parent names (what is typed, who sees it, used only for team placement). §9: deleted when
+  the season is finished, or 60 days after its last day. Read against `FRIEND_REQUESTS_PRIVACY.md`.
 - 0.2 · 2026-11-13 · Families say if they're coming (Signed-in family Stage 4b; **text goes live only when the guardian tier is on for real
   families and migrations 476, 477, 480 and 482 are on production**). §5: the paragraph on parents saying whether a player is coming and on the
   reminder email. §9: how long the answers and notes are kept. **Rewritten 2026-11-14 for One attendance record** (the answer is the player's attendance, a coach can change it, nothing clears on a new day, the clean-up never deletes an answer). New finding 11 (the in-app bell lines have no retention clock). Read against
@@ -174,6 +177,26 @@ To keep it stopped we keep that address on a short list for that club for as lon
 emailed about the stop; the club's registrar can see that the address was stopped and when. Receipts and refunds go to the
 person who paid, not to the second address.
 
+**Friends a parent names on a house-league sign-up.** When a club turns it on, a house-league sign-up can ask which other
+children a child would like to play with. The parent types the friend's first and last name (one of them is enough),
+may add that child's parent's name, or enters the friend's **friend code** — a short code every sign-up is given, so one
+family can name another's child without typing the name. The family of the child who is named did not give us that name:
+the parent who signed up did, and the form asks them to name only a child whose family is happy for them to. Only the club's
+staff who work on sign-ups and teams — the people the club has allowed to open its Registrations — see these names. They
+check which sign-up each name means, and they may keep a short note when they cannot honour a request. The team draft then
+puts friends on the same team (up to three children together), and the club can also use a request to keep two children on
+different teams. **We use these names only to decide which team a child plays on.** A request is not emailed to the family
+that is named, is not shown on a public page, and is not in the club's family or people lists; the one place the names are
+written out is the Friend requests list the club can download.
+
+**Two-step sign-in, and what your club sees.** A club's owners and admins (no other role) can see, for each person in the
+club, whether two-step sign-in is on and when it was set up. Where the club requires it for a role, they also see how many
+days that person has left to set it up, or that the time has passed. The club's Overview shows its owners and admins a short
+list of the people who still need to set it up (up to three names, with their role and the earliest date), and the members
+list the club can download carries the same column. **The club never sees your codes, your authenticator app or your
+devices.** If an owner or admin resets your two-step sign-in, it is only when your account is used for that club alone; if
+your account reaches anywhere else, the club is told only that FieldLogicHQ support must do it, with no reason given.
+
 **Parents saying whether a player is coming.** When a team's coach turns it on, a parent who has joined the team in the app can
 say In, Late, Maybe or Out for each upcoming game or practice the coach has chosen, and may add one short note (up to 200 characters).
 That answer **is the player's attendance for that event**: there is one answer per player and event, kept in the team's attendance
@@ -234,6 +257,18 @@ If you can't reach the club, contact us (§2) and we will pass your request on a
 >    registrars and the public board page never see it. The last sentence discloses a narrow inference (the account reaches
 >    somewhere beyond the club) — accepted by the ask 3 ruling, so say it plainly rather than hide it. If the Overview or
 >    export ever shows a role other than owner/admin, or a code/app/device fact, this paragraph is wrong first.
+> 8. **Friend-requests paragraph (added 2026-11-12; Board Ready Stage 1, Parts 1–3 — publish with the promote).** Sources:
+>    `FRIEND_REQUESTS_PRIVACY.md`, re-read 2026-11-12 against the code: the form's own sentence (`lib/league-friends.ts:120`);
+>    every friend surface behind `houseLeagueRefusal(ctx, 'read')` (owner, admin, league admin, registrar, anyone the club has
+>    granted House league — so "allowed to open its Registrations" is the exact set, and the club can widen it); mig 461 (what
+>    is typed: first, last, parent name, code, a 280-character note); no email and no family or people list reads the table.
+>    "Used only to decide which team a child plays on" is the wording that covers both Keep together and Keep apart — it is
+>    owner call 1's second option, applied here so the policy is true either way; the form sentence stays as shipped until the
+>    owner rules (see the topic file). The "up to three children" and "keep two apart" lines are product facts, not promises
+>    to families. **Indirect collection:** the named child's family is not told (PIPEDA 4.3 — see the topic file's lawyer's-eye
+>    line); the "happy for you to" form line and this paragraph are the only notice. If a club ever emails a named family, or
+>    the typed names reach a second place (a people list, a public page, an export other than the Friend requests file), this
+>    paragraph is wrong first.
 > 9. **Parents-saying-if-they're-coming paragraph (added 2026-11-13; Stage 4b closeout; REWRITTEN 2026-11-14 for One attendance record — publish with the tier and migs 476, 477, 479, 480, 482, 483, 484, 485 in that order).** The 2026-11-13 text said an answer "is a separate record ... never changes the coach's own attendance record" — FALSE since mig 483 (one record, latest change wins; ruling 1 of `ONE_ATTENDANCE_RECORD_PLAN.md`), so §5 and §9 now say the opposite. A parent seeing the coach's change on their OWN child is ruling 4 (the payload names a coach only as "Coach", never the coach's note: `lib/family-availability.ts` `rowOf` / `whoFor`; guard tests in `tests/unit/family-availability.test.ts`); "no message when a coach changes an answer" was checked: the coach attendance route sends none.
 >    Sources and line references: `FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md` ("What the product does today"). "Other staff of the team see
 >    only totals" is ask 11 (the `attendance` capability; guard test g) — the club administrator's rep schedule shows neither; if either ever
@@ -341,6 +376,10 @@ and email addresses.
   turn two-step off or replace your phone; the record of codes recently accepted is cleared the next time you enter a code.
   A **support reset request** and the note of why are kept with your account or your organization, with no separate time
   limit.
+- **Friend requests** (§5) are deleted when the club marks the season finished. If a club never does, they are deleted
+  automatically 60 days after the season's last day, and the friend code on each sign-up is cleared at the same time. A
+  copy of the Friend requests list that a club downloaded is the club's own, and our routine database backups age out on our
+  database host's schedule. To have a friend request removed, ask the club: its registrar can delete a request at any time.
 - **A parent's answers about whether a player is coming** (§5). The words of a note are deleted 30 days after the event. The answer
   itself is the player's attendance record, which is the club's: it is kept as the team's attendance, and this clean-up never deletes
   it. Who set the answer (a parent's account) and the answer before it are removed 60 days after the last event on the team's
@@ -381,6 +420,14 @@ and email addresses.
 >    rows and reset-request rows cascade with the person or the club. "Backup codes are removed when you turn two-step off"
 >    rests on the turn-off route's last step (`turn-off/route.ts`, `lib/two-step-reset.ts`): re-check it at promote. No
 >    separate limit exists for the free-text Why (LEGAL_INDEX L16): same open question as the staff change-log reasons.
+> 8. **Friend-request retention (added 2026-11-12; publish with the promote of Board Ready Stage 1, Parts 1–3).** Read from the
+>    migrations: 471 deletes every request of a season, and clears each sign-up's friend code, the moment the season becomes
+>    completed or archived; 472 schedules a nightly backstop (08:25 UTC) that does the same for a season whose end date
+>    (else start + 1 year, else created + 1 year) is more than 60 days past, finished or not. **True as written, and
+>    automatic** — unlike most of this section. "Registrar can delete a request at any time" is the club's Delete request…
+>    action. **Not verified:** how long the database host keeps routine backups (Supabase Pro) — the sentence names no number
+>    on purpose; read it off the host's own page before the policy publishes a figure (same open question as finding 2).
+>    The team a child was placed on stays on the registration (it is the purpose, not friend data).
 > 9. **Answers-and-notes retention (added 2026-11-13; REWRITTEN 2026-11-14 for One attendance record — publish with migs 476, 477, 479, 480, 482, 483, 484, 485 on production, in that order).** The old clauses "answers deleted 60 days after the season" and "a new day deletes answers" are NO LONGER TRUE (mig 484 blanks who-set-it and the previous answer and never deletes an attendance row; mig 485 drops the new-day trigger, owner call C1); the bullet above was rewritten from 483/484/485, not from the 2026-11-13 reading below, which is kept for history only:
 >    Each clause read from the migration, not the plan: notes 30 days after the event (476 `:151-155`); answers 60 days after the season's
 >    last event, any type and any status, closed or not, grouped by the team's program year (476 `:157-175`, dictionary: one program year per

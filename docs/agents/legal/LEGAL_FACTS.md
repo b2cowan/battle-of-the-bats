@@ -29,7 +29,7 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
 ## FieldLogicHQ's two privacy roles
 1. **Its own organization** for account holders' information (owner, coaches, club admins: name, email,
    billing address for sales tax).
-   *(Also, from 2026-11-12: a parent may type another family's child's name, an optional parent name, or a friend code on a house-league sign-up — Board Ready friend requests. Seen only by the seats that open Registrations, used only for team placement, deleted when the season is marked finished or 60 days after its last day. Privacy policy draft has no text for it yet; see `FRIEND_REQUESTS_PRIVACY.md`.)*
+   *(Also, from 2026-11-12: a parent may type another family's child's name, an optional parent name, or a friend code on a house-league sign-up — Board Ready friend requests. Seen only by the seats that open Registrations, used only for team placement, deleted when the season is marked finished or 60 days after its last day. Privacy policy draft v0.2 carries the text (§5, §9) since 2026-11-12, to go live with the Parts 1–3 promote; see `FRIEND_REQUESTS_PRIVACY.md`.)*
 2. **Service provider to each club** for the information the club puts in — rosters, players, families,
    tryout registrants. The club decides what it collects; FieldLogicHQ processes it for the club. The
    documents must say which role applies to what.
