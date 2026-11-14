@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-11-12 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-14 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-11-12
+# DB Schema Reference — 2026-11-14
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -160,6 +160,10 @@ season_id (uuid) → league_seasons.id NOT NULL, org_id (uuid) → organizations
 ### league_season_notices
 id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, kind NOT NULL, family_count (integer), reached_count (integer), failed_count (integer), created_by (uuid), created_at, club_schedule_send_id (uuid) → club_schedule_sends.id, skipped_count (integer)
 - Indexes: league_season_notices_division_idx, league_season_notices_org_idx, league_season_notices_season_idx, league_season_notices_send_idx
+
+### league_season_time_asks
+season_id (uuid) → league_seasons.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, asked_at, asked_by (uuid)
+- Indexes: league_season_time_asks_org_idx
 
 ### league_seasons
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb), early_bird_until, how_to_pay, ask_email_consent (boolean), registration_closed_at, owing_amber_days, finished_at, twice_in_a_day_allowed (boolean), home_away_tolerance, started_from (jsonb), friend_requests_max
@@ -360,8 +364,8 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_team_eval_sessions_event_idx, rep_team_evaluation_sessions_id_team_uniq, rep_team_evaluation_sessions_org_idx, rep_team_evaluation_sessions_py_idx, rep_team_evaluation_sessions_team_idx
 
 ### rep_team_event_attendance
-id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, status, note, updated_by (uuid), created_at, updated_at
-- Indexes: rep_team_event_attendance_event_id_player_id_key, rep_team_event_attendance_event_idx, rep_team_event_attendance_org_id_idx, rep_team_event_attendance_player_idx, rep_team_event_attendance_program_year_id_idx, rep_team_event_attendance_team_idx
+id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, status, note, updated_by (uuid), created_at, updated_at, set_at, set_by_kind, set_by_user_id (uuid), previous_status, previous_by_kind, previous_by_user_id (uuid), previous_at, family_note, family_note_by_user_id (uuid), family_note_at
+- Indexes: rep_team_event_attendance_event_id_player_id_key, rep_team_event_attendance_event_idx, rep_team_event_attendance_family_note_by_user_idx, rep_team_event_attendance_org_id_idx, rep_team_event_attendance_player_idx, rep_team_event_attendance_previous_by_user_idx, rep_team_event_attendance_program_year_id_idx, rep_team_event_attendance_set_by_user_idx, rep_team_event_attendance_team_idx
 
 ### rep_team_event_tags
 event_id (uuid) → rep_team_events.id NOT NULL, tag_id (uuid) → rep_team_tags.id NOT NULL, created_at
@@ -460,7 +464,7 @@ team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT
 - Indexes: idx_rep_team_tryout_contacts_org, idx_rep_team_tryout_contacts_setter
 
 ### rep_teams
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb), arrival_before_game_min (integer), arrival_before_practice_min (integer), sponsor_payment_details (jsonb)
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb), arrival_before_game_min (integer), arrival_before_practice_min (integer), sponsor_payment_details (jsonb), family_answers
 - Indexes: idx_rep_teams_org_share_club_book, rep_teams_group_id_idx, rep_teams_org_id_slug_key
 
 ### rep_tryout_evaluator_sessions
@@ -510,7 +514,7 @@ id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, tournament_team_id 
 - Indexes: team_workspace_claims_contact_email_idx, team_workspace_claims_team_workspace_id_idx, team_workspace_claims_token_hash_unique, team_workspace_claims_tournament_idx
 
 ### team_workspaces
-id (uuid), workspace_org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, active_program_year_id (uuid) → rep_program_years.id, primary_owner_user_id (uuid), source, source_tournament_id (uuid) → tournaments.id, source_tournament_team_id (uuid), workspace_state, billing_mode, billing_owner_org_id (uuid) → organizations.id, billing_owner_user_id (uuid), stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end, created_at, updated_at, basic_coach_team_id (uuid) → basic_coach_teams.id, migration_summary (jsonb), free_time_given_at, free_time_reminded_14_for, free_time_reminded_3_for
+id (uuid), workspace_org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, active_program_year_id (uuid) → rep_program_years.id, primary_owner_user_id (uuid), source, source_tournament_id (uuid) → tournaments.id, source_tournament_team_id (uuid), workspace_state, billing_mode, billing_owner_org_id (uuid) → organizations.id, billing_owner_user_id (uuid), stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end, created_at, updated_at, basic_coach_team_id (uuid) → basic_coach_teams.id, migration_summary (jsonb), free_time_given_at, free_time_reminded_14_for, free_time_reminded_3_for, renewal_reminded_for
 - Indexes: team_workspaces_active_program_year_id_idx, team_workspaces_basic_coach_team_idx, team_workspaces_billing_owner_org_id_idx, team_workspaces_one_free_time_portal_per_coach, team_workspaces_one_free_time_portal_per_free_team, team_workspaces_rep_team_unique, team_workspaces_source_tournament_idx, team_workspaces_state_idx, team_workspaces_stripe_subscription_id_uniq, team_workspaces_workspace_org_unique
 
 ## Module: Accounting
@@ -603,7 +607,7 @@ id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) 
 - Indexes: organization_members_invited_email_idx, organization_members_organization_id_user_id_key
 
 ### organizations
-id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb), coach_names_policy, subscription_amount_cents (integer), subscription_currency, tournament_look_policy, logo_aspect, two_step_board_required_since, two_step_coaches_required_since, two_step_prompt_closed_at, is_test_organization (boolean)
+id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb), coach_names_policy, subscription_amount_cents (integer), subscription_currency, tournament_look_policy, logo_aspect, two_step_board_required_since, two_step_coaches_required_since, two_step_prompt_closed_at, is_test_organization (boolean), renewal_reminded_for
 - Indexes: idx_organizations_email_opt_out, organizations_slug_key
 
 ## Module: Platform Admin
@@ -664,8 +668,8 @@ id (uuid), seq (bigint) NOT NULL, stripe_invoice_id NOT NULL, livemode (boolean)
 - Indexes: platform_charge_tax_looks_chain_idx, platform_charge_tax_looks_invoice_idx, platform_charge_tax_looks_put_back_once_idx
 
 ### platform_charge_tax_records
-id (uuid), stripe_invoice_id NOT NULL, livemode (boolean) NOT NULL, kind NOT NULL, org_id (uuid), user_id (uuid), buyer_kind NOT NULL, buyer_name, stripe_customer_id NOT NULL, stripe_subscription_id, stripe_payment_intent_id, invoice_number, issued_at NOT NULL, currency NOT NULL, amount_before_tax_cents (integer) NOT NULL, tax_total_cents (integer) NOT NULL, total_cents (integer) NOT NULL, tax_lines (jsonb), stripe_tax_status, gst_hst_position NOT NULL, gst_hst_position_why, taxed_country, taxed_region, taxed_postal_code, evidence_missing (boolean) NOT NULL, evidence_country, evidence_region, evidence_line1, evidence_line2, evidence_city, evidence_postal_code, evidence_confirmed_at, us_declaration_version, us_declaration_at, card_country, payout_country, review_reason, review_note, evidence_read_at NOT NULL, evidence_captured NOT NULL, fx_rate (numeric), fx_rate_date, fx_source, cad_amount_before_tax_cents (integer), cad_tax_total_cents (integer), cad_total_cents (integer), stripe_cad_total_cents (integer), status NOT NULL, paid_at, voided_at, uncollectible_at, refunded_cents (integer), created_at, updated_at
-- Indexes: platform_charge_tax_records_customer_idx, platform_charge_tax_records_org_idx, platform_charge_tax_records_period_idx, platform_charge_tax_records_stripe_invoice_id_key, platform_charge_tax_records_user_idx
+id (uuid), stripe_invoice_id NOT NULL, livemode (boolean) NOT NULL, kind NOT NULL, org_id (uuid), user_id (uuid), buyer_kind NOT NULL, buyer_name, stripe_customer_id NOT NULL, stripe_subscription_id, stripe_payment_intent_id, invoice_number, issued_at NOT NULL, currency NOT NULL, amount_before_tax_cents (integer) NOT NULL, tax_total_cents (integer) NOT NULL, total_cents (integer) NOT NULL, tax_lines (jsonb), stripe_tax_status, gst_hst_position NOT NULL, gst_hst_position_why, taxed_country, taxed_region, taxed_postal_code, evidence_missing (boolean) NOT NULL, evidence_country, evidence_region, evidence_line1, evidence_line2, evidence_city, evidence_postal_code, evidence_confirmed_at, us_declaration_version, us_declaration_at, card_country, payout_country, review_reason, review_note, evidence_read_at NOT NULL, evidence_captured NOT NULL, fx_rate (numeric), fx_rate_date, fx_source, cad_amount_before_tax_cents (integer), cad_tax_total_cents (integer), cad_total_cents (integer), stripe_cad_total_cents (integer), status NOT NULL, paid_at, voided_at, uncollectible_at, refunded_cents (integer), created_at, updated_at, billing_reason, purchase_email_at
+- Indexes: platform_charge_tax_records_customer_idx, platform_charge_tax_records_org_idx, platform_charge_tax_records_period_idx, platform_charge_tax_records_purchase_email_idx, platform_charge_tax_records_stripe_invoice_id_key, platform_charge_tax_records_user_idx
 
 ### platform_credit_note_tax_records
 id (uuid), stripe_credit_note_id NOT NULL, stripe_invoice_id NOT NULL, livemode (boolean) NOT NULL, kind, org_id (uuid), user_id (uuid), stripe_customer_id NOT NULL, note_number, note_type NOT NULL, stripe_reason, issued_at NOT NULL, currency NOT NULL, amount_before_tax_cents (integer) NOT NULL, tax_total_cents (integer) NOT NULL, total_cents (integer) NOT NULL, tax_lines (jsonb), refund_cents (integer), out_of_band_cents (integer), evidence_captured NOT NULL, fx_rate (numeric), fx_rate_date, fx_source, cad_amount_before_tax_cents (integer), cad_tax_total_cents (integer), cad_total_cents (integer), status NOT NULL, voided_at, created_at, updated_at
@@ -844,7 +848,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → c
 - Indexes: club_schedule_replies_by_idx, club_schedule_replies_org_idx, club_schedule_replies_schedule_idx, club_schedule_replies_send_idx, club_schedule_replies_team_idx
 
 ### club_schedule_sends
-id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, kind NOT NULL, sent_at, sent_by (uuid), team_ids, people_count (integer), failed_count (integer), bookings_email, reply_by, changes (jsonb), team_values (jsonb), billed (jsonb), owed_back (jsonb), allocation_id (uuid) → rep_cost_allocations.id, landed_at, settled (jsonb)
+id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, kind NOT NULL, sent_at, sent_by (uuid), team_ids, people_count (integer), failed_count (integer), bookings_email, reply_by, changes (jsonb), team_values (jsonb), billed (jsonb), owed_back (jsonb), allocation_id (uuid) → rep_cost_allocations.id, landed_at, settled (jsonb), league_slot_ids
 - Indexes: club_schedule_sends_allocation_idx, club_schedule_sends_org_idx, club_schedule_sends_schedule_idx, club_schedule_sends_sent_by_idx
 
 ### club_schedule_slot_programs
@@ -870,6 +874,10 @@ id (uuid), group_id (uuid) → error_groups.id NOT NULL, occurred_at, env, sourc
 ### error_groups
 id (uuid), fingerprint NOT NULL, title, error_name, route, http_method, severity, status, env, first_seen_at, last_seen_at, occurrence_count (bigint), distinct_org_count (integer), resolved_at, resolved_by, snooze_until, sample_stack, sample_context (jsonb), created_at
 - Indexes: error_groups_fingerprint_key, idx_error_groups_env_last_seen, idx_error_groups_status_severity
+
+### event_availability_reminders
+id (uuid), event_kind NOT NULL, event_id (uuid) NOT NULL, reminded_at, reminded_by_user_id (uuid), families (integer), parents (integer), app_only (integer)
+- Indexes: event_availability_reminders_by_idx, event_availability_reminders_event_idx
 
 ### family_calendar_feeds
 id (uuid), user_id (uuid) NOT NULL, token_hash NOT NULL, created_at, stopped_at
@@ -1130,10 +1138,10 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **277 tables** across 10 modules.
+Total: **279 tables** across 10 modules.
 
 - Tournament: 17 tables
-- League: 24 tables
+- League: 25 tables
 - Rep Teams: 76 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
@@ -1141,4 +1149,4 @@ Total: **277 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 32 tables
 - CRM / Leads: 6 tables
-- Other: 94 tables
+- Other: 95 tables
