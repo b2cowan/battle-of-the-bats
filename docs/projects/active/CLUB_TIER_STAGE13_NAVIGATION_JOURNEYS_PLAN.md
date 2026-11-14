@@ -879,6 +879,15 @@ ahead of the owner's rulings.
   Paid row and the method field are plain rows. **Known low, not fixed:** none new. Gates after: 14/14, typecheck clean at 8 GB,
   spelling clean, full unit suite 22 failures, none in a file this session touched.
 
+- 2026-11-14 — **13d WALK PUBLISHED as §528** (https://claude.ai/artifact/4fesQQyu4LjEdZGCuZWXSD, source [CLUB_TIER_STAGE13D_WALK.html](CLUB_TIER_STAGE13D_WALK.html); 13 parts, 47 steps,
+  3 calls; /design applied: phone buttons to 44 px). Fresh Harbourtown copy `navj-club-13d` (seed + `fx-13d-sched.mjs` + `fx-13d.mjs`; counts read back
+  per role in a browser, in the walk and the ledger). The dev server was restarted for Sessions A and B's new files. **Found while readying it:** Session B's
+  tournament "In the club's book" row never showed (the dashboard page did not copy `clubBook` from the server's answer into its stats); one line + a guard
+  test (`club-stage13d-money-handoff.test.ts`, 26/26), committed `ed3e0d57e` 2026-11-14. The walk's one send gives house league time only and holds no team,
+  so it emails nobody (R3). **Owed:** the owner's walk; `check:layout --changed` on the touched screens (staging, or against this copy); teardown of the copy
+  after the walk (`fx-teardown-13d.mjs`). Not walked: House league's time page and Generate games' Ask button (same gate, unit-tested), the Bill window's
+  over-the-line warning (no bill here is over its line).
+
 ## 11. The external review, cross-checked (2026-11-07)
 
 Source: `CLUB_TIER_PRODUCT_IA_REVIEW.md` (an outside reviewer's first look; its IDs are written **R-F-nn** here so they

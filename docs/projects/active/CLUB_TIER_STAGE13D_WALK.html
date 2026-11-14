@@ -1,0 +1,335 @@
+<title>13d Hand-offs Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame, as 13c's walk). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { button { min-height: 44px; } }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier Stage 13d · Hand-offs between people · §528</span>
+    <h1>Each hand-off reaches the person it is for, and nobody is shown a door they can’t open</h1>
+    <p class="sub">Written 2026-11-14, after Stage 13d Session A (time, committed <code>ff171af17</code>), Session B (money, committed <code>7912fa1b3</code>) and Session C (the coach’s request, committed <code>cec8115cd</code>). One purpose: when one person needs something from another (time, a bill, a payment method), it lands on the right person’s screen in words they can act on, and the people who can’t act see no button for it.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Harbourtown’s league admin has two house league seasons the club has given <strong>no time</strong>: <strong>2027 Spring House League</strong> (never asked) and <strong>2027 Winter Skills League</strong> (a draft that <strong>asked on Nov 5</strong>, 9 days ago). You will ask for the Spring’s time, give it by sending a schedule, and watch the ask clear and the bell reach the league admin. Then the money side: two schedules not yet sent carry bills (<strong>Spring tune-up practices</strong>, $400.00 on Diamond permits, and <strong>Winter dome extra hour</strong>, $900.00 on the dome line, in review), and each person sees them in the way their role allows. Last, a coach asks the club to pay (or says how they are paying), and the treasurer’s Approve already knows the method.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1–4</strong> The league admin asks for time, the owner and admins hear it on This morning, the owner gives time by sending a schedule that gives only house league time, and the league admin hears it and the season line changes.</li>
+    <li><strong>5</strong> The admin without Accounting sees the ask (giving time is not money) and no money door.</li>
+    <li><strong>6–7</strong> The treasurer reads what is owed to the club and the drafts being billed (read only); owners and admins with Accounting open the schedule from them; the Bill window names what Accounting already bills; the tournament shows “In the club’s book”.</li>
+    <li><strong>8–9</strong> The registrar sees none of it; the phone reads the same as rows.</li>
+    <li><strong>10–12</strong> The coach says how the money should move; the treasurer reads it, Approve is pre-filled, and the coach then reads “Paid”.</li>
+    <li><strong>13</strong> A new allocation from a line with a draft bill still saves (it warns, never blocks).</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk (not defects of this walk)</h2><ul>
+    <li><strong>The send in part 3 reaches nobody by email.</strong> The schedule you send gives house league time only and holds no team, so the Send window says “0 coaches” and “Nothing is emailed to a family”. The only people told are the league admins, admins and owners, by a bell. That is how this walk stops at a send without mailing anyone.</li>
+    <li><strong>The owner gets no bell for the time they give.</strong> The sender is never told about their own send. The league admin and the two admins are.</li>
+    <li><strong>One defect was found while setting this walk up and is fixed in the working tree, not yet committed:</strong> the tournament page never showed “In the club’s book” for anyone, because the page did not copy it from the server’s answer. It is one line, with a test (step 7.3 reads it). Commit awaits your yes.</li>
+    <li><strong>Winter’s ask is left standing.</strong> Its dates (Jan 9 – Feb 27, 2027) hold no time, so the schedule you send in part 3 gives time to the Spring only. The card goes from two seasons to one, not to none.</li>
+    <li><strong>Part 13 is last because it changes the books</strong> ($450.00 more billed to teams, the line down to $0.00 left). Everything that reads those figures comes first.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd><code>http://localhost:3000</code>, restarted 2026-11-14 for this walk (Sessions A and B added files).</dd>
+    <dt>The club</dt><dd>A fresh copy of <strong>Harbourtown Minor Ball</strong>, <code>navj-club-13d</code>. Counts below were read back from this copy before the walk was written.</dd>
+    <dt>Sign in</dt><dd><code>http://localhost:3000/login</code> · password <code>devpass123</code> for every account. Use a private window per person (or sign out between).</dd>
+    <dt>Accounts</dt><dd><code>navj-club-13d-owner@dev.local</code> (Morgan Ellis, owner) · <code>navj-club-13d-admin@dev.local</code> (Dana Kowalski, admin with Accounting) · <code>navj-club-13d-admin2@dev.local</code> (Sam Okafor, admin <strong>without</strong> Accounting) · <code>navj-club-13d-leagueadmin@dev.local</code> (Jules Moreau, league admin) · <code>navj-club-13d-registrar@dev.local</code> (Riley Okonkwo, registrar) · <code>navj-club-13d-treasurer@dev.local</code> (Avery Chen, treasurer) · <code>navj-club-13d-coach-13aaa@dev.local</code> (Priya Nair, head coach of 13U AAA)</dd>
+    <dt>Widths</dt><dd>“Desk” = a full browser window. “Phone” = the browser’s device view at <strong>390 px</strong>.</dd>
+    <dt>Order</dt><dd>Walk the parts in order. Part 1 asks, part 3 sends, part 11 approves, part 13 allocates: each changes what later parts read.</dd>
+    <dt>Keep private</dt><dd>Dev-only accounts; the page carries the password, so do not share the link.</dd>
+    <dt>When done</dt><dd>Tell Claude “13d walk done” with the build summary; it removes the copy and its accounts.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>One instruction or two (not on screen in this walk).</strong> The Bill window shows this only when a bill is bigger than its line, which no schedule here is. When it is, it says “Pick another line, or bill it off-plan”; the send’s own refusal says “Raise the line, bill a part of the cost, or bill from another line”. Both are about the same problem. Keep two sentences, or make them one?</li>
+    <li><strong>“(draft)” on a schedule in review (6.3).</strong> The Budget table’s caption under the dome line reads “$900.00 being billed (draft)”, while the line’s window says “A schedule in review”. Say “(in review)” in the caption too, or keep one short word?</li>
+    <li><strong>Where the card’s door lands (2.3).</strong> With several permits, the card on This morning opens Schedules (not a permit). Right place?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "club-stage13d-handoffs-walk-v1";
+  var TITLE = "Stage 13d walk §528 · Hand-offs between people (2026-11-14)";
+  var C = "<code>http://localhost:3000/navj-club-13d/admin</code>";
+  var OWNER = "Owner · navj-club-13d-owner@dev.local";
+  var ADMIN = "Admin with Accounting · navj-club-13d-admin@dev.local";
+  var ADMIN2 = "Admin without Accounting · navj-club-13d-admin2@dev.local";
+  var LA = "League admin · navj-club-13d-leagueadmin@dev.local";
+  var REG = "Registrar · navj-club-13d-registrar@dev.local";
+  var TRE = "Treasurer · navj-club-13d-treasurer@dev.local";
+  var COACH = "Coach · navj-club-13d-coach-13aaa@dev.local";
+  var COACHURL = "<code>http://localhost:3000/navj-club-13d/coaches/teams/bc189fe0-7254-4980-8b86-429cba69b881/accounting?section=club</code>";
+  var SPRING = "<strong>2027 Spring House League</strong>";
+  var WINTER = "<strong>2027 Winter Skills League</strong>";
+  var HLS = "<strong>House league Saturdays, spring 2027</strong>";
+  var TUNE = "<strong>Spring tune-up practices</strong>";
+  var PARTS = [
+ { id: "1", title: "The league admin asks for time (desk)", steps: [
+  { who: LA + " · desk", do: "Sign in and open <strong>House league</strong>, then the season " + SPRING + ".",
+    see: "On the season’s line: “<strong>The club hasn’t given this season any time yet.</strong>” and a button <strong>Ask for time</strong>." },
+  { who: LA, do: "Press <strong>Ask for time</strong>.",
+    see: "The button is replaced by “<strong>Asked Nov 14.</strong>” and “The owner and admins see it on their Overview.” No error." },
+  { who: LA, do: "Open the season " + WINTER + ".",
+    see: "The same “hasn’t given this season any time yet” line, with “<strong>Asked Nov 5.</strong>” and an <strong>Ask again</strong> button (the ask is 9 days old, so asking again is allowed). Do not press it." },
+  { who: LA, do: "Open the season <strong>2026 Fall House League</strong>.",
+    see: "No “hasn’t given any time” line and no Ask button: this season already has time from the Saturday schedule." }
+ ]},
+ { id: "2", title: "The owner hears it (desk)", steps: [
+  { who: OWNER + " · desk", do: "Sign in and open the bell (" + C + ").",
+    see: "One new row, <strong>House league asks for time</strong>: “2027 Spring House League’s league admin asked for house league time. It waits on your Overview until the season has some.”" },
+  { who: OWNER, do: "Open the Overview and read <strong>This morning</strong>.",
+    see: "A card <strong>House league asks for time</strong> with the number <strong>2</strong> and the line “<strong>2 seasons · oldest asked 9 days ago</strong>”. The card has no Dismiss." },
+  { who: OWNER, do: "Press the card.",
+    see: "It opens <strong>Schedules</strong> (the club has several permits, so the card does not pick one for you)." }
+ ]},
+ { id: "3", title: "The owner gives time by sending a schedule (desk)", steps: [
+  { who: OWNER, do: "On Schedules, open the draft " + HLS + ".",
+    see: "A draft on Kinsmen Park, <strong>Saturdays, Mar 13 – Apr 3, 2027</strong>, handed out <strong>8 of 8</strong>, with house league on Diamond A at 11:00 a.m. and Diamond B at 12:00 p.m. No team holds time." },
+  { who: OWNER, do: "Press <strong>Send</strong> and read the window before pressing anything in it.",
+    see: "“Sending makes 0 slots real bookings: on 0 teams’ schedules… Nothing is emailed to a family.” Under <strong>WHO IS TOLD · 0 COACHES</strong>: <strong>House league · Jules Moreau, league admin: 2 hours a week to divide</strong>, by a bell. The button reads <strong>Send to 0</strong>." },
+  { who: OWNER, do: "Press <strong>Send to 0</strong>.",
+    see: "The schedule goes final. No refusal. (No email leaves: there is nobody on a team to email.)" },
+  { who: OWNER, do: "Open the Overview and read <strong>This morning</strong> again.",
+    see: "The card now counts <strong>1</strong>: only " + WINTER + " (“asked 9 days ago by its league admin”). The Spring’s ask cleared by itself when the time was given." }
+ ]},
+ { id: "4", title: "The league admin hears it, and the season changes (desk)", steps: [
+  { who: LA + " · desk", do: "Sign in and open the bell.",
+    see: "A row <strong>The club gave house league time</strong>: “House league Saturdays, spring 2027” gives 2027 Spring House League <strong>2 hours a week</strong> (Sat · 11:00 a.m.–12:00 p.m. · Diamond A; Sat · 12:00–1:00 p.m. · Diamond B), with the dates, and “Divide it into games and practices.”" },
+  { who: LA, do: "Press the row.",
+    see: "It opens <strong>House league’s time</strong> for " + SPRING + " (one door, straight to it)." },
+  { who: LA, do: "Open the Spring season’s Overview.",
+    see: "The “hasn’t given this season any time yet” line and the Ask button are <strong>gone</strong>. " + WINTER + " still reads “Asked Nov 5.” (its dates hold no time)." }
+ ]},
+ { id: "5", title: "The admin without Accounting: the ask yes, the money no (desk)", steps: [
+  { who: ADMIN2 + " · desk", do: "Sign in and open the Overview.",
+    see: "<strong>House league asks for time</strong> on This morning, <strong>1</strong>, " + WINTER + ", asked 9 days ago. Giving time is not money, so this person can act on it. No “Owed to the club”, no Accounting in the sidebar." },
+  { who: ADMIN2, do: "Open the bell.",
+    see: "<strong>The club gave house league time</strong> is here too (admins hear it, as the league admin does)." },
+  { who: ADMIN2, do: "Open <strong>Tournaments</strong> and the Harbourtown Invitational 2026’s Dashboard. Find the <strong>Payments</strong> card.",
+    see: "Only “<strong>Not set up — payments aren’t tracked here</strong>”. No “In the club’s book” row." }
+ ]},
+ { id: "6", title: "The treasurer: what is owed, and what is being billed (desk)", steps: [
+  { who: TRE + " · desk", do: "Sign in and open <strong>Accounting › Overview</strong>.",
+    see: "<strong>Owed to the club $12,690.00</strong>: “teams $10,950.00 ($3,450.00 overdue) · house league $1,740.00 (12 players)”. Revenue (planned $16,550.00, so far $8,045.00) reads “includes house league fees $2,355.00 · Harbourtown Invitational 2026 $1,440.00”." },
+  { who: TRE, do: "Under the books, read the doors, then press <strong>House league money: 2026 Fall House League · $1,740.00 still owing</strong>.",
+    see: "Two doors: “2027 Spring House League · nothing owing” and “2026 Fall House League · $1,740.00 still owing”. The second opens that season’s Money page." },
+  { who: TRE, do: "Open <strong>Budget</strong> and read the captions under the lines.",
+    see: "<strong>Diamond permits — city fields · $400.00 being billed (draft)</strong>; <strong>Dome time — winter dome · $900.00 being billed (draft)</strong>; Umpire fees — home games keeps “$1,500.00 not allocated · the club pays it unless you allocate it”.", call: "Call: the dome caption says “(draft)” for a schedule in review." },
+  { who: TRE, do: "Press <strong>Diamond permits — city fields</strong> and read the window.",
+    see: "Planned $9,000.00, Allocated $8,550.00. A group <strong>BEING BILLED (DRAFT)</strong>: " + TUNE + " · “A draft schedule · $400.00 to 3 teams when it’s sent · not billed yet”. Under it: <strong>$450.00 not allocated</strong> and “A draft schedule is billing $400.00 of it. Allocating it here too bills the same teams twice.”" },
+  { who: TRE, do: "In that window press the draft row " + TUNE + ".",
+    see: "A read-only window: <strong>Schedule · draft · read only</strong>, “Spring tune-up practices · fair shares”. The bill $400.00 · Diamond permits — city fields; Hours 9 hours · $44.44 an hour; One payment. Teams: <strong>14U AA 3 h $133.34 · 15U AA 3 h $133.33 · 13U AAA 3 h $133.33</strong>, total 3 teams 9 h $400.00. <strong>No “Open the schedule” link</strong> (the treasurer can’t change schedules)." },
+  { who: TRE, do: "Close it. Open <strong>Allocations › New allocation</strong> and choose <strong>Diamond permits — city fields · $450.00 left</strong> under Bill from.",
+    see: "A notice under the choice: “<strong>A draft schedule is billing this line.</strong> ‘Spring tune-up practices’ bills $400.00 to 3 teams when it’s sent. Billing them here as well would charge the same time twice.” and “See its fair shares”. The form is still open (it warns, never blocks). Cancel it." }
+ ]},
+ { id: "7", title: "Owner or admin with Accounting: the doors open (desk)", steps: [
+  { who: ADMIN + " · desk", do: "Sign in. Open <strong>Accounting › Budget</strong>, then the Diamond permits line, then the draft row " + TUNE + ".",
+    see: "The same read-only fair shares window, with one more door: <strong>Open the schedule</strong>. Press it: it opens the draft schedule " + TUNE + "." },
+  { who: OWNER + " · desk", do: "Open the draft schedule " + TUNE + ", press the <strong>The bill $400.00</strong> tile, then <strong>The bill · 1 payment</strong>.",
+    see: "<strong>Bill the teams</strong>, billed from Diamond permits — city fields ($9,000.00 planned, $450.00 left). A notice: “<strong>Accounting already bills this line.</strong> ‘Fall ball diamond fees 2026’ charged 15U AAA and 13U AAA $1,800.00 and ‘Diamond fees 2026’ charged 5 teams $6,750.00. If those were for this time, billing it here charges those teams twice.” with <strong>See the line</strong>. Nothing is blocked; Take the bill off the schedule and Save the bill are still there. Cancel." },
+  { who: OWNER, do: "Open <strong>Tournaments › Dashboard</strong> (Harbourtown Invitational 2026) and find the <strong>Payments</strong> card.",
+    see: "Its first row is unchanged (“Not set up — payments aren’t tracked here”). Under it a second row: “<strong>In the club’s book: $1,440 in</strong>” and “$500 float moved in · opens the event’s book in Ledger”." },
+  { who: OWNER, do: "Press that second row.",
+    see: "It opens the Ledger on this event’s book (Harbourtown Invitational 2026)." }
+ ]},
+ { id: "8", title: "The registrar sees none of it (desk)", steps: [
+  { who: REG + " · desk", do: "Sign in and open the Overview.",
+    see: "No “House league asks for time” card, no “Owed to the club”, and no <strong>Accounting</strong> in the sidebar." },
+  { who: REG, do: "Open the bell.",
+    see: "Nothing about time or bills. (The registrar does not run house league’s time and holds no money screens.)" }
+ ]},
+ { id: "9", title: "The phone: the same, as rows", steps: [
+  { who: LA + " · phone", do: "At 390 px open the season " + WINTER + ".",
+    see: "“Asked Nov 5.” and <strong>Ask again</strong> as a button the full width of the screen, 44 px tall. Do not press it." },
+  { who: OWNER + " · phone", do: "Open the Overview and find the <strong>House league asks for time</strong> card.",
+    see: "A row (not a tile): the label, the count 1, and “" + "2027 Winter Skills League · asked 9 days ago by its league admin”." },
+  { who: TRE + " · phone", do: "Open <strong>Accounting › Overview</strong>.",
+    see: "<strong>Owed to the club $12,690.00</strong> reads as plain rows (the figure, then its two parts), not as tiles. The two house league money doors are rows you can press." }
+ ]},
+ { id: "10", title: "The coach says how the money should move (desk)", steps: [
+  { who: COACH + " · desk", do: "Sign in and open 13U AAA’s <strong>Money › Club</strong> (" + COACHURL + ").",
+    see: "<strong>Waiting on the club $345.00</strong>, “3 requests, not yet decided” (Batting tee set $90.00, Field line paint $75.00, Tournament refund — the club’s share $180.00). A button <strong>Make a request</strong>." },
+  { who: COACH, do: "Press <strong>Make a request</strong>.",
+    see: "“Which way is the money going?” starts on <strong>To the club</strong>, with the question “<strong>How are you paying the club?</strong>” and the choices Cash, E-Transfer, Cheque, <strong>Card</strong>, Other. Hint: “Cash, E-Transfer, Cheque, Card or Other. Optional.”" },
+  { who: COACH, do: "Change the direction to <strong>From the club</strong>.",
+    see: "The question becomes “<strong>How should the club pay you?</strong>” and the choices are Cash, E-Transfer, Cheque, Other (<strong>no Card</strong>). Hint: “Cash, E-Transfer, Cheque or Other. Optional.”" },
+  { who: COACH, do: "Type the description <code>Practice bases</code> and the amount <code>60.00</code>, answer “New money, or money back?” with <strong>Paying us back for a cost</strong>, and choose <strong>Cheque</strong>.",
+    see: "The form takes them. Nothing is sent yet." },
+  { who: COACH, do: "Press <strong>Submit request</strong>.",
+    see: "The window closes. The list now shows 4 requests waiting ($405.00), the new one reading “Practice bases” $60.00." }
+ ]},
+ { id: "11", title: "The treasurer answers (desk)", steps: [
+  { who: TRE + " · desk", do: "Open <strong>Accounting › Payment requests</strong>.",
+    see: "<strong>6</strong> waiting on you, $1,145.00 (the five that were there, $1,085.00, and the coach’s $60.00). The new one is at the top of 13U AAA’s: “FROM CLUB” $60.00." },
+  { who: TRE, do: "Open <strong>Practice bases</strong>.",
+    see: "“13U AAA asks the club for $60.00”, Direction: From club — the club pays 13U AAA, and the line <strong>How they’d like to be paid · Cheque</strong>." },
+  { who: TRE, do: "Open <strong>Tournament refund — the club’s share</strong> (the one that goes to the club).",
+    see: "Direction: To club — 13U AAA pays the club, and the line <strong>How it’s coming · Cheque</strong>. Its button reads “Confirm $180.00 received”." },
+  { who: TRE, do: "Open <strong>Field line paint</strong> (filed 40 days ago, before the method was a list).",
+    see: "The line reads <strong>Payment method (as filed) · E-Transfer</strong>: its words are shown as the coach wrote them, never rewritten." },
+  { who: TRE, do: "Open <strong>Batting tee set</strong> ($90.00, “How they’d like to be paid · E-Transfer”) and press <strong>Approve</strong>.",
+    see: "“Approve and pay 13U AAA $90.00?” opens with <strong>How it was paid already set to E-Transfer</strong>. Press <strong>Approve and record $90.00</strong>: it goes through." }
+ ]},
+ { id: "12", title: "The coach reads “Paid” (desk and phone)", steps: [
+  { who: COACH + " · desk", do: "Open 13U AAA’s <strong>Money › Club</strong> again and find <strong>Batting tee set</strong> in the list.",
+    see: "The row reads <strong>Paid</strong> with the payment day beside it (Nov 14), not “Approved”. Waiting on the club now reads <strong>3 requests, $315.00</strong>." },
+  { who: COACH, do: "Press the Batting tee set row.",
+    see: "The window shows a row <strong>Paid</strong> reading “<strong>$90.00 by E-Transfer on</strong> today’s date” (and a Reference line only if the treasurer typed one)." },
+  { who: COACH + " · phone", do: "At 390 px open the same row, then <strong>Make a request</strong>.",
+    see: "The Paid line and the method question are plain rows in the window, with nothing clipped or side by side; the choices read as one list." }
+ ]},
+ { id: "13", title: "A new allocation from a billed line still saves (desk, last)", steps: [
+  { who: TRE + " · desk", do: "Open <strong>Allocations › New allocation</strong>, choose <strong>Diamond permits — city fields · $450.00 left</strong>, and type any date in the <strong>Due</strong> box.",
+    see: "The warning (“A draft schedule is billing this line…”) is on screen; the form is filled in with $450.00 evenly to the 7 teams; the lime button reads <strong>Bill 7 teams · $450.00</strong>." },
+  { who: TRE, do: "Press <strong>Bill 7 teams · $450.00</strong>.",
+    see: "It saves: the window closes with a confirmation and the allocation appears in the list. The warning did not stop it." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + '.' + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
