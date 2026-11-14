@@ -1,6 +1,6 @@
 # One attendance record — plan
 
-**Status:** RULED 2026-11-13 (owner, mid-walk §526). S1 the record committed `54272a665` + `f554a73ea` 2026-11-13; S2 the screens committed `bfdaa885e` 2026-11-13; S3 the closeout committed `6e9d5fc77` 2026-11-14 with its legal text in `ff92f1afd` (owner walk §529 owed). PM brief: `ONE_ATTENDANCE_RECORD_PM_BRIEF.md`.
+**Status:** RULED 2026-11-13 (owner, mid-walk §526). S1 the record committed `54272a665` + `f554a73ea` 2026-11-13; S2 the screens committed `bfdaa885e` 2026-11-13; S3 the closeout committed `6e9d5fc77` 2026-11-14 with its legal text in `ff92f1afd` (owner walk §529 PASSED 50/50 on 2026-11-14, no findings; the five owner calls RULED 2026-11-14 as recommended, only call 3 changes the product: consent 0.2 → 0.3 for new parents, owed via `/legal`). PM brief: `ONE_ATTENDANCE_RECORD_PM_BRIEF.md`.
 **Supersedes** Signed-in Family Stage 4b's two-record design (`SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md`, committed
 `22db0210d` … `7fa87f3f7`; `COACH_AVAILABILITY_RSVP_PLAN.md` §governing constraint 1 and :136-137; the accounts plan's
 Stage 4b ask 3). Everything else Stage 4b ruled (the switch, Remind's cap, the bell's 48 h rule, consent 0.2, ask 14's
