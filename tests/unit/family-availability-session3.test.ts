@@ -230,10 +230,12 @@ describe('Part 8 — the coach’s bell', () => {
     eventId: 'e1', eventLabel: 'Sat vs Lakeshore', eventDay: 'Sat, Apr 24', childId: 'c-ava', child: 'Ava', answer: 'absent', prior: null,
     parent: 'Priya', hasNote: true, count: '9 of 13 in · 1 out · 1 maybe', ...over,
   });
+  /** The one line (title and body); the opened rows are Stage 3’s (tests/unit/notification-facts.test.ts). */
+  const titleBody = (w: { title: string; body: string }) => ({ title: w.title, body: w.body });
   it('the words as drawn, and never the note’s words', () => {
-    assert.deepEqual(coachBellWords({ kind: 'event', items: [item({})] }),
+    assert.deepEqual(titleBody(coachBellWords({ kind: 'event', items: [item({})] })),
       { title: 'Ava’s family said Out for Sat vs Lakeshore', body: 'Priya left a note · now 9 of 13 in · 1 out · 1 maybe' });
-    assert.deepEqual(coachBellWords({ kind: 'event', items: [item({ child: 'Maya', prior: 'late', hasNote: false, count: null })] }),
+    assert.deepEqual(titleBody(coachBellWords({ kind: 'event', items: [item({ child: 'Maya', prior: 'late', hasNote: false, count: null })] })),
       { title: 'Maya’s family changed to Out for Sat vs Lakeshore', body: 'Was Late' });
     assert.doesNotMatch(readCode(BELL_MODULE), /markWord/, 'one record cannot disagree with itself: no "your mark still says"');
     assert.doesNotMatch(readCode(BELL_MODULE), /\.note\b|'note'|note:/, 'the bell never reads a note');
@@ -248,7 +250,7 @@ describe('Part 8 — the coach’s bell', () => {
     const f = mergeCoachBell([{ id: 'n1', bundle: first.bundle }], item({ eventId: 'e2', eventDay: 'Tue, May 4' }), 't');
     assert.equal(f.id, 'n1');
     assert.equal(f.bundle.kind, 'family');
-    assert.deepEqual(coachBellWords(f.bundle), { title: 'Ava’s family said Out for 2 events', body: 'Sat, Apr 24 · Tue, May 4' });
+    assert.deepEqual(titleBody(coachBellWords(f.bundle)), { title: 'Ava’s family said Out for 2 events', body: 'Sat, Apr 24 · Tue, May 4' });
     assert.equal(mergeCoachBell([{ id: 'n1', bundle: first.bundle }], item({ eventId: 'e2', childId: 'c-leo' }), 't').id, null);
   });
   it('to coaches who can mark attendance only, never to the parent who answered, never an empty list (= everyone)', () => {

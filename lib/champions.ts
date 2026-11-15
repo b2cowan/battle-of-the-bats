@@ -13,11 +13,37 @@
 // Relative (not '@/lib/…') so the unit suite can load the champions rule through lib/event-recap.ts.
 import type { Game, Division } from './types';
 import { groupGamesByBracketId } from './playoff-bracket';
+import { FACT_LABELS, capFactList, factLine, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
+import { joinWithAnd } from './utils';
 
 export interface ChampionInfo {
   division: string;
   champion: string;
   runnerUp: string | null;
+}
+
+/** Up to this many champions, the one line names each with its division; past it, the line counts them (owner 2026-11-15). */
+const NAMED_CHAMPIONS = 3;
+
+/**
+ * "Champions crowned", to the tournament's staff — the kind's ONE words entry (Notifications read at a glance, Stage 3; owner
+ * ruling 2026-11-15). The body is the one line the list rows, push and email read: up to three champions each named with its
+ * division ("Ridge 12U won U12, Hawks 13U won U13 and Stars 15U won U15."), more than three counted, so a ten-division
+ * tournament's push stays one line. Opened: one line per champion under Champions, "U12 · **Ridge 12U**". With no champion
+ * found the body is unchanged and there are no rows. The fans' push (`notifyFansForChampions`) is a separate message. [marketing]
+ */
+export function championsNotice(champs: readonly ChampionInfo[]): { body: string; facts?: NoticeFacts } {
+  if (!champs.length) return { body: 'The playoffs are complete — see the final results.' };
+  return {
+    body: champs.length <= NAMED_CHAMPIONS
+      ? `${joinWithAnd(champs.map(c => `${c.champion} won ${c.division}`))}.`
+      : `${champs.length} divisions have their champions — see the final results.`,
+    facts: noticeFacts([
+      factRow(FACT_LABELS.champions, null, {
+        list: capFactList(champs.map(c => factLine(c.division, c.champion)), { one: 'champion', many: 'champions' }, n => `and ${n} more on the final results`),
+      }),
+    ]),
+  };
 }
 
 /** A per-tier champion row — one per decided bracket group within a division. Used by the

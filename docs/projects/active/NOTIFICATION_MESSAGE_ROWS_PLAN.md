@@ -8,7 +8,87 @@
 view). `/legal` owed before Stage 3 for the moved-games email (Q7).
 PM brief: `NOTIFICATION_MESSAGE_ROWS_PM_BRIEF.md`.
 **Stage 2 BUILT 2026-11-14, committed `ed417b626` 2026-11-14** (see "Stage 2 as built" below); reviewed and simplified
-2026-11-15 (see "Stage 2 review"). Next: the owner's browser check, then Stage 3.
+2026-11-15 (see "Stage 2 review", fixes committed `b55793822`). **Stage 3 (the six list notices) BUILT 2026-11-15, simplified and
+reviewed 2026-11-15, committed 2026-11-15** (see "Stage 3 as built" and "Stage 3 review"); the four undrawn kinds ruled
+2026-11-15. Next: the owner's browser check of Stages 2 and 3, then Stage 4.
+
+## Stage 3 as built (2026-11-15)
+
+- **The shared shape grew two things the drawing's tab 5 shows** (the Stage 3 prompt said no frame work was owed; the
+  drawing disagreed): a row that IS its list (`listRow`, or `factRow` with no value and a list: the list is the row's
+  answer, `<dd>`, starting on the label's line; on a phone it runs the full width like any list), and a list line with a
+  bold part (`factLine`: "Maya · **In** · was Out"). `readNoticeFacts` stays all-or-nothing for both. Twelve labels added
+  to `FACT_LABELS`: Divisions, Games, Answers, Answer, Now, Events, This week, Champions, Came off, Club owes, Paid for,
+  Payment.
+- **Moved games** (`LEAGUE_ADMIN_NOTICE.notice`, one sender `lib/club-schedule-send.ts`): one line = today's first
+  sentence; rows Schedule · Divisions · Practices · Games (one game per line, fold 6, keep 30, "and N more on the
+  schedule"); the waiting games are the next step. The body no longer carries line breaks.
+- **Family answers** (`coachBellWords`): drawn shapes (several families: Answers list + Now; one change: Answer · From ·
+  Now) and the ruled one for one family across events (Events list + From). Past three children the line names three and
+  counts the rest. **The fold into an unread notice re-writes `facts` with the title and body**, both paths.
+- **Weekly insights** (`formatInsightDigest`): one line = the first finding and a count ("· and 2 more this week"); rows =
+  the same chosen findings, one per line under This week. Rows and body come from the one call per coach, so a coach
+  never sees a finding their permissions withheld.
+- **Hand-back answered**: the four builds are ONE entry, `HAND_BACK_WORDS.bellAnswered` (accepted / declined × on time /
+  late). Accepted: Schedule · Practices · Came off (one line per payment that dropped, "Feb 1 · $864.00 → $432.00", date
+  order; a covered payment reads "→ $0.00") · Club owes. Declined: Schedule · Practices · Reason, quoted exactly; the
+  reason also stays in the line (ruling below). `tellTeamMoneyPeople` now carries `facts` (as `tellClubAccounting` did).
+- **Refund whose** (`LEAGUE_ONLINE_NOTICE_WORDS.whose`): Paid for (the children, one per line) · Payment (total, receipt)
+  · Book; next step "Choose the child, and it goes on that registration." Title unchanged.
+- **Champions crowned** (`championsNotice` in `lib/champions.ts`): **no new read was needed**: `deriveChampions` already
+  returned each champion's division; the notice threw it away. Up to three champions are named with their division, more
+  are counted; rows list "U12 · **Ridge 12U**". The no-champion body is unchanged and stores no rows. The fans' push keeps
+  its own names-only headline.
+- **Email check (Q7):** five of the six can email when switched on (`card_refund_whose` has no setting). `/legal`
+  2026-11-15: not a commercial message, nothing owed (`docs/agents/legal/CASL_LATE_BILL_EMAIL.md`, last section). One
+  `/docs` note: the coaches' help answer on "Your week in review" says the push carries "the top items"; it now leads with
+  one.
+- **Words** are draft copy tagged `[marketing]`, owed to the one /marketing pass.
+- **Tests:** `tests/unit/notification-facts.test.ts` (the six kinds' block), and the moved-games, family-bell and insights
+  tests moved to the new one-line words.
+
+## Stage 3 rulings (2026-11-15, owner, all as recommended)
+
+1. **Weekly insights' line:** the first finding and a count of the rest; the findings under "This week" when opened.
+2. **Champions' line:** up to three named with their division; more than three counted ("8 divisions have their
+   champions — see the final results.").
+3. **A declined hand-back's reason stays in the line** (quoted, never shortened); also the Reason row. Accepted adds the
+   labels "Came off" and "Club owes".
+4. **Refund whose** (Paid for · Payment · Book, the choice as next step) and **one family across events** (Events · From)
+   as drawn in the question.
+
+## Stage 3 owner questions (copy; not decided here)
+
+1. **A covered payment** on an accepted hand-back reads "Dec 1 · $432.00 → $0.00" (the old sentence said "is covered").
+   Keep the figure, or "→ covered". Owed to the /marketing pass.
+2. **Games removed from a draft** read "2 removed from the draft" in the Games row (the line keeps "2 draft games
+   removed"). Undrawn; a copy call for /marketing.
+
+## Stage 3 review (2026-11-15)
+
+- **Simplify:** `listRow` is no longer exported: every sender writes `factRow(label, null, { list })`, so there is one way to
+  write a row that is its list (the helper stays inside the module as what `factRow` falls through to). The family answers'
+  "was X" is written once (`was()`), not three times. Kept as built: each kind's own fold noun and "and N more …" closer
+  (their words differ), `FactListLines`' `only` and string-or-`FactLine` items, `bellAnswered` as ONE entry for the four
+  builds, the light-module boundary, every `[marketing]` tag and every one-open-copy metadata key.
+- **Review, fixed:** the rows are read back all-or-nothing, so one blank part in one list line would have made a notice lose
+  ALL its rows and fall back to the bare line. A list line with no text of its own now leads with its bold part
+  (`factLine`), and a blank line is left out of any list (`capFactList`) instead of drawing as an empty bullet. "Refund whose"
+  also tolerates a registration with no first name (it is left out of the list and the line; with none, the line says "more
+  than one child").
+- **Review, held (checked against the code):** both family-answer write paths (the fold into an unread notice, and a fresh
+  notice) store `facts` built from the same bundle as the title and body, after the dev-only old-vocabulary shim; the weekly
+  insights' rows and line come from the same chosen findings the coach's permissions allowed; a declined hand-back's reason
+  is quoted exactly (the 500-character cap is at the door, nothing shortens it after) in both the line and the Reason row;
+  `tellTeamMoneyPeople` keeps `teamId` and the caller's metadata and adds `facts` only when given (the lapsed ask carries
+  none); refund whose gets its `body` and `facts` from the one spread and its one-open-copy key is untouched; the
+  no-champion body is unchanged with no rows, and the fans' push still gets its names-only headline; the moved games' body has
+  no line breaks and the next step shows only while games wait; a list-only row draws no empty `<dd>`.
+- **Docs:** the coaches' help answer on "Your week in review" (and its search text and keywords) now says the push and the
+  list lead with one finding and a count, and the opened note lists them under "This week". No other help text quotes the
+  five other notices' words.
+- **Checks:** the four test files of this work pass; spelling and the type check are clean; `verify:changed` shows only the
+  failures already on the tree from other sessions' files (none in a file of this work).
 
 ## Stage 2 as built (2026-11-14)
 

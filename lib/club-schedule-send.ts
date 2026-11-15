@@ -1113,14 +1113,17 @@ async function tellHouseLeague(sctx: SchedulerCtx, scheduleName: string, half: L
         const query = new URLSearchParams();
         if (landing.division) query.set('division', landing.division);
         if (landing.day) query.set('day', landing.day);
+        const notice = LEAGUE_ADMIN_NOTICE.notice({
+          scheduleName,
+          divisions: [...new Set([...mine, ...myGames].map(t => t.divisionName).filter(Boolean))],
+          gameLines: myGames.map(g => `${g.divisionName} · ${g.line}`), ...counts,
+        });
         await notify({
           orgId: org.id, eventType: 'club_schedule_league_changes', userIds, excludeUserIds: [sctx.ctx.user.id],
           title: LEAGUE_ADMIN_NOTICE.title(scheduleName, counts),
-          body: LEAGUE_ADMIN_NOTICE.body({
-            divisions: [...new Set([...mine, ...myGames].map(t => t.divisionName).filter(Boolean))],
-            gameLines: myGames.map(g => `${g.divisionName} · ${g.line}`), ...counts,
-          }),
-          link: `/${org.slug}/admin/house-league/seasons/${seasonId}/schedule${query.toString() ? `?${query}` : ''}`, metadata: { seasonId, sendId },
+          body: notice.body,
+          link: `/${org.slug}/admin/house-league/seasons/${seasonId}/schedule${query.toString() ? `?${query}` : ''}`,
+          metadata: { seasonId, sendId, facts: notice.facts },
         });
       }
     }

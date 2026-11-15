@@ -60,6 +60,26 @@ kept theirs. Not re-fetched: the statute (finding 1's reading unchanged).
   method and date of a payment that never arrived, what an asked hand-back waits on, that the money can be asked back). Fine for
   a notice whose View button opens the record; if a club ever asks for the email to stand alone, that is a product call.
 
+### Reviewed 2026-11-15 — six list notices shortened to one line (Notifications read at a glance, Stage 3, ruling Q7)
+Same email and push (title, the body, a View button; email off by default, switched on per kind). Five kinds can carry it:
+`club_schedule_league_changes` (keeps its first sentence; the game lines and "Families hear once you send them" move into the
+opened notice), `family_availability_response` (unchanged up to three children; past three it names three and counts the rest),
+`coach_insights_digest` (push ON by default), `club_hand_back_answered` (accepted drops the per-payment sentences),
+`champions_crowned` (push ON by default for staff; the fans' push is a separate message and untouched). `card_refund_whose` has
+no email setting. Not re-fetched: the statute (finding 1's reading unchanged, verified 2026-11-13).
+- **CASL: not owed.** No kind gains an offer, price, promotion or link; shorter text cannot make a non-commercial notice
+  commercial. Nothing to add. Same guard as before: a one-line email must not gain a promotional line to "fill it out".
+- **Privacy: no new data.** The champions line may gain each champion's division, which the tournament already publishes on its
+  public results. Family answers still never carry a parent's note (`FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md` unchanged).
+- **Product promise, one wording note for `/docs` (not a law point):** the coaches' help answer "What is the ‘Your week in
+  review’ notification?" (`lib/help-content/coaches.tsx` ~1991) says the push carries "the top items from Insights". If the owner
+  picks the shorter digest line (the first finding and a count), that sentence should say the push leads with one and the note
+  opens to all of them. If the digest line stays as today, nothing changes. The settings descriptions
+  (`NOTIFICATION_EVENT_DESCRIPTIONS`) describe the event, not the email, and stay true either way.
+- **The declined hand-back's reason is a person's words.** Keeping it in the one line or only in the opened notice is a product
+  call, not a legal one: either is fine, as long as it is never shortened or reworded (it is the club's statement to the team,
+  and rewording it would put words in the club's mouth).
+
 ## Sources
 - [Canada's Anti-Spam Legislation (S.C. 2010, c. 23) — ss.1(2), 6(1)–(3), 6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-13
 - [Electronic Commerce Protection Regulations (SOR/2013-221) — s.3](https://laws-lois.justice.gc.ca/eng/regulations/SOR-2013-221/page-1.html) — accessed 2026-11-13

@@ -3,6 +3,7 @@ import { endSentence, formatTime, joinWithAnd, pluralize, possessive } from './u
 import { opponentPhrase, scheduleDayLabel } from './family-schedule-format';
 import { ATTENDANCE_WORD } from './coach-schedule-vocab';
 import type { RepAttendanceStatus } from './types';
+import { FACT_LABELS as L, capFactList, factLine, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
 
 /**
  * EVERY WORD "Families say if they're coming" shows (Signed-in family accounts Stage 4b; drawing
@@ -328,35 +329,74 @@ interface BellItemWords {
   count: string | null; eventLabel: string; eventDay: string;
 }
 
-/** One bell line's title and body, from its items (one event's answers, or one family's run of events). */
-export function coachBellWords(bundle: { kind: 'event' | 'family'; items: readonly BellItemWords[] }): { title: string; body: string } {
+/** [marketing] The opened notice's folds (Q3) and their closing line past 30. */
+const ANSWER_NOUN = { one: 'answer', many: 'answers' } as const;
+const EVENT_NOUN = { one: 'event', many: 'events' } as const;
+const andMore = (noun: string) => (n: number) => `and ${n} more ${noun}`;
+
+/** "11 of 14 in · 2 out · 1 maybe" as the Now row: the first part is the bold lead, the rest its quieter detail. */
+function nowRow(count: string | null) {
+  const [lead, ...rest] = (count ?? '').split(' · ');
+  return factRow(L.now, lead, { lead: true, detail: rest.join(' · ') });
+}
+const answerWord = (a: AnswerStatus | null) => (a ? ANSWER_WORD[a] : 'No answer');
+
+/**
+ * One bell line's title, body and opened rows, from its items (one event's answers, or one family's run of events) — the
+ * kind's ONE words entry (Notifications read at a glance, Stage 3; drawing tab 5). The body is the one line the list rows,
+ * push and email read; it is today's line while three or fewer children answered, and past three it names three and counts
+ * the rest. Opened: one child per line (name · **answer** · what it was before, and that a note was left), then the head
+ * count as Now; a single change reads Answer · From · Now; one family across events lists each event. Never the note's words.
+ * ⚠ A fold into an unread line re-writes the rows WITH the title and body (`notifyCoachesOfFamilyAnswer`): stale rows under
+ * a fresh title would contradict it.
+ */
+export function coachBellWords(bundle: { kind: 'event' | 'family'; items: readonly BellItemWords[] }): { title: string; body: string; facts: NoticeFacts } {
   const items = bundle.items;
   const last = items[items.length - 1];
   const allOut = items.every(i => i.answer === 'absent');
+  const who = last.parent ?? 'A parent';
+  const was = (i: BellItemWords) => (i.prior ? `was ${ANSWER_WORD[i.prior]}` : null);
+  const before = (i: BellItemWords) => [was(i), i.hasNote ? `${i.parent ?? 'A parent'} left a note` : null].filter(Boolean).join(' · ');
   if (bundle.kind === 'family' && items.length > 1) {
     return {
       title: `${possessive(last.child)} family ${allOut ? 'said Out' : 'changed answers'} for ${items.length} events`,
       body: items.map(i => i.eventDay).join(' · '),
+      facts: noticeFacts([
+        factRow(L.events, null, { list: capFactList(items.map(i => factLine(i.eventDay, answerWord(i.answer), was(i))), EVENT_NOUN, andMore('events')) }),
+        factRow(L.from, who, { detail: items.some(i => i.hasNote) ? 'left a note' : null }),
+      ]),
     };
   }
   if (items.length > 1) {
+    const named = items.length > 3
+      ? `${items.slice(0, 3).map(i => i.child).join(', ')} and ${items.length - 3} more`
+      : joinWithAnd(items.map(i => (allOut ? i.child : `${i.child} (${i.answer ? ANSWER_WORD[i.answer] : 'no answer'})`)));
+    const count = items.length > 3 ? last.count?.split(' · ')[0] ?? null : last.count;
     return {
       title: `${items.length} families ${allOut ? 'said Out' : 'changed their answers'} for ${last.eventLabel}`,
-      body: [joinWithAnd(items.map(i => (allOut ? i.child : `${i.child} (${i.answer ? ANSWER_WORD[i.answer] : 'no answer'})`))), last.count ? `now ${last.count}` : null]
-        .filter(Boolean).join(' · '),
+      body: [named, count ? `now ${count}` : null].filter(Boolean).join(' · '),
+      facts: noticeFacts([
+        factRow(L.answers, null, { list: capFactList(items.map(i => factLine(i.child, answerWord(i.answer), before(i))), ANSWER_NOUN, andMore('answers')) }),
+        nowRow(last.count),
+      ]),
     };
   }
-  const who = last.parent ?? 'A parent';
-  const was = last.prior ? `Was ${ANSWER_WORD[last.prior]}` : null;
+  const wasLine = last.prior ? `Was ${ANSWER_WORD[last.prior]}` : null;
   const tail = [last.hasNote ? `${who} left a note` : null, last.count ? `now ${last.count}` : null];
+  const facts = noticeFacts([
+    factRow(L.answer, answerWord(last.answer), { lead: true, detail: was(last) }),
+    factRow(L.from, who, { detail: last.hasNote ? 'left a note' : null }),
+    nowRow(last.count),
+  ]);
   if (last.answer === null) {
-    return { title: `${possessive(last.child)} family took back their answer for ${last.eventLabel}`, body: [was, ...tail].filter(Boolean).join(' · ') };
+    return { title: `${possessive(last.child)} family took back their answer for ${last.eventLabel}`, body: [wasLine, ...tail].filter(Boolean).join(' · '), facts };
   }
   if (last.answer === 'absent' && !last.prior) {
-    return { title: `${possessive(last.child)} family said Out for ${last.eventLabel}`, body: [last.hasNote ? `${who} left a note` : `${who} answered`, ...tail.slice(1)].filter(Boolean).join(' · ') };
+    return { title: `${possessive(last.child)} family said Out for ${last.eventLabel}`, body: [last.hasNote ? `${who} left a note` : `${who} answered`, ...tail.slice(1)].filter(Boolean).join(' · '), facts };
   }
   return {
     title: `${possessive(last.child)} family changed to ${ANSWER_WORD[last.answer]} for ${last.eventLabel}`,
-    body: [was, ...tail].filter(Boolean).join(' · '),
+    body: [wasLine, ...tail].filter(Boolean).join(' · '),
+    facts,
   };
 }

@@ -281,15 +281,20 @@ describe('digest formatting', () => {
     ]);
     assert.ok(digest);
     assert.equal(digest.title, 'Your week in review');
-    assert.equal(
-      digest.body,
-      "You've won 3 straight · ⚠ Riley P. went over the pitching cap in 1 game · ⚠ Sam T. has sat the bench most — 12 innings, including 2 back-to-back games.",
-    );
-    assert.equal(digest.body.split(' · ').length, DIGEST_MAX_SEGMENTS);
+    // Stage 3 (owner 2026-11-15): the one line is the first finding and a count; the findings are the opened rows, one per line.
+    assert.equal(digest.body, "You've won 3 straight · and 2 more this week.");
+    assert.deepEqual(digest.facts.rows.map(r => r.label), ['This week']);
+    assert.deepEqual(digest.facts.rows[0].list?.lines, [
+      "You've won 3 straight.",
+      '⚠ Riley P. went over the pitching cap in 1 game.',
+      '⚠ Sam T. has sat the bench most — 12 innings, including 2 back-to-back games.',
+    ]);
+    assert.equal(digest.facts.rows[0].list?.lines.length, DIGEST_MAX_SEGMENTS);
   });
 
   it('works without a good-news finding', () => {
     const digest = formatInsightDigest([F('safety', 'warn', 'A went over the pitching cap in 1 game.')]);
     assert.equal(digest?.body, '⚠ A went over the pitching cap in 1 game.');
+    assert.deepEqual(digest?.facts.rows[0].list?.lines, ['⚠ A went over the pitching cap in 1 game.']);
   });
 });

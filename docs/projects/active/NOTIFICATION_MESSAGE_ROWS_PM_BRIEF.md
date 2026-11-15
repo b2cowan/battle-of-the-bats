@@ -22,3 +22,10 @@ most of the 28), then the lists, then the coach and league notices.
 
 **Success looks like.** Opening any of the 28, the reader finds the amount, the date or the next step without
 reading a sentence; the notification list stays one line per notice; no notice says the same thing two ways.
+
+**Where it stands (2026-11-15).** The shared pattern and the 15 money notices are committed (Stage 2). The six list
+notices are built (Stage 3): moved games list one game per line; family answers list one child per line with the new
+head count; the weekly insights push leads with one finding and counts the rest; the club's answer to a hand-back lists
+each payment that dropped, and a "no" keeps the club's reason word for word; a refund that paid for several children
+lists them to choose from; "Champions crowned" names which team won which division. Next: review, the commit, the owner's
+browser check, then the remaining coach and league notices.

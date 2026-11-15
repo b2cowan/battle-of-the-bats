@@ -10,7 +10,7 @@ import {
   type ActivityEntry,
 } from '@/lib/notification-view';
 import { readTimeChangeFacts } from '@/lib/league-time-notice';
-import { FACT_FOLD_WORDS, FACT_LIST_FOLD, readNoticeFacts, type FactList, type NoticeFacts } from '@/lib/notification-facts';
+import { FACT_FOLD_WORDS, FACT_LIST_FOLD, factLineText, readNoticeFacts, type FactList, type NoticeFacts } from '@/lib/notification-facts';
 import buttons from './notification-buttons.module.css';
 import styles from './NotificationMessage.module.css';
 
@@ -186,11 +186,13 @@ function FactRows({ facts, settled }: { facts: NoticeFacts; settled: boolean }) 
         {facts.rows.map((r, i) => (
           <div key={`${i}-${r.label}`} className={styles.fact}>
             <dt>{r.label}</dt>
-            <dd>
-              {r.lead ? <span className={styles.factLead}>{r.value}</span> : r.value}
-              {r.detail && <span className={styles.factDetail}> · {r.detail}</span>}
-            </dd>
-            {r.list && <FactListLines list={r.list} />}
+            {r.value && (
+              <dd>
+                {r.lead ? <span className={styles.factLead}>{r.value}</span> : r.value}
+                {r.detail && <span className={styles.factDetail}> · {r.detail}</span>}
+              </dd>
+            )}
+            {r.list && <FactListLines list={r.list} only={!r.value} />}
           </div>
         ))}
       </dl>
@@ -199,15 +201,24 @@ function FactRows({ facts, settled }: { facts: NoticeFacts; settled: boolean }) 
   );
 }
 
-/** A list under a row: 6 lines, then "Show N more <noun>" opens the rest in place ("Show fewer <noun>"), Q3 B. */
-function FactListLines({ list }: { list: FactList }) {
+/** A list under a row: 6 lines, then "Show N more <noun>" opens the rest in place ("Show fewer <noun>"), Q3 B. A row with
+ *  no answer of its own IS its list (`only`): the list is the answer, so it is the row's `<dd>`. A line may carry a bold
+ *  part: "Maya · **In** · was Out" (drawing tab 5). */
+function FactListLines({ list, only }: { list: FactList; only: boolean }) {
   const [open, setOpen] = useState(false);
   const hidden = list.lines.length - FACT_LIST_FOLD;
   const shown = hidden > 0 && !open ? list.lines.slice(0, FACT_LIST_FOLD) : list.lines;
+  const Wrap = only ? 'dd' : 'div';
   return (
-    <div className={styles.factSpan}>
+    <Wrap className={only ? `${styles.factSpan} ${styles.factSpanOnly}` : styles.factSpan}>
       <ul className={styles.factLines}>
-        {shown.map((l, i) => <li key={`${i}-${l}`}>{l}</li>)}
+        {shown.map((l, i) => typeof l === 'string'
+          ? <li key={`${i}-${l}`}>{l}</li>
+          : (
+            <li key={`${i}-${factLineText(l)}`}>
+              {l.text}{l.lead && <> · <span className={styles.factLead}>{l.lead}</span></>}{l.detail && ` · ${l.detail}`}
+            </li>
+          ))}
         {list.overflow && (open || hidden <= 0) && <li>{list.overflow}</li>}
       </ul>
       {hidden > 0 && (
@@ -215,7 +226,7 @@ function FactListLines({ list }: { list: FactList }) {
           {open ? FACT_FOLD_WORDS.fewer(list.noun) : FACT_FOLD_WORDS.more(hidden, list.noun)}
         </button>
       )}
-    </div>
+    </Wrap>
   );
 }
 

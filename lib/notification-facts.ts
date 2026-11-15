@@ -71,6 +71,19 @@ export const FACT_LABELS = {
   practices: 'Practices',
   gives: 'Gives',
   takesBack: 'Takes back',
+  // Stage 3, the list notices (drawing tabs 4 and 5; owner rulings 2026-11-15 for the undrawn kinds)
+  divisions: 'Divisions',
+  games: 'Games',
+  answers: 'Answers',
+  answer: 'Answer',
+  now: 'Now',
+  events: 'Events',
+  thisWeek: 'This week',
+  champions: 'Champions',
+  cameOff: 'Came off',
+  clubOwes: 'Club owes',
+  paidFor: 'Paid for',
+  payment: 'Payment',
 } as const;
 
 export const FACT_LABEL_MAX = 11;
@@ -79,9 +92,30 @@ export const FACT_LIST_FOLD = 6;
 /** Lines a list stores at most (Q3); past it the last line is the sender's "and N more …". */
 export const FACT_LIST_MAX = 30;
 
+/** A list line with a bold part: "Maya · **In** · was Out", "U12 · **Ridge 12U**" (drawing tab 5). */
+export interface FactLine {
+  text: string;
+  /** The line's bold part, after the text. */
+  lead?: string;
+  /** A quieter part after the lead. */
+  detail?: string;
+}
+
+/** A list line with a bold part, leaving out any empty part (a stored line never holds an empty one). */
+export function factLine(text: string, lead?: string | null, detail?: string | null): FactLine {
+  // A line with no text of its own (a blank division) leads with its bold part: a stored line always has text, or the whole
+  // notice's rows would be refused on the way back (the read is all-or-nothing).
+  if (!text.trim() && lead?.trim()) return factLine(lead, null, detail);
+  return { text: text.trim(), ...(lead?.trim() ? { lead: lead.trim() } : {}), ...(detail?.trim() ? { detail: detail.trim() } : {}) };
+}
+
+/** A list line as plain words: "Maya · In · was Out" (keys, tests, anything that reads it as text). */
+export const factLineText = (l: string | FactLine): string =>
+  typeof l === 'string' ? l : [l.text, l.lead, l.detail].filter(Boolean).join(' · ');
+
 /** A list under one row: one item per line; folds past 6 ("Show 3 more games"). */
 export interface FactList {
-  lines: string[];
+  lines: (string | FactLine)[];
   /** The fold's noun, singular and plural: "Show 1 more game" / "Show 3 more games". */
   noun: { one: string; many: string };
   /** Past 30: the closing line, in the sender's words ("and 12 more on the schedule"). Never folded away. */
@@ -91,7 +125,7 @@ export interface FactList {
 /** One labelled row. */
 export interface FactRow {
   label: string;
-  /** The answer. */
+  /** The answer. '' only on a row that IS its list (family answers: the children are the answer, Stage 3). */
   value: string;
   /** The answer is the row's bold lead (an amount, a count, a deadline). */
   lead?: boolean;
@@ -109,14 +143,20 @@ export interface NoticeFacts {
 }
 
 /** A row, or nothing when there is no value to show (a row with no answer is left out, never drawn empty). */
-export function factRow(label: string, value: string | null | undefined, more: Omit<FactRow, 'label' | 'value'> = {}): FactRow[] {
+export function factRow(label: string, value: string | null | undefined, more: Omit<FactRow, 'label' | 'value' | 'detail'> & { detail?: string | null } = {}): FactRow[] {
   const v = value?.trim();
-  if (!v) return [];
+  if (!v) return listRow(label, more.list);
   const row: FactRow = { label, value: v };
   if (more.lead) row.lead = true;
   if (more.detail?.trim()) row.detail = more.detail.trim();
   if (more.list && more.list.lines.length) row.list = more.list;
   return [row];
+}
+
+/** A row that IS its list (no answer line of its own; the list starts on the label's line), or nothing for an empty list.
+ *  Reached as `factRow(label, null, { list })`, the one way senders write it. */
+function listRow(label: string, list: FactList | null | undefined): FactRow[] {
+  return list && list.lines.length ? [{ label, value: '', list }] : [];
 }
 
 /** Assemble a notice's facts from rows (or row-or-nothing pieces) and a next step. */
@@ -125,21 +165,29 @@ export function noticeFacts(rows: (FactRow | FactRow[])[], next?: string | null)
   return next?.trim() ? { rows: flat, next: next.trim() } : { rows: flat };
 }
 
-/** A list kept to 30 lines; past 30 the sender's closing line names how many more there are. */
-export function capFactList(lines: readonly string[], noun: FactList['noun'], overflow: (more: number) => string): FactList {
-  if (lines.length <= FACT_LIST_MAX) return { lines: [...lines], noun };
+/** A list kept to 30 lines; past 30 the sender's closing line names how many more there are. A blank line is left out
+ *  (it would draw as an empty bullet, and a blank line object would void the notice's rows on the read). */
+export function capFactList(all: readonly (string | FactLine)[], noun: FactList['noun'], overflow: (more: number) => string): FactList {
+  const lines = all.filter(l => (typeof l === 'string' ? l : l.text).trim());
+  if (lines.length <= FACT_LIST_MAX) return { lines, noun };
   return { lines: lines.slice(0, FACT_LIST_MAX), noun, overflow: overflow(lines.length - FACT_LIST_MAX) };
 }
 
 const str = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
-const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every(x => typeof x === 'string');
+const isLine = (x: unknown): x is string | FactLine => {
+  if (typeof x === 'string') return true;
+  const l = x as Partial<FactLine> | null;
+  return !!l && str(l.text) && (l.lead === undefined || str(l.lead)) && (l.detail === undefined || str(l.detail));
+};
+const readLine = (x: string | FactLine): string | FactLine =>
+  typeof x === 'string' ? x : { text: x.text, ...(x.lead ? { lead: x.lead } : {}), ...(x.detail ? { detail: x.detail } : {}) };
 
 function readList(v: unknown): FactList | null | undefined {
   if (v === undefined) return undefined;
   const l = v as Partial<FactList> | null;
-  if (!l || !strings(l.lines) || !l.noun || !str(l.noun.one) || !str(l.noun.many)) return null;
+  if (!l || !Array.isArray(l.lines) || !l.lines.every(isLine) || !l.noun || !str(l.noun.one) || !str(l.noun.many)) return null;
   if (l.overflow !== undefined && !str(l.overflow)) return null;
-  return { lines: l.lines, noun: { one: l.noun.one, many: l.noun.many }, ...(l.overflow ? { overflow: l.overflow } : {}) };
+  return { lines: l.lines.map(readLine), noun: { one: l.noun.one, many: l.noun.many }, ...(l.overflow ? { overflow: l.overflow } : {}) };
 }
 
 /** Read a notification's stored facts back, or null — a notice sent before its kind stored facts, or anything that
@@ -151,11 +199,13 @@ export function readNoticeFacts(meta: unknown): NoticeFacts | null {
   if (f.next !== undefined && !str(f.next)) return null;
   const rows: FactRow[] = [];
   for (const r of f.rows as Partial<FactRow>[]) {
-    if (!r || !str(r.label) || !str(r.value)) return null;
+    if (!r || !str(r.label) || typeof r.value !== 'string') return null;
     if (r.lead !== undefined && typeof r.lead !== 'boolean') return null;
     if (r.detail !== undefined && !str(r.detail)) return null;
     const list = readList(r.list);
     if (list === null) return null;
+    // A row with no answer of its own must be its list (a row is never drawn empty).
+    if (!str(r.value) && (r.value !== '' || !list || !list.lines.length)) return null;
     rows.push({
       label: r.label, value: r.value,
       ...(r.lead ? { lead: true } : {}),

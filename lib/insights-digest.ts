@@ -233,7 +233,8 @@ async function digestTeam(
         body: digest.body,
         link: `/${team.orgSlug}/coaches/teams/${team.teamId}/history`,
         userIds: [coach.userId],
-        metadata: { teamId: team.teamId },
+        // The rows are this coach's own findings, the same ones the body counts (Stage 3).
+        metadata: { teamId: team.teamId, facts: digest.facts },
       });
     }
     sent += 1;

@@ -368,7 +368,7 @@ export async function acceptAsk(ctx: AuthContextWithRole, handBackId: string): P
   const moves = await movesWritten(ctx.org.id, handBackId);
   await tellTeamMoneyPeople({
     org: ctx.org, teamId: view.teamId, actorUserId: ctx.user.id, event: 'club_hand_back_answered',
-    ...(late ? W.bellAcceptedLate : W.bellAccepted)({ scheduleName: view.scheduleName, count, creditCents, payCents, teamName: view.teamName, moves }),
+    ...W.bellAnswered({ answer: 'accepted', late, scheduleName: view.scheduleName, count, creditCents, payCents, teamName: view.teamName, moves }),
     metadata: { handBackId },
   });
   // Needs attention clears itself (owner 2026-10-16): every copy of what this settles leaves Needs attention now.
@@ -401,7 +401,7 @@ export async function declineAsk(ctx: AuthContextWithRole, handBackId: string, r
   const count = Math.max(1, view.count);
   await tellTeamMoneyPeople({
     org: ctx.org, teamId: view.teamId, actorUserId: ctx.user.id, event: 'club_hand_back_answered',
-    ...(view.late ? W.bellDeclinedLate : W.bellDeclined)({ scheduleName: view.scheduleName, count, reason }),
+    ...W.bellAnswered({ answer: 'declined', late: !!view.late, scheduleName: view.scheduleName, count, reason }),
     metadata: { handBackId },
   });
   // Needs attention clears itself (owner 2026-10-16): every copy of what this settles leaves Needs attention now.

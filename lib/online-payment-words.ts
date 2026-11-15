@@ -6,8 +6,8 @@
  * written here either: the payments terms are counsel's (TERMS_PLACEHOLDER).
  */
 import { formatStoredDate, utcToZonedInputs } from './timezone';
-import { formatTime, pluralize, possessive } from './utils';
-import { FACT_LABELS as L, factRow, noticeFacts, type FactRow, type NoticeFacts } from './notification-facts';
+import { formatTime, joinWithAnd, pluralize, possessive } from './utils';
+import { FACT_LABELS as L, capFactList, factRow, noticeFacts, type FactRow, type NoticeFacts } from './notification-facts';
 
 /**
  * ══ THE DESK'S MONEY NOTICES, READ AT A GLANCE (Notifications read at a glance, Stage 2; drawing tabs 2–3, owner rulings
@@ -247,8 +247,20 @@ export const LEAGUE_ONLINE_NOTICE_WORDS = {
   // `refundedInStripeBody` ("record the refund by hand") is retired: it had no door on an ended row (F4).
   whoseTitle: (amount: string, guardian: string | null) =>
     `${amount} was refunded in Stripe on ${guardian ? `${possessive(guardian)} payment` : 'the family’s payment'}`,
-  whoseBody: (children: string, total: string, receiptNo: string) =>
-    `It paid for ${children} (${total}, receipt ${receiptNo}), so we can’t tell whose fee it was. Choose the child, and it goes on that registration. Until then it isn’t in the season’s book.`,
+  /** `card_refund_whose`: its one sender (Notifications read at a glance, Stage 3; owner ruling 2026-11-15). The one line says why
+   *  a person is asked; opened, the children are the list the desk chooses among, the payment and the book are rows, and the
+   *  choice is the next step. [marketing] */
+  whose: (p: { children: readonly (string | null)[]; total: string; receiptNo: string }): NoticeText => {
+    const kids = p.children.map(c => (c ?? '').trim()).filter(Boolean);
+    return {
+      body: `It paid for ${kids.length ? joinWithAnd(kids) : 'more than one child'}, so we can’t tell whose fee it was.`,
+      facts: noticeFacts([
+        factRow(L.paidFor, null, { list: capFactList(kids, { one: 'child', many: 'children' }, n => `and ${n} more children`) }),
+        factRow(L.payment, p.total, { lead: true, detail: p.receiptNo ? `receipt ${p.receiptNo}` : null }),
+        factRow(L.book, 'Not in the season’s book until you choose'),
+      ], 'Choose the child, and it goes on that registration.'),
+    };
+  },
   enrolledTitle: (child: string, childFirst: string) => `${possessive(child)} fee was refunded in Stripe, and ${childFirst} is still enrolled`,
   /** `card_refund_still_enrolled`: its one sender. The three choices are also the notice's buttons. */
   enrolled: (p: { amount: string; to: string; day: string; childFirst: string; owing: string }): NoticeText => ({
@@ -1155,7 +1167,7 @@ export const DISPUTE_WORDS = {
         body: `${lead}.${p.dueDay ? ` ${p.answers} answers it in Stripe by ${p.dueDay}.` : ''}`,
         facts: noticeFacts([...head, factRow(L.whoAnswers, `${p.answers}, in Stripe`), factRow(L.answerBy, p.due, { lead: true })],
           p.inquiry ? null : 'If the club wins, nothing changes here.'),
-      };
+    };
     }
     const until = 'until the bank decides';
     const held = p.inquiry ? factRow(L.held, 'Nothing has been taken')

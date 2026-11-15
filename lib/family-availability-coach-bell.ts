@@ -140,7 +140,8 @@ export async function notifyCoachesOfFamilyAnswer(params: {
       // that folded first, makes this match nothing, and this answer then gets a line of its own rather than being lost.
       const { data: folded, error } = await supabaseAdmin.from('notifications').update({
         title: words.title, body: words.body, link: linkFor(merged.bundle),
-        metadata: { teamId: params.teamId, eventId: item.eventId, bundle: merged.bundle },
+        // The rows are re-written with the title and body (Notifications read at a glance, Stage 3): never stale rows under a fresh title.
+        metadata: { teamId: params.teamId, eventId: item.eventId, bundle: merged.bundle, facts: words.facts },
         created_at: now.toISOString(),
       }).eq('id', merged.id).eq('user_id', coachId).eq('created_at', stampOf.get(merged.id)!)
         .is('read_at', null).is('cleared_at', null).select('id');
@@ -152,7 +153,7 @@ export async function notifyCoachesOfFamilyAnswer(params: {
       const words = coachBellWords(freshBundle);
       await notify({
         orgId: event.org_id, eventType: KIND, title: words.title, body: words.body, link: linkFor(freshBundle),
-        userIds: fresh, metadata: { teamId: params.teamId, eventId: item.eventId, bundle: freshBundle },
+        userIds: fresh, metadata: { teamId: params.teamId, eventId: item.eventId, bundle: freshBundle, facts: words.facts },
       });
     }
   } catch (err) {

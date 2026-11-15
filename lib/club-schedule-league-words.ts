@@ -11,6 +11,7 @@ import { formatShortWeekdayDate, formatStoredDate, formatWeekRange } from './tim
 import { weekdayPlural } from './permit-words';
 import { weeklyDays, type EmailWords } from './club-schedule-words';
 import type { LeagueRow, PracticeFace } from './club-schedule-league-plan';
+import { FACT_LABELS as L, capFactList, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
 
 /** A practice's place: the venue and its facility (a venue without facilities has none). */
 export interface LeaguePlace { venue: string; facility: string | null }
@@ -197,15 +198,24 @@ export const PRACTICES_CHANGED_NOTICE = {
 export interface LeagueNoticeCounts { moved: number; cancelled: number; gamesMoved: number; gamesNeedDate: number; gamesRemoved: number; gamesWaiting: number }
 export const NO_LEAGUE_COUNTS: LeagueNoticeCounts = { moved: 0, cancelled: 0, gamesMoved: 0, gamesNeedDate: 0, gamesRemoved: 0, gamesWaiting: 0 };
 
-const LEAGUE_NOTICE_LINES = 6;
+/** The moved games' fold (Q3): "Show 3 more games". [marketing] */
+const GAME_NOUN = { one: 'game', many: 'games' } as const;
+/** [marketing] Past 30 game lines in one notice (drawing tab 4's pin). */
+const gamesMore = (n: number) => `and ${n} more on the schedule`;
 
 export const LEAGUE_ADMIN_NOTICE = {
   title: (scheduleName: string, c: LeagueNoticeCounts) => {
     const practices = c.moved + c.cancelled > 0, games = c.gamesMoved + c.gamesNeedDate + c.gamesRemoved > 0;
     return `${scheduleName} changed house league’s ${games && practices ? 'practices and game time' : games ? 'game time' : 'practices'}`;
   },
-  /** `gameLines` names which games and when ("U12 · Sun, Nov 8: Field 2 → Field 4"), a few and then "and 3 more". */
-  body: (p: { divisions: string[]; gameLines?: string[] } & LeagueNoticeCounts) => {
+  /**
+   * The notice's ONE words entry (Notifications read at a glance, Stage 3; drawing tab 4). The body is the one line the list
+   * rows, push and email read: today's first sentence ("U12: 3 practices moved and 1 game moved."). Opened, the counts are
+   * rows and the games are a list under Games, one per line ("U12 · Sun, Nov 8: Field 2 → Field 4"), folding at 6, at most
+   * 30 kept; the games waiting in Changes to send are the next-step line (9d2·13: families hear about a published game
+   * once, from the league admin's send).
+   */
+  notice: (p: { scheduleName: string; divisions: string[]; gameLines?: string[] } & LeagueNoticeCounts): { body: string; facts: NoticeFacts } => {
     const what = [
       p.moved ? `${pluralize(p.moved, 'practice')} moved` : '', p.cancelled ? `${pluralize(p.cancelled, 'practice')} cancelled` : '',
       p.gamesMoved ? `${pluralize(p.gamesMoved, 'game')} moved` : '',
@@ -213,14 +223,25 @@ export const LEAGUE_ADMIN_NOTICE = {
       p.gamesRemoved ? `${pluralize(p.gamesRemoved, 'draft game')} removed` : '',
     ].filter(Boolean);
     const told = `${joinWithAnd(what)}.`;
-    const lead = p.divisions.length ? `${joinWithAnd(p.divisions)}: ${told}` : told.charAt(0).toUpperCase() + told.slice(1);
-    // 9d2·13: families hear about a published game once, from the league admin's send.
-    const summary = p.gamesWaiting > 0 ? `${lead} ${pluralize(p.gamesWaiting, 'game')} ${p.gamesWaiting === 1 ? 'waits' : 'wait'} in Changes to send. Families hear once you send them.` : lead;
+    const body = p.divisions.length ? `${joinWithAnd(p.divisions)}: ${told}` : told.charAt(0).toUpperCase() + told.slice(1);
+    // [marketing] The rows' counts: the label names the thing, so the answer is the count and what happened to it.
+    const practices = [p.moved ? `${p.moved} moved` : '', p.cancelled ? `${p.cancelled} cancelled` : ''].filter(Boolean);
+    const games = [
+      p.gamesMoved ? `${p.gamesMoved} moved` : '',
+      p.gamesNeedDate ? `${p.gamesNeedDate} ${p.gamesNeedDate === 1 ? 'needs' : 'need'} a new date` : '',
+      p.gamesRemoved ? `${p.gamesRemoved} removed from the draft` : '',
+    ].filter(Boolean);
     const lines = p.gameLines ?? [];
-    if (!lines.length) return summary;
-    const shown = lines.slice(0, LEAGUE_NOTICE_LINES);
-    if (lines.length > shown.length) shown.push(`and ${lines.length - shown.length} more`);
-    // A blank line sets the summary apart from the games it summarizes (the reader keeps line breaks, `pre-line`).
-    return `${summary}\n\n${shown.join('\n')}`;
+    return {
+      body,
+      facts: noticeFacts([
+        factRow(L.schedule, p.scheduleName),
+        factRow(L.divisions, joinWithAnd(p.divisions)),
+        factRow(L.practices, practices[0], { lead: true, detail: practices.slice(1).join(' · ') }),
+        factRow(L.games, games[0], { lead: true, detail: games.slice(1).join(' · '), list: capFactList(lines, GAME_NOUN, gamesMore) }),
+      ], p.gamesWaiting > 0
+        ? `${pluralize(p.gamesWaiting, 'game')} ${p.gamesWaiting === 1 ? 'waits' : 'wait'} in Changes to send. Families hear once you send them.`
+        : null),
+    };
   },
 } as const;

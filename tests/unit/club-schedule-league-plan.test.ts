@@ -291,26 +291,35 @@ describe('the games words (9d-2b Part 5; h4 settled, the rest /marketing\'s)', (
     assert.equal(leagueGamesSub({ division: 'U9', published: false, moved: 0, needsDate: 0, removed: 3 }),
       '3 draft games come off the draft. Nobody is told: U9’s schedule isn’t published yet.');
   });
-  it('the league admins\' notice names the games and where they wait', () => {
+  it('the league admins\' notice: the one line is the first sentence; the games and where they wait are the opened rows (Stage 3)', () => {
     const c = { ...NO_LEAGUE_COUNTS, gamesMoved: 2, gamesNeedDate: 1, gamesWaiting: 3 };
     assert.equal(LEAGUE_ADMIN_NOTICE.title('Summer field time', c), 'Summer field time changed house league’s game time');
-    assert.equal(LEAGUE_ADMIN_NOTICE.body({ divisions: ['U12'], ...c }),
-      'U12: 2 games moved and 1 game needs a new date. 3 games wait in Changes to send. Families hear once you send them.');
+    const n = LEAGUE_ADMIN_NOTICE.notice({ scheduleName: 'Summer field time', divisions: ['U12'], ...c });
+    assert.equal(n.body, 'U12: 2 games moved and 1 game needs a new date.');
+    assert.equal(n.facts.next, '3 games wait in Changes to send. Families hear once you send them.');
+    assert.deepEqual(n.facts.rows.map(r => [r.label, r.value, r.detail]), [
+      ['Schedule', 'Summer field time', undefined], ['Divisions', 'U12', undefined], ['Games', '2 moved', '1 needs a new date'],
+    ]);
     assert.equal(LEAGUE_ADMIN_NOTICE.title('Summer field time', { ...NO_LEAGUE_COUNTS, moved: 1 }), 'Summer field time changed house league’s practices');
   });
   it('a draft-only move has no instruction to send families', () => {
-    assert.equal(LEAGUE_ADMIN_NOTICE.body({ divisions: ['U12'], ...NO_LEAGUE_COUNTS, gamesMoved: 1 }),
-      'U12: 1 game moved.');
+    const n = LEAGUE_ADMIN_NOTICE.notice({ scheduleName: 'S', divisions: ['U12'], ...NO_LEAGUE_COUNTS, gamesMoved: 1 });
+    assert.equal(n.body, 'U12: 1 game moved.');
+    assert.equal(n.facts.next, undefined);
   });
-  it('the notice says which games moved and when, a few lines and then "and N more"', () => {
-    const c = { ...NO_LEAGUE_COUNTS, gamesMoved: 1 };
-    assert.equal(LEAGUE_ADMIN_NOTICE.body({ divisions: ['U11'], gameLines: ['U11: Sun, Nov 8: Field 2 → Field 4'], ...c }),
-      'U11: 1 game moved.\n\nU11: Sun, Nov 8: Field 2 → Field 4');
-    const many = Array.from({ length: 9 }, (_, i) => `U11: line ${i + 1}`);
-    const lines = LEAGUE_ADMIN_NOTICE.body({ divisions: ['U11'], gameLines: many, ...c }).split('\n');
-    assert.equal(lines.length, 9);
-    assert.equal(lines[1], '');
-    assert.equal(lines[8], 'and 3 more');
+  it('the notice lists which games moved and when, one per line under Games (folds at 6, keeps 30); the one line has no line breaks', () => {
+    const c = { ...NO_LEAGUE_COUNTS, moved: 3, cancelled: 1, gamesMoved: 1 };
+    const one = LEAGUE_ADMIN_NOTICE.notice({ scheduleName: 'S', divisions: ['U11'], gameLines: ['U11 · Sun, Nov 8: Field 2 → Field 4'], ...c });
+    assert.equal(one.body, 'U11: 3 practices moved, 1 practice cancelled and 1 game moved.');
+    assert.deepEqual(one.facts.rows.find(r => r.label === 'Practices'), { label: 'Practices', value: '3 moved', lead: true, detail: '1 cancelled' });
+    assert.deepEqual(one.facts.rows.find(r => r.label === 'Games')?.list?.lines, ['U11 · Sun, Nov 8: Field 2 → Field 4']);
+    const many = Array.from({ length: 42 }, (_, i) => `U11 · line ${i + 1}`);
+    const n = LEAGUE_ADMIN_NOTICE.notice({ scheduleName: 'S', divisions: ['U11'], gameLines: many, ...c });
+    assert.doesNotMatch(n.body, /\n/);
+    const list = n.facts.rows.find(r => r.label === 'Games')!.list!;
+    assert.equal(list.lines.length, 30);
+    assert.equal(list.overflow, 'and 12 more on the schedule');
+    assert.deepEqual(list.noun, { one: 'game', many: 'games' });
   });
 });
 

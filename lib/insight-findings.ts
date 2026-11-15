@@ -22,6 +22,7 @@ import type { SeasonLineupAnalytics } from './lineup-season-analytics';
 // Relative WITH .ts extension so `node --test` can resolve it (allowImportingTsExtensions;
 // same convention as lineup-season-analytics.ts → lineup-analysis.ts).
 import { isNeverPaidPlayer, pastDueInstallments } from './dues-status.ts';
+import { FACT_LABELS, capFactList, factRow, noticeFacts, type NoticeFacts } from './notification-facts.ts';
 
 export type InsightTier = 'safety' | 'money' | 'attendance' | 'fairness' | 'development' | 'good-news';
 export type InsightTone = 'warn' | 'info' | 'good';
@@ -376,12 +377,21 @@ export function computeInsightFindings(inputs: FindingsInputs): InsightFinding[]
 // ── Weekly digest ─────────────────────────────────────────────────────────────
 export const DIGEST_MAX_SEGMENTS = 3;
 
+/** [marketing] The findings' fold noun (three at most, so it never folds; the shape needs one). */
+const FINDING_NOUN = { one: 'finding', many: 'findings' } as const;
+
 /**
- * Pure title/body builder for the Sunday "week in review" notification. Leads with one
- * good-news segment when there is one (warmth first), then the top attention items in
- * ladder order. Returns null on a quiet week — a digest with nothing to say is never sent.
+ * Pure title/body/rows builder for the Sunday "week in review" notification — the kind's ONE words entry. Leads with one
+ * good-news finding when there is one (warmth first), then the top attention items in ladder order. Returns null on a quiet
+ * week — a digest with nothing to say is never sent.
+ *
+ * Notifications read at a glance, Stage 3 (owner ruling 2026-11-15): the body — the push, the list row, the email — is the
+ * first finding and a count of the rest ("You've won 3 straight · and 2 more this week."); opened, the findings are one per
+ * line under "This week", a warning keeping its ⚠. ⚠ The rows and the body are built from the SAME chosen findings, which
+ * the caller computed from THIS coach's permissions: the rows can never show a finding the body's coach couldn't see.
+ * [marketing] the one line's "and 2 more this week".
  */
-export function formatInsightDigest(findings: InsightFinding[]): { title: string; body: string } | null {
+export function formatInsightDigest(findings: InsightFinding[]): { title: string; body: string; facts: NoticeFacts } | null {
   if (findings.length === 0) return null;
   const good = findings.find(f => f.tier === 'good-news');
   const rest = findings.filter(f => f !== good);
@@ -390,7 +400,14 @@ export function formatInsightDigest(findings: InsightFinding[]): { title: string
     const text = f.text.replace(/\.$/, '');
     return f.tone === 'warn' ? `⚠ ${text}` : text;
   };
-  return { title: 'Your week in review', body: `${chosen.map(segment).join(' · ')}.` };
+  const more = chosen.length - 1;
+  return {
+    title: 'Your week in review',
+    body: `${segment(chosen[0])}${more ? ` · and ${more} more this week` : ''}.`,
+    facts: noticeFacts([
+      factRow(FACT_LABELS.thisWeek, null, { list: capFactList(chosen.map(f => `${segment(f)}.`), FINDING_NOUN, n => `and ${n} more`) }),
+    ]),
+  };
 }
 
 // ── Shared dues shaping ──────────────────────────────────────────────────────

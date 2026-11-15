@@ -17,7 +17,7 @@ import { formatShortWeekdayDate, utcToZonedInputs } from './timezone';
 import { fmt } from './coach-money-summary';
 import { weekdayCount, weekdayOne, weekdayPlural } from './permit-words';
 import type { HandedBackSlot } from './club-hand-back-reads';
-import { FACT_LABELS, factRow, noticeFacts } from './notification-facts';
+import { FACT_LABELS, capFactList, factRow, noticeFacts } from './notification-facts';
 
 /** A hand-back ask's bell, opened (Notifications read at a glance, Stage 2): Team · Schedule · Practices (the count, then the
  *  days) · Money back (never for a builder who can't move club money: `cents` null), then where it stands. [marketing] */
@@ -31,6 +31,8 @@ function askFacts(p: { teamName: string; count: number; cents: number | null; sc
 }
 
 const money = (cents: number) => fmt(cents / 100);
+/** [marketing] The fold of an accepted hand-back's payments (Q3). */
+const PAYMENT_NOUN = { one: 'payment', many: 'payments' } as const;
 /** "Sun, Mar 7" without the weekday: "Mar 7". */
 export const shortDay = (day: string) => formatShortWeekdayDate(day).replace(/^[A-Za-z]{3}, /, '');
 
@@ -278,18 +280,52 @@ export const HAND_BACK_WORDS = {
     title: `${p.teamName} withdrew its hand-back`,
     body: `${p.scheduleName}: ${namePractices(p.count, null).the} ${namePractices(p.count, null).stay} ${possessive(p.teamName)}.`,
   }),
-  bellAccepted: (p: { scheduleName: string; count: number; creditCents: number; payCents: number; teamName: string; moves: readonly CreditMove[] }) => ({
-    title: 'The club accepted your hand-back',
-    body: [
-      `${p.scheduleName}: ${pluralize(p.count, 'practice')} handed back.`,
-      p.creditCents ? `${money(p.creditCents)} came off what ${p.teamName} owes. ${creditMovesSentence(p.moves)}` : null,
-      p.payCents ? `The club owes ${p.teamName} ${money(p.payCents)} and will record paying it.` : null,
-    ].filter(Boolean).join(' '),
-  }),
-  bellDeclined: (p: { scheduleName: string; count: number; reason: string | null }) => ({
-    title: 'The club declined your hand-back',
-    body: `${p.scheduleName}: ${namePractices(p.count, null).the} ${namePractices(p.count, null).stay} yours.${p.reason ? ` “${p.reason}”` : ''}`,
-  }),
+  /**
+   * The club's answer, to the team's money people — `club_hand_back_answered`'s ONE words entry for its four builds
+   * (accepted / declined, on time / a late ask for money only; Notifications read at a glance, Stage 3). The body is the one
+   * line the list rows, push and email read: what was handed back, what came off and what the club owes (the per-payment
+   * sentences moved into the rows), or that the practices stay the team's and, when given, the club's reason (owner
+   * 2026-11-15: the reason stays in the line). ⚠ The reason is a person's words: quoted, never shortened or reworded.
+   * Opened: Schedule · Practices · Came off (one line per payment that dropped) · Club owes, or Schedule · Practices · Reason.
+   */
+  bellAnswered: (p: { late: boolean; scheduleName: string; count: number } & (
+    | { answer: 'accepted'; creditCents: number; payCents: number; teamName: string; moves: readonly CreditMove[] }
+    | { answer: 'declined'; reason: string | null })) => {
+    if (p.answer === 'declined') {
+      const stay = p.late ? 'handed back' : 'yours';
+      const quoted = p.reason ? `“${p.reason}”` : null;
+      return {
+        title: p.late ? 'The club declined your ask for money back' : 'The club declined your hand-back',
+        body: `${p.scheduleName}: ${namePractices(p.count, null).the} ${namePractices(p.count, null).stay} ${stay}.${quoted ? ` ${quoted}` : ''}`,
+        facts: noticeFacts([
+          factRow(FACT_LABELS.schedule, p.scheduleName),
+          // [marketing]
+          factRow(FACT_LABELS.practices, String(p.count), { lead: true, detail: `${p.count === 1 ? 'stays' : 'stay'} ${stay}` }),
+          factRow(FACT_LABELS.reason, quoted),
+        ]),
+      };
+    }
+    const moves = [...p.moves].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    return {
+      title: p.late ? 'The club accepted your ask for money back' : 'The club accepted your hand-back',
+      body: [
+        `${p.scheduleName}: ${pluralize(p.count, 'practice')} ${p.late ? 'you handed back' : 'handed back'}.`,
+        p.creditCents ? `${money(p.creditCents)} came off what ${p.teamName} owes.` : null,
+        p.payCents ? `The club owes ${p.teamName} ${money(p.payCents)} and will record paying it.` : null,
+      ].filter(Boolean).join(' '),
+      facts: noticeFacts([
+        factRow(FACT_LABELS.schedule, p.scheduleName),
+        // [marketing]
+        factRow(FACT_LABELS.practices, `${p.count} handed back`, { lead: true }),
+        factRow(FACT_LABELS.cameOff, p.creditCents ? money(p.creditCents) : null, {
+          lead: true,
+          // One line per payment the credit lowered: "Feb 1 · $864.00 → $432.00" (club days). [marketing]
+          list: capFactList(moves.map(m => `${shortDay(m.dueDate)} · ${money(m.fromCents)} → ${money(m.toCents)}`), PAYMENT_NOUN, n => `and ${n} more payments`),
+        }),
+        factRow(FACT_LABELS.clubOwes, p.payCents ? money(p.payCents) : null, { lead: true, detail: 'it will record paying it' }),
+      ]),
+    };
+  },
   bellLapsed: (p: { scheduleName: string; count: number }) => ({
     title: 'Your hand-back ask closed',
     body: `${p.scheduleName}: no practice in it is still to come, so the club can’t hand ${p.count === 1 ? 'it' : 'them'} back now. Nothing changed.`,
@@ -357,18 +393,6 @@ export const HAND_BACK_WORDS = {
   bellWithdrawnLate: (p: { teamName: string; count: number; scheduleName: string }) => ({
     title: `${p.teamName} withdrew its ask for money back`,
     body: `${p.scheduleName}: ${namePractices(p.count, null).the} ${namePractices(p.count, null).stay} handed back.`,
-  }),
-  bellAcceptedLate: (p: { scheduleName: string; count: number; creditCents: number; payCents: number; teamName: string; moves: readonly CreditMove[] }) => ({
-    title: 'The club accepted your ask for money back',
-    body: [
-      `${p.scheduleName}: ${pluralize(p.count, 'practice')} you handed back.`,
-      p.creditCents ? `${money(p.creditCents)} came off what ${p.teamName} owes. ${creditMovesSentence(p.moves)}` : null,
-      p.payCents ? `The club owes ${p.teamName} ${money(p.payCents)} and will record paying it.` : null,
-    ].filter(Boolean).join(' '),
-  }),
-  bellDeclinedLate: (p: { scheduleName: string; count: number; reason: string | null }) => ({
-    title: 'The club declined your ask for money back',
-    body: `${p.scheduleName}: ${namePractices(p.count, null).the} ${namePractices(p.count, null).stay} handed back.${p.reason ? ` “${p.reason}”` : ''}`,
   }),
   /** Ask 13: to the team's people who can use its money, when someone who can't handed back time the club billed. */
   bellUnasked: (p: { name: string; count: number; scheduleName: string; first: string; cents: number }) => ({

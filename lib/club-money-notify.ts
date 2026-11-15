@@ -118,6 +118,8 @@ export async function tellTeamMoneyPeople(p: {
   event: CoachMoneyEvent;
   title: string;
   body: string;
+  /** The rows the opened notice draws (Notifications read at a glance, Stage 3); with them `body` is the one line. */
+  facts?: NoticeFacts;
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   try {
@@ -133,7 +135,7 @@ export async function tellTeamMoneyPeople(p: {
       // The hub's Club tab through the one way to address it — the standalone `accounting/club` route was deleted
       // 2026-08-31, and the hand-built address it used 404'd on every notice (found drawing Stage 11d).
       link: moneySectionHref(`/${p.org.slug}/coaches/teams/${p.teamId}`, 'club'),
-      metadata: { teamId: p.teamId, ...(p.metadata ?? {}) },
+      metadata: { teamId: p.teamId, ...(p.metadata ?? {}), ...(p.facts ? { facts: p.facts } : {}) },
     });
   } catch (e) {
     console.error(`[club-money-notify] ${p.event} to the team failed (the money move landed):`, e);

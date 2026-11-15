@@ -1657,7 +1657,7 @@ async function recordLeagueDashboardRefund(op: PayForRefund, refund: Stripe.Refu
     await raiseOnce({
       org, userIds: await leagueRefundPeople(org), eventType: 'card_refund_whose', subjectKey: 'unassignedRefundId', subjectId: held.id as string,
       title: LW.whoseTitle(formatMoney(x / 100), guardian),
-      body: LW.whoseBody(childList(regRows.map(r => r.player_first_name)), formatMoney(Number(op.total_amount)), String(op.receipt_no ?? '')),
+      ...LW.whose({ children: regRows.map(r => r.player_first_name), total: formatMoney(Number(op.total_amount)), receiptNo: String(op.receipt_no ?? '') }),
       link: `/${org.slug}/admin/house-league/seasons/${op.season_id}/registrations?whose=${held.id as string}`,
       // Never onlinePaymentId: the one-open key reads it first, and a second refund on this payment is its own question.
       extra: { stripeRefundId: refund.id },

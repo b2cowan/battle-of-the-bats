@@ -15,7 +15,7 @@
 import { supabaseAdmin } from './supabase-admin';
 import { notify } from './notify';
 import { notifyFansForChampions } from './fan-notify';
-import { deriveChampions, isTournamentPlayoffsComplete } from './champions';
+import { championsNotice, deriveChampions, isTournamentPlayoffsComplete } from './champions';
 import { onlyPublishedGames } from './public-games';
 import type { Game, Division, GameStatus } from './types';
 
@@ -95,7 +95,8 @@ export async function announceChampionsForTournament(tournamentId: string, exclu
       .maybeSingle();
     if (!org) return;
 
-    // 4. Headline champion line — the top-tier champion per division.
+    // 4. The top-tier champion per division. The staff notice names each with its division (its one words entry); the fans'
+    //    push keeps its own headline, the champions' names.
     const teams = (teamRes.data ?? []).map(t => ({ id: t.id, name: t.name }));
     const champs = deriveChampions(games, teams, divisions);
     const headline =
@@ -103,14 +104,16 @@ export async function announceChampionsForTournament(tournamentId: string, exclu
       : champs.length === 1 ? champs[0].champion
       : champs.map(c => c.champion).join(', ');
 
+    const notice = championsNotice(champs);
     const link = `/${org.slug}/${claimed.slug}/champions`;
     notify({
       orgId: claimed.org_id,
       tournamentId,
       eventType: 'champions_crowned',
       title: '🏆 Champions crowned',
-      body: headline ? `${headline} — see the final results` : 'The playoffs are complete — see the final results.',
+      body: notice.body,
       link,
+      ...(notice.facts ? { metadata: { facts: notice.facts } } : {}),
       excludeUserIds: excludeUserId ? [excludeUserId] : [],
     }).catch(console.error);
     // Anonymous fans following any team in the tournament (Tournament Plus+, gated inside).

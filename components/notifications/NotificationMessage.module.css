@@ -88,6 +88,10 @@
 .factSpan { grid-column: 2; min-width: 0; }
 .factLines { list-style: none; margin: 2px 0 0; padding: 0; font-size: var(--type-body, 0.875rem); line-height: 1.5; color: var(--text-secondary); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .factLines li { padding: 1px 0; }
+/* A line's bold part (a child's answer, a champion) reads in primary ink inside the quieter list (drawing tab 5). */
+.factLines .factLead { color: var(--text-primary); }
+/* A row that IS its list (family answers, Stage 3): the list is the answer, so it starts on the label's line. */
+.factSpanOnly .factLines { margin-top: 0; }
 /* The fold (Q3): a quiet text control in the accent, the product's other folds' voice. */
 .factFold {
   padding: 2px 0 0;

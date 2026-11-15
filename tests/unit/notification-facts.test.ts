@@ -10,7 +10,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  FACT_FOLD_WORDS, FACT_LABELS, FACT_LABEL_MAX, FACT_LIST_FOLD, FACT_LIST_MAX, capFactList, factRow, noticeFacts, readNoticeFacts,
+  FACT_FOLD_WORDS, FACT_LABELS, FACT_LABEL_MAX, FACT_LIST_FOLD, FACT_LIST_MAX, capFactList, factLine, factLineText, factRow, noticeFacts,
+  readNoticeFacts, type NoticeFacts,
 } from '../../lib/notification-facts.ts';
 import { readCode } from './_source-code.ts';
 import {
@@ -20,6 +21,10 @@ import { CLUB_MONEY_NOTICE } from '../../lib/club-money-words.ts';
 import { SCHEDULE_NOTICES } from '../../lib/club-schedule-words.ts';
 import { FAMILY_HANDOFF_COACH_WORDS } from '../../lib/families-words.ts';
 import { HAND_BACK_WORDS as H } from '../../lib/club-hand-back-words.ts';
+import { LEAGUE_ADMIN_NOTICE, NO_LEAGUE_COUNTS } from '../../lib/club-schedule-league-words.ts';
+import { coachBellWords } from '../../lib/family-availability-words.ts';
+import { formatInsightDigest } from '../../lib/insight-findings.ts';
+import { championsNotice } from '../../lib/champions.ts';
 
 const NOUN = { one: 'game', many: 'games' };
 
@@ -171,12 +176,159 @@ describe('the fifteen money notices (C): one wording per kind, rows from the sha
   });
 });
 
+describe('the six list notices (Stage 3): one wording per kind, rows from the shared vocabulary', () => {
+  const VOCAB = new Set<string>(Object.values(FACT_LABELS));
+  const bell = (over: Partial<Parameters<typeof coachBellWords>[0]['items'][number]>) => ({
+    child: 'Maya', answer: 'attending' as const, prior: 'absent' as const, parent: 'Dana', hasNote: false,
+    count: '11 of 14 in · 2 out · 1 maybe', eventLabel: 'Sat vs Lakeshore', eventDay: 'Sat, Nov 8', ...over,
+  });
+  const champs = (n: number) => Array.from({ length: n }, (_, i) => ({ division: `U${10 + i}`, champion: `Team ${i + 1}`, runnerUp: null }));
+  const accepted = H.bellAnswered({ answer: 'accepted', late: false, scheduleName: 'Winter dome', count: 4, creditCents: 43_200, payCents: 10_800, teamName: 'Ridge 12U',
+    moves: [{ dueDate: '2027-02-01', fromCents: 86_400, toCents: 43_200 }, { dueDate: '2026-12-01', fromCents: 43_200, toCents: 0 }] });
+  const notices: Record<string, { body: string; facts?: NoticeFacts }[]> = {
+    club_schedule_league_changes: [LEAGUE_ADMIN_NOTICE.notice({ scheduleName: 'Winter dome', divisions: ['U10', 'U12'], gameLines: ['U12 · Sun, Nov 15: Field 2 → Field 4'],
+      ...NO_LEAGUE_COUNTS, moved: 3, gamesMoved: 8, gamesNeedDate: 1, gamesWaiting: 9 })],
+    family_availability_response: [
+      coachBellWords({ kind: 'event', items: [bell({}), bell({ child: 'Leo', answer: 'absent', prior: null, hasNote: true }), bell({ child: 'Sam', answer: 'maybe', prior: 'attending' })] }),
+      coachBellWords({ kind: 'event', items: [bell({ answer: 'absent', prior: 'attending', hasNote: true })] }),
+      coachBellWords({ kind: 'family', items: [bell({ answer: 'absent', prior: 'attending' }), bell({ answer: 'absent', prior: null, eventDay: 'Sat, Nov 15', hasNote: true })] }),
+    ],
+    coach_insights_digest: [formatInsightDigest([
+      { tier: 'good-news', tone: 'good', report: 'results', text: 'Won 4 of your last 5.' },
+      { tier: 'attendance', tone: 'warn', report: 'attendance', text: 'Maya Chen has made 5 of 9 tracked sessions this season.' },
+    ])!],
+    club_hand_back_answered: [
+      accepted,
+      H.bellAnswered({ answer: 'accepted', late: true, scheduleName: 'Winter dome', count: 4, creditCents: 0, payCents: 43_200, teamName: 'Ridge 12U', moves: [] }),
+      H.bellAnswered({ answer: 'declined', late: false, scheduleName: 'Winter dome', count: 4, reason: 'We can’t re-sell those dates.' }),
+      H.bellAnswered({ answer: 'declined', late: true, scheduleName: 'Winter dome', count: 1, reason: null }),
+    ],
+    card_refund_whose: [LW.whose({ children: ['Henry', 'Sam', 'Ella'], total: '$450.00', receiptNo: '1042' })],
+    champions_crowned: [championsNotice(champs(3)), championsNotice(champs(8))],
+  };
+  it('every row label is a shared word, at most 11 characters; every notice round-trips; every one line is one line', () => {
+    for (const [kind, list] of Object.entries(notices)) {
+      for (const n of list) {
+        assert.ok(n.facts, kind);
+        for (const r of n.facts!.rows) assert.ok(VOCAB.has(r.label), `${kind}: "${r.label}" is not in the shared vocabulary`);
+        assert.deepEqual(readNoticeFacts(JSON.parse(JSON.stringify({ facts: n.facts }))), n.facts, kind);
+        assert.doesNotMatch(n.body, /\n/, kind);
+      }
+    }
+  });
+  it('a row that IS its list, and a list line with a bold part, round-trip; an empty row or an empty part never does', () => {
+    const facts = noticeFacts([factRow('Answers', null, { list: { lines: [factLine('Maya', 'In', 'was Out'), 'plain'], noun: { one: 'answer', many: 'answers' } } })]);
+    assert.deepEqual(facts.rows[0], { label: 'Answers', value: '', list: { lines: [{ text: 'Maya', lead: 'In', detail: 'was Out' }, 'plain'], noun: { one: 'answer', many: 'answers' } } });
+    assert.deepEqual(readNoticeFacts(JSON.parse(JSON.stringify({ facts }))), facts);
+    assert.deepEqual(factLine('Sat, Nov 15', 'Out', ''), { text: 'Sat, Nov 15', lead: 'Out' }, 'an empty part is left out');
+    assert.equal(factLineText(factLine('Maya', 'In', 'was Out')), 'Maya · In · was Out');
+    assert.deepEqual(factRow('Answers', null, { list: { lines: [], noun: NOUN } }), [], 'an empty list is no row');
+    assert.deepEqual(factLine('', 'Ridge 12U'), { text: 'Ridge 12U' }, 'a line with no text leads with its bold part');
+    const kept = capFactList(['Maya', '', factLine('', ''), factLine('U12', 'Ridge')], NOUN, n => `and ${n} more`);
+    assert.deepEqual(kept.lines, ['Maya', { text: 'U12', lead: 'Ridge' }], 'a blank line is left out, so it never voids the rows');
+    assert.ok(readNoticeFacts({ facts: noticeFacts([factRow('Answers', null, { list: kept })]) }), 'and the notice still reads back');
+    for (const meta of [
+      { facts: { rows: [{ label: 'Answers', value: '' }] } },
+      { facts: { rows: [{ label: 'Answers', value: '', list: { lines: [], noun: NOUN } }] } },
+      { facts: { rows: [{ label: 'Answers', value: ' ', list: { lines: ['a'], noun: NOUN } }] } },
+      { facts: { rows: [{ label: 'Answers', value: '', list: { lines: [{ text: 'Maya', lead: '' }], noun: NOUN } }] } },
+      { facts: { rows: [{ label: 'Answers', value: '', list: { lines: [{ lead: 'In' }], noun: NOUN } }] } },
+    ]) assert.equal(readNoticeFacts(meta), null, JSON.stringify(meta));
+  });
+  it('moved games read as drawn (tab 4): counts are rows, the games a list under Games, the waiting games the next step', () => {
+    const [n] = notices.club_schedule_league_changes;
+    assert.equal(n.body, 'U10 and U12: 3 practices moved, 8 games moved and 1 game needs a new date.');
+    assert.deepEqual(n.facts!.rows.map(r => [r.label, r.value]), [['Schedule', 'Winter dome'], ['Divisions', 'U10 and U12'], ['Practices', '3 moved'], ['Games', '8 moved']]);
+    assert.equal(n.facts!.rows[3].detail, '1 needs a new date');
+    assert.equal(n.facts!.next, '9 games wait in Changes to send. Families hear once you send them.');
+  });
+  it('family answers read as drawn (tab 5): one child per line and Now; a single change; one family across events', () => {
+    const [several, single, family] = notices.family_availability_response;
+    assert.equal(several.body, 'Maya (In), Leo (Out) and Sam (Maybe) · now 11 of 14 in · 2 out · 1 maybe', 'three or fewer: today’s line');
+    assert.deepEqual(several.facts!.rows[0].list!.lines, [
+      { text: 'Maya', lead: 'In', detail: 'was Out' }, { text: 'Leo', lead: 'Out', detail: 'Dana left a note' }, { text: 'Sam', lead: 'Maybe', detail: 'was In' },
+    ]);
+    assert.deepEqual(several.facts!.rows.map(r => [r.label, r.value, r.detail]), [['Answers', '', undefined], ['Now', '11 of 14 in', '2 out · 1 maybe']]);
+    assert.deepEqual(single.facts!.rows.map(r => [r.label, r.value, r.detail]), [['Answer', 'Out', 'was In'], ['From', 'Dana', 'left a note'], ['Now', '11 of 14 in', '2 out · 1 maybe']]);
+    assert.equal(family.body, 'Sat, Nov 8 · Sat, Nov 15');
+    assert.deepEqual(family.facts!.rows.map(r => r.label), ['Events', 'From']);
+    assert.deepEqual(family.facts!.rows[0].list!.lines, [{ text: 'Sat, Nov 8', lead: 'Out', detail: 'was In' }, { text: 'Sat, Nov 15', lead: 'Out' }]);
+    // More than three: the line names three and counts the rest; the rows keep every child.
+    const seven = coachBellWords({ kind: 'event', items: ['Maya', 'Leo', 'Sam', 'Ava', 'Ben', 'Cal', 'Dee'].map(child => bell({ child })) });
+    assert.equal(seven.body, 'Maya, Leo, Sam and 4 more · now 11 of 14 in');
+    assert.equal(seven.facts.rows[0].list!.lines.length, 7);
+    // Never the note's words: the bell has no note to read.
+    assert.doesNotMatch(JSON.stringify(notices.family_availability_response), /note’s|said:/);
+  });
+  it('a family answer folded into an unread notice re-writes its rows with the title and body', () => {
+    const src = readCode('lib/family-availability-coach-bell.ts');
+    assert.match(src, /const words = coachBellWords\(merged\.bundle\);[\s\S]*?title: words\.title, body: words\.body,[\s\S]*?metadata: \{ teamId: params\.teamId, eventId: item\.eventId, bundle: merged\.bundle, facts: words\.facts \}/);
+    assert.match(src, /const words = coachBellWords\(freshBundle\);[\s\S]*?metadata: \{ teamId: params\.teamId, eventId: item\.eventId, bundle: freshBundle, facts: words\.facts \}/);
+  });
+  it('weekly insights: the line leads with the first finding and counts the rest; the rows are the same findings (ruling 2026-11-15)', () => {
+    const [n] = notices.coach_insights_digest;
+    assert.equal(n.body, 'Won 4 of your last 5 · and 1 more this week.');
+    assert.deepEqual(n.facts!.rows[0].list!.lines, ['Won 4 of your last 5.', '⚠ Maya Chen has made 5 of 9 tracked sessions this season.']);
+    // Each coach's own findings: the rows are built in the same call as the body, from the findings computed for that coach.
+    assert.match(readCode('lib/insights-digest.ts'), /const digest = formatInsightDigest\(findings\);[\s\S]*?body: digest\.body,[\s\S]*?facts: digest\.facts/);
+  });
+  it('hand-back answered: one entry for four builds; one line per payment that dropped; a declined reason is quoted, never shortened', () => {
+    assert.equal(accepted.body, 'Winter dome: 4 practices handed back. $432.00 came off what Ridge 12U owes. The club owes Ridge 12U $108.00 and will record paying it.');
+    assert.deepEqual(accepted.facts.rows.map(r => [r.label, r.value]), [['Schedule', 'Winter dome'], ['Practices', '4 handed back'], ['Came off', '$432.00'], ['Club owes', '$108.00']]);
+    assert.deepEqual(accepted.facts.rows[2].list!.lines, ['Dec 1 · $432.00 → $0.00', 'Feb 1 · $864.00 → $432.00'], 'in date order');
+    const [, late, declined, declinedLate] = notices.club_hand_back_answered;
+    assert.equal(late.facts!.rows.find(r => r.label === 'Came off'), undefined, 'no credit, no row');
+    assert.equal(declined.body, 'Winter dome: the 4 practices stay yours. “We can’t re-sell those dates.”', 'the reason stays in the line (owner 2026-11-15)');
+    assert.deepEqual(declined.facts!.rows.map(r => [r.label, r.value, r.detail]), [['Schedule', 'Winter dome', undefined], ['Practices', '4', 'stay yours'], ['Reason', '“We can’t re-sell those dates.”', undefined]]);
+    assert.deepEqual(declinedLate.facts!.rows.map(r => [r.label, r.detail]), [['Schedule', undefined], ['Practices', 'stays handed back']], 'no reason, no row');
+    const long = 'x'.repeat(480) + ' — and we told you in September.';
+    const d = H.bellAnswered({ answer: 'declined', late: false, scheduleName: 'W', count: 2, reason: long });
+    assert.equal(d.facts.rows.find(r => r.label === 'Reason')!.value, `“${long}”`);
+    assert.ok(d.body.endsWith(`“${long}”`));
+    const src = readCode('lib/club-hand-back.ts');
+    assert.equal((src.match(/W\.bellAnswered\(/g) ?? []).length, 2);
+    assert.doesNotMatch(src + readCode('lib/club-hand-back-words.ts'), /bellAcceptedLate|bellDeclinedLate|bellAccepted\b|bellDeclined\b/);
+    assert.match(readCode('lib/club-money-notify.ts'), /export async function tellTeamMoneyPeople[\s\S]*?\.\.\.\(p\.facts \? \{ facts: p\.facts \} : \{\}\)/);
+  });
+  it('a refund whose: the children are the list to choose among; the payment and the book are rows; the choice is the next step', () => {
+    const [n] = notices.card_refund_whose;
+    assert.equal(n.body, 'It paid for Henry, Sam and Ella, so we can’t tell whose fee it was.');
+    assert.deepEqual(n.facts!.rows.map(r => [r.label, r.value, r.detail]), [['Paid for', '', undefined], ['Payment', '$450.00', 'receipt 1042'], ['Book', 'Not in the season’s book until you choose', undefined]]);
+    assert.deepEqual(n.facts!.rows[0].list!.lines, ['Henry', 'Sam', 'Ella']);
+    assert.equal(n.facts!.next, 'Choose the child, and it goes on that registration.');
+    assert.match(readCode('lib/online-payment-landing.ts'), /eventType: 'card_refund_whose'[\s\S]*?\.\.\.LW\.whose\(\{ children: regRows\.map/);
+  });
+  it('champions: up to three named with their division, more counted; one line per champion; no champion, no rows', () => {
+    const [three, eight] = notices.champions_crowned;
+    assert.equal(three.body, 'Team 1 won U10, Team 2 won U11 and Team 3 won U12.');
+    assert.equal(eight.body, '8 divisions have their champions — see the final results.');
+    assert.deepEqual(three.facts!.rows[0].list!.lines[0], { text: 'U10', lead: 'Team 1' });
+    assert.equal(championsNotice(champs(1)).body, 'Team 1 won U10.');
+    assert.deepEqual(championsNotice([]), { body: 'The playoffs are complete — see the final results.' });
+    const src = readCode('lib/champions-notify.ts');
+    assert.match(src, /const notice = championsNotice\(champs\);[\s\S]*?body: notice\.body,[\s\S]*?metadata: \{ facts: notice\.facts \}/);
+    assert.match(src, /notifyFansForChampions\(tournamentId, headline\)/, 'the fans’ push keeps its own line');
+  });
+  it('every sender of the six passes facts to its one entry', () => {
+    assert.match(readCode('lib/club-schedule-send.ts'), /const notice = LEAGUE_ADMIN_NOTICE\.notice\([\s\S]*?body: notice\.body,[\s\S]*?metadata: \{ seasonId, sendId, facts: notice\.facts \}/);
+    assert.doesNotMatch(readCode('lib/club-schedule-league-words.ts'), /\\n\\n/, 'the one line never carries the game lines');
+  });
+});
+
 describe('the message block', () => {
   const src = readCode('components/notifications/NotificationMessage.tsx');
   it('draws any kind’s stored facts; the settled line replaces the next step (Q2)', () => {
     assert.match(src, /readNoticeFacts\(lead\.metadata\)/);
     assert.match(src, /<FactRows facts=\{facts\} settled=\{!!settled\} \/>/);
     assert.match(src, /\{facts\.next && !settled && <p className=\{styles\.factNext\}>/);
+  });
+  it('a row that IS its list draws the list as its answer; a line’s bold part is the row’s bold face (Stage 3, drawing tab 5)', () => {
+    assert.ok(src.includes('{r.value && (\n              <dd>'), 'a row with no answer of its own draws no empty answer');
+    assert.ok(src.includes('<FactListLines list={r.list} only={!r.value} />'));
+    assert.ok(src.includes(`const Wrap = only ? 'dd' : 'div';`), 'the list is the row’s answer');
+    assert.ok(src.includes('<span className={styles.factLead}>{l.lead}</span>'));
+    const css = readCode('components/notifications/NotificationMessage.module.css');
+    assert.ok(css.includes('.factLines .factLead { color: var(--text-primary); }'));
   });
   it('a bundle opens as its members’ one-line bodies, never rows', () => {
     assert.match(src, /const facts = entry\.kind !== 'item' \? null/);
