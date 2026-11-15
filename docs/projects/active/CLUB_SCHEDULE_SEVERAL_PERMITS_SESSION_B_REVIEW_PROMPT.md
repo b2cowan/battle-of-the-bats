@@ -97,7 +97,7 @@ Known red before this run that is NOT B's: `team-move-coverage` (other sessions'
   sentences: the document's "Dates off: Sat, Mar 27 (Easter weekend, at Kinsmen Park)" and the Venue library refusal
   "A date off on one of the club’s schedules names {venue}, so it can be archived but not deleted." Apply what the owner
   approves; re-run Tests + spelling.
-- [ ] **Stage 6 · Commit** — runs only after Stages 1–2 are ticked. **ASK the owner before committing; show the file
+- [x] **Stage 6 · Commit** — DONE 2026-11-15: committed `da0f39b53` on dev (41 files; owner said commit and to stop ending messages with Co-Authored-By, so none). Private index + CAS on HEAD; TODO.md and MANUAL_PROD_STEPS.json built from HEAD + B's piece only (the release-hardening TODO line and every other prod-status flip / the 486 entry stay uncommitted in the tree). Hash recorded in plan Phase 2, TODO and the project memory in a follow-up docs commit. Original: runs only after Stages 1–2 are ticked. **ASK the owner before committing; show the file
   list first.** Recipe: dev branch; explicit pathspecs; never push. Other sessions have uncommitted work in the tree
   (the Bill and Send windows, notifications, words/send/stylesheet pieces): stage only B's hunks, build blobs from the
   working copy minus foreign hunks, commit in a private index with a compare-and-swap on HEAD in ONE script (HEAD moved

@@ -309,8 +309,7 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [x] Guard: a test that no reader of a schedule's permit uses a single column after this session.
 
 ### Phase 2 (Session B) — dates off with venues
-> **Built 2026-11-15** (Session B of the build prompt; the commit hash is recorded here by the commit chat, which runs after
-> the owner's /simplify, /review and /dba chats). Step 0 (partial-hour overlap trim) **skipped**: the owner's ruling line was not pasted.
+> **Built 2026-11-15** (Session B of the build prompt; **committed `da0f39b53` 2026-11-15**, after the /simplify, /review, /dba, /docs, /design and /marketing passes). Step 0 (partial-hour overlap trim) **skipped**: the owner's ruling line was not pasted.
 > Mig **488** `488_a_date_off_names_its_parks.sql` applied to DEV 2026-11-15; prod step `pending` (live `club_schedule_save` was 487's
 > before the apply); `tests/sql/date-off-venues-fixture.sql` **5/5**, A's `several-permits-fixture.sql` still 5/5; prod step
 > in `MANUAL_PROD_STEPS.json` (`pending`, after 487, before B's code); dictionary + snapshots (the hook refreshed them at the apply).
