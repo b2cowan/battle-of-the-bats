@@ -23,7 +23,7 @@ import { readClubBookings } from './venue-clash-lookup';
 import { calendarPrograms, readClubCalendar, MAX_CALENDAR_DAYS, type CalendarReader } from './club-calendar';
 import { clubDayOf, datesOffTaken, type BookingPlace, type PermitTime, type VenueFacilities } from './permit-time';
 import type { TakenKind } from './permit-words';
-import { buildDatesOffNotice, type DatesOffNotice, type ScheduleOutside, type TakenDay } from './permit-dates-off-view';
+import { buildDatesOffNotice, type DatesOffNotice, type ScheduleOutside, type ScheduleOutsideRow, type TakenDay } from './permit-dates-off-view';
 import { canOpenClubSchedules } from './club-schedule-gate';
 import type { ClubBooking } from './venue-clash';
 import type { CalendarBooking } from './club-calendar-view';
@@ -139,6 +139,9 @@ export async function readScheduleOutside(reader: CalendarReader, opts: {
   const byDay = new Map<string, { note: string | null; slotKeys: Set<string> }>();
   const names: string[] = [];
   const leagueByDay = new Map<string, TakenDay['bookings']>();
+  const rows: ScheduleOutsideRow[] = [];
+  // The parks the schedule's time stands on: a permit's row names only its own of them (P5 A).
+  const scheduleParks = new Set(opts.slots.map(s => s.venueId));
   for (const id of opts.permitIds) {
     const permit = times.permits.find(p => p.id === id);
     if (!permit) continue;
@@ -153,13 +156,22 @@ export async function readScheduleOutside(reader: CalendarReader, opts: {
       for (const b of d.bookings) was.slotKeys.add(b.key);
     }
     const pulled = new Set(hit.map(d => d.day));
+    const mine: TakenDay[] = [];
     for (const d of taken.get(id) ?? []) {
       if (!pulled.has(d.day)) continue;
       const league = d.bookings.filter(b => b.program === 'league');
       if (!league.length) continue;
+      mine.push({ day: d.day, bookings: league });
       const list = leagueByDay.get(d.day) ?? leagueByDay.set(d.day, []).get(d.day)!;
       for (const b of league) if (!list.includes(b)) list.push(b);
     }
+    rows.push({
+      permitId: id, permitName: permit.name,
+      venueIds: [...new Set(permit.blocks.map(b => b.venueId))].filter(v => scheduleParks.has(v)),
+      days: hit.map(d => ({ day: d.day, note: noteOf.get(d.day) ?? null, slotKeys: [...new Set(d.bookings.map(b => b.key))] })).sort((a, z) => a.day.localeCompare(z.day)),
+      league: mine.flatMap(d => d.bookings.map(kindOf)),
+      leagueDays: mine.map(d => d.day).sort(),
+    });
   }
   if (!byDay.size) return null;
   const leagueDays: TakenDay[] = [...leagueByDay].sort((a, z) => a[0].localeCompare(z[0])).map(([day, bookings]) => ({ day, bookings }));
@@ -168,6 +180,7 @@ export async function readScheduleOutside(reader: CalendarReader, opts: {
   const door = notice?.doors.find(d => d.kind === 'season') ?? notice?.doors.find(d => d.kind === 'calendar') ?? null;
   return {
     permitName: joinWithAnd(names),
+    rows,
     days: [...byDay].sort((a, z) => a[0].localeCompare(z[0])).map(([day, d]) => ({ day, note: d.note, slotKeys: [...d.slotKeys] })),
     league: leagueDays.flatMap(d => d.bookings.map(kindOf)),
     leagueDays: leagueDays.map(d => d.day),

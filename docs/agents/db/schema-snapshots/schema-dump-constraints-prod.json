@@ -271,16 +271,6 @@
   },
   {
     "table_name": "bank_accounts",
-    "constraint_name": "bank_accounts_set_up_by_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "set_up_by",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_accounts",
     "constraint_name": "bank_accounts_team_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
@@ -290,8 +280,8 @@
     "update_rule": "NO ACTION"
   },
   {
-    "table_name": "bank_check_added_lines",
-    "constraint_name": "bank_check_added_lines_added_by_fkey",
+    "table_name": "bank_check_waiting",
+    "constraint_name": "bank_check_waiting_added_by_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "added_by",
     "foreign_table": null,
@@ -300,8 +290,8 @@
     "update_rule": "NO ACTION"
   },
   {
-    "table_name": "bank_check_added_lines",
-    "constraint_name": "bank_check_added_lines_check_id_fkey",
+    "table_name": "bank_check_waiting",
+    "constraint_name": "bank_check_waiting_check_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "check_id",
     "foreign_table": "bank_checks",
@@ -310,8 +300,8 @@
     "update_rule": "NO ACTION"
   },
   {
-    "table_name": "bank_check_added_lines",
-    "constraint_name": "bank_check_added_lines_once",
+    "table_name": "bank_check_waiting",
+    "constraint_name": "bank_check_waiting_once",
     "constraint_type": "UNIQUE",
     "column_name": "check_id",
     "foreign_table": null,
@@ -320,148 +310,8 @@
     "update_rule": null
   },
   {
-    "table_name": "bank_check_added_lines",
-    "constraint_name": "bank_check_added_lines_once",
-    "constraint_type": "UNIQUE",
-    "column_name": "line_key",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_check_added_lines",
-    "constraint_name": "bank_check_added_lines_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_check_changes",
-    "constraint_name": "bank_check_changes_changed_by_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "changed_by",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_check_changes",
-    "constraint_name": "bank_check_changes_check_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "check_id",
-    "foreign_table": "bank_checks",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_check_changes",
-    "constraint_name": "bank_check_changes_cleared_by_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "cleared_by",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_check_changes",
-    "constraint_name": "bank_check_changes_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_check_events",
-    "constraint_name": "bank_check_events_by_user_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "by_user",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_check_events",
-    "constraint_name": "bank_check_events_check_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "check_id",
-    "foreign_table": "bank_checks",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_check_events",
-    "constraint_name": "bank_check_events_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_check_marks",
-    "constraint_name": "bank_check_marks_bank_account_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "bank_account_id",
-    "foreign_table": "bank_accounts",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_check_marks",
-    "constraint_name": "bank_check_marks_check_same_account",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "check_id",
-    "foreign_table": "bank_checks",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_check_marks",
-    "constraint_name": "bank_check_marks_check_same_account",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "bank_account_id",
-    "foreign_table": "bank_checks",
-    "foreign_column": "bank_account_id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_check_marks",
-    "constraint_name": "bank_check_marks_marked_by_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "marked_by",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_check_marks",
-    "constraint_name": "bank_check_marks_one_tick",
-    "constraint_type": "UNIQUE",
-    "column_name": "bank_account_id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_check_marks",
-    "constraint_name": "bank_check_marks_one_tick",
+    "table_name": "bank_check_waiting",
+    "constraint_name": "bank_check_waiting_once",
     "constraint_type": "UNIQUE",
     "column_name": "line_key",
     "foreign_table": null,
@@ -470,8 +320,8 @@
     "update_rule": null
   },
   {
-    "table_name": "bank_check_marks",
-    "constraint_name": "bank_check_marks_pkey",
+    "table_name": "bank_check_waiting",
+    "constraint_name": "bank_check_waiting_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -491,9 +341,9 @@
   },
   {
     "table_name": "bank_checks",
-    "constraint_name": "bank_checks_checked_by_fkey",
+    "constraint_name": "bank_checks_corrected_by_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "checked_by",
+    "column_name": "corrected_by",
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": "SET NULL",
@@ -511,43 +361,13 @@
   },
   {
     "table_name": "bank_checks",
-    "constraint_name": "bank_checks_id_account",
-    "constraint_type": "UNIQUE",
-    "column_name": "id",
+    "constraint_name": "bank_checks_deleted_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "deleted_by",
     "foreign_table": null,
     "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_checks",
-    "constraint_name": "bank_checks_id_account",
-    "constraint_type": "UNIQUE",
-    "column_name": "bank_account_id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_checks",
-    "constraint_name": "bank_checks_one_per_end_date",
-    "constraint_type": "UNIQUE",
-    "column_name": "bank_account_id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_checks",
-    "constraint_name": "bank_checks_one_per_end_date",
-    "constraint_type": "UNIQUE",
-    "column_name": "statement_end_date",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "bank_checks",
@@ -558,106 +378,6 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
-  },
-  {
-    "table_name": "bank_line_exclusions",
-    "constraint_name": "bank_line_exclusions_bank_account_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "bank_account_id",
-    "foreign_table": "bank_accounts",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_line_exclusions",
-    "constraint_name": "bank_line_exclusions_excluded_by_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "excluded_by",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_line_exclusions",
-    "constraint_name": "bank_line_exclusions_once",
-    "constraint_type": "UNIQUE",
-    "column_name": "bank_account_id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_line_exclusions",
-    "constraint_name": "bank_line_exclusions_once",
-    "constraint_type": "UNIQUE",
-    "column_name": "line_key",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_line_exclusions",
-    "constraint_name": "bank_line_exclusions_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_saved_lines",
-    "constraint_name": "bank_saved_lines_bank_account_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "bank_account_id",
-    "foreign_table": "bank_accounts",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "bank_saved_lines",
-    "constraint_name": "bank_saved_lines_once",
-    "constraint_type": "UNIQUE",
-    "column_name": "bank_account_id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_saved_lines",
-    "constraint_name": "bank_saved_lines_once",
-    "constraint_type": "UNIQUE",
-    "column_name": "line_key",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_saved_lines",
-    "constraint_name": "bank_saved_lines_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": null,
-    "update_rule": null
-  },
-  {
-    "table_name": "bank_saved_lines",
-    "constraint_name": "bank_saved_lines_saved_by_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "saved_by",
-    "foreign_table": null,
-    "foreign_column": null,
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
   },
   {
     "table_name": "basic_coach_team_announcements",
@@ -2120,6 +1840,56 @@
     "update_rule": null
   },
   {
+    "table_name": "event_availability_reminders",
+    "constraint_name": "event_availability_reminders_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "event_availability_reminders",
+    "constraint_name": "event_availability_reminders_reminded_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "reminded_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_calendar_feeds",
+    "constraint_name": "family_calendar_feeds_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "family_calendar_feeds",
+    "constraint_name": "family_calendar_feeds_token_hash_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "token_hash",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "family_calendar_feeds",
+    "constraint_name": "family_calendar_feeds_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "family_coach_asks",
     "constraint_name": "family_coach_asks_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2260,6 +2030,106 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "family_invitations",
+    "constraint_name": "family_invitations_child_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "child_id",
+    "foreign_table": "org_children",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_invitations",
+    "constraint_name": "family_invitations_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_invitations",
+    "constraint_name": "family_invitations_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "family_invitations",
+    "constraint_name": "family_invitations_rep_player_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "rep_player_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_invitations",
+    "constraint_name": "family_invitations_replaced_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "replaced_by",
+    "foreign_table": "family_invitations",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_invitations",
+    "constraint_name": "family_invitations_sent_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "sent_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_invitations",
+    "constraint_name": "family_invitations_token_hash_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "token_hash",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "family_invitations",
+    "constraint_name": "family_invitations_used_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "used_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_invite_stops",
+    "constraint_name": "family_invite_stops_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_invite_stops",
+    "constraint_name": "family_invite_stops_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "family_links",
     "constraint_name": "family_links_approved_by_user_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2278,6 +2148,16 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
+  },
+  {
+    "table_name": "family_links",
+    "constraint_name": "family_links_child_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "child_id",
+    "foreign_table": "org_children",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "family_links",
@@ -2958,6 +2838,96 @@
     "foreign_column": null,
     "delete_rule": "NO ACTION",
     "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_decided_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "decided_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_kept_apart_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "kept_apart_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_matched_registration_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "matched_registration_id",
+    "foreign_table": "league_registrations",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_registration_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "registration_id",
+    "foreign_table": "league_registrations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_slot_uniq",
+    "constraint_type": "UNIQUE",
+    "column_name": "registration_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_friend_requests",
+    "constraint_name": "league_friend_requests_slot_uniq",
+    "constraint_type": "UNIQUE",
+    "column_name": "slot",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
   },
   {
     "table_name": "league_game_changes",
@@ -3820,6 +3790,16 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "league_registrations",
+    "constraint_name": "league_registrations_told_team_fk",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "told_team_id",
+    "foreign_table": "league_teams",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "league_schedule_emails",
     "constraint_name": "league_schedule_emails_division_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -3972,6 +3952,46 @@
   {
     "table_name": "league_season_notices",
     "constraint_name": "league_season_notices_season_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "season_id",
+    "foreign_table": "league_seasons",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "constraint_name": "league_season_time_asks_asked_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "asked_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "constraint_name": "league_season_time_asks_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "constraint_name": "league_season_time_asks_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "season_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "constraint_name": "league_season_time_asks_season_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "season_id",
     "foreign_table": "league_seasons",
@@ -4207,6 +4227,26 @@
     "foreign_table": "league_seasons",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "legal_acceptances",
+    "constraint_name": "legal_acceptances_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "legal_acceptances",
+    "constraint_name": "legal_acceptances_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {
@@ -5531,6 +5571,16 @@
   },
   {
     "table_name": "org_time_blocks",
+    "constraint_name": "org_time_blocks_from_permit_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "from_permit_id",
+    "foreign_table": "org_permits",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_blocks",
     "constraint_name": "org_time_blocks_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
@@ -6028,6 +6078,76 @@
     "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "constraint_name": "platform_charge_tax_looks_after_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "after_id",
+    "foreign_table": "platform_charge_tax_looks",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "constraint_name": "platform_charge_tax_looks_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "constraint_name": "platform_charge_tax_looks_put_back_of_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "put_back_of",
+    "foreign_table": "platform_charge_tax_looks",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "constraint_name": "platform_charge_tax_records_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "constraint_name": "platform_charge_tax_records_stripe_invoice_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "stripe_invoice_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "constraint_name": "platform_credit_note_tax_records_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "constraint_name": "platform_credit_note_tax_records_stripe_credit_note_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "stripe_credit_note_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
   },
   {
     "table_name": "platform_email_templates",
@@ -8731,6 +8851,16 @@
   },
   {
     "table_name": "rep_roster_players",
+    "constraint_name": "rep_roster_players_health_confirmed_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "health_confirmed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_roster_players",
     "constraint_name": "rep_roster_players_id_team_uniq",
     "constraint_type": "UNIQUE",
     "column_name": "id",
@@ -9481,6 +9611,16 @@
   },
   {
     "table_name": "rep_team_event_attendance",
+    "constraint_name": "rep_team_event_attendance_family_note_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "family_note_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_event_attendance",
     "constraint_name": "rep_team_event_attendance_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
@@ -9511,12 +9651,32 @@
   },
   {
     "table_name": "rep_team_event_attendance",
+    "constraint_name": "rep_team_event_attendance_previous_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "previous_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_event_attendance",
     "constraint_name": "rep_team_event_attendance_program_year_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "program_year_id",
     "foreign_table": "rep_program_years",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "constraint_name": "rep_team_event_attendance_set_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "set_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {
@@ -11570,6 +11730,26 @@
     "update_rule": null
   },
   {
+    "table_name": "second_parent_stops",
+    "constraint_name": "second_parent_stops_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "second_parent_stops",
+    "constraint_name": "second_parent_stops_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "stripe_billing_drift_checks",
     "constraint_name": "stripe_billing_drift_checks_pkey",
     "constraint_type": "PRIMARY KEY",
@@ -12488,6 +12668,166 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
+  },
+  {
+    "table_name": "two_step_backup_codes",
+    "constraint_name": "two_step_backup_codes_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_backup_codes",
+    "constraint_name": "two_step_backup_codes_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "two_step_code_uses",
+    "constraint_name": "two_step_code_uses_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_code_uses",
+    "constraint_name": "two_step_code_uses_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "code_hash",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_code_uses",
+    "constraint_name": "two_step_code_uses_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "two_step_grace",
+    "constraint_name": "two_step_grace_organization_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "organization_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "two_step_grace",
+    "constraint_name": "two_step_grace_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_grace",
+    "constraint_name": "two_step_grace_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "organization_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_grace",
+    "constraint_name": "two_step_grace_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "constraint_name": "two_step_owner_resets_organization_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "organization_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "constraint_name": "two_step_owner_resets_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "constraint_name": "two_step_owner_resets_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "user_hidden_workspaces",
+    "constraint_name": "user_hidden_workspaces_organization_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "organization_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "user_hidden_workspaces",
+    "constraint_name": "user_hidden_workspaces_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "user_hidden_workspaces",
+    "constraint_name": "user_hidden_workspaces_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "organization_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "user_hidden_workspaces",
+    "constraint_name": "user_hidden_workspaces_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "user_marketing_opt_outs",

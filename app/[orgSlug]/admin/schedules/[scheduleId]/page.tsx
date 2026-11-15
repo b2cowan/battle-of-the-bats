@@ -350,11 +350,27 @@ export default function SchedulePage() {
   // ── The permit's pulled dates (13c Session C, C2 = A): the words are scheduleOutsideWords'; the page adds the one ask,
   // a computer's only (as Regenerate is). The days go into the schedule's OWN Dates off, in today's Regenerate; nothing is
   // written until the admin keeps a draft there. No sync from the permit (13c adds none).
+  // A schedule on several permits (Session B): ONE ROW PER PERMIT, each counting only the practices at its parks, and its
+  // "Take … off" closing only those parks (P5 A) — named once the schedule's time uses more than one park. The warnings'
+  // first line still reads every permit's days together.
   const outsideWords = outside ? scheduleOutsideWords(outside, v, { draft, nameOf }) : null;
-  const outsideRow = outsideWords && outside ? {
-    ...outsideWords,
-    action: canChange ? { label: W.takeDaysOff(outsideWords.days), onClick: () => setWin({ kind: 'settings', regenerate: true, addDatesOff: outside.days.map(d => ({ day: d.day, note: d.note })) }) } : null,
-  } : null;
+  const scheduleParks = [...new Set(v.time.blocks.map(b => b.venueId))];
+  const outsideRows = outside ? outside.rows.map(row => {
+    const parks = scheduleParks.length > 1 ? row.venueIds : [];
+    const at = parks.length ? joinWithAnd(parks.map(id => placeName(v.places, id, null)).filter(Boolean)) : null;
+    const words = scheduleOutsideWords({ ...outside, permitName: row.permitName, days: row.days, league: row.league, leagueDays: row.leagueDays }, v,
+      { draft, nameOf, permitNamed: outside.rows.length > 1, at });
+    return {
+      ...words,
+      action: canChange ? { label: W.takeDaysOff(words.days, at), onClick: () => setWin({ kind: 'settings', regenerate: true, addDatesOff: row.days.map(d => ({ day: d.day, note: d.note, venueIds: parks })) }) } : null,
+    };
+  }) : [];
+  // "Different on a date": a pulled day names the parks of the permit(s) that pulled it, once the schedule uses more than one.
+  const outsideDays = (outside?.days ?? []).map(d => {
+    const ids = scheduleParks.length > 1 && outside
+      ? [...new Set(outside.rows.filter(r => r.days.some(x => x.day === d.day)).flatMap(r => r.venueIds))] : [];
+    return { ...d, at: ids.length ? joinWithAnd(ids.map(id => placeName(v.places, id, null)).filter(Boolean)) : null };
+  });
 
   // ── Export ──
   const exportInput = () => ({
@@ -363,7 +379,7 @@ export default function SchedulePage() {
     startsOn: s.startsOn, endsOn: s.endsOn, places: v.places,
     teams: v.teams.map(t => ({ id: t.id, name: t.name, groupName: t.groupName })),
     slots: v.slots.map(x => ({ ...x, handedBackTeamId: x.handedBack?.teamId ?? null })),
-    datesOff: v.time.datesOff, pricing: v.pricing,
+    datesOff: v.time.datesOff, offParkNames: v.offParkNames, pricing: v.pricing,
     bill: v.bill ? v.bill.teams.map(t => ({ teamId: t.teamId, amount: t.cents / 100, installments: t.installments })) : null,
   });
   const runExport = async (kind: 'xlsx' | 'pdf' | 'ics') => {
@@ -617,7 +633,7 @@ export default function SchedulePage() {
       {reviewCallout}
       <ScheduleAttention asks={v.asks} slots={v.slots} places={v.places} canMoney={v.canMoney}
         changed={final && s.changedSinceSent} sentOn={formatStoredDate(s.sent?.at ?? '', { withYear: false })}
-        changeLines={changeLines} outside={outsideRow} onAnswer={id => setWin({ kind: 'answer', id })}
+        changeLines={changeLines} outside={outsideRows} onAnswer={id => setWin({ kind: 'answer', id })}
         onSend={() => setWin({ kind: 'send', start: 'changes' })} />
       {!isPhone && fair && <FairSharesBand model={fair} onOpen={() => setWin({ kind: 'fair' })} />}
 
@@ -669,7 +685,7 @@ export default function SchedulePage() {
           {lens === 'overview' && cols && <>
             {fair && <FairSharesLines model={fair} lead={outsideWords?.lead} />}
             <ScheduleOverview rows={allRows} days={cols.days} slots={v.slots} askedIds={askedIds}
-              nameOf={nameOf} onOpenGrid={openOverviewDate} outsideDays={outside?.days ?? []} />
+              nameOf={nameOf} onOpenGrid={openOverviewDate} outsideDays={outsideDays} />
           </>}
           {lens === 'grid' && cols ? (
             <>

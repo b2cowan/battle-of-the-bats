@@ -47,7 +47,10 @@ export interface ScheduleDocInput {
   places: readonly DocPlace[];
   teams: readonly DocTeam[];
   slots: readonly DocSlot[];
-  datesOff: readonly { day: string; note: string | null }[];
+  /** `venueIds`: the parks a date off closes (mig 488); none = every park. */
+  datesOff: readonly { day: string; note: string | null; venueIds?: readonly string[] }[];
+  /** Names of parks a date off names that no row of the schedule uses (so `places` can't name them): venue id → name. */
+  offParkNames?: Readonly<Record<string, string>>;
   /** The permit's price, for a MONEY reader only: an hour of a full field, its cost, its reference words. */
   pricing?: { fullHour: number | null; permitCost: number | null; permitName: string | null } | null;
   /** Each team's bill (a money reader, a bill riding with the schedule): its share and payments, in dollars. */
@@ -107,7 +110,18 @@ export function scheduleNotes(input: ScheduleDocInput): string[] {
   const notes = [timesInZoneSentence()];
   if (halfNames.length) notes.push(`${facilityListWords(halfNames)} ${halfNames.length === 1 ? 'is a half field' : 'are half fields'}.`);
   if (input.datesOff.length) {
-    notes.push(`Dates off: ${input.datesOff.map(d => `${formatShortWeekdayDate(d.day)}${d.note ? ` (${d.note})` : ''}`).join(', ')}.`);
+    // A date off that names its parks says them ("Sat, Mar 27 (Easter weekend, at Kinsmen Park)"); one on every park says none.
+    const parksOf = (d: ScheduleDocInput['datesOff'][number]) => {
+      // A date off that names parks always says them — a park no row uses still has its name, never a bare "Dates off".
+      const ids = d.venueIds ?? [];
+      const names = ids.map(v => placeWords(input.places, v, null) || input.offParkNames?.[v] || '').filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'en-CA', { numeric: true }));
+      return ids.length ? `at ${names.length ? joinWithAnd(names) : 'a venue this schedule doesn’t use'}` : '';
+    };
+    notes.push(`Dates off: ${input.datesOff.map(d => {
+      const why = [d.note, parksOf(d)].filter(Boolean).join(', ');
+      return `${formatShortWeekdayDate(d.day)}${why ? ` (${why})` : ''}`;
+    }).join(', ')}.`);
   }
   notes.push('A slot handed back after this was printed is open on the club’s schedule and on the team’s.');
   return notes;

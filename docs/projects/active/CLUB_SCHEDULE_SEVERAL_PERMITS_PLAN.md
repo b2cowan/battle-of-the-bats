@@ -309,12 +309,67 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [x] Guard: a test that no reader of a schedule's permit uses a single column after this session.
 
 ### Phase 2 (Session B) — dates off with venues
-- [ ] **Migration:** `org_time_dates_off_venues (dates_off_id, org_venue_id)`; no rows = all venues. Replace the
-      (schedule_id, day) uniqueness with one that allows the same day twice for different venue sets, or keep one row
-      per day with a venue set (decide with `/dba`; one row per day reads simpler). Dictionary + snapshots.
-- [ ] Engine and hand-edit warnings honour the scope.
-- [ ] The New schedule / Settings… dates-off row gains "Applies to" and its window (default All).
-- [ ] Copying a permit's dates off scopes them to its venues (P5); "Take … off" does the same.
+> **Built 2026-11-15** (Session B of the build prompt; the commit hash is recorded here by the commit chat, which runs after
+> the owner's /simplify, /review and /dba chats). Step 0 (partial-hour overlap trim) **skipped**: the owner's ruling line was not pasted.
+> Mig **488** `488_a_date_off_names_its_parks.sql` applied to DEV 2026-11-15; prod step `pending` (live `club_schedule_save` was 487's
+> before the apply); `tests/sql/date-off-venues-fixture.sql` **5/5**, A's `several-permits-fixture.sql` still 5/5; prod step
+> in `MANUAL_PROD_STEPS.json` (`pending`, after 487, before B's code); dictionary + snapshots (the hook refreshed them at the apply).
+> **/dba Stage 3 review 2026-11-15: GO, one amendment** — the same-club trigger also refuses a park row on a permit's own date off (re-applied to dev; fixture check 5 proves it, still 5/5); the prod step gained a pre-check that prod's save function is still 487's. See Finding #50.
+> **Table name:** `org_time_date_off_venues` (/dba Finding #50's name wins over this plan's `org_time_dates_off_venues`).
+> Shape exactly Finding #50 "Mig 2 (B)": join table; venue FK **NO ACTION**; date-off FK cascade; `org_id`; PK
+> `(date_off_id, org_venue_id)`; same-club trigger; RLS on, no policies, service role; indexes `(org_venue_id)`, `(org_id)`;
+> the UNIQUE per (owner, day) stays. `club_schedule_save` re-made from 487 — the diff is the datesOff block plus three declared
+> variables, nothing else.
+> **What it does:** a schedule's date off names its parks (none = All venues; every existing one is All). One answer,
+> `dateOffCovers` (`lib/permit-time.ts`), asked by `blockDates`, so the engine (generation, the regenerate, the hand-edit
+> checks that re-cut slots) honours it; a permit's own dates off stay permit-wide. The form keeps ONE ROW PER PERMIT AND DAY
+> (A's skip "the first wins" and "a day another permit has stays off" are gone) and merges to one per day at send
+> (`mergeDatesOff` in `lib/club-schedule-permit-rows.ts`: All wins, else the union, first non-empty note); unticking a permit
+> just drops its rows, so a shared day re-derives from the permits still ticked. A's /review F5 fixed: the "came off" hint
+> counts only days whose date off really changed (`datesOffChanged`). "Applies to" is the shipped `PickField` with "All
+> venues" first (N4 A), shown when the time uses more than one park or a date off already names one; under a permit's row,
+> "From {permit}". The API: `venueIds` through `readTimeBody` / `timePayload`; left out (or null) stays unsaid and the save keeps
+> the stored parks; the regenerate route fills an unsaid day from what is stored BEFORE cutting drafts
+> (`datesOffKeepingParks`), so a stale tab neither widens the save nor cuts the drafts on All venues — proved through the TS path
+> (`tests/unit/club-schedule-dates-off-venues.test.ts`, loading the real server module with the database stubbed).
+> Needs attention: "Outside the permit" is one row per permit (`ScheduleOutside.rows`), counting only practices at that
+> permit's parks, naming the permit when several are behind the rows; "Take {day} off {park}" adds the day for that permit's
+> parks on the schedule (one-park schedules: All venues and the old words, exactly as before); a second row's button is
+> outline. The document/export notes say a named date off's parks ("Sat, Mar 27 (Easter weekend, at Kinsmen Park)"). The Venue
+> library refuses deleting a park a date off names (`venue_in_date_off`, its own sentence).
+> **Guard:** `tests/unit/club-schedule-dates-off-venues.test.ts` (18 tests: the two-town fixture in generation, the
+> Outside rule and the document; the merge; untick; the stale tab through `readTimeBody`/`timePayload`; the Needs attention
+> words; the build guard — day-only readers of dates off exist only on the permit's side, `blockDates` asks `dateOffCovers`,
+> every schedule reader carries the parks, mig 488's shape). `team-move-coverage` gained the table in STAYS (a club schedule's).
+> **Decisions made in the build (owner may overrule):**
+> - A permit's copied date off names that permit's parks **only while the schedule's time uses more than one park**; on one
+>   park it is All venues (so a one-permit, one-park schedule stores and cuts exactly what it did; every date off now sends
+>   `venueIds: []` on the wire). Consequence: a one-park schedule's copied date off is All, so a park added later is closed
+>   that day too (Add time, Session E, may want to scope it then).
+> - "Take … off" names the permit's parks **on this schedule** (its blocks' venues that the schedule's slots use).
+> - A permit whose time holds no park gives an All-venues date off (it has no parks to name).
+> - "Applies to" also shows on a one-park schedule when a date off already names a park (a copied schedule's, or one whose
+>   other park's rows were removed), so a named list is never hidden; such a park stays an option in the field.
+> - In Settings… a saved date off no longer knows which permit it came from (the database keeps one row per day, no permit),
+>   so its "From {permit}" line shows only in New schedule.
+> - The "Applies to" key is NOT drawn inside the button as the drawing has it: the shipped `PickField` labels above the
+>   field, so the label is visually hidden in the row (kept for screen readers) and the button reads "All venues" /
+>   "Kinsmen Park". A /design question.
+> - New words: "Applies to", "All venues", "From {permit}", the permit-named head "… is a date off on {permit}", "… at {park}",
+>   "Take {day} off {park}", the document's "(…, at Kinsmen Park)", the venue refusal "A date off on one of the club's
+>   schedules names {venue}, so it can be archived but not deleted." — drawing words where the drawing has them; the last two
+>   are new and want /marketing.
+> **Not run:** `check:layout --changed` (a dev-server sweep; owed at the browser pass); a browser pass. `verify:changed`
+> ran and is red on OTHER sessions' work (its `npm test`: 17,133 / 17,157 — the possessive guard on PlayerGuardiansCard, the
+> tax-phrase guard on release notes/help, 13a doors A5, team-move coverage for `league_season_time_asks` and
+> `platform_charge_tax_looks`, coach phone/practice/notification suites); since `npm test` stopped it, its later steps were run
+> one by one: CSS purity, spelling, date correctness, snapshot freshness, manual prod migrations pass; schema parity is red
+> with 488 as dev-only (expected until prod) plus others'; index coverage, CSS selectors and admin type are red on others'
+> files, none on B's. Whole-project typecheck: clean. `lint:focused` on B's files: clean.
+- [x] **Migration:** `org_time_date_off_venues` (one row per day with a venue set — /dba #50). Dictionary + snapshots.
+- [x] Engine and hand-edit warnings honour the scope.
+- [x] The New schedule / Settings… dates-off row gains "Applies to" (the tick-list field, N4 A; default All).
+- [x] Copying a permit's dates off scopes them to its venues (P5); "Take … off" does the same.
 
 ### Phase 3 (Session C) — the bill: each permit's price or one rate
 - [ ] **Migration:** `club_schedules.bill_price_mode` (`each_permit` | `one_rate`, default `each_permit`) and

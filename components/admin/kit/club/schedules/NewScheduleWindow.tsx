@@ -67,13 +67,13 @@ import {
 } from '@/lib/club-schedule-form';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, sharingSentence, sharingWho } from '@/lib/club-schedule-words';
 import {
-  NO_GROUP, PRIME_DAYS, closingNote, isStale, facilityNoun, footCount, nightsWords, placeKey, scheduleDates, summaryLine, teamColour, yearOn,
+  NO_GROUP, PRIME_DAYS, closingNote, isStale, facilityNoun, footCount, nightsWords, placeKey, placeName, scheduleDates, summaryLine, teamColour, yearOn,
   type GenerateSummary, type ScheduleView,
 } from '@/lib/club-schedule-view';
 import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import type { DraftMeasure, TeamResult } from '@/lib/club-schedule-engine';
 import { HOUSE_LEAGUE, isProgramHolder } from '@/lib/club-schedule-holders';
-import { permitsSpan, settleOverlaps } from '@/lib/club-schedule-permit-rows';
+import { datesOffChanged, dateOffVenues, mergeDatesOff, permitsSpan, settleOverlaps, type DateOffParks } from '@/lib/club-schedule-permit-rows';
 import type { DateOff, TimeBlock } from '@/lib/permit-time';
 import { Statement, Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
@@ -102,9 +102,10 @@ export interface NewInputs {
 
 // ── The draft the form holds ──────────────────────────────────────────────────────────────────────
 
-/** A source's dates off as the form's rows — moved a year on when the source is last year's schedule. */
-const offRows = (list: readonly { day: string; note: string | null }[], shift: (day: string) => string = d => d) =>
-  list.map(o => ({ key: newKey('off'), day: shift(o.day), note: o.note ?? '' }));
+/** A source's dates off as the form's rows — moved a year on when the source is last year's schedule. A saved date off's
+ *  parks come with it, said (mig 488: none named = All venues). */
+const offRows = (list: readonly { day: string; note: string | null; venueIds?: readonly string[] }[], shift: (day: string) => string = d => d): OffRow[] =>
+  list.map(o => ({ key: newKey('off'), day: shift(o.day), note: o.note ?? '', ...(o.venueIds ? { venueIds: [...o.venueIds] } : {}) }));
 
 interface HoursRow {
   key: string; weekdays: number[]; start: string; end: string;
@@ -118,8 +119,10 @@ interface HoursRow {
    *  its own dates inside the widened From and To (one permit: the row follows the schedule's dates, as before). */
   permitDates?: { fromDate: string; untilDate: string };
 }
-/** A date off; `permitId`: the permit it came with, so unticking that permit takes it away again. */
-interface OffRow { key: string; day: string; note: string; permitId?: string }
+/** A date off; `permitId`: the permit it came with, so unticking that permit takes it away again. One row per permit and
+ *  day: two permits off the same day are two rows, merged into one date off only when the time is sent (`mergeDatesOff`).
+ *  `venueIds`: "Applies to", as chosen ([] = All venues); absent = its default — a permit's parks, or All venues. */
+interface OffRow { key: string; day: string; note: string; permitId?: string; venueIds?: string[] }
 
 /** The time, and the settings part (`SettingsDraft` — its conversions to and from the saved settings are one module's). */
 interface Draft extends SettingsDraft {
@@ -145,6 +148,8 @@ const EMPTY: Draft = {
   ...EMPTY_SETTINGS,
 };
 
+/** A dates-off merge where every row says its parks (Settings… and "Take … off"): no defaults to read. */
+const NO_PARKS: DateOffParks = { parks: [], permitParks: () => [] };
 type ListName = 'rows' | 'datesOff' | 'windows' | 'daysOff' | 'fieldsBy' | 'sharing';
 type RowOf<K extends ListName> = Draft[K] extends readonly (infer R)[] ? R : never;
 
@@ -289,6 +294,11 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const opening = !editing && !inputs && !inputsFailed;
   const set = useCallback((patch: Partial<Draft>) => setDraft(d => ({ ...d, ...patch })), []);
   const permitById = useMemo(() => new Map((inputs?.permits ?? []).map(x => [x.id, x])), [inputs]);
+  /** The parks a set of rows uses (a row with no place of its own is at the form's Venue), and each permit's own parks. */
+  const parksCtx = useCallback((rows: readonly HoursRow[]): DateOffParks => ({
+    parks: [...new Set(rows.filter(rowDone).map(r => r.place?.venueId ?? draft.venueId).filter(Boolean))],
+    permitParks: id => [...new Set((permitById.get(id)?.blocks ?? []).map(b => b.venueId))],
+  }), [permitById, draft.venueId]);
 
   // ── The inputs, and where the form starts ──
   useEffect(() => {
@@ -304,10 +314,11 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           ...EMPTY, ...settingsDraftOf(editing.schedule.settings, running),
           name: editing.schedule.name, startsOn: editing.schedule.startsOn, endsOn: editing.schedule.endsOn,
           ...timeFromBlocks(editing.time.blocks, r.data.places),
-          datesOff: offRows([
+          // "Take … off" days join the schedule's own, one per day: a day already off keeps All venues, else the parks unite.
+          datesOff: offRows(mergeDatesOff([
             ...editing.time.datesOff,
-            ...(settingsOf?.addDatesOff ?? []).filter(a => !editing.time.datesOff.some(d => d.day === a.day)),
-          ].sort((a, b) => a.day.localeCompare(b.day))),
+            ...(settingsOf?.addDatesOff ?? []),
+          ], NO_PARKS).sort((a, b) => a.day.localeCompare(b.day))),
         });
         return;
       }
@@ -337,14 +348,18 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const addedNow = next.filter(id => !draft.permitIds.includes(id));
     if (removedNow.length === 1 && !addedNow.length) {
       const id = removedNow[0];
-      setCameOff({ name: byId.get(id)?.name ?? '', rows: draft.rows.filter(r => r.permitId === id).length, offs: draft.datesOff.filter(o => o.permitId === id).length });
+      // Only the days that are not off exactly as before (/review F5): a day another ticked permit, or a typed row, keeps
+      // off on the same parks did not come off.
+      const offsOf = (rows: readonly HoursRow[], offs: readonly OffRow[]) => mergeDatesOff(offs.filter(o => isCalendarDate(o.day)), parksCtx(rows));
+      const rowsLeft = draft.rows.filter(r => r.permitId !== id), offsLeft = draft.datesOff.filter(o => o.permitId !== id);
+      const offs = datesOffChanged(draft.datesOff.filter(o => o.permitId === id).map(o => o.day), offsOf(draft.rows, draft.datesOff), offsOf(rowsLeft, offsLeft)).length;
+      setCameOff({ name: byId.get(id)?.name ?? '', rows: draft.rows.filter(r => r.permitId === id).length, offs });
     } else setCameOff(null);
     setDraft(d => {
       const ids = next.filter(id => byId.has(id));
       const added = ids.filter(id => !d.permitIds.includes(id));
       const removed = d.permitIds.filter(id => !ids.includes(id));
       let rows = d.rows, datesOff = d.datesOff;
-      const offDays = new Set(datesOff.filter(o => o.permitId && removed.includes(o.permitId)).map(o => o.day));
       rows = rows.filter(r => !r.permitId || !removed.includes(r.permitId));
       datesOff = datesOff.filter(o => !o.permitId || !removed.includes(o.permitId));
       for (const id of added) {
@@ -356,10 +371,23 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             .map(r => (r.place || !d.venueId ? r : { ...r, place: { venueId: d.venueId, facilityIds: [...d.facilityIds] } })),
           ...rowsOfPermit(p, inputs.places),
         ];
-        datesOff = [...datesOff, ...offsOfPermit(p).filter(o => !datesOff.some(x => x.day === o.day))];
+        // Each permit's own rows, a shared day too (P5 A): it is merged into one date off when the time is sent, so
+        // unticking either takes only its parks off that day.
+        datesOff = [...datesOff, ...offsOfPermit(p)];
       }
-      // A day the permit that came off had first, that another ticked permit is off too, stays off — now that one's.
-      for (const id of ids) for (const o of offsOfPermit(byId.get(id)!)) if (offDays.has(o.day) && !datesOff.some(x => x.day === o.day)) datesOff = [...datesOff, o];
+      // Unticking leaves no park behind on a row the admin picked by hand: a pick keeps only the parks the time still uses,
+      // and on a one-park time it is "All venues" again (what a one-park schedule always sent). A pick that names none of
+      // the parks left stays as typed — trimming it would widen it to All.
+      if (removed.length) {
+        const used = new Set(rows.filter(rowDone).map(r => r.place?.venueId ?? d.venueId).filter(Boolean));
+        datesOff = datesOff.map(o => {
+          if (!o.venueIds?.length) return o;
+          const keep = o.venueIds.filter(v => used.has(v));
+          if (!keep.length) return o;
+          const kept = used.size > 1 ? keep : [];
+          return kept.length === o.venueIds.length ? o : { ...o, venueIds: kept };
+        });
+      }
       if (!rows.length) rows = [emptyRow()];
       const span = permitsSpan(ids.map(id => byId.get(id)!));
       const first = ids.length ? byId.get(ids[0]) : undefined;
@@ -444,11 +472,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     }));
     return several ? settleOverlaps(blocks, permitOrder, { startsOn: draft.startsOn, endsOn: draft.endsOn }) : { blocks, overlaps: [] };
   }, [draft.rows, draft.venueId, draft.facilityIds, draft.startsOn, draft.endsOn, venue, permitOrder]);
-  /** The schedule's time as the routes read it. */
+  /** The parks the time uses, and each permit's — what a date off's "Applies to" offers and defaults to (P5 A). */
+  const offParks = useMemo(() => parksCtx(draft.rows), [parksCtx, draft.rows]);
+  /** The schedule's time as the routes read it: the dates off one per day, each saying its parks (`mergeDatesOff`). */
   const timeBody = useMemo(() => ({
     startsOn: draft.startsOn, endsOn: draft.endsOn, blocks: settled.blocks,
-    datesOff: draft.datesOff.filter(o => isCalendarDate(o.day)).map(o => ({ day: o.day, note: o.note.trim() || null })),
-  }), [draft.startsOn, draft.endsOn, draft.datesOff, settled]);
+    datesOff: mergeDatesOff(draft.datesOff.filter(o => isCalendarDate(o.day)), offParks),
+  }), [draft.startsOn, draft.endsOn, draft.datesOff, settled, offParks]);
   const rowsDone = draft.rows.filter(rowDone).length;
   const mixedPlaces = draft.rows.some(r => r.place);
   /** The rows sit in cards, each naming its place, once a permit gives the time or the places mix (N2 A: the read-only
@@ -626,6 +656,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   );
 
   // ── The time's pieces (a schedule on several permits: the rows in cards, the dates after them — drawing tab 1) ──
+  /** "Applies to" (N4 A): the schedule's parks, "All venues" first; shown only when the time uses more than one park
+   *  (drawing UX 7) — or while a date off still names one, so a named list is never hidden. */
+  // A park a date off names that the rows no longer use stays an option, so the field never reads "All venues" over it —
+  // and so does every park a row will SEND (a permit's date off defaults to that permit's own parks).
+  const parkOptions = [...new Set([...offParks.parks, ...draft.datesOff.flatMap(o => dateOffVenues(o, offParks))])]
+    .map(id => ({ id, label: placeName(places, id, null) }));
+  const showApplies = offParks.parks.length > 1 || draft.datesOff.some(o => o.venueIds?.length);
   const permitOptions = (inputs?.permits ?? []).map(x => ({ id: x.id, label: x.name, detail: W.permitOption(x.issuer, scheduleDates(x.startsOn, x.endsOn)) }));
   const permitsHint = cameOff ? W.permitCameOff(cameOff.name, cameOff.rows, cameOff.offs)
     : draft.permitIds.length ? W.permitsHint : draft.copyFrom ? W.permitReplacesCopy : W.permitHint;
@@ -713,7 +750,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         const shown = days.length > 4 ? days.slice(0, 3) : days;
         return (
           <Statement key={`${o.permitId}|${o.keptBy}|${o.venueId}`}
-            lead={W.overlapLead(W.overlapDays(shown, days.length - shown.length), days.length > 1, places.find(x => x.venueId === o.venueId)?.venueName ?? '', permitById.get(o.keptBy)?.name ?? '')}
+            lead={W.overlapLead(W.overlapDays(shown, days.length - shown.length), days.length > 1, placeName(places, o.venueId, null), permitById.get(o.keptBy)?.name ?? '')}
             rest={W.overlapTail(o.startsOn ? formatShortWeekdayDate(o.startsOn) : null)} />
         );
       })}
@@ -787,7 +824,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       <div className={ck.field}>
         <span className={ck.label}>{W.datesOff}</span>
         {draft.datesOff.map((o, i) => (
-          <div key={o.key} className={own.offRow}>
+          <div key={o.key} className={showApplies ? `${own.offRow} ${sch.offRowParks}` : own.offRow}>
             <label className={ck.field} htmlFor={`ns-off-${i}`}>
               <span className={repKit.srOnly}>{W.datesOff} {i + 1}</span>
               <DateInput id={`ns-off-${i}`} className={ck.input} value={o.day} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
@@ -798,10 +835,15 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
               <input id={`ns-offn-${i}`} className={ck.input} value={o.note} maxLength={120} placeholder={W.dateOffWhy}
                 onChange={e => patchIn('datesOff', o.key, { note: e.target.value })} />
             </label>
+            {showApplies && (
+              <PickField id={`ns-offv-${i}`} label={W.dateOffAppliesTo} inlineLabel options={parkOptions} everyLabel={W.allVenues}
+                selected={dateOffVenues(o, offParks)} onChange={next => patchIn('datesOff', o.key, { venueIds: next })} />
+            )}
             <button type="button" className={sch.remove} aria-label={W.removeDateOff(o.day ? formatShortWeekdayDate(o.day) : String(i + 1))}
               onClick={() => dropFrom('datesOff', o.key)}>
               <X size={15} aria-hidden />
             </button>
+            {o.permitId && permitById.has(o.permitId) && <span className={`${ck.hint} ${sch.offFrom}`}>{W.dateOffFrom(permitById.get(o.permitId)!.name)}</span>}
           </div>
         ))}
         <button type="button" className={sch.door} onClick={() => set({ datesOff: [...draft.datesOff, { key: newKey('off'), day: '', note: '' }] })}>

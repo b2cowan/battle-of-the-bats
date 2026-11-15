@@ -118,7 +118,13 @@ export interface ScheduleOutsideWords {
 export function scheduleOutsideWords(
   outside: ScheduleOutside,
   view: { slots: readonly Pick<SlotView, 'key' | 'day' | 'weekday' | 'teamIds'>[]; teams: readonly { id: string }[] },
-  opts: { draft: boolean; nameOf: (teamId: string) => string },
+  opts: {
+    draft: boolean; nameOf: (teamId: string) => string;
+    /** One permit's row on a schedule with several permits behind its rows: the head names it (Session B). */
+    permitNamed?: boolean;
+    /** The permit's parks, said when the schedule uses more than one park ("… sit on that day at Kinsmen Park"). */
+    at?: string | null;
+  },
 ): ScheduleOutsideWords {
   const days = outside.days.map(d => d.day);
   const keys = new Set(outside.days.flatMap(d => d.slotKeys));
@@ -130,10 +136,10 @@ export function scheduleOutsideWords(
   const weekdays = new Set(onDays.map(x => x.weekday));
   const when = everyDay && days.length > 1 && weekdays.size === 1 ? W.outsideBoth([...weekdays][0], days.length) : null;
   const line = practices.length
-    ? [W.outsidePractices(practices.length, teamIds.map(opts.nameOf), days.length, when), opts.draft ? null : W.outsideTeamsHave(practices.length === 1)].filter(Boolean).join(' ')
+    ? [W.outsidePractices(practices.length, teamIds.map(opts.nameOf), days.length, when, opts.at ?? null), opts.draft ? null : W.outsideTeamsHave(practices.length === 1)].filter(Boolean).join(' ')
     : outside.league.length ? null : W.outsideSlots(onDays.length, days.length);
   return {
-    head: W.outsideHead(days),
+    head: W.outsideHead(days, opts.permitNamed ? outside.permitName : null),
     line,
     league: outside.league.length ? {
       line: W.outsideLeague(takenCountWords(outside.league), outside.league.length > 1, outside.leagueDays),

@@ -243,8 +243,9 @@ async function readScheduleTime(orgId: string, scheduleId: string, row: Pick<Sch
     fetchAll<{ id: string; org_venue_id: string; from_permit_id: string | null; weekdays: number[]; start_time: string; end_time: string; from_date: string | null; until_date: string | null; sort_order: number; org_time_block_facilities: { facility_id: string }[] | null }>((a, b) => supabaseAdmin
       .from('org_time_blocks').select('id, org_venue_id, from_permit_id, weekdays, start_time, end_time, from_date, until_date, sort_order, org_time_block_facilities(facility_id)')
       .eq('org_id', orgId).eq('schedule_id', scheduleId).order('sort_order').order('id').range(a, b)),
-    fetchAll<{ day: string; note: string | null }>((a, b) => supabaseAdmin.from('org_time_dates_off')
-      .select('day, note').eq('org_id', orgId).eq('schedule_id', scheduleId).order('day').range(a, b)),
+    // Each date off's parks (mig 488): none = All venues.
+    fetchAll<{ day: string; note: string | null; org_time_date_off_venues: { org_venue_id: string }[] | null }>((a, b) => supabaseAdmin.from('org_time_dates_off')
+      .select('day, note, org_time_date_off_venues(org_venue_id)').eq('org_id', orgId).eq('schedule_id', scheduleId).order('day').range(a, b)),
   ]);
   return {
     startsOn: row.starts_on, endsOn: row.ends_on,
@@ -254,7 +255,7 @@ async function readScheduleTime(orgId: string, scheduleId: string, row: Pick<Sch
       fromDate: b.from_date, untilDate: b.until_date,
     })),
     blockIds: blocks.map(b => b.id),
-    datesOff: offs.map((o): DateOff => ({ day: o.day, note: o.note })),
+    datesOff: offs.map((o): DateOff => ({ day: o.day, note: o.note, venueIds: (o.org_time_date_off_venues ?? []).map(v => v.org_venue_id).sort() })),
   };
 }
 
@@ -593,6 +594,8 @@ export interface ScheduleView {
   };
   /** Each block with the permit it came from (`permitId`), so Settings… keeps every row's permit through a regenerate. */
   time: { blocks: ScheduleBlock[]; datesOff: DateOff[] };
+  /** Names of the parks a date off names that no row uses (not in `places`), so a printed note can still say them. */
+  offParkNames: Record<string, string>;
   places: { venueId: string; venueName: string; facilities: { id: string; name: string }[] }[];
   teams: { id: string; name: string; groupId: string | null; groupName: string | null; color: string | null; season: ClubTeam['season'] }[];
   slots: SlotView[];
@@ -733,6 +736,8 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
       finalized: row.finalized_at ? { at: row.finalized_at, by: nameOf(row.finalized_by) } : null,
     },
     time: { blocks: [...loaded.time.blocks], datesOff: [...loaded.time.datesOff] },
+    offParkNames: Object.fromEntries([...new Set(loaded.time.datesOff.flatMap(d => d.venueIds ?? []))]
+      .filter(v => !placeIds.includes(v) && ctx.places.venueName.has(v)).map(v => [v, ctx.places.venueName.get(v)!])),
     places: placeIds.map(v => ({
       venueId: v, venueName: ctx.places.venueName.get(v) ?? '',
       facilities: (ctx.places.byVenue.get(v) ?? []).map(f => ({ id: f, name: ctx.places.facilityName.get(f) ?? '' })),
@@ -845,7 +850,9 @@ export function timePayload(time: ScheduleTime & { blockIds?: (string | null)[] 
       // Absent (a request that never said) keeps the row's permit in the save; null (a typed row) clears it.
       ...(b.permitId === undefined ? {} : { permitId: b.permitId }),
     })),
-    datesOff: time.datesOff.map(d => ({ day: d.day, note: d.note })),
+    // Absent parks (a request that never said: a tab from before mig 488) keeps what the day names in the save; a list is
+    // its parks, and an empty one All venues.
+    datesOff: time.datesOff.map(d => ({ day: d.day, note: d.note, ...(d.venueIds === undefined ? {} : { venueIds: [...d.venueIds] }) })),
   };
 }
 
@@ -939,7 +946,12 @@ export function readTimeBody(body: Record<string, unknown>): { ok: true; time: S
     if (!Array.isArray(body.datesOff) || body.datesOff.length > 200) return bad('Pick the dates off again.');
     for (const d of body.datesOff as Record<string, unknown>[]) {
       if (typeof d?.day !== 'string' || !isCalendarDate(d.day)) return bad('A date off needs its date.');
-      datesOff.push({ day: d.day, note: typeof d.note === 'string' ? d.note.trim().slice(0, 120) || null : null });
+      // The parks it closes (mig 488): a list of the club's venues, [] = All venues. Left out (or null) stays undefined, so
+      // the save keeps what the day names today — a stale tab can't widen a named date off to All.
+      const raw = d.venueIds;
+      if (raw != null && (!Array.isArray(raw) || raw.length > 40 || !raw.every(isUuid))) return bad('Pick the date off’s parks again.');
+      const venueIds = raw == null ? undefined : [...new Set(raw as string[])];
+      datesOff.push({ day: d.day, note: typeof d.note === 'string' ? d.note.trim().slice(0, 120) || null : null, ...(venueIds ? { venueIds } : {}) });
     }
   }
   return { ok: true, time: { startsOn, endsOn, blocks, datesOff, blockIds } };
@@ -1009,6 +1021,8 @@ export async function readScheduleRequest(orgId: string, body: Record<string, un
     groupOf: new Map(running.map(x => [x.id, x.groupId])),
   });
   if (!settings.ok) return { ok: false, response: refusal(400, settings.code, settings.error) };
+  // A date off names the club's own parks (the save's trigger would refuse another's as a 500).
+  if (t.time.datesOff.some(d => d.venueIds?.some(v => !places.venueName.has(v)))) return { ok: false, response: refusal(400, 'bad_time', 'Pick the date off’s parks again.') };
   // No team rule reaches house league (Stage 11b): its league admins divide its time, and it shares a slot with nobody.
   const r = settings.value.rules;
   if ([...r.windows.flatMap(w => w.teamIds), ...r.daysOff.map(d => d.teamId), ...r.fieldsBy.flatMap(f => f.teamIds), ...r.sharing.flatMap(s => s.teamIds)].some(isProgramHolder)) {

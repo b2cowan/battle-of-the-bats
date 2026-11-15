@@ -26,7 +26,8 @@ import { tournamentToday } from '@/lib/timezone';
 //                    it, past ones keep their words, and no notice is sent (`carryWordsForward`).
 //   archive-venue  — out of every picker; every booking keeps it.   restore-venue — Bring back.
 //   delete-venue   — only when NOTHING books it, past included (S6-08: a delete strips every link it clears), and no
-//                    permit holds time there (Club Tier 10a: a permit's block keeps its venue — archive it instead).
+//                    permit holds time there (Club Tier 10a: a permit's block keeps its venue — archive it instead),
+//                    no schedule holds time there, and no schedule's date off names it (mig 488).
 //
 // Club Tier Stage 10a (Asks 1, 7): the library read carries each venue's PERMITS (the permits that hold time there, each
 // with only its blocks there — the window's Permits section; a permit's time reads to every library reader, its money
@@ -319,19 +320,26 @@ export const POST = withObservability(async (req: Request) => {
       }
       // A permit's block keeps its venue (Club Tier 10a): archive it instead. So does a club schedule's (Club Tier 11a: its
       // block, or a slot standing on it).
-      const [{ count: heldBy, error: pErr }, { count: scheduled, error: sErr }, { count: slotted, error: tErr }] = await Promise.all([
+      // A date off that names the venue keeps it too (mig 488's FK is NO ACTION: "no parks named" is All venues, so a delete
+      // that took its last park would widen the date off to every park).
+      const [{ count: heldBy, error: pErr }, { count: scheduled, error: sErr }, { count: slotted, error: tErr }, { count: offNamed, error: oErr }] = await Promise.all([
         supabaseAdmin.from('org_time_blocks').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id).not('permit_id', 'is', null),
         supabaseAdmin.from('org_time_blocks').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id).not('schedule_id', 'is', null),
         supabaseAdmin.from('club_schedule_slots').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id),
+        supabaseAdmin.from('org_time_date_off_venues').select('date_off_id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id),
       ]);
       if (pErr) throw pErr;
       if (sErr) throw sErr;
       if (tErr) throw tErr;
+      if (oErr) throw oErr;
       if ((heldBy ?? 0) > 0) {
         return venueRefusal(409, 'venue_in_permit', `A permit holds time at ${existing.name}, so it can be archived but not deleted.`);
       }
       if ((scheduled ?? 0) + (slotted ?? 0) > 0) {
         return venueRefusal(409, 'venue_in_schedule', `One of the club’s schedules holds time at ${existing.name}, so it can be archived but not deleted.`);
+      }
+      if ((offNamed ?? 0) > 0) {
+        return venueRefusal(409, 'venue_in_date_off', `A date off on one of the club’s schedules names ${existing.name}, so it can be archived but not deleted.`);
       }
       // org_venue_facilities cascade via FK.
       const { error } = await supabaseAdmin.from('org_venues').delete().eq('id', id).eq('org_id', orgId);

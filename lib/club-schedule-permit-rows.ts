@@ -126,6 +126,71 @@ export function settleOverlaps<B extends PermitRowBlock>(blocks: readonly B[], o
   return { blocks: out, overlaps };
 }
 
+// ── Dates off by park (Session B; plan §4c; owner rulings P5 A, P6 A, N4 A; /dba Finding #50 "Mig 2 (B)") ─────────────
+//
+// The form keeps ONE ROW PER PERMIT AND DAY (and the typed ones): Milton's Easter weekend and Halton Hills' Easter weekend
+// are two rows, each from its permit, so unticking one takes only its parks off the day. They become ONE date off per day
+// only when the time is sent (the database keeps one per schedule and day): All venues wins over any list, else the
+// union of their parks, and the first note that says something. Same pattern as `settleOverlaps`.
+
+/** A date off as the form holds it. `venueIds` absent = its default (below); `[]` = All venues, chosen. */
+export interface DateOffEntry { day: string; note: string | null; permitId?: string | null; venueIds?: readonly string[] }
+/** A date off as the routes read it: one per day; `venueIds` `[]` = All venues (always said, so a save never keeps a stale
+ *  list by accident — leaving it out is the server's "keep what is stored", for an older tab). */
+export interface DateOffSent { day: string; note: string | null; venueIds: string[] }
+
+export interface DateOffParks {
+  /** Every park the schedule's time uses (its rows' venues). */
+  parks: readonly string[];
+  /** The parks a permit's own time holds (its blocks' venues). */
+  permitParks: (permitId: string) => readonly string[];
+}
+
+/**
+ * A date off's parks, as the form means them: what the admin chose in "Applies to"; else, for one copied from a permit
+ * while the schedule uses more than one park, THAT PERMIT'S PARKS (P5 A: Town A's long weekend leaves Town B's park
+ * alone); else All venues. On a one-park schedule nothing is named, so it sends exactly what it always did.
+ */
+export function dateOffVenues(entry: DateOffEntry, ctx: DateOffParks): string[] {
+  if (entry.venueIds) return [...entry.venueIds];
+  if (entry.permitId && ctx.parks.length > 1) return [...ctx.permitParks(entry.permitId)];
+  return [];
+}
+
+/** The form's dates off, one per day, in the order their days first come. Rows with no valid day are the caller's to drop. */
+export function mergeDatesOff(entries: readonly DateOffEntry[], ctx: DateOffParks): DateOffSent[] {
+  const byDay = new Map<string, DateOffSent>();
+  for (const e of entries) {
+    const venueIds = dateOffVenues(e, ctx);
+    const note = e.note?.trim() || null;
+    const was = byDay.get(e.day);
+    if (!was) { byDay.set(e.day, { day: e.day, note, venueIds }); continue; }
+    if (!was.note && note) was.note = note;
+    // All venues (an empty list) wins over any list, and stays won.
+    if (!was.venueIds.length) continue;
+    if (!venueIds.length) { was.venueIds = []; continue; }
+    for (const v of venueIds) if (!was.venueIds.includes(v)) was.venueIds.push(v);
+  }
+  return [...byDay.values()];
+}
+
+/**
+ * A saved schedule's request whose dates off never said their parks (a tab opened before mig 488): each keeps the parks
+ * its day names today, so the drafts are cut — and the save keeps — exactly what is stored. A stale tab can never widen a
+ * named date off to All venues. A day with nothing stored stays unsaid (All venues). Said parks are the request's own.
+ */
+export function datesOffKeepingParks<D extends { day: string; venueIds?: readonly string[] }>(sent: readonly D[], stored: readonly { day: string; venueIds?: readonly string[] }[]): D[] {
+  const named = new Map(stored.filter(d => d.venueIds?.length).map(d => [d.day, d.venueIds!]));
+  return sent.map(d => (d.venueIds === undefined && named.has(d.day) ? { ...d, venueIds: [...named.get(d.day)!] } : d));
+}
+
+/** The days among `days` whose date off is not the same after as before (gone, or other parks) — what really came off. */
+export function datesOffChanged(days: readonly string[], before: readonly DateOffSent[], after: readonly DateOffSent[]): string[] {
+  const key = (d: DateOffSent | undefined) => (d ? (d.venueIds.length ? [...d.venueIds].sort().join(',') : '*') : '');
+  const b = new Map(before.map(d => [d.day, d])), a = new Map(after.map(d => [d.day, d]));
+  return [...new Set(days)].filter(day => key(b.get(day)) !== key(a.get(day)));
+}
+
 /** The dates that cover every permit picked: the first permit's first day to the last one's last. */
 export function permitsSpan(permits: readonly { startsOn: string; endsOn: string }[]): { startsOn: string; endsOn: string } | null {
   if (!permits.length) return null;

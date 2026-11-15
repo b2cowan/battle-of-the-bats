@@ -364,8 +364,8 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
     assert.match(attention, /ordered\.slice\(0, FIRST_ASKS\)/);
     assert.match(attention, /Show \$\{ordered\.length - FIRST_ASKS\} more hand-back asks/);
     // The first ask takes the lime — 13c Session C put the permit's "Take … off" first (section 13 pins that row).
-    assert.match(attention, /index === 0 && !outside\?\.action \? 'btn-lime' : 'btn-outline'/);
-    assert.match(attention, /\(canMoney && ordered\.length\) \|\| outside\?\.action \? 'btn-outline' : 'btn-lime'/);
+    assert.match(attention, /index === 0 && !outsideAsks \? 'btn-lime' : 'btn-outline'/);
+    assert.match(attention, /\(canMoney && ordered\.length\) \|\| outsideAsks \? 'btn-outline' : 'btn-lime'/);
     assert.match(attention, /onClick=\{\(\) => onAnswer\(ask\.id\)\}/);
     assert.match(attention, /H\.calloutTailLate\(ask, canMoney\) : H\.calloutTail\(ask, canMoney\)/);
     assert.match(attention, /\{canMoney && <button/, 'Answer only for someone who moves club money');
@@ -457,15 +457,18 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     assert.match(page, /setOutsideRead\(\{ version: r\?\.ok \? r\.data\.version : outsideVersion,/, 'tagged with the version the server read');
     assert.match(page, /useDeferredLoad\(outsideVersion != null, loadOutside\);/, 'after the page has read, the kit’s read pattern');
     assert.match(outside, /notice\?\.doors\.find\(d => d\.kind === 'season'\) \?\? notice\?\.doors\.find\(d => d\.kind === 'calendar'\)/, 'a door by its kind, never its address');
-    assert.match(attention, /const count = ordered\.length \+ \(changed \? 1 : 0\) \+ \(outside \? 1 : 0\);/, 'the heading counts it');
+    assert.match(attention, /const count = ordered\.length \+ \(changed \? 1 : 0\) \+ outside\.length;/, 'the heading counts each permit\'s row');
   });
   it('"Take {day} off" writes ONLY the schedule’s own Dates off, through today’s Regenerate — no sync, nothing else (C2)', () => {
-    assert.match(page, /action: canChange \? \{ label: W\.takeDaysOff\(outsideWords\.days\), onClick: \(\) => setWin\(\{ kind: 'settings', regenerate: true, addDatesOff: outside\.days\.map\(d => \(\{ day: d\.day, note: d\.note \}\)\) \}\) \} : null,/);
-    assert.match(form, /\.\.\.\(settingsOf\?\.addDatesOff \?\? \[\]\)\.filter\(a => !editing\.time\.datesOff\.some\(d => d\.day === a\.day\)\),/, 'added to the form’s Dates off, saved only by Keep');
+    // Session B: each permit's row adds ITS days, closing only its parks once the schedule uses more than one (P5 A).
+    assert.match(page, /action: canChange \? \{ label: W\.takeDaysOff\(words\.days, at\), onClick: \(\) => setWin\(\{ kind: 'settings', regenerate: true, addDatesOff: row\.days\.map\(d => \(\{ day: d\.day, note: d\.note, venueIds: parks \}\)\) \}\) \} : null,/);
+    assert.match(page, /const parks = scheduleParks\.length > 1 \? row\.venueIds : \[\];/, 'one park: All venues, exactly as before');
+    assert.match(form, /\.\.\.\(settingsOf\?\.addDatesOff \?\? \[\]\),\n\s+\], NO_PARKS\)/, 'added to the form’s Dates off, one per day, saved only by Keep');
     assert.doesNotMatch(page, /action: 'datesOff'|action: 'syncPermit'/, 'no write of its own');
     // The first ask takes the lime: Send the changes and a hand-back ask step down while the row's button shows.
-    assert.match(attention, /\(canMoney && ordered\.length\) \|\| outside\?\.action \? 'btn-outline' : 'btn-lime'/);
-    assert.match(attention, /index === 0 && !outside\?\.action \? 'btn-lime' : 'btn-outline'/);
+    assert.match(attention, /\(canMoney && ordered\.length\) \|\| outsideAsks \? 'btn-outline' : 'btn-lime'/);
+    assert.match(attention, /index === 0 && !outsideAsks \? 'btn-lime' : 'btn-outline'/);
+    assert.match(attention, /i === firstOutsideAsk \? 'btn-lime' : 'btn-outline'/, 'one lime a screen: a second permit\'s row is outline');
   });
   it('the row says the drawing’s words on the drawing’s case: 6 practices, both Saturdays, 2 house-league games', () => {
     const TEAMS = ['t14', 't15', 't13'];
@@ -477,7 +480,7 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
       permitName: 'Saturday diamonds, December 2026',
       days: ['2026-12-05', '2026-12-12'].map(d => ({ day: d, note: null, slotKeys: slots.filter(x => x.day === d).map(x => x.key) })),
       league: [{ program: 'league' as const, kind: 'game' as const }, { program: 'league' as const, kind: 'game' as const }],
-      leagueDays: ['2026-12-05'], leagueHref: '/c/admin/house-league/seasons/s/schedule',
+      leagueDays: ['2026-12-05'], leagueHref: '/c/admin/house-league/seasons/s/schedule', rows: [],
     };
     const names: Record<string, string> = { t14: '14U AA', t15: '15U AA', t13: '13U AAA' };
     const w = scheduleOutsideWords(outsideRead, { slots, teams: TEAMS.map(id => ({ id })) }, { draft: false, nameOf: id => names[id] });

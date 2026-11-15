@@ -59,7 +59,11 @@ export function takenOnce(taken: ReadonlyMap<string, readonly TakenDay[]>): Map<
 /** A schedule's Needs attention row (13c Session C, C2), as `readScheduleOutside` answers it — here, so the page reads
  *  the type without the server module. */
 export interface ScheduleOutside {
+  /** Every permit with a pulled day, joined ("Milton spring 2027 and Halton Hills spring 2027") — the warnings' line. */
   permitName: string;
+  /** ONE ROW PER PERMIT (a schedule on several permits, Session B; drawing, dates off, "Two permits, two dates off"): its
+   *  own days, only the slots at ITS parks, and the parks its "Take … off" closes (P5 A). In the order the permits come. */
+  rows: ScheduleOutsideRow[];
   /** Each date off from today on that still holds slots of this schedule, in day order, with the permit's own note. */
   days: { day: string; note: string | null; slotKeys: string[] }[];
   /** What else this permit's dates off took on those days that is HOUSE LEAGUE's (the pool's own bookings — its games and
@@ -67,6 +71,18 @@ export interface ScheduleOutside {
   league: TakenKind[];
   leagueDays: string[];
   leagueHref: string | null;
+}
+
+/** One permit's pulled days on a schedule — its own Needs attention row. */
+export interface ScheduleOutsideRow {
+  permitId: string;
+  permitName: string;
+  /** That permit's parks on this schedule: what "Take … off" names (P5 A). */
+  venueIds: string[];
+  days: { day: string; note: string | null; slotKeys: string[] }[];
+  /** House league's bookings this permit's days took, and their days. */
+  league: TakenKind[];
+  leagueDays: string[];
 }
 
 /** "See the permit ›" and the Overview card's door: one permit → that permit with its notice; more → Permits. */

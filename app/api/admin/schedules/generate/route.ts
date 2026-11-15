@@ -6,6 +6,7 @@ import {
   buildEngineInput, loadSchedule, pricePermitOf, readRequestPrices, readScheduleRequest, repTeamsRefusal, resolveScheduler, schedulerRefusal,
   teamNamer,
 } from '@/lib/club-schedule-server';
+import { datesOffKeepingParks } from '@/lib/club-schedule-permit-rows';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, measureLines, warningLine } from '@/lib/club-schedule-words';
 
 // ---------------------------------------------------------------------------
@@ -36,7 +37,10 @@ export const POST = withObservability(async (req: Request) => {
   if (scheduleId && !loaded) return schedulerRefusal(404, 'not_found', R.notFound);
   const closed = loaded ? repTeamsRefusal(r, loaded) : null;
   if (closed) return closed;
-  const { time, teams, places, settings } = asked.value;
+  const { teams, places, settings } = asked.value;
+  // A saved schedule's date off whose request never said its parks (a tab from before mig 488) keeps the ones stored, so the
+  // preview is cut exactly as the save will cut it — never widened to All venues (the regenerate's PATCH does the same).
+  const time = loaded ? { ...asked.value.time, datesOff: datesOffKeepingParks(asked.value.time.datesOff, loaded.time.datesOff) } : asked.value.time;
   // The price permit; each row is weighed by its own permit (a schedule on several permits).
   const permitId = isUuid(body.startedFromPermitId) ? body.startedFromPermitId : loaded ? pricePermitOf(loaded.row) : null;
   const { prices, gone } = await readRequestPrices(orgId, permitId, time.blocks);

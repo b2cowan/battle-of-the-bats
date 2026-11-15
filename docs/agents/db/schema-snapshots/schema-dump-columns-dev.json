@@ -14571,6 +14571,33 @@
     "ordinal_position": 14
   },
   {
+    "table_name": "org_time_date_off_venues",
+    "column_name": "date_off_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "org_time_date_off_venues",
+    "column_name": "org_venue_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "org_time_date_off_venues",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
     "table_name": "org_time_dates_off",
     "column_name": "id",
     "data_type": "uuid",

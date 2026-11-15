@@ -601,6 +601,11 @@ export const SCHEDULE_SCREEN_WORDS = {
   addDateOff: 'Add a date off',
   dateOffWhy: 'Why (optional)',
   removeDateOff: (day: string) => `Remove the date off ${day}`,
+  /** [marketing] A date off's parks (a schedule on several permits, Session B; N4 A — the drawing's words). */
+  dateOffAppliesTo: 'Applies to',
+  allVenues: 'All venues',
+  /** The line under a permit's date off: where it came from (drawing, dates off, note 2). */
+  dateOffFrom: (permit: string) => `From ${permit}`,
   minutes: (n: number) => `${n} min`,
   split: 'Split the time',
   splitEven: 'Evenly',
@@ -860,11 +865,13 @@ export const SCHEDULE_SCREEN_WORDS = {
   fairBillTitle: 'Fair shares and the bill',
   /** [marketing] Needs attention's row while the permit's dates off still hold this schedule's slots (C2 = A). */
   outsideChip: PERMIT_WORDS.outside,
-  outsideHead: (days: readonly string[]) => `${datesOffClause(days)} on the permit`,
+  /** `permit`: named once a schedule's rows come from more than one permit, each its own row (Session B: "Thu, May 13 is a
+   *  date off on Milton spring 2027"). */
+  outsideHead: (days: readonly string[], permit: string | null = null) => `${datesOffClause(days)} on ${permit ?? 'the permit'}`,
   /** "6 practices on this schedule sit on those days: 14U AA, 15U AA and 13U AAA, both Saturdays." `when` is said only
    *  when every team named is on every one of two or more days of one weekday ("both Saturdays", "all 3 Saturdays"). */
-  outsidePractices: (n: number, teams: readonly string[], days: number, when: string | null) =>
-    `${pluralize(n, 'practice')} on this schedule ${n === 1 ? 'sits' : 'sit'} on ${thoseDays(days)}: ${joinWithAnd([...teams])}${when ? `, ${when}` : ''}.`,
+  outsidePractices: (n: number, teams: readonly string[], days: number, when: string | null, at: string | null = null) =>
+    `${pluralize(n, 'practice')} on this schedule ${n === 1 ? 'sits' : 'sit'} on ${thoseDays(days)}${at ? ` at ${at}` : ''}: ${joinWithAnd([...teams])}${when ? `, ${when}` : ''}.`,
   outsideSlots: (n: number, days: number) => `${pluralize(n, 'slot')} of this schedule ${n === 1 ? 'is' : 'are'} on ${thoseDays(days)}.`,
   outsideBoth: (weekday: number, days: number) => `${days === 2 ? 'both' : `all ${days}`} ${weekdayPlural(weekday)}`,
   outsideTeamsHave: (one: boolean) => (one ? 'The team still has it.' : 'The teams still have them.'),
@@ -873,12 +880,14 @@ export const SCHEDULE_SCREEN_WORDS = {
     `${what} on ${shortDays(days)} ${many ? 'are' : 'is'} for the league admins to move.`,
   outsideSeeThem: 'See them',
   /** The row's one ask: the days into the schedule's own Dates off, then today's Regenerate. */
-  takeDaysOff: (days: readonly string[]) => `Take ${shortDays(days)} off`,
+  /** `at`: the permit's parks, said once the schedule uses more than one ("Take May 13 off Kinsmen Park", Session B, P5 A). */
+  takeDaysOff: (days: readonly string[], at: string | null = null) => `Take ${shortDays(days)} off${at ? ` ${at}` : ''}`,
   /** The warnings' first line, its lead in bold. */
   outsideWarnLead: (days: readonly string[]) => `${PERMIT_WORDS.outside}: ${datesOffClause(days)}`,
   outsideWarnTail: (permit: string) => ` on ${permit}.`,
   /** "Different on a date": a pulled day's own row. */
-  outsideDayPlace: 'every facility',
+  /** A permit's date off closes every facility at ITS parks; on a schedule over several parks the row names them. */
+  outsideDayPlace: (at?: string | null) => (at ? `every facility at ${at}` : 'every facility'),
   outsideDayLine: (n: number) => `${PERMIT_WORDS.outside} · ${pluralize(n, 'slot')} still on it`,
   whichWeeks: (team: string, from: string, to: string) => `Move ${possessive(team)} ${from} slot to ${to}:`,
   swapWeeks: (team: string, from: string, other: string) => `Swap ${possessive(team)} ${from} slot with ${possessive(other)}:`,

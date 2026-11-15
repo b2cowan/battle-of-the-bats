@@ -21,7 +21,7 @@ export default function ScheduleOverview({ rows, days, slots, askedIds, nameOf, 
   onOpenGrid: (rowKey: string | null, day: string) => void;
   /** 13c Session C (C2): the permit’s pulled dates, each with the slots of this schedule still on it — listed first, a
    *  whole day each (“every facility”), so they no longer read as normal days. */
-  outsideDays?: readonly { day: string; slotKeys: readonly string[] }[];
+  outsideDays?: readonly { day: string; slotKeys: readonly string[]; at?: string | null }[];
 }) {
   const [allExceptions, setAllExceptions] = useState(false);
   const patterns = useMemo(() => scheduleOverview(rows, days, slots, askedIds), [rows, days, slots, askedIds]);
@@ -61,7 +61,7 @@ export default function ScheduleOverview({ rows, days, slots, askedIds, nameOf, 
           <div className={sch.overviewPanelHead}><h2 id="schedule-exceptions-title">Different on a date</h2><span>{pluralize(exceptions.length + outsideDays.length, 'difference')}</span></div>
           {outsideDays.map(o => (
             <button key={`outside|${o.day}`} type="button" className={sch.overviewException} data-outside-permit onClick={() => onOpenGrid(null, o.day)}>
-              <b>{formatShortWeekdayDate(o.day)} · {W.outsideDayPlace}</b>
+              <b>{formatShortWeekdayDate(o.day)} · {W.outsideDayPlace(o.at)}</b>
               <span className={sch.overviewOutside}>{W.outsideDayLine(o.slotKeys.length)}</span>
             </button>
           ))}

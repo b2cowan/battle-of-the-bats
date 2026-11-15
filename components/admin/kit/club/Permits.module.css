@@ -159,6 +159,9 @@
 .pickButton:disabled { opacity: 0.6; cursor: default; }
 .pickValue { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pickPlaceholder { color: var(--text-tertiary); }
+/* The inline label (a date off's "Applies to"): the key reads inside the button; the label above names it to a screen reader only. */
+.pickKey { flex: none; color: var(--text-tertiary); }
+.pickLabelHidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* ⚖ Hangs over its window (§80) — `useFieldMenu` measures the field and writes the place and height; without `fixed`
    those writes mean nothing and the list sat in the window's body, under its footer (New schedule's Rules, 2026-10-13). */
 .pickMenu {

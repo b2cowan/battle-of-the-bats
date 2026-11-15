@@ -5630,6 +5630,56 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "org_time_date_off_venues",
+    "constraint_name": "org_time_date_off_venues_date_off_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "date_off_id",
+    "foreign_table": "org_time_dates_off",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_date_off_venues",
+    "constraint_name": "org_time_date_off_venues_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_date_off_venues",
+    "constraint_name": "org_time_date_off_venues_org_venue_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_venue_id",
+    "foreign_table": "org_venues",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_date_off_venues",
+    "constraint_name": "org_time_date_off_venues_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "date_off_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_time_date_off_venues",
+    "constraint_name": "org_time_date_off_venues_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "org_venue_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "org_time_dates_off",
     "constraint_name": "org_time_dates_off_once",
     "constraint_type": "UNIQUE",

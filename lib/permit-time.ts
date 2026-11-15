@@ -48,7 +48,17 @@ export interface TimeBlock {
   untilDate: string | null;
 }
 
-export interface DateOff { day: string; note: string | null }
+/** A day with no time held. `venueIds`: the parks a SCHEDULE's date off closes (`org_time_date_off_venues`, mig 488);
+ *  absent or empty = ALL VENUES (a permit's own dates off never name parks: they close the permit's time, all of it). */
+export interface DateOff { day: string; note: string | null; venueIds?: readonly string[] }
+
+/**
+ * ⚖ THE ONE ANSWER to "is this date off on that park?" (a schedule on several permits, Session B; owner rulings P5 A, P6 A:
+ * venue by venue, never field by field). No parks named = every park, so a date off that names none stays all as parks are
+ * added, and a named list never grows. Every reader of a schedule's dates off asks it — a guard test holds them to it.
+ */
+export const dateOffCovers = (off: Pick<DateOff, 'venueIds'>, venueId: string): boolean =>
+  !off.venueIds?.length || off.venueIds.includes(venueId);
 
 /** A permit, as the rule reads it — its time only (no money, no names). */
 export interface PermitTime {
@@ -90,11 +100,11 @@ export function blockSpan(permit: Pick<PermitTime, 'startsOn' | 'endsOn'>, block
   return first <= last ? { first, last } : null;
 }
 
-/** Every date a block holds: its span, on its weekdays, never a date off. */
+/** Every date a block holds: its span, on its weekdays, never a date off on its park (`dateOffCovers`). */
 export function blockDates(permit: PermitTime, block: TimeBlock): string[] {
   const span = blockSpan(permit, block);
   if (!span) return [];
-  const off = new Set(permit.datesOff.map(d => d.day));
+  const off = new Set(permit.datesOff.filter(d => dateOffCovers(d, block.venueId)).map(d => d.day));
   const days = new Set(block.weekdays);
   const out: string[] = [];
   // At most ~1,100 days (the permit's CHECK), so a walk is cheap and never unbounded.

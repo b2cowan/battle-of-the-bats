@@ -10,6 +10,7 @@ import { changesSummary, sendLog } from '@/lib/club-schedule-send';
 import { scheduleReplies } from '@/lib/club-schedule-coach';
 import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 import { readScheduleOutside } from '@/lib/permit-dates-off';
+import { datesOffKeepingParks } from '@/lib/club-schedule-permit-rows';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -98,8 +99,11 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     }
 
     if (body.action === 'regenerate') {
-      const asked = await readScheduleRequest(orgId, body, { houseLeague: r.houseLeague, repTeams: r.repTeams });
-      if (!asked.ok) return asked.response;
+      const read = await readScheduleRequest(orgId, body, { houseLeague: r.houseLeague, repTeams: r.repTeams });
+      if (!read.ok) return read.response;
+      // A date off whose request never said its parks (a tab from before mig 488) keeps the ones stored: the drafts are cut,
+      // and the save keeps, what the day names today — never widened to All venues.
+      const asked = { ...read, value: { ...read.value, time: { ...read.value.time, datesOff: datesOffKeepingParks(read.value.time.datesOff, loaded.time.datesOff) } } };
       // The rows the regenerate sends, each priced by its own permit (a schedule on several permits).
       const { prices, gone } = await readRequestPrices(orgId, pricePermitOf(loaded.row), asked.value.time.blocks);
       if (gone) return gone;

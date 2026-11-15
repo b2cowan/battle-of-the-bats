@@ -79,9 +79,12 @@ export function facilitiesOf(venues: readonly LibraryVenue[]): VenueFacilities {
 
 // ── The multi-pick field: a block's facilities, its days ────────────────────────────────────────────
 
-export function PickField({ id, label, required, options, selected, onChange, everyLabel, placeholder, disabled }: {
+export function PickField({ id, label, required, options, selected, onChange, everyLabel, placeholder, disabled, inlineLabel }: {
   id: string;
   label: string;
+  /** The label sits inside the button, before the value ("Applies to  Kinsmen Park ⌄") — for a field in a row of unlabelled
+   *  fields (a date off's). The label above stays for a screen reader, hidden. */
+  inlineLabel?: boolean;
   required?: boolean;
   /** `detail`: a second line under the option's name (New schedule's Permits: its issuer and dates). */
   options: readonly { id: string; label: string; detail?: string }[];
@@ -104,10 +107,11 @@ export function PickField({ id, label, required, options, selected, onChange, ev
   const toggle = (oid: string) => onChange(selected.includes(oid) ? selected.filter(x => x !== oid) : [...selected, oid]);
   return (
     <div className={ck.field}>
-      <span className={ck.label} id={`${id}-label`}>{label}{required && <span className={repKit.req} aria-hidden>*</span>}</span>
+      <span className={inlineLabel ? `${ck.label} ${own.pickLabelHidden}` : ck.label} id={`${id}-label`}>{label}{required && <span className={repKit.req} aria-hidden>*</span>}</span>
       <div className={own.pick} ref={wrap}>
         <button type="button" id={id} className={own.pickButton} aria-haspopup="listbox" aria-expanded={open}
           aria-labelledby={`${id}-label ${id}`} disabled={disabled} onClick={() => setOpen(o => !o)}>
+          {inlineLabel && <span className={own.pickKey} aria-hidden>{label}</span>}
           <span className={`${own.pickValue}${value ? '' : ` ${own.pickPlaceholder}`}`}>{value || placeholder || 'Choose'}</span>
           <ChevronDown size={15} aria-hidden />
         </button>

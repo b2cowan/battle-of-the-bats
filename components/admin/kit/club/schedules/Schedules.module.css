@@ -136,6 +136,10 @@
 }
 .remove:hover { background: var(--home-olive-soft); color: var(--text-primary); }
 .remove:disabled { opacity: 0.4; cursor: default; }
+/* A date off on a schedule over more than one park (Session B, N4 A): the day, why, "Applies to", the ✕ — and, for one a
+   permit gave, the line that says which (drawing, dates off, note 2). New schedule is computer-only (plan §5.9). */
+.offRowParks { grid-template-columns: 11rem minmax(0, 1fr) minmax(0, 15rem) auto; }
+.offFrom { grid-column: 1 / -1; margin-top: -0.2rem; }
 .sum { margin: 0.35rem 0 0.2rem; font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
 .sumBad { margin: 0.35rem 0 0.2rem; font-size: var(--type-support); color: var(--danger-light); }
 .figureInput { width: 4.5rem; }
