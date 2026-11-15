@@ -50170,42 +50170,6 @@
       },
       {
         "table_name": "bank_accounts",
-        "pos": 6,
-        "column_name": "opening_date",
-        "data_type": "date",
-        "udt_name": "date",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_accounts",
-        "pos": 7,
-        "column_name": "opening_balance_cents",
-        "data_type": "bigint",
-        "udt_name": "int8",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_accounts",
-        "pos": 8,
-        "column_name": "set_up_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_accounts",
-        "pos": 9,
-        "column_name": "set_up_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_accounts",
         "pos": 10,
         "column_name": "created_by",
         "data_type": "uuid",
@@ -50232,7 +50196,7 @@
         "column_default": null
       },
       {
-        "table_name": "bank_check_added_lines",
+        "table_name": "bank_check_waiting",
         "pos": 1,
         "column_name": "id",
         "data_type": "uuid",
@@ -50241,7 +50205,7 @@
         "column_default": "gen_random_uuid()"
       },
       {
-        "table_name": "bank_check_added_lines",
+        "table_name": "bank_check_waiting",
         "pos": 2,
         "column_name": "check_id",
         "data_type": "uuid",
@@ -50250,7 +50214,7 @@
         "column_default": null
       },
       {
-        "table_name": "bank_check_added_lines",
+        "table_name": "bank_check_waiting",
         "pos": 3,
         "column_name": "line_key",
         "data_type": "text",
@@ -50259,251 +50223,8 @@
         "column_default": null
       },
       {
-        "table_name": "bank_check_added_lines",
+        "table_name": "bank_check_waiting",
         "pos": 4,
-        "column_name": "kind",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_added_lines",
-        "pos": 5,
-        "column_name": "added_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_added_lines",
-        "pos": 6,
-        "column_name": "added_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 1,
-        "column_name": "id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": "gen_random_uuid()"
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 2,
-        "column_name": "check_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 3,
-        "column_name": "line_key",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 4,
-        "column_name": "was_date",
-        "data_type": "date",
-        "udt_name": "date",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 5,
-        "column_name": "was_direction",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 6,
-        "column_name": "was_amount_cents",
-        "data_type": "bigint",
-        "udt_name": "int8",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 7,
-        "column_name": "now_date",
-        "data_type": "date",
-        "udt_name": "date",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 8,
-        "column_name": "now_direction",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 9,
-        "column_name": "now_amount_cents",
-        "data_type": "bigint",
-        "udt_name": "int8",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 10,
-        "column_name": "removed",
-        "data_type": "boolean",
-        "udt_name": "bool",
-        "is_nullable": "NO",
-        "column_default": "false"
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 11,
-        "column_name": "changed_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 12,
-        "column_name": "changed_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 13,
-        "column_name": "cleared_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_changes",
-        "pos": 14,
-        "column_name": "cleared_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_events",
-        "pos": 1,
-        "column_name": "id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": "gen_random_uuid()"
-      },
-      {
-        "table_name": "bank_check_events",
-        "pos": 2,
-        "column_name": "check_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_events",
-        "pos": 3,
-        "column_name": "kind",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_events",
-        "pos": 4,
-        "column_name": "reason",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_events",
-        "pos": 5,
-        "column_name": "by_user",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_events",
-        "pos": 6,
-        "column_name": "at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
-        "table_name": "bank_check_marks",
-        "pos": 1,
-        "column_name": "id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": "gen_random_uuid()"
-      },
-      {
-        "table_name": "bank_check_marks",
-        "pos": 2,
-        "column_name": "bank_account_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_marks",
-        "pos": 3,
-        "column_name": "check_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_marks",
-        "pos": 4,
-        "column_name": "line_key",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_check_marks",
-        "pos": 5,
         "column_name": "line_date",
         "data_type": "date",
         "udt_name": "date",
@@ -50511,17 +50232,17 @@
         "column_default": null
       },
       {
-        "table_name": "bank_check_marks",
-        "pos": 6,
-        "column_name": "direction",
+        "table_name": "bank_check_waiting",
+        "pos": 5,
+        "column_name": "label",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
-        "table_name": "bank_check_marks",
-        "pos": 7,
+        "table_name": "bank_check_waiting",
+        "pos": 6,
         "column_name": "amount_cents",
         "data_type": "bigint",
         "udt_name": "int8",
@@ -50529,31 +50250,40 @@
         "column_default": null
       },
       {
-        "table_name": "bank_check_marks",
-        "pos": 8,
-        "column_name": "payout_key",
+        "table_name": "bank_check_waiting",
+        "pos": 7,
+        "column_name": "direction",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": null
       },
       {
-        "table_name": "bank_check_marks",
+        "table_name": "bank_check_waiting",
+        "pos": 8,
+        "column_name": "at_start",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "bank_check_waiting",
         "pos": 9,
-        "column_name": "marked_by",
+        "column_name": "added_by",
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
       },
       {
-        "table_name": "bank_check_marks",
+        "table_name": "bank_check_waiting",
         "pos": 10,
-        "column_name": "marked_at",
+        "column_name": "added_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "bank_checks",
@@ -50593,42 +50323,6 @@
       },
       {
         "table_name": "bank_checks",
-        "pos": 5,
-        "column_name": "status",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": "'open'::text"
-      },
-      {
-        "table_name": "bank_checks",
-        "pos": 6,
-        "column_name": "checked_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_checks",
-        "pos": 7,
-        "column_name": "checked_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_checks",
-        "pos": 8,
-        "column_name": "outstanding_snapshot",
-        "data_type": "jsonb",
-        "udt_name": "jsonb",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_checks",
         "pos": 9,
         "column_name": "created_by",
         "data_type": "uuid",
@@ -50646,139 +50340,85 @@
         "column_default": "now()"
       },
       {
-        "table_name": "bank_line_exclusions",
-        "pos": 1,
-        "column_name": "id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": "gen_random_uuid()"
-      },
-      {
-        "table_name": "bank_line_exclusions",
-        "pos": 2,
-        "column_name": "bank_account_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_line_exclusions",
-        "pos": 3,
-        "column_name": "line_key",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_line_exclusions",
-        "pos": 4,
-        "column_name": "excluded_by",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_line_exclusions",
-        "pos": 5,
-        "column_name": "excluded_at",
-        "data_type": "timestamp with time zone",
-        "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
-      },
-      {
-        "table_name": "bank_saved_lines",
-        "pos": 1,
-        "column_name": "id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": "gen_random_uuid()"
-      },
-      {
-        "table_name": "bank_saved_lines",
-        "pos": 2,
-        "column_name": "bank_account_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_saved_lines",
-        "pos": 3,
+        "table_name": "bank_checks",
+        "pos": 11,
         "column_name": "kind",
         "data_type": "text",
         "udt_name": "text",
         "is_nullable": "NO",
-        "column_default": null
+        "column_default": "'check'::text"
       },
       {
-        "table_name": "bank_saved_lines",
-        "pos": 4,
-        "column_name": "line_key",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_saved_lines",
-        "pos": 5,
-        "column_name": "line_date",
-        "data_type": "date",
-        "udt_name": "date",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_saved_lines",
-        "pos": 6,
-        "column_name": "direction",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "bank_saved_lines",
-        "pos": 7,
-        "column_name": "amount_cents",
+        "table_name": "bank_checks",
+        "pos": 12,
+        "column_name": "books_cents",
         "data_type": "bigint",
         "udt_name": "int8",
         "is_nullable": "NO",
         "column_default": null
       },
       {
-        "table_name": "bank_saved_lines",
-        "pos": 8,
-        "column_name": "description",
-        "data_type": "text",
-        "udt_name": "text",
+        "table_name": "bank_checks",
+        "pos": 13,
+        "column_name": "on_its_way_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
         "is_nullable": "YES",
         "column_default": null
       },
       {
-        "table_name": "bank_saved_lines",
-        "pos": 9,
-        "column_name": "saved_by",
+        "table_name": "bank_checks",
+        "pos": 14,
+        "column_name": "cash_not_deposited_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 15,
+        "column_name": "book_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 16,
+        "column_name": "deleted_by",
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
       },
       {
-        "table_name": "bank_saved_lines",
-        "pos": 10,
-        "column_name": "saved_at",
+        "table_name": "bank_checks",
+        "pos": 17,
+        "column_name": "deleted_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
-        "is_nullable": "NO",
-        "column_default": "now()"
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 18,
+        "column_name": "corrected_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 19,
+        "column_name": "corrected_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "basic_coach_team_announcements",
@@ -53247,6 +52887,15 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "club_schedule_sends",
+        "pos": 19,
+        "column_name": "league_slot_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "club_schedule_slot_programs",
         "pos": 1,
         "column_name": "slot_id",
@@ -55047,6 +54696,123 @@
         "column_default": "now()"
       },
       {
+        "table_name": "event_availability_reminders",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 2,
+        "column_name": "event_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 3,
+        "column_name": "event_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 4,
+        "column_name": "reminded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 5,
+        "column_name": "reminded_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 6,
+        "column_name": "families",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 7,
+        "column_name": "parents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "event_availability_reminders",
+        "pos": 8,
+        "column_name": "app_only",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "family_calendar_feeds",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "family_calendar_feeds",
+        "pos": 2,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_calendar_feeds",
+        "pos": 3,
+        "column_name": "token_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_calendar_feeds",
+        "pos": 4,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "family_calendar_feeds",
+        "pos": 5,
+        "column_name": "stopped_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "family_coach_asks",
         "pos": 1,
         "column_name": "id",
@@ -55515,6 +55281,177 @@
         "column_default": null
       },
       {
+        "table_name": "family_invitations",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 3,
+        "column_name": "email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 4,
+        "column_name": "token_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 5,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 6,
+        "column_name": "rep_player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 7,
+        "column_name": "child_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 8,
+        "column_name": "sent_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 10,
+        "column_name": "expires_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 11,
+        "column_name": "used_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 12,
+        "column_name": "used_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 13,
+        "column_name": "cancelled_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 14,
+        "column_name": "replaced_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invitations",
+        "pos": 15,
+        "column_name": "reconnects",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "family_invite_stops",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "family_invite_stops",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invite_stops",
+        "pos": 3,
+        "column_name": "email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_invite_stops",
+        "pos": 4,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "family_links",
         "pos": 1,
         "column_name": "id",
@@ -55538,7 +55475,7 @@
         "column_name": "rep_team_id",
         "data_type": "uuid",
         "udt_name": "uuid",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -55727,6 +55664,33 @@
         "column_name": "person_id",
         "data_type": "uuid",
         "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_links",
+        "pos": 26,
+        "column_name": "child_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_links",
+        "pos": 27,
+        "column_name": "invited_as",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'rep_coach'::text"
+      },
+      {
+        "table_name": "family_links",
+        "pos": 28,
+        "column_name": "ended_by",
+        "data_type": "text",
+        "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -57288,6 +57252,195 @@
         "column_default": "0"
       },
       {
+        "table_name": "league_friend_requests",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 3,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 4,
+        "column_name": "registration_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 5,
+        "column_name": "slot",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 6,
+        "column_name": "typed_first",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 7,
+        "column_name": "typed_last",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 8,
+        "column_name": "typed_parent",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 9,
+        "column_name": "code_entered",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 10,
+        "column_name": "state",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'to_confirm'::text"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 11,
+        "column_name": "mark",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 12,
+        "column_name": "matched_registration_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 13,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 14,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 15,
+        "column_name": "decided_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 16,
+        "column_name": "decided_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 17,
+        "column_name": "kept_apart_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 18,
+        "column_name": "kept_apart_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 19,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 20,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "pos": 21,
+        "column_name": "draft_outcome",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_game_changes",
         "pos": 1,
         "column_name": "id",
@@ -57950,6 +58103,15 @@
         "column_name": "notice_id",
         "data_type": "uuid",
         "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_placement_emails",
+        "pos": 16,
+        "column_name": "changes",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -59016,6 +59178,33 @@
         "column_default": null
       },
       {
+        "table_name": "league_registrations",
+        "pos": 45,
+        "column_name": "told_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 46,
+        "column_name": "told_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_registrations",
+        "pos": 47,
+        "column_name": "friend_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_schedule_emails",
         "pos": 1,
         "column_name": "id",
@@ -59244,6 +59433,51 @@
         "table_name": "league_season_notices",
         "pos": 11,
         "column_name": "club_schedule_send_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_notices",
+        "pos": 12,
+        "column_name": "skipped_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "pos": 1,
+        "column_name": "season_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "pos": 3,
+        "column_name": "asked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "pos": 4,
+        "column_name": "asked_by",
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "YES",
@@ -59500,6 +59734,15 @@
         "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_seasons",
+        "pos": 30,
+        "column_name": "friend_requests_max",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "2"
       },
       {
         "table_name": "league_slot_uses",
@@ -59901,6 +60144,78 @@
         "table_name": "league_teams",
         "pos": 8,
         "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 2,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 3,
+        "column_name": "user_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 4,
+        "column_name": "terms_version",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 5,
+        "column_name": "privacy_version",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 6,
+        "column_name": "box_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 7,
+        "column_name": "door",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 8,
+        "column_name": "accepted_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -61660,6 +61975,33 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "org_children",
+        "pos": 8,
+        "column_name": "medical_notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_children",
+        "pos": 9,
+        "column_name": "emergency_contact_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_children",
+        "pos": 10,
+        "column_name": "emergency_contact_phone",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "org_custom_domains",
@@ -63462,6 +63804,15 @@
         "column_default": "'[]'::jsonb"
       },
       {
+        "table_name": "org_public_site_content",
+        "pos": 20,
+        "column_name": "mailing_address",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_site_notices",
         "pos": 1,
         "column_name": "id",
@@ -63690,6 +64041,15 @@
         "table_name": "org_time_blocks",
         "pos": 13,
         "column_name": "schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 14,
+        "column_name": "from_permit_id",
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "YES",
@@ -64477,6 +64837,60 @@
         "udt_name": "text",
         "is_nullable": "NO",
         "column_default": "'club_default'::text"
+      },
+      {
+        "table_name": "organizations",
+        "pos": 44,
+        "column_name": "two_step_board_required_since",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 45,
+        "column_name": "two_step_coaches_required_since",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 46,
+        "column_name": "two_step_prompt_closed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 47,
+        "column_name": "is_test_organization",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "organizations",
+        "pos": 48,
+        "column_name": "renewal_reminded_for",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 49,
+        "column_name": "logo_aspect",
+        "data_type": "real",
+        "udt_name": "float4",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "pitch_decks",
@@ -65631,6 +66045,879 @@
         "column_default": "now()"
       },
       {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 2,
+        "column_name": "seq",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 3,
+        "column_name": "stripe_invoice_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 4,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 6,
+        "column_name": "looked_keys",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "NO",
+        "column_default": "'{}'::text[]"
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 7,
+        "column_name": "put_back_of",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 8,
+        "column_name": "after_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 9,
+        "column_name": "looked_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 10,
+        "column_name": "looked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 11,
+        "column_name": "why",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 2,
+        "column_name": "stripe_invoice_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 3,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 4,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 6,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 7,
+        "column_name": "buyer_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 8,
+        "column_name": "buyer_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 9,
+        "column_name": "stripe_customer_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 10,
+        "column_name": "stripe_subscription_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 11,
+        "column_name": "stripe_payment_intent_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 12,
+        "column_name": "invoice_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 13,
+        "column_name": "issued_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 14,
+        "column_name": "currency",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 15,
+        "column_name": "amount_before_tax_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 16,
+        "column_name": "tax_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 17,
+        "column_name": "total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 18,
+        "column_name": "tax_lines",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 19,
+        "column_name": "stripe_tax_status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 20,
+        "column_name": "gst_hst_position",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 21,
+        "column_name": "gst_hst_position_why",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 22,
+        "column_name": "taxed_country",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 23,
+        "column_name": "taxed_region",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 24,
+        "column_name": "taxed_postal_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 25,
+        "column_name": "evidence_missing",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 26,
+        "column_name": "evidence_country",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 27,
+        "column_name": "evidence_region",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 28,
+        "column_name": "evidence_line1",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 29,
+        "column_name": "evidence_line2",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 30,
+        "column_name": "evidence_city",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 31,
+        "column_name": "evidence_postal_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 32,
+        "column_name": "evidence_confirmed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 33,
+        "column_name": "us_declaration_version",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 34,
+        "column_name": "us_declaration_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 35,
+        "column_name": "card_country",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 36,
+        "column_name": "payout_country",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 37,
+        "column_name": "review_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 38,
+        "column_name": "review_note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 39,
+        "column_name": "evidence_read_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 40,
+        "column_name": "evidence_captured",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 41,
+        "column_name": "fx_rate",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 42,
+        "column_name": "fx_rate_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 43,
+        "column_name": "fx_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 44,
+        "column_name": "cad_amount_before_tax_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 45,
+        "column_name": "cad_tax_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 46,
+        "column_name": "cad_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 47,
+        "column_name": "stripe_cad_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 48,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 49,
+        "column_name": "paid_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 50,
+        "column_name": "voided_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 51,
+        "column_name": "uncollectible_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 52,
+        "column_name": "refunded_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 53,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 54,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 55,
+        "column_name": "billing_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 56,
+        "column_name": "purchase_email_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 2,
+        "column_name": "stripe_credit_note_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 3,
+        "column_name": "stripe_invoice_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 4,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 5,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 6,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 7,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 8,
+        "column_name": "stripe_customer_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 9,
+        "column_name": "note_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 10,
+        "column_name": "note_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 11,
+        "column_name": "stripe_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 12,
+        "column_name": "issued_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 13,
+        "column_name": "currency",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 14,
+        "column_name": "amount_before_tax_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 15,
+        "column_name": "tax_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 16,
+        "column_name": "total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 17,
+        "column_name": "tax_lines",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 18,
+        "column_name": "refund_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 19,
+        "column_name": "out_of_band_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 20,
+        "column_name": "evidence_captured",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 21,
+        "column_name": "fx_rate",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 22,
+        "column_name": "fx_rate_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 23,
+        "column_name": "fx_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 24,
+        "column_name": "cad_amount_before_tax_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 25,
+        "column_name": "cad_tax_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 26,
+        "column_name": "cad_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 27,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 28,
+        "column_name": "voided_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 29,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 30,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "platform_email_templates",
         "pos": 1,
         "column_name": "key",
@@ -66043,6 +67330,24 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 19,
+        "column_name": "total",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 20,
+        "column_name": "tax_lines",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "platform_feedback_replies",
@@ -66599,6 +67904,33 @@
         "column_name": "completed_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 19,
+        "column_name": "stripe_invoice_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 20,
+        "column_name": "stripe_credit_note_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_refunds",
+        "pos": 21,
+        "column_name": "stripe_credit_note_number",
+        "data_type": "text",
+        "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -68194,6 +69526,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_document_templates",
+        "pos": 12,
+        "column_name": "validity",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
       },
       {
         "table_name": "rep_dues_credits",
@@ -70959,6 +72300,24 @@
         "column_default": null
       },
       {
+        "table_name": "rep_roster_players",
+        "pos": 33,
+        "column_name": "health_confirmed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_roster_players",
+        "pos": 34,
+        "column_name": "health_confirmed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_season_refund_adjustments",
         "pos": 1,
         "column_name": "id",
@@ -72154,6 +73513,96 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 12,
+        "column_name": "set_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 13,
+        "column_name": "set_by_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 14,
+        "column_name": "set_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 15,
+        "column_name": "previous_status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 16,
+        "column_name": "previous_by_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 17,
+        "column_name": "previous_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 18,
+        "column_name": "previous_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 19,
+        "column_name": "family_note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 20,
+        "column_name": "family_note_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "pos": 21,
+        "column_name": "family_note_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "rep_team_event_tags",
@@ -74919,6 +76368,15 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "rep_teams",
+        "pos": 23,
+        "column_name": "family_answers",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'off'::text"
+      },
+      {
         "table_name": "rep_tryout_evaluator_sessions",
         "pos": 1,
         "column_name": "id",
@@ -76116,6 +77574,60 @@
         "column_default": "now()"
       },
       {
+        "table_name": "second_parent_stops",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "second_parent_stops",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "second_parent_stops",
+        "pos": 3,
+        "column_name": "email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "second_parent_stops",
+        "pos": 4,
+        "column_name": "stopped_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "second_parent_stops",
+        "pos": 5,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'stop_page'::text"
+      },
+      {
+        "table_name": "second_parent_stops",
+        "pos": 6,
+        "column_name": "registration_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": "'{}'::uuid[]"
+      },
+      {
         "table_name": "stripe_billing_drift_checks",
         "pos": 1,
         "column_name": "id",
@@ -77052,6 +78564,15 @@
         "column_default": null
       },
       {
+        "table_name": "team_workspaces",
+        "pos": 24,
+        "column_name": "renewal_reminded_for",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "teams",
         "pos": 1,
         "column_name": "id",
@@ -77311,6 +78832,24 @@
         "udt_name": "numeric",
         "is_nullable": "NO",
         "column_default": "0"
+      },
+      {
+        "table_name": "teams",
+        "pos": 32,
+        "column_name": "link_version",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "teams",
+        "pos": 33,
+        "column_name": "link_replaced_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "tournament_archives",
@@ -78564,6 +80103,330 @@
         "column_default": null
       },
       {
+        "table_name": "tournaments",
+        "pos": 48,
+        "column_name": "logo_aspect",
+        "data_type": "real",
+        "udt_name": "float4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 2,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 3,
+        "column_name": "salt",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 4,
+        "column_name": "code_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 6,
+        "column_name": "used_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_backup_codes",
+        "pos": 7,
+        "column_name": "used_session_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_code_uses",
+        "pos": 1,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_code_uses",
+        "pos": 2,
+        "column_name": "code_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_code_uses",
+        "pos": 3,
+        "column_name": "used_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "two_step_grace",
+        "pos": 1,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_grace",
+        "pos": 2,
+        "column_name": "organization_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_grace",
+        "pos": 3,
+        "column_name": "starts_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "two_step_grace",
+        "pos": 4,
+        "column_name": "start_email_for",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_grace",
+        "pos": 5,
+        "column_name": "reminder_sent_for",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 2,
+        "column_name": "organization_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 3,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 4,
+        "column_name": "asked_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 5,
+        "column_name": "asked_how",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 6,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 7,
+        "column_name": "requested_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 8,
+        "column_name": "confirmed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 9,
+        "column_name": "runs_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 10,
+        "column_name": "held_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 11,
+        "column_name": "held_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 12,
+        "column_name": "cancelled_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 13,
+        "column_name": "completed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 14,
+        "column_name": "confirm_token_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 15,
+        "column_name": "confirm_expires_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 16,
+        "column_name": "club_notice_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "pos": 17,
+        "column_name": "cancelled_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "user_hidden_workspaces",
+        "pos": 1,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "user_hidden_workspaces",
+        "pos": 2,
+        "column_name": "organization_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "user_hidden_workspaces",
+        "pos": 3,
+        "column_name": "hidden_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "user_marketing_opt_outs",
         "pos": 1,
         "column_name": "user_id",
@@ -78882,94 +80745,24 @@
       },
       {
         "table_name": "bank_accounts",
-        "column_name": "set_up_by",
-        "foreign_table": null,
-        "foreign_column": null,
-        "constraint_name": "bank_accounts_set_up_by_fkey"
-      },
-      {
-        "table_name": "bank_accounts",
         "column_name": "team_id",
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "bank_accounts_team_id_fkey"
       },
       {
-        "table_name": "bank_check_added_lines",
+        "table_name": "bank_check_waiting",
         "column_name": "added_by",
         "foreign_table": null,
         "foreign_column": null,
-        "constraint_name": "bank_check_added_lines_added_by_fkey"
+        "constraint_name": "bank_check_waiting_added_by_fkey"
       },
       {
-        "table_name": "bank_check_added_lines",
+        "table_name": "bank_check_waiting",
         "column_name": "check_id",
         "foreign_table": "bank_checks",
         "foreign_column": "id",
-        "constraint_name": "bank_check_added_lines_check_id_fkey"
-      },
-      {
-        "table_name": "bank_check_changes",
-        "column_name": "changed_by",
-        "foreign_table": null,
-        "foreign_column": null,
-        "constraint_name": "bank_check_changes_changed_by_fkey"
-      },
-      {
-        "table_name": "bank_check_changes",
-        "column_name": "check_id",
-        "foreign_table": "bank_checks",
-        "foreign_column": "id",
-        "constraint_name": "bank_check_changes_check_id_fkey"
-      },
-      {
-        "table_name": "bank_check_changes",
-        "column_name": "cleared_by",
-        "foreign_table": null,
-        "foreign_column": null,
-        "constraint_name": "bank_check_changes_cleared_by_fkey"
-      },
-      {
-        "table_name": "bank_check_events",
-        "column_name": "by_user",
-        "foreign_table": null,
-        "foreign_column": null,
-        "constraint_name": "bank_check_events_by_user_fkey"
-      },
-      {
-        "table_name": "bank_check_events",
-        "column_name": "check_id",
-        "foreign_table": "bank_checks",
-        "foreign_column": "id",
-        "constraint_name": "bank_check_events_check_id_fkey"
-      },
-      {
-        "table_name": "bank_check_marks",
-        "column_name": "bank_account_id",
-        "foreign_table": "bank_accounts",
-        "foreign_column": "id",
-        "constraint_name": "bank_check_marks_bank_account_id_fkey"
-      },
-      {
-        "table_name": "bank_check_marks",
-        "column_name": "check_id",
-        "foreign_table": "bank_checks",
-        "foreign_column": "id",
-        "constraint_name": "bank_check_marks_check_same_account"
-      },
-      {
-        "table_name": "bank_check_marks",
-        "column_name": "bank_account_id",
-        "foreign_table": "bank_checks",
-        "foreign_column": "bank_account_id",
-        "constraint_name": "bank_check_marks_check_same_account"
-      },
-      {
-        "table_name": "bank_check_marks",
-        "column_name": "marked_by",
-        "foreign_table": null,
-        "foreign_column": null,
-        "constraint_name": "bank_check_marks_marked_by_fkey"
+        "constraint_name": "bank_check_waiting_check_id_fkey"
       },
       {
         "table_name": "bank_checks",
@@ -78980,10 +80773,10 @@
       },
       {
         "table_name": "bank_checks",
-        "column_name": "checked_by",
+        "column_name": "corrected_by",
         "foreign_table": null,
         "foreign_column": null,
-        "constraint_name": "bank_checks_checked_by_fkey"
+        "constraint_name": "bank_checks_corrected_by_fkey"
       },
       {
         "table_name": "bank_checks",
@@ -78993,32 +80786,11 @@
         "constraint_name": "bank_checks_created_by_fkey"
       },
       {
-        "table_name": "bank_line_exclusions",
-        "column_name": "bank_account_id",
-        "foreign_table": "bank_accounts",
-        "foreign_column": "id",
-        "constraint_name": "bank_line_exclusions_bank_account_id_fkey"
-      },
-      {
-        "table_name": "bank_line_exclusions",
-        "column_name": "excluded_by",
+        "table_name": "bank_checks",
+        "column_name": "deleted_by",
         "foreign_table": null,
         "foreign_column": null,
-        "constraint_name": "bank_line_exclusions_excluded_by_fkey"
-      },
-      {
-        "table_name": "bank_saved_lines",
-        "column_name": "bank_account_id",
-        "foreign_table": "bank_accounts",
-        "foreign_column": "id",
-        "constraint_name": "bank_saved_lines_bank_account_id_fkey"
-      },
-      {
-        "table_name": "bank_saved_lines",
-        "column_name": "saved_by",
-        "foreign_table": null,
-        "foreign_column": null,
-        "constraint_name": "bank_saved_lines_saved_by_fkey"
+        "constraint_name": "bank_checks_deleted_by_fkey"
       },
       {
         "table_name": "basic_coach_team_announcements",
@@ -79700,6 +81472,20 @@
         "constraint_name": "error_events_org_id_fkey"
       },
       {
+        "table_name": "event_availability_reminders",
+        "column_name": "reminded_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "event_availability_reminders_reminded_by_user_id_fkey"
+      },
+      {
+        "table_name": "family_calendar_feeds",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "family_calendar_feeds_user_id_fkey"
+      },
+      {
         "table_name": "family_coach_asks",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -79763,11 +81549,67 @@
         "constraint_name": "family_email_sends_sent_by_fkey"
       },
       {
+        "table_name": "family_invitations",
+        "column_name": "child_id",
+        "foreign_table": "org_children",
+        "foreign_column": "id",
+        "constraint_name": "family_invitations_child_id_fkey"
+      },
+      {
+        "table_name": "family_invitations",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "family_invitations_org_id_fkey"
+      },
+      {
+        "table_name": "family_invitations",
+        "column_name": "rep_player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "family_invitations_rep_player_id_fkey"
+      },
+      {
+        "table_name": "family_invitations",
+        "column_name": "replaced_by",
+        "foreign_table": "family_invitations",
+        "foreign_column": "id",
+        "constraint_name": "family_invitations_replaced_by_fkey"
+      },
+      {
+        "table_name": "family_invitations",
+        "column_name": "sent_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "family_invitations_sent_by_user_id_fkey"
+      },
+      {
+        "table_name": "family_invitations",
+        "column_name": "used_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "family_invitations_used_by_user_id_fkey"
+      },
+      {
+        "table_name": "family_invite_stops",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "family_invite_stops_org_id_fkey"
+      },
+      {
         "table_name": "family_links",
         "column_name": "approved_by_user_id",
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "family_links_approved_by_user_id_fkey"
+      },
+      {
+        "table_name": "family_links",
+        "column_name": "child_id",
+        "foreign_table": "org_children",
+        "foreign_column": "id",
+        "constraint_name": "family_links_child_id_fkey"
       },
       {
         "table_name": "family_links",
@@ -80118,6 +81960,48 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "league_email_log_sent_by_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "decided_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_friend_requests_decided_by_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "kept_apart_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_friend_requests_kept_apart_by_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "matched_registration_id",
+        "foreign_table": "league_registrations",
+        "foreign_column": "id",
+        "constraint_name": "league_friend_requests_matched_registration_id_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_friend_requests_org_id_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "registration_id",
+        "foreign_table": "league_registrations",
+        "foreign_column": "id",
+        "constraint_name": "league_friend_requests_registration_id_fkey"
+      },
+      {
+        "table_name": "league_friend_requests",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_friend_requests_season_id_fkey"
       },
       {
         "table_name": "league_game_changes",
@@ -80596,6 +82480,13 @@
         "constraint_name": "league_registrations_team_id_fkey"
       },
       {
+        "table_name": "league_registrations",
+        "column_name": "told_team_id",
+        "foreign_table": "league_teams",
+        "foreign_column": "id",
+        "constraint_name": "league_registrations_told_team_fk"
+      },
+      {
         "table_name": "league_schedule_emails",
         "column_name": "division_id",
         "foreign_table": "league_divisions",
@@ -80685,6 +82576,27 @@
         "foreign_table": "league_seasons",
         "foreign_column": "id",
         "constraint_name": "league_season_notices_season_id_fkey"
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "column_name": "asked_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "league_season_time_asks_asked_by_fkey"
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "league_season_time_asks_org_id_fkey"
+      },
+      {
+        "table_name": "league_season_time_asks",
+        "column_name": "season_id",
+        "foreign_table": "league_seasons",
+        "foreign_column": "id",
+        "constraint_name": "league_season_time_asks_season_id_fkey"
       },
       {
         "table_name": "league_seasons",
@@ -80797,6 +82709,13 @@
         "foreign_table": "league_seasons",
         "foreign_column": "id",
         "constraint_name": "league_teams_season_id_fkey"
+      },
+      {
+        "table_name": "legal_acceptances",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "legal_acceptances_user_id_fkey"
       },
       {
         "table_name": "notification_preferences",
@@ -81409,6 +83328,13 @@
       },
       {
         "table_name": "org_time_blocks",
+        "column_name": "from_permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "org_time_blocks_from_permit_id_fkey"
+      },
+      {
+        "table_name": "org_time_blocks",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -81539,6 +83465,20 @@
         "foreign_table": "platform_plan_versions",
         "foreign_column": "id",
         "constraint_name": "platform_catalog_change_requests_target_version_id_fkey"
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "column_name": "after_id",
+        "foreign_table": "platform_charge_tax_looks",
+        "foreign_column": "id",
+        "constraint_name": "platform_charge_tax_looks_after_id_fkey"
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "column_name": "put_back_of",
+        "foreign_table": "platform_charge_tax_looks",
+        "foreign_column": "id",
+        "constraint_name": "platform_charge_tax_looks_put_back_of_fkey"
       },
       {
         "table_name": "platform_events",
@@ -82928,6 +84868,13 @@
       },
       {
         "table_name": "rep_roster_players",
+        "column_name": "health_confirmed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_roster_players_health_confirmed_by_fkey"
+      },
+      {
+        "table_name": "rep_roster_players",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -83271,6 +85218,13 @@
       },
       {
         "table_name": "rep_team_event_attendance",
+        "column_name": "family_note_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_event_attendance_family_note_by_user_id_fkey"
+      },
+      {
+        "table_name": "rep_team_event_attendance",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -83285,10 +85239,24 @@
       },
       {
         "table_name": "rep_team_event_attendance",
+        "column_name": "previous_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_event_attendance_previous_by_user_id_fkey"
+      },
+      {
+        "table_name": "rep_team_event_attendance",
         "column_name": "program_year_id",
         "foreign_table": "rep_program_years",
         "foreign_column": "id",
         "constraint_name": "rep_team_event_attendance_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_team_event_attendance",
+        "column_name": "set_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_event_attendance_set_by_user_id_fkey"
       },
       {
         "table_name": "rep_team_event_attendance",
@@ -84306,6 +86274,13 @@
         "constraint_name": "schedule_facility_lanes_tournament_id_fkey"
       },
       {
+        "table_name": "second_parent_stops",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "second_parent_stops_org_id_fkey"
+      },
+      {
         "table_name": "team_entitlements",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -84740,6 +86715,62 @@
         "constraint_name": "tournaments_org_id_fkey"
       },
       {
+        "table_name": "two_step_backup_codes",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "two_step_backup_codes_user_id_fkey"
+      },
+      {
+        "table_name": "two_step_code_uses",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "two_step_code_uses_user_id_fkey"
+      },
+      {
+        "table_name": "two_step_grace",
+        "column_name": "organization_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "two_step_grace_organization_id_fkey"
+      },
+      {
+        "table_name": "two_step_grace",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "two_step_grace_user_id_fkey"
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "column_name": "organization_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "two_step_owner_resets_organization_id_fkey"
+      },
+      {
+        "table_name": "two_step_owner_resets",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "two_step_owner_resets_user_id_fkey"
+      },
+      {
+        "table_name": "user_hidden_workspaces",
+        "column_name": "organization_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "user_hidden_workspaces_organization_id_fkey"
+      },
+      {
+        "table_name": "user_hidden_workspaces",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "user_hidden_workspaces_user_id_fkey"
+      },
+      {
         "table_name": "user_marketing_opt_outs",
         "column_name": "user_id",
         "foreign_table": null,
@@ -84934,89 +86965,29 @@
         "indexdef": "CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id)"
       },
       {
-        "tablename": "bank_accounts",
-        "indexname": "bank_accounts_set_up_by_idx",
-        "indexdef": "CREATE INDEX bank_accounts_set_up_by_idx ON public.bank_accounts USING btree (set_up_by) WHERE (set_up_by IS NOT NULL)"
+        "tablename": "bank_check_waiting",
+        "indexname": "bank_check_waiting_added_by_idx",
+        "indexdef": "CREATE INDEX bank_check_waiting_added_by_idx ON public.bank_check_waiting USING btree (added_by) WHERE (added_by IS NOT NULL)"
       },
       {
-        "tablename": "bank_check_added_lines",
-        "indexname": "bank_check_added_lines_by_idx",
-        "indexdef": "CREATE INDEX bank_check_added_lines_by_idx ON public.bank_check_added_lines USING btree (added_by) WHERE (added_by IS NOT NULL)"
+        "tablename": "bank_check_waiting",
+        "indexname": "bank_check_waiting_once",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_waiting_once ON public.bank_check_waiting USING btree (check_id, line_key)"
       },
       {
-        "tablename": "bank_check_added_lines",
-        "indexname": "bank_check_added_lines_once",
-        "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_once ON public.bank_check_added_lines USING btree (check_id, line_key)"
-      },
-      {
-        "tablename": "bank_check_added_lines",
-        "indexname": "bank_check_added_lines_pkey",
-        "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_pkey ON public.bank_check_added_lines USING btree (id)"
-      },
-      {
-        "tablename": "bank_check_changes",
-        "indexname": "bank_check_changes_changed_by_idx",
-        "indexdef": "CREATE INDEX bank_check_changes_changed_by_idx ON public.bank_check_changes USING btree (changed_by) WHERE (changed_by IS NOT NULL)"
-      },
-      {
-        "tablename": "bank_check_changes",
-        "indexname": "bank_check_changes_check_idx",
-        "indexdef": "CREATE INDEX bank_check_changes_check_idx ON public.bank_check_changes USING btree (check_id, changed_at)"
-      },
-      {
-        "tablename": "bank_check_changes",
-        "indexname": "bank_check_changes_cleared_by_idx",
-        "indexdef": "CREATE INDEX bank_check_changes_cleared_by_idx ON public.bank_check_changes USING btree (cleared_by) WHERE (cleared_by IS NOT NULL)"
-      },
-      {
-        "tablename": "bank_check_changes",
-        "indexname": "bank_check_changes_open_idx",
-        "indexdef": "CREATE INDEX bank_check_changes_open_idx ON public.bank_check_changes USING btree (check_id) WHERE (cleared_at IS NULL)"
-      },
-      {
-        "tablename": "bank_check_changes",
-        "indexname": "bank_check_changes_pkey",
-        "indexdef": "CREATE UNIQUE INDEX bank_check_changes_pkey ON public.bank_check_changes USING btree (id)"
-      },
-      {
-        "tablename": "bank_check_events",
-        "indexname": "bank_check_events_by_idx",
-        "indexdef": "CREATE INDEX bank_check_events_by_idx ON public.bank_check_events USING btree (by_user) WHERE (by_user IS NOT NULL)"
-      },
-      {
-        "tablename": "bank_check_events",
-        "indexname": "bank_check_events_check_idx",
-        "indexdef": "CREATE INDEX bank_check_events_check_idx ON public.bank_check_events USING btree (check_id, at)"
-      },
-      {
-        "tablename": "bank_check_events",
-        "indexname": "bank_check_events_pkey",
-        "indexdef": "CREATE UNIQUE INDEX bank_check_events_pkey ON public.bank_check_events USING btree (id)"
-      },
-      {
-        "tablename": "bank_check_marks",
-        "indexname": "bank_check_marks_by_idx",
-        "indexdef": "CREATE INDEX bank_check_marks_by_idx ON public.bank_check_marks USING btree (marked_by) WHERE (marked_by IS NOT NULL)"
-      },
-      {
-        "tablename": "bank_check_marks",
-        "indexname": "bank_check_marks_check_idx",
-        "indexdef": "CREATE INDEX bank_check_marks_check_idx ON public.bank_check_marks USING btree (check_id)"
-      },
-      {
-        "tablename": "bank_check_marks",
-        "indexname": "bank_check_marks_one_tick",
-        "indexdef": "CREATE UNIQUE INDEX bank_check_marks_one_tick ON public.bank_check_marks USING btree (bank_account_id, line_key)"
-      },
-      {
-        "tablename": "bank_check_marks",
-        "indexname": "bank_check_marks_pkey",
-        "indexdef": "CREATE UNIQUE INDEX bank_check_marks_pkey ON public.bank_check_marks USING btree (id)"
+        "tablename": "bank_check_waiting",
+        "indexname": "bank_check_waiting_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_waiting_pkey ON public.bank_check_waiting USING btree (id)"
       },
       {
         "tablename": "bank_checks",
-        "indexname": "bank_checks_checked_by_idx",
-        "indexdef": "CREATE INDEX bank_checks_checked_by_idx ON public.bank_checks USING btree (checked_by) WHERE (checked_by IS NOT NULL)"
+        "indexname": "bank_checks_account_idx",
+        "indexdef": "CREATE INDEX bank_checks_account_idx ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
+      },
+      {
+        "tablename": "bank_checks",
+        "indexname": "bank_checks_corrected_by_idx",
+        "indexdef": "CREATE INDEX bank_checks_corrected_by_idx ON public.bank_checks USING btree (corrected_by) WHERE (corrected_by IS NOT NULL)"
       },
       {
         "tablename": "bank_checks",
@@ -85025,48 +86996,23 @@
       },
       {
         "tablename": "bank_checks",
-        "indexname": "bank_checks_id_account",
-        "indexdef": "CREATE UNIQUE INDEX bank_checks_id_account ON public.bank_checks USING btree (id, bank_account_id)"
+        "indexname": "bank_checks_deleted_by_idx",
+        "indexdef": "CREATE INDEX bank_checks_deleted_by_idx ON public.bank_checks USING btree (deleted_by) WHERE (deleted_by IS NOT NULL)"
       },
       {
         "tablename": "bank_checks",
-        "indexname": "bank_checks_one_per_end_date",
-        "indexdef": "CREATE UNIQUE INDEX bank_checks_one_per_end_date ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
+        "indexname": "bank_checks_one_live_per_date",
+        "indexdef": "CREATE UNIQUE INDEX bank_checks_one_live_per_date ON public.bank_checks USING btree (bank_account_id, statement_end_date) WHERE (deleted_at IS NULL)"
+      },
+      {
+        "tablename": "bank_checks",
+        "indexname": "bank_checks_one_live_start",
+        "indexdef": "CREATE UNIQUE INDEX bank_checks_one_live_start ON public.bank_checks USING btree (bank_account_id) WHERE ((kind = 'start'::text) AND (deleted_at IS NULL))"
       },
       {
         "tablename": "bank_checks",
         "indexname": "bank_checks_pkey",
         "indexdef": "CREATE UNIQUE INDEX bank_checks_pkey ON public.bank_checks USING btree (id)"
-      },
-      {
-        "tablename": "bank_line_exclusions",
-        "indexname": "bank_line_exclusions_by_idx",
-        "indexdef": "CREATE INDEX bank_line_exclusions_by_idx ON public.bank_line_exclusions USING btree (excluded_by) WHERE (excluded_by IS NOT NULL)"
-      },
-      {
-        "tablename": "bank_line_exclusions",
-        "indexname": "bank_line_exclusions_once",
-        "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_once ON public.bank_line_exclusions USING btree (bank_account_id, line_key)"
-      },
-      {
-        "tablename": "bank_line_exclusions",
-        "indexname": "bank_line_exclusions_pkey",
-        "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_pkey ON public.bank_line_exclusions USING btree (id)"
-      },
-      {
-        "tablename": "bank_saved_lines",
-        "indexname": "bank_saved_lines_by_idx",
-        "indexdef": "CREATE INDEX bank_saved_lines_by_idx ON public.bank_saved_lines USING btree (saved_by) WHERE (saved_by IS NOT NULL)"
-      },
-      {
-        "tablename": "bank_saved_lines",
-        "indexname": "bank_saved_lines_once",
-        "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_once ON public.bank_saved_lines USING btree (bank_account_id, line_key)"
-      },
-      {
-        "tablename": "bank_saved_lines",
-        "indexname": "bank_saved_lines_pkey",
-        "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_pkey ON public.bank_saved_lines USING btree (id)"
       },
       {
         "tablename": "basic_coach_team_announcements",
@@ -85859,6 +87805,41 @@
         "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
       },
       {
+        "tablename": "event_availability_reminders",
+        "indexname": "event_availability_reminders_by_idx",
+        "indexdef": "CREATE INDEX event_availability_reminders_by_idx ON public.event_availability_reminders USING btree (reminded_by_user_id) WHERE (reminded_by_user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "event_availability_reminders",
+        "indexname": "event_availability_reminders_event_idx",
+        "indexdef": "CREATE INDEX event_availability_reminders_event_idx ON public.event_availability_reminders USING btree (event_kind, event_id, reminded_at DESC)"
+      },
+      {
+        "tablename": "event_availability_reminders",
+        "indexname": "event_availability_reminders_pkey",
+        "indexdef": "CREATE UNIQUE INDEX event_availability_reminders_pkey ON public.event_availability_reminders USING btree (id)"
+      },
+      {
+        "tablename": "family_calendar_feeds",
+        "indexname": "family_calendar_feeds_live_user_uniq",
+        "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_live_user_uniq ON public.family_calendar_feeds USING btree (user_id) WHERE (stopped_at IS NULL)"
+      },
+      {
+        "tablename": "family_calendar_feeds",
+        "indexname": "family_calendar_feeds_pkey",
+        "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_pkey ON public.family_calendar_feeds USING btree (id)"
+      },
+      {
+        "tablename": "family_calendar_feeds",
+        "indexname": "family_calendar_feeds_token_hash_key",
+        "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_token_hash_key ON public.family_calendar_feeds USING btree (token_hash)"
+      },
+      {
+        "tablename": "family_calendar_feeds",
+        "indexname": "family_calendar_feeds_user_idx",
+        "indexdef": "CREATE INDEX family_calendar_feeds_user_idx ON public.family_calendar_feeds USING btree (user_id)"
+      },
+      {
         "tablename": "family_coach_asks",
         "indexname": "family_coach_asks_org_sent_idx",
         "indexdef": "CREATE INDEX family_coach_asks_org_sent_idx ON public.family_coach_asks USING btree (org_id, sent_at DESC)"
@@ -85929,9 +87910,74 @@
         "indexdef": "CREATE INDEX family_email_sends_season_sent_idx ON public.family_email_sends USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
       },
       {
+        "tablename": "family_invitations",
+        "indexname": "family_invitations_child_idx",
+        "indexdef": "CREATE INDEX family_invitations_child_idx ON public.family_invitations USING btree (child_id) WHERE (child_id IS NOT NULL)"
+      },
+      {
+        "tablename": "family_invitations",
+        "indexname": "family_invitations_open_placement_uniq",
+        "indexdef": "CREATE UNIQUE INDEX family_invitations_open_placement_uniq ON public.family_invitations USING btree (org_id, email) WHERE ((source = 'placement'::text) AND (used_at IS NULL) AND (cancelled_at IS NULL) AND (replaced_by IS NULL))"
+      },
+      {
+        "tablename": "family_invitations",
+        "indexname": "family_invitations_open_rep_uniq",
+        "indexdef": "CREATE UNIQUE INDEX family_invitations_open_rep_uniq ON public.family_invitations USING btree (rep_player_id, email) WHERE ((source = 'rep_coach'::text) AND (used_at IS NULL) AND (cancelled_at IS NULL) AND (replaced_by IS NULL))"
+      },
+      {
+        "tablename": "family_invitations",
+        "indexname": "family_invitations_org_email_idx",
+        "indexdef": "CREATE INDEX family_invitations_org_email_idx ON public.family_invitations USING btree (org_id, email)"
+      },
+      {
+        "tablename": "family_invitations",
+        "indexname": "family_invitations_pkey",
+        "indexdef": "CREATE UNIQUE INDEX family_invitations_pkey ON public.family_invitations USING btree (id)"
+      },
+      {
+        "tablename": "family_invitations",
+        "indexname": "family_invitations_rep_player_idx",
+        "indexdef": "CREATE INDEX family_invitations_rep_player_idx ON public.family_invitations USING btree (rep_player_id) WHERE (rep_player_id IS NOT NULL)"
+      },
+      {
+        "tablename": "family_invitations",
+        "indexname": "family_invitations_replaced_by_idx",
+        "indexdef": "CREATE INDEX family_invitations_replaced_by_idx ON public.family_invitations USING btree (replaced_by) WHERE (replaced_by IS NOT NULL)"
+      },
+      {
+        "tablename": "family_invitations",
+        "indexname": "family_invitations_sent_by_idx",
+        "indexdef": "CREATE INDEX family_invitations_sent_by_idx ON public.family_invitations USING btree (sent_by_user_id) WHERE (sent_by_user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "family_invitations",
+        "indexname": "family_invitations_token_hash_key",
+        "indexdef": "CREATE UNIQUE INDEX family_invitations_token_hash_key ON public.family_invitations USING btree (token_hash)"
+      },
+      {
+        "tablename": "family_invitations",
+        "indexname": "family_invitations_used_by_idx",
+        "indexdef": "CREATE INDEX family_invitations_used_by_idx ON public.family_invitations USING btree (used_by_user_id) WHERE (used_by_user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "family_invite_stops",
+        "indexname": "family_invite_stops_org_email_uniq",
+        "indexdef": "CREATE UNIQUE INDEX family_invite_stops_org_email_uniq ON public.family_invite_stops USING btree (org_id, email)"
+      },
+      {
+        "tablename": "family_invite_stops",
+        "indexname": "family_invite_stops_pkey",
+        "indexdef": "CREATE UNIQUE INDEX family_invite_stops_pkey ON public.family_invite_stops USING btree (id)"
+      },
+      {
         "tablename": "family_links",
         "indexname": "family_links_calendar_token_hash_key",
         "indexdef": "CREATE UNIQUE INDEX family_links_calendar_token_hash_key ON public.family_links USING btree (calendar_token_hash)"
+      },
+      {
+        "tablename": "family_links",
+        "indexname": "family_links_child_id_idx",
+        "indexdef": "CREATE INDEX family_links_child_id_idx ON public.family_links USING btree (child_id)"
       },
       {
         "tablename": "family_links",
@@ -85945,8 +87991,8 @@
       },
       {
         "tablename": "family_links",
-        "indexname": "family_links_live_uniq",
-        "indexdef": "CREATE UNIQUE INDEX family_links_live_uniq ON public.family_links USING btree (rep_team_id, invited_email, role) WHERE (status <> ALL (ARRAY['declined'::text, 'revoked'::text]))"
+        "indexname": "family_links_live_child_uniq",
+        "indexdef": "CREATE UNIQUE INDEX family_links_live_child_uniq ON public.family_links USING btree (child_id, invited_email, role) WHERE (status <> ALL (ARRAY['declined'::text, 'revoked'::text]))"
       },
       {
         "tablename": "family_links",
@@ -86289,6 +88335,41 @@
         "indexdef": "CREATE INDEX league_email_log_season_id_idx ON public.league_email_log USING btree (season_id)"
       },
       {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_decided_by_idx",
+        "indexdef": "CREATE INDEX league_friend_requests_decided_by_idx ON public.league_friend_requests USING btree (decided_by) WHERE (decided_by IS NOT NULL)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_kept_apart_by_idx",
+        "indexdef": "CREATE INDEX league_friend_requests_kept_apart_by_idx ON public.league_friend_requests USING btree (kept_apart_by) WHERE (kept_apart_by IS NOT NULL)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_matched_idx",
+        "indexdef": "CREATE INDEX league_friend_requests_matched_idx ON public.league_friend_requests USING btree (matched_registration_id) WHERE (matched_registration_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_org_idx",
+        "indexdef": "CREATE INDEX league_friend_requests_org_idx ON public.league_friend_requests USING btree (org_id)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_friend_requests_pkey ON public.league_friend_requests USING btree (id)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_season_idx",
+        "indexdef": "CREATE INDEX league_friend_requests_season_idx ON public.league_friend_requests USING btree (season_id)"
+      },
+      {
+        "tablename": "league_friend_requests",
+        "indexname": "league_friend_requests_slot_uniq",
+        "indexdef": "CREATE UNIQUE INDEX league_friend_requests_slot_uniq ON public.league_friend_requests USING btree (registration_id, slot)"
+      },
+      {
         "tablename": "league_game_changes",
         "indexname": "league_game_changes_game_idx",
         "indexdef": "CREATE INDEX league_game_changes_game_idx ON public.league_game_changes USING btree (game_id, created_at)"
@@ -86620,6 +88701,11 @@
       },
       {
         "tablename": "league_registrations",
+        "indexname": "league_registrations_friend_code_uniq",
+        "indexdef": "CREATE UNIQUE INDEX league_registrations_friend_code_uniq ON public.league_registrations USING btree (season_id, friend_code) WHERE (friend_code IS NOT NULL)"
+      },
+      {
+        "tablename": "league_registrations",
         "indexname": "league_registrations_guardian_idx",
         "indexdef": "CREATE INDEX league_registrations_guardian_idx ON public.league_registrations USING btree (guardian_email)"
       },
@@ -86657,6 +88743,11 @@
         "tablename": "league_registrations",
         "indexname": "league_registrations_team_id_idx",
         "indexdef": "CREATE INDEX league_registrations_team_id_idx ON public.league_registrations USING btree (team_id)"
+      },
+      {
+        "tablename": "league_registrations",
+        "indexname": "league_registrations_told_team_idx",
+        "indexdef": "CREATE INDEX league_registrations_told_team_idx ON public.league_registrations USING btree (told_team_id) WHERE (told_team_id IS NOT NULL)"
       },
       {
         "tablename": "league_schedule_emails",
@@ -86722,6 +88813,16 @@
         "tablename": "league_season_notices",
         "indexname": "league_season_notices_send_idx",
         "indexdef": "CREATE INDEX league_season_notices_send_idx ON public.league_season_notices USING btree (club_schedule_send_id) WHERE (club_schedule_send_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_season_time_asks",
+        "indexname": "league_season_time_asks_org_idx",
+        "indexdef": "CREATE INDEX league_season_time_asks_org_idx ON public.league_season_time_asks USING btree (org_id, asked_at)"
+      },
+      {
+        "tablename": "league_season_time_asks",
+        "indexname": "league_season_time_asks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX league_season_time_asks_pkey ON public.league_season_time_asks USING btree (season_id)"
       },
       {
         "tablename": "league_seasons",
@@ -86817,6 +88918,16 @@
         "tablename": "league_teams",
         "indexname": "league_teams_season_id_idx",
         "indexdef": "CREATE INDEX league_teams_season_id_idx ON public.league_teams USING btree (season_id)"
+      },
+      {
+        "tablename": "legal_acceptances",
+        "indexname": "legal_acceptances_pkey",
+        "indexdef": "CREATE UNIQUE INDEX legal_acceptances_pkey ON public.legal_acceptances USING btree (id)"
+      },
+      {
+        "tablename": "legal_acceptances",
+        "indexname": "legal_acceptances_user_idx",
+        "indexdef": "CREATE INDEX legal_acceptances_user_idx ON public.legal_acceptances USING btree (user_id, accepted_at DESC)"
       },
       {
         "tablename": "no_login_rate_limits",
@@ -87520,6 +89631,11 @@
       },
       {
         "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_from_permit_idx",
+        "indexdef": "CREATE INDEX org_time_blocks_from_permit_idx ON public.org_time_blocks USING btree (from_permit_id) WHERE (from_permit_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_time_blocks",
         "indexname": "org_time_blocks_permit_idx",
         "indexdef": "CREATE INDEX org_time_blocks_permit_idx ON public.org_time_blocks USING btree (permit_id)"
       },
@@ -87824,6 +89940,91 @@
         "indexdef": "CREATE INDEX platform_catalog_change_requests_target_version_id_idx ON public.platform_catalog_change_requests USING btree (target_version_id)"
       },
       {
+        "tablename": "platform_charge_tax_looks",
+        "indexname": "platform_charge_tax_looks_chain_idx",
+        "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_chain_idx ON public.platform_charge_tax_looks USING btree (stripe_invoice_id, COALESCE(after_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+      },
+      {
+        "tablename": "platform_charge_tax_looks",
+        "indexname": "platform_charge_tax_looks_invoice_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_looks_invoice_idx ON public.platform_charge_tax_looks USING btree (stripe_invoice_id, seq DESC)"
+      },
+      {
+        "tablename": "platform_charge_tax_looks",
+        "indexname": "platform_charge_tax_looks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_pkey ON public.platform_charge_tax_looks USING btree (id)"
+      },
+      {
+        "tablename": "platform_charge_tax_looks",
+        "indexname": "platform_charge_tax_looks_put_back_once_idx",
+        "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_put_back_once_idx ON public.platform_charge_tax_looks USING btree (put_back_of) WHERE (put_back_of IS NOT NULL)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_customer_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_records_customer_idx ON public.platform_charge_tax_records USING btree (stripe_customer_id)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_org_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_records_org_idx ON public.platform_charge_tax_records USING btree (org_id, issued_at DESC)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_period_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_records_period_idx ON public.platform_charge_tax_records USING btree (livemode, issued_at)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_records_pkey ON public.platform_charge_tax_records USING btree (id)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_purchase_email_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_records_purchase_email_idx ON public.platform_charge_tax_records USING btree (paid_at) WHERE ((billing_reason IS NOT NULL) AND (purchase_email_at IS NULL))"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_stripe_invoice_id_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_records_stripe_invoice_id_key ON public.platform_charge_tax_records USING btree (stripe_invoice_id)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_user_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_records_user_idx ON public.platform_charge_tax_records USING btree (user_id, issued_at DESC)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_invoice_idx",
+        "indexdef": "CREATE INDEX platform_credit_note_tax_records_invoice_idx ON public.platform_credit_note_tax_records USING btree (stripe_invoice_id)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_org_idx",
+        "indexdef": "CREATE INDEX platform_credit_note_tax_records_org_idx ON public.platform_credit_note_tax_records USING btree (org_id, issued_at DESC)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_period_idx",
+        "indexdef": "CREATE INDEX platform_credit_note_tax_records_period_idx ON public.platform_credit_note_tax_records USING btree (livemode, issued_at)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_credit_note_tax_records_pkey ON public.platform_credit_note_tax_records USING btree (id)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_stripe_credit_note_id_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_credit_note_tax_records_stripe_credit_note_id_key ON public.platform_credit_note_tax_records USING btree (stripe_credit_note_id)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_user_idx",
+        "indexdef": "CREATE INDEX platform_credit_note_tax_records_user_idx ON public.platform_credit_note_tax_records USING btree (user_id, issued_at DESC)"
+      },
+      {
         "tablename": "platform_email_templates",
         "indexname": "platform_email_templates_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_email_templates_pkey ON public.platform_email_templates USING btree (key)"
@@ -87937,6 +90138,11 @@
         "tablename": "platform_refunds",
         "indexname": "platform_refunds_charge_idx",
         "indexdef": "CREATE INDEX platform_refunds_charge_idx ON public.platform_refunds USING btree (stripe_charge_id)"
+      },
+      {
+        "tablename": "platform_refunds",
+        "indexname": "platform_refunds_credit_note_uniq",
+        "indexdef": "CREATE UNIQUE INDEX platform_refunds_credit_note_uniq ON public.platform_refunds USING btree (stripe_credit_note_id) WHERE (stripe_credit_note_id IS NOT NULL)"
       },
       {
         "tablename": "platform_refunds",
@@ -89290,6 +91496,11 @@
       },
       {
         "tablename": "rep_team_event_attendance",
+        "indexname": "rep_team_event_attendance_family_note_by_user_idx",
+        "indexdef": "CREATE INDEX rep_team_event_attendance_family_note_by_user_idx ON public.rep_team_event_attendance USING btree (family_note_by_user_id) WHERE (family_note_by_user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_event_attendance",
         "indexname": "rep_team_event_attendance_org_id_idx",
         "indexdef": "CREATE INDEX rep_team_event_attendance_org_id_idx ON public.rep_team_event_attendance USING btree (org_id)"
       },
@@ -89305,8 +91516,18 @@
       },
       {
         "tablename": "rep_team_event_attendance",
+        "indexname": "rep_team_event_attendance_previous_by_user_idx",
+        "indexdef": "CREATE INDEX rep_team_event_attendance_previous_by_user_idx ON public.rep_team_event_attendance USING btree (previous_by_user_id) WHERE (previous_by_user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_event_attendance",
         "indexname": "rep_team_event_attendance_program_year_id_idx",
         "indexdef": "CREATE INDEX rep_team_event_attendance_program_year_id_idx ON public.rep_team_event_attendance USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_team_event_attendance",
+        "indexname": "rep_team_event_attendance_set_by_user_idx",
+        "indexdef": "CREATE INDEX rep_team_event_attendance_set_by_user_idx ON public.rep_team_event_attendance USING btree (set_by_user_id) WHERE (set_by_user_id IS NOT NULL)"
       },
       {
         "tablename": "rep_team_event_attendance",
@@ -90244,6 +92465,21 @@
         "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
       },
       {
+        "tablename": "second_parent_stops",
+        "indexname": "second_parent_stops_org_email_uniq",
+        "indexdef": "CREATE UNIQUE INDEX second_parent_stops_org_email_uniq ON public.second_parent_stops USING btree (org_id, email)"
+      },
+      {
+        "tablename": "second_parent_stops",
+        "indexname": "second_parent_stops_pkey",
+        "indexdef": "CREATE UNIQUE INDEX second_parent_stops_pkey ON public.second_parent_stops USING btree (id)"
+      },
+      {
+        "tablename": "second_parent_stops",
+        "indexname": "second_parent_stops_registration_ids_idx",
+        "indexdef": "CREATE INDEX second_parent_stops_registration_ids_idx ON public.second_parent_stops USING gin (registration_ids)"
+      },
+      {
         "tablename": "stripe_billing_drift_checks",
         "indexname": "stripe_billing_drift_checks_checked_idx",
         "indexdef": "CREATE INDEX stripe_billing_drift_checks_checked_idx ON public.stripe_billing_drift_checks USING btree (checked_at DESC)"
@@ -90689,6 +92925,56 @@
         "indexdef": "CREATE UNIQUE INDEX tournaments_pkey ON public.tournaments USING btree (id)"
       },
       {
+        "tablename": "two_step_backup_codes",
+        "indexname": "two_step_backup_codes_pkey",
+        "indexdef": "CREATE UNIQUE INDEX two_step_backup_codes_pkey ON public.two_step_backup_codes USING btree (id)"
+      },
+      {
+        "tablename": "two_step_backup_codes",
+        "indexname": "two_step_backup_codes_session_idx",
+        "indexdef": "CREATE INDEX two_step_backup_codes_session_idx ON public.two_step_backup_codes USING btree (user_id, used_session_id) WHERE (used_session_id IS NOT NULL)"
+      },
+      {
+        "tablename": "two_step_backup_codes",
+        "indexname": "two_step_backup_codes_user_idx",
+        "indexdef": "CREATE INDEX two_step_backup_codes_user_idx ON public.two_step_backup_codes USING btree (user_id) WHERE (used_at IS NULL)"
+      },
+      {
+        "tablename": "two_step_code_uses",
+        "indexname": "two_step_code_uses_pkey",
+        "indexdef": "CREATE UNIQUE INDEX two_step_code_uses_pkey ON public.two_step_code_uses USING btree (user_id, code_hash)"
+      },
+      {
+        "tablename": "two_step_grace",
+        "indexname": "two_step_grace_pkey",
+        "indexdef": "CREATE UNIQUE INDEX two_step_grace_pkey ON public.two_step_grace USING btree (user_id, organization_id)"
+      },
+      {
+        "tablename": "two_step_owner_resets",
+        "indexname": "two_step_owner_resets_one_open_idx",
+        "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_one_open_idx ON public.two_step_owner_resets USING btree (user_id) WHERE ((completed_at IS NULL) AND (cancelled_at IS NULL))"
+      },
+      {
+        "tablename": "two_step_owner_resets",
+        "indexname": "two_step_owner_resets_pkey",
+        "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_pkey ON public.two_step_owner_resets USING btree (id)"
+      },
+      {
+        "tablename": "two_step_owner_resets",
+        "indexname": "two_step_owner_resets_token_idx",
+        "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_token_idx ON public.two_step_owner_resets USING btree (confirm_token_hash) WHERE (confirm_token_hash IS NOT NULL)"
+      },
+      {
+        "tablename": "two_step_owner_resets",
+        "indexname": "two_step_owner_resets_waiting_idx",
+        "indexdef": "CREATE INDEX two_step_owner_resets_waiting_idx ON public.two_step_owner_resets USING btree (runs_at) WHERE ((completed_at IS NULL) AND (cancelled_at IS NULL))"
+      },
+      {
+        "tablename": "user_hidden_workspaces",
+        "indexname": "user_hidden_workspaces_pkey",
+        "indexdef": "CREATE UNIQUE INDEX user_hidden_workspaces_pkey ON public.user_hidden_workspaces USING btree (user_id, organization_id)"
+      },
+      {
         "tablename": "user_marketing_opt_outs",
         "indexname": "user_marketing_opt_outs_pkey",
         "indexdef": "CREATE UNIQUE INDEX user_marketing_opt_outs_pkey ON public.user_marketing_opt_outs USING btree (user_id)"
@@ -90824,12 +93110,6 @@
       {
         "kind": "CHECK",
         "table_name": "bank_accounts",
-        "detail": "bank_accounts_opening_pair",
-        "check_clause": "(((opening_date IS NULL) = (opening_balance_cents IS NULL)) AND ((opening_date IS NULL) OR (set_up_at IS NOT NULL)))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_accounts",
         "detail": "bank_accounts_owner_kind_check",
         "check_clause": "(owner_kind = ANY (ARRAY['club'::text, 'team'::text]))"
       },
@@ -90847,193 +93127,67 @@
       },
       {
         "kind": "CHECK",
-        "table_name": "bank_check_added_lines",
-        "detail": "bank_check_added_lines_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['bank_fee'::text, 'interest'::text, 'payment_processing'::text]))"
+        "table_name": "bank_check_waiting",
+        "detail": "bank_check_waiting_added_shape",
+        "check_clause": "(((added_at IS NULL) AND (added_by IS NULL)) OR (at_start AND (added_at IS NOT NULL)))"
       },
       {
         "kind": "CHECK",
-        "table_name": "bank_check_added_lines",
-        "detail": "bank_check_added_lines_line_key_check",
-        "check_clause": "((char_length(line_key) >= 3) AND (char_length(line_key) <= 200))"
-      },
-      {
-        "kind": "RLS",
-        "table_name": "bank_check_added_lines",
-        "detail": "ENABLED",
-        "check_clause": null
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_changes",
-        "detail": "bank_check_changes_line_key_check",
-        "check_clause": "((char_length(line_key) >= 3) AND (char_length(line_key) <= 200))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_changes",
-        "detail": "bank_check_changes_now_amount_cents_check",
-        "check_clause": "((now_amount_cents IS NULL) OR (now_amount_cents >= 0))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_changes",
-        "detail": "bank_check_changes_now_direction_check",
-        "check_clause": "((now_direction IS NULL) OR (now_direction = ANY (ARRAY['in'::text, 'out'::text])))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_changes",
-        "detail": "bank_check_changes_now_shape",
-        "check_clause": "(removed OR ((now_date IS NOT NULL) AND (now_direction IS NOT NULL) AND (now_amount_cents IS NOT NULL)))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_changes",
-        "detail": "bank_check_changes_was_amount_cents_check",
-        "check_clause": "(was_amount_cents >= 0)"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_changes",
-        "detail": "bank_check_changes_was_direction_check",
-        "check_clause": "(was_direction = ANY (ARRAY['in'::text, 'out'::text]))"
-      },
-      {
-        "kind": "RLS",
-        "table_name": "bank_check_changes",
-        "detail": "ENABLED",
-        "check_clause": null
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_events",
-        "detail": "bank_check_events_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['checked'::text, 'undone'::text, 'checked_again'::text]))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_events",
-        "detail": "bank_check_events_reason_check",
-        "check_clause": "((reason IS NULL) OR ((reason = btrim(reason)) AND ((char_length(reason) >= 1) AND (char_length(reason) <= 500))))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_events",
-        "detail": "bank_check_events_undo_has_reason",
-        "check_clause": "((kind <> 'undone'::text) OR (reason IS NOT NULL))"
-      },
-      {
-        "kind": "RLS",
-        "table_name": "bank_check_events",
-        "detail": "ENABLED",
-        "check_clause": null
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_marks",
-        "detail": "bank_check_marks_amount_cents_check",
-        "check_clause": "(amount_cents >= 0)"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_marks",
-        "detail": "bank_check_marks_direction_check",
-        "check_clause": "(direction = ANY (ARRAY['in'::text, 'out'::text]))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_marks",
-        "detail": "bank_check_marks_line_key_check",
-        "check_clause": "((char_length(line_key) >= 3) AND (char_length(line_key) <= 200))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_check_marks",
-        "detail": "bank_check_marks_payout_key_check",
-        "check_clause": "((payout_key IS NULL) OR (payout_key ~~ 'payout:%'::text))"
-      },
-      {
-        "kind": "RLS",
-        "table_name": "bank_check_marks",
-        "detail": "ENABLED",
-        "check_clause": null
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_checks",
-        "detail": "bank_checks_checked_has_when",
-        "check_clause": "((status = 'open'::text) OR ((checked_at IS NOT NULL) AND (outstanding_snapshot IS NOT NULL)))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_checks",
-        "detail": "bank_checks_outstanding_snapshot_check",
-        "check_clause": "((outstanding_snapshot IS NULL) OR (jsonb_typeof(outstanding_snapshot) = 'array'::text))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_checks",
-        "detail": "bank_checks_status_check",
-        "check_clause": "(status = ANY (ARRAY['open'::text, 'checked'::text]))"
-      },
-      {
-        "kind": "RLS",
-        "table_name": "bank_checks",
-        "detail": "ENABLED",
-        "check_clause": null
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_line_exclusions",
-        "detail": "bank_line_exclusions_line_key_check",
-        "check_clause": "((char_length(line_key) >= 3) AND (char_length(line_key) <= 200))"
-      },
-      {
-        "kind": "RLS",
-        "table_name": "bank_line_exclusions",
-        "detail": "ENABLED",
-        "check_clause": null
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_saved_lines",
-        "detail": "bank_saved_lines_amount_cents_check",
+        "table_name": "bank_check_waiting",
+        "detail": "bank_check_waiting_amount_cents_check",
         "check_clause": "(amount_cents > 0)"
       },
       {
         "kind": "CHECK",
-        "table_name": "bank_saved_lines",
-        "detail": "bank_saved_lines_description_check",
-        "check_clause": "((description IS NULL) OR ((description = btrim(description)) AND ((char_length(description) >= 1) AND (char_length(description) <= 200))))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "bank_saved_lines",
-        "detail": "bank_saved_lines_direction_check",
+        "table_name": "bank_check_waiting",
+        "detail": "bank_check_waiting_direction_check",
         "check_clause": "(direction = ANY (ARRAY['in'::text, 'out'::text]))"
       },
       {
         "kind": "CHECK",
-        "table_name": "bank_saved_lines",
-        "detail": "bank_saved_lines_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['opening_picked'::text, 'opening_typed'::text, 'carried'::text]))"
+        "table_name": "bank_check_waiting",
+        "detail": "bank_check_waiting_label_check",
+        "check_clause": "((label IS NULL) OR ((label = btrim(label)) AND ((char_length(label) >= 1) AND (char_length(label) <= 200))))"
       },
       {
         "kind": "CHECK",
-        "table_name": "bank_saved_lines",
-        "detail": "bank_saved_lines_line_key_check",
+        "table_name": "bank_check_waiting",
+        "detail": "bank_check_waiting_line_key_check",
         "check_clause": "((char_length(line_key) >= 3) AND (char_length(line_key) <= 200))"
       },
       {
+        "kind": "RLS",
+        "table_name": "bank_check_waiting",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "CHECK",
-        "table_name": "bank_saved_lines",
-        "detail": "bank_saved_lines_typed_shape",
-        "check_clause": "(((kind = 'opening_typed'::text) AND (line_key = ('typed:'::text || (id)::text)) AND (description IS NOT NULL)) OR ((kind <> 'opening_typed'::text) AND (line_key !~~ 'typed:%'::text)))"
+        "table_name": "bank_checks",
+        "detail": "bank_checks_cash_shape",
+        "check_clause": "((cash_not_deposited_cents IS NULL) OR ((kind = 'check'::text) AND (cash_not_deposited_cents > 0)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_checks",
+        "detail": "bank_checks_corrected_shape",
+        "check_clause": "(((corrected_at IS NULL) AND (corrected_by IS NULL)) OR ((kind = 'start'::text) AND (corrected_at IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_checks",
+        "detail": "bank_checks_deleted_shape",
+        "check_clause": "((deleted_by IS NULL) OR (deleted_at IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_checks",
+        "detail": "bank_checks_kind",
+        "check_clause": "(kind = ANY (ARRAY['start'::text, 'check'::text]))"
       },
       {
         "kind": "RLS",
-        "table_name": "bank_saved_lines",
+        "table_name": "bank_checks",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -91395,7 +93549,7 @@
         "kind": "CHECK",
         "table_name": "child_match_rejections",
         "detail": "child_match_rejections_door_check",
-        "check_clause": "(door = ANY (ARRAY['single_add'::text, 'paste_list'::text, 'tryout_accept'::text]))"
+        "check_clause": "(door = ANY (ARRAY['single_add'::text, 'paste_list'::text, 'tryout_accept'::text, 'children_queue'::text, 'split'::text]))"
       },
       {
         "kind": "CHECK",
@@ -91521,7 +93675,7 @@
         "kind": "CHECK",
         "table_name": "club_schedule_sends",
         "detail": "club_schedule_sends_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['review'::text, 'final'::text, 'changes'::text]))"
+        "check_clause": "(kind = ANY (ARRAY['review'::text, 'final'::text, 'changes'::text, 'bill'::text]))"
       },
       {
         "kind": "CHECK",
@@ -91837,6 +93991,30 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "event_availability_reminders",
+        "detail": "event_availability_reminders_counts_check",
+        "check_clause": "((families >= 0) AND (parents >= 0) AND (app_only >= 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "event_availability_reminders",
+        "detail": "event_availability_reminders_kind_check",
+        "check_clause": "(event_kind = ANY (ARRAY['rep_event'::text, 'league_game'::text, 'league_practice'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "event_availability_reminders",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "family_calendar_feeds",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "family_coach_asks",
         "detail": "family_coach_asks_player_count_check",
         "check_clause": "(player_count >= 0)"
@@ -91975,6 +94153,54 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "family_invitations",
+        "detail": "family_invitations_email_check",
+        "check_clause": "((email = lower(btrim(email))) AND (email <> ''::text) AND (char_length(email) <= 320))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_invitations",
+        "detail": "family_invitations_source_check",
+        "check_clause": "(((source = 'placement'::text) AND (rep_player_id IS NULL) AND (child_id IS NULL)) OR ((source = 'rep_coach'::text) AND (rep_player_id IS NOT NULL) AND (child_id IS NOT NULL)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "family_invitations",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_invite_stops",
+        "detail": "family_invite_stops_email_check",
+        "check_clause": "((email = lower(btrim(email))) AND (email <> ''::text) AND (char_length(email) <= 320))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "family_invite_stops",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_links",
+        "detail": "family_links_ended_by_check",
+        "check_clause": "((ended_by IS NULL) OR ((ended_by = ANY (ARRAY['parent'::text, 'club'::text, 'coach'::text, 'stop'::text, 'merged'::text])) AND (status = ANY (ARRAY['revoked'::text, 'declined'::text]))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_links",
+        "detail": "family_links_invited_as_check",
+        "check_clause": "(invited_as = ANY (ARRAY['first_parent'::text, 'second_parent'::text, 'rep_coach'::text, 'requested'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_links",
+        "detail": "family_links_made_on_entry_ck",
+        "check_clause": "((invited_as = ANY (ARRAY['first_parent'::text, 'second_parent'::text])) OR (player_id IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
         "table_name": "family_links",
         "detail": "family_links_role_check",
         "check_clause": "(role = 'guardian'::text)"
@@ -91983,7 +94209,7 @@
         "kind": "CHECK",
         "table_name": "family_links",
         "detail": "family_links_role_player_ck",
-        "check_clause": "((role = 'guardian'::text) AND (player_id IS NOT NULL))"
+        "check_clause": "((role = 'guardian'::text) AND (child_id IS NOT NULL))"
       },
       {
         "kind": "CHECK",
@@ -92197,6 +94423,84 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_code_entered_check",
+        "check_clause": "((code_entered IS NULL) OR (code_entered ~ '^[2-9A-HJ-NP-Z]{5}[A-HJ-NP-Y]$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_draft_outcome_check",
+        "check_clause": "((draft_outcome IS NULL) OR (draft_outcome = ANY (ARRAY['kept'::text, 'over_cap'::text, 'locked'::text, 'apart'::text, 'off'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_mark_check",
+        "check_clause": "((mark IS NULL) OR (mark = 'different_division'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_named",
+        "check_clause": "(((code_entered IS NOT NULL) AND (typed_first IS NULL) AND (typed_last IS NULL) AND (typed_parent IS NULL)) OR ((code_entered IS NULL) AND ((typed_first IS NOT NULL) OR (typed_last IS NOT NULL))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_not_self",
+        "check_clause": "((matched_registration_id IS NULL) OR (matched_registration_id <> registration_id))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_note_check",
+        "check_clause": "((note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 280)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_reason_check",
+        "check_clause": "((reason IS NULL) OR (reason = ANY (ARRAY['different_division'::text, 'other'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_slot_check",
+        "check_clause": "((slot >= 1) AND (slot <= 2))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_state_check",
+        "check_clause": "(state = ANY (ARRAY['to_confirm'::text, 'confirmed'::text, 'not_signed_up'::text, 'cant_honour'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_typed_first_check",
+        "check_clause": "((typed_first IS NULL) OR ((char_length(typed_first) >= 1) AND (char_length(typed_first) <= 80)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_typed_last_check",
+        "check_clause": "((typed_last IS NULL) OR ((char_length(typed_last) >= 1) AND (char_length(typed_last) <= 80)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_friend_requests",
+        "detail": "league_friend_requests_typed_parent_check",
+        "check_clause": "((typed_parent IS NULL) OR ((char_length(typed_parent) >= 1) AND (char_length(typed_parent) <= 120)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_friend_requests",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "league_game_changes",
         "detail": "league_game_changes_check",
         "check_clause": "((kind = 'added'::text) = (before IS NULL))"
@@ -92270,6 +94574,12 @@
       {
         "kind": "CHECK",
         "table_name": "league_placement_emails",
+        "detail": "league_placement_emails_changes_check",
+        "check_clause": "((kind = 'changes'::text) = (changes IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_placement_emails",
         "detail": "league_placement_emails_guardian_email_check",
         "check_clause": "(guardian_email = lower(btrim(guardian_email)))"
       },
@@ -92277,7 +94587,7 @@
         "kind": "CHECK",
         "table_name": "league_placement_emails",
         "detail": "league_placement_emails_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['placed'::text, 'moved'::text]))"
+        "check_clause": "(kind = ANY (ARRAY['placed'::text, 'moved'::text, 'changes'::text]))"
       },
       {
         "kind": "CHECK",
@@ -92462,6 +94772,12 @@
       {
         "kind": "CHECK",
         "table_name": "league_registrations",
+        "detail": "league_registrations_friend_code_check",
+        "check_clause": "((friend_code IS NULL) OR (friend_code ~ '^[2-9A-HJ-NP-Z]{5}[A-HJ-NP-Y]$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_registrations",
         "detail": "league_registrations_guardian_email_2_check",
         "check_clause": "((guardian_email_2 IS NULL) OR ((guardian_email_2 = lower(btrim(guardian_email_2))) AND (guardian_email_2 <> ''::text) AND (char_length(guardian_email_2) <= 200) AND (guardian_email_2 <> lower(btrim(guardian_email)))))"
       },
@@ -92541,7 +94857,7 @@
         "kind": "CHECK",
         "table_name": "league_season_notices",
         "detail": "league_season_notices_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text]))"
+        "check_clause": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text, 'team_changes'::text]))"
       },
       {
         "kind": "CHECK",
@@ -92550,10 +94866,28 @@
         "check_clause": "(reached_count >= 0)"
       },
       {
+        "kind": "CHECK",
+        "table_name": "league_season_notices",
+        "detail": "league_season_notices_skipped_count_check",
+        "check_clause": "((skipped_count >= 0) AND (skipped_count <= family_count))"
+      },
+      {
         "kind": "RLS",
         "table_name": "league_season_notices",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "league_season_time_asks",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_seasons",
+        "detail": "league_seasons_friend_requests_max_check",
+        "check_clause": "(friend_requests_max = ANY (ARRAY[0, 1, 2]))"
       },
       {
         "kind": "CHECK",
@@ -92648,6 +94982,30 @@
       {
         "kind": "RLS",
         "table_name": "league_teams",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "legal_acceptances",
+        "detail": "legal_acceptances_door_check",
+        "check_clause": "(door = ANY (ARRAY['signup'::text, 'follow'::text, 'coach_signup'::text, 'registration'::text, 'team_signup'::text, 'assistant_invite'::text, 'league_coach_invite'::text, 'staff_invite'::text, 'family_accept'::text, 'sign_in_screen'::text, 'purchase_window'::text, 'fixture'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "legal_acceptances",
+        "detail": "legal_acceptances_text_shape",
+        "check_clause": "(((char_length(btrim(user_email)) >= 1) AND (char_length(btrim(user_email)) <= 320)) AND ((char_length(btrim(box_text)) >= 1) AND (char_length(btrim(box_text)) <= 1000)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "legal_acceptances",
+        "detail": "legal_acceptances_version_shape",
+        "check_clause": "(((terms_version = 'draft'::text) OR (terms_version ~ '^\\d{4}-\\d{2}-\\d{2}$'::text)) AND ((privacy_version = 'draft'::text) OR (privacy_version ~ '^\\d{4}-\\d{2}-\\d{2}$'::text)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "legal_acceptances",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -93356,6 +95714,12 @@
       {
         "kind": "CHECK",
         "table_name": "org_public_site_content",
+        "detail": "org_public_site_content_mailing_address_check",
+        "check_clause": "((mailing_address IS NULL) OR ((char_length(btrim(mailing_address)) >= 1) AND (char_length(btrim(mailing_address)) <= 300)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_public_site_content",
         "detail": "org_public_site_content_questions_cap",
         "check_clause": "((jsonb_typeof(questions) = 'array'::text) AND (jsonb_array_length(questions) <= 10))"
       },
@@ -93406,6 +95770,12 @@
         "table_name": "org_time_blocks",
         "detail": "org_time_blocks_dates",
         "check_clause": "((from_date IS NULL) OR (until_date IS NULL) OR (until_date >= from_date))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_blocks",
+        "detail": "org_time_blocks_from_permit_on_schedule",
+        "check_clause": "((from_permit_id IS NULL) OR (schedule_id IS NOT NULL))"
       },
       {
         "kind": "CHECK",
@@ -93810,6 +96180,360 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_keys_shape",
+        "check_clause": "((cardinality(looked_keys) = 0) OR ((cardinality(looked_keys) <= 8) AND (array_to_string(looked_keys, '|'::text) ~ '^[a-z_]{1,40}(:[A-Za-z0-9_.-]{0,40})?(\\|[a-z_]{1,40}(:[A-Za-z0-9_.-]{0,40})?)*$'::text)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_looked_by_check",
+        "check_clause": "((length(looked_by) >= 3) AND (length(looked_by) <= 320))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_not_itself",
+        "check_clause": "((after_id IS NULL) OR (after_id <> id))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_put_back_is_newest",
+        "check_clause": "((put_back_of IS NULL) OR (put_back_of = after_id))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_shape",
+        "check_clause": "((put_back_of IS NULL) = (cardinality(looked_keys) > 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_stripe_invoice_id_check",
+        "check_clause": "(stripe_invoice_id ~ '^in_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_why_check",
+        "check_clause": "((btrim(why) <> ''::text) AND (length(why) <= 500))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_billing_reason_check",
+        "check_clause": "((billing_reason IS NULL) OR (billing_reason ~ '^[a-z_]{1,64}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_buyer_kind_check",
+        "check_clause": "(buyer_kind = ANY (ARRAY['club'::text, 'person'::text, 'unknown'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_buyer_name_check",
+        "check_clause": "((buyer_name IS NULL) OR (length(buyer_name) <= 300))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_buyer_shape",
+        "check_clause": "(((buyer_kind = 'club'::text) AND (org_id IS NOT NULL)) OR ((buyer_kind = 'person'::text) AND (user_id IS NOT NULL)) OR (buyer_kind = 'unknown'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_cad_is_itself",
+        "check_clause": "((currency <> 'cad'::text) OR ((NOT (fx_source IS DISTINCT FROM 'same_currency'::text)) AND (NOT (fx_rate IS DISTINCT FROM (1)::numeric))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_card_country_check",
+        "check_clause": "((card_country IS NULL) OR (card_country ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_currency_check",
+        "check_clause": "(currency ~ '^[a-z]{3}$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_evidence_captured_check",
+        "check_clause": "(evidence_captured = ANY (ARRAY['event'::text, 'catch_up'::text, 'backfill'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_evidence_country_check",
+        "check_clause": "((evidence_country IS NULL) OR (evidence_country ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_evidence_region_check",
+        "check_clause": "((evidence_region IS NULL) OR (length(evidence_region) <= 10))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_evidence_shape",
+        "check_clause": "(evidence_missing OR (evidence_country IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_fx_rate_check",
+        "check_clause": "((fx_rate IS NULL) OR (fx_rate > (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_fx_shape",
+        "check_clause": "(((fx_rate IS NULL) = (fx_rate_date IS NULL)) AND ((fx_rate IS NULL) = (fx_source IS NULL)) AND ((fx_rate IS NULL) = (cad_total_cents IS NULL)) AND ((fx_rate IS NULL) = (cad_amount_before_tax_cents IS NULL)) AND ((fx_rate IS NULL) = (cad_tax_total_cents IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_fx_source_check",
+        "check_clause": "((fx_source IS NULL) OR (fx_source = ANY (ARRAY['same_currency'::text, 'bank_of_canada'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_gst_hst_position_check",
+        "check_clause": "(gst_hst_position = ANY (ARRAY['taxed'::text, 'zero_rated'::text, 'missing'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_gst_hst_position_why_check",
+        "check_clause": "((gst_hst_position_why IS NULL) OR (gst_hst_position_why = ANY (ARRAY['stripe_did_not_work_out'::text, 'canadian_buyer_not_charged'::text, 'no_evidence_for_zero_rating'::text, 'unexpected_reason'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_invoice_number_check",
+        "check_clause": "((invoice_number IS NULL) OR ((length(invoice_number) >= 1) AND (length(invoice_number) <= 64)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['subscription'::text, 'premium'::text, 'fee'::text, 'one_off'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_payout_country_check",
+        "check_clause": "((payout_country IS NULL) OR (payout_country ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_refunded_cents_check",
+        "check_clause": "(refunded_cents >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_status_check",
+        "check_clause": "(status = ANY (ARRAY['open'::text, 'paid'::text, 'void'::text, 'uncollectible'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_stripe_customer_id_check",
+        "check_clause": "(stripe_customer_id ~ '^cus_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_stripe_invoice_id_check",
+        "check_clause": "(stripe_invoice_id ~ '^in_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_stripe_payment_intent_id_check",
+        "check_clause": "((stripe_payment_intent_id IS NULL) OR (stripe_payment_intent_id ~ '^pi_[A-Za-z0-9]+$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_stripe_subscription_id_check",
+        "check_clause": "((stripe_subscription_id IS NULL) OR (stripe_subscription_id ~ '^sub_[A-Za-z0-9]+$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_stripe_tax_status_check",
+        "check_clause": "((stripe_tax_status IS NULL) OR (stripe_tax_status = ANY (ARRAY['complete'::text, 'requires_location_inputs'::text, 'failed'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_tax_lines_check",
+        "check_clause": "(jsonb_typeof(tax_lines) = 'array'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_taxed_country_check",
+        "check_clause": "((taxed_country IS NULL) OR (taxed_country ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_taxed_postal_code_check",
+        "check_clause": "((taxed_postal_code IS NULL) OR (length(taxed_postal_code) <= 20))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_taxed_region_check",
+        "check_clause": "((taxed_region IS NULL) OR (length(taxed_region) <= 100))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_why_shape",
+        "check_clause": "((gst_hst_position = 'missing'::text) = (gst_hst_position_why IS NOT NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_charge_tax_records",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_cad_is_itself",
+        "check_clause": "((currency <> 'cad'::text) OR ((NOT (fx_source IS DISTINCT FROM 'same_currency'::text)) AND (NOT (fx_rate IS DISTINCT FROM (1)::numeric))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_currency_check",
+        "check_clause": "(currency ~ '^[a-z]{3}$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_evidence_captured_check",
+        "check_clause": "(evidence_captured = ANY (ARRAY['event'::text, 'catch_up'::text, 'backfill'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_fx_rate_check",
+        "check_clause": "((fx_rate IS NULL) OR (fx_rate > (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_fx_shape",
+        "check_clause": "(((fx_rate IS NULL) = (fx_rate_date IS NULL)) AND ((fx_rate IS NULL) = (fx_source IS NULL)) AND ((fx_rate IS NULL) = (cad_total_cents IS NULL)) AND ((fx_rate IS NULL) = (cad_amount_before_tax_cents IS NULL)) AND ((fx_rate IS NULL) = (cad_tax_total_cents IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_fx_source_check",
+        "check_clause": "((fx_source IS NULL) OR (fx_source = ANY (ARRAY['same_currency'::text, 'bank_of_canada'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_kind_check",
+        "check_clause": "((kind IS NULL) OR (kind = ANY (ARRAY['subscription'::text, 'premium'::text, 'fee'::text, 'one_off'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_note_number_check",
+        "check_clause": "((note_number IS NULL) OR ((length(note_number) >= 1) AND (length(note_number) <= 64)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_note_type_check",
+        "check_clause": "(note_type = ANY (ARRAY['pre_payment'::text, 'post_payment'::text, 'mixed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_out_of_band_cents_check",
+        "check_clause": "(out_of_band_cents >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_refund_cents_check",
+        "check_clause": "(refund_cents >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_status_check",
+        "check_clause": "(status = ANY (ARRAY['issued'::text, 'void'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_stripe_credit_note_id_check",
+        "check_clause": "(stripe_credit_note_id ~ '^cn_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_stripe_customer_id_check",
+        "check_clause": "(stripe_customer_id ~ '^cus_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_stripe_invoice_id_check",
+        "check_clause": "(stripe_invoice_id ~ '^in_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_stripe_reason_check",
+        "check_clause": "((stripe_reason IS NULL) OR (stripe_reason ~ '^[a-z_]{1,64}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_tax_lines_check",
+        "check_clause": "(jsonb_typeof(tax_lines) = 'array'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_void_shape",
+        "check_clause": "((status = 'void'::text) = (voided_at IS NOT NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "platform_email_templates",
         "detail": "ENABLED",
@@ -93850,6 +96574,12 @@
         "table_name": "platform_fee_invoices",
         "detail": "platform_fee_invoices_status_check",
         "check_clause": "(status = ANY (ARRAY['draft'::text, 'open'::text, 'paid'::text, 'void'::text, 'uncollectible'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_fee_invoices",
+        "detail": "platform_fee_invoices_tax_lines_chk",
+        "check_clause": "((tax_lines IS NULL) OR (jsonb_typeof(tax_lines) = 'array'::text))"
       },
       {
         "kind": "RLS",
@@ -93956,8 +96686,38 @@
       {
         "kind": "CHECK",
         "table_name": "platform_refunds",
+        "detail": "platform_refunds_credit_note_id_chk",
+        "check_clause": "((stripe_credit_note_id IS NULL) OR (stripe_credit_note_id ~ '^cn_[A-Za-z0-9]+$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_credit_note_number_chk",
+        "check_clause": "((stripe_credit_note_number IS NULL) OR ((stripe_credit_note_id IS NOT NULL) AND (stripe_credit_note_number ~ '^[A-Za-z0-9-]{1,64}$'::text)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
         "detail": "platform_refunds_currency_check",
         "check_clause": "(currency ~ '^[a-z]{3}$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_done_invoice_has_note_chk",
+        "check_clause": "(NOT ((status = 'done'::text) AND (stripe_invoice_id IS NOT NULL) AND (stripe_credit_note_id IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_invoice_id_chk",
+        "check_clause": "((stripe_invoice_id IS NULL) OR (stripe_invoice_id ~ '^in_[A-Za-z0-9]+$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_refunds",
+        "detail": "platform_refunds_note_needs_invoice_chk",
+        "check_clause": "((stripe_credit_note_id IS NULL) OR (stripe_invoice_id IS NOT NULL))"
       },
       {
         "kind": "CHECK",
@@ -94342,6 +97102,12 @@
         "table_name": "rep_document_templates",
         "detail": "rep_document_templates_document_type_check",
         "check_clause": "(document_type = ANY (ARRAY['waiver'::text, 'medical_consent'::text, 'code_of_conduct'::text, 'other'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_document_templates",
+        "detail": "rep_document_templates_validity_check",
+        "check_clause": "(validity = ANY (ARRAY['signed_each_season'::text, 'good_until_replaced'::text]))"
       },
       {
         "kind": "RLS",
@@ -95090,8 +97856,26 @@
       {
         "kind": "CHECK",
         "table_name": "rep_team_event_attendance",
+        "detail": "rep_team_event_attendance_family_note_check",
+        "check_clause": "((family_note IS NULL) OR ((char_length(family_note) >= 1) AND (char_length(family_note) <= 200)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_event_attendance",
+        "detail": "rep_team_event_attendance_previous_check",
+        "check_clause": "(((previous_status IS NULL) OR (previous_status = ANY (ARRAY['unknown'::text, 'attending'::text, 'absent'::text, 'late'::text, 'maybe'::text]))) AND ((previous_by_kind IS NULL) OR (previous_by_kind = ANY (ARRAY['coach'::text, 'family'::text, 'system'::text]))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_event_attendance",
+        "detail": "rep_team_event_attendance_set_by_kind_check",
+        "check_clause": "((set_by_kind IS NULL) OR (set_by_kind = ANY (ARRAY['coach'::text, 'family'::text, 'system'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_event_attendance",
         "detail": "rep_team_event_attendance_status_check",
-        "check_clause": "(status = ANY (ARRAY['unknown'::text, 'attending'::text, 'absent'::text, 'late'::text]))"
+        "check_clause": "(status = ANY (ARRAY['unknown'::text, 'attending'::text, 'absent'::text, 'late'::text, 'maybe'::text]))"
       },
       {
         "kind": "RLS",
@@ -95642,6 +98426,12 @@
       {
         "kind": "CHECK",
         "table_name": "rep_teams",
+        "detail": "rep_teams_family_answers_check",
+        "check_clause": "(family_answers = ANY (ARRAY['off'::text, 'games'::text, 'games_and_practices'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_teams",
         "detail": "rep_teams_schedule_visibility_ck",
         "check_clause": "(schedule_visibility = ANY (ARRAY['staff'::text, 'families'::text, 'public_link'::text]))"
       },
@@ -95756,6 +98546,18 @@
       {
         "kind": "RLS",
         "table_name": "schedule_facility_lanes",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "second_parent_stops",
+        "detail": "second_parent_stops_email_check",
+        "check_clause": "((email = lower(btrim(email))) AND (email <> ''::text) AND (char_length(email) <= 200))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "second_parent_stops",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -95934,6 +98736,12 @@
         "check_clause": "(entry_lowered >= (0)::numeric)"
       },
       {
+        "kind": "CHECK",
+        "table_name": "teams",
+        "detail": "teams_link_version_check",
+        "check_clause": "(link_version >= 0)"
+      },
+      {
         "kind": "RLS",
         "table_name": "teams",
         "detail": "ENABLED",
@@ -96086,6 +98894,36 @@
       {
         "kind": "RLS",
         "table_name": "tournaments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "two_step_backup_codes",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "two_step_code_uses",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "two_step_grace",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "two_step_owner_resets",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "user_hidden_workspaces",
         "detail": "ENABLED",
         "check_clause": null
       },

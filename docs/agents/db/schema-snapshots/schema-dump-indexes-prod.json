@@ -150,89 +150,29 @@
     "indexdef": "CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id)"
   },
   {
-    "tablename": "bank_accounts",
-    "indexname": "bank_accounts_set_up_by_idx",
-    "indexdef": "CREATE INDEX bank_accounts_set_up_by_idx ON public.bank_accounts USING btree (set_up_by) WHERE (set_up_by IS NOT NULL)"
+    "tablename": "bank_check_waiting",
+    "indexname": "bank_check_waiting_added_by_idx",
+    "indexdef": "CREATE INDEX bank_check_waiting_added_by_idx ON public.bank_check_waiting USING btree (added_by) WHERE (added_by IS NOT NULL)"
   },
   {
-    "tablename": "bank_check_added_lines",
-    "indexname": "bank_check_added_lines_by_idx",
-    "indexdef": "CREATE INDEX bank_check_added_lines_by_idx ON public.bank_check_added_lines USING btree (added_by) WHERE (added_by IS NOT NULL)"
+    "tablename": "bank_check_waiting",
+    "indexname": "bank_check_waiting_once",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_waiting_once ON public.bank_check_waiting USING btree (check_id, line_key)"
   },
   {
-    "tablename": "bank_check_added_lines",
-    "indexname": "bank_check_added_lines_once",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_once ON public.bank_check_added_lines USING btree (check_id, line_key)"
-  },
-  {
-    "tablename": "bank_check_added_lines",
-    "indexname": "bank_check_added_lines_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_pkey ON public.bank_check_added_lines USING btree (id)"
-  },
-  {
-    "tablename": "bank_check_changes",
-    "indexname": "bank_check_changes_changed_by_idx",
-    "indexdef": "CREATE INDEX bank_check_changes_changed_by_idx ON public.bank_check_changes USING btree (changed_by) WHERE (changed_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_check_changes",
-    "indexname": "bank_check_changes_check_idx",
-    "indexdef": "CREATE INDEX bank_check_changes_check_idx ON public.bank_check_changes USING btree (check_id, changed_at)"
-  },
-  {
-    "tablename": "bank_check_changes",
-    "indexname": "bank_check_changes_cleared_by_idx",
-    "indexdef": "CREATE INDEX bank_check_changes_cleared_by_idx ON public.bank_check_changes USING btree (cleared_by) WHERE (cleared_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_check_changes",
-    "indexname": "bank_check_changes_open_idx",
-    "indexdef": "CREATE INDEX bank_check_changes_open_idx ON public.bank_check_changes USING btree (check_id) WHERE (cleared_at IS NULL)"
-  },
-  {
-    "tablename": "bank_check_changes",
-    "indexname": "bank_check_changes_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_changes_pkey ON public.bank_check_changes USING btree (id)"
-  },
-  {
-    "tablename": "bank_check_events",
-    "indexname": "bank_check_events_by_idx",
-    "indexdef": "CREATE INDEX bank_check_events_by_idx ON public.bank_check_events USING btree (by_user) WHERE (by_user IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_check_events",
-    "indexname": "bank_check_events_check_idx",
-    "indexdef": "CREATE INDEX bank_check_events_check_idx ON public.bank_check_events USING btree (check_id, at)"
-  },
-  {
-    "tablename": "bank_check_events",
-    "indexname": "bank_check_events_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_events_pkey ON public.bank_check_events USING btree (id)"
-  },
-  {
-    "tablename": "bank_check_marks",
-    "indexname": "bank_check_marks_by_idx",
-    "indexdef": "CREATE INDEX bank_check_marks_by_idx ON public.bank_check_marks USING btree (marked_by) WHERE (marked_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_check_marks",
-    "indexname": "bank_check_marks_check_idx",
-    "indexdef": "CREATE INDEX bank_check_marks_check_idx ON public.bank_check_marks USING btree (check_id)"
-  },
-  {
-    "tablename": "bank_check_marks",
-    "indexname": "bank_check_marks_one_tick",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_marks_one_tick ON public.bank_check_marks USING btree (bank_account_id, line_key)"
-  },
-  {
-    "tablename": "bank_check_marks",
-    "indexname": "bank_check_marks_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_marks_pkey ON public.bank_check_marks USING btree (id)"
+    "tablename": "bank_check_waiting",
+    "indexname": "bank_check_waiting_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_waiting_pkey ON public.bank_check_waiting USING btree (id)"
   },
   {
     "tablename": "bank_checks",
-    "indexname": "bank_checks_checked_by_idx",
-    "indexdef": "CREATE INDEX bank_checks_checked_by_idx ON public.bank_checks USING btree (checked_by) WHERE (checked_by IS NOT NULL)"
+    "indexname": "bank_checks_account_idx",
+    "indexdef": "CREATE INDEX bank_checks_account_idx ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_corrected_by_idx",
+    "indexdef": "CREATE INDEX bank_checks_corrected_by_idx ON public.bank_checks USING btree (corrected_by) WHERE (corrected_by IS NOT NULL)"
   },
   {
     "tablename": "bank_checks",
@@ -241,48 +181,23 @@
   },
   {
     "tablename": "bank_checks",
-    "indexname": "bank_checks_id_account",
-    "indexdef": "CREATE UNIQUE INDEX bank_checks_id_account ON public.bank_checks USING btree (id, bank_account_id)"
+    "indexname": "bank_checks_deleted_by_idx",
+    "indexdef": "CREATE INDEX bank_checks_deleted_by_idx ON public.bank_checks USING btree (deleted_by) WHERE (deleted_by IS NOT NULL)"
   },
   {
     "tablename": "bank_checks",
-    "indexname": "bank_checks_one_per_end_date",
-    "indexdef": "CREATE UNIQUE INDEX bank_checks_one_per_end_date ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
+    "indexname": "bank_checks_one_live_per_date",
+    "indexdef": "CREATE UNIQUE INDEX bank_checks_one_live_per_date ON public.bank_checks USING btree (bank_account_id, statement_end_date) WHERE (deleted_at IS NULL)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_one_live_start",
+    "indexdef": "CREATE UNIQUE INDEX bank_checks_one_live_start ON public.bank_checks USING btree (bank_account_id) WHERE ((kind = 'start'::text) AND (deleted_at IS NULL))"
   },
   {
     "tablename": "bank_checks",
     "indexname": "bank_checks_pkey",
     "indexdef": "CREATE UNIQUE INDEX bank_checks_pkey ON public.bank_checks USING btree (id)"
-  },
-  {
-    "tablename": "bank_line_exclusions",
-    "indexname": "bank_line_exclusions_by_idx",
-    "indexdef": "CREATE INDEX bank_line_exclusions_by_idx ON public.bank_line_exclusions USING btree (excluded_by) WHERE (excluded_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_line_exclusions",
-    "indexname": "bank_line_exclusions_once",
-    "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_once ON public.bank_line_exclusions USING btree (bank_account_id, line_key)"
-  },
-  {
-    "tablename": "bank_line_exclusions",
-    "indexname": "bank_line_exclusions_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_pkey ON public.bank_line_exclusions USING btree (id)"
-  },
-  {
-    "tablename": "bank_saved_lines",
-    "indexname": "bank_saved_lines_by_idx",
-    "indexdef": "CREATE INDEX bank_saved_lines_by_idx ON public.bank_saved_lines USING btree (saved_by) WHERE (saved_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_saved_lines",
-    "indexname": "bank_saved_lines_once",
-    "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_once ON public.bank_saved_lines USING btree (bank_account_id, line_key)"
-  },
-  {
-    "tablename": "bank_saved_lines",
-    "indexname": "bank_saved_lines_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_pkey ON public.bank_saved_lines USING btree (id)"
   },
   {
     "tablename": "basic_coach_team_announcements",
@@ -1075,6 +990,41 @@
     "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
   },
   {
+    "tablename": "event_availability_reminders",
+    "indexname": "event_availability_reminders_by_idx",
+    "indexdef": "CREATE INDEX event_availability_reminders_by_idx ON public.event_availability_reminders USING btree (reminded_by_user_id) WHERE (reminded_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "event_availability_reminders",
+    "indexname": "event_availability_reminders_event_idx",
+    "indexdef": "CREATE INDEX event_availability_reminders_event_idx ON public.event_availability_reminders USING btree (event_kind, event_id, reminded_at DESC)"
+  },
+  {
+    "tablename": "event_availability_reminders",
+    "indexname": "event_availability_reminders_pkey",
+    "indexdef": "CREATE UNIQUE INDEX event_availability_reminders_pkey ON public.event_availability_reminders USING btree (id)"
+  },
+  {
+    "tablename": "family_calendar_feeds",
+    "indexname": "family_calendar_feeds_live_user_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_live_user_uniq ON public.family_calendar_feeds USING btree (user_id) WHERE (stopped_at IS NULL)"
+  },
+  {
+    "tablename": "family_calendar_feeds",
+    "indexname": "family_calendar_feeds_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_pkey ON public.family_calendar_feeds USING btree (id)"
+  },
+  {
+    "tablename": "family_calendar_feeds",
+    "indexname": "family_calendar_feeds_token_hash_key",
+    "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_token_hash_key ON public.family_calendar_feeds USING btree (token_hash)"
+  },
+  {
+    "tablename": "family_calendar_feeds",
+    "indexname": "family_calendar_feeds_user_idx",
+    "indexdef": "CREATE INDEX family_calendar_feeds_user_idx ON public.family_calendar_feeds USING btree (user_id)"
+  },
+  {
     "tablename": "family_coach_asks",
     "indexname": "family_coach_asks_org_sent_idx",
     "indexdef": "CREATE INDEX family_coach_asks_org_sent_idx ON public.family_coach_asks USING btree (org_id, sent_at DESC)"
@@ -1145,9 +1095,74 @@
     "indexdef": "CREATE INDEX family_email_sends_season_sent_idx ON public.family_email_sends USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
   },
   {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_child_idx",
+    "indexdef": "CREATE INDEX family_invitations_child_idx ON public.family_invitations USING btree (child_id) WHERE (child_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_open_placement_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_invitations_open_placement_uniq ON public.family_invitations USING btree (org_id, email) WHERE ((source = 'placement'::text) AND (used_at IS NULL) AND (cancelled_at IS NULL) AND (replaced_by IS NULL))"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_open_rep_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_invitations_open_rep_uniq ON public.family_invitations USING btree (rep_player_id, email) WHERE ((source = 'rep_coach'::text) AND (used_at IS NULL) AND (cancelled_at IS NULL) AND (replaced_by IS NULL))"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_org_email_idx",
+    "indexdef": "CREATE INDEX family_invitations_org_email_idx ON public.family_invitations USING btree (org_id, email)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_invitations_pkey ON public.family_invitations USING btree (id)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_rep_player_idx",
+    "indexdef": "CREATE INDEX family_invitations_rep_player_idx ON public.family_invitations USING btree (rep_player_id) WHERE (rep_player_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_replaced_by_idx",
+    "indexdef": "CREATE INDEX family_invitations_replaced_by_idx ON public.family_invitations USING btree (replaced_by) WHERE (replaced_by IS NOT NULL)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_sent_by_idx",
+    "indexdef": "CREATE INDEX family_invitations_sent_by_idx ON public.family_invitations USING btree (sent_by_user_id) WHERE (sent_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_token_hash_key",
+    "indexdef": "CREATE UNIQUE INDEX family_invitations_token_hash_key ON public.family_invitations USING btree (token_hash)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_used_by_idx",
+    "indexdef": "CREATE INDEX family_invitations_used_by_idx ON public.family_invitations USING btree (used_by_user_id) WHERE (used_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_invite_stops",
+    "indexname": "family_invite_stops_org_email_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_invite_stops_org_email_uniq ON public.family_invite_stops USING btree (org_id, email)"
+  },
+  {
+    "tablename": "family_invite_stops",
+    "indexname": "family_invite_stops_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_invite_stops_pkey ON public.family_invite_stops USING btree (id)"
+  },
+  {
     "tablename": "family_links",
     "indexname": "family_links_calendar_token_hash_key",
     "indexdef": "CREATE UNIQUE INDEX family_links_calendar_token_hash_key ON public.family_links USING btree (calendar_token_hash)"
+  },
+  {
+    "tablename": "family_links",
+    "indexname": "family_links_child_id_idx",
+    "indexdef": "CREATE INDEX family_links_child_id_idx ON public.family_links USING btree (child_id)"
   },
   {
     "tablename": "family_links",
@@ -1161,8 +1176,8 @@
   },
   {
     "tablename": "family_links",
-    "indexname": "family_links_live_uniq",
-    "indexdef": "CREATE UNIQUE INDEX family_links_live_uniq ON public.family_links USING btree (rep_team_id, invited_email, role) WHERE (status <> ALL (ARRAY['declined'::text, 'revoked'::text]))"
+    "indexname": "family_links_live_child_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_links_live_child_uniq ON public.family_links USING btree (child_id, invited_email, role) WHERE (status <> ALL (ARRAY['declined'::text, 'revoked'::text]))"
   },
   {
     "tablename": "family_links",
@@ -1505,6 +1520,41 @@
     "indexdef": "CREATE INDEX league_email_log_season_id_idx ON public.league_email_log USING btree (season_id)"
   },
   {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_decided_by_idx",
+    "indexdef": "CREATE INDEX league_friend_requests_decided_by_idx ON public.league_friend_requests USING btree (decided_by) WHERE (decided_by IS NOT NULL)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_kept_apart_by_idx",
+    "indexdef": "CREATE INDEX league_friend_requests_kept_apart_by_idx ON public.league_friend_requests USING btree (kept_apart_by) WHERE (kept_apart_by IS NOT NULL)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_matched_idx",
+    "indexdef": "CREATE INDEX league_friend_requests_matched_idx ON public.league_friend_requests USING btree (matched_registration_id) WHERE (matched_registration_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_org_idx",
+    "indexdef": "CREATE INDEX league_friend_requests_org_idx ON public.league_friend_requests USING btree (org_id)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_friend_requests_pkey ON public.league_friend_requests USING btree (id)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_season_idx",
+    "indexdef": "CREATE INDEX league_friend_requests_season_idx ON public.league_friend_requests USING btree (season_id)"
+  },
+  {
+    "tablename": "league_friend_requests",
+    "indexname": "league_friend_requests_slot_uniq",
+    "indexdef": "CREATE UNIQUE INDEX league_friend_requests_slot_uniq ON public.league_friend_requests USING btree (registration_id, slot)"
+  },
+  {
     "tablename": "league_game_changes",
     "indexname": "league_game_changes_game_idx",
     "indexdef": "CREATE INDEX league_game_changes_game_idx ON public.league_game_changes USING btree (game_id, created_at)"
@@ -1836,6 +1886,11 @@
   },
   {
     "tablename": "league_registrations",
+    "indexname": "league_registrations_friend_code_uniq",
+    "indexdef": "CREATE UNIQUE INDEX league_registrations_friend_code_uniq ON public.league_registrations USING btree (season_id, friend_code) WHERE (friend_code IS NOT NULL)"
+  },
+  {
+    "tablename": "league_registrations",
     "indexname": "league_registrations_guardian_idx",
     "indexdef": "CREATE INDEX league_registrations_guardian_idx ON public.league_registrations USING btree (guardian_email)"
   },
@@ -1873,6 +1928,11 @@
     "tablename": "league_registrations",
     "indexname": "league_registrations_team_id_idx",
     "indexdef": "CREATE INDEX league_registrations_team_id_idx ON public.league_registrations USING btree (team_id)"
+  },
+  {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_told_team_idx",
+    "indexdef": "CREATE INDEX league_registrations_told_team_idx ON public.league_registrations USING btree (told_team_id) WHERE (told_team_id IS NOT NULL)"
   },
   {
     "tablename": "league_schedule_emails",
@@ -1938,6 +1998,16 @@
     "tablename": "league_season_notices",
     "indexname": "league_season_notices_send_idx",
     "indexdef": "CREATE INDEX league_season_notices_send_idx ON public.league_season_notices USING btree (club_schedule_send_id) WHERE (club_schedule_send_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_season_time_asks",
+    "indexname": "league_season_time_asks_org_idx",
+    "indexdef": "CREATE INDEX league_season_time_asks_org_idx ON public.league_season_time_asks USING btree (org_id, asked_at)"
+  },
+  {
+    "tablename": "league_season_time_asks",
+    "indexname": "league_season_time_asks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_season_time_asks_pkey ON public.league_season_time_asks USING btree (season_id)"
   },
   {
     "tablename": "league_seasons",
@@ -2033,6 +2103,16 @@
     "tablename": "league_teams",
     "indexname": "league_teams_season_id_idx",
     "indexdef": "CREATE INDEX league_teams_season_id_idx ON public.league_teams USING btree (season_id)"
+  },
+  {
+    "tablename": "legal_acceptances",
+    "indexname": "legal_acceptances_pkey",
+    "indexdef": "CREATE UNIQUE INDEX legal_acceptances_pkey ON public.legal_acceptances USING btree (id)"
+  },
+  {
+    "tablename": "legal_acceptances",
+    "indexname": "legal_acceptances_user_idx",
+    "indexdef": "CREATE INDEX legal_acceptances_user_idx ON public.legal_acceptances USING btree (user_id, accepted_at DESC)"
   },
   {
     "tablename": "no_login_rate_limits",
@@ -2736,6 +2816,11 @@
   },
   {
     "tablename": "org_time_blocks",
+    "indexname": "org_time_blocks_from_permit_idx",
+    "indexdef": "CREATE INDEX org_time_blocks_from_permit_idx ON public.org_time_blocks USING btree (from_permit_id) WHERE (from_permit_id IS NOT NULL)"
+  },
+  {
+    "tablename": "org_time_blocks",
     "indexname": "org_time_blocks_permit_idx",
     "indexdef": "CREATE INDEX org_time_blocks_permit_idx ON public.org_time_blocks USING btree (permit_id)"
   },
@@ -3040,6 +3125,91 @@
     "indexdef": "CREATE INDEX platform_catalog_change_requests_target_version_id_idx ON public.platform_catalog_change_requests USING btree (target_version_id)"
   },
   {
+    "tablename": "platform_charge_tax_looks",
+    "indexname": "platform_charge_tax_looks_chain_idx",
+    "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_chain_idx ON public.platform_charge_tax_looks USING btree (stripe_invoice_id, COALESCE(after_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+  },
+  {
+    "tablename": "platform_charge_tax_looks",
+    "indexname": "platform_charge_tax_looks_invoice_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_looks_invoice_idx ON public.platform_charge_tax_looks USING btree (stripe_invoice_id, seq DESC)"
+  },
+  {
+    "tablename": "platform_charge_tax_looks",
+    "indexname": "platform_charge_tax_looks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_pkey ON public.platform_charge_tax_looks USING btree (id)"
+  },
+  {
+    "tablename": "platform_charge_tax_looks",
+    "indexname": "platform_charge_tax_looks_put_back_once_idx",
+    "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_put_back_once_idx ON public.platform_charge_tax_looks USING btree (put_back_of) WHERE (put_back_of IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_customer_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_records_customer_idx ON public.platform_charge_tax_records USING btree (stripe_customer_id)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_org_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_records_org_idx ON public.platform_charge_tax_records USING btree (org_id, issued_at DESC)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_period_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_records_period_idx ON public.platform_charge_tax_records USING btree (livemode, issued_at)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_records_pkey ON public.platform_charge_tax_records USING btree (id)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_purchase_email_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_records_purchase_email_idx ON public.platform_charge_tax_records USING btree (paid_at) WHERE ((billing_reason IS NOT NULL) AND (purchase_email_at IS NULL))"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_stripe_invoice_id_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_records_stripe_invoice_id_key ON public.platform_charge_tax_records USING btree (stripe_invoice_id)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_user_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_records_user_idx ON public.platform_charge_tax_records USING btree (user_id, issued_at DESC)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_invoice_idx",
+    "indexdef": "CREATE INDEX platform_credit_note_tax_records_invoice_idx ON public.platform_credit_note_tax_records USING btree (stripe_invoice_id)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_org_idx",
+    "indexdef": "CREATE INDEX platform_credit_note_tax_records_org_idx ON public.platform_credit_note_tax_records USING btree (org_id, issued_at DESC)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_period_idx",
+    "indexdef": "CREATE INDEX platform_credit_note_tax_records_period_idx ON public.platform_credit_note_tax_records USING btree (livemode, issued_at)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_credit_note_tax_records_pkey ON public.platform_credit_note_tax_records USING btree (id)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_stripe_credit_note_id_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_credit_note_tax_records_stripe_credit_note_id_key ON public.platform_credit_note_tax_records USING btree (stripe_credit_note_id)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_user_idx",
+    "indexdef": "CREATE INDEX platform_credit_note_tax_records_user_idx ON public.platform_credit_note_tax_records USING btree (user_id, issued_at DESC)"
+  },
+  {
     "tablename": "platform_email_templates",
     "indexname": "platform_email_templates_pkey",
     "indexdef": "CREATE UNIQUE INDEX platform_email_templates_pkey ON public.platform_email_templates USING btree (key)"
@@ -3153,6 +3323,11 @@
     "tablename": "platform_refunds",
     "indexname": "platform_refunds_charge_idx",
     "indexdef": "CREATE INDEX platform_refunds_charge_idx ON public.platform_refunds USING btree (stripe_charge_id)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_credit_note_uniq",
+    "indexdef": "CREATE UNIQUE INDEX platform_refunds_credit_note_uniq ON public.platform_refunds USING btree (stripe_credit_note_id) WHERE (stripe_credit_note_id IS NOT NULL)"
   },
   {
     "tablename": "platform_refunds",
@@ -4506,6 +4681,11 @@
   },
   {
     "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_family_note_by_user_idx",
+    "indexdef": "CREATE INDEX rep_team_event_attendance_family_note_by_user_idx ON public.rep_team_event_attendance USING btree (family_note_by_user_id) WHERE (family_note_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
     "indexname": "rep_team_event_attendance_org_id_idx",
     "indexdef": "CREATE INDEX rep_team_event_attendance_org_id_idx ON public.rep_team_event_attendance USING btree (org_id)"
   },
@@ -4521,8 +4701,18 @@
   },
   {
     "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_previous_by_user_idx",
+    "indexdef": "CREATE INDEX rep_team_event_attendance_previous_by_user_idx ON public.rep_team_event_attendance USING btree (previous_by_user_id) WHERE (previous_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
     "indexname": "rep_team_event_attendance_program_year_id_idx",
     "indexdef": "CREATE INDEX rep_team_event_attendance_program_year_id_idx ON public.rep_team_event_attendance USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_set_by_user_idx",
+    "indexdef": "CREATE INDEX rep_team_event_attendance_set_by_user_idx ON public.rep_team_event_attendance USING btree (set_by_user_id) WHERE (set_by_user_id IS NOT NULL)"
   },
   {
     "tablename": "rep_team_event_attendance",
@@ -5460,6 +5650,21 @@
     "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
   },
   {
+    "tablename": "second_parent_stops",
+    "indexname": "second_parent_stops_org_email_uniq",
+    "indexdef": "CREATE UNIQUE INDEX second_parent_stops_org_email_uniq ON public.second_parent_stops USING btree (org_id, email)"
+  },
+  {
+    "tablename": "second_parent_stops",
+    "indexname": "second_parent_stops_pkey",
+    "indexdef": "CREATE UNIQUE INDEX second_parent_stops_pkey ON public.second_parent_stops USING btree (id)"
+  },
+  {
+    "tablename": "second_parent_stops",
+    "indexname": "second_parent_stops_registration_ids_idx",
+    "indexdef": "CREATE INDEX second_parent_stops_registration_ids_idx ON public.second_parent_stops USING gin (registration_ids)"
+  },
+  {
     "tablename": "stripe_billing_drift_checks",
     "indexname": "stripe_billing_drift_checks_checked_idx",
     "indexdef": "CREATE INDEX stripe_billing_drift_checks_checked_idx ON public.stripe_billing_drift_checks USING btree (checked_at DESC)"
@@ -5903,6 +6108,56 @@
     "tablename": "tournaments",
     "indexname": "tournaments_pkey",
     "indexdef": "CREATE UNIQUE INDEX tournaments_pkey ON public.tournaments USING btree (id)"
+  },
+  {
+    "tablename": "two_step_backup_codes",
+    "indexname": "two_step_backup_codes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX two_step_backup_codes_pkey ON public.two_step_backup_codes USING btree (id)"
+  },
+  {
+    "tablename": "two_step_backup_codes",
+    "indexname": "two_step_backup_codes_session_idx",
+    "indexdef": "CREATE INDEX two_step_backup_codes_session_idx ON public.two_step_backup_codes USING btree (user_id, used_session_id) WHERE (used_session_id IS NOT NULL)"
+  },
+  {
+    "tablename": "two_step_backup_codes",
+    "indexname": "two_step_backup_codes_user_idx",
+    "indexdef": "CREATE INDEX two_step_backup_codes_user_idx ON public.two_step_backup_codes USING btree (user_id) WHERE (used_at IS NULL)"
+  },
+  {
+    "tablename": "two_step_code_uses",
+    "indexname": "two_step_code_uses_pkey",
+    "indexdef": "CREATE UNIQUE INDEX two_step_code_uses_pkey ON public.two_step_code_uses USING btree (user_id, code_hash)"
+  },
+  {
+    "tablename": "two_step_grace",
+    "indexname": "two_step_grace_pkey",
+    "indexdef": "CREATE UNIQUE INDEX two_step_grace_pkey ON public.two_step_grace USING btree (user_id, organization_id)"
+  },
+  {
+    "tablename": "two_step_owner_resets",
+    "indexname": "two_step_owner_resets_one_open_idx",
+    "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_one_open_idx ON public.two_step_owner_resets USING btree (user_id) WHERE ((completed_at IS NULL) AND (cancelled_at IS NULL))"
+  },
+  {
+    "tablename": "two_step_owner_resets",
+    "indexname": "two_step_owner_resets_pkey",
+    "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_pkey ON public.two_step_owner_resets USING btree (id)"
+  },
+  {
+    "tablename": "two_step_owner_resets",
+    "indexname": "two_step_owner_resets_token_idx",
+    "indexdef": "CREATE UNIQUE INDEX two_step_owner_resets_token_idx ON public.two_step_owner_resets USING btree (confirm_token_hash) WHERE (confirm_token_hash IS NOT NULL)"
+  },
+  {
+    "tablename": "two_step_owner_resets",
+    "indexname": "two_step_owner_resets_waiting_idx",
+    "indexdef": "CREATE INDEX two_step_owner_resets_waiting_idx ON public.two_step_owner_resets USING btree (runs_at) WHERE ((completed_at IS NULL) AND (cancelled_at IS NULL))"
+  },
+  {
+    "tablename": "user_hidden_workspaces",
+    "indexname": "user_hidden_workspaces_pkey",
+    "indexdef": "CREATE UNIQUE INDEX user_hidden_workspaces_pkey ON public.user_hidden_workspaces USING btree (user_id, organization_id)"
   },
   {
     "tablename": "user_marketing_opt_outs",

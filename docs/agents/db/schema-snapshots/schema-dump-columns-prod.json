@@ -685,42 +685,6 @@
   },
   {
     "table_name": "bank_accounts",
-    "column_name": "opening_date",
-    "data_type": "date",
-    "udt_name": "date",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "bank_accounts",
-    "column_name": "opening_balance_cents",
-    "data_type": "bigint",
-    "udt_name": "int8",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 7
-  },
-  {
-    "table_name": "bank_accounts",
-    "column_name": "set_up_by",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 8
-  },
-  {
-    "table_name": "bank_accounts",
-    "column_name": "set_up_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 9
-  },
-  {
-    "table_name": "bank_accounts",
     "column_name": "created_by",
     "data_type": "uuid",
     "udt_name": "uuid",
@@ -747,7 +711,7 @@
     "ordinal_position": 12
   },
   {
-    "table_name": "bank_check_added_lines",
+    "table_name": "bank_check_waiting",
     "column_name": "id",
     "data_type": "uuid",
     "udt_name": "uuid",
@@ -756,7 +720,7 @@
     "ordinal_position": 1
   },
   {
-    "table_name": "bank_check_added_lines",
+    "table_name": "bank_check_waiting",
     "column_name": "check_id",
     "data_type": "uuid",
     "udt_name": "uuid",
@@ -765,7 +729,7 @@
     "ordinal_position": 2
   },
   {
-    "table_name": "bank_check_added_lines",
+    "table_name": "bank_check_waiting",
     "column_name": "line_key",
     "data_type": "text",
     "udt_name": "text",
@@ -774,287 +738,53 @@
     "ordinal_position": 3
   },
   {
-    "table_name": "bank_check_added_lines",
-    "column_name": "kind",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 4
-  },
-  {
-    "table_name": "bank_check_added_lines",
-    "column_name": "added_by",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "bank_check_added_lines",
-    "column_name": "added_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "NO",
-    "column_default": "now()",
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "ordinal_position": 1
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "check_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 2
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "line_key",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 3
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "was_date",
-    "data_type": "date",
-    "udt_name": "date",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 4
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "was_direction",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "was_amount_cents",
-    "data_type": "bigint",
-    "udt_name": "int8",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "now_date",
-    "data_type": "date",
-    "udt_name": "date",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 7
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "now_direction",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 8
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "now_amount_cents",
-    "data_type": "bigint",
-    "udt_name": "int8",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 9
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "removed",
-    "data_type": "boolean",
-    "udt_name": "bool",
-    "is_nullable": "NO",
-    "column_default": "false",
-    "ordinal_position": 10
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "changed_by",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 11
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "changed_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "NO",
-    "column_default": "now()",
-    "ordinal_position": 12
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "cleared_by",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 13
-  },
-  {
-    "table_name": "bank_check_changes",
-    "column_name": "cleared_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 14
-  },
-  {
-    "table_name": "bank_check_events",
-    "column_name": "id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "ordinal_position": 1
-  },
-  {
-    "table_name": "bank_check_events",
-    "column_name": "check_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 2
-  },
-  {
-    "table_name": "bank_check_events",
-    "column_name": "kind",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 3
-  },
-  {
-    "table_name": "bank_check_events",
-    "column_name": "reason",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 4
-  },
-  {
-    "table_name": "bank_check_events",
-    "column_name": "by_user",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "bank_check_events",
-    "column_name": "at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "NO",
-    "column_default": "now()",
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "bank_check_marks",
-    "column_name": "id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "ordinal_position": 1
-  },
-  {
-    "table_name": "bank_check_marks",
-    "column_name": "bank_account_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 2
-  },
-  {
-    "table_name": "bank_check_marks",
-    "column_name": "check_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 3
-  },
-  {
-    "table_name": "bank_check_marks",
-    "column_name": "line_key",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 4
-  },
-  {
-    "table_name": "bank_check_marks",
+    "table_name": "bank_check_waiting",
     "column_name": "line_date",
     "data_type": "date",
     "udt_name": "date",
     "is_nullable": "NO",
     "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_check_waiting",
+    "column_name": "label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
     "ordinal_position": 5
   },
   {
-    "table_name": "bank_check_marks",
-    "column_name": "direction",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "bank_check_marks",
+    "table_name": "bank_check_waiting",
     "column_name": "amount_cents",
     "data_type": "bigint",
     "udt_name": "int8",
     "is_nullable": "NO",
     "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "bank_check_waiting",
+    "column_name": "direction",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
     "ordinal_position": 7
   },
   {
-    "table_name": "bank_check_marks",
-    "column_name": "payout_key",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
+    "table_name": "bank_check_waiting",
+    "column_name": "at_start",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
     "ordinal_position": 8
   },
   {
-    "table_name": "bank_check_marks",
-    "column_name": "marked_by",
+    "table_name": "bank_check_waiting",
+    "column_name": "added_by",
     "data_type": "uuid",
     "udt_name": "uuid",
     "is_nullable": "YES",
@@ -1062,12 +792,12 @@
     "ordinal_position": 9
   },
   {
-    "table_name": "bank_check_marks",
-    "column_name": "marked_at",
+    "table_name": "bank_check_waiting",
+    "column_name": "added_at",
     "data_type": "timestamp with time zone",
     "udt_name": "timestamptz",
-    "is_nullable": "NO",
-    "column_default": "now()",
+    "is_nullable": "YES",
+    "column_default": null,
     "ordinal_position": 10
   },
   {
@@ -1108,42 +838,6 @@
   },
   {
     "table_name": "bank_checks",
-    "column_name": "status",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": "'open'::text",
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "bank_checks",
-    "column_name": "checked_by",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "bank_checks",
-    "column_name": "checked_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 7
-  },
-  {
-    "table_name": "bank_checks",
-    "column_name": "outstanding_snapshot",
-    "data_type": "jsonb",
-    "udt_name": "jsonb",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 8
-  },
-  {
-    "table_name": "bank_checks",
     "column_name": "created_by",
     "data_type": "uuid",
     "udt_name": "uuid",
@@ -1161,139 +855,85 @@
     "ordinal_position": 10
   },
   {
-    "table_name": "bank_line_exclusions",
-    "column_name": "id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "ordinal_position": 1
-  },
-  {
-    "table_name": "bank_line_exclusions",
-    "column_name": "bank_account_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 2
-  },
-  {
-    "table_name": "bank_line_exclusions",
-    "column_name": "line_key",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 3
-  },
-  {
-    "table_name": "bank_line_exclusions",
-    "column_name": "excluded_by",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 4
-  },
-  {
-    "table_name": "bank_line_exclusions",
-    "column_name": "excluded_at",
-    "data_type": "timestamp with time zone",
-    "udt_name": "timestamptz",
-    "is_nullable": "NO",
-    "column_default": "now()",
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "bank_saved_lines",
-    "column_name": "id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "ordinal_position": 1
-  },
-  {
-    "table_name": "bank_saved_lines",
-    "column_name": "bank_account_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 2
-  },
-  {
-    "table_name": "bank_saved_lines",
+    "table_name": "bank_checks",
     "column_name": "kind",
     "data_type": "text",
     "udt_name": "text",
     "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 3
+    "column_default": "'check'::text",
+    "ordinal_position": 11
   },
   {
-    "table_name": "bank_saved_lines",
-    "column_name": "line_key",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 4
-  },
-  {
-    "table_name": "bank_saved_lines",
-    "column_name": "line_date",
-    "data_type": "date",
-    "udt_name": "date",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "bank_saved_lines",
-    "column_name": "direction",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "bank_saved_lines",
-    "column_name": "amount_cents",
+    "table_name": "bank_checks",
+    "column_name": "books_cents",
     "data_type": "bigint",
     "udt_name": "int8",
     "is_nullable": "NO",
     "column_default": null,
-    "ordinal_position": 7
+    "ordinal_position": 12
   },
   {
-    "table_name": "bank_saved_lines",
-    "column_name": "description",
-    "data_type": "text",
-    "udt_name": "text",
+    "table_name": "bank_checks",
+    "column_name": "on_its_way_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
     "is_nullable": "YES",
     "column_default": null,
-    "ordinal_position": 8
+    "ordinal_position": 13
   },
   {
-    "table_name": "bank_saved_lines",
-    "column_name": "saved_by",
+    "table_name": "bank_checks",
+    "column_name": "cash_not_deposited_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "book_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "deleted_by",
     "data_type": "uuid",
     "udt_name": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "ordinal_position": 9
+    "ordinal_position": 16
   },
   {
-    "table_name": "bank_saved_lines",
-    "column_name": "saved_at",
+    "table_name": "bank_checks",
+    "column_name": "deleted_at",
     "data_type": "timestamp with time zone",
     "udt_name": "timestamptz",
-    "is_nullable": "NO",
-    "column_default": "now()",
-    "ordinal_position": 10
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "corrected_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "corrected_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
   },
   {
     "table_name": "basic_coach_team_announcements",
@@ -3762,6 +3402,15 @@
     "ordinal_position": 18
   },
   {
+    "table_name": "club_schedule_sends",
+    "column_name": "league_slot_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
     "table_name": "club_schedule_slot_programs",
     "column_name": "slot_id",
     "data_type": "uuid",
@@ -5562,6 +5211,123 @@
     "ordinal_position": 19
   },
   {
+    "table_name": "event_availability_reminders",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "event_availability_reminders",
+    "column_name": "event_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "event_availability_reminders",
+    "column_name": "event_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "event_availability_reminders",
+    "column_name": "reminded_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "event_availability_reminders",
+    "column_name": "reminded_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "event_availability_reminders",
+    "column_name": "families",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "event_availability_reminders",
+    "column_name": "parents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "event_availability_reminders",
+    "column_name": "app_only",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "family_calendar_feeds",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "family_calendar_feeds",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "family_calendar_feeds",
+    "column_name": "token_hash",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "family_calendar_feeds",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "family_calendar_feeds",
+    "column_name": "stopped_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
     "table_name": "family_coach_asks",
     "column_name": "id",
     "data_type": "uuid",
@@ -6030,6 +5796,177 @@
     "ordinal_position": 17
   },
   {
+    "table_name": "family_invitations",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "token_hash",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "rep_player_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "child_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "sent_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "expires_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "used_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "used_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "cancelled_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "replaced_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "family_invitations",
+    "column_name": "reconnects",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "family_invite_stops",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "family_invite_stops",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "family_invite_stops",
+    "column_name": "email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "family_invite_stops",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
     "table_name": "family_links",
     "column_name": "id",
     "data_type": "uuid",
@@ -6052,7 +5989,7 @@
     "column_name": "rep_team_id",
     "data_type": "uuid",
     "udt_name": "uuid",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 3
   },
@@ -6244,6 +6181,33 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 25
+  },
+  {
+    "table_name": "family_links",
+    "column_name": "child_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "family_links",
+    "column_name": "invited_as",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'rep_coach'::text",
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "family_links",
+    "column_name": "ended_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 28
   },
   {
     "table_name": "family_messages",
@@ -7803,6 +7767,195 @@
     "ordinal_position": 10
   },
   {
+    "table_name": "league_friend_requests",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "season_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "registration_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "slot",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "typed_first",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "typed_last",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "typed_parent",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "code_entered",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "state",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'to_confirm'::text",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "mark",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "matched_registration_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "decided_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "decided_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "kept_apart_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "kept_apart_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "league_friend_requests",
+    "column_name": "draft_outcome",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
     "table_name": "league_game_changes",
     "column_name": "id",
     "data_type": "uuid",
@@ -8467,6 +8620,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 15
+  },
+  {
+    "table_name": "league_placement_emails",
+    "column_name": "changes",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
   },
   {
     "table_name": "league_player_ratings",
@@ -9531,6 +9693,33 @@
     "ordinal_position": 44
   },
   {
+    "table_name": "league_registrations",
+    "column_name": "told_team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 45
+  },
+  {
+    "table_name": "league_registrations",
+    "column_name": "told_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 46
+  },
+  {
+    "table_name": "league_registrations",
+    "column_name": "friend_code",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 47
+  },
+  {
     "table_name": "league_schedule_emails",
     "column_name": "id",
     "data_type": "uuid",
@@ -9763,6 +9952,51 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 11
+  },
+  {
+    "table_name": "league_season_notices",
+    "column_name": "skipped_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "column_name": "season_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "column_name": "asked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "league_season_time_asks",
+    "column_name": "asked_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
   },
   {
     "table_name": "league_seasons",
@@ -10015,6 +10249,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 29
+  },
+  {
+    "table_name": "league_seasons",
+    "column_name": "friend_requests_max",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "2",
+    "ordinal_position": 30
   },
   {
     "table_name": "league_slot_uses",
@@ -10415,6 +10658,78 @@
   {
     "table_name": "league_teams",
     "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "legal_acceptances",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "legal_acceptances",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "legal_acceptances",
+    "column_name": "user_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "legal_acceptances",
+    "column_name": "terms_version",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "legal_acceptances",
+    "column_name": "privacy_version",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "legal_acceptances",
+    "column_name": "box_text",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "legal_acceptances",
+    "column_name": "door",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "legal_acceptances",
+    "column_name": "accepted_at",
     "data_type": "timestamp with time zone",
     "udt_name": "timestamptz",
     "is_nullable": "NO",
@@ -12175,6 +12490,33 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 7
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "medical_notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "emergency_contact_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "emergency_contact_phone",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
   },
   {
     "table_name": "org_custom_domains",
@@ -13977,6 +14319,15 @@
     "ordinal_position": 19
   },
   {
+    "table_name": "org_public_site_content",
+    "column_name": "mailing_address",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
     "table_name": "org_site_notices",
     "column_name": "id",
     "data_type": "uuid",
@@ -14209,6 +14560,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 13
+  },
+  {
+    "table_name": "org_time_blocks",
+    "column_name": "from_permit_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
   },
   {
     "table_name": "org_time_dates_off",
@@ -14992,6 +15352,60 @@
     "is_nullable": "NO",
     "column_default": "'club_default'::text",
     "ordinal_position": 43
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "two_step_board_required_since",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 44
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "two_step_coaches_required_since",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 45
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "two_step_prompt_closed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 46
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "is_test_organization",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 47
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "renewal_reminded_for",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 48
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "logo_aspect",
+    "data_type": "real",
+    "udt_name": "float4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 49
   },
   {
     "table_name": "pitch_decks",
@@ -16146,6 +16560,879 @@
     "ordinal_position": 21
   },
   {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "seq",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "stripe_invoice_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "livemode",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "looked_keys",
+    "data_type": "ARRAY",
+    "udt_name": "_text",
+    "is_nullable": "NO",
+    "column_default": "'{}'::text[]",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "put_back_of",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "after_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "looked_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "looked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "column_name": "why",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "stripe_invoice_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "livemode",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "buyer_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "buyer_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "stripe_customer_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "stripe_subscription_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "stripe_payment_intent_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "invoice_number",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "issued_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "currency",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "amount_before_tax_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "tax_total_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "total_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "tax_lines",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "stripe_tax_status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "gst_hst_position",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "gst_hst_position_why",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "taxed_country",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "taxed_region",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 23
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "taxed_postal_code",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "evidence_missing",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 25
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "evidence_country",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "evidence_region",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "evidence_line1",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 28
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "evidence_line2",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "evidence_city",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "evidence_postal_code",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 31
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "evidence_confirmed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 32
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "us_declaration_version",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "us_declaration_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 34
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "card_country",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 35
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "payout_country",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 36
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "review_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 37
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "review_note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 38
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "evidence_read_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 39
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "evidence_captured",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 40
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "fx_rate",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 41
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "fx_rate_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 42
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "fx_source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 43
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "cad_amount_before_tax_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 44
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "cad_tax_total_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 45
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "cad_total_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 46
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "stripe_cad_total_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 47
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 48
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "paid_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 49
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "voided_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 50
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "uncollectible_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 51
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "refunded_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 52
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 53
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 54
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "billing_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 55
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "column_name": "purchase_email_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 56
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "stripe_credit_note_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "stripe_invoice_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "livemode",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "stripe_customer_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "note_number",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "note_type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "stripe_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "issued_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "currency",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "amount_before_tax_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "tax_total_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "total_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "tax_lines",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "refund_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "out_of_band_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "evidence_captured",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "fx_rate",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "fx_rate_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "fx_source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 23
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "cad_amount_before_tax_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "cad_tax_total_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 25
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "cad_total_cents",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "voided_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 28
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 30
+  },
+  {
     "table_name": "platform_email_templates",
     "column_name": "key",
     "data_type": "text",
@@ -16558,6 +17845,24 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 18
+  },
+  {
+    "table_name": "platform_fee_invoices",
+    "column_name": "total",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "platform_fee_invoices",
+    "column_name": "tax_lines",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
   },
   {
     "table_name": "platform_feedback_replies",
@@ -17116,6 +18421,33 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 18
+  },
+  {
+    "table_name": "platform_refunds",
+    "column_name": "stripe_invoice_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "platform_refunds",
+    "column_name": "stripe_credit_note_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "platform_refunds",
+    "column_name": "stripe_credit_note_number",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
   },
   {
     "table_name": "platform_sent_email_searches",
@@ -18709,6 +20041,15 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_document_templates",
+    "column_name": "validity",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 12
   },
   {
     "table_name": "rep_dues_credits",
@@ -21474,6 +22815,24 @@
     "ordinal_position": 32
   },
   {
+    "table_name": "rep_roster_players",
+    "column_name": "health_confirmed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
+  },
+  {
+    "table_name": "rep_roster_players",
+    "column_name": "health_confirmed_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 34
+  },
+  {
     "table_name": "rep_season_refund_adjustments",
     "column_name": "id",
     "data_type": "uuid",
@@ -22669,6 +24028,96 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "column_name": "set_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "column_name": "set_by_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "column_name": "set_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "column_name": "previous_status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "column_name": "previous_by_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "column_name": "previous_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "column_name": "previous_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "column_name": "family_note",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "column_name": "family_note_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "column_name": "family_note_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
   },
   {
     "table_name": "rep_team_event_tags",
@@ -25434,6 +26883,15 @@
     "ordinal_position": 22
   },
   {
+    "table_name": "rep_teams",
+    "column_name": "family_answers",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'off'::text",
+    "ordinal_position": 23
+  },
+  {
     "table_name": "rep_tryout_evaluator_sessions",
     "column_name": "id",
     "data_type": "uuid",
@@ -26631,6 +28089,60 @@
     "ordinal_position": 9
   },
   {
+    "table_name": "second_parent_stops",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "second_parent_stops",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "second_parent_stops",
+    "column_name": "email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "second_parent_stops",
+    "column_name": "stopped_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "second_parent_stops",
+    "column_name": "source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'stop_page'::text",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "second_parent_stops",
+    "column_name": "registration_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "NO",
+    "column_default": "'{}'::uuid[]",
+    "ordinal_position": 6
+  },
+  {
     "table_name": "stripe_billing_drift_checks",
     "column_name": "id",
     "data_type": "uuid",
@@ -27567,6 +29079,15 @@
     "ordinal_position": 23
   },
   {
+    "table_name": "team_workspaces",
+    "column_name": "renewal_reminded_for",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
     "table_name": "teams",
     "column_name": "id",
     "data_type": "uuid",
@@ -27826,6 +29347,24 @@
     "is_nullable": "NO",
     "column_default": "0",
     "ordinal_position": 31
+  },
+  {
+    "table_name": "teams",
+    "column_name": "link_version",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 32
+  },
+  {
+    "table_name": "teams",
+    "column_name": "link_replaced_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
   },
   {
     "table_name": "tournament_archives",
@@ -29077,6 +30616,330 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 47
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "logo_aspect",
+    "data_type": "real",
+    "udt_name": "float4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 48
+  },
+  {
+    "table_name": "two_step_backup_codes",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "two_step_backup_codes",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "two_step_backup_codes",
+    "column_name": "salt",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "two_step_backup_codes",
+    "column_name": "code_hash",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "two_step_backup_codes",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "two_step_backup_codes",
+    "column_name": "used_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "two_step_backup_codes",
+    "column_name": "used_session_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "two_step_code_uses",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "two_step_code_uses",
+    "column_name": "code_hash",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "two_step_code_uses",
+    "column_name": "used_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "two_step_grace",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "two_step_grace",
+    "column_name": "organization_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "two_step_grace",
+    "column_name": "starts_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "two_step_grace",
+    "column_name": "start_email_for",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "two_step_grace",
+    "column_name": "reminder_sent_for",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "organization_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "asked_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "asked_how",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "requested_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "confirmed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "runs_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "held_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "held_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "cancelled_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "completed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "confirm_token_hash",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "confirm_expires_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "club_notice_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "two_step_owner_resets",
+    "column_name": "cancelled_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "user_hidden_workspaces",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "user_hidden_workspaces",
+    "column_name": "organization_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "user_hidden_workspaces",
+    "column_name": "hidden_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
   },
   {
     "table_name": "user_marketing_opt_outs",
