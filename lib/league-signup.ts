@@ -2,6 +2,7 @@ import { bornFitsDate, type Cutoff } from './born-years';
 import { leaguePrice } from './league-price';
 import { dollarsLine } from './house-league-season';
 import { clubDay } from './league-registration-state';
+import { FACT_LABELS, capFactList, factLine, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -91,10 +92,25 @@ export function signupSubject(children: readonly PlacedChild[], seasonName: stri
   return `Your sign-up for ${seasonName}: ${parts.join(', ')}`;
 }
 
-/** The staff notice (copy §11): one per sign-up. Staff words: approved, to review, on the waitlist. */
-export function signupNotice(children: readonly PlacedChild[], guardianName: string, seasonName: string): { title: string; body: string } {
-  const names = children.map(c => `${c.firstName} ${c.lastName}`);
-  const title = names.length === 1 ? `New sign-up: ${names[0]}`
+/** A child's outcome in staff words (copy §11), for the notice's Players lines. [marketing] */
+const STAFF_OUTCOME: Record<ChildOutcome, string> = { active: 'Approved', pending_review: 'To review', waitlisted: 'On the waitlist' };
+
+/**
+ * The staff notice (copy §11): one per sign-up, and the ONE wording for both senders (Notifications read at a glance,
+ * Stage 4, ruling 5): the family's sign-up (`via: 'signup'`) and a registration staff enter by hand (`'entered'`). The
+ * titles keep their words, because they say who started it; the one line and the rows are the same shape (owner Q3,
+ * 2026-11-15): Season · Family · Players, one line per child with the outcome bold. Staff words: approved, to review,
+ * on the waitlist. A status outside those three (staff can enter a declined one) names the child with no outcome.
+ */
+export function signupNotice(
+  children: readonly (Pick<PlacedChild, 'firstName' | 'lastName'> & { status: string })[],
+  guardianName: string,
+  seasonName: string,
+  via: 'signup' | 'entered' = 'signup',
+): { title: string; body: string; facts: NoticeFacts } {
+  const names = children.map(c => `${c.firstName} ${c.lastName}`.trim());
+  const title = via === 'entered' ? `New registration: ${names[0]}`
+    : names.length === 1 ? `New sign-up: ${names[0]}`
     : names.length === 2 ? `New sign-up: ${names[0]} and ${names[1]}`
     : `New sign-up: ${names[0]} and ${names.length - 1} more`;
   const count = (s: ChildOutcome) => children.filter(c => c.status === s).length;
@@ -103,7 +119,19 @@ export function signupNotice(children: readonly PlacedChild[], guardianName: str
     count('pending_review') ? `${count('pending_review')} to review` : null,
     count('waitlisted') ? `${count('waitlisted')} on the waitlist` : null,
   ].filter(Boolean);
-  return { title, body: [guardianName, seasonName, parts.join(', ')].filter(Boolean).join(' · ') };
+  const guardian = guardianName.trim();
+  return {
+    title,
+    body: [guardian, seasonName.trim(), parts.join(', ')].filter(Boolean).join(' · '),
+    facts: noticeFacts([
+      factRow(FACT_LABELS.season, seasonName),
+      factRow(FACT_LABELS.family, guardian),
+      factRow(FACT_LABELS.players, null, {
+        list: capFactList(children.map((c, i) => factLine(names[i], STAFF_OUTCOME[c.status as ChildOutcome])),
+          { one: 'player', many: 'players' }, n => `and ${n} more on Registrations`),
+      }),
+    ]),
+  };
 }
 
 /** A child's detail line in the confirmation and the emails (copy §8, §10). */

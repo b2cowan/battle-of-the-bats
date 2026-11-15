@@ -77,13 +77,14 @@ export const POST = withObservability(async (req: Request,
   try {
     const userIds = await houseLeagueDeskUserIds(org);
     if (userIds.length) {
+      const notice = ASK_WORDS.notice(`${reg.player_first_name} ${reg.player_last_name}`, `${reg.guardian_first_name} ${reg.guardian_last_name}`, season.name, note);
       await notify({
         orgId: org.id,
         eventType: 'house_league_withdraw_request',
-        title: ASK_WORDS.noticeTitle(`${reg.player_first_name} ${reg.player_last_name}`),
-        body: ASK_WORDS.noticeBody(`${reg.guardian_first_name} ${reg.guardian_last_name}`.trim(), season.name, note),
+        title: notice.title,
+        body: notice.body,
         link: `/${org.slug}/admin/house-league/seasons/${season.id}/registrations`,
-        metadata: { registrationId: reg.id, seasonId: season.id },
+        metadata: { registrationId: reg.id, seasonId: season.id, facts: notice.facts },
         userIds,
       });
     }

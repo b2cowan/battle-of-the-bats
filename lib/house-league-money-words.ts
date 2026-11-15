@@ -5,6 +5,7 @@
  */
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from './types';
 import { joinWithAnd, pluralize, possessive } from './utils';
+import { FACT_LABELS, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
 
 /** A stored method as staff read it: the label, or "Not recorded". */
 export function paymentMethodWord(m: string | null | undefined): string {
@@ -48,9 +49,24 @@ export const ASK_WORDS = {
   errTwice: (child: string) => `You already asked to withdraw ${child}. The club will reply by email.`,
   errGeneric: 'Something went wrong. Please try again.',
   errFinished: 'This season has finished, so there is nothing to withdraw from. Contact the club if you have a question.',
-  noticeTitle: (player: string) => `Withdrawal request: ${player}`,
-  noticeBody: (guardian: string, season: string, note: string | null) =>
-    [guardian, season, note ? (note.length > 120 ? `${note.slice(0, 119)}…` : note) : 'No note'].filter(Boolean).join(' · '),
+  /**
+   * The desk's notice (Notifications read at a glance, Stage 4; owner Q4, 2026-11-15, as /legal recommended): the one
+   * line names whether there is a note but never its words, because a push or an email would put a family's words
+   * (possibly health or family details) on a lock screen. Opened, the note is quoted in full under Note, never
+   * shortened or reworded (the 300-character cap is at the door). "No note" when the family left none. [marketing]
+   */
+  notice: (player: string, guardian: string, season: string, note: string | null): { title: string; body: string; facts: NoticeFacts } => {
+    const said = note?.trim() || null;
+    return {
+      title: `Withdrawal request: ${player.trim()}`,
+      body: [guardian.trim(), season.trim(), said ? 'with a note' : 'No note'].filter(Boolean).join(' · '),
+      facts: noticeFacts([
+        factRow(FACT_LABELS.family, guardian),
+        factRow(FACT_LABELS.season, season),
+        factRow(FACT_LABELS.note, said ? `“${said}”` : 'No note'),
+      ]),
+    };
+  },
 } as const;
 
 /** 12c Part 7 (12b's b4): the child's payment line on the family's record — online, or the pay link while owing. The

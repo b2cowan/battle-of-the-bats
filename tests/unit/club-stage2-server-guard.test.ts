@@ -283,12 +283,13 @@ describe('The coach is told when the club changes the season', () => {
         clubName: 'Northfield Minor Ball', teamName: '9U A', action: 'started', seasonName: '2027 Season',
         previousSeasonName: '2026 Season', carried: { players: 14, budgetPlan: true, feePlan: true, openingBalance: true },
       }).body,
-      '9U A · Came with the team: 14 players, the budget, the fee plan and the opening balance. Tryouts are closed until you open them. The 2026 Season is kept as a record.',
+      '9U A · Came with the team: 14 players, the budget, the fee plan and the opening balance.',
+      'the one line (Notifications Stage 4): the tryouts and the kept record are rows when opened',
     );
     assert.equal(
       clubSeasonNotice({ clubName: 'C', teamName: 'T', action: 'started', seasonName: '2027 Season', previousSeasonName: '2026 Season', carried: { players: 0, budgetPlan: false, feePlan: false, openingBalance: false } }).body,
-      'T · Tryouts are closed until you open them. The 2026 Season is kept as a record.',
-      'nothing carried → no "Came with the team" line',
+      'T · Tryouts are closed until you open them.',
+      'nothing carried → no "Came with the team" line; the tryouts lead',
     );
     assert.equal(clubSeasonNotice({ clubName: 'C', teamName: 'T', action: 'reopened', seasonName: '2026 Season' }).title, 'C reopened the 2026 Season');
   });

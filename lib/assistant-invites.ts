@@ -2,7 +2,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { generateAssistantInviteToken, hashAssistantInviteToken } from './assistant-invite-token';
 import { addStaffMember, getActiveTeamMembership, setStaffMemberRole } from './coach-membership';
 import {
-  sanitizeAssistantGrants, sanitizeStaffKind, STAFF_KIND_COPY,
+  sanitizeAssistantGrants, sanitizeStaffKind, staffApprovalNotice, STAFF_KIND_COPY,
   type AssistantCapabilityGrants, type StaffKind,
 } from './coach-capabilities';
 import { sendEmail, assistantCoachInviteHtml, clubCoachInviteHtml, clubCoachInviteSubject } from './email';
@@ -83,7 +83,7 @@ export async function notifyAdminOfPendingInvite(p: {
   staffKind: StaffKind | null;
   changed?: boolean;
 }): Promise<void> {
-  const copy = STAFF_KIND_COPY[p.staffKind ?? 'assistant'];
+  const notice = staffApprovalNotice(p);
   // WHO CAN APPROVE: members holding Rep Teams whose group covers the team — the approve route's own check
   // (Needs attention clears itself, owner 2026-10-16: with no list it reached every member, coaches included). An
   // empty list must never reach notify(), which would read it as every member.
@@ -94,13 +94,11 @@ export async function notifyAdminOfPendingInvite(p: {
   await notify({
     orgId: p.org.id,
     eventType: 'assistant_coach_approval_requested',
-    title: p.changed ? `${copy.name} invite changed — still awaiting approval` : `${copy.name} invite awaiting approval`,
-    body: p.changed
-      ? `${p.invitedByName ?? 'A head coach'} changed what ${p.email} will get on ${p.teamName}: now ${copy.asA} — ${copy.sentence}`
-      : `${p.invitedByName ?? 'A head coach'} invited ${p.email} to ${p.teamName} as ${copy.asA} — ${copy.sentence}`,
+    title: notice.title,
+    body: notice.body,
     link: `/${p.org.slug}/admin/rep-teams`,
     userIds,
-    metadata: { inviteId: p.inviteId },
+    metadata: { inviteId: p.inviteId, facts: notice.facts },
   }).catch(() => {});
 }
 

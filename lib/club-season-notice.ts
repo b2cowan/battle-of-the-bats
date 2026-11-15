@@ -14,6 +14,7 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import { joinWithAnd, pluralize } from './utils';
+import { FACT_LABELS, capFactList, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
 
 export type ClubSeasonAction = 'closed' | 'started' | 'reopened';
 
@@ -32,7 +33,9 @@ export function clubSeasonNotice(p: {
   /** The season a roll closed ("2026 Season"); null for a team's first season. */
   previousSeasonName?: string | null;
   carried?: ClubSeasonCarried | null;
-}): { title: string; body: string } {
+  /** Started: the new season's tryouts are open (a first season can be created open; a roll always closes them). */
+  tryoutsOpen?: boolean;
+}): { title: string; body: string; facts?: NoticeFacts } {
   const { clubName, teamName, seasonName } = p;
   if (p.action === 'closed') {
     return {
@@ -46,8 +49,36 @@ export function clubSeasonNotice(p: {
       body: `${teamName} · The season is live again, and every screen is back.`,
     };
   }
-  const started = clubSeasonStartedCard({ clubName, seasonName, previousSeasonName: p.previousSeasonName, carried: p.carried });
-  return { title: started.title, body: `${teamName} · ${started.body}` };
+  // Started (Notifications read at a glance, Stage 4; owner Q7–Q8, 2026-11-15): the one line is the team and what came
+  // along (or, with nothing, the tryouts' state); opened, Came with (one line each) · Tryouts · Last season. The
+  // Overview's one-time card keeps its paragraph (`clubSeasonStartedCard`). [marketing]
+  const s = startedFacts(p.carried, p.tryoutsOpen === true);
+  return {
+    title: `${clubName} started the ${seasonName}`,
+    body: `${teamName} · ${s.came || s.tryouts}`,
+    facts: noticeFacts([
+      factRow(FACT_LABELS.cameWith, null, { list: capFactList(s.lines, { one: 'thing', many: 'things' }, n => `and ${n} more`) }),
+      factRow(FACT_LABELS.tryouts, p.tryoutsOpen ? 'Open' : 'Closed until you open them'),
+      factRow(FACT_LABELS.lastSeason, p.previousSeasonName, { detail: 'kept as a record' }),
+    ]),
+  };
+}
+
+/** What came along with the team, as a sentence and as one line each, and the tryouts' state: only what ACTUALLY carried. */
+function startedFacts(c: ClubSeasonCarried | null | undefined, tryoutsOpen: boolean): { came: string; lines: string[]; tryouts: string } {
+  const parts: string[] = [];
+  if (c) {
+    if (c.players > 0) parts.push(pluralize(c.players, 'player'));
+    if (c.budgetPlan) parts.push('the budget');
+    if (c.feePlan) parts.push('the fee plan');
+    if (c.openingBalance) parts.push('the opening balance');
+  }
+  return {
+    came: parts.length === 0 ? '' : `Came with the team: ${joinWithAnd(parts)}.`,
+    lines: parts.map(x => x.charAt(0).toUpperCase() + x.slice(1)),
+    // ⚠ A first season can be created with tryouts open (owner Q8, 2026-11-15): never tell the coach they are closed then.
+    tryouts: tryoutsOpen ? 'Tryouts are open.' : 'Tryouts are closed until you open them.',
+  };
 }
 
 /**
@@ -59,20 +90,14 @@ export function clubSeasonStartedCard(p: {
   seasonName: string;
   previousSeasonName?: string | null;
   carried?: ClubSeasonCarried | null;
+  /** The season's tryouts are open now (a first season can be created open). */
+  tryoutsOpen?: boolean;
 }): { title: string; body: string } {
-  const parts: string[] = [];
-  const c = p.carried;
-  if (c) {
-    if (c.players > 0) parts.push(pluralize(c.players, 'player'));
-    if (c.budgetPlan) parts.push('the budget');
-    if (c.feePlan) parts.push('the fee plan');
-    if (c.openingBalance) parts.push('the opening balance');
-  }
-  const came = parts.length === 0 ? '' : `Came with the team: ${joinWithAnd(parts)}. `;
+  const s = startedFacts(p.carried, p.tryoutsOpen === true);
   const kept = p.previousSeasonName ? ` The ${p.previousSeasonName} is kept as a record.` : '';
   return {
     title: `${p.clubName} started the ${p.seasonName}`,
-    body: `${came}Tryouts are closed until you open them.${kept}`,
+    body: `${s.came ? `${s.came} ` : ''}${s.tryouts}${kept}`,
   };
 }
 

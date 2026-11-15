@@ -1,4 +1,5 @@
 import { CHAT_PAUSED } from './chat-pause';
+import { FACT_LABELS, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
 
 /**
  * Assistant Coaches — per-assistant capability model (Phase 1).
@@ -406,6 +407,32 @@ export function staffKindCopyFor(kind: StaffKind, org: { isTeamWorkspace: boolea
     // Names BOTH tournament grants the preset hands over here: running the team's own (Run
     // tournaments) and entering it in someone else's (Register for tournaments, 2026-10-13).
     emailWhat: `Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails${CHAT_PAUSED ? '' : ', the staff chat'}, the staff list, the team’s tournaments and entering it in other organizers’ tournaments — the head coach can change any of it.`,
+  };
+}
+
+/**
+ * The admin's approval notice (`assistant_coach_approval_requested`), asked and changed: ONE wording for its three
+ * senders (Notifications read at a glance, Stage 4; owner Q5, 2026-11-15). The one line is who invited whom, to which
+ * team, as what; the role's sentence moves into the opened rows: Invited by · Invited (the address exactly as the
+ * inviter typed it) · Team · Role (bold, what it gets as the quiet detail). An unknown inviter reads "A head coach" in
+ * the line and has no row. [marketing]
+ */
+export function staffApprovalNotice(p: {
+  email: string; teamName: string; invitedByName: string | null; staffKind: StaffKind | null; changed?: boolean;
+}): { title: string; body: string; facts: NoticeFacts } {
+  const copy = STAFF_KIND_COPY[p.staffKind ?? 'assistant'];
+  const by = p.invitedByName?.trim() || 'A head coach';
+  return {
+    title: p.changed ? `${copy.name} invite changed — still awaiting approval` : `${copy.name} invite awaiting approval`,
+    body: p.changed
+      ? `${by} changed what ${p.email} will get on ${p.teamName}: now ${copy.asA}.`
+      : `${by} invited ${p.email} to ${p.teamName} as ${copy.asA}.`,
+    facts: noticeFacts([
+      factRow(FACT_LABELS.invitedBy, p.invitedByName),
+      factRow(FACT_LABELS.invited, p.email),
+      factRow(FACT_LABELS.team, p.teamName),
+      factRow(FACT_LABELS.role, copy.name, { lead: true, detail: copy.sentence }),
+    ]),
   };
 }
 

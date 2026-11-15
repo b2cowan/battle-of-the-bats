@@ -145,7 +145,7 @@ export const POST = withObservability(async (req: Request,
   const results = await Promise.all(recipients.map(async r => {
     const mineTagIds = mineTagIdsOf(r);
     const myLabels = myLabelsOnPlan(plan, mineTagIds);
-    const { title, body: text } = practicePlanSentMessage({ dayLabel, startLabel, arriveLabel, myLabels });
+    const { title, body: text, facts } = practicePlanSentMessage({ dayLabel, startLabel, arriveLabel, myLabels });
     await notify({
       orgId: ctx.org.id,
       eventType: 'practice_plan_sent',
@@ -153,7 +153,7 @@ export const POST = withObservability(async (req: Request,
       body: text,
       link: planPath,
       userIds: [r.userId],
-      metadata: { teamId, eventId, audience, sentBy: ctx.user.id },
+      metadata: { teamId, eventId, audience, sentBy: ctx.user.id, facts },
     });
     if (!withEmail || !r.email || demo) return false;
     const { subject, html } = practicePlanEmail({

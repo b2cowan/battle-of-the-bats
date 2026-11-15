@@ -32,7 +32,7 @@ const registrationsHelp: HelpPageContent = {
       heading: 'How to work the daily registration review queue',
       summary: 'Review pending players, confirm details, and keep the queue from backing up.',
       keywords: ['daily review', 'to review', 'pending registrations', 'approve', 'decline', 'mark received', 'pay by card', 'pay link', 'fee', 'review queue', 'division full', 'add to the waitlist instead', 'select several', 'bulk approve'],
-      searchText: 'division is full add to the waitlist instead one needs attention notice per sign-up several children one reference daily review queue to review pending registrations approve waitlist decline mark received fee owing payment search player name parent email status views view switch status tabs duplicate confirm tick several rows approve promote waitlist mark received move division email one at a time decline withdraw',
+      searchText: 'division is full add to the waitlist instead one notice per sign-up to the house league desk several children one reference daily review queue to review pending registrations approve waitlist decline mark received fee owing payment search player name parent email status views view switch status tabs duplicate confirm tick several rows approve promote waitlist mark received move division email one at a time decline withdraw',
       content: (
         <>
           <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the view switch at the left of the toolbar (To review, Active, Waitlist, Ended) plus the search box are how you move through it. Tick several rows and a bar offers Approve, Promote, Waitlist, Mark received, Move division and Email for all of them at once.</p>

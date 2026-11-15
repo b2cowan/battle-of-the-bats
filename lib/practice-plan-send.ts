@@ -18,6 +18,7 @@ import type { PracticePlan, PracticePlanSendAudience } from './types';
 import type { StaffKind } from './coach-capabilities';
 import { collectPracticePlanTagIds, practicePlanLevels } from './rep-practice-plan';
 import { possessive } from './utils';
+import { FACT_LABELS, capFactList, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
 
 /**
  * The four options, in the sheet's order: three GROUPS the rule works out, then "Just these
@@ -206,19 +207,39 @@ export function endOnClock(sentence: string): string {
   return sentence.endsWith('.') ? sentence : `${sentence}.`;
 }
 
+/** The one line names this many of a person's stations; past it, it counts the rest (owner Q6, 2026-11-15). */
+const NAMED_STATIONS = 3;
+
 /**
  * The bell/push message, personalized: the two facts an assistant needs — what's mine, when to
- * be there — and nothing else. The email (`lib/practice-plan-email.ts`) opens with the same line.
+ * be there — and nothing else. The email (`lib/practice-plan-email.ts`) opens with the same line,
+ * naming every station (it has the room; the bell's line names three and counts the rest).
+ *
+ * Opened (Notifications read at a glance, Stage 4; owner Q6, 2026-11-15): You’re on (the person's
+ * stations, one per line, folding at 6) · Arrive by · Starts. A person on nothing gets no list row.
+ * [marketing]
  */
-export function practicePlanSentMessage(input: PracticePlanMessageInput): { title: string; body: string } {
+export function practicePlanSentMessage(input: PracticePlanMessageInput): { title: string; body: string; facts: NoticeFacts } {
   const title = `${possessive(input.dayLabel)} practice plan is ready`;
   const when = endOnClock(input.arriveLabel
     ? `Arrive by ${input.arriveLabel} for ${input.startLabel}`
     : `Read it before ${input.startLabel}`);
-  const body = input.myLabels.length > 0
-    ? `You’re on ${joinNames(input.myLabels)}. ${when}`
-    : when;
-  return { title, body };
+  const mine = input.myLabels.map(l => l.trim()).filter(Boolean);
+  const named = mine.length > NAMED_STATIONS
+    ? `${mine.slice(0, NAMED_STATIONS).join(', ')} and ${mine.length - NAMED_STATIONS} more`
+    : joinNames(mine);
+  const body = mine.length > 0 ? `You’re on ${named}. ${when}` : when;
+  return {
+    title,
+    body,
+    facts: noticeFacts([
+      factRow(FACT_LABELS.youreOn, null, {
+        list: capFactList(mine, { one: 'station', many: 'stations' }, n => `and ${n} more on the plan`),
+      }),
+      factRow(FACT_LABELS.arriveBy, input.arriveLabel),
+      factRow(FACT_LABELS.starts, input.startLabel),
+    ]),
+  };
 }
 
 /**

@@ -335,9 +335,10 @@ describe('the coach\'s side (specimens 4 and 6)', () => {
       carried: { players: 14, budgetPlan: false, feePlan: true, openingBalance: true } });
     assert.equal(card.title, 'Northfield started the 2027 Season');
     assert.equal(card.body, 'Came with the team: 14 players, the fee plan and the opening balance. Tryouts are closed until you open them. The 2026 Season is kept as a record.');
-    // The bell says the same, with the team in front.
+    // The bell's one line is the team and what came (Notifications Stage 4); the rest is its opened rows.
     assert.equal(clubSeasonNotice({ clubName: 'Northfield', teamName: '9U A', action: 'started', seasonName: '2027 Season',
-      previousSeasonName: '2026 Season', carried: { players: 14, budgetPlan: false, feePlan: true, openingBalance: true } }).body, `9U A · ${card.body}`);
+      previousSeasonName: '2026 Season', carried: { players: 14, budgetPlan: false, feePlan: true, openingBalance: true } }).body,
+      '9U A · Came with the team: 14 players, the fee plan and the opening balance.');
     const welcome = clubWelcomeCard({ teamName: '10U A', firstName: null, clubName: 'Northfield', roleWord: 'head coach', namedOn: 'Sep 28', players: 13, otherStaff: 2 });
     assert.equal(welcome.title, 'Welcome to 10U A');
     assert.equal(welcome.body, 'Northfield named you head coach on Sep 28. Your team is already here: 13 players and 2 staff.');

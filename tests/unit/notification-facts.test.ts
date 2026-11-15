@@ -25,6 +25,11 @@ import { LEAGUE_ADMIN_NOTICE, NO_LEAGUE_COUNTS } from '../../lib/club-schedule-l
 import { coachBellWords } from '../../lib/family-availability-words.ts';
 import { formatInsightDigest } from '../../lib/insight-findings.ts';
 import { championsNotice } from '../../lib/champions.ts';
+import { signupNotice } from '../../lib/league-signup.ts';
+import { ASK_WORDS } from '../../lib/house-league-money-words.ts';
+import { staffApprovalNotice } from '../../lib/coach-capabilities.ts';
+import { practicePlanSentMessage } from '../../lib/practice-plan-send.ts';
+import { clubSeasonNotice, clubSeasonStartedCard } from '../../lib/club-season-notice.ts';
 
 const NOUN = { one: 'game', many: 'games' };
 
@@ -57,7 +62,8 @@ describe('labels (Q1)', () => {
   it('every label in the shared vocabulary is sentence case and at most 11 characters', () => {
     for (const label of Object.values(FACT_LABELS)) {
       assert.ok(label.length <= FACT_LABEL_MAX, `"${label}" is ${label.length} characters`);
-      assert.match(label, /^[A-Z][a-z]*( [a-z]+)*$/, `"${label}" is sentence case`);
+      // A word may hold the house apostrophe ("You’re on", Stage 4 ruling Q6).
+      assert.match(label, /^[A-Z][a-z’]*( [a-z’]+)*$/, `"${label}" is sentence case`);
     }
     assert.equal(FACT_LABEL_MAX, 11);
   });
@@ -312,6 +318,121 @@ describe('the six list notices (Stage 3): one wording per kind, rows from the sh
   it('every sender of the six passes facts to its one entry', () => {
     assert.match(readCode('lib/club-schedule-send.ts'), /const notice = LEAGUE_ADMIN_NOTICE\.notice\([\s\S]*?body: notice\.body,[\s\S]*?metadata: \{ seasonId, sendId, facts: notice\.facts \}/);
     assert.doesNotMatch(readCode('lib/club-schedule-league-words.ts'), /\\n\\n/, 'the one line never carries the game lines');
+  });
+});
+
+describe('the six few-facts notices (Stage 4): one wording per kind, rows from the shared vocabulary (owner Q1–Q8, 2026-11-15)', () => {
+  const VOCAB = new Set<string>(Object.values(FACT_LABELS));
+  const kid = (firstName: string, status: string) => ({ firstName, lastName: 'Kim', status });
+  const plan = (myLabels: string[], arriveLabel: string | null = '5:45 p.m.') => practicePlanSentMessage({ dayLabel: 'Tuesday', startLabel: '6:00 p.m.', arriveLabel, myLabels });
+  const carried = { players: 14, budgetPlan: true, feePlan: true, openingBalance: false };
+  const started = (over: Partial<Parameters<typeof clubSeasonNotice>[0]> = {}) =>
+    clubSeasonNotice({ clubName: 'Northfield', teamName: 'Ridge 12U', action: 'started', seasonName: '2027 Season', previousSeasonName: '2026 Season', carried, ...over });
+  const NOTE = 'Ava broke her wrist — we’ll be back in the fall.';
+  const notices: Record<string, { body: string; facts?: NoticeFacts }[]> = {
+    house_league_registration_new: [
+      signupNotice([kid('Henry', 'active'), kid('Ava', 'waitlisted'), kid('Sam', 'pending_review')], 'Grace Kim', 'Summer 2027'),
+      signupNotice([kid('Henry', 'active')], 'Grace Kim', 'Summer 2027', 'entered'),
+      signupNotice([kid('Henry', 'declined')], ' ', 'Summer 2027', 'entered'),
+    ],
+    house_league_withdraw_request: [
+      ASK_WORDS.notice('Ava Kim', 'Grace Kim', 'Summer 2027', NOTE),
+      ASK_WORDS.notice('Ava Kim', 'Grace Kim', 'Summer 2027', null),
+      ASK_WORDS.notice('Ava Kim', ' ', 'Summer 2027', '   '),
+    ],
+    assistant_coach_approval_requested: [
+      staffApprovalNotice({ email: 'Pat.Lee+coach@Example.com', teamName: 'Ridge 12U', invitedByName: 'Sam Lee', staffKind: 'assistant' }),
+      staffApprovalNotice({ email: 'pat@example.com', teamName: 'Ridge 12U', invitedByName: null, staffKind: 'treasurer', changed: true }),
+    ],
+    practice_plan_sent: [plan(['Close control', 'Footwork ladder']), plan(['A', 'B', 'C', 'D', 'E']), plan([], null), plan(['', 'Rondo'])],
+    club_season_changed: [started(), started({ previousSeasonName: null, carried: null, tryoutsOpen: true })],
+  };
+  it('every row label is a shared word, at most 11 characters; every notice round-trips; every one line is one line', () => {
+    for (const label of Object.values(FACT_LABELS)) assert.ok(label.length <= FACT_LABEL_MAX, label);
+    for (const [kind, list] of Object.entries(notices)) {
+      for (const n of list) {
+        assert.ok(n.facts?.rows.length, kind);
+        for (const r of n.facts!.rows) assert.ok(VOCAB.has(r.label), `${kind}: "${r.label}" is not in the shared vocabulary`);
+        assert.deepEqual(readNoticeFacts(JSON.parse(JSON.stringify({ facts: n.facts }))), n.facts, `${kind}: ${n.body}`);
+        assert.doesNotMatch(n.body, /\n/, kind);
+      }
+    }
+  });
+  it('a new registration: one wording for the sign-up and the hand-entered one; one line per child with the outcome (Q3)', () => {
+    const [signup, admin, blank] = notices.house_league_registration_new;
+    assert.equal(signup.body, 'Grace Kim · Summer 2027 · 1 approved, 1 to review, 1 on the waitlist');
+    assert.deepEqual(signup.facts!.rows.map(r => [r.label, r.value]), [['Season', 'Summer 2027'], ['Family', 'Grace Kim'], ['Players', '']]);
+    assert.deepEqual(signup.facts!.rows[2].list!.lines, [
+      { text: 'Henry Kim', lead: 'Approved' }, { text: 'Ava Kim', lead: 'On the waitlist' }, { text: 'Sam Kim', lead: 'To review' },
+    ]);
+    assert.equal((admin as ReturnType<typeof signupNotice>).title, 'New registration: Henry Kim', 'the title keeps its word: staff entered it');
+    assert.equal(admin.body, 'Grace Kim · Summer 2027 · 1 approved', 'the hand-entered body gains the guardian and the outcome (ruling 5)');
+    assert.equal(blank.body, 'Summer 2027', 'no guardian, no outcome word: nothing invented');
+    assert.deepEqual(blank.facts!.rows.map(r => r.label), ['Season', 'Players']);
+    assert.deepEqual(blank.facts!.rows[1].list!.lines, [{ text: 'Henry Kim' }]);
+  });
+  it('a withdrawal request: the line never carries the family’s words; the note is quoted in full, “No note” when none (Q4)', () => {
+    const [said, none, blank] = notices.house_league_withdraw_request;
+    assert.equal(said.body, 'Grace Kim · Summer 2027 · with a note');
+    assert.ok(!said.body.includes('wrist'));
+    assert.deepEqual(said.facts!.rows.map(r => [r.label, r.value]), [['Family', 'Grace Kim'], ['Season', 'Summer 2027'], ['Note', `“${NOTE}”`]]);
+    assert.equal(none.body, 'Grace Kim · Summer 2027 · No note');
+    assert.equal(none.facts!.rows[2].value, 'No note');
+    assert.equal(blank.body, 'Summer 2027 · No note');
+    assert.deepEqual(blank.facts!.rows.map(r => r.label), ['Season', 'Note']);
+    const long = 'x'.repeat(299) + '!';
+    const n = ASK_WORDS.notice('Ava Kim', 'Grace Kim', 'Summer 2027', long);
+    assert.equal(n.facts.rows[2].value, `“${long}”`, 'never shortened');
+    assert.ok(!n.body.includes('x'));
+  });
+  it('an assistant-coach approval: who invited whom, to which team, as what; the address exactly as typed (Q5)', () => {
+    const [asked, changed] = notices.assistant_coach_approval_requested;
+    assert.equal(asked.body, 'Sam Lee invited Pat.Lee+coach@Example.com to Ridge 12U as an assistant coach.');
+    assert.deepEqual(asked.facts!.rows.map(r => [r.label, r.value, r.lead, r.detail]), [
+      ['Invited by', 'Sam Lee', undefined, undefined], ['Invited', 'Pat.Lee+coach@Example.com', undefined, undefined], ['Team', 'Ridge 12U', undefined, undefined],
+      ['Role', 'Assistant coach', true, 'Coaches the team. Starts with the everyday tools; you choose the rest.'],
+    ]);
+    assert.equal(changed.body, 'A head coach changed what pat@example.com will get on Ridge 12U: now the team treasurer.');
+    assert.equal(changed.facts!.rows.find(r => r.label === 'Invited by'), undefined, 'an unknown inviter has no row');
+  });
+  it('a practice plan: three stations named, the rest counted; the stations a list; no stations, no list row (Q6)', () => {
+    const [two, five, none, blank] = notices.practice_plan_sent;
+    assert.equal(two.body, 'You’re on Close control and Footwork ladder. Arrive by 5:45 p.m. for 6:00 p.m.', 'three or fewer: today’s line');
+    assert.equal(five.body, 'You’re on A, B, C and 2 more. Arrive by 5:45 p.m. for 6:00 p.m.');
+    assert.deepEqual(five.facts!.rows.map(r => [r.label, r.value]), [['You’re on', ''], ['Arrive by', '5:45 p.m.'], ['Starts', '6:00 p.m.']]);
+    assert.equal(five.facts!.rows[0].list!.lines.length, 5);
+    assert.equal(none.body, 'Read it before 6:00 p.m.');
+    assert.deepEqual(none.facts!.rows.map(r => r.label), ['Starts']);
+    assert.equal(blank.body, 'You’re on Rondo. Arrive by 5:45 p.m. for 6:00 p.m.', 'a blank label is left out of the line and the list');
+    const forty = plan(Array.from({ length: 40 }, (_, i) => `Station ${i + 1}`));
+    assert.equal(forty.facts.rows[0].list!.lines.length, FACT_LIST_MAX);
+    assert.equal(forty.facts.rows[0].list!.overflow, 'and 10 more on the plan');
+  });
+  it('a season started: the team and what came; Came with · Tryouts · Last season; a first season with tryouts open says so (Q7, Q8)', () => {
+    const [rolled, first] = notices.club_season_changed;
+    assert.equal(rolled.body, 'Ridge 12U · Came with the team: 14 players, the budget and the fee plan.');
+    assert.deepEqual(rolled.facts!.rows.map(r => [r.label, r.value, r.detail]), [['Came with', '', undefined], ['Tryouts', 'Closed until you open them', undefined], ['Last season', '2026 Season', 'kept as a record']]);
+    assert.deepEqual(rolled.facts!.rows[0].list!.lines, ['14 players', 'The budget', 'The fee plan'], 'only what actually carried');
+    assert.equal(first.body, 'Ridge 12U · Tryouts are open.');
+    assert.deepEqual(first.facts!.rows.map(r => [r.label, r.value]), [['Tryouts', 'Open']]);
+    assert.equal(clubSeasonStartedCard({ clubName: 'N', seasonName: '2027 Season', tryoutsOpen: true }).body, 'Tryouts are open.', 'the Overview card tells the truth too');
+    assert.equal(clubSeasonNotice({ clubName: 'N', teamName: 'T', action: 'closed', seasonName: '2026 Season' }).facts, undefined, 'closed and reopened keep their sentence');
+    assert.equal(clubSeasonNotice({ clubName: 'N', teamName: 'T', action: 'reopened', seasonName: '2026 Season' }).facts, undefined);
+  });
+  it('every sender of the six passes facts to its one entry; the registration reaches the desk only (Q2); the moved game keeps its sentence (Q1)', () => {
+    const signup = readCode('app/api/league/[orgSlug]/[seasonSlug]/register/route.ts');
+    assert.match(signup, /const n = signupNotice\(children,[\s\S]*?const userIds = await houseLeagueDeskUserIds\(org\);[\s\S]*?metadata: \{ facts: n\.facts \},\s*userIds,/);
+    const admin = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts');
+    assert.match(admin, /const notice = signupNotice\(\[[\s\S]*?'entered'\);\s*houseLeagueDeskUserIds\(ctx!\.org\)\s*\.then\(ids => ids\.filter\(id => id !== ctx!\.user\.id\)\)[\s\S]*?metadata: \{ facts: notice\.facts \},\s*userIds,/);
+    for (const src of [signup, admin]) assert.equal((src.match(/eventType: 'house_league_registration_new'/g) ?? []).length, 1);
+    assert.match(readCode('app/api/league/[orgSlug]/[seasonSlug]/withdraw-request/route.ts'),
+      /const notice = ASK_WORDS\.notice\([\s\S]*?body: notice\.body,[\s\S]*?metadata: \{ registrationId: reg\.id, seasonId: season\.id, facts: notice\.facts \}/);
+    assert.match(readCode('lib/assistant-invites.ts'), /const notice = staffApprovalNotice\(p\);[\s\S]*?body: notice\.body,[\s\S]*?metadata: \{ inviteId: p\.inviteId, facts: notice\.facts \}/);
+    assert.match(readCode('app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/practice-plan/send/route.ts'),
+      /const \{ title, body: text, facts \} = practicePlanSentMessage\([\s\S]*?metadata: \{ teamId, eventId, audience, sentBy: ctx\.user\.id, facts \}/);
+    assert.match(readCode('lib/club-season-notify.ts'), /const \{ title, body, facts \} = clubSeasonNotice\([\s\S]*?metadata: \{ teamId: p\.team\.id, action: p\.action, \.\.\.\(facts \? \{ facts \} : \{\}\) \}/);
+    assert.match(readCode('app/api/admin/rep-teams/teams/[teamId]/program-years/route.ts'), /action: 'started', seasonName: programYear\.name,\s*tryoutsOpen: programYear\.tryoutOpen,/);
+    assert.doesNotMatch(readCode('lib/family-notify.ts'), /facts/, 'Q1: a moved game keeps its sentence, like “A game changed”');
   });
 });
 

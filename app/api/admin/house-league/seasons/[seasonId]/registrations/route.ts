@@ -10,6 +10,8 @@ import { leaguePrice } from '@/lib/league-price';
 import { isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
+import { houseLeagueDeskUserIds } from '@/lib/notify-recipients';
+import { signupNotice } from '@/lib/league-signup';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { readRegistrationDisputes } from '@/lib/online-dispute-read';
@@ -193,14 +195,22 @@ export const POST = withObservability(async (req: Request,
   const { data: row } = await supabaseAdmin.from('league_registrations').select('*').eq('id', result.placed.id).single();
   const registration = mapLeagueRegistration(row);
 
-  // Notify org admins of new house league registration (fire-and-forget)
-  notify({
-    orgId: ctx!.org.id,
-    eventType: 'house_league_registration_new',
-    title: `New registration: ${playerFirstName} ${playerLastName}`,
-    body: season.name,
-    link: `/${ctx!.org.slug}/admin/house-league/seasons/${seasonId}/registrations`,
-  }).catch(console.error);
+  // The house-league desk, but not the person who typed it (owner Q2, 2026-11-15), in the sign-up's one wording (ruling 5).
+  // Fire-and-forget: a failed notice never fails the registration.
+  const notice = signupNotice([{ firstName: playerFirstName, lastName: playerLastName, status: registration.status }],
+    `${guardianFirstName} ${guardianLastName}`, season.name, 'entered');
+  houseLeagueDeskUserIds(ctx!.org)
+    .then(ids => ids.filter(id => id !== ctx!.user.id))
+    .then(userIds => (userIds.length ? notify({
+      orgId: ctx!.org.id,
+      eventType: 'house_league_registration_new',
+      title: notice.title,
+      body: notice.body,
+      link: `/${ctx!.org.slug}/admin/house-league/seasons/${seasonId}/registrations`,
+      metadata: { facts: notice.facts },
+      userIds,
+    }) : undefined))
+    .catch(console.error);
 
   return NextResponse.json(registration, { status: 201 });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/registrations' });

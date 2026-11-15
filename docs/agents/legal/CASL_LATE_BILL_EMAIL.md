@@ -80,6 +80,65 @@ no email setting. Not re-fetched: the statute (finding 1's reading unchanged, ve
   call, not a legal one: either is fine, as long as it is never shortened or reworded (it is the club's statement to the team,
   and rewording it would put words in the club's mouth).
 
+### Reviewed 2026-11-15 — Stage 4 proposal: six few-facts notices (Notifications read at a glance, ruling Q7)
+A proposal review before code. Read in the code: `lib/notify.ts:150-203` (recipients), `:81-90` (defaults), `:99-108` (the email);
+`app/api/league/[orgSlug]/[seasonSlug]/register/route.ts:305-316` and `app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts:196-203`
+(both senders, no `userIds`); `lib/notify-recipients.ts:107-118` (`houseLeagueDeskUserIds`); `lib/assistant-invites.ts:77-105`;
+`lib/family-notify.ts:150-239`; `lib/club-season-notice.ts:71-76` and `app/api/admin/rep-teams/teams/[teamId]/program-years/route.ts:66-70`.
+Statute not re-fetched (finding 1's reading, verified 2026-11-13, unchanged).
+- **CASL, all six: not owed.** Every notice is a message to the org's own staff or coaches about their own work, or (kind 3) the
+  families' existing service notice; none gains an offer, price, promotion or link, and shorter text cannot make a non-commercial
+  notice commercial. Guard unchanged: a one-line email or push must not gain a promotional line to "fill it out".
+- **1. `house_league_registration_new` — CASL fine; PRIVACY FINDING (need to know, pre-existing).** Both senders omit `userIds`, so
+  `notify()` takes the "all active org members" branch (`notify.ts:167-203`): every role, bell on by default (`systemDefaults`), and the
+  bell API reads by user, not by role or module. Children's full names and the guardian's name therefore reach tournament staff and
+  anyone else in the org who holds no house-league seat. Same class as the late-bill audience finding (PIPEDA 4.7; the policy's "people
+  see what their role opens"), and the link goes to a screen they cannot open. This build makes it a little worse (the admin-entered
+  notice gains the guardian's name; the opened notice lists every child with an outcome) and adds no new reader. **Recommend: fix in
+  this build, it is one line per sender** — `userIds: await houseLeagueDeskUserIds(org)` (never hand `notify()` an empty list: skip
+  the notice) and, on the admin-entered path, `excludeUserIds: [the admin who typed it]`. If the owner holds the "no audience change"
+  line, it is a named, dated finding to `/plan`, not a blocker. Push/email off by default stays fine.
+- **2. `house_league_withdraw_request` — CASL fine; privacy: choose (b).** The family's note is free text on a public form whose hint
+  invites a reason ("why"), so it can hold health or family detail. In a push it sits on a lock screen and passes through the browser's
+  push service; in the email, through Resend. (a) puts 120 characters of it there, (c) all 300; (b) puts none ("with a note" / "No note")
+  and matches the rule already kept for family answers (the bell never carries a parent's words, `FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md`).
+  The audience (the desk) is right. **Retention catch:** the opened Note row stores the note in `notifications.metadata`; "cleared" only
+  sets `cleared_at` (`needs-attention.ts` `clearIds`), the row stays, and there is no retention clock (privacy draft finding 11). Today
+  the body already holds 120 characters; (b) with a full copy holds up to 300 in a place that outlives the registration. **Prefer a Note
+  row read live from the registration** (the id is in the notice's link/metadata) so the words have one home and go when it goes; if it
+  must be copied, say so under finding 11. Never shortened or reworded when shown to the desk: agreed.
+- **3. `family_game_update` — CASL fine; privacy fine; confirm nothing owed.** Kept sentence, or same body plus coach-only rows: the
+  family email (`familyEmailHtml`, `sendFamilyEmail`) is byte-identical either way, so the earlier reading stands (a service notice to a
+  family that follows the team, suppression list honoured, "you follow {team}" reason, one CTA to the team schedule). It must stay a
+  plain service message: no sponsor, no registration or "invite a friend" link. Rows (opponent, when, where) are the team's own
+  schedule, no new person's data. Nothing owed.
+- **4. `assistant_coach_approval_requested` — CASL fine; audience correct; one promise conflict.** Audience is Rep Teams holders for
+  the team's group (`clubModuleUserIds`), good. The invitee is a non-user whose address a head coach typed; it reaches club admins to
+  decide approval (a fair purpose). **But the privacy draft §6 says the browser push service gets "the alert text — no name or email",
+  and this kind is push ON by default with the invitee's email in the line** (true today, not new). Recommend the one line **without
+  the address** ("Sam Lee invited an assistant coach to Ridge 12U."), the exact address only in the opened row. If the owner prefers
+  the address in the line, the §6 row must be reworded instead (it is also already untrue for any kind that names a child or person).
+  Rows in `metadata.facts` join finding 11's class (no retention clock).
+- **5. `practice_plan_sent` — CASL fine; privacy fine.** The line is the recipient's own assignment, chosen by the sending coach, one
+  person per notice (`userIds: [r.userId]`). Naming three and counting the rest is a length choice, no law point. The separate
+  practice-plan email is untouched. Nothing owed.
+- **6. `club_season_changed` (started) — CASL fine; privacy fine; one real accuracy defect, agree the fix.** Audience is the team's
+  active staff, actor excluded: right. Verified: the first season is created with `tryoutOpen: body.tryoutOpen === true`
+  (`program-years/route.ts:70`) while `clubSeasonNotice` always says "Tryouts are closed until you open them". That is more than
+  cosmetic: an open tryout is a live public form collecting children's information, and the coach is told it is closed. Say what is
+  true from the stored flag (open / closed); I did not check the roll-forward path, so read the flag there too rather than assume.
+- **Policy follow-through (route to `/plan`/owner, nothing blocks):** (i) privacy draft §6 push-service row wording (above);
+  (ii) finding 11 now covers the new `metadata.facts` rows (child, guardian and invitee names, the invitee's email): fix at the root
+  for every kind, not per kind.
+- **Owner questions:** Q1 fix the registration audience in this build (recommended) or log it. Q2 withdrawal line (b) and a live-read
+  Note (recommended). Q3 invitee address out of the push line (recommended) or reword §6. Q4 none for kinds 3, 5, 6.
+
+**Owner ruled 2026-11-15 ("as recommended") and BUILT 2026-11-15, commit owed:** the new-registration notice goes to the
+house-league desk only; the withdrawal line names "with a note", never its words, and the note is quoted in full in the
+opened notice (copied into the stored rows, so it joins the retention finding 11); the invitee's address stays in the line
+and the privacy draft §6 push row now says the alert text can name a person, a child or a team; the first season's
+tryouts are told as they are. The moved family game keeps its sentence (its email unchanged).
+
 ## Sources
 - [Canada's Anti-Spam Legislation (S.C. 2010, c. 23) — ss.1(2), 6(1)–(3), 6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-13
 - [Electronic Commerce Protection Regulations (SOR/2013-221) — s.3](https://laws-lois.justice.gc.ca/eng/regulations/SOR-2013-221/page-1.html) — accessed 2026-11-13

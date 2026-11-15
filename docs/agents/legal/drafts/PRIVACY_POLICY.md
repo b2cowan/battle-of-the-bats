@@ -287,7 +287,7 @@ needs. We do not sell personal information, and we do not share it with advertis
 | **Resend** | Sends our emails, and the emails clubs send through FieldLogicHQ | Recipient's name and email address, and the message | United States |
 | **Stripe** | Card payments for our plans and our invoices for Stripe fees; and, when a club takes payments online, the club's own payment account | For our plans and invoices: the owner's email, the billing name and address, and the card. For club payments: the payer's email, card, what is being paid for and the player names on the payment | Canada, the United States and other countries |
 | **Google** (a Gmail account) | Our business email inbox — the addresses on this page arrive there | Messages people send us, which can include contact details | The United States and other countries |
-| **Your browser's push service** (for example Google, Apple or Mozilla) | Delivers notifications you turn on | A notification address and the alert text — no name or email | Varies |
+| **Your browser's push service** (for example Google, Apple or Mozilla) | Delivers notifications you turn on | A notification address and the alert text, which can name a person, a child or a team (for example "New sign-up: Henry Kim") | Varies |
 
 **How we hold them to it.** Supabase, AWS, Resend and Stripe each protect the personal information they handle for us under
 their standard data-processing terms, which form part of our agreement with each of them. Our Gmail inbox is a free account,

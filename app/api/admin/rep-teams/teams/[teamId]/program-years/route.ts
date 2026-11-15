@@ -113,6 +113,7 @@ export const POST = withObservability(async (req: Request,
     // The coach is told (a coach invited before the team's first season is already on its staff).
     await tellClubTeamStaff({
       org: ctx!.org, team, actorUserId: ctx!.user.id, action: 'started', seasonName: programYear.name,
+      tryoutsOpen: programYear.tryoutOpen,
     });
     return NextResponse.json({ programYear }, { status: 201 });
   } catch (e: any) {

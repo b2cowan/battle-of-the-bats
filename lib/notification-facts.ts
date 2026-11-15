@@ -84,6 +84,18 @@ export const FACT_LABELS = {
   clubOwes: 'Club owes',
   paidFor: 'Paid for',
   payment: 'Payment',
+  // Stage 4, the few-facts coach and league notices (owner rulings 2026-11-15, Q3–Q7) [marketing]
+  players: 'Players',
+  note: 'Note',
+  invitedBy: 'Invited by',
+  invited: 'Invited',
+  role: 'Role',
+  youreOn: 'You’re on',
+  arriveBy: 'Arrive by',
+  starts: 'Starts',
+  cameWith: 'Came with',
+  tryouts: 'Tryouts',
+  lastSeason: 'Last season',
 } as const;
 
 export const FACT_LABEL_MAX = 11;

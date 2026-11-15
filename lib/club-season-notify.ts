@@ -20,13 +20,14 @@ export async function tellClubTeamStaff(p: {
   seasonName: string;
   previousSeasonName?: string | null;
   carried?: ClubSeasonCarried | null;
+  tryoutsOpen?: boolean;
 }): Promise<void> {
   try {
     const userIds = await listActiveStaffUserIds(p.team.id);
     if (userIds.length === 0) return;
-    const { title, body } = clubSeasonNotice({
+    const { title, body, facts } = clubSeasonNotice({
       clubName: p.org.name, teamName: p.team.name, action: p.action, seasonName: p.seasonName,
-      previousSeasonName: p.previousSeasonName, carried: p.carried,
+      previousSeasonName: p.previousSeasonName, carried: p.carried, tryoutsOpen: p.tryoutsOpen,
     });
     const base = `/${p.org.slug}/coaches/teams/${p.team.id}`;
     await notify({
@@ -37,7 +38,7 @@ export async function tellClubTeamStaff(p: {
       userIds,
       excludeUserIds: [p.actorUserId],
       link: p.action === 'closed' ? `${base}/season-end` : base,
-      metadata: { teamId: p.team.id, action: p.action },
+      metadata: { teamId: p.team.id, action: p.action, ...(facts ? { facts } : {}) },
     });
   } catch (e) {
     console.error('[club-season-notify] staff notice failed (the season change landed):', e);

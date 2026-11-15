@@ -10,7 +10,109 @@ PM brief: `NOTIFICATION_MESSAGE_ROWS_PM_BRIEF.md`.
 **Stage 2 BUILT 2026-11-14, committed `ed417b626` 2026-11-14** (see "Stage 2 as built" below); reviewed and simplified
 2026-11-15 (see "Stage 2 review", fixes committed `b55793822`). **Stage 3 (the six list notices) BUILT 2026-11-15, simplified and
 reviewed 2026-11-15, committed `8f5f2e491` 2026-11-15** (see "Stage 3 as built" and "Stage 3 review"); the four undrawn kinds ruled
-2026-11-15. Next: the owner's browser check of Stages 2 and 3, then Stage 4.
+2026-11-15. **Stage 4 (the few-facts coach and league notices) RULED and BUILT 2026-11-15, commit owed** (see "Stage 4 as
+built"; five kinds get rows, the moved game keeps its sentence, Q1). Next: `/simplify` and `/review` of Stage 4, the commit,
+the owner's browser check of Stages 2–4, then Stage 5.
+
+## Stage 4 as built (2026-11-15)
+
+- **New registration** (`signupNotice` in `lib/league-signup.ts`, both senders): one line "Grace Kim · Summer 2027 · 1
+  approved" for the family's sign-up and the hand-entered one (which gained the guardian and the outcome; ruling 5); the
+  titles keep "New sign-up" / "New registration". Rows Season · Family · Players (one line per child, outcome bold; a
+  status outside the three staff words names the child with no outcome). **Audience (Q2): the house-league desk**
+  (`houseLeagueDeskUserIds`), the hand-entered one not to the person who typed it; nothing is sent when the desk is empty.
+- **Withdrawal request** (`ASK_WORDS.notice`): the line is "Pat Doe · Spring 2026 · with a note" / "· No note", never the
+  note's words; rows Family · Season · Note, the note quoted in full (300 at the door, nothing shortens it after). The
+  120-character cut is gone with the words. Needs-attention keys unchanged.
+- **Moved game** (`family_game_update`): untouched (Q1). The family email is byte-identical.
+- **Assistant-coach approval** (`staffApprovalNotice` in `lib/coach-capabilities.ts`, one entry for the three senders):
+  the line drops the role's sentence; rows Invited by (left out when unknown; the line says "A head coach") · Invited (the
+  address as typed) · Team · Role (bold, what it gets as the detail). `inviteId` unchanged.
+- **Practice plan** (`practicePlanSentMessage`): three or fewer stations is today's line; past three it names three and
+  counts the rest. Rows You’re on (a list, fold 6, keep 30, "and N more on the plan") · Arrive by · Starts. The coach-chosen
+  practice email still names every station. The send sheet's preview reads the same line.
+- **Season started** (`clubSeasonNotice`): the line is the team and what came ("Ridge 12U · Came with the team: 14 players,
+  the budget and the fee plan."), or with nothing the tryouts' state; rows Came with (one line each) · Tryouts · Last season
+  ("kept as a record"). Closed and reopened unchanged, no rows. **Q8:** the first season passes its tryouts state, and the
+  Overview's one-time card reads it too (a coach may have opened tryouts since the roll), so neither says "closed" when open.
+- **Eleven labels** added to `FACT_LABELS` (Players, Note, Invited by, Invited, Role, You’re on, Arrive by, Starts, Came with,
+  Tryouts, Last season); the label test now allows the house apostrophe.
+- **Privacy draft §6** (push service row) reworded per Q5: the alert text can name a person, a child or a team.
+- **Tests:** `tests/unit/notification-facts.test.ts` (the Stage 4 block: round-trips, blank inputs, every sender); the season
+  notice's two guards moved to the new one line. One guard caught the hand-entered path's `'admin'` value as a role name: it
+  is `'entered'`.
+- **Checks:** the touched tests pass; spelling clean; type check clean except another session's untracked
+  `layout-run-journal.test.ts`; `verify:changed` fails only on other sessions' files (listed in the hand-off).
+- **For `/docs` (not changed here):** the coaches' practice-plan help says each person's push names "their stations" (true;
+  past three it names three and counts the rest); the withdrawal help says the notice "opens Registrations on that child", but
+  its link opens the season's Registrations list (pre-existing); the registrations search text says "one needs attention
+  notice per sign-up", but the kind is a know notice (pre-existing).
+
+## Stage 4 review (2026-11-15)
+
+- **`/simplify`: no change.** `staffApprovalNotice` stays beside `STAFF_KIND_COPY` (the test must import the words, and
+  `lib/assistant-invites.ts` loads the server client); `clubSeasonNotice` and `clubSeasonStartedCard` share one `startedFacts`
+  (nothing written twice); `signupNotice`'s `via` stays `'signup' | 'entered'`; the coach-chosen practice email still names
+  every station.
+- **`/review`: clean.** Every blank input was run through the notice and read back (a blank guardian, a declined status, a
+  blank child, a note of spaces, an unknown or blank inviter, no stations, a blank station, a first season with nothing
+  carried, a roll with zero players): each still opens as rows, none voids them. Both registration senders reach
+  `houseLeagueDeskUserIds` only, the hand-entered one without the person who typed it; an empty desk sends nothing; the
+  hand-entered path stays fire-and-forget. The withdrawal note is never in the body. `programYear.tryoutOpen` exists on both
+  reads (the first season's route and the Overview card's route); the roll path leaves it out. `lib/family-notify.ts` untouched.
+- **`/docs`: three help sentences fixed.** The withdrawal help (house league article, club article) now says the notice opens the
+  season's Registrations list (it never opened one child; the link is unchanged); the registrations help search text no longer
+  says "needs attention notice per sign-up" (a know notice, to the house-league desk). The coaches' practice-plan help still reads
+  true (its quoted line has two stations).
+- **Still owed to `/legal`:** the privacy draft's retention finding 11 should name the withdrawal note now kept in full on the
+  stored notice.
+
+## Stage 4 rulings (2026-11-15, owner: "As recommended" on all eight)
+
+Q1 `family_game_update` keeps its sentence and leaves the 28 (now 27) · Q2 the new-registration notice goes to the
+house-league desk only, not to the admin who typed it · Q3 Players, one line per child · Q4 the note out of the line,
+quoted in full in a Note row · Q5 keep the address; the privacy draft's push row is reworded · Q6 three named, the rest
+counted · Q7 Came with · Tryouts · Last season · Q8 a first season with tryouts open says so. The questions as asked:
+
+## Stage 4 owner questions (2026-11-15, asked before any code)
+
+Found in the code before building (senders checked by hand): every kind has one builder through `notify()`; the generic
+opt-in email and the push print the body. `/legal` 2026-11-15 (`docs/agents/legal/CASL_LATE_BILL_EMAIL.md`, "Stage 4
+proposal"): CASL not owed on any of the six; the findings are folded into Q2, Q4, Q5 and Q8.
+
+1. **`family_game_update` keeps its sentence** (recommended), the same call as Q8 for "A game changed": "vs Hawks is now
+   Sat, Nov 8, 6:00 p.m. at Riverdale Park." is already one line and the summary. Families have no in-app frame at all
+   (they get only the email, which prints this sentence), so rows would only ever reach the coach's copy. Or: the coach's
+   copy gains Opponent · When · Where (three new labels); the family email is byte-identical either way.
+2. **`house_league_registration_new` reaches every active org member** (`notify()` with no recipients), including people
+   with no house-league access. `/legal`: a need-to-know finding (children's and the guardian's names). Recommended: send
+   it to the house-league desk (as the withdrawal request already does) and not to the admin who typed it, in this build.
+   Or keep the audience (the brief says it stays) and log it for `/plan`.
+3. **Registration rows.** Recommended: Season · Family (the guardian) · **Players** (new label; one line per child with
+   the outcome bold: "Henry Kim · **Approved**"). Or one **Status** row with the counts. Either way one line for both
+   senders ("Grace Kim · Summer 2027 · 1 approved"), so the admin-entered body gains the guardian and the outcome
+   (ruling 5); the two titles keep their words ("New sign-up" / "New registration": they say who started it).
+4. **Withdrawal request.** Recommended (`/legal`): the line leaves the note's words out ("Pat Doe · Spring 2026 · with a
+   note" / "· No note"), because a push or email would put a family's words (possibly health details) on a lock screen.
+   Rows: Family · Season · **Note** (new label), quoted in full, never shortened. The full note is then copied into the
+   stored rows (today 120 characters of it are in the body); `/legal` adds that to the privacy draft's retention finding
+   11. Or: the Note row says only that there is a note, read in the Withdraw window (no copy).
+5. **Assistant-coach approval.** One line drops the role's description: "Sam Lee invited pat@example.com to Ridge 12U as
+   an assistant coach." Rows: **Invited by** · **Invited** (the address, exact) · Team · **Role** (bold role, what it gets
+   as the quiet detail); three new labels. `/legal` notes the privacy draft (§6) says a push carries "no name or email",
+   and this kind's push is on by default with the address in the line. Recommended: reword §6, because titles across the
+   product already carry names ("New sign-up: Henry Kim"); taking one address out would not make §6 true. Or: the line
+   drops the address ("Sam Lee invited a new assistant coach to Ridge 12U.").
+6. **Practice plan.** Rows: **You’re on** (new label; the list, folding at 6) · **Arrive by** · **Starts** (two new
+   labels); a person on nothing gets no list row. Recommended: the line names up to three and counts the rest ("You’re on
+   Close control, Footwork ladder, Rondo and 2 more. Arrive by 5:45 p.m. for 6:00 p.m."), as family answers do; three or
+   fewer is today's line (the help article's quote stays true). The coach-chosen practice email is untouched.
+7. **Season started.** Line: "Ridge 12U · Came with the team: 14 players, the budget and the fee plan." (nothing came
+   along: "Ridge 12U · Tryouts are closed until you open them."). Rows: **Came with** (new; a list: 14 players · The budget
+   · The fee plan · The opening balance) · **Tryouts** (new) · **Last season** (new; "2026 Season", detail "kept as a
+   record"). The Overview's one-time "New season" card keeps its paragraph.
+8. **A first season created with tryouts open is told "Tryouts are closed until you open them."** (false; `/legal`: an
+   open tryout is a live public form). Recommended: fix it along the way: the notice says "Tryouts are open." when they are.
 
 ## Stage 3 as built (2026-11-15)
 

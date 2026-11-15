@@ -110,6 +110,8 @@ export const GET = withObservability(async (_req: Request,
       feePlan: (fees.count ?? 0) > 0,
       openingBalance: programYear.openingBalance != null,
     },
+    // The card shows once, later: a coach may have opened tryouts since the roll closed them.
+    tryoutsOpen: programYear.tryoutOpen,
   });
   return NextResponse.json({ started: { key: `club_started:${programYear.id}`, ...card }, welcome: null });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/club-arrival' });

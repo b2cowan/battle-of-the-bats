@@ -15,6 +15,7 @@ import { cutoffFor, bornFitsDate } from '@/lib/born-years';
 import { normalizeGuardianEmailRequired } from '@/lib/guardian-email';
 import { recordLeagueMarketingConsent } from '@/lib/org-people';
 import { notify } from '@/lib/notify';
+import { houseLeagueDeskUserIds } from '@/lib/notify-recipients';
 import { signupNotice, signupSubject, type PlacedChild } from '@/lib/league-signup';
 import { buildLeaguePayView, leagueMailLink } from '@/lib/league-pay-view';
 import { getClubSiteContent } from '@/lib/club-page-meta';
@@ -302,14 +303,19 @@ export const POST = withObservability(async (req: Request,
       console.error(`[league-register] ${copy.secondParentLine ? 'second parent ' : ''}email send failed:`, e);
     }
   }
+  // The house-league desk only (owner Q2, 2026-11-15; /legal: children's and the guardian's names are need-to-know), the
+  // same people the withdrawal request reaches.
   try {
     const n = signupNotice(children, `${guardianFirst} ${guardianLast}`, season.name);
-    await notify({
+    const userIds = await houseLeagueDeskUserIds(org);
+    if (userIds.length) await notify({
       orgId: org.id,
       eventType: 'house_league_registration_new',
       title: n.title,
       body: n.body,
       link: `/${org.slug}/admin/house-league/seasons/${season.id}/registrations`,
+      metadata: { facts: n.facts },
+      userIds,
     });
   } catch (e) {
     console.error('[league-register] staff notice failed:', e);
