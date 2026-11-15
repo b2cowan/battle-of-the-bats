@@ -9,7 +9,7 @@ view). `/legal` owed before Stage 3 for the moved-games email (Q7).
 PM brief: `NOTIFICATION_MESSAGE_ROWS_PM_BRIEF.md`.
 **Stage 2 BUILT 2026-11-14, committed `ed417b626` 2026-11-14** (see "Stage 2 as built" below); reviewed and simplified
 2026-11-15 (see "Stage 2 review", fixes committed `b55793822`). **Stage 3 (the six list notices) BUILT 2026-11-15, simplified and
-reviewed 2026-11-15, committed 2026-11-15** (see "Stage 3 as built" and "Stage 3 review"); the four undrawn kinds ruled
+reviewed 2026-11-15, committed `8f5f2e491` 2026-11-15** (see "Stage 3 as built" and "Stage 3 review"); the four undrawn kinds ruled
 2026-11-15. Next: the owner's browser check of Stages 2 and 3, then Stage 4.
 
 ## Stage 3 as built (2026-11-15)
