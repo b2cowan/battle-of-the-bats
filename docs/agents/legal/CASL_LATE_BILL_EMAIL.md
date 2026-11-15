@@ -133,7 +133,7 @@ Statute not re-fetched (finding 1's reading, verified 2026-11-13, unchanged).
 - **Owner questions:** Q1 fix the registration audience in this build (recommended) or log it. Q2 withdrawal line (b) and a live-read
   Note (recommended). Q3 invitee address out of the push line (recommended) or reword §6. Q4 none for kinds 3, 5, 6.
 
-**Owner ruled 2026-11-15 ("as recommended") and BUILT 2026-11-15, commit owed:** the new-registration notice goes to the
+**Owner ruled 2026-11-15 ("as recommended") and BUILT 2026-11-15, committed `3902fc9e5` 2026-11-15:** the new-registration notice goes to the
 house-league desk only; the withdrawal line names "with a note", never its words, and the note is quoted in full in the
 opened notice (copied into the stored rows, so it joins the retention finding 11); the invitee's address stays in the line
 and the privacy draft §6 push row now says the alert text can name a person, a child or a team; the first season's

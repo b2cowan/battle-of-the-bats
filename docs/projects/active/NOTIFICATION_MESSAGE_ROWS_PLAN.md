@@ -10,9 +10,9 @@ PM brief: `NOTIFICATION_MESSAGE_ROWS_PM_BRIEF.md`.
 **Stage 2 BUILT 2026-11-14, committed `ed417b626` 2026-11-14** (see "Stage 2 as built" below); reviewed and simplified
 2026-11-15 (see "Stage 2 review", fixes committed `b55793822`). **Stage 3 (the six list notices) BUILT 2026-11-15, simplified and
 reviewed 2026-11-15, committed `8f5f2e491` 2026-11-15** (see "Stage 3 as built" and "Stage 3 review"); the four undrawn kinds ruled
-2026-11-15. **Stage 4 (the few-facts coach and league notices) RULED and BUILT 2026-11-15, commit owed** (see "Stage 4 as
-built"; five kinds get rows, the moved game keeps its sentence, Q1). Next: `/simplify` and `/review` of Stage 4, the commit,
-the owner's browser check of Stages 2–4, then Stage 5.
+2026-11-15. **Stage 4 (the few-facts coach and league notices) RULED and BUILT 2026-11-15, simplified and reviewed 2026-11-15,
+committed `3902fc9e5` 2026-11-15** (see "Stage 4 as built" and "Stage 4 review"; five kinds get rows, the moved game keeps
+its sentence, Q1). Next: the owner's browser check of Stages 2–4, then Stage 5.
 
 ## Stage 4 as built (2026-11-15)
 
