@@ -298,7 +298,7 @@ export const CLUB_MONEY_NOTICE = {
     const day = formatStoredDate(p.sentOn, { withYear: false });
     return {
       title: `${p.teamName} says they sent ${fmt(p.amount)}`,
-      body: `${p.what}, sent ${day}.`,
+      body: `${p.what}, sent ${day}${p.how ? ` · ${p.how}` : ''}.`,
       facts: noticeFacts([
         factRow(FACT_LABELS.amount, fmt(p.amount), { lead: true }),
         factRow(FACT_LABELS.for, p.what),

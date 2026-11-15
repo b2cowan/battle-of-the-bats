@@ -151,6 +151,11 @@ describe('the fifteen money notices (C): one wording per kind, rows from the sha
     assert.equal(teamCard.body, '$150.00 to Visa •••• 4242 came back.');
     assert.equal(teamCard.facts.next, 'Send the money another way, then record the refund.');
   });
+  it('a club notice that can email keeps the one fact its email needs in the one line (Stage 2 review)', () => {
+    const notReceived = FAMILY_HANDOFF_COACH_WORDS.admin({ team: 'Ridge 12U', child: 'Henry', amount: '$150.00', method: 'E-Transfer', receivedDay: 'Nov 8' });
+    assert.match(notReceived.body, /e-transfer, Nov 8/, 'which payment: how, and the day');
+    assert.equal(CLUB_MONEY_NOTICE.sent({ teamName: 'Ridge 12U', amount: 150, what: 'Winter dome', sentOn: '2026-11-08', how: 'E-Transfer' }).body.includes('E-Transfer'), true);
+  });
   it('every sender of a kind passes facts to its one entry — no sender writes its own paragraph', () => {
     const landing = readCode('lib/online-payment-landing.ts');
     assert.equal((landing.match(/refundFailedNotice\(/g) ?? []).length, 3, 'send-back (A, B), a team refund (C, E), a child’s (D)');

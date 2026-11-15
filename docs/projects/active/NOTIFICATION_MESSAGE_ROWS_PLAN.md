@@ -7,7 +7,8 @@
 (tab 6's verdict); Q9 = the phone sheet's buttons when a notice outgrows it (moved games measured 131px below the first
 view). `/legal` owed before Stage 3 for the moved-games email (Q7).
 PM brief: `NOTIFICATION_MESSAGE_ROWS_PM_BRIEF.md`.
-**Stage 2 BUILT 2026-11-14, commit owed** (see "Stage 2 as built" below). Next: the owner's browser check, then Stage 3.
+**Stage 2 BUILT 2026-11-14, committed `ed417b626` 2026-11-14** (see "Stage 2 as built" below); reviewed and simplified
+2026-11-15 (see "Stage 2 review"). Next: the owner's browser check, then Stage 3.
 
 ## Stage 2 as built (2026-11-14)
 
@@ -35,6 +36,29 @@ PM brief: `NOTIFICATION_MESSAGE_ROWS_PM_BRIEF.md`.
 - **Words** are draft copy tagged `[marketing]` in the words files, owed to the one /marketing pass.
 - Tests: `tests/unit/notification-facts.test.ts` (new), and the reference case's, dispute, paid-twice, 12c review, desk,
   hand-back and sheet-frame guards updated.
+
+## Stage 2 review (2026-11-15)
+
+- **Simplify:** one change. The failed-subscription ending's first sentence was written twice (the bell's line and the
+  Payouts card's paragraph); it is now written once and the paragraph builds on it. The nine words helpers are each used
+  at least twice and none repeats an existing money formatter; `endingBell` beside `endingNotice` stays (the card reads
+  one, the bell the other); the light-module boundary, `useOutgrows` and `pinActions` stay as built.
+- **Review, fixed:** two of the six club kinds that can email lost the fact that says WHICH payment when their body
+  became one line. "Payment not received" (`club_payment_not_received`) once again names how it was paid and the day;
+  "Team money sent" (`team_money_sent`) once again names how. Both are still one line; the rows are unchanged.
+- **Review, held:** a malformed `metadata.facts` reads as null (never throws) and a notice stored with the first shape
+  (`metadata.timeChange`) still draws as rows; a team's debit reversed says "team" in every row and line; refund amounts
+  follow the refund row first, then the payment plus the fee only when the fee goes back and the family paid it, and a
+  refund that could not be sent never says "came back"; all fifteen kinds' senders call their one words entry and store
+  `facts` (every insert path checked); the pinned button row takes the same room as the unpinned one (16px above, the
+  sheet's 14px under), so pinning cannot flip its own measure.
+- **Owner questions (not decided here):**
+  1. **"Sent to" on a refund that was never sent.** The row reads "Sent to · The card ending 4242" beside "Reason · It
+     couldn’t be sent". The destination is right; the label may read as if it went. Keep, or a label such as "Refund to"
+     (9 characters). Copy call, owed to the /marketing pass.
+  2. **`club_hand_back_unasked`:** the one line no longer says "you can ask for it back from the practice" (that
+     instruction is in the opened notice and the email's link). Keep, or restore it in the line.
+
 Census (every kind, its real wording, its group, where it is built): `NOTIFICATION_MESSAGE_ROWS_CENSUS.md`.
 
 ## Why

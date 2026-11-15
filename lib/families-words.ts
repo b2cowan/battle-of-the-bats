@@ -773,7 +773,8 @@ export const FAMILY_HANDOFF_COACH_WORDS = {
   /** `club_payment_not_received`, opened (Notifications read at a glance, Stage 2): the one line, then Amount · For · Team ·
    *  Received · How · Book. [marketing] */
   admin: (p: { team: string; child: string; amount: string; method: string | null; receivedDay: string }) => ({
-    body: `${possessive(p.team)} head coach says it never reached the team. Nothing was recorded.`,
+    // The one line keeps WHICH payment (how, and the day): an email built from the body has no rows to say it.
+    body: `${possessive(p.team)} head coach says the payment you sent (${p.method ? `${p.method.toLowerCase()}, ` : ''}${p.receivedDay}) never reached the team. Nothing was recorded.`,
     facts: noticeFacts([
       factRow(FACT_LABELS.amount, p.amount, { lead: true }),
       factRow(FACT_LABELS.for, p.child),

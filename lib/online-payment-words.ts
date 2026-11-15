@@ -505,6 +505,9 @@ function oweToday(families: number, teams: number): string {
   return '';
 }
 
+/** The failed-subscription ending's first sentence: the owner's bell says only this; the Payouts card adds what follows. */
+const LEAVING_FAILED_LINE = (clubName: string) => `${possessive(clubName)} subscription payment didn’t go through.`;
+
 /** LEAVING ONLINE PAYMENTS (12d-2 Part 3; words CLUB_TIER_STAGE12D_COPY.md §4). One rule (ask 4): no ending disconnects
  *  the Stripe account; every ending closes open pay pages and counts them (ask 11). Marked "derived": no words-doc key,
  *  owed to /marketing. */
@@ -564,8 +567,8 @@ export const LEAVING_WORDS = {
     compSentence: (targetPlan: string, dateLong: string) => `Your organization moves to the free ${targetPlan} plan on ${dateLong}.`,
     // Derived (owner 2026-10-27: a failed payment is warned the day it fails, with no date): owed to /marketing.
     failedTitle: 'Online payments stop if the subscription payment doesn’t go through',
-    failedLine: (clubName: string) => `${possessive(clubName)} subscription payment didn’t go through.`,
-    failedSentence: (clubName: string) => `${possessive(clubName)} subscription payment didn’t go through. If it still doesn’t, ${clubName} is suspended and online payments stop.`,
+    failedLine: LEAVING_FAILED_LINE,
+    failedSentence: (clubName: string) => `${LEAVING_FAILED_LINE(clubName)} If it still doesn’t, ${clubName} is suspended and online payments stop.`,
     /** The owner's bell, opened (Notifications read at a glance, Stage 2). [marketing] The Payouts card keeps `body`. */
     bell: {
       planReason: (targetPlan: string) => `Moving to the free ${targetPlan} plan`,
