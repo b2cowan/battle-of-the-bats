@@ -347,7 +347,8 @@ describe('12 · copying is how New schedule opens, never a field inside it (owne
   it('changing your mind is Cancel — the window’s back stays step 2’s (Ask 2)', () => {
     // Find the time (a schedule on several permits, Session D) is its own level over step 1, with its Back to New schedule;
     // the opening screen still has none — it is never the finder (`inFinder` needs `!choosing`).
-    has(code, "back={inFinder ? { label: W.newTitle, onBack: () => setFinding(false) } : step === 'drafts' ? { label: W.settingsBack, onBack: () => setStep('settings') } : undefined}");
+    // Add time (Session E) is the same window titled Add time: its levels go back to it.
+    has(code, "back={inFinder ? { label: addingTime ? W.addTitle : W.newTitle, onBack: () => setFinding(false) } : step === 'drafts' ? { label: addingTime ? W.addTitle : W.settingsBack, onBack: () => setStep('settings') } : undefined}");
     has(code, "const inFinder = finding && !!findFilters && !!inputs && !choosing && step === 'settings';");
   });
 });

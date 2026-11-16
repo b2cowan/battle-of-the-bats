@@ -68,7 +68,7 @@ interface PageRead extends ScheduleView {
 type Win =
   | { kind: 'slot'; key: string }
   | { kind: 'swap'; key: string }
-  | { kind: 'settings'; regenerate?: boolean; addDatesOff?: DateOff[] }
+  | { kind: 'settings'; regenerate?: boolean; addDatesOff?: DateOff[]; addTime?: boolean }
   | { kind: 'fair' }
   | { kind: 'bill' }
   | { kind: 'send'; start: 'draft' | 'final' | 'changes' | 'bill'; bill?: object }
@@ -406,6 +406,8 @@ export default function SchedulePage() {
   );
   const tools = (
     <CoachToolbarMenu label={W.tools} icon={<MoreHorizontal size={isPhone ? 20 : 15} aria-hidden />} variant={isPhone ? 'glyph' : 'secondary'} drawerOnPhone drawerTitle={W.tools}>
+      {/* S1 A: Add time beside Settings…, first in Tools — it only adds; Settings… changes what is there. */}
+      {canChange && <CoachToolbarMenuItem label={W.toolAddTime} hint={W.toolAddTimeHint} onSelect={() => setWin({ kind: 'settings', addTime: true })} />}
       {canChange && <CoachToolbarMenuItem label={W.toolSettings} hint={W.toolSettingsHint} onSelect={() => setWin({ kind: 'settings' })} />}
       {canChange && <CoachToolbarMenuItem label={W.toolRegenerate} onSelect={() => setWin({ kind: 'settings', regenerate: true })} />}
       {canChange && lens === 'grid' && <CoachToolbarMenuItem label={W.toolLockWeek(weekScope)} onSelect={lockWeek} />}
@@ -723,8 +725,8 @@ export default function SchedulePage() {
       {win?.kind === 'settings' && (
         <NewScheduleWindow q={q} orgSlug={slug} orgName={currentOrg?.name} onCancel={() => setWin(null)}
           settingsOf={{
-            view: v, regenerate: win.regenerate, addDatesOff: win.addDatesOff, onStale: () => void load(),
-            onKept: (_version, renamed) => { setWin(null); setMoved(new Set()); say(renamed ? W.regenerated(s.name) : W.regeneratedNotRenamed(s.name)); void load(); },
+            view: v, regenerate: win.regenerate, addDatesOff: win.addDatesOff, addTime: win.addTime, onStale: () => void load(),
+            onKept: (_version, renamed, said) => { setWin(null); setMoved(new Set()); say(said ?? (renamed ? W.regenerated(s.name) : W.regeneratedNotRenamed(s.name))); void load(); },
           }} />
       )}
       {/* ⚖ 13c Session C (C4 = A): Fair shares and the bill, in a window — the team table and its bill door. A reader

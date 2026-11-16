@@ -59,19 +59,24 @@ interface FindOwnTime { startsOn: string; endsOn: string; blocks: readonly objec
 const SHORTEST = [30, 45, 60, 90, 120, 180, 240];
 
 /** The filters as the route reads them: only whole ranges of hours. */
-function bodyOf(f: FindFilters, own: FindOwnTime | null) {
+function bodyOf(f: FindFilters, own: FindOwnTime | null, scheduleId: string | null) {
   const hours = f.hours.filter(h => h.start && h.end && h.end > h.start).map(h => ({ start: h.start, end: h.end }));
-  return { from: f.from, to: f.to, weekdays: f.weekdays, hours, kinds: f.kinds, venueIds: f.venueIds, issuers: f.issuers, minMinutes: f.minMinutes, own };
+  return {
+    from: f.from, to: f.to, weekdays: f.weekdays, hours, kinds: f.kinds, venueIds: f.venueIds, issuers: f.issuers, minMinutes: f.minMinutes, own,
+    // Add time (Session E): the schedule asking, so its own slots are taken too (drawing tab 3, "This schedule’s own
+    // practices are taken").
+    ...(scheduleId ? { scheduleId } : {}),
+  };
 }
 
 /** The finder's reading, asked again a moment after the filters stop changing; the last answer stays while it does. */
-export function useFreeTime(q: string, filters: FindFilters | null, own: FindOwnTime | null) {
+export function useFreeTime(q: string, filters: FindFilters | null, own: FindOwnTime | null, scheduleId: string | null = null) {
   const [data, setData] = useState<FreeTime | null>(null);
   /** The question the last answer (or refusal) was to: loading is "the filters have moved on since". */
   const [answered, setAnswered] = useState<{ key: string; ok: boolean; error?: string } | null>(null);
   // The question as text, so the effect depends on what is asked and not on a new object each render.
   const key = filters && isCalendarDate(filters.from) && isCalendarDate(filters.to) && filters.to >= filters.from
-    ? JSON.stringify(bodyOf(filters, own)) : null;
+    ? JSON.stringify(bodyOf(filters, own, scheduleId)) : null;
   useEffect(() => {
     if (!key) return;
     let live = true;

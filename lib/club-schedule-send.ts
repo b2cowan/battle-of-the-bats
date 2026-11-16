@@ -27,7 +27,7 @@ import { diffAgainstSent, slotPatterns, type Slot } from './club-schedule-engine
 import {
   billCorrections, correctionInstallments, hourOfScale, keptRateOf, paymentPeriods, pricedMinutes, pricedValues, sharesAtRates, timeSplits, uniformRate,
   valuesAfterChanges,
-  type BillSlot, type Installment, type TimeSplit,
+  type BillSlot, type Installment, type KeptRates, type PaymentPeriod, type TimeSplit,
 } from './club-schedule-bill';
 import {
   SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, changeLine, houseLeagueUse, patternLine,
@@ -356,7 +356,7 @@ async function readPractices(orgId: string, slotIds: readonly string[]): Promise
  * gained and what was lost; this names each change and writes each row — a move updates the practice in place, a gain
  * is written on the team's running season (a team without one is said, never written), a loss is retired.
  */
-function planChanges(c: Context, practices: readonly Practice[]): ChangesPlan {
+export function planChanges(c: Context, practices: readonly Practice[]): ChangesPlan {
   const slotByKey = new Map(c.slots.map(s => [s.key, s]));
   const slotById = new Map([...c.slotIdOf].map(([key, id]) => [id, slotByKey.get(key)!]));
   const practiceById = new Map(practices.map(p => [p.id, p]));
@@ -604,6 +604,40 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
 }
 
 /**
+ * SEND THE CHANGES' MONEY (Stage 11d Ask 8; Session C; a schedule on several permits P9 B, Session E's test) — pure, the
+ * one place the send works it out. Each slot at the rate the bill kept for its permit; a permit that was NOT behind the
+ * bill when it was made (Add time) at ITS OWN price, kept from this send (`fresh`); only the teams the club's changes
+ * touch measured again (`valuesAfterChanges`), so a team the change does not reach keeps its value to the cent; each
+ * team's gain a NEW correction with its own payments over the slots it gained (`correctionInstallments`) — never a
+ * re-spread of what it already owes; a loss credited off what it owes (written by the step).
+ */
+export function changesMoney(
+  c: Pick<Context, 'slots' | 'slotIdOf' | 'assignments' | 'teams' | 'prices'>,
+  plan: Pick<ChangesPlan, 'byTeam' | 'gainedSlots'>,
+  kept: KeptRates,
+  before: Readonly<Record<string, number>>,
+  handBacks: readonly HandBackRow[],
+  o: { periods: readonly PaymentPeriod[]; today: string },
+): { now: Map<string, number>; correction: { gains: Map<string, number>; losses: Map<string, number> }; fresh: Map<string, number>; splits: TimeSplit[] } {
+  const { rateOf, fresh } = keptRateOf(kept, c.prices.hourOf);
+  const measured = measureWithHandBacks(handBacks, billSlotsOf(c.slots, c.assignments, c.prices.priceKeyOf), c, rateOf, kept.scale);
+  const atRate = sharesAtRates(measured, measured.oneRate, c.teams.map(t => t.id));
+  const paymentWeight = measured.oneRate === null ? rateOf : undefined;
+  const now = valuesAfterChanges(before, atRate, new Set(plan.byTeam.keys()));
+  const correction = billCorrections(before, now);
+  const splits: TimeSplit[] = [...correction.gains].map(([t, cents]) => {
+    const installments = correctionInstallments(cents, t, plan.gainedSlots.get(t) ?? [], o.periods, o.today, paymentWeight);
+    const gainedMinutes = (plan.gainedSlots.get(t) ?? []).reduce((n, g) => n + ((g.endMs - g.startMs) / 60_000) * g.weight, 0);
+    return {
+      teamId: t, programYearId: c.teams.find(x => x.id === t)?.season?.id ?? '', amount: cents / 100,
+      splitValue: Math.max(0.01, Math.round((gainedMinutes / 60) * 100) / 100),
+      paymentSchedule: installments.length > 1 ? 'custom' as const : 'standard' as const, notes: null, installments,
+    };
+  });
+  return { now, correction, fresh, splits };
+}
+
+/**
  * ⚖ A HAND-BACK IS NEVER THE CLUB TAKING TIME (Stage 11d, Asks 8 and 9; S11D-03's hidden owed-back). A team's measure
  * at Send the changes adds back the priced minutes of every slot it handed back — a plain hand-back's (the team still
  * pays for that time, so it stays in what the team was billed) unless the team holds the slot again, and an accepted
@@ -616,9 +650,20 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
  * back always; given back by the club, it is time gained and billed). A waiting or declined late ask adds nothing.
  */
 async function withHandedBack(orgId: string, scheduleId: string, billSlots: readonly BillSlot[], c: Context, rateOf: (s: BillSlot) => number, scale: number): Promise<TeamMeasure> {
-  const rows = await fetchAll<{ slot_id: string | null; priced_minutes: number | string; club_schedule_hand_backs: { team_id: string; state: string; asked_at: string; closed_at: string | null } | null }>((a, b) => supabaseAdmin
+  return measureWithHandBacks(await readHandBacks(orgId, scheduleId), billSlots, c, rateOf, scale);
+}
+
+/** A slot handed back, as the measure reads it (`club_schedule_hand_back_slots` with its hand-back). */
+export interface HandBackRow { slot_id: string | null; priced_minutes: number | string; club_schedule_hand_backs: { team_id: string; state: string; asked_at: string; closed_at: string | null } | null }
+
+async function readHandBacks(orgId: string, scheduleId: string): Promise<HandBackRow[]> {
+  return fetchAll<HandBackRow>((a, b) => supabaseAdmin
     .from('club_schedule_hand_back_slots').select('slot_id, priced_minutes, club_schedule_hand_backs!inner ( team_id, state, schedule_id, asked_at, closed_at )')
     .eq('org_id', orgId).eq('handed_back', true).eq('club_schedule_hand_backs.schedule_id', scheduleId).order('id').range(a, b));
+}
+
+/** `withHandedBack`'s measure, once the hand-backs are read (pure). */
+function measureWithHandBacks(rows: readonly HandBackRow[], billSlots: readonly BillSlot[], c: Pick<Context, 'slots' | 'slotIdOf' | 'assignments'>, rateOf: (s: BillSlot) => number, scale: number): TeamMeasure {
   const keyOf = new Map([...c.slotIdOf].map(([key, id]) => [id, key]));
   // Session C: each team's VALUE beside its minutes — a slot at its kept rate, a Sunday handed back at its slot's (the
   // bill's rate when the slot is gone) — and whether every one of them bills at one rate (then the minutes path, as before).
@@ -792,7 +837,6 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
   let plan: ChangesPlan | undefined;
   let correction: { gains: Map<string, number>; losses: Map<string, number> } | undefined;
   let correctionBlocked: SendPreview['correctionBlocked'] = null;
-  let paymentWeight: ((s: BillSlot) => number) | undefined;
   // ⚖ Ask 9: a hand-back is never a change waiting for a send — always empty (the shape stays for the window).
   const handedBack: SendPreview['handedBack'] = [];
   const lost = new Map<string, LostTime>();
@@ -805,14 +849,13 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
       // act — and each is measured with the time it handed back added back (`withHandedBack`), so a Sunday handed back is
       // never read as one the club took (S11D-03).
       const before = told?.team_values ?? {};
+      const today = tournamentToday();
+      const periods = paymentPeriods(row.bill_plan ?? 'one', { firstDue: row.bill_first_due ?? today, dates: row.bill_dates, lastDay: row.ends_on });
       // Each slot at its kept rate; a permit that was not behind the bill at its own price, kept from this send (P9 B).
-      const { rateOf, fresh } = keptRateOf(kept, c.prices.hourOf);
-      const measured = await withHandedBack(c.orgId, row.id, billSlotsOf(c.slots, c.assignments, c.prices.priceKeyOf), c, rateOf, kept.scale);
-      const atRate = sharesAtRates(measured, measured.oneRate, c.teams.map(t => t.id));
-      rates = rateRows(fresh);
-      paymentWeight = measured.oneRate === null ? rateOf : undefined;
-      const now = valuesAfterChanges(before, atRate, new Set(plan.byTeam.keys()));
-      correction = billCorrections(before, now);
+      const money = changesMoney(c, plan, kept, before, await readHandBacks(c.orgId, row.id), { periods, today });
+      rates = rateRows(money.fresh);
+      const now = money.now;
+      correction = money.correction;
       // Ask 8: a team that LOST time is credited off what it owes (the rest owed back) — worded here, written in the step.
       for (const [t, cents] of correction.losses) {
         const settled = await lostTime(c.orgId, row.id, t, cents, c);
@@ -826,19 +869,9 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
       teamValues = Object.fromEntries(now);
       const gainTotal = [...correction.gains.values()].reduce((a, b) => a + b, 0);
       if (gainTotal > 0) {
-        const today = tournamentToday();
         const blocked = await billBlockers(c, sctx.canMoney, gainTotal, today);
         correctionBlocked = correctionBlocked ?? blocked[0] ?? null;
-        const periods = paymentPeriods(row.bill_plan ?? 'one', { firstDue: row.bill_first_due ?? today, dates: row.bill_dates, lastDay: row.ends_on });
-        splits = [...correction.gains].map(([t, cents]) => {
-          const installments = correctionInstallments(cents, t, plan!.gainedSlots.get(t) ?? [], periods, today, paymentWeight);
-          const gainedMinutes = (plan!.gainedSlots.get(t) ?? []).reduce((n, s) => n + ((s.endMs - s.startMs) / 60_000) * s.weight, 0);
-          return {
-            teamId: t, programYearId: c.teams.find(x => x.id === t)?.season?.id ?? '', amount: cents / 100,
-            splitValue: Math.max(0.01, Math.round((gainedMinutes / 60) * 100) / 100),
-            paymentSchedule: installments.length > 1 ? 'custom' as const : 'standard' as const, notes: null, installments,
-          };
-        });
+        splits = money.splits;
         for (const s of splits) if (!s.programYearId && !correctionBlocked) correctionBlocked = { code: 'season_closed', error: R.seasonClosed(teamName(s.teamId)) };
       }
     }

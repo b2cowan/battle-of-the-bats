@@ -3,8 +3,9 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { clearSettled } from '@/lib/needs-attention';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import {
-  draftToSave, editSlotsStep, loadSchedule, pricePermitOf, readBill, readClubTeams, readName, readRequestPrices, readScheduleRequest,
+  addTimeRequest, draftToSave, editSlotsStep, keepingFor, loadSchedule, requestOnStored, timeWithoutPermit, pricePermitOf, readBill, readClubTeams, readName, readRequestPrices, readScheduleRequest,
   repTeamsRefusal, resolveScheduler, roomChecker, saveScheduleStep, schedulePermitIds, schedulePrices, scheduleView, schedulerRefusal, timePayload,
+  type ScheduleRequest,
 } from '@/lib/club-schedule-server';
 import { changesSummary, sendLog } from '@/lib/club-schedule-send';
 import { scheduleReplies } from '@/lib/club-schedule-coach';
@@ -14,6 +15,7 @@ import { datesOffKeepingParks } from '@/lib/club-schedule-permit-rows';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { tournamentToday } from '@/lib/timezone';
 import { DEFAULT_PRICE_MODE } from '@/lib/club-schedule-bill';
+import type { KeepChange } from '@/lib/club-schedule-keep';
 
 // ---------------------------------------------------------------------------
 // ONE SCHEDULE (Club Tier Stage 11a, part A — hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11, specimens 6–10, 14).
@@ -25,7 +27,13 @@ import { DEFAULT_PRICE_MODE } from '@/lib/club-schedule-bill';
 //          rename      { name }
 //          regenerate  { startsOn, endsOn, blocks, datesOff, settings, assignments } — Tools › Settings… and "Regenerate
 //                      the unlocked slots": the slots locked or moved by hand stay where they are (Ask 19). On a sent
-//                      schedule it is a change to send (Ask 14).
+//                      schedule it is a change to send (Ask 14), and nothing before today moves (P10 A).
+//          add_time    { endsOn, blocks, datesOff, assignments } — Tools › Add time… (S1 A): the NEW rows only; nothing on
+//                      the schedule moves, locked or not; the end widens. On a sent schedule the new slots wait for Send
+//                      the changes, which bills them (P9 B).
+//          take_permit_off { permitId } — Settings… › "Take it off…" (P11 A): that permit's rows and slots come off, and
+//                      nothing else moves. On a sent schedule its slots before today stay (and so does their bill); its rows
+//                      end the day before today; the rest waits for Send the changes, which credits it.
 //          edit        { edits: [{ slotId, teamIds?, locked? }] } — the grid's hand edits (Ask 13): a slot whose teams change
 //                      by hand LOCKS ITSELF; `locked: false` frees it. The client works out which weeks a drop reaches
 //                      (`planMove`); the server re-validates (the one refusal: a team twice at once). UNDO (the 8-second
@@ -91,6 +99,23 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   const version = Number(body.version);
   if (!Number.isInteger(version) || version !== loaded.row.version) return schedulerRefusal(409, 'changed', R.changed, { version: loaded.row.version });
 
+  /** The one save for a change to the time: what the change keeps is kept exactly (`keepingFor`), and so are the slots
+   *  locked or moved by hand that the new time still holds (Ask 19). */
+  const keepTime = async (asked: ScheduleRequest, change: KeepChange, assignments: unknown = body.assignments) => {
+    const keep = keepingFor(loaded, asked.time, change, asked.places);
+    const req = keep ? { ...asked, time: keep.time } : asked;
+    // The rows it sends, each priced by its own permit (a schedule on several permits).
+    const { prices, gone } = await readRequestPrices(orgId, pricePermitOf(loaded.row), req.time.blocks);
+    if (gone) return gone;
+    const kept = new Map(loaded.slots.filter(s => !s.removed && (s.locked || s.movedByHand)).map(s => [s.key, s]));
+    const draft = draftToSave(req, prices, assignments, kept, keep);
+    if (!draft.ok) return draft.response;
+    const saved = await saveScheduleStep(orgId, scheduleId, actor, version, {
+      settings: req.settings, ...timePayload(req.time), slots: draft.slots,
+    });
+    return saved.ok ? NextResponse.json({ version: saved.version }) : saved.response;
+  };
+
   try {
     if (body.action === 'rename') {
       const name = readName(body.name);
@@ -105,17 +130,24 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       // A date off whose request never said its parks (a tab from before mig 488) keeps the ones stored: the drafts are cut,
       // and the save keeps, what the day names today — never widened to All venues.
       const asked = { ...read, value: { ...read.value, time: { ...read.value.time, datesOff: datesOffKeepingParks(read.value.time.datesOff, loaded.time.datesOff) } } };
-      // The rows the regenerate sends, each priced by its own permit (a schedule on several permits).
-      const { prices, gone } = await readRequestPrices(orgId, pricePermitOf(loaded.row), asked.value.time.blocks);
-      if (gone) return gone;
-      // The slots locked or moved by hand are kept exactly (Ask 19) — whatever the draft says of them.
-      const kept = new Map(loaded.slots.filter(s => !s.removed && (s.locked || s.movedByHand)).map(s => [s.key, s]));
-      const draft = draftToSave(asked.value, prices, body.assignments, kept);
-      if (!draft.ok) return draft.response;
-      const saved = await saveScheduleStep(orgId, scheduleId, actor, version, {
-        settings: asked.value.settings, ...timePayload(asked.value.time), slots: draft.slots,
-      });
-      return saved.ok ? NextResponse.json({ version: saved.version }) : saved.response;
+      return keepTime(asked.value, { kind: 'regenerate' });
+    }
+
+    if (body.action === 'add_time') {
+      // The new rows only: the schedule's own rows, dates off and settings are read from what is stored (`addTimeRequest`).
+      const asked = await addTimeRequest(orgId, loaded, body, { houseLeague: r.houseLeague, repTeams: r.repTeams });
+      if (!asked.ok) return asked.response;
+      return keepTime(asked.value, { kind: 'add' });
+    }
+
+    if (body.action === 'take_permit_off') {
+      const permitId = typeof body.permitId === 'string' ? body.permitId : '';
+      // The time without that permit's rows (the rest by id, untouched); its past comes back through the keeping rule.
+      const time = timeWithoutPermit(loaded, permitId);
+      if (!time) return schedulerRefusal(409, 'changed', R.changed, { version: loaded.row.version });
+      const asked = await requestOnStored(orgId, loaded, time, { houseLeague: r.houseLeague, repTeams: r.repTeams });
+      if (!asked.ok) return asked.response;
+      return keepTime(asked.value, { kind: 'take_off', permitId }, []);
     }
 
     if (body.action === 'edit') {

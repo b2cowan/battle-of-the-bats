@@ -278,12 +278,18 @@ describe('the money: one step, build questions A and B (ruled 2026-10-11)', () =
   });
   it('B, amended by Stage 11d Ask 8: a gain is a correction bill; a loss is CREDITED in the step (never a negative bill, never "owed back")', () => {
     const preview = functionBody(readCode('lib/club-schedule-send.ts'), 'previewSend');
-    assert.match(preview, /splits = \[\.\.\.correction\.gains\]\.map\(/);
-    assert.doesNotMatch(preview, /correction\.losses\]\.map\(/, 'a loss never becomes a bill');
+    // The money of Send the changes is worked out in ONE pure function the send calls (`changesMoney`, Session E: its P9 B
+    // test runs it through the send's own planning — club-schedule-add-time-send.test.ts).
+    const money = functionBody(readCode('lib/club-schedule-send.ts'), 'changesMoney');
+    assert.match(preview, /const money = changesMoney\(c, plan, kept, before, await readHandBacks\(/);
+    assert.match(preview, /splits = money\.splits;/);
+    assert.match(money, /splits: TimeSplit\[\] = \[\.\.\.correction\.gains\]\.map\(/);
+    assert.doesNotMatch(money + preview, /correction\.losses\]\.map\(/, 'a loss never becomes a bill');
     // Each team that lost time is worded from the credit the step will write (`lostTime` → `creditApplication`).
     assert.match(preview, /for \(const \[t, cents\] of correction\.losses\) \{\s*const settled = await lostTime\(/);
     // Hand-backs are the team's own act: never measured as the club's change (S11D-03's hidden owed-back).
-    assert.match(preview, /valuesAfterChanges\(before, atRate, new Set\(plan\.byTeam\.keys\(\)\)\)/);
+    assert.match(money, /valuesAfterChanges\(before, atRate, new Set\(plan\.byTeam\.keys\(\)\)\)/);
+    assert.match(money, /measureWithHandBacks\(handBacks,/);
     assert.match(preview, /await withHandedBack\(/);
     const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
     assert.doesNotMatch(send, /owedBack/, 'build question B\'s owed-back is retired (Ask 8)');

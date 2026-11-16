@@ -9,14 +9,14 @@ import { clubSchedulerOn, isScheduleBuilder } from './club-schedule-gate';
 import { resolvePersonNamer } from './db';
 import { liveSeasonOf } from './season-live';
 import { isUuid } from './utils';
-import { addCalendarDays, isCalendarDate, mondayOfDay, tournamentToday, utcToZonedInputs } from './timezone';
+import { addCalendarDays, isCalendarDate, tournamentToday, utcToZonedInputs } from './timezone';
 import { readClubPlaces, readPermitTimes, type ClubPlaces } from './permit-lookup';
 import { facilityListWords } from './permit-words';
 import { readClubBookings } from './venue-clash-lookup';
 import { readAmount } from './club-bill-split';
-import { clock, fieldPrices, overlappingBlocks, shareOf, weekdayOf, type DateOff } from './permit-time';
+import { clock, fieldPrices, overlappingBlocks, shareOf, type DateOff } from './permit-time';
 import {
-  ageOf, cutSlots, heldSlots, isPrimeSlot, seatCounts, shareTargets, slotKeyOf, teamResults, teamTwice,
+  ageOf, cutSlots, heldSlots, seatCounts, shareTargets, slotKeyOf, teamResults, teamTwice,
   type EngineInput, type EngineTeam, type PoolBooking, type ScheduleBlock, type ScheduleTime, type Slot, type TeamBooking, type TeamResult,
   type WeightOf,
 } from './club-schedule-engine';
@@ -29,6 +29,7 @@ import { SCHEDULE_REFUSALS as R, houseLeagueUse } from './club-schedule-words';
 import { clubDay, keptHandBacks, waitingAsksOfSchedule, type KeptHandBack } from './club-hand-back-reads';
 import { scheduleMoney, type ScheduleMoney } from './club-money-reads';
 import { HOUSE_LEAGUE, isProgramHolder, storedHolders, teamsOnly } from './club-schedule-holders';
+import { addedTime, engineSlotOf, pinnedSlots, slotsWithPinned, timeKeeping, type KeepChange, type Keeping } from './club-schedule-keep';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -408,19 +409,6 @@ export async function readRequestPrices(orgId: string, permitId: string | null, 
   return { prices, gone: permitGone(prices, blocks) };
 }
 
-/** A stored slot as the engine reads it: its club day and clock worked out from its instants, its prime and its price. */
-export function engineSlotOf(s: Pick<StoredSlot, 'key' | 'venueId' | 'facilityId' | 'startsAt' | 'endsAt'> & { permitId?: string | null }, blockIndex: number, settings: ScheduleSettings, weightOf: WeightOf): Slot {
-  const start = utcToZonedInputs(s.startsAt), end = utcToZonedInputs(s.endsAt);
-  const weekday = weekdayOf(start.date);
-  return {
-    key: s.key, venueId: s.venueId, facilityId: s.facilityId, blockIndex, day: start.date, weekday, week: mondayOfDay(start.date),
-    startClock: start.time, endClock: end.time, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt),
-    pos: `${weekday}|${start.time}|${s.venueId}|${s.facilityId ?? ''}`,
-    prime: isPrimeSlot(settings.prime, weekday, start.time, end.time), weight: weightOf(s.facilityId, s.permitId ?? null),
-    ...(s.permitId ? { permitId: s.permitId } : {}),
-  };
-}
-
 // ── The engine's inputs, from the database ───────────────────────────────────────────────────────
 
 /**
@@ -492,6 +480,68 @@ export function checkTime(time: ScheduleTime, settings: ScheduleSettings, places
   return { ok: true, slots };
 }
 
+/** What a change keeps exactly as it is, with the stored slots behind it (their teams and flags go to the save). */
+export type ServerKeeping = Keeping & { stored: readonly StoredSlot[] };
+
+/** The time cut into slots, with what the change keeps put in exactly as it is (`slotsWithPinned`). */
+function cutKeeping(time: ScheduleTime, settings: ScheduleSettings, places: ClubPlaces, weightOf: WeightOf, keep: Keeping | null): { ok: true; slots: Slot[] } | Refused {
+  const checked = checkTime(time, settings, places, weightOf);
+  if (!checked.ok || !keep) return checked;
+  return { ok: true, slots: slotsWithPinned(checked.slots, { ...keep, pinned: keep.pinned.map(s => ({ ...s, weight: weightOf(s.facilityId, s.permitId ?? null) })) }, places.byVenue) };
+}
+
+/**
+ * WHAT A CHANGE TO A SCHEDULE THAT EXISTS KEEPS (Session E; `club-schedule-keep.ts` holds the rule). Null when it keeps
+ * nothing by this rule (a regenerate of a draft or a schedule in review: exactly as before). `asked` is the time the
+ * change asks for (Add time: the schedule's own rows and the new ones, `addedTime`).
+ */
+export function keepingFor(loaded: LoadedSchedule, asked: ScheduleTime & { blockIds: (string | null)[] }, change: KeepChange, places: ClubPlaces, today = tournamentToday()): ServerKeeping | null {
+  const final = loaded.row.state === 'final';
+  if (change.kind === 'regenerate' && !final) return null;
+  const pastFrom = final ? today : null;
+  const stored = pinnedSlots(loaded.slots, change, { final, today });
+  const k = timeKeeping(asked, loaded.time, stored, {
+    settings: loaded.settings, weightOf: () => 1, venueFacilities: places.byVenue, pastFrom,
+    freshBlocks: change.kind === 'add' ? 'new' : change.kind === 'take_off' ? 'none' : 'all',
+  });
+  return { ...k, stored };
+}
+
+/**
+ * ADD TIME's request (S1 A): the body names only the NEW time — its rows, the dates off that come with them, and the last
+ * day it reaches. The schedule's own rows (by id, untouched), its first day, its dates off and its SETTINGS are read here,
+ * never from the body: Add time changes nothing that is already on the schedule.
+ */
+export async function addTimeRequest(orgId: string, loaded: LoadedSchedule, body: Record<string, unknown>, opts: { houseLeague?: boolean; repTeams?: boolean } = {}): Promise<{ ok: true; value: ScheduleRequest } | { ok: false; response: Response }> {
+  const t = readTimeBody({ ...body, startsOn: loaded.row.starts_on });
+  if (!t.ok) return { ok: false, response: refusal(400, t.code, t.error) };
+  return requestOnStored(orgId, loaded, addedTime({ ...loaded.time, startsOn: loaded.row.starts_on, endsOn: loaded.row.ends_on }, t.time), opts);
+}
+
+/** TAKE A PERMIT OFF's request (P11 A): the schedule's time without that permit's rows (the rest by id, untouched), its
+ *  settings as stored. Null when no row of the schedule is on that permit. */
+export function timeWithoutPermit(loaded: LoadedSchedule, permitId: string): (ScheduleTime & { blockIds: (string | null)[] }) | null {
+  const keep = loaded.time.blocks.map((b, i) => ({ b, id: loaded.time.blockIds[i] })).filter(x => x.b.permitId !== permitId);
+  if (keep.length === loaded.time.blocks.length) return null;
+  return { startsOn: loaded.row.starts_on, endsOn: loaded.row.ends_on, datesOff: loaded.time.datesOff, blocks: keep.map(x => x.b), blockIds: keep.map(x => x.id) };
+}
+
+/**
+ * A request made from what is STORED (Add time, Take a permit off): the settings are the schedule's own — never the
+ * body's — with only the teams whose season is running ticked (as Settings… opens them), the club's teams and places
+ * read as every request reads them.
+ */
+export async function requestOnStored(orgId: string, loaded: LoadedSchedule, time: ScheduleTime & { blockIds: (string | null)[] }, opts: { houseLeague?: boolean; repTeams?: boolean } = {}): Promise<{ ok: true; value: ScheduleRequest } | { ok: false; response: Response }> {
+  const [teams, places] = await Promise.all([readClubTeams(orgId, opts), readClubPlaces(orgId)]);
+  const running = teams.filter(x => x.season);
+  if (!running.length) return { ok: false, response: refusal(409, 'nothing_to_schedule', R.nothingToSchedule) };
+  const live = new Set(running.map(x => x.id));
+  const settings: ScheduleSettings = { ...loaded.settings, teamIds: loaded.settings.teamIds.filter(t => live.has(t)) };
+  if (time.blocks.length > 40) return { ok: false, response: refusal(400, 'no_time', 'A schedule holds at most 40 rows of time.') };
+  if (time.datesOff.some(d => d.venueIds?.some(v => !places.venueName.has(v)))) return { ok: false, response: refusal(400, 'bad_time', 'Pick the date off’s parks again.') };
+  return { ok: true, value: { time, teams, running, places, settings } };
+}
+
 /** The engine's whole input for a schedule's time and settings. `storedSlots`: a regenerate's, whose locked and moved
  *  slots it keeps. */
 export async function buildEngineInput(orgId: string, p: {
@@ -502,6 +552,8 @@ export async function buildEngineInput(orgId: string, p: {
   permitId: string | null;
   places?: ClubPlaces;
   prices?: Prices;
+  /** What the change keeps exactly as it is (`keepingFor`): `time` is then `keep.time`. */
+  keep?: Keeping | null;
 }): Promise<{ ok: true; input: EngineInput; prices: Prices; places: ClubPlaces; pool: PoolBooking[] } | Refused> {
   const ticked = p.settings.teamIds.map(id => p.teams.find(t => t.id === id)).filter((t): t is ClubTeam => !!t);
   const fromMs = Date.parse(`${p.time.startsOn}T00:00:00Z`) - 86_400_000, toMs = Date.parse(`${p.time.endsOn}T23:59:59Z`) + 86_400_000;
@@ -509,12 +561,16 @@ export async function buildEngineInput(orgId: string, p: {
     slotIds: p.storedSlots.map(s => s.id), teamIds: ticked.map(t => t.id), fromMs, toMs, permitId: p.permitId, places: p.places,
     rowPermits: p.time.blocks.map(b => b.permitId), prices: p.prices,
   });
-  const checked = checkTime(p.time, p.settings, ctx.places, ctx.prices.weightOf);
+  const checked = cutKeeping(p.time, p.settings, ctx.places, ctx.prices.weightOf, p.keep ?? null);
   if (!checked.ok) return checked;
   // A regenerate keeps every slot locked or moved by hand (Ask 19) — by place and start, so a slot whose time the new
-  // settings no longer cut is not kept (its team is said, never silently dropped: `notKept`).
+  // settings no longer cut is not kept (its team is said, never silently dropped: `notKept`). What the change keeps
+  // EXACTLY (a sent schedule's past, P10 A; everything, on Add time) is always in the cut, so always kept.
   const fixed = new Map<string, string[]>();
-  for (const s of p.storedSlots) if (!s.removed && (s.locked || s.movedByHand)) fixed.set(s.key, s.teamIds.filter(t => ticked.some(x => x.id === t)));
+  const pinnedKeys = new Set(p.keep?.pinned.map(s => s.key) ?? []);
+  for (const s of p.storedSlots) {
+    if (pinnedKeys.has(s.key) || (!s.removed && (s.locked || s.movedByHand))) fixed.set(s.key, s.teamIds.filter(t => ticked.some(x => x.id === t)));
+  }
   const input: EngineInput = {
     slots: checked.slots, teams: ticked, settings: p.settings, held: heldSlots(checked.slots, ctx.pool),
     teamBookings: ctx.teamBookings, fixed,
@@ -558,6 +614,8 @@ export interface SlotView {
   teamIds: string[]; locked: boolean; movedByHand: boolean;
   /** The permit that prices it (its row's, else the price permit; Session C) — the bill's key, never a price. */
   pricePermitId: string | null;
+  /** The permit its ROW came from (null: a typed row) — what "Take {permit} off" counts (P11 A). Never a price. */
+  rowPermitId?: string | null;
   handedBack: { at: string; teamId: string | null } | null;
   /** A booking already on the books holds it: drawn as that booking ("Tryout day · 13U AAA"). */
   heldBy: { ownerName: string; kind: string | null } | null;
@@ -840,7 +898,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
       return {
         id: s.id, key: s.key, venueId: s.venueId, facilityId: s.facilityId, startsAt: s.startsAt, endsAt: s.endsAt,
         day: e.day, weekday: e.weekday, week: e.week, startClock: e.startClock, endClock: e.endClock, prime: e.prime, weight: e.weight,
-        teamIds: s.teamIds, locked: s.locked, movedByHand: s.movedByHand, pricePermitId: billSlots[i].permitId ?? null,
+        teamIds: s.teamIds, locked: s.locked, movedByHand: s.movedByHand, pricePermitId: billSlots[i].permitId ?? null, rowPermitId: s.permitId,
         handedBack: s.handedBack ? { at: s.handedBack.at, teamId: s.handedBack.teamId } : null,
         heldBy: h ? { ownerName: h.ownerName, kind: h.kind ?? null } : null,
         clash: !!h && s.teamIds.length > 0,
@@ -1124,18 +1182,24 @@ export async function readScheduleRequest(orgId: string, body: Record<string, un
  * doesn't hold — the chosen draft's assignments on them, the slots a regenerate keeps exactly as they are (`kept`, Ask
  * 19: whatever the draft says of them), and the schedule's one refusal asked: a team twice at once.
  */
-export function draftToSave(req: ScheduleRequest, prices: Prices, rawAssignments: unknown, kept: ReadonlyMap<string, StoredSlot> = new Map()):
+export function draftToSave(req: ScheduleRequest, prices: Prices, rawAssignments: unknown, kept: ReadonlyMap<string, StoredSlot> = new Map(), keep: ServerKeeping | null = null):
   { ok: true; slots: ReturnType<typeof slotsPayload> } | { ok: false; response: Response } {
-  const checked = checkTime(req.time, req.settings, req.places, prices.weightOf);
+  const checked = cutKeeping(req.time, req.settings, req.places, prices.weightOf, keep);
   if (!checked.ok) return { ok: false, response: refusal(400, checked.code, checked.error) };
   const room = roomChecker(req.settings, req.teams);
-  const a = readAssignments(rawAssignments, checked.slots, new Set(req.running.map(x => x.id)), (ids, slot) => room(ids, slot.weight));
+  // A kept slot is the stored one, whatever the draft says of it: its teams are never asked again (a team whose season has
+  // since ended stays on a practice it already played).
+  const pinned = new Set(keep?.pinned.map(s => s.key) ?? []);
+  const asked = pinned.size && Array.isArray(rawAssignments)
+    ? rawAssignments.filter(x => !pinned.has((x as { slotKey?: unknown })?.slotKey as string)) : rawAssignments;
+  const a = readAssignments(asked, checked.slots, new Set(req.running.map(x => x.id)), (ids, slot) => room(ids, slot.weight));
   if (!a.ok) return { ok: false, response: refusal(400, a.code, a.error) };
-  for (const [key, s] of kept) a.value.set(key, s.teamIds);
+  const keptAll = new Map<string, StoredSlot>([...kept, ...(keep?.stored ?? []).map(s => [s.key, s] as const)]);
+  for (const [key, s] of keptAll) a.value.set(key, s.teamIds);
   // House league holds many slots at once (its league admins divide them): the one refusal is a TEAM's.
   const twice = teamTwice(checked.slots, new Map([...a.value].map(([k, ids]) => [k, teamsOnly(ids)])));
   if (twice) return { ok: false, response: refusal(409, 'team_twice', R.teamTwice(teamNamer(req.teams)(twice.teamId))) };
-  return { ok: true, slots: slotsPayload(checked.slots, a.value, kept) };
+  return { ok: true, slots: slotsPayload(checked.slots, a.value, keptAll) };
 }
 
 export interface BillTerms { lineId: string | null; permitId: string | null; amount: number | null; plan: PaymentPlan; firstDue: string | null; dates: string[] | null; mode: PriceMode }

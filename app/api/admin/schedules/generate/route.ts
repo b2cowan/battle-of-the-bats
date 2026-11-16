@@ -3,10 +3,11 @@ import { withObservability } from '@/lib/observability';
 import { isUuid } from '@/lib/utils';
 import { generateDrafts, seatCounts, shareTargets, slotsTeamsCanHold, teamsCanHold } from '@/lib/club-schedule-engine';
 import {
-  buildEngineInput, loadSchedule, pricePermitOf, readRequestPrices, readScheduleRequest, repTeamsRefusal, resolveScheduler, schedulerRefusal,
-  teamNamer,
+  addTimeRequest, buildEngineInput, keepingFor, loadSchedule, pricePermitOf, readRequestPrices, readScheduleRequest, repTeamsRefusal, resolveScheduler,
+  schedulerRefusal, teamNamer,
 } from '@/lib/club-schedule-server';
 import { datesOffKeepingParks } from '@/lib/club-schedule-permit-rows';
+import { pastPractices } from '@/lib/club-schedule-keep';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, measureLines, warningLine } from '@/lib/club-schedule-words';
 
 // ---------------------------------------------------------------------------
@@ -17,7 +18,10 @@ import { SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, measureLines, warningLine 
 //     30 slots a week · 354 slots"; each team's share in slots; what is left open; what a booking holds) — no drafts.
 //   → otherwise: THREE RANKED DRAFTS (round 0; "Three more drafts" asks round 1, 2, …), each with its score, its measures
 //     in words, its warnings, and its assignments; every slot the time holds, each marked prime / held.
-//   With `scheduleId` (Tools › Settings…, a regenerate): the slots locked or moved by hand there are KEPT (Ask 19).
+//   With `scheduleId` (Tools › Settings…, a regenerate): the slots locked or moved by hand there are KEPT (Ask 19), and on
+//   a sent schedule every slot before today, locked or not (P10 A; `club-schedule-keep.ts`).
+//   With `scheduleId` and `addTime: true` (Tools › Add time…, S1 A): the body's rows are the NEW ones only; the schedule's
+//   own rows, dates off and settings are read here, every slot on it is kept as it is, and only the new rows are cut.
 // Nothing is written here: a draft is kept by POST /api/admin/schedules (or a regenerate's PATCH).
 // ---------------------------------------------------------------------------
 
@@ -29,10 +33,16 @@ export const POST = withObservability(async (req: Request) => {
 
   const scheduleId = isUuid(body.scheduleId) ? body.scheduleId : null;
   if (body.scheduleId && !scheduleId) return schedulerRefusal(404, 'not_found', R.notFound);
-  const [asked, loaded] = await Promise.all([
-    readScheduleRequest(orgId, body, { houseLeague: r.houseLeague, repTeams: r.repTeams }),
-    scheduleId ? loadSchedule(orgId, scheduleId) : null,
-  ]);
+  const adding = body.addTime === true;
+  if (adding && !scheduleId) return schedulerRefusal(404, 'not_found', R.notFound);
+  const scope = { houseLeague: r.houseLeague, repTeams: r.repTeams };
+  // Add time asks with the schedule's own rows and settings joined to the new rows (`addTimeRequest`), so it reads the
+  // schedule first; every other ask reads the request and the schedule together (one round trip, as before).
+  const own = adding ? await loadSchedule(orgId, scheduleId!) : null;
+  if (adding && !own) return schedulerRefusal(404, 'not_found', R.notFound);
+  const [asked, loaded] = adding
+    ? [await addTimeRequest(orgId, own!, body, scope), own] as const
+    : await Promise.all([readScheduleRequest(orgId, body, scope), scheduleId ? loadSchedule(orgId, scheduleId) : null]);
   if (!asked.ok) return asked.response;
   if (scheduleId && !loaded) return schedulerRefusal(404, 'not_found', R.notFound);
   const closed = loaded ? repTeamsRefusal(r, loaded) : null;
@@ -40,13 +50,16 @@ export const POST = withObservability(async (req: Request) => {
   const { teams, places, settings } = asked.value;
   // A saved schedule's date off whose request never said its parks (a tab from before mig 488) keeps the ones stored, so the
   // preview is cut exactly as the save will cut it — never widened to All venues (the regenerate's PATCH does the same).
-  const time = loaded ? { ...asked.value.time, datesOff: datesOffKeepingParks(asked.value.time.datesOff, loaded.time.datesOff) } : asked.value.time;
+  const askedTime = loaded ? { ...asked.value.time, datesOff: datesOffKeepingParks(asked.value.time.datesOff, loaded.time.datesOff) } : asked.value.time;
+  // What the change keeps exactly as it is: a sent schedule's past (P10 A); on Add time, everything already on it.
+  const keep = loaded ? keepingFor(loaded, askedTime, { kind: adding ? 'add' : 'regenerate' }, places) : null;
+  const time = keep?.time ?? askedTime;
   // The price permit; each row is weighed by its own permit (a schedule on several permits).
   const permitId = isUuid(body.startedFromPermitId) ? body.startedFromPermitId : loaded ? pricePermitOf(loaded.row) : null;
   const { prices, gone } = await readRequestPrices(orgId, permitId, time.blocks);
   if (gone) return gone;
 
-  const built = await buildEngineInput(orgId, { time, settings, teams, storedSlots: loaded?.slots ?? [], permitId, places, prices });
+  const built = await buildEngineInput(orgId, { time, settings, teams, storedSlots: loaded?.slots ?? [], permitId, places, prices, keep });
   if (!built.ok) return schedulerRefusal(400, built.code, built.error);
   const { input } = built;
   const nameOf = teamNamer(teams);
@@ -87,6 +100,8 @@ export const POST = withObservability(async (req: Request) => {
     half: [...new Set(input.slots.filter(s => s.weight < 1 && s.facilityId).map(s => s.facilityId!))],
     kept: [...input.fixed.keys()].filter(k => slotKeys.has(k)).length,
     notKept: [...input.fixed.keys()].filter(k => !slotKeys.has(k)).length,
+    // A sent schedule's practices before today, which stay as they were sent (P10 A: the regenerate question counts them).
+    past: keep ? pastPractices(keep) : 0,
   };
   if (body.previewOnly === true) return NextResponse.json({ summary });
 

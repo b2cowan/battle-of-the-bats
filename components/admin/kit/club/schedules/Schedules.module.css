@@ -126,6 +126,8 @@
 .permitCard { padding: 0.6rem 0.75rem 0; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
 .permitCardHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.5rem; margin: 0 0 0.35rem; font-size: var(--type-support); color: var(--text-tertiary); }
 .permitCardHead strong { font-size: var(--type-body); color: var(--text-primary); }
+/* Settings… › a permit's card: "Take it off…" at the head's end (P11 A). */
+.cardDoor { margin-left: auto; font-size: var(--type-support); }
 .placeRow { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.8fr) auto; }
 .rowPlace { display: flex; flex-direction: column; justify-content: center; min-height: var(--admin-control-h); margin-bottom: 0.9rem; font-size: var(--type-support); font-weight: 650; color: var(--text-primary); }
 .rowPlace small { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); }

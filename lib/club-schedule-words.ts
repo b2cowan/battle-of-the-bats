@@ -584,6 +584,59 @@ export const SCHEDULE_SCREEN_WORDS = {
     (more > 0 ? `${shown.join(', ')} and ${more} more ${more === 1 ? 'day' : 'days'}` : joinWithAnd(shown)),
   overlapTail: (startsOn: string | null) =>
     `They stay as they are, priced there.${startsOn ? ` The new time starts ${startsOn}.` : ''}`,
+  // ── Add time and taking a permit off (Session E; drawing tab 3; owner rulings S1 A, P10 A, P11 A, P9 B). [marketing] at
+  //    the project's close. ──
+  /** Tools › first item (S1 A: beside Settings…, never inside it). */
+  toolAddTime: 'Add time…',
+  toolAddTimeHint: 'Another permit’s time, or time you find. Nothing already on the schedule moves.',
+  addTitle: 'Add time',
+  addStep1: 'Step 1 of 2 · the new time',
+  addStep2: 'Step 2 of 2 · drafts for the new time',
+  /** The read-only field beside Permits: the permits already behind the schedule's rows. */
+  onSchedule: 'On this schedule',
+  onScheduleNone: 'No permit: typed time',
+  addPermitsHint: 'Each permit ticked brings its time. Untick one to take it away again.',
+  addPickPlaceholder: 'No permit ticked',
+  addNoOtherPermit: 'Every permit the club holds is on this schedule already. Find the time to add more of it.',
+  /** Under To, when the new time runs past the schedule's last day. */
+  addWidened: (was: string) => `Widened from ${was}`,
+  /** Step 1's promise, said where it is made (drawing note 4). */
+  addPromiseLead: 'Only the new time is scheduled. Nothing already on the schedule moves, locked or not, and nothing before today can.',
+  addPromiseSent: 'Drafts are made for the new time, toward each team’s practices a week. They wait in Changed since sent until you send the changes, and Send the changes bills them.',
+  addPromiseDraft: 'Drafts are made for the new time, toward each team’s practices a week, and join this schedule’s drafts.',
+  /** Generate can't go yet: nothing new is ticked or found. */
+  addNeedTime: 'Tick a permit, or find the time, to add time.',
+  addGenerate: 'Generate drafts for the new time',
+  addBack: 'Back to the new time',
+  /** Step 2's statement: "6 new practices, Jun 1 – Jun 29". */
+  addDraftsLead: (practices: number, dates: string) => `${pluralize(practices, 'new practice')}, ${dates}`,
+  addDraftsRest: (permits: string, others: number, sent: boolean) =>
+    `${permits ? `From ${permits}. ` : ''}The other ${pluralize(others, 'practice')} ${others === 1 ? 'stays' : 'stay'} exactly where ${others === 1 ? 'it' : 'they'} ${sent ? (others === 1 ? 'was sent' : 'were sent') : (others === 1 ? 'is' : 'are')}.`,
+  addColTeam: 'Team',
+  addColNew: 'New',
+  addColHours: 'Hours',
+  addTeamsTotal: (teams: number) => pluralize(teams, 'team'),
+  /** A ticked team the new time gives nothing. */
+  addNothingFor: (team: string) => `${team} gets nothing new: it already has its practices a week.`,
+  /** The draft gives no team anything (/ux 5): only Back. */
+  addNothingNew: (permits: number) => (permits > 1 ? 'No team needs more time from these permits.' : 'No team needs more time from this permit.'),
+  addNothingNewRest: 'Every team already has its practices a week. Go back to add other time, or cancel.',
+  /** The page's notice once the new time is kept. */
+  timeAdded: (name: string, sent: boolean) => (sent ? `The new time is on ${name}. Send the changes to tell the coaches.` : `The new time is on ${name}.`),
+  /** Settings… › a permit's card: the door to take it off (P11 A). */
+  takeOffDoor: 'Take it off…',
+  takeOffLabel: (permit: string) => `Take ${permit} off`,
+  takeOffTitle: (permit: string) => `Take ${permit} off?`,
+  takeOffFuture: (practices: number, day: string, teams: string) => (practices
+    ? `Its ${pluralize(practices, 'practice')} from today, ${day}, come off: ${teams}.`
+    : `It has no practice from today, ${day}, on, so no team loses one.`),
+  takeOffPast: (practices: number) => `The ${pluralize(practices, 'practice')} played before today stay on the schedule, and so does what the teams were billed for them.`,
+  takeOffSend: 'The change waits in Changed since sent. Send the changes tells the coaches and shows what each team is credited for that time.',
+  takeOffDraft: (slots: number) => `Its rows and ${pluralize(slots, 'slot')} come off this schedule. Nothing else on it moves.`,
+  takeOffEdits: 'Your other changes in Settings haven’t been kept, so they are left out.',
+  takeOffGo: 'Take it off',
+  takeOffBack: 'Back',
+  permitTakenOff: (permit: string, name: string) => `${permit} is off ${name}`,
   // ── Find the time (Session D; drawing tab 2; owner rulings N1 A, P4 A, P7 A, P7b A). [marketing] at the project's close:
   //    "Where" and "Town" (the plan's venue-or-issuer filter) and "Another time" (its extra ranges) were not drawn. ──
   /** The door under the Permits field (N1 A: a door, not an entry in the tick list). */
@@ -808,6 +861,9 @@ export const SCHEDULE_SCREEN_WORDS = {
   keepDraft: 'Keep this draft',
   regenTitle: (name: string) => `Regenerate ${name}?`,
   regenLead: 'The draft you picked replaces every slot nobody placed by hand.',
+  /** On a sent schedule (P10 A): nothing before today moves, said where the admin decides, with the count. */
+  regenLeadSent: 'The draft you picked replaces every slot from today on that nobody placed by hand.',
+  regenPast: (practices: number) => `The ${pluralize(practices, 'practice')} before today ${practices === 1 ? 'stays as it was' : 'stay as they were'} sent.`,
   regenKept: (locked: number, moved: number) => {
     const parts = [locked ? `the ${pluralize(locked, 'slot')} you locked` : '', moved ? `the ${moved} you moved by hand` : ''].filter(Boolean);
     if (!parts.length) return '';

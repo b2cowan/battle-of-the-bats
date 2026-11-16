@@ -239,6 +239,8 @@ export interface GenerateSummary {
   half: string[];
   kept: number;
   notKept: number;
+  /** A sent schedule's practices before today, which stay as sent (P10 A — the regenerate question counts them). */
+  past?: number;
   /** Set when the per-day setting is what leaves slots open (Stage 13 fix-now 3): the setting, and the most slots the teams
    *  can hold at it. `handedOut` and `open` already count it. */
   dayLimit?: { perDay: number; canUse: number } | null;

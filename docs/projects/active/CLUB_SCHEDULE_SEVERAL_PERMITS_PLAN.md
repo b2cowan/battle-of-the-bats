@@ -476,11 +476,81 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [x] The finder inside New schedule ("Any permit — find the time"); picked rows become time rows with their permit.
 
 ### Phase 5 (Session E) — Add time, remove a permit, and F1
-- [ ] A schedule-page **Add time** action reusing the picker and the finder; generate drafts for the new rows only
+> **Built 2026-11-16** (Session E of the build prompt; no migration). **One rule, three doors:** `lib/club-schedule-keep.ts`
+> (pure) decides what a change to a schedule that exists keeps EXACTLY — `pinnedSlots` (regenerate: a sent schedule's slots
+> before today; add: every slot; take_off: every slot not on that permit, and that permit's past once sent), `timeKeeping`
+> (gives each kept slot a row: the asked row that holds it — same place, day, hours AND permit — else its own stored row
+> brought back ending yesterday, with its id; an asked row overlapping a row brought back starts today), `slotsWithPinned`
+> (the kept slots in the cut; nothing fresh before today on a sent schedule, nothing fresh off a non-new row, nothing over a
+> kept slot), `addedTime` (Add time's whole time from the stored rows by id + the new ones; dates off one per day, All stays
+> all). `keepingFor` (server) asks it for the generate route and every time save of the PATCH (`keepTime`: regenerate,
+> `add_time`, `take_permit_off`). `addTimeRequest` / `requestOnStored`: Add time and Take-off read the schedule's own rows,
+> dates off and SETTINGS from what is stored (only teams with a running season ticked), never from the body.
+> **Screens:** Tools › **Add time…** first, beside Settings… (S1 A; absent on a phone like every editing item);
+> `NewScheduleWindow` with `settingsOf.addTime` (`addingTime`): the picker lists only permits not on the schedule, "On this
+> schedule" read-only beside it, Find the time asks as the schedule (`scheduleId`, so its own slots are taken), the new rows
+> settled against the schedule's own (P4 statement), From fixed / To widening ("Widened from …"), the promise statement; step
+> 2 = the new practices per team (table) above the ranked drafts, or "No team needs more time from this permit" with only
+> Back (/ux 5); Keep has no question (nothing moves). Settings… › each permit's card › **Take it off…** → the question
+> (sent: practices from today on per team, the played ones stay with their bill, the credit shows at Send the changes;
+> draft: its rows and slots come off) → its own save. The regenerate question on a sent schedule: "…every slot from today on
+> that nobody placed by hand. The N practices before today stay as they were sent." (P10 A).
+> **P9 B through the real Send path:** the send's money moved into one pure function it calls (`changesMoney`: kept rates,
+> hand-backs, touched teams, the correction and its payments); `tests/unit/club-schedule-add-time-send.test.ts` runs the
+> send's own `planChanges` + `changesMoney` (database stubbed): bill Milton + Halton Hills, add Milton June's time, send —
+> earlier shares byte-identical, the new amount = June's price × the added hours on the touched teams only, each as its own
+> correction with payments adding to the cent, June's rate kept; same in both modes; a permit taken off is credited at its
+> billed rate. Guard 4: `tests/unit/club-schedule-keep.test.ts` (17 cases + a source guard that every time save goes through
+> `keepingFor`). Two guards followed the code where it moved (`club-scheduler-guard` B, `club-scheduler-screens-guard` 12).
+> Schedule/permit suites 626/626; typecheck clean (bar another session's `layout-run-journal` test; the dev server's
+> generated route list was corrupt on disk, so the check ran without it); lint and spelling clean.
+> **Decisions made in the build (owner may overrule):**
+> - ⚖ **Taking a permit off is its OWN save, not a regenerate** (the drawing implied untick → Settings…' regenerate). A
+>   regenerate would reshuffle every unlocked practice from today on across all permits; this removes only that permit's
+>   (from today on, once sent) and nothing else moves — the inverse of Add time. Other unkept edits in Settings… are left out,
+>   and the question says so.
+> - **No dollar figure in the take-off question** (the drawing showed "credits $X"): Settings… is open to schedulers without
+>   Money, and the real credit is worked out at Send the changes with any other pending change — it is said there.
+> - **A sent schedule's row edited, narrowed or removed in Settings… keeps its past**: its stored row comes back ending
+>   yesterday (so Settings… then shows two rows, "until Nov 15" and the new one "from Nov 16"); a row's played slots keep
+>   their row id and so their permit and price.
+> - **Add time pins the schedule's own rows to the old last day when the end widens** (a row with no end of its own would
+>   otherwise run into the new weeks and meet the new permit's rows).
+> - The new permit's dates off come with it, named by park as in New schedule; a stored "All venues" day stays all (UX 2) and
+>   so also closes the new park that day. A new date off on a day an existing practice holds leaves that practice where it
+>   is (kept exactly) — the hand-edit warnings may then flag it as on a date off.
+> - Add time offers no typed rows ("+ Add hours"): a permit, or found time. Not drawn otherwise.
+> - Take it off… is offered only when something stays (another row, or practices it already gave on a sent schedule).
+> - The permit's copied dates off stay on the schedule when it is taken off (a date off no longer knows its permit, mig 488).
+> **/simplify + /review done 2026-11-16 (high tier; four cleanup lenses, three review lenses, no Critical or High finding).**
+> Simplify applied: Add time's dates-off merge now calls the form's own `mergeDatesOff`; Add time's hours column reuses
+> `hoursNumber`; the preview's two database reads run together again except on Add time (which needs the schedule first);
+> `canTakeOff` reads today once; dead pieces removed (`GenerateSummary.added`, a re-export, a return field, three exports);
+> one loop where two did the same job. Review: the "no practice before today" rule held on all three doors (club day, not
+> UTC; a randomized check of ~3,900 schedules found no duplicate row id, no orphaned slot, nothing new before today); the send's
+> money is a pure extraction; version checks and org scoping match regenerate. **Open for the owner (not decided):**
+> - ⚖ **A new permit row that starts before the schedule's first day is clipped to the first day, silently.** "From" is fixed
+>   in the window, so the permit's earlier days are never used and nobody is told. Say so in the window, or let Add time move
+>   the first day earlier?
+> - ⚖ **Add time's new dates off join the schedule's dates off, which apply to every row.** Nothing moves now, but the next
+>   Regenerate or Settings… save applies them to the OLD rows' future slots too, and the Add time promise does not say so.
+> - ⚖ **Take it off when nothing would stay** (the permit is the schedule's only row, nothing played): the screen hides the
+>   door, and the server refuses with 400 "give the schedule its time first", not 409 (409 is "that permit has no row on this
+>   schedule"). Harmless; say if you want a clearer refusal for a direct call.
+> - Counts differ by design in two questions: the regenerate question's "N practices before today" counts slots that have a
+>   team; the take-off question counts teams per slot (a shared slot is 1 and 2).
+> - Known, low, left alone: a stale tab from before mig 487 (no permit on its rows) splits a sent schedule's rows without
+>   moving anything; brought-back rows are not counted against the 40-row limit; Add time saves the settings with only
+>   running-season teams ticked; the PATCH Add time path does not apply `datesOffKeepingParks` as the preview does (a refusal
+>   only, from a stale request that omits parks).
+> **Not run:** `check:layout --changed` and a browser pass (dev-server restart first: new files); `/marketing` on the new
+> sentences at the Close (list in `lib/club-schedule-words.ts`, block "Add time and taking a permit off"). `/accounting`: not
+> run — the price of added time was Session C's (product bookkeeping, out of its scope then).
+- [x] A schedule-page **Add time** action reusing the picker and the finder; generate drafts for the new rows only
       (existing slots fixed for the run, whatever their lock).
-- [ ] Final schedules: new slots wait in "Changed since sent"; Send the changes bills them per P9.
-- [ ] Remove a permit (P11).
-- [ ] F1: regenerate on a final schedule never moves a slot whose day has passed (P10).
+- [x] Final schedules: new slots wait in "Changed since sent"; Send the changes bills them per P9.
+- [x] Remove a permit (P11).
+- [x] F1: regenerate on a final schedule never moves a slot whose day has passed (P10).
 
 ### Phase 6 — words, help, check, walk
 - [ ] `/marketing` once over the words below; `/docs` (Schedules and Permits guides: several permits, Add time, Find
