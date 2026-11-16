@@ -476,7 +476,7 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [x] The finder inside New schedule ("Any permit — find the time"); picked rows become time rows with their permit.
 
 ### Phase 5 (Session E) — Add time, remove a permit, and F1
-> **Built 2026-11-16** (Session E of the build prompt; no migration). **One rule, three doors:** `lib/club-schedule-keep.ts`
+> **Built 2026-11-16, committed `ef8a45683` 2026-11-16** (Session E of the build prompt; no migration). **One rule, three doors:** `lib/club-schedule-keep.ts`
 > (pure) decides what a change to a schedule that exists keeps EXACTLY — `pinnedSlots` (regenerate: a sent schedule's slots
 > before today; add: every slot; take_off: every slot not on that permit, and that permit's past once sent), `timeKeeping`
 > (gives each kept slot a row: the asked row that holds it — same place, day, hours AND permit — else its own stored row
