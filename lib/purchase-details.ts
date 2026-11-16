@@ -184,8 +184,9 @@ function purchaseFixedHtml(i: PurchaseEmailInput): string {
     i.sellerMailingAddress.trim() || null,
   ].filter((s): s is string => !!s);
   const terms = i.terms.mode === 'published'
-    ? `The Terms of Service you accepted: ${link(`version ${day(i.terms.version)}`, i.terms.href)}`
-    : i.terms.mode === 'preview' ? `The Terms of Service you accepted: ${link('the draft', i.terms.href)}` : null;
+    // "for this purchase", never "you accepted": the email goes to every owner, and only the buyer ticked (/legal, 6.6).
+    ? `The Terms of Service for this purchase: ${link(`version ${day(i.terms.version)}`, i.terms.href)}`
+    : i.terms.mode === 'preview' ? `The Terms of Service for this purchase: ${link('the draft', i.terms.href)}` : null;
   return [
     table,
     ...dates.map(s => warmEmailParagraph(escapeHtml(s))),

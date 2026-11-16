@@ -210,10 +210,12 @@ describe('3 · the words (§6)', () => {
     const preview = purchaseDetailsEmail(input({ terms: { mode: 'preview', href: 'https://fieldlogichq.ca/legal/terms' } })).html;
     const published = purchaseDetailsEmail(input({ terms: { mode: 'published', version: '2026-11-13', href: 'https://fieldlogichq.ca/legal/terms/2026-11-13' } })).html;
     assert.equal(termsOf(off).length, 0, 'pages off: no line');
-    assert.match(text(termsOf(preview).join(' ')), /The Terms of Service you accepted: the draft/);
+    assert.match(text(termsOf(preview).join(' ')), /The Terms of Service for this purchase: the draft/);
     assert.match(termsOf(preview).join(' '), /href="https:\/\/fieldlogichq\.ca\/legal\/terms"/);
-    assert.match(text(termsOf(published).join(' ')), /The Terms of Service you accepted: version November 13, 2026/);
+    assert.match(text(termsOf(published).join(' ')), /The Terms of Service for this purchase: version November 13, 2026/);
     assert.match(termsOf(published).join(' '), /legal\/terms\/2026-11-13/);
+    // Every owner gets this email and only the buyer ticked, so the line never says "you accepted" (/legal, 6.6).
+    assert.doesNotMatch(text(preview + published), /you accepted/i);
     assert.equal(withoutTerms(preview), withoutTerms(off));
     assert.equal(withoutTerms(published), withoutTerms(off));
   });
