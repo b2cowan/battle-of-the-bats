@@ -114,7 +114,7 @@ No new third-party service, storage bucket or IP/device logging since 2026-11-05
 ### 2.2 The draft's product findings (status on dev)
 | # | Finding | Status | Route |
 |---|---|---|---|
-| 1 | High — deleting an organization leaves its uploaded files (medical and waiver files included) | **open** [V] | **P7** — recommended fix before publication |
+| 1 | High — deleting an organization leaves its uploaded files (medical and waiver files included) | **built** — committed `45c134bea` 2026-11-15 (6.5) | **P7** — recommended fix before publication |
 | 2 | High — no automatic purge after the retention window | **open** [V] | `/plan` (after publication; wording stays "may delete") |
 | 3 | Medium — a club cannot delete a player or family (now sharper with Stage 14) | open [H] | `/plan` with Stage 14 (the club's own deletion duty as our service-provider promise) |
 | 4 | Medium — no signup acceptance | open | **this stage, §5.3** |
@@ -461,6 +461,11 @@ Route to `/plan`: the delete removes every storage object the organization owns,
 waiver files, documents, logos). The other findings (purge, a club deleting a child, MFA, self-serve correction) are separate
 `/plan` items; the policy states them truthfully meanwhile.
 
+**Built, committed `45c134bea` 2026-11-15** (prompt `BOARD_READY_ORG_DELETE_FILES_PROMPT.md`, the same item as Board Ready
+Stage 0a). The files are removed AFTER the rows (a failed database delete never leaves a club without its files); proven on
+dev with real objects; no migration. Production read 2026-11-15: nothing left by clubs deleted earlier. Findings left
+open: deleting one tournament, rep team, player or person still leaves its files.
+
 ### 6.6 — Reviews before hand-off
 - `/legal` on the v1.0 texts, the accept step (what is collected, what a customer agrees to, the record), every new email.
 - `/accounting` on anything stating a price, a tax, a refund or an invoice (Terms §6–§8, §16 email).
@@ -470,7 +475,7 @@ waiver files, documents, logos). The other findings (purge, a club deleting a ch
 
 ### 6.7 — Publication
 - Prerequisites: lookups L-a/L-b answered and in §6/§10; L-c answered and §6/§8 match it; taxed checkout on production (or §6
-  says less); 6.3 and 6.4 built and walked; P7 fixed (ruled 2026-11-08).
+  says less); 6.3 and 6.4 built and walked; P7 fixed (ruled 2026-11-08; built `45c134bea` 2026-11-15, on production before publication).
 - The owner approves the v1.0 text. Set the effective date = the version. The product's copy becomes the single source: **the
   draft files are deleted and replaced by a pointer row in `LEGAL_INDEX.md`**; their "Before this can be published" and "For a
   lawyer's eye" sections move to a `/legal` topic file rather than into the product.

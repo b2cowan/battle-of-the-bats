@@ -63,8 +63,11 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   production project: AWS us-east-2 (USA), Pro plan** (read from the Supabase Management API 2026-11-08; the dev project is
   ca-central-1 and is not what any policy describes). Stripe's customer portal is always opened with our own configuration,
   built from code: cancel at the period end, no refund, no plan switches (production code, read 2026-11-08; the live copy is
-  created on the first live open). Two-step sign-in (authenticator app + hashed backup codes; club-requirable; staff always) is built on dev, Parts 1–4 (`docs/projects/active/BOARD_READY_TWO_STEP_BUILD_PROMPTS.md`, 2026-11-11/12; see `TWO_STEP_SIGNIN_PRIVACY.md`); deployment state lives in the release-history record, and the privacy policy describes it only once it is live. No automatic purge at the end of a retention window; org delete
-  does not touch file storage. Full list: `drafts/PRIVACY_POLICY.md` § Product findings.
+  created on the first live open). Two-step sign-in (authenticator app + hashed backup codes; club-requirable; staff always) is built on dev, Parts 1–4 (`docs/projects/active/BOARD_READY_TWO_STEP_BUILD_PROMPTS.md`, 2026-11-11/12; see `TWO_STEP_SIGNIN_PRIVACY.md`); deployment state lives in the release-history record, and the privacy policy describes it only once it is live. No automatic purge at the end of a retention window. Deleting an organization
+  removes the files uploaded to it after its rows (every file under its id in the six club stores, and its old rules files
+  no other club links to); a removal that fails is shown to staff and logged by the club's id; the public demo clubs are
+  refused (built, committed `45c134bea` 2026-11-15; deployment state: the release-history record). Deleting one tournament,
+  team, player or person still leaves that item's files. Full list: `drafts/PRIVACY_POLICY.md` § Product findings.
 - **Stripe:** a data-processing addendum is in place (`FACILITATED_PAYMENTS_COUNSEL_BRIEF.md` ~L37).
 - **Data-processing terms — how each supplier's are accepted** (read on each supplier's own site 2026-11-08; owner P3 ruled
   "accept each supplier's standard terms"). All three are **part of the service terms, accepted with them — no request or

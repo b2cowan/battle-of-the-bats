@@ -433,7 +433,9 @@ points here, so they aren't tracked twice)
     - CASL: all of these emails are non-commercial (security and account facts); keep any offer out of them.
     - For a lawyer, optional: the owner-reset check against PIPEDA 4.7, the Terms for a consumer coach, and consent for
       telling the club's admins.
-- [ ] Org delete removes its file storage (gap in `LEGAL_FACTS.md`).
+- [x] Org delete removes its file storage — built, committed `45c134bea` 2026-11-15 (`BOARD_READY_ORG_DELETE_FILES_PROMPT.md`;
+  deployment state: the release-history record). Demo clubs refused (owner 2026-11-15). Findings: deleting one tournament,
+  rep team, player or person still leaves its files; the dev club fixture files sample documents under the web name.
 - [ ] Backups: confirm what the Pro plan does (daily backups vs point-in-time recovery), decide whether PITR is worth the add-on, and write it down in `docs/agents/ops/`.
 - [ ] Publish the legal pages (privacy policy, terms) already tied to `GST_HST_STAGE6_TERMS_PLAN.md`, so this plan does not duplicate that work.
 - [ ] Data-processing terms for clubs and a sub-processor list (`LEGAL_INDEX.md` rows "not started") via `/legal`.

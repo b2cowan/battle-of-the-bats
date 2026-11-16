@@ -9,6 +9,10 @@
 | **Backlog** | L2 (with L9 findings); children's consent wording (L5) and CASL lawful basis (L6) are referenced, not settled |
 
 **Change log**
+- 0.2 · 2026-11-15 · §9: deleting an organization removes the files uploaded to it (Stage 6 step 6.5, built `45c134bea`); the
+  sentence now names what is kept (our tax records and our record that the deletion happened) and that routine database
+  backups age out on the host's schedule (owner yes 2026-11-15). Note 2 and finding 1 updated; a new open finding on
+  deleting one item.
 - 0.2 · 2026-11-15 · Notifications that read at a glance, Stage 4 as built. §6 push row: the alert text can also give an email address. §9: one sentence on how long an in-app note is kept and what it can hold. Finding 11 widened (stored notice rows, the withdrawal note in full). Read against `CASL_LATE_BILL_EMAIL.md` "Stage 4 as built".
 - 0.1 · 2026-11-05 · First draft by `/legal`, written from a code census of what the product collects, stores and sends.
 - 0.1 · 2026-11-05 (later) · §3 billing row: a club gives its billing address when it turns on online payments.
@@ -371,7 +375,9 @@ and email addresses.
 - **Information a club keeps** stays while its organization exists; the club decides how long to keep its members'
   information. A club can remove a player from a team, but a child's record (§5) is kept until we delete it at the club's
   or a parent's request, or the organization is deleted. **When an organization is deleted, its information and the files
-  it uploaded are deleted with it**, except our own tax records (above).
+  uploaded to it are deleted with it**, except our own tax records (above) and our record that the deletion happened (the
+  organization's name and web address, who deleted it, when and why). Copies in our routine database backups age out on
+  our database host's schedule.
 - **Two-step sign-in records** (§3) are kept while your account exists, or, for your set-up time in an organization, while
   that organization exists; they are deleted with the account or the organization. Your backup codes are removed when you
   turn two-step off or replace your phone; the record of codes recently accepted is cleared the next time you enter a code.
@@ -398,10 +404,14 @@ and email addresses.
 >    by hand (staff press a button; no scheduled job calls it [H]), and its final state ("pending purge") still holds the
 >    data — so "may be deleted", and "we will try" for the warning. PIPEDA 4.5.3 expects guidelines and procedures for
 >    destroying what we no longer need. → `/plan`: a real purge and a written retention schedule (finding 2).
-> 2. **⚠ "When an organization is deleted … the files it uploaded are deleted with it" depends on Stage 6 step 6.5 (P7,
->    ruled: fix before publication).** Today the delete removes the database rows only [V, Stage 6 plan §0.3]. **Do not
->    publish this sentence before 6.5 ships.** If 6.5 slips, the sentence becomes "its information is deleted; its uploaded
->    files are removed by hand on request" — never silence.
+> 2. **"…the files uploaded to it are deleted with it" — built as Stage 6 step 6.5 (P7), committed `45c134bea` 2026-11-15** [V:
+>    proven on dev with real objects in all six club stores]. True once that code is on production (release-history record);
+>    publish this sentence only then. What it rests on: after the rows, every file under the organization's id is removed,
+>    and its old flat rules files unless another club's rows still link to one (that file is the other club's live link). A
+>    removal that fails does not undo the delete: staff see it and a change-log row names the club's id for a removal by hand.
+>    **Kept, and now said:** the change log's record of the deletion (name, web address, who, when, why, and the old rules
+>    files' names). **Not verified:** whether the database host's routine backups hold stored files at all. Production read
+>    2026-11-15 (owner yes): no files left from clubs deleted earlier; one old rules file no row links to, origin unknown.
 > 3. **A club cannot delete a child's record** [H: no DELETE on the roster, house-league sign-up or parent-link routes; a
 >    free Coaches Portal coach can delete a player]. "Until the club deletes it" from 0.1 was misleading and is gone.
 >    → `/plan` with Stage 14 (finding 3).
@@ -539,16 +549,18 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca · [mailing address]
 - P1 · privacy@fieldlogichq.ca working; the mailing address (shared with the Terms §1) if you keep that line (§2 note).
 - P3 · record the acceptance date of each supplier's terms in `LEGAL_FACTS.md` (mechanisms already recorded there).
 - P6 · approve `BREACH_PROCEDURE.md`, choose where the record lives, and start it.
-- (P2, P4, P5 are done: region, Gmail named, encryption wording read. P7 is the build below.)
+- (P2, P4, P5 are done: region, Gmail named, encryption wording read. P7 is built, `45c134bea`.)
 
 **Product must do first** (Stage 6 plan):
-- **6.5 (P7)** — deleting an organization removes its stored files (§9 note 2).
+- **6.5 (P7)** — deleting an organization removes its stored files: built, committed `45c134bea` 2026-11-15; publish once it
+  is on production (§9 note 2).
 - **6.3** — acceptance records exist (§3 row) and the age line is ticked at every door (§8).
 - **6.4** — checkout refuses a Québec billing address (§14).
 
 **Product findings → `/plan`** (the policy is written to be true without them, but each is a real gap):
-1. **High** — deleting an organization leaves its uploaded files (children's medical and waiver documents) in storage.
-   **In this stage as 6.5.**
+1. **Closed for a whole organization** — built as 6.5 (`45c134bea`, 2026-11-15). **Still open, Medium:** deleting one tournament,
+   rep team, player or person leaves that item's files; §9 says a child's record is deleted on request, and that delete
+   probably leaves the child's signed documents (not checked against the code) → `/plan`.
 2. **High** — no automatic purge at the end of a retention window; no written retention schedule (PIPEDA 4.5.3).
 3. **Medium** — a club cannot delete a child's record (sharper with Stage 14's one record across seasons).
 4. **Medium** — signup acceptance of the Terms and this policy. **In this stage as 6.3.**
