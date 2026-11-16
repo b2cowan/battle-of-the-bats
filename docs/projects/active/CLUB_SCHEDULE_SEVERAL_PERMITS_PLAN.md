@@ -537,6 +537,21 @@ families; a permit edit should never rewrite it without a person pressing Send t
 > - ⚖ **Take it off when nothing would stay** (the permit is the schedule's only row, nothing played): the screen hides the
 >   door, and the server refuses with 400 "give the schedule its time first", not 409 (409 is "that permit has no row on this
 >   schedule"). Harmless; say if you want a clearer refusal for a direct call.
+> - **/marketing proposed wording for the three calls above (2026-11-16, Close; PROPOSED, nothing built or decided — the
+>   owner picks, and the build follows):**
+>   1. *Clipped start* — **Option A (say so, recommended):** under "From" in Add time, when a ticked permit starts before
+>      the schedule's first day: "Milton spring starts Apr 12, before this schedule’s first day. Only its time from May 3 on
+>      is added." **Option B (move the first day earlier):** needs no sentence of its own, but then the promise line must
+>      say "The schedule now starts Apr 12", and on a sent schedule nothing before today can be added either way, so A's
+>      sentence is still needed there. /marketing leans A: it changes nothing the owner has ruled and costs one line.
+>   2. *New dates off reach the old rows* — add one line under the promise in Add time, shown only when the new permit
+>      brings dates off: "Its dates off join the schedule’s dates off. They also apply to the time already here, the next
+>      time you regenerate or save Settings…. Nothing moves now." (Plain version for the walk: nothing moves today; the old
+>      rows lose those days later.)
+>   3. *Take-off with nothing left* — the refusal reuses "Give the schedule its time first: a venue, its facilities, the
+>      days and the hours", which tells the reader to do what they already did. Proposed: "This permit is the only time on
+>      the schedule, so it can’t be taken off. Add other time first." (The screen already hides the door; this is for a
+>      direct call and the 400 body only.)
 > - Counts differ by design in two questions: the regenerate question's "N practices before today" counts slots that have a
 >   team; the take-off question counts teams per slot (a shared slot is 1 and 2).
 > - Known, low, left alone: a stale tab from before mig 487 (no permit on its rows) splits a sent schedule's rows without
@@ -553,8 +568,17 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [x] F1: regenerate on a final schedule never moves a slot whose day has passed (P10).
 
 ### Phase 6 — words, help, check, walk
-- [ ] `/marketing` once over the words below; `/docs` (Schedules and Permits guides: several permits, Add time, Find
-      the time, dates off by venue, Price the time; F3's one-permit-per-issuer advice).
+- [x] `/marketing` once over the words below — **done 2026-11-16, committed `f0f36651d`** (this project's words only: the
+      Session A–E blocks of `lib/club-schedule-words.ts`; `lib/permit-words.ts` was not touched by this project, so
+      nothing there). 13 sentences reworded, meaning kept, no guard needed to follow (none pinned them): the overlap
+      line's "priced there"; Add time's promise ("nothing before today changes", "earlier payments stay as they are"); the
+      "kept" notice ("The coaches aren’t told until you send the changes"); the take-off question's dates ("from today
+      (Nov 16) on") and its "Other changes … but not kept are left out"; the notice "is taken off"; Find the time's
+      "are on both permits", "The permit that prices those days" and "a row of hours tied to its permit"; the regenerate
+      question ("except the ones someone placed by hand"); the Bill window's "Time added after the bill was made…" and
+      "Time already billed keeps its price". The three open calls have proposed words in Phase 5 above.
+- [ ] `/docs` (Schedules and Permits guides: several permits, Add time, Find the time, dates off by venue, Price the
+      time; F3's one-permit-per-issuer advice) — **still owed at the Close**; it quotes the settled words above.
 - [ ] `check:layout --changed` on the touched screens; `check:spelling`.
 - [ ] `/simplify` and `/review` per session; an owner walk (checkable Artifact) on a two-town fixture with a four-month
       season.
