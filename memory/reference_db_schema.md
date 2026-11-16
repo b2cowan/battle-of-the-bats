@@ -835,6 +835,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, surface NOT NULL, ref_id
 id (uuid), child_a_id (uuid) → org_children.id NOT NULL, child_b_id (uuid) → org_children.id NOT NULL, door NOT NULL, rejected_by (uuid), rejected_at
 - Indexes: child_match_rejections_child_b_idx, child_match_rejections_pair_uniq
 
+### club_schedule_bill_rates
+id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, permit_id (uuid) → org_permits.id, permit_name NOT NULL, scale (numeric) NOT NULL, first_billed_send_id (uuid) → club_schedule_sends.id, created_at
+- Indexes: club_schedule_bill_rates_org_idx, club_schedule_bill_rates_permit_idx, club_schedule_bill_rates_schedule_permit_key, club_schedule_bill_rates_send_idx
+
 ### club_schedule_hand_back_slots
 id (uuid), hand_back_id (uuid) → club_schedule_hand_backs.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, slot_id (uuid) → club_schedule_slots.id, event_id (uuid), starts_at NOT NULL, ends_at NOT NULL, priced_minutes (numeric) NOT NULL, cents (bigint) NOT NULL, waiting (boolean), handed_back (boolean)
 - Indexes: club_schedule_hand_back_slots_hand_back_idx, club_schedule_hand_back_slots_one_waiting, club_schedule_hand_back_slots_org_idx, club_schedule_hand_back_slots_slot_idx
@@ -864,7 +868,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → c
 - Indexes: club_schedule_slots_block_idx, club_schedule_slots_facility_idx, club_schedule_slots_handed_back_by_idx, club_schedule_slots_handed_back_team_idx, club_schedule_slots_org_idx, club_schedule_slots_place_start, club_schedule_slots_venue_idx
 
 ### club_schedules
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, state, starts_on NOT NULL, ends_on NOT NULL, settings (jsonb), version (integer), started_from_permit_id (uuid) → org_permits.id, started_from_schedule_id (uuid) → club_schedules.id, reply_by, sent_at, sent_by (uuid), finalized_at, finalized_by (uuid), changed_since_sent (boolean), bill_line_id (uuid) → org_budget_lines.id, bill_permit_id (uuid) → org_permits.id, bill_amount (numeric), bill_plan, bill_first_due, bill_dates, bill_scale (numeric), allocation_id (uuid) → rep_cost_allocations.id, created_by (uuid), updated_by (uuid), created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, state, starts_on NOT NULL, ends_on NOT NULL, settings (jsonb), version (integer), started_from_permit_id (uuid) → org_permits.id, started_from_schedule_id (uuid) → club_schedules.id, reply_by, sent_at, sent_by (uuid), finalized_at, finalized_by (uuid), changed_since_sent (boolean), bill_line_id (uuid) → org_budget_lines.id, bill_permit_id (uuid) → org_permits.id, bill_amount (numeric), bill_plan, bill_first_due, bill_dates, bill_scale (numeric), allocation_id (uuid) → rep_cost_allocations.id, created_by (uuid), updated_by (uuid), created_at, updated_at, bill_price_mode
 - Indexes: club_schedules_allocation_idx, club_schedules_bill_line_idx, club_schedules_bill_permit_idx, club_schedules_created_by_idx, club_schedules_finalized_by_idx, club_schedules_from_schedule_idx, club_schedules_org_idx, club_schedules_permit_idx, club_schedules_sent_by_idx, club_schedules_updated_by_idx
 
 ### error_events
@@ -1142,7 +1146,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **280 tables** across 10 modules.
+Total: **281 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 25 tables
@@ -1153,4 +1157,4 @@ Total: **280 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 32 tables
 - CRM / Leads: 6 tables
-- Other: 96 tables
+- Other: 97 tables

@@ -23,6 +23,8 @@ import { formatShortWeekdayDate, formatStoredDate, timesInZoneSentence } from '.
 import { formatTime, formatTimeRange, joinWithAnd, pluralize } from './utils.ts';
 import { facilityListWords, weekdayCount } from './permit-words.ts';
 import { fmt as money } from './coach-money-summary.ts';
+import type { PriceMode } from './club-schedule-bill.ts';
+import { teamsOnly } from './club-schedule-holders.ts';
 
 export interface DocPlace { venueId: string; venueName: string; facilities: { id: string; name: string }[] }
 export interface DocTeam { id: string; name: string; groupName: string | null }
@@ -32,6 +34,8 @@ export interface DocSlot {
   teamIds: string[]; weight: number; prime: boolean;
   heldBy: { ownerName: string; kind: string | null } | null;
   handedBackTeamId?: string | null;
+  /** The permit that prices it (several permits, Session C). */
+  pricePermitId?: string | null;
 }
 
 export interface ScheduleDocInput {
@@ -51,8 +55,13 @@ export interface ScheduleDocInput {
   datesOff: readonly { day: string; note: string | null; venueIds?: readonly string[] }[];
   /** Names of parks a date off names that no row of the schedule uses (so `places` can't name them): venue id → name. */
   offParkNames?: Readonly<Record<string, string>>;
-  /** The permit's price, for a MONEY reader only: an hour of a full field, its cost, its reference words. */
-  pricing?: { fullHour: number | null; permitCost: number | null; permitName: string | null } | null;
+  /** The permit's price, for a MONEY reader only: an hour of a full field, its cost, its reference words. On several
+   *  permits (Session C): each permit's hour, and how the bill prices them (each permit's price, or one rate for all). */
+  pricing?: {
+    fullHour: number | null; permitCost: number | null; permitName: string | null;
+    mode?: PriceMode;
+    permits?: readonly { id: string; name: string; fullHour: number | null }[];
+  } | null;
   /** Each team's bill (a money reader, a bill riding with the schedule): its share and payments, in dollars. */
   bill?: { teamId: string; amount: number; installments: { dueDate: string; amount: number }[] }[] | null;
 }
@@ -183,9 +192,37 @@ export function sheetNameOf(name: string): string {
   return name.replace(/[:\\/?*[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 31) || 'Schedule';
 }
 
+/**
+ * A SLOT'S HOUR in the Cost column (Session C): one permit, its hour, as before; several, each slot at its own permit's
+ * hour, or every slot at the one rate (the time at the permits' prices ÷ its full-field hours, P1 A). Null: not priced.
+ */
+function slotHours(input: ScheduleDocInput): { hourOf: (s: DocSlot) => number; oneRate: number | null; byPermit: { name: string; fullHour: number }[] } | null {
+  const permits = input.pricing?.permits ?? [];
+  // Time house league holds is on no bill (11b·A): it prices nothing the sheet shows, so it joins no rate either.
+  const billed = input.slots.filter(x => teamsOnly(x.teamIds).length);
+  const used = new Set(billed.map(x => x.pricePermitId ?? ''));
+  const behind = permits.filter(x => used.has(x.id));
+  const distinct = new Set(behind.map(x => x.fullHour));
+  if (behind.length < 2 || distinct.size < 2 || [...distinct].some(h => h == null)) {
+    const one = input.pricing?.fullHour ?? (behind.length && distinct.size === 1 ? behind[0].fullHour : null);
+    return one != null ? { hourOf: () => one, oneRate: null, byPermit: [] } : null;
+  }
+  const hour = new Map(behind.map(x => [x.id, x.fullHour as number]));
+  const own = (x: DocSlot) => hour.get(x.pricePermitId ?? '') ?? 0;
+  const byPermit = behind.map(x => ({ name: x.name, fullHour: x.fullHour as number }));
+  if (input.pricing?.mode !== 'one_rate') return { hourOf: own, oneRate: null, byPermit };
+  let cost = 0, full = 0;
+  for (const x of billed) {
+    const h = (Date.parse(x.endsAt) - Date.parse(x.startsAt)) / 3_600_000 * x.weight;
+    cost += h * own(x); full += h;
+  }
+  const oneRate = full > 0 ? cost / full : 0;
+  return { hourOf: () => oneRate, oneRate, byPermit };
+}
+
 export function scheduleSheets(input: ScheduleDocInput): ScheduleSheets {
-  const fullHour = input.pricing?.fullHour ?? null;
-  const priced = fullHour != null;
+  const pricedBy = slotHours(input);
+  const priced = pricedBy != null;
   const groupOf = (id: string) => input.teams.find(t => t.id === id)?.groupName ?? '';
   const sorted = [...input.slots].sort((a, b) => a.startsAt.localeCompare(b.startsAt)
     || placeWords(input.places, a.venueId, a.facilityId).localeCompare(placeWords(input.places, b.venueId, b.facilityId), 'en-CA', { numeric: true }));
@@ -198,7 +235,7 @@ export function scheduleSheets(input: ScheduleDocInput): ScheduleSheets {
   let hoursTotal = 0, costTotal = 0;
   for (const s of sorted) {
     const h = hours(Date.parse(s.endsAt) - Date.parse(s.startsAt));
-    const cost = priced ? Math.round(h * s.weight * fullHour! * 100) / 100 : null;
+    const cost = pricedBy ? Math.round(h * s.weight * pricedBy.hourOf(s) * 100) / 100 : null;
     hoursTotal += h;
     if (cost != null) costTotal += cost;
     const teamWords = slotWords(s, input.teams);
@@ -230,9 +267,16 @@ export function scheduleSheets(input: ScheduleDocInput): ScheduleSheets {
   });
 
   const notes = scheduleNotes(input).slice(0, 3);
-  if (priced) {
-    const half = fullHour! / 2;
-    notes.push(`Cost is each slot’s share of ${input.pricing?.permitName ?? 'the permit'}${input.pricing?.permitCost != null ? ` (${money(input.pricing.permitCost)})` : ''}: a full field is ${money(fullHour!)} an hour, a half field ${money(half)}.${input.bill ? ' Each team’s bill is on the By team sheet.' : ''}`);
+  if (pricedBy) {
+    const byTeam = input.bill ? ' Each team’s bill is on the By team sheet.' : '';
+    if (pricedBy.oneRate != null) {
+      notes.push(`Cost is each slot at one rate for all, ${money(pricedBy.oneRate)} a full field an hour: the time at ${joinWithAnd(pricedBy.byPermit.map(x => `${x.name}’s ${money(x.fullHour)}`))}, over all its hours.${byTeam}`);
+    } else if (pricedBy.byPermit.length) {
+      notes.push(`Cost is each slot at its own permit’s price, a full field an hour: ${joinWithAnd(pricedBy.byPermit.map(x => `${x.name} ${money(x.fullHour)}`))}. A half field is half of it.${byTeam}`);
+    } else {
+      const fullHour = pricedBy.hourOf(input.slots[0]);
+      notes.push(`Cost is each slot’s share of ${input.pricing?.permitName ?? 'the permit'}${input.pricing?.permitCost != null ? ` (${money(input.pricing.permitCost)})` : ''}: a full field is ${money(fullHour)} an hour, a half field ${money(fullHour / 2)}.${byTeam}`);
+    }
   }
   return {
     sheetName: sheetNameOf(input.name),

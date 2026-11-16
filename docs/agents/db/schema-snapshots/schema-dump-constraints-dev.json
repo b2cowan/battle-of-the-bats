@@ -1090,6 +1090,76 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "club_schedule_bill_rates",
+    "constraint_name": "club_schedule_bill_rates_first_billed_send_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "first_billed_send_id",
+    "foreign_table": "club_schedule_sends",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "constraint_name": "club_schedule_bill_rates_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "constraint_name": "club_schedule_bill_rates_permit_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "permit_id",
+    "foreign_table": "org_permits",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "constraint_name": "club_schedule_bill_rates_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "constraint_name": "club_schedule_bill_rates_schedule_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "schedule_id",
+    "foreign_table": "club_schedules",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "constraint_name": "club_schedule_bill_rates_schedule_permit_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "schedule_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "constraint_name": "club_schedule_bill_rates_schedule_permit_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "permit_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "club_schedule_hand_back_slots",
     "constraint_name": "club_schedule_hand_back_slots_hand_back_id_fkey",
     "constraint_type": "FOREIGN KEY",

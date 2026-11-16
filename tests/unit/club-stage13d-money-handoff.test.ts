@@ -47,7 +47,8 @@ describe('a bill not sent yet (13d-3 A)', () => {
     const reader = readCode('lib/club-draft-bill-server.ts');
     assert.match(reader, /\.in\('state', \[\.\.\.BILL_PENDING_STATES\]\)/);
     assert.match(reader, /if \(!loaded \|\| !billIsPending\(loaded\.row\)/, 'the row as loaded decides');
-    assert.match(reader, /computeBill\(row, billSlotsOf\(slots, assignments\), prices\.fullHour, teamOrder\)/);
+    // Each slot at its own permit's price (a schedule on several permits, Session C): the same computeBill the page runs.
+    assert.match(reader, /computeBill\(row, billSlotsOf\(slots, assignments, prices\.priceKeyOf\), prices\.hourOf, teamOrder\)/);
     for (const f of ['lib/club-draft-bill-server.ts', 'lib/club-draft-bill.ts', 'components/admin/kit/club/money/DraftBills.tsx']) {
       assert.doesNotMatch(readCode(f), /\b(billShares|shareCents|pricedMinutes)\(/, `${f} computes no share`);
     }

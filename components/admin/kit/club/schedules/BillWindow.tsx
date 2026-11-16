@@ -13,6 +13,10 @@
  * that books the slots. A final schedule's bill reads here, never changes — a change to the time is billed at Send the
  * changes (build question B).
  * ⚖ MONEY: the window opens only for those who hold the club's Accounting (`canMoney`); the route refuses anyone else.
+ * A SCHEDULE ON SEVERAL PERMITS (Session C; drawing tab 5): each slot is priced at its own permit's price, or every slot at
+ * one rate for all — "Price the time", shown only when the time has more than one price (P2 A). The total is the same
+ * either way (P1 A); a typed part is shared by what each team's time costs, or by its hours (P3 A). Once made, the window
+ * reads the rate each permit was billed at, and any permit billed later at its own price (P9 B).
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Trash2 } from 'lucide-react';
@@ -23,9 +27,9 @@ import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit'
 import { fmt } from '@/lib/coach-money-summary';
 import { formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { pluralize } from '@/lib/utils';
-import { billShares, closingRow, paymentPeriods, pricedMinutes, teamInstallments, type BillSlot, type PaymentPlan } from '@/lib/club-schedule-bill';
+import { closingRow, DEFAULT_PRICE_MODE, paymentPeriods, priceTheBill, pricedMinutes, pricedMinutesByPermit, teamInstallments, type BillSlot, type PaymentPlan, type PriceMode } from '@/lib/club-schedule-bill';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, closingRowLine, moneyCents as money } from '@/lib/club-schedule-words';
-import { NO_GROUP, isStale, viewBillSlots, type ScheduleView } from '@/lib/club-schedule-view';
+import { NO_GROUP, isStale, pricingHourOf, viewBillSlots, type ScheduleView } from '@/lib/club-schedule-view';
 import { Statement } from './ScheduleParts';
 import sch from './Schedules.module.css';
 import DateInput from '@/components/shared/DateInput';
@@ -58,9 +62,10 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
   const late = final && !existing;
   const [lines, setLines] = useState<{ year: string; lines: BillFromLine[] } | null>(null);
   const [lineId, setLineId] = useState<string>(existing?.lineId ?? pricing?.lineId ?? '');
-  const [part, setPart] = useState<boolean>(existing?.amount != null || pricing?.fullHour == null);
+  const [partPicked, setPart] = useState<boolean>(existing?.amount != null || !(pricing?.permits ?? []).some(x => x.fullHour != null));
   const [amountText, setAmountText] = useState(existing?.amount != null ? existing.amount.toFixed(2) : '');
   const [plan, setPlan] = useState<PaymentPlan>(existing?.plan ?? 'one');
+  const [mode, setMode] = useState<PriceMode>(existing?.mode ?? pricing?.mode ?? DEFAULT_PRICE_MODE);
   const firstOfStart = `${view.schedule.startsOn.slice(0, 7)}-01`;
   // A bill made late opens on today, never on a start-of-schedule date that has already passed.
   const firstDefault = late && firstOfStart < tournamentToday() ? tournamentToday() : firstOfStart;
@@ -89,26 +94,41 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
 
   // ── The bill, worked out as the server works it ──
   const billSlots: BillSlot[] = useMemo(() => viewBillSlots(view.slots), [view.slots]);
-  const amount = part ? (Number(amountText.replace(/[$,\s]/g, '')) || null) : null;
   const priced = useMemo(() => pricedMinutes(billSlots), [billSlots]);
-  const fullHour = pricing?.fullHour ?? null;
+  const hourOf = useMemo(() => pricingHourOf(pricing), [pricing]);
+  /** The whole of the handed-out time at its price (null when not all of it has one) — and whether it has more than one. */
+  const timeBill = useMemo(() => priceTheBill(billSlots, { hourOf, mode, amount: null, teamOrder: view.teamOrder }), [billSlots, hourOf, mode, view.teamOrder]);
+  const priceable = timeBill?.timePriceCents != null;
+  // Time one permit prices and another does not has no whole-time price: the club types what the teams pay, never a window
+  // with the amount field hidden and nothing to bill by (/review, Session C).
+  const part = partPicked || (!priceable && [...priced.values()].some(m => m > 0));
+  const amount = part ? (Number(amountText.replace(/[$,\s]/g, '')) || null) : null;
+  const multi = !!timeBill?.multiPrice;
   const endsOn = view.schedule.endsOn;
   // Worked out once per change to the bill's inputs — each team's payments walk every slot it holds.
   const { rows, dues } = useMemo(() => {
     if (final && existing) {
       return { rows: existing.teams.map(t => ({ teamId: t.teamId, cents: t.cents, hours: t.pricedHours, installments: t.installments })), dues: existing.dues };
     }
-    const shares = part && !(amount && amount > 0) ? null : billShares(priced, { fullHour, amount: amount && amount > 0 ? amount : null, teamOrder: view.teamOrder });
+    const shares = !part ? timeBill : amount && amount > 0 ? priceTheBill(billSlots, { hourOf, mode, amount, teamOrder: view.teamOrder }) : null;
     const periods = paymentPeriods(plan, { firstDue: isCalendarDate(firstDue) ? firstDue : null, dates: plan === 'dates' ? dates.filter(isCalendarDate) : null, lastDay: endsOn });
     return {
-      rows: shares ? [...shares.shares].map(([teamId, cents]) => ({ teamId, cents, hours: Math.round(((priced.get(teamId) ?? 0) / 60) * 100) / 100, installments: teamInstallments(teamId, cents, billSlots, periods) })) : [],
+      rows: shares ? [...shares.shares].map(([teamId, cents]) => ({ teamId, cents, hours: Math.round(((priced.get(teamId) ?? 0) / 60) * 100) / 100, installments: teamInstallments(teamId, cents, billSlots, periods, shares.paymentWeight) })) : [],
       dues: periods.map(p => p.due),
     };
-  }, [final, existing, priced, fullHour, part, amount, view.teamOrder, plan, firstDue, dates, endsOn, billSlots]);
+  }, [final, existing, priced, hourOf, mode, part, amount, view.teamOrder, plan, firstDue, dates, endsOn, billSlots, timeBill]);
   const totalCents = rows.reduce((n, r) => n + r.cents, 0);
   const closing = closingRow(totalCents, pricing?.permitCost ?? existing?.permitCost ?? null);
-  /** What the whole of the handed-out time comes to at the permit's price — the option's own figure. */
-  const timePriceCents = fullHour != null ? billShares(priced, { fullHour, amount: null })?.timePriceCents ?? null : null;
+  /** What the whole of the handed-out time comes to at the permits' prices — the option's own figure. */
+  const timePriceCents = timeBill?.timePriceCents ?? null;
+  const permitsBehind = pricing?.permits.length ?? 0;
+  const permitName = new Map((pricing?.permits ?? []).map(x => [x.id, x.name]));
+  const byPermit = useMemo(() => pricedMinutesByPermit(billSlots), [billSlots]);
+  /** "Milton spring $60.00 a full field, an hour · Halton Hills $90.00" — each permit behind the time, its own hour. */
+  const eachHint = W.billPriceEachHint((pricing?.permits ?? []).filter(x => x.fullHour != null).map(x => ({ name: x.name, hour: fmt(x.fullHour!) })));
+  // One rate (P1 A): the time at the permits’ prices over its full-field hours (rep teams only, as the bill counts them).
+  const oneRateHour = timeBill && multi ? (timeBill.rate * 60) / 100 : null;
+  const fullFieldHours = timeBill && multi ? timeBill.timePriceCents! / timeBill.rate / 60 : 0;
 
   // A team's time, in the drawing's words: "25 full-field slots · 37.5 h" / "25 full + 25 half · 56.3 h" / "50 shared
   // slots · 37.5 h" (Stage 11c: a slot it shares is its own kind — half a facility for the bill, whatever the field).
@@ -127,6 +147,12 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
   }, [view.slots]);
   const caption = (teamId: string, hours: number) => {
     const k = kinds.get(teamId) ?? { full: 0, half: 0, shared: 0, all: 0 };
+    // More than one price: the team's hours by permit, so "why does 15U AA pay more?" is answered in the row.
+    if (multi) {
+      const parts = [...(byPermit.get(teamId) ?? [])].filter(([, m]) => m > 0)
+        .map(([id, m]) => `${W.hours(m / 60)} ${permitName.get(id) ?? W.billNoLineName}`);
+      return W.billTeamByPermit(k.all, parts);
+    }
     return W.billTeamCaption(k.full, k.half, k.shared, k.all - k.full - k.half - k.shared, hours);
   };
   const groupsOf = new Map<string, { name: string; teamIds: string[] }>();
@@ -143,7 +169,7 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
 
   const problem = (): string | null => {
     if (part && !(amount && amount > 0)) return W.billNeedAmount;
-    if (!rows.length) return pricing?.fullHour == null ? W.billNeedAmount : W.billNoTimeYet;
+    if (!rows.length) return !priceable ? W.billNeedAmount : W.billNoTimeYet;
     if (plan === 'dates' ? !dates.some(isCalendarDate) : !isCalendarDate(firstDue)) return plan === 'dates' ? W.billNeedDates : W.billNeedFirst;
     return null;
   };
@@ -161,12 +187,32 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
       setBusy(false);
     }
   }
+  const amountField = (
+    <label className={ck.field} htmlFor="bill-amount">
+      <span className={ck.label}>{W.billAmount}<span className={repKit.req} aria-hidden>*</span></span>
+      <input id="bill-amount" className={ck.input} inputMode="decimal" placeholder="$0.00" value={amountText} onChange={e => setAmountText(e.target.value)} />
+    </label>
+  );
   const billBody = () => ({
-    lineId: lineId || null, permitId: pricing?.permitId ?? null, amount: part ? amount : null, plan,
+    lineId: lineId || null, permitId: pricing?.permitId ?? null, amount: part ? amount : null, plan, mode,
     firstDue: plan === 'dates' ? null : firstDue, dates: plan === 'dates' ? [...new Set(dates.filter(isCalendarDate))].sort() : null,
   });
 
   const half = pricing?.fullHour != null && view.slots.some(s => Math.abs(s.weight - 0.5) < 0.0001) ? fmt(pricing.fullHour / 2) : null;
+  const splitHint = multi
+    ? (part ? (mode === 'one_rate' ? W.billSplitPartOne : W.billSplitPartEach) : (mode === 'one_rate' ? W.billSplitHintOne : W.billSplitHintEach))
+    : pricing?.fullHour != null ? W.billSplitHint(fmt(pricing.fullHour), half) : W.billSplitHintPlain;
+  /** The read-only view's terms (P9 B item 5): the rates kept, and a permit billed later at its own price. */
+  const keptWords = (() => {
+    const kept = existing?.kept ?? [];
+    const first = kept.filter(k => !k.later), later = kept.filter(k => k.later);
+    const list = (ks: typeof kept) => W.billPriceEachHint(ks.map(k => ({ name: k.permitName, hour: fmt(k.fullHour) })));
+    const out: string[] = [];
+    if (new Set(first.map(k => k.fullHour)).size > 1) out.push(W.billKeptEach(list(first)));
+    else if (first.length > 1 && existing?.mode === 'one_rate') out.push(W.billKeptOne(fmt(first[0].fullHour)));
+    if (later.length) out.push(W.billKeptLater(list(later)));
+    return out;
+  })();
   // The table, then its closing line UNDER the frame (inside it, the window's paragraph rule pressed it flush against the
   // frame's edges), and a step before the statement (owner 2026-10-13: "squished").
   const table = (
@@ -209,7 +255,7 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
           </tbody>
         </table>
       </div>
-      <p className={`${repKit.notes} ${sch.billNote}`}>{closingRowLine(closing, view.fairness.totals.open)}</p>
+      <p className={`${repKit.notes} ${sch.billNote}`}>{closingRowLine(closing, view.fairness.totals.open, permitsBehind)}</p>
     </div>
   );
 
@@ -217,6 +263,7 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
     return (
       <KitDialog kind="form" size="wide" eyebrow={view.schedule.name} title={W.billTitle} onClose={onClose}>
         {table}
+        {keptWords.map(w => <p key={w} className={ck.hint}>{w}</p>)}
         <p className={ck.hint}>{R.billFinal}</p>
       </KitDialog>
     );
@@ -260,15 +307,17 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
               ...(lineId && lines && !lines.lines.some(l => l.id === lineId) ? [{ value: lineId, name: W.billNoLineName, sub: W.billNoLineSub }] : []),
             ]}
           />
-          {line && <span className={ck.hint}>{(lineId === pricing?.lineId ? W.billFromHint : W.billFromOther)(fmt(line.planned), fmt(line.left))}</span>}
+          {line && <span className={ck.hint}>{lineId === pricing?.lineId
+            ? (pricing?.lineFrom ? W.billFromMost(pricing.lineFrom, fmt(line.planned), fmt(line.left)) : W.billFromHint(fmt(line.planned), fmt(line.left)))
+            : W.billFromOther(fmt(line.planned), fmt(line.left))}</span>}
         </div>
         <label className={ck.field} htmlFor="bill-for">
           <span className={ck.label}>{W.billFor}</span>
-          <select id="bill-for" className={ck.select} value={part ? 'part' : 'whole'} onChange={e => setPart(e.target.value === 'part')} disabled={pricing?.fullHour == null}>
-            {pricing?.fullHour != null && <option value="whole">{timePriceCents != null ? W.billWhole(money(timePriceCents)) : W.billWholeTime}</option>}
+          <select id="bill-for" className={ck.select} value={part ? 'part' : 'whole'} onChange={e => setPart(e.target.value === 'part')} disabled={!priceable}>
+            {priceable && <option value="whole">{(permitsBehind > 1 ? W.billWholePermits : W.billWhole)(money(timePriceCents!))}</option>}
             <option value="part">{W.billPart}</option>
           </select>
-          <span className={ck.hint}>{pricing?.fullHour == null ? W.billNoPermitHint : W.billPartHint}</span>
+          <span className={ck.hint}>{!priceable ? W.billNoPermitHint : W.billPartHint}</span>
         </label>
       </div>
       {/* Accounting's allocations on the line, a bill bigger than what's left, and a permit's line it can't offer —
@@ -277,17 +326,28 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
         <BillLineNotice q={q} lineId={lineId} billCents={totalCents > 0 ? totalCents : null}
           droppedLineId={!savedLineId && pricing?.lineId && !lines.lines.some(l => l.id === pricing.lineId) ? pricing.lineId : null} />
       )}
-      {part && (
-        <label className={ck.field} htmlFor="bill-amount">
-          <span className={ck.label}>{W.billAmount}<span className={repKit.req} aria-hidden>*</span></span>
-          <input id="bill-amount" className={ck.input} inputMode="decimal" placeholder="$0.00" value={amountText} onChange={e => setAmountText(e.target.value)} />
-        </label>
-      )}
+      {/* "Price the time" (P2 A): absent, not disabled, when the time has one price — and then the amount sits alone, full
+          width, exactly as a one-permit schedule always showed it. */}
+      {multi ? (
+        <div className={sch.pair}>
+          <label className={ck.field} htmlFor="bill-price">
+            <span className={ck.label}>{W.billPrice}</span>
+            <select id="bill-price" className={ck.select} value={mode} onChange={e => setMode(e.target.value as PriceMode)}>
+              <option value="each_permit">{W.billPriceEach}</option>
+              <option value="one_rate">{W.billPriceOne}</option>
+            </select>
+            <span className={ck.hint}>{mode === 'one_rate' && oneRateHour != null
+              ? W.billPriceOneHint(money(timePriceCents!), W.hours(fullFieldHours), fmt(oneRateHour))
+              : eachHint}</span>
+          </label>
+          {part ? amountField : <div />}
+        </div>
+      ) : part ? amountField : null}
       <div className={sch.pair}>
         <div className={ck.field}>
           <span className={ck.label} id="bill-split-label">{W.billSplit}</span>
           <p className={sch.fixedValue} aria-labelledby="bill-split-label">{W.billSplitTime}</p>
-          <span className={ck.hint}>{pricing?.fullHour != null ? W.billSplitHint(fmt(pricing.fullHour), half) : W.billSplitHintPlain}</span>
+          <span className={ck.hint}>{splitHint}</span>
         </div>
         <div className={ck.field}>
           <span className={ck.label} id="bill-pay-label">{W.billPayments}</span>

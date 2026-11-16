@@ -61,6 +61,8 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     // Which teams carry a bill is money's own news: a sender without Money access isn't told (the bill itself is hidden above).
     billNotTold: money ? p.billNotTold : [],
     blockers: p.blockers, correctionBlocked: p.correctionBlocked, replyBy: p.replyBy, lastSent: p.lastSent,
+    // A permit billed from this send at its own price (P9 B) is money: a money reader's only.
+    newPrices: money ? p.newPrices : [],
     handedBack: p.handedBack, recipientCount: p.recipientCount,
     // Stage 11b Part 5 (h4): the house-league teams' rows, coaches and family counts, their emails, and the plan's
     // fingerprint the POST returns (no money in any of it).

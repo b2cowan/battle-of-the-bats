@@ -550,6 +550,31 @@
     "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
   },
   {
+    "tablename": "club_schedule_bill_rates",
+    "indexname": "club_schedule_bill_rates_org_idx",
+    "indexdef": "CREATE INDEX club_schedule_bill_rates_org_idx ON public.club_schedule_bill_rates USING btree (org_id)"
+  },
+  {
+    "tablename": "club_schedule_bill_rates",
+    "indexname": "club_schedule_bill_rates_permit_idx",
+    "indexdef": "CREATE INDEX club_schedule_bill_rates_permit_idx ON public.club_schedule_bill_rates USING btree (permit_id) WHERE (permit_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedule_bill_rates",
+    "indexname": "club_schedule_bill_rates_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_bill_rates_pkey ON public.club_schedule_bill_rates USING btree (id)"
+  },
+  {
+    "tablename": "club_schedule_bill_rates",
+    "indexname": "club_schedule_bill_rates_schedule_permit_key",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_bill_rates_schedule_permit_key ON public.club_schedule_bill_rates USING btree (schedule_id, permit_id)"
+  },
+  {
+    "tablename": "club_schedule_bill_rates",
+    "indexname": "club_schedule_bill_rates_send_idx",
+    "indexdef": "CREATE INDEX club_schedule_bill_rates_send_idx ON public.club_schedule_bill_rates USING btree (first_billed_send_id) WHERE (first_billed_send_id IS NOT NULL)"
+  },
+  {
     "tablename": "club_schedule_hand_back_slots",
     "indexname": "club_schedule_hand_back_slots_hand_back_idx",
     "indexdef": "CREATE INDEX club_schedule_hand_back_slots_hand_back_idx ON public.club_schedule_hand_back_slots USING btree (hand_back_id)"

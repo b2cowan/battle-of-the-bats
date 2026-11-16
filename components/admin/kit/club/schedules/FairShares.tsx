@@ -14,7 +14,8 @@ import type { ReactNode } from 'react';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 import { SCHEDULE_SCREEN_WORDS as W, moneyCents as money } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
-import { NO_GROUP, dayHead, facilityNoun, fairBill, heldWords, perWeek, primeWords, weekCounts, weekShortfalls, type ScheduleView } from '@/lib/club-schedule-view';
+import { NO_GROUP, dayHead, facilityNoun, fairBill, heldWords, perWeek, primeWords, viewBillSlots, weekCounts, weekShortfalls, type ScheduleView } from '@/lib/club-schedule-view';
+import { pricedMinutesByPermit } from '@/lib/club-schedule-bill';
 import { formatTime } from '@/lib/utils';
 import type { TeamResult } from '@/lib/club-schedule-engine';
 import { JoinedBand, Swatch } from './ScheduleParts';
@@ -88,11 +89,19 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
   const sum = (rs: readonly TeamResult[], of: (r: TeamResult) => number) => rs.reduce((n, r) => n + of(r), 0);
   const allCol: Column = { head: W.colAll, cell: r => W.sharedCount(r.got, r.shared), group: rs => sum(rs, r => r.got) };
   const hoursCol: Column = { head: W.colHours, cell: r => hours(r), group: rs => hours({ pricedMinutes: sum(rs, r => r.pricedMinutes) }), hours: true };
+  // Several permits (Session C, drawing tab 5 'Fair shares'): a column of hours per permit replaces the one Hours column
+  // when more than one permit prices the time, so why a team pays more is answered in the table.
+  const byPermit = showBill && (view.pricing?.permits.length ?? 0) > 1 ? pricedMinutesByPermit(viewBillSlots(view.slots)) : null;
+  const permitHourCols: Column[] = byPermit ? view.pricing!.permits.map(x => ({
+    head: W.colHoursOn(x.name), hours: true,
+    cell: r => hours({ pricedMinutes: byPermit.get(r.teamId)?.get(x.id) ?? 0 }),
+    group: rs => hours({ pricedMinutes: sum(rs, r => byPermit.get(r.teamId)?.get(x.id) ?? 0) }),
+  })) : [];
   const billCol: Column = { head: W.colBill, cell: r => money(billCents.get(r.teamId) ?? 0), group: rs => money(sum(rs, r => billCents.get(r.teamId) ?? 0)) };
   const columns: Column[] = moved
     ? [allCol, { head: W.colEarly, cell: r => r.early, group: rs => sum(rs, r => r.early) }, { head: facilityWord, cell: r => r.facilities, group: () => '' }, ...(showBill ? [billCol] : [])]
     : showBill
-      ? [{ ...allCol, head: W.colSlots }, hoursCol, billCol]
+      ? [{ ...allCol, head: W.colSlots }, ...(permitHourCols.length ? permitHourCols : [hoursCol]), billCol]
       : [
         percent
           ? { head: W.colShare, cell: r => `${share(r.teamId)}%`, group: rs => `${Math.round(sum(rs, r => share(r.teamId)) * 100) / 100}%` }

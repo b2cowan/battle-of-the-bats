@@ -30,6 +30,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './CoachClubArrivalCard.module.css';
 import own from './ClubSlot.module.css';
 import { fmt } from '@/lib/coach-money-summary';
+import type { PriceMode } from '@/lib/club-schedule-bill';
 import { formatShortWeekdayDate, formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { joinWithAnd } from '@/lib/utils';
 import { SCHEDULE_COACH_WORDS as C, moneyCents, slotCountWords } from '@/lib/club-schedule-words';
@@ -42,7 +43,7 @@ interface Review {
   days: number;
   hours: number;
   patterns: string[];
-  bill: { cents: number; installments: { installmentNumber: number; amount: number; dueDate: string }[] } | null;
+  bill: { cents: number; installments: { installmentNumber: number; amount: number; dueDate: string }[]; pricedBy?: PriceMode | null } | null;
   covers: { slots: number; days: number; months: string[] }[];
   oneWeekday: number | null;
   seasonName: string | null;
@@ -184,7 +185,7 @@ function ReviewWindow({ review: r, url, onClose, onAnswered }: { review: Review;
               <div className={own.tile}>
                 <span className={own.tileLabel}>{C.yourShare}</span>
                 <span className={own.tileValue}>{moneyCents(r.bill.cents)}</span>
-                <span className={own.tileSub}>{C.byTheTime}</span>
+                <span className={own.tileSub}>{r.bill.pricedBy ? C.byTheTimePriced(r.bill.pricedBy) : C.byTheTime}</span>
               </div>
               <div className={own.tile}>
                 <span className={own.tileLabel}>{C.payments}</span>

@@ -136,7 +136,8 @@ describe('the scheduler rides League Plus and both Club bands, checked on the se
 });
 
 describe('the club\'s practices are written at Finalize and at Send the changes — never on read (P11-05)', () => {
-  const steps = /rpc\(['"](club_schedule_finalize|club_schedule_apply_changes)['"]/;
+  // Since mig 489 the send calls the _priced wrappers (the bill and its kept rates in one transaction); either name counts.
+  const steps = /rpc\(['"](club_schedule_finalize|club_schedule_apply_changes)(_priced)?['"]/;
   it('only the send module runs the two steps that write them', () => {
     const callers = CODE.filter(f => steps.test(readSource(f)));
     assert.deepEqual(callers, ['lib/club-schedule-send.ts']);
@@ -318,7 +319,7 @@ describe('the money: one step, build questions A and B (ruled 2026-10-11)', () =
   });
   it('the next send\'s baseline lands IN the step, never after the emails (/review 2026-10-11: a lost completion double-billed)', () => {
     const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
-    for (const step of ['club_schedule_send_review', 'club_schedule_finalize', 'club_schedule_apply_changes']) {
+    for (const step of ['club_schedule_send_review', 'club_schedule_finalize_priced', 'club_schedule_apply_changes_priced']) {
       const at = send.indexOf(`rpc('${step}'`);
       assert.ok(at > 0, step);
       assert.match(send.slice(at, at + 700), /p_send: sendId/, `${step} carries the claimed row`);
@@ -355,7 +356,7 @@ describe('the money: one step, build questions A and B (ruled 2026-10-11)', () =
     assert.match(mig, /check \(kind in \('review', 'final', 'changes', 'bill'\)\)/);
     assert.match(mig, /revoke all on function public\.club_schedule_bill_late[\s\S]*to service_role;/);
     const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
-    const at = send.indexOf("rpc('club_schedule_bill_late'");
+    const at = send.indexOf("rpc('club_schedule_bill_late_priced'");
     assert.ok(at > 0);
     assert.match(send.slice(at, at + 500), /p_send: sendId/, 'the late bill carries the claimed row');
     // The terms are the SERVER's own (read again from the request), never a list the browser sends on trust.

@@ -57,6 +57,8 @@ interface Preview {
   billNotTold: { teamId: string; teamName: string; sentence: string }[];
   blockers: { code: string; error: string }[];
   correctionBlocked: { code: string; error: string } | null;
+  /** P9 B: a permit billed from this send at its own price (money readers only). */
+  newPrices?: { permitName: string; fullHour: number }[];
   replyBy: string | null;
   lastSent: { at: string; by: string | null } | null;
   handedBack: { teamId: string; teamName: string; lines: string[] }[];
@@ -334,6 +336,9 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
               <span>
                 <b>{W.billCorrections}</b>
                 <span className={repKit.calloutSub}>{corrections ? W.billCorrectionsOn : W.billCorrectionsOff}</span>
+                {corrections && !!shown.newPrices?.length && (
+                  <span className={repKit.calloutSub}>{W.billNewPermitPrice(shown.newPrices.map(x => ({ name: x.permitName, hour: money(Math.round(x.fullHour * 100)) })))}</span>
+                )}
                 {corrections && shown.correctionBlocked && <span className={repKit.formError}>{shown.correctionBlocked.error}</span>}
               </span>
             </label>

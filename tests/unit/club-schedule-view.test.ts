@@ -113,7 +113,7 @@ describe('step 1 counts the time the way the drawings say it', () => {
 const slot = (key: string, day: string, start: string, end: string, teamIds: string[], over: Partial<SlotView> = {}): SlotView => ({
   id: key, key, venueId: 'v', facilityId: over.facilityId ?? 'lane2', startsAt: `${day}T${start}:00Z`, endsAt: `${day}T${end}:00Z`,
   day, weekday: 3, week: '2027-01-04', startClock: start, endClock: end, prime: true, weight: 1, teamIds, locked: false,
-  movedByHand: false, handedBack: null, heldBy: null, clash: false, ...over,
+  movedByHand: false, pricePermitId: null, handedBack: null, heldBy: null, clash: false, ...over,
 });
 const names: Record<string, string> = { t15aa: '15U AA', t16aa: '16U AA', t13: '13U AAA', t9: '9U AA', t14: '14U AA' };
 const places: Record<string, string> = { lane1: 'Lane 1', lane2: 'Lane 2', f2: 'Field 2', f6: 'Field 6' };

@@ -13,6 +13,7 @@ import { readScheduleOutside } from '@/lib/permit-dates-off';
 import { datesOffKeepingParks } from '@/lib/club-schedule-permit-rows';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { tournamentToday } from '@/lib/timezone';
+import { DEFAULT_PRICE_MODE } from '@/lib/club-schedule-bill';
 
 // ---------------------------------------------------------------------------
 // ONE SCHEDULE (Club Tier Stage 11a, part A — hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11, specimens 6–10, 14).
@@ -180,6 +181,9 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       const { data, error } = await supabaseAdmin.from('club_schedules').update({
         bill_line_id: bill.value?.lineId ?? null, bill_permit_id: bill.value?.permitId ?? null, bill_amount: bill.value?.amount ?? null,
         bill_plan: bill.value?.plan ?? null, bill_first_due: bill.value?.firstDue ?? null, bill_dates: bill.value?.dates ?? null,
+        // A bill term (mig 489): saved with the rest, frozen once the bill is made. A removed bill goes back to the default.
+        // A save that does not say keeps what is stored (a stale tab never resets a chosen mode).
+        ...(!bill.value ? { bill_price_mode: DEFAULT_PRICE_MODE } : bill.value.mode ? { bill_price_mode: bill.value.mode } : {}),
         version: version + 1, updated_by: actor, updated_at: new Date().toISOString(),
       }).eq('id', scheduleId).eq('org_id', orgId).eq('version', version).select('version').maybeSingle();
       if (error) throw error;

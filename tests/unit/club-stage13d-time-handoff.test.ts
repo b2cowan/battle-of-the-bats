@@ -110,7 +110,9 @@ describe('the time-given bell (A1, 13d-1 A)', () => {
     const send = readCode('lib/club-schedule-send.ts');
     const server = readCode('lib/league-time-handoff-server.ts');
     assert.match(server, /if \(p\.kind !== 'final' && !\(p\.kind === 'changes' && p\.state === 'final'\)\) return null;/);
-    assert.ok(send.indexOf('await tellTimeGiven(') > send.indexOf("rpc('club_schedule_apply_changes'"), 'told after the step');
+    const step = send.indexOf("rpc('club_schedule_apply_changes_priced'");
+    assert.ok(step > 0, 'the step is called');
+    assert.ok(send.indexOf('await tellTimeGiven(') > step, 'told after the step');
     // The baseline comes from the schedule itself, never from the bell's read (a failed read costs a bell, not the baseline).
     assert.match(send, /\.\.\.\(kind === 'final' \|\| kind === 'changes' \? \{ league_slot_ids: heldHouseLeagueSlotIds\(loaded\.slots\) \} : \{\}\),/);
   });

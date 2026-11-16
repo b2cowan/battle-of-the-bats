@@ -8,7 +8,7 @@ const places = [{ key: 'dome|f1', venueId: 'dome', facilityId: 'f1', name: 'Fiel
 const slot = (day: string, teamIds: string[], over: Partial<SlotView> = {}): SlotView => ({
   id: day, key: `dome|f1|${day}`, venueId: 'dome', facilityId: 'f1', startsAt: `${day}T12:00:00Z`, endsAt: `${day}T13:30:00Z`,
   day, weekday: 7, week: day, startClock: '08:00', endClock: '09:30', prime: false, weight: 1,
-  teamIds, locked: false, movedByHand: false, handedBack: null, heldBy: null, clash: false, ...over,
+  teamIds, locked: false, movedByHand: false, pricePermitId: null, handedBack: null, heldBy: null, clash: false, ...over,
 });
 const ask = (id: string, affected: string, askedOn: string, late = false): ScheduleAsk => ({
   id, teamId: id, teamName: id, late, askedOn, handedBackOn: late ? affected : null, askedBy: null,

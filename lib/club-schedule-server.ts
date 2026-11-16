@@ -22,8 +22,8 @@ import {
 } from './club-schedule-engine';
 import { readScheduleSettings, defaultSettings, isClock, sharingPools, slotRoom, type ScheduleSettings, type SettingsRefusal } from './club-schedule-settings';
 import {
-  billShares, closingRow, paymentPeriods, pricedMinutes, teamInstallments,
-  type BillShares, type BillSlot, type ClosingRow, type Installment, type PaymentPeriod, type PaymentPlan,
+  closingRow, DEFAULT_PRICE_MODE, hourOfScale, paymentPeriods, PRICE_MODES, priceTheBill, pricedMinutes, pricedMinutesByPermit, teamInstallments,
+  type BillSlot, type ClosingRow, type Installment, type PaymentPeriod, type KeptRates, type PaymentPlan, type PriceMode, type PricedBill,
 } from './club-schedule-bill';
 import { SCHEDULE_REFUSALS as R, houseLeagueUse } from './club-schedule-words';
 import { clubDay, keptHandBacks, waitingAsksOfSchedule, type KeptHandBack } from './club-hand-back-reads';
@@ -209,9 +209,11 @@ export interface ScheduleRow {
   reply_by: string | null; sent_at: string | null; sent_by: string | null; finalized_at: string | null; finalized_by: string | null;
   changed_since_sent: boolean; bill_line_id: string | null; bill_permit_id: string | null; bill_amount: number | string | null;
   bill_plan: PaymentPlan | null; bill_first_due: string | null; bill_dates: string[] | null; bill_scale: number | string | null;
+  /** How the bill prices time on more than one price (mig 489). */
+  bill_price_mode: PriceMode;
   allocation_id: string | null; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string;
 }
-const SCHEDULE_COLUMNS = 'id, org_id, name, state, starts_on, ends_on, settings, version, started_from_permit_id, started_from_schedule_id, reply_by, sent_at, sent_by, finalized_at, finalized_by, changed_since_sent, bill_line_id, bill_permit_id, bill_amount, bill_plan, bill_first_due, bill_dates, bill_scale, allocation_id, created_by, updated_by, created_at, updated_at';
+const SCHEDULE_COLUMNS = 'id, org_id, name, state, starts_on, ends_on, settings, version, started_from_permit_id, started_from_schedule_id, reply_by, sent_at, sent_by, finalized_at, finalized_by, changed_since_sent, bill_line_id, bill_permit_id, bill_amount, bill_plan, bill_first_due, bill_dates, bill_scale, bill_price_mode, allocation_id, created_by, updated_by, created_at, updated_at';
 
 export interface StoredSlot {
   id: string;
@@ -312,9 +314,22 @@ export interface Prices {
   lineId: string | null;
   /** Every permit read that is still the club's (the price permit and the rows'): its name, by id. */
   names: ReadonlyMap<string, string>;
+  /** THE PERMIT THAT PRICES A ROW (Session C): the row's own, else the price permit (else the first permit behind the
+   *  rows) — exactly the permit `weightOf` weighs it by, so a slot's weight and its price never come from two permits. */
+  priceKeyOf: (rowPermit: string | null) => string | null;
+  /** A permit's full field's hour (dollars), null without a price or for a permit that is gone. */
+  hourOf: (permitId: string) => number | null;
+  /** The permits that price the schedule's rows, in the rows' order: each one's hour, cost and budget line (money readers
+   *  only, through `pricing`). */
+  permits: readonly PricePermit[];
 }
 
-const NO_PRICES: Prices = { found: false, weightOf: () => 1, fullHour: null, permitCost: null, permitName: null, lineId: null, names: new Map() };
+export interface PricePermit { id: string; name: string; fullHour: number | null; cost: number | null; lineId: string | null }
+
+const NO_PRICES: Prices = {
+  found: false, weightOf: () => 1, fullHour: null, permitCost: null, permitName: null, lineId: null, names: new Map(),
+  priceKeyOf: () => null, hourOf: () => null, permits: [],
+};
 
 /**
  * THE PRICES (Ask 23; a schedule on several permits, Session A). `permitId` is the PRICE permit — `pricePermitOf`, the
@@ -332,15 +347,26 @@ export async function readPrices(orgId: string, permitId: string | null, rowPerm
   const shares = new Map(times.permits.map(x => [x.id, new Map(Object.entries(x.shares))]));
   const names = new Map(times.permits.map(x => [x.id, x.name]));
   const byRow = !permitId || !rows.length || rows.includes(permitId);
+  const fallback = permitId ?? rows[0] ?? null;
+  const priceKeyOf = (row: string | null): string | null => {
+    const key = byRow && row ? row : fallback;
+    return key && shares.has(key) ? key : null;
+  };
   const weightOf: WeightOf = (f, row) => {
     const own = byRow && row ? shares.get(row) : undefined;
     const set = own ?? (permitId ? shares.get(permitId) : undefined);
     return set ? shareOf(set, f) : 1;
   };
+  const hours = new Map(times.permits.map(x => [x.id, fieldPrices(x, times.venueFacilities, shares.get(x.id)!, x.cost).fullHour]));
+  const hourOf = (id: string) => hours.get(id) ?? null;
+  const keys = [...new Set((rowPermits.length ? rowPermits : [null]).map(r => priceKeyOf(r ?? null)).filter((x): x is string => !!x))];
+  const permits: PricePermit[] = keys.map(id => {
+    const x = times.permits.find(y => y.id === id)!;
+    return { id, name: x.name, fullHour: hourOf(id), cost: x.cost, lineId: x.budgetLineId };
+  });
   const p = permitId ? times.permits.find(x => x.id === permitId) : undefined;
-  if (!p) return { ...NO_PRICES, weightOf, names };
-  const prices = fieldPrices(p, times.venueFacilities, shares.get(p.id)!, p.cost);
-  return { found: true, weightOf, fullHour: prices.fullHour, permitCost: p.cost, permitName: p.name, lineId: p.budgetLineId, names };
+  if (!p) return { ...NO_PRICES, weightOf, names, priceKeyOf, hourOf, permits };
+  return { found: true, weightOf, fullHour: hourOf(p.id), permitCost: p.cost, permitName: p.name, lineId: p.budgetLineId, names, priceKeyOf, hourOf, permits };
 }
 
 /** The permit that prices a schedule's hour (until Session C): the bill's, else the one it started from (mig 487 keeps
@@ -498,10 +524,40 @@ export async function buildEngineInput(orgId: string, p: {
 
 // ── The page (specimens 6–10, 14) ────────────────────────────────────────────────────────────────
 
+export interface SchedulePricing {
+  permitId: string; permitName: string | null; fullHour: number | null; permitCost: number | null; lineId: string | null;
+  mode: PriceMode;
+  permits: readonly PricePermit[];
+  lineFrom: string | null;
+}
+
+/** THE PRICING A MONEY READER SEES (Session C): the permits that price the rows, their cost together, and "Bill from"'s
+ *  default — the line of the permit with the most priced time (N6 A). Null without a permit that prices any of it. */
+export function schedulePricing(row: Pick<ScheduleRow, 'bill_price_mode'>, prices: Prices, billSlots: readonly BillSlot[], permitId: string | null): SchedulePricing | null {
+  if (!prices.permits.length) return null;
+  const minutes = new Map<string, number>();
+  for (const by of pricedMinutesByPermit(billSlots).values()) for (const [k, m] of by) if (k) minutes.set(k, (minutes.get(k) ?? 0) + m);
+  const most = [...prices.permits].sort((a, b) => (minutes.get(b.id) ?? 0) - (minutes.get(a.id) ?? 0))[0];
+  const lines = new Set(prices.permits.map(x => x.lineId));
+  const one = prices.permits.length === 1 && prices.found ? prices : null;
+  return {
+    permitId: permitId && prices.found ? permitId : prices.permits[0].id,
+    permitName: one ? prices.permitName : null,
+    fullHour: one ? prices.fullHour : prices.permits.length === 1 ? prices.permits[0].fullHour : null,
+    permitCost: prices.permits.some(x => x.cost == null) ? null : prices.permits.reduce((n, x) => n + Number(x.cost), 0),
+    lineId: most.lineId,
+    mode: row.bill_price_mode ?? DEFAULT_PRICE_MODE,
+    permits: prices.permits,
+    lineFrom: lines.size > 1 ? most.name : null,
+  };
+}
+
 export interface SlotView {
   id: string; key: string; venueId: string; facilityId: string | null; startsAt: string; endsAt: string;
   day: string; weekday: number; week: string; startClock: string; endClock: string; prime: boolean; weight: number;
   teamIds: string[]; locked: boolean; movedByHand: boolean;
+  /** The permit that prices it (its row's, else the price permit; Session C) — the bill's key, never a price. */
+  pricePermitId: string | null;
   handedBack: { at: string; teamId: string | null } | null;
   /** A booking already on the books holds it: drawn as that booking ("Tryout day · 13U AAA"). */
   heldBy: { ownerName: string; kind: string | null } | null;
@@ -522,14 +578,39 @@ export interface BillView {
   dues: string[];
   /** After Finalize: the bill it became. */
   allocationId: string | null;
+  /** How it prices time on more than one price (Session C). */
+  mode: PriceMode;
+  /** Once made: the rate each permit was billed at (a full field's hour, dollars), in the order kept — `later` for a
+   *  permit added after the bill, billed at its own price (P9 B). Empty before the bill is made. */
+  kept: KeptPermitRate[];
 }
 
-/** A schedule's slots as the bill reads them: each slot's time, its field's price share, its teams. */
-export function billSlotsOf(slots: readonly Slot[], assignments: ReadonlyMap<string, readonly string[]>): BillSlot[] {
-  return slots.map(s => ({ day: s.day, startMs: s.startMs, endMs: s.endMs, weight: s.weight, teamIds: assignments.get(s.key) ?? [] }));
+export interface KeptPermitRate { permitId: string | null; permitName: string; fullHour: number; later: boolean }
+
+/** A made bill's kept rates (`club_schedule_bill_rates`, mig 489), in the order kept. Money readers only. */
+export async function readKeptRates(orgId: string, scheduleId: string): Promise<KeptPermitRate[]> {
+  const { data, error } = await supabaseAdmin.from('club_schedule_bill_rates')
+    .select('permit_id, permit_name, scale, first_billed_send_id, created_at').eq('org_id', orgId).eq('schedule_id', scheduleId)
+    .order('created_at').order('permit_name');
+  if (error) throw error;
+  return (data ?? []).map(r => ({ permitId: r.permit_id, permitName: r.permit_name, fullHour: hourOfScale(Number(r.scale)), later: !!r.first_billed_send_id }));
 }
 
-export interface BillNow { billSlots: BillSlot[]; priced: Map<string, number>; shares: BillShares | null; periods: PaymentPeriod[] }
+/** A made bill's terms as the corrections read them: its rate and each permit's kept rate (cents per full-field minute). */
+export async function readBillTerms(orgId: string, row: Pick<ScheduleRow, 'id' | 'bill_scale'>): Promise<KeptRates | null> {
+  if (row.bill_scale == null) return null;
+  const { data, error } = await supabaseAdmin.from('club_schedule_bill_rates').select('permit_id, scale').eq('org_id', orgId).eq('schedule_id', row.id);
+  if (error) throw error;
+  return { scale: Number(row.bill_scale), byPermit: new Map((data ?? []).filter(r => r.permit_id).map(r => [r.permit_id as string, Number(r.scale)])) };
+}
+
+/** A schedule's slots as the bill reads them: each slot's time, its field's price share, its teams, and the permit that
+ *  prices it (`Prices.priceKeyOf` — its row's, else the price permit; Session C). */
+export function billSlotsOf(slots: readonly Slot[], assignments: ReadonlyMap<string, readonly string[]>, priceKeyOf: Prices['priceKeyOf']): BillSlot[] {
+  return slots.map(s => ({ day: s.day, startMs: s.startMs, endMs: s.endMs, weight: s.weight, teamIds: assignments.get(s.key) ?? [], permitId: priceKeyOf(s.permitId ?? null) }));
+}
+
+export interface BillNow { billSlots: BillSlot[]; priced: Map<string, number>; shares: PricedBill | null; periods: PaymentPeriod[] }
 
 /**
  * THE BILL NOW (Ask 23), worked out in this one place so the schedule's page, the send and a coach's review card agree
@@ -537,14 +618,15 @@ export interface BillNow { billSlots: BillSlot[]; priced: Map<string, number>; s
  * (`readClubTeams`). Null when no bill rides with the schedule.
  */
 export function computeBill(
-  row: Pick<ScheduleRow, 'bill_plan' | 'bill_amount' | 'bill_first_due' | 'bill_dates' | 'ends_on'>,
-  billSlots: BillSlot[], fullHour: number | null, teamOrder: readonly string[],
+  row: Pick<ScheduleRow, 'bill_plan' | 'bill_amount' | 'bill_first_due' | 'bill_dates' | 'ends_on' | 'bill_price_mode'>,
+  billSlots: BillSlot[], hourOf: Prices['hourOf'], teamOrder: readonly string[],
 ): BillNow | null {
   if (!row.bill_plan) return null;
   const priced = pricedMinutes(billSlots);
   return {
     billSlots, priced,
-    shares: billShares(priced, { fullHour, amount: row.bill_amount == null ? null : Number(row.bill_amount), teamOrder }),
+    // Each slot at its own permit's price, or one rate for all (Session C); one price behind the time bills as before.
+    shares: priceTheBill(billSlots, { hourOf, mode: row.bill_price_mode ?? DEFAULT_PRICE_MODE, amount: row.bill_amount == null ? null : Number(row.bill_amount), teamOrder }),
     periods: paymentPeriods(row.bill_plan, { firstDue: row.bill_first_due, dates: row.bill_dates, lastDay: row.ends_on }),
   };
 }
@@ -554,23 +636,25 @@ export function computeBill(
  *  again from the slots as they stand — a hand-back, with money or without, leaves it as it was (Stage 11d Ask 6; 3d Ask
  *  7b), and a club change is billed or credited on its own. Hours stay the time each team holds now, as Fair shares
  *  counts it. */
-export function billViewOf(row: ScheduleRow, bill: BillNow | null, prices: Prices, made: ScheduleMoney['made'] | null = null): BillView | null {
+export function billViewOf(row: ScheduleRow, bill: BillNow | null, pricing: SchedulePricing | null, made: ScheduleMoney['made'] | null = null, kept: KeptPermitRate[] = []): BillView | null {
   if (!bill || !row.bill_plan) return null;
   const { shares, priced, periods, billSlots } = bill;
   const hours = (teamId: string) => Math.round(((priced.get(teamId) ?? 0) / 60) * 100) / 100;
   const rank = new Map([...(shares?.shares.keys() ?? [])].map((t, i) => [t, i]));
   const teams = made
     ? [...made].sort((a, b) => (rank.get(a.teamId) ?? 1e9) - (rank.get(b.teamId) ?? 1e9)).map(m => ({ ...m, pricedHours: hours(m.teamId) }))
-    : shares ? [...shares.shares].map(([teamId, cents]) => ({ teamId, cents, pricedHours: hours(teamId), installments: teamInstallments(teamId, cents, billSlots, periods) })) : [];
+    : shares ? [...shares.shares].map(([teamId, cents]) => ({ teamId, cents, pricedHours: hours(teamId), installments: teamInstallments(teamId, cents, billSlots, periods, shares.paymentWeight) })) : [];
   const total = made ? teams.reduce((n, t) => n + t.cents, 0) : shares?.totalCents ?? 0;
   return {
     lineId: row.bill_line_id, permitId: row.bill_permit_id, amount: row.bill_amount == null ? null : Number(row.bill_amount),
     plan: row.bill_plan, firstDue: row.bill_first_due, dates: row.bill_dates,
-    fullHour: prices.fullHour, permitCost: prices.permitCost,
-    totalCents: total, timePriceCents: shares?.timePriceCents ?? null, closing: closingRow(total, prices.permitCost),
+    fullHour: pricing?.fullHour ?? null, permitCost: pricing?.permitCost ?? null,
+    totalCents: total, timePriceCents: shares?.timePriceCents ?? null, closing: closingRow(total, pricing?.permitCost ?? null),
     teams,
     dues: made ? [...new Set(teams.flatMap(t => t.installments.map(i => i.dueDate)))].sort() : periods.map(p => p.due),
     allocationId: row.allocation_id,
+    mode: row.bill_price_mode ?? DEFAULT_PRICE_MODE,
+    kept,
   };
 }
 
@@ -608,8 +692,11 @@ export interface ScheduleView {
    * What the schedule's permit prices the time at (Ask 23 — Fair shares counts the bill beside the slots once a permit
    * stands behind it, and Bill the teams opens filled in from it): an hour of a full field, the permit's cost, its name
    * and its budget line. MONEY: null unless `canMoney` (as `bill` is), and null without a permit.
+   * A schedule on several permits (Session C): `permits` are the permits that price its rows, each with its own hour;
+   * `permitCost` is what they cost together (null when one has no cost); `lineId` is the line of the permit with the
+   * most priced time (N6 A), named by `lineFrom` when the permits sit on more than one line.
    */
-  pricing: { permitId: string; permitName: string | null; fullHour: number | null; permitCost: number | null; lineId: string | null } | null;
+  pricing: SchedulePricing | null;
   /** The permits behind the schedule's rows, still the club's, in the order their time starts — the top line's doors (13c
    *  C4; a schedule on several permits, the drawing's tab 6: "From the permits A › and B ›"). Names only, never money;
    *  empty for a schedule with no permit. */
@@ -696,7 +783,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
   const billed = canMoney && row.state === 'final' && !!row.allocation_id;
   // The permits behind its rows (the top line's doors): the prices read their names.
   const fromIds = schedulePermitIds(row, loaded.time.blocks);
-  const [teams, ctx, nameOf, waiting, money, plainBacks] = await Promise.all([
+  const [teams, ctx, nameOf, waiting, money, plainBacks, keptRates] = await Promise.all([
     // House league is always named when a slot holds it, whether or not the club still has house league.
     readClubTeams(orgId, { houseLeague: true }),
     engineContext(orgId, { slotIds: loaded.slots.map(s => s.id), teamIds: [], fromMs, toMs, permitId, rowPermits: loaded.time.blocks.map(b => b.permitId) }),
@@ -704,11 +791,14 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
     row.state === 'final' ? waitingAsksOfSchedule(orgId, row.id) : Promise.resolve([]),
     billed ? scheduleMoney(orgId, row.id, row.allocation_id!) : Promise.resolve(null),
     billed ? keptHandBacks(orgId, row.id, new Map(live.map(s => [s.id, s.teamIds]))) : Promise.resolve([]),
+    billed ? readKeptRates(orgId, row.id) : Promise.resolve([]),
   ]);
   // A permit only the fallback names (no row came from it, and it doesn't price the time): its name, read alone.
   const unread = fromIds.filter(id => !ctx.prices.names.has(id));
   const names = unread.length ? new Map([...ctx.prices.names, ...(await readPrices(orgId, null, unread)).names]) : ctx.prices.names;
   const { slots, assignments, stored } = liveSlots(loaded, ctx.prices.weightOf);
+  const billSlots = billSlotsOf(slots, assignments, ctx.prices.priceKeyOf);
+  const pricing = canMoney ? schedulePricing(row, ctx.prices, billSlots, permitId) : null;
   const held = heldSlots(slots, ctx.pool);
   const houseLeagueOf = await houseLeagueSlots(orgId, stored.filter(s => s.teamIds.some(isProgramHolder)).map(s => s.id));
   const teamById = new Map(teams.map(t => [t.id, t]));
@@ -750,7 +840,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
       return {
         id: s.id, key: s.key, venueId: s.venueId, facilityId: s.facilityId, startsAt: s.startsAt, endsAt: s.endsAt,
         day: e.day, weekday: e.weekday, week: e.week, startClock: e.startClock, endClock: e.endClock, prime: e.prime, weight: e.weight,
-        teamIds: s.teamIds, locked: s.locked, movedByHand: s.movedByHand,
+        teamIds: s.teamIds, locked: s.locked, movedByHand: s.movedByHand, pricePermitId: billSlots[i].permitId ?? null,
         handedBack: s.handedBack ? { at: s.handedBack.at, teamId: s.handedBack.teamId } : null,
         heldBy: h ? { ownerName: h.ownerName, kind: h.kind ?? null } : null,
         clash: !!h && s.teamIds.length > 0,
@@ -767,10 +857,8 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
     // The bill and its money read only to a money reader (stripped on the server, as a permit's money is); once made, the
     // bill Finalize made.
     // A bill whose rows can't be read (none came back) falls back to the time priced now, never an empty bill (/review).
-    bill: canMoney ? billViewOf(row, computeBill(row, billSlotsOf(slots, assignments), ctx.prices.fullHour, teams.map(t => t.id)), ctx.prices, money?.made.length ? money.made : null) : null,
-    pricing: canMoney && permitId && ctx.prices.found
-      ? { permitId, permitName: ctx.prices.permitName, fullHour: ctx.prices.fullHour, permitCost: ctx.prices.permitCost, lineId: ctx.prices.lineId }
-      : null,
+    bill: canMoney ? billViewOf(row, computeBill(row, billSlots, ctx.prices.hourOf, teams.map(t => t.id)), pricing, money?.made.length ? money.made : null, keptRates) : null,
+    pricing,
     fromPermits: fromIds.filter(id => names.has(id)).map(id => ({ id, name: names.get(id)! })),
     canMoney,
     houseLeague: !!opts.houseLeague,
@@ -1050,7 +1138,8 @@ export function draftToSave(req: ScheduleRequest, prices: Prices, rawAssignments
   return { ok: true, slots: slotsPayload(checked.slots, a.value, kept) };
 }
 
-export interface BillTerms { lineId: string | null; permitId: string | null; amount: number | null; plan: PaymentPlan; firstDue: string | null; dates: string[] | null }
+export interface BillTerms { lineId: string | null; permitId: string | null; amount: number | null; plan: PaymentPlan; firstDue: string | null; dates: string[] | null; mode: PriceMode }
+
 
 const PLANS: readonly PaymentPlan[] = ['one', 'monthly', 'two_months', 'dates'];
 
@@ -1089,5 +1178,8 @@ export async function readBill(orgId: string, raw: unknown): Promise<{ ok: true;
   }
   if (permit && !permit.permits.length) return no('permit_gone', R.permitGone);
   if (!permitId && amount === null) return no('bill_no_price', R.billNoPrice);
-  return { ok: true, value: { lineId, permitId, amount, plan, firstDue, dates } };
+  // How time on more than one price is priced (Session C, P2 A): Each permit's price unless the window says One rate.
+  if (b.mode !== undefined && !(PRICE_MODES as readonly string[]).includes(b.mode as string)) return no('bad_bill', R.billAgain);
+  const mode = (b.mode as PriceMode | undefined) ?? DEFAULT_PRICE_MODE;
+  return { ok: true, value: { lineId, permitId, amount, plan, firstDue, dates, mode } };
 }

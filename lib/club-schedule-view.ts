@@ -19,7 +19,7 @@ import { weekdayCount, weekdayOne, weekdaysShort } from './permit-words';
 import { moveLanding, type PrimeTime, type ScheduleSettings, type slotHolds } from './club-schedule-settings';
 import { teamColor } from './team-color';
 import type { Slot } from './club-schedule-engine';
-import { billShares, pricedMinutes, type BillSlot } from './club-schedule-bill';
+import { priceTheBill, type BillSlot } from './club-schedule-bill';
 import { isProgramHolder } from './club-schedule-holders';
 import type { ScheduleAsk, ScheduleListRow, ScheduleView, SlotView } from './club-schedule-server';
 
@@ -406,7 +406,13 @@ export function ruleBroken(rules: ScheduleSettings['rules'], teamId: string, slo
 /** The view's slots as the bill reads them (a shared slot's time is SPLIT among its teams) — one conversion, so Fair
  *  shares' estimate and Bill the teams price the same minutes the server does. */
 export const viewBillSlots = (slots: readonly SlotView[]): BillSlot[] =>
-  slots.map(s => ({ day: s.day, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), weight: s.weight, teamIds: s.teamIds }));
+  slots.map(s => ({ day: s.day, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), weight: s.weight, teamIds: s.teamIds, permitId: s.pricePermitId ?? null }));
+
+/** A permit's full field's hour as the page's pricing reads it (null without a price) — the client's `Prices.hourOf`. */
+export const pricingHourOf = (pricing: ScheduleView['pricing']) => {
+  const hours = new Map((pricing?.permits ?? []).map(p => [p.id, p.fullHour]));
+  return (permitId: string): number | null => hours.get(permitId) ?? null;
+};
 
 /**
  * FAIR SHARES' BILL, by team, in cents (Stage 11d part B — Not drawn: Fair shares; D4). Once the schedule made its bill,
@@ -418,10 +424,11 @@ export const viewBillSlots = (slots: readonly SlotView[]): BillSlot[] =>
 export function fairBill(view: Pick<ScheduleView, 'pays' | 'bill' | 'pricing' | 'slots' | 'teamOrder'>): Map<string, number> {
   if (view.pays) return new Map(Object.entries(view.pays));
   if (view.bill) return new Map(view.bill.teams.map(t => [t.teamId, t.cents]));
-  if (view.pricing?.fullHour == null) return new Map();
+  if (!view.pricing) return new Map();
   // The bill's own minutes (a shared slot split among its teams) in the club's team order — never the engine's per-team
-  // count, which gives each team in a shared slot the whole of it (/review).
-  return new Map(billShares(pricedMinutes(viewBillSlots(view.slots)), { fullHour: view.pricing.fullHour, amount: null, teamOrder: view.teamOrder })?.shares ?? []);
+  // count, which gives each team in a shared slot the whole of it (/review). Each slot at its permit's price, or one rate
+  // (Session C) — Bill the teams' own rule.
+  return new Map(priceTheBill(viewBillSlots(view.slots), { hourOf: pricingHourOf(view.pricing), mode: view.pricing.mode, amount: null, teamOrder: view.teamOrder })?.shares ?? []);
 }
 
 // ── An ask on the schedule (Stage 11d part B — the callout, the ringed Sundays, the slot window) ──────

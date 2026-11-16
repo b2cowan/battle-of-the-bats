@@ -7,9 +7,9 @@ import { weekdayOf } from './permit-time';
 import { isUuid } from './utils';
 import type { RepTeamEvent } from './types';
 import { slotPatterns } from './club-schedule-engine';
-import { slotFigure, teamInstallments, type Installment } from './club-schedule-bill';
+import { keptRateOf, slotFigure, teamInstallments, type Installment, type PriceMode } from './club-schedule-bill';
 import { SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, patternLine, placeWords } from './club-schedule-words';
-import { billSlotsOf, computeBill, liveSlots, loadSchedule, readClubTeams, schedulePrices, type ScheduleRow } from './club-schedule-server';
+import { billSlotsOf, computeBill, liveSlots, loadSchedule, readBillTerms, readClubTeams, schedulePrices, type ScheduleRow } from './club-schedule-server';
 import { readClubPlaces } from './permit-lookup';
 import { tellBuilders } from './club-schedule-send';
 import { practiceHandBacks, waitingAsksOfTeam, type PracticeHandBack } from './club-hand-back-reads';
@@ -90,7 +90,8 @@ export interface ReviewCard {
   days: number;
   hours: number;
   patterns: string[];
-  bill: { cents: number; installments: Installment[] } | null;
+  /** `pricedBy`: how the club priced time that has more than one price (Session C) — null at one price. */
+  bill: { cents: number; installments: Installment[]; pricedBy: PriceMode | null } | null;
   /** What each payment covers (part B, the review window: "Your 9 Sundays in October and November"): the team's slots in
    *  that payment's period and the months they fall in. Index-aligned with `bill.installments`. */
   covers: { slots: number; days: number; months: string[] }[];
@@ -121,9 +122,9 @@ export async function teamReviews(orgId: string, teamId: string): Promise<Review
     const { slots, assignments } = liveSlots(loaded, prices.weightOf);
     const own = slots.filter(s => (assignments.get(s.key) ?? []).includes(teamId));
     const patterns = slotPatterns(slots, teamId, assignments).map(p => patternLine(p, placeWords(places.venueName.get(p.venueId) ?? '', p.facilityId ? places.facilityName.get(p.facilityId) ?? null : null)));
-    const bill = computeBill(loaded.row, billSlotsOf(slots, assignments), prices.fullHour, teamOrder);
+    const bill = computeBill(loaded.row, billSlotsOf(slots, assignments, prices.priceKeyOf), prices.hourOf, teamOrder);
     const cents = bill?.shares?.shares.get(teamId);
-    const installments = bill && cents ? teamInstallments(teamId, cents, bill.billSlots, bill.periods) : [];
+    const installments = bill && cents ? teamInstallments(teamId, cents, bill.billSlots, bill.periods, bill.shares?.paymentWeight) : [];
     const periodOf = (due: string) => bill?.periods.find(p => p.due === due) ?? null;
     const covers = installments.map(i => {
       const p = periodOf(i.dueDate);
@@ -135,7 +136,8 @@ export async function teamReviews(orgId: string, teamId: string): Promise<Review
       scheduleId: id, scheduleName: loaded.row.name, replyBy: loaded.row.reply_by, slots: own.length, days: new Set(own.map(x => x.day)).size,
       hours: Math.round(own.reduce((n, s) => n + (s.endMs - s.startMs) / 3_600_000 / Math.max(1, (assignments.get(s.key) ?? []).length), 0) * 100) / 100,
       patterns,
-      bill: bill && cents ? { cents, installments } : null,
+      // `pricedBy`: how the club priced time with more than one price (the drawing's coach frame, note 2) — null at one price.
+      bill: bill && cents ? { cents, installments, pricedBy: bill.shares?.multiPrice ? loaded.row.bill_price_mode : null } : null,
       covers,
       oneWeekday: weekdays.length === 1 ? weekdays[0] : null,
       seasonName: teams.find(t => t.id === teamId)?.season?.name ?? null,
@@ -284,14 +286,17 @@ export interface HandBackSlot { eventId: string; slotId: string; startsAt: strin
 export async function practiceFigures(orgId: string, scheduleId: string, practices: readonly ClubPractice[]): Promise<{ figures: HandBackSlot[]; row: ScheduleRow } | null> {
   const loaded = await loadSchedule(orgId, scheduleId);
   if (!loaded) return null;
-  const prices = await schedulePrices(orgId, loaded);
-  const scale = loaded.row.bill_scale == null ? null : Number(loaded.row.bill_scale);
+  const [prices, kept] = await Promise.all([schedulePrices(orgId, loaded), readBillTerms(orgId, loaded.row)]);
+  // Each practice at the rate the club billed ITS permit at (Session C; a bill before mig 489 at its one rate).
+  const rateOf = kept ? keptRateOf(kept, prices.hourOf).rateOf : null;
   const slotById = new Map(loaded.slots.filter(s => !s.removed).map(s => [s.id, s]));
   const figures: HandBackSlot[] = [];
   for (const p of practices) {
     const slot = slotById.get(p.club_schedule_slot_id);
     if (!slot) continue;
-    const f = slotFigure({ startMs: Date.parse(slot.startsAt), endMs: Date.parse(slot.endsAt), weight: prices.weightOf(slot.facilityId, slot.permitId), teams: slot.teamIds.length, scale });
+    const startMs = Date.parse(slot.startsAt), endMs = Date.parse(slot.endsAt), weight = prices.weightOf(slot.facilityId, slot.permitId);
+    const scale = rateOf ? rateOf({ day: '', startMs, endMs, weight, teamIds: slot.teamIds, permitId: prices.priceKeyOf(slot.permitId ?? null) }) : null;
+    const f = slotFigure({ startMs, endMs, weight, teams: slot.teamIds.length, scale });
     figures.push({ eventId: p.id, slotId: slot.id, startsAt: slot.startsAt, endsAt: slot.endsAt, pricedMinutes: Math.round(f.pricedMinutes * 10_000) / 10_000, cents: f.cents });
   }
   return { figures, row: loaded.row };

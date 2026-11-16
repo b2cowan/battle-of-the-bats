@@ -28,6 +28,52 @@
 
 ---
 
+### [2026-11-15] — Finding #51: Migration 489 (several permits, Session C — the bill's rates) reviewed before it was written
+**Severity:** None blocking; Medium ×1 (a bill with no rate rows), Low ×3
+**Finding:** Pre-write pass on Finding #50's mig 3 plus four refinements. Live schema (snapshots 2026-11-15, dev + prod):
+`club_schedules.bill_scale numeric` with `club_schedules_bill_scale_check (bill_scale IS NULL OR bill_scale > 0)`; no
+`bill_price_mode`, no `club_schedule_bill_rates` on either. Dev census 2026-11-15: 2 billed schedules (both with a scale),
+1 pending bill, 0 billed schedules with rows on more than one permit. Prod not queried (read at the apply).
+- **R1 — a rate row for EVERY permit behind the bill, in both modes. GO.** One-rate rows carry the one rate (= `bill_scale`).
+  The owner's P9 B ("a later permit is its own small bill") needs "was this permit behind the bill?" as a stored fact; one
+  shape for both modes removes a mode branch from every reader. Each-permit rows = the permit's price × (total ÷ time price),
+  so Σ priced minutes × the row's rate = the bill total and a typed part scales every row alike.
+- **R2 — `bill_scale` keeps today's meaning in every mode (total ÷ priced minutes). GO, with one change (Medium).** Lookup:
+  `rates[slot permit ?? price permit]` → else a permit never billed prices at its own price, stored at that send
+  (`first_billed_send_id`) → else `bill_scale`. **Change:** a billed schedule with **zero** rate rows is a legacy bill and
+  prices EVERY slot at `bill_scale` — never "never billed, so its own price". Prod applies migrations BEFORE the promote
+  (`apply-migration-api.mjs` header), so a bill made by the old code in that window has no rows; without this rule its next
+  Send the changes would re-price time already billed. Pin it in the arithmetic test.
+- **R3 — backfill. GO, re-runnable.** Only billed schedules (allocation_id and bill_scale set) with no rate rows yet; one row per
+  distinct existing permit in its blocks' `from_permit_id` ∪ {`bill_permit_id`, `started_from_permit_id`}, scale = `bill_scale`,
+  name from `org_permits`, `first_billed_send_id` null. RAISE NOTICE schedules and rows. Re-run on prod at the promote catches
+  a bill made in the window (R2's rule covers it until then).
+- **Functions — thin wrappers. GO.** `club_schedule_finalize_priced`, `club_schedule_bill_late_priced`,
+  `club_schedule_apply_changes_priced`: the inner function's exact args plus `(p_mode text, p_rates jsonb)`, SECURITY DEFINER,
+  `set search_path = public`, revoke from public/anon/authenticated, grant service_role. Call the inner, write rates only when it
+  returned ok. One RPC is one transaction, so the allocation and its rates land together or not at all. Re-making three large
+  bodies to add one insert is the riskier change. **Do not revoke the inner three** (old prod code calls them between the apply
+  and the promote); a TS guard test pins that the app calls only the `_priced` ones. The writer
+  `club_schedule_bill_rates_put(p_org, p_schedule, p_rates, p_send)`: `on conflict (schedule_id, permit_id) do nothing`; revoke
+  from EVERY role including service_role (only the definer wrappers reach it — the database, not a test, says who writes rates).
+- **Terms freeze — a trigger on `bill_price_mode`. GO (Low).** `BEFORE UPDATE OF bill_price_mode`: refuse when
+  `OLD.allocation_id IS NOT NULL` and the mode changes. The late-bill wrapper therefore sets the mode BEFORE calling the inner
+  function (the row is unbilled then) and puts it back if the inner refuses (a refusal returns, it does not raise).
+- **Same-club trigger on the rates table (Low).** `club_schedule_bill_rates_check`: the schedule's and (when set) the permit's
+  `org_id` equal the row's — the `org_time_blocks_check` pattern; a SECURITY DEFINER writer is exactly where a cross-club id
+  would slip through.
+- **Constraints and indexes (Low).** Named CHECK `club_schedule_bill_rates_scale_check (scale > 0)` matching `bill_scale`'s;
+  `permit_name` not null. UNIQUE `(schedule_id, permit_id)` serves the schedule lookup; `(org_id)`; partial `(permit_id) WHERE
+  permit_id IS NOT NULL` and partial `(first_billed_send_id) WHERE first_billed_send_id IS NOT NULL` (both FKs SET NULL on
+  delete). RLS on, no policies; `grant select, insert, update, delete … to service_role` (Finding #43's gate).
+**Tables affected:** club_schedules, club_schedule_bill_rates (new)
+**Recommendation:** Build 489 as above, with its SQL fixture (both modes write the rows; a refused inner writes none; the freeze
+trigger; the backfill's legacy rows), the dictionary and snapshots. Prod step in `MANUAL_PROD_STEPS.json`: count billed schedules
+without rows before, re-run the backfill after.
+**Status:** Addressed on DEV 2026-11-15 (489 applied; backfill 2 schedules / 2 rows; `tests/sql/bill-rates-fixture.sql` 6/6). Prod: pending, in `MANUAL_PROD_STEPS.json`.
+
+---
+
 ### [2026-11-14] — Finding #50: A schedule on several permits — three migrations reviewed together (pre-apply; only the first applied in Session A)
 **Severity:** None blocking; Medium ×1 (mig 2's venue FK), Low ×3
 **Finding:** A pre-apply /dba pass on the project's three migrations (plan `CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`), shapes decided together so B and C don't reopen A. Dev census 2026-11-14: 10 schedules, 5 started from a permit, 15 schedule-owned blocks, every one of those 5 schedules' blocks matches its permit's venue and facilities (0 left NULL by the backfill), 0 billed from another permit. Prod is counted at its apply (the step runs the count first).

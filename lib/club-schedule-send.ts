@@ -25,7 +25,8 @@ import { readClubPlaces, type ClubPlaces } from './permit-lookup';
 import { clashesForSavedClubPractices } from './venue-clash-lookup';
 import { diffAgainstSent, slotPatterns, type Slot } from './club-schedule-engine';
 import {
-  billCorrections, correctionInstallments, paymentPeriods, pricedMinutes, sharesAtRate, timeSplits, valuesAfterChanges,
+  billCorrections, correctionInstallments, hourOfScale, keptRateOf, paymentPeriods, pricedMinutes, pricedValues, sharesAtRates, timeSplits, uniformRate,
+  valuesAfterChanges,
   type BillSlot, type Installment, type TimeSplit,
 } from './club-schedule-bill';
 import {
@@ -33,8 +34,8 @@ import {
   placeWords, unreachableSentence, billNotToldSentence, moneyCents, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
 } from './club-schedule-words';
 import {
-  billSlotsOf, computeBill, liveSlots, readBill, readClubTeams, schedulePrices, stepRefusal, teamNamer,
-  type BillTerms, type ClubTeam, type LoadedSchedule, type SchedulerCtx,
+  billSlotsOf, computeBill, liveSlots, readBill, readBillTerms, readClubTeams, schedulePrices, stepRefusal, teamNamer,
+  type BillTerms, type ClubTeam, type LoadedSchedule, type Prices, type SchedulerCtx,
 } from './club-schedule-server';
 import type { WeightOf } from './club-schedule-engine';
 import { HOUSE_LEAGUE, teamsOnly } from './club-schedule-holders';
@@ -130,6 +131,9 @@ export interface SendPreview {
   blockers: { code: string; error: string; teamId?: string }[];
   /** On Send the changes: a correction the line can't hold — the send can still go without it (`billCorrections: false`). */
   correctionBlocked: { code: string; error: string } | null;
+  /** On Send the changes (P9 B): a permit that was not behind the bill, billed from this send at its own price (a full
+   *  field's hour, dollars). MONEY: the route sends it to a money reader only. */
+  newPrices: { permitName: string; fullHour: number }[];
   replyBy: string | null;
   lastSent: { at: string; by: string | null; kind: SendKind } | null;
   /** ⚖ Always empty since Stage 11d (Ask 9): a hand-back is never a change waiting for a send — the team already has it,
@@ -238,7 +242,8 @@ interface Context {
   assignments: Map<string, string[]>;
   slotIdOf: Map<string, string>;
   weightOf: WeightOf;
-  fullHour: number | null;
+  /** The prices of the schedule's time, permit by permit (Session C): what prices each row, each permit's hour. */
+  prices: Prices;
   venueAddress: Map<string, string | null>;
 }
 
@@ -256,7 +261,7 @@ async function contextFor(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<C
   return {
     orgId, orgName: sctx.ctx.org.name, orgSlug: sctx.ctx.org.slug, senderId: sctx.ctx.user.id, senderEmail: sctx.ctx.user.email ?? null,
     loaded, teams, places, slots, assignments,
-    slotIdOf: new Map(stored.map(s => [s.key, s.id])), weightOf: prices.weightOf, fullHour: prices.fullHour,
+    slotIdOf: new Map(stored.map(s => [s.key, s.id])), weightOf: prices.weightOf, prices,
     venueAddress: new Map(venues.map(v => [v.id, v.address])),
   };
 }
@@ -365,7 +370,7 @@ function planChanges(c: Context, practices: readonly Practice[]): ChangesPlan {
   const plan: ChangesPlan = { inserts: [], updates: [], retire: [], byTeam: new Map(), gainedSlots: new Map(), seasonless: [] };
   const push = (t: string, ch: TeamChange) => (plan.byTeam.get(t) ?? plan.byTeam.set(t, []).get(t)!).push(ch);
   const gained = (t: string, g: Slot) => (plan.gainedSlots.get(t) ?? plan.gainedSlots.set(t, []).get(t)!)
-    .push({ day: g.day, startMs: g.startMs, endMs: g.endMs, weight: g.weight, teamIds: [t] });
+    .push({ day: g.day, startMs: g.startMs, endMs: g.endMs, weight: g.weight, teamIds: [t], permitId: c.prices.priceKeyOf(g.permitId ?? null) });
   const placeOfPractice = (p: Practice) => {
     const from = slotById.get(p.club_schedule_slot_id);
     return from ? placeOf(c, from.venueId, from.facilityId) : '';
@@ -610,12 +615,16 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
  * `handed_back` only at Accept: its later moment wins the dedupe below, so that Sunday reads as an accepted ask's (added
  * back always; given back by the club, it is time gained and billed). A waiting or declined late ask adds nothing.
  */
-async function withHandedBack(orgId: string, scheduleId: string, priced: ReadonlyMap<string, number>, c: Context): Promise<Map<string, number>> {
+async function withHandedBack(orgId: string, scheduleId: string, billSlots: readonly BillSlot[], c: Context, rateOf: (s: BillSlot) => number, scale: number): Promise<TeamMeasure> {
   const rows = await fetchAll<{ slot_id: string | null; priced_minutes: number | string; club_schedule_hand_backs: { team_id: string; state: string; asked_at: string; closed_at: string | null } | null }>((a, b) => supabaseAdmin
     .from('club_schedule_hand_back_slots').select('slot_id, priced_minutes, club_schedule_hand_backs!inner ( team_id, state, schedule_id, asked_at, closed_at )')
     .eq('org_id', orgId).eq('handed_back', true).eq('club_schedule_hand_backs.schedule_id', scheduleId).order('id').range(a, b));
   const keyOf = new Map([...c.slotIdOf].map(([key, id]) => [id, key]));
-  const out = new Map(priced);
+  // Session C: each team's VALUE beside its minutes — a slot at its kept rate, a Sunday handed back at its slot's (the
+  // bill's rate when the slot is gone) — and whether every one of them bills at one rate (then the minutes path, as before).
+  const billSlotOf = new Map(c.slots.map((s, i) => [s.key, billSlots[i]]));
+  const minutes = pricedMinutes(billSlots), values = pricedValues(billSlots, rateOf);
+  let oneRate = uniformRate(billSlots, rateOf);
   // A Sunday handed back, given back by the club and handed back again counts ONCE — its latest hand-back (/review
   // 2026-10-13): two records of one slot would add its minutes twice and read the team as gaining time.
   const when = (r: (typeof rows)[number]) => r.club_schedule_hand_backs?.closed_at ?? r.club_schedule_hand_backs?.asked_at ?? '';
@@ -630,10 +639,21 @@ async function withHandedBack(orgId: string, scheduleId: string, priced: Readonl
     }
     const key = r.slot_id ? keyOf.get(r.slot_id) : undefined;
     if (hb.state === 'landed' && key && (c.assignments.get(key) ?? []).includes(hb.team_id)) continue;
-    out.set(hb.team_id, (out.get(hb.team_id) ?? 0) + Number(r.priced_minutes));
+    const back = key ? billSlotOf.get(key) : undefined;
+    const rate = back ? rateOf(back) : scale;
+    if (oneRate !== null && rate !== oneRate) oneRate = null;
+    minutes.set(hb.team_id, (minutes.get(hb.team_id) ?? 0) + Number(r.priced_minutes));
+    values.set(hb.team_id, (values.get(hb.team_id) ?? 0) + Number(r.priced_minutes) * rate);
   }
-  return out;
+  return { minutes, values, oneRate };
 }
+
+/** A team's measure at a bill's rates (Session C): its priced minutes and value, hand-backs added back, and the one rate
+ *  they all bill at (null at more than one). */
+interface TeamMeasure { minutes: Map<string, number>; values: Map<string, number>; oneRate: number | null }
+
+/** A rate the step keeps (`club_schedule_bill_rates`, mig 489): cents per full-field minute. */
+interface KeptRateRow { permitId: string; permitName: string; scale: number }
 
 /** How a team's lost time settles (Ask 8): off what it still owes on the schedule's bills, latest payment first; the rest
  *  owed back by the club. The step writes the same application (`club_credit_apply`). */
@@ -677,7 +697,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
    *  its credit (the emails, the correction bell, the window's line) — the step already skips them itself under the same
    *  switch. ⚠ Only what is told: the plan, the splits, the baseline and the `lost` map the step reads are untouched. */
   corrections?: boolean;
-} = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> }; lost?: Map<string, LostTime>; half?: LeagueHalf | null; billTerms?: BillTerms | null; timeHandoff?: SendTimeHandoff | null }> {
+} = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; rates?: KeptRateRow[]; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> }; lost?: Map<string, LostTime>; half?: LeagueHalf | null; billTerms?: BillTerms | null; timeHandoff?: SendTimeHandoff | null }> {
   // ⚖ A FINAL SCHEDULE'S FIRST BILL, MADE LATER (mig 481): its terms ride with the REQUEST, not the schedule — nothing is
   // stored until the send lands, so a window closed halfway leaves nothing half-billed. The schedule is read as if it
   // carried them, so the bill is worked out by the one `computeBill` Finalize uses.
@@ -692,7 +712,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
       else if (!read.value) blockers.push({ code: 'bad_bill', error: R.billAgain });
       else {
         billTerms = read.value;
-        loaded = { ...asked, row: { ...asked.row, bill_line_id: billTerms.lineId, bill_permit_id: billTerms.permitId, bill_amount: billTerms.amount, bill_plan: billTerms.plan, bill_first_due: billTerms.firstDue, bill_dates: billTerms.dates } };
+        loaded = { ...asked, row: { ...asked.row, bill_line_id: billTerms.lineId, bill_permit_id: billTerms.permitId, bill_amount: billTerms.amount, bill_plan: billTerms.plan, bill_first_due: billTerms.firstDue, bill_dates: billTerms.dates, bill_price_mode: billTerms.mode } };
       }
     }
   }
@@ -722,8 +742,12 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
   // A late bill is worked out only from the terms the request carried (a money reader's, validated above): without them the
   // stored row's bill — a draft's staged one — would be priced for a reader who may not see money, and its total said in the
   // statement the GET returns whole.
-  const bill = kind === 'changes' || (kind === 'bill' && !billTerms) ? null : computeBill(row, billSlotsOf(c.slots, c.assignments), c.fullHour, c.teams.map(t => t.id));
+  const bill = kind === 'changes' || (kind === 'bill' && !billTerms) ? null : computeBill(row, billSlotsOf(c.slots, c.assignments, c.prices.priceKeyOf), c.prices.hourOf, c.teams.map(t => t.id));
   let splits: TimeSplit[] | undefined, rate: number | null = null, teamValues: Record<string, number> | undefined;
+  /** The rates the step keeps: every permit behind a first bill, or a permit a Send the changes bills for the first time
+   *  (P9 B). */
+  let rates: KeptRateRow[] = [];
+  const rateRows = (m: ReadonlyMap<string, number>): KeptRateRow[] => [...m].map(([permitId, scale]) => ({ permitId, permitName: c.prices.names.get(permitId) ?? '', scale }));
   if (bill) {
     const total = bill.shares?.totalCents ?? 0;
     // A review books and bills nothing (Ask 24): it asks only who may show the teams their bill. The line's room, its year
@@ -737,6 +761,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
       const seasons = new Map(c.teams.filter(t => t.season).map(t => [t.id, t.season!.id]));
       splits = timeSplits({ slots: bill.billSlots, shares: bill.shares, periods: bill.periods, seasons, priced: bill.priced });
       rate = bill.shares.rate;
+      rates = rateRows(bill.shares.rates);
       teamValues = Object.fromEntries(bill.shares.shares);
       if (kind === 'bill') {
         // ⚖ THE BASELINE OF A LATE BILL counts the time a team already handed back as part of its measure (as Send the
@@ -744,11 +769,15 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
         // is not billed — and without this, the next Send the changes would read that Sunday as time GAINED and bill it.
         // A team that handed back ALL its time has no share but is measured, so it joins the baseline too
         // (`valuesAfterChanges`, as Send the changes builds the next one): left out, it would be "new to the bill" then.
-        const measured = await withHandedBack(c.orgId, row.id, bill.priced, c);
-        const touched = new Set([...measured].filter(([teamId, minutes]) => minutes !== (bill.priced.get(teamId) ?? 0)).map(([teamId]) => teamId));
-        if (touched.size) teamValues = Object.fromEntries(valuesAfterChanges(teamValues, sharesAtRate(measured, bill.shares.rate, c.teams.map(t => t.id)), touched));
+        const { rateOf } = keptRateOf({ scale: bill.shares.rate, byPermit: bill.shares.rates }, c.prices.hourOf);
+        const measured = await withHandedBack(c.orgId, row.id, bill.billSlots, c, rateOf, bill.shares.rate);
+        const touched = new Set([...measured.minutes].filter(([teamId, minutes]) => minutes !== (bill.priced.get(teamId) ?? 0)).map(([teamId]) => teamId));
+        if (touched.size) teamValues = Object.fromEntries(valuesAfterChanges(teamValues, sharesAtRates(measured, measured.oneRate, c.teams.map(t => t.id)), touched));
       }
-    } else if ((kind === 'final' || kind === 'bill') && !c.fullHour && row.bill_amount == null) blockers.push({ code: 'bill_no_price', error: R.billNoPrice });
+    // No bill and no typed amount: no permit prices the time — or some permit behind the teams' time has no price, so the
+    // time has no whole price either (/review, Session C): the club types what the teams pay.
+    } else if ((kind === 'final' || kind === 'bill') && row.bill_amount == null
+      && (!c.prices.permits.some(x => x.fullHour != null) || teamsOnly([...bill.priced.keys()]).some(t => (bill.priced.get(t) ?? 0) > 0))) blockers.push({ code: 'bill_no_price', error: R.billNoPrice });
   }
 
   // Seasons (Ask 15): a slot lands on the team's running season; a team without one can't take one.
@@ -763,20 +792,25 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
   let plan: ChangesPlan | undefined;
   let correction: { gains: Map<string, number>; losses: Map<string, number> } | undefined;
   let correctionBlocked: SendPreview['correctionBlocked'] = null;
+  let paymentWeight: ((s: BillSlot) => number) | undefined;
   // ⚖ Ask 9: a hand-back is never a change waiting for a send — always empty (the shape stays for the window).
   const handedBack: SendPreview['handedBack'] = [];
   const lost = new Map<string, LostTime>();
   if (kind === 'changes') {
     plan = planChanges(c, await readPractices(c.orgId, loaded.slots.map(s => s.id)));
     for (const t of plan.seasonless) blockers.push({ code: 'season_closed', error: R.seasonClosed(teamName(t)), teamId: t });
-    const rateNow = row.bill_scale == null ? null : Number(row.bill_scale);
-    if (rateNow && row.allocation_id) {
+    const kept = row.allocation_id ? await readBillTerms(c.orgId, row) : null;
+    if (kept && kept.scale) {
       // Only the teams the CLUB's changes touch are measured again (`valuesAfterChanges`) — a hand-back is the team's own
       // act — and each is measured with the time it handed back added back (`withHandedBack`), so a Sunday handed back is
       // never read as one the club took (S11D-03).
       const before = told?.team_values ?? {};
-      const priced = await withHandedBack(c.orgId, row.id, pricedMinutes(billSlotsOf(c.slots, c.assignments)), c);
-      const atRate = sharesAtRate(priced, rateNow, c.teams.map(t => t.id));
+      // Each slot at its kept rate; a permit that was not behind the bill at its own price, kept from this send (P9 B).
+      const { rateOf, fresh } = keptRateOf(kept, c.prices.hourOf);
+      const measured = await withHandedBack(c.orgId, row.id, billSlotsOf(c.slots, c.assignments, c.prices.priceKeyOf), c, rateOf, kept.scale);
+      const atRate = sharesAtRates(measured, measured.oneRate, c.teams.map(t => t.id));
+      rates = rateRows(fresh);
+      paymentWeight = measured.oneRate === null ? rateOf : undefined;
       const now = valuesAfterChanges(before, atRate, new Set(plan.byTeam.keys()));
       correction = billCorrections(before, now);
       // Ask 8: a team that LOST time is credited off what it owes (the rest owed back) — worded here, written in the step.
@@ -797,7 +831,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
         correctionBlocked = correctionBlocked ?? blocked[0] ?? null;
         const periods = paymentPeriods(row.bill_plan ?? 'one', { firstDue: row.bill_first_due ?? today, dates: row.bill_dates, lastDay: row.ends_on });
         splits = [...correction.gains].map(([t, cents]) => {
-          const installments = correctionInstallments(cents, t, plan!.gainedSlots.get(t) ?? [], periods, today);
+          const installments = correctionInstallments(cents, t, plan!.gainedSlots.get(t) ?? [], periods, today, paymentWeight);
           const gainedMinutes = (plan!.gainedSlots.get(t) ?? []).reduce((n, s) => n + ((s.endMs - s.startMs) / 60_000) * s.weight, 0);
           return {
             teamId: t, programYearId: c.teams.find(x => x.id === t)?.season?.id ?? '', amount: cents / 100,
@@ -871,6 +905,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
     : W.changesStatement(changedTeams, handedBack.map(h => h.teamName), leagueTeams.length, new Set((half?.games ?? []).map(g => g.divisionName)).size);
   return {
     kind, scheduleId: row.id, version: row.version, statement, teams, unreachable, billNotTold, blockers, correctionBlocked, replyBy,
+    newPrices: kind === 'changes' ? rates.map(x => ({ permitName: x.permitName, fullHour: hourOfScale(x.scale) })) : [],
     lastSent: last ? { at: last.sent_at, by: nameOf(last.sent_by), kind: last.kind } : null,
     handedBack,
     // People who'd be emailed: the rep teams' coaches, and each house-league team's coaches and households (9d2·2).
@@ -878,7 +913,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
       + new Set(leagueTeams.flatMap(t => t.households)).size,
     league: half ? { teams: leagueTeams, games: half.games, seen: half.seen } : null,
     leagueTime: timeHandoff?.told?.line ?? null,
-    plan, finalRows, splits, rate, teamValues, correction, lost, half, billTerms, timeHandoff,
+    plan, finalRows, splits, rate, rates, teamValues, correction, lost, half, billTerms, timeHandoff,
   };
 }
 
@@ -957,9 +992,10 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     version = r.version!;
   } else if (kind === 'final') {
     const bill = preview.splits?.length ? { description: row.name, lineId: row.bill_line_id, notes: null, splits: preview.splits } : null;
-    const { data, error } = await supabaseAdmin.rpc('club_schedule_finalize', {
+    // ⚖ The _priced step (mig 489): the bill, and the rate each permit behind it is billed at, in one transaction.
+    const { data, error } = await supabaseAdmin.rpc('club_schedule_finalize_priced', {
       p_org: orgId, p_schedule: row.id, p_actor: actor, p_version: row.version, p_rows: preview.finalRows ?? [], p_bill: bill, p_scale: bill ? preview.rate : null,
-      p_send: sendId, p_log: { teamValues: preview.teamValues ?? {} },
+      p_send: sendId, p_log: { teamValues: preview.teamValues ?? {} }, p_rates: bill ? preview.rates ?? [] : [],
     });
     if (error) { await release(); throw error; }
     const r = data as { ok: boolean; code?: string; teamId?: string; left?: number; allocationId?: string | null };
@@ -974,9 +1010,10 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     // step; the schedule stays final and no practice moves. The server's own terms (`preview.billTerms`), never the browser's.
     if (!preview.splits?.length || !preview.billTerms) { await release(); return json(409, { error: R.changed, code: 'changed', version: row.version }); }
     const bill = { description: row.name, lineId: preview.billTerms.lineId, notes: null, splits: preview.splits };
-    const { data, error } = await supabaseAdmin.rpc('club_schedule_bill_late', {
+    const { data, error } = await supabaseAdmin.rpc('club_schedule_bill_late_priced', {
       p_org: orgId, p_schedule: row.id, p_actor: actor, p_version: row.version, p_terms: preview.billTerms, p_bill: bill,
       p_scale: preview.rate, p_send: sendId, p_log: { teamValues: preview.teamValues ?? {} },
+      p_mode: preview.billTerms.mode, p_rates: preview.rates ?? [],
     });
     if (error && isClosedYearError(error)) { await release(); return { ok: false, response: stepRefusal({ code: 'year_closed' }, teamName) }; }
     if (error && /changed:/.test(error.message ?? '')) { await release(); return { ok: false, response: stepRefusal({ code: 'changed' }, teamName) }; }
@@ -1001,7 +1038,7 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
       teamId, cents: l.cents, reason: HAND_BACK_WORDS.reasonChanges(creditDays(teamId)),
       request: { programYearId: l.request.programYearId, description: HAND_BACK_WORDS.lostRequestName(row.name), budgetItemId: l.request.budgetItemId ?? '', budgetCategoryId: l.request.budgetCategoryId ?? '', budgetLineId: row.bill_line_id ?? '' },
     })) : [];
-    const { data, error } = await supabaseAdmin.rpc('club_schedule_apply_changes', {
+    const { data, error } = await supabaseAdmin.rpc('club_schedule_apply_changes_priced', {
       p_org: orgId, p_schedule: row.id, p_actor: actor, p_version: row.version,
       p_inserts: plan.inserts, p_updates: plan.updates, p_retire: plan.retire, p_bill: bill,
       p_send: sendId, p_log: {
@@ -1012,6 +1049,8 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
       p_losses: losses,
       // House league's half (Stage 11b Part 5): the plan the preview showed; null when nothing house-league changes.
       p_league: half?.step ?? null,
+      // A permit billed for the first time keeps its own price from this send (P9 B; mig 489).
+      p_rates: preview.rates ?? [],
     });
     if (error && isClosedYearError(error)) { await release(); return json(409, { error: HAND_BACK_WORDS.refuse.yearClosed(null), code: 'year_closed', correction: true }); }
     // The step's own 'changed: …' refusals (a slot gone, a loss's team or season, a team paid since the preview): read the

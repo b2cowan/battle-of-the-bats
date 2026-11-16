@@ -35,7 +35,20 @@ export interface BillSlot {
   /** The field's price share in the permit (1 = Full, 0.5 = Half); 1 without a permit. */
   weight: number;
   teamIds: readonly string[];
+  /** The permit that prices it (a schedule on several permits, Session C): its row's, else the schedule's price permit;
+   *  null = no permit prices it. */
+  permitId?: string | null;
 }
+
+/** How the bill prices time that has more than one price (`club_schedules.bill_price_mode`, mig 489; P2 A). */
+export const PRICE_MODES = ['each_permit', 'one_rate'] as const;
+export type PriceMode = (typeof PRICE_MODES)[number];
+export const DEFAULT_PRICE_MODE: PriceMode = 'each_permit';
+
+/** A full field's hour (dollars) as a rate: cents per full-field minute — `bill_scale`'s unit. */
+export const scaleOfHour = (fullHour: number): number => (fullHour * 100) / 60;
+/** A rate (cents per full-field minute) as a full field's hour in dollars, to the cent — the inverse of `scaleOfHour`. */
+export const hourOfScale = (scale: number): number => Math.round(scale * 60) / 100;
 
 export type PaymentPlan = 'one' | 'monthly' | 'two_months' | 'dates';
 
@@ -54,7 +67,7 @@ export function pricedMinutes(slots: readonly BillSlot[]): Map<string, number> {
   const out = new Map<string, number>();
   for (const s of slots) {
     if (!s.teamIds.length) continue;
-    const each = ((s.endMs - s.startMs) / MIN) * s.weight / s.teamIds.length;
+    const each = eachTeamsMinutes(s);
     for (const t of s.teamIds) out.set(t, (out.get(t) ?? 0) + each);
   }
   return out;
@@ -86,6 +99,140 @@ export function billShares(priced: ReadonlyMap<string, number>, opts: { fullHour
   if (totalCents == null || totalCents <= 0) return null;
   const cents = shareCents(totalCents, order.map(t => priced.get(t)!));
   return { totalCents, timePriceCents, shares: new Map(order.map((t, i) => [t, cents[i]])), rate: totalCents / minutes };
+}
+
+/** A slot's priced minutes for each of its teams (`pricedMinutes`' rule). */
+const eachTeamsMinutes = (s: BillSlot): number => ((s.endMs - s.startMs) / MIN) * s.weight / s.teamIds.length;
+
+/** Each team's priced VALUE in (fractional) cents: Σ a slot's priced minutes × its rate (cents per full-field minute). */
+export function pricedValues(slots: readonly BillSlot[], rateOf: (s: BillSlot) => number): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const s of slots) {
+    if (!s.teamIds.length) continue;
+    const each = eachTeamsMinutes(s) * rateOf(s);
+    for (const t of s.teamIds) out.set(t, (out.get(t) ?? 0) + each);
+  }
+  return out;
+}
+
+/** Each team's priced minutes on each permit ('' = time no permit prices) — the bill's "hours by permit". */
+export function pricedMinutesByPermit(slots: readonly BillSlot[]): Map<string, Map<string, number>> {
+  const out = new Map<string, Map<string, number>>();
+  for (const s of slots) {
+    if (!s.teamIds.length) continue;
+    const each = eachTeamsMinutes(s), key = s.permitId ?? '';
+    for (const t of s.teamIds) {
+      const mine = out.get(t) ?? new Map<string, number>();
+      mine.set(key, (mine.get(key) ?? 0) + each);
+      out.set(t, mine);
+    }
+  }
+  return out;
+}
+
+/** A bill priced permit by permit (a schedule on several permits, Session C). */
+export interface PricedBill extends BillShares {
+  /** The time has more than one price, so how it is priced is the club's choice (P2 A: the choice shows only then). */
+  multiPrice: boolean;
+  /** The rate each permit behind the bill is billed at — kept at the bill's making (`club_schedule_bill_rates`), in both
+   *  modes (a one-rate bill's are all the one rate). Cents per full-field minute. */
+  rates: Map<string, number>;
+  /** What a payment weighs a slot by, beyond its priced minutes — set only when each permit's price shares the bill (a
+   *  team's payments follow what its time costs in each period); absent, payments follow priced time, as before. */
+  paymentWeight?: (s: BillSlot) => number;
+}
+
+/**
+ * THE BILL, PERMIT BY PERMIT (P1–P3 A). `hourOf` is a permit's full field's hour (dollars, null without a price).
+ *   · ONE PRICE behind the time (one permit, or every permit at one hour) — or time not every part of which has a price —
+ *     is EXACTLY `billShares` at that hour: a one-permit schedule bills to the cent what it billed before.
+ *   · MORE THAN ONE: the time's price is Σ each slot at its own permit's price. `each_permit` shares the bill (or a typed
+ *     part) by what each team's time costs; `one_rate` shares the same total by priced time — one rate = the total ÷ all
+ *     priced minutes, so the club recovers the same either way (P1 A) and the closing row keeps one meaning.
+ * The rates kept: each permit's price × (the total ÷ the time's price) under `each_permit`, so a part scales every
+ * permit alike and Σ priced minutes × the kept rate is the bill; the one rate for every permit otherwise.
+ */
+export function priceTheBill(slots: readonly BillSlot[], opts: { hourOf: (permitId: string) => number | null; mode: PriceMode; amount: number | null; teamOrder?: readonly string[] }): PricedBill | null {
+  const priced = pricedMinutes(slots);
+  const order = teamsOnly(opts.teamOrder ?? [...priced.keys()]).filter(t => (priced.get(t) ?? 0) > 0);
+  const inBill = new Set(order);
+  const hours = new Map<string, number | null>();
+  for (const s of slots) if (s.teamIds.some(t => inBill.has(t))) hours.set(s.permitId ?? '', s.permitId ? opts.hourOf(s.permitId) : null);
+  const prices = [...new Set(hours.values())];
+  const allPriced = prices.length > 0 && prices.every(h => h != null);
+  const permits = [...hours.keys()].filter(Boolean);
+  // A $0 permit beside a priced one has no rate to keep (a kept rate must be above 0): the time is not wholly priced.
+  const free = prices.length > 1 && prices.some(h => h != null && h <= 0);
+  if (!allPriced || free || prices.length === 1) {
+    const base = billShares(priced, { fullHour: allPriced && !free ? prices[0] : null, amount: opts.amount, teamOrder: opts.teamOrder });
+    return base ? { ...base, multiPrice: false, rates: new Map(permits.map(p => [p, base.rate])) } : null;
+  }
+  const scaleOf = (s: BillSlot) => scaleOfHour(hours.get(s.permitId ?? '') ?? 0);
+  const values = pricedValues(slots, scaleOf);
+  const minutes = order.reduce((n, t) => n + priced.get(t)!, 0);
+  const timePriceCents = Math.round(order.reduce((n, t) => n + (values.get(t) ?? 0), 0));
+  const totalCents = opts.amount != null ? toCents(opts.amount) : timePriceCents;
+  if (!order.length || minutes <= 0 || totalCents <= 0 || timePriceCents <= 0) return null;
+  const each = opts.mode === 'each_permit';
+  const cents = shareCents(totalCents, order.map(t => (each ? values.get(t) ?? 0 : priced.get(t)!)));
+  const rate = totalCents / minutes, factor = totalCents / timePriceCents;
+  return {
+    totalCents, timePriceCents, rate, multiPrice: true,
+    shares: new Map(order.map((t, i) => [t, cents[i]])),
+    rates: new Map(permits.map(p => [p, each ? scaleOfHour(hours.get(p)!) * factor : rate])),
+    ...(each ? { paymentWeight: scaleOf } : {}),
+  };
+}
+
+/** A made bill's terms, as the corrections read them: its rate (`bill_scale`) and each permit's kept rate. */
+export interface KeptRates { scale: number; byPermit: ReadonlyMap<string, number> }
+
+/**
+ * A SLOT'S RATE ON A BILL ALREADY MADE (P9 B, the owner's model: "the previous payments stay the same and just the new
+ * amounts are added … basically a new separate permit"). A permit behind the bill keeps its kept rate — so more evenings
+ * on it bill at its term; a permit that was NOT behind it bills at ITS OWN price, in either mode, and that price is `fresh`
+ * (kept at this send, from then on); a slot no permit prices bills at the bill's rate. ⚠ A bill with NO kept rates (made
+ * before mig 489) prices every slot at its rate (/dba #51 R2): never "never billed, so its own price".
+ */
+export function keptRateOf(kept: KeptRates, hourOf: (permitId: string) => number | null): { rateOf: (s: BillSlot) => number; fresh: Map<string, number> } {
+  const fresh = new Map<string, number>();
+  const rateOf = (s: BillSlot): number => {
+    // Time house league holds is on no bill (11b·A): it never earns a permit a kept rate, or an announcement.
+    if (!kept.byPermit.size || !s.permitId || !teamsOnly(s.teamIds).length) return kept.scale;
+    const was = kept.byPermit.get(s.permitId) ?? fresh.get(s.permitId);
+    if (was != null) return was;
+    const hour = hourOf(s.permitId);
+    if (hour == null || hour <= 0) return kept.scale;
+    const own = scaleOfHour(hour);
+    fresh.set(s.permitId, own);
+    return own;
+  };
+  return { rateOf, fresh };
+}
+
+/** The one rate every slot (with a team) bills at, or null when they bill at more than one. */
+export function uniformRate(slots: readonly BillSlot[], rateOf: (s: BillSlot) => number): number | null {
+  let one: number | null = null;
+  for (const s of slots) {
+    if (!teamsOnly(s.teamIds).length) continue;
+    const r = rateOf(s);
+    if (one === null) one = r;
+    else if (r !== one) return null;
+  }
+  return one;
+}
+
+/**
+ * EACH TEAM'S SHARE AS IT STANDS NOW, at a made bill's kept rates — the corrections' figure. At one rate it is exactly
+ * `sharesAtRate` (a one-rate or one-permit bill corrects to the cent as before); at more than one, the priced value
+ * (Σ minutes × each slot's rate) shared by value, in `teamOrder`.
+ */
+export function sharesAtRates(measure: { minutes: ReadonlyMap<string, number>; values: ReadonlyMap<string, number> }, oneRate: number | null, teamOrder?: readonly string[]): Map<string, number> {
+  if (oneRate != null) return sharesAtRate(measure.minutes, oneRate, teamOrder);
+  const order = teamsOnly(teamOrder ?? [...measure.values.keys()]).filter(t => (measure.values.get(t) ?? 0) > 0);
+  if (!order.length) return new Map();
+  const cents = shareCents(Math.round(order.reduce((n, t) => n + measure.values.get(t)!, 0)), order.map(t => measure.values.get(t)!));
+  return new Map(order.map((t, i) => [t, cents[i]]));
 }
 
 /**
@@ -135,12 +282,14 @@ export interface Installment { installmentNumber: number; amount: number; dueDat
 /**
  * ONE TEAM'S PAYMENTS: its share spread over the periods by its priced time in each (largest remainder to the cent),
  * a period with none of its time dropped, numbered from 1. A share too small for its payments (fewer cents than
- * payments) is one payment, on the first.
+ * payments) is one payment, on the first. `paymentWeight` (a bill shared by each permit's price — `PricedBill`): each
+ * slot weighs its priced minutes × its price, so a payment is what the team's time in its period costs.
  */
-export function teamInstallments(teamId: string, shareCentsTotal: number, slots: readonly BillSlot[], periods: readonly PaymentPeriod[]): Installment[] {
+export function teamInstallments(teamId: string, shareCentsTotal: number, slots: readonly BillSlot[], periods: readonly PaymentPeriod[], paymentWeight?: (s: BillSlot) => number): Installment[] {
   if (!periods.length || shareCentsTotal <= 0) return [];
-  const weights = periods.map(p => slots.reduce((n, s) => (s.teamIds.includes(teamId) && inPeriod(p, s.day)
-    ? n + ((s.endMs - s.startMs) / MIN) * s.weight / s.teamIds.length : n), 0));
+  const mine = slots.filter(s => s.teamIds.includes(teamId));
+  const weights = periods.map(p => mine.reduce((n, s) => (inPeriod(p, s.day)
+    ? n + eachTeamsMinutes(s) * (paymentWeight ? paymentWeight(s) : 1) : n), 0));
   const live = periods.map((p, i) => ({ p, w: weights[i] })).filter(x => x.w > 0);
   if (!live.length) return [{ installmentNumber: 1, amount: toDollars(shareCentsTotal), dueDate: periods[0].due }];
   if (shareCentsTotal < live.length) return [{ installmentNumber: 1, amount: toDollars(shareCentsTotal), dueDate: live[0].p.due }];
@@ -180,13 +329,13 @@ export interface TimeSplit {
  */
 export function timeSplits(p: {
   slots: readonly BillSlot[];
-  shares: BillShares;
+  shares: BillShares & Pick<PricedBill, 'paymentWeight'>;
   periods: readonly PaymentPeriod[];
   seasons: ReadonlyMap<string, string>;
   priced: ReadonlyMap<string, number>;
 }): TimeSplit[] {
   return [...p.shares.shares].map(([teamId, cents]) => {
-    const installments = teamInstallments(teamId, cents, p.slots, p.periods);
+    const installments = teamInstallments(teamId, cents, p.slots, p.periods, p.shares.paymentWeight);
     return {
       teamId, programYearId: p.seasons.get(teamId) ?? '',
       amount: toDollars(cents),
@@ -245,14 +394,15 @@ export function billCorrections(before: Readonly<Record<string, number>>, now: R
 /**
  * A CORRECTION'S PAYMENTS: the gain spread over the plan's periods by the gained slots' time, each due on its period's
  * day or today, whichever is later (a period already due is due now); two payments due the same day are one. With no
- * gained slot to place it (a move to a pricier field), one payment, due on the next period's day or today.
+ * gained slot to place it (a move to a pricier field), one payment, due on the next period's day or today. At more than
+ * one kept rate, `paymentWeight` is each gained slot's rate, so each payment is what that period's added time costs.
  */
-export function correctionInstallments(deltaCents: number, teamId: string, gained: readonly BillSlot[], periods: readonly PaymentPeriod[], today: string): Installment[] {
+export function correctionInstallments(deltaCents: number, teamId: string, gained: readonly BillSlot[], periods: readonly PaymentPeriod[], today: string, paymentWeight?: (s: BillSlot) => number): Installment[] {
   if (deltaCents <= 0) return [];
   const later = (d: string) => (d > today ? d : today);
   const fallback = later(periods.find(p => p.due >= today)?.due ?? today);
   const placeable = gained.some(s => s.teamIds.includes(teamId));
-  const spread = placeable ? teamInstallments(teamId, deltaCents, gained, periods.length ? periods : [{ due: fallback, from: '0000-01-01', until: null }]) : [];
+  const spread = placeable ? teamInstallments(teamId, deltaCents, gained, periods.length ? periods : [{ due: fallback, from: '0000-01-01', until: null }], paymentWeight) : [];
   const byDue = new Map<string, number>();
   for (const i of spread.length ? spread : [{ installmentNumber: 1, amount: toDollars(deltaCents), dueDate: fallback }]) {
     const due = later(i.dueDate);

@@ -371,6 +371,39 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [x] Copying a permit's dates off scopes them to its venues (P5); "Take … off" does the same.
 
 ### Phase 3 (Session C) — the bill: each permit's price or one rate
+> **Built 2026-11-15, commit owed** (owner's go 2026-11-15; ran before D — no dependency between them). Mig **489**
+> `489_a_bill_keeps_each_permits_rate.sql` applied to DEV (backfill: 2 billed schedules, 1 permit row each, at their
+> `bill_scale`); prod step `pending` in `MANUAL_PROD_STEPS.json` (count first; ⚠ re-run the file right after the promote).
+> `tests/sql/bill-rates-fixture.sql` 6/6. /dba **Finding #51** (2026-11-15): GO with one change — a billed schedule with NO
+> rate rows prices every slot at `bill_scale`; thin `_priced` wrappers around the three bill steps (inner ones untouched,
+> so old prod code works between the apply and the promote); the writer is no role's to call; the mode freezes once billed.
+> **What it does:** `priceTheBill` (one price behind the time = exactly `billShares`, to the cent); each-permit vs one rate
+> (same total); a part shared by priced dollars or hours; payments weighted by cost per period under each-permit; rates
+> kept per permit in BOTH modes; corrections at each slot's kept rate (`keptRateOf`), a permit not behind the bill at its own
+> FULL price, kept from that send (P9 B), the single-rate path unchanged when every slot bills at one rate; hand-backs
+> counted at their slot's rate. Readers moved: page view + `pricing` (permits, combined cost, N6 "Bill from" default),
+> Finalize / Send the bill / Send the changes, the coach's review card ("at each permit's price" / "at one rate" only on
+> more than one price) and "what that practice cost", Fair shares (hours per permit), the printed notes, 13d's draft bill
+> ("$X an hour" only at one price or one rate). Bill window: "Price the time" (absent at one price), the hints, captions
+> by permit, the read-only view's kept rates and later-added permits. Send window: the new-permit-price line.
+> **First check (P9 B item 3) PASSED:** a correction is already its own allocation with its own installments; earlier
+> payments are never edited; a loss credits the latest unpaid installments. No stop.
+> **Build default the owner may overrule:** on a bill with a typed PART, a permit added later bills at its FULL price (not
+> the earlier discount) — /accounting (2026-11-15, out of its scope, product question) flags it as an owner question.
+> Tests: `club-schedule-bill-several-permits.test.ts` (the money gate + P9 B arithmetic), `club-schedule-bill-rates.test.ts`
+> (only `_priced` steps are called; N5: no payment is edited); four guards moved to the `_priced` names (two would have
+> passed silently). Club + permit suites 2734 pass; 2 unrelated failures (SeasonFrame list mark, ClubHub tournament link —
+> other sessions' files). Owed: /simplify → /review, dev-server restart, browser pass, commit, /marketing for the new
+> sentences at the Close; the P9 B test through the real Send path is Session E's.
+>
+> **Owner call 2026-11-15 (Session C review run, Stage 3): KEEP FULL PRICE.** On a part bill (the club covers some of the
+> cost), time on a permit added later bills at that permit's FULL price, kept from the send that first bills it — no
+> carried-forward percentage. **Follow-up logged, NOT built (owner: "a schedule is not a set of permits"; one schedule should
+> be able to hold permits that each carry their own billing conditions):** (1) a covered share set PER permit, chosen at the
+> send that first bills a new permit (fits the kept-rate rows already built; replaces the full-price default with an explicit
+> choice); (2) a permit that isn't billed at all (needs a stored "no charge" — today a rate must be above zero); (3) different
+> PAYERS per permit (coaches vs house league, separate totals and installments) = several bills inside one schedule, a
+> data-shape change — its own design session with drawings, not an extension of C. Levels 1–2 are the cheap pair; 3 is the project.
 - [ ] **Migration:** `club_schedules.bill_price_mode` (`each_permit` | `one_rate`, default `each_permit`) and
       `club_schedule_bill_rates (schedule_id, permit_id null, scale)` written when the bill is made (Finalize and the
       late bill, `club_schedule_bill_late` mig 481). `bill_scale` stays as the one-rate value or is retired (decide with

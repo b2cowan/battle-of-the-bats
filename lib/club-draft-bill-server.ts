@@ -54,7 +54,7 @@ export async function readDraftBills(orgId: string, opts: { lineId?: string | nu
     const lineId = loaded.row.bill_line_id;
     const prices = await pricesFor(pricePermitOf(row), loaded.time.blocks.map(b => b.permitId));
     const { slots, assignments } = liveSlots(loaded, prices.weightOf);
-    const bill = computeBill(row, billSlotsOf(slots, assignments), prices.fullHour, teamOrder);
+    const bill = computeBill(row, billSlotsOf(slots, assignments, prices.priceKeyOf), prices.hourOf, teamOrder);
     if (!bill) return null;
     const shares = bill.shares;
     // The teams it bills: the split's own order, or (no amount yet) the club's order over the teams that hold time.
@@ -79,7 +79,9 @@ export async function readDraftBills(orgId: string, opts: { lineId?: string | nu
       cents: shares?.totalCents ?? null,
       teams: named, teamCount: billed.length,
       hours: billed.reduce((n, t) => n + hoursOf(t), 0),
-      hourCents: shares ? Math.round(shares.rate * 60) : null,
+      // "· $X an hour" only when the time bills at one hour (one price, or One rate for all): at each permit's price an
+      // average hour is no price anyone pays (several permits, Session C).
+      hourCents: shares && (!shares.multiPrice || row.bill_price_mode === 'one_rate') ? Math.round(shares.rate * 60) : null,
       plan: row.bill_plan!, payments: Math.max(1, bill.periods.length),
     };
   });

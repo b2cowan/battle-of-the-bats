@@ -15,7 +15,7 @@ import { formatShortWeekdayDate, formatStoredDate, formatWeekRange } from './tim
 import { fmt } from './coach-money-summary';
 import { PERMIT_WORDS, weekdayCount, weekdayOne, weekdayPlural } from './permit-words';
 import type { DraftMeasure, DraftStrategy, ShareWarning, SlotPattern } from './club-schedule-engine';
-import type { ClosingRow, Installment } from './club-schedule-bill';
+import type { ClosingRow, Installment, PriceMode } from './club-schedule-bill';
 import type { SendKind } from './club-schedule-send';
 import { HAND_BACK_WORDS, type CreditMove } from './club-hand-back-words';
 import { FACT_LABELS, factRow, noticeFacts } from './notification-facts';
@@ -244,13 +244,15 @@ export const placeWords = (venue: string, facility: string | null) => facility ?
 /** [marketing] The closing row under Bill the teams — naming the open time when slots are left open (Stage 11c: sharing
  *  frees time the club has paid for — "$5,400.00 less than the permit’s $27,000.00: the 50 open slots. The club covers
  *  the rest."). */
-export function closingRowLine(c: ClosingRow, openSlots = 0): string {
-  if (c.kind === 'matches') return `Matches the permit’s ${moneyCents(c.permitCents)}: nothing left for the club to cover.`;
+export function closingRowLine(c: ClosingRow, openSlots = 0, permits = 1): string {
+  // Several permits (Session C): the closing row compares with what they cost together — "the permits’".
+  const whose = permits > 1 ? 'the permits’' : 'the permit’s';
+  if (c.kind === 'matches') return `Matches ${whose} ${moneyCents(c.permitCents)}: nothing left for the club to cover.`;
   if (c.kind === 'club_covers') {
     const open = openSlots > 0 ? ` the ${openSlots === 1 ? '1 open slot' : `${openSlots} open slots`}. The club covers the rest.` : ' the club covers the rest.';
-    return `${moneyCents(c.differenceCents)} less than the permit’s ${moneyCents(c.permitCents)}:${open}`;
+    return `${moneyCents(c.differenceCents)} less than ${whose} ${moneyCents(c.permitCents)}:${open}`;
   }
-  if (c.kind === 'more_than_permit') return `${moneyCents(c.differenceCents)} more than the permit’s ${moneyCents(c.permitCents)}.`;
+  if (c.kind === 'more_than_permit') return `${moneyCents(c.differenceCents)} more than ${whose} ${moneyCents(c.permitCents)}.`;
   return 'No permit cost to compare it with.';
 }
 
@@ -958,6 +960,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   colNights: 'Days',
   bandGroup: (group: string, teams: number, slots: number) => `${group} · ${pluralize(teams, 'team')} · ${pluralize(slots, 'slot')}`,
   hours: (h: number) => `${Math.round(h * 10) / 10} h`,
+  /** Fair shares on several permits (Session C): 'Hours · Milton spring'. */
+  colHoursOn: (permit: string) => `Hours · ${permit}`,
   teamSlotsTitle: (team: string) => `${possessive(team)} slots`,
   // The bill (specimen 14 step 4)
   billTitle: 'Bill the teams',
@@ -969,7 +973,28 @@ export const SCHEDULE_SCREEN_WORDS = {
   billNoLineSub: 'Off-plan: no line’s budget is used',
   billFor: 'Bill the teams for',
   billWhole: (amount: string) => `The time at the permit’s price · ${amount}`,
-  billWholeTime: 'The time at the permit’s price',
+  // ── A schedule on several permits, Session C (drawing tab 5 "Price the time"; [marketing] at the Close) ──
+  billWholePermits: (amount: string) => `The time at the permits’ prices · ${amount}`,
+  billPrice: 'Price the time',
+  billPriceEach: 'Each permit’s price',
+  billPriceOne: 'One rate for all',
+  /** "Milton spring $60.00 a full field, an hour · Halton Hills $90.00" */
+  billPriceEachHint: (permits: readonly { name: string; hour: string }[]) =>
+    permits.map((x, i) => (i === 0 ? `${x.name} ${x.hour} a full field, an hour` : `${x.name} ${x.hour}`)).join(' · '),
+  /** "$450.00 over 6 h of full fields: $75.00 a full field, an hour, wherever the team played" */
+  billPriceOneHint: (total: string, hours: string, rate: string) => `${total} over ${hours} of full fields: ${rate} a full field, an hour, wherever the team played`,
+  billSplitHintEach: 'Each field at its permit’s price; a half field at half of it',
+  billSplitHintOne: 'Each field at the one rate; a half field at half of it',
+  billSplitPartEach: 'The amount, shared by what each team’s time costs at its permit’s price',
+  billSplitPartOne: 'The amount, shared by the hours each team got',
+  /** N6 A: "Bill from" starts on the line of the permit with the most priced time, and says so. */
+  billFromMost: (permit: string, planned: string, left: string) => `${permit}’s budget line, the permit with the most time · ${planned} planned, ${left} left`,
+  /** A team's caption with its hours by permit: "2 slots · 1 h Milton spring + 1 h Halton Hills". */
+  billTeamByPermit: (slots: number, parts: readonly string[]) => `${slots === 1 ? '1 slot' : `${slots} slots`} · ${parts.join(' + ')}`,
+  /** The read-only view once the bill is made (P9 B item 5): the terms it keeps, and any permit billed later at its own price. */
+  billKeptEach: (list: string) => `Priced at each permit’s price: ${list}.`,
+  billKeptOne: (rate: string) => `Priced at one rate for all: ${rate} a full field, an hour.`,
+  billKeptLater: (list: string) => `Added after the bill, each at its own price and kept from then on: ${list}.`,
   billPart: 'A part of it',
   billPartHint: 'Or a part of it, when the club covers some',
   billNoPermitHint: 'No permit prices this time: type what the teams pay.',
@@ -1076,6 +1101,12 @@ export const SCHEDULE_SCREEN_WORDS = {
   // its coach asks for it" retired with build question B's owed-back).
   billCorrectionsOn: HAND_BACK_WORDS.billCorrectionsOn,
   billCorrectionsOff: HAND_BACK_WORDS.billCorrectionsOff,
+  /** P9 B (several permits, Session C): time on a permit that was not behind the bill is billed at that permit's own price,
+   *  kept from now on. "Time on Georgetown summer is billed at that permit’s own price, $120.00 a full field, an hour, and
+   *  kept from now on." [marketing] at the Close. */
+  billNewPermitPrice: (permits: readonly { name: string; hour: string }[]) => permits.length === 1
+    ? `Time on ${permits[0].name} is billed at that permit’s own price, ${permits[0].hour} a full field, an hour, and kept from now on.`
+    : `Time on ${joinWithAnd(permits.map(x => `${x.name} (${x.hour} a full field, an hour)`))} is billed at each permit’s own price, and kept from now on.`,
   billedCorrection: (money: string) => `a correction of ${money}`,
   handedBackLine: (team: string, lines: string) => `${team} handed back ${lines} itself, so it isn’t emailed.`,
   previewFailed2: 'The preview didn’t load.',
@@ -1131,6 +1162,8 @@ export const SCHEDULE_COACH_WORDS = {
   yourBill: 'Your bill',
   yourShare: 'Your share',
   byTheTime: 'By the time you got',
+  /** Several permits (Session C): with more than one price behind the time, which way the club priced it (drawing, coach note 2). */
+  byTheTimePriced: (mode: PriceMode) => (mode === 'one_rate' ? 'By the time you got, at one rate for every team' : 'By the time you got, at each permit’s price'),
   payments: 'Payments',
   paymentCovers: (slots: number, days: number, months: string, oneWeekday: number | null) => `Your ${slotCountWords(slots, days, oneWeekday)} in ${months}`,
   nothingYet: 'Nothing is on your schedule or your Money › Club tab until the club finalizes it.',

@@ -2916,6 +2916,78 @@
     "ordinal_position": 6
   },
   {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "schedule_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "permit_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "permit_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "scale",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "first_billed_send_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_schedule_bill_rates",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
     "table_name": "club_schedule_hand_back_slots",
     "column_name": "id",
     "data_type": "uuid",
@@ -3868,6 +3940,15 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 28
+  },
+  {
+    "table_name": "club_schedules",
+    "column_name": "bill_price_mode",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'each_permit'::text",
+    "ordinal_position": 29
   },
   {
     "table_name": "diamonds",
