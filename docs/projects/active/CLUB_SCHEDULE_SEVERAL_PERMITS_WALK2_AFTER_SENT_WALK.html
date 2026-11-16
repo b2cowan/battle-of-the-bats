@@ -1,0 +1,193 @@
+<title>After It’s Sent Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame, as 13c's walk). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { button { min-height: 44px; } }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · A schedule on several permits · Session E, and the money half of Session C</span>
+    <h1>Change a schedule after it has been sent, without moving what was played or billed</h1>
+    <p class="sub">Written 2026-11-16, after Session E (<code>ef8a45683</code>), with Session C’s bill (<code>3ee39edaa</code>) and the Close’s words pass (<code>f0f36651d</code>, <code>b4ce14bea</code>). One purpose: a club adds a second town’s permit to a schedule already sent, takes one off, and regenerates, and nothing before today moves, locked slots stay, and the bill’s earlier payments stay as they were.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Harbourtown sent <strong>Fall practices</strong> to three teams (14U AA, 15U AA, 13U AAA): Oct 5, 2026 to Jan 24, 2027, built from <strong>Milton evenings</strong> (Town of Milton, one diamond at Kinsmen Park, $60.00 an hour), billed at that price in three payments, the first already due. Part of it has been played. You <strong>add</strong> Halton Hills evenings ($90.00 an hour, Prospect Park) and read what it gives each team and what the send would bill, <strong>regenerate</strong>, checking that the played practices and the two locked slots did not move, and last <strong>take Milton evenings off</strong> to see what stays. Nothing is ever sent.</p></section>
+  <section class="card"><h2>It passes when</h2><ul><li><strong>0</strong> You start from a Final schedule with no “Changed since sent”, and you have written down its payments, its two locked slots and a played week.</li><li><strong>1</strong> Add time is the first item in Tools, offers only permits not on the schedule, drafts practices for the new time only, keeps them in Changed since sent, moves nothing (locked or not), leaves every payment as it was, and the send would bill each touched team the new permit’s full price for the hours it gained.</li><li><strong>2</strong> Regenerate says how many practices before today stay as they were sent, keeps the locked slots, and moves nothing played.</li><li><strong>3</strong> Taking a permit off is its own save: its practices from today on go (locked ones too), the played ones stay with what they were billed, and an unkept Settings… edit is left out and said so.</li><li><strong>4</strong> On a phone, Tools holds only Send log.</li></ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul><li><strong>Pressing Send the changes.</strong> It would email the teams’ coaches on the copy. The money it would bill is read in the Send window; the send itself is run end to end by a unit test (<code>club-schedule-add-time-send</code>) with a stubbed database.</li><li>Building a schedule on two permits, Find the time, dates off by park and the Bill window’s “Price the time”: that is <strong>walk 1</strong>.</li><li>A coach’s Money › Club tab after a send, and what a family sees.</li><li>An exact credit or correction to the cent beyond the relationships stated in the steps. Figures marked “on Nov 16” drift as practices are played (one a day); the stated relationship is the pass condition.</li></ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts"><dt>Dev server</dt><dd><code>http://localhost:3000</code>. It was restarted after the build; if a page will not load, tell Claude before walking.</dd><dt>The club</dt><dd>A fresh Harbourtown copy, <strong>navj-club-spw2</strong>, built and checked 2026-11-16 (“today” is Mon, Nov 16, 2026). If you walk much later, ask Claude to rebuild it so the played and future practices move with the calendar.</dd><dt>Sign in</dt><dd><code>http://localhost:3000/login</code> · password <code>devpass123</code> · keep this page private.</dd><dt>Account</dt><dd><code>navj-club-spw2-owner@dev.local</code> (Morgan Ellis, owner). Open <code>http://localhost:3000/navj-club-spw2/admin/schedules</code> and press <strong>Fall practices</strong>. (Its address ends <code>15ff16eb-8c27-45ac-bdaf-cf4fe7711efa</code>; the id changes if it is rebuilt.)</dd><dt>Stop check</dt><dd>See step 0.1: Final, and no “Changed since sent”. If the schedule shows that chip, it was already changed: stop and tell Claude.</dd><dt>Width</dt><dd>Desk for parts 0–3. Phone (390 px) for part 4 only.</dd><dt>Order</dt><dd>Parts 0–4 in order. Part 1 adds unsent practices, part 3 takes Milton evenings off: each changes what the next reads. Part 3 is last because it is the destructive one.</dd><dt>When done</dt><dd>Tell Claude “several permits walk 2 done” with the build summary. It then tears down both walk clubs and their accounts and reads them back.</dd></dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+  <section class="card" id="callsCard"><h2>Your calls (not counted in the progress)</h2><p class="sub">Tick the option you choose; the box is the answer. Say why in the note, if you like.</p><div id="calls" style="display:flex;flex-direction:column;gap:14px"></div></section>
+</main>
+<script>
+(function () {
+  var D = {"KEY":"several-permits-walk2-after-sent-v1","TITLE":"Several permits walk 2 · Change it after it’s sent (2026-11-16)","PARTS":[{"id":"0","title":"Start from the sent schedule, and write down what you will compare (desk)","intro":"Part 0 changes nothing. Keep a scrap of paper (or the notes box) for the four things you write down.","steps":[{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open \u003cstrong>Schedules\u003c/strong> and press \u003cstrong>Fall practices\u003c/strong>.","see":"The page opens with the chip \u003cstrong>Final\u003c/strong> and \u003cstrong>no\u003c/strong> “Changed since sent” chip beside it. The line under the name reads “From the permit \u003cstrong>Milton evenings ›\u003c/strong>” (one permit). \u003cstrong>If a “Changed since sent” chip is there, stop:\u003c/strong> the copy was changed after it was built."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open the bill (the \u003cstrong>Bill\u003c/strong> tile) and write down each team’s three payment amounts.","see":"A read-only bill, three payments a team, the first one dated \u003cstrong>Nov 2, 2026\u003c/strong> (before today). Built as: \u003cstrong>14U AA $540.00 · $240.00 · $180.00\u003c/strong>; \u003cstrong>15U AA $600.00 · $240.00 · $180.00\u003c/strong>; \u003cstrong>13U AAA $960.00 · $480.00 · $360.00\u003c/strong>. A bill’s terms never change, so these are the pass condition for every later “unchanged”."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open the \u003cstrong>Grid\u003c/strong>, go to the week of Mon, Nov 23 and look at Thursday, Nov 26. Write down what you see.","see":"Two \u003cstrong>Locked\u003c/strong> slots on Kinsmen Park, Diamond A: \u003cstrong>6:00 p.m. · 14U AA\u003c/strong> and \u003cstrong>7:00 p.m. · 15U AA\u003c/strong>."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Go back to the week of Mon, Nov 9 (before today). Write down each practice: the team, the day, the time and the field.","see":"Practices on Tuesdays and Thursdays on Diamond A. These are “already played”: part 3 checks that none of them moved."}]},{"id":"1","title":"Add time, with a permit the schedule does not have (desk)","intro":"Halton Hills evenings (Town of Halton Hills, Prospect Park, $90.00 an hour) runs from Mon, Nov 23. No team has enough practices from Milton evenings, which holds one diamond, so the new time has work to do.","steps":[{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open \u003cstrong>Tools\u003c/strong> on the schedule’s page and read the menu.","see":"\u003cstrong>Add time…\u003c/strong> is the first item, above \u003cstrong>Settings…\u003c/strong>, with the hint “Another permit’s time, or time you find. Nothing already on the schedule moves.”"},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Press \u003cstrong>Add time…\u003c/strong>.","see":"A window \u003cstrong>Add time\u003c/strong>, “Step 1 of 2 · the new time”. Beside the Permits field a read-only \u003cstrong>On this schedule\u003c/strong> shows Milton evenings."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Read the lines under the fields.","see":"“\u003cstrong>Only the new time is scheduled. Nothing already on the schedule moves, locked or not, and nothing before today changes.\u003c/strong>” then “Drafts are made for the new time, toward each team’s practices a week. They wait in Changed since sent until you send the changes. \u003cstrong>Send the changes bills them; earlier payments stay as they are.\u003c/strong>” The generate button is off, with “Tick a permit, or find the time, to add time.”"},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open the \u003cstrong>Permits\u003c/strong> field.","see":"It lists the club’s permits \u003cstrong>except\u003c/strong> Milton evenings (that one is already on the schedule): Fall diamonds 2026, Halton Hills evenings, Summer fields 2027 and Winter dome 2026–27."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Tick \u003cstrong>Halton Hills evenings\u003c/strong>.","see":"A card \u003cstrong>Halton Hills evenings\u003c/strong> with its row at \u003cstrong>Prospect Park\u003c/strong>, Tue and Thu, 6:00–8:00 p.m. The button now reads \u003cstrong>Generate drafts for the new time\u003c/strong>."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Press \u003cstrong>Generate drafts for the new time\u003c/strong>.","see":"“Step 2 of 2 · drafts for the new time”. The statement reads “\u003cstrong>N new practices\u003c/strong>, Dec 3, 2026 – Jan 21, 2027” and “From Halton Hills evenings. The other \u003cstrong>M practices\u003c/strong> stay exactly where they were sent.” On Nov 16 it was \u003cstrong>15\u003c/strong> new and \u003cstrong>63\u003c/strong> others; M is every practice the schedule already had."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Read the table under the statement.","see":"Columns \u003cstrong>Team · New · Hours\u003c/strong> with \u003cstrong>14U AA\u003c/strong> and \u003cstrong>15U AA\u003c/strong> (on Nov 16: 7 new for 14U AA, 8 for 15U AA, total “2 teams”), and the line “\u003cstrong>13U AAA gets nothing new: it already has its practices a week.\u003c/strong>” Write down each team’s Hours."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Press \u003cstrong>Keep this draft\u003c/strong> on the first draft.","see":"The window closes and the page says “\u003cstrong>The new time is on Fall practices. The coaches aren’t told until you send the changes.\u003c/strong>”"},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Look at the top of the page and at Needs attention.","see":"The chip \u003cstrong>Changed since sent\u003c/strong> now sits beside Final. A \u003cstrong>Needs attention\u003c/strong> row “\u003cstrong>Unsent change\u003c/strong>” reads “N changes since you sent it on Nov 16”."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open that row’s list of changes.","see":"Every line begins with a team and says \u003cstrong>gains\u003c/strong> a practice (“14U AA · gains Tue, Dec 8, 7:00 p.m. · Diamond 2”). Only 14U AA and 15U AA appear. No line says a practice moves or goes."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"In the Grid go to the week of Mon, Nov 23 and look at Thursday, Nov 26.","see":"The same two \u003cstrong>Locked\u003c/strong> slots as you wrote down in 0.3: 6:00 p.m. 14U AA and 7:00 p.m. 15U AA on Diamond A. Nothing existing moved, locked or not."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open the bill again and compare with 0.2.","see":"Every team’s payments are \u003cstrong>exactly\u003c/strong> what you wrote down. The bill itself never changes; the new money arrives as its own correction (next step)."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Press \u003cstrong>Send the changes\u003c/strong> and read the window. \u003cstrong>Do not send\u003c/strong>; close it when you have read it.","see":"“Send the changes”. \u003cstrong>14U AA\u003c/strong> and \u003cstrong>15U AA\u003c/strong> each carry “\u003cstrong>a correction of $…\u003c/strong>”; 13U AAA carries none. \u003cstrong>Each team’s correction is $90.00 × that team’s Hours from 1.7\u003c/strong> (on Nov 16: $630.00 and $720.00, together $1,350.00 = $90.00 × 15). Also a line: “Time on Halton Hills evenings is billed at that permit’s own price, $90.00 a full field, an hour, and kept at that price from now on. Time already billed keeps its price.”","check":true}]},{"id":"2","title":"Regenerate leaves what was played alone, and the locked slots (desk)","intro":"The schedule still has its unsent new time from part 1. Regenerate replaces only what is left to move.","steps":[{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open \u003cstrong>Tools › Regenerate the unlocked slots…\u003c/strong>.","see":"Settings opens and goes by itself to “Step 2 of 2 · drafts for Fall practices”."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Press \u003cstrong>Keep this draft\u003c/strong> and read the question.","see":"“\u003cstrong>Regenerate Fall practices?\u003c/strong>”: “The draft you picked replaces every slot from today on, except the ones someone placed by hand. \u003cstrong>The 2 slots you locked stay where they are.\u003c/strong>” then “The \u003cstrong>M practices\u003c/strong> before today stay as they were sent.” and “It has already been sent, so no team is told until you send the changes from its page.” On Nov 16 M was 24. Write M down."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Press \u003cstrong>Regenerate\u003c/strong>.","see":"The page says “Fall practices regenerated”."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"In the Grid go to the week of Mon, Nov 23 and look at Thursday, Nov 26.","see":"The same two \u003cstrong>Locked\u003c/strong> slots as in 0.3, unchanged."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Go to the week of Mon, Nov 9.","see":"Exactly the practices you wrote down in 0.4. Regenerating moved nothing that was played."}]},{"id":"3","title":"Take Milton evenings off (desk)","intro":"The destructive part: the schedule keeps its played practices and loses Milton’s future ones, locked or not. Nothing is sent.","steps":[{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open \u003cstrong>Tools › Settings…\u003c/strong> and type \u003ccode> x\u003c/code> at the end of the Name. Do not keep it.","see":"Settings… opens on the settings step with a card per permit. The Name now reads “Fall practices x” (unsaved)."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"On the \u003cstrong>Milton evenings\u003c/strong> card press \u003cstrong>Take it off…\u003c/strong>.","see":"A question “\u003cstrong>Take Milton evenings off?\u003c/strong>”. First line: “Its \u003cstrong>N practices\u003c/strong> from today (Nov 16) on come off: 14U AA, 15U AA and 13U AAA.” Then “The \u003cstrong>M practices\u003c/strong> played before today stay on the schedule, and so does what the teams were billed for them.” \u003cstrong>M is the same number you wrote down in 2.2\u003c/strong> (on Nov 16: 24) Then “The change waits in Changed since sent. Send the changes tells the coaches and shows what each team is credited for that time.” Then “\u003cstrong>Other changes you’ve made in Settings… but not kept are left out of this.\u003c/strong>” N counts every Milton practice from today on, \u003cstrong>locked ones too\u003c/strong> (on Nov 16: 39)."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Press \u003cstrong>Back\u003c/strong> in the question.","see":"The question closes. Nothing was taken off: the Milton card is still there."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Press \u003cstrong>Take it off…\u003c/strong> again.","see":"The same question, with the same lines."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Press \u003cstrong>Take it off\u003c/strong> in the question.","see":"The page says “\u003cstrong>Milton evenings is taken off Fall practices.\u003c/strong>” The name is still “Fall practices”: your unkept edit was left out."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open the \u003cstrong>Unsent change\u003c/strong> row’s list again.","see":"New lines for 14U AA, 15U AA and 13U AAA saying a practice \u003cstrong>goes\u003c/strong>, all dated \u003cstrong>today or later\u003c/strong>. No line is dated before today."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"In the Grid go to the week of Mon, Nov 23 and look at Thursday, Nov 26.","see":"\u003cstrong>The two slots you locked are gone\u003c/strong>: they were Milton evenings practices from today on, and locking protects a slot from Regenerate, not from its permit being taken off. The question named them among the practices that come off."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"In the Grid go to the week of Mon, Nov 9.","see":"Exactly the practices you wrote down in 0.4: the played ones stay."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open \u003cstrong>Tools › Settings…\u003c/strong> and look at the Milton evenings card.","see":"Its row now ends \u003cstrong>the day before today\u003c/strong> (Nov 15): the schedule keeps the time it already gave. Close Settings… without keeping."},{"who":"Owner · navj-club-spw2-owner@dev.local","do":"Open the bill and compare with 0.2.","see":"Every payment is still exactly what you wrote down. The credit for the time taken off appears when you send the changes, not before."}]},{"id":"4","title":"On a phone, no editing door (phone)","steps":[{"who":"Owner · navj-club-spw2-owner@dev.local · phone","do":"At 390 px open the same schedule and open \u003cstrong>Tools\u003c/strong>.","see":"Only \u003cstrong>Send log\u003c/strong>. \u003cstrong>Add time…\u003c/strong>, \u003cstrong>Settings…\u003c/strong> and \u003cstrong>Regenerate the unlocked slots…\u003c/strong> are absent, as every editing item is on a phone."}]}],"CALLS":[{"id":"C1","title":"A new permit that starts before the schedule’s first day","text":"Add time keeps “From” fixed at the schedule’s first day, so a permit row that starts earlier is clipped to it, and nobody is told. This walk’s permit starts after the first day, so you cannot see it; the proposed words are /marketing’s, not built.","options":["A · Say so in the window: “Milton evenings starts Apr 12, before this schedule’s first day. Only its time from May 3 on is added.”","B · Let Add time move the first day earlier (the promise line would then say “The schedule now starts Apr 12”)","C · Leave as built"]},{"id":"C2","title":"Add time’s dates off reach the older time later","text":"The new permit’s dates off join the schedule’s dates off, which apply to every row. Nothing moves now, but the next Regenerate or Settings… save applies them to the older rows’ future practices, and the Add time promise does not say so.","options":["A · Add one line under the promise, shown only when the new permit brings dates off: “Its dates off join the schedule’s dates off. They also apply to the time already here, the next time you regenerate or save Settings…. Nothing moves now.”","B · Leave as built"]},{"id":"C3","title":"Taking off a permit when nothing would stay","text":"The screen hides “Take it off…” then. A direct request is refused with “Give the schedule its time first: a venue, its facilities, the days and the hours.”, which tells the reader to do what they already did. Nobody can reach this from the screen.","options":["A · Say instead: “This permit is the only time on the schedule, so it can’t be taken off. Add other time first.”","B · Leave as built"]},{"id":"C4","title":"The take-off credit reaches a payment already due","text":"Read from the send preview on this copy (not a step): taking Milton evenings off credits each team at $60.00 an hour (on Nov 16: 14U AA $600.00, 15U AA $660.00, 13U AAA $1,080.00). The credit empties the Dec 7 and Jan 4 payments first, then shrinks the first payment, which was due Nov 2 (14U AA $540.00 → $360.00). Nobody has paid anything on the copy, so nothing is owed back here. If a team had already paid that first payment, the credit would have to come back to them as money.","options":["A · As built: the credit comes off the latest payments first and reaches an earlier one only when it must","B · A credit never touches a payment already due; anything past the unpaid later payments is owed back to the team","C · Look closer first (read how a paid payment is handled)"]}]};
+  var KEY = D.KEY, TITLE = D.TITLE, PARTS = D.PARTS, CALLS = D.CALLS;
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    if (p.intro) body.appendChild(el('p', 'sub', p.intro));
+    p.steps.forEach(function (s, i) {
+      var id = p.id + '.' + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', (s.check ? 'Check: ' : 'You should see: ') + s.see));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  var callHost = document.getElementById('calls');
+  CALLS.forEach(function (c) {
+    var box = el('div', 'callbox'); box.style.cssText = 'display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px';
+    box.appendChild(el('strong', null, c.id + ' · ' + c.title));
+    box.appendChild(el('span', 'see', c.text));
+    c.options.forEach(function (o, i) {
+      var key = c.id + '.' + i;
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!state.calls[key]; cb.style.cssText = 'width:18px;height:18px;margin-top:3px;accent-color:var(--accent);flex:none';
+      cb.addEventListener('change', function () { state.calls[key] = cb.checked; save(); });
+      var row = el('label', 'step'); row.style.borderTop = '0'; row.style.paddingBlock = '4px';
+      row.appendChild(cb); row.appendChild(el('span', 'txt', o)); box.appendChild(row);
+    });
+    var ta = document.createElement('textarea'); ta.id = 'callnote-' + c.id; ta.placeholder = 'Why (optional)'; ta.value = state.callNotes[c.id] || '';
+    ta.addEventListener('input', function () { state.callNotes[c.id] = ta.value; save(); });
+    box.appendChild(ta); callHost.appendChild(box);
+  });
+  if (!CALLS.length) document.getElementById('callsCard').hidden = true;
+
+  function doneSteps(partId) { return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; }); }
+  var totalSteps = boxes.length;
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length, v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    if (CALLS.length) {
+      lines.push('Calls (not counted):');
+      CALLS.forEach(function (c) {
+        var chosen = c.options.filter(function (o, i) { return state.calls[c.id + '.' + i]; });
+        lines.push('  ' + c.id + ' ' + c.title + ': ' + (chosen.length ? chosen.join(' / ') : 'not answered') + (state.callNotes[c.id] ? ' — ' + state.callNotes[c.id] : ''));
+      });
+    }
+    return lines.join('\n');
+  }
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    CALLS.forEach(function (c) { document.getElementById('callnote-' + c.id).value = ''; });
+    Array.prototype.forEach.call(document.querySelectorAll('#calls input[type=checkbox]'), function (b) { b.checked = false; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

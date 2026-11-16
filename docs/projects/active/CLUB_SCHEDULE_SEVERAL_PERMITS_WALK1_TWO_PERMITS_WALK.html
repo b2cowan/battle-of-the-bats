@@ -1,0 +1,193 @@
+<title>Two Permits Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame, as 13c's walk). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { button { min-height: 44px; } }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · A schedule on several permits · Sessions A, B, C, D</span>
+    <h1>Build a schedule on two permits, from two towns</h1>
+    <p class="sub">Written 2026-11-16, after Sessions A (<code>673670185</code>), B (<code>da0f39b53</code>), C (<code>3ee39edaa</code>) and D (<code>e4753a86b</code>) and the Close’s words pass (<code>f0f36651d</code>, <code>b4ce14bea</code>). One purpose: a club holding permits from two towns builds one practice schedule from both, and every screen says which permit each hour belongs to.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Harbourtown holds permits from <strong>Town of Milton</strong> and <strong>Town of Halton Hills</strong> for a four-month season (Nov 30, 2026 to Mar 28, 2027): <strong>Milton evenings</strong> ($60.00 an hour, Kinsmen Park), <strong>Halton Hills evenings</strong> ($90.00, Prospect Park) and <strong>Kinsmen Thursdays</strong> (a second Milton permit for the same Thursdays). You pick permits and read what each brings, find free Tuesday and Thursday evenings across all of them, close one park on one day while another day closes both, read the permit door lines, price the same time two ways, and let a permit’s new closure send you to “Take … off”.</p></section>
+  <section class="card"><h2>It passes when</h2><ul><li><strong>1</strong> Each ticked permit brings its own card, issuer and time; unticking one takes its rows away; two permits on the same park and hours say which one keeps the evenings.</li><li><strong>2</strong> Find the time lists every facility the club holds, says what free means, counts evenings free of held, names the days two permits both hold and who prices them, and settles your picks into one card per permit.</li><li><strong>3</strong> A date off can name its park (“Applies to”) or close All venues, and the grid shows the difference; the permit’s own date off arrives with its time.</li><li><strong>4</strong> The schedule names both permits at the top, each a door to that permit.</li><li><strong>5</strong> The bill window prices the same time per permit or at one rate: the total stays, only the split moves, and the note under the table says “the permits’”.</li><li><strong>6</strong> A permit’s new date off lands in Needs attention as “Outside the permit” and the row’s own button finishes the job.</li></ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul><li>Adding time to a schedule already sent, taking a permit off it, and what happens to played practices and earlier payments: that is <strong>walk 2</strong>.</li><li>Finalizing or sending this schedule. Nothing here is emailed to anyone.</li><li>The “Another time” door in the finder, the Kind, Where and Town filters, and a draft’s held days (the unit tests cover them).</li><li>Money arithmetic to the cent. Three unit-test suites pin it; this walk checks that the screens agree with each other.</li></ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts"><dt>Dev server</dt><dd><code>http://localhost:3000</code>. It was restarted after the build; if a page will not load, tell Claude before walking.</dd><dt>The club</dt><dd>A fresh Harbourtown copy, <strong>navj-club-spw</strong>, built 2026-11-16. Dates below are as of that day (“today” is Mon, Nov 16, 2026). If you walk much later, ask Claude to rebuild it so the dates move with the calendar.</dd><dt>Sign in</dt><dd><code>http://localhost:3000/login</code> · password <code>devpass123</code> · keep this page private.</dd><dt>Account</dt><dd><code>navj-club-spw-owner@dev.local</code> (Morgan Ellis, owner). Open <code>http://localhost:3000/navj-club-spw/admin/schedules</code>.</dd><dt>Stop check</dt><dd>The Schedules list reads “No schedules yet”. If it lists a schedule, stop: a previous walk left it behind.</dd><dt>Width</dt><dd>Desk only. New schedule and Find the time are not offered on a phone.</dd><dt>Order</dt><dd>Parts 1–6 in order. Part 1 writes nothing; parts 2 and 3 are one window; part 6 changes a permit.</dd><dt>When done</dt><dd>Tell Claude “several permits walk 1 done” with the build summary. Walk 2 uses a separate club; the teardown removes both.</dd></dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+  <section class="card" id="callsCard"><h2>Your calls (not counted in the progress)</h2><p class="sub">Tick the option you choose; the box is the answer. Say why in the note, if you like.</p><div id="calls" style="display:flex;flex-direction:column;gap:14px"></div></section>
+</main>
+<script>
+(function () {
+  var D = {"KEY":"several-permits-walk1-two-permits-v1","TITLE":"Several permits walk 1 · Build a schedule on two permits (2026-11-16)","PARTS":[{"id":"1","title":"Pick permits, and the overlap rule (desk)","intro":"Nothing is saved in this part. You close the window at the end.","steps":[{"who":"Owner · navj-club-spw-owner@dev.local","do":"Open \u003cstrong>Schedules\u003c/strong>. Press \u003cstrong>New schedule\u003c/strong>.","see":"A window \u003cstrong>New schedule\u003c/strong>, “Step 1 of 2 · settings”, with a \u003cstrong>Permits\u003c/strong> field beside Name that reads “No permit: type the time below”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Open the \u003cstrong>Permits\u003c/strong> field and read the list. Do not tick anything yet.","see":"Every permit the club holds, each with its issuer and dates under its name. Three are this walk’s: \u003cstrong>Halton Hills evenings\u003c/strong> (Town of Halton Hills), \u003cstrong>Kinsmen Thursdays\u003c/strong> and \u003cstrong>Milton evenings\u003c/strong> (both Town of Milton). The other three (Fall diamonds 2026, Summer fields 2027, Winter dome 2026–27) are the club’s own and are not used here."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Tick \u003cstrong>Milton evenings\u003c/strong>.","see":"A card headed \u003cstrong>Milton evenings\u003c/strong> (“Town of Milton · …”) with a row at \u003cstrong>Kinsmen Park\u003c/strong>, Tue and Thu, 6:00–8:00 p.m. Under the field: “Each permit brings its own time and dates off. Untick one to take its time off again.”"},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Tick \u003cstrong>Halton Hills evenings\u003c/strong> as well.","see":"A second card, \u003cstrong>Halton Hills evenings\u003c/strong>, with its row at \u003cstrong>Prospect Park\u003c/strong>, Tue and Thu, 6:00–8:00 p.m. Both cards stay on screen, each with its own permit and issuer."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Untick \u003cstrong>Halton Hills evenings\u003c/strong>.","see":"Its card goes. A line under the field says its rows came off and ends “Ticking it again brings back the permit’s time, not your changes to it.” The Milton card is untouched."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Tick \u003cstrong>Kinsmen Thursdays\u003c/strong> (Milton evenings is still ticked).","see":"A sentence says the Thursdays at \u003cstrong>Kinsmen Park\u003c/strong> “are on this schedule already, from Milton evenings. They stay where they are, priced by that permit.” Two permits hold the same park at the same hours; the evenings stay on the permit ticked first."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Close the window without saving (Cancel, or the back arrow).","see":"You are back on the Schedules list. It still reads “No schedules yet”: nothing was created."}]},{"id":"2","title":"Find the time across every permit (desk)","intro":"Part 2 starts a fresh New schedule and settles what you find into rows of hours. Part 3 carries on in the same window.","steps":[{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>New schedule\u003c/strong> again.","see":"A blank window: the Permits field reads “No permit: type the time below”. Under it a door, \u003cstrong>Find the time across every permit\u003c/strong>."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>Find the time across every permit\u003c/strong>.","see":"A window \u003cstrong>Find the time\u003c/strong>: “Every facility the club holds on a permit. Free means nothing is booked there and no other schedule’s draft holds it.” A list with the columns \u003cstrong>Facility · Permit · Free\u003c/strong>, and a count line “… facilities the club holds in these dates · … hours free”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Set \u003cstrong>From\u003c/strong> to Mon, Nov 30, 2026.","see":"The list reloads for the new dates (“Finding the time…” for a moment)."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Set \u003cstrong>To\u003c/strong> to Sun, Mar 28, 2027.","see":"The list reloads again. These are the dates the three walk permits run."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Under \u003cstrong>Days\u003c/strong>, choose Tue and Thu only.","see":"Every row now reads as Tuesday and Thursday time, “Tue and Thu 6:00–8:00 p.m.”, for the walk’s permits."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Find the \u003cstrong>Prospect Park\u003c/strong> row for Diamond 1 (Halton Hills evenings) and read its Free column.","see":"Its Free column reads “\u003cstrong>N evenings free of N\u003c/strong>”: the same number twice, because nothing is booked at Prospect Park. It shows the pattern and the hours, “Tue and Thu 6:00–8:00 p.m. · N hours”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Find the \u003cstrong>Kinsmen Park\u003c/strong> row for Diamond A and read under its name.","see":"A line “\u003cstrong>Thu, … are on both\u003c/strong> permits” (the Thursdays Milton evenings and Kinsmen Thursdays both hold), with a choice labelled “\u003cstrong>The permit that prices those days\u003c/strong>”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"In that choice pick \u003cstrong>Milton evenings\u003c/strong>.","see":"It reads “Priced by Milton evenings”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Set \u003cstrong>Shortest time\u003c/strong> to 4 hours.","see":"No row has anything free any more. A line says “\u003cstrong>Nothing the club holds is free\u003c/strong> on Tue and Thu from … to …”, with doors to clear the days or widen the dates. (No permit here holds a four-hour stretch on a Tuesday or Thursday.)"},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Set \u003cstrong>Shortest time\u003c/strong> back to 30 minutes.","see":"The rows come back as before."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Tick the \u003cstrong>Prospect Park\u003c/strong> row for Diamond 1.","see":"The footer button reads “Add 1 to the schedule”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Tick the \u003cstrong>Kinsmen Park\u003c/strong> row for Diamond A as well.","see":"The footer button reads “\u003cstrong>Add 2 to the schedule\u003c/strong>”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>Add 2 to the schedule\u003c/strong>.","see":"The finder closes. The Permits field now shows both permits, with the hint “Found in Find the time. Tick a permit to bring all of its time.” Under it one card per permit, \u003cstrong>Halton Hills evenings\u003c/strong> (Prospect Park) and \u003cstrong>Milton evenings\u003c/strong> (Kinsmen Park), each holding only the row you ticked."}]},{"id":"3","title":"Dates off, by park, and a saved draft (desk)","intro":"Same window as part 2. The permit’s own date off came in with its time.","steps":[{"who":"Owner · navj-club-spw-owner@dev.local","do":"Type the Name \u003ccode>Two permits walk\u003c/code>.","see":"The name is kept. (It would otherwise take the first permit’s name.)"},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Under \u003cstrong>Who, and how much\u003c/strong>, make sure 14U AA, 15U AA and 13U AAA are the teams ticked, and no others.","see":"Those three teams, each with an equal share."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Scroll to \u003cstrong>Dates off\u003c/strong> and read what is already there.","see":"One date off came in with Milton evenings: \u003cstrong>Tue, Jan 26, 2027\u003c/strong>, “Town event”, with the line “\u003cstrong>From Milton evenings\u003c/strong>” under it, and \u003cstrong>Applies to\u003c/strong> reading “\u003cstrong>Kinsmen Park\u003c/strong>” (the permit holds only Kinsmen Park)."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>Add a date off\u003c/strong> and choose Tue, Jan 12, 2027. Type the reason \u003ccode>Walk date off\u003c/code>.","see":"A new row. Its \u003cstrong>Applies to\u003c/strong> reads “\u003cstrong>All venues\u003c/strong>” (a date you type closes every park)."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"On that new row, open \u003cstrong>Applies to\u003c/strong> and choose \u003cstrong>Prospect Park\u003c/strong> only.","see":"It reads “Prospect Park”. Choosing “All venues” again would clear the park."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>Add a date off\u003c/strong> again and choose Thu, Jan 14, 2027. Leave \u003cstrong>Applies to\u003c/strong> alone.","see":"The second new row reads “\u003cstrong>All venues\u003c/strong>”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>Generate drafts\u003c/strong>.","see":"“Step 2 of 2 · drafts for Two permits walk” with ranked drafts. No error."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>Save as a draft\u003c/strong> on the first draft.","see":"The schedule’s page opens as a draft, named Two permits walk."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Open the \u003cstrong>Grid\u003c/strong>, go to the week of Mon, Jan 11, 2027 and look at Tuesday, Jan 12.","see":"\u003cstrong>Prospect Park\u003c/strong> has no slot that day (its date off). \u003cstrong>Kinsmen Park\u003c/strong> still has slots."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"In the same week look at Thursday, Jan 14.","see":"Neither park has a slot: “All venues” closed both."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Go to the week of Mon, Jan 25 and look at Tuesday, Jan 26.","see":"\u003cstrong>Kinsmen Park\u003c/strong> has no slot (the permit’s date off, named for Kinsmen Park). \u003cstrong>Prospect Park\u003c/strong> still has slots: that date off does not reach it."}]},{"id":"4","title":"The permit door lines (desk)","steps":[{"who":"Owner · navj-club-spw-owner@dev.local","do":"On the schedule’s page read the line under its name.","see":"“\u003cstrong>From the permits\u003c/strong> Halton Hills evenings › and Milton evenings ›” (the two permits behind its rows), then the place, the dates and the team count."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>Milton evenings ›\u003c/strong>.","see":"The Permits page opens with the Milton evenings permit’s window (Town of Milton, Kinsmen Park, Tue and Thu 6:00–8:00 p.m.). The other permit’s ›, pressed instead, opens that permit’s window."}]},{"id":"5","title":"The bill, priced two ways (desk)","intro":"Milton evenings is $60.00 an hour and Halton Hills evenings is $90.00. The checks compare figures on this screen with each other; none depends on today’s date.","steps":[{"who":"Owner · navj-club-spw-owner@dev.local","do":"Back on the schedule, open the bill: the \u003cstrong>Bill\u003c/strong> tile (it reads “Not billed”), or the “Bill the teams” door.","see":"A window \u003cstrong>Bill the teams\u003c/strong>. “Bill the teams for” starts on “\u003cstrong>The time at the permits’ prices · $…\u003c/strong>” (plural: two permits)."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Find the \u003cstrong>Price the time\u003c/strong> choice and read it.","see":"Two choices, “\u003cstrong>Each permit’s price\u003c/strong>” (selected) and “\u003cstrong>One rate for all\u003c/strong>”, and a hint naming both prices: Milton evenings $60.00 and Halton Hills evenings $90.00, “a full field, an hour”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Write down the figure after “The time at the permits’ prices” and each team’s amount.","see":"The three teams’ amounts add up to that figure, to the cent. Each team’s caption lists its hours by permit, like “… · 1 h Milton evenings + 1 h Halton Hills evenings”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Choose \u003cstrong>One rate for all\u003c/strong>.","see":"The hint becomes “$… over … h of full fields: $… a full field, an hour, wherever the team played”."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Compare the top figure and the teams’ amounts with what you wrote down.","see":"The figure after “The time at the permits’ prices” is \u003cstrong>the same\u003c/strong>, and the teams’ amounts still add up to it. Only the split between teams can differ: a team with more Halton Hills hours pays less than before, one with more Milton hours pays more.","check":true},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Read the note under the team table.","see":"It compares the bill with “\u003cstrong>the permits’\u003c/strong>” cost (plural, never “the permit’s”): “Matches the permits’ $…”, or “$… less than the permits’ $…”, or “$… more than the permits’ $…”. The teams’ total and that difference add up to the permits’ figure.","check":true},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Choose \u003cstrong>Monthly\u003c/strong> under Payments and type a first payment date a week from today.","see":"A line under Payments reads “N payments: the first due …, then every month.”"},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Read the statement at the foot of the window.","see":"It says each team’s share arrives on its Money › Club tab “with its \u003cstrong>N payments\u003c/strong>”: the same N as the line under Payments. Close the window without saving the bill.","check":true}]},{"id":"6","title":"Needs attention: Outside the permit, then “Take … off” (desk)","steps":[{"who":"Owner · navj-club-spw-owner@dev.local","do":"On the schedule press \u003cstrong>Milton evenings ›\u003c/strong> in the line under its name.","see":"The Milton evenings permit’s window opens."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press the pencil \u003cstrong>Edit Milton evenings\u003c/strong>.","see":"The permit’s form, with its one date off (Tue, Jan 26, “Town event”) and an \u003cstrong>Add a date off\u003c/strong> button."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>Add a date off\u003c/strong>, choose Thu, Feb 4, 2027 and type the reason \u003ccode>Walk closure\u003c/code>.","see":"A saving pill appears and settles. There is no Save button on a stored permit."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Go back to the schedule’s page and reload it.","see":"A \u003cstrong>Needs attention\u003c/strong> row above the grid with the chip “\u003cstrong>Outside the permit\u003c/strong>”: “Thu, Feb 4 is a date off on \u003cstrong>Milton evenings\u003c/strong>”, saying the schedule has practices (or slots) that day at Kinsmen Park."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press the row’s button \u003cstrong>Take Feb 4 off Kinsmen Park\u003c/strong>.","see":"The Settings window opens and goes by itself to “Step 2 of 2 · drafts for Two permits walk”. Nothing is saved yet."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>Keep this draft\u003c/strong>.","see":"A question “\u003cstrong>Regenerate Two permits walk?\u003c/strong>”: “The draft you picked replaces every slot nobody placed by hand.” and “It hasn’t been sent, so no team is told.”"},{"who":"Owner · navj-club-spw-owner@dev.local","do":"Press \u003cstrong>Regenerate\u003c/strong>.","see":"The page says “Two permits walk regenerated” and the Needs attention row is gone."},{"who":"Owner · navj-club-spw-owner@dev.local","do":"In the Grid go to the week of Mon, Feb 1, 2027 and look at Thursday, Feb 4.","see":"\u003cstrong>Kinsmen Park\u003c/strong> has no slot. \u003cstrong>Prospect Park\u003c/strong> still has slots (the permit’s date off names only Milton’s park)."}]}],"CALLS":[]};
+  var KEY = D.KEY, TITLE = D.TITLE, PARTS = D.PARTS, CALLS = D.CALLS;
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    if (p.intro) body.appendChild(el('p', 'sub', p.intro));
+    p.steps.forEach(function (s, i) {
+      var id = p.id + '.' + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', (s.check ? 'Check: ' : 'You should see: ') + s.see));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  var callHost = document.getElementById('calls');
+  CALLS.forEach(function (c) {
+    var box = el('div', 'callbox'); box.style.cssText = 'display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px';
+    box.appendChild(el('strong', null, c.id + ' · ' + c.title));
+    box.appendChild(el('span', 'see', c.text));
+    c.options.forEach(function (o, i) {
+      var key = c.id + '.' + i;
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!state.calls[key]; cb.style.cssText = 'width:18px;height:18px;margin-top:3px;accent-color:var(--accent);flex:none';
+      cb.addEventListener('change', function () { state.calls[key] = cb.checked; save(); });
+      var row = el('label', 'step'); row.style.borderTop = '0'; row.style.paddingBlock = '4px';
+      row.appendChild(cb); row.appendChild(el('span', 'txt', o)); box.appendChild(row);
+    });
+    var ta = document.createElement('textarea'); ta.id = 'callnote-' + c.id; ta.placeholder = 'Why (optional)'; ta.value = state.callNotes[c.id] || '';
+    ta.addEventListener('input', function () { state.callNotes[c.id] = ta.value; save(); });
+    box.appendChild(ta); callHost.appendChild(box);
+  });
+  if (!CALLS.length) document.getElementById('callsCard').hidden = true;
+
+  function doneSteps(partId) { return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; }); }
+  var totalSteps = boxes.length;
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length, v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    if (CALLS.length) {
+      lines.push('Calls (not counted):');
+      CALLS.forEach(function (c) {
+        var chosen = c.options.filter(function (o, i) { return state.calls[c.id + '.' + i]; });
+        lines.push('  ' + c.id + ' ' + c.title + ': ' + (chosen.length ? chosen.join(' / ') : 'not answered') + (state.callNotes[c.id] ? ' — ' + state.callNotes[c.id] : ''));
+      });
+    }
+    return lines.join('\n');
+  }
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    CALLS.forEach(function (c) { document.getElementById('callnote-' + c.id).value = ''; });
+    Array.prototype.forEach.call(document.querySelectorAll('#calls input[type=checkbox]'), function (b) { b.checked = false; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

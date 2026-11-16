@@ -552,6 +552,14 @@ families; a permit edit should never rewrite it without a person pressing Send t
 >      days and the hours", which tells the reader to do what they already did. Proposed: "This permit is the only time on
 >      the schedule, so it can’t be taken off. Add other time first." (The screen already hides the door; this is for a
 >      direct call and the 400 body only.)
+> - ⚖ **A fourth call, found while building the walk fixture (2026-11-16, read from the send preview on a copy; nothing
+>   changed): taking a permit off credits each team at the billed rate, and the credit empties the LATEST payments first and
+>   then shrinks one already due** (Fall practices, Milton off: Dec 7 and Jan 4 go to $0, the Nov 2 payment goes from
+>   $540.00 to $360.00 for 14U AA). Nothing was paid on the copy, so nothing is owed back there; with a payment already made
+>   the credit would have to come back as money. Options on the walk: as built / a credit never touches a payment already
+>   due, the rest is owed back / read how a paid payment is handled first. Also found: **a locked slot is not protected from
+>   its permit being taken off** (the question lists those practices; lock protects from Regenerate only) — say if that
+>   should be said in the question.
 > - Counts differ by design in two questions: the regenerate question's "N practices before today" counts slots that have a
 >   team; the take-off question counts teams per slot (a shared slot is 1 and 2).
 > - Known, low, left alone: a stale tab from before mig 487 (no permit on its rows) splits a sent schedule's rows without
@@ -579,7 +587,14 @@ families; a permit edit should never rewrite it without a person pressing Send t
       "Time already billed keeps its price". The three open calls have proposed words in Phase 5 above.
 - [ ] `/docs` (Schedules and Permits guides: several permits, Add time, Find the time, dates off by venue, Price the
       time; F3's one-permit-per-issuer advice) — **still owed at the Close**; it quotes the settled words above.
-- [ ] `check:layout --changed` on the touched screens; `check:spelling`.
+- [x] Owner walks drafted 2026-11-16 as two checkable Artifacts (**§531** walk 1 "Build a schedule on two permits", 49
+      steps, https://claude.ai/artifact/5X2uwZNQjJ4zakWyFARtKD; **§532** walk 2 "Change it after it's sent", 33 steps + 4
+      calls outside the counter, https://claude.ai/artifact/FEBfBUNHr8DdGaUbzNqMgS) on two DEV copies built by
+      `.probe/several-permits-walk/seed.mjs` (teardown: `.probe/several-permits-walk/teardown.mjs`, first run still to
+      be read back). **Owner walk owed.** One more words fix on the way: the regenerate question's "The 1 slot you locked
+      stay…" now reads "stays where it is" (`b4ce14bea`).
+- [ ] `check:layout --changed` on the touched screens (the owner's call at the walk); `check:spelling` (clean at
+      `f0f36651d`).
 - [ ] `/simplify` and `/review` per session; an owner walk (checkable Artifact) on a two-town fixture with a four-month
       season.
 - [ ] `/demos` at its next cycle (demos follow the product; they don't gate it).
