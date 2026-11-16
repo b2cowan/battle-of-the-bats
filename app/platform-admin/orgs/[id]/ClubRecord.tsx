@@ -28,7 +28,7 @@ import type { OurMoneyRecord } from '@/lib/console-money';
 import { PAYING_CLUB_PLAN_REFUSAL } from '@/lib/stripe-billing-state';
 import MoneyTab, { lookCount, useClubMoney, useNeedsLook } from './MoneyTab';
 import { reviewOf, useBillingAddress } from './BillingAddressPanel';
-import RecordWindow from '../../RecordWindow';
+import RecordWindow, { type RecordWindowAnswer } from '../../RecordWindow';
 import { BlockLine, ChangeEndWindow, EndNowWindow, GiveWindow, freeTimeSubject, freeTimeTitle } from './FreeTimeWindows';
 import { PortalBlockLine, PortalChangeEndWindow, PortalEndNowWindow, PortalGiveWindow } from './PortalFreeTimeWindows';
 import type { PortalRecordFreeTime } from '@/lib/portal-free-time-tab';
@@ -1376,24 +1376,32 @@ function FinishEndingWindow({ orgId, orgName, ending, tournamentCount: count, on
 function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onClose }: {
   orgId: string; orgName: string; orgSlug: string; hasStripeCustomer: boolean; onDone: () => void; onClose: () => void;
 }) {
-  const [pre, setPre] = useState<{ hasActiveSubscription?: boolean; memberCount?: number; tournamentCount?: number; coachesLinkCount?: number; retentionRecordCount?: number; paymentsInFlight?: string | null } | null>(null);
+  const [pre, setPre] = useState<{ hasActiveSubscription?: boolean; memberCount?: number; tournamentCount?: number; coachesLinkCount?: number; retentionRecordCount?: number; paymentsInFlight?: string | null; fileCount?: number | null; demoRefusal?: string | null } | null>(null);
   const [typed, setTyped] = useState('');
   const [notify, setNotify] = useState(false);
   const [dropStripe, setDropStripe] = useState(false);
+  const [answer, setAnswer] = useState<RecordWindowAnswer | null>(null);
   useEffect(() => {
     void sendJson(`/api/platform-admin/orgs/${orgId}/delete`, 'GET').then(({ ok, data }) => { if (ok) setPre(data); });
   }, [orgId]);
   // 12d-2 (owner ruling 2): money in flight (an open dispute, a clearing debit, an unpaid or failed Stripe fee) waits too.
   const inFlight = pre?.paymentsInFlight ?? null;
-  const blocked = !!pre?.hasActiveSubscription || !!inFlight;
+  // The public demo clubs are never deleted from the console (owner 2026-11-15).
+  const demo = pre?.demoRefusal ?? null;
+  const blocked = !!demo || !!pre?.hasActiveSubscription || !!inFlight;
+  // Board Ready Stage 0a: the files the club uploaded go with it, and the window counts them (null = could not be counted).
+  const files = !pre || pre.fileCount === 0 ? '' : typeof pre.fileCount === 'number'
+    ? `, ${pre.fileCount} stored file${pre.fileCount === 1 ? '' : 's'}`
+    : ', its stored files (they could not be counted just now)';
   return (
     <RecordWindow
       title={`Delete ${orgName}`}
-      sentence={pre?.hasActiveSubscription
+      sentence={demo ? <>{demo}</> : pre?.hasActiveSubscription
         ? <>{orgName} still has a running subscription. <strong>Cancel the subscription first</strong>, then delete the club.</>
         : inFlight ? <>{inFlight}</>
         : <>{orgName} and everything in it — {pre?.memberCount ?? 0} member{pre?.memberCount === 1 ? '' : 's'}, {pre?.tournamentCount ?? 0} tournament{pre?.tournamentCount === 1 ? '' : 's'}
-          {pre?.coachesLinkCount ? `, ${pre.coachesLinkCount} coaches portal link${pre.coachesLinkCount === 1 ? '' : 's'}` : ''} — are removed. <strong>This cannot be taken back.</strong></>}
+          {pre?.coachesLinkCount ? `, ${pre.coachesLinkCount} coaches portal link${pre.coachesLinkCount === 1 ? '' : 's'}` : ''}{files} — are removed. <strong>This cannot be taken back.</strong></>}
+      answer={answer}
       footNote="Invoice history stays in Stripe."
       cancelLabel="Keep it"
       confirmLabel="Delete the club"
@@ -1402,10 +1410,11 @@ function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onCl
       onConfirm={async reason => {
         const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/delete`, 'DELETE', { reason, confirmSlug: typed.trim().toLowerCase(), notifyOwner: notify, deleteStripeCustomer: dropStripe });
         if (!ok) return errorOf(data, 'The club could not be deleted.');
-        onDone();
+        setAnswer(deletedAnswer(orgName, data));
         return null;
       }}
-      onClose={onClose}
+      // Once the club is gone there is no record to go back to: closing the answer goes to the club list.
+      onClose={answer ? onDone : onClose}
     >
       <label className={kit.fieldGroup}>
         <span className={kit.label}>Type <code className={kit.code}>{orgSlug}</code> to confirm<span className={kit.req} aria-hidden>*</span></span>
@@ -1423,4 +1432,55 @@ function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onCl
       )}
     </RecordWindow>
   );
+}
+
+/** What each store holds, in staff words, for a removal that failed. */
+const FILE_STORE_WORDS: Record<string, string> = {
+  'org-logos': 'logos',
+  'org-assets': 'the public site’s banner',
+  resources: 'rules files',
+  'org-permit-documents': 'permit documents',
+  'rep-team-documents': 'player and team documents',
+  'tournament-registration-files': 'registration files',
+};
+
+/**
+ * The delete's answer (Board Ready Stage 0a): the club is gone, how many stored files went with it, and plainly which could
+ * not be removed (the change log holds them under the club's id, for a retry). The Stripe customer's failure shows here too:
+ * before, the window closed on success and that warning was never seen.
+ */
+function deletedAnswer(orgName: string, data: unknown): RecordWindowAnswer {
+  const d = (data ?? {}) as { filesRemoved?: number; filesFailed?: { bucket: string; keyOrPrefix: string; message: string }[]; stripeCustomerWarning?: string | null };
+  const removed = typeof d.filesRemoved === 'number' ? d.filesRemoved : 0;
+  const failed = Array.isArray(d.filesFailed) ? d.filesFailed : [];
+  return {
+    title: `${orgName} is deleted`,
+    body: (
+      <>
+        <div className={styles.sentence}>
+          {orgName} is deleted{removed > 0 ? <>, and {removed} stored file{removed === 1 ? ' was' : 's were'} removed with it</> : ''}.
+        </div>
+        {failed.length > 0 && (
+          <div className={`${kit.callout} ${kit.calloutBad}`} role="alert">
+            <span>
+              <strong>Some stored files could not be removed.</strong> The change log names this club’s id with them, so
+              they can be removed later:
+              <ul>
+                {failed.slice(0, 10).map((f, i) => (
+                  <li key={i}>{FILE_STORE_WORDS[f.bucket] ?? 'stored files'}: {f.message}</li>
+                ))}
+                {failed.length > 10 && <li>and {failed.length - 10} more</li>}
+              </ul>
+            </span>
+          </div>
+        )}
+        {d.stripeCustomerWarning && (
+          <div className={`${kit.callout} ${kit.calloutBad}`} role="alert">
+            <span><strong>The Stripe customer was not deleted.</strong> {d.stripeCustomerWarning}</span>
+          </div>
+        )}
+      </>
+    ),
+    closeLabel: 'Back to clubs',
+  };
 }

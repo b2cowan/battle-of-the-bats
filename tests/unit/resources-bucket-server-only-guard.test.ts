@@ -93,9 +93,13 @@ describe('the route checks the club and the capability on both verbs', () => {
   it('delete refuses a key outside the club folder and keeps a file another row still names', () => {
     assert.match(del, /mayRemoveKey\(\s*key,\s*ctx\.org\.id,\s*row\.created_at/);
     assert.match(del, /keyStillNamed\(\s*key,\s*ctx\.org\.id\s*\)/);
-    assert.match(del, /count:\s*'exact'/);
-    assert.match(del, /\.like\('url'/);
-    assert.match(del, /if \(error \|\| count\) return true/, 'a lookup that fails keeps the file');
+    assert.match(code, /import \{ keyStillNamed \} from '@\/lib\/resource-file-server'/);
+    // The lookup's single home since the club delete shares it (Board Ready Stage 0a).
+    const named = readCode('lib/resource-file-server.ts');
+    assert.match(named, /count:\s*'exact'/);
+    assert.match(named, /\.like\('url'/);
+    assert.match(named, /if \(error\) return 'unread';\s*if \(count\) return 'named';/);
+    assert.match(named, /return \(await keyNamedState\(key, orgId\)\) !== 'free';/, 'a lookup that fails keeps the file');
   });
 
   it('upload files under the club and event, with a random name', () => {

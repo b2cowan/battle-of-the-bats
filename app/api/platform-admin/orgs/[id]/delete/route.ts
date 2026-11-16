@@ -12,6 +12,17 @@ import { stopClubDomain } from '@/lib/club-domain-service';
 import { clubDomainDeps } from '@/lib/club-domain-deps';
 import { inFlightRefusal, moneyInFlight, readOutstanding } from '@/lib/online-payment-endings';
 import { closeClubPayPages } from '@/lib/online-pay-pages';
+import { countOrgFiles, removeOrgFiles, type OrgFilesResult } from '@/lib/org-storage-purge';
+import { legacyKeysNoRowNames, readOrgLegacyResourceKeys } from '@/lib/resource-file-server';
+import { isDemoOrgSlug } from '@/lib/demo-org';
+
+const DEMO_DELETE_REFUSAL = 'This is a public demo club. It can’t be deleted from the console.';
+
+/**
+ * The delete now removes the club's stored files after its rows (Board Ready Stage 0a): six stores walked and emptied, which
+ * for a large club takes longer than an ordinary request. The same ceiling as the console's other long jobs.
+ */
+export const maxDuration = 300;
 
 type OrgRow = {
   id: string;
@@ -22,6 +33,28 @@ type OrgRow = {
   stripe_subscription_id: string | null;
   stripe_customer_id: string | null;
 };
+
+/**
+ * The delete's file half, after the club's rows are gone. Never throws: a lookup or a purge that breaks comes back as a failure
+ * naming the club's folder, which is enough to retry from (the folder is the id).
+ */
+async function purgeOrgFiles(orgId: string, legacyResourceKeys: string[]): Promise<OrgFilesResult & { legacyKept: number }> {
+  try {
+    const { free, kept, unread } = await legacyKeysNoRowNames(legacyResourceKeys, orgId);
+    const result = await removeOrgFiles({ storage: supabaseAdmin.storage, orgId, legacyResourceKeys: free });
+    // A legacy key whose "still named?" lookup failed is kept, and reported: its name is on the `delete_organization` row.
+    if (unread.length) {
+      result.failed.push({ bucket: 'resources', keyOrPrefix: `${unread.length} legacy rules file${unread.length === 1 ? '' : 's'}`,
+        message: `${unread.length} not checked against other clubs’ rows (the lookup failed), so kept` });
+    }
+    return { ...result, legacyKept: kept.length };
+  } catch (e) {
+    return {
+      removed: 0, byBucket: {}, legacyKept: 0,
+      failed: [{ bucket: '*', keyOrPrefix: `${orgId}/`, message: e instanceof Error ? e.message : String(e) }],
+    };
+  }
+}
 
 export const GET = withObservability(async (_req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
@@ -66,6 +99,12 @@ export const GET = withObservability(async (_req: NextRequest,
   // 12d-2 (owner ruling 2): the window names the money in flight before Delete is pressed, as the refusal will.
   const outstanding = await readOutstanding(id).catch(() => null);
   const inFlight = outstanding ? moneyInFlight(outstanding) : [];
+  // Board Ready Stage 0a: the window names the stored files the delete removes. A count that can't be read says so (null);
+  // it never blocks the window, and the delete itself still removes what it finds.
+  const legacyKeys = await readOrgLegacyResourceKeys(id).catch(() => null);
+  const files = await countOrgFiles({ storage: supabaseAdmin.storage, orgId: id, legacyResourceKeys: legacyKeys ?? [] })
+    .catch((): OrgFilesResult => ({ removed: 0, byBucket: {}, failed: [{ bucket: '*', keyOrPrefix: `${id}/`, message: 'count failed' }] }));
+  const filesCounted = !!legacyKeys && files.failed.length === 0;
 
   return NextResponse.json({
     orgName: org.name,
@@ -80,6 +119,9 @@ export const GET = withObservability(async (_req: NextRequest,
     coachesLinkCount: coachesLinkCount.count ?? 0,
     retentionRecordCount: retentionCount.count ?? 0,
     paymentsInFlight: !outstanding ? 'Couldn’t read this club’s online payments. Try again.' : inFlight.length ? inFlightRefusal(inFlight) : null,
+    demoRefusal: isDemoOrgSlug(org.slug) ? DEMO_DELETE_REFUSAL : null,
+    fileCount: filesCounted ? files.removed : null,
+    filesByBucket: filesCounted ? files.byBucket : null,
   });
 }, { route: '/api/platform-admin/orgs/[id]/delete' });
 
@@ -116,6 +158,12 @@ export const DELETE = withObservability(async (req: NextRequest,
     return NextResponse.json({ error: 'Organization not found.' }, { status: 404 });
   }
 
+  // The public demo clubs are the shop window (owner 2026-11-15, Board Ready Stage 0a): never deleted from the console. The
+  // proxy's demo write guard reads the slug in the URL, and this route carries the slug in the body, so it refuses here.
+  if (isDemoOrgSlug(org.slug)) {
+    return NextResponse.json({ error: DEMO_DELETE_REFUSAL }, { status: 403 });
+  }
+
   if (confirmSlug !== org.slug) {
     return NextResponse.json(
       { error: `Slug confirmation does not match. Expected "${org.slug}".` },
@@ -144,6 +192,13 @@ export const DELETE = withObservability(async (req: NextRequest,
   const inFlight = moneyInFlight(outstanding);
   if (inFlight.length) {
     return NextResponse.json({ error: inFlightRefusal(inFlight), inFlight }, { status: 409 });
+  }
+  // Board Ready Stage 0a: the rules screen's files from before the folders carry no club id; only the club's rows name them,
+  // and the cascade takes the rows. Read them now, before anything is changed (pay pages included). A read that fails refuses
+  // the delete: going on would leave those files with nothing left naming them.
+  const legacyResourceKeys = await readOrgLegacyResourceKeys(id).catch(() => null);
+  if (!legacyResourceKeys) {
+    return NextResponse.json({ error: 'Couldn’t read this club’s rules files. Nothing was deleted. Try again.' }, { status: 503 });
   }
   // We disconnect before deleting (words §4.4): the club's open pay pages close first, so no family pays a club that is
   // gone. The Stripe account itself stays the club's, with any money in it (ask 4).
@@ -191,6 +246,10 @@ export const DELETE = withObservability(async (req: NextRequest,
       subscriptionStatus: org.subscription_status,
       stripeCustomerId: org.stripe_customer_id,
       notifyOwner,
+      // Board Ready Stage 0a: the old flat rules files carry no club id and their rows go with the cascade, so their names
+      // are written here, BEFORE the change: a request cut off mid-purge still leaves a way to find them (the folders are
+      // found from orgId alone). Public rules-file names, never a family's document.
+      legacyResourceKeys,
     },
     { reason },
   );
@@ -256,5 +315,40 @@ export const DELETE = withObservability(async (req: NextRequest,
     }
   }
 
-  return NextResponse.json({ ok: true, deletedSlug: org.slug, stripeCustomerWarning });
+  // Board Ready Stage 0a (privacy policy §9): the files the club uploaded go too. AFTER the row is gone, so a database delete
+  // that fails never leaves a club still there with its files already removed; the id still names its folders. Every file is
+  // under `{orgId}/`, and the legacy flat rules keys read above go too, unless another club's row still names one. A file that
+  // could not be removed does not undo the delete: the answer says so, and a `_files_failed` row names what is left, for a retry.
+  const files = await purgeOrgFiles(id, legacyResourceKeys);
+  if (files.failed.length) {
+    await writePlatformAuditLog(
+      auth.user.email!,
+      null,
+      'delete_organization_files_failed',
+      'org_id',
+      id,
+      { orgId: id, orgSlug: org.slug, removed: files.removed, byBucket: files.byBucket, legacyKept: files.legacyKept,
+        failed: files.failed.slice(0, 50), failedCount: files.failed.length },
+      { reason },
+    );
+    await captureError(new Error(`org delete: ${files.failed.length} stored-file removal(s) failed for org ${id}`));
+  } else {
+    await writePlatformAuditLog(
+      auth.user.email!,
+      null,
+      'delete_organization_files',
+      'org_id',
+      id,
+      { orgId: id, orgSlug: org.slug, removed: files.removed, byBucket: files.byBucket, legacyKept: files.legacyKept },
+      { reason },
+    );
+  }
+
+  return NextResponse.json({
+    ok: true,
+    deletedSlug: org.slug,
+    stripeCustomerWarning,
+    filesRemoved: files.removed,
+    filesFailed: files.failed.map(f => ({ bucket: f.bucket, keyOrPrefix: f.keyOrPrefix, message: f.message })),
+  });
 }, { route: '/api/platform-admin/orgs/[id]/delete' });

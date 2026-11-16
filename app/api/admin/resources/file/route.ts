@@ -8,12 +8,11 @@ import {
   RESOURCE_ALLOWED_MIME,
   RESOURCE_BUCKET as BUCKET,
   RESOURCE_MAX_BYTES,
-  isClubKey,
-  keySpellings,
   mayRemoveKey,
   resourceKeyFromUrl,
   resourceObjectPath,
 } from '@/lib/resource-file-storage';
+import { keyStillNamed } from '@/lib/resource-file-server';
 
 /**
  * THE RULES SCREEN'S FILES (Board Ready W2 fix B, sweep 3 finding 2). The `resources` bucket used to let ANY signed-in account
@@ -102,31 +101,3 @@ export const DELETE = withObservability(async (req: Request) => {
   }
   return NextResponse.json({ ok: true, fileKept });
 }, { route: '/api/admin/resources/file' });
-
-/** LIKE-escape so a file name's `_` and `%` match themselves (an over-match would only KEEP a file, never remove one). */
-const likeEscape = (s: string) => s.replace(/[\\%_]/g, c => `\\${c}`);
-
-/**
- * Does any OTHER row still name this stored file? A copied event reuses its source's address, so the file stays while one
- * does. For a key in this club's folder only this club's events count (a stranger's row that merely repeats a public address
- * cannot keep a club's file alive); a flat key belongs to nobody, so any row anywhere counts (a typed link can imitate one).
- * Both spellings of the address are tried, and a lookup that fails answers "yes": an orphan is harmless, a dead link is not.
- */
-async function keyStillNamed(key: string, orgId: string): Promise<boolean> {
-  let tournamentIds: string[] | null = null;
-  if (isClubKey(key, orgId)) {
-    const { data, error } = await supabaseAdmin.from('tournaments').select('id').eq('org_id', orgId);
-    if (error) return true;
-    tournamentIds = (data ?? []).map(t => t.id as string);
-  }
-  for (const spelling of keySpellings(key)) {
-    let query = supabaseAdmin
-      .from('resources')
-      .select('id', { count: 'exact', head: true })
-      .like('url', `%/${BUCKET}/${likeEscape(spelling)}%`);
-    if (tournamentIds) query = query.in('tournament_id', tournamentIds);
-    const { count, error } = await query;
-    if (error || count) return true;
-  }
-  return false;
-}

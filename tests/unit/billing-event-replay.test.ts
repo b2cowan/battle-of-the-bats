@@ -659,12 +659,14 @@ describe('S2 · the screen’s words and the shared window', () => {
     assert.equal(REPLAY_WINDOW.messages, 'No message is sent to the customer by a replay');
     assert.doesNotMatch(JSON.stringify(REPLAY_WINDOW), /about 30|Set aside again|Send again/);
   });
-  it('the window’s answer state is the replay’s alone: every other caller of RecordWindow passes none', () => {
+  it('the window’s answer state is opt-in: only the replay and the club delete pass one', () => {
     // Each `<RecordWindow …` opening tag, to the line that closes it (`/>` or `>` on its own line, the house JSX layout).
+    // The club delete (Board Ready Stage 0a) is the second: the club is gone, so its answer says how many stored files went
+    // with it, and any that could not be removed, before the window closes to the club list.
     const tags = (code: string) => [...code.matchAll(/<RecordWindow\b([\s\S]*?)\n\s*\/?>/g)].map(m => m[1]);
     const withAnswer = [...filesUnder('app', '.tsx'), ...filesUnder('components', '.tsx')]
       .filter(f => tags(readCode(f)).some(t => /\banswer=\{/.test(t)));
-    assert.deepEqual(withAnswer, ['app/platform-admin/watching-stripe/ReplayDoors.tsx']);
+    assert.deepEqual(withAnswer.sort(), ['app/platform-admin/orgs/[id]/ClubRecord.tsx', 'app/platform-admin/watching-stripe/ReplayDoors.tsx']);
     // A refusal, before or after the click, is the answer state (no Why, nothing to discard), never a hidden-Why question.
     assert.doesNotMatch(readCode('app/platform-admin/watching-stripe/ReplayDoors.tsx'), /confirmHidden|askWhy=\{false\}/);
   });
