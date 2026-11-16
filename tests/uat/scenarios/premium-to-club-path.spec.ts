@@ -90,7 +90,8 @@ async function openClubWindow(page: Page) {
   const body = await (await answered).json().catch(() => ({})) as { code?: string; checkout?: { trialDays: number; amountDueToday: number } };
   test.skip(body.code !== 'no_live_subscription' || !body.checkout,
     `the window could not quote Club here (${body.code ?? 'no answer'}): a Stripe test key and the Club price row are needed`);
-  await expect(dialog.getByText(W.clubUpgrade.dueToday)).toBeVisible();
+  // The window opens on step 1 (the club and its address); the charge, "Due today", is on step 2 (owner 2026-11-16).
+  await expect(dialog.getByText(W.clubUpgrade.stepLine(1))).toBeVisible();
   return { dialog, quote: body.checkout! };
 }
 
@@ -118,16 +119,28 @@ test.describe('A · the Club row and the window, read-only', () => {
       // The address the portal already has (read by path: the base URL is the server's environment, not this runner's).
       await expect(dialog.getByText(new RegExp(`/${FREE_TIME_PORTAL}$`))).toBeVisible();
       await expect(dialog.getByText(W.clubUpgrade.addressHelp)).toBeVisible();
-      await expect(dialog.getByText(W.clubUpgrade.checkoutFoot)).toBeVisible();
-      await expect(dialog.getByText(/\bcard\b/i), 'payment method, never card (ruling T1)').toHaveCount(0);
+      // Start your club is two steps (owner 2026-11-16): step 1 holds the club and its address, with no paid button; with no name
+      // Next is ABSENT and the foot says what is missing.
+      await expect(dialog.getByText(W.clubUpgrade.stepLine(1))).toBeVisible();
+      await expect(dialog.getByRole('button', { name: W.clubUpgrade.next })).toHaveCount(0);
+      await expect(dialog.getByRole('button', { name: W.move.checkout })).toHaveCount(0);
+      await expect(dialog.getByText(W.clubUpgrade.nameEmpty)).toBeVisible();
 
-      // An empty name is refused in the field, before anything is sent.
-      await dialog.getByRole('button', { name: W.move.checkout }).click();
-      await expect(dialog.locator('#upgrade-name-help')).toHaveText(W.clubUpgrade.nameEmpty);
-      await expect(dialog.locator('#upgrade-name-help')).toHaveAttribute('role', 'alert');
-      await expect(name).toBeFocused();
+      // With a name, Next opens step 2: the read-back, the charge and the terms, and the paid button.
+      await name.fill('Falcons Club');
+      await dialog.getByRole('button', { name: W.clubUpgrade.next }).click();
+      await expect(dialog.getByText(W.clubUpgrade.stepLine(2))).toBeVisible();
+      await expect(dialog.getByText(W.clubUpgrade.dueToday)).toBeVisible();
+      await expect(dialog.getByText(W.clubUpgrade.checkoutFoot)).toBeVisible();
+      await expect(dialog.getByRole('button', { name: W.move.checkout })).toBeVisible();
+      await expect(dialog.getByText(/\bcard\b/i), 'payment method, never card (ruling T1)').toHaveCount(0);
       await page.waitForTimeout(1000);
-      expect(checkouts, 'an empty club name sends no checkout and no move').toEqual([]);
+      expect(checkouts, 'looking at the charge sends no checkout and no move').toEqual([]);
+
+      // Back returns to step 1 with everything kept; clearing the name leaves nothing typed.
+      await dialog.getByRole('button', { name: W.clubUpgrade.back }).click();
+      await expect(name).toHaveValue('Falcons Club');
+      await name.fill('');
 
       // Leaving changes nothing: the window closes (nothing typed, so it does not ask) and the portal is still the portal.
       await dialog.getByRole('button', { name: W.move.cancel }).click();
@@ -375,6 +388,7 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
       await expect(clubBlock.locator('#upgrade-billing-city')).toHaveValue(HOME_ADDRESS.city);
       await expect(clubBlock.locator('#upgrade-billing-postal')).toHaveValue(HOME_ADDRESS.postal_code);
       await dialog.getByLabel(new RegExp(`^${W.clubUpgrade.name}`)).fill(clubName);
+      await dialog.getByRole('button', { name: W.clubUpgrade.next }).click();
 
       // Every full document load the page makes from here on. The checkout leaves this document on its own, so a marker set
       // here proves nothing about the LAST hop; a document load whose address is the club's Admin does.

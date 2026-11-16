@@ -33,7 +33,7 @@ import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import styles from './Billing.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import FreeTimeBand from './FreeTimeBand';
-import { BILLING_ADDRESS_FORM_WORDS, BILLING_ADDRESS_REQUIRED, BILLING_LOCATION_WORDS, BILLING_REGION_CLOSED, checkBillingLocation } from '@/lib/billing-location';
+import { BILLING_ADDRESS_FORM_WORDS, BILLING_ADDRESS_REQUIRED, BILLING_LOCATION_WORDS, BILLING_REGION_CLOSED, checkBillingLocation, formatBillingAddress, type BillingLocationField } from '@/lib/billing-location';
 import BillingAddressFields, { useAddressDraft } from './BillingAddressFields';
 import { isAddressRefusal, useBillingAddressGate } from './BillingAddressDialog';
 // A held account (GST/HST Stage 2 Ask 1) shows the server's sentence with no "Check again": asking again cannot change it.
@@ -82,6 +82,8 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   const [nameError, setNameError] = useState<string | null>(null);
   const [cycle, setCycle] = useState<'monthly' | 'annual'>(org.subscriptionPeriod ?? 'monthly');
   const [revision, setRevision] = useState(0);
+  /** Start your club (`inPlace`) is two steps (owner 2026-11-16): the club and its address, then the charge and terms. */
+  const [step, setStep] = useState<'club' | 'review'>('club');
   const nameInput = useRef<HTMLInputElement>(null);
   // GST/HST Stage 1. The club's billing address: in place, a block under the club name filled in from the coach's own home
   // address (drawing tab 5) and saved to the CLUB's row with the purchase; otherwise the Billing address window, opened when
@@ -150,8 +152,12 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
       if (stale) return;
       // A new quote replaces any "the charge changed" sentence: it was about the figures this one replaces.
       if (r.ok) { setState({ status: 'preview', preview: d as Preview, key }); setChanged(null); }
-      else setState({ status: 'refused', refusal: { ...d, code: d.code ?? 'error', error: d.error ?? W.clubUpgrade.previewFailed }, key });
-    }).catch(() => { if (!stale) setState({ status: 'refused', refusal: { code: 'network', error: W.clubUpgrade.previewFailed }, key }); });
+      else {
+        setState({ status: 'refused', refusal: { ...d, code: d.code ?? 'error', error: d.error ?? W.clubUpgrade.previewFailed }, key });
+        // A refusal with no charge to show puts the window back on step 1, so a later answer never jumps it to step 2 unasked.
+        if (!d.checkout) setStep('club');
+      }
+    }).catch(() => { if (!stale) { setState({ status: 'refused', refusal: { code: 'network', error: W.clubUpgrade.previewFailed }, key }); setStep('club'); } });
     return () => { stale = true; };
   }, [org.slug, toPlan, inPlace, cycle, revision, quoteFor, quoteReady]);
   /** A Check again keeps the window as it is when it has figures to show (only the figures load again). */
@@ -159,6 +165,8 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     if (state.status !== 'preview' && !(state.status === 'refused' && state.refusal.checkout)) setState({ status: 'loading' });
     setFailure(null); setChanged(null); setRevision(n => n + 1);
   }
+  /** Back (and the read-back's Change, and the phone's ←): to step 1 with everything kept; a sentence about step 2's charge goes. */
+  function goClub() { setStep('club'); setFailure(null); setChanged(null); }
   function checkedName(): string | null {
     if (!inPlace) return '';
     const parsed = parseClubName(clubName);
@@ -182,7 +190,8 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   async function confirm() {
     if (state.status !== 'preview' || busyRef.current || figures !== 'ready') return;
     const club = checkedClub();
-    if (club === null) return;
+    // The fields that show a refusal live on step 1: a check that fails here takes the buyer back to them (/review 2026-11-16).
+    if (club === null) { setStep('club'); return; }
     busyRef.current = true; setWorking(true); setFailure(null); setChanged(null);
     let accepted = false;
     try {
@@ -198,7 +207,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
       if (!live.current) return;
       if (!res.ok) {
         if (isAddressRefusal(d)) { address.refused(() => void confirm()); return; }
-        if (inPlace && d.code === 'invalid_billing_address' && d.errors) { clubAddress.setErrors(d.errors); return; }
+        if (inPlace && d.code === 'invalid_billing_address' && d.errors) { clubAddress.setErrors(d.errors); setStep('club'); return; }
         // Nothing was charged: the new figures replace the old ones, and the owner presses again (tab 3, frame 4).
         if (d.code === 'charge_changed' && d.preview) { setState({ status: 'preview', preview: d.preview as Preview, key: requestKey }); setChanged(d.error ?? null); return; }
         // The club's address didn't reach Stripe: nothing changed, the figures stay, and pressing again retries (tab 3, frame 6).
@@ -206,6 +215,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
         // The move already landed (a lost answer, then a second try): the workspace is the club now, so finish on the setup screen.
         if (inPlace && d.code === 'not_a_move') { leaving.current = true; window.location.replace(inPlaceReturnPath(org.slug)); return; }
         // A band move keeps its figures on screen and says what went wrong; the Premium window has a door for each refusal.
+        if (inPlace && !d.checkout) setStep('club');
         if (inPlace) setState({ status: 'refused', refusal: { ...d, code: d.code ?? 'error', error: d.error ?? W.errors.move }, key: requestKey });
         else setFailure(d.error ?? W.errors.move);
         return;
@@ -261,7 +271,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   async function checkout() {
     if (busyRef.current || (inPlace && !quote) || figures !== 'ready') return;
     const club = checkedClub();
-    if (club === null) return;
+    if (club === null) { setStep('club'); return; }
     busyRef.current = true; setWorking(true); setFailure(null);
     try {
       const res = await terms.send('/api/billing/create-checkout', {
@@ -275,7 +285,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
       if (!live.current) return;
       if (!res.ok) {
         if (isAddressRefusal(d)) { address.refused(() => void checkout()); return; }
-        if (inPlace && d.code === 'invalid_billing_address' && d.errors) { clubAddress.setErrors(d.errors); return; }
+        if (inPlace && d.code === 'invalid_billing_address' && d.errors) { clubAddress.setErrors(d.errors); setStep('club'); return; }
         if (d.code === 'subscription_exists') { retry(); return; }
         if (d.code === 'cannot_become_club') setState({ status: 'refused', refusal: d, key: requestKey });
         else setFailure(refusalText({ ...d, code: d.code ?? 'error', error: d.error ?? W.errors.checkout }));
@@ -296,14 +306,33 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     ? <DialogCancel className={`btn btn-outline ${styles.desktopCancel}`}>{W.move.cancel}</DialogCancel>
     : <button type="button" className="btn btn-outline" onClick={onClose} disabled={working}>{W.move.cancel}</button>;
   const preview = state.status === 'preview' ? state.preview : null;
+  // The two steps of Start your club. The form (and so the step bar) shows whenever there is a charge to show, or the Québec
+  // refusal that keeps the address on screen; step 2 needs a charge (or checkout quote) of its own, so a refusal arriving
+  // while on it puts the window back on step 1's body.
+  const formShown = inPlace && (preview !== null || !!quote || refusal?.code === BILLING_REGION_CLOSED);
+  const reviewing = inPlace && step === 'review' && (preview !== null || !!quote);
+  const clubStep = formShown && !reviewing;
+  // Next is ABSENT, not greyed, until the name and address pass their checks; the foot says what is missing in the shipped
+  // words (the name's, then the first line of the address that the check refuses). A held address (US closed, Québec) never
+  // gets a Next: the foot says why (drawing asks 3 and 4).
+  const parsedName = parseClubName(clubName);
+  const regionHold = refusal?.code === BILLING_REGION_CLOSED;
+  const ADDRESS_ORDER: BillingLocationField[] = ['country', 'regionCode', 'line1', 'line2', 'city', 'postalCode', 'usDeclared'];
+  const addressMissing = typed && !typed.ok && !clubHold ? ADDRESS_ORDER.map(field => typed.errors[field]).find(Boolean) ?? null : null;
+  const stepMissing = !parsedName.ok ? (parsedName.code === 'club_name_required' ? W.clubUpgrade.nameEmpty : W.clubUpgrade.nameLong(CLUB_NAME_MAX)) : addressMissing;
+  const canNext = clubStep && !clubHold && !regionHold && stepMissing === null;
   const canCheckout = refusal?.code === 'no_live_subscription' && (!inPlace || !!quote);
   // No address on file for a band move: the Billing address window, which comes back here with the figures once saved.
   const retryable = figures === 'failed' || (refusal && (refusal.code === 'no_live_subscription' ? inPlace && !quote : !['band_too_small', 'plan_not_on_sale', 'payment_failing', 'cannot_become_club', 'subscription_ending', BILLING_REVIEW_HOLD, BILLING_ADDRESS_REQUIRED, BILLING_REGION_CLOSED].includes(refusal.code)));
   const payWaits = working || figures !== 'ready';
+  // Start your club's step 1 holds no paid button: its foot is Cancel and Next, and step 2's is Back and the paid button (as
+  // New tournament does: Cancel on the first step, Back after). Every other window keeps the one foot it always had.
+  const paidHere = !inPlace || reviewing;
   const footer = <>
-    {cancel}
-    {preview && !clubHold && figures !== 'failed' && <button type="button" className="btn btn-lime" onClick={() => void confirm()} disabled={payWaits} data-autofocus="">{working ? inPlace ? W.clubUpgrade.starting : W.move.moving : inPlace ? W.clubUpgrade.start : W.change.move(target.label)}</button>}
-    {canCheckout && !clubHold && figures !== 'failed' && <button type="button" className="btn btn-lime" onClick={() => void checkout()} disabled={payWaits}>{working ? W.plan.openingCheckout : W.move.checkout}</button>}
+    {reviewing ? <button type="button" className="btn btn-outline" onClick={goClub} disabled={working}>{W.clubUpgrade.back}</button> : cancel}
+    {canNext && <button type="button" className="btn btn-lime" onClick={() => setStep('review')} data-autofocus="">{W.clubUpgrade.next}</button>}
+    {paidHere && preview && !clubHold && figures !== 'failed' && <button type="button" className="btn btn-lime" onClick={() => void confirm()} disabled={payWaits} data-autofocus="">{working ? inPlace ? W.clubUpgrade.starting : W.move.moving : inPlace ? W.clubUpgrade.start : W.change.move(target.label)}</button>}
+    {paidHere && canCheckout && !clubHold && figures !== 'failed' && <button type="button" className="btn btn-lime" onClick={() => void checkout()} disabled={payWaits}>{working ? W.plan.openingCheckout : W.move.checkout}</button>}
     {refusal?.code === BILLING_ADDRESS_REQUIRED && <button type="button" className="btn btn-lime" onClick={() => address.refused(retry)}>{W.move.addressDoor}</button>}
     {refusal?.code === 'band_too_small' && <Link href={teamsHref} className="btn btn-lime">{W.move.repTeams}</Link>}
     {refusal?.code === 'plan_not_on_sale' && <a href={CONTACT_HREF} className="btn btn-lime">{W.change.contact}</a>}
@@ -312,7 +341,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
       : <a className="btn btn-lime" href={`${returnTo}?keep_plan=1`}>{W.cancel.keepDoor(org.planId)}</a>)}
     {refusal?.code === 'payment_failing' && <button type="button" className="btn btn-lime" onClick={() => void paymentPortal()} disabled={working}>{W.plan.payment}</button>}
     {refusal?.code === 'cannot_become_club' && <a href={CONTACT_HREF} className="btn btn-lime">{W.change.contact}</a>}
-    {retryable && <button type="button" className="btn btn-lime" onClick={retry}>{W.clubUpgrade.checkAgain}</button>}
+    {retryable && !clubStep && <button type="button" className="btn btn-lime" onClick={retry}>{W.clubUpgrade.checkAgain}</button>}
   </>;
   const foot = !inPlace ? undefined : state.status === 'finished' ? W.clubUpgrade.finishing : figures === 'failed' ? undefined : quote ? W.clubUpgrade.checkoutFoot : preview?.direction === 'up' ? W.clubUpgrade.payingFoot : undefined;
   // While the charge loads again the footer says so too: on a phone the figures are below the fold and the footer never is.
@@ -328,10 +357,15 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
   if (address.open) return address.dialog;
   // §20 (3) ends the body whenever a paid button is in the foot (drawing tab 5, pins 2 and 3): the move (up, or down at renewal)
   // or the checkout. The trial sentence first only where this window already says a trial applies.
-  const paidButton = !clubHold && figures !== 'failed' && (preview !== null || canCheckout);
+  const paidButton = paidHere && !clubHold && figures !== 'failed' && (preview !== null || canCheckout);
   return <><KitDialog kind={inPlace ? 'form' : 'question'} title={inPlace ? W.clubUpgrade.title : W.move.title(target.label)}
     onClose={onClose} busy={working} dirty={inPlace && (clubName.trim().length > 0 || clubAddress.dirty) && state.status !== 'finished'} openOn={inPlace ? 'panel' : 'field'}
-    footerStart={clubHold && (preview || quote) ? <span className={addressStyles.amber}>{BILLING_LOCATION_WORDS.usClosed}</span>
+    levelKey={formShown ? (reviewing ? 'review' : 'club') : undefined} back={reviewing ? { onBack: goClub } : undefined}
+    identity={formShown ? W.clubUpgrade.stepLine(reviewing ? 2 : 1) : undefined} progress={formShown ? { at: reviewing ? 2 : 1, of: 2 } : undefined}
+    footerStart={clubStep ? (clubHold ? <span className={addressStyles.amber}>{BILLING_LOCATION_WORDS.usClosed}</span>
+        : regionHold ? <span className={addressStyles.amber}>{refusal?.error}</span>
+        : <span>{stepMissing ?? W.clubUpgrade.nextFoot}</span>)
+      : clubHold && (preview || quote) ? <span className={addressStyles.amber}>{BILLING_LOCATION_WORDS.usClosed}</span>
       : figures === 'loading' && inPlace ? <LoadingState inline label={W.move.loadingCharge} />
       : foot ? <span>{foot}</span> : undefined}
     footer={state.status === 'finished' ? null : footer}>
@@ -340,7 +374,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     {state.status === 'loading' && <LoadingState inline label={W.move.loading} />}
     {state.status === 'finished' && <PageNotice notice={{ tone: 'good', text: W.clubUpgrade.finishing }} />}
     {/* The Québec refusal keeps the address fields: the typed province is what was refused, and changing it asks again. */}
-    {inPlace && (preview || quote || refusal?.code === BILLING_REGION_CLOSED) && <>
+    {clubStep && <>
       {quote && <FreeTimeBand band={{ tone: 'amber', eyebrow: W.page.sections.plan, title: W.clubUpgrade.freeTitle(), text: W.clubUpgrade.freeWarning(freeThrough) }} />}
       {quote && <p>{quote.trialDays > 0 ? W.clubUpgrade.trial(quote.trialDays) : W.clubUpgrade.noTrial}</p>}
       <p>{W.clubUpgrade.owner}</p>
@@ -359,11 +393,23 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
           subject={{ kind: 'club', name: clubName.trim() || org.name }} disabled={working} />
       </div>
       <div className={styles.upgradeAddress}><span>{W.clubUpgrade.address}</span><span>{W.clubUpgrade.addressValue(org.slug)}</span><p className={styles.hint}>{W.clubUpgrade.addressHelp}</p></div>
+    </>}
+    {/* Step 2 opens with what step 1 collected, so the tax row has its reason beside it; "Change" goes back (owner ask 2). Monthly /
+        Yearly sits over the figures it changes (ask 5). */}
+    {reviewing && <>
+      <div className={styles.readBack}>
+        <dl>
+          <dt>{W.clubUpgrade.readClub}</dt><dd>{parsedName.ok ? parsedName.name : ''}</dd>
+          <dt>{W.clubUpgrade.readAddress}</dt><dd>{typed?.ok ? formatBillingAddress(typed.value) : ''}</dd>
+          <dt>{W.clubUpgrade.address}</dt><dd>{W.clubUpgrade.addressValue(org.slug)}</dd>
+        </dl>
+        <button type="button" className={styles.readBackChange} onClick={goClub} disabled={working} aria-label={W.clubUpgrade.changeLabel}>{W.clubUpgrade.change}</button>
+      </div>
       {quote && quote.trialDays > 0 && <div className={styles.cycle} role="group" aria-label={W.clubUpgrade.billing}>
         {(['monthly', 'annual'] as const).map(value => <button key={value} type="button" aria-pressed={cycle === value} disabled={working} onClick={() => { if (value !== cycle) setCycle(value); }}>{value === 'monthly' ? W.clubUpgrade.monthly : W.clubUpgrade.yearly}</button>)}
       </div>}
     </>}
-    {preview?.direction === 'up' && <>
+    {paidHere && preview?.direction === 'up' && <>
       {!inPlace && <p>{W.move.up(org.name, target.label, target.teamLimit)}</p>}
       {figures === 'ready' ? <dl className={styles.figures}>
         {inPlace && preview.lines?.map((line, index) => <div key={index} className={line.kind === 'credit' ? styles.credit : undefined}><dt>{line.kind === 'charge' ? W.clubUpgrade.charge(PLAN_CONFIG[line.plan].label) : W.clubUpgrade.credit(PLAN_CONFIG[line.plan].label)}</dt><dd>{line.kind === 'credit' ? '−' : ''}{amount(line.amount, preview.currency)}</dd></div>)}
@@ -375,7 +421,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
       </dl> : figureNote}
       <p className={styles.hint}>{inPlace ? W.clubUpgrade.billingKept(preview.billingCycle) : W.move.previewHelp}</p>
     </>}
-    {quote && (figures === 'ready' ? <dl className={styles.figures}>
+    {paidHere && quote && (figures === 'ready' ? <dl className={styles.figures}>
       {/* No trial: the first period before tax, the tax, then Due today, for the typed club address (tab 4). */}
       {taxLines.length > 0 && beforeTax !== null && <div><dt>{W.clubUpgrade.firstPeriod(PLAN_CONFIG[quote.toPlan].label, quote.billingCycle)}</dt><dd>{amount(beforeTax, quote.currency)}</dd></div>}
       {taxRows(quote.currency)}
@@ -387,7 +433,8 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     {refusal?.code === 'no_live_subscription' && !quote && !inPlace && <p>{W.move.noSubscription(org.name, target.label, org.subscriptionPeriod === 'annual' ? target.annualPrice : target.monthlyPrice, org.subscriptionPeriod ?? 'monthly')}</p>}
     {refusal?.code === 'no_live_subscription' && !quote && inPlace && <PageNotice notice={{ tone: 'bad', text: W.clubUpgrade.previewFailed }} />}
     {refusal?.code === 'plan_not_on_sale' && <p>{W.move.notOnSale(target.label, org.name)}</p>}
-    {refusal && !['band_too_small', 'no_live_subscription', 'plan_not_on_sale'].includes(refusal.code) && <PageNotice notice={{ tone: 'bad', text: refusalText(refusal) }} />}
+    {/* The Québec refusal's sentence is in the foot on step 1 (it says why Next is absent); the body does not say it twice. */}
+    {refusal && !(clubStep && regionHold) && !['band_too_small', 'no_live_subscription', 'plan_not_on_sale'].includes(refusal.code) && <PageNotice notice={{ tone: 'bad', text: refusalText(refusal) }} />}
     {paidButton && <PlanTermsLine trial={quote && quote.trialDays > 0 ? 'known' : undefined} />}
   </KitDialog>{terms.window}</>;
 }

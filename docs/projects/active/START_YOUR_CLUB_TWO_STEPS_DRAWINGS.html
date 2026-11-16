@@ -1,0 +1,338 @@
+<title>Start Your Club Steps</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky tab row, View switch, then one section at a time; framed product specimens on a cool document ground so they read as specimens. */
+:root{
+  --bg:#e8ecf1; --panel:#f6f8fa; --fg:#1c2530; --muted:#566272; --line:#cdd5de; --accent:#2c5b8a; --accent-ink:#fff;
+  --tag-new:#1f6b3a; --tag-new-bg:#d8efe0; --tag-rest:#8a5a00; --tag-rest-bg:#fbebc4; --tag-same:#566272; --tag-same-bg:#e1e6ec;
+  --pin:#c2410c; --pin-ink:#fff;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --panel:#1b222b; --fg:#e6ebf1; --muted:#9aa7b6; --line:#2e3946; --accent:#7db0e0; --accent-ink:#0f1720;
+  --tag-new:#8fd6a8; --tag-new-bg:#173525; --tag-rest:#f2c566; --tag-rest-bg:#3a2d0c; --tag-same:#9aa7b6; --tag-same-bg:#232d38;
+  --pin:#fb923c; --pin-ink:#1b1209; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --panel:#1b222b; --fg:#e6ebf1; --muted:#9aa7b6; --line:#2e3946; --accent:#7db0e0; --accent-ink:#0f1720;
+  --tag-new:#8fd6a8; --tag-new-bg:#173525; --tag-rest:#f2c566; --tag-rest-bg:#3a2d0c; --tag-same:#9aa7b6; --tag-same-bg:#232d38;
+  --pin:#fb923c; --pin-ink:#1b1209; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1160px;margin:0 auto}
+header.top{padding:20px 0 10px}
+header.top h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em;text-wrap:balance}
+header.top p{margin:0;color:var(--muted);max-width:75ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:4px;overflow-x:auto;padding:8px 0 0}
+.tabs button{font:inherit;font-weight:600;font-size:14px;color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tabs button:focus-visible,.pin:focus-visible,.seg button:focus-visible,.ask label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.viewrow{display:flex;align-items:center;gap:10px;padding:12px 0 4px}
+.viewrow[hidden]{display:none}
+.viewrow span{font-size:13px;font-weight:600;color:var(--muted)}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{font:inherit;font-size:13px;font-weight:600;border:0;background:none;color:#445;padding:5px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#e9efe0;color:#2f3b12}
+.panel{display:none;padding-top:12px}.panel.on{display:block}
+.lead{max-width:80ch;margin:6px 0 14px;color:var(--fg)}
+.lead b{font-weight:650}
+.row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin:0 0 18px}
+.spec{min-width:0}
+.cap{display:flex;gap:8px;align-items:center;margin:0 0 6px;font-size:13px;font-weight:650}
+.cap small{font-weight:500;color:var(--muted)}
+.tag{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px}
+.tag.new{background:var(--tag-new-bg);color:var(--tag-new)}.tag.rest{background:var(--tag-rest-bg);color:var(--tag-rest)}.tag.same{background:var(--tag-same-bg);color:var(--tag-same)}
+.scroller{max-width:100%;overflow-x:auto;padding:14px 14px 14px 0}
+.notes{flex:1 1 280px;min-width:0;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+.notes h3{margin:0 0 6px;font-size:14px}
+.notes ul{margin:0;padding-left:18px}.notes li{margin:0 0 5px}
+.notes p{margin:0 0 6px}
+.pin{position:absolute;z-index:3;width:22px;height:22px;border-radius:50%;border:2px solid var(--bg);background:var(--pin);color:var(--pin-ink);font:700 12px/1 var(--font);cursor:pointer;display:grid;place-items:center;padding:0}
+.pin:hover{transform:scale(1.12)}
+.flash{animation:flash 1.6s ease-out}
+@keyframes flash{0%{background:var(--tag-rest-bg)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none;outline:2px solid var(--pin)}.pin:hover{transform:none}}
+
+/* ---- Product specimen: FieldLogicHQ coaches portal, light. Tokens read off the shipped window. ---- */
+.dlg{--p-card:#fff;--p-line:#e4dfd3;--p-field:#d3cdbf;--p-ink:#3a3327;--p-muted:#6e6657;--p-olive:#4b5a1c;--p-lime:#d9f89c;--p-amber:#8a5a00;--p-amber-bg:#fdf3d8;
+  position:relative;width:520px;background:var(--p-card);color:var(--p-ink);border-radius:12px;border:1px solid var(--p-line);box-shadow:0 8px 28px rgba(30,30,10,.18);font-size:13px;line-height:1.45;display:flex;flex-direction:column;font-family:var(--font)}
+.dh{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 20px 10px}
+.dh h4{margin:0;font-size:17px;font-weight:650}
+.dh .x{font-size:20px;color:var(--p-muted);line-height:1}
+.prog{display:flex;gap:4px;padding:0 20px 6px}
+.prog span{flex:1;height:4px;border-radius:2px;background:#e7e2d6}.prog span.done{background:var(--p-olive)}
+.stepline{margin:2px 0 0;font-size:12.5px;color:var(--p-muted)}
+.db{padding:8px 20px 14px;position:relative;overflow:hidden}
+.db p{margin:0 0 10px}
+.db.cut{height:380px}
+.db.cut::after{content:"";position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(transparent,var(--p-card))}
+.thumb{position:absolute;right:4px;top:16px;width:5px;height:96px;border-radius:3px;background:#c9c3b4}
+.df{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 20px 14px;border-top:1px solid var(--p-line)}
+.fs{color:var(--p-muted);font-size:12.5px;flex:1 1 auto;min-width:0}
+.fs.amber{color:var(--p-amber);font-weight:600}
+.fb{display:flex;gap:8px;flex:0 0 auto}
+.b{font:inherit;font-weight:650;font-size:13px;padding:8px 16px;border-radius:7px;border:1px solid var(--p-field);background:#fff;color:var(--p-ink);white-space:nowrap}
+.b.lime{background:var(--p-lime);border-color:var(--p-lime);color:#2b3410}
+.b.dis{opacity:.45}
+.fld{margin:0 0 11px}
+.fld label{display:block;font-weight:650;margin-bottom:4px}.fld label i{font-style:normal;color:var(--p-muted)}
+.inp{border:1px solid var(--p-field);border-radius:7px;padding:8px 10px;background:#fff;min-height:35px}
+.inp.sel{position:relative}.inp.sel::after{content:"⌄";position:absolute;right:10px;top:4px;color:var(--p-muted)}
+.hint{margin:4px 0 0!important;color:var(--p-muted);font-size:12px}
+.sub{font-weight:650;margin:2px 0 8px!important}
+.web{margin:0 0 10px;display:grid;gap:2px}.web span:first-child{color:var(--p-muted)}
+.figs{margin:8px 0;border:1px solid var(--p-line);border-radius:8px;overflow:hidden}
+.figs div{display:flex;justify-content:space-between;gap:12px;padding:8px 11px;border-bottom:1px solid var(--p-line)}
+.figs div:last-child{border-bottom:0}
+.figs dt{color:var(--p-muted)}.figs dd{margin:0;font-weight:650;text-align:right}.figs dd small{display:block;font-weight:400;color:var(--p-muted)}
+.figs .credit dd{color:var(--p-olive)}.figs .due dt{color:var(--p-ink);font-weight:600}.figs .due dd{font-size:14px}
+.terms{color:var(--p-muted);font-size:12.5px;margin-top:10px!important}.terms u{color:var(--p-ink);font-weight:650}
+.readback{border:1px solid var(--p-line);border-radius:8px;background:#faf8f2;padding:9px 12px;margin:0 0 10px;display:grid;grid-template-columns:auto 1fr auto;column-gap:12px;row-gap:3px;position:relative}
+.readback .k{color:var(--p-muted)}.readback .v{min-width:0;overflow-wrap:anywhere}
+.readback a{color:var(--p-olive);font-weight:650;text-decoration:underline;grid-row:1;grid-column:3}
+.band{border:1px solid #e6cf8f;background:var(--p-amber-bg);border-radius:8px;padding:9px 12px;margin:0 0 10px;color:#5b3d00}.band b{display:block}
+.callout{border-left:3px solid #d29a1b;background:var(--p-amber-bg);padding:8px 11px;border-radius:0 6px 6px 0;margin:0 0 10px;color:#5b3d00}
+.cycle{display:inline-flex;border:1px solid var(--p-field);border-radius:999px;padding:3px;margin:0 0 8px;background:#fff}
+.cycle span{padding:4px 14px;border-radius:999px;font-weight:650;color:var(--p-muted)}.cycle span.on{background:#e9efe0;color:#2f3b12}
+.fold{position:relative;margin:6px -20px 10px;border-top:2px dashed var(--pin);}
+.fold span{position:absolute;right:20px;top:-1px;transform:translateY(-100%);font-size:11px;font-weight:700;color:var(--pin);background:var(--p-card);padding:0 4px}
+.slice{border-radius:0;box-shadow:none;border-style:dashed}
+.slice .dh h4,.slice .dh .x{display:none}.slice .dh{padding-bottom:6px}.slice .dh>div:only-child{padding-top:0}
+.slice .db{padding-top:12px}
+.same{transition:opacity .15s}
+body.diff .same{opacity:.28}
+.phone{width:390px;max-width:100%}
+.phone .dlg{width:100%;height:690px;border-radius:16px}
+.phone .db{flex:1 1 auto}
+.phone .df{flex-wrap:wrap}
+.phone .db::after{content:"";position:absolute;left:0;right:0;bottom:0;height:28px;background:linear-gradient(transparent,var(--p-card))}
+.phone .fs{flex:1 1 100%}
+.phone .fb{flex:1 1 100%;justify-content:flex-end}.phone .b{min-height:44px;display:inline-flex;align-items:center}
+
+/* Asks */
+.asks{display:grid;gap:12px;max-width:860px}
+.ask{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+.ask h3{margin:0 0 2px;font-size:15px;display:flex;gap:8px;align-items:center}
+.ask h3 .n{width:22px;height:22px;border-radius:50%;background:var(--pin);color:var(--pin-ink);display:grid;place-items:center;font-size:12px;flex:none}
+.ask p{margin:0 0 8px;color:var(--muted)}
+.ask label{display:flex;gap:9px;align-items:flex-start;padding:6px 8px;border-radius:6px;cursor:pointer}
+.ask label:hover{background:var(--bg)}
+.ask input{margin-top:3px;accent-color:var(--accent)}
+.ask .rec{font-size:11px;font-weight:700;color:var(--tag-new);background:var(--tag-new-bg);padding:1px 6px;border-radius:4px;margin-left:6px}
+.copyrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0 8px}
+.copyrow button{font:inherit;font-weight:650;background:var(--accent);color:var(--accent-ink);border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+#out{width:100%;max-width:860px;min-height:130px;font:13px/1.45 ui-monospace,Consolas,monospace;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:10px}
+.truesize{font-size:13px;color:var(--muted);margin:2px 0 10px}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <h1>Start your club: charge and terms on their own step</h1>
+  <p>Today the charge and terms sit below the fold of one long window. This page draws the window split in two, name and address first, then a review of what you are agreeing to. Drawn from the shipped window and its real wording; the figures are the ones from your screenshot.</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" data-tab="split">1 · The split</button>
+  <button role="tab" data-tab="changes">2 · Changing your mind</button>
+  <button role="tab" data-tab="phone">3 · On a phone</button>
+  <button role="tab" data-tab="other">4 · Other starting points</button>
+  <button role="tab" data-tab="asks">5 · Asks</button>
+</nav>
+
+<div class="viewrow" id="viewrow">
+  <span>View</span>
+  <div class="seg" role="group" aria-label="View">
+    <button type="button" id="v-all" aria-pressed="true">Everything</button>
+    <button type="button" id="v-diff" aria-pressed="false">Show only what differs</button>
+  </div>
+</div>
+
+<!-- 1 -->
+<section class="panel" id="p-split">
+  <p class="lead"><b>Before:</b> the window is one scroll. The pinned button, <b>Start my club</b>, is on screen from the first moment, so it can be pressed before the charge or the terms have ever been seen. <b>After:</b> step 1 collects the club and address, step 2 is the review, and the charge and terms are all you see when you can press Start.</p>
+
+  <div class="row">
+    <div class="spec"><p class="cap"><span class="tag rest">Before</span> Laptop height: what you see <small>(your first screenshot)</small></p><div class="scroller" id="s-before-a"></div></div>
+    <div class="spec"><p class="cap"><span class="tag rest">Before</span> Scrolled to the bottom <small>(your second screenshot)</small></p><div class="scroller" id="s-before-b"></div></div>
+  </div>
+  <div class="row">
+    <div class="spec"><p class="cap"><span class="tag new">New</span> Step 1 of 2: your club</p><div class="scroller" id="s-s1"></div></div>
+    <div class="spec"><p class="cap"><span class="tag new">New</span> Step 2 of 2: review the charge</p><div class="scroller" id="s-s2"></div></div>
+  </div>
+  <div class="row">
+    <div class="notes"><h3>What changes</h3><ul>
+      <li>A step bar under the title, the same one New tournament uses.</li>
+      <li>Step 1 keeps every field exactly as it is. The only new thing is <b>Next</b>, the word the New tournament window uses.</li>
+      <li>Step 2 starts with a read-back of what you typed (club, address, billing address) so the tax row has its reason beside it.</li>
+      <li>The charge, the renewal line and the terms follow. Step 2 fits a laptop window without a scroll. Step 1 can still scroll on a short laptop, but it holds only fields; nothing below its fold is something to agree to.</li>
+    </ul></div>
+    <div class="notes"><h3>What stays</h3><ul>
+      <li>All wording, all figures, and the rule that the charge is Stripe’s own for the address typed.</li>
+      <li>One press of <b>Start my club</b> still charges once. If a new address changes the charge, the window shows the new figures and asks for a second press.</li>
+      <li>Closing after typing still asks before it discards.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="panel" id="p-changes">
+  <p class="lead">What happens when you change your mind, or the address changes the answer. Only the parts that change are drawn.</p>
+  <div class="row">
+    <div class="spec"><p class="cap"><span class="tag new">New</span> Back keeps everything <small>(step 2, after pressing Back → step 1 again)</small></p><div class="scroller" id="s-back"></div></div>
+    <div class="spec"><p class="cap"><span class="tag rest">Moved</span> New province → Next → the charge loads</p><div class="scroller" id="s-load"></div></div>
+  </div>
+  <div class="row">
+    <div class="spec"><p class="cap"><span class="tag rest">Moved</span> The address changed the charge: second press</p><div class="scroller" id="s-changed"></div></div>
+    <div class="spec"><p class="cap"><span class="tag same">Same wording</span> The address can’t be sold to: stays on step 1</p><div class="scroller" id="s-closed"></div></div>
+  </div>
+  <div class="row">
+    <div class="spec"><p class="cap"><span class="tag new">New</span> Step 1 before the form is complete: Next is absent, the foot says why</p><div class="scroller" id="s-missing"></div></div>
+    <div class="spec"><p class="cap"><span class="tag same">Same wording</span> The charge could not be checked</p><div class="scroller" id="s-fail"></div></div>
+  </div>
+  <div class="row">
+    <div class="notes"><h3>Rules this follows</h3><ul>
+      <li><b>Back never wipes.</b> Name, address and the loaded charge are kept; only a changed country or province asks for a new charge.</li>
+      <li><b>A refusal stays where its cause is.</b> An address Stripe can’t sell to is fixed on step 1, so Next is absent and the foot says why. Step 2 is never reached with a charge that can’t be made.</li>
+      <li><b>Figures not ready:</b> Next still works; step 2 says “Loading the charge…” and Start waits.</li>
+      <li>Wording is as shipped (the charge-changed sentence is the server’s own); only the step line and the Next button are new.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="panel" id="p-phone">
+  <p class="truesize">Drawn at 390 px wide in a fixed frame; it does not reflow with your window. <b>Open this page on your phone</b> to judge the real thing.</p>
+  <div class="row">
+    <div class="spec"><p class="cap"><span class="tag new">New</span> Step 1 of 2</p><div class="scroller phone" id="s-ph1"></div></div>
+    <div class="spec"><p class="cap"><span class="tag new">New</span> Step 2 of 2</p><div class="scroller phone" id="s-ph2"></div></div>
+    <div class="notes"><h3>On a phone</h3><ul>
+      <li>Step 2 puts <b>Due today</b>, the renewal line and the button in one view. Today they are three scrolls apart.</li>
+      <li>The foot is the kit’s own: the sentence on its line, the two buttons right-aligned under it at the 44 px tap floor. Nothing is stretched.</li>
+      <li>The note “Charged to the payment method you already use.” sits above the buttons.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="panel" id="p-other">
+  <p class="lead">The same window is opened from three places. Only the Start your club window changes.</p>
+  <div class="row">
+    <div class="spec"><p class="cap"><span class="tag new">New</span> Start with free time left, step 1 <small>(top of the window only)</small></p><div class="scroller" id="s-q1"></div></div>
+    <div class="spec"><p class="cap"><span class="tag new">New</span> …and step 2: the Monthly / Yearly choice sits over the figures</p><div class="scroller" id="s-q2"></div></div>
+  </div>
+  <div class="row">
+    <div class="notes"><h3>Why Monthly / Yearly moves to step 2</h3><p>Choosing yearly changes the figures, so it belongs on the step that shows them, and it stops being a control between the address and the charge. Pins <b>5</b> asks whether you agree.</p></div>
+    <div class="notes"><h3>Plain plan moves <span class="tag same">Unchanged</span></h3><p>Moving between rep-team bands (Tournament Plus, League and so on) has no form in front of its figures, so it stays one window with no step bar.</p></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="panel" id="p-asks">
+  <p class="lead">Six calls. The recommended answer is ticked on each; change any and copy your answers back to me.</p>
+  <div class="asks" id="asks"></div>
+  <div class="copyrow"><button type="button" id="copy">Copy my answers</button><span id="copied" role="status"></span></div>
+  <textarea id="out" readonly aria-label="Your answers" placeholder="Your answers appear here"></textarea>
+</section>
+</div>
+
+<script>
+const pin=(n,style)=>`<button class="pin" data-ask="${n}" style="${style}" aria-label="Ask ${n}">${n}</button>`;
+const b=(t,k)=>`<span class="b ${k||""}">${t}</span>`;
+const fld=(label,val,o)=>{o=o||{};return `<div class="fld${o.same===false?"":" same"}"><label>${label}${o.req?" <i>*</i>":""}</label><div class="inp${o.sel?" sel":""}">${val||"&nbsp;"}</div>${o.hint?`<p class="hint">${o.hint}</p>`:""}</div>`};
+const prog=(at,of)=>`<div class="prog">${Array.from({length:of},(_,i)=>`<span class="${i<at?"done":""}"></span>`).join("")}</div>`;
+const dlg=o=>`<div class="dlg ${o.cls||""}">
+  <div class="dh"><div><h4>Start your club</h4>${o.stepline?`<p class="stepline">${o.stepline}</p>`:""}</div><span class="x">×</span></div>
+  ${o.prog?prog(o.prog[0],o.prog[1]):""}
+  <div class="db ${o.cut?"cut":""}">${o.body}${o.scroll?`<div class="thumb"></div>`:""}</div>
+  ${o.nofoot?"":`<div class="df"><span class="fs ${o.fsc||""}">${o.fs||""}</span><div class="fb">${(o.btns||[]).join("")}</div></div>`}
+  ${o.pins||""}
+</div>`;
+
+const OWNER=`<p class="same">You’ll become the owner of your club. Your team stays exactly where it is, and you stay its head coach.</p>`;
+const NAME=fld("Club name","Walk64 Tigers Baseball Association",{req:1,hint:"Shown across your club’s pages. You can change it later."});
+const ADDR=`<div class="same"><p class="sub">Club billing address</p>
+  ${fld("Country","Canada",{sel:1,req:1,same:false})}${fld("Province or territory","Ontario",{sel:1,req:1,same:false})}
+  ${fld("Street address","1 Main St",{req:1,hint:"A PO Box on its own can’t be used.",same:false})}${fld("Apartment, suite or unit","",{same:false})}
+  ${fld("City","London",{req:1,same:false})}${fld("Postal code","M5H 2N2",{req:1,same:false})}</div>`;
+const WEB=`<div class="web same"><span>Web address</span><span>http://localhost:3000/walk64-tigers-coaches-portal</span><p class="hint">Stays as it is, so links you have already sent keep working. You can change it any time in club settings.</p></div>`;
+const figs=`<dl class="figs">
+  <div><dt>Club for the rest of this period</dt><dd>$218.84 CAD</dd></div>
+  <div class="credit"><dt>Credit for unused Premium Coaches Portal time</dt><dd>−$28.98 CAD</dd></div>
+  <div><dt>HST 13%</dt><dd>$24.68 CAD</dd></div>
+  <div class="due"><dt>Due today</dt><dd>$214.54 CAD</dd></div>
+  <div><dt>From December 16, 2026</dt><dd>$219.00 CAD / month<small>plus applicable taxes</small></dd></div></dl>`;
+const KEPT=`<p class="hint same">Same subscription and payment method. Your monthly billing stays monthly. No second trial.</p>`;
+const TERMS=`<p class="terms same">Your plan renews automatically until you cancel. You can cancel any time from your billing page, and your plan runs to the end of the period you’ve paid for. By continuing, you agree to the <u>Terms of Service</u>.</p>`;
+const NOTE="Charged to the payment method you already use.";
+const READ=(pins)=>`<div class="readback">
+  <span class="k">Club</span><span class="v">Walk64 Tigers Baseball Association</span><a>Change</a>
+  <span class="k">Billing address</span><span class="v">1 Main St, London, Ontario M5H 2N2</span><span></span>
+  <span class="k">Web address</span><span class="v">…/walk64-tigers-coaches-portal</span><span></span>${pins||""}</div>`;
+const set=(id,h)=>{document.getElementById(id).innerHTML=h};
+
+// 1 · the split
+set("s-before-a",dlg({cut:1,scroll:1,body:OWNER+NAME+ADDR,fs:NOTE,btns:[b("Cancel"),b("Start my club","lime")],
+  pins:pin(4,"right:-11px;bottom:12px")}));
+set("s-before-b",dlg({body:`<div class="web same"><span>Web address</span><span>http://localhost:3000/walk64-tigers-coaches-portal</span></div>`+figs+KEPT+TERMS,fs:NOTE,btns:[b("Cancel"),b("Start my club","lime")]}));
+set("s-s1",dlg({prog:[1,2],stepline:"Step 1 of 2 · Your club",body:OWNER+NAME+ADDR+WEB,fs:"The charge and terms come next.",btns:[b("Cancel"),b("Next","lime")],
+  pins:pin(1,"right:-11px;top:54px")+pin(4,"right:-11px;bottom:12px")}));
+set("s-s2",dlg({prog:[2,2],stepline:"Step 2 of 2 · Review the charge",body:READ(pin(2,"right:-7px;top:-7px"))+figs+KEPT+TERMS,fs:NOTE,btns:[b("Back"),b("Start my club","lime")],
+  pins:pin(3,"right:-11px;bottom:12px")}));
+
+// 2 · changing your mind
+set("s-back",dlg({cls:"slice",prog:[1,2],stepline:"Step 1 of 2 · Your club",body:NAME+`<div class="same">${fld("Province or territory","Ontario",{sel:1,req:1,same:false})}${fld("City","London",{req:1,same:false})}${fld("Postal code","M5H 2N2",{req:1,same:false})}</div>`,fs:"The charge and terms come next.",btns:[b("Cancel"),b("Next","lime")]}));
+set("s-load",dlg({cls:"slice",prog:[2,2],stepline:"Step 2 of 2 · Review the charge",body:READ().replace("Ontario","Alberta").replace("London","Calgary")+`<p class="hint">Loading the charge…</p>`,fs:"Loading the charge…",btns:[b("Back"),b("Start my club","lime dis")]}));
+set("s-changed",dlg({cls:"slice",prog:[2,2],stepline:"Step 2 of 2 · Review the charge",body:`<p class="callout">The charge changed to $199.35. Nothing was charged. Check the figures, then press Start my club again.</p>`+figs.replace("$24.68","$9.49").replace("HST 13%","GST 5%").replace("$214.54","$199.35"),fs:NOTE,btns:[b("Back"),b("Start my club","lime")]}));
+set("s-closed",dlg({cls:"slice",prog:[1,2],stepline:"Step 1 of 2 · Your club",body:`<div class="same">${fld("Country","United States",{sel:1,req:1,same:false,hint:"We’re not selling in the United States yet."})}</div>`,fs:"We’re not selling in the United States yet.",fsc:"amber",btns:[b("Cancel")],
+  pins:pin(4,"right:-11px;bottom:12px")}));
+set("s-missing",dlg({cls:"slice",prog:[1,2],stepline:"Step 1 of 2 · Your club",body:fld("Club name","",{req:1,hint:"Shown across your club’s pages. You can change it later."})+`<div class="same">${fld("Postal code","M5H 2N2",{req:1,same:false})}</div>`,fs:"Enter your club’s name.",btns:[b("Cancel")],pins:pin(4,"right:-11px;bottom:12px")}));
+set("s-fail",dlg({cls:"slice",prog:[2,2],stepline:"Step 2 of 2 · Review the charge",body:READ()+`<p style="color:#9a2a1a;font-weight:600">We couldn’t check the charge. Please check again.</p>`,fs:"",btns:[b("Back"),b("Check again","lime")]}));
+
+// 3 · phone
+set("s-ph1",dlg({prog:[1,2],stepline:"Step 1 of 2 · Your club",body:OWNER+NAME+ADDR.slice(0,ADDR.indexOf(fld("City","London",{req:1,same:false}).slice(0,40)))+`</div>`,fs:"The charge and terms come next.",btns:[b("Cancel"),b("Next","lime")]}));
+set("s-ph2",dlg({prog:[2,2],stepline:"Step 2 of 2 · Review the charge",body:READ()+figs+KEPT+TERMS,fs:NOTE,btns:[b("Back"),b("Start my club","lime")],
+  pins:pin(3,"right:-11px;bottom:12px")}));
+
+// 4 · other starting points
+set("s-q1",dlg({cls:"slice",prog:[1,2],stepline:"Step 1 of 2 · Your club",body:`<div class="band"><b>Your Premium Coaches Portal free time ends when your club starts</b>Free through December 12, 2026. The days left don’t carry over. If you leave before finishing, nothing changes and your free time keeps running.</div><p class="same">14-day trial — you add a payment method at checkout, and you’re first charged when the trial ends.</p>`+OWNER+NAME,fs:"The charge and terms come next.",btns:[b("Cancel"),b("Next","lime")]}));
+set("s-q2",dlg({cls:"slice",prog:[2,2],stepline:"Step 2 of 2 · Review the charge",body:READ()+`<div class="cycle" style="position:relative"><span class="on">Monthly</span><span>Yearly</span>${pin(5,"right:-11px;top:-7px")}</div>`+`<dl class="figs"><div class="due"><dt>Due today</dt><dd>$0.00 CAD</dd></div><div><dt>First charge, December 30, 2026</dt><dd>$219.00 CAD / month<small>plus applicable taxes</small></dd></div></dl>`+TERMS,fs:"Next, you add a payment method on our secure payment page.",btns:[b("Back"),b("Continue to checkout","lime")]}));
+
+// tabs, view toggle, pins
+const names=["split","changes","phone","other","asks"];
+const diffTabs={split:1,phone:1};
+function show(n){ if(names.indexOf(n)<0)n="split";
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id==="p-"+n));
+  document.querySelectorAll(".tabs button").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.tab===n)));
+  document.getElementById("viewrow").hidden=!diffTabs[n];
+  if(!diffTabs[n])document.body.classList.remove("diff"); else document.body.classList.toggle("diff",document.getElementById("v-diff").getAttribute("aria-pressed")==="true");
+}
+document.querySelectorAll(".tabs button").forEach(t=>t.addEventListener("click",()=>{location.hash=t.dataset.tab;show(t.dataset.tab)}));
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+function setView(diff){document.getElementById("v-all").setAttribute("aria-pressed",String(!diff));document.getElementById("v-diff").setAttribute("aria-pressed",String(diff));document.body.classList.toggle("diff",diff)}
+document.getElementById("v-all").addEventListener("click",()=>setView(false));
+document.getElementById("v-diff").addEventListener("click",()=>setView(true));
+
+// asks
+const ASKS=[
+ {t:"Split Start your club into two steps",q:"Where should the charge and terms live?",o:["Two steps: your club, then review the charge (Start your club only).","One window, with the amount on the button (“Start my club — $214.54 due today”) and a scroll cue.","Leave it as it is."]},
+ {t:"A read-back on step 2",q:"Step 2 repeats the club name, billing address and web address with a Change link, so the tax row has its reason beside it.",o:["Yes, show the read-back. (Same idea as New tournament’s review, whose rows reopen the step they came from.)","No, step 2 is only the figures and terms."]},
+ {t:"The foot of step 2",q:"What sits in the foot beside Start my club?",o:["Back, and Start my club. × still closes the window. (As New tournament does: Cancel on step 1, Back after.)","Cancel, Back and Start my club (three buttons; crowded on a phone)."]},
+ {t:"Next before the form is complete",q:"The house rule is absent, not greyed, with the foot saying why.",o:["Next is absent until the name and address are complete; the foot says what is missing.","Next is always there; pressing it shows what is missing."]},
+ {t:"Monthly / Yearly (start with free time left)",q:"Choosing yearly changes the figures.",o:["On step 2, above the figures.","On step 1, where it is today."]},
+ {t:"Plain plan moves",q:"Moves between rep-team bands have no form in front of their figures.",o:["Stay one window, no step bar.","Two steps there too."]}
+];
+const asksEl=document.getElementById("asks");
+asksEl.innerHTML=ASKS.map((a,i)=>`<div class="ask" id="ask-${i+1}"><h3><span class="n">${i+1}</span>${a.t}</h3><p>${a.q}</p>${a.o.map((o,j)=>`<label><input type="radio" name="a${i+1}" value="${String.fromCharCode(65+j)}"${j===0?" checked":""}><span><b>${String.fromCharCode(65+j)}.</b> ${o}${j===0?`<span class="rec">Recommended</span>`:""}</span></label>`).join("")}</div>`).join("");
+document.addEventListener("click",e=>{const p=e.target.closest(".pin");if(!p)return;
+  location.hash="asks";show("asks");const el=document.getElementById("ask-"+p.dataset.ask);
+  if(el){el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")}});
+document.getElementById("copy").addEventListener("click",()=>{
+  const lines=ASKS.map((a,i)=>{const c=document.querySelector(`input[name="a${i+1}"]:checked`);return `Ask ${i+1} (${a.t}): ${c?c.value:"?"}`});
+  const txt="Start your club, two steps. My answers:\n"+lines.join("\n");
+  const out=document.getElementById("out");out.value=txt;out.select();
+  const ok=()=>{document.getElementById("copied").textContent="Copied. Paste it back to me."};
+  try{navigator.clipboard.writeText(txt).then(ok,()=>{document.getElementById("copied").textContent="Select the text below and copy it."})}catch(err){document.getElementById("copied").textContent="Select the text below and copy it."}
+});
+show(location.hash.slice(1)||"split");
+</script>

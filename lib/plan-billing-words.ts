@@ -422,6 +422,11 @@ export const PLAN_BILLING_WORDS = {
     amount: (amount: string, currency: string) => `${amount} ${currency.toUpperCase()}`,
     renewal: (amount: string, billing: BillingCycle, currency: string) => `${amount} ${currency.toUpperCase()} / ${period(billing)}`,
     billingKept: (billing: BillingCycle) => `Same subscription and payment method. Your ${cycle(billing)} billing stays ${cycle(billing)}. No second trial.`,
+    /** The window in two steps (owner 2026-11-16, drawings START_YOUR_CLUB_TWO_STEPS): the step line, the foot's buttons and
+     *  the read-back that opens step 2. The step line is the New tournament wizard's own ("Step 1 of 3 · The tournament"). */
+    stepLine: (at: number) => `Step ${at} of 2 · ${at === 1 ? 'Your club' : 'Review the charge'}`,
+    next: 'Next', back: 'Back', nextFoot: 'The charge and terms come next.',
+    readClub: 'Club', readAddress: 'Billing address', changeLabel: 'Change the club or its billing address',
     payingFoot: 'Charged to the payment method you already use.',
     checkoutFoot: 'Next, you add a payment method on our secure payment page.',
     freeTitle: () => `Your ${PLAN_CONFIG.team.label} free time ends when your club starts`,

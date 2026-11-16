@@ -7,6 +7,12 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-16 — START YOUR CLUB IS TWO STEPS: THE CHARGE AND TERMS GET THEIR OWN REVIEW STEP (owner, all six asks A on drawings `claude.ai/artifact/Swg71ETYVZXeFjgAUZThbj`; source `docs/projects/active/START_YOUR_CLUB_TWO_STEPS_DRAWINGS.html`)
+
+**Decision:** (A1) The Start your club window splits in two: Step 1 of 2 · Your club (name, billing address, web address, all unchanged) and Step 2 of 2 · Review the charge (the charge, the renewal line, the terms). Step bar and step line are the kit's `progress` and the New tournament wizard's wording. (A2) Step 2 opens with a read-back of the club name, billing address and web address, with a Change link back to step 1. (A3) Step 2's foot is **Back** and **Start my club**; Cancel appears only on step 1 (as New tournament does); × still closes. (A4) **Next** is absent until the name and address are complete and the foot says what is missing ("Enter your club’s name."); an address Stripe can’t sell to (US, Québec) stays on step 1 with Next absent and the reason in the foot. (A5) For a start with free time left, Monthly / Yearly moves to step 2, above the figures. (A6) Plain plan moves (rep-team bands) stay one window with no step bar.
+**Rationale:** The charge depends on the typed address and sat below a scroll, while the pinned **Start my club** was on screen from the first moment, so it could be pressed before the charge or terms were ever seen. Step 2 puts Due today, the renewal line, the terms and the button in one view, also on a phone. A changed country or province still loads the charge again and asks for a second press when it moved (2026-11-05 ruling, unchanged); Back never wipes what was typed.
+**Applies to:** the Start your club window (`PlanMoveDialog`, in-place mode) only, in all three of its starts (a plan with a subscription, free time with a trial, no trial). Not built when recorded.
+
 ### 2026-11-14 — A COACH TEAM'S OVERVIEW: THE CLUB'S CARDS ARE ROWS IN THE TAIL, AND THE GAME CARD LOSES ITS CHIP ROW (owner approved drawings `claude.ai/artifact/6CBLokgyfhJ7eZTE3GgYro` v4, A1–A9 all as recommended)
 
 **Decision:** (A1) The club's proposals leave the top of the Overview: one row per schedule in review, in the TAIL below

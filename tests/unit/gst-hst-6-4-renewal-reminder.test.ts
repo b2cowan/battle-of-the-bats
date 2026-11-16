@@ -379,7 +379,11 @@ describe('6 · Québec', () => {
 describe('Québec in the Premium → Club window (review 2026-11-13)', () => {
   it('the refusal keeps the address fields on screen, so the buyer can correct the province and ask again', () => {
     const dialog = read('components/billing/PlanMoveDialog.tsx');
-    assert.ok(dialog.includes('inPlace && (preview || quote || refusal?.code === BILLING_REGION_CLOSED) && <>'));
+    // Start your club is two steps (owner 2026-11-16): the form is step 1's body, shown whenever there is a charge OR this refusal,
+    // and a refusal never gets a Next (the foot says why), so the buyer stays on the address.
+    assert.ok(dialog.includes('const formShown = inPlace && (preview !== null || !!quote || refusal?.code === BILLING_REGION_CLOSED);'));
+    assert.ok(dialog.includes('{clubStep && <>'));
+    assert.ok(dialog.includes('const canNext = clubStep && !clubHold && !regionHold && stepMissing === null;'));
   });
 
   it('the gate and the in-place preview answer with the one Québec body', () => {
