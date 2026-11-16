@@ -102,6 +102,14 @@ async function readStripe(c: ReminderCandidate): Promise<ReminderStripeFacts> {
   const sub = await stripe.subscriptions.retrieve(c.subscriptionId, {}, STRIPE_OPTS);
   const item = sub.items?.data?.[0];
   const chargeUnix = sub.status === 'trialing' ? (sub.trial_end ?? item?.current_period_end) : item?.current_period_end;
+  const cancelSet = !!sub.cancel_at_period_end || !!sub.cancel_at;
+  const chargeIso = chargeUnix ? new Date(chargeUnix * 1000).toISOString() : null;
+  // A plan that is not billing, or whose cancel is set, is skipped by `skipAfterStripe` before any figure is read. Stripe has no
+  // upcoming invoice for it, so asking for the preview would throw and count the account as a failure every day (walk §525 F9,
+  // owner 2026-11-16). The figures below are never read for such a plan.
+  if ((sub.status !== 'active' && sub.status !== 'trialing') || cancelSet) {
+    return { status: sub.status, cancelSet, chargeIso, previewPlan: null, beforeTaxCents: 0, taxLines: [], totalCents: 0, currency: '', taxOff: false };
+  }
   const preview = await stripe.invoices.createPreview({ subscription: c.subscriptionId }, STRIPE_OPTS);
   // The PLAN's lines only (/accounting 2026-11-13): a club's recovered Stripe fees queued on this subscription ride the same
   // invoice and would be in the preview's totals. The reminder is about the plan's renewal (and the invoice itemises the rest).
@@ -115,8 +123,8 @@ async function readStripe(c: ReminderCandidate): Promise<ReminderStripeFacts> {
   const plan = figures.priceId ? await getPlanFromPriceId(figures.priceId) : null;
   return {
     status: sub.status,
-    cancelSet: !!sub.cancel_at_period_end || !!sub.cancel_at,
-    chargeIso: chargeUnix ? new Date(chargeUnix * 1000).toISOString() : null,
+    cancelSet,
+    chargeIso,
     previewPlan: plan ? { planId: plan.planId, cycle: plan.billingCycle === 'annual' ? 'annual' : 'monthly' } : null,
     beforeTaxCents: figures.beforeTaxCents,
     taxLines: await namedTaxLines(figures.taxes.map(t => ({ amount: t.amount, tax_rate_details: t.taxRateId ? { tax_rate: t.taxRateId } : null })),
