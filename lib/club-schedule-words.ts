@@ -13,7 +13,7 @@
 import { formatTime, formatTimeRange, joinWithAnd, pluralize, possessive } from './utils';
 import { formatShortWeekdayDate, formatStoredDate, formatWeekRange } from './timezone';
 import { fmt } from './coach-money-summary';
-import { PERMIT_WORDS, weekdayCount, weekdayOne, weekdayPlural } from './permit-words';
+import { PERMIT_WORDS, hoursWords, weekdayCount, weekdayOne, weekdayPlural } from './permit-words';
 import type { DraftMeasure, DraftStrategy, ShareWarning, SlotPattern } from './club-schedule-engine';
 import type { ClosingRow, Installment, PriceMode } from './club-schedule-bill';
 import type { SendKind } from './club-schedule-send';
@@ -94,6 +94,8 @@ export const SCHEDULE_REFUSALS = {
   justSent: 'This schedule was just sent. Give it a minute before sending again.',
   finalDelete: 'A final schedule has practices on teams’ schedules and a bill, so it can’t be deleted.',
   noTime: 'Give the schedule its time first: a venue, its facilities, the days and the hours.',
+  /** Find the time reads the form's own rows; a form past the 40-row limit can't be read (it couldn't be saved either). */
+  findTooManyRows: 'The schedule has more than 40 rows of hours, so the free time can’t be read. Combine some rows first.',
   tooManySlots: (max: number) => `That is more than ${max.toLocaleString('en-CA')} slots. Shorten the dates or lengthen the slots.`,
   overlappingBlocks: 'Two rows of hours overlap on one facility. Each facility’s hour is handed out once.',
   teamTwice: (team: string) => `${team} would be in two slots at once.`,
@@ -582,6 +584,64 @@ export const SCHEDULE_SCREEN_WORDS = {
     (more > 0 ? `${shown.join(', ')} and ${more} more ${more === 1 ? 'day' : 'days'}` : joinWithAnd(shown)),
   overlapTail: (startsOn: string | null) =>
     `They stay as they are, priced there.${startsOn ? ` The new time starts ${startsOn}.` : ''}`,
+  // ── Find the time (Session D; drawing tab 2; owner rulings N1 A, P4 A, P7 A, P7b A). [marketing] at the project's close:
+  //    "Where" and "Town" (the plan's venue-or-issuer filter) and "Another time" (its extra ranges) were not drawn. ──
+  /** The door under the Permits field (N1 A: a door, not an entry in the tick list). */
+  findDoor: 'Find the time across every permit',
+  findTitle: 'Find the time',
+  /** The finder's subtitle: what "free" means (/design: moved here from the list). */
+  findIdentity: 'Every facility the club holds on a permit. Free means nothing is booked there and no other schedule’s draft holds it.',
+  findShortest: 'Shortest time',
+  findShortestHint: 'A day counts when this much is free',
+  findDaysHint: 'Every day the permits hold',
+  findAnyTime: 'Any time',
+  findAnotherTime: 'Another time',
+  findRemoveTime: (n: number) => `Remove time ${n}`,
+  findKind: 'Kind',
+  findWhere: 'Where',
+  findTown: 'Town',
+  findLoading: 'Finding the time…',
+  findFailed: 'The free time didn’t load. Try again.',
+  /** Both dates are needed to look; with one cleared the list on screen is the last answer, not this one. */
+  findNeedDates: 'Pick the first and last day to look in.',
+  /** The list's count line: "4 facilities the club holds in these dates · 128 hours free". */
+  findCount: (places: number, minutes: number) => `${pluralize(places, 'facility', 'facilities')} the club holds in these dates · ${hoursWords(minutes)} free`,
+  findHeadPlace: 'Facility',
+  findHeadPermit: 'Permit',
+  findHeadFree: 'Free',
+  /** "18 evenings free of 24" — evenings when every stretch starts at 5:00 p.m. or later, else days. */
+  findFreeOf: (free: number, held: number, evening: boolean) => `${pluralize(free, evening ? 'evening' : 'day', evening ? 'evenings' : 'days')} free of ${held}`,
+  /** "Tue and Thu 6:00–8:00 p.m. · 36 hours". */
+  findPattern: (stretches: readonly string[], minutes: number) => `${stretches.join(' · ')} · ${hoursWords(minutes)}`,
+  findStretch: (days: string, start: string, end: string) => `${days} ${formatTimeRange(start, end)}`,
+  /** P7 A: "4 held by a draft (Spring house league 2027)". */
+  findDraftHeld: (days: number, drafts: readonly string[]) => `${days} held by ${drafts.length > 1 ? 'drafts' : 'a draft'} (${joinWithAnd(drafts)})`,
+  /** P4 A: "Tue, May 25 and Thu, May 27 are on both". */
+  findShared: (days: string, many: boolean) => `${days} ${many ? 'are' : 'is'} on both`,
+  findPricedBy: (permit: string) => `Priced by ${permit}`,
+  findPricedByLabel: 'The permit that prices the days on both',
+  findFootNone: 'Tick the time to bring into the schedule.',
+  findFootSome: 'Each comes in as a time row with its permit, in the dates above.',
+  findAdd: (n: number) => (n ? `Add ${n} to the schedule` : 'Add to the schedule'),
+  findBack: 'Back',
+  /** Nothing found (drawing, frame "Nothing found"): said by the days when the days are what narrowed it. */
+  findNoneDays: (days: string, from: string, to: string) => `Nothing the club holds is free on ${days} from ${from} to ${to}.`,
+  findNoneFilters: (from: string, to: string) => `Nothing the club holds is free in these filters from ${from} to ${to}.`,
+  findHeldDays: (days: string) => `The permits hold time on ${days} in these dates.`,
+  findClearDays: 'Clear the days',
+  findClearFilters: 'Clear the filters',
+  findWiden: 'Widen the dates',
+  /** The club holds no permit in the dates (/ux 4). */
+  findNoPermit: (from: string, to: string) => `The club holds no permit between ${from} and ${to}.`,
+  findAddPermit: 'Add a permit',
+  /** Under the Permits field after found time came in (drawing, frame "picked"). */
+  foundHint: 'Found in Find the time. Tick a permit to bring all of its time.',
+  /** On a found row's card (P7b A): "4 Thursdays on Diamond B are held by the draft Spring house league 2027." */
+  foundDraftNote: (days: string, many: boolean, place: string, drafts: readonly string[]) =>
+    `${days} on ${place} ${many ? 'are' : 'is'} held by the ${drafts.length > 1 ? 'drafts' : 'draft'} ${joinWithAnd(drafts)}.`,
+  /** The drafts step (P7b A, "warns on them like a clash"): slots on found time another draft holds. */
+  foundDraftWarning: (slots: number, drafts: readonly string[]) =>
+    `${pluralize(slots, 'slot')} ${slots === 1 ? 'is' : 'are'} given on days the ${drafts.length > 1 ? 'drafts' : 'draft'} ${joinWithAnd(drafts)} ${drafts.length > 1 ? 'hold' : 'holds'} there`,
   venue: 'Venue',
   chooseVenue: 'Choose a venue',
   facilities: 'Facilities',
@@ -988,7 +1048,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   billSplitPartEach: 'The amount, shared by what each team’s time costs at its permit’s price',
   billSplitPartOne: 'The amount, shared by the hours each team got',
   /** N6 A: "Bill from" starts on the line of the permit with the most priced time, and says so. */
-  billFromMost: (permit: string, planned: string, left: string) => `${permit}’s budget line, the permit with the most time · ${planned} planned, ${left} left`,
+  billFromMost: (permit: string, planned: string, left: string) => `${possessive(permit)} budget line, the permit with the most time · ${planned} planned, ${left} left`,
   /** A team's caption with its hours by permit: "2 slots · 1 h Milton spring + 1 h Halton Hills". */
   billTeamByPermit: (slots: number, parts: readonly string[]) => `${slots === 1 ? '1 slot' : `${slots} slots`} · ${parts.join(' + ')}`,
   /** The read-only view once the bill is made (P9 B item 5): the terms it keeps, and any permit billed later at its own price. */

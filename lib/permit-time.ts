@@ -335,19 +335,23 @@ export interface UseBooking extends BookingPlace {
   ownerName: string;
 }
 
-type Span = [number, number];
+/** An interval of instants (ms), start inclusive, end exclusive. */
+export type Span = [number, number];
+
+/** A set of intervals as non-overlapping ones, in order (the free-time finder reads it too, `lib/permit-free-time.ts`). */
+export function unionSpans(spans: readonly Span[]): Span[] {
+  const out: Span[] = [];
+  for (const [s, e] of [...spans].sort((a, b) => a[0] - b[0])) {
+    const last = out[out.length - 1];
+    if (last && s <= last[1]) last[1] = Math.max(last[1], e);
+    else out.push([s, e]);
+  }
+  return out;
+}
 
 /** The total length of a set of intervals, overlaps counted once. */
 function unionMinutes(spans: Span[]): number {
-  if (!spans.length) return 0;
-  const sorted = [...spans].sort((a, b) => a[0] - b[0]);
-  let total = 0;
-  let [s, e] = sorted[0];
-  for (const [ns, ne] of sorted.slice(1)) {
-    if (ns > e) { total += e - s; s = ns; e = ne; } else if (ne > e) e = ne;
-  }
-  total += e - s;
-  return total / MIN;
+  return unionSpans(spans).reduce((total, [s, e]) => total + (e - s), 0) / MIN;
 }
 
 const clip = (b: BookingPlace, w: { startMs: number; endMs: number }): Span | null => {
@@ -356,8 +360,8 @@ const clip = (b: BookingPlace, w: { startMs: number; endMs: number }): Span | nu
   return e > s ? [s, e] : null;
 };
 
-/** The parts of a span no taken span covers. */
-function subtractSpans(span: Span, taken: readonly Span[]): Span[] {
+/** The parts of a span no taken span covers (the free-time finder reads it too, `lib/permit-free-time.ts`). */
+export function subtractSpans(span: Span, taken: readonly Span[]): Span[] {
   let parts: Span[] = [span];
   for (const [ts, te] of taken) {
     parts = parts.flatMap(([s, e]): Span[] => (te <= s || ts >= e ? [[s, e]] : [

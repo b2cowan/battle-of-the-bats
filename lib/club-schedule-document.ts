@@ -20,7 +20,7 @@
  */
 import { buildDayDocument, type ScheduleDocument } from './export/schedule-document.ts';
 import { formatShortWeekdayDate, formatStoredDate, timesInZoneSentence } from './timezone.ts';
-import { formatTime, formatTimeRange, joinWithAnd, pluralize } from './utils.ts';
+import { formatTime, formatTimeRange, joinWithAnd, pluralize, possessive } from './utils.ts';
 import { facilityListWords, weekdayCount } from './permit-words.ts';
 import { fmt as money } from './coach-money-summary.ts';
 import type { PriceMode } from './club-schedule-bill.ts';
@@ -270,7 +270,7 @@ export function scheduleSheets(input: ScheduleDocInput): ScheduleSheets {
   if (pricedBy) {
     const byTeam = input.bill ? ' Each team’s bill is on the By team sheet.' : '';
     if (pricedBy.oneRate != null) {
-      notes.push(`Cost is each slot at one rate for all, ${money(pricedBy.oneRate)} a full field an hour: the time at ${joinWithAnd(pricedBy.byPermit.map(x => `${x.name}’s ${money(x.fullHour)}`))}, over all its hours.${byTeam}`);
+      notes.push(`Cost is each slot at one rate for all, ${money(pricedBy.oneRate)} a full field an hour: the time at ${joinWithAnd(pricedBy.byPermit.map(x => `${possessive(x.name)} ${money(x.fullHour)}`))}, over all its hours.${byTeam}`);
     } else if (pricedBy.byPermit.length) {
       notes.push(`Cost is each slot at its own permit’s price, a full field an hour: ${joinWithAnd(pricedBy.byPermit.map(x => `${x.name} ${money(x.fullHour)}`))}. A half field is half of it.${byTeam}`);
     } else {

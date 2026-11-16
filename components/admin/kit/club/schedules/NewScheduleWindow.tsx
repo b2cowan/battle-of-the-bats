@@ -44,7 +44,7 @@
  * `previewOnly` answer, debounced as the form changes. The client never re-decides a largest-remainder share.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AlertTriangle, Check, ChevronDown, ChevronRight, Download, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, ChevronRight, Download, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { ClubRow, ClubRowList, RecordAction, repKit } from '../RepKit';
@@ -58,7 +58,7 @@ import { ViewSwitch } from '@/components/coaches/kit';
 import { spreadGroupFigure } from '@/lib/club-bill-split';
 import { formatTimeRange, pluralize, possessive } from '@/lib/utils';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
-import { formatShortWeekdayDate, isCalendarDate } from '@/lib/timezone';
+import { formatShortWeekdayDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { WEEKDAY_OPTIONS, facilityListWords, renewedName } from '@/lib/permit-words';
 import { rulesOn, type ScheduleSettings } from '@/lib/club-schedule-settings';
 import {
@@ -73,10 +73,11 @@ import {
 import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import type { DraftMeasure, TeamResult } from '@/lib/club-schedule-engine';
 import { HOUSE_LEAGUE, isProgramHolder } from '@/lib/club-schedule-holders';
-import { datesOffChanged, dateOffVenues, mergeDatesOff, permitsSpan, settleOverlaps, type DateOffParks } from '@/lib/club-schedule-permit-rows';
+import { datesOffChanged, dateOffVenues, mergeDatesOff, permitsSpan, rowsFromFound, settleOverlaps, type DateOffParks } from '@/lib/club-schedule-permit-rows';
 import type { DateOff, TimeBlock } from '@/lib/permit-time';
 import { Statement, Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
+import FindTheTime, { draftDaysSaid, findFiltersFrom, findRowKey, useFreeTime, type FindFilters } from './FindTheTime';
 import LoadingState from '@/components/shared/LoadingState';
 import DateInput from '@/components/shared/DateInput';
 import TimeInput from '@/components/shared/TimeInput';
@@ -118,6 +119,9 @@ interface HoursRow {
   /** That permit's own dates: sent as the row's only while several permits are ticked, so each permit's time keeps to
    *  its own dates inside the widened From and To (one permit: the row follows the schedule's dates, as before). */
   permitDates?: { fromDate: string; untilDate: string };
+  /** Found in Find the time (Session D): the days in it another schedule's draft holds, said on its card and warned on in
+   *  the drafts step (P7b A). Never sent — the form's own note. */
+  found?: { draftDays: { facilityId: string | null; day: string }[]; draftBy: string[] };
 }
 /** A date off; `permitId`: the permit it came with, so unticking that permit takes it away again. One row per permit and
  *  day: two permits off the same day are two rows, merged into one date off only when the time is sent (`mergeDatesOff`).
@@ -215,6 +219,12 @@ function fromPermit(p: InputPermit, places: readonly InputPlace[]): Partial<Draf
 }
 /** A row of hours the admin has filled in. */
 const rowDone = (r: HoursRow) => r.weekdays.length > 0 && !!r.start && !!r.end && r.end > r.start;
+/** Time that comes in FRESH replaces what the form holds: the first permit or find on a copy, or on a form with no time typed. */
+const replacesTime = (d: Draft, rows: readonly HoursRow[]) => !d.permitIds.length && (!!d.copyFrom || !rows.some(rowDone));
+/** The rows the admin typed, kept when more time comes in — each now names its place (the form's own venue, when it had none). */
+const typedRowsKept = (d: Draft, rows: readonly HoursRow[]): HoursRow[] =>
+  rows.filter(r => r.weekdays.length || r.start || r.end)
+    .map(r => (r.place || !d.venueId ? r : { ...r, place: { venueId: d.venueId, facilityIds: [...d.facilityIds] } }));
 
 /** A "Facilities by group" rule keeps only the facilities the time now holds — the server refuses a rule naming another
  *  venue's (last year's schedule copied onto this year's permit somewhere else, or the Venue changed by hand). The rule
@@ -286,6 +296,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const [step, setStep] = useState<'settings' | 'drafts'>('settings');
   /** The permit just unticked: the hint says what came off with it (/ux 1). */
   const [cameOff, setCameOff] = useState<{ name: string; rows: number; offs: number } | null>(null);
+  /** Find the time (Session D): open over the settings; its filters and ticks are kept while the window is, so Back keeps
+   *  the form and opening it again keeps the filters (/ux 6). `foundIn`: found time just came in (the Permits hint says so). */
+  const [finding, setFinding] = useState(false);
+  const [findFilters, setFindFilters] = useState<FindFilters | null>(null);
+  const [findTicked, setFindTicked] = useState<ReadonlySet<string>>(new Set());
+  const [findPriced, setFindPriced] = useState<Record<string, string>>({});
+  const [foundIn, setFoundIn] = useState(false);
   /** Past the opening screen — a copy picked, or Start blank. */
   const [started, setStarted] = useState(false);
   /** The opening screen (0): only when there is one to copy, never in Settings… */
@@ -355,6 +372,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       const offs = datesOffChanged(draft.datesOff.filter(o => o.permitId === id).map(o => o.day), offsOf(draft.rows, draft.datesOff), offsOf(rowsLeft, offsLeft)).length;
       setCameOff({ name: byId.get(id)?.name ?? '', rows: draft.rows.filter(r => r.permitId === id).length, offs });
     } else setCameOff(null);
+    setFoundIn(false);
     setDraft(d => {
       const ids = next.filter(id => byId.has(id));
       const added = ids.filter(id => !d.permitIds.includes(id));
@@ -364,13 +382,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       datesOff = datesOff.filter(o => !o.permitId || !removed.includes(o.permitId));
       for (const id of added) {
         const p = byId.get(id)!;
-        const fresh = !d.permitIds.length && id === added[0] && (!!d.copyFrom || !rows.some(rowDone));
-        if (fresh) { rows = rowsOfPermit(p, inputs.places); datesOff = offsOfPermit(p); continue; }
-        rows = [
-          ...rows.filter(r => r.weekdays.length || r.start || r.end)
-            .map(r => (r.place || !d.venueId ? r : { ...r, place: { venueId: d.venueId, facilityIds: [...d.facilityIds] } })),
-          ...rowsOfPermit(p, inputs.places),
-        ];
+        if (id === added[0] && replacesTime(d, rows)) { rows = rowsOfPermit(p, inputs.places); datesOff = offsOfPermit(p); continue; }
+        rows = [...typedRowsKept(d, rows), ...rowsOfPermit(p, inputs.places)];
         // Each permit's own rows, a shared day too (P5 A): it is merged into one date off when the time is sent, so
         // unticking either takes only its parks off that day.
         datesOff = [...datesOff, ...offsOfPermit(p)];
@@ -403,6 +416,66 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         name: d.name.trim() || !first ? d.name : first.name,
       }, inputs.places);
     });
+  }
+
+  /**
+   * FIND THE TIME → the form (drawing tab 2, frame "picked"). The places ticked become ordinary rows, each remembering its
+   * permit and keeping to the finder's dates cut to that permit; a place two permits hold is priced by the one chosen (P4
+   * A, settled in the rows by `rowsFromFound`). A permit not yet ticked shows as ticked — a row came from it — without its
+   * other time (ticking it again after an untick brings all of it; unticking takes the found rows away too). It brings its
+   * dates off inside the found time, so the drafts keep the days the finder counted as off. Its draft-held days come in,
+   * said on the card (P7b A). The first time on a copy, or on a form with no time typed, REPLACES the time, as the first
+   * permit ticked does (N3 A). From and To widen to cover it unless typed.
+   */
+  function addFound() {
+    if (!inputs || !freeRead.data) return;
+    const picked = freeRead.data.rows.filter(r => findTicked.has(findRowKey(r)) && r.freeDays + r.draftDays > 0);
+    const found = rowsFromFound(picked, r => findPriced[findRowKey(r)] ?? r.pricedBy);
+    if (!found.length) return;
+    const newRows: HoursRow[] = found.map(f => ({
+      key: newKey('row'), weekdays: [...f.weekdays], start: f.startTime, end: f.endTime,
+      place: { venueId: f.venueId, facilityIds: [...f.facilityIds] }, permitId: f.permitId,
+      dates: { fromDate: f.fromDate, untilDate: f.untilDate },
+      ...(f.draftDays.length ? { found: { draftDays: f.draftDays, draftBy: f.draftBy } } : {}),
+    }));
+    const spanOf = (rows: readonly { fromDate: string; untilDate: string }[]) =>
+      permitsSpan(rows.map(f => ({ startsOn: f.fromDate, endsOn: f.untilDate })))!;
+    const { startsOn: lo, endsOn: hi } = spanOf(found);
+    setDraft(d => {
+      const fresh = replacesTime(d, d.rows);
+      const kept = fresh ? [] : typedRowsKept(d, d.rows);
+      const added = [...new Set(found.map(f => f.permitId))].filter(id => !d.permitIds.includes(id));
+      const offs = added.flatMap(id => {
+        const p = permitById.get(id);
+        const { startsOn: from, endsOn: until } = spanOf(found.filter(f => f.permitId === id));
+        return p ? offsOfPermit(p).filter(o => o.day >= from && o.day <= until) : [];
+      });
+      const ids = [...d.permitIds, ...added];
+      const first = permitById.get(ids[0]);
+      const widen = !fresh && isCalendarDate(d.startsOn) && isCalendarDate(d.endsOn);
+      const rows = [...kept, ...newRows];
+      // The shared Venue and its facilities move with the time, as when a permit is ticked: a copy's old venue is not left behind.
+      const placed = rows.find(r => r.place)?.place;
+      const moved = !!placed && placed.venueId !== d.venueId;
+      return fieldsInTime({
+        ...d, permitIds: ids, rows, datesOff: [...(fresh ? [] : d.datesOff), ...offs],
+        venueId: moved ? placed.venueId : d.venueId,
+        facilityIds: moved ? [...placed.facilityIds] : d.facilityIds,
+        startsOn: d.datesTyped.start ? d.startsOn : widen && d.startsOn < lo ? d.startsOn : lo,
+        endsOn: d.datesTyped.end ? d.endsOn : widen && d.endsOn > hi ? d.endsOn : hi,
+        name: d.name.trim() || !first ? d.name : first.name,
+      }, inputs.places);
+    });
+    setCameOff(null);
+    setFoundIn(true);
+    setFindTicked(new Set());
+    setFinding(false);
+  }
+  /** Open the finder — on its kept filters, or today → three months on the first time. */
+  function openFinder() {
+    setFindFilters(f => f ?? findFiltersFrom(tournamentToday()));
+    setError('');
+    setFinding(true);
   }
 
   /** The latest Copy pick — a read that lands after a later pick is dropped, never applied over it. */
@@ -479,6 +552,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     startsOn: draft.startsOn, endsOn: draft.endsOn, blocks: settled.blocks,
     datesOff: mergeDatesOff(draft.datesOff.filter(o => isCalendarDate(o.day)), offParks),
   }), [draft.startsOn, draft.endsOn, draft.datesOff, settled, offParks]);
+  /** Find the time's reading, while it is open. The form's own time rides along, so it is never offered again. */
+  // A finished row with no venue yet is left out (the route refuses a row without one): it holds no place to take.
+  const findBlocks = timeBody.blocks.filter(b => b.venueId);
+  const findOwn = isCalendarDate(timeBody.startsOn) && isCalendarDate(timeBody.endsOn) && timeBody.endsOn >= timeBody.startsOn && findBlocks.length
+    ? { ...timeBody, blocks: findBlocks } : null;
+  const freeRead = useFreeTime(q, finding ? findFilters : null, findOwn);
   const rowsDone = draft.rows.filter(rowDone).length;
   const mixedPlaces = draft.rows.some(r => r.place);
   /** The rows sit in cards, each naming its place, once a permit gives the time or the places mix (N2 A: the read-only
@@ -635,7 +714,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const patchIn = <K extends ListName>(list: K, key: string, patch: Partial<RowOf<K>>) =>
     set({ [list]: (draft[list] as { key: string }[]).map(x => (x.key === key ? { ...x, ...(patch as object) } : x)) } as Partial<Draft>);
   const dropFrom = (list: ListName, key: string) => set({ [list]: (draft[list] as { key: string }[]).filter(x => x.key !== key) } as Partial<Draft>);
-  const setRow = (key: string, patch: Partial<HoursRow>) => patchIn('rows', key, patch);
+  // A found row edited by hand is the admin's own: its finder note (days a draft holds) no longer says what it covers.
+  const setRow = (key: string, patch: Partial<HoursRow>) => patchIn('rows', key, { ...patch, found: undefined });
 
   // ── The opening screen (0) ──
   /** Opened from a permit's page: the permit already picked, named on the screen (/design D4). */
@@ -665,6 +745,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const showApplies = offParks.parks.length > 1 || draft.datesOff.some(o => o.venueIds?.length);
   const permitOptions = (inputs?.permits ?? []).map(x => ({ id: x.id, label: x.name, detail: W.permitOption(x.issuer, scheduleDates(x.startsOn, x.endsOn)) }));
   const permitsHint = cameOff ? W.permitCameOff(cameOff.name, cameOff.rows, cameOff.offs)
+    : foundIn && draft.permitIds.length ? W.foundHint
     : draft.permitIds.length ? W.permitsHint : draft.copyFrom ? W.permitReplacesCopy : W.permitHint;
   /** Under To: the dates the permits set ("Widened to cover both permits"), or where they went back to. */
   const remaining = draft.permitIds.length === 1 ? permitById.get(draft.permitIds[0]) : undefined;
@@ -675,6 +756,15 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const v = places.find(x => x.venueId === (r.place?.venueId ?? draft.venueId));
     const names = (v?.facilities ?? []).filter(f => (r.place?.facilityIds ?? draft.facilityIds).includes(f.id)).map(f => f.name);
     return `${v?.venueName ?? ''}${names.length ? ` · ${facilityListWords(names)}` : ''}`;
+  };
+  /** A found row's draft-held days, one line per facility (P7b A): "4 Thursdays on Diamond B are held by the draft …". */
+  const foundDraftNotes = (r: HoursRow): string[] => {
+    if (!r.found?.draftDays.length) return [];
+    const v = places.find(x => x.venueId === r.place?.venueId);
+    const byFacility = new Map<string | null, string[]>();
+    for (const d of r.found.draftDays) byFacility.set(d.facilityId, [...(byFacility.get(d.facilityId) ?? []), d.day]);
+    return [...byFacility].map(([fid, days]) => W.foundDraftNote(draftDaysSaid(days), days.length > 1,
+      (fid ? v?.facilities.find(f => f.id === fid)?.name : v?.venueName) ?? '', r.found!.draftBy));
   };
   const cardGroups = cards ? [
     ...permitOrder.map(id => {
@@ -687,7 +777,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const i = draft.rows.indexOf(r);
     return (
       <div key={r.key} className={`${sch.dayRow}${withPlace ? ` ${sch.placeRow}` : ''}`}>
-        {withPlace && <span className={sch.rowPlace}>{rowPlaceWords(r)}{!r.permitId && <small>{W.rowNoPermit}</small>}</span>}
+        {withPlace && (
+          <span className={sch.rowPlace}>
+            {rowPlaceWords(r)}{!r.permitId && <small>{W.rowNoPermit}</small>}
+            {foundDraftNotes(r).map(n => <span key={n} className={sch.foundNote}>{n}</span>)}
+          </span>
+        )}
         <PickField id={`ns-days-${i}`} label={W.days} required options={WEEKDAY_OPTIONS} selected={r.weekdays.map(String)}
           onChange={ids => setRow(r.key, { weekdays: ids.map(Number).sort((a, b) => a - b) })} placeholder={W.chooseDays} />
         <label className={ck.field} htmlFor={`ns-rs-${i}`}>
@@ -742,6 +837,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           <div>
             <PickField id="ns-permits" label={W.permits} options={permitOptions} selected={draft.permitIds} onChange={togglePermits} placeholder={W.noPermitTyped} />
             <span className={ck.hint}>{permitsHint}</span>
+            {/* N1 A: a door under the picker, never an entry in the tick list (a list of choices holding an action reads as one more permit). */}
+            {permitOptions.length > 0 && (
+              <button type="button" className={`${sch.door} ${sch.findDoor}`} onClick={openFinder}>
+                <Search size={15} aria-hidden />{W.findDoor} ›
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1370,6 +1471,25 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     setStep('settings');
     window.setTimeout(() => document.getElementById('ns-max-per-day')?.focus(), 0);
   };
+  /** P7b A: found days another schedule's draft holds, by place and day — each draft warns on the slots it gives there,
+   *  like a clash (a draft is booked nowhere else, so this is the drafts step's only word of it). */
+  const foundHeld = new Map<string, readonly string[]>();
+  for (const r of draft.rows) {
+    if (!r.found || !r.place) continue;
+    for (const x of r.found.draftDays) foundHeld.set(`${r.place.venueId}|${x.facilityId ?? ''}|${x.day}`, r.found.draftBy);
+  }
+  const foundWarning = (d: DraftRead): string | null => {
+    if (!foundHeld.size || !gen) return null;
+    const by = new Set<string>();
+    let slots = 0;
+    for (const s of gen.slots) {
+      const who = foundHeld.get(`${s.venueId}|${s.facilityId ?? ''}|${s.day}`);
+      if (!who || !(d.assignments[s.key] ?? []).length) continue;
+      slots++;
+      for (const w of who) by.add(w);
+    }
+    return slots ? W.foundDraftWarning(slots, [...by]) : null;
+  };
   const draftsBody = gen && pick && (
     <div className={sch.drafts}>
       {shortWhy && (
@@ -1396,6 +1516,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
                 );
               })}
               {d.warnings.map(w => <li key={w.line} className={sch.amber}><AlertTriangle size={13} aria-hidden />{w.line}</li>)}
+              {(() => { const w = foundWarning(d); return w && <li className={sch.amber}><AlertTriangle size={13} aria-hidden />{w}</li>; })()}
             </ul>
           </button>
         ))}
@@ -1520,17 +1641,36 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       </button>
     </>
   );
+  /** Find the time, open over step 1 (never over the opening screen or the drafts). */
+  const inFinder = finding && !!findFilters && !!inputs && !choosing && step === 'settings';
+  /** The places ticked that the list still shows (a filter can narrow one away; it is not brought in). */
+  // Only a row that can be picked counts: a tick left on a row a filter has since emptied adds nothing.
+  const findPicked = freeRead.data?.rows.filter(r => findTicked.has(findRowKey(r)) && r.freeDays + r.draftDays > 0).length ?? 0;
+  const footFind = (
+    <>
+      <button type="button" className="btn btn-outline" onClick={() => setFinding(false)}>{W.findBack}</button>
+      <button type="button" className="btn btn-lime" disabled={!findPicked || freeRead.loading || !freeRead.current} onClick={addFound}>{W.findAdd(findPicked)}</button>
+    </>
+  );
   let body: ReactNode;
   if (inputsFailed) body = <p className={repKit.formError}>{W.inputsFailed}</p>;
   else if (!inputs) body = <LoadingState inline label={W.loadingInputs} />;
   else if (choosing) body = openingBody;
-  else if (step === 'drafts' && gen) body = draftsBody;
+  else if (inFinder) {
+    body = (
+      <FindTheTime filters={findFilters!} onFilters={setFindFilters} read={freeRead} ticked={findTicked}
+        onTick={(key, on) => setFindTicked(t => { const n = new Set(t); if (on) n.add(key); else n.delete(key); return n; })}
+        pricedBy={findPriced} onPricedBy={(key, id) => setFindPriced(p => ({ ...p, [key]: id }))}
+        places={places} permitById={permitById} orgSlug={orgSlug} />
+    );
+  } else if (step === 'drafts' && gen) body = draftsBody;
   else body = <div className={sch.settings}>{timeSection}{whoSection}{!wholeHouseLeague && rulesSection}</div>;
 
   // While the inputs load, no step line and no step bar: the window may open on the opening screen instead (/review).
   let identity: string | undefined = copiedFrom ? W.copiedFrom(copiedFrom) : W.step1;
   if (opening) identity = undefined;
   else if (choosing) identity = startPermit ? W.openingLeadPermit : W.openingLead;
+  else if (inFinder) identity = W.findIdentity;
   else if (step === 'drafts') identity = W.step2(draft.name.trim() || W.newTitle);
 
   return (
@@ -1539,15 +1679,15 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         kind="form"
         size="wide"
         eyebrow={editing ? editing.schedule.name : undefined}
-        title={editing ? W.settingsBack : W.newTitle}
+        title={inFinder ? W.findTitle : editing ? W.settingsBack : W.newTitle}
         identity={identity}
-        progress={choosing || opening ? undefined : { at: step === 'drafts' ? 2 : 1, of: 2 }}
-        back={step === 'drafts' ? { label: W.settingsBack, onBack: () => setStep('settings') } : undefined}
-        levelKey={choosing ? 'opening' : step}
+        progress={choosing || opening || inFinder ? undefined : { at: step === 'drafts' ? 2 : 1, of: 2 }}
+        back={inFinder ? { label: W.newTitle, onBack: () => setFinding(false) } : step === 'drafts' ? { label: W.settingsBack, onBack: () => setStep('settings') } : undefined}
+        levelKey={choosing ? 'opening' : inFinder ? 'finding' : step}
         onClose={onCancel}
         busy={busy}
-        footerStart={step === 'drafts' || choosing ? undefined : footSettingsNote}
-        footer={choosing ? footOpening : opening ? <button type="button" className="btn btn-outline" onClick={onCancel}>{W.cancel}</button> : step === 'drafts' ? footDrafts : footSettings}
+        footerStart={inFinder ? <span className={sch.footNote}>{findPicked ? W.findFootSome : W.findFootNone}</span> : step === 'drafts' || choosing ? undefined : footSettingsNote}
+        footer={choosing ? footOpening : opening ? <button type="button" className="btn btn-outline" onClick={onCancel}>{W.cancel}</button> : inFinder ? footFind : step === 'drafts' ? footDrafts : footSettings}
       >
         <FormError>{error}</FormError>
         {body}

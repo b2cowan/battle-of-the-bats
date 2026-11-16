@@ -345,7 +345,10 @@ describe('12 · copying is how New schedule opens, never a field inside it (owne
     assert.equal(SCHEDULE_SCREEN_WORDS.copiedFrom('Winter dome 2026–27'), 'Step 1 of 2 · settings · copied from Winter dome 2026–27');
   });
   it('changing your mind is Cancel — the window’s back stays step 2’s (Ask 2)', () => {
-    has(code, "back={step === 'drafts' ? { label: W.settingsBack, onBack: () => setStep('settings') } : undefined}");
+    // Find the time (a schedule on several permits, Session D) is its own level over step 1, with its Back to New schedule;
+    // the opening screen still has none — it is never the finder (`inFinder` needs `!choosing`).
+    has(code, "back={inFinder ? { label: W.newTitle, onBack: () => setFinding(false) } : step === 'drafts' ? { label: W.settingsBack, onBack: () => setStep('settings') } : undefined}");
+    has(code, "const inFinder = finding && !!findFilters && !!inputs && !choosing && step === 'settings';");
   });
 });
 

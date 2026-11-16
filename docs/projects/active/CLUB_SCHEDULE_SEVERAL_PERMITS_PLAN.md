@@ -420,11 +420,60 @@ families; a permit edit should never rewrite it without a person pressing Send t
       team's shares add up to the cent.
 
 ### Phase 4 (Session D) — Find the time
-- [ ] `lib/permit-free-time.ts` (pure): all permits' blocks in a window, minus the permits' dates off, minus
+> **Review run 2026-11-16 (simplify, then four-lens review; 0 Critical/High).** Applied: the finder ignores a finished row
+> with no venue yet; Add found time moves a copy's shared venue like ticking a permit; Add is offered only on an answer to
+> the filters on screen and counts only rows that can be picked; overlapping hour ranges are one range (touching ones stay
+> two); the route refuses a non-object body and drops places not at the club's venues from the form's own rows; >40 rows
+> says so; two drafts read in the plural; the isolation test catches any import form. **Ruled (owner, 2026-11-16): keep the
+> widening** (other schedules' FINAL slots count as taken in the finder). **Owed — ONE `/plan` item for all three places
+> that do not see other schedules' final time:** the permit's Used figure, the pick (a row spans first to last free day, so a
+> day a final schedule holds in the middle still comes along), and the generator (never reads other schedules' final slots).
+> **Left on purpose (recorded, not fixed):** the shortest block is applied per cut before days are joined (two touching
+> blocks under a high minimum); "shared" days count two permits on a day even when their hours differ (the Priced-by choice
+> then does nothing); draft-only overlap days skip the P4 choice; a date off inside a shared window comes off the unchosen
+> permit too; a booking over three calendar days frees its middle day (same as Used); DST days mix wall and real minutes
+> (same as Used); a part-free evening brings the whole row's hours; handed-back slots still count as taken; Find the time's
+> tick-order widening of From/To after an untick; Priced-by is not undone by unticking.
+> **Built 2026-11-16** (Session D of the build prompt; no migration). `lib/permit-free-time.ts` (pure:
+> `freeTime`), `lib/permit-free-time-server.ts` (the reads), `POST /api/admin/schedules/free-time` (the scheduler gate, a
+> read), `components/admin/kit/club/schedules/FindTheTime.tsx` (a level of New schedule), `rowsFromFound` in
+> `lib/club-schedule-permit-rows.ts`. `subtractSpans` in `lib/permit-time.ts` exported (no second interval rule).
+> Tests: `tests/unit/permit-free-time.test.ts` 14/14 (the owner's example as arithmetic: Diamond A 17 evenings held, 15
+> free; Diamond B 4 held by a draft, 12 free; P4's shared days priced by the newer; hours, ranges, the shortest block, a
+> no-facility booking, a facility-less venue, the empty states; guard 2: the module imports only `./permit-time`).
+> Schedule/permit suites 556/557 before the screens-guard update, 557/557 after; typecheck clean (bar another session's
+> `layout-run-journal` test); lint clean; spelling clean. Not run: `check:layout --changed`, a browser pass (dev-server
+> restart first: new files).
+> **Decisions made in the build (owner may overrule):**
+> - ⚠ **Taken also counts other schedules' FINAL slots** (silently, as booked), not only drafts. `readClubBookings` never
+>   reads `club_schedule_slots`, so a final schedule's house-league time the league has not yet divided into practices
+>   (and its open slots) would otherwise be offered as free. Same gap in the permit's **Used** figure (`permitUseOf`) —
+>   a finding, not fixed here (it would change a number the Permits page shows; route to `/plan`).
+> - The time the form already holds (its rows, settled) is taken too, so the finder never offers it again; in Add time
+>   (Session E) the schedule's own slots will be, via `scheduleId`.
+> - A booking with no facility set takes every facility at its venue that hour (never offered as free).
+> - A row's free minutes count only pieces at least the shortest block long (the drawing summed every piece).
+> - Picking brings the permit's **dates off inside the found time** (tied to the permit, so unticking takes them away);
+>   without them the drafts would land on days the finder counted as off.
+> - A found row's permit shows as **ticked** without its other time (drawing "picked"); the first found time on a copy or
+>   an empty form replaces the time, as the first permit ticked does (N3 A).
+> - P4's choice is settled **in the rows** at the pick (`rowsFromFound` runs `settleOverlaps` with the chosen permit
+>   first), so the send's own settling never undoes it.
+> - P7b: a found row's draft-held days are said on its card per facility ("4 Thursdays on Diamond B are held by the draft
+>   …"), and each draft in step 2 warns "N slots are given on days the draft … holds there" — matched by place and DAY,
+>   so it can over-count a slot on a day the other draft held only part of the evening. Editing a found row by hand
+>   drops its note.
+> - Not drawn, built from the plan: **Where** (venues) and **Town** (issuers) chips, shown only with two or more to
+>   choose; **Another time** (extra hour ranges). Words for `/marketing` at the Close.
+> - Fixed on the way past: Session C's "Bill from" line and the export's one-rate note hand-built "’s" on a permit's
+>   name; both now use `possessive()` (the possessive guard was red on them).
+> - "Widen the dates" moves To three months on. "Clear the filters" (an empty result not caused by the days) resets
+>   everything but the dates.
+- [x] `lib/permit-free-time.ts` (pure): all permits' blocks in a window, minus the permits' dates off, minus
       `readClubBookings`, minus other schedules' draft/in-review slots (labelled). Filters: dates, weekdays, hours,
       facility kind, venue/issuer, minimum block. Unit tests on the arithmetic.
-- [ ] An API under `app/api/admin/schedules/` returning the narrowed list (owner/admin, the scheduler gate).
-- [ ] The finder inside New schedule ("Any permit — find the time"); picked rows become time rows with their permit.
+- [x] An API under `app/api/admin/schedules/` returning the narrowed list (owner/admin, the scheduler gate).
+- [x] The finder inside New schedule ("Any permit — find the time"); picked rows become time rows with their permit.
 
 ### Phase 5 (Session E) — Add time, remove a permit, and F1
 - [ ] A schedule-page **Add time** action reusing the picker and the finder; generate drafts for the new rows only

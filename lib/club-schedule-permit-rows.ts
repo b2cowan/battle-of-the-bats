@@ -199,3 +199,70 @@ export function permitsSpan(permits: readonly { startsOn: string; endsOn: string
     endsOn: permits.reduce((m, p) => (p.endsOn > m ? p.endsOn : m), permits[0].endsOn),
   };
 }
+
+// ── Found time into rows (Session D, "Find the time"; drawing tab 2 frames "picked" and "both"; owner rulings P4 A, P7b A) ──
+
+/** One place's found time, as `freeTime` (`lib/permit-free-time.ts`) returns it — only what a pick needs. */
+export interface FoundPlace {
+  permitIds: readonly string[];
+  /** Days two permits hold, and the one the admin chose to price them (P4 A). */
+  shared: readonly string[];
+  pieces: readonly {
+    permitId: string; venueId: string; unit: string | null; weekdays: readonly number[]; startTime: string; endTime: string;
+    fromDate: string; untilDate: string; draftDays: readonly string[]; draftBy: readonly string[];
+  }[];
+}
+
+/** A row of found time: an ordinary row that remembers its permit, its own dates, and the days a draft holds in it. */
+export interface FoundRow extends PermitRowBlock {
+  permitId: string;
+  fromDate: string;
+  untilDate: string;
+  /** Each facility's draft-held days in the row (P7b A: they come in, said on the card; the drafts step warns on them). */
+  draftDays: { facilityId: string | null; day: string }[];
+  draftBy: string[];
+}
+
+/**
+ * The places picked, as rows. A place two permits hold on the same days is settled with the CHOSEN permit first
+ * (`settleOverlaps`), so the other permit's rows lose exactly those days and the choice is in the rows themselves — the
+ * send's own settling never undoes it. Then the same stretch on the same permit and dates at several facilities of one
+ * venue is ONE row over those facilities (Kinsmen Diamonds A and B, Tue & Thu 6:00–8:00 p.m.).
+ */
+export function rowsFromFound<P extends FoundPlace>(places: readonly P[], pricedBy: (place: P) => string | null): FoundRow[] {
+  const out: FoundRow[] = [];
+  places.forEach(place => {
+    let blocks = place.pieces.map(pc => ({
+      venueId: pc.venueId, facilityIds: pc.unit ? [pc.unit] : [], weekdays: [...pc.weekdays], startTime: pc.startTime, endTime: pc.endTime,
+      fromDate: pc.fromDate as string | null, untilDate: pc.untilDate as string | null, permitId: pc.permitId,
+      draftDays: [...pc.draftDays], draftBy: [...pc.draftBy],
+    }));
+    const chosen = place.shared.length ? pricedBy(place) : null;
+    if (chosen && blocks.length > 1) {
+      const range = permitsSpan(blocks.map(b => ({ startsOn: b.fromDate!, endsOn: b.untilDate! })))!;
+      blocks = settleOverlaps(blocks, [chosen, ...place.permitIds.filter(id => id !== chosen)], range).blocks;
+    }
+    for (const b of blocks) {
+      const from = b.fromDate!, until = b.untilDate!;
+      // A piece split by the settling keeps only the draft days still inside it.
+      const draftDays = b.draftDays.filter(d => d >= from && d <= until && b.weekdays.includes(weekdayOf(d)));
+      const facilityId = b.facilityIds[0] ?? null;
+      const same = out.find(r => r.permitId === b.permitId && r.venueId === b.venueId && r.startTime === b.startTime && r.endTime === b.endTime
+        && r.fromDate === from && r.untilDate === until && r.weekdays.join() === b.weekdays.join()
+        && !!r.facilityIds.length === !!b.facilityIds.length);
+      const days = draftDays.map(day => ({ facilityId, day }));
+      const by = draftDays.length ? b.draftBy : [];
+      if (same) {
+        for (const f of b.facilityIds) if (!same.facilityIds.includes(f)) (same.facilityIds as string[]).push(f);
+        same.draftDays.push(...days);
+        for (const w of by) if (!same.draftBy.includes(w)) same.draftBy.push(w);
+      } else {
+        out.push({
+          venueId: b.venueId, facilityIds: [...b.facilityIds], weekdays: b.weekdays, startTime: b.startTime, endTime: b.endTime,
+          fromDate: from, untilDate: until, permitId: b.permitId, draftDays: days, draftBy: [...by],
+        });
+      }
+    }
+  });
+  return out;
+}
