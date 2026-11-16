@@ -868,7 +868,7 @@ export const SCHEDULE_SCREEN_WORDS = {
     const parts = [locked ? `the ${pluralize(locked, 'slot')} you locked` : '', moved ? `the ${moved} you moved by hand` : ''].filter(Boolean);
     if (!parts.length) return '';
     const said = parts.join(' and ');
-    return `${capFirst(said)} stay where they are.`;
+    return `${capFirst(said)} ${locked + moved === 1 ? 'stays where it is' : 'stay where they are'}.`;
   },
   regenNotSent: 'It hasn’t been sent, so no team is told.',
   regenSent: 'It has already been sent, so no team is told until you send the changes from its page.',
