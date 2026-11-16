@@ -864,10 +864,13 @@ function probeInPage(opts) {
         if (declared === 'frame' && painter.node !== list) add('list-ground', label, `declared as a framed list but the card is painted by an ancestor <${painter.node.tagName.toLowerCase()}> — two painters, or the frame lost its ground`);
         if (declared === 'inset' && painter.node === list) add('list-ground', label, `declared inset (the card around it paints) but the list paints its own ground`);
         if (declared === 'frame' && painter.node === list) {
+          // The page's own ground (--bg, the paper) is not a second card: a shell with no <main> of its own (the free coach
+          // portal's) paints it on a wrapper, exactly as a <main> would, so an ancestor painting that token is the paper.
+          const paper = resolve(list, '--bg');
           let above = list.parentElement;
           while (above && above !== stopAt) {
             const bg = getComputedStyle(above).backgroundColor;
-            if (!transparent(bg)) { add('list-ground', label, `a framed list inside a painted <${above.tagName.toLowerCase()} class="${String(above.className).slice(0, 60)}"> (${bg}) — two painters; pass \`inset\` and let the card paint`); break; }
+            if (!transparent(bg) && bg !== paper) { add('list-ground', label, `a framed list inside a painted <${above.tagName.toLowerCase()} class="${String(above.className).slice(0, 60)}"> (${bg}) — two painters; pass \`inset\` and let the card paint`); break; }
             above = above.parentElement;
           }
         }
