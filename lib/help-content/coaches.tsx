@@ -2,6 +2,7 @@ import type { HelpPageContent } from './index';
 import { HelpDefs, HelpDef, HelpSteps, HelpNote } from '@/components/help/HelpBlocks';
 import HelpScreenshot from '@/components/help/HelpScreenshot';
 import { CHAT_PAUSED } from '@/lib/chat-pause';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 
 const coachesHelp: HelpPageContent = {
   title: 'Coaches Portal',
@@ -1557,11 +1558,12 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-premium-cancel',
           question: 'What happens to my data if my team is no longer on Premium?',
-          answerText: 'Premium tools switch off straight away, but your team is kept for a year from the day Premium ended. The cancellation email gives the exact date, and we email you again about a month before it. Select Resubscribe in the email before that date and the same team comes back as you left it, with nothing to re-enter. You can also do it from the portal: if you own it, the first screen you meet when Premium has ended has a Reactivate Premium button (Keep Premium when your free time has ended). Anyone else on the team sees the explanation but no button. You do not start a new portal. Your free portal and tournament records stay available the whole time. This is the same whether you cancelled or your payment could not be collected.',
-          keywords: ['premium ends', 'retention', 'reactivate', 'reactivate premium', 'keep premium', 'free time ended', 'data', 'cancel premium', 'cancelled', 'how long is my team kept', 'one year', 'a year', 'resubscribe', 'reactivate premium', 'get my team back', 'deleted', 'payment failed'],
+          answerText: 'If you cancel, Premium stays on until the end of the period you have paid for, and nothing more is charged. Until that day, Keep Premium on Plan & billing undoes the cancel. We do not refund or credit the unused part of a period. When Premium ends, its tools switch off, but your team is kept for a year from that day. The cancellation email gives the exact date, and we email you again about a month before it. Select Resubscribe in the email before that date and the same team comes back as you left it, with nothing to re-enter. You can also do it from the portal: if you own it, the first screen you meet when Premium has ended has a Reactivate Premium button (Keep Premium when your free time has ended). Anyone else on the team sees the explanation but no button. You do not start a new portal. Your free portal and tournament records stay available the whole time. This is the same whether you cancelled or your payment could not be collected.',
+          keywords: ['premium ends', 'retention', 'reactivate', 'reactivate premium', 'keep premium', 'free time ended', 'data', 'cancel premium', 'cancelled', 'refund', 'no refund', 'when does premium end', 'undo cancel', 'how long is my team kept', 'one year', 'a year', 'resubscribe', 'reactivate premium', 'get my team back', 'deleted', 'payment failed'],
           answer: (
             <>
-              <p>Premium tools switch off straight away, but <strong>your team is kept for a year</strong> from the day Premium ended.</p>
+              <p>If you cancel, <strong>Premium stays on until the end of the period you&rsquo;ve paid for</strong>, and nothing more is charged. Until that day, <strong>Keep Premium</strong> on Plan &amp; billing undoes the cancel. We don&rsquo;t refund or credit the unused part of a period.</p>
+              <p>When Premium ends, its tools switch off, but <strong>your team is kept for a year</strong> from that day.</p>
               <ul>
                 <li>The cancellation email gives the exact date. We email you again about a month before it.</li>
                 <li>Select <strong>Resubscribe</strong> in the email before that date and the same team comes back as you left it, with nothing to re-enter. You do not start a new portal.</li>
@@ -1575,7 +1577,7 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-premium-plan-billing',
           question: 'Where do I see my Premium plan, change it, or update my card?',
-          answerText: 'Open Plan & billing. On a computer it is at the foot of the list on the left. On a phone, open More and choose Plan & billing. It shows your plan and what you are using, lets you change plan, and opens the secure billing portal for your card and invoices; Reduce or cancel is at the bottom. It is there whenever you own the portal, including between seasons. If your team is not set up yet, the Coaches Portal not ready screen has a Plan & billing button instead. Only the person who owns the portal sees it: assistant coaches, other helpers and coaches whose team belongs to a club do not (a club team is billed by the club). Someone who opens the address anyway is told that only the owner can see and change the plan.',
+          answerText: 'Open Plan & billing. On a computer it is at the foot of the list on the left. On a phone, open More and choose Plan & billing. It shows your plan and what you are using, lets you change plan, and opens the secure billing portal for your card and invoices; Reduce or cancel is at the bottom. After you buy or come back to Premium we email you The details of your purchase, a summary, not a receipt (your invoice is on your billing page); on a yearly plan we also email you about a month before it renews, with the date and the amount. It is there whenever you own the portal, including between seasons. If your team is not set up yet, the Coaches Portal not ready screen has a Plan & billing button instead. Only the person who owns the portal sees it: assistant coaches, other helpers and coaches whose team belongs to a club do not (a club team is billed by the club). Someone who opens the address anyway is told that only the owner can see and change the plan.',
           keywords: ['plan and billing', 'plan & billing', 'billing', 'where is billing', 'change plan', 'change my plan', 'update card', 'update my card', 'payment method', 'invoices', 'receipts', 'cancel premium', 'reduce or cancel', 'upgrade', 'who can see billing', 'assistant coach billing', 'club team billing', 'owner only'],
           answer: (
             <>
@@ -1584,6 +1586,7 @@ const coachesHelp: HelpPageContent = {
                 <li>It shows your plan and what you&rsquo;re using, and lets you change plan.</li>
                 <li><strong>Payment method &amp; invoices</strong> opens the secure billing portal, where you update your card and download invoices.</li>
                 <li><strong>Reduce or cancel</strong> is at the bottom.</li>
+                <li>After you buy or come back to Premium, we email you <strong>The details of your purchase</strong>: a summary, not a receipt (your invoice is on your billing page). On a yearly plan we also email you about a month before it renews, with the date and the amount.</li>
                 <li>It&rsquo;s there whenever you own the portal, including between seasons. If your team isn&rsquo;t set up yet, the <strong>Coaches Portal not ready</strong> screen has a <strong>Plan &amp; billing</strong> button instead.</li>
               </ul>
               <HelpNote variant="info" title="Only the owner sees it">Assistant coaches and other helpers don&rsquo;t get the row, and coaches whose team belongs to a club don&rsquo;t either &mdash; a club team is billed by the club. Someone who opens the address anyway is told that only the owner can see and change the plan. To see who does pay for a club team, open Team settings.</HelpNote>
@@ -1593,16 +1596,17 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-premium-billing-address',
           question: 'Why am I asked for my home address before I pay?',
-          answerText: 'You buy Premium as yourself, so before your first paid checkout we ask for your home address: on the sign-up page it is the third step, Address; anywhere else a Your home address window opens. You answer once. It covers every portal you pay for, and later purchases go straight through and say Billed to your address. We use it only to work out the GST or HST you are charged, and it prints on your receipts. Change it and your next charge is taxed for the new address. A PO Box on its own cannot be a billing address. To change it, open Plan & billing and choose Billing address on the plan card. Stripe\'s billing page updates your card and invoices but no longer changes the address. Choosing United States says We\'re not selling in the United States yet. If you turn your portal into a club with Start your club, the club gets its own billing address, filled in from yours, and you can change it. On the free Coaches Portal you are not asked until you press a button that pays.',
-          keywords: ['billing address', 'home address', 'why my address', 'address before paying', 'change billing address', 'change my address', 'billed to', 'sales tax', 'tax', 'GST', 'HST', 'receipt address', 'PO Box', 'United States', 'american coach', 'club billing address', 'start your club address'],
+          answerText: 'You buy Premium as yourself, so before your first paid checkout we ask for your home address: on the sign-up page it is the third step, Address; anywhere else a Your home address window opens. You answer once. It covers every portal you pay for, and later purchases go straight through and say Billed to your address. We use it only to work out the GST or HST you are charged, and it prints on your invoices. Change it and your next charge is taxed for the new address. A PO Box on its own cannot be a billing address. To change it, open Plan & billing and choose Billing address on the plan card. Stripe\'s billing page updates your card and invoices but no longer changes the address. Choosing United States says We\'re not selling in the United States yet. A Québec address can be saved, but a new purchase or a move up is refused: We\'re not selling in Québec yet. A plan you already have keeps renewing, and you can still cancel it. If you turn your portal into a club with Start your club, the club gets its own billing address, filled in from yours, and you can change it. On the free Coaches Portal you are not asked until you press a button that pays.',
+          keywords: ['billing address', 'home address', 'why my address', 'address before paying', 'change billing address', 'change my address', 'billed to', 'sales tax', 'tax', 'GST', 'HST', 'receipt address', 'PO Box', 'United States', 'american coach', 'Québec', 'Quebec', 'club billing address', 'start your club address'],
           answer: (
             <>
               <p>You buy Premium as yourself, so before your first paid checkout we ask for your home address. On the sign-up page it&rsquo;s the third step, <strong>Address</strong>; anywhere else a <strong>Your home address</strong> window opens.</p>
               <ul>
                 <li>You answer once. It covers every portal you pay for, and later purchases go straight through and say <strong>Billed to</strong> your address.</li>
-                <li>We use it only to work out the GST or HST you&rsquo;re charged, and it prints on your receipts. Change it and your next charge is taxed for the new address.</li>
+                <li>We use it only to work out the GST or HST you&rsquo;re charged, and it prints on your invoices. Change it and your next charge is taxed for the new address.</li>
                 <li>A PO Box on its own can&rsquo;t be a billing address. Enter a street address.</li>
                 <li>Choosing United States says &ldquo;We&rsquo;re not selling in the United States yet.&rdquo;</li>
+                <li>A Québec address can be saved, but a new purchase or a move up is refused: &ldquo;We&rsquo;re not selling in Québec yet.&rdquo; A plan you already have keeps renewing, and you can still cancel it.</li>
                 <li>If you turn your portal into a club with <strong>Start your club</strong>, the club gets its own <strong>Club billing address</strong>, filled in from yours. Change it if the club has its own.</li>
                 <li>On the free Coaches Portal you aren&rsquo;t asked until you press a button that pays.</li>
               </ul>
@@ -1613,18 +1617,18 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-premium-taxes',
           question: 'What tax am I charged, and why?',
-          answerText: 'Our prices are plus applicable taxes. The tax is worked out from your billing address: GST, or HST in the provinces that charge it, named with its rate on every quote and receipt, for example HST 13%. Before you pay, the window shows the price, the tax on its own line, and Due today, which is the total you are charged. If the charge has changed by the time you press the button, nothing is charged; the window shows the new figure and asks you to check it and press again. A renewal shows the price before tax with plus applicable taxes under it. You can type a GST/HST number on Stripe’s payment page; it prints on your receipts and the tax still applies. When we refund a charge, Stripe emails a credit note that shows the tax given back. If you turn your portal into a club with Start your club, the club’s address and name go on the club’s invoices. If your billing also pays for another Coaches Portal, the portal can’t become a club on its own: contact us and we’ll set the club up.',
-          keywords: ['tax', 'taxes', 'GST', 'HST', 'sales tax', 'plus applicable taxes', 'why am I charged tax', 'tax on my receipt', 'tax rate', 'due today', 'charge changed', 'GST/HST number', 'business number', 'credit note', 'refund tax', 'start your club tax', 'another coaches portal'],
+          answerText: `Our prices are ${BILLING_TAX_WORDS.plusTax}. The tax is worked out from your billing address: GST, or HST in the provinces that charge it, named with its rate on every quote and invoice, for example HST 13%. Before you pay, the window shows the price, the tax on its own line, and Due today, which is the total you are charged. If the charge has changed by the time you press the button, nothing is charged; the window shows the new figure and asks you to check it and press again. A renewal shows the price before tax with ${BILLING_TAX_WORDS.plusTax} under it. You can type a GST/HST number on Stripe’s payment page; it prints on your invoices and the tax still applies. If a charge is ever refunded, Stripe emails a credit note that shows the tax given back. If you turn your portal into a club with Start your club, the club’s address and name go on the club’s invoices, and the unused part of your Premium period is credited against the first Club charge. If your billing also pays for another Coaches Portal, the portal can’t become a club on its own: contact us and we’ll set the club up.`,
+          keywords: ['tax', 'taxes', 'GST', 'HST', 'sales tax', BILLING_TAX_WORDS.plusTax, 'why am I charged tax', 'tax on my receipt', 'tax rate', 'due today', 'charge changed', 'GST/HST number', 'business number', 'credit note', 'refund tax', 'start your club tax', 'another coaches portal'],
           answer: (
             <>
-              <p>Our prices are plus applicable taxes. The tax is worked out from your billing address: GST, or HST in the provinces that charge it, named with its rate on every quote and receipt, for example <strong>HST 13%</strong>.</p>
+              <p>Our prices are {BILLING_TAX_WORDS.plusTax}. The tax is worked out from your billing address: GST, or HST in the provinces that charge it, named with its rate on every quote and invoice, for example <strong>HST 13%</strong>.</p>
               <ul>
                 <li>Before you pay, the window shows the price, the tax on its own line, and <strong>Due today</strong>, which is the total you&rsquo;re charged.</li>
                 <li>If the charge has changed by the time you press the button, nothing is charged. The window shows the new figure and asks you to check it and press again.</li>
-                <li>A renewal shows the price before tax, with <strong>plus applicable taxes</strong> under it.</li>
-                <li>You can type a GST/HST number on Stripe&rsquo;s payment page. It prints on your receipts; the tax still applies.</li>
-                <li>When we refund a charge, Stripe emails a credit note that shows the tax given back.</li>
-                <li>If you turn your portal into a club with <strong>Start your club</strong>, the club&rsquo;s address and name go on the club&rsquo;s invoices.</li>
+                <li>A renewal shows the price before tax, with <strong>{BILLING_TAX_WORDS.plusTax}</strong> under it.</li>
+                <li>You can type a GST/HST number on Stripe&rsquo;s payment page. It prints on your invoices; the tax still applies.</li>
+                <li>If a charge is ever refunded, Stripe emails a credit note that shows the tax given back.</li>
+                <li>If you turn your portal into a club with <strong>Start your club</strong>, the club&rsquo;s address and name go on the club&rsquo;s invoices, and the unused part of your Premium period is credited against the first Club charge.</li>
               </ul>
               <HelpNote variant="info" title="A portal that shares its billing">If your billing also pays for another Coaches Portal, the portal can&rsquo;t become a club on its own. The window says so; contact us and we&rsquo;ll set the club up.</HelpNote>
             </>

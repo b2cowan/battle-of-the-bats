@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
 import { HelpDefs, HelpDef, HelpSteps, HelpNote } from '@/components/help/HelpBlocks';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 
 const orgHelp: HelpPageContent = {
   title: 'Org admin & setup',
@@ -377,9 +378,9 @@ const orgHelp: HelpPageContent = {
     {
       id: 'club-plan-and-billing',
       heading: 'Club plan & billing',
-      summary: 'Your plan, what’s in use, your billing address, changing plan, what’s included, and reducing or cancelling your subscription.',
-      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity', 'free time', 'free through', 'free time ended', 'billing address', 'change billing address', 'club address', 'billed to', 'sales tax', 'tax', 'GST', 'HST', 'PO Box', 'United States', 'US club', 'taxes', 'plus applicable taxes', 'why am I charged tax', 'tax on my invoice', 'GST/HST number', 'business number', 'credit note', 'charge changed'],
-      searchText: 'billing address where the club is billed asked once before the first paid checkout billed to remembered sales tax work out the tax prints on your invoices next charge taxed for the new address taxes what youre charged and why plus applicable taxes gst hst rate named hst 13% due today total tax line charge changed nothing was charged press again renewal price before tax stripe fees taxed gst/hst number business number on stripe payment page tax still applies refund credit note tax given back couldnt work out the tax check the address club address start your club club billing address filled in from the coach home address po box street address change it billing address button plan card stripe billing page payment method no longer changes the address united states not selling in the united states yet gst hst free through free time from fieldlogichq a plan given for a while goes back automatically free time ended last 14 days amber contact us to keep the plan nothing is charged club plan and billing rail foot beside help more you owner only your plan whats in use change plan whats included reduce or cancel capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel and suspend goes offline ninety days retention reactivate within retention plan limits retained remainder public site online coach portals reopen archived tournaments return',
+      summary: 'Your plan, what’s in use, your billing address, changing plan, free trials and the emails about your plan, what’s included, and reducing or cancelling your subscription.',
+      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity', 'free time', 'free through', 'free time ended', 'billing address', 'change billing address', 'club address', 'billed to', 'sales tax', 'tax', 'GST', 'HST', 'PO Box', 'United States', 'US club', 'taxes', BILLING_TAX_WORDS.plusTax, 'why am I charged tax', 'tax on my invoice', 'GST/HST number', 'business number', 'credit note', 'charge changed', 'refund', 'no refund', 'keep plan', 'undo cancel', 'when does my plan end', 'free trial', 'trial', 'no trial', 'details of your purchase', 'purchase email', 'receipt', 'yearly reminder', 'renewal reminder', 'payment failed', 'Québec', 'Quebec'],
+      searchText: 'billing address where the club is billed asked once before the first paid checkout billed to remembered sales tax work out the tax prints on your invoices next charge taxed for the new address taxes what youre charged and why plus tax gst hst rate named hst 13% due today total tax line charge changed nothing was charged press again renewal price before tax stripe fees taxed gst/hst number business number on stripe payment page tax still applies refund credit note tax given back couldnt work out the tax check the address club address start your club club billing address filled in from the coach home address po box street address change it billing address button plan card stripe billing page payment method no longer changes the address united states not selling in the united states yet gst hst free through free time from fieldlogichq a plan given for a while goes back automatically free time ended last 14 days amber contact us to keep the plan nothing is charged club plan and billing rail foot beside help more you owner only your plan whats in use change plan whats included reduce or cancel capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel any time plan runs to the end of the period you paid for keep button undo cancel nothing more is charged goes offline on the end date no refund or credit for the unused part cancel and suspend founding season ends at once free trial first paid plan only no second trial trial email first payment date details of your purchase email every owner summary not a receipt invoice billing page renewal sends no email yearly renewal reminder 30 to 37 days before payment failed notice straight away québec quebec not selling in québec yet plan already there keeps renewing move up charged now plus tax ninety days retention reactivate within retention plan limits retained remainder public site online coach portals reopen archived tournaments return',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
       ],
@@ -417,6 +418,7 @@ const orgHelp: HelpPageContent = {
                 <li>A PO Box on its own can&rsquo;t be a billing address. Enter a street address.</li>
                 <li>A free or comped plan isn&rsquo;t asked until someone presses a button that pays.</li>
                 <li>Choosing United States says &ldquo;We&rsquo;re not selling in the United States yet.&rdquo;</li>
+                <li>A Québec address can be saved, but a new plan, a move up or a next-season choice is refused: &ldquo;We&rsquo;re not selling in Québec yet.&rdquo; A plan the club already has keeps renewing, and can move down or be cancelled as usual.</li>
               </ul>
               <HelpNote variant="info" title="Changing it">Open Plan &amp; billing and choose <strong>Billing address</strong> on the plan card, which shows the address on file. Stripe&rsquo;s billing page (Payment method &amp; invoices) updates your card and invoices, but no longer changes the address.</HelpNote>
             </>
@@ -427,13 +429,13 @@ const orgHelp: HelpPageContent = {
           title: 'Taxes: what you’re charged and why',
           content: (
             <>
-              <p>Our prices are plus applicable taxes. The tax is worked out from your club&rsquo;s billing address: GST, or HST in the provinces that charge it, named with its rate on every quote and invoice, for example <strong>HST 13%</strong>.</p>
+              <p>Our prices are {BILLING_TAX_WORDS.plusTax}. The tax is worked out from your club&rsquo;s billing address: GST, or HST in the provinces that charge it, named with its rate on every quote and invoice, for example <strong>HST 13%</strong>.</p>
               <ul>
                 <li>Before you pay, the window shows the plan&rsquo;s price, the tax on its own line, and <strong>Due today</strong>, which is the total you&rsquo;re charged.</li>
                 <li>If the charge has changed by the time you press the button, nothing is charged. The window shows the new figure and asks you to check it and press again.</li>
-                <li>A renewal shows the price before tax, with <strong>plus applicable taxes</strong> under it. Stripe fees we bill back to the club carry the same tax.</li>
+                <li>A renewal shows the price before tax, with <strong>{BILLING_TAX_WORDS.plusTax}</strong> under it. Stripe fees we bill back to the club carry the same tax.</li>
                 <li>You can type your club&rsquo;s GST/HST number on Stripe&rsquo;s payment page. It prints on your invoices; the tax still applies.</li>
-                <li>When we refund a charge, Stripe emails a credit note that shows the tax given back.</li>
+                <li>If a charge is ever refunded, Stripe emails a credit note that shows the tax given back.</li>
               </ul>
               <HelpNote variant="info" title="If the tax can’t be worked out">The window says &ldquo;We couldn&rsquo;t work out the tax for this billing address. Check the address and try again.&rdquo; Open <strong>Billing address</strong> on the plan card and check the street, city, province and postal code.</HelpNote>
             </>
@@ -445,7 +447,7 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <p>Club and Club · Association differ only in how many teams they hold and what they cost — every feature is identical between them. Each size lists both a monthly and a yearly price, and the size you&rsquo;re on is marked &ldquo;Your plan.&rdquo;</p>
-              <p><strong>Moving up</strong> to Club · Association changes your existing paid subscription. Before you confirm, Stripe shows the exact amount due for the rest of this billing period and what you&rsquo;ll pay from your next renewal. If there is no live paid subscription to change, the window offers checkout instead. A plan that is not open for sign-up says <strong>Contact us to move</strong>.</p>
+              <p><strong>Moving up</strong> to Club · Association changes your existing paid subscription straight away. You pay the difference for the rest of this billing period, {BILLING_TAX_WORDS.plusTax}, charged when you confirm. Before you confirm, Stripe shows that exact amount and what you&rsquo;ll pay from your next renewal. If there is no live paid subscription to change, the window offers checkout instead. A plan that is not open for sign-up says <strong>Contact us to move</strong>.</p>
               <p><strong>Moving down</strong> to Club takes effect at your next renewal, with no credit for the current period, and is refused while you&rsquo;re running more teams than Club holds — archive a team first, or stay where you are. A move waiting for renewal can be undone with &ldquo;Keep&rdquo; your current size, any time before then.</p>
               <p>More teams than the larger size holds? Contact us for a custom plan.</p>
             </>
@@ -459,11 +461,33 @@ const orgHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'club-plan-and-billing-t-emails',
+          title: 'Free trials, and the emails about your plan',
+          content: (
+            <>
+              <p>A paid plan with a free trial gives it only on your organization&rsquo;s <strong>first</strong> paid plan. If the organization has had a paid plan before, on any plan, checkout starts with no trial. The trial&rsquo;s length and the date of the first payment are shown at checkout and in the email that confirms it.</p>
+              <p>Every owner of the organization is told about its plan:</p>
+              <ul>
+                <li><strong>The details of your purchase</strong> is emailed after you start a plan or a trial, choose next season&rsquo;s plan, come back to a plan, or pay to move up: what was bought, by whom, the price, each tax, the total, the renewal date and how to cancel. It is a summary, not a receipt: your invoice is the document to keep, and it&rsquo;s always on your billing page. A renewal sends no such email.</li>
+                <li><strong>Before a yearly plan renews</strong>, an email about a month ahead (30 to 37 days) gives the date, the amount and its tax. To stop it, cancel before that date. When a yearly plan&rsquo;s first payment is less than 38 days away, the trial or next-season email is that notice.</li>
+                <li><strong>If a payment fails</strong>, a notice saying so arrives straight away, by email too unless an owner has turned that off. The plan keeps working while the payment is tried again; update your card from your billing page.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
           id: 'club-plan-and-billing-t-cancel',
           title: 'Cancelling, and reactivating',
           content: (
             <>
-              <p>Under <strong>Reduce or cancel</strong>, the page names what goes offline and how long your records are kept. Cancelling suspends the club: Rep teams and every team&rsquo;s coach portal, Accounting, Families, the public site, house league and tournaments go offline. The confirmation window reads the impact first, with a reason field before <strong>Cancel and suspend</strong>. A reason is optional.</p>
+              <p>You can cancel at any time under <strong>Reduce or cancel</strong>. The confirmation window names the day your plan ends, what goes offline then, and how long your records are kept. A reason is optional.</p>
+              <ul>
+                <li><strong>Your plan keeps running</strong> until the end of the period you&rsquo;ve paid for (or the end of your trial). Everything works until that day, and nothing more is charged.</li>
+                <li>Until that day, Plan &amp; billing shows the end date and a <strong>Keep</strong> button: one press and the plan carries on as before.</li>
+                <li>On that day the club is suspended: Rep teams and every team&rsquo;s coach portal, Accounting, Families, the public site, house league and tournaments go offline.</li>
+                <li>We don&rsquo;t refund or credit the unused part of a period, whether you cancel, move down or stop using FieldLogicHQ.</li>
+                <li>A plan with nothing to pay, such as a Founding Season plan, has no paid period to run out, so it ends when you confirm and the button reads <strong>Cancel and suspend</strong>.</li>
+              </ul>
               <p>Reactivate within the retention window to restore the public site, coach portals and retained tournaments within your plan&rsquo;s limits. Records beyond those limits remain in retention until their deadline. Data past that deadline may no longer be available. If Club isn&rsquo;t yet open for self-serve purchase, the reactivate button reads &ldquo;Contact us to reactivate&rdquo; instead.</p>
             </>
           ),
@@ -484,6 +508,7 @@ const orgHelp: HelpPageContent = {
         'renew', 'renew subscription', 'start paying again',
         'past due', 'payment failed', 'card declined', 'card expired', 'failed payment',
         '90 days', 'retention', 'coaches portal not working', 'scorekeeper stopped',
+        'keep plan', 'undo cancel', 'when does access stop', 'end of the period',
       ],
       searchText: 'if your subscription ends cancel cancelled canceled subscription ended stop paying lost access locked out cannot log in nothing works did we lose our data is our data deleted nothing is deleted data kept 90 days retention resubscribe reactivate renew restore access plan and billing billing page past due payment failed card declined card expired failed payment keeps working grace retry coaches portal stops scorekeeper stops check-in stops family portal stops public tournament pages go offline tryout registration closes dues reminder emails stop free coaches portal unaffected personal teams basic coach keeps their own work retained records restored within plan limits beyond limits kept until deadline owner only locked card rail foot more you club plan and billing',
       links: [
@@ -491,8 +516,8 @@ const orgHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p><strong>Cancellation starts a retention window.</strong> Plan &amp; billing names how long your records are kept. Reactivate within that window to restore the tools and retained records your plan allows. Records beyond its limits stay in retention until their deadline; data past that deadline may no longer be available.</p>
-          <p><strong>What stops.</strong> Access ends straight away, across everything: the Coaches Portal, tournament setup, scheduling and score entry, the scorekeeper and check-in apps, your public tournament pages, and the family-facing team pages and calendar feeds. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted — not an error, and not a page that half works.</p>
+          <p><strong>A cancelled plan runs to the end of the period you paid for.</strong> Until that day everything keeps working, nothing more is charged, and the owner can press <strong>Keep</strong> on Plan &amp; billing to carry on. <strong>When the plan ends, a retention window starts.</strong> Plan &amp; billing names how long your records are kept. Reactivate within that window to restore the tools and retained records your plan allows. Records beyond its limits stay in retention until their deadline; data past that deadline may no longer be available.</p>
+          <p><strong>What stops.</strong> On the day the plan ends, access ends across everything: the Coaches Portal, tournament setup, scheduling and score entry, the scorekeeper and check-in apps, your public tournament pages, and the family-facing team pages and calendar feeds. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted — not an error, and not a page that half works.</p>
           <p>Two related things stop as well, so nobody is left wondering: <strong>tryout registration closes</strong> (a form that is no longer being watched should not keep collecting families&rsquo; details), and <strong>automated dues reminder emails stop going out</strong>.</p>
           <p><strong>Your Plan &amp; billing page keeps working.</strong> An admin who opens the admin area lands there. Only the owner can reactivate; everyone else sees the locked card. It remains reachable at the foot of the sidebar and in More &gt; You on a phone for the owner.</p>
           <p><strong>A missed payment is not the same as cancelling.</strong> If a card fails, your account is marked past due and <em>everything keeps working</em> while the payment is retried and you are told about it. Access only stops if the subscription is actually cancelled at the end of that.</p>
@@ -504,39 +529,39 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-subscription-ended-data',
           question: 'We cancelled — did we lose our data?',
-          answerText: 'No records are deleted at cancellation. They are kept during the retention window shown on Plan & billing. Your account records are retained for 90 days after cancellation. Reactivate within that window to restore retained records within your plan limits — there is nothing to re-enter and nothing to import.',
+          answerText: 'No records are deleted when you cancel or when the plan ends. They are kept during the retention window shown on Plan & billing. Your account records are retained for 90 days after the plan ends. Reactivate within that window to restore retained records within your plan limits — there is nothing to re-enter and nothing to import.',
           keywords: ['did we lose our data', 'data deleted', 'is our data gone', 'lose everything', 'get data back', '90 days', 'retention', 'restore', 'cancelled data'],
           popular: true,
           answer: (
             <>
               <p><strong>No.</strong> Nothing is deleted when a subscription ends. Your seasons, rosters, schedules, records and history are all kept.</p>
-              <p>Your account records are retained for <strong>90 days</strong> after cancellation. Reactivate within that window to restore retained records within your plan limits — there is nothing to re-enter and nothing to import.</p>
+              <p>Your account records are retained for <strong>90 days</strong> after the plan ends. Reactivate within that window to restore retained records within your plan limits — there is nothing to re-enter and nothing to import.</p>
             </>
           ),
         },
         {
           id: 'faq-subscription-ended-access',
           question: 'Our coaches say the portal stopped working — why?',
-          answerText: 'If your organization\'s subscription was cancelled, access stops immediately for everyone: the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted. Check your Plan & billing page — an admin who opens the admin area is taken straight there, but only the owner can reactivate; other admins see a locked card. The owner can reactivate within retention, subject to the plan limits. If instead a payment simply failed, the account is marked past due and everything keeps working while the payment is retried, so a portal that has genuinely stopped means a cancellation, not a declined card.',
+          answerText: 'If your organization\'s plan has ended, access stops for everyone: the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted. Check your Plan & billing page — an admin who opens the admin area is taken straight there, but only the owner can reactivate; other admins see a locked card. The owner can reactivate within retention, subject to the plan limits. If instead a payment simply failed, the account is marked past due and everything keeps working while the payment is retried, so a portal that has genuinely stopped means the plan has ended, not a declined card. A cancelled plan keeps working until the end of the period paid for, so it stops only on that day.',
           keywords: ['portal stopped working', 'coaches locked out', 'coaches cannot log in', 'scorekeeper stopped', 'check-in stopped', 'no access', 'nothing works', 'subscription has ended message', 'why did access stop'],
           popular: true,
           answer: (
             <>
-              <p>If your organization&apos;s subscription was cancelled, <strong>access stops immediately for everyone</strong> — the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. They see a short note saying the subscription has ended and that nothing has been deleted.</p>
+              <p>If your organization&apos;s plan has ended, <strong>access stops for everyone</strong> — the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. They see a short note saying the subscription has ended and that nothing has been deleted.</p>
               <p>Open <strong>Plan &amp; billing</strong> — an admin who opens the admin area is taken straight there, but only the owner can reactivate; other admins see a locked card. The owner can reactivate within retention, subject to the plan limits.</p>
-              <p>If a payment simply <em>failed</em>, that is different: the account is marked past due and everything keeps working while the payment is retried. So a portal that has genuinely stopped means a cancellation, not a declined card.</p>
+              <p>If a payment simply <em>failed</em>, that is different: the account is marked past due and everything keeps working while the payment is retried. So a portal that has genuinely stopped means the plan has ended, not a declined card. A cancelled plan keeps working until the end of the period paid for, so it stops only on that day.</p>
             </>
           ),
         },
         {
           id: 'faq-subscription-restore',
           question: 'How do we get everything back?',
-          answerText: 'Subscribe again from Plan & billing. That page keeps working even while access is stopped, precisely so you can come back. Reactivate within the retention window to restore the tools and records your plan allows. Records beyond its limits stay in retention until their deadline. Your records are kept for 90 days after cancellation.',
+          answerText: 'If you cancelled and the plan has not ended yet, press Keep on Plan & billing and it carries on as before. Once it has ended, subscribe again from Plan & billing. That page keeps working even while access is stopped, precisely so you can come back. Reactivate within the retention window to restore the tools and records your plan allows. Records beyond its limits stay in retention until their deadline. Your records are kept for 90 days after the plan ends.',
           keywords: ['get everything back', 'restore access', 'resubscribe', 're-subscribe', 'reactivate', 'renew', 'start again', 'come back', 'subscribe again'],
           answer: (
             <>
-              <p>Subscribe again from <strong>Plan &amp; billing</strong>. That page keeps working even while access is stopped, precisely so you can come back.</p>
-              <p>Reactivate within the retention window to restore the tools and records your plan allows. Records beyond its limits stay in retention until their deadline. Your records are kept for <strong>90 days</strong> after cancellation.</p>
+              <p>If you cancelled and the plan hasn&rsquo;t ended yet, press <strong>Keep</strong> on <strong>Plan &amp; billing</strong> and it carries on as before.</p>
+              <p>Once it has ended, subscribe again from <strong>Plan &amp; billing</strong>. That page keeps working even while access is stopped, precisely so you can come back. Reactivate within the retention window to restore the tools and records your plan allows. Records beyond its limits stay in retention until their deadline. Your records are kept for <strong>90 days</strong> after the plan ends.</p>
             </>
           ),
         },
