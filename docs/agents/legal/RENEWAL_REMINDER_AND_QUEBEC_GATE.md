@@ -26,6 +26,19 @@ As above, from the cited lines.
 - Terms 0.3: §17 and §8 as listed in build prompt §9; add a sentence that Québec accounts opened before the gate keep their plan.
 - Tell `/accounting`: what tax a renewing account with a Québec address is charged is theirs to confirm; the reminder shows whatever Stripe's preview says.
 
+## The review before hand-off (Stage 6 step 6.6, 2026-11-16)
+- **Finding 3 re-checked: unchanged.** The `yearly_renewal_reminder` template still has no fixed block, and the save route checks
+  nothing for `{{lead}}` or the cancel line; the built-in words are used until an operator customises the template, and from
+  then on the date, amount and cancel line are operator text. → `/plan` (recommended: the purchase email's pattern — the date and
+  amount paragraph and the cancel sentence rendered by code outside the editable body; the template description gains "keep
+  this transactional: no offers or links"). Owner call: build before publication (recommended, small) or accept the risk with a
+  hand rule "never customise this template". Today no operator has customised it.
+- **Terms 0.3 applied:** §17 "no new purchase, upgrade or plan choice with a billing address in Québec; an account whose billing
+  address is already in Québec keeps the plan it has"; §8 the confirmation email is the notice for a yearly first payment chosen
+  under 38 days ahead (`/accounting`'s wording, which covers decision (a)); §3 "the account owner" = every owner.
+- **Decision (b), late send:** unchanged — an operating failure; the Terms keep "at least 30 days". The owner's refund-on-complaint
+  call stays open (not a 6.7 blocker).
+
 ## Sources
 - [Canada's Anti-Spam Legislation, s.6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-06 (via `CASL_SECOND_PARENT_EMAIL.md`)
 

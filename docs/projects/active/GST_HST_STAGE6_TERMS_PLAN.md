@@ -438,7 +438,7 @@ same day (the prompt's §9); Part A next.**
 > - **A paid → paid move down sends no email today** (only the on-screen message) [H `lib/plan-move.ts:527–553`].
 >   Recommend: send the existing "your move is scheduled" email for it too, in Part A.
 > - The GST/HST number must print on invoices in the Stripe dashboard (the email reads it from the invoice).
-> - **Terms 0.3 edits owed (`/legal`, from its 2026-11-13 read; the build prompt §9):**
+> - **Terms 0.3 edits owed (`/legal`, from its 2026-11-13 read; the build prompt §9) — applied in 6.6, 2026-11-16:**
 >   - §16 "a link to the version you accepted", not "a copy";
 >   - §17 "no new purchase, upgrade or plan choice" with a Québec billing address (today's "we do not accept a billing
 >     address" is untrue once one can be saved and renewed);
@@ -472,6 +472,74 @@ open: deleting one tournament, rep team, player or person still leaves its files
 - `/docs`: a help passage for the accept step and where the legal pages live; the billing articles' cancellation lines match §8.
 - Demos: the build's tour check passes with the switch on (the demo exemption).
 - Apply what they find, or record it as an owner question.
+
+**Outcome — run 2026-11-16 (prompt [GST_HST_STAGE6_6_REVIEWS_PROMPT.md](GST_HST_STAGE6_6_REVIEWS_PROMPT.md)).** Each review read the
+code, not this plan; the records live with the texts (the Terms draft's two "From the `/accounting`" blocks, the legal topic
+files' "6.6" sections).
+- **`/accounting` — applied 4, open 3.** Holds against the code: CAD only, every charging door taxed, upgrade charged now with
+  Stripe's figure re-checked, move down at renewal, cancel at period end, refunds through the credit-note tool, the email's
+  every listed item. Applied: §7 "one trial per plan" → a trial only on an organization's first paid plan (the product's
+  rule); §8 a yearly first payment under 38 days away is told by the confirmation email (the reminder skips it by design);
+  the price-rise procedure's step 5 timing (moving everyone on the notice day would break the 30 days); its own topic file's
+  stale $30 tier. Open: A (how "the unused part" is worked out), D (live invoice prints our number; pre-2026-11-06 prod
+  subscriptions renew untaxed), **E (new): a move up during a trial charges nothing, so no email goes and the trial email's
+  first-payment figure is the old plan's.**
+- **`/legal` — applied: Terms and Privacy Policy to 0.3, one code fix; CASL clean; open 3.** The 0.3 edits owed since 6.4
+  planning (§3 owners, §16 the link is the copy — settled, §17 "no new purchase from a Québec address", §20 and the policy
+  "at least six years"), the policy's acceptance row as built (no IP — verified on migration 455), every owner told who
+  bought. **Code fix:** the purchase email's Terms line said "The Terms of Service you accepted" to every owner; it now says
+  "…for this purchase" (test added). Every 6.2–6.4 email is transactional (links: invoice, billing page, Terms). The 6.1
+  privacy findings are stated truthfully (purge, a club deleting a child, two-step text gated to its release, self-serve
+  correction). Open: the reminder's editable template (below), the "No contracts" marketing line (→ `/marketing`), and
+  support@ (the Terms name it; the product shows hello@ until the one 6.7 edit).
+- **`/docs` — applied, two guides.** The club guide and the Coaches Portal guide said cancelling switches the plan off
+  **straight away** — untrue since the renewal-date cancel. Rewritten: cancel runs to the end of the paid period with
+  Keep until then, no refunds for part-periods, move up charged now plus tax, Québec, retention counted from the plan's end; a
+  new answer "Free trials, and the emails about your plan" (first-plan trial, the purchase email to every owner, the yearly
+  reminder, the failed-payment notice); "receipt" → "invoice"; Premium → Club credits the unused Premium. **The accept-step
+  and legal-pages passage is NOT published** — the 6.2 ruling keeps it to 6.7 (help is live on production; the pages are not).
+  Drafted for 6.7 below.
+- **Demos — clean.** The tour-destination guard and the exemption tests pass with `LEGAL_PAGES_PREVIEW=true` (147/147), and
+  the read-only check of both demo worlds passes ("2 presentable"). Nothing re-seeded.
+
+> **⚖ RULED 2026-11-16 (owner, "agreed" to each of the five, as recommended):**
+> 1. **Build** the reminder's fixed block (the date-and-amount paragraph and the cancel sentence rendered by code; the template
+>    description says "keep this transactional") **before 6.7** → `/plan` for the build prompt.
+> 2. **Send** the details email for a move up during a trial (trial words, the new plan's first payment) **before 6.7** → `/plan`,
+>    same build as 1.
+> 3. **"The unused part" (O3) = daily pro-rata of the last invoice**; a few cents' rounding under is accepted. No build: staff type
+>    the figure into the refund tool.
+> 4. **The price-rise procedure v0.2 is approved.**
+> 5. **"No contracts" reworded before 6.7** → `/marketing` ("No long-term contract — cancel any time"; for yearly, "Cancel any
+>    time; your plan runs to the end of the year you've paid for").
+>
+> Owner's own blocking steps (email receiving, the Stripe reads, the contact facts, the breach record): the checkable walk
+> [GST_HST_STAGE6_7_OWNER_STEPS_WALK.html](GST_HST_STAGE6_7_OWNER_STEPS_WALK.html) (ledger §533).
+
+**6.6 owner questions (each with a recommendation):**
+1. **The yearly reminder's template is editable** — a customised copy can drop the date, the amount or the cancel line the
+   §8 promise rests on. **Recommend: build** the purchase email's pattern (those lines rendered by code; operator edits only
+   an opening line) before publication → `/plan`, small. Or accept with a hand rule "never customise this template" (free;
+   nobody has).
+2. **E — a move up during a trial sends no email.** **Recommend: send** the details email for it (trial words, the new
+   plan's first payment) → `/plan`, small. Or accept: the move window showed the new price (free; a stale figure in the
+   customer's inbox).
+3. **A — the unused part when we end a plan (O3).** **Recommend:** daily pro-rata of the last invoice, a few cents' rounding
+   under accepted (no build; staff type the figure into the refund tool).
+4. **The price-rise procedure v0.2** — approve (internal; step 5 timing fixed).
+5. **"No contracts — cancel anytime"** on the marketing pages beside a contract with a no-refund rule. **Recommend:**
+   `/marketing` rewords before 6.7 ("No long-term contract — cancel any time"); copy only.
+
+**6.7 help passage, drafted (write it into the club guide's plan answer and the account help at 6.7, not before):**
+> **Our Terms of Service and Privacy Policy.** Both are linked at the foot of every page, under Sign out in the account menu
+> (Terms · Privacy), on your account page, and on the sign-in and sign-up cards. Each version stays at its own address.
+> - **When you agree:** you tick one box when you create your account. If you had an account before the Terms were
+>   published, a one-time screen asks you on your next sign-in. If we make a change that reduces your rights or raises what
+>   you pay, we email the owners 30 days ahead and the screen asks again; an owner of a paid plan can cancel from it instead.
+> - **Before a plan starts or changes**, a "Before you continue" window appears if you haven't agreed to the current version,
+>   then carries on where you left off. The line beside a plan's button reminds you the plan renews until you cancel.
+> - **What we keep:** which version you agreed to, the words you ticked, your email address, when and where — no internet
+>   (IP) address — for at least six years after your account closes. Your purchase email links the version for that purchase.
 
 ### 6.7 — Publication
 - Prerequisites: lookups L-a/L-b answered and in §6/§10; L-c answered and §6/§8 match it; taxed checkout on production (or §6

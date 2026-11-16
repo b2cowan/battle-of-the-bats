@@ -46,6 +46,27 @@ Read from the build prompt §6 and `lib/purchase-details.ts` / `lib/purchase-det
 No change to the email. Three owner questions: (1) add a "keep this transactional: no offers or links" line to the template's
 description; (2) reword the build prompt's "never paid" rule as above; (3) optionally one clause in the privacy policy §5.
 
+## The review before hand-off (Stage 6 step 6.6, 2026-11-16) — as built, and the every-owner billing emails
+Read from code (helper census, cited lines opened for the decisions): `lib/purchase-details.ts`, `lib/purchase-details-server.ts`,
+`lib/fieldlogichq-contact.ts`, migration 478; no new statute text.
+1. **Fixed — "The Terms of Service you accepted" went to every owner.** Only the buyer ticked; a co-owner who never accepted that
+   version was told they had. The line now reads "The Terms of Service for this purchase: version {date}" (preview: "the draft"),
+   with a test that "you accepted" never appears. The link still opens the buyer's accepted version (else the current one).
+2. **Links as built:** the invoice, the billing page and the Terms; the contact address is plain text. No pricing, sign-up or
+   upsell link. Holds finding 1.
+3. **Seller block today:** phone and mailing address are blank constants and their lines drop out (no placeholder); contact is
+   **hello@** (ruling Q3), so the Terms' support@ must be made true by the one 6.7 edit or the Terms changed.
+4. **Owner question 1 (keep-transactional line in the template description) — still open**; the description is a seeded row, so
+   it is a migration, not a copy edit → `/plan`, with the reminder's fixed block (`RENEWAL_REMINDER_AND_QUEBEC_GATE.md` 6.6).
+   **Owner question 3 applied:** privacy draft §3 now says every owner receives the plan emails, including who bought.
+5. **The billing emails now sent to every owner** (welcome back, trial ending, the plan-ending set, cancellation confirmation,
+   the retention warning): each carries one button to the dashboard or billing page, none a pricing or upgrade link, none an
+   unsubscribe. Sending them to every owner adds no CASL question — the owners are the customer. **Low, not a blocker:** the
+   cancellation confirmation's "Resubscribe" button and the plan-ending line "can come back if you upgrade before then" are the
+   nearest thing to an invitation to buy. Read as factual information about the recipient's own subscription (undo the cancel,
+   keep the plan), they stay outside "commercial"; if they ever name another plan or a price, they become CEMs (consent is
+   implied by the purchase, but they would need the s.6(2) unsubscribe). Reword to "Keep your plan" at the next touch.
+
 ## Sources
 - [Canada's Anti-Spam Legislation — s.6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-06 (via `CASL_SECOND_PARENT_EMAIL.md`)
 

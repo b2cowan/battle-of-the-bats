@@ -1,7 +1,8 @@
 # Raising a plan's price — the notice procedure (internal)
 
-> Version 0.1 · drafted 2026-11-13 by the Stage 6 step 6.4 planning session, from `/legal`'s steps that day. **Owner approval
-> owed**, with the rest of Stage 6 (6.6). Not customer-facing.
+> Version 0.2 · drafted 2026-11-13 by the Stage 6 step 6.4 planning session, from `/legal`'s steps that day; 0.2 2026-11-16
+> (6.6 `/accounting` review): step 5 moves each subscription only from its first renewal on or after step 1's date. **Owner-approved
+> 2026-11-16** (the 6.6 hand-over). Not customer-facing.
 > It makes true the Terms draft §8 "Price changes": *"If the price of your plan is going up, we will email the account owner at
 > least 30 days before the renewal at which the new price applies."* There is no build; this is done by hand.
 > - **Who:** `/strategy` decides the new price and its date, and logs it in `BUSINESS_DECISIONS.md` (the Plan & Pricing Facts
@@ -29,8 +30,12 @@
    Plain and factual, with no upsell (it is a transactional email under CASL).
 4. **Keep the record:** the date sent, every recipient, and each delivery result. Re-send or phone anyone whose email
    bounced. **Nobody moves to the new price without a delivered notice** (`BUSINESS_DECISIONS.md`, 2026-10-31, item 3).
-5. **Only then change the price** in Stripe and in the product. After the first affected renewal, check that the invoice
-   shows the new price, and that the yearly reminder (Stage 6 step 6.4) showed it too.
+5. **Only then change the price** in Stripe and in the product — and move each existing subscription **only from its first
+   renewal on or after the date in step 1**, never all at once on the day the notice goes. A Stripe price cannot be edited:
+   make a new price, put it in the product for new buyers from `/strategy`'s date, and give each affected subscription a
+   scheduled change that starts at that renewal, with no proration. (Moving every subscription straight after the notice would
+   charge a monthly plan renewing ten days later the new price — inside the 30 days.) After the first affected renewal, check
+   that the invoice shows the new price, and that the yearly reminder (Stage 6 step 6.4) showed it too.
 
 ## Notes
 - A yearly plan's 30-day reminder reads Stripe's preview of the next invoice. Once the price is changed in Stripe, the reminder

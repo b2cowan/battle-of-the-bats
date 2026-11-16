@@ -57,8 +57,9 @@ re-count production subscriptions made before 2026-11-06 (untaxed, tax owed by u
 
 **Check before the first live invoice (Part 7 walk, W9):** the live account's public business details (name, Ontario address) and that
 our **GST/HST number prints on live invoices and credit notes** (the account tax ID shown on documents). The sandbox prints it because
-the sandbox has it set; nothing read so far shows the live account does. A club needs it on any invoice of $30 and more to claim
-its input tax credits (Input Tax Credit Information Regulations; see GST_HST_ON_SUBSCRIPTIONS_CANADA.md), and every credit note must
+the sandbox has it set; nothing read so far shows the live account does. A club needs it on any invoice of $100 and more to claim
+its input tax credits (Input Tax Credit Information (GST/HST) Regulations, tiers since 2021-04-20 — the old $30 tier is gone; see
+GST_HST_ON_SUBSCRIPTIONS_CANADA.md), and every credit note must
 carry it (SOR/91-44 s.3(b); CREDIT_NOTES_ON_REFUNDS.md).
 
 Later, unchanged: provincial registrations only after registering with that province; the online-payment fee statement needs its own

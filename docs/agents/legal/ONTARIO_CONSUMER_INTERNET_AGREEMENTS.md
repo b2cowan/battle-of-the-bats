@@ -33,6 +33,11 @@ before an ordinary renewal**; trial lengths stated nowhere outside checkout; a c
 and a window over any stopped purchase (version, sentence, door and time recorded); every priced paid button carries §20 (3)'s
 renewal line, with a trial sentence where the plan has trial days (conditional where checkout decides). The purchase email
 (item 3, the copy) is still 6.4.
+**Update 2026-11-16 (6.6 review):** the purchase email is built (6.4 Part A, walked §525) and carries the item 1 list (less the
+phone and address, still owed — O1′), the buyer's name and the date, and — once published — a link to the frozen page of the
+version accepted. **Settled: that is the copy** ("a durable link to the accepted version plus the list", the recommendation
+below). Not settled in primary text: s. 33 of O. Reg. 17/05 (e-Laws and CanLII refused the fetch again 2026-11-16). The cost if
+wrong is the 30-day cancel for a consumer buyer, bounded at this scale; the fix would be attaching the Terms text to the email.
 
 ## Recommendation
 - Checkout/signup: a required accept-the-Terms step recording version, person and time (reuse the payout-terms shape).

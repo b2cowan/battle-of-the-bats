@@ -1,0 +1,263 @@
+<title>Terms Go-Live Owner Steps</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { button { min-height: 44px; } }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.warnline { color: var(--warn); }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner steps · GST/HST Stage 6 · before the Terms go live (step 6.7)</span>
+    <h1>The things only you can do before the Terms of Service and Privacy Policy are published</h1>
+    <p class="sub">Written 2026-11-16, after the 6.6 reviews. One purpose: get our addresses receiving mail, read two Stripe settings, put a business phone and mailing address in place, and start the breach record. Nothing here touches the product; the product work that also blocks publication is listed at the bottom, and the agents do it.</p>
+  </header>
+  <section class="card"><h2>Why these block publication</h2><ul>
+    <li><strong>Mail.</strong> The Terms name <code>support@fieldlogichq.ca</code>, the Privacy Policy names <code>privacy@fieldlogichq.ca</code>, and every product email replies to <code>hello@fieldlogichq.ca</code>. Checked 2026-11-16: the domain has <strong>no mail record</strong>, so mail to all three bounces today. A policy that gives an address nobody receives fails the law it is written to.</li>
+    <li><strong>Stripe’s retry setting.</strong> Terms §8 says a plan whose payment fails keeps working while it is retried and “may end”. Stripe decides how long and what happens after the last retry; only the dashboard shows it.</li>
+    <li><strong>The live invoice.</strong> Clubs need our GST/HST number on the invoice to claim their tax back, and no live invoice has been seen yet. The template preview shows it without selling anything.</li>
+    <li><strong>Phone and mailing address.</strong> Ontario asks a seller to give a buyer a phone number and a business address. Ruled O1′: no personal name and no home address; a phone line and a mail service’s street address.</li>
+    <li><strong>The breach record.</strong> Privacy Policy §10 says we keep a record of every breach. It becomes true the day the record exists, even empty.</li>
+  </ul></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1</strong> A test email to each of support@, hello@ and privacy@ arrives in the business Gmail, not in spam.</li>
+    <li><strong>2</strong> You have read Stripe’s retry setting and the live invoice template, and counted the live subscriptions made before Nov 6.</li>
+    <li><strong>3</strong> You have a business phone number and a mailing address that is not your home, and Stripe’s public details show them.</li>
+    <li><strong>4</strong> The breach record exists, in the business Google account, with its first line.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Accounts</dt><dd>The business Gmail (<code>fieldlogichq@gmail.com</code>), the AWS console (Route 53, where the domain lives), and the Stripe dashboard in <strong>live</strong> mode (not the sandbox).</dd>
+    <dt>A second email account</dt><dd>Any account that is <strong>not</strong> the business Gmail (your own, or an Outlook/Hotmail one), to send the test emails from. Gmail hides mail you send to yourself through a forwarder, so a test from the business Gmail proves nothing.</dd>
+    <dt>Time</dt><dd>About 45 minutes, plus however long a phone number and a mailing address take to set up (part 3 can be done on another day).</dd>
+    <dt>Order</dt><dd>Parts 1–4 are independent; do them in any order. Part 5 is last.</dd>
+    <dt>Keep private</dt><dd><strong>Do not type the phone number, the mailing address or any account number into this page.</strong> The summary is filed in the repo. Tick the step and give the two facts to Claude in the chat at step 6.7.</dd>
+  </dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+  <section class="card" id="callsCard"><h2>Your answers and calls (not counted in the progress)</h2><p class="sub">Tick what you read or what you choose; the box is the answer. Add a note if you like.</p><div id="calls" style="display:flex;flex-direction:column;gap:14px"></div></section>
+  <section class="card"><h2>What the agents do, not you (for your reference; no boxes)</h2><ul>
+    <li>Build your two rulings from the 6.6 review: the yearly reminder’s date, amount and cancel line written by the product, and the purchase email for a move up during a trial.</li>
+    <li><code>/marketing</code> rewords “No contracts — cancel anytime”.</li>
+    <li>A release that carries taxed checkout, the 6.4 database change and the 6.5 file deletion to production.</li>
+    <li>Then step 6.7: your approval of the final text, the phone and address put into the product, support@ made the product’s one address, and the switch.</li>
+  </ul></section>
+</main>
+<script>
+(function () {
+  var D = {"KEY":"gst-6-7-owner-steps-v1","TITLE":"GST/HST 6.7 · Owner steps before the Terms go live (2026-11-16)","PARTS":[
+{"id":"1","title":"Get support@, hello@ and privacy@ receiving mail (ImprovMX + Route 53 + Gmail)","intro":"Free forwarding into the business Gmail (ruled 2026-11-12). About 20 minutes. Nothing here changes how the product sends email.","steps":[
+{"who":"You · improvmx.com","do":"Go to <strong>improvmx.com</strong> and sign up with <code>fieldlogichq@gmail.com</code> (the free plan).","see":"An ImprovMX dashboard asking for a domain."},
+{"who":"You · ImprovMX","do":"Add the domain <code>fieldlogichq.ca</code>.","see":"The domain is listed, with a red or amber status (its records are not set yet) and the two mail records it wants: <code>mx1.improvmx.com</code> and <code>mx2.improvmx.com</code>."},
+{"who":"You · ImprovMX","do":"Create the alias <code>support</code> forwarding to <code>fieldlogichq@gmail.com</code>.","see":"<code>support@fieldlogichq.ca → fieldlogichq@gmail.com</code> in the alias list."},
+{"who":"You · ImprovMX","do":"Create the alias <code>hello</code> forwarding to the same Gmail.","see":"<code>hello@fieldlogichq.ca → fieldlogichq@gmail.com</code>."},
+{"who":"You · ImprovMX","do":"Create the alias <code>privacy</code> forwarding to the same Gmail.","see":"<code>privacy@fieldlogichq.ca → fieldlogichq@gmail.com</code>."},
+{"who":"You · ImprovMX","do":"If there is a catch-all alias (<code>*</code>), delete it.","see":"Only the three aliases are left. A catch-all forwards every typo and most spam."},
+{"who":"You · AWS console › Route 53 › Hosted zones › fieldlogichq.ca","do":"Press <strong>Create record</strong>: Record name <strong>blank</strong>, type <strong>MX</strong>, TTL <strong>300</strong>, value on two lines <code>10 mx1.improvmx.com</code> and <code>20 mx2.improvmx.com</code>. Save.","see":"A new MX record on <code>fieldlogichq.ca</code> itself. <strong>Do not touch</strong> the records named <code>send</code>, <code>resend._domainkey</code> or <code>_dmarc</code>: they carry the product’s own email."},
+{"who":"You · Route 53","do":"Press <strong>Create record</strong>: Record name <strong>blank</strong>, type <strong>TXT</strong>, TTL <strong>300</strong>, value <code>\"v=spf1 include:spf.improvmx.com ~all\"</code> (with the quote marks). Save.","see":"A new TXT record on <code>fieldlogichq.ca</code>. If Route 53 says a TXT record already exists on the root, stop and tell Claude: the two must be merged into one, not added twice."},
+{"who":"You · ImprovMX","do":"Wait a few minutes and refresh the dashboard.","see":"The domain turns <strong>green</strong> (“Email forwarding active”, or similar). If it is still red after 30 minutes, note what it says in the notes box."},
+{"who":"You · Gmail (fieldlogichq@gmail.com) › Settings › Filters › Create a new filter","do":"In <strong>To</strong> type <code>support@fieldlogichq.ca OR hello@fieldlogichq.ca OR privacy@fieldlogichq.ca</code>, press <strong>Create filter</strong>, tick <strong>Never send it to Spam</strong> and <strong>Apply the label</strong> “FieldLogicHQ”, and create it.","see":"The filter is listed. Mail to the three addresses will be labelled and kept out of spam."},
+{"who":"You · your second email account","do":"Send an email to <code>support@fieldlogichq.ca</code> with the subject “support test”.","see":"Within a few minutes it arrives in the business Gmail’s inbox, labelled FieldLogicHQ, not in spam.","check":true},
+{"who":"You · your second email account","do":"Send an email to <code>privacy@fieldlogichq.ca</code> with the subject “privacy test”.","see":"It arrives the same way.","check":true},
+{"who":"You · your second email account","do":"Find any email the product has sent to that account (an invitation, a sign-in link, a notice) and press <strong>Reply</strong>. Check the reply goes to <code>hello@fieldlogichq.ca</code>, then send it.","see":"It arrives in the business Gmail the same way. This is the address every product email replies to; until today those replies bounced.","check":true}
+]},
+{"id":"2","title":"Read the live Stripe settings (Stripe dashboard, live mode)","intro":"Readings only. You change nothing in this part. Put each reading in the answers card below.","steps":[
+{"who":"You · Stripe dashboard","do":"Make sure you are in <strong>live</strong> mode: no “Test mode” or “Sandbox” banner across the top.","see":"Your live account, named FieldLogicHQ."},
+{"who":"You · Stripe › Settings › Billing › Revenue recovery › Retries","do":"Read the retry schedule (how many tries, over how many days).","see":"A schedule such as “Smart Retries, up to 8 times within 2 weeks” or a custom list. Tick what it says under answer A1. If the menu has moved, search Settings for “Retries”."},
+{"who":"You · the same page","do":"Read what happens <strong>if all retries for a payment fail</strong> (the subscription status setting).","see":"One of: cancel the subscription, mark it unpaid, or leave it past due. Tick it under answer A2."},
+{"who":"You · Stripe › Settings › Business › Public details","do":"Read the business name, the support phone and the address shown.","see":"These print on every invoice and receipt Stripe sends. Tick what the address is under answer A3. Change nothing yet: part 3 does it."},
+{"who":"You · Stripe › Settings › Billing › Invoices (Invoice template)","do":"Open the invoice template’s <strong>preview</strong>.","see":"A sample invoice with <strong>FieldLogicHQ</strong> at the top, the address from Public details, and a line with our <strong>GST/HST number</strong> (the one ending 002). Tick answer A4.","check":true},
+{"who":"You · Stripe › Billing › Subscriptions","do":"Set the status filter to <strong>All</strong> and the Created filter to <strong>before Nov 6, 2026</strong>. Count the rows.","see":"A number, most likely 0 (nothing has been sold). Each one renews with no tax until it is moved, and the tax on it is ours to pay. Tick answer A5. Write no customer names here."}
+]},
+{"id":"3","title":"A business phone number and a mailing address (not your home)","intro":"The Terms §1 and the purchase email need both. A VoIP number is fine; the address must be a street address in Ontario where mail reaches you (a mail service or a store mailbox with a street address and a suite number). Do not type either one into this page.","steps":[
+{"who":"You","do":"Get a business phone number (a VoIP line that rings your phone or takes voicemail is fine).","see":"A number you will answer as FieldLogicHQ."},
+{"who":"You","do":"Get a mailing address in Ontario that is not your home (a mail service or a store mailbox that gives a street address).","see":"A street address with a suite or box number, where mail for FieldLogicHQ reaches you."},
+{"who":"You · Stripe › Settings › Business › Public details (live)","do":"Put the new phone in <strong>Support phone</strong> and the new address in the <strong>address</strong>, and save.","see":"Public details show FieldLogicHQ, the business phone and the mailing address, so invoices never print your home."},
+{"who":"You · Stripe › Settings › Billing › Invoices","do":"Open the invoice template’s preview again.","see":"The new address and phone, and the GST/HST number, on the sample invoice.","check":true}
+]},
+{"id":"4","title":"Start the breach record (business Google account)","intro":"The procedure recommends a private spreadsheet in the business Google account (option a). This is where the record lives, not what it says; the summary records only where.","steps":[
+{"who":"You · Google Sheets, signed in as fieldlogichq@gmail.com","do":"Create a spreadsheet named “FieldLogicHQ breach record”.","see":"An empty sheet in the business account’s Drive."},
+{"who":"You · the sheet","do":"Type the procedure’s 16 column headings in row 1: Entry number · Opened · Breach date · Determined date · Whose information · What happened · Information involved · How many people · Real risk of significant harm? and why · Contained · Reported to the Privacy Commissioner · People notified · Others told · Fix · Closed · Keep until.","see":"Sixteen headings in row 1. Two rules for later rows: never the names of affected people, and only the kinds of information, never the information itself. Each row is kept 24 months from its Determined date."},
+{"who":"You · the sheet","do":"In row 2, type “No breaches as of November 16, 2026” (or today’s date).","see":"An empty record is a record: Privacy Policy §10’s “a record of every one” is now true."},
+{"who":"You · the sheet’s Share button","do":"Check it is shared with <strong>no one</strong> (only you have access).","see":"“Only you can access” or no other names."},
+{"who":"You · myaccount.google.com › Security","do":"Check that <strong>2-Step Verification</strong> is on for <code>fieldlogichq@gmail.com</code>.","see":"2-Step Verification: On. If it is off, turn it on: the record and every customer email live in this account.","check":true}
+]},
+{"id":"5","title":"Hand back","steps":[
+{"who":"You","do":"Press <strong>Build summary</strong> at the top and paste it to Claude, with “6.7 owner steps done”. In the same message, give the phone number and the mailing address, if you have them.","see":"Claude checks the mail records from outside, records the readings in the Stage 6 plan and the ledger, and puts the phone and address where 6.7 needs them."}
+]}
+],"CALLS":[
+{"id":"A1","title":"Stripe’s retry schedule (part 2)","text":"What the Retries page says.","options":["Smart Retries (Stripe picks the times), within 1 week","Smart Retries, within 2 weeks","Smart Retries, within 3 weeks or longer","A custom schedule (write it in the note)","Retries are off"]},
+{"id":"A2","title":"If all retries for a payment fail (part 2)","text":"The Terms say the plan keeps working while the payment is tried again, and “may end”. The product treats a cancelled subscription as ended and an unpaid or past-due one as still working.","options":["Cancel the subscription","Mark the subscription as unpaid","Leave the subscription as past due"]},
+{"id":"A3","title":"The address Stripe’s public details showed before part 3","text":"It prints on every invoice.","options":["My home address","A business or mailing address already","No address","Something else (note)"]},
+{"id":"A4","title":"The live invoice preview (part 2)","text":"Does the sample invoice carry FieldLogicHQ and our GST/HST number?","options":["Yes, both","The name, but no GST/HST number","Something is wrong (note)"]},
+{"id":"A5","title":"Live subscriptions created before Nov 6, 2026 (part 2)","text":"Any of these renews untaxed until it is moved, and the tax on it is ours to remit.","options":["0","1 to 3 (give the count and their status in the note, no names)","More than 3 (count in the note)"]},
+{"id":"C1","title":"Terms §6 · the receipts line","text":"The draft keeps one of two lines. A says “Receipts and invoices are emailed to the account owner”. Stripe sends its receipts to one address, the buyer’s, while the Terms now say “the account owner” means every owner, so A would be untrue for a club with two owners. B says invoices are always on the billing page and we email the owners the details of each purchase, which is true whatever Stripe’s email settings are.","options":["B · invoices on the billing page, and our purchase email (recommended; true either way, no dashboard read needed)","A · Stripe emails receipts and invoices (then switch both Stripe customer emails on, and accept that only the buyer gets them)"]},
+{"id":"C2","title":"The breach procedure (internal)","text":"Written 2026-11-08: what counts as a breach, how to judge real risk of significant harm, who is told and when (people affected and the Privacy Commissioner for our own information; for a club’s information we tell the club straight away and the club decides), and each entry kept 24 months. Recommended: approve as written, with the record in the business Google account (part 4).","options":["Approve, with the record as a sheet in the business Google account","Approve, with the record somewhere else (say where in the note, never what it holds)","Not yet (say why)"]}
+]};
+  var KEY = D.KEY, TITLE = D.TITLE, PARTS = D.PARTS, CALLS = D.CALLS;
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    if (p.intro) body.appendChild(el('p', 'sub', p.intro));
+    p.steps.forEach(function (s, i) {
+      var id = p.id + '.' + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', (s.check ? 'Check: ' : 'You should see: ') + s.see));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id + ' (no phone numbers, addresses or account numbers)'; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  var callHost = document.getElementById('calls');
+  CALLS.forEach(function (c) {
+    var box = el('div', 'callbox'); box.style.cssText = 'display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px';
+    box.appendChild(el('strong', null, c.id + ' · ' + c.title));
+    box.appendChild(el('span', 'see', c.text));
+    c.options.forEach(function (o, i) {
+      var key = c.id + '.' + i;
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'call-' + key.replace('.', '-'); cb.checked = !!state.calls[key]; cb.style.cssText = 'width:18px;height:18px;margin-top:3px;accent-color:var(--accent);flex:none';
+      cb.addEventListener('change', function () { state.calls[key] = cb.checked; save(); });
+      var row = el('label', 'step'); row.style.borderTop = '0'; row.style.paddingBlock = '4px';
+      row.appendChild(cb); row.appendChild(el('span', 'txt', o)); box.appendChild(row);
+    });
+    var ta = document.createElement('textarea'); ta.id = 'callnote-' + c.id; ta.placeholder = 'Note (optional; no personal details)'; ta.value = state.callNotes[c.id] || '';
+    ta.addEventListener('input', function () { state.callNotes[c.id] = ta.value; save(); });
+    box.appendChild(ta); callHost.appendChild(box);
+  });
+  if (!CALLS.length) document.getElementById('callsCard').hidden = true;
+
+  function doneSteps(partId) { return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; }); }
+  var totalSteps = boxes.length;
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length, v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    if (CALLS.length) {
+      lines.push('Answers and calls (not counted):');
+      CALLS.forEach(function (c) {
+        var chosen = c.options.filter(function (o, i) { return state.calls[c.id + '.' + i]; });
+        lines.push('  ' + c.id + ' ' + c.title + ': ' + (chosen.length ? chosen.join(' / ') : 'not answered') + (state.callNotes[c.id] ? ' — ' + state.callNotes[c.id] : ''));
+      });
+    }
+    return lines.join('\n');
+  }
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    CALLS.forEach(function (c) { document.getElementById('callnote-' + c.id).value = ''; });
+    Array.prototype.forEach.call(document.querySelectorAll('#calls input[type=checkbox]'), function (b) { b.checked = false; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

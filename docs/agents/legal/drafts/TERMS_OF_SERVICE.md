@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| **Version** | 0.2 (draft) |
+| **Version** | 0.3 (draft) |
 | **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
 | **Effective date** | — (set on publication; the version then becomes that date, `YYYY-MM-DD`) |
-| **Last reviewed** | 2026-11-09 |
+| **Last reviewed** | 2026-11-16 |
 | **Backlog** | L1 (with L8 and L12 folded in); Québec (L7) answered by not selling there (§17); payments terms (L3) left out until written |
 
 **Change log**
@@ -27,6 +27,13 @@
 - 0.2 · 2026-11-09 · §20 item (3) gains the conditional trial sentence ("If your plan starts with a trial, …") for a screen
   that cannot know whether this purchase starts one (`/legal`, the Stage 6 step 6.3 Chunk C review: Tournament Plus is on
   sale with a trial for a first subscription, so the plain line under-told the main paid path).
+- **0.3 · 2026-11-16 · The review before hand-off (GST/HST Stage 6 step 6.6: `/accounting`, then `/legal`), read against the
+  6.2–6.4 build.** §3 "owners" (any owner can buy or cancel; "the account owner" in an email = every owner). §6 line B: "when you
+  start a plan or pay to move up". §7: a trial is for a first paid plan only (the product's rule), and its date is in the trial
+  email. §8: a yearly first payment chosen under 38 days ahead is told by the confirmation email. §16: the email's list, the
+  buyer and the date, and a link to the accepted version is the copy (the "a copy" question settled). §17: no new purchase,
+  upgrade or plan choice from a Québec billing address; a Québec account keeps its plan. §20: "at least" six years. Notes on
+  §8, §16, §17 brought up to the build.
 
 > **How to read this draft.** `[square brackets]` = a fact the owner must supply (only the phone and mailing address are left
 > — no personal name, by ruling O1′ — and the one Stripe choice in §6). A `> NOTE` block is for the owner and is deleted before publication.
@@ -84,7 +91,9 @@ You need a current web browser and an internet connection to use FieldLogicHQ.
 - **People you invite.** An organization's owner and administrators can invite other people (coaches, staff,
   officials, treasurers, volunteers, parents and others) and decide what they can see and do. The organization is
   responsible for the people it invites and for removing access when someone leaves.
-- **The owner controls billing.** Only an organization's or portal's owner can buy, change or cancel its plan.
+- **The owners control billing.** Only an organization's or portal's owners can buy, change or cancel its plan. An
+  organization can have more than one owner, and any of them can do it. Where these Terms say we email "the account owner",
+  we email every owner.
 
 ### If you joined through an organization
 
@@ -162,7 +171,7 @@ We may suspend access that puts other customers, children, or the platform at ri
   - *(A — Stripe's receipt and invoice emails are on)* **Receipts and invoices** are emailed to the account owner. Your
     invoices, which show the tax charged, are always available from your billing page.
   - *(B — they are off)* **Your invoices**, which show the tax charged, are always available from your billing page. We also
-    email the account owner the details of each purchase (§16).
+    email the account owner the details when you start a plan or pay to move up to a higher one (§16).
 
 > NOTES —
 > 1. **No price appears in this document on purpose**: prices have one home (the pricing page, kept matched to the Plan &
@@ -179,9 +188,9 @@ We may suspend access that puts other customers, children, or the platform at ri
 ## 7. Free trials
 
 Some paid plans start with a free trial. The length of the trial, and the date your first payment will be taken, are
-shown at checkout before you confirm. **Unless you cancel before the trial ends, your card is charged the plan's price, plus
-applicable taxes, on that date** and the plan continues under §8. Each organization gets one trial per plan; a returning customer does not
-get a second trial.
+shown at checkout before you confirm, and again in the email confirming your trial (§16). **Unless you cancel before the trial ends, your card is charged the plan's price, plus
+applicable taxes, on that date** and the plan continues under §8. A trial is for an organization's **first** paid plan: an
+organization that has had a paid plan with us before, on any plan, does not get a trial.
 
 > NOTE — the trial length and one-trial rule are set at checkout and enforced [H]. Still `/billing`'s check before
 > publication: no pricing card on a plan whose trial needs a card says "No credit card required" (`/marketing` owns the card
@@ -193,7 +202,9 @@ get a second trial.
 period, at the then-current price, and the card on file is charged — until you cancel.
 
 **Yearly plans.** For a yearly plan, we will email the account owner **at least 30 days before** it renews, with the
-renewal date and the amount, plus applicable taxes.
+renewal date and the amount, plus applicable taxes. If a yearly plan's first payment is due less than 38 days after you
+choose it (at the end of a short free trial, or for a next season you choose close to its start), the email confirming your
+choice is that notice: it gives the date and the amount.
 
 **Price changes.** If the price of your plan is going up, we will email the account owner **at least 30 days before**
 the renewal at which the new price applies. If you do not want to continue at the new price, cancel before that renewal.
@@ -228,8 +239,10 @@ unused part** of the period you paid for, including the tax on it, and send you 
 >    period end, no proration, no plan switches), so it holds on every door [H, Stage 6 plan §3 L-c]. Comped, Founding Season
 >    and free-time accounts have no paid period and end at once on cancel; they pay nothing, so "the period you paid for"
 >    does not apply and no clause is needed. Founding Season comps are honoured on the terms they were sold.
-> 2. **Yearly reminder (O2, ruled 2026-11-08)** — nothing sends it yet; Stage 6 step 6.4 builds it as a step of the daily
->    ending-reminder job. **This paragraph is not published before that build ships.**
+> 2. **Yearly reminder (O2, ruled 2026-11-08)** — built in Stage 6 step 6.4 Part B (a step of the daily job), walked §525
+>    2026-11-16. It is sent 37 to 30 days before the charge, late rather than never if the job missed the window, and skipped
+>    when the purchase email went out under 38 days before the first charge (that email is the notice — the paragraph's last
+>    sentence, added in the 6.6 `/accounting` review). Publish with the build on production.
 > 3. **Price-rise email** — no build; a written hand procedure (Stage 6 plan §6.4). A price change must never happen silently.
 > 4. **Failed payment** — written to hold whatever Stripe's live retry setting is (F2, still unread): a failed payment marks
 >    the plan past due and tells the owners [V `lib/billing-webhook-handler.ts:887–935`], a past-due plan keeps working
@@ -238,8 +251,8 @@ unused part** of the period you paid for, including the tax on it, and send you 
 >    customer [H].
 > 5. **Refund when we end a plan (O3, ruled)** — by hand at this scale, through platform admin's refund tool, which issues the
 >    credit note. **Never a bare card refund in Stripe's dashboard**: without a credit note our own GST/HST is not reduced
->    (`/accounting`, `CREDIT_NOTES_ON_REFUNDS.md` §Finding and closeout 1 [V]). How "the unused part" is worked out is
->    `/accounting` owner question A below.
+>    (`/accounting`, `CREDIT_NOTES_ON_REFUNDS.md` §Finding and closeout 1 [V]). **"The unused part" = daily pro-rata of the
+>    last invoice, a few cents' rounding under accepted (owner, 2026-11-16, question A).**
 
 ## 9. What happens to your information when a plan ends
 
@@ -328,24 +341,36 @@ may be a **consumer** under your province's consumer protection law. **Nothing i
 gives you**, and if a section of these Terms conflicts with it, the law wins. In particular, §14's limits and §15 apply to
 you only as far as that law allows.
 
-When you buy a plan, we email you a copy of these Terms and the details of your purchase: what you bought, the price, each
-tax by name and rate, the total, how often you will be charged, when the plan starts and renews, and how to cancel.
+When you start a plan, or pay to move up to a higher one, we email the account owner the details of the purchase: what was
+bought, by whom and when, the price, each tax by name and rate, the total, how often you will be charged, when the plan starts
+and renews, how to cancel, and a link to the version of these Terms you accepted. That version stays at its own address, word
+for word, so you can read or print it at any time. Keep the email: with the version it links to, it is your copy of our
+agreement.
 
-> NOTE — **not published before Stage 6 step 6.4 ships the purchase email** [V: no plan-purchase email kind exists]. It is
-> the largest exposure in these Terms: Ontario's Consumer Protection Act, 2002 (internet agreements over $50) wants the
-> disclosures before purchase, an express chance to accept, decline and correct, and **a copy within 15 days** — miss the copy
-> and the consumer may cancel within 30 days (`ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md`). The list in the paragraph above is
-> the Act's list as that topic file records it (the primary text was not fetched — read it before publication). Build it once
-> for every plan. Whether a link to the accepted version's page plus the listed items is "a copy", or the text itself must be
-> in the email, is settled in 6.6. The business address and phone in §1 are part of the same disclosure list.
+> NOTE — **the purchase email is built** (Stage 6 step 6.4 Part A, walked §525 2026-11-16) and goes to every owner on a first
+> plan, a trial, a next-season choice, a comeback and a charged move up; never on a renewal, a move down, or a move up that
+> charges nothing (during a trial — owner question E in the `/accounting` review). Ontario's Consumer Protection Act, 2002
+> (internet agreements over $50) wants the disclosures before purchase, an express chance to accept, decline and correct, and
+> **a copy within 15 days** — miss the copy and the consumer may cancel within 30 days (`ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md`).
+> **Settled in 6.6 (`/legal`, 2026-11-16): a link is enough, with the list in the email.** The email itself carries the listed
+> items, the buyer's name and the date; the Terms line links the frozen page of the exact version accepted, which never changes
+> and can be printed. That is "a copy in a form the consumer can keep and print". The conservative alternative (the Terms text
+> in or attached to every email) costs a build and makes a long email for a remedy that is a consumer's cancel right, bounded at
+> this scale. **Two gaps carried:** the regulation's copy section (O. Reg. 17/05 s. 33) was not read in the primary text — e-Laws
+> and CanLII refused the fetch again 2026-11-16 (lawyer's-eye list); and the phone and business address in §1 are still owed,
+> so until the owner fills them the copy lacks two items (O1′'s accepted remedy).
 
 ## 17. Where you are
 
 FieldLogicHQ is offered to organizations and individuals in **Canada**. It is **not currently offered in Québec**: we do not
-accept a billing address in Québec.
+take a new purchase, an upgrade or a plan choice with a billing address in Québec. An account whose billing address is
+already in Québec keeps the plan it has: it renews, and can move down or cancel, as usual.
 
-> NOTE — O4 (ruled 2026-11-08, logged in `BUSINESS_DECISIONS.md` 2026-11-08). True only once checkout refuses a Québec
-> billing address (Stage 6 step 6.4); the address step already captures the province [H `lib/billing-location.ts`]. Existing
+> NOTE — O4 (ruled 2026-11-08, logged in `BUSINESS_DECISIONS.md` 2026-11-08); Q6 (ruled 2026-11-13): every purchase door
+> refuses, upgrades included. Built in 6.4 Part B, walked §525: refused at checkout, the team checkout, the next-season
+> choice and a move up (its preview too) [V `lib/billing-location.ts:89` "We're not selling in Québec yet, so we can't take a
+> purchase with a billing address there…"]; saving the address, renewals, a move down, cancel, payouts and fee invoices are
+> untouched by design. The 0.2 sentence ("we do not accept a billing address") was untrue against that and is replaced (0.3). Existing
 > Québec accounts: none known. When Québec opens, L7 comes first (French-first contracts, Québec's Consumer Protection Act
 > limits on §8 and §14, Law 25). **The US:** the Plan & Pricing Facts say US customers can buy once the GST/HST US work ships;
 > when it does, this section and the Privacy Policy §14 change first (a minor version is not enough — new buyers, new law).
@@ -380,7 +405,7 @@ post them.
 You accept these Terms by ticking the box when you create your account. If you already had an account when we published
 these Terms, or when we make a change under §18 that needs your agreement, we ask you once, the next time you sign in.
 Before you start or change a plan, we check that you have accepted the current version. We keep a record of which version
-you accepted and when, for six years after your account closes.
+you accepted and when, for at least six years after your account closes.
 
 ### The words the product shows
 
@@ -565,18 +590,28 @@ open. Read them again."
 
 ## Before this can be published (owner — delete this section on publication)
 
-**Product must do first** (Stage 6 plan, steps 6.2–6.5):
-1. **6.2** the legal pages, each version readable at its own address, linked from the footer, account menu, account page,
-   sign-in and sign-up cards and our own account emails.
-2. **6.3** acceptance at every door, with the words in §20.
-3. **6.4** the purchase email (§16), the yearly reminder (§8), the Québec refusal at checkout (§17).
-4. **6.5** deleting an organization removes its stored files (the Privacy Policy rests on it).
-5. Taxed checkout on production (§6 "shown before you pay").
+**Product must do first** (Stage 6 plan, steps 6.2–6.5) — status at the 6.6 review, 2026-11-16:
+1. **6.2** the legal pages, versions at their own addresses, the links — built, walked §500.
+2. **6.3** acceptance at every door, with the words in §20 — built, walked §506; checked against the code in 6.6 (every
+   account door refuses without the tick; no IP kept; the record is append-only).
+3. **6.4** the purchase email (§16), the yearly reminder (§8), the Québec refusal (§17) — built, walked §525.
+4. **6.5** deleting an organization removes its stored files — built `45c134bea`; must be on production before publication.
+5. Taxed checkout on production (§6 "shown before you pay"), and the 6.4 migration applied there.
 
 **Owner, before 6.7:**
-- O1 · the phone and mailing address (§1; the seller's identity is ruled — O1′, no name); support@fieldlogichq.ca working;
-  hello@ receiving too.
+- O1 · the phone and mailing address (§1; the seller's identity is ruled — O1′, no name). Until they are filled, the purchase
+  email simply leaves both lines out.
+- **support@fieldlogichq.ca receiving mail.** These Terms name support@ in five places; the product shows **hello@** everywhere
+  today (ruling Q3), and one edit at 6.7 moves it to support@. If support@ is not working by then, these Terms say hello@ instead.
 - The two Stripe dashboard reads: customer emails (the §6 choice) and the retry setting (F2, §8 note 4).
+- ~~Approve `PRICE_CHANGE_NOTICE_PROCEDURE.md`~~ — approved 2026-11-16.
+- Your own steps are one checkable walk: `docs/projects/active/GST_HST_STAGE6_7_OWNER_STEPS_WALK.html` (ledger §533).
+- **"No contracts" on the marketing pages** (`/legal` 6.6, the item the 6.2 session left for it): the pricing page, the three
+  segment pages and the pricing cards say "No contracts — cancel anytime" and, of yearly billing, "No contracts, no penalties",
+  beside Terms that are a contract, a yearly plan paid in advance and a no-refund rule (§8). "Cancel anytime" is true; "no
+  contracts" invites a consumer to argue the no-refund rule was hidden (a misleading-representation point under Ontario's CPA
+  2002, low). → `/marketing` before 6.7, recommended "No long-term contract — cancel any time" and, for yearly, "Cancel any
+  time; your plan runs to the end of the year you've paid for." The "Upgrade or downgrade at any time" line holds.
 
 ## From the `/accounting` read (2026-11-08)
 
@@ -605,6 +640,43 @@ an invoice.
 - **D** · Before 6.7: check that a **live** invoice prints our GST/HST number and the Ontario business details (the test account
   reads a PEI sandbox address), and count production subscriptions made before 2026-11-06 (`STRIPE_TAX_SETUP.md`).
 
+## From the `/accounting` review (Stage 6 step 6.6, 2026-11-16)
+
+Research, not an accountant's sign-off. Topic files fresh (2026-11-05 to 11-07); no re-verify trigger fired. Read against the
+code, and against the purchase email and the yearly reminder as they render (the 6.4 tests' fixtures; walk §525's figures).
+
+**Holds, against the code:** §6 CAD only (a non-CAD price fails the catalog check), every live charging door taxes by the
+billing address, invoices with tax on the billing page; §8 cancel at the period end with undo, upgrade charged now as a
+prorated invoice with Stripe's figure shown first and re-checked at the press (Premium → Club nets the unused Premium as a
+credit, walk E4: $218.61 − $28.95 + $24.66 HST = $214.32), move down at the renewal with no credit, failed payment tells every
+owner and keeps the plan working, the end-a-plan refund goes through the console tool that issues a credit note. §16 the email
+carries every listed item (plan, cycle, price before tax, each tax by name and rate, total in CAD, start and renewal, how to
+cancel), our business name and GST/HST number, the invoice link, and never calls itself a receipt or an invoice; a zero-rated
+sale reads "GST/HST 0%". The trial email's after-trial tax is labelled "Estimated tax, based on your billing address today" —
+**question B above is answered by the build**. The reminder's figures are the plan's own lines of Stripe's preview (a queued
+fee line never inflates them).
+
+**Applied in this review:**
+- **§7 trial rule.** The draft said "one trial per plan"; the product gives a trial only for an organization's **first** paid
+  plan (any earlier subscription, on any plan, withholds it). Words changed to match the product (narrower promise; nothing
+  to build).
+- **§8 yearly reminder.** "At least 30 days" was untrue for a yearly first payment chosen under 38 days ahead (a Tournament
+  Plus yearly trial is told about 14 days ahead, by the trial email only — the reminder skips it on purpose). One sentence
+  added naming the confirmation email as the notice in that case. The remaining gap is a job outage, which sends late rather
+  than never — an operating failure, not a promise to word around.
+- **Price-change procedure step 5** (internal): moving every subscription on the notice day would charge a monthly plan
+  renewing inside 30 days the new price. Step 5 now moves each subscription from its first renewal on or after step 1's date.
+- **`STRIPE_TAX_SETUP.md`'s $30 tier** corrected to $100 (question C closed).
+- **§17 Québec** confirmed untrue as worded ("we do not accept a billing address": one can be saved, and stored accounts
+  renew) — `/legal`'s 0.3 edit, applied in the legal pass. A renewal billed to Québec carries 5% GST and no QST and still counts
+  toward the $30,000 specified-system test (`GST_HST_ON_SUBSCRIPTIONS_CANADA.md`, already recorded).
+
+**Ruled 2026-11-16 (owner):** A — daily pro-rata of the last invoice, rounding under accepted; E — send the details email for a
+trial move up, built before 6.7. **Still open:** D (a **live** invoice and credit note print our GST/HST number
+and Ontario details; the count of production subscriptions made before 2026-11-06, which renew **untaxed** until moved — the
+tax on them is ours to remit). New: **E** a move up **during a trial** changes the plan and charges nothing, so no email goes
+and the trial email's "first payment" figure is now the old plan's — see the 6.6 owner questions in the Stage 6 plan.
+
 ## For a lawyer's eye
 
 - **§1 the seller named only by its business name** (O1′, ruled 2026-11-08) — Ontario's internet-agreement rule asks a
@@ -617,8 +689,9 @@ an invoice.
   club, plus an indemnity, holds up when the platform designed the forms that collect it.
 - **§8 automatic renewal and no-refund** — against Ontario's CPA 2002 and the CPA 2023 once in force (not confirmed in
   force as of 2026-11-05).
-- **§16 consumer carve-out** — the internet-agreement disclosure and copy rules; whether the confirmation email as designed
-  satisfies them.
+- **§16 consumer carve-out** — the internet-agreement disclosure and copy rules; whether the confirmation email as built (the
+  listed items, the buyer, the date, and a link to the frozen version rather than the text) is "a copy". O. Reg. 17/05 s. 33 was
+  not read in the primary text (e-Laws and CanLII refused the fetch, 2026-11-08 and 2026-11-16).
 - **§3 "If you joined through an organization"** (new in 0.2) — whether a parent or volunteer who pays nothing is bound by
   click-through Terms at all (consideration), and whether acceptable use is enforceable against them; and whether an age
   attestation with no check is enough where a teenage fan can reach the "follow" door.

@@ -28437,3 +28437,12 @@ performed over the shared working tree. The original walk result is not claimed 
 **Not walked:** pressing Send the changes (it would email the coaches on the copy; `club-schedule-add-time-send.test.ts` runs the send's own planChanges and changesMoney with the database stubbed); a coach's Money › Club tab after a send; a credit or correction to the cent beyond the stated relationships.
 **Owed after the walk:** `check:layout --changed` is the owner's call; teardown as in §531 (untested; read it back); `/docs` and `/demos` stay owed at the Close.
 <!-- /§532 -->
+
+
+## §533 · GST/HST Stage 6 · the owner's own steps before the Terms go live (step 6.7 prerequisites) — **support@, hello@ and privacy@ receive mail (ImprovMX forwarding into the business Gmail; the domain had no mail record on 2026-11-16, so all three bounced, including replies to every product email); Stripe's live retry setting and "if all retries fail" read; the live invoice template shows FieldLogicHQ and our GST/HST number; live subscriptions made before Nov 6 counted; a business phone and an Ontario mailing address that is not a home, put into Stripe's public details; the breach record started in the business Google account** · walk published 2026-11-16, owner walk owed
+<!-- §533 -->
+**Walk (checkable):** https://claude.ai/artifact/AdALaBgY7RkpWma7EWbdT1 (source `docs/projects/active/GST_HST_STAGE6_7_OWNER_STEPS_WALK.html`); 5 parts, 29 steps; **5 answers + 2 calls outside the counter** (A1 retry schedule, A2 after the last retry, A3 the address Stripe showed, A4 the invoice preview, A5 the subscription count; C1 the Terms §6 receipts line, recommended B; C2 approve the breach procedure).
+**Why:** the 6.6 reviews (plan `GST_HST_STAGE6_TERMS_PLAN.md` §5 6.6) left these as the owner's; the 6.6 rulings (all five as recommended, 2026-11-16) are recorded there. Not product steps: the two ruled builds, `/marketing`'s "No contracts" reword and the release are agents' work, listed on the walk without boxes.
+**Keep out of the summary:** the phone number, the mailing address and any account number (the walk says so twice); they go to Claude in the chat at 6.7.
+**Owed after the walk:** an outside check of the domain's MX and SPF records; the readings into the Stage 6 plan (§3 L-c) and the Terms draft (§6 line, §8 note 4); the breach record's place into `LEGAL_FACTS.md` (where, never what).
+<!-- /§533 -->

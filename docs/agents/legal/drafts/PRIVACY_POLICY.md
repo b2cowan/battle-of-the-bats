@@ -2,13 +2,18 @@
 
 | | |
 |---|---|
-| **Version** | 0.2 (draft) |
+| **Version** | 0.3 (draft) |
 | **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
 | **Effective date** | — (set on publication; the version then becomes that date, `YYYY-MM-DD`) |
-| **Last reviewed** | 2026-11-12 |
+| **Last reviewed** | 2026-11-16 |
 | **Backlog** | L2 (with L9 findings); children's consent wording (L5) and CASL lawful basis (L6) are referenced, not settled |
 
 **Change log**
+- **0.3 · 2026-11-16 · The review before hand-off (GST/HST Stage 6 step 6.6, `/legal` after `/accounting`).** §3 acceptance row:
+  also the exact words ticked and the email used (as built), and "at least" six years; §3 emails: every owner receives the plan
+  emails, including who bought; §6 Stripe row: a reference to the account that made the purchase; §9 "at least six years" (no
+  automatic end yet — finding 1). Checked against the build: no IP on the acceptance record, self-serve name/email correction
+  still absent (§11 holds).
 - 0.2 · 2026-11-15 · §9: deleting an organization removes the files uploaded to it (Stage 6 step 6.5, built `45c134bea`); the
   sentence now names what is kept (our tax records and our record that the deletion happened) and that routine database
   backups age out on the host's schedule (owner yes 2026-11-15). Note 2 and finding 1 updated; a new open finding on
@@ -92,7 +97,7 @@ officials, treasurers, volunteers), and people who buy a plan. Everyone who hold
 | What we collect | Why |
 |---|---|
 | Name, email address and password | To create your account, sign you in and contact you about it. Your password is stored by our sign-in provider in a protected (hashed) form; we never see it. |
-| Which version of our Terms of Service and this policy you accepted, when, and where (for example at sign-up or at checkout) | To show what you agreed to. We keep it for six years after your account closes (§9). We don't record your internet (IP) address for this. |
+| Which version of our Terms of Service and this policy you accepted, the exact words you ticked, the email address you used, when, and where (for example at sign-up or at checkout) | To show what you agreed to. We keep it for at least six years after your account closes (§9). We don't record your internet (IP) address for this. |
 | The organizations and teams you belong to, your role and title | To show you the right screens and let the club control who sees what. |
 | For the account owner who buys a plan, or who turns on online payments for a club: the billing address, and (when a card is used) the card's brand, last four digits and country | To bill you — for your plan, and for the Stripe fees a club's online payments cause — to work out the sales tax that applies, and to show you which card is on file. Your full card number goes to Stripe, never to us. |
 | **For each sale, our tax record of it:** the name on the invoice, the full billing address it was taxed on (including the postal code — **for a coach buying as a person, that is usually a home address**), the card's country, the country of a club's payout account, and, where a buyer declares where they are, which version of that declaration they gave and when | The tax law requires us to keep evidence of where each sale was taxed. It is kept apart from your account, so closing the account does not remove it (§9). Our staff can see it to answer tax questions, and can add a note to a sale that needs a second look. |
@@ -110,15 +115,20 @@ third-party analytics tools.
 **Our emails to you.** We send account holders emails about their account, their organization and their plan — for
 example sign-in links, invitations, renewal and payment notices, a club's monthly invoice for its Stripe fees, notices when two-step sign-in is turned on or off, or your password is
 changed from inside FieldLogicHQ, and, where an organization requires two-step sign-in for your role, an email when your set-up time
-starts and a reminder three days before it ends. These are part of the service. We only send promotional emails (news about features or offers) in line with Canada's anti-spam
+starts and a reminder three days before it ends. These are part of the service. If an organization has more than one owner,
+each owner receives the emails about its plan — including, when a plan is bought or moved up, the name or email address of
+the owner who did it. We only send promotional emails (news about features or offers) in line with Canada's anti-spam
 law, and every one has an unsubscribe link.
 
 > NOTES —
 > 1. **Tax record contents** [H, cited lines opened: migration 451 L50, L65–81]: the payout country is new to the policy in
 >    0.2. The staff "looked at" log (migration 452) keeps the staff member's email — staff data, not a customer's; covered by
 >    §5's "recorded".
-> 2. **Acceptance records** describe Stage 6 step 6.3 as planned (no IP address, plan §5.3). **The row is published only with
->    6.3**; if the build adds an IP address, this row changes.
+> 2. **Acceptance records — checked against the build 2026-11-16 (6.6).** One row per tick: account id, the email as text, the
+>    Terms and privacy versions, the exact box sentence, the door, the time — **no IP address, browser or device** [V migration
+>    455 :39-48]. Append-only (update and delete refused; the one allowed change is the account id going blank when the account
+>    is deleted, so the row and its email survive). Nothing removes a row at six years yet, hence "at least" (finding 1). The
+>    family guardian-consent record is a different table and does keep an IP — §5's registrants line covers it.
 > 3. **Feedback** [H, `app/api/feedback/route.ts:107–127`]: also stores the user id, the club's web-address name, the help
 >    section, app version and a request id — covered by "role and organization". Finding 8 (is the IP needed?) stands.
 > 4. Finding (L6): signup today records an **opt-out**, not an express opt-in, for promotional email. A buyer gives
@@ -290,7 +300,7 @@ needs. We do not sell personal information, and we do not share it with advertis
 | **Supabase** | Database, sign-in and file storage | Everything stored in FieldLogicHQ | United States (Ohio) |
 | **Amazon Web Services (AWS)** | Hosts the website; holds our own business records (expenses and receipts, tax returns) | Everything that passes through the website. Our business records hold no customer's name or address | United States (Ohio) |
 | **Resend** | Sends our emails, and the emails clubs send through FieldLogicHQ | Recipient's name and email address, and the message | United States |
-| **Stripe** | Card payments for our plans and our invoices for Stripe fees; and, when a club takes payments online, the club's own payment account | For our plans and invoices: the owner's email, the billing name and address, and the card. For club payments: the payer's email, card, what is being paid for and the player names on the payment | Canada, the United States and other countries |
+| **Stripe** | Card payments for our plans and our invoices for Stripe fees; and, when a club takes payments online, the club's own payment account | For our plans and invoices: the owner's email, the billing name and address, the card, and a reference to the account that made the purchase. For club payments: the payer's email, card, what is being paid for and the player names on the payment | Canada, the United States and other countries |
 | **Google** (a Gmail account) | Our business email inbox — the addresses on this page arrive there | Messages people send us, which can include contact details | The United States and other countries |
 | **Your browser's push service** (for example Google, Apple or Mozilla) | Delivers notifications you turn on | A notification address and the alert text, which can name a person, a child or a team, or give an email address (for example "New sign-up: Henry Kim") | Varies |
 
@@ -369,8 +379,8 @@ and email addresses.
   after the end of the tax year they relate to. They include, for each sale, the name, billing address and card country it
   was taxed on. Closing your account, deleting an organization, or asking us to delete your information does not remove
   these records before that period ends.
-- **The record of which version of our Terms of Service you accepted** (§3) is kept for **six years** after your account
-  closes, so we can show what was agreed if a question about it comes up later. It keeps the email address you used at the
+- **The record of which version of our Terms of Service you accepted** (§3) is kept for **at least six years** after your
+  account closes, so we can show what was agreed if a question about it comes up later. It keeps the email address you used at the
   time; closing your account does not remove it before that period ends.
 - **Information a club keeps** stays while its organization exists; the club decides how long to keep its members'
   information. A club can remove a player from a team, but a child's record (§5) is kept until we delete it at the club's

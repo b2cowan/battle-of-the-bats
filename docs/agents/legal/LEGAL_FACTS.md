@@ -1,5 +1,5 @@
 # FieldLogicHQ — Legal Facts
-**Last updated:** 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
+**Last updated:** 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
 Stage 6 step 6.1). Seeded 2026-11-04 from a repo census — each fact carries its source; re-open the source before a draft
 rests on it.
 
@@ -109,7 +109,11 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   privacy draft's §6 doubles as the first subprocessor list).
 - No legal links in the site footer; the account page leaves Terms and Privacy out on purpose (owner
   2026-07-20: omit rather than link a page that 404s).
-- No "I agree" at account or organization signup. **Census 2026-11-08** (Stage 6 plan §7): accounts are created at about eight
+- ~~No "I agree" at account or organization signup.~~ **Superseded 2026-11-16 (6.6 review):** the accept step is built
+  (Stage 6 step 6.3, walked §506) and held behind the legal-pages switch until 6.7 — every account door refuses without the
+  tick; the record is append-only (account id, email as text, both versions, the exact box sentence, door, time; **no IP**;
+  migration 455); purchases and organization creation are refused without the current Terms, cancel never is. The purchase
+  email and yearly reminder (6.4, walked §525) go to every active owner. The 2026-11-08 door census, for history: **Census 2026-11-08** (Stage 6 plan §7): accounts are created at about eight
   doors, two with no sign-up page (the account a tournament registration makes for the registering coach; the "follow this
   tournament" nudge, which lets anyone — possibly a teenage player — make an account). Organizations at four routes; plans at
   about six.
