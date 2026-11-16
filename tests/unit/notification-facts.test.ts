@@ -1,6 +1,6 @@
 /**
  * Notifications read at a glance, Stage 2 — the shared stored-facts shape (plan
- * docs/projects/active/NOTIFICATION_MESSAGE_ROWS_PLAN.md; drawing tab 1; owner rulings Q1–Q3 and Q9, 2026-11-14).
+ * docs/projects/archive/NOTIFICATION_MESSAGE_ROWS_PLAN.md; drawing tab 1; owner rulings Q1–Q3 and Q9, 2026-11-14).
  *
  *   · the shape round-trips through a notification's metadata; anything else reads as null (the notice keeps its paragraph)
  *   · every label in the shared vocabulary is at most 11 characters (Q1)

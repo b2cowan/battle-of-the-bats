@@ -1,6 +1,6 @@
 /**
  * WHAT "SCORE SUBMITTED" SAYS — the one wording every sender of `score_submitted` calls (Notifications read at a glance,
- * Stage 5; plan docs/projects/active/NOTIFICATION_MESSAGE_ROWS_PLAN.md, owner rulings 2026-11-15 Q1–Q4, "as recommended").
+ * Stage 5; plan docs/projects/archive/NOTIFICATION_MESSAGE_ROWS_PLAN.md, owner rulings 2026-11-15 Q1–Q4, "as recommended").
  *
  * Three senders (Field scores; Results' score entry; Results' forfeit) each built their own words, and none said which game
  * or what score — only who entered it, and the same words whether the score was final or waiting for an admin's approval.

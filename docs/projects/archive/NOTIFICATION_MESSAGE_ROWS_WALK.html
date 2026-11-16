@@ -1,0 +1,374 @@
+<title>Notification rows walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column of cards; each step is Do / See so nothing is left to guess. Same house look as before. */
+:root{
+  --bg:#f6f6f2; --panel:#ffffff; --fg:#1d2320; --muted:#5d665f; --line:#d9dcd3;
+  --accent:#1f5f4a; --accent-fg:#ffffff; --pass:#1f7a4d; --issue:#b3261e; --call:#9a6700;
+  --chip:#eceee6; --mark:#fff3c4; --seebg:#eef5f0;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-data: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --panel:#1b221f; --fg:#e6ebe7; --muted:#9aa59d; --line:#2e3833;
+  --accent:#6fcfa6; --accent-fg:#0d1612; --pass:#58c98d; --issue:#ff8a80; --call:#e5b94c;
+  --chip:#232c28; --mark:#4a4220; --seebg:#1f2b25; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --panel:#1b221f; --fg:#e6ebe7; --muted:#9aa59d; --line:#2e3833;
+  --accent:#6fcfa6; --accent-fg:#0d1612; --pass:#58c98d; --issue:#ff8a80; --call:#e5b94c;
+  --chip:#232c28; --mark:#4a4220; --seebg:#1f2b25; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);line-height:1.5;
+  padding-block:20px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;text-wrap:balance}
+h2{font-size:1.1rem;margin:0;text-wrap:balance}
+p{margin:0}
+code,.mono{font-family:var(--font-data);font-size:.85em;background:var(--chip);padding:1px 5px;border-radius:4px;word-break:break-word}
+.lede{color:var(--muted);max-width:68ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.signin{border-left:4px solid var(--accent)}
+dl.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;min-width:0;word-break:break-word}
+@media (max-width:520px){dl.kv{grid-template-columns:1fr}dl.kv dt{margin-top:6px}}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.bar progress{flex:1;min-width:120px;height:10px;accent-color:var(--accent)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:8px;padding:6px 12px}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+ol.steps>li{display:flex;gap:10px;align-items:flex-start;padding-top:14px;border-top:1px solid var(--line)}
+ol.steps>li:first-child{padding-top:0;border-top:0}
+ol.steps>li>input[type=checkbox]{margin-top:4px;width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.step{min-width:0;display:flex;flex-direction:column;gap:6px;flex:1}
+.step>label{font-weight:600}
+li.done .step>label{color:var(--muted)}
+.row{display:grid;grid-template-columns:3.4rem 1fr;gap:8px;min-width:0}
+.row>b{font-size:.72em;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.row>div{min-width:0}
+.row.see>div{background:var(--seebg);border-radius:6px;padding:6px 10px}
+.row ol,.row ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
+.row p+p{margin-top:4px}
+.where{color:var(--muted);font-size:.9em}
+.who{display:inline-block;font-size:.72em;font-weight:600;padding:1px 8px;border-radius:99px;background:var(--chip);color:var(--muted);margin-left:6px;vertical-align:1px}
+.verdict{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.verdict button[aria-pressed="true"].v-pass{background:var(--pass);color:#fff;border-color:var(--pass)}
+.verdict button[aria-pressed="true"].v-issue{background:var(--issue);color:#fff;border-color:var(--issue)}
+.verdict button[aria-pressed="true"].v-call{background:var(--call);color:#fff;border-color:var(--call)}
+textarea{width:100%;min-height:54px;font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px;box-sizing:border-box}
+.call{background:var(--mark);padding:12px 14px;border-radius:8px}
+.note{background:var(--mark);border-radius:8px;padding:8px 10px}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--chip);padding:10px;border-radius:8px;margin:0;font-family:var(--font-data);font-size:.85em;max-height:340px;overflow:auto}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92em}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.8em;text-transform:uppercase;letter-spacing:.05em}
+</style>
+
+<main>
+<header class="card" style="gap:6px">
+  <h1>Notification rows walk</h1>
+  <p class="lede">Every notice that now opens as labelled rows, in one pass: the money and club notices (a computer), the coach notices (a phone-sized window), and “Score submitted” made by entering real scores. 48 steps, about an hour and a quarter. Every step says what to open and do (Do) and what you should see (See).</p>
+</header>
+
+<section class="card signin" aria-label="Before you start">
+  <h2>Before you start</h2>
+  <dl class="kv">
+    <dt>App</dt><dd><code>http://localhost:3000</code>. The dev server was restarted after the Stage 5 commit. Dev only; keep this page private.</dd>
+    <dt>Parts 1 and 4</dt><dd>Club owner <code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> · UAT Rep Club.</dd>
+    <dt>Part 2</dt><dd>Coach <code>uat-coach@uat-test-org.local</code> · <code>UATPassword2026!</code> · UAT Rep Club (a private window, about 390 px wide).</dd>
+    <dt>Part 3</dt><dd>Dev Test Org, all with <code>devpass123</code>: owner <code>owner@dev.local</code>, admin <code>admin@dev.local</code>, scorekeeper <code>j8-scorekeeper@dev.local</code>, coach <code>coach@dev.local</code>. Two windows (a private one for the second person).</dd>
+    <dt>Reset</dt><dd>Part 3 uses up the two semifinals. To play it again, run <code>node --env-file=.env.local scripts/seed-live-tournament.mjs</code> (it rebuilds the Live Demo tournament). Part 1 and 2 reset with the seed in step 0b.</dd>
+    <dt>Stop check</dt><dd>If step 0b does not print “seeded 38 notices”, stop and tell me; nothing below will make sense.</dd>
+  </dl>
+</section>
+
+<div class="bar" role="status">
+  <progress id="prog" value="0" max="1"></progress>
+  <span id="progText" class="mono">0 of 0</span>
+  <button class="primary" id="summaryBtn" type="button">Build summary</button>
+</div>
+
+<section class="card" id="p0" data-part="0">
+  <h2>0 · Get ready (about 5 minutes)</h2>
+  <p class="where">Two checks. Everything else in this walk is already in place: the notices of Parts 1 and 2 were put in the two bells for you, and the game of Part 3 is the Live Demo tournament.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s0a"><div class="step"><label for="s0a">The site loads on the new code <span class="who">Dev</span></label>
+      <div class="row"><b>Do</b><div>Open <code>http://localhost:3000/auth/login</code>.</div></div>
+      <div class="row see"><b>See</b><div>The login page loads. (The dev server was restarted after the Stage 5 commit, so the new notice code is running.)</div></div></div></li>
+    <li><input type="checkbox" id="s0b"><div class="step"><label for="s0b">The notices are in the two bells <span class="who">Dev</span></label>
+      <div class="row"><b>Do</b><div>In a terminal at the project folder, run <code>node scripts/seed-notification-rows-walk.mjs</code>. It is safe to run again: it replaces its own earlier notices, so run it any time Part 1 or 2 is getting messy.</div></div>
+      <div class="row see"><b>See</b><div>It ends “seeded 38 notices: 25 for uat-club-owner@uat-rep-club.local, 13 for uat-coach@uat-test-org.local (org uat-rep-club)”.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p0"></div><textarea id="n0" aria-label="Notes for part 0" data-notes="p0" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p1" data-part="1">
+  <h2>1 · The club owner’s notifications, on a computer</h2>
+  <p class="where">Sign in as the UAT club owner in your normal window and open <code>http://localhost:3000/uat-rep-club/admin/notifications</code>. Select a notice to open it. Notices are newest first, so the order down the page is the order of the steps. These are real notices built by the product’s own wording code; what they do not have is the “needs attention” buttons and the green “settled” line (see Not in this walk).</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s1a"><div class="step"><label for="s1a">The list shows one line per notice <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Look down the whole list without opening anything.</div></div>
+      <div class="row see"><b>See</b><div>Every notice is a title and <strong>one line</strong>. No notice shows a paragraph, a line break or a list in the list itself.</div></div></div></li>
+    <li><input type="checkbox" id="s1b"><div class="step"><label for="s1b">A bank debit that came back <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>A bank debit was returned</strong> (either of the two; the other is the same kind for a team).</div></div>
+      <div class="row see"><b>See</b><div>Rows with the label on the left and the answer beside it: <strong>Amount</strong> $450.00 in bold with “nothing was taken” in quieter type, <strong>Account</strong> Ending 6789, <strong>Returned</strong> Nov 8, <strong>Reason</strong>, <strong>Spot</strong> Still held, <strong>Family</strong> Emailed a way to pay. No next-step line under the rows.</div></div></div></li>
+    <li><input type="checkbox" id="s1c"><div class="step"><label for="s1c">A payment that was taken back after it cleared <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>A bank payment was returned after it cleared</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Amount</strong> $450.00 (receipt 1042 in quiet type), <strong>Returned</strong>, <strong>Book</strong> Out of the season’s book, <strong>Owes again</strong> Henry, <strong>Family</strong>.</div></div></div></li>
+    <li><input type="checkbox" id="s1d"><div class="step"><label for="s1d">A card dispute has its deadline as a row <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>A card payment was disputed</strong>.</div></div>
+      <div class="row see"><b>See</b><div>Rows <strong>Amount</strong>, <strong>Paid by</strong>, <strong>Reason</strong>, <strong>Held</strong> (once, not repeated as a second amount), <strong>Answer by</strong> “Nov 20 at 11:59 p.m.” in bold. The next-step line reads <strong>Answer it in Stripe.</strong></div></div></div></li>
+    <li><input type="checkbox" id="s1e"><div class="step"><label for="s1e">A dispute that was lost <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>A dispute was lost</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Amount</strong>, <strong>Returned</strong>, <strong>Book</strong>, <strong>Owes again</strong> Ridge 12U, <strong>Team</strong> Not emailed.</div></div></div></li>
+    <li><input type="checkbox" id="s1f"><div class="step"><label for="s1f">A refund that didn’t reach the card <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Ridge 12U’s refund didn’t reach the card</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Amount</strong> $150.00, <strong>Sent to</strong> Visa •••• 4242, <strong>For</strong> Ridge 12U, <strong>Reason</strong> “It came back, for example because the card was closed”. Next step: <strong>Send the money another way, then record the refund.</strong></div></div></div></li>
+    <li><input type="checkbox" id="s1g"><div class="step"><label for="s1g">A refunded child who is still enrolled <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>A refunded child is still enrolled</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Amount</strong>, <strong>Sent to</strong>, <strong>Refunded</strong> Nov 8, and <strong>Owes again</strong> $150.00 with Henry in quiet type. The next step names the three choices (withdraw, email the pay link, keep enrolled).</div></div></div></li>
+    <li><input type="checkbox" id="s1h"><div class="step"><label for="s1h">A refund where the child has to be chosen <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>A refund in Stripe needs you to say whose it was</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Paid for</strong> with the three children listed under it, one to a line: Henry, Sam, Ella. Then <strong>Payment</strong> $450.00 (receipt 1042) and <strong>Book</strong>. Next step: <strong>Choose the child, and it goes on that registration.</strong></div></div></div></li>
+    <li><input type="checkbox" id="s1i"><div class="step"><label for="s1i">An online payment that isn’t in the team’s record <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>An online payment isn’t in the team’s record</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Amount</strong> $150.00 (by card), <strong>Paid by</strong> Pat Doe, <strong>Paid</strong>, <strong>For</strong> Henry Doe, <strong>Reason</strong>, <strong>Money</strong>. Next step: <strong>Refund it to the card.</strong></div></div></div></li>
+    <li><input type="checkbox" id="s1j"><div class="step"><label for="s1j">A team paid more than it owed <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>A team paid more than it owed</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Amount</strong> $450.00, <strong>Paid</strong>, <strong>Extra</strong> $50.00 in bold with “more than the team owed” in quiet type, <strong>Money</strong>. Next step: <strong>Refund the extra $50.00 to the card.</strong></div></div></div></li>
+    <li><input type="checkbox" id="s1k"><div class="step"><label for="s1k">A coach says a payment never arrived <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>A coach says a payment never arrived</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Amount</strong> $150.00, <strong>For</strong> Henry, <strong>Team</strong>, <strong>Received</strong> Nov 8, <strong>How</strong> E-Transfer, <strong>Book</strong> Nothing was recorded.</div></div></div></li>
+    <li><input type="checkbox" id="s1l"><div class="step"><label for="s1l">A hand-back request <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Ridge 12U asks to hand back 4 practices, with $432.00 back</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Team</strong>, <strong>Schedule</strong>, <strong>Practices</strong> 4 (Sun, Nov 8 – Sun, Nov 29 in quiet type), <strong>Money back</strong> $432.00 in bold. The next step says the practices stay Ridge 12U’s until someone who holds the club’s Accounting answers.</div></div></div></li>
+    <li><input type="checkbox" id="s1m"><div class="step"><label for="s1m">A hand-back with no money asked for <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Riley Chen handed back 4 practices without asking for money</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Schedule</strong>, <strong>From</strong> Sun, Nov 8, <strong>Practices</strong> 4, <strong>Billed</strong> $432.00 in bold. Next step: <strong>You can ask for it back from the practice.</strong></div></div></div></li>
+    <li><input type="checkbox" id="s1n"><div class="step"><label for="s1n">Moved games: a long list folds <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>The club changed house league’s practices</strong>. Under <strong>Games</strong>, press the line that starts <strong>Show</strong>.</div></div>
+      <div class="row see"><b>See</b><div>Rows <strong>Schedule</strong>, <strong>Divisions</strong> U10 and U12, <strong>Practices</strong> 3 moved, <strong>Games</strong> 9 moved with “1 needs a new date” in quiet type. Only <strong>6</strong> game lines show with “Show 3 more games”; pressing it shows all 9, and “Show fewer games” folds them again. The next step says 9 games wait in Changes to send.</div></div></div></li>
+    <li><input type="checkbox" id="s1o"><div class="step"><label for="s1o">House league’s time, as rows <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>The club gave house league time</strong> (the one without “sent before the change”).</div></div>
+      <div class="row see"><b>See</b><div><strong>Season</strong>, <strong>Schedule</strong>, <strong>Gives</strong> “2 hours a week” in bold with “Mar 13 – Apr 3” in quiet type and the two slots listed under it. Next step: <strong>Divide it into games and practices.</strong></div></div></div></li>
+    <li><input type="checkbox" id="s1p"><div class="step"><label for="s1p">Champions crowned <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Champions crowned</strong>.</div></div>
+      <div class="row see"><b>See</b><div>The line reads “Team 1 won U10, Team 2 won U11 and Team 3 won U12.” and <strong>Champions</strong> lists one champion to a line with their division: “U10 · Team 1”.</div></div></div></li>
+    <li><input type="checkbox" id="s1q"><div class="step"><label for="s1q">A new sign-up with three children <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>New sign-up: Henry Kim and 2 more</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Season</strong>, <strong>Family</strong> Grace Kim, and <strong>Players</strong> with one child to a line and the outcome in bold: Henry Kim · <strong>Approved</strong>, Ava Kim · <strong>On the waitlist</strong>, Sam Kim · <strong>To review</strong>.</div></div></div></li>
+    <li><input type="checkbox" id="s1r"><div class="step"><label for="s1r">A withdrawal request keeps the note out of the line <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Withdrawal request: Ava Kim</strong>.</div></div>
+      <div class="row see"><b>See</b><div>The one line in the list says “… · with a note” and <strong>never the family’s words</strong>. Opened, <strong>Note</strong> shows the whole note in quotes: “Ava broke her wrist — we’ll be back in the fall.”</div></div></div></li>
+    <li><input type="checkbox" id="s1s"><div class="step"><label for="s1s">An assistant coach awaiting approval <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Assistant coach invite awaiting approval</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Invited by</strong> Sam Lee, <strong>Invited</strong> the address exactly as typed (<code>Pat.Lee+coach@Example.com</code>), <strong>Team</strong>, <strong>Role</strong> “Assistant coach” in bold with what it gets in quiet type.</div></div></div></li>
+    <li><input type="checkbox" id="s1t"><div class="step"><label for="s1t">Several scores in one day fold into one bundle <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Find the bundle for the three <strong>Score submitted</strong> notices and open it.</div></div>
+      <div class="row see"><b>See</b><div>It opens as a list of the three one-line bodies (“Hawks 4, Ridge 12U 6 · Final · entered by kim@example.com” and the other two), <strong>not</strong> as rows.</div></div></div></li>
+    <li><input type="checkbox" id="s1u"><div class="step"><label for="s1u">An older notice keeps its paragraph <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Payment received</strong>.</div></div>
+      <div class="row see"><b>See</b><div>It shows its single sentence (“Pat Doe paid $450.00 by e-transfer …”) with no rows. Nothing broke on notices sent before the change.</div></div></div></li>
+    <li><input type="checkbox" id="s1v"><div class="step"><label for="s1v">A notice stored with the first rows shape still opens as rows <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>The club gave house league time (sent before the change)</strong>.</div></div>
+      <div class="row see"><b>See</b><div>It opens as rows: <strong>Season</strong>, <strong>Schedule</strong>, <strong>Gives</strong> “1 hour a week” with its one slot. No “Divide it into games and practices” line, because that week did not grow.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p1"></div><textarea id="n1" aria-label="Notes for part 1" data-notes="p1" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p2" data-part="2">
+  <h2>2 · The coach’s notifications, in a phone-sized window</h2>
+  <p class="where">Open a private window, make it about 390 px wide (or use your phone), sign in as the UAT coach and open <code>http://localhost:3000/uat-rep-club/coaches/notifications</code>. If you land in a different club, switch to <strong>UAT Rep Club</strong>.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s2a"><div class="step"><label for="s2a">Team money sent <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Ridge 12U says they sent $216.00</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Amount</strong> $216.00, <strong>For</strong> Winter dome, 2 of 4, <strong>Sent</strong>, <strong>How</strong> E-Transfer 4471. Next step: <strong>Confirm it when it arrives.</strong> The label stays beside its answer, never above it.</div></div></div></li>
+    <li><input type="checkbox" id="s2b"><div class="step"><label for="s2b">A bill arrived <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Riverdale billed Ridge 12U $864.00</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Bill</strong> $864.00, <strong>Schedule</strong>, <strong>Payments</strong> 4, <strong>First due</strong> $216.00 with “Nov 15” in quiet type.</div></div></div></li>
+    <li><input type="checkbox" id="s2c"><div class="step"><label for="s2c">A schedule sent for review <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Riverdale sent Winter dome for review</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Team</strong>, <strong>Slots</strong> 8, <strong>Bill</strong>, <strong>Reply by</strong> Fri, Nov 20 in bold. Next step: <strong>Say it looks good, or ask for a change.</strong></div></div></div></li>
+    <li><input type="checkbox" id="s2d"><div class="step"><label for="s2d">The club accepted a hand-back <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>The club accepted your hand-back</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Schedule</strong>, <strong>Practices</strong> 4 handed back, <strong>Came off</strong> $432.00 with one line per payment that dropped (“Dec 1 · $432.00 → $0.00” first, then “Feb 1 · $864.00 → $432.00”), <strong>Club owes</strong> $108.00.</div></div></div></li>
+    <li><input type="checkbox" id="s2e"><div class="step"><label for="s2e">The club declined a hand-back <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>The club declined your hand-back</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Schedule</strong>, <strong>Practices</strong> 4 “stay yours”, and <strong>Reason</strong> quoted exactly: “We can’t re-sell those dates.” The same reason ends the one line in the list.</div></div></div></li>
+    <li><input type="checkbox" id="s2f"><div class="step"><label for="s2f">Three families changed answers <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>3 families changed their answers for Sat vs Lakeshore</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Answers</strong> lists one child to a line with the answer in bold and what it was before: Maya · <strong>In</strong> · was Out; Leo · <strong>Out</strong> · Dana left a note; Sam · <strong>Maybe</strong> · was In. Then <strong>Now</strong> “11 of 14 in” with “2 out · 1 maybe”. The note’s words appear nowhere.</div></div></div></li>
+    <li><input type="checkbox" id="s2g"><div class="step"><label for="s2g">Eight families: the line names three and counts the rest <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>8 families changed their answers for Sat vs Lakeshore</strong>.</div></div>
+      <div class="row see"><b>See</b><div>In the list the line reads “Maya, Leo, Sam and 5 more · now 11 of 14 in”. Opened, <strong>Answers</strong> shows 6 children with a “Show 2 more” line.</div></div></div></li>
+    <li><input type="checkbox" id="s2h"><div class="step"><label for="s2h">One family across two events <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Maya’s family said Out for 2 events</strong>.</div></div>
+      <div class="row see"><b>See</b><div><strong>Events</strong> lists Sat, Nov 8 · <strong>Out</strong> · was In and Sat, Nov 15 · <strong>Out</strong>, then <strong>From</strong> Dana with “left a note” in quiet type.</div></div></div></li>
+    <li><input type="checkbox" id="s2i"><div class="step"><label for="s2i">The weekly insights lead with the first finding <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Your week in review</strong>.</div></div>
+      <div class="row see"><b>See</b><div>The line reads “Won 4 of your last 5 · and 1 more this week.” Opened, <strong>This week</strong> lists both findings, one to a line.</div></div></div></li>
+    <li><input type="checkbox" id="s2j"><div class="step"><label for="s2j">A practice plan <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open the <strong>Tuesday’s practice plan is ready</strong> with six stations (the older of the two).</div></div>
+      <div class="row see"><b>See</b><div>The line names three stations and counts the rest (“Close control, Footwork ladder, Rondo and 3 more”). Opened: <strong>You’re on</strong> lists all 6 stations, <strong>Arrive by</strong> 5:45 p.m., <strong>Starts</strong> 6:00 p.m.</div></div></div></li>
+    <li><input type="checkbox" id="s2k"><div class="step"><label for="s2k">A new season, rolled from the last <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>Northfield started the 2027 Season</strong> (the one that says “Came with the team”).</div></div>
+      <div class="row see"><b>See</b><div><strong>Came with</strong> lists 14 players, The budget, The fee plan; <strong>Tryouts</strong> “Closed until you open them”; <strong>Last season</strong> 2026 Season with “kept as a record” in quiet type.</div></div></div></li>
+    <li><input type="checkbox" id="s2l"><div class="step"><label for="s2l">A first season with tryouts open says so <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open the other <strong>Northfield started the 2027 Season</strong>.</div></div>
+      <div class="row see"><b>See</b><div>The line reads “Ridge 12U · Tryouts are open.” and the one row is <strong>Tryouts</strong> Open. It never says “closed”.</div></div></div></li>
+    <li><input type="checkbox" id="s2m"><div class="step"><label for="s2m">The button row stays put when a notice is tall <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Open <strong>8 families changed their answers</strong> again and press <strong>Show 2 more</strong>. Scroll the message.</div></div>
+      <div class="row see"><b>See</b><div>If the message is taller than the sheet, the sheet’s buttons stay pinned at the bottom while the message scrolls under them.</div></div></div></li>
+    <li><input type="checkbox" id="s2n"><div class="step"><label for="s2n">A short notice has its buttons right under it <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Close that sheet and open <strong>Ridge 12U says they sent $216.00</strong>.</div></div>
+      <div class="row see"><b>See</b><div>The message and its buttons sit together with no pinned bar and no empty gap between them.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p2"></div><textarea id="n2" aria-label="Notes for part 2" data-notes="p2" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p3" data-part="3">
+  <h2>3 · “Score submitted” made by real scores</h2>
+  <p class="where">The Dev Test Org’s <strong>Live Demo — Game Day</strong> tournament asks for approval before an official’s score is final, and has two semifinals still to play: <strong>Bears U11 at Halton Hawks U11 Jr</strong> and <strong>Milton Bats U11 Purple (Jackson) at Lions U11</strong>, both on Oct 28, 2026. Use two windows: Window 1 for the scorekeeper, Window 2 for the people who should be told. The notice reaches everyone who can open Results (here owner, admin, both staff, the scorekeeper and a second owner and admin), never the person who entered it. The scorekeeper’s own entry is the one that waits for approval.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s3a"><div class="step"><label for="s3a">The scorekeeper enters a score for review <span class="who">Scorekeeper</span></label>
+      <div class="row"><b>Do</b><div>Window 1: sign in as the scorekeeper and open <code>http://localhost:3000/dev-test-org/scorekeeper</code>. Set <strong>Day to score</strong> to <strong>Oct 28, 2026</strong>, open <strong>Bears U11 at Halton Hawks U11 Jr</strong>, enter <strong>3</strong> for Bears U11 and <strong>5</strong> for Halton Hawks U11 Jr and press the button.</div></div>
+      <div class="row see"><b>See</b><div>The button reads <strong>Submit for review</strong> and a note above it says the organizer reviews the score. After saving, “Sent for review” appears. If Field scores shows no games for that day, press Needs a call.</div></div></div></li>
+    <li><input type="checkbox" id="s3b"><div class="step"><label for="s3b">The owner is told the score is waiting for approval <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Window 2: sign in as the owner and open <code>http://localhost:3000/dev-test-org/admin/notifications</code>. Open the newest <strong>Score submitted</strong>.</div></div>
+      <div class="row see"><b>See</b><div>The list line reads <strong>Bears U11 3, Halton Hawks U11 Jr 5 · Waiting for approval · entered by j8-scorekeeper@dev.local</strong>. Opened: <strong>Game</strong> “Bears U11 vs Halton Hawks U11 Jr” with U11 in quiet type, <strong>Score</strong> in bold, <strong>Status</strong> “Waiting for approval”, <strong>Entered by</strong> the scorekeeper’s address. Visitors come first.</div></div></div></li>
+    <li><input type="checkbox" id="s3c"><div class="step"><label for="s3c">The notice opens that game on Results <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Press the notice’s button.</div></div>
+      <div class="row see"><b>See</b><div>Results & scoring opens on this tournament with <strong>that game</strong> expanded, ready to approve or correct.</div></div></div></li>
+    <li><input type="checkbox" id="s3d"><div class="step"><label for="s3d">The scorekeeper is not told about their own entry <span class="who">Scorekeeper</span></label>
+      <div class="row"><b>Do</b><div>Window 1: open the scorekeeper’s notifications (the bell, or <code>/dev-test-org/admin/notifications</code> if it opens).</div></div>
+      <div class="row see"><b>See</b><div>There is no “Score submitted” about the 3–5 score. (If the scorekeeper cannot open a notifications page at all, tick this and say so in the notes.)</div></div></div></li>
+    <li><input type="checkbox" id="s3e"><div class="step"><label for="s3e">A plain coach is not told <span class="who">Coach</span></label>
+      <div class="row"><b>Do</b><div>Window 2: sign out and sign in as <code>coach@dev.local</code>. Open the notifications.</div></div>
+      <div class="row see"><b>See</b><div>No “Score submitted” anywhere. The coach cannot open Results, so is not told.</div></div></div></li>
+    <li><input type="checkbox" id="s3f"><div class="step"><label for="s3f">An admin forfeits a game <span class="who">Admin</span></label>
+      <div class="row"><b>Do</b><div>Window 2: sign in as <code>admin@dev.local</code> and open <code>http://localhost:3000/dev-test-org/admin/tournaments/results?tournamentId=34148ad4-5083-4d30-a5f7-fff0ce8b9b27</code>. Open the row <strong>Milton Bats U11 Purple (Jackson) at Lions U11</strong>, press <strong>Forfeit</strong>, choose <strong>Lions U11</strong> as the winner and confirm.</div></div>
+      <div class="row see"><b>See</b><div>The game becomes a final forfeit. (An admin’s forfeit is final at once: nothing waits for approval.)</div></div></div></li>
+    <li><input type="checkbox" id="s3g"><div class="step"><label for="s3g">The forfeit names the teams, never 1–0 <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Window 2: sign in as the owner and open the notifications. Open the newest notice, titled <strong>Game forfeited</strong>.</div></div>
+      <div class="row see"><b>See</b><div>The line reads <strong>Lions U11 wins by forfeit vs Milton Bats U11 Purple (Jackson) · Final · entered by admin@dev.local</strong>. The <strong>Score</strong> row says “Lions U11 by forfeit”. A stored 1–0 or the words “home team” appear nowhere.</div></div></div></li>
+    <li><input type="checkbox" id="s3h"><div class="step"><label for="s3h">An admin corrects the forfeit with a score <span class="who">Admin</span></label>
+      <div class="row"><b>Do</b><div>Window 2: sign in as the admin again, open the same Results page, press <strong>All games</strong>, open that same game and enter <strong>5</strong> for Lions U11 and <strong>2</strong> for Milton Bats, then press <strong>Save score</strong>.</div></div>
+      <div class="row see"><b>See</b><div>It saves as a final score. If Results will not let you edit a forfeit, press Needs a call.</div></div></div></li>
+    <li><input type="checkbox" id="s3i"><div class="step"><label for="s3i">A correction names what it replaced <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Window 2: sign in as the owner and open the newest <strong>Score submitted</strong>.</div></div>
+      <div class="row see"><b>See</b><div>The line reads <strong>Milton Bats U11 Purple (Jackson) 2, Lions U11 5 · Final · corrected by admin@dev.local</strong>. Rows in order: <strong>Game</strong>, <strong>Score</strong>, <strong>Was</strong> “Lions U11 by forfeit”, <strong>Status</strong> Final, <strong>Entered by</strong>.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p3"></div><textarea id="n3" aria-label="Notes for part 3" data-notes="p3" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="p4" data-part="4">
+  <h2>4 · The help article</h2>
+  <p class="where">One help sentence described this notice; it was rewritten with the build.</p>
+  <ol class="steps">
+    <li><input type="checkbox" id="s4a"><div class="step"><label for="s4a">The guide says who is told <span class="who">Owner</span></label>
+      <div class="row"><b>Do</b><div>Open the tournaments help (<code>http://localhost:3000/dev-test-org/admin/help/tournaments</code>), search <strong>score submitted</strong> and open “Where does a ‘score submitted’ notification take me?”.</div></div>
+      <div class="row see"><b>See</b><div>It says everyone who can open Results &amp; scoring is told, except the person who entered it, and that the notice names the game, the score, whether it is Final or Waiting for approval and who entered it. It does not say “admins” only.</div></div></div></li>
+  </ol>
+  <div class="verdict" data-for="p4"></div><textarea id="n4" aria-label="Notes for part 4" data-notes="p4" placeholder="Notes"></textarea>
+</section>
+
+<section class="card" id="pcalls" data-part="calls">
+  <h2>Calls for you (not counted above)</h2>
+  <p class="where">Nothing here is a step. Write your answer in the box; it travels in the paste-back.</p>
+  <ol>
+    <li><strong>“Sent to” on a refund that was never sent.</strong> The row reads “Sent to · Visa •••• 4242” beside “Reason · It came back”. Keep “Sent to”, or change it to “Refund to”?</li>
+    <li><strong>The hand-back with no money asked for.</strong> The one line no longer says “you can ask for it back from the practice”; that sentence is the next step when opened. Keep, or put it back in the line?</li>
+    <li><strong>A covered payment</strong> on an accepted hand-back reads “Dec 1 · $432.00 → $0.00”. Keep the figure, or “→ covered”?</li>
+    <li><strong>A held score or forfeit as a needs-attention notice</strong> that clears itself once someone approves it. Not built (you ruled “log it”). Do you want it in the plan now?</li>
+    <li><strong>The words.</strong> All of this wording is draft copy waiting for the one marketing pass. Anything above that you would change now?</li>
+  </ol>
+  <textarea id="ncalls" aria-label="Notes for the calls" data-notes="calls" placeholder="Your answers, 1 to 5"></textarea>
+</section>
+
+<section class="card">
+  <h2>Not in this walk</h2>
+  <ul>
+    <li>The “needs attention” buttons and the settled line on the seeded money notices: they hang off the real sender’s own records. The unit tests hold them.</li>
+    <li>The payment-ending notice (the one before a plan’s payments stop): rare, and its words are held by the unit tests.</li>
+    <li>A held <strong>forfeit</strong> (“Forfeit pending approval”) and a numeric correction’s Was row: held by the unit tests and checked against real dev games.</li>
+    <li>The e-mail and push versions: each kind’s e-mail was checked kind by kind when it was built and nothing owed to legal came of it.</li>
+    <li>The moved family game: unchanged on purpose.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Paste-back</h2>
+  <p class="where">Press Build summary at the top, then copy this and paste it into the chat.</p>
+  <pre id="out">Nothing yet.</pre>
+  <button type="button" id="copyBtn">Copy</button>
+</section>
+</main>
+
+<script>
+(function(){
+  var KEY = "notification-rows-walk-v1";
+  var state = { checks:{}, verdicts:{}, notes:{} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = JSON.parse(raw); } catch (e) {}
+  state.checks = state.checks || {}; state.verdicts = state.verdicts || {}; state.notes = state.notes || {};
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('ol.steps input[type=checkbox]'));
+  function refresh(){
+    var n = boxes.filter(function(b){ return b.checked; }).length;
+    var p = document.getElementById('prog'); p.max = boxes.length; p.value = n;
+    document.getElementById('progText').textContent = n + " of " + boxes.length;
+    boxes.forEach(function(b){ b.closest('li').classList.toggle('done', b.checked); });
+  }
+  boxes.forEach(function(b){
+    b.checked = !!state.checks[b.id];
+    b.addEventListener('change', function(){ state.checks[b.id] = b.checked; save(); refresh(); });
+  });
+
+  var labels = [["pass","Pass"],["issue","Issue"],["call","Needs a call"]];
+  Array.prototype.slice.call(document.querySelectorAll('.verdict')).forEach(function(box){
+    var part = box.getAttribute('data-for');
+    labels.forEach(function(pair){
+      var btn = document.createElement('button'); btn.type = 'button';
+      btn.className = 'v-' + pair[0]; btn.textContent = pair[1];
+      btn.setAttribute('aria-pressed', state.verdicts[part] === pair[0] ? 'true' : 'false');
+      btn.addEventListener('click', function(){
+        state.verdicts[part] = state.verdicts[part] === pair[0] ? "" : pair[0]; save();
+        Array.prototype.slice.call(box.querySelectorAll('button')).forEach(function(x){
+          x.setAttribute('aria-pressed', x.className === 'v-' + state.verdicts[part] ? 'true' : 'false');
+        });
+      });
+      box.appendChild(btn);
+    });
+  });
+  Array.prototype.slice.call(document.querySelectorAll('textarea[data-notes]')).forEach(function(t){
+    var part = t.getAttribute('data-notes'); t.value = state.notes[part] || "";
+    t.addEventListener('input', function(){ state.notes[part] = t.value; save(); });
+  });
+
+  function summary(){
+    var lines = ["Notification rows walk (Stage 6, v1): " + boxes.filter(function(b){return b.checked;}).length + " of " + boxes.length + " steps ticked"];
+    Array.prototype.slice.call(document.querySelectorAll('section[data-part]')).forEach(function(s){
+      var part = s.id, h = s.querySelector('h2').textContent;
+      var sb = Array.prototype.slice.call(s.querySelectorAll('input[type=checkbox]'));
+      var done = sb.filter(function(b){return b.checked;}).length;
+      var missed = sb.filter(function(b){return !b.checked;}).map(function(b){return b.id;});
+      var v = state.verdicts[part] || "no verdict";
+      lines.push("", h + (sb.length ? " | " + v + " | " + done + "/" + sb.length : "") + (missed.length ? " | not ticked: " + missed.join(", ") : ""));
+      if (state.notes[part]) lines.push("  notes: " + state.notes[part]);
+    });
+    return lines.join("\n");
+  }
+  document.getElementById('summaryBtn').addEventListener('click', function(){
+    document.getElementById('out').textContent = summary();
+    document.getElementById('out').scrollIntoView({behavior:'smooth', block:'center'});
+  });
+  document.getElementById('copyBtn').addEventListener('click', function(){
+    var text = document.getElementById('out').textContent;
+    var done = function(){ document.getElementById('copyBtn').textContent = "Copied"; };
+    try { navigator.clipboard.writeText(text).then(done, function(){ selectOut(); }); } catch (e) { selectOut(); }
+  });
+  function selectOut(){ var r = document.createRange(); r.selectNodeContents(document.getElementById('out'));
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  refresh();
+})();
+</script>

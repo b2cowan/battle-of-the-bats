@@ -1,7 +1,7 @@
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * A NOTICE THAT READS AT A GLANCE — the one stored-facts shape every opened notification can wear
- * (Notifications read at a glance, Stage 2; plan docs/projects/active/NOTIFICATION_MESSAGE_ROWS_PLAN.md,
+ * (Notifications read at a glance, Stage 2; plan docs/projects/archive/NOTIFICATION_MESSAGE_ROWS_PLAN.md,
  * drawing https://claude.ai/artifact/4oPRNGetZWQ2ei483Gs2i5 tab 1; owner rulings Q1–Q3, 2026-11-14).
  *
  * A notice that has its facts stores them on the notification (`metadata.facts`), and the opened message — the
