@@ -1,12 +1,149 @@
 {
-  "generated": "2026-11-15",
-  "total": 0,
+  "generated": "2026-11-16",
+  "total": 34,
   "counts": {
-    "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "tables": 2,
+    "columns": 12,
+    "indexes": 8,
+    "constraints": 10,
+    "rls": 2
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:club_schedule_bill_rates.club_schedule_bill_rates_scale_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedules.club_schedules_bill_price_mode_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_bill_rates.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_bill_rates.first_billed_send_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_bill_rates.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_bill_rates.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_bill_rates.permit_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_bill_rates.permit_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_bill_rates.scale",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_bill_rates.schedule_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedules.bill_price_mode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_date_off_venues.date_off_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_date_off_venues.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_date_off_venues.org_venue_id",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_bill_rates.club_schedule_bill_rates_first_billed_send_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_bill_rates.club_schedule_bill_rates_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_bill_rates.club_schedule_bill_rates_permit_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_bill_rates.club_schedule_bill_rates_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_bill_rates.club_schedule_bill_rates_schedule_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_bill_rates.club_schedule_bill_rates_schedule_permit_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_date_off_venues.org_time_date_off_venues_date_off_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_date_off_venues.org_time_date_off_venues_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_date_off_venues.org_time_date_off_venues_org_venue_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_date_off_venues.org_time_date_off_venues_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_bill_rates_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_bill_rates_permit_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_bill_rates_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_bill_rates_schedule_permit_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_bill_rates_send_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_date_off_venues_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_date_off_venues_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_date_off_venues_venue_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_schedule_bill_rates",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_time_date_off_venues",
+      "sig": ""
+    }
+  ]
 }
