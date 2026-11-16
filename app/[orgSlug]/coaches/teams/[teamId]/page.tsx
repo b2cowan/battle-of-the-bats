@@ -28,6 +28,7 @@ import {
   resolveOverviewAnchor,
   resolveBoard,
   resolveCoachingTilesShown,
+  tournamentIsNextUp,
   summariseAttendance,
   summarisePlayingTime,
   type AttendanceSummary,
@@ -1424,9 +1425,11 @@ export default function TeamOverviewPage({
   const finalizedGames = seasonGames.filter(e => e.result && e.status !== 'cancelled');
   const hasFinalizedGame = finalizedGames.length > 0;
   const nextIsGame = !!nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType);
-  // A registered tournament that's upcoming or live today keeps the team "in season" even
-  // when nothing is on the game schedule (tournaments are tracked separately from events).
-  const hasUpcomingTournament = Boolean(tournaments?.nextDate || tournaments?.liveNow);
+  // A registered tournament that's live today, or starts within the next-up horizon, keeps the team
+  // "in season" even when nothing is on the game schedule (tournaments are tracked separately from
+  // events). One further out is only a date on the calendar — it neither earns the "Next up" card
+  // nor hides the season-end prompt (owner ruling 2026-11-15).
+  const hasUpcomingTournament = tournamentIsNextUp(tournaments?.nextDate, Boolean(tournaments?.liveNow), tournamentToday());
   const phase = deriveRepPhase({
     programYearStatus: assignment.programYearStatus,
     // An UNKNOWN roster is not an EMPTY one. A zero count short-circuits the phase straight to

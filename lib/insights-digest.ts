@@ -14,8 +14,11 @@
 //    about results), run the engine, and send ONE notify() per recipient
 //    (notify() is one-body-per-call — per-recipient bodies require
 //    per-recipient calls).
-//  • Quiet week ⇒ no send. formatInsightDigest() returns null when nothing
-//    fired; silence is a feature, not a bug.
+//  • Quiet week ⇒ no send. Three silences, all deliberate:
+//      – the team had no event in the last week (a team that stopped playing is not
+//        re-told its season-to-date facts every Sunday — insights-digest-gate.ts);
+//      – formatInsightDigest() returned null because no finding fired;
+//      – the coach's findings are identical to the digest they got last time.
 //
 // Parity notes (deliberate, reviewed):
 //  • Games scope = the season record's ONE rule (`countsTowardRecord`): a Game or a
@@ -41,6 +44,7 @@
 import {
   getInsightsDigestTeams,
   hasRecentNotification,
+  getLatestNotificationFacts,
   getRepTeamCoaches,
   getRepTeamEvents,
   getRepRosterPlayers,
@@ -63,6 +67,7 @@ import {
 import { resolveCoachCapabilities } from './coach-capabilities';
 import type { RepTeamEvent } from './types';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
+import { teamHadActivityInWindow, isRepeatOfLastDigest } from './insights-digest-gate';
 
 /** One digest per team per window — just under a week so a Sunday job never
  *  skips a team because last Sunday's send was 7 days − a few minutes ago. */
@@ -158,6 +163,11 @@ async function digestTeam(
     getRepTeamAttendanceReliability(team.programYearId),
   ]);
 
+  // Nothing happened for this team in the last week ⇒ nothing to review. The findings below are
+  // season-to-date facts that never go quiet on their own, so without this a team that stopped
+  // playing months ago would hear the same digest every Sunday.
+  if (!teamHadActivityInWindow(events, new Date())) return { sent: 0, preview };
+
   // No dues fetch, deliberately — see the header block. The digest can only say
   // what it asked about, and it no longer asks about money.
 
@@ -221,6 +231,18 @@ async function digestTeam(
     });
     const digest = formatInsightDigest(findings);
     if (!digest) continue; // quiet week for THIS coach — silence is the feature
+
+    // The same findings this coach heard last time ⇒ nothing new to say.
+    // A failed lookup must never cost a coach their digest — nor, by throwing out of the loop, the
+    // coaches after them (the first one is already sent, which would make Monday's catch-up skip the
+    // whole team). Fail OPEN: not knowing what they were last told, send.
+    let lastFacts: unknown = null;
+    try {
+      lastFacts = await getLatestNotificationFacts(team.orgId, coach.userId, DIGEST_EVENT_TYPE, { teamId: team.teamId });
+    } catch (e) {
+      console.error('[insights-digest] last-digest lookup failed; sending', e instanceof Error ? e.message : e);
+    }
+    if (isRepeatOfLastDigest(lastFacts, digest.facts)) continue;
 
     const title = `${digest.title} — ${team.teamName}`;
     if (dryRun) {

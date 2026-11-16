@@ -250,6 +250,7 @@ This file is the **index** of open work for the FieldLogicHQ platform. AI models
 - [ ] UAT Agent — Browser-based acceptance test suite + `/uat` slash command; Playwright scenarios for auth, plan-gating…
 ## 🚀 Active Tasks (Priority Order)
 
+- [ ] 🔕 **Quiet teams + far-off tournaments** — weekly "week in review" only after a real game/practice that week and never repeated; "Next up" tournament only within 30 days; BUILT 2026-11-15 (uncommitted), walk owed; title wording open (see docs/projects/active/QUIET_TEAMS_AND_NEXT_UP_HORIZON_PLAN.md)
 
 - [ ] 🤝 Prospect demo program — a house-league admin (signed in as himself on staging), then his president; staging switch-on + owner decisions, a seeded club from his structure, Demo 1 gaps (president's season snapshot, postponed game says so, QR follows the host), Demo 2 family gaps (phone alerts, house-league coach posts, In / Out / Maybe, family-app prerequisites), walkthroughs + rehearsals, the beta's go-live list, then a payment-options exploration that re-opens the 2026-10-19 "No household money" ruling; planned 2026-11-09 (see docs/projects/active/PROSPECT_DEMO_PROGRAM_PLAN.md)
   - [ ] **Milton Bats demo world (P1)** — fictional Milton club on staging, five house-league divisions, one-command reset; Phase A built and run on dev 2026-11-10 (uncommitted); owed: logo files, real fees, owner dry run, Phase B (rep teams, tournament) (see docs/projects/active/MILTON_DEMO_WORLD_PLAN.md)

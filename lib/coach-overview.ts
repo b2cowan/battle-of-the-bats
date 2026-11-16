@@ -35,6 +35,7 @@ import {
   canViewDevelopmentGoals,
 } from './coach-capabilities';
 import { isCoachNavItemVisible } from './coach-nav-visibility';
+import { daysBetweenDateStrings } from './timezone';
 
 // ── The one thing ────────────────────────────────────────────────────────────
 
@@ -641,4 +642,32 @@ export function summarisePlayingTime(
   const belowCount = shares.filter(s => s < mean - PLAYING_TIME_BELOW_MARGIN).length;
 
   return { verdict: belowCount > 0 ? 'uneven' : 'even', games: gamesWithLineup, belowCount };
+}
+
+// ── How far ahead a registered tournament counts ─────────────────────────────
+
+/**
+ * A registered tournament is the team's "Next up" — and keeps the season "in season" — only inside
+ * this many days of its first day (owner ruling 2026-11-15). Further out it is a date on a calendar,
+ * not something to prompt about: a tournament entered for July said "Tournament coming up" in
+ * November and hid the season-end prompt from a team that had not played since September.
+ * Games and practices on the team's own schedule are NOT bounded — that is the coach's own plan.
+ */
+export const TOURNAMENT_NEXT_UP_HORIZON_DAYS = 30;
+
+/**
+ * True when a registered tournament should read as "next up": it is on today, or its first day is
+ * no more than {@link TOURNAMENT_NEXT_UP_HORIZON_DAYS} days away. `nextDate` is the earliest start
+ * among the team's tournaments that have not ended (a stored calendar date, `YYYY-MM-DD`), `today`
+ * the org's calendar date.
+ */
+export function tournamentIsNextUp(
+  nextDate: string | null | undefined,
+  liveNow: boolean,
+  today: string,
+  horizonDays: number = TOURNAMENT_NEXT_UP_HORIZON_DAYS,
+): boolean {
+  if (liveNow) return true;
+  if (!nextDate) return false;
+  return daysBetweenDateStrings(today, nextDate) <= horizonDays;
 }

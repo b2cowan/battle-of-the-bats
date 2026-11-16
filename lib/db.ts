@@ -3595,6 +3595,31 @@ export async function hasRecentNotification(
   return !!data && data.length > 0;
 }
 
+/**
+ * The `facts` stored on the most recent notification of this type sent to one person about one team,
+ * at any age — or null when there is none. The digest's repeat gate: a coach is never sent the same
+ * findings twice running. (A notification the coach deleted is gone, so that week's digest sends again.)
+ */
+export async function getLatestNotificationFacts(
+  orgId: string,
+  userId: string,
+  eventType: string,
+  metadataContains: Record<string, unknown>,
+): Promise<unknown | null> {
+  const { data, error } = await supabaseAdmin
+    .from('notifications')
+    .select('metadata')
+    .eq('org_id', orgId)
+    .eq('user_id', userId)
+    .eq('event_type', eventType)
+    .contains('metadata', metadataContains)
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  const meta = data?.[0]?.metadata as { facts?: unknown } | null | undefined;
+  return meta?.facts ?? null;
+}
+
 export async function addRepTeamCoach(
   programYearId: string,
   teamId: string,

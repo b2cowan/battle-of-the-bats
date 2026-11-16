@@ -8,9 +8,12 @@ import {
   summariseAttendance,
   summarisePlayingTime,
   BOARD_SLOT_COUNT,
+  TOURNAMENT_NEXT_UP_HORIZON_DAYS,
+  tournamentIsNextUp,
   type AnchorInput,
   type BoardInput,
 } from '../../lib/coach-overview.ts';
+import { deriveRepPhase } from '../../lib/coach-rep-phase.ts';
 import { eventWindowOpen, nextOpenEvent } from '../../lib/coach-next-event.ts';
 import { isInRunWindow } from '../../lib/practice-state.ts';
 import type { CoachCapabilities } from '../../lib/coach-capabilities.ts';
@@ -890,5 +893,44 @@ describe('nextOpenEvent (R7) — a practice in its run window is the card; a gam
     assert.equal(nextOpenEvent([later, noEnd], NOW)?.id, 'no-end');
     assert.equal(nextOpenEvent([later, noEnd], NOW + 1000)?.id, 'later');
     assert.equal(eventWindowOpen(noEnd, NOW), isInRunWindow(noEnd.startsAt, NOW, noEnd.endsAt), 'the same predicate, not a copy');
+  });
+});
+
+describe('tournamentIsNextUp — a far-off tournament is not "next up" (owner ruling 2026-11-15)', () => {
+  it('a tournament on today, or live, counts', () => {
+    assert.equal(tournamentIsNextUp(null, true, '2026-11-15'), true);
+    assert.equal(tournamentIsNextUp('2026-11-15', false, '2026-11-15'), true);
+  });
+  it('counts up to the horizon, and not a day past it', () => {
+    assert.equal(TOURNAMENT_NEXT_UP_HORIZON_DAYS, 30);
+    assert.equal(tournamentIsNextUp('2026-12-15', false, '2026-11-15'), true, '30 days out');
+    assert.equal(tournamentIsNextUp('2026-12-16', false, '2026-11-15'), false, '31 days out');
+  });
+  it('July 2 on November 15 does not count', () => {
+    assert.equal(tournamentIsNextUp('2027-07-02', false, '2026-11-15'), false);
+  });
+  it('no tournament does not count', () => {
+    assert.equal(tournamentIsNextUp(null, false, '2026-11-15'), false);
+    assert.equal(tournamentIsNextUp(undefined, false, '2026-11-15'), false);
+  });
+  it('a far tournament gives the lull no tournament door (the card is not ABOUT it)', () => {
+    const near = tournamentIsNextUp('2027-07-02', false, '2026-11-15');
+    const d = resolveOverviewAnchor(anchorInput({ phase: 'in_season', hasNextEvent: false, hasUpcomingTournament: near }));
+    assert.equal(d?.kind, 'lull');
+    assert.deepEqual(d?.answers, []);
+  });
+});
+
+describe('deriveRepPhase with a far-off tournament (owner ruling 2026-11-15)', () => {
+  const base = { programYearStatus: 'active', rosterCount: 12, nextEvent: null, nextEventDays: null } as const;
+  it('a team that has played stays in season whether or not a distant tournament is registered', () => {
+    const far = tournamentIsNextUp('2027-07-02', false, '2026-11-15');
+    assert.equal(deriveRepPhase({ ...base, hasFinalizedGame: true, hasUpcomingTournament: far }), 'in_season');
+  });
+  it('a near tournament keeps a team with no results in season; a distant one does not (a brand-new team reads as pre-season)', () => {
+    const near = tournamentIsNextUp('2026-12-01', false, '2026-11-15');
+    const far = tournamentIsNextUp('2027-07-02', false, '2026-11-15');
+    assert.equal(deriveRepPhase({ ...base, hasFinalizedGame: false, hasUpcomingTournament: near }), 'in_season');
+    assert.equal(deriveRepPhase({ ...base, hasFinalizedGame: false, hasUpcomingTournament: far }), 'preseason');
   });
 });
