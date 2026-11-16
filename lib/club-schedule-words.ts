@@ -547,7 +547,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   copiedFrom: (name: string) => `Step 1 of 2 · settings · copied from ${name}`,
   copyFailed: 'That schedule couldn’t be read. Try again.',
   // ── A schedule on several permits, Session A (drawing CLUB_SCHEDULE_SEVERAL_PERMITS_DRAWINGS.html, tab 1; owner rulings
-  //    2026-11-14, N1–N4 A). [marketing] at the project's close, with the plan's "Words for /marketing" list. ──
+  //    2026-11-14, N1–N4 A). Settled by /marketing 2026-11-16 (the project's Close). ──
   /** The tick-list field beside Name: every permit the club holds, each with its issuer and dates under its name. */
   permits: 'Permits',
   /** The field with nothing ticked (dimmed). */
@@ -583,9 +583,9 @@ export const SCHEDULE_SCREEN_WORDS = {
   overlapDays: (shown: readonly string[], more: number) =>
     (more > 0 ? `${shown.join(', ')} and ${more} more ${more === 1 ? 'day' : 'days'}` : joinWithAnd(shown)),
   overlapTail: (startsOn: string | null) =>
-    `They stay as they are, priced there.${startsOn ? ` The new time starts ${startsOn}.` : ''}`,
-  // ── Add time and taking a permit off (Session E; drawing tab 3; owner rulings S1 A, P10 A, P11 A, P9 B). [marketing] at
-  //    the project's close. ──
+    `They stay where they are, priced by that permit.${startsOn ? ` The new time starts ${startsOn}.` : ''}`,
+  // ── Add time and taking a permit off (Session E; drawing tab 3; owner rulings S1 A, P10 A, P11 A, P9 B). Settled by /marketing
+  //    2026-11-16 (the project's Close). ──
   /** Tools › first item (S1 A: beside Settings…, never inside it). */
   toolAddTime: 'Add time…',
   toolAddTimeHint: 'Another permit’s time, or time you find. Nothing already on the schedule moves.',
@@ -601,8 +601,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   /** Under To, when the new time runs past the schedule's last day. */
   addWidened: (was: string) => `Widened from ${was}`,
   /** Step 1's promise, said where it is made (drawing note 4). */
-  addPromiseLead: 'Only the new time is scheduled. Nothing already on the schedule moves, locked or not, and nothing before today can.',
-  addPromiseSent: 'Drafts are made for the new time, toward each team’s practices a week. They wait in Changed since sent until you send the changes, and Send the changes bills them.',
+  addPromiseLead: 'Only the new time is scheduled. Nothing already on the schedule moves, locked or not, and nothing before today changes.',
+  addPromiseSent: 'Drafts are made for the new time, toward each team’s practices a week. They wait in Changed since sent until you send the changes. Send the changes bills them; earlier payments stay as they are.',
   addPromiseDraft: 'Drafts are made for the new time, toward each team’s practices a week, and join this schedule’s drafts.',
   /** Generate can't go yet: nothing new is ticked or found. */
   addNeedTime: 'Tick a permit, or find the time, to add time.',
@@ -622,22 +622,22 @@ export const SCHEDULE_SCREEN_WORDS = {
   addNothingNew: (permits: number) => (permits > 1 ? 'No team needs more time from these permits.' : 'No team needs more time from this permit.'),
   addNothingNewRest: 'Every team already has its practices a week. Go back to add other time, or cancel.',
   /** The page's notice once the new time is kept. */
-  timeAdded: (name: string, sent: boolean) => (sent ? `The new time is on ${name}. Send the changes to tell the coaches.` : `The new time is on ${name}.`),
+  timeAdded: (name: string, sent: boolean) => (sent ? `The new time is on ${name}. The coaches aren’t told until you send the changes.` : `The new time is on ${name}.`),
   /** Settings… › a permit's card: the door to take it off (P11 A). */
   takeOffDoor: 'Take it off…',
   takeOffLabel: (permit: string) => `Take ${permit} off`,
   takeOffTitle: (permit: string) => `Take ${permit} off?`,
   takeOffFuture: (practices: number, day: string, teams: string) => (practices
-    ? `Its ${pluralize(practices, 'practice')} from today, ${day}, come off: ${teams}.`
-    : `It has no practice from today, ${day}, on, so no team loses one.`),
+    ? `Its ${pluralize(practices, 'practice')} from today (${day}) on come off: ${teams}.`
+    : `It has no practice from today (${day}) on, so no team loses one.`),
   takeOffPast: (practices: number) => `The ${pluralize(practices, 'practice')} played before today stay on the schedule, and so does what the teams were billed for them.`,
   takeOffSend: 'The change waits in Changed since sent. Send the changes tells the coaches and shows what each team is credited for that time.',
   takeOffDraft: (slots: number) => `Its rows and ${pluralize(slots, 'slot')} come off this schedule. Nothing else on it moves.`,
-  takeOffEdits: 'Your other changes in Settings haven’t been kept, so they are left out.',
+  takeOffEdits: 'Other changes you’ve made in Settings… but not kept are left out of this.',
   takeOffGo: 'Take it off',
   takeOffBack: 'Back',
-  permitTakenOff: (permit: string, name: string) => `${permit} is off ${name}`,
-  // ── Find the time (Session D; drawing tab 2; owner rulings N1 A, P4 A, P7 A, P7b A). [marketing] at the project's close:
+  permitTakenOff: (permit: string, name: string) => `${permit} is taken off ${name}.`,
+  // ── Find the time (Session D; drawing tab 2; owner rulings N1 A, P4 A, P7 A, P7b A). Settled by /marketing 2026-11-16:
   //    "Where" and "Town" (the plan's venue-or-issuer filter) and "Another time" (its extra ranges) were not drawn. ──
   /** The door under the Permits field (N1 A: a door, not an entry in the tick list). */
   findDoor: 'Find the time across every permit',
@@ -670,11 +670,11 @@ export const SCHEDULE_SCREEN_WORDS = {
   /** P7 A: "4 held by a draft (Spring house league 2027)". */
   findDraftHeld: (days: number, drafts: readonly string[]) => `${days} held by ${drafts.length > 1 ? 'drafts' : 'a draft'} (${joinWithAnd(drafts)})`,
   /** P4 A: "Tue, May 25 and Thu, May 27 are on both". */
-  findShared: (days: string, many: boolean) => `${days} ${many ? 'are' : 'is'} on both`,
+  findShared: (days: string, many: boolean) => `${days} ${many ? 'are' : 'is'} on both permits`,
   findPricedBy: (permit: string) => `Priced by ${permit}`,
-  findPricedByLabel: 'The permit that prices the days on both',
+  findPricedByLabel: 'The permit that prices those days',
   findFootNone: 'Tick the time to bring into the schedule.',
-  findFootSome: 'Each comes in as a time row with its permit, in the dates above.',
+  findFootSome: 'Each comes in as a row of hours tied to its permit, within the dates above.',
   findAdd: (n: number) => (n ? `Add ${n} to the schedule` : 'Add to the schedule'),
   findBack: 'Back',
   /** Nothing found (drawing, frame "Nothing found"): said by the days when the days are what narrowed it. */
@@ -716,7 +716,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   addDateOff: 'Add a date off',
   dateOffWhy: 'Why (optional)',
   removeDateOff: (day: string) => `Remove the date off ${day}`,
-  /** [marketing] A date off's parks (a schedule on several permits, Session B; N4 A — the drawing's words). */
+  /** A date off's parks (a schedule on several permits, Session B; N4 A — the drawing's words; settled by /marketing 2026-11-16). */
   dateOffAppliesTo: 'Applies to',
   allVenues: 'All venues',
   /** The line under a permit's date off: where it came from (drawing, dates off, note 2). */
@@ -862,7 +862,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   regenTitle: (name: string) => `Regenerate ${name}?`,
   regenLead: 'The draft you picked replaces every slot nobody placed by hand.',
   /** On a sent schedule (P10 A): nothing before today moves, said where the admin decides, with the count. */
-  regenLeadSent: 'The draft you picked replaces every slot from today on that nobody placed by hand.',
+  regenLeadSent: 'The draft you picked replaces every slot from today on, except the ones someone placed by hand.',
   regenPast: (practices: number) => `The ${pluralize(practices, 'practice')} before today ${practices === 1 ? 'stays as it was' : 'stay as they were'} sent.`,
   regenKept: (locked: number, moved: number) => {
     const parts = [locked ? `the ${pluralize(locked, 'slot')} you locked` : '', moved ? `the ${moved} you moved by hand` : ''].filter(Boolean);
@@ -969,7 +969,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   // ── The page is the path (Club Tier 13c Session C, C4 = A; drawing CLUB_TIER_STAGE13C_DRAWINGS.html, the schedule page) ──
   /** [marketing] The top line's door: "From the permit {name} ›" before the place, the dates and who sent it. */
   metaFrom: 'From the permit',
-  /** [marketing] Several permits behind the rows (a schedule on several permits, tab 6): "From the permits A › and B ›". */
+  /** Several permits behind the rows (settled by /marketing 2026-11-16; a schedule on several permits, tab 6): "From the permits A › and B ›". */
   metaFromMany: 'From the permits',
   /** [marketing] The drafts step, only while a draft is short and the per-day setting is why (hub tab 13, Change 3 — the
    *  safety net beside fix-now 3's hint): "7 teams short: 47 of 450 slots handed out. The rules allow 1 practice a team a
@@ -1089,7 +1089,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   billNoLineSub: 'Off-plan: no line’s budget is used',
   billFor: 'Bill the teams for',
   billWhole: (amount: string) => `The time at the permit’s price · ${amount}`,
-  // ── A schedule on several permits, Session C (drawing tab 5 "Price the time"; [marketing] at the Close) ──
+  // ── A schedule on several permits, Session C (drawing tab 5 "Price the time"; settled by /marketing 2026-11-16) ──
   billWholePermits: (amount: string) => `The time at the permits’ prices · ${amount}`,
   billPrice: 'Price the time',
   billPriceEach: 'Each permit’s price',
@@ -1110,7 +1110,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   /** The read-only view once the bill is made (P9 B item 5): the terms it keeps, and any permit billed later at its own price. */
   billKeptEach: (list: string) => `Priced at each permit’s price: ${list}.`,
   billKeptOne: (rate: string) => `Priced at one rate for all: ${rate} a full field, an hour.`,
-  billKeptLater: (list: string) => `Added after the bill, each at its own price and kept from then on: ${list}.`,
+  billKeptLater: (list: string) => `Time added after the bill was made, priced at its own permit’s price and kept that way: ${list}.`,
   billPart: 'A part of it',
   billPartHint: 'Or a part of it, when the club covers some',
   billNoPermitHint: 'No permit prices this time: type what the teams pay.',
@@ -1219,10 +1219,10 @@ export const SCHEDULE_SCREEN_WORDS = {
   billCorrectionsOff: HAND_BACK_WORDS.billCorrectionsOff,
   /** P9 B (several permits, Session C): time on a permit that was not behind the bill is billed at that permit's own price,
    *  kept from now on. "Time on Georgetown summer is billed at that permit’s own price, $120.00 a full field, an hour, and
-   *  kept from now on." [marketing] at the Close. */
+   *  kept at that price from now on." Settled by /marketing 2026-11-16. */
   billNewPermitPrice: (permits: readonly { name: string; hour: string }[]) => permits.length === 1
-    ? `Time on ${permits[0].name} is billed at that permit’s own price, ${permits[0].hour} a full field, an hour, and kept from now on.`
-    : `Time on ${joinWithAnd(permits.map(x => `${x.name} (${x.hour} a full field, an hour)`))} is billed at each permit’s own price, and kept from now on.`,
+    ? `Time on ${permits[0].name} is billed at that permit’s own price, ${permits[0].hour} a full field, an hour, and kept at that price from now on. Time already billed keeps its price.`
+    : `Time on ${joinWithAnd(permits.map(x => `${x.name} (${x.hour} a full field, an hour)`))} is billed at each permit’s own price, and kept at those prices from now on. Time already billed keeps its price.`,
   billedCorrection: (money: string) => `a correction of ${money}`,
   handedBackLine: (team: string, lines: string) => `${team} handed back ${lines} itself, so it isn’t emailed.`,
   previewFailed2: 'The preview didn’t load.',
