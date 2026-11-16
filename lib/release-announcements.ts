@@ -19,7 +19,7 @@ export interface Announcement {
 }
 
 export const ANNOUNCEMENTS: Announcement[] = [
-  { date: '2026-11-14', line: 'New: two-step sign-in under Account, Sign-in & security. Organizers and coaches also get a clearer sidebar and top bar.' },
+  { date: '2026-11-15', line: 'New: two-step sign-in under Account, Sign-in & security. Organizers and coaches also get a clearer sidebar and top bar.' },
 ];
 
 /** The newest announced release, or null. */

@@ -44,12 +44,16 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
-    date: '2026-11-14',
-    title: "Two-step sign-in, purchase details emailed to every owner, a clearer layout for tournament organizers and coaches, and a bank balance check for your team's books",
+    date: '2026-11-15',
+    title: "Two-step sign-in, a bank balance check for coaches, and a clearer layout across the admin and Coaches Portal",
     highlights: [
       {
         category: 'new',
-        text: "Two-step sign-in. Under Account, Sign-in & security, you can add a code from an authenticator app after your password, and you get ten backup codes in case your phone is lost. The same page changes your password, signs you out of your other devices, and sets up a new phone.",
+        text: "Two-step sign-in. Under Account, Sign-in & security, you can add a code from an authenticator app after your password, and you get ten backup codes in case you lose your phone. The same page changes your password, signs you out of your other devices and sets up a new phone.",
+      },
+      {
+        category: 'new',
+        text: "In the Premium Coaches Portal, Money > Ledger has a new Balance check view. Type the balance your bank shows for a day and it tells you whether your Ledger agrees, helps you find what is missing, lets you mark lines \"Not in the bank yet\", and prints a saved check. It works on a phone, and a check you have started stays in your browser until you save it or sign out. Anyone with Money access can read it; saving needs permission to change money.",
       },
       {
         category: 'new',
@@ -57,7 +61,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'improved',
-        text: "Prices on the website and the plan screens now say \"plus applicable taxes\", and the tax is worked out at checkout from your billing address. When you pick a paid plan while setting up a tournament account, the billing address now has its own step.",
+        text: "On a coach's Roster, the Family column now shows the guardian's name on one line, so the list is shorter. Click the name to open their phone and email, each with a copy button, and a link to the player's Family tab.",
       },
       {
         category: 'improved',
@@ -69,22 +73,31 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'improved',
-        text: "Help (the ?) now sits in the top strip beside the bell in the tournament admin, the club admin and the Coaches Portal, and is the last button in the phone bar. What's new is now a row in the account menu, in place of the dot on Help.",
-      },
-      {
-        category: 'improved',
         text: "On a coach's player page, the tabs show straight away and the summary shows on Details only. The player's name is now the way to switch players, and \"Off the roster\" shows beside the name.",
       },
       {
-        category: 'new',
-        text: "In the Premium Coaches Portal, Money > Ledger has a new Balance check view. Type the balance your bank shows for a day and it tells you whether your Ledger agrees, helps you find what is missing, lets you mark lines \"Not in the bank yet\", and prints a saved check. It works on a phone, and a check you have started stays in your browser until you save it or sign out. Anyone with Money access can read it; saving needs permission to change money.",
+        category: 'improved',
+        text: "Help (the ?) now sits in the top strip beside the bell in the tournament admin and the Coaches Portal, and is the last button in the phone bar. What's new is now a row in the account menu, in place of the dot on Help.",
       },
       {
         category: 'improved',
-        text: "The Cancel and Downgrade windows on Plan & billing are simpler: what stays and what goes offline is said once, and a downgrade asks first which tournament you keep. An organization with a cancelled plan now opens to its Plan & billing page instead of a sidebar of links that do not work.",
+        text: "Prices on the website and the plan screens now say \"plus applicable taxes\", and the tax is worked out at checkout from your billing address. When you pick a paid plan while setting up a tournament account, the billing address now has its own step.",
+      },
+      {
+        category: 'improved',
+        text: "The Cancel and Downgrade windows on Plan & billing are simpler: what stays and what goes offline is said once, and a downgrade asks first which tournament you keep. An organization with a cancelled plan now opens to its Plan & billing page.",
+      },
+      {
+        category: 'fixed',
+        text: "A coach's attendance totals (a player's summary, the team total and the month chart) now count every record, so big rosters and long seasons are no longer undercounted. What used to read \"No reply\" now reads \"Not marked\" on every coach screen.",
+      },
+      {
+        category: 'fixed',
+        text: "If you turn off a tournament's Schedule page, its games no longer show up through the Teams and Standings pages. News posts and rules meant for a division you haven't published stay hidden until you publish it.",
       },
     ],
   },
+
   {
     date: '2026-11-05',
     title: "A new look for every public tournament page, rainouts, scores and practice times for house league, and plans that end on their renewal date",
