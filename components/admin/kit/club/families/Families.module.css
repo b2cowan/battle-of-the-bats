@@ -179,3 +179,10 @@ p.finishedNote { margin: 0 0 0.75rem; }
 
 /* ── Duplicates: the Parents · Children switch above the queue (Stage 14 S6). The kit's switch brings its own touch floor. ── */
 .hubSwitch { margin: 0 0 0.75rem; }
+
+/* A phone: the two "Keep this record" sides may shrink below their content and long emails wrap, so nothing runs past the
+   card (check:layout @361, 2026-11-16). */
+@media (max-width: 640px) {
+  .sides { grid-template-columns: minmax(0, 1fr); }
+  .side .read dd { overflow-wrap: anywhere; }
+}

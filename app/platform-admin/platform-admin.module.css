@@ -159,3 +159,6 @@ a.drawerRow { font-size: 1rem; }
 @media (min-width: 901px) {
   .scrim, .drawer { display: none; }
 }
+
+/* A phone: the Menu button keeps its 44 px instead of being squeezed (check:layout @361, 2026-11-16). */
+.menuBtn { flex: none; }

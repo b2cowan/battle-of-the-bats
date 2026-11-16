@@ -58,7 +58,7 @@
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 /* Team HQ stat strip lives in components/coaches/TeamHQ.module.css (slice 5g) —

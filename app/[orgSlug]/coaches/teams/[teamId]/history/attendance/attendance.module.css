@@ -228,3 +228,7 @@
 @media (max-width: 640px) {
   .receiptsDay { min-width: 0; }
 }
+/* A tablet is a touch width too (check:layout @768, 2026-11-16). */
+@media (max-width: 768px) {
+  .markLink { min-height: var(--tap-min, 44px); }
+}

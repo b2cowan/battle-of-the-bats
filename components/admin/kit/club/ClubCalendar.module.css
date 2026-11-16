@@ -217,3 +217,11 @@
   .read { grid-template-columns: 6rem minmax(0, 1fr); }
   .door { min-height: var(--tap-min, 44px); }
 }
+
+/* The permit chip's own words may wrap inside a Week column, and "Go to that week" is a full tap target on touch widths
+   (check:layout @768/1440, 2026-11-16). */
+.dayHead .outsideLink { min-width: 0; max-width: 100%; }
+.dayHead .outsideLink > * { min-width: 0; white-space: normal; }
+@media (max-width: 768px) {
+  .nextGo { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}

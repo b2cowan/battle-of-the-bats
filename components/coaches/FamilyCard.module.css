@@ -163,3 +163,8 @@
     min-height: var(--tap-min, 44px);
   }
 }
+
+/* A tablet is a touch width too: the card's buttons are full tap targets (check:layout @768, 2026-11-16). */
+@media (max-width: 768px) {
+  .btn, .linkBtn { min-height: var(--tap-min, 44px); }
+}

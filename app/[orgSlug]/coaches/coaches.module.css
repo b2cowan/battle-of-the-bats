@@ -12421,7 +12421,7 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
   font-size: var(--type-body);
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.rowListLead[data-lead="date"] { width: 4.25rem; }
+.rowListLead[data-lead="date"] { width: 4.5rem; }
 /* Wide enough for "Wed, Oct 14 · 11:30 a.m." — the lead says its weekday since Club Tier 6c (C8); the admin kit's row
    date column is the same 10.5rem (one recipe, §3.10). */
 .rowListLead[data-lead="date-time"] { width: 10.5rem; }

@@ -141,3 +141,8 @@
 }
 :global([data-public-frame='light']) .contact a { color: var(--club-ink); }
 :global([data-public-frame='light']) .actions { justify-content: flex-start; margin-top: 4px; }
+
+/* A tablet is a touch width too (check:layout @768, 2026-11-16). */
+@media (max-width: 768px) {
+  .actions > a { min-height: var(--tap-min, 44px); }
+}

@@ -29,3 +29,8 @@
 .helpLink:hover {
   text-decoration: underline;
 }
+
+/* Touch widths: the Help page's "What's new" link is a full tap target (check:layout @361/768, 2026-11-16). */
+@media (max-width: 768px) {
+  .helpLink { min-height: var(--tap-min, 44px); }
+}

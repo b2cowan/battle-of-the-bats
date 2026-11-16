@@ -640,3 +640,10 @@
 .apartChoices { margin: 0 0 0.75rem; padding: 0; border: 0; }
 .apartChoice { display: flex; align-items: center; gap: 0.6rem; min-height: 36px; color: var(--text-primary); cursor: pointer; }
 @media (max-width: 640px) { .apartChoice { min-height: 44px; } }
+
+/* Tablet widths (641–768 px): the board's marks, pills and inline links are full tap targets, as they already are on a
+   phone (check:layout @768, 2026-11-16). */
+@media (min-width: 641px) and (max-width: 768px) {
+  .mark { min-width: 44px; height: 44px; }
+  .pill, .noCoach, .inlineLink { min-height: 44px; }
+}

@@ -107,3 +107,8 @@
   .cutoffMonth { flex: 2 1 0; width: auto; }
   .cutoffDay { flex: 1 1 0; width: auto; }
 }
+
+/* A link inside a notice is a full tap target on touch widths (check:layout @361/768, 2026-11-16). */
+@media (max-width: 768px) {
+  .noticeLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}

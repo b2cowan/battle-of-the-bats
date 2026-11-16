@@ -355,3 +355,9 @@
   background: var(--home-olive);
 }
 .center .facts { justify-content: center; }
+
+/* A plan pill ends in "plus applicable taxes" (GST/HST Stage 2): on a phone it is wider than the card, so it may wrap
+   there instead of pushing the card sideways (check:layout @320/361, 2026-11-16). */
+@media (max-width: 480px) {
+  .tag { white-space: normal; max-width: 100%; line-height: 1.25; }
+}

@@ -75,3 +75,8 @@
 
 .dismiss:hover { color: var(--text-primary); }
 .dismiss:active { opacity: 0.6; }
+
+/* Touch widths: the dismiss control is a full 44 px target (check:layout @361/768, 2026-11-16). */
+@media (max-width: 768px) {
+  .dismiss { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+}

@@ -133,7 +133,7 @@
   border: 1px solid rgba(var(--home-olive-rgb), 0.32);
   border-radius: var(--home-radius);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
-  color: var(--text-primary);
+  color: var(--home-ink);
 }
 
 .premiumHead {
@@ -160,14 +160,14 @@
   font-size: var(--type-heading);
   font-weight: 800;
   letter-spacing: -0.01em;
-  color: var(--text-primary);
+  color: var(--home-ink);
 }
 
 .premiumBody {
   margin: 0;
   font-size: var(--type-body);
   line-height: 1.55;
-  color: var(--text-secondary);
+  color: var(--home-ink-soft);
 }
 
 .premiumFeatures {
@@ -185,7 +185,7 @@
   gap: 0.45rem;
   font-size: var(--type-body);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--home-ink-soft);
 }
 .premiumFeature svg { color: var(--home-olive); flex-shrink: 0; }
 
@@ -208,19 +208,19 @@
 
 .premiumReassure {
   font-size: var(--type-support);
-  color: var(--text-tertiary);
+  color: var(--home-dim);
 }
 
 .premiumPrice {
   font-family: var(--font-data, monospace);
   font-size: var(--type-heading);
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--home-ink);
 }
 .premiumPriceUnit {
   font-size: var(--type-support);
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: var(--home-dim);
   margin-left: 0.12rem;
 }
 

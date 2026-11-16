@@ -194,3 +194,7 @@ a.gameName:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 
   .wideForm[data-state='moved'] .gameNoScore { grid-column: 2; text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) { .gameBlock[data-flipped] { animation: none; } }
+
+/* A time like "10:24 a.m." is wider than "9:00 a.m.": the compact (bracket) card gives its status pill a tighter gap so
+   the time never spills (check:layout @361, 2026-11-16). */
+.stacked[data-size='compact'] .gameHead { gap: 4px; }

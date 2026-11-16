@@ -106,7 +106,7 @@ export default function TwoStepRequirementCard({ orgQuery, initial }: { orgQuery
         <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
           <div className={ck.noticeBody}>
             Turn on two-step sign-in for your own account first. Then you can turn a requirement on or off.{' '}
-            <Link href="/account/security">Open Sign-in &amp; security</Link>
+            <Link href="/account/security" className={styles.noticeLink}>Open Sign-in &amp; security</Link>
           </div>
         </div>
       )}

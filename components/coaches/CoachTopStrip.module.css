@@ -229,3 +229,10 @@
 .stripHelp > button:hover { color: var(--text-primary); background: var(--home-olive-soft, rgba(255, 255, 255, 0.06)); }
 /* The door's width, held while no page has published a topic (a team's pages only — `CoachStripHelp reserve`). */
 .stripHelpSpacer { flex: none; width: var(--icon-door-size); height: var(--icon-door-size); }
+
+/* A phone: the label and divider give way (the page names where you are). The coaches and admin strips are hidden this
+   narrow, so only the Support console's strip, which has no bottom bar, shows it; its wordmark no longer spills
+   (check:layout @361, 2026-11-16). */
+@media (max-width: 480px) {
+  .stripLabel, .stripDivider { display: none; }
+}

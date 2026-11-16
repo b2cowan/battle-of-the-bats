@@ -4,7 +4,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 /* ⚰ `.list` is GONE (Club Tier Stage 7d): the entries render through the portal's row list

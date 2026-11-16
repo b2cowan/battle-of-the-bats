@@ -39,3 +39,8 @@
 .recordRow textarea { width: 100%; }
 .fieldHint { display: block; margin: 0.3rem 0 0; }
 .recordRow .choice { margin: 0; }
+
+/* A tablet is a touch width too: the pencil is a full 44 px target (check:layout @768, 2026-11-16). */
+@media (max-width: 768px) {
+  .pencil { width: 44px; height: 44px; }
+}

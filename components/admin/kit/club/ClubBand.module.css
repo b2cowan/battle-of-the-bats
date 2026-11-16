@@ -99,3 +99,8 @@ a.tile:focus-visible { outline: 2px solid var(--accent, currentColor); outline-o
   .capDesk { display: none; }
   .capPhone { display: inline; }
 }
+
+/* Touch widths: each "Needs someone" line is a full tap target (the 44 px floor; check:layout @361/768, 2026-11-16). */
+@media (max-width: 768px) {
+  .line a { display: flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
