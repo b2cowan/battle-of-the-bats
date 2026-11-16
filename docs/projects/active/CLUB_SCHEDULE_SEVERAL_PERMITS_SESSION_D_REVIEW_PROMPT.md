@@ -117,7 +117,7 @@ Built state: the first line 557/557 (permit-free-time 14/14) except `possessive-
   slots count as taken (plan Phase 4 ⚠) — keep (recommended) or drafts-only as the prompt said; and the **finding**
   that the permit's Used figure has the same gap (recommend: a `/plan` item, not this run).
   **⏸ PAUSE**
-- [ ] **Stage 3 · commit** — ask the owner first ("Commit Session D now?"). Then, on `dev` (re-check
+- [x] **Stage 3 · commit** — DONE 2026-11-16: owner said yes; committed `e4753a86b` (15 files, only D's; TODO.md staged as ONE line); hash record in the follow-up commit. Original brief: ask the owner first ("Commit Session D now?"). Then, on `dev` (re-check
   `git rev-parse --abbrev-ref HEAD`):
   1. Tick Stages 1–2 here and update the plan's Phase 4 header ("committed `<hash>` 2026-11-1x" goes in a follow-up
      commit, as Sessions A–C did — never "uncommitted").

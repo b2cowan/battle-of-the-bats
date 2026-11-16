@@ -434,7 +434,7 @@ families; a permit edit should never rewrite it without a person pressing Send t
 > permit too; a booking over three calendar days frees its middle day (same as Used); DST days mix wall and real minutes
 > (same as Used); a part-free evening brings the whole row's hours; handed-back slots still count as taken; Find the time's
 > tick-order widening of From/To after an untick; Priced-by is not undone by unticking.
-> **Built 2026-11-16** (Session D of the build prompt; no migration). `lib/permit-free-time.ts` (pure:
+> **Built 2026-11-16, committed `e4753a86b` 2026-11-16** (Session D of the build prompt; no migration). `lib/permit-free-time.ts` (pure:
 > `freeTime`), `lib/permit-free-time-server.ts` (the reads), `POST /api/admin/schedules/free-time` (the scheduler gate, a
 > read), `components/admin/kit/club/schedules/FindTheTime.tsx` (a level of New schedule), `rowsFromFound` in
 > `lib/club-schedule-permit-rows.ts`. `subtractSpans` in `lib/permit-time.ts` exported (no second interval rule).
