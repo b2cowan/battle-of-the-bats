@@ -59,7 +59,7 @@ export const ASK_WORDS = {
     const said = note?.trim() || null;
     return {
       title: `Withdrawal request: ${player.trim()}`,
-      body: [guardian.trim(), season.trim(), said ? 'with a note' : 'No note'].filter(Boolean).join(' · '),
+      body: [guardian.trim(), season.trim(), said ? 'Note attached' : 'No note'].filter(Boolean).join(' · '),
       facts: noticeFacts([
         factRow(FACT_LABELS.family, guardian),
         factRow(FACT_LABELS.season, season),

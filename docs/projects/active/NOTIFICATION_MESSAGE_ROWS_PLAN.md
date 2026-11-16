@@ -14,7 +14,18 @@ reviewed 2026-11-15, committed `8f5f2e491` 2026-11-15** (see "Stage 3 as built" 
 committed `3902fc9e5` 2026-11-15** (see "Stage 4 as built" and "Stage 4 review"; five kinds get rows, the moved game keeps
 its sentence, Q1). **Stage 5 (the tidy-up) RULED and BUILT 2026-11-15, simplified, reviewed and `/docs` applied 2026-11-15, committed `828ea0ad9` 2026-11-15** (owner: "as
 recommended" on all seven; see "Stage 5 as built" and "Stage 5 simplify, review and docs"): "Score submitted" carries the game, the score, its state and who entered it, and goes only to the people who can open
-Results; the six never-sent kinds are kept on purpose. Next: the owner's browser check of Stages 2–5, then the one walk (Stage 6).
+Results; the six never-sent kinds are kept on purpose. **Stage 6 walk PASSED 48/48 on 2026-11-16** (owner paste-back: Get ready 2/2 · club owner on a computer 22/22 · coach in a phone-sized window 14/14 · "Score submitted" from real scores 9/9 · help article 1/1; the "Calls for you" block came back empty). **Owner calls answered 2026-11-16 ("they are fine as is"):** keep "Sent to" on a refund that was never sent; keep the hand-back line as built (no "ask for it back" sentence); keep the covered payment as the figure ("→ $0.00"); the held score/forfeit as a needs-attention notice stays not built (ruled "log it"). **The /marketing pass APPLIED 2026-11-16 (owner: "go ahead and apply")**: ten wording changes — the weekly line drops "and" ("· 2 more this week"); the time hand-off reads "gives 2 hours a week to <season>"; moved games "Families are told when you send them"; "the club will record paying it"; the unasked hand-back's next step "Ask the club for it back from the practice"; Payouts "Your Stripe account stays connected"; withdrawal line "Note attached"; the bank-debit and dispute "told" row is labelled "Told"; the availability row "Answered by" ("From" stays the date); "Billed" dropped for "Bill". Held back: "New sign-up" titles (Stage 4 Q5 ruling) and the club-payment "Received" row (date meaning unchecked). Tests updated; full suite fails only in 24 tests from other sessions' files.
+
+## Stage 6 — the one walk (written 2026-11-15)
+
+Checkable walk, 48 steps in five parts: https://claude.ai/artifact/6uVSUvJi46oJ3HqsrUthFQ (source
+`NOTIFICATION_MESSAGE_ROWS_WALK.html`, built by `.probe/n5/walk-build.cjs`). Parts 1–2 open one real notice of every kind that now
+shows rows (25 in the UAT club owner's bell, 13 in the UAT coach's), put there by `scripts/seed-notification-rows-walk.mjs`
+(dev only, refuses production, built from the same wording code the senders call, idempotent by `metadata.seed`). Part 3 makes
+"Score submitted" by entering real scores in the Dev Test Org's Live Demo tournament (it asks for approval, so a scorekeeper's entry
+waits, an admin's is final; a forfeit, then a score over it for the Was row). Part 4 is the help sentence. Not walked (unit-tested):
+the payments-ending notice, a held forfeit, a numeric correction's Was row, the needs-attention buttons on the seeded notices.
+Five owner calls ride beside the steps. **Walked 2026-11-16: 48/48 passed; the owner-calls block came back empty.**
 
 ## Stage 5 as built (2026-11-15; committed `828ea0ad9`)
 
@@ -57,10 +68,14 @@ Results; the six never-sent kinds are kept on purpose. Next: the owner's browser
     Results' entry and forfeit after the capability, final-lock and `winningSide` checks); a refused save throws before the
     send, so no notice; `held` is the save's own answer on all three paths (`result.status === 'submitted'`, the entry's
     `status`, the forfeit's `pending`). A read that throws is caught and the score goes on.
-  - **The embedded select was run against the dev database** (`.probe/n5/read.cjs`): `teams!games_home_team_id_fkey`,
-    `teams!games_away_team_id_fkey` and `divisions` (one key on that column, no hint needed) return names ("U13", "Kawartha
-    Lakers", "Whitby Eagles (Scott)"); a game holding both a team and a leftover slot word reads the team's name. Dev holds no
-    open-slot or forfeit game, so those two paths are proved by the unit tests, not the probe.
+  - **The embedded select was run against the dev database** (`.probe/n5/read-dev.cjs`): `teams!games_home_team_id_fkey`,
+    `teams!games_away_team_id_fkey` and `divisions` (one key on that column, no hint needed) return names (a final game
+    "Falcons" / "Hawks" in "U18"; a forfeit game with both team names; an open-slot game whose teams come back null with
+    its slot words "1st Pool Pool A"), so the slot and forfeit paths are proved on real data as well as by the unit tests.
+    ⚠ **Correction (2026-11-15):** the first probe (`.probe/n5/read.cjs`) was written with `@next/env`'s default loader,
+    which reads `.env.production.local`, so it ran its four `limit 1` SELECTs against the PRODUCTION project (nothing
+    was written or changed) and this section first said "dev". It was redone against `.env.local` with a refusal if the
+    URL names production. A probe in this repo reads `.env.local` by hand, as the seed scripts do.
   - **Fixed (real):** the "was it final before?" rule lived in the server-only file where no test could reach it. It is now
     the pure `standingResult` in `lib/score-notice.ts`, tested: completed and forfeit stand; a held score, a pending forfeit,
     a scheduled or cancelled game and a half-written score have none (so a re-entry of a held score reads as new); a 0–0 is a

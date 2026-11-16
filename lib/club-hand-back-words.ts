@@ -322,7 +322,7 @@ export const HAND_BACK_WORDS = {
           // One line per payment the credit lowered: "Feb 1 · $864.00 → $432.00" (club days). [marketing]
           list: capFactList(moves.map(m => `${shortDay(m.dueDate)} · ${money(m.fromCents)} → ${money(m.toCents)}`), PAYMENT_NOUN, n => `and ${n} more payments`),
         }),
-        factRow(FACT_LABELS.clubOwes, p.payCents ? money(p.payCents) : null, { lead: true, detail: 'it will record paying it' }),
+        factRow(FACT_LABELS.clubOwes, p.payCents ? money(p.payCents) : null, { lead: true, detail: 'the club will record paying it' }),
       ]),
     };
   },
@@ -402,8 +402,8 @@ export const HAND_BACK_WORDS = {
       factRow(FACT_LABELS.schedule, p.scheduleName),
       factRow(FACT_LABELS.from, formatShortWeekdayDate(p.first)),
       factRow(FACT_LABELS.practices, String(p.count)),
-      factRow(FACT_LABELS.billed, money(p.cents), { lead: true }),
-    ], 'You can ask for it back from the practice.'),
+      factRow(FACT_LABELS.bill, money(p.cents), { lead: true }),
+    ], 'Ask the club for it back from the practice.'),
   }),
 
   // ── The schedule's page (part B, specimen 3 — Asks 3, 4; /design D1, D4, D5) ──

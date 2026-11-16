@@ -38,7 +38,7 @@ export type MoneyNoticeWho = { team: string } | { children: string; one: boolean
 const isTeam = (w: MoneyNoticeWho): w is { team: string } => 'team' in w;
 const whoName = (w: MoneyNoticeWho) => (isTeam(w) ? w.team : w.children);
 const toldRow = (w: MoneyNoticeWho, emailed: boolean) =>
-  factRow(isTeam(w) ? L.team : L.family, emailed ? 'Emailed a way to pay' : 'No email address on file');
+  factRow(L.told, emailed ? 'Emailed a way to pay' : 'No email address on file');
 const tellYourself = (w: MoneyNoticeWho, emailed: boolean) => (emailed ? null : `Tell the ${isTeam(w) ? 'team' : 'family'} yourself.`);
 
 /** "$1,234.50" — online payments always show cents (a receipt is exact). */
@@ -587,7 +587,7 @@ export const LEAVING_WORDS = {
       failedReason: 'The subscription payment didn’t go through',
       ifNotPaid: (clubName: string) => `${clubName} is suspended and online payments stop`,
       payNow: 'Becomes your “How to pay” text',
-      payouts: 'Stay connected',
+      payouts: 'Your Stripe account stays connected',
       /** "23 families and 2 teams", or nothing. */
       owing: (families: number, teams: number) => [families ? pluralize(families, 'family', 'families') : null, teams ? pluralize(teams, 'team') : null].filter(Boolean).join(' and '),
     },
@@ -1189,7 +1189,7 @@ export const DISPUTE_WORDS = {
       factRow(L.returned, p.day),
       bookRow(isTeam(p.who) ? 'tournament' : 'season'),
       owesAgainRow(whoName(p.who), p.owed, p.amount),
-      factRow(isTeam(p.who) ? L.team : L.family, 'Not emailed'),
+      factRow(L.told, 'Not emailed'),
     ]),
   }),
   /** "{guardianPossessive}" when the payer is not named. */

@@ -386,10 +386,10 @@ const FINDING_NOUN = { one: 'finding', many: 'findings' } as const;
  * week — a digest with nothing to say is never sent.
  *
  * Notifications read at a glance, Stage 3 (owner ruling 2026-11-15): the body — the push, the list row, the email — is the
- * first finding and a count of the rest ("You've won 3 straight · and 2 more this week."); opened, the findings are one per
+ * first finding and a count of the rest ("You've won 3 straight · 2 more this week."); opened, the findings are one per
  * line under "This week", a warning keeping its ⚠. ⚠ The rows and the body are built from the SAME chosen findings, which
  * the caller computed from THIS coach's permissions: the rows can never show a finding the body's coach couldn't see.
- * [marketing] the one line's "and 2 more this week".
+ * [marketing] the one line's "2 more this week".
  */
 export function formatInsightDigest(findings: InsightFinding[]): { title: string; body: string; facts: NoticeFacts } | null {
   if (findings.length === 0) return null;
@@ -403,7 +403,7 @@ export function formatInsightDigest(findings: InsightFinding[]): { title: string
   const more = chosen.length - 1;
   return {
     title: 'Your week in review',
-    body: `${segment(chosen[0])}${more ? ` · and ${more} more this week` : ''}.`,
+    body: `${segment(chosen[0])}${more ? ` · ${more} more this week` : ''}.`,
     facts: noticeFacts([
       factRow(FACT_LABELS.thisWeek, null, { list: capFactList(chosen.map(f => `${segment(f)}.`), FINDING_NOUN, n => `and ${n} more`) }),
     ]),

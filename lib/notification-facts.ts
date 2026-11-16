@@ -26,7 +26,6 @@ export const FACT_LABELS = {
   // What and how much
   amount: 'Amount',
   bill: 'Bill',
-  billed: 'Billed',
   moneyBack: 'Money back',
   extra: 'Extra',
   firstDue: 'First due',
@@ -35,6 +34,7 @@ export const FACT_LABELS = {
   for: 'For',
   team: 'Team',
   family: 'Family',
+  told: 'Told',
   paidBy: 'Paid by',
   whoAnswers: 'Who answers',
   // Where it is
@@ -49,6 +49,7 @@ export const FACT_LABELS = {
   returned: 'Returned',
   refunded: 'Refunded',
   from: 'From',
+  answeredBy: 'Answered by',
   stops: 'Stops',
   answerBy: 'Answer by',
   replyBy: 'Reply by',

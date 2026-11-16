@@ -282,7 +282,7 @@ describe('digest formatting', () => {
     assert.ok(digest);
     assert.equal(digest.title, 'Your week in review');
     // Stage 3 (owner 2026-11-15): the one line is the first finding and a count; the findings are the opened rows, one per line.
-    assert.equal(digest.body, "You've won 3 straight · and 2 more this week.");
+    assert.equal(digest.body, "You've won 3 straight · 2 more this week.");
     assert.deepEqual(digest.facts.rows.map(r => r.label), ['This week']);
     assert.deepEqual(digest.facts.rows[0].list?.lines, [
       "You've won 3 straight.",

@@ -29,7 +29,7 @@ describe('the time-given bell (A1, 13d-1 A)', () => {
       schedule: 'Saturdays at Kinsmen, December 2026', season: '2026 Fall House League', grows: true,
       given: { minutes: 120, detail: 'Sat · 9:00–11:00 a.m. · Kinsmen Park', lines: ['Sat · 9:00–11:00 a.m. · Kinsmen Park'], firstDay: '2026-12-05', lastDay: '2026-12-19' }, taken: null,
     });
-    assert.equal(body, '“Saturdays at Kinsmen, December 2026” gives 2026 Fall House League 2 hours a week.');
+    assert.equal(body, '“Saturdays at Kinsmen, December 2026” gives 2 hours a week to 2026 Fall House League.');
     assert.equal(W.bell.givenTitle, 'The club gave house league time');
   });
   it('a send that takes more than it gives says it took time back', () => {

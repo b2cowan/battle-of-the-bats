@@ -135,11 +135,11 @@ describe('the fifteen money notices (C): one wording per kind, rows from the sha
     assert.equal(kid.body, '$450.00 didn’t go through on Nov 8. Nothing was taken.');
     assert.deepEqual(kid.facts.rows.map(r => [r.label, r.value]), [
       ['Amount', '$450.00'], ['Account', 'Ending 6789'], ['Returned', 'Nov 8'], ['Reason', 'There wasn’t enough money in the account'],
-      ['Spot', 'Still held'], ['Family', 'Emailed a way to pay'],
+      ['Spot', 'Still held'], ['Told', 'Emailed a way to pay'],
     ]);
     assert.equal(kid.facts.next, undefined);
     // No bank reason, no row; a team's place; no email on file, and the next step says to tell them.
-    assert.deepEqual(teamNoEmail.facts.rows.map(r => r.label), ['Amount', 'Returned', 'Place', 'Team']);
+    assert.deepEqual(teamNoEmail.facts.rows.map(r => r.label), ['Amount', 'Returned', 'Place', 'Told']);
     assert.equal(teamNoEmail.facts.next, 'Tell the team yourself.');
   });
   it('the dispute reads as drawn (tab 3): the answerer’s deadline is a row; the desk’s copy says who answers', () => {
@@ -247,7 +247,7 @@ describe('the six list notices (Stage 3): one wording per kind, rows from the sh
     assert.equal(n.body, 'U10 and U12: 3 practices moved, 8 games moved and 1 game needs a new date.');
     assert.deepEqual(n.facts!.rows.map(r => [r.label, r.value]), [['Schedule', 'Winter dome'], ['Divisions', 'U10 and U12'], ['Practices', '3 moved'], ['Games', '8 moved']]);
     assert.equal(n.facts!.rows[3].detail, '1 needs a new date');
-    assert.equal(n.facts!.next, '9 games wait in Changes to send. Families hear once you send them.');
+    assert.equal(n.facts!.next, '9 games wait in Changes to send. Families are told when you send them.');
   });
   it('family answers read as drawn (tab 5): one child per line and Now; a single change; one family across events', () => {
     const [several, single, family] = notices.family_availability_response;
@@ -256,9 +256,9 @@ describe('the six list notices (Stage 3): one wording per kind, rows from the sh
       { text: 'Maya', lead: 'In', detail: 'was Out' }, { text: 'Leo', lead: 'Out', detail: 'Dana left a note' }, { text: 'Sam', lead: 'Maybe', detail: 'was In' },
     ]);
     assert.deepEqual(several.facts!.rows.map(r => [r.label, r.value, r.detail]), [['Answers', '', undefined], ['Now', '11 of 14 in', '2 out · 1 maybe']]);
-    assert.deepEqual(single.facts!.rows.map(r => [r.label, r.value, r.detail]), [['Answer', 'Out', 'was In'], ['From', 'Dana', 'left a note'], ['Now', '11 of 14 in', '2 out · 1 maybe']]);
+    assert.deepEqual(single.facts!.rows.map(r => [r.label, r.value, r.detail]), [['Answer', 'Out', 'was In'], ['Answered by', 'Dana', 'left a note'], ['Now', '11 of 14 in', '2 out · 1 maybe']]);
     assert.equal(family.body, 'Sat, Nov 8 · Sat, Nov 15');
-    assert.deepEqual(family.facts!.rows.map(r => r.label), ['Events', 'From']);
+    assert.deepEqual(family.facts!.rows.map(r => r.label), ['Events', 'Answered by']);
     assert.deepEqual(family.facts!.rows[0].list!.lines, [{ text: 'Sat, Nov 8', lead: 'Out', detail: 'was In' }, { text: 'Sat, Nov 15', lead: 'Out' }]);
     // More than three: the line names three and counts the rest; the rows keep every child.
     const seven = coachBellWords({ kind: 'event', items: ['Maya', 'Leo', 'Sam', 'Ava', 'Ben', 'Cal', 'Dee'].map(child => bell({ child })) });
@@ -274,7 +274,7 @@ describe('the six list notices (Stage 3): one wording per kind, rows from the sh
   });
   it('weekly insights: the line leads with the first finding and counts the rest; the rows are the same findings (ruling 2026-11-15)', () => {
     const [n] = notices.coach_insights_digest;
-    assert.equal(n.body, 'Won 4 of your last 5 · and 1 more this week.');
+    assert.equal(n.body, 'Won 4 of your last 5 · 1 more this week.');
     assert.deepEqual(n.facts!.rows[0].list!.lines, ['Won 4 of your last 5.', '⚠ Maya Chen has made 5 of 9 tracked sessions this season.']);
     // Each coach's own findings: the rows are built in the same call as the body, from the findings computed for that coach.
     assert.match(readCode('lib/insights-digest.ts'), /const digest = formatInsightDigest\(findings\);[\s\S]*?body: digest\.body,[\s\S]*?facts: digest\.facts/);
@@ -374,7 +374,7 @@ describe('the six few-facts notices (Stage 4): one wording per kind, rows from t
   });
   it('a withdrawal request: the line never carries the family’s words; the note is quoted in full, “No note” when none (Q4)', () => {
     const [said, none, blank] = notices.house_league_withdraw_request;
-    assert.equal(said.body, 'Grace Kim · Summer 2027 · with a note');
+    assert.equal(said.body, 'Grace Kim · Summer 2027 · Note attached');
     assert.ok(!said.body.includes('wrist'));
     assert.deepEqual(said.facts!.rows.map(r => [r.label, r.value]), [['Family', 'Grace Kim'], ['Season', 'Summer 2027'], ['Note', `“${NOTE}”`]]);
     assert.equal(none.body, 'Grace Kim · Summer 2027 · No note');

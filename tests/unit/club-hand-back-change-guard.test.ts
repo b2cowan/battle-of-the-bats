@@ -261,7 +261,7 @@ describe('7 · the words, as drawn', () => {
     assert.equal(unasked.title, 'Riley Chen handed back 4 practices without asking for money');
     // The one line; the ask moved under the rows (Notifications read at a glance, Stage 2).
     assert.equal(unasked.body, 'Winter dome · Sundays · from Sun, Feb 7. The club billed $432.00 for them.');
-    assert.equal(unasked.facts.next, 'You can ask for it back from the practice.');
+    assert.equal(unasked.facts.next, 'Ask the club for it back from the practice.');
   });
 });
 

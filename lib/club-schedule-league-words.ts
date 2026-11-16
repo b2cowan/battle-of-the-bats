@@ -240,7 +240,7 @@ export const LEAGUE_ADMIN_NOTICE = {
         factRow(L.practices, practices[0], { lead: true, detail: practices.slice(1).join(' · ') }),
         factRow(L.games, games[0], { lead: true, detail: games.slice(1).join(' · '), list: capFactList(lines, GAME_NOUN, gamesMore) }),
       ], p.gamesWaiting > 0
-        ? `${pluralize(p.gamesWaiting, 'game')} ${p.gamesWaiting === 1 ? 'waits' : 'wait'} in Changes to send. Families hear once you send them.`
+        ? `${pluralize(p.gamesWaiting, 'game')} ${p.gamesWaiting === 1 ? 'waits' : 'wait'} in Changes to send. Families are told when you send them.`
         : null),
     };
   },

@@ -59,7 +59,7 @@ export const TIME_HANDOFF_WORDS = {
       const takes = p.taken ? hoursAWeek(p.taken.minutes) : '';
       if (p.grows) {
         // [marketing] the second sentence only when the same send also took some back.
-        return `“${p.schedule}” gives ${p.season} ${gives}.${p.taken ? ` It takes back ${takes}.` : ''}`;
+        return `“${p.schedule}” gives ${gives} to ${p.season}.${p.taken ? ` It takes back ${takes}.` : ''}`;
       }
       return `“${p.schedule}” takes back ${takes} from ${p.season}.${p.given ? ` It gives ${gives}.` : ''}`;
     },

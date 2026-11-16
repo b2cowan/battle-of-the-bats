@@ -363,7 +363,7 @@ export function coachBellWords(bundle: { kind: 'event' | 'family'; items: readon
       body: items.map(i => i.eventDay).join(' · '),
       facts: noticeFacts([
         factRow(L.events, null, { list: capFactList(items.map(i => factLine(i.eventDay, answerWord(i.answer), was(i))), EVENT_NOUN, andMore('events')) }),
-        factRow(L.from, who, { detail: items.some(i => i.hasNote) ? 'left a note' : null }),
+        factRow(L.answeredBy, who, { detail: items.some(i => i.hasNote) ? 'left a note' : null }),
       ]),
     };
   }
@@ -385,7 +385,7 @@ export function coachBellWords(bundle: { kind: 'event' | 'family'; items: readon
   const tail = [last.hasNote ? `${who} left a note` : null, last.count ? `now ${last.count}` : null];
   const facts = noticeFacts([
     factRow(L.answer, answerWord(last.answer), { lead: true, detail: was(last) }),
-    factRow(L.from, who, { detail: last.hasNote ? 'left a note' : null }),
+    factRow(L.answeredBy, who, { detail: last.hasNote ? 'left a note' : null }),
     nowRow(last.count),
   ]);
   if (last.answer === null) {

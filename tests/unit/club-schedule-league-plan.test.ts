@@ -296,7 +296,7 @@ describe('the games words (9d-2b Part 5; h4 settled, the rest /marketing\'s)', (
     assert.equal(LEAGUE_ADMIN_NOTICE.title('Summer field time', c), 'Summer field time changed house league’s game time');
     const n = LEAGUE_ADMIN_NOTICE.notice({ scheduleName: 'Summer field time', divisions: ['U12'], ...c });
     assert.equal(n.body, 'U12: 2 games moved and 1 game needs a new date.');
-    assert.equal(n.facts.next, '3 games wait in Changes to send. Families hear once you send them.');
+    assert.equal(n.facts.next, '3 games wait in Changes to send. Families are told when you send them.');
     assert.deepEqual(n.facts.rows.map(r => [r.label, r.value, r.detail]), [
       ['Schedule', 'Summer field time', undefined], ['Divisions', 'U12', undefined], ['Games', '2 moved', '1 needs a new date'],
     ]);
