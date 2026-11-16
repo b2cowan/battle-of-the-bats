@@ -33,6 +33,19 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // ⚠ A FRAMEWORK DEFECT WORKAROUND, NOT A TUNING KNOB (owner, 2026-11-15). 16.3 turned on "optimistic routing": the
+  // router predicts a link's route tree from a sibling it already knows instead of asking the server. Our coaches layout's
+  // `@stripFacts` slot matches every team page with a catch-all (`teams/[teamId]/[...rest]`, the documented way to blank a
+  // slot). For a link to such a page that carries a query (`accounting?section=…`, `schedule?event=…`) whose plain twin was
+  // already prefetched, the prediction leaves the catch-all's param unresolved (`reifyRouteTree`'s "should never happen"
+  // TODO, still there in 16.4.6), the slot's segment is never written where it is read, and the link re-prefetches about
+  // every 300 ms for as long as the page is open (~100 coach links; the release sweep's coach screens never went idle).
+  // Off = the pre-16.3 behaviour: the first prefetch of a route asks the server for its tree. Remove only after a probe
+  // shows the loop gone on a newer Next (the probe: docs/projects/active/COACH_PREFETCH_LOOP_FIX_PROMPT.md; a local
+  // production build, since `next dev` never prefetches on sight). Guarded by tests/unit/prefetch-loop-guard.test.ts.
+  experimental: {
+    optimisticRouting: false,
+  },
   // Amplify's build machine is a fixed 8GB, and this app's webpack production build was
   // OOM-killing the build worker even at a 7GB Node heap. Webpack's persistent filesystem
   // cache (serializing the whole compiled module graph to .next/cache after every build)
