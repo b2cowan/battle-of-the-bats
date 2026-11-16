@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
 import { volunteerShut } from '@/lib/invite-only-event';
 import { INVITE_REFUSALS } from '@/lib/invite-only-words';
-import { notify } from '@/lib/notify';
+import { readScoreNoticeGame, sendScoreNotice } from '@/lib/score-notice-server';
 import { announcePlayoffsSetIfReady, fillPlayoffTeams, fillPlayoffTeamsThenAnnounce } from '@/lib/playoffs-set';
 import { pickPlayoffPlan } from '@/lib/playoff-plan';
 import { planBulkReschedule } from '@/lib/schedule-shift';
@@ -1461,6 +1461,7 @@ export const PATCH = withObservability(async (req: Request) => {
           headers: { 'Content-Type': 'application/json' },
         });
       }
+      const before = await readScoreNoticeGame(id);
       const { pending } = await submitForfeit({
         gameId: id,
         game: gameRow,
@@ -1472,17 +1473,10 @@ export const PATCH = withObservability(async (req: Request) => {
           orgRequireScoreFinalization: ctx.org.requireScoreFinalization,
         },
       });
-      notify({
-        orgId: ctx.org.id,
-        tournamentId: gameRow.tournamentId,
-        eventType: 'score_submitted',
-        title: pending ? 'Forfeit pending approval' : 'Game forfeited',
-        body: pending
-          ? `${ctx.user.email ?? 'A scorekeeper'} marked a forfeit (${winningSide} team) — needs admin approval`
-          : `Marked forfeit by ${ctx.user.email ?? 'an admin'} (${winningSide} team advances)`,
-        // WI-2: land on Results with THIS game expanded.
-        link: `/${ctx.org.slug}/admin/tournaments/results?tournamentId=${gameRow.tournamentId}&gameId=${id}`,
-        excludeUserIds: [ctx.user.id],
+      // Tell the people who can open Results (fire-and-forget; one wording, lib/score-notice.ts).
+      sendScoreNotice({
+        org: ctx.org, actor: ctx.user, gameId: id, tournamentId: gameRow.tournamentId, before,
+        result: { kind: 'forfeit', winner: winningSide }, held: pending,
       }).catch(console.error);
     }
 
@@ -1490,7 +1484,8 @@ export const PATCH = withObservability(async (req: Request) => {
     else if (action === 'submit-score') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
       if (finalLocked) return finalResultLockedResponse();
-      await submitTournamentScore({
+      const before = await readScoreNoticeGame(id);
+      const { status } = await submitTournamentScore({
         gameId: id,
         game: gameRow,
         homeScore: body.homeScore,
@@ -1504,16 +1499,11 @@ export const PATCH = withObservability(async (req: Request) => {
         source: 'admin_results',
         allowFinalizedEdit: canChangeFinal,
       });
-      // Notify org admins of submitted score (fire-and-forget)
-      notify({
-        orgId: ctx.org.id,
-        tournamentId: gameRow.tournamentId,
-        eventType: 'score_submitted',
-        title: 'Score submitted',
-        body: `Submitted by ${ctx.user.email ?? 'an admin'}`,
-        // WI-2: land on Results with THIS game expanded.
-        link: `/${ctx.org.slug}/admin/tournaments/results?tournamentId=${gameRow.tournamentId}&gameId=${id}`,
-        excludeUserIds: [ctx.user.id],
+      // Tell the people who can open Results (fire-and-forget; one wording, lib/score-notice.ts).
+      sendScoreNotice({
+        org: ctx.org, actor: ctx.user, gameId: id, tournamentId: gameRow.tournamentId, before,
+        result: { kind: 'score', homeScore: body.homeScore as number, awayScore: body.awayScore as number },
+        held: status === 'submitted',
       }).catch(console.error);
     }
 

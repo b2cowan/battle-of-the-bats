@@ -30,6 +30,7 @@ import { ASK_WORDS } from '../../lib/house-league-money-words.ts';
 import { staffApprovalNotice } from '../../lib/coach-capabilities.ts';
 import { practicePlanSentMessage } from '../../lib/practice-plan-send.ts';
 import { clubSeasonNotice, clubSeasonStartedCard } from '../../lib/club-season-notice.ts';
+import { scoreNotice, standingResult } from '../../lib/score-notice.ts';
 
 const NOUN = { one: 'game', many: 'games' };
 
@@ -433,6 +434,108 @@ describe('the six few-facts notices (Stage 4): one wording per kind, rows from t
     assert.match(readCode('lib/club-season-notify.ts'), /const \{ title, body, facts \} = clubSeasonNotice\([\s\S]*?metadata: \{ teamId: p\.team\.id, action: p\.action, \.\.\.\(facts \? \{ facts \} : \{\}\) \}/);
     assert.match(readCode('app/api/admin/rep-teams/teams/[teamId]/program-years/route.ts'), /action: 'started', seasonName: programYear\.name,\s*tryoutsOpen: programYear\.tryoutOpen,/);
     assert.doesNotMatch(readCode('lib/family-notify.ts'), /facts/, 'Q1: a moved game keeps its sentence, like “A game changed”');
+  });
+});
+
+describe('“Score submitted” (Stage 5): the game, the score, its state and who entered it (owner Q1–Q6, 2026-11-15)', () => {
+  const VOCAB = new Set<string>(Object.values(FACT_LABELS));
+  const game = { away: 'Hawks', home: 'Ridge 12U', division: 'U13' };
+  const score = (awayScore: number, homeScore: number) => ({ kind: 'score' as const, awayScore, homeScore });
+  const notices = [
+    scoreNotice({ game, result: score(4, 6), held: false, enteredBy: 'kim@example.com' }),
+    scoreNotice({ game, result: score(4, 6), held: true, enteredBy: 'kim@example.com' }),
+    scoreNotice({ game, result: { kind: 'forfeit', winner: 'home' }, held: true, enteredBy: 'kim@example.com' }),
+    scoreNotice({ game, result: { kind: 'forfeit', winner: 'away' }, held: false, enteredBy: 'kim@example.com' }),
+    scoreNotice({ game, result: score(5, 6), held: false, enteredBy: 'kim@example.com', was: score(4, 6) }),
+    scoreNotice({ game, result: score(3, 0), held: false, enteredBy: 'kim@example.com', was: { kind: 'forfeit', winner: 'home' } }),
+    // Every blank part: no names, no division, no address — the rows still open.
+    scoreNotice({ game: { away: ' ', home: '', division: ' ' }, result: score(0, 0), held: false, enteredBy: '  ' }),
+    scoreNotice({ game: { away: '', home: '', division: null }, result: score(1, 2), held: true, enteredBy: null, was: score(2, 2) }),
+    scoreNotice({ game: { away: 'Semifinal 1 winner', home: 'Hawks' }, result: score(5, 3), held: false, enteredBy: 'kim@example.com' }),
+  ];
+  it('every row label is a shared word; every notice round-trips; every one line is one line', () => {
+    for (const n of notices) {
+      assert.ok(n.facts.rows.length, n.body);
+      for (const r of n.facts.rows) assert.ok(VOCAB.has(r.label), `"${r.label}" is not in the shared vocabulary`);
+      assert.deepEqual(readNoticeFacts(JSON.parse(JSON.stringify({ facts: n.facts }))), n.facts, n.body);
+      assert.doesNotMatch(n.body, /\n/);
+      assert.ok(n.body.trim().length);
+    }
+  });
+  it('a score: visitors first, its state, who entered it; Game · Score · Status · Entered by (Q1, Q2)', () => {
+    const [final, held] = notices;
+    assert.equal(final.title, 'Score submitted');
+    assert.equal(final.body, 'Hawks 4, Ridge 12U 6 · Final · entered by kim@example.com');
+    assert.deepEqual(final.facts.rows.map(r => [r.label, r.value, r.lead, r.detail]), [
+      ['Game', 'Hawks vs Ridge 12U', undefined, 'U13'], ['Score', 'Hawks 4, Ridge 12U 6', true, undefined],
+      ['Status', 'Final', undefined, undefined], ['Entered by', 'kim@example.com', undefined, undefined],
+    ]);
+    assert.equal(held.body, 'Hawks 4, Ridge 12U 6 · Waiting for approval · entered by kim@example.com', 'a held score never reads as final');
+    assert.equal(held.facts.rows.find(r => r.label === 'Status')!.value, 'Waiting for approval');
+    assert.equal(notices[8].body, 'Semifinal 1 winner 5, Hawks 3 · Final · entered by kim@example.com', 'a bracket slot in the bracket’s words');
+  });
+  it('a forfeit names the teams, never the stored 1–0; its titles are unchanged (Q3)', () => {
+    const [, , held, final] = notices;
+    assert.equal(held.title, 'Forfeit pending approval');
+    assert.equal(held.body, 'Ridge 12U wins by forfeit vs Hawks · Waiting for approval · entered by kim@example.com');
+    assert.equal(held.facts.rows.find(r => r.label === 'Score')!.value, 'Ridge 12U by forfeit');
+    assert.equal(final.title, 'Game forfeited');
+    assert.equal(final.body, 'Hawks wins by forfeit vs Ridge 12U · Final · entered by kim@example.com');
+    for (const n of [held, final]) assert.doesNotMatch(n.body + JSON.stringify(n.facts), /\b1\b|\b0\b|home team|away team/);
+  });
+  it('a correction of a final result says so and keeps the old one in a Was row (Q4)', () => {
+    const [, , , , corrected, overForfeit] = notices;
+    assert.equal(corrected.body, 'Hawks 5, Ridge 12U 6 · Final · corrected by kim@example.com');
+    assert.deepEqual(corrected.facts.rows.map(r => r.label), ['Game', 'Score', 'Was', 'Status', 'Entered by']);
+    assert.equal(corrected.facts.rows[2].value, 'Hawks 4, Ridge 12U 6');
+    assert.equal(overForfeit.facts.rows[2].value, 'Ridge 12U by forfeit');
+    assert.equal(notices[0].facts.rows.find(r => r.label === 'Was'), undefined, 'a first entry has no Was row');
+  });
+  it('a blank part never voids the rows and nothing is invented', () => {
+    const [, , , , , , blank, blankHeld] = notices;
+    assert.equal(blank.body, 'TBD 0, TBD 0 · Final');
+    assert.deepEqual(blank.facts.rows.map(r => r.label), ['Game', 'Score', 'Status'], 'no address, no Entered by row');
+    assert.equal(blank.facts.rows[0].detail, undefined, 'no division, no detail');
+    assert.equal(blankHeld.body, 'TBD 1, TBD 2 · Waiting for approval · corrected');
+  });
+  it('only a FINAL result stands to be corrected: completed or forfeit; a held one, an unplayed game and a half-written score have none (Q4)', () => {
+    assert.deepEqual(standingResult({ status: 'completed', homeScore: 6, awayScore: 4 }), { kind: 'score', awayScore: 4, homeScore: 6 });
+    assert.deepEqual(standingResult({ status: 'completed', homeScore: 0, awayScore: 0 }), { kind: 'score', awayScore: 0, homeScore: 0 }, 'a 0–0 is a result');
+    assert.deepEqual(standingResult({ status: 'forfeit', homeScore: 0, awayScore: 1, source: 'forfeit' }), { kind: 'forfeit', winner: 'away' });
+    assert.deepEqual(standingResult({ status: 'forfeit', homeScore: 1, awayScore: 0 }), { kind: 'forfeit', winner: 'home' });
+    for (const status of ['submitted', 'scheduled', 'cancelled', 'in_progress']) {
+      assert.equal(standingResult({ status, homeScore: 1, awayScore: 0, source: 'forfeit' }), null, `${status} has no standing result (a pending forfeit is not final)`);
+    }
+    assert.equal(standingResult({ status: 'completed', homeScore: null, awayScore: 3 }), null);
+    assert.equal(standingResult({ status: 'completed', homeScore: 3, awayScore: null }), null);
+  });
+  it('the settings line says what sends it, and the server reads the standing result through the pure function', () => {
+    assert.match(readCode('lib/notification-labels.ts'), /score_submitted:\s+'A game result is entered, or a forfeit is marked\.'/);
+    assert.match(readCode('lib/score-notice-server.ts'), /standing: standingResult\(\{ status: g\.status, homeScore: g\.home_score, awayScore: g\.away_score, source: g\.score_submission_source \}\)/);
+  });
+  it('every sender of “Score submitted” passes facts through the one entry; it reaches Results’ people, never the whole club (Q5, Q6)', () => {
+    const keeper = readCode('app/api/scorekeeper/[orgSlug]/score/route.ts');
+    const admin = readCode('app/api/admin/games/route.ts');
+    assert.equal((keeper.match(/sendScoreNotice\(\{/g) ?? []).length, 1);
+    assert.equal((admin.match(/sendScoreNotice\(\{/g) ?? []).length, 2, 'the score entry and the forfeit');
+    for (const src of [keeper, admin]) {
+      assert.doesNotMatch(src, /eventType: 'score_submitted'/, 'no sender writes its own words');
+      // The standing result is read BEFORE the save, so a correction can say what it replaced.
+      for (const m of src.matchAll(/const before = await readScoreNoticeGame\(/g)) {
+        assert.match(src.slice(m.index!), /^const before = await readScoreNoticeGame\([^)]*\);\s*const (?:result|\{ (?:pending|status) \}) = await submit(?:TournamentScore|Forfeit)\(/);
+      }
+      assert.equal((src.match(/readScoreNoticeGame\(/g) ?? []).length, (src.match(/sendScoreNotice\(\{/g) ?? []).length);
+    }
+    assert.match(admin, /const \{ status \} = await submitTournamentScore\([\s\S]*?held: status === 'submitted'/, 'the Results entry keeps whether it was held');
+    const server = readCode('lib/score-notice-server.ts');
+    assert.match(server, /const userIds = \(await resultsUserIds\(p\.org, p\.tournamentId\)\)\.filter\(id => id !== p\.actor\.id\);\s*if \(!userIds\.length\) return;/,
+      'never an empty list (it would reach every member), never the person who entered it');
+    assert.match(server, /eventType: 'score_submitted',[\s\S]*?metadata: \{ facts: notice\.facts \},\s*userIds,/);
+    const recipients = readCode('lib/notify-recipients.ts');
+    assert.match(recipients, /export async function resultsUserIds[\s\S]*?tournamentMembersWho\(org\.id, tournamentId, m => canScore\(m\.role, m\.capabilities\) && !volunteerShut\(org\.planId, m\.role\)\)/);
+    // The three tournament-scoped lists share ONE member read (and its staff scoping), so none can drift from the others.
+    assert.equal((recipients.match(/from\('organization_members'\)\.select\('id, user_id, role, capabilities'\)/g) ?? []).length, 1);
+    assert.match(recipients, /async function tournamentMembersWho[\s\S]*?\.filter\(m => m\.user_id && keep\(m\)\), tournamentId\)/);
   });
 });
 

@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { canGate } from './volunteer-jobs';
+import { canGate, canScore } from './volunteer-jobs';
+import { volunteerShut } from './invite-only-event';
 import { hasCapability } from './roles';
 import { LEAGUE_RUNNER_ROLES, canHouseLeague } from './house-league-access';
 import { isDemoOrganizerEmail } from './demo-org';
@@ -48,16 +49,19 @@ export async function orgOwnerEmails(orgId: string): Promise<OwnerRecipient[]> {
  *  limited to their assigned tournaments as `notify()` limits them. Club Tier Stage 7b: the club entering its own teams tells
  *  them, never the club's coaches (a coach learns from their own Tournaments list). */
 export async function tournamentTeamAdderUserIds(orgId: string, tournamentId: string): Promise<string[]> {
-  const { data, error } = await supabaseAdmin.from('organization_members').select('id, user_id, role, capabilities')
-    .eq('organization_id', orgId).eq('status', 'active');
-  if (error) throw error;
-  return scopedToTournament(
-    ((data ?? []) as Member[]).filter(m => m.user_id && hasCapability(m.role, m.capabilities, 'create_tournaments')),
-    tournamentId,
-  );
+  return tournamentMembersWho(orgId, tournamentId, m => hasCapability(m.role, m.capabilities, 'create_tournaments'));
 }
 
 type Member = { id: string; user_id: string | null; role: OrgRole; capabilities: Record<string, boolean> | null };
+
+/** The club's active members who pass `keep`, with a staff member limited to their assigned tournaments (the one read the
+ *  tournament-scoped lists below share). Throws on a failed read. */
+async function tournamentMembersWho(orgId: string, tournamentId: string, keep: (m: Member) => boolean): Promise<string[]> {
+  const { data, error } = await supabaseAdmin.from('organization_members').select('id, user_id, role, capabilities')
+    .eq('organization_id', orgId).eq('status', 'active');
+  if (error) throw error;
+  return scopedToTournament(((data ?? []) as Member[]).filter(m => m.user_id && keep(m)), tournamentId);
+}
 
 /** A staff member with tournament assignments hears only about those tournaments (no rows = every tournament). */
 async function scopedToTournament(members: Member[], tournamentId: string): Promise<string[]> {
@@ -80,10 +84,15 @@ async function scopedToTournament(members: Member[], tournamentId: string): Prom
  *  question), with a staff member limited to their assigned tournaments as `notify()` limits them (no rows =
  *  every tournament). */
 export async function checkInUserIds(orgId: string, tournamentId: string): Promise<string[]> {
-  const { data, error } = await supabaseAdmin.from('organization_members').select('id, user_id, role, capabilities')
-    .eq('organization_id', orgId).eq('status', 'active');
-  if (error) throw error;
-  return scopedToTournament(((data ?? []) as Member[]).filter(m => m.user_id && canGate(m.role, m.capabilities)), tournamentId);
+  return tournamentMembersWho(orgId, tournamentId, m => canGate(m.role, m.capabilities));
+}
+
+/** The people who can open this tournament's Results screen — who may enter scores (`canScore`, the score routes' own
+ *  question; Results is the `submit_scores` screen), a volunteer only on a plan that has volunteers (`volunteerShut`), a
+ *  staff member limited to their assigned tournaments as `notify()` limits them. "Score submitted" goes to them, not to the
+ *  whole club (Notifications read at a glance Stage 5, owner Q6 2026-11-15). */
+export async function resultsUserIds(org: Pick<Organization, 'id' | 'planId'>, tournamentId: string): Promise<string[]> {
+  return tournamentMembersWho(org.id, tournamentId, m => canScore(m.role, m.capabilities) && !volunteerShut(org.planId, m.role));
 }
 
 /**

@@ -12,7 +12,118 @@ PM brief: `NOTIFICATION_MESSAGE_ROWS_PM_BRIEF.md`.
 reviewed 2026-11-15, committed `8f5f2e491` 2026-11-15** (see "Stage 3 as built" and "Stage 3 review"); the four undrawn kinds ruled
 2026-11-15. **Stage 4 (the few-facts coach and league notices) RULED and BUILT 2026-11-15, simplified and reviewed 2026-11-15,
 committed `3902fc9e5` 2026-11-15** (see "Stage 4 as built" and "Stage 4 review"; five kinds get rows, the moved game keeps
-its sentence, Q1). Next: the owner's browser check of Stages 2–4, then Stage 5.
+its sentence, Q1). **Stage 5 (the tidy-up) RULED and BUILT 2026-11-15, simplified, reviewed and `/docs` applied 2026-11-15** (owner: "as
+recommended" on all seven; see "Stage 5 as built" and "Stage 5 simplify, review and docs"): "Score submitted" carries the game, the score, its state and who entered it, and goes only to the people who can open
+Results; the six never-sent kinds are kept on purpose. Next: the owner's browser check of Stages 2–5, then the one walk (Stage 6).
+
+## Stage 5 as built (2026-11-15)
+
+- **One entry point for the three senders** (Field scores; Results' score entry; Results' forfeit): the words are `scoreNotice`
+  (`lib/score-notice.ts`, pure); the read and the send are `readScoreNoticeGame` (before the save) and `sendScoreNotice`
+  (`lib/score-notice-server.ts`). The line: "Hawks 4, Ridge 12U 6 · Final · entered by kim@example.com" (visitors first; "Waiting for
+  approval" when held; a forfeit "Ridge 12U wins by forfeit vs Hawks"; a correction of a final result "corrected by …"). Rows Game
+  (the division as detail) · Score (bold) · Was (a correction only) · Status · Entered by. Titles unchanged ("Score submitted",
+  "Forfeit pending approval", "Game forfeited"). A forfeit never shows the stored 1–0.
+- **Held or final is now known on every path:** Results' score entry used to drop the save's answer; it keeps it.
+- **The one extra read (Q5)** is one query before the save (both teams by their two links, the division, the slot words, the
+  standing result). A failed read never stops a score: the notice says "Visitors" / "Home team". A bracket slot reads in the
+  bracket's words ("Semifinal 1 winner").
+- **Audience (Q6):** `resultsUserIds` (`lib/notify-recipients.ts`): whoever may enter scores (`canScore`, Results' own question),
+  a volunteer only on a plan with volunteers (`volunteerShut`), staff to their assigned tournaments; never the person who entered
+  it; nothing when no one else can (an empty list would reach every member).
+- **Five labels** added (Game, Score, Status, Entered by, Was). `metadata` holds `facts` only (the kind had no metadata before).
+- **The six never-sent kinds (Q7):** re-verified (no `notify()` call or `notifications` insert anywhere; two appear only in the UAT
+  seed). Left exactly as they are; "tidy-up" closes as **kept on purpose**. The data dictionary's dead list now names all six.
+- **Not built (Q3), for `/plan`:** a held score or forfeit as a needs-attention notice that clears itself on approval.
+- **`/legal` 2026-11-15:** nothing owed (`docs/agents/legal/CASL_LATE_BILL_EMAIL.md`, "Stage 5 as built"); finding 11's count 27 → 28.
+- **Tests:** the Stage 5 block in `tests/unit/notification-facts.test.ts` (every state, a forfeit each way, two corrections, every
+  blank part read back, the bracket slot; a guard that every sender goes through the one entry, reads before it saves, and that the
+  audience is Results' people with an empty-list stop).
+- **For `/docs` (done, see the review section):** the tournaments FAQ "Where does a 'score submitted' notification take me?" says it goes to admins when a
+  scorekeeper submits; it now goes to everyone who can open Results, for every entry (an admin's too), and says whether it is
+  waiting for approval.
+
+## Stage 5 simplify, review and docs (2026-11-15)
+
+- **Simplify.** Three member lists (`tournamentTeamAdderUserIds`, `checkInUserIds`, `resultsUserIds`) each repeated the same
+  member read and staff scoping; they now share one private `tournamentMembersWho(orgId, tournamentId, keep)` and are one line
+  each (the test pins that exactly one such read remains). The game read's two error paths became one (a thrown read is logged
+  once by the catch). **Kept as asked:** the read and the send stay two calls (the read must come BEFORE the save so a
+  correction can name the old result); `fanPlaceholder` is the right reuse (it is what the fans' pages say for a slot);
+  `UNREAD` stays (a failed read says "Visitors" / "Home team", never stops a score); `lib/notification-facts.ts` imports
+  nothing; the pure/server split and the empty-list stop stand.
+- **Review, argued from the code.**
+  - Every sender reads after its scope guards and before the save (Field scores after `scopeGuard` + `requireTournamentInOrg`;
+    Results' entry and forfeit after the capability, final-lock and `winningSide` checks); a refused save throws before the
+    send, so no notice; `held` is the save's own answer on all three paths (`result.status === 'submitted'`, the entry's
+    `status`, the forfeit's `pending`). A read that throws is caught and the score goes on.
+  - **The embedded select was run against the dev database** (`.probe/n5/read.cjs`): `teams!games_home_team_id_fkey`,
+    `teams!games_away_team_id_fkey` and `divisions` (one key on that column, no hint needed) return names ("U13", "Kawartha
+    Lakers", "Whitby Eagles (Scott)"); a game holding both a team and a leftover slot word reads the team's name. Dev holds no
+    open-slot or forfeit game, so those two paths are proved by the unit tests, not the probe.
+  - **Fixed (real):** the "was it final before?" rule lived in the server-only file where no test could reach it. It is now
+    the pure `standingResult` in `lib/score-notice.ts`, tested: completed and forfeit stand; a held score, a pending forfeit,
+    a scheduled or cancelled game and a half-written score have none (so a re-entry of a held score reads as new); a 0–0 is a
+    result.
+  - **Fixed (real):** the settings line for this kind read "A scorekeeper or coach submits a game result." — coaches never
+    submit tournament scores, and admins' entries and forfeits send it too. It now reads "A game result is entered, or a
+    forfeit is marked."
+  - Audience re-read in `lib/roles.ts`: owner, admin, staff (assigned tournaments) and official hold `submit_scores`; league
+    admin, registrar, treasurer and plain coach hold none by default, and `volunteerShut` removes an official on a plan with no
+    volunteers; the actor is filtered out; an empty list sends nothing.
+  - Nothing in the code reads the old bodies ("Submitted by scorekeeper", "needs admin approval", "team advances"): only the
+    census, the mockup and a legal note quote them as history.
+  - Blank inputs: the test reads back nine notices including blank names, blank division, blank address and a blank correction.
+  - **Not changed, noted:** a member whose tournaments module is switched off but who holds a stored `submit_scores` grant
+    would be told; Results' own page gates on the same capability, so the audience matches the screen it links to.
+- **Docs (`/docs`).** One help sentence described this notice: tournaments FAQ "Where does a 'score submitted' notification
+  take me?" (`lib/help-content/tournaments.tsx`). It said admins are notified when a scorekeeper submits. It now says it goes to
+  everyone who can open Results & scoring except the person who entered it, for every entry (an admin's and a forfeit too),
+  names the game, the score, Final or Waiting for approval and who entered it, and that a correction shows what it was
+  before. Keywords and the page's search text gained the same words. No other help file mentions the notice.
+- **Checks.** `notification-facts` (42), `club-stage2-server-guard`, `club-stage2-screens-guard`, `notification-feed-grouping`,
+  `club-stage7b-add-our-teams` and `needs-attention-clears-itself` pass; `check:spelling` clean; `tsc` fails only in the
+  untracked `layout-run-journal.test.ts`. `verify:changed` fails only in other sessions' files (workspace-flip and
+  possessive guards, one door for the plan, the coach-stylesheet chain, billing rail, dispute screens, schedule bill, Stage 6
+  owner-walk summary and more); none is in a file of this work.
+
+## Stage 5 rulings (2026-11-15, owner: "as recommended" on all seven)
+
+Q1 visitors first, the address kept · Q2 Game · Score · Status · Entered by · Q3 forfeits name the teams, titles unchanged;
+needs-attention for held results logged for `/plan` · Q4 a correction says "corrected" with a Was row; a held re-entry reads as
+new · Q5 one extra read accepted · Q6 the people who can open Results · Q7 the six kept as they are. The questions as asked:
+
+## Stage 5 owner questions (2026-11-15, asked before any code)
+
+Found in the code (re-verified by hand, not from the census): **"Score submitted" has three senders** (Field scores; the
+Results screen's score entry; the Results screen's forfeit, which titles itself "Forfeit pending approval" / "Game
+forfeited"). None loads the teams, the division or the old score; none stores any metadata; the forfeit says "home team" /
+"away team", never a name. **The same words go out whether the score is final or held for an admin's approval** (the
+Results score entry does not even keep the answer). **Audience: every active member of the org except the person who entered
+it** (no recipients are passed), so house-league admins and registrars, treasurers and coaches with no tournament access get
+every score, push on by default. Not a needs-attention kind (`know`), bundles by day ("N scores submitted"; an opened bundle
+lists each one line). Every entry sends a new notice: a re-entry of a held score, and an admin's correction of a final one.
+**The six never-sent kinds:** no sender anywhere (two are inserted only by the UAT seed script); `notifications.event_type`
+is free text with no CHECK, so removing a kind is code-only, not a migration; the settings page already hides all six.
+
+1. **The line** (recommended): visitor first, as the public pages and the fan "Final:" push read: "Hawks 4, Ridge 12U 6 ·
+   Final · entered by kim@example.com"; held: "· Waiting for approval ·"; an unteamed bracket slot uses the bracket's own
+   words ("Semifinal 1 winner 5, Hawks 3"). Keep the address (as Stage 4 Q5), or the person's name when the account has one.
+2. **The rows:** Game (the matchup, the division as the quiet detail) · Score · Status (Final / Waiting for approval) ·
+   Entered by; four new labels.
+3. **Forfeits:** "Ridge 12U wins by forfeit vs Hawks · Waiting for approval · kim@example.com"; the Score row says "Ridge
+   12U by forfeit", never the stored 1–0; titles unchanged. Making a held score or forfeit a needs-attention notice is NOT
+   built here (it needs something that clears it on approval): log for `/plan`.
+4. **Twice:** a correction of a final score says "corrected" and gains a **Was** row with the old score; a re-entry of a held
+   score reads as a new one (it still waits).
+5. **Cost:** one extra small read per score entered, before the write (teams, division, slot words, the old score). A
+   150-game day ≈ 200 reads; the notice already looks up every org member for each send.
+6. **Audience (widened):** send it to the people who can open the Results screen it links to (holders of the score tool,
+   staff to their assigned tournaments), not to the whole org. Or keep the audience and log it for `/plan`.
+7. **The six never-sent kinds:** leave them exactly as they are (recommended; they cost nothing, old rows still render, the
+   seed uses two), close "tidy-up" in this plan as "kept on purpose", and correct the data dictionary's dead list (it
+   names five, not six). Or remove the five waiting-on-a-trigger kinds (code only), or write rows for them now (rejected:
+   rows with no sender to check against).
 
 ## Stage 4 as built (2026-11-15)
 

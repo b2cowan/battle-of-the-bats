@@ -9,7 +9,7 @@ import {
   submitTournamentScore,
   TournamentScoringError,
 } from '@/lib/tournament-scoring-service';
-import { notify } from '@/lib/notify';
+import { readScoreNoticeGame, sendScoreNotice } from '@/lib/score-notice-server';
 import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
@@ -52,6 +52,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     const wrongOrg = await requireTournamentInOrg(ctx, gameRow.tournamentId);
     if (wrongOrg) return wrongOrg;
 
+    const before = await readScoreNoticeGame(body.id);
     const result = await submitTournamentScore({
       gameId: body.id,
       game: gameRow,
@@ -67,16 +68,11 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       allowFinalizedEdit: false,
     });
 
-    // Notify org admins of submitted score (fire-and-forget)
-    notify({
-      orgId: ctx.org.id,
-      tournamentId: gameRow.tournamentId,
-      eventType: 'score_submitted',
-      title: 'Score submitted',
-      body: `Submitted by scorekeeper ${ctx.user.email ?? ''}`.trim(),
-      // WI-2: land on Results with THIS game expanded (was Schedule, which has no score tools).
-      link: `/${ctx.org.slug}/admin/tournaments/results?tournamentId=${gameRow.tournamentId}&gameId=${body.id}`,
-      excludeUserIds: [ctx.user.id],
+    // Tell the people who can open Results (fire-and-forget; one wording, lib/score-notice.ts).
+    sendScoreNotice({
+      org: ctx.org, actor: ctx.user, gameId: body.id, tournamentId: gameRow.tournamentId, before,
+      result: { kind: 'score', homeScore: body.homeScore as number, awayScore: body.awayScore as number },
+      held: result.status === 'submitted',
     }).catch(console.error);
 
     return NextResponse.json({ success: true, status: result.status });

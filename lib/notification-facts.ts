@@ -96,6 +96,12 @@ export const FACT_LABELS = {
   cameWith: 'Came with',
   tryouts: 'Tryouts',
   lastSeason: 'Last season',
+  // Stage 5, "Score submitted" (owner rulings 2026-11-15, Q2 and Q4) [marketing]
+  game: 'Game',
+  score: 'Score',
+  status: 'Status',
+  enteredBy: 'Entered by',
+  was: 'Was',
 } as const;
 
 export const FACT_LABEL_MAX = 11;

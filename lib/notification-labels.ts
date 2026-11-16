@@ -115,7 +115,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   payment_received:                  'A payment is recorded by hand, or a team or family pays online.',
   payment_failed:                    'A scheduled or automatic payment fails.',
   roster_change_requested:           'A coach submits a roster change request for review.',
-  score_submitted:                   'A scorekeeper or coach submits a game result.',
+  score_submitted:                   'A game result is entered, or a forfeit is marked.',
   score_disputed:                    'A submitted score is flagged as disputed by a coach.',
   registration_deadline_approaching: 'A tournament registration deadline is within 48 hours.',
   waitlist_opened:                   'A tournament waitlist is opened to allow additional registrations.',

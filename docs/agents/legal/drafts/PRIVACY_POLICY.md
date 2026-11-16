@@ -9,6 +9,7 @@
 | **Backlog** | L2 (with L9 findings); children's consent wording (L5) and CASL lawful basis (L6) are referenced, not settled |
 
 **Change log**
+- 0.2 · 2026-11-15 · Notifications that read at a glance, Stage 4 as built. §6 push row: the alert text can also give an email address. §9: one sentence on how long an in-app note is kept and what it can hold. Finding 11 widened (stored notice rows, the withdrawal note in full). Read against `CASL_LATE_BILL_EMAIL.md` "Stage 4 as built".
 - 0.1 · 2026-11-05 · First draft by `/legal`, written from a code census of what the product collects, stores and sends.
 - 0.1 · 2026-11-05 (later) · §3 billing row: a club gives its billing address when it turns on online payments.
 - 0.1 · 2026-11-06 · §5 and §12: other people's email addresses and the "Stop these emails" link (Stage 3b).
@@ -287,7 +288,7 @@ needs. We do not sell personal information, and we do not share it with advertis
 | **Resend** | Sends our emails, and the emails clubs send through FieldLogicHQ | Recipient's name and email address, and the message | United States |
 | **Stripe** | Card payments for our plans and our invoices for Stripe fees; and, when a club takes payments online, the club's own payment account | For our plans and invoices: the owner's email, the billing name and address, and the card. For club payments: the payer's email, card, what is being paid for and the player names on the payment | Canada, the United States and other countries |
 | **Google** (a Gmail account) | Our business email inbox — the addresses on this page arrive there | Messages people send us, which can include contact details | The United States and other countries |
-| **Your browser's push service** (for example Google, Apple or Mozilla) | Delivers notifications you turn on | A notification address and the alert text, which can name a person, a child or a team (for example "New sign-up: Henry Kim") | Varies |
+| **Your browser's push service** (for example Google, Apple or Mozilla) | Delivers notifications you turn on | A notification address and the alert text, which can name a person, a child or a team, or give an email address (for example "New sign-up: Henry Kim") | Varies |
 
 **How we hold them to it.** Supabase, AWS, Resend and Stripe each protect the personal information they handle for us under
 their standard data-processing terms, which form part of our agreement with each of them. Our Gmail inbox is a free account,
@@ -388,7 +389,7 @@ and email addresses.
   about that child deleted at once, but their answers stay as the child's attendance, and their first name stays beside them until
   that date; a parent whose account is deleted loses their notes, and the answers stay without their name. If a club joins two records
   of the same child, the attendance goes with the child. If an event moves to a new day, its answers are kept, and parents and coaches
-  update them by hand. The in-app notes the coach receives about answers are kept like any other in-app note (no end date today).
+  update them by hand. The in-app notes the coach receives about answers are kept like any other in-app note. An in-app note is kept until the person it was sent to deletes it, or until their account or the club is deleted (no end date today). A note can hold a name, a child’s name, an email address and, for a request to withdraw a child, the words the family wrote.
 - **Error reports** are deleted after 30 days; the detailed log of records our staff opened, after 90 days; performance
   measurements, after one year. The list of pages our staff visit in our own tools is kept with no set end date today.
 
@@ -559,10 +560,20 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca · [mailing address]
 8. **Low** — feedback keeps IP address and browser type unredacted (disclosed in §3; is the IP needed?).
 9. **Low** — the tax records never end (blank the name and address after six years).
 10. **Low (new 2026-11-08)** — the staff page trail has no end date (prune at 90 days).
-11. **Low (new 2026-11-13)** — the coach's in-app lines about families' answers (child's first name, parent's first name, the answer; kept in
-    the notification record) have no retention clock and outlive the 60-day clean-up; and no notification kind is hidden from a coach who has
-    since been removed (`app/api/notifications/route.ts:55-96` reads by user and bell scope, not by membership). §9 says so in one sentence.
-    Fix at the root for every kind, not per kind (`/plan`).
+11. **Low to medium (new 2026-11-13; widened 2026-11-15 after Stage 4 was built)** — the in-app notices (the bell) keep a stored copy of
+    what they were built from (`notifications.metadata`) with no retention clock: a notice stays until the person it was sent to
+    deletes it (`app/api/notifications/route.ts:175-196`, own copy only) or their account or the club is deleted (the rows cascade,
+    `101_notifications.sql:10-11`). "Cleared" and "settled" only set `cleared_at`; the row stays. With Stages 2–4 that copy holds, for
+    about 28 kinds, names (a child's, a guardian's, a parent's, an invitee's), the invitee's and a scorekeeper's email address, amounts and dates; and
+    **since 2026-11-15 a house-league withdrawal request holds the family's own note in full (up to 300 characters; the public form
+    invites a reason, so it can hold health or family detail)** in every desk member's own copy. That is a second copy of what the
+    registration already holds (`league_registrations.withdraw_request_note`), and it outlives the registration. The note is out of
+    the line, so the push and the email do not carry it (checked in code 2026-11-15). Separately, no notification kind is hidden from a
+    coach (or desk member) who has since been removed (`app/api/notifications/route.ts:55-96` reads by user and bell scope, not by
+    membership). §9 now says both in plain words. **Fix at the root for every kind, not per kind (`/plan`):** (a) a retention clock on
+    notification rows (the length is the owner's call; settled notices are the natural first class); (b) hide a removed member's
+    old notices; (c) for the note alone, the one-home option, read it live from the registration and store no copy (`/legal`
+    recommended it on 2026-11-15; the owner chose the copy, so (a) matters more).
 
 ## For a lawyer's eye
 

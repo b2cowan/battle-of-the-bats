@@ -1,5 +1,5 @@
 # The late bill email and notice ("Send the bill", Stage 13c) — CASL, privacy, wording
-**Last verified:** 2026-11-13 (CASL ss.1(2), 6(1), 6(2), 6(3), 6(6) and the two regulations' text read on laws-lois.justice.gc.ca today; PIPEDA and Law 25 not re-fetched, reasoning from `PRIVACY_POLICY_REQUIREMENTS_PIPEDA.md`)
+**Last verified:** 2026-11-13; Stage 4 as built re-read against the code 2026-11-15 (CASL ss.1(2), 6(1), 6(2), 6(3), 6(6) and the two regulations' text read on laws-lois.justice.gc.ca today; PIPEDA and Law 25 not re-fetched, reasoning from `PRIVACY_POLICY_REQUIREMENTS_PIPEDA.md`)
 **Re-verify by:** the email gains any offer, promotion, price list or sign-up/pricing link; the club's bill gets a reply or dispute path; Bill C-36; first Québec customer
 **Depends on facts:** `LEGAL_FACTS.md` § two privacy roles (FieldLogicHQ is the club's service provider for this mail), § Where data lives (Resend)
 
@@ -138,6 +138,62 @@ house-league desk only; the withdrawal line names "with a note", never its words
 opened notice (copied into the stored rows, so it joins the retention finding 11); the invitee's address stays in the line
 and the privacy draft §6 push row now says the alert text can name a person, a child or a team; the first season's
 tryouts are told as they are. The moved family game keeps its sentence (its email unchanged).
+
+## Reviewed 2026-11-15 — Stage 4 as built (commit `3902fc9e5`)
+
+Checked against the code, not the plan. **Verdict: nothing blocks; one wording gap closed; finding 11 widened.**
+
+- **Withdrawal note: held.** The line is "Pat Doe · Spring 2026 · with a note" or "No note", never the words (`ASK_WORDS.notice`,
+  `lib/house-league-money-words.ts`). `notify()` hands the push and the email only the title and body (`lib/notify.ts` push `:325-327`,
+  email `:368`), and the notice's `metadata` goes only into the recipient's own bell row (`:272-281`). So the note is on no lock screen and in no
+  email. It IS stored in full in each desk member's bell row (up to 300 characters, a free-text field that invites a reason). The
+  registration already keeps it (`withdraw_request_note`), so this is a second copy with no clock. **Done:** finding 11 now names it,
+  and §9 says in plain words that an in-app note can hold what it was sent with and is kept until deleted. **Still the owner's:** the
+  one-home option (read the note live, store no copy) would remove the second copy; he chose the copy on 2026-11-15, so a retention
+  clock on notification rows is the real fix and goes to `/plan`.
+- **Registration audience: held.** Both senders use `houseLeagueDeskUserIds` (the members whose seat can register), so children's
+  and guardians' names no longer reach members with no house-league seat. The hand-entered one leaves out the person who typed it;
+  an empty list sends nothing (a `userIds.length` guard on both, so `notify()` never reads an empty list as everyone). The notice also
+  gained the guardian's name and one line per child with an outcome, but only for readers who already see the registration.
+- **Assistant-coach approval: wording gap closed.** The invitee's address is in the line, so the push CAN carry an email address,
+  and the 11-15 rewording of §6 said "a person, a child or a team". An address is a contact detail, not a name; §6 now says "or give an
+  email address". No other sentence in either draft still says a push carries "no name or email" (searched). The audience is still the
+  Rep Teams holders for that team's group, which is a fair purpose.
+- **Practice plan and season started: nothing owed.** The new stored rows are a person's own station names and arrive and start times;
+  and, for a season, counts and yes/no flags of what carried (players as a number, budget, fee plan, opening balance), last season's name,
+  and the tryouts' state. No child's name or detail is stored, and the audiences are unchanged (the person, or the team's staff). The
+  season notice now tells the truth about open tryouts, which closes the accuracy defect the proposal found (an open tryout is a live
+  public form).
+- **CASL: still not owed on any of the six.** Every body and title is a plain service message to staff or to a family the sender
+  already serves; none gained an offer, price, sponsor or sign-up link. The family game email is byte-identical.
+- **Finding 11 as a whole.** Re-read and tightened (see the privacy draft). It was "Low" because it held a parent's first name and an
+  answer; it now holds a family's own free text, so it is "Low to medium". Not a blocker (nothing is sold, and each row is visible only
+  to the person it was sent to), but it should not stay unscheduled: it is the one finding on the notification record that grows with
+  every stage.
+- **Owner questions: none new.** One for `/plan`: a retention clock on notification rows (and hiding a removed member's old notices).
+- **Lawyer's eye:** no, for what shipped. Finding 11's retention length is a judgment a lawyer could confirm if the club tier goes on sale.
+
+## Reviewed 2026-11-15 — Stage 5 as built: "Score submitted" (uncommitted on review)
+
+Checked against the code (`lib/score-notice.ts`, `lib/score-notice-server.ts`, `resultsUserIds` in `lib/notify-recipients.ts`).
+**Verdict: nothing owed; one count in finding 11 updated.**
+
+- **What is stored about a person: unchanged in kind.** The only person in the notice is whoever entered the score, by the address on
+  their account, which the old body already carried ("Submitted by scorekeeper …"). It is now also in the row's stored facts (Entered by),
+  a second copy inside the same notification row, not a new place. A blank address means no part and no row (nothing invented).
+- **Teams, division, score, status: not personal information.** Youth team names ("Ridge 12U") and a division ("U13") identify a team,
+  not a child; the notice names no player.
+- **Audience: narrowed, which lowers exposure.** It went to every active member of the org (house-league desk, treasurers, coaches with no
+  tournament seat); it now goes only to people who can open that tournament's Results screen (`canScore`, staff to their assigned
+  tournaments, a volunteer only on a plan with volunteers), never the person who entered it, and nothing when that list is empty. Fewer
+  people receive the scorekeeper's address than before.
+- **Push and email.** `notify()` still hands the push and the opt-in email only the title and the one line; §6's push row already says
+  the alert text can name a team or give an email address, so it reads true. No new sentence needed.
+- **CASL: not owed.** A plain service message to staff about their own event; no offer, price, sponsor or sign-up link. The opt-in email
+  is off by default and prints the new line.
+- **Finding 11:** the count of kinds whose stored copy carries names or addresses moves from about 27 to about 28 (the score notice,
+  the scorekeeper's address). No change to its rating or its `/plan` route.
+- **Lawyer's eye:** no.
 
 ## Sources
 - [Canada's Anti-Spam Legislation (S.C. 2010, c. 23) — ss.1(2), 6(1)–(3), 6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-13
