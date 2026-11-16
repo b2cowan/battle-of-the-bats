@@ -2012,7 +2012,7 @@ export const SCREENS = [
     route: 'app/[orgSlug]/[tournamentSlug]/schedule',
     interact: async (page) => {
       await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
-      const door = page.getByRole('link', { name: /The bracket/ });
+      const door = page.getByRole('link', { name: /The playoff bracket/ });
       await door.waitFor({ state: 'visible' });
       if (!(await door.getAttribute('href'))?.endsWith('/playoffs')) throw new Error('Schedule bracket door missed Playoffs.');
     } },
@@ -2063,7 +2063,7 @@ export const SCREENS = [
         const fit = await page.locator('[data-large]').evaluate(board => {
           const viewport = board.parentElement.getBoundingClientRect();
           const bounds = board.getBoundingClientRect();
-          const team = board.querySelector('[data-bracket-game] > span:nth-child(2)');
+          const team = board.querySelector('[data-bracket-game] [class*="gameName"]');
           return { right: bounds.right, edge: viewport.right,
             textSize: parseFloat(getComputedStyle(team).fontSize) * parseFloat(getComputedStyle(board).zoom) };
         });
@@ -2074,7 +2074,7 @@ export const SCREENS = [
   { id: 'pubt-schedule-bracket-only', session: 'anon', path: () => '/stage1-metro-sports/stage4-eight/schedule',
     ready: '[data-public-schedule-ready]', route: 'app/[orgSlug]/[tournamentSlug]/schedule',
     interact: async page => {
-      const door = page.getByRole('link', { name: /The bracket/ });
+      const door = page.getByRole('link', { name: /The playoff bracket/ });
       await door.waitFor({ state: 'visible' });
       if (!(await door.getAttribute('href'))?.endsWith('/playoffs')) throw new Error('Bracket-only Schedule door missed Playoffs.');
     } },
