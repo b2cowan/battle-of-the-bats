@@ -12,11 +12,11 @@ PM brief: `NOTIFICATION_MESSAGE_ROWS_PM_BRIEF.md`.
 reviewed 2026-11-15, committed `8f5f2e491` 2026-11-15** (see "Stage 3 as built" and "Stage 3 review"); the four undrawn kinds ruled
 2026-11-15. **Stage 4 (the few-facts coach and league notices) RULED and BUILT 2026-11-15, simplified and reviewed 2026-11-15,
 committed `3902fc9e5` 2026-11-15** (see "Stage 4 as built" and "Stage 4 review"; five kinds get rows, the moved game keeps
-its sentence, Q1). **Stage 5 (the tidy-up) RULED and BUILT 2026-11-15, simplified, reviewed and `/docs` applied 2026-11-15** (owner: "as
+its sentence, Q1). **Stage 5 (the tidy-up) RULED and BUILT 2026-11-15, simplified, reviewed and `/docs` applied 2026-11-15, committed `828ea0ad9` 2026-11-15** (owner: "as
 recommended" on all seven; see "Stage 5 as built" and "Stage 5 simplify, review and docs"): "Score submitted" carries the game, the score, its state and who entered it, and goes only to the people who can open
 Results; the six never-sent kinds are kept on purpose. Next: the owner's browser check of Stages 2–5, then the one walk (Stage 6).
 
-## Stage 5 as built (2026-11-15)
+## Stage 5 as built (2026-11-15; committed `828ea0ad9`)
 
 - **One entry point for the three senders** (Field scores; Results' score entry; Results' forfeit): the words are `scoreNotice`
   (`lib/score-notice.ts`, pure); the read and the send are `readScoreNoticeGame` (before the save) and `sendScoreNotice`
