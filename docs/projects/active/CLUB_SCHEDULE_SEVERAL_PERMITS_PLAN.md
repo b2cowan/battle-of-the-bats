@@ -371,7 +371,7 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [x] Copying a permit's dates off scopes them to its venues (P5); "Take … off" does the same.
 
 ### Phase 3 (Session C) — the bill: each permit's price or one rate
-> **Built 2026-11-15, commit owed** (owner's go 2026-11-15; ran before D — no dependency between them). Mig **489**
+> **Built 2026-11-15, committed `3ee39edaa` 2026-11-15** (owner's go 2026-11-15; ran before D — no dependency between them). Mig **489**
 > `489_a_bill_keeps_each_permits_rate.sql` applied to DEV (backfill: 2 billed schedules, 1 permit row each, at their
 > `bill_scale`); prod step `pending` in `MANUAL_PROD_STEPS.json` (count first; ⚠ re-run the file right after the promote).
 > `tests/sql/bill-rates-fixture.sql` 6/6. /dba **Finding #51** (2026-11-15): GO with one change — a billed schedule with NO
