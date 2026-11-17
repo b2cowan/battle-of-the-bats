@@ -658,6 +658,43 @@ team" is this choice with one box changed — no second control.
 - [ ] `/marketing` on the new words, `/docs` (Bill the teams guide), guard tests for the three modes and the amber
       callout, `check:spelling`, `/simplify` + `/review`, an owner walk (checkable Artifact), `/demos` at its cycle.
 
+### Phase 8 — Add time is a second schedule, shown as one (owner model 2026-11-16; DRAWING round 1, asks owed)
+
+**Why (owner, browser pass of Session E, 2026-11-16):** Add time could not choose its own dates ("From" fixed at the
+schedule's first day), could not use a permit already on the schedule (the picker lists only permits not on it), and
+could not choose teams (it aims at every running-season team's practices a week, so when every team is at its target it
+makes nothing: "one extra practice for one team" was impossible twice).
+
+**The owner's model, in his words (agreed in chat, 2026-11-16):**
+1. A draft is simply edited (Settings…); Add time is not used on a draft.
+2. Finalize, send and bill as today.
+3. Later the club needs more time, without changing the existing schedule or its billing, but seen in one place.
+4. "Add time" is basically a whole new schedule, the same as making a new schedule, saved as part of the one it was
+   added to.
+5. Its billing is distinct: billed separately from the old, to 1 team or 10, whatever is set.
+"Basically, it's just 2 schedules built the same way, but viewed as 1." Phases: draft → final → final with changes → final.
+
+**Consequences raised in chat and carried into the drawing as asks (PROPOSED, not ruled):**
+- Settings… on an existing schedule shows no Permits picker today (`NewScheduleWindow` hides it when editing), so
+  taking Add time off drafts needs the picker (and the Find the time door) in Settings….
+- An addition keeps to itself on regenerate: its practices stay on its own time and with its own teams, and
+  regenerating one part never touches the other (otherwise billed practices cross bills).
+- An addition is not separate for collisions: existing practices count as taken (place and team).
+- An addition has its own bill, chosen at Send the changes with the whole Bill the teams window. This **replaces** the
+  Session C/E P9 B path (added time billed as a correction at the permit's price on the existing bill); earlier payments
+  are untouched either way.
+- It answers two Phase 5 owner calls: the clipped start (the addition has its own dates) and new dates off reaching the
+  old rows (an addition's dates off are its own).
+
+**Drawing:** https://claude.ai/artifact/6Bz3gQSuyrot2HsQnkYX5P (source `SCHEDULE_ADD_TIME_AS_ITS_OWN_DRAWINGS.html`,
+round 1, 2026-11-16). **RULED 2026-11-16: all seven A, as recommended** (owner: "i agree with your recommendations").
+Build prompt: [CLUB_SCHEDULE_ADD_TIME_PARTS_BUILD_PROMPT.md](CLUB_SCHEDULE_ADD_TIME_PARTS_BUILD_PROMPT.md). The asks (A in each): 1 the part's name "Time added Nov 16"; 2 Add time on
+final only, Settings… gains Permits + Find the time; 3 parts shown quietly (a meta line per part, a Part filter, a Part
+row on the slot) vs a list; 4 Regenerate and Settings… one part at a time; 5 the part's bill set in Send the changes
+("Bill it…") vs an Add time step 3; 6 teams = New schedule's team table, nobody ticked to start; 7 a permit already on
+the schedule offered with its used time left out. Drawn defaults to confirm at the walk: Give it to lists only the
+part's teams; "Bill the corrections" absent when the only change is new time; a part may be sent unbilled.
+
 ## 9. Sequencing (recommended)
 
 - **Not straight after 13c.** Three things touch the same screens first:

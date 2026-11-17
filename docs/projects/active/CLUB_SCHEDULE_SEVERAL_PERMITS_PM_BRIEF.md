@@ -54,4 +54,14 @@ matters: clubs often charge round figures or give one team a break, and today th
 Success: a club bills $3,000 / $2,000 / $3,000 in one window and every coach gets the right amount and payments.
 Drawing: https://claude.ai/artifact/FwoSTHUojVjWUa97bZGVnJ.
 
+**Added 2026-11-16: Add time becomes a second schedule, shown as one (ruled, not built).** A draft is simply edited, and
+its Settings can now add or remove permits. Once a schedule is final and sent, Add time makes a new part of it with its own
+permit (any, including one already on the schedule), its own dates (a week, a day or months), its own teams (one team
+ticked gets all of it) and its own bill, chosen when the changes are sent. The original practices and bill never change.
+The schedule page stays one schedule, with a Part filter and a line naming the added time. Coaches see a second charge,
+"Fall practices · Time added Nov 16". Why it matters: in the walk the owner could not add one practice for one team, use
+more of a permit already on the schedule, or pick the dates of the new time. Success: one extra practice for 14U AA on
+one evening, billed $135.00 to 14U AA alone, with every earlier payment unchanged. Drawing:
+https://claude.ai/artifact/6Bz3gQSuyrot2HsQnkYX5P.
+
 Plan: `docs/projects/active/CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`.

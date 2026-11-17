@@ -170,8 +170,8 @@ describe('the words a coach reads (Ask 7 — drafts for /marketing)', () => {
     assert.deepEqual(measureLines([{ kind: 'sharing', rules: [{ teamIds: [], groupIds: ['g'], atOnce: 3 }] }], id => id, () => 'Junior'),
       ['The Junior teams share a facility: a third of a facility each']);
     assert.equal(closingRowLine({ kind: 'club_covers', permitCents: 2_700_000, differenceCents: 540_000 }, 50),
-      '$5,400.00 less than the permit’s $27,000.00: the 50 open slots. The club covers the rest.');
+      '$5,400.00 less than the permit’s $27,000.00: the 50 open slots.');
     assert.equal(closingRowLine({ kind: 'club_covers', permitCents: 2_700_000, differenceCents: 10_800 }),
-      '$108.00 less than the permit’s $27,000.00: the club covers the rest.', 'no open slot to name');
+      '$108.00 less than the permit’s $27,000.00.', 'no open slot to name');
   });
 });

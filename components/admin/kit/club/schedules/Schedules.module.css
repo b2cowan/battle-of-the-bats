@@ -197,6 +197,9 @@
 /* ── New schedule, step 2: the cards beside the chosen draft, then the statement ── */
 .drafts { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 1.1rem; align-items: start; }
 .cards { display: grid; gap: 0.6rem; }
+/* A notice above the cards spans the whole row — as a plain grid child it took the cards' 15rem cell, pushed the cards
+   into the wide column and dropped the chosen draft's By team list into the narrow one (its names wrapped, its figures overlapped). */
+.draftsSpan { grid-column: 1 / -1; }
 .card {
   display: block; width: 100%; padding: 0.7rem 0.85rem;
   border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg);
@@ -449,9 +452,6 @@
   font-family: var(--font-display); font-size: var(--type-support); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); /* type-ok: column heading */
 }
 .fairTable th:first-child, .fairTable td:first-child { text-align: left; }
-.fairTable td { padding: 0.28rem 0.3rem; text-align: right; color: var(--text-primary); vertical-align: middle; }
-.fairTable td:first-child { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
-.fairTable tr.grp td { font-weight: 700; border-top: 1px solid var(--home-line); }
 .fairTable th:first-child { padding-left: 0.3rem; }
 /* A long permit name wraps onto a second line (as wide as a number column plus a little) instead of running into its neighbour. */
 .fairHeadText { display: inline-block; max-width: 8.5rem; overflow-wrap: anywhere; }
@@ -461,6 +461,9 @@
 /* Right-aligned over its figures, explicitly: the first permit's heading is the FIRST cell of the second header row, and would
    otherwise pick up the Team column's left alignment. */
 .fairTable th.fairSubHead { text-align: right; padding-left: 0.9rem; text-transform: none; letter-spacing: 0; font-weight: 600; }
+.fairTable td { padding: 0.28rem 0.3rem; text-align: right; color: var(--text-primary); vertical-align: middle; }
+.fairTable td:first-child { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.fairTable tr.grp td { font-weight: 700; border-top: 1px solid var(--home-line); }
 .fairTable tr.amberRow td { color: var(--badge-warning-ink); }
 .fairLines { margin: 0 0 0.75rem; display: grid; gap: 0.3rem; font-size: var(--type-support); color: var(--badge-warning-ink); }
 .fairLine { display: flex; gap: 0.35rem; align-items: flex-start; }
@@ -551,7 +554,10 @@
 }
 
 /* ── Find the time (a schedule on several permits, Session D; drawing tab 2) — computer-only, inside New schedule ── */
-.findDoor { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.35rem; }
+/* The door sits UNDER the picker's hint on a line of its own (block-level, shrink-wrapped), at the hint's size — as an
+   inline-flex it ran on from the hint's last line, stretching that line to the door's 36px and reading a size larger. The
+   touch tap floor on .door still applies (min-height is not reset here). */
+.findDoor { display: flex; width: fit-content; align-items: center; gap: 0.35rem; margin-top: 0.15rem; font-size: var(--type-support); }
 .finder { display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; }
 .findFilters { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.25fr) minmax(0, 1fr); gap: 0 1rem; padding: 0.85rem 0.85rem 0.2rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
 .findWide { grid-column: 1 / -1; margin-bottom: 0.75rem; }

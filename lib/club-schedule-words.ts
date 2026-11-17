@@ -244,15 +244,15 @@ export const placeWords = (venue: string, facility: string | null) => facility ?
 // ── The bill, in words (specimen 14) ─────────────────────────────────────────────────────────────
 
 /** [marketing] The closing row under Bill the teams — naming the open time when slots are left open (Stage 11c: sharing
- *  frees time the club has paid for — "$5,400.00 less than the permit’s $27,000.00: the 50 open slots. The club covers
- *  the rest."). */
+ *  frees time the club has paid for — "$5,400.00 less than the permit’s $27,000.00: the 50 open slots."). */
 export function closingRowLine(c: ClosingRow, openSlots = 0, permits = 1): string {
   // Several permits (Session C): the closing row compares with what they cost together — "the permits’".
   const whose = permits > 1 ? 'the permits’' : 'the permit’s';
   if (c.kind === 'matches') return `Matches ${whose} ${moneyCents(c.permitCents)}: nothing left for the club to cover.`;
   if (c.kind === 'club_covers') {
-    const open = openSlots > 0 ? ` the ${openSlots === 1 ? '1 open slot' : `${openSlots} open slots`}. The club covers the rest.` : ' the club covers the rest.';
-    return `${moneyCents(c.differenceCents)} less than ${whose} ${moneyCents(c.permitCents)}:${open}`;
+    // No verdict on who pays the rest: the open time may be handed out in another schedule and billed there.
+    const open = openSlots > 0 ? `: the ${openSlots === 1 ? '1 open slot' : `${openSlots} open slots`}.` : '.';
+    return `${moneyCents(c.differenceCents)} less than ${whose} ${moneyCents(c.permitCents)}${open}`;
   }
   if (c.kind === 'more_than_permit') return `${moneyCents(c.differenceCents)} more than ${whose} ${moneyCents(c.permitCents)}.`;
   return 'No permit cost to compare it with.';

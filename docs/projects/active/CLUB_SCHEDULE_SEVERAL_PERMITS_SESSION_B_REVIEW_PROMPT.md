@@ -107,7 +107,7 @@ Known red before this run that is NOT B's: `team-move-coverage` (other sessions'
   ends with the Co-Authored-By line. After the commit: record the hash in plan Phase 2, the project memory file
   (`project_schedule_several_permits.md` in the Claude auto-memory) and the TODO.md several-permits line ("committed
   `<hash>` <date>").
-- [ ] **Stage 7 · Close** — tell the owner, in plain words: what the run changed; the browser pass he owes (restart
+- [x] **Stage 7 · Close** — DONE 2026-11-15: owner told what changed, the browser pass owed, and the open decisions. Run complete; next Session D. Original: tell the owner, in plain words: what the run changed; the browser pass he owes (restart
   the dev server first — new files + shared modules; then New schedule with two permits at two parks → "Applies to";
   untick one permit; Needs attention "Outside the permit" for the second permit → "Take … off"; try deleting a park a
   date off names); and the open owner decisions (the plan's Phase 2 list, plus the Step 0 overlap ruling — "trim" or

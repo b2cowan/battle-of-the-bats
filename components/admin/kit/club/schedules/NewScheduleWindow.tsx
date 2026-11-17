@@ -1701,7 +1701,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     <div className={sch.drafts}>
       {addHead}
       {shortWhy && (
-        <p className={`${ck.notice} ${ck.noticeWarn}`} role="status" data-drafts-short>
+        <p className={`${ck.notice} ${ck.noticeWarn} ${sch.draftsSpan}`} role="status" data-drafts-short>
           <AlertTriangle size={14} aria-hidden />
           <span className={ck.noticeBody}>{shortWhy}{' '}
             <button type="button" className={sch.door} onClick={backToTheSetting}>{W.draftsShortDoor}<ChevronRight size={14} aria-hidden /></button>

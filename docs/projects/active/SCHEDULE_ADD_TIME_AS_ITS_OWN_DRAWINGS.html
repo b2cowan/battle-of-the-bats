@@ -1,0 +1,736 @@
+<title>Add Time Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the house drawings page. Sticky tab row, one section at a time, true-size warm product windows (800 px, the shipped wide form window) on a cool document ground. */
+:root {
+  --doc-bg: #E9ECEF; --doc-card: #F7F8F9; --doc-ink: #1B2127; --doc-dim: #4F5963; --doc-line: #C9D0D6;
+  --doc-accent: #1F5F8B; --doc-new: #0F6B3E; --doc-new-soft: #D6EEE0; --doc-chg: #8A4B00; --doc-chg-soft: #F6E3C8;
+  --doc-gone: #9B2C2C; --doc-gone-soft: #F5DADA;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  /* The product's warm portal, as it ships. Frames keep these in both themes: a specimen, not the page. */
+  --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink-soft: #4A4235; --dim: #615A54;
+  --line: rgba(70,55,30,.12); --line-strong: rgba(70,55,30,.20); --field: rgba(70,55,30,.05);
+  --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #D5F27A; --lime-ink: #2A3410;
+  --amber-ink: #6B4105; --amber: #F59E0B; --scrim: #9C968C; --green-ink: #1E6B3A;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+    --doc-accent: #7DB8E0; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12;
+    --doc-gone: #F0A0A0; --doc-gone-soft: #3A1A1A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+  --doc-accent: #7DB8E0; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12;
+  --doc-gone: #F0A0A0; --doc-gone-soft: #3A1A1A; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--doc-bg); }
+.wrap { max-width: 1120px; margin: 0 auto; }
+h1 { font-size: 1.35rem; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+h2 { font-size: 1.1rem; margin: 0 0 .25rem; text-wrap: balance; }
+h3 { font-size: .95rem; margin: 0 0 .2rem; }
+p { margin: 0 0 .6rem; max-width: 72ch; }
+.dim { color: var(--doc-dim); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--doc-bg); padding: 14px 0 0; border-bottom: 1px solid var(--doc-line); }
+.top .sub { color: var(--doc-dim); font-size: .85rem; margin: .15rem 0 .6rem; max-width: 110ch; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; }
+.tab { font: inherit; font-weight: 600; font-size: .88rem; padding: .55rem .9rem; background: transparent; color: var(--doc-dim); border: 0; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; min-height: 44px; }
+.tab[aria-selected="true"] { color: var(--doc-ink); border-bottom-color: var(--doc-accent); }
+.tab:focus-visible, .sw button:focus-visible, .mk:focus-visible, .mk2:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: .7rem; margin: 16px 0 6px; flex-wrap: wrap; }
+.viewrow b { font-size: .8rem; color: var(--doc-dim); font-weight: 600; }
+/* ONE white track, chosen option in soft olive: drawn from the shipped view switch. */
+.sw { display: inline-flex; background: #fff; border: 1px solid var(--line-strong); border-radius: 10px; padding: 3px; gap: 2px; }
+.sw button, .sw span { font: inherit; font-size: .85rem; font-weight: 600; padding: .35rem .8rem; border: 0; border-radius: 7px; background: transparent; color: #4A4235; cursor: pointer; min-height: 34px; display: inline-flex; align-items: center; }
+.sw button[aria-pressed="true"], .sw span.on { background: var(--olive-soft); color: var(--olive); }
+.sw-note { font-size: .8rem; color: var(--doc-dim); }
+section.pane { display: none; padding-top: 6px; }
+section.pane.on { display: block; }
+.lede { font-size: .95rem; margin-top: 14px; }
+.stage { margin: 14px 0 26px; }
+.cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem .8rem; margin-bottom: 6px; }
+.cap h3 { margin: 0; }
+.tag { font-family: var(--font-mono); font-size: .66rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: .1rem .45rem; border-radius: 4px; }
+.tag.new { background: var(--doc-new-soft); color: var(--doc-new); }
+.tag.chg { background: var(--doc-chg-soft); color: var(--doc-chg); }
+.tag.same { background: var(--doc-line); color: var(--doc-dim); }
+.tag.gone { background: var(--doc-gone-soft); color: var(--doc-gone); }
+.scroller { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); padding: 12px; }
+.note { font-size: .86rem; color: var(--doc-dim); margin: 8px 0 0; max-width: 84ch; }
+.note b { color: var(--doc-ink); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.pair > * { min-width: 0; }
+.card { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.card ul, .ask ul { margin: .3rem 0 .4rem 1.1rem; padding: 0; font-size: .88rem; }
+.card li, .ask li { margin-bottom: .25rem; }
+.asks { display: grid; gap: 12px; }
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.ask .rec { font-size: .85rem; color: var(--doc-new); font-weight: 600; margin: 0; }
+
+/* the life of a schedule (tab 1) */
+.life { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.life .st { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 10px 12px; position: relative; min-width: 0; }
+.life .st.nw { border-color: var(--doc-new); }
+.life .st .k { font: 700 .68rem/1.3 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--doc-dim); }
+.life .st h3 { margin: .2rem 0 .3rem; }
+.life .st p { font-size: .85rem; margin: 0; }
+.life .st .arr { position: absolute; right: -10px; top: 50%; transform: translateY(-50%); color: var(--doc-dim); font-weight: 700; z-index: 2; }
+@media (max-width: 760px) { .life { grid-template-columns: 1fr; } .life .st .arr { display: none; } }
+.own { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.own th, .own td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+.own th { font: 700 .68rem/1.3 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--doc-dim); }
+
+/* ───────── the product window, true size (KitDialog form, wide = 800 px) ───────── */
+.scrim { display: inline-block; padding: 28px; background: var(--scrim); border-radius: 10px; }
+.win { width: 800px; background: var(--card); border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.22); color: var(--ink); font: 14px/1.45 var(--font-ui); position: relative; }
+.win.sm { width: 520px; }
+.win .dh { display: flex; align-items: flex-start; gap: .75rem; padding: 1.15rem 1.5rem .5rem; }
+.win .dh .tt { flex: 1; display: grid; gap: 2px; }
+.win .dh .eb { font: 700 11.5px/1.2 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.win .dh .tl { font-size: 18px; font-weight: 700; }
+.win .dh .st2 { font-size: 13.5px; color: var(--dim); }
+.win .dh .x { font-size: 18px; color: var(--ink-soft); padding: .1rem .3rem; }
+.prog { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: .2rem 1.5rem .9rem; border-bottom: 1px solid var(--line); }
+.prog span { height: 4px; border-radius: 2px; background: var(--line-strong); }
+.prog span.on { background: var(--olive); }
+.win .db { padding: 1rem 1.5rem 1.2rem; display: grid; gap: 1rem; }
+.win .df { display: flex; justify-content: flex-end; gap: .6rem; padding: .8rem 1.5rem; border-top: 1px solid var(--line); }
+.sect { border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.1rem; display: grid; gap: .9rem; }
+.sect > .sh { font-size: 15px; font-weight: 700; margin: 0; display: flex; justify-content: space-between; align-items: baseline; }
+.sect > .sh span { font-weight: 400; font-size: 13px; color: var(--dim); }
+.btn { font: 600 14px/1 var(--font-ui); padding: .7rem 1.1rem; border-radius: 9px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); white-space: nowrap; }
+.btn.pri { background: var(--lime); color: var(--lime-ink); border-color: transparent; font-weight: 700; }
+.btn.sm { padding: .5rem .8rem; font-size: 13.5px; }
+.pr2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: .75rem 1rem; }
+.pr3 { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,.8fr) 36px; gap: .75rem; align-items: end; }
+.tick { display: inline-grid; place-items: center; width: 18px; height: 18px; border: 1.5px solid var(--line-strong); border-radius: 4px; font-size: 12px; flex: none; }
+.tick.on { background: var(--olive); border-color: var(--olive); color: #fff; }
+.who.tk { grid-template-columns: 18px 1fr; column-gap: .6rem; align-items: start; }
+.who.tk > span:not(.tick), .who.tk > small { grid-column: 2; }
+.who.tk > .tick { grid-row: 1 / span 2; margin-top: 2px; }
+.fld { display: grid; gap: .35rem; min-width: 0; align-content: start; }
+.fld .lb { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.fld .lb i { font-style: normal; color: var(--ink-soft); }
+.ctl { min-height: 40px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--field); padding: 0 .75rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: 14.5px; white-space: nowrap; overflow: hidden; }
+.ctl .v { overflow: hidden; text-overflow: ellipsis; }
+.ctl .chev { color: var(--ink-soft); font-size: 11px; }
+.ctl.ro { background: var(--field); color: var(--dim); border-style: solid; opacity: .75; }
+.ctl.open { border-color: var(--olive); box-shadow: 0 0 0 2px var(--olive-soft); }
+.ctl.x { width: 36px; justify-content: center; color: var(--dim); background: var(--card); }
+.fixed { font-size: 14.5px; font-weight: 600; min-height: 40px; display: flex; align-items: center; }
+.hnt { font-size: 12.5px; color: var(--dim); line-height: 1.4; }
+.door { color: var(--olive); font-weight: 600; font-size: 13.5px; white-space: nowrap; }
+.pcard { border: 1px solid var(--line); border-radius: 10px; padding: .8rem .95rem; display: grid; gap: .6rem; }
+.pcard .ph { display: flex; flex-wrap: wrap; gap: .3rem .6rem; align-items: baseline; }
+.pcard .ph b { font-size: 15px; }
+.pcard .ph span { font-size: 13px; color: var(--dim); }
+.pcard .ph .door { margin-left: auto; }
+.pcard .place { font-size: 13.5px; font-weight: 600; align-self: center; }
+.pcard .used { font-size: 12.5px; color: var(--dim); border-top: 1px dashed var(--line-strong); padding-top: .5rem; }
+.menu { border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); box-shadow: 0 10px 24px rgba(0,0,0,.14); padding: .3rem 0; color: var(--ink); font: 14px/1.45 var(--font-ui); }
+.menu .mi { padding: .5rem .8rem; font-size: 14.5px; display: flex; gap: .55rem; align-items: flex-start; }
+.menu .mi .tk { width: 16px; height: 16px; border: 1.5px solid var(--line-strong); border-radius: 4px; flex: none; margin-top: 3px; display: grid; place-items: center; font-size: 11px; }
+.menu .mi .tk.on { background: var(--olive); border-color: var(--olive); color: #fff; }
+.menu .mi small { display: block; font-size: 12px; color: var(--dim); }
+.menu .sep { border-top: 1px solid var(--line); margin: .3rem 0; }
+.bwrap { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.bt { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.bt th { font: 700 11px/1.2 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); text-align: left; padding: .6rem .9rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.bt td { padding: .55rem .9rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.bt tr:last-child td { border-bottom: 0; }
+.bt .n { text-align: right; white-space: nowrap; }
+.bt td small { display: block; color: var(--dim); font-size: 12.5px; margin-top: 2px; }
+.bt tr.off td { color: var(--dim); }
+.bt .ck { display: inline-grid; place-items: center; width: 16px; height: 16px; border: 1.5px solid var(--line-strong); border-radius: 4px; font-size: 11px; margin-right: .55rem; vertical-align: -3px; }
+.bt .ck.on { background: var(--olive); border-color: var(--olive); color: #fff; }
+.chips { font-size: 12px; font-weight: 600; color: var(--olive); margin-left: .5rem; font-family: var(--font-ui); letter-spacing: 0; text-transform: none; }
+.stmt { border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 8px; padding: .7rem .9rem; font-size: 13.5px; background: var(--card); display: grid; gap: .25rem; }
+.stmt b { font-weight: 650; }
+.stmt p { margin: 0; color: var(--ink-soft); max-width: none; }
+.stmt.warn { border-left-color: var(--amber); }
+.switch { display: inline-block; width: 36px; height: 20px; border-radius: 10px; background: var(--olive); position: relative; vertical-align: middle; }
+.switch::after { content: ""; position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+.who { display: grid; gap: .1rem; padding: .6rem .8rem; border: 1px solid var(--line); border-radius: 8px; }
+.who small { color: var(--dim); font-size: 12.5px; }
+.secl { font: 700 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+
+/* the schedule page (tab 4) */
+.frame { width: 1040px; background: var(--paper); border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; color: var(--ink); font: 14px/1.45 var(--font-ui); }
+.pbar { display: flex; align-items: center; gap: .6rem; padding: .7rem 1.1rem; background: var(--card); border-bottom: 1px solid var(--line); }
+.pbar .back { color: var(--ink-soft); font-size: .88rem; }
+.pbar .div { width: 1px; height: 22px; background: var(--line-strong); }
+.pbar .name { font-weight: 700; font-size: 1.05rem; }
+.chip { display: inline-flex; align-items: center; font: 700 .66rem/1.4 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: .14rem .5rem; border-radius: 999px; border: 1px solid rgba(30,125,60,.28); color: var(--green-ink); background: rgba(30,125,60,.08); }
+.chip.warn { color: var(--amber-ink); background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.3); }
+.chip.grey { color: var(--ink-soft); background: var(--field); border-color: var(--line-strong); }
+.pbody { padding: 1rem 1.1rem; display: grid; gap: .9rem; }
+.meta { font-size: .86rem; color: var(--ink-soft); margin: 0; }
+.meta a, .meta .lk { color: var(--olive); font-weight: 600; text-decoration: none; }
+.att { background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+.att .h { display: flex; justify-content: space-between; padding: .6rem .9rem; border-bottom: 1px solid var(--line); font-weight: 700; }
+.att .h span { font-weight: 400; color: var(--dim); font-size: .8rem; }
+.att .r { display: flex; gap: .8rem; padding: .7rem .9rem; align-items: flex-start; font-size: .86rem; }
+.att .tok { font: 700 .66rem/1.4 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line-strong); border-radius: 6px; padding: .12rem .4rem; white-space: nowrap; }
+.att .r p { margin: 0; color: var(--ink-soft); max-width: 66ch; }
+.att .r .act { margin-left: auto; }
+.band { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--card); border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden; }
+.band > div { padding: .7rem .9rem; border-right: 1px solid var(--line); display: grid; gap: 3px; }
+.band > div:last-child { border-right: 0; }
+.band .k { font: 700 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.band .big { font: 700 20px/1.15 var(--font-ui); font-variant-numeric: tabular-nums; }
+.band small { color: var(--dim); font-size: 12.5px; }
+.ws { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: .9rem; display: grid; gap: .7rem; }
+.ws h4 { margin: 0; font-size: 1rem; }
+.ws .sub { font-size: .84rem; color: var(--dim); margin: -.5rem 0 0; }
+.tb { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.tb .ctl { min-height: 34px; font-size: 13.5px; }
+.tb .sp { flex: 1; }
+.grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.grid th { font: 700 10.5px/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); text-align: left; padding: .5rem; border-bottom: 1px solid var(--line); }
+.grid td { padding: .4rem .5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.grid td small { display: block; color: var(--dim); }
+.slot { display: block; border: 1px solid var(--line-strong); border-radius: 6px; padding: .25rem .4rem; background: var(--paper); margin-bottom: .25rem; }
+.slot.add { border-color: var(--olive); background: var(--olive-soft); }
+.slot small { color: var(--dim); }
+
+/* markers + diff mode */
+.rel { position: relative; }
+.hl { outline: 2px dashed var(--doc-new); outline-offset: 3px; border-radius: 6px; }
+.mk { position: absolute; z-index: 5; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); cursor: pointer; display: grid; place-items: center; box-shadow: 0 0 0 3px rgba(31,95,139,.25); }
+.show-diff .same { opacity: .22; filter: grayscale(1); }
+.expl { display: none; margin-top: 10px; background: var(--doc-card); border: 1px solid var(--doc-accent); border-radius: 10px; padding: 10px 14px; font-size: .88rem; max-width: 84ch; }
+.expl.on { display: block; }
+.legend { display: grid; gap: 8px; margin-top: 10px; }
+.legend .li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; font-size: .88rem; align-items: start; padding: 2px; }
+.legend .li .mk2 { width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); display: grid; place-items: center; cursor: pointer; }
+.legend .li p { margin: 0; }
+.legend .li.flash { background: var(--doc-chg-soft); border-radius: 6px; }
+@media (max-width: 560px) { .tab { padding: .55rem .65rem; } }
+@media (prefers-reduced-motion: no-preference) { .pane.on { animation: fade .15s ease-out; } @keyframes fade { from { opacity: .6; } to { opacity: 1; } } }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <h1>Add time: a second schedule, shown as one</h1>
+    <div class="sub">Round 1 drawings for review. Nothing is built. Windows are drawn at their true width (800 px). The schedule is <b>Fall practices</b> from your screenshot: Milton evenings, Mon, Oct 5 – Sun, Jan 24, sent Oct 2, 3 teams. Today is Mon, Nov 16. Prices are the walk's (Milton evenings $60.00 an hour, Halton Hills evenings $90.00). <b>Milton's own dates (Sep 8 – Mar 27) and its park are made up for the drawing.</b></div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-t="idea" aria-selected="true">1 · The idea</button>
+      <button class="tab" role="tab" data-t="draft" aria-selected="false">2 · A draft is edited</button>
+      <button class="tab" role="tab" data-t="add" aria-selected="false">3 · Add time</button>
+      <button class="tab" role="tab" data-t="page" aria-selected="false">4 · On the schedule</button>
+      <button class="tab" role="tab" data-t="send" aria-selected="false">5 · Sending and its bill</button>
+      <button class="tab" role="tab" data-t="asks" aria-selected="false">6 · Asks</button>
+    </div>
+  </div>
+
+  <!-- ═════════ 1 · THE IDEA ═════════ -->
+  <section class="pane on" id="p-idea">
+    <p class="lede"><b>Your model, drawn as stated.</b> Add time is a second schedule, built the same way as a new one, saved inside the schedule it was added to. It has its own dates, teams and bill. It shares the page, the grid, the views and Send the changes with the original. Adding time is just one more trip round the loop a final schedule already takes when it is changed.</p>
+    <div class="life">
+      <div class="st"><span class="k">Draft</span><h3>Edit it</h3><p>Settings… changes anything, including which permits it uses. No Add time here. Nothing has been sent, so nothing needs protecting.</p><span class="arr">›</span></div>
+      <div class="st"><span class="k">Final</span><h3>Sent and billed</h3><p>As today. The teams have their practices and the bill.</p><span class="arr">›</span></div>
+      <div class="st nw"><span class="k">Final · changed since sent</span><h3>Add time</h3><p>A new part with its own dates, teams and bill. The original's practices and payments stay as they are.</p><span class="arr">›</span></div>
+      <div class="st"><span class="k">Final</span><h3>Send the changes</h3><p>The new practices go out with their own bill. Add time again later and it is one more part.</p></div>
+    </div>
+
+    <div class="pair" style="margin-top:18px">
+      <div class="card">
+        <h3>Each part has its own</h3>
+        <table class="own">
+          <tr><th>What</th><th>Why its own</th></tr>
+          <tr><td>Permits and hours</td><td>Any permit, including one already on the schedule. Only time the schedule isn't already using is offered.</td></tr>
+          <tr><td>From and To</td><td>A week, a day or months. Nothing before today once the schedule has been sent.</td></tr>
+          <tr><td>Teams and how they share</td><td>The same team table as New schedule. Tick one team and it gets all of the time.</td></tr>
+          <tr><td>Dates off, slot length, changeover</td><td>The part's dates off never reach the original's practices.</td></tr>
+          <tr><td>Bill</td><td>Chosen when you send the changes, with the whole Bill the teams window. It is a new bill: the original bill and its payments stay as they are.</td></tr>
+          <tr><td>Regenerate</td><td>Works on one part. A practice stays on its own part's time and goes only to that part's teams, so practices never move between bills.</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>The parts share</h3>
+        <table class="own">
+          <tr><th>What</th><th>How</th></tr>
+          <tr><td>The page</td><td>One schedule, one grid and one set of views. A Part filter appears only when there is more than one part.</td></tr>
+          <tr><td>Clash checks</td><td>A place or a team can't be in two practices at once, across parts. The original's practices count as taken.</td></tr>
+          <tr><td>Fair shares</td><td>Handed out, Short and Clashes count the whole schedule.</td></tr>
+          <tr><td>Needs attention, Send the changes, Send log</td><td>One list and one send for the whole schedule.</td></tr>
+        </table>
+        <h3 style="margin-top:12px">What this replaces</h3>
+        <ul>
+          <li>Add time today aims at <b>every</b> running team's practices a week. If every team already has its target, it makes nothing.</li>
+          <li>Today, added time is billed as a <b>correction</b> on the original bill, at the permit's price. Under this model it gets its own bill.</li>
+          <li>Two open questions from the Add time build go away: a permit's earlier days being cut off without warning, and new dates off reaching the original's practices.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 2 · A DRAFT IS EDITED ═════════ -->
+  <section class="pane" id="p-draft">
+    <p class="lede"><b>Add time leaves drafts, and Settings… gets the Permits picker.</b> Today Settings… on an existing schedule has no Permits picker, so on a draft Add time is the only way to bring in another permit. Taking Add time off drafts without this would leave a draft stuck on the permits it started with.</p>
+    <div class="viewrow"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+    </div>
+
+    <div class="pair">
+      <div class="stage">
+        <div class="cap"><h3>Tools on a draft · today</h3><span class="tag same">As shipped</span></div>
+        <div class="scroller"><div class="menu" style="width:340px">
+          <div class="mi"><span>Add time…<small>Another permit’s time, or time you find. Nothing already on the schedule moves.</small></span></div>
+          <div class="mi"><span>Settings…<small>The time, the teams and their shares, the rules</small></span></div>
+          <div class="mi">Regenerate the unlocked slots…</div>
+          <div class="mi">Lock this week</div>
+          <div class="mi">Clear this week…</div>
+          <div class="sep"></div>
+          <div class="mi">Send log</div>
+          <div class="mi">Delete this draft…</div>
+        </div></div>
+      </div>
+      <div class="stage">
+        <div class="cap"><h3>Tools on a draft · proposed</h3><span class="tag chg">Changed</span></div>
+        <div class="scroller"><div class="menu rel" style="width:340px">
+          <div class="mi hl" style="color:var(--dim);text-decoration:line-through"><span>Add time…<small>Gone on a draft and in review</small></span><button class="mk" style="right:-11px;top:-6px" data-n="1" aria-label="Change 1">1</button></div>
+          <div class="mi same"><span>Settings…<small>The time, the teams and their shares, the rules</small></span></div>
+          <div class="mi same">Regenerate the unlocked slots…</div>
+          <div class="mi same">Lock this week</div>
+          <div class="mi same">Clear this week…</div>
+          <div class="sep"></div>
+          <div class="mi same">Send log</div>
+          <div class="mi same">Delete this draft…</div>
+        </div></div>
+        <p class="note">On a final schedule the menu is today's, with Add time first (tab 4).</p>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Settings… on a draft · the top of the window</h3><span class="tag chg">Changed</span><span class="sw-note">A different schedule, Winter practices, still a draft. Below this point the window is unchanged.</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh same"><div class="tt"><span class="eb">Winter practices</span><span class="tl">Settings</span><span class="st2">Step 1 of 2 · settings</span></div><span class="x">✕</span></div>
+        <div class="prog same"><span class="on"></span><span></span></div>
+        <div class="db">
+          <div class="sect">
+            <p class="sh">The time</p>
+            <div class="pr2">
+              <div class="fld same"><span class="lb">Name<i> *</i></span><div class="ctl"><span class="v">Winter practices</span></div></div>
+              <div class="fld rel hl"><span class="lb">Permits</span><div class="ctl"><span class="v">Milton evenings, Halton Hills evenings</span><span class="chev">▾</span></div><span class="hnt">Each permit brings its own time and dates off. Untick one to take its time off again.</span><span class="door">⌕ Find the time across every permit ›</span><button class="mk" style="right:-11px;top:-11px" data-n="2" aria-label="Change 2">2</button></div>
+            </div>
+            <div class="pcard same">
+              <div class="ph"><b>Milton evenings</b><span>Town of Milton · Sep 8, 2026 – Mar 27, 2027</span><span class="door">Take it off…</span></div>
+              <div class="pr3"><span class="place">Kinsmen Park · Diamond A</span><div class="fld"><span class="lb">Days *</span><div class="ctl"><span class="v">Mon, Wed</span><span class="chev">▾</span></div></div><div class="fld"><span class="lb">From *</span><div class="ctl"><span class="v">6:00 p.m.</span><span class="chev">◷</span></div></div><div class="fld"><span class="lb">Until *</span><div class="ctl"><span class="v">9:00 p.m.</span><span class="chev">◷</span></div></div><span class="ctl x">✕</span></div>
+            </div>
+            <div class="pcard rel hl">
+              <div class="ph"><b>Halton Hills evenings</b><span>Town of Halton Hills · Nov 23, 2026 – Jan 24, 2027</span><span class="door">Take it off…</span></div>
+              <div class="pr3"><span class="place">Prospect Park · Diamond 1 and Diamond 2</span><div class="fld"><span class="lb">Days *</span><div class="ctl"><span class="v">Tue, Thu</span><span class="chev">▾</span></div></div><div class="fld"><span class="lb">From *</span><div class="ctl"><span class="v">6:00 p.m.</span><span class="chev">◷</span></div></div><div class="fld"><span class="lb">Until *</span><div class="ctl"><span class="v">8:00 p.m.</span><span class="chev">◷</span></div></div><span class="ctl x">✕</span></div>
+              <button class="mk" style="right:-11px;top:-11px" data-n="3" aria-label="Change 3">3</button>
+            </div>
+          </div>
+        </div>
+      </div></div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="d-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Add time is offered only once the schedule is final.</b> On a draft or in review, nothing has been sent and nothing is billed, so Settings… is the tool. Regenerating a draft moves practices nobody has been told about yet.</p></div>
+        <div class="li" id="d-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The Permits picker and the Find the time door, as in New schedule.</b> Name used to sit alone on its row in Settings…; the picker takes the empty half. Unticking a permit is the same as its card's "Take it off…".</p></div>
+        <div class="li" id="d-3"><button class="mk2" data-n="3" type="button">3</button><p><b>Ticking a permit brings its card in</b>, exactly as in New schedule. Saving goes through the existing Keep this draft step, so the draft is rebuilt with both permits' time. On a draft that is fine: nobody has been told.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 3 · ADD TIME ═════════ -->
+  <section class="pane" id="p-add">
+    <p class="lede"><b>Add time becomes New schedule's form, set for the new part.</b> Any permit, the dates you choose, and the same "Who, and how much" table. Drawn here with your example: <b>one practice for 14U AA</b>, Thu, Dec 10, 6:00 – 7:30 p.m. at Halton Hills.</p>
+    <div class="viewrow"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Today</h3><span class="tag same">As shipped</span><span class="sw-note">Your screenshot, redrawn. The window ends at the promise and the button.</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh"><div class="tt"><span class="eb">Fall practices</span><span class="tl">Add time</span><span class="st2">Step 1 of 2 · the new time</span></div><span class="x">✕</span></div>
+        <div class="prog"><span class="on"></span><span></span></div>
+        <div class="db">
+          <div class="pr2">
+            <div class="fld"><span class="lb">Permits</span><div class="ctl"><span class="v">Halton Hills evenings</span><span class="chev">▾</span></div><span class="hnt">Each permit ticked brings its time. Untick one to take it away again.</span><span class="door">⌕ Find the time across every permit ›</span></div>
+            <div class="fld"><span class="lb">On this schedule</span><div class="ctl ro"><span class="v">Milton evenings</span></div></div>
+          </div>
+          <div class="pcard">
+            <div class="ph"><b>Halton Hills evenings</b><span>Town of Halton Hills · Nov 23, 2026 – Jan 24, 2027</span></div>
+            <div class="pr3"><span class="place">Prospect Park · Diamond 1 and Diamond 2</span><div class="fld"><span class="lb">Days *</span><div class="ctl"><span class="v">Tue, Thu</span><span class="chev">▾</span></div></div><div class="fld"><span class="lb">From *</span><div class="ctl"><span class="v">6:00 p.m.</span><span class="chev">◷</span></div></div><div class="fld"><span class="lb">Until *</span><div class="ctl"><span class="v">8:00 p.m.</span><span class="chev">◷</span></div></div><span class="ctl x">✕</span></div>
+          </div>
+          <div class="pr2">
+            <div class="fld"><span class="lb">From</span><div class="ctl ro"><span class="v">Mon, Oct 5</span></div></div>
+            <div class="fld"><span class="lb">To</span><div class="ctl ro"><span class="v">Sun, Jan 24</span></div></div>
+          </div>
+          <div class="stmt"><b>Only the new time is scheduled. Nothing already on the schedule moves, locked or not, and nothing before today changes.</b><p>Drafts are made for the new time, toward each team’s practices a week. They wait in Changed since sent until you send the changes. Send the changes bills them; earlier payments stay as they are.</p></div>
+        </div>
+        <div class="df"><span class="btn">Cancel</span><span class="btn pri">Generate drafts for the new time</span></div>
+      </div></div></div>
+      <p class="note">Milton evenings can't be picked because it is already on the schedule. From and To can't be changed. There is no choice of teams: the drafts aim at every running team's practices a week.</p>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Proposed</h3><span class="tag new">New</span><span class="sw-note">One practice for one team</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh same"><div class="tt"><span class="eb">Fall practices</span><span class="tl">Add time</span><span class="st2">Step 1 of 2 · the new time</span></div><span class="x">✕</span></div>
+        <div class="prog same"><span class="on"></span><span></span></div>
+        <div class="db">
+          <div class="sect">
+            <p class="sh">The time</p>
+            <div class="pr2">
+              <div class="fld rel hl"><span class="lb">Permits</span><div class="ctl"><span class="v">Halton Hills evenings</span><span class="chev">▾</span></div><span class="hnt">Any permit the club holds. One already on this schedule brings only the time the schedule doesn't use.</span><span class="door">⌕ Find the time across every permit ›</span><button class="mk" style="right:-11px;top:-11px" data-n="1" aria-label="Change 1">1</button></div>
+              <div class="fld rel hl"><span class="lb">Shown on the schedule as</span><div class="fixed">Time added Nov 16</div><span class="hnt">A part of Fall practices, with its own teams and bill</span><button class="mk" style="right:-11px;top:-11px" data-n="2" aria-label="Change 2">2</button></div>
+            </div>
+            <div class="pcard same">
+              <div class="ph"><b>Halton Hills evenings</b><span>Town of Halton Hills · Nov 23, 2026 – Jan 24, 2027</span></div>
+              <div class="pr3"><span class="place">Prospect Park · Diamond 1 and Diamond 2</span><div class="fld"><span class="lb">Days *</span><div class="ctl"><span class="v">Thu</span><span class="chev">▾</span></div></div><div class="fld"><span class="lb">From *</span><div class="ctl"><span class="v">6:00 p.m.</span><span class="chev">◷</span></div></div><div class="fld"><span class="lb">Until *</span><div class="ctl"><span class="v">7:30 p.m.</span><span class="chev">◷</span></div></div><span class="ctl x">✕</span></div>
+            </div>
+            <span class="door same">+ Add hours</span>
+            <div class="pr2 rel hl">
+              <div class="fld"><span class="lb">From<i> *</i></span><div class="ctl"><span class="v">Thu, Dec 10</span></div><span class="hnt">Not before today: Fall practices has been sent.</span></div>
+              <div class="fld"><span class="lb">To<i> *</i></span><div class="ctl"><span class="v">Thu, Dec 10</span></div><span class="hnt">Halton Hills evenings runs Nov 23 – Jan 24.</span></div>
+              <button class="mk" style="right:-11px;top:-11px" data-n="3" aria-label="Change 3">3</button>
+            </div>
+            <div class="pr2 same">
+              <div class="fld"><span class="lb">Slot length</span><div class="ctl"><span class="v">90 minutes</span><span class="chev">▾</span></div><span class="hnt">Each team’s time on a facility</span></div>
+              <div class="fld"><span class="lb">Changeover</span><div class="ctl"><span class="v">None</span><span class="chev">▾</span></div><span class="hnt">Between slots on one facility</span></div>
+            </div>
+            <div class="fld rel hl"><span class="lb">Dates off</span><span class="hnt">None. Dates off here are this time’s only.</span><span class="door">+ Add a date off</span><button class="mk" style="right:-11px;top:-11px" data-n="4" aria-label="Change 4">4</button></div>
+          </div>
+
+          <div class="sect rel hl">
+            <p class="sh">Who, and how much</p>
+            <div class="pr2 same">
+              <div class="fld"><span class="lb">Split the time</span><div class="ctl"><span class="v">Evenly</span><span class="chev">▾</span></div></div>
+              <div class="fld"><span class="lb">Each team’s time</span><div class="ctl"><span class="v">The same each week</span><span class="chev">▾</span></div></div>
+            </div>
+            <div class="pr2 same">
+              <div class="fld"><span class="lb">Practices per team, per day</span><div class="ctl"><span class="v">1 practice</span><span class="chev">▾</span></div></div>
+              <div></div>
+            </div>
+            <div class="bwrap"><table class="bt">
+              <thead><tr><th>Team <span class="chips">All · None</span></th><th class="n">Slots</th></tr></thead>
+              <tbody>
+                <tr><td><span class="ck on">✓</span>14U AA</td><td class="n">1</td></tr>
+                <tr class="off"><td><span class="ck"></span>15U AA</td><td class="n">—</td></tr>
+                <tr class="off"><td><span class="ck"></span>13U AAA</td><td class="n">—</td></tr>
+                <tr class="off"><td><span class="ck"></span>16U A<small>Not on Fall practices yet</small></td><td class="n">—</td></tr>
+                <tr><td><b>1 team</b></td><td class="n"><b>1</b></td></tr>
+              </tbody>
+            </table></div>
+            <span class="hnt">Starts with nobody ticked. The teams you tick share only this time.</span>
+            <button class="mk" style="right:-11px;top:-11px" data-n="5" aria-label="Change 5">5</button>
+          </div>
+
+          <div class="sect same"><p class="sh">Rules <span>0 on</span></p></div>
+
+          <div class="stmt rel hl"><b>This time is its own part of Fall practices. Nothing already on the schedule moves.</b><p>Its practices stay on this time and with these teams, even when you regenerate. They wait in Changed since sent until you send the changes, and you choose then how to bill them, on a bill of their own.</p><button class="mk" style="right:-11px;top:-11px" data-n="6" aria-label="Change 6">6</button></div>
+        </div>
+        <div class="df same"><span class="btn">Cancel</span><span class="btn pri">Generate drafts for the new time</span></div>
+      </div></div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="a-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Every permit is listed, including Milton evenings.</b> A permit already on the schedule offers only the time the schedule isn't using: other days, other hours, other parks, or dates past the schedule's end. "On this schedule" (the read-only box) goes, because the picker now says it. The next drawing shows Milton.</p></div>
+        <div class="li" id="a-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The new part's name.</b> It is the date it was added, so it needs no typing. This is the label in the Part filter, on the slot window and on the coach's bill (tab 5). Ask 1 offers a name you type instead.</p></div>
+        <div class="li" id="a-3"><button class="mk2" data-n="3" type="button">3</button><p><b>From and To are the new time's own dates</b>, and they start at the permit's dates. Narrow them to a week, or to one day as here. On a sent schedule From can't be before today. If To passes the schedule's end, the schedule's dates widen to cover it. Before today was the only limit, so a permit's earlier days are never cut off without saying so.</p></div>
+        <div class="li" id="a-4"><button class="mk2" data-n="4" type="button">4</button><p><b>Dates off belong to this time only.</b> The permit's own closures in these dates come in as they do on New schedule. They never reach the original's practices, which was an open question in the current build.</p></div>
+        <div class="li" id="a-5"><button class="mk2" data-n="5" type="button">5</button><p><b>The same team table as New schedule, with nobody ticked to start.</b> Tick one team and it gets all of the time, so "one practice for one team" needs no special control. Every team with a running season is listed, including one that isn't on the original schedule (16U A). Practices a week, Prime time and the other choices are New schedule's, for this time only. Fall practices' own settings don't change.</p></div>
+        <div class="li" id="a-6"><button class="mk2" data-n="6" type="button">6</button><p><b>The promise says what the model means.</b> This time is a part of its own, regenerating keeps it to itself, and its bill comes later. "Earlier payments stay as they are" goes: a new bill touches no earlier payment, so there is nothing to reassure about.</p></div>
+      </div>
+      <p class="note"><b>Height:</b> the window gets taller because it now holds New schedule's whole form. The "Who, and how much" table is the one part the screenshot didn't have. Rules are folded, as in New schedule.</p>
+      <p class="note"><b>Step 2 is unchanged:</b> "1 new practice, Thu, Dec 10. From Halton Hills evenings. The other 63 practices stay exactly where they were sent." Then a Team · New · Hours table, the drafts, and "Back to the new time" / "Keep this draft".</p>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Proposed · more of a permit already on the schedule</h3><span class="tag new">New</span><span class="sw-note">Milton runs to Mar 27; Fall practices ends Jan 24. Only the time section is drawn.</span></div>
+      <div class="pair">
+        <div class="scroller"><div class="menu" style="width:380px">
+          <div class="mi"><span class="tk on">✓</span><span>Milton evenings<small>On this schedule to Jan 24 · Sep 8 – Mar 27</small></span></div>
+          <div class="mi"><span class="tk"></span><span>Halton Hills evenings<small>Nov 23 – Jan 24</small></span></div>
+          <div class="mi"><span class="tk"></span><span>Georgetown dome, winter<small>Jan 4 – Mar 28</small></span></div>
+        </div><p class="hnt" style="margin-top:.5rem;color:var(--doc-dim)">The Permits picker, open. Each permit's dates under its name, and "On this schedule" where it is.</p></div>
+        <div class="scroller"><div class="win" style="width:560px;box-shadow:none;border:1px solid var(--line)"><div class="db">
+          <div class="pcard">
+            <div class="ph"><b>Milton evenings</b><span>Town of Milton · Sep 8, 2026 – Mar 27, 2027</span></div>
+            <div class="pr3" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr) minmax(0,.9fr) 36px"><span class="place">Kinsmen Park · Diamond A</span><div class="fld"><span class="lb">Days *</span><div class="ctl"><span class="v">Mon, Wed</span><span class="chev">▾</span></div></div><div class="fld"><span class="lb">From *</span><div class="ctl"><span class="v">6:00 p.m.</span><span class="chev">◷</span></div></div><div class="fld"><span class="lb">Until *</span><div class="ctl"><span class="v">9:00 p.m.</span><span class="chev">◷</span></div></div><span class="ctl x">✕</span></div>
+            <p class="used hl">Fall practices already uses Mon and Wed, 6:00 – 9:00 p.m., to Jan 24. That time is left out.</p>
+          </div>
+          <div class="pr2">
+            <div class="fld"><span class="lb">From *</span><div class="ctl"><span class="v">Mon, Jan 25</span></div><span class="hnt">Starts the day after Fall practices' time on this permit ends.</span></div>
+            <div class="fld"><span class="lb">To *</span><div class="ctl"><span class="v">Sat, Mar 27</span></div><span class="hnt">Fall practices now runs to Mar 27.</span></div>
+          </div>
+        </div></div></div>
+      </div>
+      <p class="note"><b>Your 6-month permit behind a 2-month schedule:</b> pick Milton again and From starts where the schedule's use of it stops. The original's Milton rows keep their Jan 24 end, so the new weeks never reach its practices. Tick all three teams in "Who, and how much" and it is spring practices billed on their own. Milton's price is the permit's own, as already ruled for adding time from a permit already billed.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 4 · ON THE SCHEDULE ═════════ -->
+  <section class="pane" id="p-page">
+    <p class="lede"><b>One page, quietly marked.</b> The page stays one schedule. Three small things appear only once the schedule has a second part: a line under the title naming it, a Part filter beside Team, and a "Part" row on a practice. Regenerate and Settings… ask which part first.</p>
+    <div class="viewrow"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+      <span class="sw-note">The whole screen after Add time, before the changes are sent.</span>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Fall practices, with time added</h3><span class="tag chg">Changed</span><span class="sw-note">Desktop, club admin</span></div>
+      <div class="scroller"><div class="frame">
+        <div class="pbar same"><span class="back">← Schedules</span><span class="div"></span><span class="name">Fall practices</span><span class="chip">Final</span><span class="chip warn">Changed since sent</span></div>
+        <div class="pbody">
+          <div>
+            <p class="meta same">From the permit <span class="lk">Milton evenings ›</span> · Kinsmen Park · Diamond A · Oct 5 – Jan 24 · sent Oct 2</p>
+            <p class="meta rel hl" style="margin-top:.2rem"><b>Time added Nov 16</b> · From <span class="lk">Halton Hills evenings ›</span> · Thu, Dec 10 · 14U AA · not sent yet<button class="mk" style="right:-11px;top:-11px" data-n="1" aria-label="Change 1">1</button></p>
+          </div>
+          <div class="att">
+            <div class="h">Needs attention <span>1 item</span></div>
+            <div class="r rel"><span class="tok">Unsent change</span><p><b>1 change since you sent it on Oct 2</b><br>14U AA · gains Thu, Dec 10 at 6:00 p.m., Prospect Park · Diamond 1<br><span class="hl">Time added Nov 16 isn’t billed yet. You can bill it when you send the changes.</span><br>The teams still have what you sent them. Send the changes to put these on their schedules and tell their coaches.</p><span class="act btn pri sm">Send the changes</span><button class="mk" style="right:150px;top:44px" data-n="2" aria-label="Change 2">2</button></div>
+          </div>
+          <div class="band same">
+            <div><span class="k">Handed out</span><span class="big">64 of 65</span></div>
+            <div><span class="k">The bill →</span><span class="big">$7,650.00</span></div>
+            <div><span class="k">Short</span><span class="big">0</span></div>
+            <div><span class="k">Clashes</span><span class="big">0</span></div>
+          </div>
+          <div class="ws">
+            <h4>Read the schedule</h4>
+            <p class="sub">Choose a view to inspect this schedule.</p>
+            <div class="tb">
+              <span class="ctl same"><span class="v">View <b>Grid</b></span><span class="chev">▾</span></span>
+              <span class="ctl same"><span class="v">‹ Dec 6 – 12 ›</span></span>
+              <span class="ctl same"><span class="v">Facility</span><span class="chev">▾</span></span>
+              <span class="ctl same"><span class="v">Team</span><span class="chev">▾</span></span>
+              <span class="ctl rel hl"><span class="v">Part: Every part</span><span class="chev">▾</span><button class="mk" style="right:-11px;top:-11px" data-n="3" aria-label="Change 3">3</button></span>
+              <span class="sp"></span>
+              <span class="ctl same"><span class="v">Tools</span><span class="chev">▾</span></span>
+              <span class="ctl same"><span class="v">Export</span></span>
+            </div>
+            <table class="grid">
+              <thead><tr><th>Facility</th><th>Mon, Dec 7</th><th>Tue, Dec 8</th><th>Wed, Dec 9</th><th>Thu, Dec 10</th><th>Fri, Dec 11</th></tr></thead>
+              <tbody>
+                <tr class="same"><td><b>Diamond A</b><small>Kinsmen Park</small></td><td><span class="slot">6:00 p.m. · 14U AA</span><span class="slot">7:30 p.m. · 15U AA</span></td><td>—</td><td><span class="slot">6:00 p.m. · 13U AAA</span><span class="slot">7:30 p.m. · 14U AA</span></td><td>—</td><td>—</td></tr>
+                <tr><td><b>Diamond 1</b><small>Prospect Park</small></td><td>—</td><td>—</td><td>—</td><td class="rel"><span class="slot add">6:00 p.m. · 14U AA</span><button class="mk" style="right:-6px;top:-8px" data-n="4" aria-label="Change 4">4</button></td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="g-1"><button class="mk2" data-n="1" type="button">1</button><p><b>One line under the line the page already has, and never more than one.</b> It reads like the first line: where the time comes from, the dates, who it is for, and whether it has been sent. After the send, "not sent yet" becomes "sent Nov 16". With three added parts it reads "Time added Nov 16 and 2 more ›", and the door opens the Part filter. A schedule with no added time looks exactly as today.</p></div>
+        <div class="li" id="g-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The unbilled part is said in the change row, not in the bill tile.</b> The Fair shares band stays exactly as shipped: label and figure, one per tile, with The bill still Fall practices' bill. The added part's bill is set and shown in Send the changes (tab 5, Ask 5).</p></div>
+        <div class="li" id="g-3"><button class="mk2" data-n="3" type="button">3</button><p><b>A Part filter</b>, built like Facility and Team: "Every part", "Fall practices" and "Time added Nov 16". It appears only on a schedule with time added, and it filters the grid and By team the same way Team does.</p></div>
+        <div class="li" id="g-4"><button class="mk2" data-n="4" type="button">4</button><p><b>The cell stays one line.</b> Until it is sent, the new practice wears the soft olive that unsent changes already use. In the slot window a row "Part · Time added Nov 16" sits under Team. Give it to lists only the teams in that part, so a practice can't move onto another part's bill. After the send it looks like any other practice; the Part filter and the slot window tell you which part it is.</p></div>
+      </div>
+    </div>
+
+    <div class="pair">
+      <div class="stage">
+        <div class="cap"><h3>Regenerate, on a schedule with two parts</h3><span class="tag new">New</span></div>
+        <div class="scroller"><div class="win sm">
+          <div class="dh"><div class="tt"><span class="eb">Fall practices</span><span class="tl">Regenerate which part?</span></div><span class="x">✕</span></div>
+          <div class="db">
+            <div class="fld"><span class="lb">Part</span><div class="sw" style="width:max-content"><span class="on">Fall practices</span><span>Time added Nov 16</span></div></div>
+            <p class="hnt" style="font-size:13.5px;margin:0">Each part keeps its own time and teams. The draft you pick replaces Fall practices’ slots from today on, except the ones someone placed by hand. Time added Nov 16 stays exactly as it is.</p>
+          </div>
+          <div class="df"><span class="btn">Go back</span><span class="btn pri">Choose a draft</span></div>
+        </div></div>
+        <p class="note">Asked only when there is more than one part. Then the shipped regenerate question follows unchanged, with "Fall practices" or "Time added Nov 16" as its name.</p>
+      </div>
+      <div class="stage">
+        <div class="cap"><h3>Settings…, on a schedule with two parts</h3><span class="tag new">New</span></div>
+        <div class="scroller"><div class="win sm">
+          <div class="dh"><div class="tt"><span class="eb">Fall practices</span><span class="tl">Settings for which part?</span></div><span class="x">✕</span></div>
+          <div class="db">
+            <div class="fld"><span class="lb">Part</span><div class="sw" style="width:max-content"><span>Fall practices</span><span class="on">Time added Nov 16</span></div></div>
+            <p class="hnt" style="font-size:13.5px;margin:0">Time added Nov 16: Halton Hills evenings, Thu, Dec 10, 6:00 p.m. until 7:30 p.m. · 14U AA.</p>
+          </div>
+          <div class="df"><span class="btn">Go back</span><span class="btn pri">Open its settings</span></div>
+        </div></div>
+        <p class="note">Asked first, like Regenerate, so switching part can never throw away edits half made. Then the shipped Settings window opens at its usual width, its eyebrow reading "Fall practices · Time added Nov 16". Taking an added part's only permit off removes that part: before the send its practice simply goes, and after it the usual credit applies at Send the changes.</p>
+      </div>
+    </div>
+    <p class="note"><b>Tools on a final schedule are as shipped</b>, with Add time… first. Its hint changes from "Another permit’s time, or time you find…" to <b>"More time, for the teams you choose, on a bill of its own. Nothing already on the schedule moves."</b></p>
+  </section>
+
+  <!-- ═════════ 5 · SENDING AND ITS BILL ═════════ -->
+  <section class="pane" id="p-send">
+    <p class="lede"><b>The new part goes out through Send the changes, with a bill of its own.</b> Today the added practice would show up in that window as "a correction of $135.00" on Fall practices' bill. Proposed: the window has a line for the new part's bill, and "Bill it…" opens the whole Bill the teams window for that part.</p>
+    <div class="viewrow"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+    </div>
+
+    <div class="pair">
+      <div class="stage">
+        <div class="cap"><h3>Send the changes · today</h3><span class="tag same">As shipped</span></div>
+        <div class="scroller"><div class="win sm">
+          <div class="dh"><div class="tt"><span class="eb">Fall practices</span><span class="tl">Send the changes</span></div><span class="x">✕</span></div>
+          <div class="db">
+            <div class="stmt"><p>The changes reach 1 team’s schedule. Only that team’s coaches are told. Nothing else on the schedule moves.</p></div>
+            <span class="secl">Who is told · 1 person</span>
+            <div class="who tk"><span class="tick on">✓</span><span><b>14U AA</b> · Dana Whitfield</span><small>Gains Thu, Dec 10 at 6:00 p.m. · a correction of $135.00</small></div>
+            <div style="display:flex;gap:.6rem;align-items:flex-start"><span class="tick on">✓</span><span><b style="font-size:13.5px">Bill the corrections</b><span class="hnt" style="display:block;margin-top:.2rem">A team that gained time gets a small bill for it, and a team that lost time has it taken off what it owes, on the same budget line.</span><span class="hnt" style="display:block;margin-top:.2rem">Time on Halton Hills evenings is billed at that permit’s own price, $90.00 a full field, an hour, and kept at that price from now on. Time already billed keeps its price.</span></span></div>
+          </div>
+          <div class="df"><span class="btn">Cancel</span><span class="btn pri">Send to 1 person</span></div>
+        </div></div>
+      </div>
+      <div class="stage">
+        <div class="cap"><h3>Send the changes · proposed</h3><span class="tag chg">Changed</span></div>
+        <div class="scroller"><div class="win sm">
+          <div class="dh same"><div class="tt"><span class="eb">Fall practices</span><span class="tl">Send the changes</span></div><span class="x">✕</span></div>
+          <div class="db">
+            <div class="stmt same"><p>The changes reach 1 team’s schedule. Only that team’s coaches are told. Nothing else on the schedule moves.</p></div>
+            <span class="secl same">Who is told · 1 person</span>
+            <div class="who tk rel hl"><span class="tick on">✓</span><span><b>14U AA</b> · Dana Whitfield</span><small>Gains Thu, Dec 10 at 6:00 p.m. · Time added Nov 16</small><button class="mk" style="right:-11px;top:-11px" data-n="1" aria-label="Change 1">1</button></div>
+            <div class="rel hl" style="display:grid;gap:.4rem">
+              <span class="secl">Time added Nov 16 · its bill</span>
+              <div class="who" style="grid-template-columns:1fr auto;align-items:center"><span><b>Not billed</b><small style="display:block">1.5 hours of Halton Hills evenings for 14U AA</small></span><span class="door">Bill it…</span></div>
+              <button class="mk" style="right:-11px;top:-11px" data-n="2" aria-label="Change 2">2</button>
+            </div>
+            <p class="hnt rel hl" style="margin:0">“Bill the corrections” appears only when a change touches Fall practices’ own time.<button class="mk" style="right:-11px;top:-11px" data-n="3" aria-label="Change 3">3</button></p>
+          </div>
+          <div class="df same"><span class="btn">Cancel</span><span class="btn pri">Send to 1 person</span></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="expl"></div>
+    <div class="legend">
+      <div class="li" id="s-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The coach row names the part</b> instead of "a correction of $135.00". The money is said once, on the bill line below.</p></div>
+      <div class="li" id="s-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The new part's bill gets its own line.</b> Drawn as it first appears: "Not billed", with "Bill it…" opening Bill the teams for this part (below). Once set it reads "<b>$135.00</b> · 14U AA · one payment, due Dec 1", and the door becomes "Change…". Sending with it unbilled is allowed, the same as finalizing a schedule with no bill. The time then sits as "Not billed" in the bill tile until "Review the bill" sends one, the path the shipped final-not-billed schedule already has.</p></div>
+      <div class="li" id="s-3"><button class="mk2" data-n="3" type="button">3</button><p><b>"Bill the corrections" stays for what it was built for.</b> Practices moved, gained or lost on Fall practices' own time are still corrected on Fall practices' bill. When the only change is new time, the switch has nothing to do, so it is absent.</p></div>
+    </div>
+
+    <div class="stage" style="margin-top:22px">
+      <div class="cap"><h3>Bill the teams, for the added time</h3><span class="tag chg">Changed</span><span class="sw-note">The shipped window, with the menu words as ruled for each team's amount (Phase 7). Only the eyebrow and the statement differ.</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh"><div class="tt"><span class="eb hl">Fall practices · Time added Nov 16</span><span class="tl">Bill the teams</span></div><span class="x">✕</span></div>
+        <div class="db">
+          <div class="pr2 same">
+            <div class="fld"><span class="lb">Bill from</span><div class="ctl"><span class="v">No budget line</span><span class="chev">▾</span></div></div>
+            <div class="fld"><span class="lb">Bill the teams for</span><div class="ctl"><span class="v">The time at the permit’s price · $135.00</span><span class="chev">▾</span></div><span class="hnt">Or a total, or each team’s amount, that you choose</span></div>
+          </div>
+          <div class="pr2 same">
+            <div class="fld"><span class="lb">Split</span><span class="fixed">By the time each team got</span></div>
+            <div class="fld"><span class="lb">Payments</span><div class="pr2"><div class="ctl"><span class="v">One payment</span><span class="chev">▾</span></div><div class="ctl"><span class="v">Dec 1, 2026</span></div></div></div>
+          </div>
+          <div class="bwrap same"><table class="bt">
+            <thead><tr><th>Team</th><th class="n">Share</th><th class="n">Dec 1</th></tr></thead>
+            <tbody>
+              <tr><td>14U AA<small>1 slot · 1.5 h Halton Hills evenings</small></td><td class="n">$135.00</td><td class="n">$135.00</td></tr>
+            </tbody>
+          </table></div>
+          <div class="stmt hl"><b>A bill of its own, for Time added Nov 16.</b><p>It goes to the team when you send the changes and arrives on its Money › Club tab as “Fall practices · Time added Nov 16”. Fall practices’ bill and its payments stay as they are.</p></div>
+        </div>
+        <div class="df"><span class="btn">Cancel</span><span class="btn pri">Add the bill to the schedule</span></div>
+      </div></div></div>
+      <p class="note"><b>What the coach sees:</b> a second charge on Money › Club named "Fall practices · Time added Nov 16", beside "Fall practices". The notice reads "Riverdale Minor Ball billed 14U AA $135.00. For Fall practices · Time added Nov 16 · 1 payment, $135.00 due Dec 1." Today the same money would arrive as a correction named "Fall practices · changes" with a date.</p>
+      <p class="note"><b>Who can do what is unchanged:</b> Add time and Settings… for those who schedule. The bill line and Bill the teams for people with the club's Accounting; anyone else sees "Not billed" or the figure, but no door. Desktop only, like every schedule edit.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 6 · ASKS ═════════ -->
+  <section class="pane" id="p-asks">
+    <p class="lede"><b>Ruled 2026-11-16: all seven as recommended (A).</b> Recorded in the Several permits plan as Phase 8, with a build prompt. Not built yet.</p>
+    <div class="asks">
+      <div class="card">
+        <h3>What you already said (shown so it can be corrected)</h3>
+        <ul>
+          <li>A draft is edited, not added to. Add time is for after the schedule is final and sent.</li>
+          <li>Adding time is basically making a new schedule the same way, saved as part of the one it was added to.</li>
+          <li>The new part doesn't change the existing schedule or its billing.</li>
+          <li>Its billing is separate from the old one: 1 team or 10, whatever is set.</li>
+          <li>The phases are draft → final → final with changes → final.</li>
+        </ul>
+      </div>
+      <div class="ask">
+        <h3>Ask 1 · What an added part is called</h3>
+        <ul><li><b>A · "Time added Nov 16"</b> (drawn). It names itself, so there is nothing to type, and it reads clearly on a coach's bill. A second on the same day is "Time added Nov 16 (2)".</li><li><b>B · A name you type</b>, starting as "Time added Nov 16" (e.g. "Spring extension"). It is one more field in a window that is already longer.</li></ul>
+        <p class="rec">Recommend A. B can come later as a rename in Settings… if clubs ask for it.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 2 · Add time on a draft</h3>
+        <ul><li><b>A · Final schedules only.</b> Settings… on a draft gets the Permits picker and Find the time (tab 2).</li><li><b>B · Keep Add time on drafts too</b>, as built today.</li></ul>
+        <p class="rec">Recommend A. It is your model, and a draft with two kinds of edit is two ways to do one job.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 3 · How the parts show on the page</h3>
+        <ul><li><b>A · Quietly</b> (drawn): a line under the title per added part, a Part filter, and a Part row on a practice. All of them only on a schedule with time added.</li><li><b>B · A "Time on this schedule" list</b> above the grid: one row per part with its dates, teams, permit and bill status, and a Settings… door on each.</li></ul>
+        <p class="rec">Recommend A. B is clearer once a schedule has three or more parts, but it pushes the grid down on every schedule that has any.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 4 · Regenerate and Settings… on a schedule with parts</h3>
+        <ul><li><b>A · One part at a time</b>, chosen at the top (drawn). Regenerating Fall practices never touches Time added Nov 16, and the other way round.</li><li><b>B · The whole schedule at once</b>, each part still keeping to its own time and teams.</li></ul>
+        <p class="rec">Recommend A. B regenerates time you didn't mean to touch, and its question has to list two parts' kept practices at once.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 5 · Where the new part's bill is set</h3>
+        <ul><li><b>A · In Send the changes</b>, a line with "Bill it…" (drawn). The bill is set when the time is about to go out, as with Finalize.</li><li><b>B · As Add time's step 3</b>, straight after the drafts.</li></ul>
+        <p class="rec">Recommend A. Add time is used by people who schedule; the bill needs Accounting. A keeps those two jobs where they are today.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 6 · Choosing the teams</h3>
+        <ul><li><b>A · New schedule's team table</b>, nobody ticked to start (drawn). One tick means one team gets all of it.</li><li><b>B · A separate choice</b>, "Share it toward each team's practices a week" or "Give all of it to [team]". This is what I suggested in chat before your model.</li></ul>
+        <p class="rec">Recommend A. Your model makes it the same form, so the one-team case needs no control of its own.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 7 · A permit already on the schedule</h3>
+        <ul><li><b>A · Offered, with the time already used left out</b> (drawn), and From starting where the schedule's use of it ends.</li><li><b>B · Offered as is</b>, letting the clash check refuse overlapping time when the drafts are made.</li></ul>
+        <p class="rec">Recommend A. B shows time that can never be used, and you only find out at the drafts.</p>
+      </div>
+      <div class="card">
+        <h3>What changes from what's built (for the record)</h3>
+        <ul>
+          <li>Added time is no longer billed as a correction on the original bill (the "P9 B" path). It gets its own bill. Earlier payments are untouched either way.</li>
+          <li>Add time's From/To and its dates off become the part's own. That answers two open questions from the Add time build.</li>
+          <li>Add time leaves drafts. Settings… gains the Permits picker.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>After you rule</h3>
+        <p style="margin:0">It goes into the Several permits plan as Phase 8, with what it changes in Add time (Session E) and in the bill (Session C), the build checks, the help for Schedules, and the walk steps. The build waits on Phase 7 (each team's amount) if that is built first, because both change the Bill the teams window.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var names = ['idea', 'draft', 'add', 'page', 'send', 'asks'];
+  var tabs = document.querySelectorAll('.tab');
+  function show(name) {
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.t === name)); });
+    document.querySelectorAll('section.pane').forEach(function (p) { p.classList.toggle('on', p.id === 'p-' + name); });
+    try { history.replaceState(null, '', '#' + name); } catch (e) { /* hash only */ }
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.t); }); });
+  /* A numbered dot (on the drawing or in the legend) opens its explanation under the drawing. */
+  function explain(pane, n) {
+    var li = null;
+    pane.querySelectorAll('.legend .li').forEach(function (x) { if (x.id.split('-')[1] === String(n)) li = x; });
+    var ex = pane.querySelector('.expl');
+    if (!li || !ex) return;
+    ex.innerHTML = li.querySelector('p').innerHTML; ex.classList.add('on');
+    pane.querySelectorAll('.li').forEach(function (x) { x.classList.toggle('flash', x === li); });
+    ex.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  document.querySelectorAll('.mk, .mk2').forEach(function (b) {
+    b.addEventListener('click', function () { explain(b.closest('section'), b.dataset.n); });
+  });
+  document.querySelectorAll('.viewrow').forEach(function (row) {
+    var pane = row.closest('section');
+    row.querySelectorAll('button[data-v]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        row.querySelectorAll('button[data-v]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        pane.classList.toggle('show-diff', b.dataset.v === 'diff');
+      });
+    });
+  });
+  var h = (location.hash || '').replace('#', '');
+  if (names.indexOf(h) > -1) show(h);
+  window.addEventListener('hashchange', function () { var n = (location.hash || '').replace('#', ''); if (names.indexOf(n) > -1) show(n); });
+})();
+</script>

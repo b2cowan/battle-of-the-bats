@@ -280,7 +280,11 @@ a.noticeRow:hover { background: var(--home-olive-soft); }
 .handedDoor { font-weight: 600; color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
 /* The form's line under a date off: what that day already holds, as it is picked. */
 .offNote {
-  grid-column: 1 / -1; display: flex; gap: 0.4rem; align-items: flex-start; margin: -0.2rem 0 0.6rem;
+  grid-column: 1 / -1; display: flex; gap: 0.4rem; align-items: flex-start; margin: -0.2rem 0 0;
+  /* PADDING, not margin: the window body's "p:last-child { margin-bottom: 0 }" (shared/KitDialog.module.css) beats any
+     one-class margin, and this line is always the last child of its row — so the gap under it never showed and the
+     next "Date off" sat flush beneath the warning (owner 2026-11-16, three tries). */
+  padding-bottom: 1rem;
   font-size: var(--type-support); color: var(--text-secondary);
 }
 .offNote > svg { flex: none; margin-top: 0.1rem; color: var(--warning); }
