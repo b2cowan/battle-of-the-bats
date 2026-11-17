@@ -767,7 +767,7 @@ date-off fixtures re-run green; `tests/unit/club-schedule-add-part.test.ts`). De
 - **Owed to Session 3**, unchanged: sending, billing, regenerating and removing a part. Until then a part added on dev can be
   seen but not sent; the P9 B money path still exists and has no caller that adds time to a sent schedule.
 
-**Session 3 BUILT 2026-11-17 — Send the changes sends the family; one part at a time** (no migration: every step it runs
+**Session 3 BUILT 2026-11-17, committed `839645c5c` 2026-11-17 (simplified + reviewed) — Send the changes sends the family; one part at a time** (no migration: every step it runs
 already existed per schedule; `tests/sql/schedule-part-send-fixture.sql` 5/5 on DEV; `tests/unit/club-schedule-family-send.test.ts`
 15/15; the schedule suites 546/546). Decisions it made:
 - **One send, each member its own step.** Send the changes on the schedule's address previews every part with something to

@@ -147,7 +147,7 @@ After the owner's yes on the storage decision:
 
 ## Session 3 — Send the changes sends the family; one part at a time
 
-> **BUILT 2026-11-17** (commit owed — the owner's yes). No migration. What was decided and how: plan Phase 8, "Session 3 BUILT".
+> **BUILT 2026-11-17, committed `839645c5c` 2026-11-17** (simplified + reviewed; the review's fixes and open calls are below). No migration. What was decided and how: plan Phase 8, "Session 3 BUILT".
 > `tests/sql/schedule-part-send-fixture.sql` 5/5 (DEV); `tests/unit/club-schedule-family-send.test.ts` 15/15; schedule suites 546/546.
 > **The Close must know:** the new words are one block in `PART_WORDS` ("Time added as its own part: sending it and its bill"),
 > incl. "Billed" (no figure, a reader without Accounting — the drawing said "or the figure"; the shipped money rule won), the
