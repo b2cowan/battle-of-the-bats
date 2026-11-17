@@ -39,7 +39,7 @@ differently ("Prospect Park · Diamond 1" against "Diamond 1").
 
 ## Build record
 
-- Built 2026-11-17, uncommitted at hand-off (commit owed on the owner's word).
+- Built 2026-11-17; committed `cb4af174b` 2026-11-17 (no migration). Review fixes folded in before the commit: a single change shows inline instead of behind "All 1 change"; a move run's dates are labelled as the dates it moves from ("was Dec 3 – 10", "Was Dec 3 · 10" in the email) and it sorts by the soonest day it touches; the run key is built with JSON so a place containing "|" can never merge two changes; an unknown place leaves no empty segment in a pattern. Left as noted: a run need not be weekly (two Tuesdays seven weeks apart read "Dec 1 – Jan 26"); the Send window lists teams in audience order, the page soonest first; a house-league games row counts as a team in "N teams".
 - Words (ask 5): `/marketing` kept every head, pattern, toggle and email title; changed two in the total — "taken off"
   → "lost" (in this scheduler "taken off" already means a permit taken off, or money off what a team owes) and "N other"
   → "N other changes". Unit tests:
