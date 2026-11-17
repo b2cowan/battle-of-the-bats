@@ -61,8 +61,10 @@ export function classifyPurchase(f: PurchaseFacts): PurchaseCase | null {
   // first payment, so it earns the email (owner ruling 2, 2026-11-16). ⚠ The move metadata STAYS on the subscription after the
   // move, so the trialing guard is what keeps a later $0 dashboard update from sending one.
   // ⚠ A next-season choice is `trialing` too (its first charge is the season start, not a free trial), and the move metadata
-  // merges onto its `choiceKind`: "Your free trial continues" would be untrue there, so it sends nothing, as before (/review
-  // 2026-11-16; an owner question, not ruled: ruling 2 is a move up during a FREE trial).
+  // merges onto its `choiceKind`: "Your free trial continues" would be untrue there, so it sends nothing (/review 2026-11-16).
+  // A GUARD, not a case: no move up reaches a pending choice today (the move acts on the organization's own subscription, and
+  // a pending choice's never becomes it, ruling D2); changing a choice checks out again and sends `next_season`. Owner
+  // 2026-11-16: no email of its own (dropped).
   if (f.billingReason === 'subscription_update' && f.totalCents === 0 && f.subscriptionStatus === 'trialing'
     && f.meta[MOVE_METADATA_KEY] === 'up' && f.meta.choiceKind !== NEXT_SEASON_CHOICE_KIND) return 'trial_change';
   return null;

@@ -519,7 +519,12 @@ files' "6.6" sections).
 >    email, so the next-season email in its inbox quotes the old plan's first payment — the same gap ruling 2 closed for a
 >    trial. Recommendation: the same email with its own opening ("{orgName} is now on {planLabel} for next season. Nothing has
 >    been charged today."), `/legal` to read it; small. **⚖ RULED 2026-11-16 (owner): as recommended** — a next-season choice's
->    move up sends the details email with its own opening, `/legal` reads it first; not built yet. Owner walk: built 2026-11-16
+>    move up sends the details email with its own opening, `/legal` reads it first; not built yet. **⚠ Premise found false the
+>    same day, before building (owner asked to build it):** the move window acts only on the organization's own subscription,
+>    and a pending next-season choice's subscription never becomes it (the webhook stops at the choice while it is trialing,
+>    owner ruling D2; it lives in `organization_billing_facts.next_season_subscription_id`), so no move up can reach it. A club
+>    that changes its choice cancels the old one and checks out again, which already sends the `next_season` email with the
+>    new plan. **⚖ DROPPED 2026-11-16 (owner, "drop it"): not built**; `/review`'s exclusion stays as a guard. Owner walk: built 2026-11-16
 >    on the owner's go — ledger §534, https://claude.ai/artifact/EydBVx3ubYdK7BTRBNjNhp, 26 steps, fixture
 >    `scripts/seed-gst-6-6-fixes-walk-fixture.mjs`, dry-run by Claude before publishing; owner walk owed ( it needs a dev yearly account 30–37 days from renewal, since the template editor's preview
 >    and test send show no fixed block).

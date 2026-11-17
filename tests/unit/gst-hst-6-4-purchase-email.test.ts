@@ -56,7 +56,7 @@ describe('1 · which paid invoice earns the email (§3.2)', () => {
     assert.equal(is({ ...trialUp, status: 'open' }), null);
     assert.equal(is({ ...trialUp, subscriptionId: 'mock_sub_1' }), null, 'the dev mock path writes no invoice');
     assert.equal(is({ ...trialUp, billingReason: 'subscription_create' }), 'trial', 'a trial\'s own first invoice stays the trial email');
-    // A next-season choice is trialing too, with no free trial: its move up sends nothing, as before (/review; an owner question).
+    // A next-season choice is trialing too, with no free trial: a guard (no move up reaches one today), so it sends nothing.
     assert.equal(is({ ...trialUp, meta: { flhq_plan_move: 'up', choiceKind: NEXT_SEASON_CHOICE_KIND } }), null);
   });
   it('a renewal is never one — a trial\'s or next-season choice\'s first real charge included', () => {
