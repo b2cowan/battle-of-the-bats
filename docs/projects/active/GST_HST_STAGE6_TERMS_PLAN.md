@@ -526,8 +526,11 @@ files' "6.6" sections).
 >    that changes its choice cancels the old one and checks out again, which already sends the `next_season` email with the
 >    new plan. **⚖ DROPPED 2026-11-16 (owner, "drop it"): not built**; `/review`'s exclusion stays as a guard. Owner walk: built 2026-11-16
 >    on the owner's go — ledger §534, https://claude.ai/artifact/EydBVx3ubYdK7BTRBNjNhp, 26 steps, fixture
->    `scripts/seed-gst-6-6-fixes-walk-fixture.mjs`, dry-run by Claude before publishing; owner walk owed ( it needs a dev yearly account 30–37 days from renewal, since the template editor's preview
->    and test send show no fixed block).
+>    `scripts/seed-gst-6-6-fixes-walk-fixture.mjs`, dry-run by Claude before publishing; **owner walk PASSED 26/26 2026-11-17** (ledger §534: A the two
+>    billing templates 6/6, B a real reminder after the customised words 8/8, C a move up during a free trial 11/11, D hand
+>    back 1/1; it needed a dev yearly account 30–37 days from renewal, since the template editor's preview and test send show
+>    no fixed block). Fixture torn down 2026-11-17. Mig 490 re-applied to dev 2026-11-17 (restores the reminder row's opening
+>    line, which "Reset to default" leaves edited). Prod mig 490 rides 6.7.
 > 3. **"The unused part" (O3) = daily pro-rata of the last invoice**; a few cents' rounding under is accepted. No build: staff type
 >    the figure into the refund tool.
 > 4. **The price-rise procedure v0.2 is approved.**
