@@ -600,8 +600,8 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [ ] `/demos` at its next cycle (demos follow the product; they don't gate it).
 - [x] Found at walk 1 (2026-11-16, owner): Fair shares' per-permit hour headings ("Hours · Milton evenings") ran together.
       Now ONE "Hours" heading over the permit columns with the permit names on a second header row (own case, wrap at
-      ~8.5rem, right-aligned over their figures). Built in this conversation, lint clean, **uncommitted**; the full
-      typecheck ran out of memory twice (not a pass). The `colHoursOn` word was retired with it.
+      ~8.5rem, right-aligned over their figures). Committed `8be08e758` 2026-11-16, lint clean; the full typecheck ran
+      out of memory twice (not a pass); browser-checked by the owner before the commit. The `colHoursOn` word was retired with it.
 - [ ] Walk 1 step 5.1 says the Bill tile "reads Not billed"; on a DRAFT it reads the time's price (Not billed is
       Final-with-no-bill only). The walk already passed 49/49, so the source is left as is; any reuse fixes the step.
 
