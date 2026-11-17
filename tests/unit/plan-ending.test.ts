@@ -24,7 +24,7 @@ import assert from 'node:assert/strict';
 import type Stripe from 'stripe';
 import {
   OVERDUE_GRACE_DAYS, applyEnding, clickedAt, keepInProgress, keptOnTheDate, scheduleDowngrade, waitingState, endedAtFor, endingForDeletedSubscription, finishOverdueEnding, futureMoveAnswer, hasRealSubscription,
-  askingDoor, endingEmailTiming, reminderDue, sendDueEndingEmails, stripeIdToStopNow, upcomingDate,
+  askingDoor, endingEmailTiming, endsOnEmailOwed, reminderDue, sendDueEndingEmails, stripeIdToStopNow, upcomingDate,
   isOverdueEnding, keepEnding, pickAppliedEnding, recordStripeSignal, retentionUntilFrom, scheduleEnding, stripeCancelSignal,
   waitingMoveOf, waitingMoveView, changeKeptTournaments, operatorPlanChangeRefusal, type EndedEvent, type EndingAccount, type EndingActor, type EndingDeps, type EndingEmail, type EndingIntent,
   type RetainedRecordRow, type DowngradedEvent, type SlotHolder,
@@ -371,18 +371,48 @@ describe('3 · the end date runs the ending once', () => {
     });
   }
 
-  it('Stripe ending it with nobody asking: a fresh ending, Stripe’s reason, no email for an org (as before)', async () => {
+  it('Stripe ending it with nobody asking: a fresh ending, Stripe’s reason, and a club is told it ended (ruling Q1, 2026-11-16)', async () => {
     const w = world();
     const result = await endingForDeletedSubscription(account(), subscription({ status: 'canceled', ended_at: unix('2026-12-03T10:00:00Z') }), w.deps);
     assert.equal(result.kind, 'ended');
+    assert.equal(result.kind === 'ended' && result.result.emailed, true);
     const row = w.only();
     assert.equal(row.reason, 'Stripe subscription deleted');
     assert.equal(row.createdByEmail, 'stripe-webhook');
+    assert.equal(row.notifyOwner, true, 'the row is written ticked: the email follows the row, never the path');
+    assert.ok(row.endedEmailSentAt);
     assert.equal(w.records[0].metadata.retentionReason, 'stripe_subscription_deleted');
     assert.equal([...w.events.values()][0].source, 'stripe');
-    assert.equal(w.emails.size, 0);
+    assert.deepEqual([...w.emails.entries()], [[`intent:${row.id}:ended_email`, 1]], 'one "ended" email');
     assert.deepEqual(w.payPages, ['stripe suspension']);
+    // A replay after it finished sends nothing more.
+    const again = await endingForDeletedSubscription(account(), subscription({ status: 'canceled', ended_at: unix('2026-12-03T10:00:00Z') }), w.deps);
+    assert.equal(again.kind, 'already');
+    assert.deepEqual([...w.emails.values()], [1]);
   });
+
+  for (const crashAt of [...TEARDOWN, 'db:flip']) {
+    it(`G7 · Stripe ending a club with nobody asking: a crash at "${crashAt}" then the webhook's retry still tells the owner, once`, async () => {
+      const w = world();
+      const deleted = subscription({ status: 'canceled', ended_at: unix('2026-12-03T10:00:00Z') });
+      w.state.failAt = crashAt;
+      await assert.rejects(endingForDeletedSubscription(account(), deleted, w.deps));
+      // The ticked row a crash leaves waiting has a date already past when the webhook came, so the daily job owes it
+      // neither the reminder nor the "ends on" email (both need a date ahead).
+      const waiting = w.pending();
+      if (waiting) {
+        const arrived = new Date('2026-12-03T10:01:00Z');
+        assert.equal(reminderDue(waiting, arrived), false);
+        assert.equal(endsOnEmailOwed(waiting, arrived), false);
+      }
+      // The retry finds the row waiting and arrives as a request: the row's tick is what still sends the email.
+      await endingForDeletedSubscription(account(), deleted, w.deps);
+      const row = w.only();
+      assert.equal(row.status, 'applied');
+      assert.equal(w.emails.size, 1, 'one "ended" email (the mail service’s once-only key holds a resend)');
+      assert.ok(row.endedEmailSentAt);
+    });
+  }
 
   it('a Coaches Portal: 365 days, the workspace reason, the Premium workspace record, the email always, pay pages close (decision 2)', async () => {
     const portal = account({ ownPlan: 'team', accountKind: 'team_workspace', isCoachesPortal: true, teamWorkspaceId: 'ws-1', name: 'Hawks Coaches Portal' });
@@ -997,7 +1027,7 @@ describe('8d · Finish this ending now — Stripe first, then only what Stripe c
 describe('8e · the words and the wiring', () => {
   const facts = (over: Partial<EndingEmailFacts> = {}): EndingEmailFacts => ({
     kind: 'ends_on', move: null, portal: false, orgName: 'Riverside', plan: 'tournament_plus', planLabel: 'Tournament Plus', door: 'owner',
-    clickedAt: NOW.toISOString(), date: RENEWAL, retentionUntil: retentionUntilFrom(RENEWAL, 90), tournaments: 3, trialing: false,
+    clickedAt: NOW.toISOString(), date: RENEWAL, retentionUntil: retentionUntilFrom(RENEWAL, 90), tournaments: 3, trialing: false, pastDue: false,
     remindLater: true, daysLeft: 7, renewsAs: null, price: '$39 CAD / month', keepUrl: 'https://x/billing?keep_plan=1', billingUrl: 'https://x/billing', ...over,
   });
 
@@ -1020,6 +1050,51 @@ describe('8e · the words and the wiring', () => {
     assert.doesNotMatch(endingEmail(facts({ remindLater: false })).html, /remind you/);
     assert.match(endingEmail(facts({ kind: 'kept', renewsAs: 'Club' })).subject, /will renew as Club on January 14, 2027/);
     assert.doesNotMatch(endingEmail(facts({ orgName: '<b>x</b>' })).html, /<b>x<\/b>/, 'names are escaped');
+  });
+
+  it('renewal Stage 4: the "ends on" email says the window’s lead word for word; a trial says nothing is charged (T1)', () => {
+    const html = endingEmail(facts()).html;
+    assert.match(html, /the end of the period you paid for\. Nothing is switched off before then, and no more plan payments are taken\./);
+    assert.match(html, /it comes back if you reactivate before then/);
+    assert.doesNotMatch(html, /everything comes back/, '/legal: the windows restore what the plan allows');
+    assert.doesNotMatch(html, /resubscribe/i, 'one door word: Reactivate, as the billing page says it');
+    assert.doesNotMatch(endingEmail(facts({ trialing: true })).html, /card is/);
+    assert.match(endingEmail(facts({ trialing: true })).html, /Your trial ends on .*keeps every tool until then, and no plan payment is taken\./);
+  });
+
+  it('F2 · past due: the "ends on" email and the reminder never promise the date (owner 2026-11-05)', () => {
+    for (const kind of ['ends_on', 'reminder'] as const) {
+      for (const portal of [false, true]) {
+        const out = endingEmail(facts({ kind, portal, pastDue: true, ...(portal ? { plan: 'team' as const, planLabel: 'Premium' } : {}) }));
+        assert.doesNotMatch(out.html, /paid for|Nothing more is charged|kept until/, `${kind} ${portal}`);
+        assert.match(out.html, /When it ends/, `${kind} ${portal}`);
+        assert.match(out.html, /for 90 days after that/, `${kind} ${portal}`);
+      }
+    }
+    assert.match(endingEmail(facts({ pastDue: true })).html, /it is still due\. If it’s collected, everything stays open until .*If it can’t be, the plan ends sooner/);
+    // /review 2026-11-16: "Premium" is a name — it keeps its capital in the middle of the sentence.
+    const portalPastDue = endingEmail(facts({ pastDue: true, portal: true, plan: 'team', planLabel: 'Premium' })).html;
+    assert.match(portalPastDue, /If it’s collected, Premium tools stay on until /);
+    assert.doesNotMatch(portalPastDue, /premium tools/);
+    assert.match(endingEmail(facts({ pastDue: true })).subject, /ends by January 14, 2027/);
+    assert.match(endingEmail(facts({ kind: 'reminder', pastDue: true })).subject, /ends within 7 days/);
+    assert.match(endingEmail(facts({ kind: 'reminder', pastDue: true })).html, /or sooner if your last payment can’t be collected\. Until then everything stays open\./);
+    assert.match(readCode('lib/plan-ending-server.ts'), /pastDue: account\.subscriptionStatus === 'past_due'/);
+  });
+
+  it('renewal Stage 4: the "ended" emails say the plan has ended, with the page’s door (Reactivate), never "Resubscribe"', () => {
+    const club = functionBody(readCode('lib/email.ts'), 'cancellationConfirmationHtml');
+    const portal = functionBody(readCode('lib/email.ts'), 'teamWorkspaceCancelledHtml');
+    assert.match(club, /has ended, and \$\{escapeHtml\(p\.orgName\)\} is now suspended/);
+    assert.match(club, /warmEmailButton\(`Reactivate \$\{escapeHtml\(p\.planLabel\)\}`/);
+    assert.match(portal, /warmEmailButton\('Reactivate Premium'/);
+    // /legal (CASL): after the end the email is a data notice — the date and where to restore it, no win-back promise.
+    assert.match(club, /You can restore it from Plan &amp; billing before then\./);
+    assert.match(portal, /You can restore it from your Coaches Portal before then\./);
+    for (const body of [club, portal]) assert.doesNotMatch(body, /Resubscribe|resubscribe before|has been cancelled|now inactive|everything comes back/);
+    const server = readCode('lib/plan-ending-server.ts');
+    assert.match(server, /defaultSubject: `\$\{planLabel\} for \$\{account\.name\} has ended`/);
+    assert.match(server, /defaultSubject: `Premium for your \$\{workspaceName\} Coaches Portal has ended`/);
   });
 
   it('a stored renewal date already past is no end date to promise (Part C, a)', () => {
@@ -1637,7 +1712,7 @@ describe('10 · a move’s emails, the log as an append, the operator’s plan c
     const facts = (over: Partial<EndingEmailFacts> = {}): EndingEmailFacts => ({
       kind: 'ends_on', move: { target: 'Tournament', kept: ['Spring Classic'], archived: ['Fall Cup'], fellBack: false, picked: true, choose: true },
       portal: false, orgName: 'Riverside', plan: 'tournament_plus', planLabel: 'Tournament Plus', door: 'owner', clickedAt: NOW.toISOString(), date: RENEWAL,
-      retentionUntil: retentionUntilFrom(RENEWAL, 90), tournaments: 0, trialing: false, remindLater: true, daysLeft: 7, renewsAs: null,
+      retentionUntil: retentionUntilFrom(RENEWAL, 90), tournaments: 0, trialing: false, pastDue: false, remindLater: true, daysLeft: 7, renewsAs: null,
       price: '$39 CAD / month', keepUrl: 'https://x/billing?keep_plan=1', billingUrl: 'https://x/billing', ...over,
     });
 

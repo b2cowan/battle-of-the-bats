@@ -275,7 +275,11 @@ them; never retype a status. Shown only when the **live** gate says the plan is 
 ### 🆕 The Club trial sentence — WRITTEN 2026-09-25 (`/marketing`, per `BUSINESS_DECISIONS.md` 2026-09-25 "The 90-day Club trial collects a card at checkout")
 
 **The sentence — one, verbatim, on every surface that offers the Club trial:**
-> **90-day trial — you add a card at checkout, and you're first charged when the trial ends.**
+> **90-day trial — you add a payment method at checkout, and you’re first charged when the trial ends.**
+
+> **T1, 2026-11-16 (`/marketing`, owner ruling "Payment method" wording everywhere, Plan & billing plan T1):** "a card" became
+> "a payment method" — checkout collects a payment method and is not changed to force cards — and the apostrophe is curly.
+> Facts and order unchanged; the billing page's trial line now calls `clubTrialLine()` too.
 
 - **Where:** the Club pricing card's note (`/pricing`, homepage, onboarding chooser), the billing
   page's Club trial line, and checkout (Stripe's message beside the button), and the `/for-clubs`
@@ -285,7 +289,7 @@ them; never retype a status. Shown only when the **live** gate says the plan is 
 - **Only where a trial applies.** A paying org moving to Club gets no second trial (2026-09-25,
   paid→paid moves), so the billing page shows this line to a free org buying Club and never on the
   move-up window. Same sentence for Club · Association (both bands run 90 days).
-- **Why these words:** the card and the charge are both stated as facts, so the line cannot be
+- **Why these words:** the payment method and the charge are both stated as facts, so the line cannot be
   read as "free". "Nothing is charged until the trial ends" was **rejected** — it is "free until"
   framing by another name, which Club may not carry (2026-09-25, no Founding offer for Club), and a
   skimmer stops at "nothing is charged". "At checkout" rather than "up front", which reads as
@@ -351,7 +355,7 @@ The sections below document all copy changes applied to the live pages after the
 >
 > Do **not** reintroduce trial-length language (14/30/90-day) anywhere in live copy. The body trial sections are retained below only as historical record.
 >
-> **⚠ One exception, 2026-09-25: Club.** Club has no free floor and no Founding offer, and its 90-day trial takes a card, so it is named on purpose — in the one sentence at the top of this document ("The Club trial sentence"), and nowhere else in any other wording. The rule above still holds for every other plan.
+> **⚠ One exception, 2026-09-25: Club.** Club has no free floor and no Founding offer, and its 90-day trial takes a payment method at checkout, so it is named on purpose — in the one sentence at the top of this document ("The Club trial sentence"), and nowhere else in any other wording. The rule above still holds for every other plan.
 
 > ### 🔁 RENAME — "League Starter"/"League" → "League"/"League Plus" (applied 2026-06-13)
 > The $89 paid tier is now **"League Plus"** on the live pages (was "League"). A new **free "League"** house-league floor (1 season / 1 division / 8 teams; internal `free_floor='league_starter'`, capped beta) sits below it, mirroring Tournament (free) / Tournament Plus (paid). **Read every "League" in the body sections below as "League Plus"** unless it clearly means the free floor or the **"House League"** module. Internal keys are unchanged (`plan_id='league'`, Stripe). The free "League" **public pricing card** is held for the Free-Tier Phase-9 launch — until then the live pricing page shows "League Plus" as the $89 tier and does not advertise the free "League". Never write "League Starter"/"Starter" in customer copy. Full inventory + rules: `docs/projects/archive/LEAGUE_REBRAND_PLAN.md`.

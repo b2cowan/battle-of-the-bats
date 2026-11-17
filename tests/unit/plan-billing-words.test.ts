@@ -53,7 +53,7 @@ describe('shared billing vocabulary', () => {
     assert.equal(W.plan.trial(false, 90), 'Payment details collected in Stripe');
     assert.equal(W.plan.trial(true, null), 'Payment details collected in Stripe');
     assert.equal(W.plan.trial(true, 0), 'Payment details collected in Stripe');
-    assert.equal(W.plan.trial(true, 14), "14-day trial — you add a payment method at checkout, and you're first charged when the trial ends.");
+    assert.equal(W.plan.trial(true, 14), "14-day trial — you add a payment method at checkout, and you’re first charged when the trial ends.");
   });
 
   it('keeps coach/org cancellation meaning and retention values separate', () => {
@@ -105,7 +105,8 @@ describe('shared billing vocabulary', () => {
     assert.equal(W.downgrade.capacity(9999), 'Unlimited tournaments.');
     assert.equal(W.downgrade.title('Target'), 'Downgrade to Target?');
     assert.equal(W.downgrade.reason, 'Why are you downgrading?');
-    assert.match(W.downgrade.when, /today.*Nothing is credited/);
+    // Renewal Stage 4: "takes effect today" is gone — a move to the free plan names its date, or says it has none to wait for.
+    assert.equal('when' in W.downgrade, false);
     assert.match(W.downgrade.lostKept, /^Saved branding is kept/);
     assert.equal(W.downgrade.toolsOff('Tournament Plus'), 'Tournament Plus tools turn off');
     assert.match(W.downgrade.choose(1, 90), /Choose 1 tournament.*90 days/);

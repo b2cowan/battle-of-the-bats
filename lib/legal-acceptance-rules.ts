@@ -140,9 +140,9 @@ export function termsStopOf(status: number, data: unknown): TermsStop | null {
  */
 export const PLAN_LINE_WORDS = {
   /** Where the screen KNOWS this purchase starts a trial (the "Start your club" window's checkout quote). */
-  trial: 'Your trial ends on the date shown at checkout, and your card is charged then unless you cancel. ',
+  trial: 'Your trial ends on the date shown at checkout, and your payment method is charged then unless you cancel. ',
   /** Where the plan has trial days but checkout decides (a trial is for a first subscription only) — `/legal` 2026-11-09. */
-  trialMaybe: 'If your plan starts with a trial, it ends on the date shown at checkout, and your card is charged then unless you cancel. ',
+  trialMaybe: 'If your plan starts with a trial, it ends on the date shown at checkout, and your payment method is charged then unless you cancel. ',
   lead: 'Your plan renews automatically until you cancel. You can cancel any time from your billing page, and your plan runs to the end of the period you’ve paid for. By continuing, you agree to the ',
   terms: TERMS_TITLE,
   end: '.',

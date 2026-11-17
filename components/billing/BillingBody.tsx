@@ -226,9 +226,11 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   // was the least noticeable thing on the card); the line above it is the date alone.
   const keepLine = pending && <p className={styles.scheduled}>{pendingMove
     ? W.plan.scheduled(PLAN_CONFIG[pendingMove.move.targetPlan].label, pendingMove.endsAt)
-    : W.plan.endsOn(pending.endsAt, org.subscriptionStatus === 'trialing')}</p>;
+    : W.plan.endsOn(pending.endsAt, org.subscriptionStatus === 'trialing', org.subscriptionStatus === 'past_due')}</p>;
   const keepButton = pending && <button type="button" className={`btn btn-lime ${styles.keepButton}`} disabled={a.busy !== null} onClick={a.keepPlan}>{keepLabel}</button>;
   const trialingNow = org.subscriptionStatus === 'trialing';
+  // Stage 3 F2: past due — the date is not promised (Stripe's retries can end it sooner).
+  const pastDueNow = org.subscriptionStatus === 'past_due';
   const changes = ownProfile.changes;
   const scheduled = s.move.status === 'ready' ? s.move.data.scheduledMove : null;
   // Plans & pricing Stage 0 (fix 1): what the customer's own subscription charges, when the webhook has recorded it (in
@@ -528,7 +530,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
       {preflight?.ending?.waits && !preflight.ending.endsOn ? <><p role="alert" className={styles.hint}>{W.errors.read('the renewal date')}</p>{retry}</>
         : preflight ? <>
         <p className={styles.cancelCopy}>{preflight.ending?.endsOn
-          ? premium ? W.cancel.premiumWaitBody(preflight.ending.endsOn, preflight.retentionDays, trialingNow) : W.cancel.waitBody(org.name, preflight.shortShutsDown, preflight.ending.endsOn, preflight.retentionDays, trialingNow)
+          ? premium ? W.cancel.premiumWaitBody(preflight.ending.endsOn, preflight.retentionDays, trialingNow, pastDueNow) : W.cancel.waitBody(org.name, preflight.shortShutsDown, preflight.ending.endsOn, preflight.retentionDays, trialingNow, pastDueNow)
           : premium ? W.cancel.premiumBody(preflight.retentionDays) : W.cancel.orgBody(org.name, preflight.shortShutsDown, preflight.retentionDays)}</p>
         <button type="button" className={`btn btn-outline ${styles.dangerText}`} id="billing-cancel-btn" onClick={a.cancel} disabled={disabled}>{premium ? W.cancel.premiumDoor : preflight.ending?.endsOn ? W.cancel.waitDoor(ownProfile.config.label) : W.cancel.orgDoor(org.name)}</button>
       </> : s.cancellation.status === 'loading' ? <LoadingState inline label="Loading cancellation details…" /> : <ReadFailure read={s.cancellation} section="cancellation details" />}
@@ -795,12 +797,15 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
   const ending = cancel?.ending ?? null;
   const endsOn = ending?.waits ? ending.endsOn : null;
   const trialing = org.subscriptionStatus === 'trialing';
+  // Stage 3 F2: a past-due account's date can come sooner, so the windows do not promise it.
+  const pastDue = org.subscriptionStatus === 'past_due';
   // A cheaper move waiting at renewal: the cancel sets it aside, and Keep {Plan} brings it back (gap review G1).
   const heldMove = move.status === 'ready' ? move.data.scheduledMove : null;
   // Stage 2 Part B: a paying subscription's move to the free plan waits for its date; none to wait for, it moves at the
   // click (ruling 3). A waiting move whose date is missing says so and offers no confirm (as the Cancel section does).
   const movesOn = downgrade?.when?.waits ? downgrade.when.movesOn : null;
-  const moveDateMissing = Boolean(downgrade?.when?.waits && !movesOn);
+  // No timing in the review at all (an old answer) is a missing date too: said, and no confirm — never "takes effect today".
+  const moveDateMissing = Boolean(downgrade && (!downgrade.when || (downgrade.when.waits && !movesOn)));
   // Downgrade window redraw (owner 2026-11-05): the foot says what the button is waiting for, then what was chosen; the
   // button already carries the date, so the foot no longer repeats it. The names of the rest appear once the choice is complete.
   const choiceDone = Boolean(downgrade?.requiresTournamentChoice && keepIds.length === downgrade.allowedKeepCount);
@@ -898,7 +903,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
           list of what goes offline OPEN and said once, then when it is suspended and how long the data is kept, then the payments. */}
       {cancel && endsOn && <>
         <div className={`${styles.waitCallout} ${styles.moveBand} ${styles.calloutLines}`}>
-          <p>{trialing ? W.cancel.trialStays(org.name, endsOn) : premium ? W.cancel.premiumStays(endsOn) : W.cancel.stays(org.name, endsOn)}</p>
+          <p>{trialing ? W.cancel.trialStays(org.name, endsOn) : pastDue ? W.cancel.pastDueStays(premium ? 'Premium' : org.name, endsOn, premium) : premium ? W.cancel.premiumStays(endsOn) : W.cancel.stays(org.name, endsOn)}</p>
           <p>{W.cancel.keepAnyTime(premium ? 'Premium' : ownProfile.config.label, endsOn)}</p>
         </div>
         {heldMove && <p className={styles.waitCallout}>{W.cancel.moveSetAside(PLAN_CONFIG[heldMove.toPlan].label, heldMove.effectiveAt, keepLabel)}</p>}
@@ -906,7 +911,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
         {waitingMove && <p className={styles.waitCallout}>{W.cancel.replacesMove(PLAN_CONFIG[waitingMove.move.targetPlan].label, waitingMove.endsAt, ownProfile.config.label)}</p>}
         <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{premium ? W.cancel.premiumOfflineOn(endsOn) : W.cancel.offlineOn(endsOn)}</h3>
         <ul className={styles.offlineList}>{cancel.shutsDown.map(line => <li key={line}>{line}</li>)}</ul>
-        <p className={`${styles.hint} ${styles.afterList}`}>{premium ? W.cancel.premiumKeptThen(endsOn, cancel.retentionDays) : W.cancel.suspendedThen(org.name, endsOn, cancel.retentionDays)}</p>
+        <p className={`${styles.hint} ${styles.afterList}`}>{premium ? W.cancel.premiumKeptThen(endsOn, cancel.retentionDays, !pastDue) : W.cancel.suspendedThen(org.name, endsOn, cancel.retentionDays, !pastDue)}</p>
         <PaymentsEndingSection section={cancel.onlinePayments} ending={{ kind: 'cancelOn', dateLong: moveDateLong(endsOn), plan: premium ? 'Premium' : ownProfile.config.label }} />
       </>}
       {cancel && !endsOn && !premium && <>
@@ -934,9 +939,8 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
       {downgrade && target && <>
         {/* Stage 2 Part B: the move waits for the date (the drawing's words); no paid period → it moves now, and says why. */}
         {moveDateMissing ? <p role="alert" className={styles.hint}>{W.errors.read('the renewal date')}</p>
-          : movesOn ? <p>{W.downgrade.whenOn(movesOn, ownProfile.config.label, trialing)}</p>
-          : downgrade.when ? <p className={styles.waitCallout}>{W.downgrade.noPeriod(org.name)}</p>
-          : <p>{W.downgrade.when}</p>}
+          : movesOn ? <p>{W.downgrade.whenOn(movesOn, ownProfile.config.label, trialing, pastDue)}</p>
+          : <p className={styles.waitCallout}>{W.downgrade.noPeriod(org.name)}</p>}
         {/* Downgrade window redraw (owner 2026-11-05, drawing MYbuAxtXLUi7qqE16vaz34): the decision comes first, the rules that
             explain it sit quietly under it, and the long list of lost tools opens on request. The words are the shipped ones,
             split to fit the layout; the one-sentence "turns off these tools…" became the row's label and its list. */}

@@ -845,8 +845,8 @@ export type ApplyResult = {
  * An applied row means it already ran: nothing happens.
  *
  * `origin`: 'request' when somebody asked (owner, operator, the customer in Stripe's portal); 'stripe' when Stripe ended it
- * with nobody asking (a card that failed for good). Only a request — or any Coaches Portal ending — sends the email,
- * as before; an operator's request honours the "tell the owner" tick.
+ * with nobody asking (a card that failed for good). The email follows the row's "tell the owner" tick on both: an
+ * operator's request honours its tick; a Stripe ending writes it ticked (ruling Q1, 2026-11-16).
  */
 export async function applyEnding(
   account: EndingAccount,
@@ -932,10 +932,12 @@ export async function applyEnding(
   // never cost the event (/review of 12d-2 Part 3); a suspended account is refused Pay now by the pay facts regardless.
   await deps.closePayPages(account.orgId, payPagesWhere(p.actor.door));
 
-  // 6 · the "cancelled" email, once per ending.
-  const notify = isRequest ? intent.notifyOwner : account.isCoachesPortal;
+  // 6 · the "ended" email, once per ending. The row's own tick decides, on every path: a request's is the asker's (an
+  // operator's unticked cancel stays silent); Stripe ending it with nobody asking writes its row ticked (owner ruling Q1,
+  // 2026-11-16 — a club whose card failed for good is told too, as a Coaches Portal always was). Reading the ROW, not the
+  // origin, is what keeps a crash-replay honest: the webhook's retry finds that row waiting and arrives as a request.
   let endedEmailSentAt = intent.endedEmailSentAt;
-  const emailed = notify && !endedEmailSentAt;
+  const emailed = intent.notifyOwner && !endedEmailSentAt;
   if (emailed) {
     await deps.sendEndedEmail({ account, intentId: intent.id, retentionUntil, retainedTournaments: allRetained.length, askedBy: p.actor.userId ?? intent.createdBy });
     endedEmailSentAt = deps.now().toISOString();
@@ -1329,7 +1331,9 @@ export async function endingForDeletedSubscription(account: EndingAccount, sub: 
   return {
     kind: 'ended',
     result: await applyEnding(account, {
-      actor: { door: 'stripe', userId: null, email: 'stripe-webhook' }, reason: 'Stripe subscription deleted', notifyOwner: false, origin: 'stripe', stripeEndedAt,
+      // notifyOwner true: the owner is told the plan ended (ruling Q1). The row's date is already past, so the daily job's
+      // reminder and "ends on" email (both need a date ahead) never fire for it.
+      actor: { door: 'stripe', userId: null, email: 'stripe-webhook' }, reason: 'Stripe subscription deleted', notifyOwner: true, origin: 'stripe', stripeEndedAt,
     }, deps),
   };
 }

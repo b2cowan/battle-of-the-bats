@@ -67,12 +67,15 @@ test('a Stripe-side end retains the workspace before emailing, and never double-
   const retain = body.indexOf('await deps.insertRecords(');
   const send = body.indexOf('await deps.sendEndedEmail(');
   assert.ok(retain > 0 && retain < send, 'retention is recorded before the email');
-  assert.match(body.slice(retain, send), /const emailed = notify && !endedEmailSentAt;\s*if \(emailed\)/, 'one email per ending, whatever replays');
+  assert.match(body.slice(retain, send), /const emailed = intent\.notifyOwner && !endedEmailSentAt;\s*if \(emailed\)/, 'one email per ending, whatever replays');
+  // The email follows the row's tick; a Stripe-side end writes its row ticked, so a portal (and, ruling Q1 2026-11-16, a
+  // club) is always told — on the first run and on the webhook's retry alike.
   // An ending that already ran (a door ended it and sent its email) is not run again by the deletion that follows. No age
   // window either: the applied row is recognised by ITS subscription, so a late re-send finds it and quotes no later date.
   const deleted = src.slice(src.indexOf('export async function endingForDeletedSubscription'));
   assert.ok(deleted.indexOf("if (applied) return { kind: 'already'") > 0);
   assert.ok(deleted.indexOf("if (applied) return { kind: 'already'") < deleted.lastIndexOf('applyEnding('));
+  assert.match(deleted, /reason: 'Stripe subscription deleted', notifyOwner: true, origin: 'stripe'/);
   assert.match(read('lib/billing-webhook-handler.ts'), /if \(account\) await endingForDeletedSubscription\(account, sub, endingDeps\);/);
 });
 

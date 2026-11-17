@@ -1160,6 +1160,8 @@ type CancelPreflight = {
   activeTournamentCount?: number; retentionDays?: number; shutsDown?: string[]; onlinePayments?: EndingSection | null;
   /** A real Stripe subscription: the cancel waits for its renewal date. False: no paid period, it ends at the click. */
   waitsForRenewal?: boolean; renewsOn?: string | null;
+  /** The route's own read of the record's status: past due (Stage 3 F2) means the date is not a promise. */
+  subscriptionStatus?: string | null;
 };
 
 /** The cancel window's read; a refusal (free time, already cancelled) is the window's sentence and holds the confirm. */
@@ -1204,7 +1206,10 @@ function CancelWindow({ orgId, orgName, onEndNow, onDone, onClose }: {
       sentence={failed ? <>{failed}</> : !pre ? <>Reading the subscription…</>
         : dateMissing ? <>Stripe bills {orgName}, but its renewal date isn’t on our record, so this cancel can’t say when it would end. Check the Money tab.</>
         : endsOn ? <>
-          Stripe stops charging {orgName} after {consoleDate(endsOn)}, the end of the period it paid for. Until then everything stays open.
+          {/* Stage 3 F2: a past-due club has not paid for the period, and Stripe's retries can end it before the date. */}
+          {pre.subscriptionStatus === 'past_due'
+            ? <>{possessive(orgName)} last payment failed. If Stripe collects it, the plan ends on {consoleDate(endsOn)}; if Stripe’s retries fail first, it ends sooner, on the day Stripe stops trying. Until then everything stays open.</>
+            : <>Stripe stops charging {orgName} after {consoleDate(endsOn)}, the end of the period it paid for. Until then everything stays open.</>}
           {pre.activeTournamentCount ? <> On that day its {pre.activeTournamentCount} tournament{pre.activeTournamentCount === 1 ? ' is' : 's are'} archived and kept for {pre.retentionDays} days.</> : null}
           {' '}The owner can keep the plan until then, and so can you.
         </> : <>
@@ -1352,7 +1357,7 @@ function FinishEndingWindow({ orgId, orgName, ending, tournamentCount: count, on
           {count > 0
             ? <> Its {count} tournament{count === 1 ? ' is' : 's are'} archived and kept until {consoleDate(ending.retentionUntil)}</>
             : <> Its data is kept until {consoleDate(ending.retentionUntil)}</>}
-          {ending.notifyOwner ? <>, and the owner gets the “cancelled” email.</> : '.'}
+          {ending.notifyOwner ? <>, and the owner gets the “ended” email.</> : '.'}
         </p>}
         <p>If Stripe says the subscription is still live, the account is not touched, and our record is corrected to match Stripe.</p>
       </>}

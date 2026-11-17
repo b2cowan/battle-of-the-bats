@@ -64,6 +64,8 @@ export type EndingEmailFacts = {
   /** Tournaments live now — what the end date archives. */
   tournaments: number;
   trialing: boolean;
+  /** Past due (Stage 3 F2): the last payment failed, so the date is not promised — Stripe's retries can end it sooner. */
+  pastDue: boolean;
   /** "We'll remind you seven days before it ends" — only when there are seven days or more left. */
   remindLater: boolean;
   daysLeft: number;
@@ -97,6 +99,8 @@ function keyOf(f: EndingEmailFacts): EmailKind {
 const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const day = (iso: string) => formatStoredDate(iso, { longMonth: true });
 const b = (text: string) => `<strong>${escapeHtml(text)}</strong>`;
+/** F2, past due: the end can come before the date (the billing page's own words). */
+const SOONER = W.cancel.sooner;
 
 /** What was cancelled or kept, in a sentence: "Premium for your Falcons Coaches Portal" or "Tournament Plus for Riverside". */
 const what = (f: EndingEmailFacts, html: boolean) => f.portal
@@ -108,12 +112,25 @@ function panel(title: string, body: string): string {
     + `<p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">${body}</p></div>`;
 }
 
-/** The end date, in the account's words: suspended (or Premium stopping), the tournaments archived, the data kept until the date. */
+/** The end date, in the account's words: suspended (or Premium stopping), the tournaments archived, the data kept until the date.
+ *  Past due (F2) the end can come sooner, so the kept-until date becomes "for N days after that". */
 function onTheDay(f: EndingEmailFacts, withComeBack: boolean): string {
-  const comeBack = withComeBack ? ', and everything comes back if you resubscribe before then' : '';
-  if (f.portal) return `Premium tools stop. Your team is kept until ${b(day(f.retentionUntil))}${comeBack}. Basic tournament records stay available.`;
+  // The page's own door word (Reactivate {Plan}), one spelling with the billing page and the "ended" email.
+  // /legal 2026-11-16: "comes back", never "everything comes back" — the windows restore what the plan allows.
+  const comeBack = withComeBack ? `, and it comes back if you reactivate ${f.pastDue ? 'within that time' : 'before then'}` : '';
+  const keptDays = Math.round((Date.parse(f.retentionUntil) - Date.parse(f.date ?? f.retentionUntil)) / 86_400_000);
+  // No end date to count from (not a case today) reads as the plain "until {date}", never "for 0 days".
+  const kept = f.pastDue && f.date ? `for ${pluralize(keptDays, 'day')} after that` : `until ${b(day(f.retentionUntil))}`;
+  if (f.portal) return `Premium tools stop. Your team is kept ${kept}${comeBack}. Basic tournament records stay available.`;
   const archived = f.tournaments === 0 ? '' : f.tournaments === 1 ? ' and its tournament is archived' : ` and its ${pluralize(f.tournaments, 'tournament')} are archived`;
-  return `${escapeHtml(f.orgName)} is suspended${archived}. Your data is kept until ${b(day(f.retentionUntil))}${comeBack}.`;
+  return `${escapeHtml(f.orgName)} is suspended${archived}. Your data is kept ${kept}${comeBack}.`;
+}
+
+/** F2: the past-due sentence the Cancel window says (the failed payment can still be collected; if not, it ends sooner). */
+function pastDueOpen(f: EndingEmailFacts, end: string): string {
+  // Built whole, never lowercased: "Premium" is a name and keeps its capital mid-sentence.
+  const open = f.portal ? `Premium tools stay on until ${day(end)}` : `everything stays open until ${day(end)}`;
+  return `Your last payment didn’t go through, and it is still due. If it’s collected, ${open}. If it can’t be, ${f.portal ? 'Premium' : 'the plan'} ends sooner, on the day the payment provider stops trying.`;
 }
 
 /** The ends-on email's first sentence changes with the door (Tab 7, email A's note). */
@@ -126,13 +143,17 @@ function cancelledSentence(f: EndingEmailFacts): string {
 
 function endsOn(f: EndingEmailFacts, end: string): { subject: string; body: string[] } {
   const open = f.portal ? `Premium tools stay on until ${day(end)}` : `Everything stays open until ${day(end)}`;
-  const stays = f.trialing ? `${open}, when your trial ends. Your card is not charged.` : `${open}, the end of the period you paid for. Nothing more is charged.`;
+  // Renewal Stage 4: the window's lead, word for word — nothing is taken away before the date (the trial: nothing is charged).
+  const stays = f.trialing ? W.cancel.trialStays(f.orgName, end)
+    : f.pastDue ? pastDueOpen(f, end)
+      : `${open}, the end of the period you paid for. Nothing is switched off before then, and no more ${f.portal ? 'Premium' : 'plan'} payments are taken.`;
   return {
-    subject: f.portal ? `${what(f, false)} ends on ${day(end)}` : `Your ${f.planLabel} plan ends on ${day(end)}`,
+    // F2 (/legal 2026-11-16): past due, the subject never promises the date either.
+    subject: f.portal ? `${what(f, false)} ends ${f.pastDue ? 'by' : 'on'} ${day(end)}` : `Your ${f.planLabel} plan ends ${f.pastDue ? 'by' : 'on'} ${day(end)}`,
     body: [
       warmEmailHeading('We’re sorry to see you go!'),
       warmEmailParagraph(`${cancelledSentence(f)} ${stays}`),
-      panel(`On ${day(end)}`, onTheDay(f, true)),
+      panel(f.pastDue ? 'When it ends' : `On ${day(end)}`, onTheDay(f, true)),
       warmEmailParagraph(`Changed your mind? ${escapeHtml(W.cancel.keepAnyTime(f.planLabel, end))}`),
       warmEmailButton(escapeHtml(W.cancel.keepDoor(f.plan)), f.keepUrl),
       ...(f.remindLater ? [warmEmailSmall('We’ll remind you seven days before it ends.')] : []),
@@ -143,13 +164,13 @@ function endsOn(f: EndingEmailFacts, end: string): { subject: string; body: stri
 function reminder(f: EndingEmailFacts, end: string): { subject: string; body: string[] } {
   const left = pluralize(f.daysLeft, 'day');
   return {
-    subject: f.portal ? `${what(f, false)} ends in ${left}` : `Your ${f.planLabel} plan ends in ${left}`,
+    subject: f.portal ? `${what(f, false)} ends ${f.pastDue ? 'within' : 'in'} ${left}` : `Your ${f.planLabel} plan ends ${f.pastDue ? 'within' : 'in'} ${left}`,
     body: [
       warmEmailHeading(`${left} left on ${escapeHtml(f.planLabel)}`),
       warmEmailParagraph(f.portal
-        ? `${what(f, true)} ends on ${day(end)}. Until then every Premium tool stays on.`
-        : `Your ${b(f.planLabel)} plan for ${b(f.orgName)} ends on ${day(end)}. Until then everything stays open.`),
-      panel(`On ${day(end)}`, onTheDay(f, false)),
+        ? `${what(f, true)} ends on ${day(end)}${f.pastDue ? `, ${SOONER}` : ''}. Until then every Premium tool stays on.`
+        : `Your ${b(f.planLabel)} plan for ${b(f.orgName)} ends on ${day(end)}${f.pastDue ? `, ${SOONER}` : ''}. Until then everything stays open.`),
+      panel(f.pastDue ? 'When it ends' : `On ${day(end)}`, onTheDay(f, false)),
       warmEmailButton(escapeHtml(W.cancel.keepDoor(f.plan)), f.keepUrl),
     ],
   };
@@ -210,7 +231,7 @@ function moveOnTheDay(f: EndingEmailFacts, m: MoveEmailFacts, end: string): stri
 
 function moveScheduled(f: EndingEmailFacts, m: MoveEmailFacts, end: string): { subject: string; body: string[] } {
   // The Downgrade window's own dated words (Stage 2 Part B), so the email and the window say the same thing.
-  const stays = escapeHtml(W.downgrade.whenOn(end, f.planLabel, f.trialing));
+  const stays = escapeHtml(W.downgrade.whenOn(end, f.planLabel, f.trialing, f.pastDue));
   return {
     subject: `Your move to ${m.target} is scheduled for ${day(end)}`,
     body: [
@@ -230,7 +251,7 @@ function moveReminder(f: EndingEmailFacts, m: MoveEmailFacts, end: string): { su
     subject: `Your move to ${m.target} is in ${left}`,
     body: [
       warmEmailHeading(`${left} until your move to ${escapeHtml(m.target)}`),
-      warmEmailParagraph(`${b(f.orgName)} moves from ${b(f.planLabel)} to ${b(m.target)} on ${day(end)}. Until then everything stays open.`),
+      warmEmailParagraph(`${b(f.orgName)} moves from ${b(f.planLabel)} to ${b(m.target)} on ${day(end)}${f.pastDue ? `, ${SOONER}` : ''}. Until then everything stays open.`),
       panel(`On ${day(end)}`, moveOnTheDay(f, m, end)),
       warmEmailButton(escapeHtml(W.cancel.keepDoor(f.plan)), f.keepUrl),
     ],

@@ -7,7 +7,7 @@ import {
   formatPriceAmount, formatAnnualSavings, gatedPlanTag, gatedPlanNote,
   FOUNDING_SEASON_END_LABEL as END, FOUNDING_SEASON_FIRST_CHARGE_LABEL as FIRST,
   FOUNDING_SEASON_DECISION_MONTH_LABEL as DECISION, FOUNDING_SEASON_NEXT_YEAR_LABEL as NEXT,
-  PLAN_CONFIG, type BillingCycle,
+  PLAN_CONFIG, clubTrialLine, type BillingCycle,
 } from './plan-config';
 import { possessive, pluralize, joinWithAnd } from './utils';
 import { formatStoredDate } from './timezone';
@@ -52,6 +52,8 @@ const cents = (amount: number, currency: string) =>
   `$${(amount / 100).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency.toUpperCase()}`;
 const PLUS_TAX = BILLING_TAX_WORDS.plusTax;
 const PRICES_PLUS_TAX = BILLING_TAX_WORDS.pricesPlusTax;
+/** A past-due account's end date (Plans end at renewal, Stage 3 F2): Stripe's retries can end it before the date. */
+const SOONER = 'or sooner if your last payment can’t be collected';
 const charge = (plan: OrgPlanKey, billing: BillingCycle, cents?: number | null, currency?: string | null) => currency === 'cad' && cents != null
   ? paidPrice(cents, billing)
   : price(billing === 'annual' ? PLAN_CONFIG[plan].annualPrice : PLAN_CONFIG[plan].monthlyPrice, billing);
@@ -99,13 +101,15 @@ export const PLAN_BILLING_WORDS = {
     kept: (org: string, label: string) => `${org} stays on ${label}.`,
     // Plans end at the renewal date (Stage 0 ruling 1): a waiting cancel on the plan card's waiting-change line.
     ending: 'Ending',
-    endsOn: (iso: string, trial: boolean) => `Ends on ${day(iso)}, ${trial ? 'when the trial ends' : 'the last day you paid for'}.`,
+    // Stage 3 finding F2 (owner 2026-11-05): a past-due account has not paid for the period, and Stripe's retries can end it
+    // sooner than the date — the line never promises the date then.
+    endsOn: (iso: string, trial: boolean, pastDue = false) => `Ends on ${day(iso)}, ${trial ? 'when the trial ends' : pastDue ? SOONER : 'the last day you paid for'}.`,
     renewsAs: (label: string) => `If you keep it, you renew as ${label}, the move you chose.`,
     savings: formatAnnualSavings,
     // A conditional sentence only; eligibility/duration must come from checkout, not default config.
-    // The public Club helper is changed in its separate /marketing step (T1).
+    // T1 (2026-11-16): the ONE Club trial sentence, the public pricing card's own.
     trial: (eligible: boolean, days: number | null) => eligible && days !== null && days > 0
-      ? `${days}-day trial — you add a payment method at checkout, and you're first charged when the trial ends.`
+      ? clubTrialLine(days)
       : 'Payment details collected in Stripe',
   },
   // The payment step an Upgrade opens: the cycle is chosen where the money is committed, not above a table that shows both.
@@ -164,20 +168,27 @@ export const PLAN_BILLING_WORDS = {
     confirm: 'Cancel and suspend', premiumConfirm: 'Cancel Premium', working: 'Cancelling…',
     // A cancel that waits for the renewal date (Plans end at renewal, Stage 1). The words above stay for an account with no
     // paid period, which still ends at the click.
-    waitBody: (org: string, offline: readonly string[], iso: string, days: number, trialing = false) => `Cancelling ends ${possessive(org)} plan on ${day(iso)}, ${trialing ? 'when your trial ends' : 'the end of the period you paid for'}. Then ${joinWithAnd(offline)} go offline. Your data is kept for ${days} days after that. Reactivate within that time to restore the tools and records your plan allows.`,
-    premiumWaitBody: (iso: string, days: number, trialing = false) => `Cancelling turns off Premium tools on ${day(iso)}, ${trialing ? 'when your trial ends' : 'the end of the period you paid for'}. Basic tournament records stay available. Premium team data is kept for ${days} days after that and comes back if you reactivate within that time.`,
+    waitBody: (org: string, offline: readonly string[], iso: string, days: number, trialing = false, pastDue = false) => `Cancelling ends ${possessive(org)} plan on ${day(iso)}, ${trialing ? 'when your trial ends' : pastDue ? SOONER : 'the end of the period you paid for'}. Then ${joinWithAnd(offline)} go offline. Your data is kept for ${days} days after that. Reactivate within that time to restore the tools and records your plan allows.`,
+    premiumWaitBody: (iso: string, days: number, trialing = false, pastDue = false) => `Cancelling turns off Premium tools on ${day(iso)}, ${trialing ? 'when your trial ends' : pastDue ? SOONER : 'the end of the period you paid for'}. Basic tournament records stay available. Premium team data is kept for ${days} days after that and comes back if you reactivate within that time.`,
     waitDoor: (label: string) => `Cancel ${label}…`, waitTitle: (label: string) => `Cancel ${label}?`,
-    stays: (org: string, iso: string) => `${org} stays open until ${day(iso)}, the end of the period you paid for. Nothing more is charged.`,
-    premiumStays: (iso: string) => `Premium stays on until ${day(iso)}, the end of the period you paid for. Nothing more is charged.`,
-    trialStays: (org: string, iso: string) => `Your trial runs until ${day(iso)}. ${org} stays open until then. Your card is not charged.`,
+    // Renewal Stage 4: the lead says plainly that nothing is taken away early (the ruling: paid ahead, no refund). It names the
+    // PLAN payment (/legal + /accounting 2026-11-16): a club with online payments keeps its fee invoices until the date.
+    stays: (org: string, iso: string) => `${org} stays open until ${day(iso)}, the end of the period you paid for. Nothing is switched off before then, and no more plan payments are taken.`,
+    premiumStays: (iso: string) => `Premium stays on until ${day(iso)}, the end of the period you paid for. No Premium tool stops before then, and no more Premium payments are taken.`,
+    trialStays: (org: string, iso: string) => `Your trial ends on ${day(iso)}. ${org} keeps every tool until then, and no plan payment is taken.`,
+    /** F2: the end-date clause for a past-due account (the plan card, the Cancel section, the emails). */
+    sooner: SOONER,
+    /** F2: past due — the failed payment can still be collected, and if it can't, Stripe's retries end the plan sooner. */
+    pastDueStays: (name: string, iso: string, premium: boolean) => `Your last payment didn’t go through, and it is still due. If it’s collected, ${name} ${premium ? 'stays on' : 'stays open'} until ${day(iso)}. If it can’t be, ${name} ends sooner, on the day the payment provider stops trying.`,
     /** Stage 2 ruling 4: a cancel over a waiting move to the free plan replaces it — a later Keep returns the full plan. */
     replacesMove: (move: string, iso: string, current: string) => `You chose to move to ${move} on ${dayOnly(iso)}. Cancelling replaces that move. If you then keep ${current}, you stay on ${current}.`,
     moveSetAside: (move: string, iso: string | null, keep: string) => `You chose to move to ${move}${iso ? ` on ${dayOnly(iso)}` : ' at renewal'}. Cancelling sets that move aside. ${keep} before then and the move to ${move} comes back.`,
     keepAnyTime: (name: string, iso: string) => `You can keep ${name} any time before ${dayOnly(iso)}.`,
     /** The lines under the list of what goes offline (Cancel window redraw, owner 2026-11-05): when it is suspended and how long
      *  the data is kept, split out of the sentence that used to name every area a second time. */
-    suspendedThen: (org: string, iso: string, days: number) => `${org} is suspended then, and your data is kept for ${days} days after that, until ${day(retainedUntil(iso, days))}.`,
-    premiumKeptThen: (iso: string, days: number) => `Basic tournament records stay available. Premium team data is kept for ${days} days after that, until ${day(retainedUntil(iso, days))}.`,
+    // `dated` false (F2, past due): the end can come sooner, so the kept-until date would be a promise it can't keep.
+    suspendedThen: (org: string, iso: string, days: number, dated = true) => `${org} is suspended then, and your data is kept for ${days} days after that${dated ? `, until ${day(retainedUntil(iso, days))}` : ''}.`,
+    premiumKeptThen: (iso: string, days: number, dated = true) => `Basic tournament records stay available. Premium team data is kept for ${days} days after that${dated ? `, until ${day(retainedUntil(iso, days))}` : ''}.`,
     suspendedNow: (org: string) => `${org} is suspended the moment you confirm, and families opening your pages will see that they aren’t available.`,
     offlineOn: (iso: string) => `What goes offline on ${dayOnly(iso)}`, premiumOfflineOn: (iso: string) => `Premium tools that stop on ${dayOnly(iso)}`,
     waitConfirm: (iso: string) => `Cancel on ${dayOnly(iso)}`,
@@ -312,7 +323,6 @@ export const PLAN_BILLING_WORDS = {
   },
   downgrade: {
     title: (label: string) => `Downgrade to ${label}?`, close: 'Close', applying: 'Applying…',
-    when: 'This takes effect today and ends your subscription. Nothing is credited for the rest of the current period.',
     capacity: (limit: number) => limit >= NO_LIMIT ? 'Unlimited tournaments.' : limit === 1
       ? 'One tournament at a time: a draft or an active event holds the slot, and a finished one stays online.'
       : `${limit} tournaments at a time: drafts and active events hold the slots, and finished ones stay online.`,
@@ -344,9 +354,9 @@ export const PLAN_BILLING_WORDS = {
     /** A Coaches Portal changes plan on its own billing page, never through a club's downgrade. */
     notHere: 'This plan isn’t changed here.',
     // Stage 2 Part B (screens): the Downgrade window's dated words (Stage 0 drawing, tab "Moves to the free plan").
-    whenOn: (iso: string, current: string, trialing = false) => trialing
-      ? `This takes effect on ${day(iso)}, when your trial ends. Until then you keep every ${current} tool, and your card is not charged.`
-      : `This takes effect on ${day(iso)}, the end of the period you paid for. Until then you keep every ${current} tool. Nothing is credited.`,
+    whenOn: (iso: string, current: string, trialing = false, pastDue = false) => trialing
+      ? `This takes effect on ${day(iso)}, when your trial ends. Until then you keep every ${current} tool, and no plan payment is taken.`
+      : `This takes effect on ${day(iso)}, ${pastDue ? SOONER : 'the end of the period you paid for'}. Until then you keep every ${current} tool. Nothing is credited.`,
     chooseOn: (count: number, iso: string, days: number) => `${chooseCount(count)} ${W_REST(days, iso)}`,
     chooseCount,
     confirmOn: (iso: string) => `Downgrade on ${dayOnly(iso)}`,
@@ -431,7 +441,7 @@ export const PLAN_BILLING_WORDS = {
     checkoutFoot: 'Next, you add a payment method on our secure payment page.',
     freeTitle: () => `Your ${PLAN_CONFIG.team.label} free time ends when your club starts`,
     freeWarning: (through: string | null) => `${through ? `Free through ${day(through)}. ` : ''}The days left don’t carry over. If you leave before finishing, nothing changes and your free time keeps running.`,
-    trial: (days: number) => `${days}-day trial — you add a payment method at checkout, and you’re first charged when the trial ends.`,
+    trial: (days: number) => clubTrialLine(days),
     noTrial: 'You’ve had a subscription before, so there’s no second trial. The full charge is due today at checkout.',
     firstCharge: (iso: string | null) => iso ? `First charge, ${day(iso)}` : 'First charge when the trial ends',
     monthly: 'Monthly', yearly: 'Yearly', billing: 'Billing',

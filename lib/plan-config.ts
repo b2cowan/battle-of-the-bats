@@ -148,7 +148,8 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
 /**
  * The Club trial sentence — ONE sentence, verbatim, on the Club pricing card, the billing page and
  * checkout (BUSINESS_DECISIONS.md 2026-09-25, "The 90-day Club trial collects a card at checkout";
- * canon in PRICING_PAGE_COPY.md). Never reword it per surface: the defect it replaced was a pricing
+ * canon in PRICING_PAGE_COPY.md). It says "a payment method", not "a card" (T1, owner: checkout collects a payment method
+ * and is not changed to force cards; Plan & billing Stage 5 Part B, 2026-11-16). Never reword it per surface: the defect it replaced was a pricing
  * card promising "No credit card required" while checkout asked for one.
  *
  * Pass the trial length checkout will actually use where you have it (`getPlanConfigOverride()`
@@ -157,7 +158,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
  * No "free" in it — Club carries no "free until" framing (2026-09-25, Club has no Founding offer).
  */
 export function clubTrialLine(trialDays: number = PLAN_CONFIG.club.trialDays): string {
-  return `${trialDays}-day trial — you add a card at checkout, and you're first charged when the trial ends.`;
+  return `${trialDays}-day trial — you add a payment method at checkout, and you’re first charged when the trial ends.`;
 }
 
 /**

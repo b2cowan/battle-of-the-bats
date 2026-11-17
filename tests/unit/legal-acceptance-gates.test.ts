@@ -475,10 +475,10 @@ describe('the line (C2, drawing tab 5): §20 (3), only while the pages are on', 
     assert.ok(!html.includes('Your trial ends'));
   });
   it('a trial this purchase starts (the screen knows): the trial sentence first, one paragraph', () => {
-    assert.match(render(LINKS, { trial: 'known' }), /^<p[^>]*>Your trial ends on the date shown at checkout, and your card is charged then unless you cancel\. <span>Your plan renews/);
+    assert.match(render(LINKS, { trial: 'known' }), /^<p[^>]*>Your trial ends on the date shown at checkout, and your payment method is charged then unless you cancel. <span>Your plan renews/);
   });
   it('a plan with trial days where checkout decides: the conditional sentence (/legal 2026-11-09)', () => {
-    assert.match(render(LINKS, { trial: 5 }),/^<p[^>]*>If your plan starts with a trial, it ends on the date shown at checkout, and your card is charged then unless you cancel\. <span>Your plan renews/);
+    assert.match(render(LINKS, { trial: 5 }),/^<p[^>]*>If your plan starts with a trial, it ends on the date shown at checkout, and your payment method is charged then unless you cancel. <span>Your plan renews/);
   });
   it('the line is placed only beside a priced button: never on a Founding Season "free" choice', () => {
     assert.match(sourceOf.get('components/billing/PlanCycleDialog.tsx')!, /\{!free && \(monthlyPrice > 0 \|\| annualPrice > 0\) && <PlanTermsLine trial=/);

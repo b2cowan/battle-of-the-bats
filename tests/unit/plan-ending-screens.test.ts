@@ -159,6 +159,35 @@ describe('the operator record while a cancel waits (source)', () => {
     assert.match(W.cancel.waitBody('Falcons', ['the pay page'], ENDS, 30), /the end of the period you paid for/);
     assert.match(W.cancel.premiumWaitBody(ENDS, 30, true), /when your trial ends/);
   });
+  // Stage 3 finding F2 (owner 2026-11-05; renewal Stage 4 words): a past-due account has not paid for the period, and Stripe's
+  // retries can end it before the date — no screen says "paid for", "nothing more is charged" or a kept-until date then.
+  it('past due never promises the date (F2)', () => {
+    const lines = [
+      W.plan.endsOn(ENDS, false, true),
+      W.cancel.waitBody('Falcons', ['the pay page'], ENDS, 30, false, true),
+      W.cancel.premiumWaitBody(ENDS, 30, false, true),
+      W.cancel.pastDueStays('Falcons', ENDS, false),
+      W.cancel.pastDueStays('Premium', ENDS, true),
+      W.cancel.suspendedThen('Falcons', ENDS, 30, false),
+      W.cancel.premiumKeptThen(ENDS, 30, false),
+      W.downgrade.whenOn(ENDS, 'Tournament Plus', false, true),
+    ];
+    for (const line of lines) assert.doesNotMatch(line, /paid for|Nothing more is charged/, line);
+    // The kept-until date counts from an end that can come sooner, so it is left out.
+    for (const line of lines.slice(5, 7)) assert.doesNotMatch(line, /until [A-Z][a-z]+ \d/, line);
+    for (const line of lines.slice(0, 3)) assert.match(line, /or sooner if your last payment can’t be collected/);
+    assert.match(W.cancel.pastDueStays('Falcons', ENDS, false), /it is still due\. If it’s collected, Falcons stays open until .*ends sooner, on the day the payment provider stops trying/);
+    const body = readCode('components/billing/BillingBody.tsx');
+    assert.match(body, /pastDue \? W\.cancel\.pastDueStays\(/);
+    assert.match(body, /W\.cancel\.suspendedThen\(org\.name, endsOn, cancel\.retentionDays, !pastDue\)/);
+    assert.match(record, /pre\.subscriptionStatus === 'past_due'/);
+  });
+  it('the paid lead says nothing is taken away early; a trial says nothing is charged (renewal Stage 4, T1)', () => {
+    assert.match(W.cancel.stays('Falcons', ENDS), /Nothing is switched off before then, and no more plan payments are taken\./);
+    assert.match(W.cancel.premiumStays(ENDS), /No Premium tool stops before then/);
+    assert.doesNotMatch(W.cancel.trialStays('Falcons', ENDS), /card/);
+    assert.doesNotMatch(W.downgrade.whenOn(ENDS, 'Tournament Plus', true), /card/);
+  });
   it('the operator hears about a move that could not be put back in staff words, not the owner’s (review)', () => {
     assert.doesNotMatch(W.cancel.moveNotRestoredStaff('Club', 'Tournament Plus', ENDS), /Your plan/);
     assert.match(W.cancel.moveNotRestoredStaff('Club', 'Tournament Plus', ENDS), /they can choose it again/);
@@ -225,7 +254,9 @@ describe('the owner billing page while a move to the free plan waits (Stage 2 Pa
 describe('the windows over a waiting move (source)', () => {
   const body = readCode('components/billing/BillingBody.tsx');
   it('the Downgrade window says its date, and with no paid period says it moves at the click', () => {
-    assert.match(body, /W\.downgrade\.whenOn\(movesOn, ownProfile\.config\.label, trialing\)/);
+    assert.match(body, /W\.downgrade\.whenOn\(movesOn, ownProfile\.config\.label, trialing, pastDue\)/);
+    // Renewal Stage 4: a review with no timing is a missing date (said, no confirm), never the old "takes effect today".
+    assert.match(body, /const moveDateMissing = Boolean\(downgrade && \(!downgrade\.when \|\|/);
     assert.match(W.downgrade.whenOn('2027-03-01T05:00:00Z', 'Tournament Plus', true), /when your trial ends/);
     assert.doesNotMatch(W.downgrade.whenOn('2027-03-01T05:00:00Z', 'Tournament Plus', true), /paid for|credited/, 'a trial paid for nothing');
     assert.match(body, /W\.downgrade\.noPeriod\(org\.name\)/);

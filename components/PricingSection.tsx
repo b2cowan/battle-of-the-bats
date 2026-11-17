@@ -139,8 +139,8 @@ const PLANS: Plan[] = [
     annualSavings: `${formatAnnualSavings('club')}`,
     currency: 'CAD',
     period: '/mo',
-    // The Club trial takes a card (BUSINESS_DECISIONS.md 2026-09-25) — the one sentence billing and
-    // checkout also use. It read "No credit card required" until then, which checkout contradicted.
+    // The Club trial takes a payment method at checkout (BUSINESS_DECISIONS.md 2026-09-25; T1 2026-11-16) — the one
+    // sentence billing and checkout also use. It read "No credit card required" until then, which checkout contradicted.
     freeNote: clubTrialLine(),
     trialNote: clubTrialLine(),
     features: [

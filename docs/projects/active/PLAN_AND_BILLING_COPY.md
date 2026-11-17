@@ -209,6 +209,10 @@ Dates and years below are the existing `FOUNDING_SEASON_*` constants, never fres
 
 ## 6. Reduce/cancel section, window and result
 
+> **⚠ Superseded for a paying plan (2026-11-16).** These rows are the Stage 1 record of an IMMEDIATE cancel. Since Plans end
+> at renewal (Stages 1–2), a paying plan's cancel waits for its renewal date; its words are in **§15**. The rows below stay
+> true only for an account with no paid period to wait for (comped, Founding Season), which still ends at the click.
+
 `{days}` comes from the profile resolved against server preflight: **365 for a Premium workspace, 90 for an
 organization** (ruling 9). A cancelled portal's free-time-ended state is different and has no cancellation clock.
 `{offline}` comes from the one cancellation preflight source, not screen-authored lists. The known stale accounting
@@ -282,6 +286,9 @@ resolve that same preflight list (including enabled add-ons), rather than guessi
 | Staff-free-time-ended coach | — | Free time ended plus the free-time band and Keep Premium | Keep this distinct state; do not claim cancellation, retained-data deadline or a second portal is needed. |
 
 ## 8. Notices, errors and downgrade review
+
+> **⚠ The downgrade rows below are the Stage 1 record (2026-11-16).** A move to the free plan now waits for the renewal date;
+> its dated words, the band and Keep are in **§15**.
 
 Success uses the shipped Club notice pattern (fades). Errors stay visible, matching the shared rules and
 `PageNotice.tsx`. Server refusal messages remain authoritative; local fallback errors below name the failed action.
@@ -637,3 +644,75 @@ No other direct org sentence pin, UAT assertion or coach-help paragraph was foun
 `lib/portal-free-time.ts`, not this builder: the current billing page uses it, the free Basic Overview uses its **ended**
 band, and `PortalFreeTimeEndingBand` uses its separate Overview projection. The free-time API returns `freeTime:null`
 plus `portal` for a coach workspace. None of those portal paths is converted to the org contact invitation.
+
+## 15. A plan that ends or steps down on its renewal date — the words as built (renewal Stage 4, 2026-11-16)
+
+Read from the code 2026-11-16 (`lib/plan-billing-words.ts`, `components/billing/BillingBody.tsx`, `lib/plan-ending-emails.ts`,
+the operator record). **The code is the source; this table is its record.** One window serves every plan; Premium differs
+only where a row says so. Dates are `formatStoredDate` (America/Toronto) everywhere, emails included (G4). **Past due**
+(Stage 3 finding F2, owner 2026-11-05): the last renewal payment failed, so the period is not paid for and Stripe's retries
+can end the plan before the date — no past-due line promises the date, "the period you paid for", "nothing more is charged"
+or a kept-until date. The plan payment is named ("no more plan payments are taken"), never "nothing more is charged": a club
+with online payments keeps its own fee invoices to the date (`/legal` + `/accounting` 2026-11-16).
+
+### The cancel (Reduce or cancel → the Cancel window)
+
+| Concept | Words |
+|---|---|
+| Section body, paying | Cancelling ends `{org's}` plan on `{date}`, the end of the period you paid for. Then `{offline}` go offline. Your data is kept for `{days}` days after that. Reactivate within that time to restore the tools and records your plan allows. |
+| — trial / past due | …on `{date}`, when your trial ends. / …on `{date}`, or sooner if your last payment can't be collected. |
+| — Premium | Cancelling turns off Premium tools on `{date}`, `{the end of the period you paid for / when your trial ends / or sooner if…}`. Basic tournament records stay available. Premium team data is kept for `{days}` days after that and comes back if you reactivate within that time. |
+| Door / title | Cancel `{Plan}`… / Cancel `{Plan}`? (Premium: Cancel Premium… / Cancel Premium?) |
+| Lead, paying | `{Org}` stays open until `{date}`, the end of the period you paid for. Nothing is switched off before then, and no more plan payments are taken. |
+| — Premium | Premium stays on until `{date}`, the end of the period you paid for. No Premium tool stops before then, and no more Premium payments are taken. |
+| — trial | Your trial ends on `{date}`. `{Org}` keeps every tool until then, and no plan payment is taken. |
+| — past due | Your last payment didn't go through, and it is still due. If it's collected, `{Org}` stays open (Premium: Premium stays on) until `{date}`. If it can't be, `{Org}` ends sooner, on the day the payment provider stops trying. |
+| Way back | You can keep `{Plan}` any time before `{Mon D}`. |
+| A cheaper move set aside (G1) | You chose to move to `{move}` on `{Mon D}` / at renewal. Cancelling sets that move aside. Keep `{Plan}` before then and the move to `{move}` comes back. |
+| Over a waiting move to the free plan | You chose to move to `{move}` on `{Mon D}`. Cancelling replaces that move. If you then keep `{current}`, you stay on `{current}`. |
+| List heading | What goes offline on `{Mon D}` / Premium tools that stop on `{Mon D}` |
+| Under the list | `{Org}` is suspended then, and your data is kept for `{days}` days after that, until `{date}`. (Premium: Basic tournament records stay available. Premium team data is kept for `{days}` days after that, until `{date}`.) **Past due:** the same without ", until `{date}`". |
+| Online payments | Online payments stop on `{date}` · Until then families and teams pay you online as now… · keep `{plan}` before then and nothing stops; reactivate later and online payments come back. (`lib/online-payment-words.ts`) |
+| Confirm / busy | Cancel on `{Mon D}` / Cancelling… |
+| Result notice | `{Org}` (Premium) ends on `{date}`. You can keep it until then. |
+| No paid period (comped, Founding Season) | `{Org}` has no paid period to wait for, so it ends when you confirm. — then §6's immediate rows. |
+| Renewal date unreadable | We couldn't load the renewal date. Try again. (no door, no confirm) |
+
+### The plan card while a change waits, and Keep
+
+| Concept | Words |
+|---|---|
+| Chip | Ending |
+| Line, cancel | Ends on `{date}`, the last day you paid for. / …, when the trial ends. / **past due:** …, or sooner if your last payment can't be collected. |
+| Held cheaper move | If you keep it, you renew as `{move}`, the move you chose. |
+| Line, move to the free plan | Moves to `{Plan}` on `{date}`. |
+| Door | Keep `{Plan}` / Keep Premium (lime) |
+| Refusal over the change table | Your plan ends on `{date}`. Keep `{Plan}` first, then change it. / Your plan moves to Tournament on `{date}`. Keep `{Plan}` first, then change it. |
+| Keep window | Keep `{Plan}`? · `{Org}` stays on `{Plan}` and renews on `{date}` at `{price}` plus applicable taxes. (trial: …The trial ends on `{date}`, and then it's `{price}` plus applicable taxes.) · Nothing else changes. / The move to `{target}` is called off, and no tournament is archived. · Not now / Keep `{Plan}` (Keep and renew as `{move}`) · Keeping… |
+
+### Stepping down
+
+| Concept | Words |
+|---|---|
+| To the free plan, paying | This takes effect on `{date}`, the end of the period you paid for. Until then you keep every `{current}` tool. Nothing is credited. |
+| — trial / past due | …on `{date}`, when your trial ends. Until then you keep every `{current}` tool, and no plan payment is taken. / …on `{date}`, or sooner if your last payment can't be collected. Until then… Nothing is credited. |
+| — no paid period | `{org}` has no paid period to wait for, so the move happens when you confirm. |
+| — no date / no timing | We couldn't load the renewal date. Try again. (no confirm; the old "This takes effect today…" line is removed) |
+| Confirm / result | Downgrade on `{Mon D}` / `{org}` moves to `{target}` on `{date}`. |
+| Band | On `{date}` · You keep **X**. … is archived then and kept for `{days}` days, so it can come back. So is any other tournament you make before then. · Change which tournament you keep |
+| To a lower paid plan (Club · Association → Club only) | `{org}` moves to `{label}` on `{date}`, and can hold up to `{limit}` teams from then. · You keep `{current}` until then, with no credit for the rest of this period. From then it's `{amount}` CAD / `{period}` plus applicable taxes. |
+
+### The emails (keys registered on the platform-admin Email templates page and `/dev/email-preview`)
+
+| Email | Key(s) | Subject |
+|---|---|---|
+| Ends on | `plan_ends_on`, `team_workspace_ends_on` | Your `{Plan}` plan ends on `{date}` / Premium for your `{team}` Coaches Portal ends on `{date}` — body leads with the window's lead word for word (past due: subject "ends by `{date}`", "…it is still due. If it's collected, everything stays open until `{date}`. If it can't be, the plan ends sooner…", panel "When it ends") |
+| Seven-day reminder | `plan_ending_reminder`, `team_workspace_ending_reminder`, `plan_downgrade_reminder` | Your `{Plan}` plan ends in `{n}` days (past due: ends within) / … / Your move to `{target}` is in `{n}` days |
+| Move scheduled | `plan_downgrade_scheduled` | Your move to `{target}` is scheduled for `{date}` |
+| Kept | `plan_kept`, `team_workspace_kept` | `{Plan}` will renew on `{date}` / `{Org}` will renew as `{move}` on `{date}` |
+| Ended | `cancellation_confirmation`, `team_workspace_cancelled` | `{Plan}` for `{Org}` has ended / Premium for your `{team}` Coaches Portal has ended — "…has ended, and `{Org}` is now suspended.", "Your data is kept until `{date}`. You can restore it from Plan & billing before then." [Reactivate `{Plan}`] (Premium: "You can restore it from your Coaches Portal before then." [Reactivate Premium]) — a data notice, never a price or an offer (`/legal` CASL 2026-11-16) |
+| Now on the free plan | `plan_downgraded` | `{Org}` is now on `{target}` |
+
+**Not built (owner questions, renewal Stage 4):** a club Stripe ends with nobody asking (a card that failed for good) gets no
+"ended" email — only a Coaches Portal does; the paid step-down has no emails; the stored template rows (used only once an
+operator customises one) still say "at `{{price}}`" without "plus applicable taxes", and "resubscribe".

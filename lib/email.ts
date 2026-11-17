@@ -1688,13 +1688,13 @@ export function teamWorkspaceCancelledHtml(p: {
   retentionUntil: string;
 }) {
   return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Coaches Portal cancelled</h2>
-    <p style="margin:0 0 1rem;">Your <strong>${escapeHtml(p.workspaceName)}</strong> Coaches Portal subscription has been cancelled. Premium tools are now inactive.</p>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Premium has ended</h2>
+    <p style="margin:0 0 1rem;">Premium for your <strong>${escapeHtml(p.workspaceName)}</strong> Coaches Portal has ended, and Premium tools are off now.</p>
     <div style="${warmPanelStyle('secondary')}">
       <p style="${WARM_EMAIL_STYLE.panelLabel}">Your data</p>
-      <p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">Your team is kept until <strong>${p.retentionUntil}</strong>. Resubscribe before then and everything comes back as you left it. Basic tournament records remain available in Coaches Portal.</p>
+      <p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">Your team is kept until <strong>${p.retentionUntil}</strong>. You can restore it from your Coaches Portal before then. Basic tournament records stay available in Coaches Portal.</p>
     </div>
-    ${warmEmailButton('Resubscribe', p.resubscribeUrl)}
+    ${warmEmailButton('Reactivate Premium', p.resubscribeUrl)}
   `);
 }
 
@@ -2081,18 +2081,20 @@ export function cancellationConfirmationHtml(p: {
   retainedTournaments: number;
   resubscribeUrl: string;
 }) {
-  const retainedNote = p.retainedTournaments > 0
-    ? `Your ${p.retainedTournaments} tournament${p.retainedTournaments === 1 ? '' : 's'} have been archived and your data is retained until <strong>${p.retentionUntil}</strong>. If you resubscribe before that date, everything will be restored.`
-    : `Your account data is retained until <strong>${p.retentionUntil}</strong>. If you resubscribe before that date, everything will be restored.`;
+  // Plans end at renewal Stage 4: this goes on the END date (or End now), so it says the plan has ended, in the windows' words
+  // ("suspended", "kept until"), with the billing page's own door, Reactivate {Plan}. /legal 2026-11-16 (CASL): after the end there
+  // is no subscription left, so this stays a DATA NOTICE — the date and where to restore it; never a price or an offer.
+  const archived = p.retainedTournaments === 0 ? ''
+    : p.retainedTournaments === 1 ? ' Its tournament is archived.' : ` Its ${p.retainedTournaments} tournaments are archived.`;
 
   return wrap(`
-    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Subscription cancelled</h2>
-    <p style="margin:0 0 1rem;">Your <strong>${p.planLabel}</strong> subscription for <strong>${p.orgName}</strong> has been cancelled. Your organization is now inactive.</p>
+    <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">${escapeHtml(p.planLabel)} has ended</h2>
+    <p style="margin:0 0 1rem;"><strong>${escapeHtml(p.planLabel)}</strong> for <strong>${escapeHtml(p.orgName)}</strong> has ended, and ${escapeHtml(p.orgName)} is now suspended.${archived}</p>
     <div style="${warmPanelStyle('secondary')}">
       <p style="${WARM_EMAIL_STYLE.panelLabel}">Your data</p>
-      <p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">${retainedNote}</p>
+      <p style="margin:0;line-height:1.75;color:${WARM_EMAIL.ink};">Your data is kept until <strong>${p.retentionUntil}</strong>. You can restore it from Plan &amp; billing before then.</p>
     </div>
-    ${warmEmailButton('Resubscribe', p.resubscribeUrl)}
+    ${warmEmailButton(`Reactivate ${escapeHtml(p.planLabel)}`, p.resubscribeUrl)}
   `);
 }
 

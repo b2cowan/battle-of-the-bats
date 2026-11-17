@@ -58,6 +58,19 @@ Every outstanding piece of work has a home below. **Where this list and the stag
     phone sheet's tournament rows (`AdminKitBottomNav.tsx`, `isKitLinkActiveAmong(…, [billingLink])`). Pinned by
     `tests/unit/admin-kit-nav.test.ts` "only Plan & billing lights on its own page" (211/211 nav tests green). Not
     re-walked in a browser; it joins the Stage 5 walk list.
+- **Stage 5 Part B (2026-11-16), the words — renewal Stage 4's windows, billing page and emails:** BUILT, commit owed
+  (owner's yes). Record in `PLAN_ENDS_AT_RENEWAL_PLAN.md` (Stage list, Stage 4); the words as built are
+  `PLAN_AND_BILLING_COPY.md` §15. **(a) T1 applied** (`/marketing` 2026-11-16): ONE Club trial sentence, "{days}-day trial
+  — you add a payment method at checkout, and you’re first charged when the trial ends." — `clubTrialLine()` (public
+  pricing card) now says "payment method" with a curly apostrophe, and both billing trial lines call it (no second copy);
+  brand canon `docs/agents/brand/PRICING_PAGE_COPY.md` updated with a dated T1 line. `/legal`: the terms line under the
+  paid buttons says "your payment method is charged" (no versioning event — nothing is published or accepted; the draft
+  Terms §7/§8/§20(3) and §9 "reactivate" aligned in the same pass). The Founding setup email's "add a card" beside its
+  "Add a payment method" button (`lib/marketing-email-defaults.ts` ~200) is moot (owner 2026-11-16: Founding Season is being
+  retired). **(b) Review session 2026-11-16:** Q1 built (a club Stripe ends with nobody asking now gets the "ended" email,
+  once), Q4 drafted (Terms §8, draft only, version stays 0.3), and `/review` run with its confirmed findings fixed (a
+  lowercased "Premium" in the portal's past-due email, the trial lead made the window's own words, two operator-note
+  wordings, a null-date guard); detail in `PLAN_ENDS_AT_RENEWAL_PLAN.md` Stage 4. Commit still owed (owner's yes).
 - **Stage 5 — Docs, demos, walks (ONE help pass with Plans end at renewal Stage 4):** NOT STARTED, gated on 4b Part 4, Plans end at renewal shipped, the `/marketing` price-form call, and GST/HST Stage 2 (tax live). Scope as written in §5, **plus**: (a) the **T1 trial-sentence `/marketing` pass** (the shared trial sentence and public `clubTrialLine()`; see "Still owed" in §9); (b) the **owner call on the failed payer read** (degrade to "no card" instead of failing the whole team-settings GET — §9 Stage 4 review, a test pins today's throw); (c) **clearing the red `tests/unit/plan-billing-usage.test.ts:112`** (503 instead of 200 — this project's count-only usage route; it keeps the full `verify:changed` gate red); (d) the **baseline cleanup** (`check:admin-type --init`, `check:css-selectors`) — **blocked by other projects' drift** (§9 Stage 4 records), so it waits for that to clear; layout baselines are refreshed on staging, not the dev server; (e) the **tournament-tier rail double highlight** (placed here 2026-11-01 from the §425 walk; first reported in the Stage 1 review as "two rail rows highlight at once on the tournament tiers"): re-check on a Tournament / Tournament Plus owner's rail whether Plan & billing and another row both read as the current page, and fix it if it still does. Not re-checked in code or in a browser yet, so it may already be gone after Stages 2–3.
 - **Stage 6 — Release and close (NEW):** NOT STARTED. The final owner walk of the billing screens, everything on production (recorded in the release record), the TODO line closed, and this plan and its PM brief moved to `docs/projects/archive/`.
 

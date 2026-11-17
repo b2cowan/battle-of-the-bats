@@ -36,6 +36,10 @@
   §8, §16, §17 brought up to the build.
 - 0.3 · 2026-11-16 · The two 6.6 fixes (owner rulings 1 and 2): §16 and §6 line B "or move up to a higher one" (a move up during a
   trial now sends the details email too); §16's NOTE says which moves; `/accounting` item E closed.
+- 0.3 · 2026-11-16 · Plans end at renewal Stage 4 (owner ruling Q4): §8 gains "While a cancel or a move to a free plan is
+  waiting" — a plan change waits; keep the plan first, then change it; a cancel still replaces a waiting move to a free plan.
+  "Card" becomes "payment method" in §6, §7, §8 and §20 (3), and "resubscribe" becomes "reactivate" in §9, matching the
+  product's words. Still a draft: the version stays 0.3.
 
 > **How to read this draft.** `[square brackets]` = a fact the owner must supply (only the phone and mailing address are left
 > — no personal name, by ruling O1′ — and the one Stripe choice in §6). A `> NOTE` block is for the owner and is deleted before publication.
@@ -167,7 +171,7 @@ We may suspend access that puts other customers, children, or the platform at ri
 - **Taxes.** Prices are **plus applicable taxes** (such as GST/HST). We work the tax out from the billing address you give
   us, and show it as its own line before you pay. If you change your billing address, or a tax rate changes, the tax on your
   next invoice changes with it. A change in a tax rate is not a price change under §8.
-- **Payment.** Payments are processed by Stripe. We do not see or store your full card number. Your card stays on file
+- **Payment.** Payments are processed by Stripe. We do not see or store your full card number. Your payment method stays on file
   with Stripe so your plan can renew.
 - **[STRIPE CHOICE — keep one line, delete the other]**
   - *(A — Stripe's receipt and invoice emails are on)* **Receipts and invoices** are emailed to the account owner. Your
@@ -190,7 +194,7 @@ We may suspend access that puts other customers, children, or the platform at ri
 ## 7. Free trials
 
 Some paid plans start with a free trial. The length of the trial, and the date your first payment will be taken, are
-shown at checkout before you confirm, and again in the email confirming your trial (§16). **Unless you cancel before the trial ends, your card is charged the plan's price, plus
+shown at checkout before you confirm, and again in the email confirming your trial (§16). **Unless you cancel before the trial ends, your payment method is charged the plan's price, plus
 applicable taxes, on that date** and the plan continues under §8. A trial is for an organization's **first** paid plan: an
 organization that has had a paid plan with us before, on any plan, does not get a trial.
 
@@ -201,7 +205,7 @@ organization that has had a paid plan with us before, on any plan, does not get 
 ## 8. Renewal, cancelling and changing plans
 
 **Automatic renewal.** A paid plan **renews automatically** at the end of each billing period, for the same length of
-period, at the then-current price, and the card on file is charged — until you cancel.
+period, at the then-current price, and the payment method on file is charged — until you cancel.
 
 **Yearly plans.** For a yearly plan, we will email the account owner **at least 30 days before** it renews, with the
 renewal date and the amount, plus applicable taxes. If a yearly plan's first payment is due less than 38 days after you
@@ -228,8 +232,12 @@ taxes, shown before you confirm.
 current period. If the lower plan has smaller limits (for example, fewer tournaments), you choose what to keep when you
 downgrade.
 
+**While a cancel or a move to a free plan is waiting,** your plan cannot be changed to another plan, higher or lower,
+until that date. To change it, keep your current plan first (from the billing page), then make the change. You can
+still cancel while a move to a free plan is waiting: the cancel takes the move's place.
+
 **If a payment fails,** we tell the account owner straight away, and your plan keeps working while the payment is tried
-again. Update your card from the billing page. If the payment still can't be taken, the plan may end; if it does, it ends
+again. Update your payment method from the billing page. If the payment still can't be taken, the plan may end; if it does, it ends
 as if you had cancelled, and §9 applies.
 
 **When we end or change a plan.** If we stop offering your paid plan, or remove a core feature of it, we will give the
@@ -255,6 +263,14 @@ unused part** of the period you paid for, including the tax on it, and send you 
 >    credit note. **Never a bare card refund in Stripe's dashboard**: without a credit note our own GST/HST is not reduced
 >    (`/accounting`, `CREDIT_NOTES_ON_REFUNDS.md` §Finding and closeout 1 [V]). **"The unused part" = daily pro-rata of the
 >    last invoice, a few cents' rounding under accepted (owner, 2026-11-16, question A).**
+> 6. **A change waits behind a cancel (owner ruling Q4, 2026-11-16, Plans end at renewal Stage 4)** — the paragraph "While a
+>    cancel or a move to a free plan is waiting" says exactly what the one rule does [V `lib/plan-ending.ts` `futureMoveAnswer`:
+>    a plan move and a move to the free plan are REFUSED while a cancel or a move waits; a cancel over a waiting move to the
+>    free plan REPLACES it]. The customer reads "Your plan ends on {date}. Keep {Plan} first, then change it." (or "Your plan
+>    moves to {Plan} on {date}. …") [V `lib/plan-billing-words.ts` `endingRefusal`, `waitingRefusal`]. Stripe's portal offers
+>    no plan switches (note 1), so no door goes around it. Deliberately NOT promised: an operator's plan change is refused the
+>    same way, but it is ours, not the customer's, so it stays out of the Terms. If the rule ever lets a change through (for
+>    example, an upgrade that withdraws the cancel), this paragraph changes with it.
 
 ## 9. What happens to your information when a plan ends
 
@@ -263,7 +279,7 @@ you can come back** and pick up where you left off:
 - **a Premium Coaches Portal: 365 days** from the date the plan ended;
 - **every other organization: 90 days.**
 
-We will try to email the owner a warning before that period ends. If you resubscribe within that period, everything comes
+We will try to email the owner a warning before that period ends. If you reactivate within that period, everything comes
 back. **After that period we may permanently delete it.** If there is anything you want to keep, download or print it
 before your plan ends.
 
@@ -453,12 +469,12 @@ plan move and next-season choice). A line, not a second box — the account alre
 > end of the period you've paid for. By continuing, you agree to the [Terms of Service].
 
 For a plan with a trial, add before it:
-> Your trial ends on the date shown at checkout, and your card is charged then unless you cancel.
+> Your trial ends on the date shown at checkout, and your payment method is charged then unless you cancel.
 
 Where the plan has a trial but the screen cannot know whether **this** purchase starts one (a trial is for a first
 subscription only, and checkout decides — the billing table's monthly-or-yearly window, the plan drawer, onboarding's plan
 step, address step and plan chooser), add this instead:
-> If your plan starts with a trial, it ends on the date shown at checkout, and your card is charged then unless you cancel.
+> If your plan starts with a trial, it ends on the date shown at checkout, and your payment method is charged then unless you cancel.
 
 > NOTE on (3), `/legal` 2026-11-09 (the Stage 6 step 6.3 Chunk C review). "A plan with a trial" means the plan's own settings
 > give it trial days (`lib/plan-config.ts`; the facts live in `docs/agents/strategy/PLAN_PRICING_FACTS.md` — no number here).

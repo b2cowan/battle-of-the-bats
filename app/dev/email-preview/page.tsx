@@ -308,7 +308,7 @@ const ACCOUNT: Preview[] = [
 // were missing here (the drawings' Asks tab): the "cancelled" email on the end date and the trial-ending email.
 const ENDING_SAMPLE: EndingEmailFacts = {
   kind: 'ends_on', move: null, portal: false, orgName: 'Riverside Minor Ball', plan: 'tournament_plus', planLabel: 'Tournament Plus', door: 'owner',
-  clickedAt: '2026-10-31T15:00:00Z', date: '2026-12-01T02:00:00Z', retentionUntil: '2027-03-01T02:00:00Z', tournaments: 3, trialing: false,
+  clickedAt: '2026-10-31T15:00:00Z', date: '2026-12-01T02:00:00Z', retentionUntil: '2027-03-01T02:00:00Z', tournaments: 3, trialing: false, pastDue: false,
   remindLater: true, daysLeft: 7, renewsAs: null, price: PLAN_BILLING_WORDS.plan.price(PLAN_CONFIG.tournament_plus.monthlyPrice, 'monthly'),
   keepUrl: 'https://dev.fieldlogichq.ca/riverside-minor-ball/admin/tournaments/settings/subscription?keep_plan=1',
   billingUrl: 'https://dev.fieldlogichq.ca/riverside-minor-ball/admin/tournaments/settings/subscription',
@@ -325,9 +325,13 @@ const ending = (id: string, label: string, trigger: string, facts: EndingEmailFa
 };
 const PLAN: Preview[] = [
   ending('plan-ends-on', 'Your plan ends on {date}', 'The click: an owner’s cancel, an operator’s (only when "Email the owner" is ticked), or a cancel in Stripe’s billing portal. Once per waiting cancel.', ENDING_SAMPLE),
+  ending('plan-ends-on-past-due', 'Your plan ends on {date} (past due)', 'The same, when the last payment failed (Stage 3 F2): the date is not promised, because Stripe’s retries can end the plan sooner.', { ...ENDING_SAMPLE, pastDue: true }),
   ending('plan-ends-on-portal', 'Premium ends on {date} (Coaches Portal)', 'The same, for a Coaches Portal on Premium.', PORTAL_ENDING),
   ending('plan-ending-reminder', 'Seven days before the end', 'The daily job, once per waiting cancel; skipped when it was made with under seven days left or the plan was kept.', { ...ENDING_SAMPLE, kind: 'reminder' }),
+  ending('plan-ending-reminder-portal', 'Seven days before Premium ends (Coaches Portal)', 'The same, for a Coaches Portal on Premium.', { ...PORTAL_ENDING, kind: 'reminder' }),
   ending('plan-kept', 'Your plan will renew', 'Keep {Plan} (the owner’s, or the operator’s when ticked), or Renew in Stripe’s billing portal.', { ...ENDING_SAMPLE, kind: 'kept' }),
+  ending('plan-kept-portal', 'Premium will renew (Coaches Portal)', 'Keep Premium, or Renew in Stripe’s billing portal, for a Coaches Portal.',
+    { ...PORTAL_ENDING, kind: 'kept', price: PLAN_BILLING_WORDS.plan.price(PLAN_CONFIG.team.monthlyPrice, 'monthly') }),
   ending('plan-kept-cheaper', 'Your plan will renew as a cheaper plan', 'Keep {Plan} when a cheaper-plan move the cancel set aside came back (G1).',
     { ...ENDING_SAMPLE, kind: 'kept', orgName: 'Falcons Community Club', plan: 'club_large', planLabel: PLAN_CONFIG.club_large.label, renewsAs: PLAN_CONFIG.club.label, price: PLAN_BILLING_WORDS.plan.price(PLAN_CONFIG.club.monthlyPrice, 'monthly') }),
   ending('plan-downgrade-scheduled', 'Your move to the free plan is scheduled', 'The click: an owner’s move from a paid plan to the free plan, waiting for the renewal date. Once per waiting move; the daily job sends it late if it failed.', MOVE_SAMPLE),
@@ -337,12 +341,12 @@ const PLAN: Preview[] = [
     { ...MOVE_SAMPLE, kind: 'moved', date: '2026-12-01T02:00:00Z' }),
   ending('plan-kept-move', 'Your plan will renew (the move is called off)', 'Keep {Plan} over a waiting move to the free plan, or Renew in Stripe’s billing portal.', { ...MOVE_SAMPLE, kind: 'kept' }),
   {
-    id: 'cancellation-confirmation', label: 'Subscription cancelled', subject: 'Your Riverside Minor Ball subscription has been cancelled',
+    id: 'cancellation-confirmation', label: 'Plan ended', subject: 'Tournament Plus for Riverside Minor Ball has ended',
     trigger: 'The end date (or End now): the plan has ended. Its data date counts from the end date.',
     html: cancellationConfirmationHtml({ orgName: 'Riverside Minor Ball', planLabel: 'Tournament Plus', retentionUntil: 'February 28, 2027', retainedTournaments: 3, resubscribeUrl: 'https://dev.fieldlogichq.ca/riverside-minor-ball/admin/tournaments/settings/subscription' }),
   },
   {
-    id: 'team-workspace-cancelled', label: 'Coaches Portal cancelled', subject: 'Your Toronto Blue Jays U13 Coaches Portal has been cancelled',
+    id: 'team-workspace-cancelled', label: 'Premium ended (Coaches Portal)', subject: 'Premium for your Toronto Blue Jays U13 Coaches Portal has ended',
     trigger: 'The end date (or End now) for a Coaches Portal on Premium.',
     html: teamWorkspaceCancelledHtml({ workspaceName: 'Toronto Blue Jays U13', resubscribeUrl: 'https://dev.fieldlogichq.ca/coaches/start', retentionUntil: 'February 28, 2027' }),
   },
