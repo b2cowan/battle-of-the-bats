@@ -379,13 +379,13 @@ const orgHelp: HelpPageContent = {
       id: 'club-plan-and-billing',
       heading: 'Club plan & billing',
       summary: 'Your plan, what’s in use, your billing address, changing plan, free trials and the emails about your plan, what’s included, and reducing or cancelling your subscription.',
-      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity', 'free time', 'free through', 'free time ended', 'billing address', 'change billing address', 'club address', 'billed to', 'sales tax', 'tax', 'GST', 'HST', 'PO Box', 'United States', 'US club', 'taxes', BILLING_TAX_WORDS.plusTax, 'why am I charged tax', 'tax on my invoice', 'GST/HST number', 'business number', 'credit note', 'charge changed', 'refund', 'no refund', 'keep plan', 'undo cancel', 'when does my plan end', 'free trial', 'trial', 'no trial', 'details of your purchase', 'purchase email', 'receipt', 'yearly reminder', 'renewal reminder', 'payment failed', 'Québec', 'Quebec'],
+      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity', 'free time', 'free through', 'free time ended', 'billing address', 'change billing address', 'club address', 'billed to', 'sales tax', 'tax', 'GST', 'HST', 'PO Box', 'United States', 'US club', 'taxes', BILLING_TAX_WORDS.plusTax, 'why am I charged tax', 'tax on my invoice', 'GST/HST number', 'business number', 'credit note', 'charge changed', 'refund', 'no refund', 'keep plan', 'undo cancel', 'when does my plan end', 'free trial', 'trial', 'no trial', 'details of your purchase', 'purchase email', 'receipt', 'yearly reminder', 'renewal reminder', 'payment failed', 'plan ends on', 'ending', 'what goes offline', 'stays open until', 'keep any time', 'suspended then', 'data is kept until', 'cancel on', 'reactivate', 'plan ends on email', 'ending reminder', 'will renew', 'renew as', 'keep first then change it', 'moves to tournament', 'change which tournament you keep', 'Québec', 'Quebec'],
       searchText: 'billing address where the club is billed asked once before the first paid checkout billed to remembered sales tax work out the tax prints on your invoices next charge taxed for the new address taxes what youre charged and why plus tax gst hst rate named hst 13% due today total tax line charge changed nothing was charged press again renewal price before tax stripe fees taxed gst/hst number business number on stripe payment page tax still applies refund credit note tax given back couldnt work out the tax check the address club address start your club club billing address filled in from the coach home address po box street address change it billing address button plan card stripe billing page payment method no longer changes the address united states not selling in the united states yet gst hst free through free time from fieldlogichq a plan given for a while goes back automatically free time ended last 14 days amber contact us to keep the plan nothing is charged club plan and billing rail foot beside help more you owner only your plan whats in use change plan whats included reduce or cancel capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel any time plan runs to the end of the period you paid for keep button undo cancel nothing more is charged goes offline on the end date no refund or credit for the unused part cancel and suspend founding season ends at once free trial first paid plan only no second trial trial email first payment date details of your purchase email every owner summary not a receipt invoice billing page renewal sends no email yearly renewal reminder 30 to 37 days before payment failed notice straight away québec quebec not selling in québec yet plan already there keeps renewing move up charged now plus tax ninety days retention reactivate within retention plan limits retained remainder public site online coach portals reopen archived tournaments return',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
       ],
       content: (
-        <p>Every plan uses the same Plan &amp; billing page: a line at the top while you owe an invoice for Stripe fees, Your plan, What&rsquo;s in use, any free-time or Founding Season band, Stripe fees when any exist, Change plan, What&rsquo;s included, and Reduce or cancel. Open it at the foot of the sidebar, or in More &gt; You on a phone. Only the owner can use it; every other member sees a locked card.</p>
+        <p>Every plan uses the same Plan &amp; billing page: a line at the top while you owe an invoice for Stripe fees, Your plan, What&rsquo;s in use, any free-time or Founding Season band, Stripe fees when any exist, Change plan, What&rsquo;s included, and Reduce or cancel. While a cancel is waiting, an amber <strong>Ending</strong> chip, &ldquo;Ends on [date]&rdquo; and a <strong>Keep</strong> button that names your plan replace Reduce or cancel and the change buttons. While a move to the free plan is waiting, the card says &ldquo;Moves to [plan] on [date]&rdquo; with the same Keep button, and the change buttons are gone. Open it at the foot of the sidebar, or in More &gt; You on a phone. Only the owner can use it; every other member sees a locked card.</p>
       ),
       subtopics: [
         {
@@ -449,6 +449,7 @@ const orgHelp: HelpPageContent = {
               <p>Club and Club · Association differ only in how many teams they hold and what they cost — every feature is identical between them. Each size lists both a monthly and a yearly price, and the size you&rsquo;re on is marked &ldquo;Your plan.&rdquo;</p>
               <p><strong>Moving up</strong> to Club · Association changes your existing paid subscription straight away. You pay the difference for the rest of this billing period, {BILLING_TAX_WORDS.plusTax}, charged when you confirm. Before you confirm, Stripe shows that exact amount and what you&rsquo;ll pay from your next renewal. If there is no live paid subscription to change, the window offers checkout instead. A plan that is not open for sign-up says <strong>Contact us to move</strong>.</p>
               <p><strong>Moving down</strong> to Club takes effect at your next renewal, with no credit for the current period, and is refused while you&rsquo;re running more teams than Club holds — archive a team first, or stay where you are. A move waiting for renewal can be undone with &ldquo;Keep&rdquo; your current size, any time before then.</p>
+              <p>While a cancel or a move to the free plan is waiting, every change button is gone, and a change is refused with &ldquo;Your plan ends on [date]. Keep [plan] first, then change it.&rdquo; (over a waiting move: &ldquo;Your plan moves to [plan] on [date]. Keep [plan] first, then change it.&rdquo;) Press <strong>Keep</strong> on the plan card first, then make the change. Moving down to the free plan is covered in <strong>If your subscription ends</strong>.</p>
               <p>More teams than the larger size holds? Contact us for a custom plan.</p>
             </>
           ),
@@ -470,7 +471,9 @@ const orgHelp: HelpPageContent = {
               <ul>
                 <li><strong>The details of your purchase</strong> is emailed after you start a plan or a trial, choose next season&rsquo;s plan, come back to a plan, or move up (during a trial too): what was bought, by whom, the price, each tax, the total, the renewal date and how to cancel. It is a summary, not a receipt: your invoice is the document to keep, and it&rsquo;s always on your billing page. A renewal sends no such email.</li>
                 <li><strong>Before a yearly plan renews</strong>, an email about a month ahead (30 to 37 days) gives the date, the amount and its tax. To stop it, cancel before that date. When a yearly plan&rsquo;s first payment is less than 38 days away, the trial or next-season email is that notice.</li>
-                <li><strong>If a payment fails</strong>, a notice saying so arrives straight away, by email too unless an owner has turned that off. The plan keeps working while the payment is tried again; update your card from your billing page.</li>
+                <li><strong>If a payment fails</strong>, a notice saying so arrives straight away, by email too unless an owner has turned that off. The plan keeps working while the payment is tried again; update your payment method from your billing page. If it still can&rsquo;t be collected, the plan can end sooner than its date, on the day the payment provider stops trying.</li>
+                <li><strong>When your plan is set to end</strong>, every owner is emailed the moment you cancel: &ldquo;Your plan ends on [date]&rdquo; with a <strong>Keep</strong> button, then a reminder seven days before the date (when there are that many days left). Press Keep and &ldquo;[Plan] will renew on [date]&rdquo; confirms it. If the last payment failed and is still due, the subject says &ldquo;ends by [date]&rdquo; and the email says the plan can end sooner. A move to the free plan sends &ldquo;Your move to [plan] is scheduled for [date]&rdquo; and its own seven-day reminder.</li>
+                <li><strong>When the plan has ended</strong>, &ldquo;[Plan] for [your club] has ended&rdquo; says the club is suspended, names the day your data is kept until, and has a <strong>Reactivate</strong> button that names your plan.</li>
               </ul>
             </>
           ),
@@ -480,15 +483,17 @@ const orgHelp: HelpPageContent = {
           title: 'Cancelling, and reactivating',
           content: (
             <>
-              <p>You can cancel at any time under <strong>Reduce or cancel</strong>. The confirmation window names the day your plan ends, what goes offline then, and how long your records are kept. A reason is optional.</p>
+              <p>You can cancel at any time under <strong>Reduce or cancel</strong>. The button names your plan (<strong>Cancel</strong> and the plan&rsquo;s name), and the window names the day your plan ends, what goes offline then, and how long your records are kept after that. A reason is optional.</p>
               <ul>
-                <li><strong>Your plan keeps running</strong> until the end of the period you&rsquo;ve paid for (or the end of your trial). Everything works until that day, and nothing more is charged.</li>
-                <li>Until that day, Plan &amp; billing shows the end date and a <strong>Keep</strong> button: one press and the plan carries on as before.</li>
-                <li>On that day the club is suspended: Rep teams and every team&rsquo;s coach portal, Accounting, Families, the public site, house league and tournaments go offline.</li>
+                <li><strong>Cancelling ends your plan on the renewal date</strong>, the end of the period you&rsquo;ve paid for (or the day your trial ends). The club stays open until then. Nothing is switched off before that day, and no more plan payments are taken.</li>
+                <li>Until that day, Plan &amp; billing shows an <strong>Ending</strong> chip, &ldquo;Ends on [date]&rdquo;, and a <strong>Keep</strong> button that names your plan. Press it, confirm in the window, and the plan carries on and renews as before. Reduce or cancel and the change buttons are gone while a cancel waits.</li>
+                <li>On that day the club is suspended: Rep teams and every team&rsquo;s coach portal, Accounting, Families, the public site, house league and tournaments go offline. Your records are kept for 90 days after that.</li>
+                <li>If your last payment didn&rsquo;t go through and is still due, the window says so. If it&rsquo;s collected, the club stays open until the date. If it can&rsquo;t be, the plan ends sooner, on the day the payment provider stops trying, so the window can&rsquo;t promise a kept-until date ahead of time. The email that the plan has ended gives it.</li>
+                <li>A cancel replaces a waiting move to the free plan. If you then keep your plan, you stay on it.</li>
                 <li>We don&rsquo;t refund or credit the unused part of a period, whether you cancel, move down or stop using FieldLogicHQ.</li>
-                <li>A plan with nothing to pay, such as a Founding Season plan, has no paid period to run out, so it ends when you confirm and the button reads <strong>Cancel and suspend</strong>.</li>
+                <li>A plan with nothing to pay, such as a Founding Season plan, has no paid period to wait for, so it ends when you confirm and the button reads <strong>Cancel and suspend</strong>.</li>
               </ul>
-              <p>Reactivate within the retention window to restore the public site, coach portals and retained tournaments within your plan&rsquo;s limits. Records beyond those limits remain in retention until their deadline. Data past that deadline may no longer be available. If Club isn&rsquo;t yet open for self-serve purchase, the reactivate button reads &ldquo;Contact us to reactivate&rdquo; instead.</p>
+              <p>Once the plan has ended, press <strong>Reactivate</strong> (it names your plan) on Plan &amp; billing within the retention window to restore the public site, coach portals and retained tournaments within your plan&rsquo;s limits. Records beyond those limits remain in retention until their deadline. Data past that deadline may no longer be available. If Club isn&rsquo;t yet open for self-serve purchase, the reactivate button reads &ldquo;Contact us to reactivate&rdquo; instead.</p>
             </>
           ),
         },
@@ -504,23 +509,26 @@ const orgHelp: HelpPageContent = {
         'lost access', 'no access', 'locked out', 'cannot log in', "can't log in",
         'nothing works', 'everything stopped', 'portal stopped working',
         'did we lose our data', 'is our data deleted', 'data deleted', 'lose everything',
-        'get our data back', 'restore access', 'resubscribe', 're-subscribe', 'reactivate',
+        'get our data back', 'restore access', 'reactivate',
         'renew', 'renew subscription', 'start paying again',
-        'past due', 'payment failed', 'card declined', 'card expired', 'failed payment',
+        'past due', 'payment failed', 'payment method declined', 'payment method expired', 'failed payment',
         '90 days', 'retention', 'coaches portal not working', 'scorekeeper stopped',
         'keep plan', 'undo cancel', 'when does access stop', 'end of the period',
+        'plan ends on', 'ends on', 'ending', 'ending soon', 'ends sooner', 'keep', 'plan ends on email', 'ending reminder', 'will renew', 'renew as',
+        'cancelled but everything still works', 'still works after cancelling', 'first then change it', 'change refused', 'move to the free plan',
+        'move to tournament', 'change which tournament you keep', 'reactivate plan', 'update payment method',
       ],
-      searchText: 'if your subscription ends cancel cancelled canceled subscription ended stop paying lost access locked out cannot log in nothing works did we lose our data is our data deleted nothing is deleted data kept 90 days retention resubscribe reactivate renew restore access plan and billing billing page past due payment failed card declined card expired failed payment keeps working grace retry coaches portal stops scorekeeper stops check-in stops family portal stops public tournament pages go offline tryout registration closes dues reminder emails stop free coaches portal unaffected personal teams basic coach keeps their own work retained records restored within plan limits beyond limits kept until deadline owner only locked card rail foot more you club plan and billing',
+      searchText: 'if your subscription ends cancel cancelled canceled subscription ended stop paying lost access locked out cannot log in nothing works did we lose our data is our data deleted nothing is deleted data kept 90 days retention reactivate renew restore access plan and billing billing page past due payment failed payment method declined payment method expired failed payment keeps working grace retry plan ends on the renewal date nothing is switched off early ending chip ends on keep plan undoes a cancel keep first then change it moves to tournament on the renewal date change which tournament you keep archived on the date plan ends sooner the day the payment provider stops trying ended email data is kept until ending reminder will renew email coaches portal stops scorekeeper stops check-in stops family portal stops public tournament pages go offline tryout registration closes dues reminder emails stop free coaches portal unaffected personal teams basic coach keeps their own work retained records restored within plan limits beyond limits kept until deadline owner only locked card rail foot more you club plan and billing',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
       ],
       content: (
         <>
-          <p><strong>A cancelled plan runs to the end of the period you paid for.</strong> Until that day everything keeps working, nothing more is charged, and the owner can press <strong>Keep</strong> on Plan &amp; billing to carry on. <strong>When the plan ends, a retention window starts.</strong> Plan &amp; billing names how long your records are kept. Reactivate within that window to restore the tools and retained records your plan allows. Records beyond its limits stay in retention until their deadline; data past that deadline may no longer be available.</p>
+          <p><strong>A cancelled plan ends on the renewal date, the end of the period you paid for.</strong> Until that day everything keeps working, nothing is switched off early, no more plan payments are taken, and the owner can press <strong>Keep</strong> (it names your plan) on Plan &amp; billing to carry on. <strong>When the plan ends, a retention window starts.</strong> Plan &amp; billing names how long your records are kept. Reactivate within that window to restore the tools and retained records your plan allows. Records beyond its limits stay in retention until their deadline; data past that deadline may no longer be available.</p>
           <p><strong>What stops.</strong> On the day the plan ends, access ends across everything: the Coaches Portal, tournament setup, scheduling and score entry, the scorekeeper and check-in apps, your public tournament pages, and the family-facing team pages and calendar feeds. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted — not an error, and not a page that half works.</p>
           <p>Two related things stop as well, so nobody is left wondering: <strong>tryout registration closes</strong> (a form that is no longer being watched should not keep collecting families&rsquo; details), and <strong>automated dues reminder emails stop going out</strong>.</p>
           <p><strong>Your Plan &amp; billing page keeps working.</strong> An admin who opens the admin area lands there. Only the owner can reactivate; everyone else sees the locked card. It remains reachable at the foot of the sidebar and in More &gt; You on a phone for the owner.</p>
-          <p><strong>A missed payment is not the same as cancelling.</strong> If a card fails, your account is marked past due and <em>everything keeps working</em> while the payment is retried and you are told about it. Access only stops if the subscription is actually cancelled at the end of that.</p>
+          <p><strong>A missed payment is not the same as cancelling, but it can end the plan.</strong> If a payment fails, your account is marked past due and <em>everything keeps working</em> while the payment is retried and you are told about it. Update your payment method from Plan &amp; billing to clear it. If the payment still can&rsquo;t be collected, the plan ends sooner than any date you were shown, on the day the payment provider stops trying, and you&rsquo;re emailed that it has ended.</p>
           <p><strong>A free Coaches Portal is not affected.</strong> Teams a coach set up on their own free portal belong to that person rather than to your organization, so there is no subscription involved and their own work stays exactly as it was.</p>
           <p>Running a Club? <strong>Club plan &amp; billing</strong> covers your two sizes, moving between them, and exactly what reactivating restores.</p>
         </>
@@ -534,7 +542,7 @@ const orgHelp: HelpPageContent = {
           popular: true,
           answer: (
             <>
-              <p><strong>No.</strong> Nothing is deleted when a subscription ends. Your seasons, rosters, schedules, records and history are all kept.</p>
+              <p><strong>No.</strong> Nothing is deleted when a subscription ends. Your seasons, rosters, schedules, records and history are all kept for the retention window below.</p>
               <p>Your account records are retained for <strong>90 days</strong> after the plan ends. Reactivate within that window to restore retained records within your plan limits — there is nothing to re-enter and nothing to import.</p>
             </>
           ),
@@ -542,38 +550,88 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-subscription-ended-access',
           question: 'Our coaches say the portal stopped working — why?',
-          answerText: 'If your organization\'s plan has ended, access stops for everyone: the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted. Check your Plan & billing page — an admin who opens the admin area is taken straight there, but only the owner can reactivate; other admins see a locked card. The owner can reactivate within retention, subject to the plan limits. If instead a payment simply failed, the account is marked past due and everything keeps working while the payment is retried, so a portal that has genuinely stopped means the plan has ended, not a declined card. A cancelled plan keeps working until the end of the period paid for, so it stops only on that day.',
+          answerText: 'If your organization\'s plan has ended, access stops for everyone: the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted. Check your Plan & billing page — an admin who opens the admin area is taken straight there, but only the owner can reactivate; other admins see a locked card. The owner can reactivate within retention, subject to the plan limits. If instead a payment simply failed, the account is marked past due and everything keeps working while the payment is retried, so a portal that has genuinely stopped means the plan has ended, not a declined payment method. A cancelled plan keeps working until the end of the period paid for, so it stops only on that day. A plan with a payment that could not be collected can end sooner, on the day the payment provider stops trying.',
           keywords: ['portal stopped working', 'coaches locked out', 'coaches cannot log in', 'scorekeeper stopped', 'check-in stopped', 'no access', 'nothing works', 'subscription has ended message', 'why did access stop'],
           popular: true,
           answer: (
             <>
               <p>If your organization&apos;s plan has ended, <strong>access stops for everyone</strong> — the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. They see a short note saying the subscription has ended and that nothing has been deleted.</p>
               <p>Open <strong>Plan &amp; billing</strong> — an admin who opens the admin area is taken straight there, but only the owner can reactivate; other admins see a locked card. The owner can reactivate within retention, subject to the plan limits.</p>
-              <p>If a payment simply <em>failed</em>, that is different: the account is marked past due and everything keeps working while the payment is retried. So a portal that has genuinely stopped means the plan has ended, not a declined card. A cancelled plan keeps working until the end of the period paid for, so it stops only on that day.</p>
+              <p>If a payment simply <em>failed</em>, that is different: the account is marked past due and everything keeps working while the payment is retried. So a portal that has genuinely stopped means the plan has ended, not a declined payment method. A cancelled plan keeps working until the end of the period paid for, so it stops only on that day. A plan whose payment can&rsquo;t be collected can end sooner, on the day the payment provider stops trying.</p>
             </>
           ),
         },
         {
           id: 'faq-subscription-restore',
           question: 'How do we get everything back?',
-          answerText: 'If you cancelled and the plan has not ended yet, press Keep on Plan & billing and it carries on as before. Once it has ended, subscribe again from Plan & billing. That page keeps working even while access is stopped, precisely so you can come back. Reactivate within the retention window to restore the tools and records your plan allows. Records beyond its limits stay in retention until their deadline. Your records are kept for 90 days after the plan ends.',
-          keywords: ['get everything back', 'restore access', 'resubscribe', 're-subscribe', 'reactivate', 'renew', 'start again', 'come back', 'subscribe again'],
+          answerText: 'If you cancelled and the plan has not ended yet, press Keep on Plan & billing (the button names your plan), confirm, and it carries on as before. Once it has ended, press Reactivate on Plan & billing. That page keeps working even while access is stopped, precisely so you can come back. Reactivate within the retention window to restore the tools and records your plan allows. Records beyond its limits stay in retention until their deadline. Your records are kept for 90 days after the plan ends.',
+          keywords: ['get everything back', 'restore access', 'reactivate', 'reactivate plan', 'keep plan', 'renew', 'start again', 'come back'],
           answer: (
             <>
-              <p>If you cancelled and the plan hasn&rsquo;t ended yet, press <strong>Keep</strong> on <strong>Plan &amp; billing</strong> and it carries on as before.</p>
-              <p>Once it has ended, subscribe again from <strong>Plan &amp; billing</strong>. That page keeps working even while access is stopped, precisely so you can come back. Reactivate within the retention window to restore the tools and records your plan allows. Records beyond its limits stay in retention until their deadline. Your records are kept for <strong>90 days</strong> after the plan ends.</p>
+              <p>If you cancelled and the plan hasn&rsquo;t ended yet, press <strong>Keep</strong> (the button names your plan) on <strong>Plan &amp; billing</strong>, confirm, and it carries on as before.</p>
+              <p>Once it has ended, press <strong>Reactivate</strong> on <strong>Plan &amp; billing</strong>. That page keeps working even while access is stopped, precisely so you can come back. Reactivate within the retention window to restore the tools and records your plan allows. Records beyond its limits stay in retention until their deadline. Your records are kept for <strong>90 days</strong> after the plan ends.</p>
             </>
           ),
         },
         {
           id: 'faq-plan-change-tournaments',
           question: 'We moved to a smaller plan — where did our tournaments go?',
-          answerText: 'If your new plan includes fewer tournament slots than you have draft and active tournaments, the extra ones are archived rather than deleted. A tournament that is currently running is never the one archived — live events are kept — and a completed tournament holds no slot, so a plan change never archives it. Archived tournaments are retained and come back when you move up to a plan with room for them again.',
-          keywords: ['tournaments disappeared', 'tournaments missing', 'tournament archived', 'downgrade', 'smaller plan', 'fewer tournaments', 'plan change tournaments', 'where did my tournament go'],
+          answerText: 'A move to the free plan takes effect on the renewal date, not when you choose it, and until then you keep every tool. If the new plan includes fewer tournament slots than you have draft and active tournaments, you choose which to keep when you set the move, and the ones you did not choose are archived on that date rather than deleted. If you choose none, the newest is kept. A completed tournament holds no slot, so a move never archives it. Archived tournaments are retained for 90 days and come back when you move up to a plan with room for them again. Change which tournament you keep changes the choice any time before the date.',
+          keywords: ['tournaments disappeared', 'tournaments missing', 'tournament archived', 'downgrade', 'smaller plan', 'fewer tournaments', 'plan change tournaments', 'where did my tournament go', 'moves to tournament', 'change which tournament you keep', 'which tournament stays active'],
           answer: (
             <>
-              <p>If your new plan includes fewer tournament slots than you have draft and active tournaments, the extra ones are <strong>archived rather than deleted</strong>, and a tournament that is <strong>currently running is never the one archived</strong> — live events are kept. A completed tournament holds no slot, so a plan change never archives it.</p>
-              <p>Archived tournaments are retained and come back when you move up to a plan with room for them again.</p>
+              <p>A move to the free plan takes effect <strong>on the renewal date</strong>, not when you choose it. Until then you keep every tool you have now.</p>
+              <p>If the new plan includes fewer tournament slots than you have draft and active tournaments, the ones you didn&rsquo;t choose to keep are <strong>archived on that date rather than deleted</strong>, a running event included, so choose carefully. If you choose none, the newest is kept. A completed tournament holds no slot, so a move never archives it.</p>
+              <p>Archived tournaments are retained for 90 days and come back when you move up to a plan with room for them again. <strong>Change which tournament you keep</strong> on the plan card changes your choice any time before the date.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-cancelled-still-works',
+          question: 'We cancelled, but everything still works — is that right?',
+          answerText: 'Yes. Cancelling ends the plan on the renewal date, the end of the period you paid for, or the day your trial ends. Nothing is switched off before then, and no more plan payments are taken. Plan & billing shows an Ending chip and Ends on the date, and a Keep button that names your plan undoes it. You are emailed Your plan ends on the date when you cancel, and a reminder seven days before (when there are that many days left). If your last payment failed and is still due, the plan can end sooner, on the day the payment provider stops trying.',
+          keywords: ['cancelled but still works', 'still have access after cancelling', 'when does my plan end', 'ends on', 'ending', 'keep plan', 'undo cancel', 'plan ends on email', 'ending reminder', 'ends sooner'],
+          answer: (
+            <>
+              <p><strong>Yes.</strong> Cancelling ends the plan <strong>on the renewal date</strong>, the end of the period you paid for (or the day your trial ends). Nothing is switched off before then, and no more plan payments are taken.</p>
+              <ul>
+                <li>Plan &amp; billing shows an <strong>Ending</strong> chip and &ldquo;Ends on [date]&rdquo;. A <strong>Keep</strong> button that names your plan undoes the cancel.</li>
+                <li>Every owner is emailed &ldquo;Your plan ends on [date]&rdquo; when you cancel, and a reminder seven days before (when there are that many days left).</li>
+                <li>If your last payment failed and is still due, the plan can end sooner, on the day the payment provider stops trying.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'faq-change-after-cancel',
+          question: 'Why does it say “Keep [plan] first, then change it”?',
+          answerText: 'While a cancel or a move to the free plan is waiting for the renewal date, a plan change is refused, so a move up never charges you for a plan that is about to end. The message reads Your plan ends on the date, Keep and the plan name first, then change it (over a waiting move: Your plan moves to the plan on the date, Keep the plan first, then change it). Press the Keep button that names your plan on Plan & billing, confirm, then make the change. A cancel still replaces a waiting move to the free plan.',
+          keywords: ['keep first then change it', 'cannot change plan', 'change plan refused', 'move up refused', 'plan ends on', 'keep plan'],
+          answer: (
+            <>
+              <p>While a cancel or a move to the free plan is waiting for the renewal date, a plan change is refused, so a move up never charges you for a plan that is about to end.</p>
+              <ol>
+                <li>Press the <strong>Keep</strong> button that names your plan on <strong>Plan &amp; billing</strong>.</li>
+                <li>Confirm in the window.</li>
+                <li>Make the change you wanted.</li>
+              </ol>
+              <p>A cancel still replaces a waiting move to the free plan.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-move-to-free-plan',
+          question: 'How do we move down to the free plan?',
+          answerText: 'Choose the free plan under Change plan. The window asks which tournament to keep active, lists the tools that turn off, and its button reads Downgrade on the date. Nothing is credited, and you keep every tool until the renewal date. On that date the plan moves, and the tournaments you did not choose are archived for 90 days. Plan & billing shows Moves to a named plan on the date and a Keep button until then.',
+          keywords: ['downgrade to free', 'move to the free plan', 'free plan', 'downgrade on', 'choose a tournament to keep', 'keep active', 'tools turn off', 'archive retention', 'moves to tournament'],
+          answer: (
+            <>
+              <ol>
+                <li>Choose the free plan under <strong>Change plan</strong>.</li>
+                <li>Pick the tournament to keep active. The window lists the tools that turn off and what is archived.</li>
+                <li>Press <strong>Downgrade on [date]</strong>.</li>
+              </ol>
+              <p>The move takes effect on the renewal date, and nothing is credited. Until then you keep every tool, and Plan &amp; billing shows <strong>Moves to [plan] on [date]</strong> with a <strong>Keep</strong> button. On that date the tournaments you didn&rsquo;t choose are archived for 90 days.</p>
             </>
           ),
         },
@@ -1724,7 +1782,7 @@ const orgHelp: HelpPageContent = {
       id: 'leaving-online-payments',
       heading: 'Leaving online payments: disconnect, a plan move, cancel and delete',
       summary: 'What happens to Pay now, pay pages, bank debits, refunds and disputes when online payments stop, and why none of it disconnects your Stripe account.',
-      keywords: ['leaving online payments', 'disconnect payouts', 'disconnect', 'online payments stop', 'online payments stop on', 'online payments stop now', 'online payments off', 'downgrade', 'move to a plan without online payments', 'cancel', 'cancel and suspend', 'suspended', 'delete', 'ask us to delete', 'your online payments', 'pay now stops', 'pay pages close', 'how to pay', 'bank debits clearing', 'open card disputes', 'stripe account stays yours', 'payouts stay connected', 'free time ending', 'subscription payment failed', 'needs attention', 'payouts card'],
+      keywords: ['leaving online payments', 'disconnect payouts', 'disconnect', 'online payments stop', 'online payments stop on', 'online payments stop now', 'online payments off', 'downgrade', 'move to a plan without online payments', 'cancel', 'cancel and suspend', 'suspended', 'until then pay online', 'keep plan nothing stops', 'reactivate online payments', 'delete', 'ask us to delete', 'your online payments', 'pay now stops', 'pay pages close', 'how to pay', 'bank debits clearing', 'open card disputes', 'stripe account stays yours', 'payouts stay connected', 'free time ending', 'subscription payment failed', 'needs attention', 'payouts card'],
       searchText: 'leaving online payments the one rule no ending disconnects your stripe account pay now stops pay pages open close bank debits already clearing finish refunds and disputes of payments already made keep working payouts stay connected disconnect payouts window counts families who still owe a house league fee teams who still owe a tournament fee pay pages open right now bank debits clearing open card disputes answer in stripe by the due date write it now how to pay text empty moving to a plan without online payments online payments stop on date pay now becomes how to pay open pay pages close wind down online payments off open stripe the record the payouts list disconnect moving back up turns online payments on again cancel and suspend online payments stop now stripe account stays yours keeps paying out refunds handled in stripe while suspended ask us to delete request account deletion your online payments we wait for open card disputes and clearing debits we disconnect your payouts before deleting export records from accounting first an ending you did not choose free time running out warned 7 days ahead a subscription payment that failed warned the day it fails notice on the payouts card needs attention item one email downgrade plan billing owner only',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
@@ -1780,10 +1838,11 @@ const orgHelp: HelpPageContent = {
         },
         {
           id: 'leaving-online-payments-cancel',
-          title: 'Cancel and suspend',
+          title: 'Cancelling your plan',
           content: (
             <>
-              <p>Open the cancel window from <strong>Reduce or cancel</strong> on Plan &amp; billing. When payouts are connected, it adds <strong>Online payments stop now</strong>: nobody can pay you online and open pay pages close. It counts the families and teams who still owe, the pay pages open right now, and the bank debits still clearing, which finish and reach your bank.</p>
+              <p>Open the cancel window from <strong>Reduce or cancel</strong> on Plan &amp; billing. When payouts are connected, it adds <strong>Online payments stop on [date]</strong>, the day the plan ends. Until then families and teams pay you online as now. Keep your plan before then and nothing stops; reactivate later and online payments come back. From the date, nobody can pay you online and open pay pages close. The window counts the families and teams who still owe, the pay pages open right now, and the bank debits still clearing, which finish and reach your bank.</p>
+              <p>A plan with no paid period to wait for, such as a Founding Season plan, says <strong>Online payments stop now</strong> instead.</p>
               <p>Your Stripe account stays yours, and money in it keeps paying out to your bank. While you are suspended, refunds and any open disputes are handled in Stripe.</p>
             </>
           ),

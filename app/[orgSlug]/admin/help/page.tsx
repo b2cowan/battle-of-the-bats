@@ -117,7 +117,7 @@ export default function AdminHelpHubPage() {
       desc:  'Configure your organization settings, manage members, plan & billing, and venues.',
       href:  `${helpBase}/org`,
       topicCount: 8,
-      keywords: ['members', 'roles', 'invite', 'plan & billing', 'subscription', 'billing', 'settings', 'venues', 'set up your club'],
+      keywords: ['members', 'roles', 'invite', 'plan & billing', 'subscription', 'billing', 'settings', 'venues', 'set up your club', 'plan ends on', 'keep plan', 'ending reminder', 'cancel', 'reactivate'],
     }] : []),
     {
       title: 'Exports & downloads',

@@ -61,7 +61,7 @@ export default function PlatformAdminHelpPage() {
       desc: 'Customer-facing guide for members, roles, plan & billing, settings, modules, and org setup — including Club plan & billing and the Club setup checklist.',
       href: '/platform-admin/help/org',
       topicCount: 8,
-      keywords: ['customer', 'members', 'roles', 'plan & billing', 'subscription', 'settings', 'billing', 'set up your club'],
+      keywords: ['customer', 'members', 'roles', 'plan & billing', 'subscription', 'settings', 'billing', 'set up your club', 'plan ends on', 'keep plan', 'ending reminder'],
     },
     {
       title: 'Exports & downloads',
@@ -78,7 +78,7 @@ export default function PlatformAdminHelpPage() {
       desc: 'Employee SOPs for the menu, Today and Find, the club and person records (one pencil, Put it back, the Story), password resets, overrides, plan changes, audit review, retention, feedback triage, errors, the approval queue, email templates, campaigns, and leads.',
       href: '/platform-admin/help/platform-admin',
       topicCount: 25,
-      keywords: ['find', 'today', 'club record', 'person record', 'put it back', 'story', 'password reset', 'override', 'billing', 'module access', 'comp period', 'audit', 'records opened', 'bulk changes', 'feedback triage', 'errors', 'approval queue', 'email templates', 'campaigns', 'leads'],
+      keywords: ['find', 'today', 'club record', 'person record', 'put it back', 'story', 'password reset', 'override', 'billing', 'overdue endings', 'finish this ending', 'plan ending emails', 'daily job', 'module access', 'comp period', 'audit', 'records opened', 'bulk changes', 'feedback triage', 'errors', 'approval queue', 'email templates', 'campaigns', 'leads'],
     },
   ];
 

@@ -1,0 +1,216 @@
+<title>Plan-Ending Words Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame, from walk §533). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { button { min-height: 44px; } }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.warnline { color: var(--warn); }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner walk · Plan &amp; billing Stage 5 Parts B and C · ledger §535</span>
+    <h1>The plan-ending words, from the owner&rsquo;s chair</h1>
+    <p class="sub">Written 2026-11-17. One purpose: read what a club owner, a coach and the operator read when a plan is cancelled, moved down, kept, past due or ended, in the windows, the emails and the help. Nothing here is a price, a tax or a gate.</p>
+  </header>
+  <section class="card"><h2>What changed</h2><ul>
+    <li><strong>Cancel and move down end on the renewal date.</strong> Nothing is taken away early, no more plan payments are taken, and <strong>Keep [Plan]</strong> undoes it.</li>
+    <li><strong>One set of words.</strong> &ldquo;Payment method&rdquo;, &ldquo;Reactivate&rdquo;, and a past-due plan is told its end may come sooner, on the day the payment provider stops trying.</li>
+    <li><strong>A plan change waits behind a waiting cancel or move:</strong> &ldquo;Keep [Plan] first, then change it.&rdquo;</li>
+    <li><strong>The help says the same</strong> in the club, Coaches Portal and operator help articles, and the operator&rsquo;s email log now names two emails &ldquo;Plan ended&rdquo; and &ldquo;Premium ended&rdquo;.</li>
+  </ul></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>A&ndash;C</strong> The paying club&rsquo;s Cancel window, waiting state, refused change and Keep all use the new words.</li>
+    <li><strong>D&ndash;E</strong> The trial and past-due windows never promise the date or &ldquo;your card&rdquo;.</li>
+    <li><strong>F</strong> Moving to the free plan waits for the renewal date and refuses a change behind it.</li>
+    <li><strong>G&ndash;H</strong> The Coaches Portal and the operator read the same story.</li>
+    <li><strong>I&ndash;K</strong> The emails, the help articles and the rail say what the windows say.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>Running at <code>http://localhost:3000</code>. Claude restarted it after the help edits.</dd>
+    <dt>The six accounts</dt><dd>Built and checked by Claude on dev (Stripe test mode). Owners: <code>words+pw1@fieldlogichq-walk.local</code> (paying club), <code>+pw2</code> (trial), <code>+pw3</code> (past due), <code>+pw4</code> (downgrade, two tournaments), <code>+pw5</code> (Premium portal), <code>+pw6</code> (Premium portal, past due). Password <code>UATPassword2026!</code>, at <code>http://localhost:3000/login</code>, each in a <strong>private window</strong>. These addresses send no mail.</dd>
+    <dt>Staff sign-in</dt><dd><code>uat-platform@fieldlogichq.ca</code> at <code>http://localhost:3000/platform-admin/login</code>, with your authenticator code.</dd>
+    <dt>Past due</dt><dd>The two past-due accounts are marked past due in our record only. Nothing was made to fail at the payment provider, and a later Stripe message could set one back to active.</dd>
+    <dt>Order</dt><dd>A, B, C in that order (B and C use the waiting state A leaves). The rest, any order. The fixture&rsquo;s own dates (renewal Dec 17, trial end Dec 1) are the ones in the steps.</dd>
+    <dt>Tear down</dt><dd><code>node --env-file=.env.local scripts/seed-plan-ending-words-walk.mjs teardown</code></dd>
+  </dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+  <section class="card" id="callsCard"><h2>Your calls (not counted in the progress)</h2><div id="calls" style="display:flex;flex-direction:column;gap:14px"></div></section>
+  <section class="card"><h2>Already checked by Claude (no boxes)</h2><ul>
+    <li><strong>The help tests and checks.</strong> Spelling, lint, 497 help and billing tests and the typecheck pass (the same two known layout-journal errors and 26 known suite failures as before).</li>
+    <li><strong>The email-log names.</strong> &ldquo;Subscription cancelled&rdquo; and &ldquo;Coaches Portal cancelled&rdquo; are display names only; the stored rows keep their keys, so old rows read as &ldquo;Plan ended&rdquo; and &ldquo;Premium ended&rdquo; too.</li>
+    <li><strong>The accounts.</strong> Claude read each owner&rsquo;s cancel preflight and each operator preflight, and loaded every billing page, without clicking anything through.</li>
+    <li><strong>Not in this walk.</strong> A past-due Coaches Portal&rsquo;s own ends-on email has no preview card (a test pins its capital P). The stored email template rows still say &ldquo;resubscribe&rdquo;; the next data migration fixes them.</li>
+  </ul></section>
+</main>
+<script>
+(function () {
+  var D = {"KEY":"plan-ending-words-walk-v1","TITLE":"Plan-ending words · Owner walk §535 (2026-11-17)","PARTS":[{"id":"A","title":"A paying club cancels (Words Walk Paying Club, owner pw1)","intro":"Private window. Sign in at http://localhost:3000/login as <code>words+pw1@fieldlogichq-walk.local</code>, password <code>UATPassword2026!</code>. This club pays monthly and nothing is waiting. You stop at the waiting state and keep going in B.","steps":[{"who":"You · <a href=\"http://localhost:3000/words-walk-paying-club/admin/org/billing\">the billing page</a>","do":"Open Plan &amp; billing and scroll to <strong>Reduce or cancel</strong>.","see":"The section says &ldquo;Cancelling ends Words Walk Paying Club&rsquo;s plan on [renewal date], the end of the period you paid for. Then [the areas] go offline. Your data is kept for 90 days after that.&rdquo; The button reads <strong>Cancel [Plan name]…</strong>."},{"who":"You · Reduce or cancel","do":"Press <strong>Cancel [Plan name]…</strong> and read the window.","see":"Title &ldquo;Cancel [Plan name]?&rdquo;. Lead: &ldquo;Words Walk Paying Club stays open until [date], the end of the period you paid for. Nothing is switched off before then, and no more plan payments are taken.&rdquo; Then &ldquo;You can keep [Plan name] any time before [Mon D].&rdquo;, the list &ldquo;What goes offline on [Mon D]&rdquo;, and &ldquo;Words Walk Paying Club is suspended then, and your data is kept for 90 days after that, until [a date 90 days later].&rdquo;","check":true},{"who":"You · the Cancel window","do":"Read the red button.","see":"<strong>Cancel on [Mon D]</strong>, with the renewal date, not &ldquo;Cancel and suspend&rdquo;.","check":true},{"who":"You · the Cancel window","do":"Press <strong>Cancel on [Mon D]</strong>.","see":"The window closes. The plan card shows an amber <strong>Ending</strong> chip and &ldquo;Ends on [date], the last day you paid for.&rdquo; with a <strong>Keep [Plan name]</strong> button. <strong>Reduce or cancel</strong> is gone."},{"who":"You · the billing page","do":"Scroll to <strong>Change plan</strong> and read it.","see":"In place of the move buttons: &ldquo;Your plan ends on [date]. Keep [Plan name] first, then change it.&rdquo;","check":true},{"who":"You · the billing page","do":"Leave this window open and go to B. Do not press Keep yet.","see":"The club is waiting to end on its renewal date."}]},{"id":"B","title":"The operator sees the same waiting cancel (Words Walk Paying Club record)","intro":"Normal window, signed in as <code>uat-platform@fieldlogichq.ca</code> at http://localhost:3000/platform-admin/login (your authenticator code). The record: <a href=\"http://localhost:3000/platform-admin/orgs/86556e22-6252-433a-83ef-caaf35a355f8\">Words Walk Paying Club</a>. If the link 404s, the fixture was rebuilt: open Clubs &amp; portals and search &ldquo;Words Walk&rdquo;.","steps":[{"who":"You · the club record","do":"Open the record and look under the club name.","see":"A yellow callout: <strong>Ending.</strong> Ends [date], at the period end. Cancelled by the owner on [today]. Two doors: <strong>Keep the plan</strong> and a quiet red <strong>End now…</strong>. No red &ldquo;Cancel the subscription&rdquo; in this state."},{"who":"You · the Ending callout","do":"Press <strong>Keep the plan</strong> and read the window.","see":"Title &ldquo;Keep [Plan name] for Words Walk Paying Club&rdquo;. &ldquo;Words Walk Paying Club stays on [Plan name] and renews on [date]. Stripe charges it again then. Nothing else changes.&rdquo; and an unticked box &ldquo;Email the owner that the plan renews on [date]…&rdquo;. <em>Close it with Not now; the owner keeps it in C.</em>","check":true}]},{"id":"C","title":"The owner keeps the plan (back in the owner window)","steps":[{"who":"You · owner window, the billing page","do":"Press <strong>Keep [Plan name]</strong> and read the window.","see":"Title &ldquo;Keep [Plan name]?&rdquo;. &ldquo;Words Walk Paying Club stays on [Plan name] and renews on [date] at [price] plus applicable taxes.&rdquo; then &ldquo;Nothing else changes.&rdquo; Buttons <strong>Not now</strong> and <strong>Keep [Plan name]</strong>.","check":true},{"who":"You · the Keep window","do":"Press <strong>Keep [Plan name]</strong>.","see":"The Ending chip and the date line are gone, <strong>Reduce or cancel</strong> is back, and the club is on its plan as before."}]},{"id":"D","title":"A club on a free trial (Words Walk Trial Club, owner pw2)","intro":"Private window. Sign in as <code>words+pw2@fieldlogichq-walk.local</code>. A Tournament-tier club keeps its billing under Settings. Nothing is confirmed in this part.","steps":[{"who":"You · <a href=\"http://localhost:3000/words-walk-trial-club/admin/tournaments/settings/subscription\">the billing page</a>","do":"Open the billing page and read the <strong>Reduce or cancel</strong> text.","see":"&ldquo;Cancelling ends Words Walk Trial Club&rsquo;s plan on [trial end date], when your trial ends.&rdquo; (the date is 2026-12-01).","check":true},{"who":"You · Reduce or cancel","do":"Press <strong>Cancel [Plan name]…</strong> and read the lead.","see":"&ldquo;Your trial ends on [date]. Words Walk Trial Club keeps every tool until then, and no plan payment is taken.&rdquo; Not &ldquo;your card&rdquo;. <em>Close the window with Not now.</em>","check":true}]},{"id":"E","title":"A past-due club (Words Walk Past Due Club, owner pw3)","intro":"Private window. Sign in as <code>words+pw3@fieldlogichq-walk.local</code>. This club&rsquo;s last payment is marked as failed. Nothing is confirmed.","steps":[{"who":"You · <a href=\"http://localhost:3000/words-walk-past-due-club/admin/tournaments/settings/subscription\">the billing page</a>","do":"Open the billing page, press <strong>Cancel [Plan name]…</strong> and read the lead.","see":"&ldquo;Your last payment didn&rsquo;t go through, and it is still due. If it&rsquo;s collected, Words Walk Past Due Club stays open until [date]. If it can&rsquo;t be, Words Walk Past Due Club ends sooner, on the day the payment provider stops trying.&rdquo;","check":true},{"who":"You · the same window","do":"Read the line under the list of what goes offline.","see":"&ldquo;Words Walk Past Due Club is suspended then, and your data is kept for 90 days after that.&rdquo; with <strong>no &ldquo;until [date]&rdquo;</strong>. The button still says Cancel on [Mon D]. <em>Close the window with Not now.</em>","check":true}]},{"id":"F","title":"Moving down to the free plan, and the move being refused behind it (Words Walk Downgrade Club, owner pw4)","intro":"Private window. Sign in as <code>words+pw4@fieldlogichq-walk.local</code>. The club has two tournaments, <em>Classic 1</em> (active) and <em>Classic 2</em> (draft).","steps":[{"who":"You · <a href=\"http://localhost:3000/words-walk-downgrade-club/admin/tournaments/settings/subscription\">the billing page</a>","do":"Open the billing page and scroll to <strong>Change plan</strong>.","see":"The free Tournament plan is offered as a move down."},{"who":"You · Change plan","do":"Press the move to the free plan and read the window.","see":"&ldquo;Choose 1 tournament to keep active.&rdquo; with Classic 1 and Classic 2 as rows, and the rule beneath. The button is faded.","check":true},{"who":"You · the Downgrade window","do":"Choose <strong>Classic 2</strong>.","see":"The line under the list names what is archived: &ldquo;On [date] the rest move to archive retention for 90 days: Classic 1.&rdquo;","check":true},{"who":"You · the Downgrade window","do":"Read the sentence above the button and the button.","see":"&ldquo;This takes effect on [date], the end of the period you paid for. Until then you keep every [Plan name] tool. Nothing is credited.&rdquo; Button <strong>Downgrade on [Mon D]</strong>.","check":true},{"who":"You · the Downgrade window","do":"Press <strong>Downgrade on [Mon D]</strong>.","see":"The window closes."},{"who":"You · the plan card","do":"Read the plan card and the band beneath it.","see":"&ldquo;Moves to [Tournament] on [date].&rdquo; with a <strong>Keep [Plan name]</strong> button. The band says &ldquo;On [date] · You keep Classic 2&rdquo; and offers <strong>Change which tournament you keep</strong>. <strong>Reduce or cancel</strong> is still there.","check":true},{"who":"You · Change plan","do":"Read the Change plan area.","see":"&ldquo;Your plan moves to [Tournament] on [date]. Keep [Plan name] first, then change it.&rdquo;","check":true},{"who":"You · the plan card","do":"Press <strong>Keep [Plan name]</strong> and read the window.","see":"&ldquo;The move to [Tournament] is called off, and no tournament is archived.&rdquo; and &ldquo;Nothing else changes.&rdquo; (A cancel pressed over a waiting move replaces it: a test pins that sentence, so it is not a step here.)","check":true},{"who":"You · the Keep window","do":"Press <strong>Keep [Plan name]</strong>.","see":"The &ldquo;Moves to&rdquo; line and the band are gone; the club is on its plan as before."}]},{"id":"G","title":"A Coaches Portal cancels, then a past-due one (owners pw5 and pw6)","intro":"Private window. Sign in as <code>words+pw5@fieldlogichq-walk.local</code>. The portal <a href=\"http://localhost:3000/words-walk-premium/coaches/billing\">Words Walk Premium</a> pays monthly.","steps":[{"who":"You · the portal&rsquo;s Plan &amp; billing","do":"Press <strong>Cancel Premium…</strong> (under Reduce or cancel) and read the window.","see":"Title &ldquo;Cancel Premium?&rdquo;. Lead: &ldquo;Premium stays on until [date], the end of the period you paid for. No Premium tool stops before then, and no more Premium payments are taken.&rdquo; Heading &ldquo;Premium tools that stop on [Mon D]&rdquo;. Under it: &ldquo;Basic tournament records stay available. Premium team data is kept for 365 days after that, until [date].&rdquo;","check":true},{"who":"You · the Cancel window","do":"Press <strong>Cancel on [Mon D]</strong>.","see":"The window closes."},{"who":"You · the plan card","do":"Read the card.","see":"An <strong>Ending</strong> chip, &ldquo;Ends on [date], the last day you paid for.&rdquo; and <strong>Keep Premium</strong> beside <strong>Payment method &amp; invoices</strong>. <strong>Reduce or cancel</strong> is hidden.","check":true},{"who":"You · the plan card","do":"Press <strong>Keep Premium</strong> and read the window.","see":"&ldquo;Keep Premium?&rdquo; &mdash; &ldquo;[portal name] stays on Premium and renews on [date] at [price] plus applicable taxes.&rdquo;","check":true},{"who":"You · the Keep window","do":"Press <strong>Keep Premium</strong>.","see":"The chip and date line are gone and <strong>Reduce or cancel</strong> is back."},{"who":"You · <a href=\"http://localhost:3000/words-walk-premium-past-due/coaches/billing\">the past-due portal</a>","do":"In a private window signed in as <code>words+pw6@fieldlogichq-walk.local</code>, press <strong>Cancel Premium…</strong> and read the lead.","see":"&ldquo;Your last payment didn&rsquo;t go through, and it is still due. If it&rsquo;s collected, Premium stays on until [date]. If it can&rsquo;t be, Premium ends sooner, on the day the payment provider stops trying.&rdquo; with a capital P in Premium. <em>Close it with Not now.</em>","check":true}]},{"id":"H","title":"The operator&rsquo;s Cancel window on a past-due club (Words Walk Past Due Club record)","intro":"Normal window, platform operator. The record: <a href=\"http://localhost:3000/platform-admin/orgs/0c0cf9c0-dac7-4ca5-bc1c-99e18978d1c7\">Words Walk Past Due Club</a>. Nothing is confirmed.","steps":[{"who":"You · the club record, Access tab, at its end","do":"Press <strong>Cancel the subscription</strong> and read the window.","see":"Title &ldquo;Cancel the subscription for Words Walk Past Due Club&rdquo;. &ldquo;Words Walk Past Due Club&rsquo;s last payment failed. If Stripe collects it, the plan ends on [date]; if Stripe&rsquo;s retries fail first, it ends sooner, on the day Stripe stops trying. Until then everything stays open.&rdquo; and &ldquo;The owner can keep the plan until then, and so can you.&rdquo;","check":true},{"who":"You · the same window","do":"Read the email box and the red button.","see":"&ldquo;Email the owner that the plan ends on [date] (this reaches an inbox and cannot be taken back)&rdquo; and <strong>Cancel at the period end</strong>.","check":true},{"who":"You · the same window","do":"Press <strong>End it today instead…</strong> and read the next window.","see":"Title &ldquo;End the plan for Words Walk Past Due Club today&rdquo;, &ldquo;Nothing is refunded… This cannot be put back&rdquo;, and the box &ldquo;Email the owner that the plan has ended (this reaches an inbox and cannot be taken back)&rdquo;. <em>Close both windows with Keep it.</em>","check":true}]},{"id":"I","title":"The ending emails, club and Coaches Portal","intro":"Open <a href=\"http://localhost:3000/dev/email-preview\">/dev/email-preview</a>; each step has its own card. In every Coaches Portal card, &ldquo;Premium&rdquo; keeps its capital P in the middle of a sentence. The owner addresses in this walk are <code>.local</code>, so no real mail is sent.","steps":[{"who":"You · <a href=\"http://localhost:3000/dev/email-preview#plan-ends-on\">Your plan ends on {date}</a>","do":"Read the card.","see":"Subject &ldquo;Your [Plan] plan ends on [date]&rdquo;. The body leads with the window&rsquo;s own sentence (&ldquo;…stays open until [date], the end of the period you paid for. Nothing is switched off before then, and no more plan payments are taken.&rdquo;) and a <strong>Keep [Plan]</strong> button.","check":true},{"who":"You · <a href=\"http://localhost:3000/dev/email-preview#plan-ends-on-past-due\">Your plan ends on {date} (past due)</a>","do":"Read the card.","see":"Subject says &ldquo;ends by [date]&rdquo;. It says the payment is still due and the plan can end sooner. The panel reads &ldquo;When it ends&rdquo;. No &ldquo;period you paid for&rdquo;.","check":true},{"who":"You · <a href=\"http://localhost:3000/dev/email-preview#plan-ends-on-portal\">Premium ends on {date}</a>","do":"Read the card.","see":"Subject &ldquo;Premium for your [team] Coaches Portal ends on [date]&rdquo;. &ldquo;Until then every Premium tool stays on.&rdquo; Capital P throughout. Button <strong>Keep Premium</strong>.","check":true},{"who":"You · <a href=\"http://localhost:3000/dev/email-preview#plan-ending-reminder\">Seven days before the end</a>","do":"Read the card.","see":"Subject &ldquo;Your [Plan] plan ends in 7 days&rdquo;, the same wording as the window.","check":true},{"who":"You · <a href=\"http://localhost:3000/dev/email-preview#plan-kept-portal\">Premium will renew</a>","do":"Read the card.","see":"Subject &ldquo;Premium will renew [on date]&rdquo;; capital P; &ldquo;payment method&rdquo;, never &ldquo;card&rdquo;.","check":true},{"who":"You · <a href=\"http://localhost:3000/dev/email-preview#cancellation-confirmation\">Plan ended</a>","do":"Read the card.","see":"Subject &ldquo;[Plan] for [club] has ended&rdquo;. &ldquo;…is now suspended.&rdquo; &ldquo;Your data is kept until [date]. You can restore it from Plan &amp; billing before then.&rdquo; Button <strong>Reactivate [Plan]</strong>, not &ldquo;Resubscribe&rdquo;.","check":true},{"who":"You · <a href=\"http://localhost:3000/dev/email-preview#team-workspace-cancelled\">Premium ended</a>","do":"Read the card.","see":"Subject &ldquo;Premium for your [team] Coaches Portal has ended&rdquo;. Button <strong>Reactivate Premium</strong>.","check":true}]},{"id":"J","title":"The help articles that changed","intro":"Each link opens the article. Owner side: signed in as pw1 (the owner window). Coaches Portal: signed in as pw5. Operator: the operator window. If an article does not scroll to its place, search its title in the help.","steps":[{"who":"You · <a href=\"http://localhost:3000/words-walk-paying-club/admin/help/org#subscription-ends\">If your subscription ends</a>","do":"Read the first paragraph and the &ldquo;missed payment&rdquo; paragraph.","see":"&ldquo;A cancelled plan ends on the renewal date, the end of the period you paid for&hellip; nothing is switched off early, no more plan payments are taken&hellip; press <strong>Keep</strong>&hellip;&rdquo; and &ldquo;A missed payment is not the same as cancelling, but it can end the plan&hellip; on the day the payment provider stops trying.&rdquo; &ldquo;payment method&rdquo;, never &ldquo;card&rdquo;.","check":true},{"who":"You · <a href=\"http://localhost:3000/words-walk-paying-club/admin/help/org#club-plan-and-billing-t-cancel\">Cancelling, and reactivating</a>","do":"Read the list.","see":"The button is &ldquo;Cancel [plan name]&rdquo;; cancelling ends the plan on the renewal date; an Ending chip and Keep button; past-due bullet (&ldquo;ends sooner&rdquo;); &ldquo;Reactivate&rdquo; after it has ended, never &ldquo;Resubscribe&rdquo;.","check":true},{"who":"You · <a href=\"http://localhost:3000/words-walk-paying-club/admin/help/org#faq-cancelled-still-works\">We cancelled, but everything still works</a>","do":"Read the answer.","see":"It says yes: nothing stops before the date; the Ending chip; the Keep button; the &ldquo;ends on&rdquo; email and its seven-day reminder; a past-due plan can end sooner.","check":true},{"who":"You · <a href=\"http://localhost:3000/words-walk-paying-club/admin/help/org#faq-change-after-cancel\">Keep [plan] first, then change it</a>","do":"Read the question and answer.","see":"The question is &ldquo;Why does it say &ldquo;Keep [plan] first, then change it&rdquo;?&rdquo; and the answer gives three numbered steps.","check":true},{"who":"You · <a href=\"http://localhost:3000/words-walk-paying-club/admin/help/org#faq-plan-change-tournaments\">Where did our tournaments go?</a>","do":"Read the answer.","see":"A move to the free plan takes effect on the renewal date; the ones you didn&rsquo;t choose are archived that day, <strong>a running event included</strong>; if you choose none the newest is kept.","check":true},{"who":"You · <a href=\"http://localhost:3000/words-walk-premium/coaches/help#faq-premium-cancel\">What happens to my data if my team is no longer on Premium?</a>","do":"Read the answer.","see":"Premium stays on until the end of the period you paid for; the Ending chip and Keep Premium; the ends-on email and reminder; <strong>Reactivate Premium</strong> in the ended email; &ldquo;we try to email you again about a month before&rdquo;; past-due can end it sooner.","check":true},{"who":"You · <a href=\"http://localhost:3000/platform-admin/help/platform-admin#cancel-subscription\">How to cancel a customer subscription</a>","do":"Read the opening paragraph and the three sub-topics.","see":"Cancel ends the plan on the renewal date and can be kept; <strong>End now</strong> is the separate door that closes everything today; the window&rsquo;s own words (<strong>Cancel at the period end</strong>, <strong>Keep it</strong>, <strong>End it today instead…</strong>); the Overdue callout&rsquo;s <strong>Finish this ending now</strong> (&ldquo;more than 3 days&rdquo;); the refund exception when we end a plan for a reason that isn&rsquo;t the customer&rsquo;s fault.","check":true}]},{"id":"K","title":"The Tournament-tier rail","intro":"Still signed in as pw4 (a Tournament Plus owner) in the owner window.","steps":[{"who":"You · <a href=\"http://localhost:3000/words-walk-downgrade-club/admin/tournaments/settings/subscription\">Plan & billing</a>","do":"Look at the left rail on this page.","see":"Only <strong>Plan &amp; billing</strong> is highlighted. No second row reads as the current page.","check":true}]},{"id":"L","title":"Hand back","steps":[{"who":"You","do":"Press <strong>Build summary</strong> at the top and paste it to Claude, with &ldquo;§535 done&rdquo;.","see":"Claude records the result, and tears the fixture down with <code>teardown</code> if you say so."}]}],"CALLS":[{"id":"Q1","title":"The plan card&rsquo;s past-due line still says &ldquo;card&rdquo;","text":"On the past-due club (E), the line on the plan card reads &ldquo;Your last payment didn&rsquo;t go through. Everything stays open during the grace period &mdash; update your card in Payment method &amp; invoices&hellip;&rdquo;. Every window and email now says &ldquo;payment method&rdquo;. Part B did not change this line, and Part C does not re-word the product.","options":["Change that line to &ldquo;payment method&rdquo; (its own small change)","Leave it"]},{"id":"Q2","title":"Searching the old words","text":"Help search reads only keywords and text. &ldquo;Resubscribe&rdquo;, &ldquo;card declined&rdquo; and &ldquo;update card&rdquo; were removed from the help&rsquo;s search words to match the one-spelling rule, so a customer typing those finds nothing.","options":["Keep them out (one spelling)","Put them back as search-only aliases"]},{"id":"Q3","title":"End now says &ldquo;Nothing is refunded&rdquo;","text":"The operator&rsquo;s End now window says &ldquo;Nothing is refunded&rdquo;. The draft Terms promise a refund of the unused part when we end a plan for a reason that is not the customer&rsquo;s fault (by hand, through the refund tool). The help now says so; the window does not.","options":["Add the exception to the window (its own change)","Leave the window; help covers it"]},{"id":"Q4","title":"Keep the walk&rsquo;s accounts?","text":"Six accounts (four clubs, two Coaches Portals) with test Stripe subscriptions are on dev now.","options":["Tear them down after this walk","Keep them for the next billing walk"]}]};
+  var KEY = D.KEY, TITLE = D.TITLE, PARTS = D.PARTS, CALLS = D.CALLS;
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    if (p.intro) body.appendChild(el('p', 'sub', p.intro));
+    p.steps.forEach(function (s, i) {
+      var id = p.id + '.' + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', (s.check ? 'Check: ' : 'You should see: ') + s.see));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id + ' (no phone numbers, addresses or account numbers)'; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  var callHost = document.getElementById('calls');
+  CALLS.forEach(function (c) {
+    var box = el('div', 'callbox'); box.style.cssText = 'display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px';
+    box.appendChild(el('strong', null, c.id + ' · ' + c.title));
+    box.appendChild(el('span', 'see', c.text));
+    c.options.forEach(function (o, i) {
+      var key = c.id + '.' + i;
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'call-' + key.replace('.', '-'); cb.checked = !!state.calls[key]; cb.style.cssText = 'width:18px;height:18px;margin-top:3px;accent-color:var(--accent);flex:none';
+      cb.addEventListener('change', function () { state.calls[key] = cb.checked; save(); });
+      var row = el('label', 'step'); row.style.borderTop = '0'; row.style.paddingBlock = '4px';
+      row.appendChild(cb); row.appendChild(el('span', 'txt', o)); box.appendChild(row);
+    });
+    var ta = document.createElement('textarea'); ta.id = 'callnote-' + c.id; ta.placeholder = 'Note (optional; no personal details)'; ta.value = state.callNotes[c.id] || '';
+    ta.addEventListener('input', function () { state.callNotes[c.id] = ta.value; save(); });
+    box.appendChild(ta); callHost.appendChild(box);
+  });
+  if (!CALLS.length) document.getElementById('callsCard').hidden = true;
+
+  function doneSteps(partId) { return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; }); }
+  var totalSteps = boxes.length;
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length, v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    if (CALLS.length) {
+      lines.push('Answers and calls (not counted):');
+      CALLS.forEach(function (c) {
+        var chosen = c.options.filter(function (o, i) { return state.calls[c.id + '.' + i]; });
+        lines.push('  ' + c.id + ' ' + c.title + ': ' + (chosen.length ? chosen.join(' / ') : 'not answered') + (state.callNotes[c.id] ? ' — ' + state.callNotes[c.id] : ''));
+      });
+    }
+    return lines.join('\n');
+  }
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    CALLS.forEach(function (c) { document.getElementById('callnote-' + c.id).value = ''; });
+    Array.prototype.forEach.call(document.querySelectorAll('#calls input[type=checkbox]'), function (b) { b.checked = false; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

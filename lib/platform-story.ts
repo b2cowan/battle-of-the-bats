@@ -327,7 +327,7 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
         continue;
       }
       const until = str(obj(r.new_value)?.retentionUntil);
-      entries.push({ key, at: r.created_at, kind: 'staff', title: 'Subscription cancelled', sub: until ? `Its data is kept until ${consoleDay(until)}` : undefined, who, ...whyFields(r, true) });
+      entries.push({ key, at: r.created_at, kind: 'staff', title: 'Plan ended', sub: until ? `Its data is kept until ${consoleDay(until)}` : undefined, who, ...whyFields(r, true) });
       continue;
     }
     if (r.action === 'end_subscription_now') {
