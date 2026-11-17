@@ -53,6 +53,14 @@ Coaches Portal Org Add-on, monthly + yearly) were archived by the owner the same
 (grep). The Locations page still showed "Needs attention" after setup (page data was 20 hours old); filing is "I'll file myself". Still owed:
 re-count production subscriptions made before 2026-11-06 (untaxed, tax owed by us), and re-run the audit at the promote.
 
+**Re-checked 2026-11-17 (read-only live audit `stripe-live-2026-11-17.json`, run by the agent at the owner's `/brief do`):** tax
+settings, registrations and the account are **identical** to the 6 Nov after-registration audit — 1 registration, CA, `active`, from
+2026-11-06 20:17 UTC, no end; default behaviour `exclusive`; origin CA; head office complete (no missing fields); all 10 prices
+`txcd_10103001` and `unspecified`. Not tax, noted: one product renamed (Coaches Portal Premium → Premium Coaches Portal); the live
+webhook gained 13 events (disputes, refunds, payment methods, invoice and credit-note events); Stripe's own default portal
+configuration now has customer updates off (our sessions name our own configuration; ours, v2, does not exist on live yet). The
+re-run at the promote and the re-count of production subscriptions stay owed as release steps, not owner steps.
+
 **Leave alone:** the 14 live prices. They follow the default; setting each to exclusive gains nothing and cannot be undone.
 
 **Check before the first live invoice (Part 7 walk, W9):** the live account's public business details (name, Ontario address) and that
