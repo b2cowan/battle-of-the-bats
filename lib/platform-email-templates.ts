@@ -126,8 +126,8 @@ export async function isPlatformTemplateCustomised(key: EmailKind): Promise<bool
  * renderer handles it. Marketing campaigns carry their CTAs inline in the body and leave
  * these columns null, so this is a no-op for them.
  */
-function bodyWithCta(row: PlatformEmailTemplate): string {
-  if (!row.cta_label) return row.body;
+function bodyWithCta(row: PlatformEmailTemplate, dropCta = false): string {
+  if (dropCta || !row.cta_label) return row.body;
   const url = row.cta_url_pattern ?? '#';
   return `${row.body}\n\n::button ${row.cta_label} | ${url}`;
 }
@@ -170,6 +170,9 @@ export async function renderResolvedEmail(opts: {
   /** Words a template must NOT change, rendered by code after the operator's body when it is customised (the caller's default
    *  already holds them): the purchase email's figures, cancel and refund lines (GST/HST 6.4, /legal 6). */
   fixedHtml?: string;
+  /** The fixed words carry the email's one button (the yearly reminder's billing button, GST/HST 6.6 fixes): a customised row's
+   *  own button is dropped, so the email never shows two. Only with `fixedHtml`; every other email renders as before. */
+  fixedCarriesButton?: boolean;
 }): Promise<ResolvedEmail> {
   const { key, vars, fallback, alwaysRenderFromTemplate = false } = opts;
 
@@ -192,7 +195,7 @@ export async function renderResolvedEmail(opts: {
     ...face,
     ...fixed,
     heading: row.heading,
-    body: bodyWithCta(row),
+    body: bodyWithCta(row, !!opts.fixedHtml && opts.fixedCarriesButton === true),
     vars,
   });
   const subject = fillSubjectTokens(row.subject, vars);
@@ -231,6 +234,8 @@ export async function sendTransactionalEmail(opts: {
   builtInOnly?: boolean;
   /** Fixed words a customised template keeps (see renderResolvedEmail). */
   fixedHtml?: string;
+  /** The fixed words carry the email's one button (see renderResolvedEmail). */
+  fixedCarriesButton?: boolean;
 }): Promise<SendEmailResult> {
   const { subject, html } = opts.builtInOnly
     ? { subject: opts.defaultSubject, html: opts.defaultHtml }
@@ -240,6 +245,7 @@ export async function sendTransactionalEmail(opts: {
       fallback: { subject: opts.defaultSubject, html: opts.defaultHtml },
       family: opts.family,
       fixedHtml: opts.fixedHtml,
+      fixedCarriesButton: opts.fixedCarriesButton,
     });
   const log = { kind: opts.key, orgId: opts.orgId, askedBy: opts.askedBy, ...(opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : {}) };
   if (!opts.family) return sendEmail(opts.to, subject, html, log);

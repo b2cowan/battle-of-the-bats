@@ -1,6 +1,6 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-16 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
 **⚠️ 34 divergence(s)** across dev/prod.
 

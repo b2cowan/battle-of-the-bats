@@ -383,7 +383,7 @@ describe('S3b — the senders thread the club', () => {
     // face is spread first and the fixed block only ADDS to its foot, so a family email keeps its band and foot either way.
     assert.match(code, /const face = familyTemplateParts\(opts\.family\);/);
     assert.match(code, /footerHtml: \[opts\.fixedHtml, face\.footerHtml\]\.filter\(Boolean\)\.join\('\\n'\)/);
-    assert.match(code, /\.\.\.face,\s*\.\.\.fixed,\s*heading: row\.heading,\s*body: bodyWithCta\(row\)/);
+    assert.match(code, /\.\.\.face,\s*\.\.\.fixed,\s*heading: row\.heading,\s*body: bodyWithCta\(row(, [^)]*)?\)/);
   });
   it('the template editor’s preview and test-send show the six family keys on a sample club', () => {
     for (const key of ['league_registration_approved', 'league_registration_pending', 'league_registration_waitlisted', 'league_waitlist_promoted', 'league_registration_declined', 'tryout_application_received']) {

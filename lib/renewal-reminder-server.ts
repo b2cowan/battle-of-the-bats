@@ -166,7 +166,8 @@ const deps: ReminderRunDeps = {
   planLabel: planId => (planId && PLAN_CONFIG[planId as keyof typeof PLAN_CONFIG]?.label) || 'your plan',
   send: (to, email, idempotencyKey, orgId) => sendTransactionalEmail({
     key: 'yearly_renewal_reminder', to: to.email, vars: email.vars, defaultSubject: email.subject, defaultHtml: email.html,
-    orgId, idempotencyKey,
+    // The date, amount, cancel line and button follow a customised template's words, and its own button gives way to ours.
+    fixedHtml: email.fixedHtml, fixedCarriesButton: true, orgId, idempotencyKey,
   }),
   log: (message, orgId) => {
     console.error(`[renewal-reminder] ${message}:`, orgId);

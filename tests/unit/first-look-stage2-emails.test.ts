@@ -133,7 +133,8 @@ describe('the two emails and their render paths', () => {
     // S3b: a family email's club rides in beside the footer; with none, the plain wrap() is still what renders.
     assert.match(templates, /mode\?: TokenMode;\s*\}\): string \{\s*const inner = renderHeadingAndBody\(\{ heading: p\.heading, body: p\.body, vars: p\.vars, mode: p\.mode \}\);\s*const content = [^;]*;\s*return p\.club \? warmEmailDocument\(content, p\.club\) : wrap\(content\);/);
     assert.match(templates, /footerHtml: opts\?\.footerHtml,\s*\}\);/, 'renderTemplateEmail (the preview route)');
-    assert.match(templates, /body: bodyWithCta\(row\),\s*vars,\s*\}\);/, 'renderResolvedEmail (the send)');
+    // GST/HST 6.6 fixes: the send may drop a customised row's own button when the fixed block carries one (the yearly reminder).
+    assert.match(templates, /body: bodyWithCta\(row, !!opts\.fixedHtml && opts\.fixedCarriesButton === true\),\s*vars,\s*\}\);/, 'renderResolvedEmail (the send)');
     assert.match(readCode('app/api/platform-admin/email-templates/[key]/test-send/route.ts'), /renderPlatformEmailHtml\(\{ heading, body: bodyMarkup, vars, footerHtml: `\$\{family\?\.footerHtml \?\? ''\}\$\{testNote\}`, club: family\?\.club \}\)/);
     const editor = readCode('app/platform-admin/email-templates/[key]/EmailTemplateEditor.tsx');
     assert.match(editor, /const inner = renderHeadingAndBody\(\{ heading: fields\.heading, body, mode: 'chip' \}\);/);

@@ -17,6 +17,8 @@ import {
   type ReminderCandidate, type ReminderEmailInput, type ReminderRunDeps, type ReminderStripeFacts,
 } from '../../lib/renewal-reminder.ts';
 import { BILLING_LOCATION_WORDS, BILLING_REGION_CLOSED, checkBillingLocation, isClosedRegion } from '../../lib/billing-location.ts';
+import { escText, warmEmailButton, warmEmailDocument, warmEmailHeading, warmEmailParagraph } from '../../lib/email-envelope-warm.ts';
+import { renderHeadingAndBody } from '../../lib/email-markup.ts';
 
 const read = (p: string) => readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 const DAY = 86_400_000;
@@ -257,12 +259,80 @@ describe('4 · the words (§6, copied exactly)', () => {
     for (const w of [/\bpaid\b/i, /receipt/i, /payment received/i, /upgrade/i, /pricing/i]) assert.doesNotMatch(e.html, w);
   });
 
-  it('the template row carries the same variables the email fills (mig 478)', () => {
+  it('the template row carries the same variables the email fills (mig 478; 490 leaves the list as it is)', () => {
     const mig = read('supabase/migrations/478_a_purchase_is_told_its_details.sql');
     const row = mig.slice(mig.indexOf('$k$yearly_renewal_reminder$k$'));
     const declared = JSON.parse(row.match(/'(\[[^\]]+\])'::jsonb/)![1]) as string[];
     assert.deepEqual([...declared].sort(), Object.keys(renewalReminderEmail(input()).vars).sort());
-    assert.ok(row.includes('To keep it, there’s nothing to do. To stop it, cancel from your billing page before {{date}}; your plan stays active until then.'));
+    assert.doesNotMatch(read(MIG_490), /variables\s*=/, '490 does not touch the editor’s chips');
+  });
+});
+
+// ── 4c · the fixed block (GST/HST 6.6 fixes Part A, owner ruling 1 2026-11-16; mig 490) ────────────────────────────────
+const MIG_490 = 'supabase/migrations/490_the_yearly_reminder_keeps_its_date_and_amount.sql';
+describe('4c · the date, the amount, the cancel line and the button are the code’s, after the operator’s words', () => {
+  const kinds = [
+    input(), input({ kind: 'trial' }), input({ kind: 'next_season' }), input({ planLabel: 'Club', nextPlanLabel: 'League' }), input({ taxLines: [], totalCents: 39000 }),
+  ];
+
+  it('the built-in email is byte-for-byte what it was before the fixed block (each kind, the move-down line, no tax)', () => {
+    // Today's composition, as it stood before 6.6 (commit b7dcab3ea): heading · lead · move-down (if any) · keep-or-stop · button.
+    for (const i of kinds) {
+      const e = renewalReminderEmail(i);
+      const before = warmEmailDocument([
+        warmEmailHeading(escText(e.vars.headingLine)),
+        warmEmailParagraph(escText(e.vars.lead)),
+        e.vars.moveDownLine ? warmEmailParagraph(escText(e.vars.moveDownLine)) : '',
+        warmEmailParagraph(escText(REMINDER_WORDS.keepOrStop(e.vars.date))),
+        warmEmailButton(escText(REMINDER_WORDS.button), escText(i.billingUrl)),
+      ].filter(Boolean).join('\n'));
+      assert.equal(e.html, before, i.kind);
+    }
+  });
+
+  it('the fixed block holds the date and amount paragraph, the move-down line, the keep-or-stop sentence and the button', () => {
+    const e = renewalReminderEmail(input({ planLabel: 'Club', nextPlanLabel: 'League' }));
+    assert.ok(e.html.includes(e.fixedHtml));
+    assert.ok(e.fixedHtml.includes(escText(e.vars.lead)));
+    assert.match(e.fixedHtml, /October 1, 2027/);
+    assert.match(e.fixedHtml, /\$390\.00 plus applicable taxes/);
+    assert.ok(e.fixedHtml.includes(escText(e.vars.moveDownLine)));
+    assert.ok(e.fixedHtml.includes(escText(REMINDER_WORDS.keepOrStop('October 1, 2027'))));
+    assert.deepEqual([...e.fixedHtml.matchAll(/href="([^"]+)"/g)].map(m => m[1]), ['https://x.test/billing']);
+    assert.doesNotMatch(e.fixedHtml, /Your yearly plan renews on/, 'the heading is the template’s, not the fixed block’s');
+  });
+
+  it('a customised row: the operator’s words, then the fixed block, and one button (its own is dropped)', () => {
+    const e = renewalReminderEmail(input());
+    // The way renderResolvedEmail renders a customised row: its heading and body (the row's button dropped for this email), then the fixed block.
+    const html = `${renderHeadingAndBody({ heading: '{{headingLine}}', body: 'Hello from the club office.\n\nAnything else we want to say.', vars: e.vars })}\n${e.fixedHtml}`;
+    assert.ok(html.indexOf('Anything else we want to say.') < html.indexOf('October 1, 2027. We’ll charge'), 'the fixed block follows the operator’s text');
+    assert.deepEqual([...html.matchAll(/href="([^"]+)"/g)].map(m => m[1]), ['https://x.test/billing'], 'one button');
+    for (const w of [/\bpaid\b/i, /receipt/i, /payment received/i, /upgrade/i, /pricing/i]) assert.doesNotMatch(html, w);
+    // The wiring: the send passes the block and asks the renderer to drop a customised row's own button; only that send does.
+    const tpl = read('lib/platform-email-templates.ts');
+    assert.match(tpl, /body: bodyWithCta\(row, !!opts\.fixedHtml && opts\.fixedCarriesButton === true\)/);
+    assert.match(tpl, /if \(dropCta \|\| !row\.cta_label\) return row\.body;/);
+    assert.match(tpl, /fixedCarriesButton: opts\.fixedCarriesButton,/);
+    assert.match(read('lib/renewal-reminder-server.ts'), /fixedHtml: email\.fixedHtml, fixedCarriesButton: true,/);
+    assert.doesNotMatch(read('lib/purchase-details-server.ts'), /fixedCarriesButton/, 'the purchase email renders as before');
+  });
+
+  it('mig 490: an uncustomised row starts from one opening line and no button; both descriptions say keep it transactional', () => {
+    const mig = read(MIG_490);
+    // /legal 6.6 fixes: no hand-built possessive in the seeded line (a template cannot call possessive(): "The Hawks’s").
+    assert.ok(mig.includes('set body = $k$A note about the yearly plan for {{orgName}}.$k$'));
+    assert.match(mig, /cta_label = NULL,\s+cta_url_pattern = NULL\s+where key = 'yearly_renewal_reminder'\s+and is_customised = false;/);
+    assert.doesNotMatch(mig, /set (subject|heading)/, 'the subject and heading carry the date and stay');
+    const keep = 'Keep this email transactional: no offers, no other plans’ prices, and no links.';
+    assert.ok(mig.includes(`{{lead}} repeats the app's sentence with the date, the price and the tax, which the app adds below your text anyway;`));
+    assert.ok(mig.includes(`${keep} The app adds the figures, the cancel line and the billing button after your text, so they cannot be removed.$k$\n where key = 'yearly_renewal_reminder';`));
+    // The purchase description already lists what the app adds: only the keep-transactional sentence joins it (/legal).
+    assert.ok(mig.includes(`{{opening}} is the app's opening for the case. ${keep}$k$\n where key = 'purchase_details';`));
+    assert.doesNotMatch(mig, /description \|\|/, 'set, not appended: a re-run is exact');
+    // The opening line renders as plain words (no token left unfilled).
+    const e = renewalReminderEmail(input());
+    assert.match(renderHeadingAndBody({ heading: 'x', body: 'A note about the yearly plan for {{orgName}}.', vars: e.vars }), /A note about the yearly plan for Guelph Minor Ball\./);
   });
 });
 

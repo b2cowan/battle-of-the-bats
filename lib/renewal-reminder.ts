@@ -180,8 +180,15 @@ export const REMINDER_WORDS = {
   button: 'Your billing page',
 } as const;
 
-/** The whole email: subject, the template's variables (mig 478's `yearly_renewal_reminder` row) and the built-in html. */
-export function renewalReminderEmail(i: ReminderEmailInput): { subject: string; vars: Record<string, string>; html: string } {
+/**
+ * The whole email: subject, the template's variables (mig 478's `yearly_renewal_reminder` row), the fixed block and the built-in
+ * html (the heading, then the fixed block).
+ * ⚖ The FIXED block (the date-and-amount paragraph, the move-down line, the keep-or-stop sentence and the billing button) is what
+ *   the Terms §8 promise rests on ("the renewal date and the amount, plus applicable taxes"), so it is rendered by code after a
+ *   customised template's words, never by the template (GST/HST 6.6 fixes, owner ruling 2026-11-16; mig 490). Uncustomised, the
+ *   email is byte-for-byte what it was before.
+ */
+export function renewalReminderEmail(i: ReminderEmailInput): { subject: string; vars: Record<string, string>; fixedHtml: string; html: string } {
   const W = REMINDER_WORDS;
   const date = day(i.chargeIso);
   // The code names any currency but ours, so a price is never read as Canadian dollars when it is not (/accounting 3; the
@@ -197,16 +204,17 @@ export function renewalReminderEmail(i: ReminderEmailInput): { subject: string; 
   const moveDownLine = i.nextPlanLabel ? W.moveDown(date, i.orgName, i.nextPlanLabel) : '';
   const subjectLine = W.subject(i.kind, i.planLabel, date);
   const headingLine = W.heading(i.kind, date);
+  const fixedHtml = [
+    warmEmailParagraph(escapeHtml(lead)),
+    moveDownLine ? warmEmailParagraph(escapeHtml(moveDownLine)) : '',
+    warmEmailParagraph(escapeHtml(W.keepOrStop(date))),
+    warmEmailButton(escapeHtml(W.button), escapeHtml(i.billingUrl)),
+  ].filter(Boolean).join('\n');
   return {
     subject: subjectLine,
     vars: { orgName: i.orgName, planLabel: i.planLabel, date, subjectLine, headingLine, lead, moveDownLine, billingUrl: i.billingUrl },
-    html: warmEmailDocument([
-      warmEmailHeading(escapeHtml(headingLine)),
-      warmEmailParagraph(escapeHtml(lead)),
-      moveDownLine ? warmEmailParagraph(escapeHtml(moveDownLine)) : '',
-      warmEmailParagraph(escapeHtml(W.keepOrStop(date))),
-      warmEmailButton(escapeHtml(W.button), escapeHtml(i.billingUrl)),
-    ].filter(Boolean).join('\n')),
+    fixedHtml,
+    html: warmEmailDocument([warmEmailHeading(escapeHtml(headingLine)), fixedHtml].join('\n')),
   };
 }
 
