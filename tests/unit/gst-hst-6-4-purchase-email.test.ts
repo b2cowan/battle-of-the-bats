@@ -44,6 +44,21 @@ describe('1 · which paid invoice earns the email (§3.2)', () => {
     assert.equal(is({ billingReason: 'subscription_update', meta: { flhq_plan_move: 'down' } }), null);
     assert.equal(is({ billingReason: 'subscription_update', totalCents: 0, meta: { flhq_plan_move: 'up' } }), null);
   });
+  it('a move up during a trial: Stripe\'s $0 paid update invoice with the move marker (test mode 2026-11-16; 6.6 fixes ruling 2)', () => {
+    const trialUp = { billingReason: 'subscription_update', totalCents: 0, subscriptionStatus: 'trialing', meta: { flhq_plan_move: 'up' } };
+    assert.equal(is(trialUp), 'trial_change');
+    assert.equal(is({ ...trialUp, meta: { flhq_plan_move: 'up', [BUYER_USER_META]: 'u1', inPlaceClub: '1' } }), 'trial_change', 'Premium → Club during a trial too');
+    // The move metadata stays on the subscription after the move: the trialing guard is what keeps a later $0 update quiet.
+    assert.equal(is({ ...trialUp, subscriptionStatus: 'active' }), null, 'a $0 update with the old marker, after the trial');
+    assert.equal(is({ ...trialUp, subscriptionStatus: 'past_due' }), null);
+    assert.equal(is({ ...trialUp, meta: {} }), null, 'a $0 dashboard update during a trial');
+    assert.equal(is({ ...trialUp, meta: { flhq_plan_move: 'down' } }), null);
+    assert.equal(is({ ...trialUp, status: 'open' }), null);
+    assert.equal(is({ ...trialUp, subscriptionId: 'mock_sub_1' }), null, 'the dev mock path writes no invoice');
+    assert.equal(is({ ...trialUp, billingReason: 'subscription_create' }), 'trial', 'a trial\'s own first invoice stays the trial email');
+    // A next-season choice is trialing too, with no free trial: its move up sends nothing, as before (/review; an owner question).
+    assert.equal(is({ ...trialUp, meta: { flhq_plan_move: 'up', choiceKind: NEXT_SEASON_CHOICE_KIND } }), null);
+  });
   it('a renewal is never one — a trial\'s or next-season choice\'s first real charge included', () => {
     assert.equal(is({ billingReason: 'subscription_cycle' }), null);
     assert.equal(is({ billingReason: 'subscription_cycle', meta: { choiceKind: NEXT_SEASON_CHOICE_KIND } }), null);
@@ -196,7 +211,7 @@ const termsOf = (html: string) => html.split('\n').filter(l => /Terms of Service
 const withoutTerms = (html: string) => html.split('\n').filter(l => !/Terms of Service/.test(l)).join('\n');
 
 describe('3 · the words (§6)', () => {
-  it('the subject, heading and five openings are §6 as reviewed', () => {
+  it('the subject, heading and five openings are §6 as reviewed (the sixth, a move up during a trial, below)', () => {
     assert.equal(PURCHASE_WORDS.subject('League'), 'The details of your purchase: League');
     assert.equal(PURCHASE_WORDS.opening('first', 'League', 'Riverside Club'), 'Thanks for choosing League for Riverside Club. Here are the details of your purchase.');
     assert.equal(PURCHASE_WORDS.opening('comeback', 'League', 'Riverside Club'), 'Welcome back to League, Riverside Club. Here are the details of your purchase.');
@@ -248,6 +263,23 @@ describe('3 · the words (§6)', () => {
     const noEstimate = text(purchaseDetailsEmail(input({ case: 'trial', nextPriceCents: 48000, estimate: null })).html);
     assert.match(noEstimate, /Your first payment: \$480\.00 plus applicable taxes, on November 13, 2027\./);
     assert.doesNotMatch(noEstimate, /Estimated tax/);
+  });
+  it('a move up during a trial: the trial continues, nothing charged, the NEW plan\'s first payment and its estimate (6.6 fixes)', () => {
+    assert.equal(PURCHASE_WORDS.opening('trial_change', 'Club · Association', 'Riverside Club'),
+      'Riverside Club is now on Club · Association. Your free trial continues, and nothing has been charged today.');
+    // The probe's figures (test mode 2026-11-16): Club → Club · Association monthly, $379.00 before tax, HST (ON) 13% $49.27.
+    const est = { taxLines: [{ label: 'HST (ON) 13%', cents: 4927 }], totalCents: 42827 };
+    const e = purchaseDetailsEmail(input({ case: 'trial_change', planLabel: 'Club · Association', cycle: 'monthly', beforeTaxCents: 0,
+      totalCents: 0, taxLines: [], nextPriceCents: 37900, nextIso: '2026-12-17T02:12:25Z', estimate: est }));
+    assert.equal(e.subject, 'The details of your purchase: Club · Association');
+    const t = text(e.html);
+    assert.match(t, /Riverside Club is now on Club · Association\. Your free trial continues, and nothing has been charged today\./);
+    assert.match(t, /Price before tax \$0\.00/, 'not "for the rest of this period": nothing is prorated in a trial');
+    assert.match(t, /Charged today \$0\.00/);
+    assert.match(t, /Your first payment: \$379\.00 plus applicable taxes, on December 16, 2026\. Estimated tax, based on your billing address today: HST \(ON\) 13% \$49\.27, for a total of \$428\.27 CAD\./);
+    assert.match(t, /Cancel from your billing page before December 16, 2026 and you won’t be charged\./);
+    assert.doesNotMatch(t, /Renews on|Here are the details of the change/);
+    assert.doesNotMatch(e.html, /receipt|payment received|upgrade/i);
   });
   it('drops what it does not have: the invoice link, the GST/HST number, the buyer, the blank seller lines', () => {
     const html = purchaseDetailsEmail(input({ invoiceUrl: null, taxNumber: null, boughtBy: null })).html;

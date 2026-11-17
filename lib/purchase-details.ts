@@ -20,7 +20,7 @@ import { COMEBACK_META, MOVE_METADATA_KEY } from './plan-growth';
 import { sendToOwners, type SendResultLike } from './owners-send-outcome';
 import type { StoredTaxLine } from './charge-tax-record';
 
-export type PurchaseCase = 'first' | 'comeback' | 'plan_change' | 'trial' | 'next_season';
+export type PurchaseCase = 'first' | 'comeback' | 'plan_change' | 'trial' | 'next_season' | 'trial_change';
 
 /** What the classifier reads: the stored record, the invoice's own subscription metadata (as it stood when the invoice was
  *  made: `parent.subscription_details.metadata`) and the subscription's status now. */
@@ -56,6 +56,15 @@ export function classifyPurchase(f: PurchaseFacts): PurchaseCase | null {
   // An in-app move up (and Premium → Club in place, which is one: test mode 2026-11-13 shows `flhq_plan_move: 'up'` beside
   // `inPlaceClub: '1'`). Its proration invoice is `subscription_update`. Any other update (a dashboard change) is none.
   if (f.billingReason === 'subscription_update' && f.totalCents > 0 && f.meta[MOVE_METADATA_KEY] === 'up') return 'plan_change';
+  // A move up DURING A TRIAL charges nothing: Stripe still makes a $0 paid `subscription_update` invoice carrying the move's
+  // metadata (test mode 2026-11-16, .probe/66fix/trial-move-up-run1.txt), and the trial email in the inbox quotes the OLD plan's
+  // first payment, so it earns the email (owner ruling 2, 2026-11-16). ⚠ The move metadata STAYS on the subscription after the
+  // move, so the trialing guard is what keeps a later $0 dashboard update from sending one.
+  // ⚠ A next-season choice is `trialing` too (its first charge is the season start, not a free trial), and the move metadata
+  // merges onto its `choiceKind`: "Your free trial continues" would be untrue there, so it sends nothing, as before (/review
+  // 2026-11-16; an owner question, not ruled: ruling 2 is a move up during a FREE trial).
+  if (f.billingReason === 'subscription_update' && f.totalCents === 0 && f.subscriptionStatus === 'trialing'
+    && f.meta[MOVE_METADATA_KEY] === 'up' && f.meta.choiceKind !== NEXT_SEASON_CHOICE_KIND) return 'trial_change';
   return null;
 }
 
@@ -105,8 +114,8 @@ export type PurchaseEmailInput = {
   terms: TermsLine;
 };
 
-/** A trial or a next-season choice: nothing is charged today. */
-export const isFreePurchase = (c: PurchaseCase) => c === 'trial' || c === 'next_season';
+/** A trial, a next-season choice, or a move up during a trial: nothing is charged today. */
+export const isFreePurchase = (c: PurchaseCase) => c === 'trial' || c === 'next_season' || c === 'trial_change';
 const PLUS_TAX = BILLING_TAX_WORDS.plusTax;
 
 export const PURCHASE_WORDS = {
@@ -119,6 +128,7 @@ export const PURCHASE_WORDS = {
       case 'plan_change': return `${orgName} is now on ${planLabel}. Here are the details of the change.`;
       case 'trial': return `Your free trial of ${planLabel} for ${orgName} has started. Nothing has been charged today.`;
       case 'next_season': return `You chose ${planLabel} for ${possessive(orgName)} next season. Nothing has been charged today.`;
+      case 'trial_change': return `${orgName} is now on ${planLabel}. Your free trial continues, and nothing has been charged today.`;
     }
   },
   closing: 'This email is a summary of your purchase. Your invoice is the document to keep for your books, and it’s always on your billing page.',
