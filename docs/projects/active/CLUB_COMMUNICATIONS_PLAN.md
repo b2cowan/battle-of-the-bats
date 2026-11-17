@@ -1,6 +1,7 @@
 # Club Communications — Implementation Plan
 
-> **Status:** Stage 1 fully ruled 2026-11-16 (direction 1–12, Stage 1 asks 1–14, the board asks 15–19, and the coach
+> **Status:** on the board (Owner Morning Brief).
+> **History (not kept current):** Stage 1 fully ruled 2026-11-16 (direction 1–12, Stage 1 asks 1–14, the board asks 15–19, and the coach
 > email drawing's ten standing asks, all as recommended). Build prompt: `CLUB_COMMUNICATIONS_STAGE1_BUILD_PROMPT.md`.
 > Build state: §3 Stage 1 (Sessions 1 and 2 committed; Walk A §537 owed by the owner; next Session 3).
 > **Created:** 2026-11-16

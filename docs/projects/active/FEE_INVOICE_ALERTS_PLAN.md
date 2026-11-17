@@ -1,5 +1,7 @@
 # Fee invoice alerts — the owner finds out what they owe
 
+**Status:** on the board (Owner Morning Brief).
+
 Plan of record. PM brief: `FEE_INVOICE_ALERTS_PM_BRIEF.md`. Drawings (owner rulings, all eight asks A, 2026-11-05):
 https://claude.ai/artifact/4dmPojUsg4EspaphPVxSEc, source `FEE_INVOICE_ALERTS_DRAWINGS.html`. Design record: `memory/design_decisions.md`
 2026-11-05 "A FEE INVOICE THE CLUB OWES".

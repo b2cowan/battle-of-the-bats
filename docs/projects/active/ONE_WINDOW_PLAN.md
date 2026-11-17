@@ -1,6 +1,7 @@
 # One Window — implementation plan
 
-**Status:** all sixteen asks ruled as recommended 2026-10-18 (owner paste-back; hub version 1). Plan written
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** all sixteen asks ruled as recommended 2026-10-18 (owner paste-back; hub version 1). Plan written
 2026-10-18. Stage 1 width audit published 2026-10-18 (hub version 3); its five calls S1–S5 ruled as recommended the
 same day. Stage 1 committed `992243fb` 2026-10-18 after /simplify and /review (Stage 1 and windows-keep-width on prod 2026-10-19, master job 282); **owner walk ✅ passed 2026-10-19**
 (30 of 30, no notes; hub QA tab, QA ledger §339). Windows that changed width on a click were ruled 2026-10-19 (the

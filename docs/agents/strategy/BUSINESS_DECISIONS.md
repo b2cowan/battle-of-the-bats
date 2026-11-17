@@ -8,6 +8,23 @@
 
 ---
 
+### 2026-11-17 — Launch in Canada first, the US after; the Canadian launch = a club can onboard, with marketing and the demo after it (Decided)
+**Status:** **Decided** (owner, 2026-11-17, One Board Session 1; logged on his yes in One Board Session 2 the same day).
+**Decision:**
+1. **Canada first.** FieldLogicHQ launches in Canada first; the US launch comes after the Canadian launch.
+2. **What "the Canadian launch" means: functionally able to onboard a club.** A Canadian club can sign up, pay us on Stripe,
+   connect its own Stripe so families pay online, and open a house league or a tournament. **Marketing and the demo come
+   after it**; neither is part of the launch.
+**Rationale:** one definition of done for the launch, so every project can be sorted into "needed to onboard a club" or "after".
+**Related, same day (recorded in `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §7, not a separate entry):** four Club pieces move to
+after the launch and the Club release no longer waits for them: coaches entering their own team's permits, Stage 13f–13h,
+saving a bank check to finish later, and each team's own amount across several permits.
+**Affects:** roadmap sequencing; the board's goals ("Canadian launch" done-when, "After the Canadian launch", "US launch") in
+`docs/agents/strategy/OWNER_BRIEF_PROJECTS.json`, where each project's status lives.
+**Handoff:** none owed now. The board already sorts projects by these goals; marketing and demo work wait for the launch.
+**Supersedes:** nothing. It sequences, and does not reverse, 2026-10-31 "FieldLogicHQ charges its own sales tax…" (US customers
+in scope by design).
+
 ### 2026-11-10 — Board Ready: no new price, band or key; security work is on every plan; Stages 1–7 ride League Plus and both Club bands (Decided; planned, nothing built)
 **Status:** **Decided** (owner, 2026-11-10, "agreed", answering the gate recommendation in `docs/projects/active/BOARD_READY_PLAN.md`
 §9 "Gates"). **Planned, nothing built.** **One item still OPEN:** who pays the card fee on a sponsor payment (below).

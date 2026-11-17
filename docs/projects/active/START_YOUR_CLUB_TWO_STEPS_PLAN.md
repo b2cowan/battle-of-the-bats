@@ -1,5 +1,7 @@
 # Start your club in two steps — plan
 
+**Status:** on the board (Owner Morning Brief).
+
 **Ruled** 2026-11-16 (owner, all six asks A) on the drawings https://claude.ai/artifact/Swg71ETYVZXeFjgAUZThbj
 (source `START_YOUR_CLUB_TWO_STEPS_DRAWINGS.html`). Decision entry: `memory/design_decisions.md`, 2026-11-16.
 PM brief: `START_YOUR_CLUB_TWO_STEPS_PM_BRIEF.md`.

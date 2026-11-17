@@ -1,5 +1,7 @@
 # Tryouts from a phone — the tryouts room, the helper's scoring link and the tryout history, read and used at phone width
 
+**Status:** on the board (Owner Morning Brief).
+
 **Created:** 2026-09-25 · **Owner:** product owner · **Phase:** design — measured and drawn, **rulings owed (T1–T8)**; no code until the owner pastes them back.
 **Hub (mockup · brief · plan · decisions · QA walk, one artifact for the project's life):** `docs/projects/active/COACH_TRYOUTS_PHONE_HUB.html` — published as a Claude Artifact at https://claude.ai/artifact/QYuRFVutfDhACnjKqfAwsu (v1, 2026-09-25). Republish the same file path to stack a version.
 **PM brief:** `COACH_TRYOUTS_PHONE_PM_BRIEF.md` · **TODO:** one line under Active Tasks · **Ledger:** no § until something is built (a planning entry is not a §).

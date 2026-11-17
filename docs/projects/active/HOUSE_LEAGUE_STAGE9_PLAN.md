@@ -1,5 +1,7 @@
 # House league — Club Tier Stage 9 (plan)
 
+**Status:** on the board (Owner Morning Brief).
+
 > **Deep dive walked and 9a drawn 2026-10-24.** Hub https://claude.ai/artifact/UtrYHLaqbkfQQC2kBbGEQ7 (walk · standing back · ladder · 9a drawn · asks):
 > source `docs/projects/active/HOUSE_LEAGUE_STAGE9_HUB.html` (captures as `{{IMG:…}}` placeholders; the published copy
 > inlines them). PM brief: `HOUSE_LEAGUE_STAGE9_PM_BRIEF.md`. Kickoff prompt: `CLUB_TIER_STAGE9_DEEP_DIVE_PROMPT.md`.

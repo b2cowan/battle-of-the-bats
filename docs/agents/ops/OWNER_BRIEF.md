@@ -38,7 +38,7 @@ tracker points here.
 | Moving / gone quiet / days stopped / "started since" | Git history of each project's plan files | Nothing to type; it follows the work |
 | Parked on purpose, closed | `docs/agents/strategy/OWNER_BRIEF_PROJECTS.json` | Only on the owner's word: `state` + `parked: { since, reason }` |
 | A project's name, grouping, "what remains" line | The same registry | Edit the registry |
-| Roadmap items and their status | The tables in `docs/agents/strategy/PRODUCT_ROADMAP.md` §2 | Change the row's Status in the unit of work that changes the fact |
+| Roadmap items and their status | The tables in `docs/agents/strategy/PRODUCT_ROADMAP.md` §2 | Change the row's Status in the unit of work that changes the fact. A board project's `roadmap` field names the rows that cover its whole scope, and the script prints ⚠ when a row's Status does not fit the project's phase |
 | Goals, lanes, phase, next step, dependencies, steps waiting on him | The board file `OWNER_BRIEF_PROJECTS.json` | The session doing the work, in the same commit; lanes and Now order only on the owner's word |
 
 ## Rules the script applies
@@ -56,5 +56,4 @@ tracker points here.
 - The ledger is free text. A new way of wording a result needs adding to `DONE` in the script, or the walk shows
   as "No result recorded".
 - Rulings the owner owes are not computed. They reach the page as a project's `youOwe` line on the board.
-- Until ONE_BOARD_PLAN Session 2, seven projects read "Not checked yet" and seven active plans are not on the board.
 - The page was published without a rendered check in the session that built it.

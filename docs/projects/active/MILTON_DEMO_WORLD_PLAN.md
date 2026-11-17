@@ -1,6 +1,7 @@
 # Milton Bats demo world — build plan (P1 of the Prospect Demo Program)
 
-Status: Phase A built and run on dev 2026-11-10 (committed 9ca8c679d; sign-ups auto-approve under capacity; password only in .env.local) · Parent: `PROSPECT_DEMO_PROGRAM_PLAN.md` (P1, P4c) · Brief: `MILTON_DEMO_WORLD_PM_BRIEF.md`
+**Status:** on the board (Owner Morning Brief).
+History (not kept current): Phase A built and run on dev 2026-11-10 (committed 9ca8c679d; sign-ups auto-approve under capacity; password only in .env.local) · Parent: `PROSPECT_DEMO_PROGRAM_PLAN.md` (P1, P4c) · Brief: `MILTON_DEMO_WORLD_PM_BRIEF.md`
 Playbook (walkthrough): the "House League Demo Playbook" Artifact (republished from this plan's §6).
 Prospect handout (only what he sees — no reset, scripts, gaps or staging steps): `MILTON_DEMO_PROSPECT_WALK.html`, published as
 https://claude.ai/artifact/NqFaetSngvqWEdJQ6u5A4T. Keep it in step with the playbook's five walks + four on-call. It links straight

@@ -1,6 +1,7 @@
 # A schedule on several permits — Implementation Plan
 
-> **Status:** Planning. Planned 2026-11-13 (owner asked: several permits per schedule, an "any permit" finder, per-venue
+> **Status:** on the board (Owner Morning Brief).
+> **History (not kept current):** Planning. Planned 2026-11-13 (owner asked: several permits per schedule, an "any permit" finder, per-venue
 > dates off, an admin choice of per-permit vs one-rate billing). Nothing drawn, nothing built.
 > **Created:** 2026-11-13
 > **Branch:** dev

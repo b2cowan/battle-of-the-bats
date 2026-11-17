@@ -1,6 +1,7 @@
 # Public tournament pages — Stage 8: the new look on for everyone (plan)
 
-**Status:** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a committed `3304c77fe` 2026-11-03**
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** asks A to D RULED 2026-11-03, all as recommended (logged in `BUSINESS_DECISIONS.md`, "Tournament branding is a logo, colours and type"). **Part 1 committed `d4af280e6` 2026-11-03** (record §10; it releases with the flip, ruling D). **Part 2 committed `02e29f453` 2026-11-03** (record §11; it releases with the flip too). **Part 3a committed `3304c77fe` 2026-11-03**
 (record §12; releases with the flip). **Part 3b committed `9b6252e8a` 2026-11-04** (record §13; releases with the flip). **Part 3c committed `62f5841f9` 2026-11-04**
 (record §14; releases with the flip). **Part 3d committed `33386d5df` 2026-11-04** (record §15; releases with the flip; the
 switch-off half-state ends for every public tournament page). **The public feed fix committed `55045ecf4` 2026-11-04** (record §16; its own change,

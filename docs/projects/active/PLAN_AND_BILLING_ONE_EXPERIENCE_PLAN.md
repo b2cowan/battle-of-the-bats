@@ -1,6 +1,7 @@
 # Plan & billing — one experience for every plan
 
-**Status:** Stage 1 Parts 1–3 implemented 2026-10-28; Part 3 validation and owner-walk gates recorded in §9 · PM brief:
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** Stage 1 Parts 1–3 implemented 2026-10-28; Part 3 validation and owner-walk gates recorded in §9 · PM brief:
 `PLAN_AND_BILLING_ONE_EXPERIENCE_PM_BRIEF.md`
 
 > **Sequence rulings (owner, 2026-10-31, all as recommended; index https://claude.ai/artifact/Kua6RAqMA7ChA7QBTNE63a):**
@@ -1410,3 +1411,7 @@ directly to billing, rather than inventing a second allowed zero-team route; rea
 The header's help reuses the shipped Premium first-login article until help sync. Tournament lock links retain their
 admin drawer on ordinary clicks and admin billing on modified clicks; Admin-door removal/old-link redirects stay Stage 3.
 The known static Premium availability/live-gate distinction and stale historical memory facts were reported, not rewritten.
+
+## Carried in from TODO (2026-11-17, One Board Session 2)
+
+- [ ] **Known defect: a removed LAST card never clears "card on file".** Stripe's card-detached event names no customer, so the webhook stops before it clears the card; that changes who gets the "no card yet" reminder. Found in the GST/HST Stage 1 Part 3 review (`GST_HST_STAGE1_BUILD_PROMPT.md` ▶ Progress Part 3 follow-up 1); the owner named this program its owner 2026-11-04.

@@ -8,8 +8,9 @@
 
 > **2026-11-04 (owner):** counsel no longer gates online payments in production or the guardian tier. Wherever this plan says counsel's sign-off gates either, read: the switch stays off until the owner turns it on, after real payments terms and guardian consent wording are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
 
-> **Status:** PLANNED 2026-09-25 — this is the owner-started **full Club capability evaluation** that
-> `PROGRAM_LEAGUE_AND_CLUB.md` parked on 2026-07-28 ("once the Coach Portal work is finalised").
+> **Status:** on the board (Owner Morning Brief).
+> Started 2026-09-25 as the owner's **full Club capability evaluation**, which `PROGRAM_LEAGUE_AND_CLUB.md` parked on
+> 2026-07-28 ("once the Coach Portal work is finalised").
 > **Created:** 2026-09-25 · **Branch:** dev
 > **Companions:** [CLUB_TIER_PRODUCTION_READINESS_PM_BRIEF.md](CLUB_TIER_PRODUCTION_READINESS_PM_BRIEF.md) ·
 > project hub `CLUB_TIER_PRODUCTION_READINESS_HUB.html` = https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 (republish the same path every phase)
@@ -3289,6 +3290,13 @@ walk** (its own checkable page, a § in the Owner QA Ledger) passed.
 Families book, so it is sized at its own mockup session rather than guessed here.
 
 ## 7. Sequencing & dependencies
+
+> ⚖ **Owner 2026-11-17 (One Board Session 2): four pieces move to after the Canadian launch, and the Club release no longer
+> waits for them.** The launch means a club can onboard (sign up, pay us on Stripe, connect its own Stripe, open a house league
+> or a tournament). The four are coaches entering their own team's permits (not drawn), Stage 13f, 13g and 13h (not started),
+> saving a bank check to finish later, and each team's own amount across several permits. This amends the 2026-10-12 ruling
+> that held the release until every Club stage was walked, for these four only. On the board they are one After-launch
+> project, "Club, after launch".
 
 ```
 Stage 0 ─┬─ Stage 1 (shell + 1b buying) ─┬─ Stage 2 (rep teams) ──┬─ Stage 3a ─ 3b ─ 3c (money) ─┐

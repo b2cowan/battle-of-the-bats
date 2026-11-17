@@ -1,6 +1,7 @@
 # Business email addresses — plan (STARTED 2026-11-12; Phase 0 + Phase 1 research done)
 
-**Status:** Phase 0 + Phase 1 done 2026-11-12. **Owner ruled 2026-11-12 (below): free receiving now (Phase 2A);
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** Phase 0 + Phase 1 done 2026-11-12. **Owner ruled 2026-11-12 (below): free receiving now (Phase 2A);
 our own domain mailboxes later, after a handful of paying clients (R1 deferred).** Phase 2A is owner steps in
 the forwarder dashboard + Route 53; nothing else starts until R1 comes back.
 

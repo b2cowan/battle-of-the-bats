@@ -1,5 +1,7 @@
 # Quiet teams and a far-off tournament — plan (owner ruled 2026-11-15)
 
+**Status:** on the board (Owner Morning Brief).
+
 Raised by the owner from production: a team with no activity since September kept getting the same
 "Your week in review" every Sunday, and a tournament entered for next July showed as "Next up".
 Same root: nothing asked whether anything had happened (or was about to) recently.

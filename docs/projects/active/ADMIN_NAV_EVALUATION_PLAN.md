@@ -1,6 +1,7 @@
 # Navigation evaluation across the three portals — plan
 
-**Status (2026-11-09):** evaluation done; drawings rounds 1–3 published; **asks E1–E16 RULED 2026-11-09, all as recommended** (owner: "looks good, i think we are ready to start the build prompts", then "Yes, all as recommended"; design log entry of that date). Build prompts: `ADMIN_NAV_BUILD_PROMPTS_INDEX.md` (Phase 0 + 1 written; each later prompt written after the phase before it lands). Nothing built. Session prompt:
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current) (2026-11-09):** evaluation done; drawings rounds 1–3 published; **asks E1–E16 RULED 2026-11-09, all as recommended** (owner: "looks good, i think we are ready to start the build prompts", then "Yes, all as recommended"; design log entry of that date). Build prompts: `ADMIN_NAV_BUILD_PROMPTS_INDEX.md` (Phase 0 + 1 written; each later prompt written after the phase before it lands). Nothing built. Session prompt:
 `ADMIN_NAV_EVALUATION_PLAN_PROMPT.md`. Drawings: `ADMIN_NAV_EVALUATION_DRAWINGS.html`, published as https://claude.ai/artifact/S7XXbtLwNeZUjEWXzbUcw4
 (round 1 + /design; round 2 from the owner's notes + /design — see §0).
 
@@ -1056,3 +1057,7 @@ exact, let two tabs hold two events across reloads and remove the remembered cho
 route, link, help article and demo tour anchor moving, and of switching an event becoming a navigation (today it keeps
 you on the page). Phase 0 made the remembered choice paint correctly, which removed the reason the question was urgent.
 It is the owner's call whether to open it.
+
+## Carried in from TODO (2026-11-17, One Board Session 2)
+
+- [ ] **Owner call: the 404 page's bottom bar.** On an unrecognised address the root 404 sits outside every shell, so on a phone the visitor bar falls back to its dark skin (found in the Phase 3 walk 2026-11-11). Decide: the warm skin on the 404, or no bottom bar there.

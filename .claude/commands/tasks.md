@@ -18,8 +18,9 @@ don't fix it. **The one exception (owner, 2026-11-03):** after you deliver a lis
 1. **Read `docs/agents/ops/TASK_LIST_PROMPT.md` in full and follow it.** It is the one home for the method: the owner's
    format rulings, how to gather the state fresh, the projects in scope with their hubs, the standing rulings the order
    obeys, how to decide what runs in parallel, and the exact output. Don't work from a summary of it, including this one.
-2. Gather the state fresh, as that file says: git, production, the Owner QA Ledger, the TODO lines and plan headers, the
-   prompts ready to run, and the decisions log. **Never answer from memory or from an earlier list.**
+2. Gather the state fresh, as that file says: **the board first** (`node scripts/owner-brief.mjs`; the board is the only
+   place a project's status is written, owner 2026-11-17), then git, production, the Owner QA Ledger, the prompts ready
+   to run, and the decisions log. The waves follow the board's lanes: Now, then Next. **Never answer from memory or from an earlier list.**
    **Exception, "from the last one" (owner, 2026-11-03):** when the note says the list should be updated from the last
    one ("updated list from the last one", "delta", "what changed"), follow the **"The saved list"** section of
    `TASK_LIST_PROMPT.md` instead: start from `.probe/last-task-list.md` and read only what changed since it was saved.

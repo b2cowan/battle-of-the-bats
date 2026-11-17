@@ -1,6 +1,7 @@
 # Coach portal — touch-target debt
 
-**Status:** named, not started. **Raised:** 2026-08-19, out of the Insights reports portal's
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** named, not started. **Raised:** 2026-08-19, out of the Insights reports portal's
 follow-up calls (`COACH_PORTAL_THREE_OPEN_CALLS_PROMPT.md`, call 2).
 
 ## Why this file exists

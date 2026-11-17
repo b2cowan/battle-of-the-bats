@@ -150,6 +150,8 @@ function readProjects(walks) {
   let settled = 0;
   for (const b of planFiles) {
     if (claimed.has(b)) continue;
+    // A plan moved to the archive is closed; its recent history must not list it as unregistered.
+    if (!fs.existsSync(path.join(ROOT, ACTIVE, b))) continue;
     const f = fileFacts(b);
     if (!f.last || daysSince(f.last) > SHOW_WITHIN_DAYS) continue;
     if (daysSince(f.last) > QUIET_AFTER_DAYS && !openTodo.includes(b)) { settled += 1; continue; }
@@ -173,7 +175,7 @@ function readProjects(walks) {
       parked: p.parked || null, remains: p.remains || '', auto: p.auto,
       goals: p.goals || [], lane: p.lane || null, order: p.order ?? 99, phase: p.phase || null, stage: p.stage || '',
       next: p.next || '', waitsOn: p.waitsOn || [], finishesAfter: p.finishesAfter || [], youOwe: p.youOwe || [],
-      state: p.state || 'open', checked: p.checked !== false };
+      state: p.state || 'open', checked: p.checked !== false, roadmap: p.roadmap || [] };
   });
   // what overtook a project that stopped: projects that started after its last activity
   for (const p of out) {
@@ -194,7 +196,13 @@ function readProjects(walks) {
 // checked: false = not yet truth-checked (ONE_BOARD_PLAN Session 2) — counted, not warned about.
 // The board's own rules are printed as warnings, so a broken board shows at the refresh.
 const MAX_NOW = 3;
-function buildBoard(projects) {
+// A project's `roadmap` names the roadmap rows that cover its whole scope; a row's Status must fit the phase.
+const ROW_FITS_PHASE = {
+  Planning: ['Not started', 'In progress'], Drawing: ['Not started', 'In progress'], 'Asks to rule': ['Not started', 'In progress'],
+  Building: ['In progress', 'Built'], 'Walk owed': ['In progress', 'Built'], 'Ready to release': ['Built'], Live: ['Live'],
+  Parked: ['Not started', 'In progress'],
+};
+function buildBoard(projects, roadmapRows = []) {
   const reg = JSON.parse(read(REGISTRY));
   const goalsDef = reg.goals || [];
   const afterGoals = new Set(goalsDef.filter((g) => g.after).map((g) => g.id));
@@ -222,6 +230,13 @@ function buildBoard(projects) {
     if (laneOf(p) === 'after' && open.some((q) => laneOf(q) !== 'after' && (q.waitsOn.includes(p.id) || q.finishesAfter.includes(p.id))))
       warnings.push(`${p.name} is after launch, but a launch project depends on it.`);
   }
+  for (const p of open) for (const item of p.roadmap) {
+    const row = roadmapRows.find((r) => r.item === item);
+    if (!row) { warnings.push(`${p.name} names a roadmap row that does not exist: "${item}".`); continue; }
+    const fits = ROW_FITS_PHASE[p.phase];
+    if (fits && !fits.includes(row.status))
+      warnings.push(`Roadmap row "${item}" reads ${row.status}, but ${p.name} is at ${p.phase}.`);
+  }
   const notOnBoard = projects.filter((p) => p.auto).map((p) => p.name);
   if (notOnBoard.length) warnings.push(`${notOnBoard.length} active plan(s) are not on the board: ${notOnBoard.join(', ')}.`);
   const unchecked = open.filter((p) => !p.checked).map((p) => p.id);
@@ -244,7 +259,7 @@ const walks = readWalks();
 const production = readProduction();
 const roadmap = readRoadmap();
 const projects = readProjects(walks);
-const board = buildBoard(projects);
+const board = buildBoard(projects, roadmap);
 const count = (list, key) => list.reduce((m, x) => { m[x[key]] = (m[x[key]] || 0) + 1; return m; }, {});
 const DONE_STATUS = /^(live|done)$/i;
 const horizons = [...new Set(roadmap.map((r) => r.horizon))].map((name) => {

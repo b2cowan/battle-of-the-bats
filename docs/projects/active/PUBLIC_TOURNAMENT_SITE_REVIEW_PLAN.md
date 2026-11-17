@@ -1,6 +1,7 @@
 # Public tournament pages — the redesign plan
 
-**Status: Stages 0–6 implemented; Stage 5 owner walk §432 passed 2026-10-31 (60/60 checked, O1–O3 optional and
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current): Stages 0–6 implemented; Stage 5 owner walk §432 passed 2026-10-31 (60/60 checked, O1–O3 optional and
 skipped; both desktop layouts approved as built). Stage 6 manual review completed and owner walk §435 PASSED 68/68
 2026-11-01 (Stage 6 closed). Stage 7 (the pay page) committed 2026-11-01 and owner walk §440 PASSED 34/34 the same
 day (Stage 7 closed). Stage 1a drawn and ruled 2026-11-02 (§4a); built in four parts, walk §448 published 2026-11-03. All 17 design asks

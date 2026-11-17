@@ -5,10 +5,14 @@
 > Written 2026-10-16 from the coordinating session that had been producing these lists by hand. It is a living reference
 > (`docs/agents/ops/`): when the owner changes how they want the list, update this file.
 >
-> **The daily view is `/brief`, not this list** (owner, 2026-11-14). The Morning Brief
-> (`docs/agents/ops/OWNER_BRIEF.md`) carries today's three to five priorities in order. This list is the full
-> working plan (waves, parallel work, prompts). When the two would order the same items differently, the brief's
-> latest order is the owner's most recent call: follow it here, and say so if you think it is wrong.
+> **The board comes first** (owner ruling 2026-11-17, `docs/projects/active/ONE_BOARD_PLAN.md`). The Owner Morning Brief
+> is the board, and its file `docs/agents/strategy/OWNER_BRIEF_PROJECTS.json` is the ONLY place a project's status is
+> written. This list does not decide status or order: it turns the board into waves, parallel work and prompts.
+> - **The waves follow the lanes:** Now (in the owner's order), then Next. Later and After launch appear only when the
+>   owner asks for them, one line each. Never move a project between lanes; recommend it in one line.
+> - **Owner steps come from the board's `youOwe` lines and the walks owed** (the ledger, as the board script reads it).
+> - TODO lines and plan headers point at the board and no longer carry status. Where git or the ledger disagrees with
+>   the board, say so in the list as a ⚠ line (the board line is fixed by the session doing that work, not by this one).
 
 ---
 
@@ -121,6 +125,9 @@ is a delta, the delta rules apply and the filters only trim what is shown.
 
 ## Gather the state fresh (never trust a list from memory, including this file's)
 
+0. **The board:** run `node scripts/owner-brief.mjs` (read-only). Its printed lanes, goals, "waiting on you" count and ⚠
+   lines are the frame. Read `.probe/owner-brief/out/board.json` (lanes, youOwe, warnings) and `projects.json` (each
+   project's phase, now → next, next action, waitsOn, walks owed) for the projects in the lanes you are listing.
 1. **Git:** `git fetch`, then:
    - `git log --format="%h %ad %s" --date=format:%m-%d` since the last list (or the last two days);
    - `git rev-list --count origin/master..dev` (commits not on production) and `origin/dev..dev` (not pushed);
@@ -132,8 +139,9 @@ is a delta, the delta rules apply and the filters only trim what is shown.
    carries ✅, or its text says **PASSED**, **CLOSED** or **MARKED COMPLETE**. List only the open ones. Take each walk's
    **link and tab from the section's own text** (it names the hub URL, the tab and the walk numbers). Never guess a link.
    A section can have open re-checks inside a closed walk: say so only if the text says one is still owed.
-4. **The projects:** each project's TODO line and its plan's status header. The TODO lines are long: read them whole, and
-   cross-check any "BUILT / COMMITTED / owed" claim against git (an "uncommitted" claim is often stale).
+4. **The projects:** the board's line for each (step 0). Open a project's plan body only for what the board does not
+   carry (the stage list, a prompt's precondition). Cross-check a "built / committed / owed" claim against git when it
+   looks stale; a disagreement is a ⚠ line in the list, not an edit.
 5. **Prompts ready to run:** `ls docs/projects/active/*PROMPT*.md`. A prompt exists for the next step of most stages.
    Check its precondition line against what has landed.
 6. **Decisions waiting on the owner:** `docs/agents/strategy/BUSINESS_DECISIONS.md` (entries **Proposed** or **Mixed**),
@@ -142,21 +150,11 @@ is a delta, the delta rules apply and the filters only trim what is shown.
    another session ("I set the console secret yesterday"). If the records are silent, phrase it as a question, not a
    chore.
 
-## The projects in scope (re-verify each; the list grows)
+## The projects in scope
 
-| Project | Plan of record | Hub (the walks and drawings live here; verify the URL in the ledger) |
-|---|---|---|
-| **Club Tier readiness** (with the coach Schedule deep dive merged in, and permits + the club scheduler) | `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` (§6 stages, §7 sequencing), `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` | https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 |
-| **Club Accounting · Teams** (part of the Club release) | `CLUB_ACCOUNTING_TEAMS_PLAN.md` | https://claude.ai/artifact/M3iNQq4N8cRWeZCdN6G8Ps |
-| **The free tournament tier** | `FREE_TOURNAMENT_TIER_REVIEW_PLAN.md` | https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU |
-| **Sidebar Strip & Grid Width** (every portal): CLOSED 2026-10-17; only its **layout-check follow-up** in TODO | `docs/projects/archive/SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md` §13 | https://claude.ai/artifact/5s1QP7HHsctVso78u5tUjC |
-| **Register Your Existing Team** (coach registration) | `COACH_REGISTER_EXISTING_TEAM_PLAN.md` | https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm |
-| **Free coach header parity** | `FREE_COACH_HEADER_PARITY_PLAN.md` | https://claude.ai/artifact/EA2D38WeFe9mk4Qji9535y |
-| **The tournament admin redesign**: CLOSED 2026-10-13; only its **follow-ups group** in TODO | `docs/projects/archive/TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §12 | https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM |
-| **Platform admin as a support console**: QUEUED | `PLATFORM_ADMIN_SUPPORT_CONSOLE_PLAN.md` | none yet |
-
-Also check for **new plans** created since this file was written (`ls -t docs/projects/active/*_PLAN.md | head`). A new
-project the owner started belongs in the list.
+**The board's projects** (step 0), and nothing else: each with its plan files, lane and goals. A new plan that is not on
+the board shows as a ⚠ line in the board script's output; name it in the list as "not on the board yet". Walk and drawing
+links come from the ledger section's own text, never from this file.
 
 ## The rules the order follows (owner rulings; binding unless the owner changes them)
 
@@ -164,6 +162,10 @@ project the owner started belongs in the list.
   2026-10-12; `BUSINESS_DECISIONS.md` 2026-10-16). That includes Stage 9 house league (with the scheduler's house-league
   half), the Families redesign, bank reconciliation (both portals), the calendar feeds, the event-form fixes and the
   merged coach work. **League Plus going on sale the same day is Proposed**, to confirm when Stage 9 opens.
+  **Except (owner 2026-11-17):** four pieces moved to after the Canadian launch (the board's "Club, after launch"
+  project, plan §7): coach-entered permits, Stage 13f–13h, bank-check save for later, each team's amount on several permits.
+- **Canada first, US after; the Canadian launch = a club can onboard; marketing and the demo come after** (owner
+  2026-11-17). The board's goals carry this.
 - **The two queued projects:** the **free tournament tier** started after the tournament redesign closed (it may run while
   Club Tier finishes). **Platform admin starts only after the Club release.**
 - **Shipping ahead of QA walks is accepted** while there are no paying customers. Walks never block a build or a release.
@@ -174,6 +176,9 @@ project the owner started belongs in the list.
 
 ## How to decide the order
 
+- **The lanes set it.** Wave 1 is the Now lane in the owner's order, plus every walk owed and every owner step that can
+  be done now. The Next lane follows in Wave 2 onward, sequenced by each project's `waitsOn`. The rules below decide only
+  what runs in parallel inside a wave.
 - **One drawing session per hub at a time.** Two sessions publishing the Club Tier hub collide. So Club drawings queue
   one after another, while builds and other projects' drawings run beside them.
 - **Builds on the same screens run in sequence; builds on different screens run in parallel.** Name the shared screen when
@@ -203,7 +208,7 @@ project the owner started belongs in the list.
    sessions (a `/strategy` or `/marketing` pass), then, as its own group, **later in this wave**: the items that wait
    and the follow-ups to chats already open (the 2026-10-19 grouping ruling above).
 4. **Waves 2 onward**, each with its parallel group and, separately, its later items with the reason each waits.
-5. **After the Club release:** the platform admin project.
+5. **Later and after launch:** only if asked, one line per project from the board's Later and After launch lanes.
 6. **Fillers.**
 7. **Still waiting on you:** each a question with your recommendation.
 8. **Housekeeping:** uncommitted records worth committing, and by whose session.

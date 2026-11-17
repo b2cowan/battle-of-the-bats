@@ -1,6 +1,7 @@
 # FieldLogicHQ's own sales tax — charging, recording and filing it correctly
 
-> **Status:** PLANNED 2026-10-31 — nothing built. Written by the Accounting Agent from the research in
+> **Status:** on the board (Owner Morning Brief).
+> **History (not kept current):** PLANNED 2026-10-31 — nothing built. Written by the Accounting Agent from the research in
 > `docs/agents/accounting/` (index: `ACCOUNTING_INDEX.md`). **Owner decisions T1–T7 RULED 2026-10-31** (§3; decision
 > page https://claude.ai/artifact/Si21JDJNyhQLFjmaS9Wy3t, paste-back 7/7). US club payments review DONE 2026-10-31;
 > its owner decisions U1–U5 RULED 2026-10-31 (§4 Stage 8a).

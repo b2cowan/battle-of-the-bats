@@ -1,5 +1,7 @@
 # Club Tier Stage 13, expanded — How people move through the club (navigation + journeys)
 
+**Status:** on the board (Owner Morning Brief).
+
 **Opened 2026-11-06 by the owner.** Stage 13 of `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` ("Navigation across the three
 portals") grows from a nav inventory into a review of **how each person who runs a club gets their work done**, end to
 end, on real screens. PM brief: `CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PM_BRIEF.md`.

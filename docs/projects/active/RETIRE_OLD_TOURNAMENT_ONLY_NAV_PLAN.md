@@ -1,6 +1,7 @@
 # Retire the old tournament-only menu and the duplicate tournaments-list address
 
-**Status:** NOTE ONLY — nothing built. Opened 2026-10-30 (owner, during the Plan & billing Stage 3 walk, step 2).
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** NOTE ONLY — nothing built. Opened 2026-10-30 (owner, during the Plan & billing Stage 3 walk, step 2).
 **Why this exists:** the owner ruled the account-level menu ("Tournaments" row + "Account" group: Staff & access,
 Audit log, Settings, PDF settings) is **an old nav the product no longer navigates to**, and asked for it to be
 retired so nobody builds a link to it again.

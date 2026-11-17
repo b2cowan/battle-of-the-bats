@@ -1,6 +1,7 @@
 # Bank check through a volunteer's eyes — plan of record
 
-**Status:** STARTED 2026-11-08. Every owner ask is ruled (§0). **S1 committed `bdb56dd2f` 2026-11-08** (§4; owner walk
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** STARTED 2026-11-08. Every owner ask is ruled (§0). **S1 committed `bdb56dd2f` 2026-11-08** (§4; owner walk
 owed). **S1b committed `4b9e9a655` 2026-11-08** (§4); owner walk §497 PASSED 24/24 2026-11-09; S2 committed `0147063c5` 2026-11-09 (§4); owner walk §503 PASSED 23/23 2026-11-09; next S3 (S1 needs no walk, owner: "the words are good"). PM brief:
 `BANK_CHECK_NOVICE_UX_PM_BRIEF.md`.
 

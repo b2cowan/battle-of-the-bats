@@ -1,6 +1,7 @@
 # Plans end — and step down — at the renewal date (cancel, downgrade to free, downgrade to a lower paid plan)
 
-**Status:** RULED by the owner 2026-10-31 (from walk item D3, Support Console Stage 2 walk). Stages 1–3 built and walked (§444, §453, §459); Stages 1 and 2 on production since the 2026-11-05 promote; Stage 4 (words, emails, windows, help) not started.
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** RULED by the owner 2026-10-31 (from walk item D3, Support Console Stage 2 walk). Stages 1–3 built and walked (§444, §453, §459); Stages 1 and 2 on production since the 2026-11-05 promote; Stage 4 (words, emails, windows, help) not started.
 **Gap review 2026-10-31:** a second read of this plan against the code found three money gaps, a test gap and six smaller ones; the
 owner accepted every recommendation the same day. They are §1 items 7–9, §3a, and the re-cut stages in §4. Where §3 and §3a
 disagree, §3a wins.

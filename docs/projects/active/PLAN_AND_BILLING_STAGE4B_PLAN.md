@@ -1,5 +1,7 @@
 # Plan & billing · Stage 4b · A Premium coach becomes a club, in place · build plan
 
+**Status:** on the board (Owner Morning Brief).
+
 **Written 2026-10-30 · screens drawn and all eight rulings made the same day (owner) · PM brief: `PLAN_AND_BILLING_STAGE4B_PM_BRIEF.md` · build prompt: `PLAN_AND_BILLING_STAGE4B_BUILD_PROMPT.md` · drawings: `PLAN_AND_BILLING_STAGE4B_DECISIONS.html` (second pass; Codex's first pass is `PLAN_AND_BILLING_STAGE4B_PREMIUM_TO_CLUB_DRAWINGS.html`) · parent plan: `PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md` §5 Stage 4b, §6 B (4)**
 
 > Every "saw in code" line below was read from the tree on 2026-10-30 by a read-only pass and the load-bearing ones were re-opened

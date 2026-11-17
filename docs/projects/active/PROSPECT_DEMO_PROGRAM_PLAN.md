@@ -1,6 +1,7 @@
 # Prospect Demo Program — a house-league admin, then his president — Implementation Plan
 
-> **Status:** Planning
+> **Status:** on the board (Owner Morning Brief).
+> **History (not kept current):** Planning
 > **Created:** 2026-11-09
 > **Branch:** dev
 > **PM brief:** `PROSPECT_DEMO_PROGRAM_PM_BRIEF.md`

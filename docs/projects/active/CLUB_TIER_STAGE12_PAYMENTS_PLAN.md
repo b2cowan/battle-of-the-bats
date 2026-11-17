@@ -1,5 +1,7 @@
 # Club Tier Stage 12 — families pay online (plan)
 
+**Status:** on the board (Owner Morning Brief).
+
 > Opened 2026-10-24 with a drawing round (kickoff: `CLUB_TIER_STAGE12_KICKOFF_PROMPT.md`). Drawings: the Club Payments
 > Drawings artifact (source `CLUB_TIER_STAGE12_DRAWINGS.html`, built by `.probe/s12/build.mjs`). PM brief:
 > `CLUB_TIER_STAGE12_PAYMENTS_PM_BRIEF.md`. Parent: `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` § Stage 12. Decisions that bind

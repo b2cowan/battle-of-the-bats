@@ -375,3 +375,7 @@ Resend, AWS).
    upload and delete change). Its own commit; the prod migration goes with the code.
 3. **Finding 4** (the standing owner call) and **finding 5** (an owner call): small, once ruled.
 4. **Findings 6 and 7**, then the Small line.
+
+## Carried in from TODO (2026-11-17, One Board Session 2)
+
+- [ ] **Owner call still open (finding 2):** neither the file-store route nor the rules route locks a completed event. The file-store, link-row and Rules fixes are built (W2 fix B and after); their migrations go to production after the code.

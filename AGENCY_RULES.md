@@ -39,7 +39,7 @@ These rules apply to all AI coding assistants working in this repository.
 - **Verification**: The user is responsible for performing all **browser-based testing** and visual verification unless explicitly asked otherwise. This is intended to minimize model token usage and browser tool execution.
 - **Resource-aware static checks**: During routine coding, prefer focused validation (`npm run verify:changed` or `npm run lint:focused -- <file...>`) over repeated full-project lint/typecheck sweeps. Run `npm run typecheck` when changes touch shared modules, route/auth/proxy/config behavior, API/data contracts, or broad refactors. Run expensive checks serially, stop checks that appear hung or dangerously resource-heavy, and report any skipped verification plus residual risk. See `docs/agents/ops/AGENT_VERIFICATION_WORKFLOW.md` and `memory/agent-verification-workflow.md`.
 - **Documentation**: Two memory stores exist — do not conflate them. The **Claude auto-memory** lives OUTSIDE the repo (a per-user store, loaded automatically into Claude Code sessions) and is the living record Claude maintains. The **in-repo `memory/` directory** is the cross-assistant store read by other AI tools; any write there must update `memory/MEMORY.md` in the same change (that index has drifted months behind its own files before).
-- **Task Tracking**: Agents MUST update the `TODO.md` file in the root directory. Mark items as completed `[x]` once verified and move the line to `docs/projects/archive/TODO_COMPLETED_ARCHIVE.md`. TODO.md is an index — one line per item, detail in the plan file; `npm run check:todo-size` warns past 70 KB (cut 2026-10-26 from 1.2 MB).
+- **Task Tracking (amended 2026-11-17, owner ruling 3 in `docs/projects/active/ONE_BOARD_PLAN.md`)**: a project's **status lives only on the board**, `docs/agents/strategy/OWNER_BRIEF_PROJECTS.json` (shown as the Owner Morning Brief); a session that moves a project changes its board line in the same commit as the work. `TODO.md` is **one line per project**, pointing at the board and the project's plan, plus a short **Chores** list; it carries no status. A project's steps live in its plan's stage list; an idea goes to `docs/projects/IDEAS_BACKLOG.md`. When a project closes (the owner's word), tick its line `[x]` and move it to `docs/projects/archive/TODO_COMPLETED_ARCHIVE.md`. `npm run check:todo-size` warns past 70 KB.
 - **Status wording (anti-drift)**: In TODO.md, plan headers, ledgers, and memory, never record a deliverable's state as a perishable negative — "uncommitted", "NOT on prod", "DEV-ONLY" go stale silently the moment another session ships (the 2026-08-10 audit found ~25 such claims, all false). Record the positive fact with its anchor instead: "committed `<hash>` <date>", "applied to prod <date> (job N)". Deployment state has one home — the release-history record and the Owner QA Ledger; other docs point there rather than restating it. After every production promote, run the post-release truth-up checklist in `.claude/commands/release.md` (Phase 2b).
 - **One spelling, everywhere a customer can read it (owner ruling 2026-08-24, binding).** A word the
   product shows has exactly **one** spelling on every surface — screens, table/column headings (incl.
@@ -63,11 +63,11 @@ These rules apply to all AI coding assistants working in this repository.
 
 All planning and reference documentation follows a three-tier structure:
 
-### `TODO.md` — High-level task list only
-- One line per task (or a small nested group for closely related sub-items)
-- Links to the relevant detailed plan file for full implementation notes
-- No file paths, SQL, code blocks, or step-by-step instructions
-- Example entry: `- [ ] **Item 1** — Generalized design token refactor (see docs/projects/active/DESIGN_SYSTEM_PLAN.md)`
+### `TODO.md` — one line per project (since 2026-11-17)
+- One line per board project, pointing at the board for its status and at its plan for its steps
+- A short **Chores** list for one-off housekeeping that belongs to no project
+- No status, file paths beyond the plan link, SQL, code blocks, or step-by-step instructions
+- Example entry: `- [ ] **Club Communications** — status on the board · plan [CLUB_COMMUNICATIONS_PLAN.md](docs/projects/active/CLUB_COMMUNICATIONS_PLAN.md)`
 
 ### `docs/projects/` — Project plans with a lifespan
 - `docs/projects/active/` — plans for features currently in flight

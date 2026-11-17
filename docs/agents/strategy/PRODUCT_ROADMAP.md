@@ -41,7 +41,7 @@ column names, keep one item per row, and change a row's **Status** in the same u
 | Track | Lane | Item | Size | Status | Ruled |
 |---|---|---|---|---|---|
 | Product | What the board asked for | Friend requests in the draft, live | Small | Built | |
-| Product | What the board asked for | Group email to coaches | Small | Not started | |
+| Product | What the board asked for | Group email to coaches | Small | In progress | |
 | Product | The Club product | One release of everything built since 5 November | Medium | In progress | |
 | Technology | Security | Two-step sign-in, live | Small | Built | |
 | Technology | Security | Access review fixes, live | Small | Built | |

@@ -1,6 +1,7 @@
 # House league — the draft board at scale (plan)
 
-**Status:** drawn and RULED 2026-10-26 (A1–A12 yes, as recommended; the steps drawer requested by the owner in
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** drawn and RULED 2026-10-26 (A1–A12 yes, as recommended; the steps drawer requested by the owner in
 round 3). Build prompt: `HOUSE_LEAGUE_DRAFT_BOARD_AT_SCALE_BUILD_PROMPT.md`. **Built and committed 2026-10-26:** the board
 `4aad77562`, families together in the draft `a12fd32e2`, help and records after them. Owner QA walk §387 owed
 (https://claude.ai/artifact/F3P4GoqonbFY9fjh2NPPn3). See §6.

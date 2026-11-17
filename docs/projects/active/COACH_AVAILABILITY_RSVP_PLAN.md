@@ -5,7 +5,8 @@
 > families and coaches both set, latest change wins, families locked at the start. See
 > [ONE_ATTENDANCE_RECORD_PLAN.md](ONE_ATTENDANCE_RECORD_PLAN.md). Where this plan and that one disagree, that one wins.
 
-**Status (2026-11-13): Drawn + ruled 2026-11-13 (all 15 asks A); BUILT on `dev` as Signed-in family accounts Stage 4b** — Session 1
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current) (2026-11-13): Drawn + ruled 2026-11-13 (all 15 asks A); BUILT on `dev` as Signed-in family accounts Stage 4b** — Session 1
 `22db0210d` + `7dd71b435` (watched automation) + records `8b21c44cd`; Session 2 `b5d121f0c`; Session 3 `fdae0e4f0` + records
 `8e7c7520b`; Session 4 (closeout: the owner's Session 4 rulings, consent 0.2, the Remind daily cap, mig 482) built 2026-11-13, its
 commit recorded in [SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md](SIGNED_IN_FAMILY_STAGE4B_BUILD_PROMPT.md)'s Progress block. Migrations 476, 477, 479, 480, 482 on DEV only; prod order 476 → 477 →

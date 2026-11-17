@@ -6,7 +6,8 @@
 > **Not legal advice; not reviewed by a lawyer.** No lawyer gate (owner 2026-11-04): `/legal` flags, the owner decides when.
 > Marks: **[V]** = opened this session (2026-11-08); **[H]** = handed over (a helper's report, a memory note or an earlier doc), not re-opened.
 
-**Status:** PLAN WRITTEN 2026-11-08; owner sheet §3 RULED 2026-11-08; **6.1 drafts v0.2 written 2026-11-08** (progress line in
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** PLAN WRITTEN 2026-11-08; owner sheet §3 RULED 2026-11-08; **6.1 drafts v0.2 written 2026-11-08** (progress line in
 §5 6.1); **6.2 PLANNED 2026-11-08, six rulings (§5 6.2 RULED block); next the 6.2 drawing round + build Chunk 1**, 6.5 in
 parallel; nothing built. No release timing in this plan (house rule): the
 order below is by dependency and rework risk.

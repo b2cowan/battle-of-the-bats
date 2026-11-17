@@ -1,6 +1,7 @@
 # Bracket game-order rule — a game cannot start before the games it depends on
 
-**Status:** RULED 2026-10-29 (owner), not started. Parked until the weekly usage refreshes (weekend of 2026-11-01); nothing built, nothing investigated beyond the trigger below.
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** RULED 2026-10-29 (owner), not started. Parked until the weekly usage refreshes (weekend of 2026-11-01); nothing built, nothing investigated beyond the trigger below.
 
 ## The rule (owner, 2026-10-29)
 > It must be **impossible** in real life to schedule a game before a game it depends on. The admin schedule editor **blocks the save**.

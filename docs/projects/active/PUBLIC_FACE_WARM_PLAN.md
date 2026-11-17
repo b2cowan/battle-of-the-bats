@@ -1,6 +1,7 @@
 # The public face, warm — marketing, sign-in and emails — plan
 
-**Status:** WALKED AND DRAWN 2026-10-22 · **ROUND 1 RULED 2026-10-23** (see the rulings below). **Project index** (stages, model per stage, dated log; db-backed, update by data writes): https://claude.ai/artifact/D5ZENgbwc8EjPQFn5MS8uu (source `PUBLIC_FACE_WARM_INDEX.html`). The walk, the ladder, the identity and the end state are one page:
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** WALKED AND DRAWN 2026-10-22 · **ROUND 1 RULED 2026-10-23** (see the rulings below). **Project index** (stages, model per stage, dated log; db-backed, update by data writes): https://claude.ai/artifact/D5ZENgbwc8EjPQFn5MS8uu (source `PUBLIC_FACE_WARM_INDEX.html`). The walk, the ladder, the identity and the end state are one page:
 https://claude.ai/artifact/M1ehQVxvLzMiTZfJDMtcft (source `PUBLIC_FACE_WARM_WALK.html`, built from `.probe/pfw/src/` by
 `.probe/pfw/build-walk.mjs`). Fourteen asks; nothing is built. `/design` (D1–D13) and `/ux` (U1–U8) ran before the hand-off; their drawn changes are on the page's Checks tab (Ask 12), and the two calls they raised are Asks 13 (where the sign-up wordmark leads) and 14 (one lime per marketing view). **Scope trimmed 2026-10-19:** S2 (sign-in and sign-up)
 and the two account emails moved to The first look (`FIRST_LOOK_SIGNUP_PLAN.md`, its Ask 1).

@@ -1,6 +1,7 @@
 # Signed-in family accounts — Implementation Plan
 
-**Status:** Stages 1–3 built and committed (owner rulings 2026-10-31); Stages 4–5 wait on Club Stage 14. Current status lives in the TODO line.
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** Stages 1–3 built and committed (owner rulings 2026-10-31); Stages 4–5 wait on Club Stage 14. Current status lives in the TODO line.
 **Decision of record:** `docs/agents/strategy/BUSINESS_DECISIONS.md` — 2026-10-31 "A family gets an account when their child
 is PLACED ON A TEAM…" (amends 2026-10-29 "The end state is an app where everyone signs in").
 **PM brief:** `SIGNED_IN_FAMILY_ACCOUNTS_PM_BRIEF.md`

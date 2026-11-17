@@ -1,5 +1,7 @@
 # House League: team-change emails after publishing (plan)
 
+**Status:** on the board (Owner Morning Brief).
+
 > **Drawn and ruled 2026-11-10.** Raised by the owner during the Family App walk (the three-sibling step): after a division is
 > published, every move or late placement opens its own window and sends its own email, so three siblings placed one by one
 > mean three emails and a child dragged between teams means more.

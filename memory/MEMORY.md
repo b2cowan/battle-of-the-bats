@@ -1,10 +1,12 @@
 # FieldLogicHQ Memory Index
 
-- [Bank check novice UX evaluation](bank-check-novice-ux-evaluation.md) — Codex evaluated both portals on dev at 1440/390 and incorporated a source-checked comparison with Claude on 2026-11-08; revised drawings and eight proposed owner asks live in the local HTML artifact. No product decision accepted or product code changed in this evaluation.
+> **Project status lives on the board** (owner ruling 2026-11-17): `docs/agents/strategy/OWNER_BRIEF_PROJECTS.json`, shown as the Owner Morning Brief. Entries here keep lessons and rulings and point at the board for where a project stands; never write a project's status here.
 
-- [Public tournament Stage 6](../docs/projects/active/PUBLIC_TOURNAMENT_STAGE6_BUILD_PROMPT.md) — implementation and manual review completed 2026-10-31; shared first-paint tab facts, current-publication crown gate and empty-withheld-division fix verified; 315 tests pass. [Owner walk §435](https://fieldlogichq-stage6-owner-walk.b2cowan.chatgpt.site) published privately (66 steps/16 parts); owner result pending. Implementation committed `295ebce8a` on dev 2026-10-31 (all parts combined). Next build: Stage 7 (pay page) or Stage 1a (look ownership), owner's choice.
+- [Bank check novice UX evaluation](bank-check-novice-ux-evaluation.md) — Codex evaluated both portals on dev at 1440/390 on 2026-11-08, with a source-checked comparison with Claude; the revised drawings and eight owner asks live in the local HTML artifact. Status on the board.
 
-- [Public tournament Stage 5](public-tournament-stage5.md) — owner walk §432 passed 2026-10-31; both desktop layouts approved, optional installed-app checks skipped; eight review corrections and their verification are recorded in the plan and ledger.
+- [Public tournament Stage 6](../docs/projects/active/PUBLIC_TOURNAMENT_STAGE6_BUILD_PROMPT.md) — shared first-paint tab facts, the current-publication crown gate and the empty-withheld-division fix; [owner walk §435](https://fieldlogichq-stage6-owner-walk.b2cowan.chatgpt.site). Status on the board.
+
+- [Public tournament Stage 5](public-tournament-stage5.md) — both desktop layouts approved by the owner (walk §432); eight review corrections and their verification are recorded in the plan and ledger. Status on the board.
 
 - [Plans end at renewal · Stage 0](design_decisions.md) — owner ruled all nine asks as recommended 2026-10-31: a waiting cancel rides the plan card's amber waiting-change line with an "Ending" chip; the undo door is spelled "Keep {Plan}", never "Keep my plan"; Keep is a question window; End now is an operator-only red link with a typed Why; the overdue data clock starts on the end date. Plan: `docs/projects/active/PLAN_ENDS_AT_RENEWAL_PLAN.md`.
 

@@ -1,6 +1,7 @@
 # Our own invoices, and Stripe run from our own platform admin
 
-**Status: PLANNED, nothing built (2026-10-31).** Stripe walks 1 to 9 closed 2026-10-31; the round-2 staff drawings' 19 asks
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current): PLANNED, nothing built (2026-10-31).** Stripe walks 1 to 9 closed 2026-10-31; the round-2 staff drawings' 19 asks
 were ruled 2026-10-31; Stage 0 no longer waits for Plan & billing Stage 5. The stages are numbered in "Stage list of record"
 below. Stage 6 (customers' own invoice list) still needs its own design session. (Superseded: "planning starts after the
 Plan & billing project is complete", owner 2026-10-30.) Everything under "Claude's notes" is a suggestion, not a decision.

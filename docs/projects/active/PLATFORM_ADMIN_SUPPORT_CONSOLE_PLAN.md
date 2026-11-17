@@ -1,6 +1,7 @@
 # Platform admin, reorganized for the support team's jobs — plan
 
-**Status:** QUEUED 2026-10-10 (owner); cleared to run in parallel with Club Tier 2026-10-24 (owner: "don't take my
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** QUEUED 2026-10-10 (owner); cleared to run in parallel with Club Tier 2026-10-24 (owner: "don't take my
 after club tier too literally, I am fine running them in parallel, they are different areas of the application
 completely"). **Kickoff walked and end state drawn 2026-10-24** (from `PLATFORM_ADMIN_SUPPORT_CONSOLE_KICKOFF_PROMPT.md`).
 **Owner ruled 2026-10-24** (paste-back; see "Owner rulings" below). Four items stay open. The bulk plan-change fix

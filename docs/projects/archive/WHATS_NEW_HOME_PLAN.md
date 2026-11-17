@@ -1,6 +1,7 @@
 # What's New Gets a Home — Plan
 
-**Status:** drawings approved, all eight asks as recommended (owner, 2026-11-07). Stages A, B and C built 2026-11-07 (typecheck, focused lint, `tests/unit/whats-new-home-guard.test.ts` and the sidebar/billing guards pass; help sentences about the dot corrected); browser walk owed, commit owed. Stage D (coaches Overview note) not started. No announced entry exists yet, so nothing lights for customers until the first yes at a release.
+**Status:** on the board (Owner Morning Brief).
+**History (not kept current):** drawings approved, all eight asks as recommended (owner, 2026-11-07). Stages A, B and C built 2026-11-07 (typecheck, focused lint, `tests/unit/whats-new-home-guard.test.ts` and the sidebar/billing guards pass; help sentences about the dot corrected); browser walk owed, commit owed. Stage D (coaches Overview note) not started. No announced entry exists yet, so nothing lights for customers until the first yes at a release.
 **Drawings:** https://claude.ai/artifact/45KhvG8ngZeMsy1Pwq26D7 (`docs/projects/active/WHATS_NEW_HOME_DRAWINGS.html`)
 **PM brief:** `WHATS_NEW_HOME_PM_BRIEF.md`
 
