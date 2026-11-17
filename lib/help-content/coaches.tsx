@@ -1616,6 +1616,22 @@ const coachesHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'faq-terms-and-privacy',
+          question: 'Where are your Terms of Service and Privacy Policy, and when do I agree to them?',
+          answerText: 'Both are linked at the foot of every page, under Sign out in the account menu (Terms, Privacy), on your account page, and on the sign-in and sign-up cards. Each version stays at its own address. You tick one box when you create your account. If you had an account before the Terms were published, a one-time screen asks you on your next sign-in. If we make a change that reduces your rights or raises what you pay, we email the owners 30 days ahead and the screen asks again; an owner of a paid plan can cancel from it instead. Before a plan starts or changes, a Before you continue window appears if you have not agreed to the current version, then carries on where you left off. We keep which version you agreed to, the words you ticked, your email address, when and where, and no internet (IP) address, for at least six years after your account closes. Your purchase email links the version for that purchase.',
+          keywords: ['terms', 'terms of service', 'privacy', 'privacy policy', 'agree', 'accept terms', 'updated terms', 'before you continue', 'legal'],
+          answer: (
+            <>
+              <p>Both are linked at the foot of every page, under <strong>Sign out</strong> in the account menu (<strong>Terms</strong> &middot; <strong>Privacy</strong>), on your account page, and on the sign-in and sign-up cards. Each version stays at its own address.</p>
+              <ul>
+                <li><strong>When you agree:</strong> you tick one box when you create your account. If you had an account before the Terms were published, a one-time screen asks you on your next sign-in. If we make a change that reduces your rights or raises what you pay, we email the owners 30 days ahead and the screen asks again; an owner of a paid plan can cancel from it instead.</li>
+                <li><strong>Before a plan starts or changes</strong>, a &ldquo;Before you continue&rdquo; window appears if you haven&rsquo;t agreed to the current version, then carries on where you left off. The line beside a plan&rsquo;s button reminds you the plan renews until you cancel.</li>
+                <li><strong>What we keep:</strong> which version you agreed to, the words you ticked, your email address, when and where &mdash; no internet (IP) address &mdash; for at least six years after your account closes. Your purchase email links the version for that purchase.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
           id: 'faq-premium-taxes',
           question: 'What tax am I charged, and why?',
           answerText: `Our prices are ${BILLING_TAX_WORDS.plusTax}. The tax is worked out from your billing address: GST, or HST in the provinces that charge it, named with its rate on every quote and invoice, for example HST 13%. Before you pay, the window shows the price, the tax on its own line, and Due today, which is the total you are charged. If the charge has changed by the time you press the button, nothing is charged; the window shows the new figure and asks you to check it and press again. A renewal shows the price before tax with ${BILLING_TAX_WORDS.plusTax} under it. You can type a GST/HST number on Stripe’s payment page; it prints on your invoices and the tax still applies. If a charge is ever refunded, Stripe emails a credit note that shows the tax given back. If you turn your portal into a club with Start your club, the club’s address and name go on the club’s invoices, and the unused part of your Premium period is credited against the first Club charge. If your billing also pays for another Coaches Portal, the portal can’t become a club on its own: contact us and we’ll set the club up.`,

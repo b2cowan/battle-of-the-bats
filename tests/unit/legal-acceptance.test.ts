@@ -14,17 +14,24 @@ import {
   mirroredTermsVersion,
 } from '../../lib/legal-acceptance-rules.ts';
 import { recordLegalAcceptance, writeFixtureAcceptance } from '../../scripts/lib/record-legal-acceptance.mjs';
-import { LEGAL_DOCUMENTS } from '../../lib/legal-documents.ts';
+import { LEGAL_DOCUMENTS, currentVersion } from '../../lib/legal-documents.ts';
+import { LEGAL_PAGES_PUBLISHED } from '../../lib/legal-pages-switch.ts';
 
 /**
  * ACCEPTANCE OF THE TERMS — the engine (GST/HST Stage 6 step 6.3, Chunk A; rulings R1–R10 of 2026-11-09). Behaviour, run for
- * real over a fake database: the rule, the record, the check every shell and gated route asks, and who is exempt. Production is
- * off until 6.7, so "dark means invisible" is proved first.
+ * real over a fake database: the rule, the record, the check every shell and gated route asks, and who is exempt. Until 6.7 the
+ * pages were off, so "dark means invisible" was proved first; since the switch flipped (2026-11-17) that suite runs only if it is
+ * set back, and the "on" suites record the dated current version instead of the preview's 'draft'.
  */
 
 const root = resolve(import.meta.dirname, '../..');
 const OFF = {};
 const PREVIEW = { LEGAL_PAGES_PREVIEW: 'true', STRIPE_SECRET_KEY: 'sk_test_x' };
+/** The versions a door records with the pages on: the dated current ones once published, 'draft' in the preview before. */
+const V = currentVersion('terms', PREVIEW)!;
+const PV = currentVersion('privacy', PREVIEW)!;
+/** A recorded version the current one does not accept: a preview 'draft' once published; a later date in the preview. */
+const STALE = LEGAL_PAGES_PUBLISHED ? 'draft' : '2027-01-01';
 type Row = Record<string, unknown>;
 
 // ---------------------------------------------------------------- the rule
@@ -134,7 +141,7 @@ function harness({ rows = [] as Row[], staff = [] as string[], failInsert = fals
 
 const person = (over: Row = {}) => ({ id: 'u1', email: 'pat@example.test', app_metadata: {}, ...over });
 
-describe('dark means invisible: with the pages off nothing is read, recorded or refused', () => {
+describe('dark means invisible: with the pages off nothing is read, recorded or refused', { skip: LEGAL_PAGES_PUBLISHED && 'the pages are published (6.7)' }, () => {
   it('the state is off, without a query', async () => {
     const h = harness();
     assert.deepEqual(await h.mod.checkAcceptance(person(), OFF), { state: 'off', hadEarlier: false });
@@ -160,7 +167,7 @@ describe('dark means invisible: with the pages off nothing is read, recorded or 
   });
 });
 
-describe('recordAcceptance in the dev preview', () => {
+describe('recordAcceptance with the pages on (published since 6.7; the dev preview before it)', () => {
   it('refuses terms_changed when the page showed another version, and writes nothing', async () => {
     const h = harness();
     for (const shown of ['2027-01-01', undefined, null]) {
@@ -171,24 +178,24 @@ describe('recordAcceptance in the dev preview', () => {
   });
   it('writes the row — both versions, the exact sentence, the door, the email as text — THEN the mirror', async () => {
     const h = harness();
-    assert.deepEqual(await h.mod.recordAcceptance({ user: person(), door: 'sign_in_screen', shownTermsVersion: 'draft' }, PREVIEW), { ok: true, recorded: true });
+    assert.deepEqual(await h.mod.recordAcceptance({ user: person(), door: 'sign_in_screen', shownTermsVersion: V }, PREVIEW), { ok: true, recorded: true });
     assert.equal(h.table.length, 1);
     const row = { ...h.table[0] };
     delete row.accepted_at;
     assert.deepEqual(row, {
-      user_id: 'u1', user_email: 'pat@example.test', terms_version: 'draft', privacy_version: 'draft',
+      user_id: 'u1', user_email: 'pat@example.test', terms_version: V, privacy_version: PV,
       box_text: ACCEPTANCE_BOX_TEXT, door: 'sign_in_screen',
     });
-    assert.deepEqual(h.mirrorWrites, [{ id: 'u1', app_metadata: { [TERMS_ACCEPTED_KEY]: 'draft' } }]);
+    assert.deepEqual(h.mirrorWrites, [{ id: 'u1', app_metadata: { [TERMS_ACCEPTED_KEY]: V } }]);
   });
   it('no IP address and no device are kept (R1)', async () => {
     const h = harness();
-    await h.mod.recordAcceptance({ user: person(), door: 'signup', shownTermsVersion: 'draft' }, PREVIEW);
+    await h.mod.recordAcceptance({ user: person(), door: 'signup', shownTermsVersion: V }, PREVIEW);
     assert.deepEqual(Object.keys(h.table[0]).sort(), ['accepted_at', 'box_text', 'door', 'privacy_version', 'terms_version', 'user_email', 'user_id']);
   });
   it('a failed insert writes no mirror — the mirror never claims what the table lacks', async () => {
     const h = harness({ failInsert: true });
-    assert.deepEqual(await h.mod.recordAcceptance({ user: person(), door: 'signup', shownTermsVersion: 'draft' }, PREVIEW), { ok: false, code: 'save_failed' });
+    assert.deepEqual(await h.mod.recordAcceptance({ user: person(), door: 'signup', shownTermsVersion: V }, PREVIEW), { ok: false, code: 'save_failed' });
     assert.deepEqual(h.mirrorWrites, []);
   });
 });
@@ -196,14 +203,14 @@ describe('recordAcceptance in the dev preview', () => {
 describe('checkAcceptance: the table is the truth, the mirror a cache', () => {
   it('a mirror that says accepted costs no query at all', async () => {
     const h = harness();
-    assert.equal(await h.mod.acceptanceState(person({ app_metadata: { [TERMS_ACCEPTED_KEY]: 'draft' } }), PREVIEW), 'accepted');
+    assert.equal(await h.mod.acceptanceState(person({ app_metadata: { [TERMS_ACCEPTED_KEY]: V } }), PREVIEW), 'accepted');
     assert.deepEqual(h.reads, []);
     assert.deepEqual(h.staffChecks, []);
   });
   it('no mirror, a row in the table: accepted, and the mirror is repaired', async () => {
-    const h = harness({ rows: [{ user_id: 'u1', terms_version: 'draft', accepted_at: '2026-11-09T10:00:00Z' }] });
+    const h = harness({ rows: [{ user_id: 'u1', terms_version: V, accepted_at: '2026-11-09T10:00:00Z' }] });
     assert.equal(await h.mod.acceptanceState(person(), PREVIEW), 'accepted');
-    assert.deepEqual(h.mirrorWrites, [{ id: 'u1', app_metadata: { [TERMS_ACCEPTED_KEY]: 'draft' } }]);
+    assert.deepEqual(h.mirrorWrites, [{ id: 'u1', app_metadata: { [TERMS_ACCEPTED_KEY]: V } }]);
   });
   it('nothing recorded: needed, as "published" (no earlier version)', async () => {
     const h = harness();
@@ -212,7 +219,7 @@ describe('checkAcceptance: the table is the truth, the mirror a cache', () => {
   });
   it('a mirror that holds something the table does not satisfy is confirmed against the table', async () => {
     const h = harness();
-    assert.equal(await h.mod.acceptanceState(person({ app_metadata: { [TERMS_ACCEPTED_KEY]: '2027-01-01' } }), PREVIEW), 'needed');
+    assert.equal(await h.mod.acceptanceState(person({ app_metadata: { [TERMS_ACCEPTED_KEY]: STALE } }), PREVIEW), 'needed');
     assert.deepEqual(h.reads, ['u1']);
   });
   it('requireAcceptance refuses a needed person with a 409 terms_required carrying the version to show', async () => {
@@ -223,25 +230,25 @@ describe('checkAcceptance: the table is the truth, the mirror a cache', () => {
     assert.equal(r.response.status, 409);
     assert.deepEqual(await r.response.json(), {
       error: 'Before you continue, you need to agree to our current Terms of Service. Reload this page to see them.',
-      code: 'terms_required', termsVersion: 'draft', hadEarlier: false,
+      code: 'terms_required', termsVersion: V, hadEarlier: false,
     });
   });
   it('a fixture account records once: a second run adds no row', async () => {
     const h = harness();
     await h.mod.recordFixtureAcceptance(person(), PREVIEW);
-    await h.mod.recordFixtureAcceptance(person({ app_metadata: { [TERMS_ACCEPTED_KEY]: 'draft' } }), PREVIEW);
+    await h.mod.recordFixtureAcceptance(person({ app_metadata: { [TERMS_ACCEPTED_KEY]: V } }), PREVIEW);
     assert.equal(h.table.length, 1);
     assert.equal(h.table[0].door, 'fixture');
   });
   it('the script/UAT writer inserts the same row the app does, once, and only its throwing form throws', async () => {
     const h = harness();
     await writeFixtureAcceptance(h.db, person(), PREVIEW);
-    await writeFixtureAcceptance(h.db, person({ app_metadata: { [TERMS_ACCEPTED_KEY]: 'draft' } }), PREVIEW);
+    await writeFixtureAcceptance(h.db, person({ app_metadata: { [TERMS_ACCEPTED_KEY]: V } }), PREVIEW);
     assert.equal(h.table.length, 1);
     const row = { ...h.table[0] };
     delete row.accepted_at;
     assert.deepEqual(row, acceptanceRow(person(), 'fixture', PREVIEW));
-    assert.deepEqual(h.mirrorWrites, [{ id: 'u1', app_metadata: { [TERMS_ACCEPTED_KEY]: 'draft' } }]);
+    assert.deepEqual(h.mirrorWrites, [{ id: 'u1', app_metadata: { [TERMS_ACCEPTED_KEY]: V } }]);
     const down = harness({ failInsert: true });
     await assert.rejects(writeFixtureAcceptance(down.db, person(), PREVIEW), /acceptance row was not written/);
     await recordLegalAcceptance(down.db, person(), PREVIEW); // the scripts' form warns and carries on

@@ -21,7 +21,9 @@
 
 import { stripeKeyIsTest } from './stripe-mode.ts'; // .ts: scripts import this module under plain Node (the fixture helper)
 
-export const LEGAL_PAGES_PUBLISHED: boolean = false;
+// Flipped 2026-11-17 (GST/HST Stage 6 step 6.7, owner go in the `/brief do gst-hst` session): the Terms and the Privacy Policy are
+// published as version 2026-11-17 (`lib/legal-documents.ts`). Production serves them from the promote that carries this line.
+export const LEGAL_PAGES_PUBLISHED: boolean = true;
 
 export type LegalPagesMode = 'off' | 'preview' | 'published';
 

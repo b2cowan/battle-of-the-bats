@@ -5,6 +5,8 @@ import { join, resolve } from 'node:path';
 import { createElement, Fragment, type ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader } from './_billing-test-loader.ts';
+import { currentVersion } from '../../lib/legal-documents.ts';
+import { LEGAL_PAGES_PUBLISHED } from '../../lib/legal-pages-switch.ts';
 import {
   ACCEPTANCE_WORDS,
   CONSUMER_SHELL_DOORS,
@@ -34,6 +36,10 @@ const root = resolve(import.meta.dirname, '../..');
 const read = (file: string) => readFileSync(resolve(root, file), 'utf8');
 const OFF: Record<string, string> = {};
 const PREVIEW = { LEGAL_PAGES_PREVIEW: 'true', STRIPE_SECRET_KEY: 'sk_test_x' };
+/** The version a door records with the pages on: the dated current one once published (6.7), the preview's 'draft' before. */
+const V = currentVersion('terms', PREVIEW)!;
+/** Off-only cases run only if the publication switch is set back. */
+const OFF_GONE = LEGAL_PAGES_PUBLISHED && 'the pages are published (6.7)';
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(resolve(root, dir))) {
@@ -340,13 +346,13 @@ async function withEnv<T>(env: Record<string, string>, fn: () => Promise<T>): Pr
 }
 
 describe('dark means invisible (B3): the pages off — no box, no refusal, no row, no screen', () => {
-  it('an account door accepts a body with no Terms fields (the production body, unchanged)', () => {
+  it('an account door accepts a body with no Terms fields (the production body, unchanged)', { skip: OFF_GONE }, () => {
     const { load } = legalHarness();
     const { accountDoorRefusal } = load('lib/legal-acceptance.ts') as typeof import('../../lib/legal-acceptance.ts');
     assert.equal(accountDoorRefusal({}, OFF), null);
     assert.equal(accountDoorRefusal(undefined, OFF), null);
   });
-  it('and records nothing', async () => {
+  it('and records nothing', { skip: OFF_GONE }, async () => {
     const { load, table } = legalHarness();
     const { recordDoorAcceptance } = load('lib/legal-acceptance.ts') as typeof import('../../lib/legal-acceptance.ts');
     await recordDoorAcceptance({ id: 'u1', email: 'a@b.test' }, 'signup', { acceptTerms: true, termsVersion: 'draft' }, OFF);
@@ -360,12 +366,12 @@ describe('dark means invisible (B3): the pages off — no box, no refusal, no ro
     assert.deepEqual(await unticked.json(), { error: ACCEPTANCE_WORDS.refuseUnticked, code: 'terms_unticked' });
     const moved = accountDoorRefusal({ acceptTerms: true, termsVersion: '2026-01-01' }, PREVIEW)!;
     assert.equal(moved.status, 409);
-    assert.deepEqual(await moved.json(), { error: ACCEPTANCE_WORDS.refuseChangedPage, code: 'terms_changed', termsVersion: 'draft' });
-    assert.equal(accountDoorRefusal({ acceptTerms: true, termsVersion: 'draft' }, PREVIEW), null);
-    await recordDoorAcceptance({ id: 'u1', email: 'a@b.test' }, 'follow', { acceptTerms: true, termsVersion: 'draft' }, PREVIEW);
+    assert.deepEqual(await moved.json(), { error: ACCEPTANCE_WORDS.refuseChangedPage, code: 'terms_changed', termsVersion: V });
+    assert.equal(accountDoorRefusal({ acceptTerms: true, termsVersion: V }, PREVIEW), null);
+    await recordDoorAcceptance({ id: 'u1', email: 'a@b.test' }, 'follow', { acceptTerms: true, termsVersion: V }, PREVIEW);
     assert.equal(table.length, 1);
     assert.equal(table[0].door, 'follow');
-    assert.equal(table[0].terms_version, 'draft');
+    assert.equal(table[0].terms_version, V);
   });
 
   it('the tick row renders nothing with the pages off, and the box with both links when on', () => {
@@ -541,23 +547,23 @@ async function postAccept(env: Record<string, string>, body: unknown, { user = {
 }
 
 describe('the accept route (B2): the one door that satisfies the check', () => {
-  it('the pages off: not found, nothing recorded', async () => {
+  it('the pages off: not found, nothing recorded', { skip: OFF_GONE }, async () => {
     const { res, rows } = await postAccept(OFF, { termsVersion: 'draft' });
     assert.equal(res.status, 404);
     assert.equal(rows.length, 0);
   });
   it('signed in only', async () => {
-    const { res } = await postAccept(PREVIEW, { termsVersion: 'draft' }, { user: null });
+    const { res } = await postAccept(PREVIEW, { termsVersion: V }, { user: null });
     assert.equal(res.status, 401);
   });
   it('a version that moved while the screen was open: terms_changed, nothing recorded', async () => {
     const { res, rows } = await postAccept(PREVIEW, { termsVersion: '2026-01-01' });
     assert.equal(res.status, 409);
-    assert.deepEqual(await res.json(), { error: ACCEPTANCE_WORDS.refuseChangedWindow, code: 'terms_changed', termsVersion: 'draft' });
+    assert.deepEqual(await res.json(), { error: ACCEPTANCE_WORDS.refuseChangedWindow, code: 'terms_changed', termsVersion: V });
     assert.equal(rows.length, 0);
   });
   it('the shown version: one row, door sign_in_screen', async () => {
-    const { res, rows } = await postAccept(PREVIEW, { termsVersion: 'draft' });
+    const { res, rows } = await postAccept(PREVIEW, { termsVersion: V });
     assert.equal(res.status, 200);
     assert.equal(rows.length, 1);
     assert.equal(rows[0].door, 'sign_in_screen');

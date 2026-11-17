@@ -28,6 +28,21 @@ const billingLocationOnFile = {
   recordCardCountry: async () => {},
 };
 
+/**
+ * GST/HST Stage 6 step 6.7: the legal pages are published, so every account door refuses an unticked box and every gated route
+ * refuses a person who has not agreed to the current Terms. A route loaded here sees a person who HAS agreed (and a door body that
+ * ticked the box) unless the test passes its own '@/lib/legal-acceptance' override — the legal-acceptance tests load the real
+ * module that way and pin every refusal.
+ */
+const termsAccepted = {
+  checkAcceptance: async () => ({ state: 'accepted', hadEarlier: false }),
+  recordAcceptance: async () => ({ ok: true, recorded: false }),
+  recordFixtureAcceptance: async () => {},
+  accountDoorRefusal: () => null,
+  recordDoorAcceptance: async () => {},
+  requireAcceptance: async () => ({ ok: true }),
+};
+
 export function billingTestLoader(overrides: Record<string, unknown> = {}) {
   const cache = new Map<string, { exports: unknown }>();
   function load(file: string): unknown {
@@ -41,6 +56,7 @@ export function billingTestLoader(overrides: Record<string, unknown> = {}) {
     const req = (specifier: string): unknown => {
       if (Object.hasOwn(overrides, specifier)) return overrides[specifier];
       if (specifier === '@/lib/billing-location-server') return billingLocationOnFile;
+      if (specifier === '@/lib/legal-acceptance') return termsAccepted;
       if (specifier.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
       if (specifier === 'next/link') return { __esModule: true, default: ({ children, ...props }: Record<string, unknown>) => createElement('a', props, children as never) };
       if (specifier === 'server-only') return {};

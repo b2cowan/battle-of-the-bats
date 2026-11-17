@@ -5,7 +5,8 @@ import { dirname, join, resolve } from 'node:path';
 import { createElement, type ReactElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader } from './_billing-test-loader.ts';
-import { LEGAL_DOCUMENTS } from '../../lib/legal-documents.ts';
+import { LEGAL_DOCUMENTS, currentVersion } from '../../lib/legal-documents.ts';
+import { LEGAL_PAGES_PUBLISHED } from '../../lib/legal-pages-switch.ts';
 import {
   ACCEPTANCE_BOX_TEXT,
   ACCEPT_ROUTE_DOORS,
@@ -36,6 +37,10 @@ const root = resolve(import.meta.dirname, '../..');
 const read = (file: string) => readFileSync(resolve(root, file), 'utf8');
 const OFF: Record<string, string> = {};
 const PREVIEW = { LEGAL_PAGES_PREVIEW: 'true', STRIPE_SECRET_KEY: 'sk_test_x' };
+/** The version a door records with the pages on: the dated current one once published (6.7), the preview's 'draft' before. */
+const V = currentVersion('terms', PREVIEW)!;
+/** Off-only cases run only if the publication switch is set back. */
+const OFF_GONE = LEGAL_PAGES_PUBLISHED && 'the pages are published (6.7)';
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(resolve(root, dir))) {
@@ -551,7 +556,7 @@ async function withEnv<T>(env: Record<string, string>, fn: () => Promise<T>): Pr
 
 describe('requireAcceptance (C1): the gated routes’ check', () => {
   const user = { id: 'u1', email: 'pat@x.test', app_metadata: {} };
-  it('the pages off: passes, and reads nothing — every gated route behaves exactly as today', async () => {
+  it('the pages off: passes, and reads nothing — every gated route behaves exactly as today', { skip: OFF_GONE }, async () => {
     const h = legalHarness();
     const { requireAcceptance } = h.load('lib/legal-acceptance.ts') as typeof import('../../lib/legal-acceptance.ts');
     assert.deepEqual(await requireAcceptance(user, OFF), { ok: true });
@@ -566,14 +571,14 @@ describe('requireAcceptance (C1): the gated routes’ check', () => {
     assert.equal(res.status, 409);
     const body = await res.json();
     assert.equal(body.code, 'terms_required');
-    assert.equal(body.termsVersion, 'draft');
+    assert.equal(body.termsVersion, V);
     assert.equal(body.hadEarlier, false);
-    assert.deepEqual(termsStopOf(409, body), { termsVersion: 'draft', hadEarlier: false });
+    assert.deepEqual(termsStopOf(409, body), { termsVersion: V, hadEarlier: false });
   });
   it('the preview, agreed (the mirror): passes with no query', async () => {
     const h = legalHarness();
     const { requireAcceptance } = h.load('lib/legal-acceptance.ts') as typeof import('../../lib/legal-acceptance.ts');
-    assert.deepEqual(await requireAcceptance({ ...user, app_metadata: { legal_terms_accepted: 'draft' } }, PREVIEW), { ok: true });
+    assert.deepEqual(await requireAcceptance({ ...user, app_metadata: { legal_terms_accepted: V } }, PREVIEW), { ok: true });
     assert.equal(h.reads(), 0);
   });
 });
@@ -598,17 +603,17 @@ async function postAccept(env: Record<string, string>, body: unknown) {
 describe('the accept route (C3): the window records door purchase_window', () => {
   it('the two doors it serves', () => assert.deepEqual([...ACCEPT_ROUTE_DOORS], ['sign_in_screen', 'purchase_window']));
   it('the window’s tick: one row, door purchase_window, the box sentence kept', async () => {
-    const { res, rows } = await postAccept(PREVIEW, { termsVersion: 'draft', door: 'purchase_window' });
+    const { res, rows } = await postAccept(PREVIEW, { termsVersion: V, door: 'purchase_window' });
     assert.equal(res.status, 200);
     assert.equal(rows.length, 1);
     assert.equal(rows[0].door, 'purchase_window');
     assert.equal(rows[0].box_text, ACCEPTANCE_BOX_TEXT);
   });
   it('any other door named is the screen’s, never a free label', async () => {
-    const { rows } = await postAccept(PREVIEW, { termsVersion: 'draft', door: 'fixture' });
+    const { rows } = await postAccept(PREVIEW, { termsVersion: V, door: 'fixture' });
     assert.equal(rows[0].door, 'sign_in_screen');
   });
-  it('the pages off: not found, nothing recorded', async () => {
+  it('the pages off: not found, nothing recorded', { skip: OFF_GONE }, async () => {
     const { res, rows } = await postAccept(OFF, { termsVersion: 'draft', door: 'purchase_window' });
     assert.equal(res.status, 404);
     assert.equal(rows.length, 0);

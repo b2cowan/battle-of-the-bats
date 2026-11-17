@@ -591,6 +591,24 @@ files' "6.6" sections).
   30 days' email to account owners first (§18), then move "oldest still accepted" so everyone re-accepts at next sign-in.
 - `LEGAL_FACTS.md` "What does NOT exist" is updated the same day.
 
+> **⚖ BUILT 2026-11-17 (the `/brief do gst-hst` session, owner: "commit them now", "the release day", "yes, build it now").**
+> - Records first: the 17 Nov approvals, email only, walk §533 and the four wordings, committed `b891e6bbb`.
+> - The marketing words (§5 6.6 item 5, all four as approved) committed `297dc9d0c`.
+> - The versions: both 0.3 texts frozen as `2026-11-17` (the draft filter's output), drafts deleted, owner-only sections kept in
+>   `docs/agents/legal/PUBLISHED_TERMS_AND_PRIVACY_NOTES.md`, the product contact address moved to support@ (Q3), committed `ce2aee441`.
+> - The switch flipped, alone with its tests and the help passage (club guide "Our Terms of Service and Privacy Policy" under
+>   Club plan & billing; Coaches Portal FAQ "Where are your Terms of Service and Privacy Policy…").
+> - **⚠ Effective date = the release day (owner ruling 2026-11-17).** The version is named `2026-11-17`. If the promote that
+>   carries the switch is on another day, the release session renames both version files and the six date strings in
+>   `lib/legal-documents.ts` to the promote day, in one commit, BEFORE promoting (the text and its sha256 do not change). Never
+>   after production has served it.
+> - **The release carries, together:** the switch; taxed checkout (Terms §6 "shown before you pay"); 6.5 `45c134bea` (not on
+>   production on 2026-11-17; Privacy §9 rests on it); the acceptance table (mig 455) and mig 490 on production first
+>   (`MANUAL_PROD_STEPS.json`); the features the Privacy Policy describes as published (house-league friend requests,
+>   families' answers and notes, the bell lines): check each is on production at the promote, or `/legal` says what to cut.
+> - **On dev from this commit:** every account meets the one-time "We've published our Terms" screen at its next sign-in (a
+>   `'draft'` acceptance no longer counts); re-seed a fixture to re-accept. The demos are exempt.
+
 ---
 
 ## 6. What Stage 9 can and cannot start
