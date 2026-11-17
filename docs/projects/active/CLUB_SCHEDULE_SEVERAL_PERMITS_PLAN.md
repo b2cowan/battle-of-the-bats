@@ -733,7 +733,7 @@ Existing dev schedules that used the retired Add time keep their rows as they ar
 - **Owed to Session 3:** Send the changes when ONLY a part changed (the page shows Changed since sent and the part's lines,
   but the send is still the parent's alone). No part can exist before Session 2's Add time, so nothing reaches it until then.
 
-**Session 2 BUILT 2026-11-17 — Add time makes a part; a draft is edited** (mig 494, applied to DEV 2026-11-17; prod step in
+**Session 2 BUILT 2026-11-17 — Add time makes a part; a draft is edited** (committed `ca40fefcd` 2026-11-17; mig 494, applied to DEV 2026-11-17; prod step in
 `MANUAL_PROD_STEPS.json`; `tests/sql/schedule-part-save-fixture.sql` 6/6, the Session 1 fixture 7/7 and the several-permits and
 date-off fixtures re-run green; `tests/unit/club-schedule-add-part.test.ts`). Decisions it made:
 - **The part and its practices are saved in ONE step** (mig 494: `club_schedule_save` writes `part_of_schedule_id` and

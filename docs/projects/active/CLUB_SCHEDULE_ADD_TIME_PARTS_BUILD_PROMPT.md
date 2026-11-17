@@ -112,12 +112,19 @@ After the owner's yes on the storage decision:
 
 ## Session 2 — Add time makes a part; a draft is edited
 
-> **BUILT 2026-11-17.** What was decided and how: plan Phase 8, "Session 2 BUILT". Mig 494 (the save writes the link on its
+> **BUILT 2026-11-17, committed `ca40fefcd` 2026-11-17.** What was decided and how: plan Phase 8, "Session 2 BUILT". Mig 494 (the save writes the link on its
 > insert; dev only, prod step recorded); `tests/sql/schedule-part-save-fixture.sql` 6/6; `tests/unit/club-schedule-add-part.test.ts`.
 > **Session 3 must know:** a part is saved `state = 'draft'` (never in review) and waits as the parent's Changed since sent;
 > Send the changes still sends the PARENT alone, so a part can be added and seen but not yet sent, billed, regenerated or
 > removed — that is Session 3's whole job. The P9 B path (`changesMoney` billing a permit not behind the bill) is untouched and
 > now has no caller that adds time to a sent schedule; retire it there with `club-schedule-add-time-send.test.ts`.
+> **Left open by Session 2's /review (high), for the owner or Session 3 — none blocks:** (1) Settings… on a FINAL schedule still lets
+> a typed row ("Add hours") and the PATCH regenerate add NEW time to the parent, now that Add time is no longer the door — decide
+> whether to refuse null-id rows on a final schedule. (2) A permit that ended before today gives From = today and To before it, so
+> the form says only "needDates": needs a worded line (words go through /marketing). (3) A part with only House league ticked is
+> not blocked in the window; the server refuses only `giveToHouseLeague`. (4) "stays exactly where it was sent" counts an unsent
+> earlier part's practices as sent. (5) Each preview of a part reads the whole family: fine now, heavy for very large schedules.
+> (6) Taking off a draft's only permit by unticking it drops its rows with no Take it off… window (Phase 5's open refusal-wording call).
 
 - [x] **Tools:** Add time… only on a final schedule; its hint "More time, for the teams you choose, on a bill of its own. Nothing already on the
       schedule moves." (words through `/marketing` at the Close).
