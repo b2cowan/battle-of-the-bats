@@ -45,4 +45,13 @@ that hands out any of its time. A one-permit schedule works and prices exactly a
 off by park, Find the time, the bill priced per permit, then Add time. Until the bill session, a schedule on several
 permits bills at the first permit's hourly rate, so its bill is not ready to walk.
 
+**Added 2026-11-16: each team's amount (ruled, not built).** In Bill the teams, a club can choose "An amount I choose
+for each team" and type each team's figure, starting from what its time costs. "A part of it" becomes "A total I
+choose". When the bill is more or less than the permits cost, an amber warning says by how much, and the club can still
+add the bill. Coaches are told the figure was "set by the club". If a team's time changes after the bill is sent, the
+change is billed at the permit's price on top of the amount, and the club can switch that off for a flat deal. Why it
+matters: clubs often charge round figures or give one team a break, and today the product can only split by the hours.
+Success: a club bills $3,000 / $2,000 / $3,000 in one window and every coach gets the right amount and payments.
+Drawing: https://claude.ai/artifact/FwoSTHUojVjWUa97bZGVnJ.
+
 Plan: `docs/projects/active/CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`.

@@ -1,0 +1,443 @@
+<title>Each Team's Amount Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the house drawings page. Sticky tab row, one section at a time, true-size warm product windows (800 px, the shipped wide form window) on a cool document ground. */
+:root {
+  --doc-bg: #E9ECEF; --doc-card: #F7F8F9; --doc-ink: #1B2127; --doc-dim: #4F5963; --doc-line: #C9D0D6;
+  --doc-accent: #1F5F8B; --doc-new: #0F6B3E; --doc-new-soft: #D6EEE0; --doc-chg: #8A4B00; --doc-chg-soft: #F6E3C8;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  /* The product's warm portal, as it ships. Frames keep these in both themes: a specimen, not the page. */
+  --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink-soft: #4A4235; --dim: #615A54;
+  --line: rgba(70,55,30,.12); --line-strong: rgba(70,55,30,.20); --field: rgba(70,55,30,.05);
+  --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #D5F27A; --lime-ink: #2A3410;
+  --amber-ink: #6B4105; --amber: #F59E0B; --scrim: #9C968C;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+    --doc-accent: #7DB8E0; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+  --doc-accent: #7DB8E0; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--doc-bg); }
+.wrap { max-width: 1120px; margin: 0 auto; }
+h1 { font-size: 1.35rem; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+h2 { font-size: 1.1rem; margin: 0 0 .25rem; text-wrap: balance; }
+h3 { font-size: .95rem; margin: 0 0 .2rem; }
+p { margin: 0 0 .6rem; max-width: 70ch; }
+.dim { color: var(--doc-dim); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--doc-bg); padding: 14px 0 0; border-bottom: 1px solid var(--doc-line); }
+.top .sub { color: var(--doc-dim); font-size: .85rem; margin: .15rem 0 .6rem; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; }
+.tab { font: inherit; font-weight: 600; font-size: .88rem; padding: .55rem .9rem; background: transparent; color: var(--doc-dim); border: 0; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; min-height: 44px; }
+.tab[aria-selected="true"] { color: var(--doc-ink); border-bottom-color: var(--doc-accent); }
+.tab:focus-visible, .sw button:focus-visible, .mk:focus-visible, .mk2:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: .7rem; margin: 16px 0 6px; flex-wrap: wrap; }
+.viewrow b { font-size: .8rem; color: var(--doc-dim); font-weight: 600; }
+/* ONE white track, chosen option in soft olive: drawn from the shipped view switch. */
+.sw { display: inline-flex; background: #fff; border: 1px solid var(--line-strong); border-radius: 10px; padding: 3px; gap: 2px; }
+.sw button { font: inherit; font-size: .85rem; font-weight: 600; padding: .35rem .8rem; border: 0; border-radius: 7px; background: transparent; color: #4A4235; cursor: pointer; min-height: 34px; }
+.sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+.sw-note { font-size: .8rem; color: var(--doc-dim); }
+section.pane { display: none; padding-top: 6px; }
+section.pane.on { display: block; }
+.lede { font-size: .95rem; margin-top: 14px; }
+.stage { margin: 14px 0 26px; }
+.cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem .8rem; margin-bottom: 6px; }
+.cap h3 { margin: 0; }
+.tag { font-family: var(--font-mono); font-size: .66rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: .1rem .45rem; border-radius: 4px; }
+.tag.new { background: var(--doc-new-soft); color: var(--doc-new); }
+.tag.chg { background: var(--doc-chg-soft); color: var(--doc-chg); }
+.tag.same { background: var(--doc-line); color: var(--doc-dim); }
+.scroller { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); padding: 12px; }
+.note { font-size: .86rem; color: var(--doc-dim); margin: 8px 0 0; max-width: 80ch; }
+.note b { color: var(--doc-ink); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.pair > * { min-width: 0; }
+.card { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.asks { display: grid; gap: 12px; }
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.ask .rec { font-size: .85rem; color: var(--doc-new); font-weight: 600; margin: 0; }
+.ask ul, .card ul { margin: .3rem 0 .4rem 1.1rem; padding: 0; font-size: .88rem; }
+.ask li, .card li { margin-bottom: .2rem; }
+
+/* ───────── the product window, true size (KitDialog form, wide = 800 px) ───────── */
+.scrim { display: inline-block; padding: 28px; background: var(--scrim); border-radius: 10px; }
+.win { width: 800px; background: var(--card); border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.22); color: var(--ink); font: 14px/1.45 var(--font-ui); position: relative; }
+.win .dh { display: flex; align-items: flex-start; gap: .75rem; padding: 1.15rem 1.5rem .9rem; }
+.win .dh .tt { flex: 1; display: grid; gap: 2px; }
+.win .dh .eb { font: 700 11.5px/1.2 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.win .dh .tl { font-size: 18px; font-weight: 700; }
+.win .dh .x { font-size: 18px; color: var(--ink-soft); padding: .1rem .3rem; }
+.win .db { padding: .2rem 1.5rem 1.2rem; display: grid; gap: 1rem; }
+.win .df { display: flex; justify-content: flex-end; gap: .6rem; padding: .8rem 1.5rem; border-top: 1px solid var(--line); }
+.btn { font: 600 14px/1 var(--font-ui); padding: .7rem 1.1rem; border-radius: 9px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); white-space: nowrap; }
+.btn.pri { background: var(--lime); color: var(--lime-ink); border-color: transparent; font-weight: 700; }
+.pr2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: .75rem 1rem; }
+.fld { display: grid; gap: .35rem; min-width: 0; align-content: start; }
+.fld .lb { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.ctl { min-height: 40px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--field); padding: 0 .75rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: 14.5px; white-space: nowrap; overflow: hidden; }
+.ctl .v { overflow: hidden; text-overflow: ellipsis; }
+.ctl .chev { color: var(--ink-soft); font-size: 11px; }
+.ctl.open { border-color: var(--olive); box-shadow: 0 0 0 2px var(--olive-soft); }
+.fixed { font-size: 14.5px; font-weight: 600; min-height: 40px; display: flex; align-items: center; }
+.hnt { font-size: 12.5px; color: var(--dim); line-height: 1.4; }
+.menu { border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); box-shadow: 0 10px 24px rgba(0,0,0,.14); padding: .3rem 0; }
+.menu .mi { padding: .5rem .8rem; font-size: 14.5px; }
+.menu .mi.on { background: #6E6E6E; color: #fff; }
+.menu .mi small { display: block; font-size: 12px; color: var(--dim); }
+.menu .mi.on small { color: #E8E8E8; }
+/* the bill table, as shipped: one bordered card, mono headings, a group band row, a name + caption per team */
+.bwrap { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.bt { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.bt th { font: 700 11px/1.2 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); text-align: left; padding: .7rem 1rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.bt td { padding: .65rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.bt tr:last-child td { border-bottom: 0; }
+.bt .n { text-align: right; white-space: nowrap; }
+.bt td small { display: block; color: var(--dim); font-size: 12.5px; margin-top: 2px; }
+.bt tr.gp td { font-weight: 700; }
+.bt tr.gp td span { font-weight: 400; color: var(--dim); }
+.bt .inp { display: inline-flex; justify-content: flex-end; align-items: center; width: 120px; min-height: 36px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--field); padding: 0 .65rem; font-size: 14px; }
+.bt .inp.ed { border-color: var(--olive); }
+.bt .was { color: var(--dim); }
+.tblhead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.door { color: var(--olive); font-weight: 600; font-size: 13.5px; white-space: nowrap; }
+.closing { font-size: 13px; color: var(--ink-soft); margin: -.4rem 0 0; }
+/* the portal's callout: white with a coloured edge (tinted panels are retired) */
+.stmt { border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 8px; padding: .7rem .9rem; font-size: 13.5px; background: var(--card); display: grid; gap: .25rem; }
+.stmt b { font-weight: 650; }
+.stmt p { margin: 0; color: var(--ink-soft); max-width: none; }
+.stmt.warn { border-left-color: var(--amber); }
+.stmt.warn b { color: var(--amber-ink); }
+.crop { overflow: hidden; }
+/* the schedule page, for tab 3 */
+.frame { width: 1000px; background: var(--paper); border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; color: var(--ink); font: 14px/1.45 var(--font-ui); }
+.pbar { display: flex; align-items: center; gap: .6rem; padding: .7rem 1.1rem; background: var(--card); border-bottom: 1px solid var(--line); }
+.pbar .back { color: var(--ink-soft); font-size: .88rem; }
+.pbar .div { width: 1px; height: 22px; background: var(--line-strong); }
+.pbar .name { font-weight: 700; font-size: 1.05rem; }
+.chip { display: inline-flex; align-items: center; font: 700 .66rem/1.4 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: .14rem .5rem; border-radius: 999px; border: 1px solid rgba(30,125,60,.28); color: #1E6B3A; background: rgba(30,125,60,.08); }
+.chip.warn { color: var(--amber-ink); background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.3); }
+.pbody { padding: 1rem 1.1rem; }
+.att { background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+.att .h { display: flex; justify-content: space-between; padding: .6rem .9rem; border-bottom: 1px solid var(--line); font-weight: 700; }
+.att .h span { font-weight: 400; color: var(--dim); font-size: .8rem; }
+.att .r { display: flex; gap: .8rem; padding: .7rem .9rem; align-items: flex-start; font-size: .86rem; }
+.att .r + .r { border-top: 1px solid var(--line); }
+.att .tok { font: 700 .66rem/1.4 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line-strong); border-radius: 6px; padding: .12rem .4rem; white-space: nowrap; }
+.att .r p { margin: 0; color: var(--ink-soft); max-width: 60ch; }
+.att .r .act { margin-left: auto; }
+.cc { width: 720px; background: var(--paper); padding: 1.1rem; color: var(--ink); font: 14px/1.45 var(--font-ui); border-radius: 8px; border: 1px solid var(--line-strong); }
+.cc .secl { font: 700 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: .55rem; }
+.band { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--card); border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden; }
+.band > div { padding: .7rem .9rem; border-right: 1px solid var(--line); display: grid; gap: 3px; }
+.band > div:last-child { border-right: 0; }
+.band .k { font: 700 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.band .big { font: 700 20px/1.15 var(--font-ui); font-variant-numeric: tabular-nums; }
+.band small { color: var(--dim); font-size: 12.5px; }
+
+/* markers + diff mode */
+.rel { position: relative; }
+.hl { outline: 2px dashed var(--doc-new); outline-offset: 3px; border-radius: 6px; }
+.mk { position: absolute; z-index: 5; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); cursor: pointer; display: grid; place-items: center; box-shadow: 0 0 0 3px rgba(31,95,139,.25); }
+.show-diff .same { opacity: .22; filter: grayscale(1); }
+.expl { display: none; margin-top: 10px; background: var(--doc-card); border: 1px solid var(--doc-accent); border-radius: 10px; padding: 10px 14px; font-size: .88rem; max-width: 80ch; }
+.expl.on { display: block; }
+.expl b { display: block; margin-bottom: .2rem; }
+.legend { display: grid; gap: 8px; margin-top: 10px; }
+.legend .li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; font-size: .88rem; align-items: start; }
+.legend .li .mk2 { position: static; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); display: grid; place-items: center; cursor: pointer; }
+.legend .li p { margin: 0; }
+.legend .li.flash { background: var(--doc-chg-soft); border-radius: 6px; }
+@media (max-width: 560px) { .tab { padding: .55rem .65rem; } }
+@media (prefers-reduced-motion: no-preference) { .pane.on { animation: fade .15s ease-out; } @keyframes fade { from { opacity: .6; } to { opacity: 1; } } }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <h1>Bill the teams: each team's amount</h1>
+    <div class="sub">Round 1 drawings for review. Nothing is built. The window is drawn at its true width (800 px). Teams, slots and hours are the Two permits walk schedule (Milton evenings $60.00 an hour, Halton Hills evenings $90.00; $7,650.00 of time handed out, 32 slots open). <b>The permits' cost of $9,000.00 is made up for the drawing</b>; the walk's own figure is on its screen.</div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-t="window" aria-selected="true">1 · The window</button>
+      <button class="tab" role="tab" data-t="choice" aria-selected="false">2 · The choice and its words</button>
+      <button class="tab" role="tab" data-t="gap" aria-selected="false">3 · Over and under</button>
+      <button class="tab" role="tab" data-t="later" aria-selected="false">4 · After it is sent</button>
+      <button class="tab" role="tab" data-t="asks" aria-selected="false">5 · Asks</button>
+    </div>
+  </div>
+
+  <!-- ═════════ 1 · THE WINDOW ═════════ -->
+  <section class="pane on" id="p-window">
+    <p class="lede"><b>The change.</b> "Bill the teams for" gets a third choice, <b>An amount I choose for each team</b>. Pick it and every team's Share becomes a box you type in. Each box starts at what the team's time costs, so changing one team is one edit. The line under the table becomes a warning when the total is more or less than the permits, and the warning never stops you adding the bill.</p>
+
+    <div class="viewrow" id="vr1"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+      <span class="sw-note">Click a numbered dot to read what changed.</span>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Today</h3><span class="tag same">As shipped</span><span class="sw-note">Draft schedule, club owner, Each permit's price, one payment</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh"><div class="tt"><span class="eb">Two permits walk</span><span class="tl">Bill the teams</span></div><span class="x">✕</span></div>
+        <div class="db">
+          <div class="pr2">
+            <div class="fld"><span class="lb">Bill from</span><div class="ctl"><span class="v">No budget line</span><span class="chev">▾</span></div></div>
+            <div class="fld"><span class="lb">Bill the teams for</span><div class="ctl"><span class="v">The time at the permits’ prices · $7,650.00</span><span class="chev">▾</span></div><span class="hnt">Or a part of it, when the club covers some</span></div>
+          </div>
+          <div class="pr2">
+            <div class="fld"><span class="lb">Price the time</span><div class="ctl"><span class="v">Each permit’s price</span><span class="chev">▾</span></div><span class="hnt">Milton evenings $60.00 · Halton Hills evenings $90.00 a full field, an hour</span></div>
+            <div></div>
+          </div>
+          <div class="pr2">
+            <div class="fld"><span class="lb">Split</span><span class="fixed">By the time each team got</span><span class="hnt">Each field at its permit’s price; a half field at half of it</span></div>
+            <div class="fld"><span class="lb">Payments</span><div class="pr2"><div class="ctl"><span class="v">One payment</span><span class="chev">▾</span></div><div class="ctl"><span class="v">Dec 1, 2026</span></div></div><span class="hnt">One payment, due Dec 1, 2026.</span></div>
+          </div>
+          <div class="bwrap"><table class="bt">
+            <thead><tr><th>Team</th><th class="n">Share</th><th class="n">Dec 1</th></tr></thead>
+            <tbody>
+              <tr class="gp"><td>Senior <span>· 2 teams</span></td><td class="n">$4,710.00</td><td class="n">$4,710.00</td></tr>
+              <tr><td>14U AA<small>32 slots · 31 h Halton Hills evenings + 1 h Milton evenings</small></td><td class="n">$2,850.00</td><td class="n">$2,850.00</td></tr>
+              <tr><td>15U AA<small>31 slots · 31 h Milton evenings</small></td><td class="n">$1,860.00</td><td class="n">$1,860.00</td></tr>
+              <tr class="gp"><td>Junior <span>· 1 team</span></td><td class="n">$2,940.00</td><td class="n">$2,940.00</td></tr>
+              <tr><td>13U AAA<small>33 slots · 32 h Halton Hills evenings + 1 h Milton evenings</small></td><td class="n">$2,940.00</td><td class="n">$2,940.00</td></tr>
+              <tr class="gp"><td>3 teams</td><td class="n">$7,650.00</td><td class="n">$7,650.00</td></tr>
+            </tbody>
+          </table></div>
+          <p class="closing">$1,350.00 less than the permits’ $9,000.00: the 32 open slots. The club covers the rest.</p>
+          <div class="stmt"><b>The bill goes to the teams with the schedule.</b><p>Nothing is billed until you finalize. Then each team’s share arrives on its Money › Club tab with its 1 payment.</p></div>
+        </div>
+        <div class="df"><span class="btn">Cancel</span><span class="btn pri">Add the bill to the schedule</span></div>
+      </div></div></div>
+      <p class="note">Every team's figure is worked out from its hours. The only other choice is "A part of it": one total, still shared by the hours, and allowed to be more or less than the permits. No team's figure can be set on its own. The closing line is the same small grey text whether the bill matches, falls short or goes over.</p>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Proposed</h3><span class="tag new">New</span><span class="sw-note">The same schedule. The club charges each team a round figure: $3,000, $2,000 and $3,000.</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh same"><div class="tt"><span class="eb">Two permits walk</span><span class="tl">Bill the teams</span></div><span class="x">✕</span></div>
+        <div class="db">
+          <div class="pr2">
+            <div class="fld same"><span class="lb">Bill from</span><div class="ctl"><span class="v">No budget line</span><span class="chev">▾</span></div></div>
+            <div class="fld rel hl"><span class="lb">Bill the teams for</span><div class="ctl"><span class="v">An amount I choose for each team</span><span class="chev">▾</span></div><span class="hnt">Each team starts at what its time costs. Change any of them.</span><button class="mk" style="right:-11px;top:-11px" data-n="1" aria-label="Change 1">1</button></div>
+          </div>
+          <div class="pr2">
+            <div class="fld rel hl"><span class="lb">Split</span><span class="fixed">As you set it for each team</span><span class="hnt">“Price the time” is gone: you are setting the amounts yourself.</span><button class="mk" style="right:-11px;top:-11px" data-n="2" aria-label="Change 2">2</button></div>
+            <div class="fld same"><span class="lb">Payments</span><div class="pr2"><div class="ctl"><span class="v">One payment</span><span class="chev">▾</span></div><div class="ctl"><span class="v">Dec 1, 2026</span></div></div><span class="hnt">One payment, due Dec 1, 2026.</span></div>
+          </div>
+          <div class="tblhead rel"><span></span><span class="door hl">Start again from the time</span><button class="mk" style="right:-11px;top:-13px" data-n="4" aria-label="Change 4">4</button></div>
+          <div class="bwrap rel hl" style="margin-top:-.5rem"><table class="bt">
+            <thead><tr><th>Team</th><th class="n">Its time</th><th class="n">Share</th><th class="n">Dec 1</th></tr></thead>
+            <tbody>
+              <tr class="gp"><td>Senior <span>· 2 teams</span></td><td class="n was">$4,710.00</td><td class="n">$5,000.00</td><td class="n">$5,000.00</td></tr>
+              <tr><td>14U AA<small>32 slots · 31 h Halton Hills evenings + 1 h Milton evenings</small></td><td class="n was">$2,850.00</td><td class="n"><span class="inp ed">$3,000.00</span></td><td class="n">$3,000.00</td></tr>
+              <tr><td>15U AA<small>31 slots · 31 h Milton evenings</small></td><td class="n was">$1,860.00</td><td class="n"><span class="inp ed">$2,000.00</span></td><td class="n">$2,000.00</td></tr>
+              <tr class="gp"><td>Junior <span>· 1 team</span></td><td class="n was">$2,940.00</td><td class="n">$3,000.00</td><td class="n">$3,000.00</td></tr>
+              <tr><td>13U AAA<small>33 slots · 32 h Halton Hills evenings + 1 h Milton evenings</small></td><td class="n was">$2,940.00</td><td class="n"><span class="inp ed">$3,000.00</span></td><td class="n">$3,000.00</td></tr>
+              <tr class="gp"><td>3 teams</td><td class="n was">$7,650.00</td><td class="n">$8,000.00</td><td class="n">$8,000.00</td></tr>
+            </tbody>
+          </table><button class="mk" style="left:-11px;top:-11px" data-n="3" aria-label="Change 3">3</button></div>
+          <div class="stmt warn rel hl"><b>$1,000.00 less than the permits’ $9,000.00: the 32 open slots.</b><p>The club covers the rest.</p><button class="mk" style="right:-11px;top:-11px" data-n="5" aria-label="Change 5">5</button></div>
+          <div class="stmt rel hl"><b>The bill goes to the teams with the schedule.</b><p>Nothing is billed until you finalize. Then each team’s share arrives on its Money › Club tab with its 1 payment. If a team’s time changes later, the change is billed at its permit’s price, on top of the amount you set.</p><button class="mk" style="right:-11px;top:-11px" data-n="6" aria-label="Change 6">6</button></div>
+        </div>
+        <div class="df same"><span class="btn">Cancel</span><span class="btn pri">Add the bill to the schedule</span></div>
+      </div></div></div>
+      <div class="expl" id="ex1"></div>
+      <div class="legend" id="lg1">
+        <div class="li" id="li1-1"><button class="mk2" data-n="1" type="button">1</button><p><b>A third choice in "Bill the teams for".</b> This field already answers "how much do the teams pay?", so the new answer goes here, beside the other two. Tab 2 shows the menu and the new words.</p></div>
+        <div class="li" id="li1-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Price the time leaves; Split says what is happening.</b> Price the time only decides how hours become dollars, and you are now typing the dollars, so it is absent rather than greyed out (the house rule for a choice that does nothing). Split keeps its place so nothing below moves, and reads "As you set it for each team".</p></div>
+        <div class="li" id="li1-3"><button class="mk2" data-n="3" type="button">3</button><p><b>Share becomes a box per team, with "Its time" beside it.</b> Each box starts at the team's time figure. Its time stays in the next column, so you see the gap on every row without the window calling it out. Group rows add up what you typed. The payment columns follow each box straight away.</p></div>
+        <div class="li" id="li1-4"><button class="mk2" data-n="4" type="button">4</button><p><b>Start again from the time.</b> One olive door above the table puts every box back to its time figure. It appears only after you have changed a box.</p></div>
+        <div class="li" id="li1-5"><button class="mk2" data-n="5" type="button">5</button><p><b>The plain closing line becomes a warning.</b> When the total is more or less than the permits, the line becomes the portal's amber callout and names both figures. "Add the bill to the schedule" stays available. Tab 3 shows over, under and matching.</p></div>
+        <div class="li" id="li1-6"><button class="mk2" data-n="6" type="button">6</button><p><b>The rule for later is said now, while you are setting the amounts.</b> Once a bill is sent its terms never change. A change to the time is billed when the club sends the changes, at the price the bill kept. For a hand-set bill that means the permit's price, added to or taken off the amount you set. Tab 4 shows it.</p></div>
+      </div>
+      <p class="note"><b>What does not change:</b> Bill from, Payments, the footer, who can open the window (people with the club's Accounting), and sending. Hand-set bills go out exactly the way time-based bills do today.</p>
+      <p class="note"><b>Height:</b> the window is about the same height as today. Price the time leaves, and the "Start again from the time" line comes in only after an edit.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 2 · THE CHOICE AND ITS WORDS ═════════ -->
+  <section class="pane" id="p-choice">
+    <p class="lede">"A part of it" says the teams can only pay <i>less</i> than the permits. They can already pay more: type a bigger figure and the closing line says "$… more than the permits". The new words say what each choice does, using the "… I choose" wording that Payments already has ("Dates I choose").</p>
+    <div class="pair">
+      <div class="stage">
+        <div class="cap"><h3>The menu today</h3><span class="tag same">As shipped</span></div>
+        <div class="scroller"><div style="width:360px">
+          <div class="fld"><span class="lb" style="font-size:13px;font-weight:600;color:var(--ink-soft)">Bill the teams for</span><div class="ctl open" style="background:#F6F2EA"><span class="v">The time at the permits’ prices · $7,650.00</span><span class="chev">▾</span></div></div>
+          <div class="menu" style="margin-top:4px"><div class="mi on">The time at the permits’ prices · $7,650.00</div><div class="mi">A part of it</div></div>
+          <p class="hnt" style="margin-top:.4rem">Or a part of it, when the club covers some</p>
+        </div></div>
+      </div>
+      <div class="stage">
+        <div class="cap"><h3>The menu proposed</h3><span class="tag new">New</span><span class="tag chg">Changed</span></div>
+        <div class="scroller"><div style="width:360px">
+          <div class="fld"><span class="lb" style="font-size:13px;font-weight:600;color:var(--ink-soft)">Bill the teams for</span><div class="ctl open" style="background:#F6F2EA"><span class="v">The time at the permits’ prices · $7,650.00</span><span class="chev">▾</span></div></div>
+          <div class="menu" style="margin-top:4px"><div class="mi on">The time at the permits’ prices · $7,650.00</div><div class="mi hl">A total I choose</div><div class="mi hl">An amount I choose for each team</div></div>
+          <p class="hnt hl" style="margin-top:.4rem">Or a total, or each team’s amount, that you choose</p>
+        </div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:6px">
+      <h3>What each choice does, and the hint under the field</h3>
+      <ul>
+        <li><b>The time at the permits’ prices · $7,650.00.</b> Unchanged. Hint: "Or a total, or each team’s amount, that you choose".</li>
+        <li><b>A total I choose</b> (was "A part of it"). The Amount box appears, exactly as today. The total is shared by the time, and it can be more or less than the permits. Hint: "Shared by the time each team got".</li>
+        <li><b>An amount I choose for each team</b> (new). Every Share becomes a box, starting from the time. Hint: "Each team starts at what its time costs. Change any of them."</li>
+      </ul>
+      <p class="note" style="margin-top:.2rem"><b>Why not a second Split choice, as first proposed?</b> Split sits below "Bill the teams for" and "Price the time". If the switch lived in Split, choosing it would have to remove fields <i>above</i> where you clicked, and the window would jump. One field that answers "how much" is easier to read. This is Ask 1.</p>
+      <p class="note"><b>The smaller version is included.</b> "Adjust one team" is this choice with one box changed. Building it separately would mean a second control for the same idea.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 3 · OVER AND UNDER ═════════ -->
+  <section class="pane" id="p-gap">
+    <p class="lede">The closing line under the table is the one place the bill is compared with what the permits cost. Today it is plain grey text whether the bill matches or not. Proposed: <b>matching stays quiet; over or under becomes the amber callout</b>, the portal's white panel with a coloured edge. It is a warning only. Nothing is disabled and nothing asks you to confirm.</p>
+    <div class="stage">
+      <div class="cap"><h3>The three cases</h3><span class="tag chg">Changed</span><span class="sw-note">The same for "A total I choose" and "An amount I choose for each team"</span></div>
+      <div class="scroller"><div style="width:752px;display:grid;gap:18px;background:var(--card);padding:16px;border-radius:10px;color:var(--ink);font:14px/1.45 var(--font-ui)">
+        <div><div class="hnt" style="font-family:var(--font-mono);font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Matches · a total of $9,000.00</div><p class="closing" style="margin:0">Matches the permits’ $9,000.00: nothing left for the club to cover.</p><div class="hnt" style="margin-top:4px">Unchanged.</div></div>
+        <div><div class="hnt" style="font-family:var(--font-mono);font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Under · each team set by hand, $8,000.00</div><div class="stmt warn"><b>$1,000.00 less than the permits’ $9,000.00: the 32 open slots.</b><p>The club covers the rest.</p></div></div>
+        <div><div class="hnt" style="font-family:var(--font-mono);font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Over · a total of $9,400.00</div><div class="stmt warn"><b>$400.00 more than the permits’ $9,000.00.</b><p>The teams pay more than the club pays for the permits.</p></div></div>
+      </div></div>
+      <p class="note"><b>Same words as today, now said where people will see them.</b> The figures and the "the 32 open slots. The club covers the rest." sentence are the shipped closing line, split into a bold first line and a second line. The one new sentence is the second line of "over", because today that case stops after the figures. What changes is that over and under are no longer the same grey as matching.</p>
+      <p class="note"><b>No permit price to compare with?</b> The line stays as today: "No permit cost to compare it with." No callout, because there is nothing to warn about.</p>
+      <p class="note"><b>Is "under" really a warning?</b> The club covering part of the cost is a normal choice. You asked for both directions to warn, so both are drawn amber. Ask 3 offers the quieter version, where only "over" is amber.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 4 · AFTER IT IS SENT ═════════ -->
+  <section class="pane" id="p-later">
+    <p class="lede"><b>Sending is unchanged.</b> A hand-set bill goes out at Finalize, or later with "Send the bill", exactly as a time-based bill does. Two things read differently. The coach is told who set the figure, and a later change to the time is billed at the permit's price on top of the hand-set amount (Ask 4).</p>
+
+    <div class="stage">
+      <div class="cap"><h3>The coach's review window and email</h3><span class="tag chg">Changed</span><span class="sw-note">14U AA's coach. Drawn simplified from the shipped review band.</span></div>
+      <div class="pair">
+        <div>
+          <div class="cap"><h3>By the time (today, and still for time-based bills)</h3></div>
+          <div class="scroller"><div class="cc" style="width:420px">
+            <div class="secl">The club’s proposal · your share</div>
+            <div class="band"><div><span class="k">Your share</span><span class="big">$2,850.00</span><small>By the time you got, at each permit’s price</small></div><div><span class="k">Payments</span><span class="big">1</span><small>Dec 1</small></div></div>
+            <p class="hnt" style="margin:.7rem 0 0">Email: “The bill: $2,850.00 in 1 payment, for the time your team got.”</p>
+          </div></div>
+        </div>
+        <div>
+          <div class="cap"><h3>Set by hand</h3><span class="tag chg">Changed</span></div>
+          <div class="scroller"><div class="cc" style="width:420px">
+            <div class="secl">The club’s proposal · your share</div>
+            <div class="band"><div><span class="k">Your share</span><span class="big">$3,000.00</span><small class="hl">Set by the club</small></div><div><span class="k">Payments</span><span class="big">1</span><small>Dec 1</small></div></div>
+            <p class="hnt hl" style="margin:.7rem 0 0">Email: “The bill: $3,000.00 in 1 payment, set by the club.”</p>
+          </div></div>
+        </div>
+      </div>
+      <p class="note"><b>Only the reason line changes.</b> "For the time your team got" would be untrue for a figure the club typed, so it becomes "set by the club". The coach is not shown what their time would have cost (Ask 5). The payments, the Money › Club tab and the notification ("{Club} billed 14U AA $3,000.00") are as today.</p>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Later: 14U AA gains two hours at Halton Hills</h3><span class="tag chg">Changed</span><span class="sw-note">The money part of “Send the changes”. Drawn simplified; the build uses the shipped window.</span></div>
+      <div class="scroller"><div class="cc" style="width:720px;background:var(--card)">
+        <div class="secl">What the changes cost</div>
+        <div class="bwrap"><table class="bt">
+          <thead><tr><th>Team</th><th>Change</th><th class="n">Correction</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>14U AA<small>Bill set by hand: $3,000.00</small></td><td>Gained 2 slots · 2 h Halton Hills evenings</td><td class="n">$180.00</td></tr>
+            <tr><td>15U AA<small>Bill set by hand: $2,000.00</small></td><td class="hnt">No change</td><td class="n">—</td></tr>
+          </tbody>
+        </table></div>
+        <p class="hnt" style="margin:.6rem 0 0">Bill the corrections: <b>On</b>. Turn it off to keep every team at the amount it was billed.</p>
+      </div></div>
+      <p class="note"><b>Today's behaviour, unchanged:</b> the two gained hours are billed as their own small correction, $180.00 at Halton Hills evenings' $90.00, and payments already set stay as they are. A team that loses time has it taken off what it owes. <b>The one new thing:</b> the caption under the team says its bill was set by hand, so a club that agreed a flat "$3,000 for the season" knows to turn "Bill the corrections" off before sending.</p>
+      <p class="note"><b>One limit to check in the build:</b> as I read it, "Bill the corrections" covers the whole send. A send that touches a hand-set team <i>and</i> a time-based team cannot correct one and skip the other. I think that is rare enough to leave, but it is the kind of thing a walk would find.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 5 · ASKS ═════════ -->
+  <section class="pane" id="p-asks">
+    <p class="lede"><b>Ruled 2026-11-16: all five as recommended (A).</b> Recorded in the Several permits plan as Phase 7. Not built yet.</p>
+    <div class="asks">
+      <div class="card">
+        <h3>What you already said (shown so it can be corrected)</h3>
+        <ul>
+          <li>The club can bill each team whatever it wants, more or less than the permits.</li>
+          <li>Over or under is warned, never blocked.</li>
+          <li>Hand-set bills are sent the same way as any other bill.</li>
+        </ul>
+      </div>
+      <div class="ask">
+        <h3>Ask 1 · Where does the choice live?</h3>
+        <ul><li><b>A · A third choice in "Bill the teams for"</b> (drawn). One field answers "how much", and nothing above it moves when you pick.</li><li><b>B · A second choice in Split.</b> What I first proposed. Choosing it would remove "Price the time" from above the field you just used.</li></ul>
+        <p class="rec">Recommend A.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 2 · The words</h3>
+        <ul><li><b>A · "A total I choose" and "An amount I choose for each team"</b> (drawn). They match "Dates I choose" in Payments, and they drop "a part of it", which hid the fact that you can bill more.</li><li><b>B · Keep "A part of it"</b> and add only the new choice.</li></ul>
+        <p class="rec">Recommend A. "A part of it" is wrong today, before this change.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 3 · Which gaps are amber?</h3>
+        <ul><li><b>A · Over and under</b> (drawn, as you asked).</li><li><b>B · Over only.</b> Under stays the plain line, because the club covering part of the cost is common and deliberate.</li></ul>
+        <p class="rec">Recommend A for now. It is what you asked for, and it is easy to quiet down if under turns out to be noise.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 4 · A team's time changes after a hand-set bill is sent</h3>
+        <ul><li><b>A · The change is billed at the permit's price, on top of the amount you set</b> (drawn in tab 4). This is what every sent bill does today. "Send the changes" names the hand-set teams, and its existing "Bill the corrections" switch lets the club skip it for a flat deal.</li><li><b>B · Never correct a hand-set bill.</b> This is what I recommended in chat. Once a bill is sent its terms never change, so the club would have no way to bill a team that gained time. "Leave it to the club" means leaving it with no tool.</li></ul>
+        <p class="rec">Recommend A. I changed this after reading how sent bills work: B needs a new "change a sent bill" tool, and A needs only a label.</p>
+      </div>
+      <div class="ask">
+        <h3>Ask 5 · What the coach is told</h3>
+        <ul><li><b>A · "Set by the club"</b> under the team's share, instead of "By the time you got" (drawn in tab 4). It does not show what their time would have cost.</li><li><b>B · "Set by the club" plus "Your time: $2,850.00".</b> Fully open, but it invites a discussion the club may not want to have in a bill.</li></ul>
+        <p class="rec">Recommend A. The Fair shares view of the schedule already shows coaches their slots and hours.</p>
+      </div>
+      <div class="card">
+        <h3>Who sees what</h3>
+        <p style="margin:0">The window, the boxes and the warnings: people with the club's Accounting, on a computer (as today). Coaches see their own team's amount and its payments, and "Set by the club".</p>
+      </div>
+      <div class="card">
+        <h3>After you rule</h3>
+        <p style="margin:0">It goes into the Several permits plan as its own stage, with the build checks, the in-app help for Bill the teams, and the walk steps. Step 5.1 of the Two permits walk also gets its "Not billed" wording fixed.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var names = ['window', 'choice', 'gap', 'later', 'asks'];
+  var tabs = document.querySelectorAll('.tab');
+  function show(name) {
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.t === name)); });
+    document.querySelectorAll('section.pane').forEach(function (p) { p.classList.toggle('on', p.id === 'p-' + name); });
+    try { history.replaceState(null, '', '#' + name); } catch (e) { /* hash only */ }
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.t); }); });
+  /* A numbered dot (on the drawing or in the legend) opens its explanation under the drawing. */
+  function explain(pane, n) {
+    var li = pane.querySelector('[id$="-' + n + '"].li'); var ex = pane.querySelector('.expl');
+    if (!li || !ex) return;
+    ex.innerHTML = li.querySelector('p').innerHTML; ex.classList.add('on');
+    pane.querySelectorAll('.li').forEach(function (x) { x.classList.toggle('flash', x === li); });
+    ex.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  document.querySelectorAll('.mk, .mk2').forEach(function (b) {
+    b.addEventListener('click', function () { explain(b.closest('section'), b.dataset.n); });
+  });
+  document.querySelectorAll('.viewrow').forEach(function (row) {
+    var pane = row.closest('section');
+    row.querySelectorAll('button[data-v]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        row.querySelectorAll('button[data-v]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        pane.classList.toggle('show-diff', b.dataset.v === 'diff');
+      });
+    });
+  });
+  var h = (location.hash || '').replace('#', '');
+  if (names.indexOf(h) > -1) show(h);
+  window.addEventListener('hashchange', function () { var n = (location.hash || '').replace('#', ''); if (names.indexOf(n) > -1) show(n); });
+})();
+</script>

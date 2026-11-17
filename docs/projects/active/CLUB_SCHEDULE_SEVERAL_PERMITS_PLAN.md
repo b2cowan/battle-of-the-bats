@@ -598,6 +598,64 @@ families; a permit edit should never rewrite it without a person pressing Send t
 - [ ] `/simplify` and `/review` per session; an owner walk (checkable Artifact) on a two-town fixture with a four-month
       season.
 - [ ] `/demos` at its next cycle (demos follow the product; they don't gate it).
+- [x] Found at walk 1 (2026-11-16, owner): Fair shares' per-permit hour headings ("Hours · Milton evenings") ran together.
+      Now ONE "Hours" heading over the permit columns with the permit names on a second header row (own case, wrap at
+      ~8.5rem, right-aligned over their figures). Built in this conversation, lint clean, **uncommitted**; the full
+      typecheck ran out of memory twice (not a pass). The `colHoursOn` word was retired with it.
+- [ ] Walk 1 step 5.1 says the Bill tile "reads Not billed"; on a DRAFT it reads the time's price (Not billed is
+      Final-with-no-bill only). The walk already passed 49/49, so the source is left as is; any reuse fixes the step.
+
+### Phase 7 (Session F) — each team's amount (owner ask 2026-11-16; RULED the same day)
+
+**The ask (owner, walk 1):** *"should we also allow a 'custom' amount here? where they can simply bill whatever they
+want to the teams, be over or under the actual permit amount, have warnings when they are over/under, and send those
+custom bills out?"*
+
+**What the code did (verified 2026-11-16):** "A part of it" already takes any total, over or under the permits (the
+server checks only > 0 and the max, never against the permit cost); the total is always shared by the time; Split is
+a fixed value; the closing line is the same grey caption whether it matches, falls short or goes over. After a bill is
+sent its terms never change; a change to the time is billed at Send the changes at the bill's kept rate, with a
+send-wide "Bill the corrections" switch.
+
+**Drawing:** https://claude.ai/artifact/FwoSTHUojVjWUa97bZGVnJ (source `SCHEDULE_BILL_EACH_TEAM_DRAWINGS.html`, round 1).
+**All five asks ruled A, as recommended (owner, 2026-11-16: "proceed as recommended"):**
+1. **The choice lives in "Bill the teams for"** as a third option, not in Split (choosing it must not remove fields
+   above where the club clicked).
+2. **Words:** "A part of it" → **"A total I choose"**; the new option **"An amount I choose for each team"** (both echo
+   Payments' "Dates I choose"). Hints: whole → "Or a total, or each team’s amount, that you choose"; a total → "Shared
+   by the time each team got"; each team → "Each team starts at what its time costs. Change any of them."
+3. **Over AND under are amber** (the portal's white callout with an amber edge, the shipped closing-line words split
+   into a bold first line + a second line; "over" gains "The teams pay more than the club pays for the permits.").
+   Matching and "No permit cost to compare it with." stay the quiet line. **Warn, never block**: nothing disables, no
+   confirm step.
+4. **A later change to a hand-set team's time is billed at its permit's price, on top of the amount set** — i.e. the
+   shipped correction path, unchanged. Send the changes captions a hand-set team "Bill set by hand: $X" so a club with
+   a flat deal turns "Bill the corrections" off. (Reverses the chat recommendation "never correct": a sent bill's
+   terms never change, so "the club decides" had no tool.)
+5. **The coach is told "Set by the club"** (review band) and the email's reason clause becomes "set by the club"
+   instead of "for the time your team got". The coach is not shown what the time would have cost.
+
+**The window, as drawn:** choosing "An amount I choose for each team" removes "Price the time" (absent, not disabled);
+Split keeps its place and reads "As you set it for each team"; the table gains an **"Its time"** column (dim) and each
+team's **Share becomes an amount box** that starts at its time figure; group and "N teams" rows sum the boxes; the
+payment columns follow each box; an olive **"Start again from the time"** door above the table appears after the
+first edit; the statement gains "If a team’s time changes later, the change is billed at its permit’s price, on top
+of the amount you set." The footer, Bill from, Payments, access (Accounting) and sending are unchanged. "Adjust one
+team" is this choice with one box changed — no second control.
+
+**Build notes (decide in the session, not here):**
+- [ ] Storage for the per-team amounts and the third mode — `/dba` first (the bill already keeps per-permit rates,
+      mig 489; corrections need those rates for a hand-set team too, so keep them when the mode is "each team").
+- [ ] Payments follow each team's amount by its slots per period, as the time split does today.
+- [ ] Server: per-team amount ≥ 0 and ≤ the max; a $0 team — does it get a bill row and an email? (Recommend: no bill,
+      no money line in its email; confirm in the session.)
+- [ ] The read-only final-bill view and the late "Send the bill" path show the hand-set amounts and "Set by the club".
+- [ ] ⚠ **Read `CLUB_BILL_AMEND_AFTER_MADE_PLAN.md` before building** — it answers "terms never change" from the other
+      side; a hand-set amount must not get a second answer there.
+- [ ] Verify the "Bill the corrections" switch is send-wide (as read 2026-11-16); if so a send touching a hand-set and
+      a time-based team cannot correct one and skip the other — record it, don't widen it unasked.
+- [ ] `/marketing` on the new words, `/docs` (Bill the teams guide), guard tests for the three modes and the amber
+      callout, `check:spelling`, `/simplify` + `/review`, an owner walk (checkable Artifact), `/demos` at its cycle.
 
 ## 9. Sequencing (recommended)
 

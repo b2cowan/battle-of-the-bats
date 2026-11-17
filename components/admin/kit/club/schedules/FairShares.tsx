@@ -22,7 +22,7 @@ import { JoinedBand, Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
 
 /** One of the table's columns: its head, a team's cell, a group's (By percentage and the bill band teams by group). */
-interface Column { head: string; cell: (r: TeamResult) => ReactNode; group: (rs: readonly TeamResult[]) => ReactNode; hours?: boolean }
+interface Column { head: string; /** A second header line under `head`: columns that share a head and each carry a sub read as one headed group (Hours → one column per permit). */ sub?: string; cell: (r: TeamResult) => ReactNode; group: (rs: readonly TeamResult[]) => ReactNode; hours?: boolean }
 
 /** Up to this many of a week's clashes read one by one, with their date and place. */
 const CLASH_LINES_EACH = 3;
@@ -93,7 +93,7 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
   // when more than one permit prices the time, so why a team pays more is answered in the table.
   const byPermit = showBill && (view.pricing?.permits.length ?? 0) > 1 ? pricedMinutesByPermit(viewBillSlots(view.slots)) : null;
   const permitHourCols: Column[] = byPermit ? view.pricing!.permits.map(x => ({
-    head: W.colHoursOn(x.name), hours: true,
+    head: W.colHours, sub: x.name, hours: true,
     cell: r => hours({ pricedMinutes: byPermit.get(r.teamId)?.get(x.id) ?? 0 }),
     group: rs => hours({ pricedMinutes: sum(rs, r => byPermit.get(r.teamId)?.get(x.id) ?? 0) }),
   })) : [];
@@ -187,10 +187,19 @@ export function FairSharesTeams({ model, nameOf, colourOf, onBill }: {
   onBill?: () => void;
 }) {
   const { columns, groupsOf, shorts, results } = model;
+  // Columns that share a head and each carry a sub (Hours, then a permit) read as ONE headed group: the head once on top,
+  // the permit names beneath. Every other column's head spans both header rows.
+  const subbed = columns.some(c => c.sub);
+  const headGroups = columns.reduce<{ head: string; sub: boolean; span: number }[]>((gs, c) => {
+    const last = gs[gs.length - 1];
+    if (c.sub && last?.sub && last.head === c.head) last.span += 1;
+    else gs.push({ head: c.head, sub: !!c.sub, span: 1 });
+    return gs;
+  }, []);
   const row = (r: TeamResult) => (
     <tr key={r.teamId} className={shorts.has(r.teamId) ? sch.amberRow : undefined}>
       <td><Swatch colour={colourOf(r.teamId)} />{nameOf(r.teamId)}</td>
-      {columns.map(c => <td key={c.head}>{c.cell(r)}</td>)}
+      {columns.map((c, i) => <td key={i}>{c.cell(r)}</td>)}
     </tr>
   );
   const byId = new Map(results.map(r => [r.teamId, r]));
@@ -200,7 +209,7 @@ export function FairSharesTeams({ model, nameOf, colourOf, onBill }: {
     return (
       <tr key={`g-${key}`} className={sch.grp}>
         <td>{g.name}</td>
-        {columns.map(c => <td key={c.head}>{c.group(rs)}</td>)}
+        {columns.map((c, i) => <td key={i}>{c.group(rs)}</td>)}
       </tr>
     );
   };
@@ -219,9 +228,16 @@ export function FairSharesTeams({ model, nameOf, colourOf, onBill }: {
         <table className={sch.fairTable}>
           <thead>
             <tr>
-              <th scope="col">{W.colTeam}</th>
-              {columns.map(c => <th key={c.head} scope="col">{c.head}</th>)}
+              <th scope="col" rowSpan={subbed ? 2 : 1}>{W.colTeam}</th>
+              {headGroups.map((g, i) => g.sub
+                ? <th key={i} scope="colgroup" colSpan={g.span} className={sch.fairGroupHead}>{g.head}</th>
+                : <th key={i} scope="col" rowSpan={subbed ? 2 : 1}><span className={sch.fairHeadText}>{g.head}</span></th>)}
             </tr>
+            {subbed && (
+              <tr>
+                {columns.filter(c => c.sub).map((c, i) => <th key={i} scope="col" className={sch.fairSubHead}><span className={sch.fairHeadText}>{c.sub}</span></th>)}
+              </tr>
+            )}
           </thead>
           <tbody>
             {model.withGroups

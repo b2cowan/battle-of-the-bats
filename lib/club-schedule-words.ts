@@ -1076,8 +1076,6 @@ export const SCHEDULE_SCREEN_WORDS = {
   colNights: 'Days',
   bandGroup: (group: string, teams: number, slots: number) => `${group} · ${pluralize(teams, 'team')} · ${pluralize(slots, 'slot')}`,
   hours: (h: number) => `${Math.round(h * 10) / 10} h`,
-  /** Fair shares on several permits (Session C): 'Hours · Milton spring'. */
-  colHoursOn: (permit: string) => `Hours · ${permit}`,
   teamSlotsTitle: (team: string) => `${possessive(team)} slots`,
   // The bill (specimen 14 step 4)
   billTitle: 'Bill the teams',
