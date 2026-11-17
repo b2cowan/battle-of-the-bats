@@ -27,7 +27,37 @@ Every outstanding piece of work has a home below. **Where this list and the stag
 - **Stage 3 — Retire the coach's admin view:** DONE (`32093672f` 2026-10-30; the redirect rulings came from its walk).
 - **Stage 4 — "Covered by {Club}" and the plan words:** DONE (`a1080dcb0` + `8a2498123`, 2026-10-30; owner-walked 15/15, §429).
 - **Stage 4b — A Premium coach becomes a club, in place:** Parts 1–3 DONE (Part 1 `6969f41fe`, Part 2 `6d67e0bb3`, Part 3 `d6adade6b`, 2026-10-30/31); **the Part 3 owner walk (§433) is OWED**. Detail in `PLAN_AND_BILLING_STAGE4B_PLAN.md`.
+  - **Status corrected 2026-11-16:** the Part 3 walk §433 PASSED 31/34 2026-11-01 (walk 5, a Premium set to end, could not be
+    created then; it is reachable now and joins the Stage 5 walk list). Part 4 committed `1bfc4452b`, `75c83bc43`, `c5112e55f`
+    (the review's fix). The text below is the record as written.
   - **Part 4 — Verify and walk:** NOT STARTED (prompt `PLAN_AND_BILLING_STAGE4B_PART4_BUILD_PROMPT.md`). It now ALSO includes: (a) the owner's ruling on the sign-in header gap (the suspended-account billing door compares `x-pathname`, which `proxy.ts` sets only for matcher paths — 4B §9 "OPEN") **and the fix that ruling calls for** (probably one matcher entry plus the dev-server restart), which is **the 4b closing condition**; (b) the **real Stripe portal Renew/resume check** for a Premium coach whose plan is set to end (4B §9, decision 1: unverified; walk 5).
+- **Stage 5 gates re-read 2026-11-16, all met:**
+  - 4b Part 4 is committed (above).
+  - Plans end at renewal Stages 1–2 have been on production since `release/2026-11-05`, and its Stage 3 ran (`f1225ef96`).
+  - The price-form call is built as "plus applicable taxes" (`0dca09019`, `2cbfac7f6`).
+  - GST/HST Stage 2 is built and walked (§471 36/36). Its live-account set-up is a Club sale step, not a help question.
+
+  **(b) RULED 2026-11-16 (owner, "I agree with your recommendation on the card question"):** a failed payer read degrades to
+  "no card", and the rest of team settings loads. The owner asked for the refreshed build prompt the same day:
+  `PLAN_AND_BILLING_STAGE5_BUILD_PROMPT.md` (rewritten 2026-11-16).
+- **Stage 5 Part A (2026-11-16), the three small code items, re-read in code:**
+  - **(b) the failed payer read: already true since Stage 4 itself.** `a1080dcb0` shipped the route catching the coverage
+    read (`console.error('[coaches team GET] plan coverage unavailable:', …)`, `planCoverage: null`), and its route test
+    "a failed payer or role read hides the card and keeps the rest of the settings" (`tests/unit/team-plan-coverage.test.ts`
+    ~L199) pins the 200 and the one log line. The §9 note "a test pins today's throw" misread the RESOLVER tests (~L110,
+    ~L121), which are right to reject: the resolver never claims coverage it could not read; the route degrades. Nothing built.
+  - **(c) the red `plan-billing-usage.test.ts:112`: fixed (test fixture).** The red test is the free-time route
+    (`/api/admin/org/free-time`), not the usage route. `4aa1e56ab` (2026-10-30, Support console 4b "Keep Premium goes to the
+    portal's owner") added an owner read and `canKeepPremium`; the fixture (last edited 2026-10-29) stubbed the database as
+    empty, so the new read threw and the route correctly answered 503. The route is right; the fixture now serves the owner
+    read, the expected body carries `canKeepPremium`, and a new case pins that only the portal's owner gets it.
+  - **(e) the tournament-tier rail double highlight: already gone, code-verified.** `dd77be00a` (2026-11-05, "Settings &
+    access no longer lights on the Plan & billing page") and `33ac442a3` (2026-11-10, navigation Phase 2 Part B) make every
+    competing row defer to the billing row on `tournaments/settings/subscription`: the sidebar's Settings & access row and
+    the foot's (`AdminKitRail.tsx`, `settingsLit`), the event rail (`litTournamentRow` passes the billing link), and the
+    phone sheet's tournament rows (`AdminKitBottomNav.tsx`, `isKitLinkActiveAmong(…, [billingLink])`). Pinned by
+    `tests/unit/admin-kit-nav.test.ts` "only Plan & billing lights on its own page" (211/211 nav tests green). Not
+    re-walked in a browser; it joins the Stage 5 walk list.
 - **Stage 5 — Docs, demos, walks (ONE help pass with Plans end at renewal Stage 4):** NOT STARTED, gated on 4b Part 4, Plans end at renewal shipped, the `/marketing` price-form call, and GST/HST Stage 2 (tax live). Scope as written in §5, **plus**: (a) the **T1 trial-sentence `/marketing` pass** (the shared trial sentence and public `clubTrialLine()`; see "Still owed" in §9); (b) the **owner call on the failed payer read** (degrade to "no card" instead of failing the whole team-settings GET — §9 Stage 4 review, a test pins today's throw); (c) **clearing the red `tests/unit/plan-billing-usage.test.ts:112`** (503 instead of 200 — this project's count-only usage route; it keeps the full `verify:changed` gate red); (d) the **baseline cleanup** (`check:admin-type --init`, `check:css-selectors`) — **blocked by other projects' drift** (§9 Stage 4 records), so it waits for that to clear; layout baselines are refreshed on staging, not the dev server; (e) the **tournament-tier rail double highlight** (placed here 2026-11-01 from the §425 walk; first reported in the Stage 1 review as "two rail rows highlight at once on the tournament tiers"): re-check on a Tournament / Tournament Plus owner's rail whether Plan & billing and another row both read as the current page, and fix it if it still does. Not re-checked in code or in a browser yet, so it may already be gone after Stages 2–3.
 - **Stage 6 — Release and close (NEW):** NOT STARTED. The final owner walk of the billing screens, everything on production (recorded in the release record), the TODO line closed, and this plan and its PM brief moved to `docs/projects/archive/`.
 

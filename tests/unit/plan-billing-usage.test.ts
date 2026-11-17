@@ -95,12 +95,23 @@ describe('billing counts follow enforcement and effective limits', () => {
 });
 
 describe('billing free time never confuses an old ended grant or a read failure with cancellation', () => {
-  function freeTimeRoute(failure: boolean, role = 'owner', capabilities: Record<string, boolean> | null = null) {
+  // The portal's owner is `owner-user` (Keep Premium attaches to that person alone, 4aa1e56ab); `userId` is who is asking.
+  function freeTimeRoute(failure: boolean, role = 'owner', capabilities: Record<string, boolean> | null = null, userId = 'owner-user') {
+    const workspaceOwner = {
+      from: (table: string) => {
+        assert.equal(table, 'team_workspaces');
+        const query = {
+          select: () => query, eq: () => query,
+          maybeSingle: async () => ({ data: { primary_owner_user_id: 'owner-user' }, error: null }),
+        };
+        return query;
+      },
+    };
     const load = billingTestLoader({
       'next/server': { NextResponse: Response },
-      '@/lib/api-auth': { getAuthContextWithRole: async () => ({ role, capabilities, org: { id: 'b', accountKind: 'team_workspace' } }), unauthorized: () => new Response(null, { status: 401 }), forbidden: () => new Response(null, { status: 403 }) },
+      '@/lib/api-auth': { getAuthContextWithRole: async () => ({ role, capabilities, user: { id: userId }, org: { id: 'b', accountKind: 'team_workspace' } }), unauthorized: () => new Response(null, { status: 401 }), forbidden: () => new Response(null, { status: 403 }) },
       '@/lib/observability': { withObservability: (handler: unknown) => handler },
-      '@/lib/supabase-admin': {},
+      '@/lib/supabase-admin': { supabaseAdmin: workspaceOwner },
       '@/lib/entitlement-grants': {},
       '@/lib/portal-free-time-server': {
         customerPortalFreeTime: async () => { if (failure) throw new Error('No read'); return null; },
@@ -111,7 +122,11 @@ describe('billing free time never confuses an old ended grant or a read failure 
   }
   it('billing keeps the ended state beyond the informational 30-day band, without leaking team ids', async () => {
     const response = await freeTimeRoute(false)(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'));
-    assert.equal(response.status, 200); assert.deepEqual(await response.json(), { freeTime: null, overLimitAfter: false, foundingThrough: null, portal: { state: 'ended', lastDay: '2026-01-01' } });
+    assert.equal(response.status, 200); assert.deepEqual(await response.json(), { freeTime: null, overLimitAfter: false, foundingThrough: null, portal: { state: 'ended', lastDay: '2026-01-01' }, canKeepPremium: true });
+  });
+  it('Keep Premium is offered to the portal’s owner alone', async () => {
+    const response = await freeTimeRoute(false, 'owner', null, 'someone-else')(new Request('http://local/api/admin/org/free-time?orgSlug=org-b&billing=1'));
+    assert.equal(response.status, 200); assert.equal((await response.json()).canKeepPremium, false);
   });
   it('a failed billing read is unavailable, while other consumers keep their existing informational behavior', async () => {
     const get = freeTimeRoute(true);
