@@ -203,7 +203,9 @@ export async function readEmailLog(orgId: string, before: string | null, filter:
 /** One typed email, as sent: its words, its counts, and — since 9d-1 — the families it missed and those who opted out
  *  (named one to three), and how many a stopped email could still reach. */
 export interface ClubEmailRecord extends EmailLogRow {
+  /** '' once the retention clock deleted the words (12 months after the send; mig 492) — `wordsCleared` says so. */
   body: string;
+  wordsCleared: boolean;
   missed: number;
   missedNamed: string | null;
   optedOutNamed: string | null;
@@ -211,7 +213,7 @@ export interface ClubEmailRecord extends EmailLogRow {
 
 export async function readClubEmail(orgId: string, sendId: string): Promise<ClubEmailRecord | null> {
   const { data, error } = await supabaseAdmin.from('family_email_sends')
-    .select(`${CLUB_COLS}, body`).eq('org_id', orgId).eq('id', sendId).maybeSingle();
+    .select(`${CLUB_COLS}, body, words_cleared_at`).eq('org_id', orgId).eq('id', sendId).maybeSingle();
   if (error) throw error;
   if (!data) return null;
   const [nameOf, recipients, seasons] = await Promise.all([
@@ -226,7 +228,8 @@ export async function readClubEmail(orgId: string, sendId: string): Promise<Club
   const season = data.season_id ? seasons.get(data.season_id) : null;
   return {
     ...clubRow(data, nameOf(data.sent_by), Date.now(), season ? SW.seasonTo(season, data.audience_label) : data.audience_label),
-    body: data.body,
+    body: data.body ?? '',
+    wordsCleared: !!data.words_cleared_at,
     missed: missed.length,
     missedNamed: familiesNamed(missed.map(r => r.family_name)),
     optedOutNamed: familiesNamed(optedOut.map(r => r.family_name)),

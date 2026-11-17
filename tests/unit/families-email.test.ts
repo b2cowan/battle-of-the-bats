@@ -168,8 +168,9 @@ describe('Email families — the press, the claim and the cap', () => {
     assert.match(send, /loadFamilyAudience\(ctx\.org\.id, ctx\.org\.slug, \{ attach: true[,} ]/, 'the press attaches first');
   });
 
-  it('replies go to the sender; a send that reached nobody gives its claim back', () => {
-    assert.match(send, /replyTo: senderEmail/);
+  it('replies go to the sender unless the send chose the club (Club Communications R2); a send that reached nobody gives its claim back', () => {
+    assert.match(send, /const replyTo = d\.reply\.mode === 'club' \? d\.reply\.contact : senderEmail;/);
+    assert.match(send, /suppressed: world\.suppressed,\s*replyTo,/);
     assert.match(send, /if \(reached === 0\)[\s\S]{0,200}\.delete\(\)\.eq\('id', sendId\)/);
   });
 

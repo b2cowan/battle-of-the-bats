@@ -550,6 +550,61 @@
     "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
   },
   {
+    "tablename": "club_group_email_bodies",
+    "indexname": "club_group_email_bodies_org_idx",
+    "indexdef": "CREATE INDEX club_group_email_bodies_org_idx ON public.club_group_email_bodies USING btree (org_id)"
+  },
+  {
+    "tablename": "club_group_email_bodies",
+    "indexname": "club_group_email_bodies_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_group_email_bodies_pkey ON public.club_group_email_bodies USING btree (send_id)"
+  },
+  {
+    "tablename": "club_group_email_recipients",
+    "indexname": "club_group_email_recipients_org_idx",
+    "indexdef": "CREATE INDEX club_group_email_recipients_org_idx ON public.club_group_email_recipients USING btree (org_id)"
+  },
+  {
+    "tablename": "club_group_email_recipients",
+    "indexname": "club_group_email_recipients_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_group_email_recipients_pkey ON public.club_group_email_recipients USING btree (id)"
+  },
+  {
+    "tablename": "club_group_email_recipients",
+    "indexname": "club_group_email_recipients_send_idx",
+    "indexdef": "CREATE INDEX club_group_email_recipients_send_idx ON public.club_group_email_recipients USING btree (send_id, status)"
+  },
+  {
+    "tablename": "club_group_email_recipients",
+    "indexname": "club_group_email_recipients_user_idx",
+    "indexdef": "CREATE INDEX club_group_email_recipients_user_idx ON public.club_group_email_recipients USING btree (user_id, send_id) WHERE (user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_group_email_sends",
+    "indexname": "club_group_email_sends_group_idx",
+    "indexdef": "CREATE INDEX club_group_email_sends_group_idx ON public.club_group_email_sends USING btree (org_id, kind, group_key, sent_at DESC)"
+  },
+  {
+    "tablename": "club_group_email_sends",
+    "indexname": "club_group_email_sends_names_due_idx",
+    "indexdef": "CREATE INDEX club_group_email_sends_names_due_idx ON public.club_group_email_sends USING btree (sent_at) WHERE (names_cleared_at IS NULL)"
+  },
+  {
+    "tablename": "club_group_email_sends",
+    "indexname": "club_group_email_sends_org_sent_idx",
+    "indexdef": "CREATE INDEX club_group_email_sends_org_sent_idx ON public.club_group_email_sends USING btree (org_id, sent_at DESC)"
+  },
+  {
+    "tablename": "club_group_email_sends",
+    "indexname": "club_group_email_sends_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_group_email_sends_pkey ON public.club_group_email_sends USING btree (id)"
+  },
+  {
+    "tablename": "club_group_email_sends",
+    "indexname": "club_group_email_sends_words_due_idx",
+    "indexdef": "CREATE INDEX club_group_email_sends_words_due_idx ON public.club_group_email_sends USING btree (sent_at) WHERE (words_cleared_at IS NULL)"
+  },
+  {
     "tablename": "club_schedule_bill_rates",
     "indexname": "club_schedule_bill_rates_org_idx",
     "indexdef": "CREATE INDEX club_schedule_bill_rates_org_idx ON public.club_schedule_bill_rates USING btree (org_id)"
@@ -1116,6 +1171,11 @@
   },
   {
     "tablename": "family_email_sends",
+    "indexname": "family_email_sends_names_due_idx",
+    "indexdef": "CREATE INDEX family_email_sends_names_due_idx ON public.family_email_sends USING btree (sent_at) WHERE (names_cleared_at IS NULL)"
+  },
+  {
+    "tablename": "family_email_sends",
     "indexname": "family_email_sends_org_sent_idx",
     "indexdef": "CREATE INDEX family_email_sends_org_sent_idx ON public.family_email_sends USING btree (org_id, sent_at DESC)"
   },
@@ -1128,6 +1188,11 @@
     "tablename": "family_email_sends",
     "indexname": "family_email_sends_season_sent_idx",
     "indexdef": "CREATE INDEX family_email_sends_season_sent_idx ON public.family_email_sends USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_email_sends",
+    "indexname": "family_email_sends_words_due_idx",
+    "indexdef": "CREATE INDEX family_email_sends_words_due_idx ON public.family_email_sends USING btree (sent_at) WHERE (words_cleared_at IS NULL)"
   },
   {
     "tablename": "family_invitations",

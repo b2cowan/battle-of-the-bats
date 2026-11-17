@@ -1,0 +1,672 @@
+<title>Club Communications Evaluation</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;550;600;650;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+/* Layout: the house drawings layout. Sticky section tabs, one section at a time, a View switch on the tabs that compare two seats; product frames at true size on a cool striped stage so they read as specimens. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --ok: #2E6B3A; --ok-soft: #E2F0E4; --warn: #8A5A00;
+  --warn-soft: #F7ECD4; --no: #8C2F2A; --no-soft: #F6E1DF;
+  --doc-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; --doc-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --no: #F0A19B; --no-soft: #3A1F1D; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --no: #F0A19B; --no-soft: #3A1F1D; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { padding-block: 20px 10px; }
+header.top h1 { margin: 0; font: 700 1.5rem/1.15 var(--doc-display); letter-spacing: .01em; text-wrap: balance; }
+header.top p { margin: 4px 0 0; color: var(--muted); max-width: 80ch; }
+.tabbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; padding-top: 6px; }
+.tab { appearance: none; border: 0; background: none; color: var(--muted); font: 600 13.5px var(--doc-sans); padding: 10px 12px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--mark); }
+.tab:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.viewrow .vl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+main { padding-block: 14px 72px; }
+h2.sec { margin: 6px 0 4px; font: 700 1.3rem/1.2 var(--doc-display); text-wrap: balance; }
+h3.sub { margin: 22px 0 6px; font: 650 15px var(--doc-sans); }
+.lede { margin: 0 0 14px; color: var(--muted); max-width: 80ch; }
+p { max-width: 80ch; }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); }
+.spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow-x: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.row2 { display: flex; gap: 22px; align-items: flex-start; width: max-content; }
+.col2 { display: flex; flex-direction: column; gap: 18px; width: max-content; }
+.lbl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.lbl.after { color: var(--accent); }
+.tag { display: inline-block; font: 600 10.5px/1 var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; vertical-align: 2px; }
+.t-new { background: var(--accent-soft); color: var(--accent); } .t-chg { background: var(--warn-soft); color: var(--warn); } .t-same { background: var(--line); color: var(--muted); }
+.t-rec { background: var(--ok-soft); color: var(--ok); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px; margin-top: 12px; }
+.note { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; font-size: 14px; }
+.note h3 { margin: 0 0 6px; font: 650 14.5px var(--doc-sans); }
+.note p { margin: 0 0 8px; } .note p:last-child { margin: 0; }
+.note ul { margin: 4px 0 0; padding-left: 18px; } .note li { margin: 3px 0; }
+.mk { min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 0; background: var(--mark); color: var(--mark-ink); font: 700 11px/22px var(--doc-mono); text-align: center; cursor: pointer; display: inline-block; vertical-align: 1px; margin: 0 3px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; max-width: 900px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; font: 650 15px var(--doc-sans); }
+.ask p { margin: 4px 0; }
+.rec { font-weight: 650; color: var(--accent); }
+.box { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 0 0 16px; max-width: 900px; font-size: 14px; }
+.box.ok { border-left: 3px solid var(--ok); } .box.push { border-left: 3px solid var(--mark); } .box.fact { border-left: 3px solid var(--accent); }
+.box ul { margin: 4px 0 0; padding-left: 18px; } .box li { margin: 4px 0; }
+.box p { margin: 0 0 6px; } .box p:last-child { margin: 0; }
+.grid { border-collapse: collapse; background: var(--card); font-size: 13.5px; margin: 6px 0 4px; min-width: 720px; }
+.grid th, .grid td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+.grid th { font: 600 12px var(--doc-mono); background: var(--card); }
+.grid td.h { font-weight: 650; }
+.grid .rc { background: var(--ok-soft); }
+.tblwrap { overflow-x: auto; }
+.y, .n, .p { display: inline-block; font: 650 12px var(--doc-sans); padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+.y { background: var(--ok-soft); color: var(--ok); } .n { background: var(--no-soft); color: var(--no); } .p { background: var(--warn-soft); color: var(--warn); }
+body[data-view="diff"] .same { opacity: .2; filter: grayscale(1); }
+.anno { border: 2px dashed var(--mark); border-radius: 8px; padding: 8px 12px; font: 600 12.5px/1.4 var(--doc-sans); color: var(--mark); background: transparent; }
+
+/* place cards and flow diagrams (document chrome, themed) */
+.places { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); gap: 14px; margin: 10px 0 6px; }
+.place { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; font-size: 14px; }
+.place .crumb { font: 700 11px var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.place h3 { margin: 3px 0 8px; font: 650 15px var(--doc-sans); }
+.place dl { margin: 0; display: grid; grid-template-columns: 5.4rem 1fr; gap: 6px 10px; }
+.place dt { color: var(--muted); font-size: 12.5px; } .place dd { margin: 0; }
+.place.q { border-style: dashed; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; margin: 10px 0 18px; }
+.opt { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; font-size: 14px; display: flex; flex-direction: column; gap: 8px; }
+.opt.pick { border: 2px solid var(--ok); }
+.opt h3 { margin: 0; font: 650 15px var(--doc-sans); }
+.opt p { margin: 0; }
+.flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); }
+.flow .stack { display: flex; flex-direction: column; gap: 4px; }
+.flow .nd { font: 600 11.5px/1.25 var(--doc-sans); padding: 5px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+.flow .nd.rcd { background: var(--accent-soft); border-color: var(--accent); }
+.flow .nd.gone { border-style: dashed; color: var(--muted); }
+.flow .ar { color: var(--muted); font: 700 14px var(--doc-mono); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; margin: 10px 0; max-width: 980px; }
+.env { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font-size: 14px; }
+.env h3 { margin: 0 0 6px; font: 650 14.5px var(--doc-sans); }
+.env ul { margin: 0; padding-left: 18px; } .env li { margin: 3px 0; }
+.steps { display: flex; flex-direction: column; gap: 10px; max-width: 900px; margin: 10px 0; }
+.step { display: grid; grid-template-columns: 34px 1fr; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font-size: 14px; }
+.step .num { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font: 700 13px var(--doc-mono); }
+.step h3 { margin: 0 0 4px; font: 650 15px var(--doc-sans); }
+.step p { margin: 0 0 6px; } .step p:last-child { margin: 0; }
+.step .why { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+/* Admin frame: the club admin kit, Warm theme (drawn light in both page themes, as the default portal look) */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #615A54; --ln: rgba(70,55,30,.12);
+  --ln2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --amber-soft: #F4E7CF; --surface2: #F3EEE4; --win-edge: rgba(47,92,138,.30);
+  background: var(--paper); color: var(--ink); outline: 1px solid #9FB0C7; border-radius: 10px; font: 14px/1.45 'Inter', system-ui, sans-serif; position: relative; overflow: hidden; }
+.fr * { box-sizing: border-box; }
+.fr svg { flex: none; display: block; }
+.fr.w1180 { width: 1180px; } .fr.w960 { width: 960px; } .fr.w390 { width: 390px; }
+.fr.bare { outline: 0; background: transparent; overflow: visible; }
+.fr .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 500px; }
+.fr .side { background: #F1EBE0; border-right: 1px solid var(--ln2); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; font-size: 13.5px; }
+.fr .side .club { display: flex; align-items: center; gap: 8px; padding: 2px 8px 12px; font-weight: 700; }
+.fr .side .club i { width: 26px; height: 26px; border-radius: 7px; background: #1F4E79; color: #fff; display: grid; place-items: center; font: 700 11px 'Inter'; font-style: normal; }
+.fr .side .grp { font: 600 10.5px 'IBM Plex Mono'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); padding: 12px 8px 4px; }
+.fr .side a { display: block; padding: 6px 8px; border-radius: 6px; color: var(--ink2); font-weight: 550; }
+.fr .side a.on { background: var(--olive-soft); color: var(--ink); font-weight: 700; }
+.fr .side a.nw { outline: 2px dashed rgba(181,71,15,.6); outline-offset: 1px; }
+.fr .main { min-width: 0; display: flex; flex-direction: column; }
+.fr .abar { height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 20px; background: var(--white); border-bottom: 1px solid var(--ln2); font: 700 16px 'Inter'; }
+.fr .abar .av { width: 30px; height: 30px; border-radius: 50%; background: #E6DED0; }
+.fr .col { width: 900px; max-width: 100%; margin: 0 auto; padding: 18px 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+.fr .tb { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fr .sp { flex: 1; }
+.fr .lede2 { font-size: 14px; color: var(--ink2); }
+.fr .btn { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 6px; font: 650 14px 'Inter'; background: var(--white); color: var(--ink); border: 1px solid var(--ln2); white-space: nowrap; }
+.fr .btn.lime { background: var(--lime); border-color: transparent; }
+.fr .fsel { height: 34px; display: inline-flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 6px; font: 550 14px 'Inter'; background: var(--white); color: var(--ink); border: 1px solid var(--ln2); white-space: nowrap; }
+.fr table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--ln2); border-radius: 8px; overflow: hidden; }
+.fr th { font: 700 12px 'Barlow Condensed', 'Arial Narrow', sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--ink2); text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--ln2); white-space: nowrap; }
+.fr th.r, .fr td.r { text-align: right; font-variant-numeric: tabular-nums; }
+.fr td { padding: 10px 14px; border-bottom: 1px solid var(--ln); vertical-align: middle; font-size: 14px; }
+.fr td.nm { font-weight: 600; }
+.fr td.nw2 { white-space: nowrap; }
+.fr tr:last-child td { border-bottom: 0; }
+.fr th.chev, .fr td.chev { width: 36px; padding-left: 0; padding-right: 12px; color: var(--ink3); }
+.fr .chip { font: 600 10px 'IBM Plex Mono'; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid; white-space: nowrap; display: inline-block; vertical-align: 1px; }
+.fr .chip.amb { color: var(--amber); background: var(--amber-soft); border-color: rgba(131,80,6,.3); }
+.fr .chip.qt { color: var(--olive); background: var(--olive-soft); border-color: rgba(87,101,30,.35); }
+.fr .ghost { color: var(--ink3); font-size: 12px; }
+
+/* The one club send window */
+.fr .win { width: 640px; background: var(--white); border: 1px solid var(--win-edge); border-radius: 12px; display: flex; flex-direction: column; position: relative; }
+.fr .wh { padding: 17px 24px 6px; position: relative; display: flex; gap: 8px; align-items: flex-start; }
+.fr .wh .we { font: 700 11px 'IBM Plex Mono'; letter-spacing: .09em; text-transform: uppercase; color: var(--ink2); }
+.fr .wh .wt { font: 700 16px/1.25 'Inter'; margin-top: 2px; color: var(--ink); }
+.fr .wh .x { position: absolute; top: 14px; right: 16px; width: 32px; height: 32px; display: grid; place-items: center; color: var(--ink2); }
+.fr .wb { padding: 10px 24px 16px; color: var(--ink2); font-size: 14px; display: flex; flex-direction: column; }
+.fr .wf { display: flex; align-items: center; gap: 10px; padding: 13px 24px; border-top: 1px solid var(--ln); flex-wrap: wrap; }
+.fr .wf .fs { margin-right: auto; font-size: 12px; color: var(--ink3); line-height: 1.45; flex: 1 1 260px; }
+.fr .wf .btns { display: flex; gap: 8px; margin-left: auto; }
+.fr .stmt { padding: 12px 14px; border: 1px solid var(--ln); border-left: 3px solid var(--olive); border-radius: 8px; background: var(--white); color: var(--ink); font-weight: 700; font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
+.fr .fl { font: 700 11px 'IBM Plex Mono'; letter-spacing: .09em; text-transform: uppercase; color: var(--ink2); margin-bottom: 5px; }
+.fr .flab { font-size: 12px; font-weight: 650; color: var(--ink2); margin-bottom: 5px; }
+.fr .rows { border: 1px solid var(--ln); border-radius: 8px; background: var(--white); margin: 3px 0 12px; }
+.fr .srow { display: flex; gap: 10px; align-items: flex-start; padding: 9px 12px; }
+.fr .srow + .srow { border-top: 1px solid var(--ln); }
+.fr .srow .t { color: var(--ink); font-size: 14px; }
+.fr .srow small { display: block; font-size: 12px; color: var(--ink3); }
+.fr .srow.off .t { color: var(--ink3); }
+.fr .bx { width: 18px; height: 18px; border: 1.5px solid var(--ln2); border-radius: 4px; background: #fff; flex: none; position: relative; margin-top: 1px; }
+.fr .bx.on { background: var(--olive); border-color: var(--olive); }
+.fr .bx.on::after { content: ""; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.fr .dd { height: 36px; width: 100%; border: 1px solid var(--ln2); border-radius: 6px; background: var(--paper); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 14px; color: var(--ink); margin-bottom: 12px; }
+.fr .in { height: 36px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--paper); padding: 0 10px; display: flex; align-items: center; color: var(--ink); margin-bottom: 14px; }
+.fr .ta { min-height: 84px; border: 1px solid var(--ln2); border-radius: 6px; background: var(--paper); padding: 8px 10px; color: var(--ink); margin-bottom: 6px; line-height: 1.5; }
+.fr .hint { font-size: 12px; color: var(--ink3); line-height: 1.45; margin: 0 0 12px; max-width: none; }
+.fr .doors { display: flex; justify-content: space-between; gap: 10px; margin: 2px 0 4px; }
+.fr .doors span { color: var(--olive); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Phone */
+.fr.w390 { min-height: 620px; display: flex; flex-direction: column; }
+.fr .pstatus { height: 24px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font: 600 12px 'Inter'; color: var(--ink); background: var(--white); }
+.fr .pbar { height: 52px; display: flex; align-items: center; padding: 0 16px; background: var(--white); border-bottom: 1px solid var(--ln2); font: 700 16px 'Inter'; gap: 10px; }
+.fr .pact { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px 4px; gap: 10px; }
+.fr .pact .btn { height: 44px; }
+.fr .plist { margin: 8px 16px 16px; background: var(--white); border: 1px solid var(--ln2); border-radius: 8px; }
+.fr .crow { display: grid; grid-template-columns: 1fr auto 20px; gap: 2px 10px; align-items: center; min-height: 56px; padding: 10px 12px; }
+.fr .crow + .crow { border-top: 1px solid var(--ln); }
+.fr .crow b { font-size: 14.5px; font-weight: 650; color: var(--ink); }
+.fr .crow .r { font: 600 13px 'Inter'; color: var(--ink2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fr .crow small { grid-column: 1 / 3; color: var(--ink3); font-size: 12.5px; }
+.fr .crow .chev { grid-row: 1 / 3; grid-column: 3; color: var(--ink3); }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  </defs>
+</svg>
+
+<header class="top"><div class="wrap">
+  <h1>Where the club’s email should live</h1>
+  <p>An evaluation of your question: should ad hoc group email have one permissioned home in the club portal, where today it has two places and the coach email proposal adds a third? Read from the code on 2026-11-16 and from the coach email drawings. The frames are sketches to judge the idea, drawn at true size on the club’s own look. They are not build drawings. Coach counts are the seeded Harbourtown counts from the coach email drawings. Family counts, messages and history rows are examples.</p>
+</div></header>
+
+<div class="tabbar"><div class="wrap">
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-answer" data-tab="answer">1 · The short answer</button>
+    <button class="tab" role="tab" id="t-today" data-tab="today">2 · Today</button>
+    <button class="tab" role="tab" id="t-options" data-tab="options">3 · The options</button>
+    <button class="tab" role="tab" id="t-home" data-tab="home">4 · The home</button>
+    <button class="tab" role="tab" id="t-write" data-tab="write">5 · Writing an email</button>
+    <button class="tab" role="tab" id="t-seats" data-tab="seats">6 · Who sends, who sees</button>
+    <button class="tab" role="tab" id="t-moves" data-tab="moves">7 · What moves, what stays</button>
+    <button class="tab" role="tab" id="t-stages" data-tab="stages">8 · The stages</button>
+    <button class="tab" role="tab" id="t-asks" data-tab="asks">9 · Asks</button>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <div class="viewrow" id="viewrow" hidden>
+    <span class="vl" id="viewlabel">View</span>
+    <div class="seg" role="group" aria-labelledby="viewlabel">
+      <button type="button" data-view="all" aria-pressed="true">Everything</button>
+      <button type="button" data-view="diff" aria-pressed="false">Show only what differs</button>
+    </div>
+    <span>Dims what the owner and the registrar both have on this tab.</span>
+  </div>
+
+<main>
+<!-- ═══════════ 1 · THE SHORT ANSWER ═══════════ -->
+<section id="p-answer" role="tabpanel" aria-labelledby="t-answer" hidden>
+  <h2 class="sec">1 · Yes to one home. Keep the buttons where people already work.</h2>
+  <p class="lede">Your instinct is right, and the code makes the case more strongly than your note does. I would not build the coach email as a “Group email” tab on Organization. I would give the club one place called <b>Communications</b>, with one list of what went out and one window to write in, and build the coach email as its first new piece.</p>
+
+  <div class="box ok"><p><b>What I recommend</b> <button class="mk" data-ask="a1">1</button></p><ul>
+    <li><b>One home.</b> A Communications place in the club sidebar. It holds the club’s sent record and a New email button.</li>
+    <li><b>One window.</b> The same send window the club already uses. Its Who section lists every group this person may write to, families and coaches together, and more than one can be ticked. Each person gets one copy.</li>
+    <li><b>One record.</b> Every email the club sent appears in one list. A president sees all of it. A league registrar sees the part that reached house-league people.</li>
+    <li><b>Many doors.</b> “Email these families” on a list of families who owe, the ticked rows on Registrations, a season’s Email families: they stay. They open the same window with the people already filled in, and what they send lands in the same record.</li>
+    <li><b>Automatic and one-off emails stay where they fire</b>, exactly as you said. The record lists them so the picture is complete.</li>
+  </ul></div>
+
+  <div class="box push"><p><b>Where I would go further than your note</b></p><ul>
+    <li><b>The split is in the keys as much as the places.</b> Today the club-wide family email and its sent list open only for someone who holds the Families book. An admin does not hold it unless the owner grants it, and granting it also opens every household’s contact details and each child’s medical note. So a vice-president who should be able to tell every family the fields are closed either can’t, or gets far more access than the job needs. A hub fixes this only if sending is separated from reading family records. <button class="mk" data-ask="a4">4</button></li>
+    <li><b>Nobody can see everything that went out, the owner included.</b> The owner’s fullest list is Families › Emails. It has no tournament announcements, none of the emails sent to coaches, and none of the emails a coach sends to their own team’s families.</li>
+    <li><b>Coaches’ team emails are invisible to the club.</b> A rep coach can email their team’s families from the Coaches Portal and no club screen shows it. If “see all communications” is the goal, this is the largest gap, and it needs your call. <button class="mk" data-ask="a8">8</button></li>
+  </ul></div>
+
+  <div class="box push"><p><b>Where I would hold back</b></p><ul>
+    <li><b>The hub should not be the only door.</b> Emailing the people you are looking at is the easiest version of this job. Taking those buttons away to make the hub “the” place would make the common case slower.</li>
+    <li><b>“All coaches and parents” is one message but two mailings.</b> Family email carries an unsubscribe line and a daily allowance. Coach email carries neither, by the legal review. One window can write both. The product sends them down their own paths and shows them as one row. This needs a legal check before it is drawn for build. <button class="mk" data-ask="a7">7</button></li>
+    <li><b>Tournament announcements stay in the tournament.</b> They reach visiting clubs, post to the public site and push to fans. They belong in the record as rows, later, and their composer stays put. <button class="mk" data-ask="a9">9</button></li>
+    <li><b>No saved lists, templates, attachments or send-later in this work.</b> The hub gives each of them an obvious home when you want them.</li>
+  </ul></div>
+
+  <div class="box fact"><p><b>Four facts from the code that shaped this</b></p><ul>
+    <li><b>The machinery is already one thing.</b> Families email and house-league email use the same window, the same sender and the same sent tables. The coach email is drawn on the same window parts. What is separate is the doors, who may open them, and the lists. So this is mostly moving and merging.</li>
+    <li><b>The product already sends people elsewhere mid-task.</b> The Families window says: “To email a division, a team or a status, use the season’s own Email families.”</li>
+    <li><b>Members already has an access switch named “Communications”.</b> The owner and admins hold it by default, it can be turned on or off per person, and no screen reads it. <button class="mk" data-ask="a11">11</button></li>
+    <li><b>You asked this question once already.</b> On October 22 you noted the Club notice strip belongs under a Communications home, and it was parked because the club has no such place. This gives it one. <button class="mk" data-ask="a10">10</button></li>
+  </ul></div>
+</section>
+
+<!-- ═══════════ 2 · TODAY ═══════════ -->
+<section id="p-today" role="tabpanel" aria-labelledby="t-today" hidden>
+  <h2 class="sec">2 · Today, and with the coach email added as drawn</h2>
+  <p class="lede">Three places to write an ad hoc email to a group, each with its own key and its own sent list. The first two are live. The third is the proposal.</p>
+
+  <div class="places">
+    <div class="place"><div class="crumb">Families › Emails <span class="tag t-same">live</span></div><h3>Email families</h3>
+      <dl><dt>Reaches</dt><dd>Every family · some rep teams · one house-league season · a Families list (owes money, missing forms, no consent, not back)</dd>
+      <dt>Opens for</dt><dd>Holders of the Families grant only. The owner has it. An admin does not unless granted.</dd>
+      <dt>Its list</dt><dd>Families › Emails. The same grant.</dd>
+      <dt>Limit</dt><dd>3 emails in 24 hours for the club</dd></dl></div>
+    <div class="place"><div class="crumb">House league › a season › Email families <span class="tag t-same">live</span></div><h3>Email families</h3>
+      <dl><dt>Reaches</dt><dd>That season’s families: everyone, divisions, teams, registration statuses, or ticked registrations. Can copy the team’s coaches.</dd>
+      <dt>Opens for</dt><dd>Owner, admin, league admin, league registrar</dd>
+      <dt>Its list</dt><dd>The season’s own screen, with automatic notices</dd>
+      <dt>Limit</dt><dd>3 in 24 hours for each season, separate from the club’s</dd></dl></div>
+    <div class="place"><div class="crumb">Organization › Group email <span class="tag t-new">proposed</span></div><h3>Email coaches</h3>
+      <dl><dt>Reaches</dt><dd>All coaches · rep coaches · house-league coaches · coaches you pick. Board and volunteers join later.</dd>
+      <dt>Opens for</dt><dd>Owner and admin, every group. League admin and registrar, house-league coaches only.</dd>
+      <dt>Its list</dt><dd>The Group email tab, a third list</dd>
+      <dt>Limit</dt><dd>None, only a just-sent check</dd></dl></div>
+  </div>
+
+  <h3 class="sub">Also sending email, outside those three</h3>
+  <div class="places">
+    <div class="place q"><div class="crumb">Tournament › Communications</div><dl><dt>What</dt><dd>Announcements to a tournament’s teams, with posts to the public site and fan alerts</dd><dt>Its list</dt><dd>Inside each tournament</dd></dl></div>
+    <div class="place q"><div class="crumb">Coaches Portal › Email families</div><dl><dt>What</dt><dd>A coach emails their own team’s families</dd><dt>Its list</dt><dd>The coach’s page. No club screen shows it.</dd></dl></div>
+    <div class="place q"><div class="crumb">Automatic and fixed-wording sends</div><dl><dt>What</dt><dd>Teams published, schedule changes, practice times, rainouts, a message to one family, Ask the coaches, Send the schedule, allocation reminders</dd><dt>Its list</dt><dd>Spread across the season screen, Families › Emails and the screens that send them</dd></dl></div>
+  </div>
+
+  <h3 class="sub">What each seat can do, once the coach email ships as drawn</h3>
+  <div class="tblwrap"><table class="grid">
+    <thead><tr><th>Seat</th><th>Email every family in the club</th><th>Email one season’s families</th><th>Email coaches</th><th>See everything the club sent</th></tr></thead>
+    <tbody>
+      <tr><td class="h">Owner</td><td><span class="y">Yes</span> Families</td><td><span class="y">Yes</span> the season</td><td><span class="y">Yes</span> Organization</td><td><span class="n">No</span> three lists, none complete</td></tr>
+      <tr><td class="h">Admin (often the president)</td><td><span class="p">Only with the Families grant</span></td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td><span class="n">No</span></td></tr>
+      <tr><td class="h">League admin</td><td><span class="n">No</span></td><td><span class="y">Yes</span></td><td><span class="p">House-league coaches</span></td><td><span class="n">No</span></td></tr>
+      <tr><td class="h">League registrar</td><td><span class="n">No</span></td><td><span class="y">Yes</span></td><td><span class="p">House-league coaches</span></td><td><span class="n">No</span></td></tr>
+      <tr><td class="h">Treasurer</td><td><span class="n">No</span></td><td><span class="n">No</span></td><td><span class="n">No</span></td><td><span class="n">No</span></td></tr>
+    </tbody></table></div>
+
+  <div class="notes">
+    <div class="note"><h3>What a volunteer runs into</h3><ul>
+      <li>“Where do I go to email people?” has three answers, and the right one depends on who the people are.</li>
+      <li>“What did we send last week?” has three lists. A registrar can’t see that the president already told every family about a closure, so the season’s families hear it twice.</li>
+      <li>A message for two kinds of people is written twice. A message for one season plus two rep teams can’t be sent as one.</li>
+    </ul></div>
+    <div class="note"><h3>Why the Group email tab is the weak part of the coach proposal</h3><ul>
+      <li><b>The name describes the mechanism.</b> Every email on all three screens is a group email. You said so yourself.</li>
+      <li><b>Organization is the set-up area.</b> The tab would sit between Members and Audit log, beside Settings and PDF settings. Sending the club’s mail is weekly work.</li>
+      <li><b>It was placed there to work around a permission.</b> The drawing rejects Families › Emails because it needs the Families grant. That is a reason to fix the grant, and a hub does.</li>
+      <li><b>Everything else in the proposal holds up.</b> Live groups, the recount at Send, colleague mail, names and never addresses, the record naming who it reached. All of it carries over unchanged.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ═══════════ 3 · THE OPTIONS ═══════════ -->
+<section id="p-options" role="tabpanel" aria-labelledby="t-options" hidden>
+  <h2 class="sec">3 · Four ways to arrange it</h2>
+  <p class="lede">Each small diagram reads left to right: where a person starts, the window they write in, and where the sent record lives.</p>
+
+  <div class="opts">
+    <div class="opt"><h3>A · Three homes <span class="tag t-same">as proposed</span></h3>
+      <div class="flow"><div class="stack"><span class="nd">Families › Emails</span><span class="nd">Season › Email families</span><span class="nd">Organization › Group email</span></div><span class="ar">→</span><div class="stack"><span class="nd rcd">its list</span><span class="nd rcd">its list</span><span class="nd rcd">its list</span></div></div>
+      <p>Build the coach email as drawn. Each kind of recipient has its own place, key and list.</p></div>
+    <div class="opt pick"><h3>B · One home, many doors <span class="tag t-rec">recommended</span></h3>
+      <div class="flow"><div class="stack"><span class="nd">Communications</span><span class="nd">A season</span><span class="nd">A list you filtered</span></div><span class="ar">→</span><span class="nd">One window</span><span class="ar">→</span><span class="nd rcd">One record</span></div>
+      <p>Communications is where the record lives and where an email to any mix of people starts. The buttons on other screens stay and feed the same record.</p></div>
+    <div class="opt"><h3>C · One home, one door</h3>
+      <div class="flow"><span class="nd">Communications</span><span class="ar">→</span><span class="nd">One window</span><span class="ar">→</span><span class="nd rcd">One record</span><div class="stack"><span class="nd gone">Season tab removed</span><span class="nd gone">List buttons removed</span></div></div>
+      <p>Every ad hoc email starts in Communications. The other buttons go away.</p></div>
+    <div class="opt"><h3>D · Three homes, plus a read-only record</h3>
+      <div class="flow"><div class="stack"><span class="nd">Families</span><span class="nd">Season</span><span class="nd">Organization</span></div><span class="ar">→</span><span class="nd rcd">“Everything sent” for the owner</span></div>
+      <p>Build A, then add one list for the owner and admins that reads all three. Sending stays split.</p></div>
+  </div>
+
+  <div class="tblwrap"><table class="grid">
+    <thead><tr><th>What matters</th><th>A · Three homes</th><th class="rc">B · One home, many doors</th><th>C · One home, one door</th><th>D · Three homes + a record</th></tr></thead>
+    <tbody>
+      <tr><td class="h">“Where do I go to email people?”</td><td>Three answers</td><td class="rc">One answer, plus shortcuts</td><td>One answer</td><td>Three answers</td></tr>
+      <tr><td class="h">A president sees everything sent</td><td>No</td><td class="rc">Yes</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td class="h">One message to overlapping groups</td><td>No. Written twice, some people get two.</td><td class="rc">Yes, each person once</td><td>Yes, each person once</td><td>No</td></tr>
+      <tr><td class="h">Emailing the people on screen (families who owe, ticked registrations)</td><td>Kept</td><td class="rc">Kept</td><td>Lost. Rebuild the same filter in the window.</td><td>Kept</td></tr>
+      <tr><td class="h">A registrar who only works in a season</td><td>Stays in the season</td><td class="rc">Stays in the season, and can open the hub</td><td>Must leave the season to email it</td><td>Stays in the season</td></tr>
+      <tr><td class="h">Sending without the Families book</td><td>Not fixed</td><td class="rc">Fixed</td><td>Fixed</td><td>Not fixed</td></tr>
+      <tr><td class="h">Board, volunteers and later groups</td><td>Grow a tab named Group email</td><td class="rc">More rows under Who</td><td>More rows under Who</td><td>Grow a tab named Group email</td></tr>
+      <tr><td class="h">Sidebar change</td><td>One new Organization tab</td><td class="rc">One new sidebar place. Families loses its Emails tab.</td><td>The same, and the season loses a tab</td><td>Two new Organization tabs</td></tr>
+      <tr><td class="h">Build beyond the coach email as drawn</td><td>None</td><td class="rc">Small first step, then staged (tab 8)</td><td>Larger, and it removes working screens</td><td>Small</td></tr>
+      <tr><td class="h">Rework later</td><td>High. The tab, its help page and its list all move if a hub comes.</td><td class="rc">Low</td><td>Low</td><td>High. The same as A.</td></tr>
+    </tbody></table></div>
+
+  <div class="notes">
+    <div class="note"><h3>Why B over C</h3><p>C is the tidiest diagram and the worst afternoon for a registrar. Standing on a list of 19 families who owe a fee, the natural act is “email these”. C makes them leave, open Communications, and describe those 19 families again. The buttons cost nothing to keep because they open the same window.</p></div>
+    <div class="note"><h3>Why B over D</h3><p>D gives the president the list and leaves everything else as it is. It is the cheapest fix for “see all communications”, and worth choosing only if the aim is nothing more than that. It does not answer where to go, the overlapping groups, or the Families grant.</p></div>
+    <div class="note"><h3>What B costs</h3><ul><li>A new place in the sidebar, which changes the navigation standard and needs your yes.</li><li>The Emails tab leaves Families. Anyone used to it finds it under Communications.</li><li>One rule for who sees which rows (tab 6), where today each list simply follows its screen’s key.</li></ul></div>
+  </div>
+</section>
+
+<!-- ═══════════ 4 · THE HOME ═══════════ -->
+<section id="p-home" role="tabpanel" aria-labelledby="t-home" hidden>
+  <h2 class="sec">4 · The home: one list of what the club sent</h2>
+  <p class="lede">Communications sits in the Club group of the sidebar. It opens on the record, newest first, with New email in its action row. The list is the Families › Emails list that ships today, with every kind of recipient in it. <button class="mk" data-ask="a2">2</button> <button class="mk" data-ask="a3">3</button></p>
+
+  <div class="spec">
+    <div class="cap"><b>Whole screen · desktop, the owner (Morgan Ellis)</b><span>Every row. A row opens the record window that ships today: the message, who sent it, who it reached and who it missed.</span></div>
+    <div class="stage"><div class="fr w1180"><div class="shell">
+      <nav class="side same"><div class="club"><i>HM</i>Harbourtown Minor Ball</div>
+        <a>Overview</a><a>Calendar</a><a>Permits</a><a>Schedules</a>
+        <div class="grp">Programs</div><a>Rep teams</a><a>House league</a><a>Tournaments</a>
+        <div class="grp">Club</div><a>Accounting</a><a>Families</a><a class="on nw">Communications</a><a>Public site</a><a>Organization</a></nav>
+      <div class="main">
+        <div class="abar same">Communications<span class="sp"></span><span class="av"></span></div>
+        <div class="col">
+          <div class="tb same"><span class="lede2">6 emails in the last 30 days</span><span class="sp"></span><span class="fsel">All<svg width="16" height="16"><use href="#i-down"/></svg></span><span class="btn lime"><svg width="16" height="16"><use href="#i-mail"/></svg>New email</span></div>
+          <table><thead><tr class="same"><th>Sent</th><th>Subject</th><th>To</th><th>By</th><th class="r">Reached</th><th class="chev"></th></tr></thead><tbody>
+            <tr class="same"><td class="nw2">Nov 14 · 8:10 p.m.</td><td class="nm">Fields closed Saturday</td><td>Every family · All coaches</td><td>Morgan Ellis</td><td class="r">212 of 214 families<br>9 of 9 coaches</td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td class="nw2">Nov 12 · 7:42 p.m.</td><td class="nm">Coaches meeting, Nov 20</td><td>All coaches</td><td>Morgan Ellis</td><td class="r">9 of 9</td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr class="same"><td class="nw2">Nov 10 · 6:05 p.m.</td><td class="nm">U9 Rookie teams are posted <span class="chip qt">Automatic</span></td><td>2026 Fall House League · U9 Rookie</td><td>—</td><td class="r">31 of 31</td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr class="same"><td class="nw2">Nov 6 · 9:30 a.m.</td><td class="nm">Fall fees are due Friday</td><td>2026 Fall House League · 19 families who owe</td><td>Riley Okonkwo</td><td class="r">18 of 19</td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr><td class="nw2">Nov 3 · 9:15 a.m.</td><td class="nm">Winter permit times</td><td>Rep coaches · head coaches</td><td>Dana Kowalski</td><td class="r">6 of 6</td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+            <tr class="same"><td class="nw2">Oct 28 · 8:05 p.m.</td><td class="nm">Fall league wrap-up</td><td>House-league coaches</td><td>Jules Moreau</td><td class="r">2 of 2</td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div></div></div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>The same screen · the league registrar (Riley Okonkwo)</b><span>Only the page body is drawn. The sidebar and bar are the same. The registrar sees every email that reached house-league families or coaches, whoever sent it. <button class="mk" data-ask="a5">5</button></span></div>
+    <div class="stage"><div class="fr w960" style="min-height:0"><div class="col" style="width:100%">
+      <div class="tb same"><span class="lede2">4 emails in the last 30 days</span><span class="sp"></span><span class="fsel">All<svg width="16" height="16"><use href="#i-down"/></svg></span><span class="btn lime"><svg width="16" height="16"><use href="#i-mail"/></svg>New email</span></div>
+      <table><thead><tr class="same"><th>Sent</th><th>Subject</th><th>To</th><th>By</th><th class="r">Reached</th><th class="chev"></th></tr></thead><tbody>
+        <tr class="same"><td class="nw2">Nov 14 · 8:10 p.m.</td><td class="nm">Fields closed Saturday</td><td>Every family · All coaches</td><td>Morgan Ellis</td><td class="r">212 of 214 families<br>9 of 9 coaches</td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+        <tr class="same"><td class="nw2">Nov 10 · 6:05 p.m.</td><td class="nm">U9 Rookie teams are posted <span class="chip qt">Automatic</span></td><td>2026 Fall House League · U9 Rookie</td><td>—</td><td class="r">31 of 31</td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+        <tr class="same"><td class="nw2">Nov 6 · 9:30 a.m.</td><td class="nm">Fall fees are due Friday</td><td>2026 Fall House League · 19 families who owe</td><td>Riley Okonkwo</td><td class="r">18 of 19</td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+        <tr class="same"><td class="nw2">Oct 28 · 8:05 p.m.</td><td class="nm">Fall league wrap-up</td><td>House-league coaches</td><td>Jules Moreau</td><td class="r">2 of 2</td><td class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></td></tr>
+      </tbody></table>
+      <span class="ghost">Not listed for Riley: the two emails that went only to rep coaches.</span>
+    </div></div></div>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><b>Phone · the owner</b><span>Reached from the More sheet, as Families and Organization are. Each email is a row. Open this page on a phone to judge it.</span></div>
+    <div class="stage"><div class="fr w390">
+      <div class="pstatus"><span>9:41</span><span>5G</span></div>
+      <div class="pbar">Communications</div>
+      <div class="pact"><span class="lede2">6 emails in the last 30 days</span><span class="btn lime"><svg width="16" height="16"><use href="#i-mail"/></svg>New email</span></div>
+      <div class="plist">
+        <div class="crow"><b>Fields closed Saturday</b><span class="r">212 of 214</span><span class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></span><small>Nov 14 · Every family · All coaches (9 of 9) · Morgan Ellis</small></div>
+        <div class="crow"><b>Coaches meeting, Nov 20</b><span class="r">9 of 9</span><span class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></span><small>Nov 12 · All coaches · Morgan Ellis</small></div>
+        <div class="crow"><b>U9 Rookie teams are posted <span class="chip qt">Automatic</span></b><span class="r">31 of 31</span><span class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></span><small>Nov 10 · 2026 Fall House League · U9 Rookie</small></div>
+        <div class="crow"><b>Fall fees are due Friday</b><span class="r">18 of 19</span><span class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></span><small>Nov 6 · 19 families who owe · Riley Okonkwo</small></div>
+        <div class="crow"><b>Winter permit times</b><span class="r">6 of 6</span><span class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></span><small>Nov 3 · Rep coaches · Dana Kowalski</small></div>
+        <div class="crow"><b>Fall league wrap-up</b><span class="r">2 of 2</span><span class="chev"><svg width="16" height="16"><use href="#i-chev"/></svg></span><small>Oct 28 · House-league coaches · Jules Moreau</small></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><h3>What the list does that three lists can’t</h3><ul>
+      <li><b>It stops double sends.</b> Riley sees the president’s closure email before writing her own to the same families.</li>
+      <li><b>It answers a parent’s “I never got that”.</b> One place to look, and the record names who an email missed.</li>
+      <li><b>It shows the automatic emails beside the typed ones</b>, marked Automatic, as a season’s list does today.</li>
+      <li><b>One filter narrows it</b> to families, coaches, one program, or one season.</li>
+    </ul></div>
+    <div class="note"><h3>What it keeps from today</h3><ul>
+      <li>The columns, the record window, the Stopped mark and “Send to the ones it missed” are the shipped ones.</li>
+      <li>Family rows count households. Coach rows count people and name them. No row shows an address.</li>
+      <li>A message to one family is listed with its date and sender and never its words, as today.</li>
+    </ul></div>
+    <div class="note"><h3>Sketch, not a build drawing</h3><ul>
+      <li>The design check ran against the shipped screens and its fixes are applied: the Automatic tag sits beside the subject, Send carries its count, the phone caption leads with the date.</li>
+      <li><b>New email is lime with the mail symbol</b>, as a season’s Email families button is. The Families › Emails button it replaces is outlined today. This screen has one main action, so lime is the proposal.</li>
+      <li><b>An email to both kinds shows a Reached line for each.</b> Every other row keeps today’s bare figure. Where the amber Stopped mark sits on a two-line row is for the drawing round.</li>
+      <li>The filter’s choices, the 30-day line and the empty state also wait for that round.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ═══════════ 5 · WRITING AN EMAIL ═══════════ -->
+<section id="p-write" role="tabpanel" aria-labelledby="t-write" hidden>
+  <h2 class="sec">5 · Writing an email: tick who, and each person gets one copy</h2>
+  <p class="lede">The window is the club’s send window. The change is in Who: today it is one choice, and here it is any mix. The groups a person may not write to are not drawn. This is the part that answers “all coaches and parents” and “house league and rep players”.</p>
+
+  <div class="spec">
+    <div class="cap"><b>The Who section · the owner, then the league registrar</b><span>The owner has ticked every family and every coach. The registrar is offered only house-league people.</span></div>
+    <div class="stage"><div class="row2">
+      <div>
+        <div class="lbl after">Owner or admin</div>
+        <div class="fr bare"><div class="win">
+          <div class="wh"><div><div class="we">Communications</div><div class="wt">New email</div></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+          <div class="wb">
+            <div class="stmt">One email to each family and each coach you tick. Replies come to you at morgan.ellis@example.com.</div>
+            <div class="fl">Families</div>
+            <div class="rows">
+              <div class="srow"><span class="bx on"></span><div><span class="t">Every family · 214</span><small>Rep rosters and open house-league seasons, each household once</small></div></div>
+              <div class="srow off"><div><span class="t">Some rep teams</span><small>Inside Every family</small></div></div>
+              <div class="srow off same"><div><span class="t">2026 Fall House League · 96</span><small>Inside Every family</small></div></div>
+              <div class="srow off"><div><span class="t">A Families list</span><small>Inside Every family</small></div></div>
+            </div>
+            <div class="fl">Coaches and staff</div>
+            <div class="rows">
+              <div class="srow"><span class="bx on"></span><div><span class="t">All coaches · 9</span><small>Rep team staff and house-league coaches, each person once</small></div></div>
+              <div class="srow off"><div><span class="t">Rep coaches · 7</span><small>Inside All coaches</small></div></div>
+              <div class="srow off same"><div><span class="t">House-league coaches · 2</span><small>Inside All coaches</small></div></div>
+              <div class="srow"><span class="bx"></span><div><span class="t">People you pick</span><small>Tick the people</small></div></div>
+            </div>
+            <div class="flab same">Subject *</div>
+            <div class="in same">Fields closed Saturday</div>
+            <div class="flab same">Message *</div>
+            <div class="ta same">Both diamonds at Harbourtown Park are closed this Saturday, November 21, for turf repair. Games and practices there are off. Your coach will send new times.</div>
+            <div class="doors same"><span>See who gets it</span><span>See the email</span></div>
+          </div>
+          <div class="wf"><span class="fs">214 families and 9 coaches get it. 2 of the coaches are also parents here, so they get one copy.</span><span class="btns"><span class="btn">Cancel</span><span class="btn lime">Send to 221</span></span></div>
+        </div></div>
+      </div>
+      <div>
+        <div class="lbl after">League admin or registrar</div>
+        <div class="fr bare"><div class="win">
+          <div class="wh"><div><div class="we">Communications</div><div class="wt">New email</div></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+          <div class="wb">
+            <div class="stmt">One email to each family and each coach you tick. Replies come to you at riley.okonkwo@example.com.</div>
+            <div class="fl">Families</div>
+            <div class="rows">
+              <div class="srow same"><span class="bx on"></span><div><span class="t">2026 Fall House League · 96</span><small>Everyone, or pick divisions, teams or a registration status</small></div></div>
+            </div>
+            <div class="flab">Send to</div>
+            <div class="dd">Everyone in the season · 96<svg width="16" height="16"><use href="#i-down"/></svg></div>
+            <div class="fl">Coaches and staff</div>
+            <div class="rows">
+              <div class="srow same"><span class="bx"></span><div><span class="t">House-league coaches · 2</span><small>2026 Fall House League</small></div></div>
+            </div>
+            <div class="flab same">Subject *</div>
+            <div class="in same">&nbsp;</div>
+            <div class="flab same">Message *</div>
+            <div class="ta same">&nbsp;</div>
+            <div class="doors same"><span>See who gets it</span><span>See the email</span></div>
+          </div>
+          <div class="wf"><span class="fs">96 families get it.</span><span class="btns"><span class="btn">Cancel</span><span class="btn lime">Send to 96</span></span></div>
+        </div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <h3 class="sub">One message, two mailings <button class="mk" data-ask="a7">7</button></h3>
+  <p class="lede">The legal review of the coach email set a firm rule: family email and coach email are two different kinds of mail and are never mixed. A single window can still write both. The product splits the send and the record shows it as one row.</p>
+  <div class="two">
+    <div class="env"><h3>The family mailing</h3><ul><li>The club’s family email, with its unsubscribe line</li><li>Families who opted out are skipped and counted</li><li>Counts toward the 3 emails in 24 hours</li><li>One email per household</li></ul></div>
+    <div class="env"><h3>The coach mailing</h3><ul><li>Colleague mail, with no unsubscribe</li><li>A line saying why they got it, and how to be taken off</li><li>No daily allowance, only the just-sent check</li><li>One email per person</li></ul></div>
+  </div>
+  <div class="box fact"><ul>
+    <li><b>A coach who is also a parent gets the family copy only.</b> The product already does this when a family email copies the head coaches.</li>
+    <li><b>The product already sends one message down both paths.</b> “Copy head coaches” on today’s family email is exactly this, in a small way.</li>
+    <li><b>One open legal point.</b> A message that promotes something (registration is open, apparel is on sale) is fine for families, who can unsubscribe. The same words to coaches with no unsubscribe is the risk the legal review named. Before this is drawn for build, the legal check should say what the window does when both kinds are ticked.</li>
+    <li><b>The daily allowance needs one rule</b> for an email that spans the club and a season. Simplest: it counts toward the club’s.</li>
+  </ul></div>
+
+  <div class="notes">
+    <div class="note"><h3>A button on another screen fills Who in</h3><p>“Email these families” on the 19 families who owe opens this window with those 19 as the only Who row, already ticked. The sender writes the message and sends. Nothing about those buttons changes for the person using them.</p></div>
+    <div class="note"><h3>Later groups are more rows</h3><p>Board, Volunteers and “Needs a new document” from the Board Ready plan arrive under Coaches and staff with their live counts. No new screen and no new list.</p></div>
+    <div class="note"><h3>What I would leave out</h3><p>Saved lists, as the coach proposal already recommends. A hand-kept list goes wrong the day someone joins. “Send again to these people” from a record covers the repeat case.</p></div>
+    <div class="note"><h3>Sketch limits</h3><ul><li>Tick rows are the shipped kind: the window already ticks rep teams this way. A row inside a wider ticked group loses its box and says why, as a row the send won’t reach does today.</li><li>The registrar’s season choices are drawn as one field to keep the frame short. The shipped season window offers them as rows, and the drawing round decides which.</li><li>“Send to 221” counts emails: 214 households plus 7 coaches who aren’t already in one.</li></ul></div>
+  </div>
+</section>
+
+<!-- ═══════════ 6 · WHO SENDS, WHO SEES ═══════════ -->
+<section id="p-seats" role="tabpanel" aria-labelledby="t-seats" hidden>
+  <h2 class="sec">6 · Who may send, and who sees what</h2>
+  <div class="box ok"><p><b>The rule, in one sentence:</b> you can email the people in the programs you run, and you see every email that reached them. The owner and admins run everything, so they see everything. <button class="mk" data-ask="a5">5</button></p></div>
+
+  <div class="tblwrap"><table class="grid">
+    <thead><tr><th>Seat</th><th>Can write to</th><th>Sees in the record</th><th>Change from today</th></tr></thead>
+    <tbody>
+      <tr><td class="h">Owner</td><td>Everyone</td><td>Everything</td><td>One list where there were three</td></tr>
+      <tr><td class="h">Admin</td><td>Everyone</td><td>Everything</td><td><b>New:</b> can email every family without holding the Families book <button class="mk" data-ask="a4">4</button></td></tr>
+      <tr><td class="h">League admin, league registrar</td><td>House-league families (a season, its divisions, teams, statuses) and house-league coaches</td><td>Every email that reached house-league families or coaches, whoever sent it</td><td><b>New:</b> sees club-wide emails that included their families. Sends exactly what they can today, plus coaches as the coach proposal recommends.</td></tr>
+      <tr><td class="h">A member given the Families book</td><td>As their role allows</td><td>As their role allows</td><td>The Families grant stops being the key to email. It stays the key to household records.</td></tr>
+      <tr><td class="h">Treasurer</td><td>Nobody</td><td>Nothing</td><td>None. Whether the treasurer should be able to email families who owe is a fair later question.</td></tr>
+      <tr><td class="h">A member limited to some rep team groups</td><td>Nobody in the first build</td><td>Nothing</td><td>None. Later: their own teams’ families and staff.</td></tr>
+      <tr><td class="h">Staff, volunteer, coach</td><td>Nobody</td><td>Nothing</td><td>None. A coach keeps their team email in the Coaches Portal.</td></tr>
+    </tbody></table></div>
+
+  <div class="notes">
+    <div class="note"><h3>Why sending shouldn’t need the Families book <button class="mk" data-ask="a4">4</button></h3>
+      <p>The Families book is locked down for a good reason: it shows contact details, balances and each child’s medical note. Sending an email shows none of that. The sender sees a count and, in the record, family names. The house-league desk already works this way: a registrar emails a whole season without the Families grant.</p>
+      <p>So the only real change is that an admin can reach rep-team families club-wide, where today they can reach house-league families only.</p></div>
+    <div class="note"><h3>The “Communications” switch that does nothing <button class="mk" data-ask="a11">11</button></h3>
+      <p>The window where an owner sets a member’s access already lists “Communications”. It is on by default for the owner and admins, and no screen checks it. Either it becomes the hub’s on/off for a person, or it should be removed. I would make it real: it gives an owner a way to keep one admin out of the club’s mail without changing their role.</p></div>
+    <div class="note"><h3>What nobody gains</h3><ul><li>No seat sees an email address it couldn’t see before. The lists carry names only.</li><li>No seat can write to a group it couldn’t reach before, except the admin change above.</li><li>A seat with no group to write to gets no Communications place, never an empty one.</li></ul></div>
+  </div>
+</section>
+
+<!-- ═══════════ 7 · WHAT MOVES, WHAT STAYS ═══════════ -->
+<section id="p-moves" role="tabpanel" aria-labelledby="t-moves" hidden>
+  <h2 class="sec">7 · What moves, what stays where it is</h2>
+  <p class="lede">You drew the line in your note: the hub is for ad hoc group email, and the one-off and automatic emails stay with the event that causes them. This is that line, item by item.</p>
+  <div class="tblwrap"><table class="grid">
+    <thead><tr><th>Thing</th><th>Today</th><th>With Communications</th><th></th></tr></thead>
+    <tbody>
+      <tr><td class="h">Families › Emails tab</td><td>The club-wide family email and its list</td><td>Becomes Communications. Families keeps Families and Duplicates.</td><td><span class="tag t-chg">moves</span></td></tr>
+      <tr><td class="h">Organization › Group email</td><td>Proposed, not built</td><td>Not built as a tab. Its window, live groups, recount and record are built as drawn, inside Communications. Organization’s tabs don’t change.</td><td><span class="tag t-chg">moves</span></td></tr>
+      <tr><td class="h">A season’s Email families tab</td><td>The season’s email and its list</td><td>Stays. It shows the season’s slice of the same record and opens the same window. <button class="mk" data-ask="a6">6</button></td><td><span class="tag t-same">stays</span></td></tr>
+      <tr><td class="h">“Email these families” on a filtered list, ticked registrations, families who owe</td><td>Opens the send window on those people</td><td>The same. The email lands in the one record.</td><td><span class="tag t-same">stays</span></td></tr>
+      <tr><td class="h">Message this family</td><td>One household, from its record</td><td>The same. Listed in the record without its words, as today.</td><td><span class="tag t-same">stays</span></td></tr>
+      <tr><td class="h">Automatic emails: teams published, schedule changes, practice times, rainouts, team changes</td><td>Sent by the action that causes them</td><td>The same. Listed in the record, marked Automatic.</td><td><span class="tag t-same">stays</span></td></tr>
+      <tr><td class="h">Fixed-wording coach emails: Ask the coaches, Send the schedule, allocation reminders</td><td>Sent from their own screens</td><td>The same. Listed in the record in a later stage.</td><td><span class="tag t-same">stays</span></td></tr>
+      <tr><td class="h">Tournament › Communications</td><td>Announcements to a tournament’s teams</td><td>Stays in the tournament. Each announcement becomes a row in the record that opens the tournament, in a later stage. <button class="mk" data-ask="a9">9</button></td><td><span class="tag t-same">stays</span></td></tr>
+      <tr><td class="h">Coaches Portal › Email families</td><td>The coach’s own, unseen by the club</td><td>Stays the coach’s to send. Whether the club’s record lists it is your call. <button class="mk" data-ask="a8">8</button></td><td><span class="tag t-chg">your call</span></td></tr>
+      <tr><td class="h">Club notice (the strip across the public site)</td><td>In the Public site editor</td><td>Moves to Communications in a later stage, with a pointer left in the editor. <button class="mk" data-ask="a10">10</button></td><td><span class="tag t-chg">moves later</span></td></tr>
+    </tbody></table></div>
+
+  <div class="notes">
+    <div class="note"><h3>The season tab: keep it <button class="mk" data-ask="a6">6</button></h3><p>A registrar lives in the season, and its Email families tab is shipped and walked. Under the hub it reads the same record, narrowed to that season, so nothing is kept twice. One honest counterpoint: a season’s tab row already runs off a phone screen, and removing this tab would shorten it. That belongs to the navigation review, and the hub makes it possible later without losing anything.</p></div>
+    <div class="note"><h3>Coaches’ team emails: I would list them <button class="mk" data-ask="a8">8</button></h3><p>They go to the club’s families under the club’s name, and a board that hears a complaint has nothing to look at today. I would list a club team’s emails in the record, with the team and coach named, and say so plainly in the coach’s own window. This is a change in what the club can see of a coach’s work, so it is yours to rule and needs a legal check.</p></div>
+    <div class="note"><h3>Why “Communications” <button class="mk" data-ask="a2">2</button></h3><ul><li>It is the word you used, and the tournament side already uses it for the same job.</li><li>It still fits when the Club notice moves in, and when families sign in and a message can also show in their app.</li><li>“Messages” is spoken for by the chat and inbox direction. “Email” would be wrong the day a second channel arrives. “Group email” names the mechanism.</li></ul></div>
+  </div>
+</section>
+
+<!-- ═══════════ 8 · THE STAGES ═══════════ -->
+<section id="p-stages" role="tabpanel" aria-labelledby="t-stages" hidden>
+  <h2 class="sec">8 · The stages, in the order the work depends on</h2>
+  <p class="lede">The home is decided first even though the hub is built in steps. If the coach email ships as an Organization tab and the hub comes later, the tab, its help page, its demo stop and its list all move a second time.</p>
+  <div class="steps">
+    <div class="step"><span class="num">1</span><div><h3>The home, and the coach email inside it</h3>
+      <p>Build the coach email exactly as drawn: its window, live groups, the recount, the record that names who it reached. Its door and list sit in the new Communications place. The Families › Emails list moves in beside it and the two read as one list. New email offers two choices for now: to families, or to coaches. Sending to families from here no longer needs the Families book.</p>
+      <p class="why">First because everything else hangs off the place existing. It is the coach email build plus a move, so the coach email is not held up. Of the coach proposal’s 13 asks, only three change: where the history lives (6), where the door is (7), and second doors (13).</p></div></div>
+    <div class="step"><span class="num">2</span><div><h3>One window for any mix</h3>
+      <p>Who becomes tick-any across families and coaches, with each person once and the two mailings under one row (tab 5).</p>
+      <p class="why">Second because it needs the legal check and its own drawing round, and it builds on the place and the merged list from stage 1.</p></div></div>
+    <div class="step"><span class="num">3</span><div><h3>The whole record</h3>
+      <p>Automatic emails, the fixed-wording coach emails and tournament announcements join the list, with the filter. Coaches’ team emails too, if you rule yes.</p>
+      <p class="why">Third because each is a read of something that already exists. None of it blocks sending.</p></div></div>
+    <div class="step"><span class="num">4</span><div><h3>Board, volunteers and documents</h3>
+      <p>The Board Ready people work adds its groups as new rows under Who. “Email everyone who needs a new document” opens this window.</p>
+      <p class="why">It depends on the People list, which is its own stage in that plan.</p></div></div>
+    <div class="step"><span class="num">5</span><div><h3>Each its own decision, later</h3>
+      <p>The Club notice moves in. Attachments and send-later, which are the two things a president sending an annual meeting notice will ask for first. Showing a message in the family app once families sign in.</p>
+      <p class="why">None is needed for the hub to be worth having.</p></div></div>
+  </div>
+</section>
+
+<!-- ═══════════ 9 · ASKS ═══════════ -->
+<section id="p-asks" role="tabpanel" aria-labelledby="t-asks" hidden>
+  <h2 class="sec">9 · Asks</h2>
+  <div class="box ok"><p><b>Ruled 2026-11-16: all 12 as recommended.</b> Asks 7 and 8 keep the legal check their recommendations name. Next: the plan, then the stage 1 drawing round.</p></div>
+  <p class="lede">The asks as they were put, each with the recommendation that is now the ruling.</p>
+
+  <div class="ask" id="a1"><h3>1 · The direction: one home, many doors?</h3>
+    <p><span class="rec">Recommend: yes, option B.</span> One Communications place with one record and one window. The buttons on other screens stay and feed it. The alternatives are on tab 3: three homes as proposed, one home with no other doors, or three homes plus a read-only list.</p></div>
+  <div class="ask" id="a2"><h3>2 · The name: Communications?</h3>
+    <p><span class="rec">Recommend: yes.</span> It is your word and the tournament side’s word, and it still fits when the Club notice and the family app arrive. Two naming points ride with it. The Coaches Portal’s group is headed “Communication”, without the s. And a tournament’s announcements page is already called Communications on a desk and Messages on its phone bar, which the navigation standard records as an open question. A second Communications is the moment to settle both.</p></div>
+  <div class="ask" id="a3"><h3>3 · Its place: the Club group of the sidebar, after Families?</h3>
+    <p><span class="rec">Recommend: yes.</span> It changes the navigation standard, so it needs your yes. On a phone it sits in the More sheet with the rest of the Club group. Families loses its Emails tab.</p></div>
+  <div class="ask" id="a4"><h3>4 · Sending no longer needs the Families book?</h3>
+    <p><span class="rec">Recommend: yes.</span> An admin can email every family from Communications, seeing counts and family names only. The Families grant keeps guarding household records. Today an admin without the grant can email house-league families and not rep-team families, which is hard to explain to a president.</p></div>
+  <div class="ask" id="a5"><h3>5 · Who sees which rows?</h3>
+    <p><span class="rec">Recommend: you see every email that reached people in the programs you run, whoever sent it. Owner and admins see everything.</span> So a registrar sees a club-wide email that included house-league families, and never one that went only to rep coaches. The stricter choice is “only what you sent yourself”, which loses the double-send protection.</p></div>
+  <div class="ask" id="a6"><h3>6 · A season keeps its Email families tab?</h3>
+    <p><span class="rec">Recommend: keep it, as the season’s slice of the same record.</span> Removing it is a navigation-review question for later, and the hub makes that possible without losing anything.</p></div>
+  <div class="ask" id="a7"><h3>7 · One message to families and coaches together?</h3>
+    <p><span class="rec">Recommend: yes, as one message and two mailings, each person once, after a legal check.</span> The check should settle what the window says or refuses when a promotional message has both kinds ticked, and which daily allowance a mixed email counts toward.</p></div>
+  <div class="ask" id="a8"><h3>8 · Does the club’s record list the emails coaches send their own team’s families?</h3>
+    <p><span class="rec">Recommend: yes for the club’s own teams, in a later stage, with a plain line in the coach’s window that the club can see them.</span> The record would show the team, the coach, the subject, the date and how many families it reached, and the message. A coach who bought the portal for a team outside any club is not affected. This widens what a club sees of a coach’s work, so it needs your ruling and a legal check.</p></div>
+  <div class="ask" id="a9"><h3>9 · Tournament announcements?</h3>
+    <p><span class="rec">Recommend: they stay in the tournament, and each becomes a row in the record that opens it, in a later stage.</span> The coach proposal reached the same answer for sending (its ask 5). This adds only the row.</p></div>
+  <div class="ask" id="a10"><h3>10 · The Club notice moves to Communications?</h3>
+    <p><span class="rec">Recommend: yes, in a later stage, with a pointer left in the Public site editor.</span> This answers the question you noted on October 22. The counter-weight recorded then still stands: the notice is seen on the site, so the editor’s preview should keep showing it and link to where it is edited.</p></div>
+  <div class="ask" id="a11"><h3>11 · The “Communications” access switch in Members?</h3>
+    <p><span class="rec">Recommend: make it the hub’s on/off for a person.</span> Today it does nothing. If you would rather keep access purely by role, it should be removed so the window doesn’t offer a switch with no effect.</p></div>
+  <div class="ask" id="a12"><h3>12 · The order: the coach email is built inside the new home, as stage 1?</h3>
+    <p><span class="rec">Recommend: yes.</span> The coach proposal’s asks 6, 7 and 13 are replaced by this page. Its other ten asks stand as written and still need your answers. If you would rather not touch navigation before the coach email ships, option D is the fallback, and it carries the rework described on tab 3.</p></div>
+</section>
+</main>
+</div>
+
+<script>
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var compare = { home: 1, write: 1 };
+  function show(name, noHash) {
+    if (!document.getElementById('p-' + name)) name = 'answer';
+    tabs.forEach(function (t) { var on = t.dataset.tab === name; t.setAttribute('aria-selected', on ? 'true' : 'false'); document.getElementById('p-' + t.dataset.tab).hidden = !on; });
+    document.getElementById('viewrow').hidden = !compare[name];
+    if (!noHash) { try { history.replaceState(null, '', '#' + name); } catch (e) {} }
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.tab); window.scrollTo(0, 0); }); });
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      document.body.dataset.view = b.dataset.view;
+    });
+  });
+  document.querySelectorAll('.mk').forEach(function (m) {
+    m.addEventListener('click', function () {
+      show('asks');
+      var el = document.getElementById(m.dataset.ask);
+      if (el) { el.scrollIntoView({ block: 'start' }); el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1600); }
+    });
+  });
+  var h = (location.hash || '').replace('#', '');
+  show(h || 'answer', true);
+  window.addEventListener('hashchange', function () { show((location.hash || '').replace('#', ''), true); });
+})();
+</script>

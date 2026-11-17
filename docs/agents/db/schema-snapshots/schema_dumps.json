@@ -2918,6 +2918,375 @@
         "column_default": "now()"
       },
       {
+        "table_name": "club_group_email_bodies",
+        "pos": 1,
+        "column_name": "send_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "pos": 3,
+        "column_name": "subject",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "pos": 4,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "pos": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 2,
+        "column_name": "send_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 4,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 5,
+        "column_name": "league_coach_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 6,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 7,
+        "column_name": "line",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 8,
+        "column_name": "basis",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 9,
+        "column_name": "board_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 10,
+        "column_name": "rep",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 11,
+        "column_name": "house_league",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 12,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "pos": 13,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 3,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 4,
+        "column_name": "group_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 5,
+        "column_name": "group_key",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 6,
+        "column_name": "group_label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 7,
+        "column_name": "group_params",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 8,
+        "column_name": "reaches_rep",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 9,
+        "column_name": "reaches_house_league",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 10,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 11,
+        "column_name": "sender_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 12,
+        "column_name": "sender_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 13,
+        "column_name": "reply_to",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 14,
+        "column_name": "club_copy",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 15,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 16,
+        "column_name": "retried_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 17,
+        "column_name": "recipient_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 18,
+        "column_name": "left_out_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 19,
+        "column_name": "reached_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 20,
+        "column_name": "failed_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 21,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'sending'::text"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 22,
+        "column_name": "words_cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "pos": 23,
+        "column_name": "names_cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "club_schedule_bill_rates",
         "pos": 1,
         "column_name": "id",
@@ -5794,7 +6163,7 @@
         "column_name": "subject",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -5803,7 +6172,7 @@
         "column_name": "body",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -5900,6 +6269,42 @@
         "table_name": "family_email_sends",
         "pos": 17,
         "column_name": "retried_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 18,
+        "column_name": "reply_to",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'sender'::text"
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 19,
+        "column_name": "club_copy",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 20,
+        "column_name": "words_cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_email_sends",
+        "pos": 21,
+        "column_name": "names_cleared_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",
@@ -31753,6 +32158,41 @@
         "constraint_name": "child_match_rejections_rejected_by_fkey"
       },
       {
+        "table_name": "club_group_email_bodies",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_group_email_bodies_org_id_fkey"
+      },
+      {
+        "table_name": "club_group_email_bodies",
+        "column_name": "send_id",
+        "foreign_table": "club_group_email_sends",
+        "foreign_column": "id",
+        "constraint_name": "club_group_email_bodies_send_id_fkey"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_group_email_recipients_org_id_fkey"
+      },
+      {
+        "table_name": "club_group_email_recipients",
+        "column_name": "send_id",
+        "foreign_table": "club_group_email_sends",
+        "foreign_column": "id",
+        "constraint_name": "club_group_email_recipients_send_id_fkey"
+      },
+      {
+        "table_name": "club_group_email_sends",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_group_email_sends_org_id_fkey"
+      },
+      {
         "table_name": "club_schedule_bill_rates",
         "column_name": "first_billed_send_id",
         "foreign_table": "club_schedule_sends",
@@ -38073,6 +38513,61 @@
         "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
       },
       {
+        "tablename": "club_group_email_bodies",
+        "indexname": "club_group_email_bodies_org_idx",
+        "indexdef": "CREATE INDEX club_group_email_bodies_org_idx ON public.club_group_email_bodies USING btree (org_id)"
+      },
+      {
+        "tablename": "club_group_email_bodies",
+        "indexname": "club_group_email_bodies_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_group_email_bodies_pkey ON public.club_group_email_bodies USING btree (send_id)"
+      },
+      {
+        "tablename": "club_group_email_recipients",
+        "indexname": "club_group_email_recipients_org_idx",
+        "indexdef": "CREATE INDEX club_group_email_recipients_org_idx ON public.club_group_email_recipients USING btree (org_id)"
+      },
+      {
+        "tablename": "club_group_email_recipients",
+        "indexname": "club_group_email_recipients_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_group_email_recipients_pkey ON public.club_group_email_recipients USING btree (id)"
+      },
+      {
+        "tablename": "club_group_email_recipients",
+        "indexname": "club_group_email_recipients_send_idx",
+        "indexdef": "CREATE INDEX club_group_email_recipients_send_idx ON public.club_group_email_recipients USING btree (send_id, status)"
+      },
+      {
+        "tablename": "club_group_email_recipients",
+        "indexname": "club_group_email_recipients_user_idx",
+        "indexdef": "CREATE INDEX club_group_email_recipients_user_idx ON public.club_group_email_recipients USING btree (user_id, send_id) WHERE (user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_group_email_sends",
+        "indexname": "club_group_email_sends_group_idx",
+        "indexdef": "CREATE INDEX club_group_email_sends_group_idx ON public.club_group_email_sends USING btree (org_id, kind, group_key, sent_at DESC)"
+      },
+      {
+        "tablename": "club_group_email_sends",
+        "indexname": "club_group_email_sends_names_due_idx",
+        "indexdef": "CREATE INDEX club_group_email_sends_names_due_idx ON public.club_group_email_sends USING btree (sent_at) WHERE (names_cleared_at IS NULL)"
+      },
+      {
+        "tablename": "club_group_email_sends",
+        "indexname": "club_group_email_sends_org_sent_idx",
+        "indexdef": "CREATE INDEX club_group_email_sends_org_sent_idx ON public.club_group_email_sends USING btree (org_id, sent_at DESC)"
+      },
+      {
+        "tablename": "club_group_email_sends",
+        "indexname": "club_group_email_sends_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_group_email_sends_pkey ON public.club_group_email_sends USING btree (id)"
+      },
+      {
+        "tablename": "club_group_email_sends",
+        "indexname": "club_group_email_sends_words_due_idx",
+        "indexdef": "CREATE INDEX club_group_email_sends_words_due_idx ON public.club_group_email_sends USING btree (sent_at) WHERE (words_cleared_at IS NULL)"
+      },
+      {
         "tablename": "club_schedule_bill_rates",
         "indexname": "club_schedule_bill_rates_org_idx",
         "indexdef": "CREATE INDEX club_schedule_bill_rates_org_idx ON public.club_schedule_bill_rates USING btree (org_id)"
@@ -38639,6 +39134,11 @@
       },
       {
         "tablename": "family_email_sends",
+        "indexname": "family_email_sends_names_due_idx",
+        "indexdef": "CREATE INDEX family_email_sends_names_due_idx ON public.family_email_sends USING btree (sent_at) WHERE (names_cleared_at IS NULL)"
+      },
+      {
+        "tablename": "family_email_sends",
         "indexname": "family_email_sends_org_sent_idx",
         "indexdef": "CREATE INDEX family_email_sends_org_sent_idx ON public.family_email_sends USING btree (org_id, sent_at DESC)"
       },
@@ -38651,6 +39151,11 @@
         "tablename": "family_email_sends",
         "indexname": "family_email_sends_season_sent_idx",
         "indexdef": "CREATE INDEX family_email_sends_season_sent_idx ON public.family_email_sends USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
+      },
+      {
+        "tablename": "family_email_sends",
+        "indexname": "family_email_sends_words_due_idx",
+        "indexdef": "CREATE INDEX family_email_sends_words_due_idx ON public.family_email_sends USING btree (sent_at) WHERE (words_cleared_at IS NULL)"
       },
       {
         "tablename": "family_invitations",
@@ -44323,6 +44828,156 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "club_group_email_bodies",
+        "detail": "club_group_email_bodies_body_check",
+        "check_clause": "((char_length(body) >= 1) AND (char_length(body) <= 5000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_bodies",
+        "detail": "club_group_email_bodies_subject_check",
+        "check_clause": "((char_length(subject) >= 1) AND (char_length(subject) <= 200))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_group_email_bodies",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_basis_check",
+        "check_clause": "(basis = ANY (ARRAY['rep_staff'::text, 'house_league'::text, 'picked'::text, 'board'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_board_role",
+        "check_clause": "((basis = 'board'::text) = (board_role IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_board_role_check",
+        "check_clause": "(board_role = ANY (ARRAY['owner'::text, 'admin'::text, 'league_admin'::text, 'league_registrar'::text, 'treasurer'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_line_check",
+        "check_clause": "((line IS NULL) OR (((char_length(line) >= 1) AND (char_length(line) <= 300)) AND (POSITION(('@'::text) IN (line)) = 0)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_name_check",
+        "check_clause": "((name IS NULL) OR (((char_length(name) >= 1) AND (char_length(name) <= 200)) AND (POSITION(('@'::text) IN (name)) = 0)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_source",
+        "check_clause": "((user_id IS NOT NULL) OR (league_coach_id IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_recipients",
+        "detail": "club_group_email_recipients_status_check",
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_group_email_recipients",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_club_copy_check",
+        "check_clause": "(club_copy = ANY (ARRAY['asked'::text, 'sent'::text, 'failed'::text, 'already_listed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_failed_count_check",
+        "check_clause": "(failed_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_group_key_check",
+        "check_clause": "((char_length(group_key) >= 1) AND (char_length(group_key) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_group_kind_check",
+        "check_clause": "((char_length(group_kind) >= 1) AND (char_length(group_kind) <= 40))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_group_label_check",
+        "check_clause": "((char_length(group_label) >= 1) AND (char_length(group_label) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['coaches'::text, 'board'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_left_out_count_check",
+        "check_clause": "(left_out_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_reached_count_check",
+        "check_clause": "(reached_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_recipient_count_check",
+        "check_clause": "(recipient_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_reply_to_check",
+        "check_clause": "(reply_to = ANY (ARRAY['club'::text, 'sender'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_sender_name_check",
+        "check_clause": "((sender_name IS NULL) OR (((char_length(sender_name) >= 1) AND (char_length(sender_name) <= 200)) AND (POSITION(('@'::text) IN (sender_name)) = 0)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_sender_role_check",
+        "check_clause": "((sender_role IS NULL) OR (sender_role = ANY (ARRAY['owner'::text, 'admin'::text, 'league_admin'::text, 'league_registrar'::text, 'treasurer'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_group_email_sends",
+        "detail": "club_group_email_sends_status_check",
+        "check_clause": "(status = ANY (ARRAY['sending'::text, 'done'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_group_email_sends",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "club_schedule_bill_rates",
         "detail": "club_schedule_bill_rates_scale_check",
         "check_clause": "(scale > (0)::numeric)"
@@ -44894,6 +45549,12 @@
       {
         "kind": "CHECK",
         "table_name": "family_email_sends",
+        "detail": "family_email_sends_club_copy_check",
+        "check_clause": "(club_copy = ANY (ARRAY['asked'::text, 'sent'::text, 'failed'::text, 'already_listed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
         "detail": "family_email_sends_coach_count_check",
         "check_clause": "(coach_count >= 0)"
       },
@@ -44920,6 +45581,12 @@
         "table_name": "family_email_sends",
         "detail": "family_email_sends_reached_count_check",
         "check_clause": "(reached_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_email_sends",
+        "detail": "family_email_sends_reply_to_check",
+        "check_clause": "(reply_to = ANY (ARRAY['club'::text, 'sender'::text]))"
       },
       {
         "kind": "CHECK",

@@ -7,6 +7,7 @@ import { sendEmail } from './email';
 import { normalizeGuardianEmail } from './guardian-email';
 import { FAMILY_EMAIL_WORDS as W, SEASON_EMAIL_WORDS as SW } from './families-words';
 import { supabaseAdmin } from './supabase-admin';
+import { INBOX_COPY } from './club-group-email-words';
 
 /**
  * EMAIL FAMILIES' COPY TO THE HEAD COACHES (Club Tier Stage 7c; owner 2026-10-22, Put to the owner 5). ⚠ COLLEAGUE MAIL,
@@ -57,6 +58,29 @@ export async function leagueCoachesToCopy(orgId: string, seasonId: string, teamI
     byEmail.set(email, { userId: c.user_id ?? '', name, email });
   }
   return [...byEmail.values()].sort((a, b) => a.email.localeCompare(b.email));
+}
+
+/**
+ * THE CLUB-INBOX COPY of a family email (Club Communications R4, 2026-11-17; legal addendum finding 7): one message to the
+ * club's own public contact, built like the head coaches' copy — colleague mail, NEVER the family envelope (no unsubscribe,
+ * no family names, no addresses, no link). Not a family, not counted; the caller records only the outcome.
+ */
+export async function sendClubInboxCopy(to: string, o: { orgName: string; audience: string; families: number; subject: string; body: string; replyName: string }, replyTo: string | null): Promise<'sent' | 'failed'> {
+  const words: EmailWords = {
+    subject: W.coachSubject(o.subject),
+    greeting: 'Hi,',
+    paragraphs: [INBOX_COPY.familyLead(o.orgName, o.families, o.audience), `${W.subject}: ${o.subject}`, ...o.body.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)],
+    lists: [],
+    link: null,
+    outro: W.coachOutro(o.replyName),
+  };
+  try {
+    const r = await sendEmail(to, words.subject, emailHtml(words), { kind: 'club_inbox_copy', replyTo });
+    return r.status === 'sent' || r.status === 'skipped' ? 'sent' : 'failed';
+  } catch {
+    console.error('[families-email-coaches] the club-inbox copy was refused by the transport');
+    return 'failed';
+  }
 }
 
 /** The copy's words. `league`: a house-league team's coach (9d-1), not a rep team's head coach. */

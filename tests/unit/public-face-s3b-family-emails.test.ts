@@ -238,7 +238,8 @@ describe('S3b — the reply line (copy items 3–5)', () => {
   it('the Message door and Email families still reply to their sender (the guard’s pin), and the two person-sent sends are new', () => {
     // The Message door's send lives in lib/families-email.ts since 9d-1 (both doors call `messageOneFamily`).
     assert.match(readCode('lib/families-email.ts'), /replyTo:\s*ctx\.user\.email/);
-    assert.match(readCode('lib/families-email.ts'), /replyTo: senderEmail/);
+    // Club Communications R2 (2026-11-17): the sender stays the default; a send may choose the club's public contact.
+    assert.match(readCode('lib/families-email.ts'), /const replyTo = d\.reply\.mode === 'club' \? d\.reply\.contact : senderEmail;/);
     assert.match(readCode('lib/rep-team-announcements.ts'), /replyTo: reply\.replyTo/, 'the rep-team announcement now replies to the coach');
     // 9d-1: a season's email is the club's engine (lib/families-email.ts, `replyTo: senderEmail` above).
   });

@@ -9,6 +9,15 @@
 | **Backlog** | L2 (with L9 findings); children's consent wording (L5) and CASL lawful basis (L6) are referenced, not settled |
 
 **Change log**
+- 0.3 · 2026-11-17 · Club Communications Stage 1, Session 1 (`docs/agents/legal/CLUB_COMMUNICATIONS_STAGE1.md` §4 and the
+  2026-11-17 addendum; **text goes live only with the promote that puts migrations 492 and 493 on production**). §5: the
+  paragraph on emails a club sends (what the record keeps, no address, who reads it). §9: the owner-ruled clock (2026-11-17):
+  words 12 months, names 24 months, counts kept; built as a nightly job (mig 493). Read against the build: no address column
+  in any log table; the board read rule is enforced in the server reader. **Corrected from the checklist's draft:** the family
+  record keeps the last name of EVERY family an email was sent to (`family_email_recipients`, all statuses), not only the
+  missed and opted-out ones. ⚠ "Only the people the club has allowed to use Communications can read it" becomes true for the
+  family record when Session 2 moves it behind the Communications switch (today Families-book holders read it): publish this
+  paragraph no earlier than the promote that carries Session 2.
 - **0.3 · 2026-11-16 · The review before hand-off (GST/HST Stage 6 step 6.6, `/legal` after `/accounting`).** §3 acceptance row:
   also the exact words ticked and the email used (as built), and "at least" six years; §3 emails: every owner receives the plan
   emails, including who bought; §6 Stripe row: a reference to the account that made the purchase; §9 "at least six years" (no
@@ -203,6 +212,15 @@ puts friends on the same team (up to three children together), and the club can 
 different teams. **We use these names only to decide which team a child plays on.** A request is not emailed to the family
 that is named, is not shown on a public page, and is not in the club's family or people lists; the one place the names are
 written out is the Friend requests list the club can download.
+
+**Emails a club sends through FieldLogicHQ.** When a club emails its families, its coaches or its board through
+FieldLogicHQ, we keep a record of the email in the club's account: who sent it, when, which group it went to, its subject and
+message, and how many people it reached. For an email to coaches or to the board the record also keeps the name and role (or
+team) of each person it went to, as they were when it was sent; for an email to families it keeps the last name of each
+family it was sent to and whether it reached them or they had opted out. The record does not hold anyone's email address (our email provider holds
+addresses to deliver the email: §6). Only the club's people the club has allowed to use Communications can read it, and what
+each can read depends on their role: someone who runs one program sees only the emails that reached that program's people,
+and an email to the board can be read only by the person who sent it, the people it went to, and the club's owner and admins.
 
 **Two-step sign-in, and what your club sees.** A club's owners and admins (no other role) can see, for each person in the
 club, whether two-step sign-in is on and when it was set up. Where the club requires it for a role, they also see how many
@@ -406,6 +424,9 @@ and email addresses.
   that date; a parent whose account is deleted loses their notes, and the answers stay without their name. If a club joins two records
   of the same child, the attendance goes with the child. If an event moves to a new day, its answers are kept, and parents and coaches
   update them by hand. The in-app notes the coach receives about answers are kept like any other in-app note. An in-app note is kept until the person it was sent to deletes it, or until their account or the club is deleted (no end date today). A note can hold a name, a child’s name, an email address and, for a request to withdraw a child, the words the family wrote.
+- **Emails a club sends** (§5): the subject and message are deleted 12 months after the email is sent, and the names of the
+  people it went to 24 months after; the date, sender, group and counts are kept while the organization exists. Deleting an
+  organization deletes these records with it. Copies in our routine database backups age out on our database host's schedule.
 - **Error reports** are deleted after 30 days; the detailed log of records our staff opened, after 90 days; performance
   measurements, after one year. The list of pages our staff visit in our own tools is kept with no set end date today.
 

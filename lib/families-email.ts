@@ -8,9 +8,11 @@ import {
   audienceChoices, familyAudience, familyCounts, isSeasonDoorScope, parseScope, scopeNeedsPick, scopeSeasonId,
   type AudienceChoices, type AudienceFamily, type AudiencePerson, type FamilyAudience, type FamilyAudienceScope,
 } from './families-audience';
-import { coachCopyWords, headCoachesToCopy, sendCoachCopies, type CopiedCoach } from './families-email-coaches';
+import { coachCopyWords, headCoachesToCopy, sendClubInboxCopy, sendCoachCopies, type CopiedCoach } from './families-email-coaches';
 import { senderName } from './families-coach-ask';
-import { clubEmailFacts } from './club-email-context';
+import { clubEmailFacts, clubPublicContact } from './club-email-context';
+import { SAY as CW } from './club-group-email-words';
+import { namesColleagueAudience } from './club-group-email-rules';
 import { familyReplyPlan, type ClubEmailFacts } from './email-club-identity';
 import {
   CLUB_EMAIL_CAP, CLUB_EMAIL_STOPPED_AFTER_MS, FAMILY_EMAIL_WORDS as W, FAMILY_MESSAGE_REASON, FAMILY_MESSAGE_WORDS as MW,
@@ -144,7 +146,8 @@ export async function emailAllowance(orgId: string, seasonId: string | null): Pr
  *  its first batch). `seasonId`: that season's own (its door); undefined: any (the club's door). */
 export async function lastFamilyEmail(orgId: string, seasonId?: string): Promise<FamilyEmailPreview['lastSent']> {
   let q = supabaseAdmin.from('family_email_sends')
-    .select('sent_at, sent_by, subject, reached_count').eq('org_id', orgId).gt('reached_count', 0);
+    // An email whose words the clock deleted (12 months, mig 492) has no subject to show: Last sent reads the newest with words.
+    .select('sent_at, sent_by, subject, reached_count').eq('org_id', orgId).gt('reached_count', 0).is('words_cleared_at', null);
   if (seasonId) q = q.eq('season_id', seasonId);
   const { data, error } = await q.order('sent_at', { ascending: false }).limit(1);
   if (error) throw error;
@@ -237,6 +240,28 @@ async function recordOutcomes(ids: readonly string[], families: readonly Audienc
   }
 }
 
+/**
+ * Where replies go and whether the club's inbox gets a copy (Club Communications R2–R4, 2026-11-17). The DEFAULT is the shipped
+ * behaviour (replies to the sender, no copy): the shipped window sends neither field, and its words say "your address to reply
+ * to". Club mode and the copy need the club's public contact; without one they are refused, never quietly switched (T21).
+ */
+export interface FamilyReply { mode: 'club' | 'sender'; contact: string | null; copy: boolean }
+export async function familyReplyChoice(ctx: AuthContextWithRole, body: Record<string, unknown>): Promise<FamilyReply | FamilyEmailResult> {
+  const mode = body.replyTo === 'club' ? 'club' : 'sender';
+  const copy = body.copyClub === true;
+  const contact = mode === 'club' || copy ? await clubPublicContact(ctx.org.id) : null;
+  if ((mode === 'club' || copy) && !contact) return refuse(409, CW.noClubContact, 'no_club_contact');
+  return { mode, contact, copy };
+}
+
+/** The reply line the family envelope carries, by the send's mode: the sender (shipped), or the club (the shipped system
+ *  variant, "Reply to this email to reach {Club}."). */
+function replyPlanFor(ctx: AuthContextWithRole, reply: Pick<FamilyReply, 'mode' | 'contact'>, senderEmail: string | null, sender: string | null) {
+  return reply.mode === 'club'
+    ? familyReplyPlan({ kind: 'system', clubName: ctx.org.name, clubContact: reply.contact })
+    : familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail, senderName: sender });
+}
+
 /** The subject and message, as both doors read them from a body. */
 export function emailWords(body: Record<string, unknown>): { subject: string; message: string } | { error: string; code: string } {
   const subject = typeof body.subject === 'string' ? body.subject.replace(/\s*[\r\n]+\s*/g, ' ').trim() : '';
@@ -254,6 +279,8 @@ export function emailWords(body: Record<string, unknown>): { subject: string; me
  * stay on the season's own door.
  */
 export async function sendFamilyEmailToClub(ctx: AuthContextWithRole, body: Record<string, unknown>): Promise<FamilyEmailResult> {
+  // Two paths, never one message down both (legal §2a.1, T7): a family send naming a coach or board audience is refused.
+  if (namesColleagueAudience(body)) return refuse(400, CW.bothPaths, 'both_paths');
   const scope = parseScope(body);
   if (!scope || isSeasonDoorScope(scope)) return refuse(400, W.failed, 'kind');
   const pick = scopeNeedsPick(scope);
@@ -262,6 +289,8 @@ export async function sendFamilyEmailToClub(ctx: AuthContextWithRole, body: Reco
   const words = emailWords(body);
   if ('error' in words) return refuse(400, words.error, words.code);
   const expected = typeof body.expected === 'number' ? body.expected : -1;
+  const reply = await familyReplyChoice(ctx, body);
+  if ('ok' in reply) return reply;
 
   // A send is an ACTION: it attaches first, so a registration whose person was minted since the window opened is in the
   // re-count — and the re-count then has to match what the sender saw.
@@ -276,7 +305,7 @@ export async function sendFamilyEmailToClub(ctx: AuthContextWithRole, body: Reco
   const seasonId = scopeSeasonId(scope);
   const seasonName = seasonId ? seasonNameIn(world.people, seasonId) : null;
   return deliverFamilyEmail({
-    ctx, scope, world, audience, label: audienceLabel(world.people, scope), seasonName, ...words,
+    ctx, scope, world, audience, label: audienceLabel(world.people, scope), seasonName, ...words, reply,
     copy: body.copyCoaches === true && audience.coachTeamIds.length > 0
       ? { league: false, coaches: addresses => headCoachesToCopy(ctx.org.id, audience.coachTeamIds, ctx.user.id, addresses) }
       : null,
@@ -304,11 +333,14 @@ export async function deliverFamilyEmail(d: {
   subject: string;
   message: string;
   copy: CoachCopy | null;
+  /** Where replies go and the club-inbox copy (R2–R4); one mode for EVERY message of the send (legal addendum 3). */
+  reply: FamilyReply;
   /** The season door's own refusal words; the club door's otherwise. */
   words: { capReason: (nextAt: string | null) => string; sentNoneDelivered: string };
 }): Promise<FamilyEmailResult> {
   const { ctx, scope, world, audience } = d;
   const senderEmail = ctx.user.email ?? null;
+  const replyTo = d.reply.mode === 'club' ? d.reply.contact : senderEmail;
 
   // The claim and the allowance, in one step, before any email goes.
   const claim = await supabaseAdmin.rpc('family_email_claim', {
@@ -326,6 +358,16 @@ export async function deliverFamilyEmail(d: {
   const sendId = c.sendId;
   const row = () => supabaseAdmin.from('family_email_sends');
 
+  // The send's reply mode and the copy, recorded before any email goes: a resend reads the mode from here, so it can never
+  // name the sender to some families and the club to others. Unrecorded, nothing goes and the claim is given back.
+  if (d.reply.mode !== 'sender' || d.reply.copy) {
+    const { error: modeErr } = await row().update({ reply_to: d.reply.mode, club_copy: d.reply.copy ? 'asked' : null }).eq('id', sendId);
+    if (modeErr) {
+      await row().delete().eq('id', sendId).eq('org_id', ctx.org.id);
+      throw modeErr;
+    }
+  }
+
   // Each family, before the first batch: pending, or opted out. A stopped email reads whom it missed from these.
   const ids = audience.families.map(() => crypto.randomUUID());
   const recipientRows = [
@@ -340,7 +382,7 @@ export async function deliverFamilyEmail(d: {
 
   // The club's face and where a reply goes (S3b). Both degrade to a plainer email, never to a failed send: the claim is held.
   const [club, sender] = await Promise.all([clubEmailFacts(ctx.org), senderName(ctx).catch(() => null)]);
-  const reply = familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail, senderName: sender });
+  const reply = replyPlanFor(ctx, d.reply, senderEmail, sender);
 
   // The family send — through the choke point only, with progress written as each batch goes.
   const results = await sendFamilyEmailBatch({
@@ -350,7 +392,7 @@ export async function deliverFamilyEmail(d: {
     subject: d.subject,
     content: { teamName: ctx.org.name, orgName: ctx.org.name, title: d.subject, body: d.message, reason: reasonFor(d.seasonName), club, replyLine: reply.line },
     suppressed: world.suppressed,
-    replyTo: senderEmail,
+    replyTo,
     onBatch: async so => {
       const n = familyCounts(audience, so);
       const { error } = await row().update({ reached_count: n.reached, failed_count: n.failed }).eq('id', sendId);
@@ -377,11 +419,12 @@ export async function deliverFamilyEmail(d: {
   let coaches = 0;
   if (d.copy) {
     try {
-      const [copied, name] = await Promise.all([d.copy.coaches(familyAddresses(audience)), senderName(ctx)]);
+      // In club mode the copy names the club and replies to it, as the families' email does (legal addendum 3).
+      const [copied, name] = await Promise.all([d.copy.coaches(familyAddresses(audience)), d.reply.mode === 'club' ? ctx.org.name : senderName(ctx)]);
       coaches = await sendCoachCopies(copied, coach => coachCopyWords({
         orgName: ctx.org.name, audience: d.label, families: reached, subject: d.subject, body: d.message, sender: name,
         coachName: coach.name, league: d.copy!.league,
-      }), senderEmail);
+      }), replyTo);
     } catch (e) {
       console.error('[families-email] the coach copies failed (the family send went):', e);
     }
@@ -389,6 +432,16 @@ export async function deliverFamilyEmail(d: {
   if (coaches > 0) {
     const { error: coachErr } = await row().update({ coach_count: coaches }).eq('id', sendId);
     if (coachErr) console.error('[families-email] the coach count could not be recorded (the send went):', coachErr.message);
+  }
+  // The club-inbox copy (R4): colleague-built, never the family envelope, not a family, recorded without the address.
+  if (d.reply.copy && d.reply.contact) {
+    const outcome = familyAddresses(audience).has(d.reply.contact.trim().toLowerCase()) ? 'already_listed'
+      : await sendClubInboxCopy(d.reply.contact, {
+        orgName: ctx.org.name, audience: d.label, families: reached, subject: d.subject, body: d.message,
+        replyName: d.reply.mode === 'club' ? ctx.org.name : (sender ?? ctx.org.name),
+      }, replyTo);
+    const { error: copyErr } = await row().update({ club_copy: outcome }).eq('id', sendId);
+    if (copyErr) console.error('[families-email] the copy\'s outcome could not be recorded (the send went):', copyErr.message);
   }
   const missed = audience.families.filter((_, i) => known[i] !== 'sent');
   return {
@@ -405,15 +458,33 @@ export async function deliverFamilyEmail(d: {
  */
 export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: string, opts: { seasonId?: string } = {}): Promise<FamilyEmailResult> {
   const cutoff = new Date(Date.now() - CLUB_EMAIL_STOPPED_AFTER_MS).toISOString();
+  // Before taking the row: words the clock deleted can't be sent (T25), and a club-mode send whose club contact is gone
+  // can't keep its promise (one mode per send: never switched to the sender part-way).
+  // Only a row this door may resend (the season's own; still sending) is judged here; anything else falls through to the
+  // take below and its shipped not_stopped refusal (/review 2026-11-17: no fact about another season's row leaks).
+  let pre = supabaseAdmin.from('family_email_sends')
+    .select('words_cleared_at, reply_to').eq('id', sendId).eq('org_id', ctx.org.id).eq('status', 'sending');
+  if (opts.seasonId) pre = pre.eq('season_id', opts.seasonId);
+  const { data: before, error: bErr } = await pre.maybeSingle();
+  if (bErr) throw bErr;
+  if (before?.words_cleared_at) return refuse(409, CW.wordsGone, 'words_gone');
+  const mode: FamilyReply['mode'] = before?.reply_to === 'club' ? 'club' : 'sender';
+  const contact = mode === 'club' ? await clubPublicContact(ctx.org.id) : null;
+  if (mode === 'club' && !contact) return refuse(409, CW.noClubContact, 'no_club_contact');
   let q = supabaseAdmin.from('family_email_sends')
     .update({ retried_at: new Date().toISOString() })
     .eq('id', sendId).eq('org_id', ctx.org.id).eq('status', 'sending').lt('sent_at', cutoff)
-    .or(`retried_at.is.null,retried_at.lt.${cutoff}`);
+    .or(`retried_at.is.null,retried_at.lt.${cutoff}`).is('words_cleared_at', null);
   if (opts.seasonId) q = q.eq('season_id', opts.seasonId);
   // Taking the row is the press's claim: a second press finds it already taken, and nothing goes twice.
   const { data: taken, error } = await q.select('id, subject, body, season_id, family_count').maybeSingle();
   if (error) throw error;
-  if (!taken) return refuse(409, SW.notStopped, 'not_stopped');
+  if (!taken) {
+    // The nightly clean-up may have won the race between the look above and the take: say so in its own words.
+    const { data: now } = await supabaseAdmin.from('family_email_sends').select('words_cleared_at').eq('id', sendId).eq('org_id', ctx.org.id).maybeSingle();
+    if (before && now?.words_cleared_at) return refuse(409, CW.wordsGone, 'words_gone');
+    return refuse(409, SW.notStopped, 'not_stopped');
+  }
 
   const { data: missedRows, error: mErr } = await supabaseAdmin.from('family_email_recipients')
     .select('id, person_ids, family_name, status').eq('send_id', sendId).in('status', ['pending', 'failed']);
@@ -447,7 +518,7 @@ export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: str
 
   const seasonName = taken.season_id ? await seasonNameOf(taken.season_id) : null;
   const [club, name] = await Promise.all([clubEmailFacts(ctx.org), senderName(ctx).catch(() => null)]);
-  const reply = familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail: ctx.user.email ?? null, senderName: name });
+  const reply = replyPlanFor(ctx, { mode, contact }, ctx.user.email ?? null, name);
   const known: RecipientStatus[] = families.map(() => 'pending');
   const results = families.length === 0 ? new Map<string, FamilySendResult>() : await sendFamilyEmailBatch({
     kind: 'family_club_email',
@@ -456,7 +527,7 @@ export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: str
     subject: taken.subject,
     content: { teamName: ctx.org.name, orgName: ctx.org.name, title: taken.subject, body: taken.body, reason: reasonFor(seasonName), club, replyLine: reply.line },
     suppressed: world.suppressed,
-    replyTo: ctx.user.email ?? null,
+    replyTo: mode === 'club' ? contact : (ctx.user.email ?? null),
     onBatch: async so => recordOutcomes(familyIds, families, so, known),
   });
   await recordOutcomes(familyIds, families, results, known);

@@ -6957,8 +6957,9 @@ NULL, default now()).
 
 **Purpose:** one row per Families **Email families** send (Club Tier Stage 7c, Asks 6 and 7, **mig 347**) — the club
 emailing every family, some rep teams' families or one house-league season's. It keeps **the subject, the message, who
-it went to (the audience's kind and its description) and counts** — and **NEVER a list of families or addresses** (owner
-2026-10-22, Put to the owner 1, option a: "who bounced" is a count, never names). The one row is the send's **claim**
+it went to (the audience's kind and its description) and counts**, and, per recipient in `family_email_recipients` (since
+mig 385), the people and the last name — **never an address** (the 7c sentence "never a list of families", owner
+2026-10-22, was superseded by 9d-1; corrected here 2026-11-17, Club Communications Stage 1). The one row is the send's **claim**
 (written before any email goes), the club's **cap** (three per club in any rolling 24 hours) and the **record** (the
 Emails tab on Families; "Last sent … by …" in the window). **Service-role only** (RLS enabled, no policies). A
 one-household message is NOT here — it stays a date and a sender in `family_messages` (the Stage 5a rule, unchanged);
@@ -6994,6 +6995,25 @@ emails) — they are `league_season_notices`.
    counted**; its counts update as it goes. (This replaces 7c's "no Resume; a resend is a new send against the cap".)
 5. **The unit is FAMILIES** (households — Families' household rule, each once), never addresses: `family_count`,
    `opted_out_count`, `reached_count` and `failed_count` all count families.
+6. **⏰ The retention clock (owner 2026-11-17; mig 492 `club_email_retention_sweep()`, nightly by mig 493 at 08:45 UTC):**
+   12 months after `sent_at` the subject and body are set to NULL and `words_cleared_at` stamped; 24 months after, the
+   send's `family_email_recipients` rows are deleted and `names_cleared_at` stamped. The row (sender, date, audience, counts)
+   stays while the organization exists. A stopped email whose words are gone is refused "Send to the N it missed"
+   (`words_gone`); Last sent reads only rows with words. The same clock covers `club_group_email_*`.
+
+<!-- dict:col:family_email_sends.reply_to -->
+<!-- dict:col:family_email_sends.club_copy -->
+**`reply_to`** (text NOT NULL: `club` · `sender`, default `sender`, mig 492) — Club Communications R2/R3 (2026-11-17):
+`club` = replies went to the club's public contact and every message of the send (families, head-coach copies, the inbox
+copy) named the club; `sender` = the sender's own address (the shipped behaviour). A resend keeps it. **`club_copy`** (text:
+NULL = none asked · `asked` → `sent` · `failed` · `already_listed`, mig 492) — R4's "Send a copy to the club's inbox": a
+colleague-built copy to the club's public contact, never the family envelope. **Never the address.**
+
+<!-- dict:col:family_email_sends.words_cleared_at -->
+<!-- dict:col:family_email_sends.names_cleared_at -->
+**`words_cleared_at`** / **`names_cleared_at`** (timestamptz, mig 492) — when the clock blanked the words / deleted who it
+went to (gotcha 6). Partial indexes `family_email_sends_words_due_idx` / `_names_due_idx` (sent_at WHERE … IS NULL) serve
+the nightly scan.
 
 <!-- dict:col:family_email_sends.id -->
 <!-- dict:col:family_email_sends.org_id -->
@@ -7009,7 +7029,8 @@ went to their address.
 
 <!-- dict:col:family_email_sends.subject -->
 <!-- dict:col:family_email_sends.body -->
-**`subject`** (text NOT NULL, 1–200) / **`body`** (text NOT NULL, 1–5000) — the email as sent (the window's limits).
+**`subject`** (text, 1–200) / **`body`** (text, 1–5000) — the email as sent (the window's limits). NOT NULL until mig 492,
+which let the retention clock blank them (gotcha 6); every send still writes both.
 
 <!-- dict:col:family_email_sends.audience_kind -->
 **`audience_kind`** (text NOT NULL: `every` · `teams` · `season` · `list`) — `every` = each family with a child on a live team or
@@ -7055,6 +7076,146 @@ sender not counted).
 <!-- dict:col:family_email_sends.status -->
 **`status`** (text NOT NULL: `sending` · `done`, default `sending`) — `done` once the send finished; a row left `sending`
 is read as stopped after the grace period (gotcha 4).
+
+## `club_group_email_sends`
+<!-- dict:table:club_group_email_sends -->
+
+**Purpose:** one row per **club email to its coaches or its board** (Club Communications Stage 1, **mig 492**; plan
+`docs/projects/active/CLUB_COMMUNICATIONS_PLAN.md`; legal `docs/agents/legal/CLUB_COMMUNICATIONS_STAGE1.md`). Colleague
+mail, a separate path from family mail (no unsubscribe, no allowance). The row is the send's **claim** (written by
+`club_group_email_claim`, with its words, before any email goes), its **record** and the source of "Last sent". **Never an
+address** — not the sender's, the club's contact or a recipient's. **Service-role only** (RLS enabled, no policies).
+
+**Gotchas:**
+
+1. **Inserted only by `club_group_email_claim(…)`** (mig 492): a per-club-and-kind advisory lock, then the **just-sent
+   check** — the same `group_key` within 60 seconds is refused `just_sent` — then the send and its `club_group_email_bodies`
+   row, in one transaction. ⚖ **No daily allowance** (coach ask 12): the 60 seconds is the only check.
+2. **Who may read a row is decided in the app reader** (`lib/club-group-email-read.ts` → `canReadSend`, legal §2c), never by
+   a screen: owner and admins every row; a league admin or registrar `coaches_all`, `league_*`, and a `coaches_picked` with
+   `reaches_rep = false`; **a `board` row only its sender, a recipient (by `club_group_email_recipients.user_id`), the owner
+   and the admins** — its own branch, chosen by kind before any program rule.
+3. **A row still `sending` 15 minutes after `sent_at` (or `retried_at`) is read as stopped** (`STOPPED_AFTER_MS`, the family
+   send's length); "Send to the ones it missed" takes the row by stamping `retried_at`, sends to its recipients not `sent`
+   (their address read from the source row NOW, only while they still hold the role) and completes it. Refused once the
+   words are gone. A send that reached nobody deletes its row (and, by cascade, its words and people).
+4. **⏰ The clock** (owner 2026-11-17; `club_email_retention_sweep()`, nightly by mig 493): the words row is deleted 12 months
+   after `sent_at` (`words_cleared_at`), the recipients 24 months after (`names_cleared_at`). This row stays while the
+   organization exists.
+
+<!-- dict:col:club_group_email_sends.id -->
+<!-- dict:col:club_group_email_sends.org_id -->
+**`id`** (uuid PK) / **`org_id`** (uuid NOT NULL, FK → `organizations` CASCADE; indexed with `sent_at DESC` as
+`club_group_email_sends_org_sent_idx`).
+
+<!-- dict:col:club_group_email_sends.kind -->
+<!-- dict:col:club_group_email_sends.group_kind -->
+<!-- dict:col:club_group_email_sends.group_key -->
+<!-- dict:col:club_group_email_sends.group_label -->
+<!-- dict:col:club_group_email_sends.group_params -->
+**`kind`** (text NOT NULL: `coaches` · `board`) — which colleague path. **`group_kind`** (text NOT NULL, 1–40, **open-ended**
+so Stage 3 adds a value, never a rewire): `coaches_all` · `rep_staff` · `rep_head` · `league_season` · `league_division` ·
+`coaches_picked` · `board_all` · `board_picked`. **`group_key`** (text NOT NULL, 1–200) — the group with its parameters
+(`league_division:<season>:<division>`, a pick's fingerprint); the just-sent check compares it (index
+`club_group_email_sends_group_idx` on org, kind, group_key, sent_at DESC). **`group_label`** (text NOT NULL, 1–500) — the To
+in words, frozen ("All coaches", "House-league coaches · 2026 Fall House League · U9 Rookie", "3 coaches you picked").
+**`group_params`** (jsonb NOT NULL, default `{}`) — `seasonId`, `divisionId`, or a pick's size; never a person.
+
+<!-- dict:col:club_group_email_sends.reaches_rep -->
+<!-- dict:col:club_group_email_sends.reaches_house_league -->
+**`reaches_rep`** (boolean NOT NULL, default false) — a coach email reached someone who is not a house-league coach; a
+league seat never reads such a pick (gotcha 2). **`reaches_house_league`** (boolean NOT NULL, default false) — it reached at
+least one house-league coach.
+
+<!-- dict:col:club_group_email_sends.sent_by -->
+<!-- dict:col:club_group_email_sends.sender_name -->
+<!-- dict:col:club_group_email_sends.sender_role -->
+**`sent_by`** (uuid, not FK-checked: a record) — who pressed Send. **`sender_name`** (text, 1–200, CHECK no `@`) — their name
+as it was (R1: a sender with no name is refused). **`sender_role`** (text, CHECK one of the five board seats) — their seat
+at the send; the email's sender line is built from both.
+
+<!-- dict:col:club_group_email_sends.reply_to -->
+<!-- dict:col:club_group_email_sends.club_copy -->
+**`reply_to`** (text NOT NULL: `club` · `sender`) — R2: where replies went, one mode for every message of the send (the club's
+public contact, or the sender's own address read live). **`club_copy`** (text: NULL · `asked` → `sent` · `failed` ·
+`already_listed`) — R4's club-inbox copy; coach email only (never board email). Never the address.
+
+<!-- dict:col:club_group_email_sends.sent_at -->
+<!-- dict:col:club_group_email_sends.retried_at -->
+**`sent_at`** (timestamptz NOT NULL, default now()) — the claim's time, the clock's start. **`retried_at`** (timestamptz) —
+when "Send to the ones it missed" began (gotcha 3).
+
+<!-- dict:col:club_group_email_sends.recipient_count -->
+<!-- dict:col:club_group_email_sends.left_out_count -->
+<!-- dict:col:club_group_email_sends.reached_count -->
+<!-- dict:col:club_group_email_sends.failed_count -->
+**`recipient_count`** (int NOT NULL ≥ 0) — people it was going to (the "Send to N"). **`left_out_count`** (int NOT NULL ≥ 0)
+— people in the group who could not be sent to (an invitation not accepted, no address on file): **a count only, never
+their names**. **`reached_count`** / **`failed_count`** (int NOT NULL ≥ 0) — people the mail service accepted / refused (not
+a read receipt).
+
+<!-- dict:col:club_group_email_sends.status -->
+<!-- dict:col:club_group_email_sends.words_cleared_at -->
+<!-- dict:col:club_group_email_sends.names_cleared_at -->
+**`status`** (text NOT NULL: `sending` · `done`, default `sending`). **`words_cleared_at`** / **`names_cleared_at`**
+(timestamptz) — when the clock deleted the words / who it went to (gotcha 4); partial indexes
+`club_group_email_sends_words_due_idx` / `_names_due_idx` serve the nightly scan.
+
+## `club_group_email_bodies`
+<!-- dict:table:club_group_email_bodies -->
+
+**Purpose:** the subject and message of a `club_group_email_sends` row, **stored apart** so the retention clock deletes the
+words 12 months after the send and keeps the who-and-when (legal §2d). One row per send, written by the claim. **No row =
+the words are gone**: the record says so and "Send to the ones it missed" is refused. Service-role only.
+
+<!-- dict:col:club_group_email_bodies.send_id -->
+<!-- dict:col:club_group_email_bodies.org_id -->
+<!-- dict:col:club_group_email_bodies.subject -->
+<!-- dict:col:club_group_email_bodies.body -->
+<!-- dict:col:club_group_email_bodies.created_at -->
+**`send_id`** (uuid PK, FK → `club_group_email_sends` CASCADE) / **`org_id`** (uuid NOT NULL, FK → `organizations` CASCADE;
+indexed) / **`subject`** (text NOT NULL, 1–200) / **`body`** (text NOT NULL, 1–5000; the sender's own words, stored once,
+never a per-recipient copy) / **`created_at`** (timestamptz NOT NULL, default now()).
+
+## `club_group_email_recipients`
+<!-- dict:table:club_group_email_recipients -->
+
+**Purpose:** who a club coach or board email went to, **one row per person, as sent** (legal §2d): the id of the source
+row, the name and the team line or board seat at the time, why they got it, and whether the mail service accepted it.
+**No address column** — a resend reads the address from the source row at that moment, so a corrected address is honoured
+and a stale one never kept. Written before the first email; deleted 24 months after the send. Service-role only.
+
+<!-- dict:col:club_group_email_recipients.id -->
+<!-- dict:col:club_group_email_recipients.send_id -->
+<!-- dict:col:club_group_email_recipients.org_id -->
+**`id`** (uuid PK) / **`send_id`** (uuid NOT NULL, FK → `club_group_email_sends` CASCADE; indexed with `status`) /
+**`org_id`** (uuid NOT NULL, FK → `organizations` CASCADE; indexed).
+
+<!-- dict:col:club_group_email_recipients.user_id -->
+<!-- dict:col:club_group_email_recipients.league_coach_id -->
+**`user_id`** (uuid, not FK-checked) — the account (rep staff, a board seat, a house-league coach with an account); the board
+read rule reads it (partial index `club_group_email_recipients_user_idx` on user_id, send_id). **`league_coach_id`** (uuid,
+not FK-checked) — the `league_team_coaches` row of a house-league coach with no account. CHECK: at least one is set.
+
+<!-- dict:col:club_group_email_recipients.name -->
+<!-- dict:col:club_group_email_recipients.line -->
+**`name`** (text, 1–200, CHECK no `@`) — as at the send, or NULL (read as "A coach" / "A board member (treasurer)"; never an
+address). **`line`** (text, 1–300, CHECK no `@`) — the team line ("15U AAA · Head coach", "House league · Reds, U9 Rookie")
+or the board seat ("Treasurer").
+
+<!-- dict:col:club_group_email_recipients.basis -->
+<!-- dict:col:club_group_email_recipients.board_role -->
+<!-- dict:col:club_group_email_recipients.rep -->
+<!-- dict:col:club_group_email_recipients.house_league -->
+**`basis`** (text NOT NULL: `rep_staff` · `house_league` · `picked` · `board`) — why they got it, from their OWN role (legal
+C8; staff wins over house league), which picks the email's reason line. **`board_role`** (text, one of the five seats; set
+exactly when `basis = 'board'`). **`rep`** / **`house_league`** (boolean NOT NULL, default false) — they were rep staff / a
+house-league coach; a league seat reading the record sees the `house_league` ones named and the rest as one count.
+
+<!-- dict:col:club_group_email_recipients.status -->
+<!-- dict:col:club_group_email_recipients.updated_at -->
+**`status`** (text NOT NULL: `pending` · `sent` · `failed`, default `pending`) — `sent` = the mail service accepted it.
+**`updated_at`** (timestamptz NOT NULL, default now()).
 
 ## `family_messages`
 <!-- dict:table:family_messages -->

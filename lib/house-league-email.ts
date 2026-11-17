@@ -8,10 +8,12 @@ import {
   type FamilyAudience, type FamilyAudienceScope, type SeasonChoices,
 } from './families-audience';
 import {
-  deliverFamilyEmail, emailAllowance, emailWords, lastFamilyEmail, messageOneFamily, reasonFor, resendMissedFamilies,
+  deliverFamilyEmail, emailAllowance, emailWords, familyReplyChoice, lastFamilyEmail, messageOneFamily, reasonFor, resendMissedFamilies,
   type EmailAllowance, type FamilyEmailPreview, type FamilyEmailResult, type FamilyMessageResult,
 } from './families-email';
 import { leagueCoachesToCopy } from './families-email-coaches';
+import { SAY as CW } from './club-group-email-words';
+import { namesColleagueAudience } from './club-group-email-rules';
 import { senderName } from './families-coach-ask';
 import { clubEmailFacts } from './club-email-context';
 import { familyReplyPlan, type ClubEmailFacts } from './email-club-identity';
@@ -186,6 +188,8 @@ const no = (status: number, error: string, code: string, extra: Record<string, u
 /** The season's press, for a scope the route has tied to this season. One household goes through the household door. */
 export async function sendSeasonEmail(ctx: AuthContextWithRole, season: LeagueSeason, scope: FamilyAudienceScope, body: Record<string, unknown>):
   Promise<FamilyEmailResult | (FamilyMessageResult & { one: true; familyName: string | null })> {
+  // Two paths, never one message down both (legal §2a.1, T7).
+  if (namesColleagueAudience(body)) return no(400, CW.bothPaths, 'both_paths');
   const pick = scopeNeedsPick(scope);
   if (pick) {
     const say = { teams: SW.pickTeam, divisions: SW.pickDivision, statuses: SW.pickStatus, families: SW.pickFamilies, season: W.pickSeason }[pick];
@@ -221,8 +225,10 @@ export async function sendSeasonEmail(ctx: AuthContextWithRole, season: LeagueSe
     return no(409, W.changed(audience.families.length), 'changed', { families: audience.families.length });
   }
   const label = seasonAudienceLabel(scope, shape);
+  const reply = await familyReplyChoice(ctx, body);
+  if ('ok' in reply) return reply;
   return deliverFamilyEmail({
-    ctx, scope, world, audience, label, seasonName: season.name, ...words,
+    ctx, scope, world, audience, label, seasonName: season.name, ...words, reply,
     copy: scope.kind === 'season_teams' && body.copyCoaches === true
       ? { league: true, coaches: addresses => leagueCoachesToCopy(ctx.org.id, season.id, scope.teamIds, ctx.user.id, addresses) }
       : null,

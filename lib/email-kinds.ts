@@ -101,6 +101,10 @@ export const EMAIL_KINDS = {
   club_schedule_league_coach:           { klass: 'team', label: 'Club schedule, house league' },
   club_guardian_email_ask:              { klass: 'team', label: 'Guardian email request' },
   family_email_coach_copy:              { klass: 'team', label: 'Copy of a family email' },
+  // Club Communications Stage 1: the club's email to its coaches and its board (colleague mail), and the club-inbox copy (R4).
+  club_coach_email:                     { klass: 'team', label: 'Club email to coaches' },
+  club_board_email:                     { klass: 'team', label: 'Club email to the board' },
+  club_inbox_copy:                      { klass: 'team', label: "Copy for the club's inbox" },
   // House League 9d-3 Part 5: a team's coaches get one copy the first time its families are told their practice times.
   house_league_practice_coach_copy:     { klass: 'team', label: 'House league practice times, coach copy' },
   club_payment_handoff_coach:           { klass: 'team', label: 'Club payment hand-off' },

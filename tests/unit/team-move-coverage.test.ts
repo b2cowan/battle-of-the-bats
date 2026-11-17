@@ -97,6 +97,9 @@ const STAYS: Record<string, string> = {
   family_coach_asks: 'the club’s own Ask the coaches log (mig 335) — sent from Families, which a coach portal does not have (League and Club bands only), so none exist to move',
   family_email_sends: 'the club’s own Email families log (mig 347) — sent from Families, which a coach portal does not have (League and Club bands only), so none exist to move',
   family_email_recipients: 'each family a club email was going to (Club Tier 9d-1, mig 385) — rows of family_email_sends, which a coach portal never writes, so none exist to move',
+  club_group_email_sends: 'the club’s own email to its coaches and its board (Club Communications Stage 1, mig 492) — sent from the club portal, which a coach portal does not have, so none exist to move',
+  club_group_email_bodies: 'the words of a club_group_email_sends row (mig 492) — none exist on a coach portal, so none to move',
+  club_group_email_recipients: 'who a club coach or board email went to (mig 492) — rows of club_group_email_sends, which a coach portal never writes, so none exist to move',
   family_notes: 'the club’s own notes about its own people (mig 338) — written in Families, which a coach portal does not have, so none exist to move',
   family_payment_handoffs: 'a payment the CLUB received and passed to one of its teams (mig 338) — sent from Families, which a coach portal does not have, so none exist to move',
   // ── The coach's OWN tournament (a Premium portal includes one) — the org's, not the team's ────

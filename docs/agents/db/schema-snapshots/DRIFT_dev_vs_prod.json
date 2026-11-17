@@ -1,14 +1,102 @@
 {
   "generated": "2026-11-17",
-  "total": 45,
+  "total": 140,
   "counts": {
-    "tables": 2,
-    "columns": 15,
-    "indexes": 12,
-    "constraints": 11,
-    "rls": 5
+    "tables": 5,
+    "columns": 62,
+    "indexes": 25,
+    "constraints": 19,
+    "rls": 29
   },
   "items": [
+    {
+      "key": "check:only-dev:club_group_email_bodies.club_group_email_bodies_body_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_bodies.club_group_email_bodies_subject_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_recipients.club_group_email_recipients_basis_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_recipients.club_group_email_recipients_board_role",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_recipients.club_group_email_recipients_board_role_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_recipients.club_group_email_recipients_line_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_recipients.club_group_email_recipients_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_recipients.club_group_email_recipients_source",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_recipients.club_group_email_recipients_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_club_copy_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_failed_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_group_key_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_group_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_group_label_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_left_out_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_reached_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_recipient_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_reply_to_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_sender_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_sender_role_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_group_email_sends.club_group_email_sends_status_check",
+      "sig": ""
+    },
     {
       "key": "check:only-dev:club_schedule_bill_rates.club_schedule_bill_rates_scale_check",
       "sig": ""
@@ -27,6 +115,186 @@
     },
     {
       "key": "check:only-dev:club_schedules.club_schedules_part_never_in_review",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_club_copy_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_email_sends.family_email_sends_reply_to_check",
+      "sig": ""
+    },
+    {
+      "key": "column:changed:family_email_sends.body",
+      "sig": "text|text|YES| :: text|text|NO|"
+    },
+    {
+      "key": "column:changed:family_email_sends.subject",
+      "sig": "text|text|YES| :: text|text|NO|"
+    },
+    {
+      "key": "column:only-dev:club_group_email_bodies.body",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_bodies.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_bodies.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_bodies.send_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_bodies.subject",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.basis",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.board_role",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.house_league",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.league_coach_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.line",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.rep",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.send_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_recipients.user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.club_copy",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.failed_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.group_key",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.group_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.group_label",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.group_params",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.left_out_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.names_cleared_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.reached_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.reaches_house_league",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.reaches_rep",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.recipient_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.reply_to",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.retried_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.sender_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.sender_role",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.sent_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_group_email_sends.words_cleared_at",
       "sig": ""
     },
     {
@@ -78,6 +346,22 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:family_email_sends.club_copy",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.names_cleared_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.reply_to",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_email_sends.words_cleared_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:org_time_date_off_venues.date_off_id",
       "sig": ""
     },
@@ -87,6 +371,38 @@
     },
     {
       "key": "column:only-dev:org_time_date_off_venues.org_venue_id",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_group_email_bodies.club_group_email_bodies_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_group_email_bodies.club_group_email_bodies_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_group_email_bodies.club_group_email_bodies_send_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_group_email_recipients.club_group_email_recipients_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_group_email_recipients.club_group_email_recipients_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_group_email_recipients.club_group_email_recipients_send_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_group_email_sends.club_group_email_sends_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_group_email_sends.club_group_email_sends_pkey",
       "sig": ""
     },
     {
@@ -134,6 +450,50 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:club_group_email_bodies_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_group_email_bodies_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_group_email_recipients_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_group_email_recipients_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_group_email_recipients_send_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_group_email_recipients_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_group_email_sends_group_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_group_email_sends_names_due_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_group_email_sends_org_sent_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_group_email_sends_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_group_email_sends_words_due_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:club_schedule_bill_rates_org_idx",
       "sig": ""
     },
@@ -166,6 +526,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:family_email_sends_names_due_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_email_sends_words_due_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:org_time_date_off_venues_org_idx",
       "sig": ""
     },
@@ -179,6 +547,18 @@
     },
     {
       "key": "index:only-prod:club_schedule_slots_place_start",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_group_email_bodies",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_group_email_recipients",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_group_email_sends",
       "sig": ""
     },
     {
