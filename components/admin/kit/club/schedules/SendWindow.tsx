@@ -27,7 +27,7 @@ import ck from '../ClubKit.module.css';
 import { Callout, repKit, useLatestRead } from '../RepKit';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import { addCalendarDays, formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
-import { PART_WORDS as P, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, billPhrase, moneyCents as money, withoutReviewReply, type EmailWords } from '@/lib/club-schedule-words';
+import { PART_WORDS as P, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, billPhrase, moneyCents as money, withoutReviewReply, type ChangeGroup, type EmailWords } from '@/lib/club-schedule-words';
 import { isStale, oneWeekdayOf, type ScheduleView } from '@/lib/club-schedule-view';
 import type { SendKind } from '@/lib/club-schedule-send';
 import { getsPlainEmail } from '@/lib/club-schedule-money-audience';
@@ -35,6 +35,7 @@ import { HAND_BACK_WORDS, type CreditMove } from '@/lib/club-hand-back-words';
 import { TIME_HANDOFF_WORDS, type LeagueTimeLine } from '@/lib/league-time-handoff';
 import { hoursOf } from '@/lib/league-time';
 import { Statement } from './ScheduleParts';
+import { ChangeTeamBlock } from './ChangeGroups';
 import { EmailWordsSample, MailView, SendDoor, SendDoors, SendRow, SendRows, useSendLevel } from '../SendParts';
 import sch from './Schedules.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -43,7 +44,10 @@ import DateInput from '@/components/shared/DateInput';
 interface PreviewTeam {
   /** `money`: can open the team's Money — the bill goes only to them (owner 2026-11-13). */
   teamId: string; teamName: string; recipients: { userId: string; name: string | null; email: string; isHeadCoach: boolean; money: boolean }[];
-  slots: number; lines: string[]; bill: { cents: number; installments: { dueDate: string; amount: number }[] } | null;
+  slots: number; lines: string[];
+  /** changes: the same changes as groups — the row shows these, as the page's Needs attention row does (owner 2026-11-17). */
+  groups: ChangeGroup[];
+  bill: { cents: number; installments: { dueDate: string; amount: number }[] } | null;
   billedCents: number | null;
   /** Stage 11d, Ask 8: time the club moved off the team, and how it settles (a credit off what it owes; the rest owed back). */
   lost: { cents: number; creditCents: number; payCents: number; moves: CreditMove[] } | null;
@@ -159,7 +163,7 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   }, [view.slots]);
   // With no rep team in the send, the sample is the first house-league coach's email.
   const sample: PreviewTeam | null = teams[0] ?? (league[0] ? {
-    teamId: league[0].teamId, teamName: league[0].teamName, slots: 0, lines: league[0].lines, bill: null, billedCents: null, lost: null,
+    teamId: league[0].teamId, teamName: league[0].teamName, slots: 0, lines: league[0].lines, groups: [], bill: null, billedCents: null, lost: null,
     recipients: league[0].coaches.map(c => ({ userId: c.userId ?? '', name: c.name, email: c.email, isHeadCoach: false, money: true })),
     sample: league[0].sample, plainSample: null,
   } : null);
@@ -219,11 +223,8 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   const head = kind === 'review' ? W.whoReviews(ticked.length, people) : kind === 'changes' ? gamesOnly ? W.whoChangesGamesOnly : W.whoChanges(people)
     : W.whoTold(people);
   const teamLine = (t: PreviewTeam, i: number) => {
-    if (kind === 'changes') {
-      // D7: both money lines plain, as the built lines are.
-      const money2 = [t.billedCents ? W.billedCorrection(money(t.billedCents)) : '', t.lost ? HAND_BACK_WORDS.lostLine({ teamName: t.teamName, ...t.lost }) : ''].filter(Boolean);
-      return [t.lines.join('; '), ...money2].join(' · ');
-    }
+    // Send the changes: the row's changes are its groups, below the label (`changesBelow`); this line says the rest.
+    if (kind === 'changes') return '';
     if (kind === 'bill') return t.bill ? billPhrase(t.bill.cents, t.bill.installments.length) : '';
     const slots = W.teamSlots(t.slots, daysOf.get(t.teamId)?.size ?? 0, oneWeekday);
     if (kind === 'review') return t.bill ? `${slots} · ${billPhrase(t.bill.cents, t.bill.installments.length)}` : slots;
@@ -236,6 +237,20 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   const leads = (t: PreviewTeam) => {
     const heads = t.recipients.filter(r => r.isHeadCoach);
     return heads.length ? heads : t.recipients.slice(0, 1);
+  };
+  /** ⚖ Send the changes: the team's changes as the page said them — groups, each run opening to its dates — and each money
+   *  line on its own line under them, never trailing the last date (owner 2026-11-17, artifact YLos6rKun1mA612uRsChsG).
+   *  Drawn below the row's label: Show dates must not tick or untick the team. */
+  const changesBelow = (t: PreviewTeam) => {
+    if (kind !== 'changes') return null;
+    // D7: both money lines plain, as the built lines are.
+    const money2 = [t.billedCents ? W.billedCorrection(money(t.billedCents)) : '', t.lost ? HAND_BACK_WORDS.lostLine({ teamName: t.teamName, ...t.lost }) : ''].filter(Boolean);
+    return (
+      <div className={sch.chSend}>
+        <ChangeTeamBlock team={t} />
+        {money2.map(line => <p key={line} className={sch.chMoney}>{line}</p>)}
+      </div>
+    );
   };
   const teamSub = (t: PreviewTeam, i: number) => {
     const line = teamLine(t, i);
@@ -299,6 +314,7 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
                   <SendRow key={t.teamId}
                     title={<><b>{t.teamName}</b> · {leads(t).map(r => r.name ?? r.email).join(', ')}</>}
                     sub={teamSub(t, i)}
+                    below={changesBelow(t)}
                     pick={{
                       checked: !unticked.has(t.teamId),
                       onChange: checked => setUnticked(u => { const n = new Set(u); if (checked) n.delete(t.teamId); else n.add(t.teamId); return n; }),

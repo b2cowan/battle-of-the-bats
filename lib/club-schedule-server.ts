@@ -1047,7 +1047,7 @@ export async function readParts(orgId: string, parent: LoadedSchedule, opts: {
   houseLeague?: boolean; canMoney?: boolean;
   /** False: a reader who can't open Rep Teams is not shown a part that holds rep teams (the parent's own gate, for each part). */
   repTeams?: boolean;
-  changesOf?: (part: LoadedSchedule) => Promise<{ teams: { teamId: string; teamName: string; lines: string[] }[] }>;
+  changesOf?: (part: LoadedSchedule) => Promise<{ teams: PartRead['changes'] }>;
 } = {}): Promise<{ parts: PartRead[]; familySlotIds: string[] }> {
   const ids = await fetchAll<{ id: string }>((a, b) => supabaseAdmin.from('club_schedules').select('id')
     .eq('org_id', orgId).eq('part_of_schedule_id', parent.row.id).order('created_at').order('id').range(a, b));

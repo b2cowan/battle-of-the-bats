@@ -302,8 +302,52 @@
 .attentionMore { display: block; width: 100%; padding: 0.55rem 0.85rem; border: 0; border-top: 1px solid var(--home-line); background: var(--surface-2); color: var(--home-olive); text-align: left; font: inherit; font-size: var(--type-support); font-weight: 700; cursor: pointer; }
 .attentionMore:hover, .attentionMore:focus-visible { background: var(--home-olive-soft); }
 .attentionDetails { margin-top: 0.25rem; font-size: var(--type-support); color: var(--text-secondary); }
-.attentionDetails summary { cursor: pointer; color: var(--home-olive); font-weight: 700; }
+/* The disclosure's own line only: the change list nests its own summaries inside it (Show dates). */
+.attentionDetails > summary { cursor: pointer; color: var(--home-olive); font-weight: 700; }
 .attentionDetails ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+/* ⚖ A team's changes said as groups (owner 2026-11-17, artifact YLos6rKun1mA612uRsChsG) — Needs attention's Unsent change
+   row and the Send the changes window share this block (ChangeGroups.tsx). A run is one line over its pattern and opens
+   to its dates by month; the toggle words are the shipped disclosure's olive bold. */
+.chList { margin-top: 0.4rem; border-top: 1px solid var(--home-line); font-size: var(--type-body); color: var(--text-primary); }
+.chList > * { border-bottom: 1px solid var(--home-line); }
+.chTeam { padding: 0.15rem 0; }
+.chTeamName { display: block; padding-top: 0.35rem; }
+.chList .chTeam .chGroup { padding-left: 0.9rem; }
+.chGroup { display: block; padding: 0.35rem 0; }
+.chGroup summary { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.1rem 0.6rem; cursor: pointer; }
+.chGroup summary::-webkit-details-marker { display: none; }
+.chHead { font-weight: 400; font-size: var(--type-body); color: var(--text-primary); }
+/* ⚠ `.attentionBody b` makes every <b> in the row a block — the team's name and a month must stay inline with their
+   line (the owner's browser check, 2026-11-17: the name dropped under its own arrow). */
+.attentionBody .chHead b { display: inline; font-weight: 700; }
+.attentionBody .chDates b { display: inline-block; }
+.attentionBody .chTeamName { display: block; }
+/* Every head starts at the same edge: a run's arrow, or an arrow's width of space on a line that doesn't open. */
+/* The arrow (or its blank) hangs in a left gutter rather than being an inline spacer, so a line that wraps ("… Diamond / A")
+   comes back under its own words, not under the arrow. */
+.chHead { display: block; position: relative; padding-left: 0.9rem; }
+.chHead::before { content: ''; position: absolute; left: 0; top: 0; width: 0.9rem; }
+details.chGroup .chHead::before { content: '\25B8'; color: var(--home-olive); }
+details.chGroup[open] .chHead::before { content: '\25BE'; }
+.chToggle { align-self: start; color: var(--home-olive); font-size: var(--type-support); font-weight: 700; white-space: nowrap; }
+.chToggle > span + span, details.chGroup[open] .chToggle > span:first-child { display: none; }
+details.chGroup[open] .chToggle > span + span { display: inline; }
+.chPattern { grid-column: 1 / -1; padding-left: 0.9rem; line-height: 1.4; font-size: var(--type-support); color: var(--text-secondary); }
+.chGroup summary:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+.chDates { display: grid; gap: 0.15rem; padding: 0.3rem 0 0.1rem 0.9rem; font-size: var(--type-support); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.chDates b { display: inline-block; min-width: 2.2em; color: var(--text-primary); }
+.chDates i { font-style: normal; font-weight: 600; }
+.chMore { display: block; padding: 0.4rem 0 0; border: 0; background: transparent; color: var(--home-olive); font: inherit; font-size: var(--type-support); font-weight: 700; cursor: pointer; text-align: left; }
+.chMore:hover, .chMore:focus-visible { text-decoration: underline; }
+/* The Send window's row: the groups under the row's label, then each money line on its own tinted line. */
+/* Spacing: the team's name already carries the row's own bottom padding, so the changes sit close under it (one even step
+   between lines, not four stacked paddings), and the money line stands off from the last change by a clear step. */
+.chSend { margin-top: -0.25rem; font-size: var(--type-support); }
+.chSend .chHead { font-size: var(--type-body); line-height: 1.4; }
+.chSend .chTeam { padding: 0; }
+.chSend .chGroup { padding: 0.25rem 0; }
+.chSend .chDates { padding-top: 0.35rem; }
+.chMoney { margin: 0.55rem 0 0; padding: 0.5rem 0.75rem; border-radius: 6px; background: var(--home-olive-soft); color: var(--text-primary); line-height: 1.4; }
 .scheduleWorkspace { border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); padding: 0.85rem; min-width: 0; }
 .scheduleWorkspaceHead { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin: 0 0 0.55rem; }
 .scheduleWorkspaceHead h2 { margin: 0; font-size: var(--type-heading); }
@@ -343,6 +387,10 @@
   .attentionRow { grid-template-columns: minmax(0, 1fr) auto; }
   .attentionKind { grid-column: 1 / -1; }
   .attentionRow :global(.btn) { min-height: var(--tap-min, 44px); }
+  /* Unsent change carries real content now: its body takes the width and the button drops under it (ask 4). */
+  .attentionRowChanges { grid-template-columns: minmax(0, 1fr); }
+  .attentionRowChanges :global(.btn) { justify-self: stretch; }
+  .chGroup summary { min-height: var(--tap-min, 44px); align-content: center; }
   .overviewCols { grid-template-columns: minmax(0, 1fr); }
   .overviewPattern { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
   .overviewPlace { grid-column: 1 / -1; }

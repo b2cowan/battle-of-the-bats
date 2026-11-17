@@ -12,9 +12,11 @@ import { functionBody, readCode } from './_source-code.ts';
  * The database half (two allocations, the parent byte-identical) is tests/sql/schedule-part-send-fixture.sql.
  */
 
-const parent = (o: Partial<MemberShare> = {}): MemberShare => ({ memberId: 'P', label: null, lines: [], billedCents: null, lost: null, bill: null, ...o });
+const parent = (o: Partial<MemberShare> = {}): MemberShare => ({ memberId: 'P', label: null, lines: [], groups: [], billedCents: null, lost: null, bill: null, ...o });
 const part = (o: Partial<MemberShare> = {}): MemberShare => ({
-  memberId: 'C', label: 'Time added Nov 16', lines: ['Gains Thu, Dec 10, 6:00 p.m. · Prospect Park · Diamond 1'], billedCents: null, lost: null,
+  memberId: 'C', label: 'Time added Nov 16', lines: ['Gains Thu, Dec 10, 6:00 p.m. · Prospect Park · Diamond 1'],
+  groups: [{ kind: 'gains', count: 1, head: 'Gains Thu, Dec 10, 6:00 p.m. · Prospect Park · Diamond 1', pattern: null, months: [], firstDay: '2026-12-10' }],
+  billedCents: null, lost: null,
   bill: { name: 'Fall practices · Time added Nov 16', cents: 13500, installments: [{ installmentNumber: 1, dueDate: '2026-12-01', amount: 135 }] }, ...o,
 });
 
@@ -43,7 +45,16 @@ describe('one team, told once (drawing tab 5)', () => {
   it('only the members whose steps landed are told (a later refusal never tells of practices that did not land)', () => {
     const f = familyTeamFacts([parent({ lines: ['Gains Mon, Nov 9'] }), part()], new Set(['P']));
     assert.deepEqual(f.lines, ['Gains Mon, Nov 9']);
+    assert.deepEqual(f.groups, []);
     assert.deepEqual(f.partBills, []);
+  });
+  it('groups (owner 2026-11-17): a part\'s label is said once on each group, and the team\'s groups read soonest first', () => {
+    const run = { kind: 'gains' as const, count: 2, head: 'Gains 2 practices', pattern: 'Tue · 7:00 p.m. · Lane 2 · Dec 1 – 8', months: [{ month: 'Dec', days: '1 · 8' }], firstDay: '2026-12-01' };
+    const f = familyTeamFacts([parent({ groups: [{ kind: 'loses', count: 1, head: 'No longer Thu, Dec 3, 6:00 p.m. · Diamond A', pattern: null, months: [], firstDay: '2026-12-03' }] }), part({ groups: [run] })]);
+    assert.deepEqual(f.groups.map(g => [g.head, g.pattern]), [
+      ['Gains 2 practices', 'Tue · 7:00 p.m. · Lane 2 · Dec 1 – 8 · Time added Nov 16'],
+      ['No longer Thu, Dec 3, 6:00 p.m. · Diamond A', null],
+    ]);
   });
   it('mergeLost keeps either side alone', () => {
     const l = { cents: 1, creditCents: 1, payCents: 0, moves: [] };

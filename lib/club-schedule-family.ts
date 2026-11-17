@@ -15,7 +15,7 @@
  *   - `partChangeLines`: an unsent part's practices as Needs attention's change lines ("Gains Thu, Dec 10, 6:00 p.m. · …").
  */
 import { isProgramHolder } from './club-schedule-holders';
-import { PART_WORDS, changeLine } from './club-schedule-words';
+import { PART_WORDS, changeGroups, changeLine, type ChangeGroup, type TeamChange } from './club-schedule-words';
 import { addCalendarDays, formatStoredDate } from './timezone';
 import type { ScheduleView, SlotView } from './club-schedule-server';
 import type { TeamResult } from './club-schedule-engine';
@@ -90,7 +90,7 @@ export interface PartRead {
   /** A sent part's own changes wait for Send the changes (Session 3: a part taken off, a part regenerated). */
   changedSinceSent: boolean;
   /** Those changes, team by team, as Needs attention lists them (empty while the part is unsent: its practices are new). */
-  changes: { teamId: string; teamName: string; lines: string[] }[];
+  changes: { teamId: string; teamName: string; lines: string[]; groups: ChangeGroup[] }[];
   view: ScheduleView;
 }
 
@@ -181,22 +181,27 @@ export function memberView(parent: ScheduleView, parts: readonly PartRead[], par
   return (partId && parts.find(p => p.id === partId)?.view) || parent;
 }
 
-/** An unsent part's practices as Needs attention's change lines — each team's new time, said as the send says it. */
-export function partChangeLines(part: Pick<PartRead, 'view'>): { teamId: string; teamName: string; lines: string[] }[] {
+/** An unsent part's practices as Needs attention's changes — each team's new time, said as the send says it: its lines,
+ *  and the same as groups (owner 2026-11-17). The part's label is the caller's to add, once per group. */
+export function partChangeLines(part: Pick<PartRead, 'view'>): { teamId: string; teamName: string; lines: string[]; groups: ChangeGroup[] }[] {
   const v = part.view;
   const name = new Map(v.teams.map(t => [t.id, t.name]));
   const venue = new Map(v.places.map(p => [p.venueId, p]));
-  const out = new Map<string, string[]>();
+  // The view's own club day and clock for each start (the send reads the same from the org's time zone).
+  const clock = new Map(v.slots.map(s => [Date.parse(s.startsAt), { day: s.day, time: s.startClock }]));
+  const clockOf = (ms: number) => clock.get(ms) ?? { day: '', time: '' };
+  const out = new Map<string, TeamChange[]>();
   for (const s of v.slots) {
     for (const t of s.teamIds) {
       if (isProgramHolder(t)) continue;
       const p = venue.get(s.venueId);
       const place = [p?.venueName ?? '', s.facilityId ? p?.facilities.find(f => f.id === s.facilityId)?.name ?? '' : ''].filter(Boolean).join(' · ');
-      const line = changeLine({ kind: 'gains', startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), place }, () => ({ day: s.day, time: s.startClock }));
-      (out.get(t) ?? out.set(t, []).get(t)!).push(line);
+      (out.get(t) ?? out.set(t, []).get(t)!).push({ kind: 'gains', startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), place });
     }
   }
-  return [...out].map(([teamId, lines]) => ({ teamId, teamName: name.get(teamId) ?? 'A team', lines }));
+  return [...out].map(([teamId, list]) => ({
+    teamId, teamName: name.get(teamId) ?? 'A team', lines: list.map(c => changeLine(c, clockOf)), groups: changeGroups(list, clockOf),
+  }));
 }
 
 // ── Add time makes a part (Session 2 — drawing tab 3; owner rulings 1 and 7) ─────────────────────────────────────────────

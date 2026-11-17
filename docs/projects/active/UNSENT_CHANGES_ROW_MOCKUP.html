@@ -1,0 +1,507 @@
+<title>Unsent Changes Row</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: sticky section tabs, one section at a time. The document chrome is cool slate; the specimens inside it are the
+   product's warm portal, so a frame reads as a specimen and not as the page. */
+:root {
+  --bg: #EDF0F4; --fg: #17202B; --muted: #566273; --line: #D2D9E1; --card: #FFFFFF; --accent: #2C5AA6; --accent-ink: #FFFFFF;
+  --note: #FFF4CC; --note-ink: #4A3A06; --good: #1F6B3A; --bad: #9A2B1B;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-data: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10161D; --fg: #E6EBF1; --muted: #9AA7B5; --line: #28323D; --card: #18202A; --accent: #8DB4F0; --accent-ink: #0E1620;
+  --note: #3A3110; --note-ink: #F1E3A8; --good: #7FD39B; --bad: #F2907F; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #10161D; --fg: #E6EBF1; --muted: #9AA7B5; --line: #28323D; --card: #18202A; --accent: #8DB4F0; --accent-ink: #0E1620;
+  --note: #3A3110; --note-ink: #F1E3A8; --good: #7FD39B; --bad: #F2907F; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+.wrap { max-width: 1400px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+header.doc { padding-block: 20px 8px; }
+header.doc h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.01em; text-wrap: balance; }
+header.doc p { margin: 0; color: var(--muted); max-width: 78ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; }
+nav.tabs button { flex: none; border: 1px solid transparent; background: transparent; color: var(--muted); font: inherit; font-weight: 600; padding: 7px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+nav.tabs button:hover { color: var(--fg); }
+nav.tabs button[aria-selected="true"] { background: var(--card); color: var(--fg); border-color: var(--line); }
+nav.tabs button:focus-visible, .seg button:focus-visible, .pin:focus-visible, .spec summary:focus-visible, .spec .more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; padding-block: 14px 4px; }
+.viewrow label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-right: 8px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+section.tab { display: none; padding-top: 18px; }
+section.tab.on { display: block; }
+section.tab > h2 { margin: 0 0 4px; font-size: 18px; text-wrap: balance; }
+section.tab > p.lead { margin: 0 0 16px; color: var(--muted); max-width: 84ch; }
+.scroll { overflow-x: auto; padding-bottom: 6px; }
+.cmp { display: grid; grid-template-columns: repeat(2, 680px); gap: 20px; align-items: start; width: max-content; }
+.col h3 { margin: 0 0 2px; font-size: 14px; }
+.col .cap { margin: 0 0 8px; color: var(--muted); font-size: 12.5px; }
+.tagrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.tag { font-family: var(--font-data); font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); }
+.tag.new { color: var(--good); border-color: var(--good); }
+.tag.rest { color: var(--accent); border-color: var(--accent); }
+ol.notes { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; max-width: 92ch; }
+ol.notes li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); cursor: pointer; }
+ol.notes li.on, .pin.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.pin { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font: 700 11px var(--font-ui); cursor: pointer; padding: 0; vertical-align: middle; margin-left: 4px; }
+ol.notes .pin { margin: 0; cursor: pointer; }
+.notes b { font-weight: 650; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 0 0 16px; }
+.fact { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.fact b { display: block; font-size: 22px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.fact span { color: var(--muted); font-size: 13px; }
+.case { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(0, 680px); gap: 16px; align-items: start; padding: 14px 0; border-top: 1px solid var(--line); }
+.case:first-of-type { border-top: 0; }
+.case h3 { margin: 0 0 4px; font-size: 14px; }
+.case p { margin: 0 0 8px; color: var(--muted); font-size: 13.5px; }
+.raw { font-family: var(--font-data); font-size: 11.5px; line-height: 1.55; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; overflow-x: auto; white-space: pre; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 0 0 12px; max-width: 92ch; }
+.ask h3 { margin: 0 0 4px; font-size: 15px; }
+.ask p { margin: 0 0 6px; }
+.ask .rec { color: var(--good); font-weight: 650; }
+.ask .opts { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+.callout { background: var(--note); color: var(--note-ink); border-radius: 8px; padding: 10px 14px; max-width: 92ch; margin: 0 0 14px; font-size: 14px; }
+.pair { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.pair .col { width: 390px; max-width: 100%; }
+
+/* ---------- Specimen: the warm portal, from the shipped attention-queue rules ---------- */
+.spec {
+  --s-paper: #F3EFE6; --s-card: #FFFFFF; --s-s2: #FAF8F3; --s-line: rgba(70, 55, 30, 0.12); --s-line2: rgba(70, 55, 30, 0.20);
+  --s-ink: #241E15; --s-ink2: #4A4238; --s-dim: #615A54; --s-olive: #57651E; --s-olive-soft: rgba(87, 101, 30, 0.10);
+  --s-amber: 131, 80, 6; --s-warn: #6B4105; --s-lime: #C9F27B;
+  font-family: var(--font-ui); color: var(--s-ink); background: var(--s-paper); font-size: 14px; line-height: 1.4; position: relative;
+  border: 1px solid var(--s-line2); border-radius: 10px; overflow: hidden;
+}
+.spec * { color-scheme: light; }
+.spec .topbar { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; background: #FFFFFF; border-bottom: 1px solid var(--s-line); font-size: 12px; color: var(--s-dim); }
+.spec .pagehead { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px 10px; }
+.spec .pagehead b { font-size: 18px; }
+.spec .pill { font-family: var(--font-data); font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--s-line2); color: var(--s-ink2); }
+.spec .pill.am { border-color: rgba(var(--s-amber), 0.45); background: rgba(var(--s-amber), 0.14); color: var(--s-warn); }
+.spec .attn { margin: 0 14px 12px; border: 1px solid var(--s-line); border-radius: 8px; background: var(--s-card); overflow: hidden; }
+.spec .attn.solo { margin: 0; }
+.spec .ahead { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--s-s2); border-bottom: 1px solid var(--s-line); }
+.spec .ahead h4 { margin: 0; font-size: 16px; }
+.spec .ahead small { margin-left: auto; font-size: 12px; color: var(--s-dim); }
+.spec .row { display: grid; grid-template-columns: 9rem minmax(0, 1fr) auto; align-items: start; gap: 12px; padding: 10px 14px; font-size: 14px; }
+.spec .kind { justify-self: start; display: inline-flex; align-items: center; white-space: nowrap; padding: 2px 8px; border-radius: 999px; line-height: 1.4; border: 1px solid rgba(var(--s-amber), 0.45); background: rgba(var(--s-amber), 0.14); font-family: var(--font-data); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--s-warn); }
+.spec .body { min-width: 0; }
+.spec .body > b { display: block; }
+.spec .body > small, .spec .gs { display: block; margin-top: 3px; font-size: 12px; color: var(--s-ink2); }
+.spec .btn { font: inherit; font-weight: 600; font-size: 14px; border-radius: 6px; padding: 7px 14px; cursor: default; justify-self: end; white-space: nowrap; border: 1px solid var(--s-line2); background: transparent; color: var(--s-ink); }
+.spec .btn.lime { background: var(--s-lime); border-color: var(--s-lime); color: var(--s-ink); }
+/* today's disclosure */
+.spec details.old { margin-top: 4px; font-size: 12px; color: var(--s-ink2); }
+.spec details.old summary { cursor: pointer; color: var(--s-olive); font-weight: 700; }
+.spec details.old ul { margin: 6px 0 0; padding-left: 18px; }
+/* proposed team lines */
+.spec .teams { margin-top: 6px; border-top: 1px solid var(--s-line); }
+.spec .team { border-bottom: 1px solid var(--s-line); }
+.spec .team > .tname { padding: 7px 0 2px; font-weight: 700; }
+.spec .team .grp { margin-left: 14px; }
+.spec details.grp, .spec .teams > details, .spec .teams > .grp { border-bottom: 1px solid var(--s-line); }
+.spec .team details.grp { border-bottom: 0; }
+.spec .teams details > summary { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 7px 0; cursor: pointer; }
+.spec .teams details > summary::-webkit-details-marker { display: none; }
+.spec .gh { font-size: 14px; font-weight: 500; }
+.spec .gh b { font-weight: 700; }
+.spec .gh::before { content: "\25B8"; display: inline-block; width: 14px; color: var(--s-olive); }
+.spec details[open] > summary .gh::before { content: "\25BE"; }
+.spec .tog { color: var(--s-olive); font-weight: 700; font-size: 12px; align-self: center; }
+.spec .tog .h { display: none; }
+.spec details[open] > summary .tog .h { display: inline; }
+.spec details[open] > summary .tog .s { display: none; }
+.spec .teams summary .gs { grid-column: 1 / -1; margin: 0 0 0 14px; }
+.spec .gbody { padding: 0 0 8px 14px; font-size: 12px; color: var(--s-ink2); display: grid; gap: 3px; font-variant-numeric: tabular-nums; }
+.spec .gbody .mo { display: inline-block; min-width: 2.2em; font-weight: 700; color: var(--s-ink); }
+.spec .gbody ul { margin: 0; padding-left: 16px; }
+.spec .plain { padding: 7px 0; }
+.spec .plain .gh::before { content: none; }
+.spec .plain ul { margin: 4px 0 0 14px; padding-left: 16px; font-size: 12px; color: var(--s-ink2); }
+.spec .more { display: block; width: 100%; padding: 8px 0 2px; border: 0; background: transparent; color: var(--s-olive); text-align: left; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.spec .tail { display: block; margin-top: 8px; font-size: 12px; color: var(--s-ink2); }
+.spec .work { margin: 0 14px 14px; border: 1px solid var(--s-line); border-radius: 8px; background: var(--s-card); padding: 12px; }
+.spec .work .wh { display: flex; gap: 8px; font-size: 12px; color: var(--s-dim); margin-bottom: 8px; }
+.spec .work .grid { display: grid; grid-template-columns: 90px repeat(4, 1fr); gap: 4px; font-size: 11px; color: var(--s-dim); }
+.spec .work .grid i { display: block; height: 30px; border-radius: 4px; background: var(--s-s2); border: 1px solid var(--s-line); }
+.spec .work .grid i.t { background: var(--s-olive-soft); }
+.spec .fold { position: absolute; left: 0; right: 0; top: 640px; border-top: 2px dashed #B03A22; pointer-events: none; z-index: 3; }
+.spec .fold span { position: absolute; right: 8px; top: 3px; background: #B03A22; color: #fff; font: 600 10px var(--font-data); letter-spacing: 0.04em; padding: 2px 6px; border-radius: 3px; }
+body.diff .spec .same { opacity: 0.2; }
+.spec .same { transition: opacity 0.15s; }
+.spec .attn .pin { margin-left: 6px; }
+/* a phone: the shipped rule at narrow widths (Schedules.module.css), applied by class so the frame never reflows */
+.spec.narrow .row { grid-template-columns: minmax(0, 1fr) auto; }
+.spec.narrow .row .kind { grid-column: 1 / -1; }
+.spec.narrow.stack .row { grid-template-columns: minmax(0, 1fr); }
+.spec.narrow.stack .row .btnwrap { justify-self: stretch; display: flex; align-items: center; gap: 4px; }
+.spec.narrow.stack .row .btn { flex: 1; min-height: 44px; text-align: center; }
+.spec .btnwrap { justify-self: end; display: flex; align-items: center; gap: 4px; }
+#frame-today, #frame-prop { min-height: 720px; }
+@media (max-width: 900px) { .case { grid-template-columns: minmax(0, 1fr); } }
+/* the Send window, drawn from your screenshot: about 650 × 820 in the real product; drawn at 620 × 760 here */
+.spec.dlgwrap { background: rgba(36, 30, 21, 0.28); padding: 18px; border-radius: 10px; }
+.spec .dlg { width: 584px; height: 724px; display: flex; flex-direction: column; background: var(--s-card); border-radius: 12px; box-shadow: 0 10px 30px rgba(36, 30, 21, 0.25); overflow: hidden; }
+.spec .dhead { display: flex; justify-content: space-between; align-items: flex-start; padding: 22px 24px 12px; }
+.spec .eyebrow { display: block; font-family: var(--font-data); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--s-ink2); }
+.spec .dhead h4 { margin: 2px 0 0; font-size: 19px; }
+.spec .x { font-size: 22px; line-height: 1; color: var(--s-ink2); }
+.spec .dbody { flex: 1; overflow: auto; padding: 0 24px 14px; }
+.spec .stmt { border: 1px solid var(--s-line); border-left: 3px solid var(--s-olive); border-radius: 8px; padding: 12px 16px; font-size: 14.5px; line-height: 1.5; }
+.spec .flabel { margin: 18px 0 10px; font-family: var(--font-data); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--s-ink2); }
+.spec .srows { border: 1px solid var(--s-line); border-radius: 8px; }
+.spec .srow { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; padding: 12px 14px; }
+.spec .srow + .srow { border-top: 1px solid var(--s-line); }
+.spec .tick { width: 20px; height: 20px; margin-top: 2px; border-radius: 4px; background: var(--s-lime); border: 1px solid var(--s-ink2); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--s-ink); }
+.spec .stitle { font-size: 16px; }
+.spec .ssub { margin-top: 4px; font-size: 13.5px; line-height: 1.6; color: var(--s-ink2); }
+.spec .wteams { margin-top: 6px; border-top: 1px solid var(--s-line); }
+.spec .wteams > .grp:last-child, .spec .wteams > details:last-child { border-bottom: 0; }
+.spec .smoney { display: flex; align-items: flex-start; gap: 6px; margin-top: 6px; padding: 7px 10px; border-radius: 6px; background: var(--s-olive-soft); font-size: 13px; color: var(--s-ink); }
+.spec .smoney .pin { margin: 0; flex: none; }
+.spec .dfoot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid var(--s-line); }
+@media (prefers-reduced-motion: reduce) { .spec .same { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="doc">
+    <h1>Unsent changes, summarized</h1>
+    <p>Two places list what changed since the last send: the &ldquo;Needs attention&rdquo; row on the schedule, and the Send the changes window it opens. Today both list every change, one date at a time. This page draws one summary for both: a line per team, with the dates one click away.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t-whole" aria-selected="true" data-tab="whole">1 &middot; Whole screen</button>
+    <button role="tab" id="t-window" aria-selected="false" data-tab="window">2 &middot; Send window</button>
+    <button role="tab" id="t-rules" aria-selected="false" data-tab="rules">3 &middot; How runs collapse</button>
+    <button role="tab" id="t-teams" aria-selected="false" data-tab="teams">4 &middot; Many teams</button>
+    <button role="tab" id="t-phone" aria-selected="false" data-tab="phone">5 &middot; Phone</button>
+    <button role="tab" id="t-asks" aria-selected="false" data-tab="asks">6 &middot; Asks</button>
+  </nav>
+
+  <div class="viewrow" id="viewrow">
+    <div><label>View</label><span class="seg" id="seg-view"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></span></div>
+    <div><label>Row</label><span class="seg" id="seg-row"><button type="button" aria-pressed="true" data-v="closed">Collapsed</button><button type="button" aria-pressed="false" data-v="open">Opened</button></span></div>
+  </div>
+
+  <!-- 1 -->
+  <section class="tab on" id="whole" aria-labelledby="t-whole">
+    <h2>Does the schedule stay in view?</h2>
+    <p class="lead">The same screen, with the 36 changes from your screenshots: 14U AA loses one practice and gains 17, and 15U AA gains 18. Frames are 680px wide, a laptop with the sidebar open, so long lines wrap here more than on a wide monitor. The red dashed line marks about where the window ends on a 1280 &times; 720 laptop. Flip <b>Row</b> to Opened to see the worst case: you asked for every date.</p>
+    <div class="scroll"><div class="cmp">
+      <div class="col"><h3>Today</h3><p class="cap">One line per date. The &ldquo;first change&rdquo; line under the headline is just the first date in the list.</p>
+        <div class="tagrow"><span class="tag">UNCHANGED</span></div>
+        <div class="spec" id="frame-today"></div></div>
+      <div class="col"><h3>Proposed</h3><p class="cap">One line per team. Each team opens to its dates, grouped by month.</p>
+        <div class="tagrow"><span class="tag">UNCHANGED chip, headline, Send button</span><span class="tag new">NEW team lines</span><span class="tag rest">RESTYLED the disclosure</span></div>
+        <div class="spec" id="frame-prop"></div></div>
+    </div></div>
+    <div class="facts" id="facts-whole"></div>
+    <ol class="notes" data-notes="whole">
+      <li data-note="1"><button class="pin" data-pin="1" aria-label="Note 1">1</button><div><b>The headline stays.</b> &ldquo;36 changes since you sent it on Nov 17&rdquo; is already right. Under it, a one-line total says who is affected and what kind of change it is.</div></li>
+      <li data-note="2"><button class="pin" data-pin="2" aria-label="Note 2">2</button><div><b>One line per team, not per date.</b> The coach checks whether the right teams are affected and whether the pattern is right (days, time, park, date range). Nobody checks 36 near-identical lines by eye. A team with two kinds of change (14U AA) gets its name once, with one line per kind under it.</div></li>
+      <li data-note="3"><button class="pin" data-pin="3" aria-label="Note 3">3</button><div><b>Dates stay one click away.</b> Show dates opens that one team only, with dates grouped by month, so 18 dates take two lines instead of eighteen.</div></li>
+      <li data-note="4"><button class="pin" data-pin="4" aria-label="Note 4">4</button><div><b>Send the changes does not move.</b> It keeps the single lime on the screen and the same place on the right.</div></li>
+    </ol>
+  </section>
+
+  <!-- 2 -->
+  <section class="tab" id="window" aria-labelledby="t-window">
+    <h2>The window that sends them</h2>
+    <p class="lead">Send the changes opens this window. Today each team&rsquo;s changes run together as one paragraph, with &ldquo;Time added Nov 17&rdquo; repeated after every date and the money line at the very end. The proposal puts the same summary the coach just read on the page into each team&rsquo;s row.</p>
+    <div class="scroll"><div class="cmp" style="grid-template-columns: repeat(2, 620px);">
+      <div class="col"><h3>Today</h3><p class="cap">From your screenshot. The 14U AA paragraph alone is 17 wrapped lines, and 15U AA is below the window&rsquo;s first view.</p>
+        <div class="tagrow"><span class="tag">UNCHANGED</span></div>
+        <div class="spec dlgwrap" id="win-today"></div></div>
+      <div class="col"><h3>Proposed</h3><p class="cap">Both teams fit in the first view. Each opens to its dates.</p>
+        <div class="tagrow"><span class="tag">UNCHANGED head, statement, who is told, ticks, footer</span><span class="tag new">NEW team summary</span><span class="tag rest">RESTYLED the money line</span></div>
+        <div class="spec dlgwrap" id="win-prop"></div></div>
+    </div></div>
+    <ol class="notes" data-notes="window">
+      <li data-note="1"><button class="pin" data-pin="1" aria-label="Note 1">1</button><div><b>The same summary as the page.</b> The coach reads one thing on the schedule, then confirms the same thing here. Today the two lists are also built separately: the page says &ldquo;Prospect Park &middot; Diamond 1&rdquo; and the window says only &ldquo;Diamond 1&rdquo;. One summary in both places fixes that too.</div></li>
+      <li data-note="2"><button class="pin" data-pin="2" aria-label="Note 2">2</button><div><b>&ldquo;Time added Nov 17&rdquo; is said once</b>, on the group of practices it came from, not after each of 17 dates.</div></li>
+      <li data-note="3"><button class="pin" data-pin="3" aria-label="Note 3">3</button><div><b>The money gets its own line.</b> &ldquo;$60.00 comes off what 14U AA owes&rdquo; is the line a coach most needs to see before sending. Today it trails the seventeenth date after a middle dot.</div></li>
+      <li data-note="4"><button class="pin" data-pin="4" aria-label="Note 4">4</button><div><b>Losing 6:00 p.m. and gaining 7:00 p.m. on Thu, Dec 3 stay two lines.</b> They read like one move, but they come from two separate changes (the schedule&rsquo;s own edit and the added time). Showing them under the same team puts them side by side without claiming they are one move.</div></li>
+    </ol>
+  </section>
+
+  <!-- 3 -->
+  <section class="tab" id="rules" aria-labelledby="t-rules">
+    <h2>When does a run of changes collapse into one line?</h2>
+    <p class="lead">Only when the dates really are the same change. A run collapses when the time of day, the place and (for a move) the shift are identical on every date. Anything else stays as its own line under the team. The last case is the honest worst case.</p>
+    <div id="cases"></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="tab" id="teams" aria-labelledby="t-teams">
+    <h2>What if twelve teams changed?</h2>
+    <p class="lead">Three team lines show, soonest affected date first, then the shipped &ldquo;Show N more&rdquo; link. Hand-back asks on this same card already fold after three, so the coach has seen the pattern.</p>
+    <div class="scroll"><div class="cmp" style="grid-template-columns: 680px;"><div class="col">
+      <h3>Proposed, 12 teams, mixed kinds of change</h3><p class="cap" id="cap-teams"></p>
+      <div class="spec" id="frame-many"></div></div></div></div>
+    <ol class="notes" data-notes="teams">
+      <li data-note="1"><button class="pin" data-pin="1" aria-label="Note 1">1</button><div><b>The one-line total counts everything</b> so the coach sees the size of the send even with nine teams folded away.</div></li>
+      <li data-note="2"><button class="pin" data-pin="2" aria-label="Note 2">2</button><div><b>Soonest first.</b> The team whose next practice changes soonest is the one a coach is most likely to be asking about.</div></li>
+      <li data-note="3"><button class="pin" data-pin="3" aria-label="Note 3">3</button><div><b>Show 9 more teams</b> uses the same words and olive bold as the hand-back asks&rsquo; &ldquo;Show N more&rdquo;. It sits inside this row, under the teams it extends, instead of as the card-wide bar, so the Send button stays beside the list it sends.</div></li>
+    </ol>
+  </section>
+
+  <!-- 5 -->
+  <section class="tab" id="phone" aria-labelledby="t-phone">
+    <h2>On a phone</h2>
+    <p class="lead">Both frames are 390px wide, the real phone width. They do not reflow with your window. Open this page on your phone to judge the tap sizes. The team lines are whole-row tap targets.</p>
+    <div class="pair">
+      <div class="col"><h3>A &middot; The shipped narrow rule</h3><p class="cap">The button sits to the right of the body, as on every other attention row. The body gets about 190px, so team lines wrap to three or four lines.</p><div class="spec narrow" id="frame-ph-a"></div></div>
+      <div class="col"><h3>B &middot; Button below the body</h3><p class="cap">The body gets the full width and the button becomes a full-width tap target under it. This is my recommendation for this row only.</p><div class="spec narrow stack" id="frame-ph-b"></div></div>
+    </div>
+    <ol class="notes" data-notes="phone">
+      <li data-note="1"><button class="pin" data-pin="1" aria-label="Note 1">1</button><div><b>Why B.</b> The old row had one short headline, so a narrow body cost nothing. The new body carries real content, and squeezing it costs three extra wrapped lines per team.</div></li>
+      <li data-note="2"><button class="pin" data-pin="2" aria-label="Note 2">2</button><div><b>The cost of B</b> is that this row is built differently from the hand-back ask rows above it, whose buttons stay on the right.</div></li>
+    </ol>
+  </section>
+
+  <!-- 6 -->
+  <section class="tab" id="asks" aria-labelledby="t-asks">
+    <h2>Asks</h2>
+    <p class="lead">Seven calls. Each has my recommendation first.</p>
+    <div class="ask"><h3>1 &middot; The collapse rule</h3><p><span class="rec">Recommend: collapse only identical runs.</span> A run becomes one line when time, place and shift match on every date. Otherwise the lines stay separate.</p><ul class="opts"><li>Alternative: always collapse by team and print &ldquo;varies&rdquo;. Shorter, but hides exactly the changes a coach most needs to read.</li></ul></div>
+    <div class="ask"><h3>2 &middot; Opening state</h3><p><span class="rec">Recommend: every team closed.</span> The one-line summary per team is already enough to decide.</p><ul class="opts"><li>Alternative: the first team open. Shows one example of what Show dates does, at the cost of 2&ndash;4 extra lines.</li></ul></div>
+    <div class="ask"><h3>3 &middot; Order and cut-off</h3><p><span class="rec">Recommend: soonest affected date first, three teams shown.</span> It matches the hand-back asks on the same card.</p><ul class="opts"><li>Alternative: most changes first.</li></ul></div>
+    <div class="ask"><h3>4 &middot; Phone button</h3><p><span class="rec">Recommend: B, button below the body.</span> See tab 5.</p></div>
+    <div class="ask"><h3>5 &middot; Words for the kinds of change</h3><p>I used <b>gains</b>, <b>moves</b>, <b>loses</b> and <b>handed back</b> (today&rsquo;s lines say &ldquo;No longer&rdquo; for loses), and <b>gained / moved / taken off / handed back</b> in the one-line total. House-league divisions would say &ldquo;games&rdquo;, not &ldquo;practices&rdquo;. These are marketing-owned words, so they go to <code>/marketing</code> before the build.</p></div>
+    <div class="ask"><h3>6 &middot; One summary in both places</h3><p><span class="rec">Recommend: yes, the page row and the Send window show the same team summary.</span> It also settles the place-name drift (&ldquo;Prospect Park &middot; Diamond 1&rdquo; on the page, &ldquo;Diamond 1&rdquo; in the window) in favour of naming the park, since two parks can each have a Diamond 1.</p><ul class="opts"><li>Alternative: summarize only the page row and leave the window as the full record. The window is the confirm step, though, and a paragraph nobody can read confirms nothing.</li></ul></div>
+    <div class="ask"><h3>7 &middot; The email the coaches receive (not drawn)</h3><p>This is a third copy of the same list. The email a team&rsquo;s coaches get today is one bullet per date, each ending &ldquo;Time added Nov 17&rdquo;. <span class="rec">Recommend: the same grouping, with every date written out.</span> An email has no Show dates, and a coach may copy the dates into a calendar. The shape would be one line per kind (&ldquo;Gains 17 practices: Tue &amp; Thu, 7:00 p.m., Prospect Park, Diamond 1, from Time added Nov 17&rdquo;) followed by the dates by month. Email words go to <code>/marketing</code>. If you agree, I&rsquo;ll draw it as its own tab.</p><ul class="opts"><li>Alternative: leave the email as a full list. It is the record the coach keeps, so length matters less there than on a confirm screen.</li></ul></div>
+    <div class="callout"><b>For the build:</b> both the page row and the window receive finished sentences today, so neither can group anything. The build has to hand them the change itself (team, kind, date, time, place, which added time it came from). The phone version of the Send window is not drawn. It is the same rows in a sheet.</div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  function U(y, m, d) { return new Date(Date.UTC(y, m, d)); }
+  function wd(dt) { return DOW[dt.getUTCDay()] + ', ' + MON[dt.getUTCMonth()] + ' ' + dt.getUTCDate(); }
+  function md(dt) { return MON[dt.getUTCMonth()] + ' ' + dt.getUTCDate(); }
+  function run(from, to, days) {
+    var out = [], cur = new Date(from.getTime());
+    while (cur <= to) { if (days.indexOf(cur.getUTCDay()) >= 0) out.push(new Date(cur.getTime())); cur = new Date(cur.getTime() + 86400000); }
+    return out;
+  }
+  function months(dates) {
+    var order = [], by = {};
+    dates.forEach(function (dt) { var k = MON[dt.getUTCMonth()]; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(dt.getUTCDate()); });
+    return order.map(function (k) { return '<div><span class="mo">' + k + '</span> ' + by[k].join(' &middot; ') + '</div>'; }).join('');
+  }
+  var TAIL = 'The teams still have what you sent them. Send the changes to put these on their schedules and tell their coaches.';
+
+  /* data from the two screenshots: 14U AA loses one practice (the schedule's own edit) and gains 17 (Time added Nov 17);
+     15U AA gains 18 (Time added Nov 17). The schedule's own changes come first, as the page lists them. */
+  var a15 = run(U(2026, 11, 1), U(2027, 0, 28), [2, 4]);
+  var a14 = run(U(2026, 11, 3), U(2027, 0, 28), [2, 4]);
+  var LOST = 'Thu, Dec 3, 6:00 p.m. &middot; Diamond A';
+  var PART = 'Time added Nov 17';
+  var MONEY14 = '$60.00 comes off what 14U AA owes: its Jan 5 payment.';
+  var todayLines = ['14U AA &middot; no longer ' + LOST]
+    .concat(a15.map(function (dt) { return '15U AA &middot; gains ' + wd(dt) + ', 7:00 p.m. &middot; Prospect Park &middot; Diamond 2'; }))
+    .concat(a14.map(function (dt) { return '14U AA &middot; gains ' + wd(dt) + ', 7:00 p.m. &middot; Prospect Park &middot; Diamond 1'; }));
+  var total = todayLines.length;
+  var SUMLINE = '2 teams &middot; ' + (a15.length + a14.length) + ' practices gained, 1 taken off';
+
+  function group(g, name) {
+    var head = (name ? '<b>' + name + '</b> ' : '') + g.head;
+    var sub = g.sub ? '<span class="gs">' + g.sub + '</span>' : '';
+    if (g.dates) {
+      return '<details class="grp"><summary><span class="gh">' + head + '</span><span class="tog"><span class="s">Show dates</span><span class="h">Hide dates</span></span>' + sub + '</summary><div class="gbody">' + months(g.dates) + '</div></details>';
+    }
+    if (g.lines.length > 3) {
+      return '<details class="grp"><summary><span class="gh">' + head + '</span><span class="tog"><span class="s">Show all ' + g.lines.length + '</span><span class="h">Hide</span></span>' + sub + '</summary><div class="gbody"><ul>' + g.lines.map(function (l) { return '<li>' + l + '</li>'; }).join('') + '</ul></div></details>';
+    }
+    return '<div class="grp plain"><span class="gh">' + head + '</span>' + sub + (g.lines.length ? '<ul>' + g.lines.map(function (l) { return '<li>' + l + '</li>'; }).join('') + '</ul>' : '') + '</div>';
+  }
+  function team(t) {
+    if (t.groups.length === 1) return group(t.groups[0], t.name);
+    return '<div class="team"><div class="tname">' + t.name + '</div>' + t.groups.map(function (g) { return group(g, null); }).join('') + '</div>';
+  }
+  function chrome(inner, pins) {
+    return '<div class="same topbar"><span>Harbourtown Minor Ball</span><span>Schedules</span></div>' +
+      '<div class="same pagehead"><span>&larr; Schedules</span><b>Fall practices</b><span class="pill">Final</span><span class="pill am">Changed since sent</span></div>' + inner;
+  }
+  var workStub = '<div class="same work"><div class="wh"><b>Schedule</b><span>Week of Nov 23</span></div><div class="grid">' +
+    '<span>Mon</span><i></i><i class="t"></i><i></i><i></i><span>Tue</span><i class="t"></i><i></i><i class="t"></i><i></i><span>Wed</span><i></i><i></i><i></i><i class="t"></i>' +
+    '<span>Thu</span><i class="t"></i><i></i><i class="t"></i><i></i><span>Fri</span><i></i><i></i><i></i><i></i></div></div>';
+  var fold = '<div class="fold"><span>BOTTOM OF A 1280 &times; 720 WINDOW (ABOUT)</span></div>';
+
+  function todayRow() {
+    return '<div class="row"><span class="kind">Unsent change</span><div class="body"><b>' + total + ' changes since you sent it on Nov 17</b><small>' + todayLines[0] +
+      '</small><details class="old"><summary>All ' + total + ' changes</summary><ul>' + todayLines.map(function (l) { return '<li>' + l + '</li>'; }).join('') + '</ul></details><small>' + TAIL + '</small></div><button class="btn lime" type="button">Send the changes</button></div>';
+  }
+  function pin(n) { return '<button class="pin" data-pin="' + n + '" aria-label="Note ' + n + '">' + n + '</button>'; }
+  var g15 = { head: 'gains ' + a15.length + ' practices', sub: 'Tue &amp; Thu &middot; 7:00 p.m. &middot; Prospect Park, Diamond 2 &middot; ' + md(a15[0]) + ' &ndash; ' + md(a15[a15.length - 1]) + ' &middot; ' + PART, dates: a15 };
+  var g14lost = { head: 'loses 1 practice &middot; ' + LOST, lines: [] };
+  var g14 = { head: 'gains ' + a14.length + ' practices', sub: 'Tue &amp; Thu &middot; 7:00 p.m. &middot; Prospect Park, Diamond 1 &middot; ' + md(a14[0]) + ' &ndash; ' + md(a14[a14.length - 1]) + ' &middot; ' + PART, dates: a14 };
+  /* soonest affected date first: 15U AA (Dec 1), then 14U AA (Dec 3) */
+  var proposedTeams = [
+    { name: '15U AA', groups: [g15] },
+    { name: '14U AA', groups: [g14lost, g14] }
+  ];
+  function propRow() {
+    return '<div class="row"><span class="kind">Unsent change</span><div class="body"><b>' + total + ' changes since you sent it on Nov 17' + pin(1) + '</b>' +
+      '<small>' + SUMLINE + '</small><div class="teams">' + proposedTeams.map(team).join('') + '</div>' +
+      '<small class="tail">' + TAIL + '</small></div><span class="btnwrap">' + pin(4) + '<button class="btn lime" type="button">Send the changes</button></span></div>';
+  }
+  function card(row, solo) {
+    return '<section class="attn' + (solo ? ' solo' : '') + '"><div class="ahead"><h4>Needs attention</h4><small>1 item</small></div>' + row + '</section>';
+  }
+
+  var ft = document.getElementById('frame-today'), fp = document.getElementById('frame-prop');
+  ft.innerHTML = chrome(card(todayRow())) + workStub + fold;
+  fp.innerHTML = chrome(card(propRow())) + workStub + fold;
+  /* pins sit inside the summary; the click handler cancels the summary's own toggle for them */
+  fp.querySelector('.gh').insertAdjacentHTML('beforeend', pin(2));
+  fp.querySelector('.tog').insertAdjacentHTML('beforeend', pin(3));
+
+  document.getElementById('facts-whole').innerHTML =
+    '<div class="fact"><b>' + total + ' &rarr; 3</b><span>changes a coach reads before choosing to open anything: one per team and kind</span></div>' +
+    '<div class="fact"><b>' + (a15.length + a14.length) + ' dates &rarr; 4 lines</b><span>when every team is opened, because the dates group by month</span></div>' +
+    '<div class="fact"><b>Fold line</b><span>approximate. Flip Row to Opened and watch where the schedule card lands against it.</span></div>';
+
+  /* ---- tab 2: cases ---- */
+  var shifted = run(U(2026, 10, 24), U(2026, 11, 29), [2]);
+  var caseData = [
+    { h: 'A &middot; Same time, same place, every date', p: 'The screenshot. 18 lines become one.', raw: a15.slice(0, 3).map(function (dt) { return '15U AA gains ' + wd(dt) + ', 7:00 p.m. · Diamond 2'; }).join('\n') + '\n… 15 more identical lines',
+      t: [proposedTeams[0]] },
+    { h: 'B &middot; The same move on every date', p: 'A team that shifts from Tuesday to Thursday on six dates. The shift is the same each time, so it collapses.', raw: shifted.slice(0, 3).map(function (dt) { var th = new Date(dt.getTime() + 2 * 86400000); return '13U Rep ' + wd(dt) + ', 7:00 p.m. · Lane 2 → ' + wd(th) + ', 7:00 p.m. · Lane 2'; }).join('\n') + '\n… 3 more',
+      t: [{ name: '13U Rep', groups: [{ head: 'moves ' + shifted.length + ' practices', sub: 'Tue &rarr; Thu &middot; 7:00 p.m. &middot; Lane 2 &middot; ' + md(shifted[0]) + ' &ndash; ' + md(shifted[shifted.length - 1]), dates: shifted }] }] },
+    { h: 'C &middot; One team, several kinds of change', p: 'Changes group by kind inside the team. Runs that are the same collapse. The two moves are different from each other, so they stay as lines you can read.', raw: '6 identical moves (Tue → Thu, Lane 2)\nTue, Dec 8, 7:00 p.m. · Lane 2 → Wed, Dec 9, 6:00 p.m. · Lane 1\nTue, Dec 22, 7:00 p.m. · Lane 2 → Tue, Dec 22, 9:00 p.m. · Lane 2\n3 identical removals (Tue, 6:00 p.m., Hall A)\n1 handed back',
+      t: [{ name: '11U AA', groups: [
+        { head: 'moves ' + shifted.length + ' practices', sub: 'Tue &rarr; Thu &middot; 7:00 p.m. &middot; Lane 2 &middot; ' + md(shifted[0]) + ' &ndash; ' + md(shifted[shifted.length - 1]), dates: shifted },
+        { head: 'moves 2 practices &middot; each different', lines: ['Tue, Dec 8, 7:00 p.m. &middot; Lane 2 &rarr; Wed, Dec 9, 6:00 p.m. &middot; Lane 1', 'Tue, Dec 22, 7:00 p.m. &middot; Lane 2 &rarr; Tue, Dec 22, 9:00 p.m. &middot; Lane 2'] },
+        { head: 'loses 3 practices', sub: 'Tue &middot; 6:00 p.m. &middot; Hall A &middot; Dec 1 &ndash; Dec 15', dates: run(U(2026, 11, 1), U(2026, 11, 15), [2]) },
+        { head: 'hands back 1 practice', lines: ['Sat, Dec 12, 9:00 a.m. &middot; Field 3'] }
+      ] }] },
+    { h: 'D &middot; The worst case: nothing repeats', p: 'Eighteen changes that are all different. Nothing collapses, so the long list comes back, but only for this one team and only when asked. The team line says so plainly.', raw: '18 moves, each to a different time or place',
+      t: [{ name: '12U AA', groups: [{ head: 'moves 18 practices &middot; each different', lines: run(U(2026, 11, 1), U(2027, 0, 28), [2, 4]).map(function (dt, i) { return wd(dt) + ', 7:00 p.m. &middot; Diamond 2 &rarr; ' + (i % 2 ? '8:00 p.m. &middot; Diamond 2' : '7:00 p.m. &middot; Diamond 4'); }) }] }] }
+  ];
+  document.getElementById('cases').innerHTML = caseData.map(function (c) {
+    return '<div class="case"><div><h3>' + c.h + '</h3><p>' + c.p + '</p><div class="raw">' + c.raw.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</div></div>' +
+      '<div class="spec"><section class="attn solo"><div class="row" style="grid-template-columns:minmax(0,1fr)"><div class="body"><div class="teams" style="margin-top:0;border-top:0">' + c.t.map(team).join('') + '</div></div></div></section></div></div>';
+  }).join('');
+
+  /* ---- tab 3: twelve teams ---- */
+  /* name, kind, weekdays, first date, last date, what it is */
+  var many = [
+    ['13U Rep', 'moves', [2], U(2026, 10, 24), U(2026, 11, 29), 'Tue &rarr; Thu &middot; 7:00 p.m. &middot; Lane 2'],
+    ['11U AA', 'loses', [2], U(2026, 11, 1), U(2026, 11, 15), 'Tue &middot; 6:00 p.m. &middot; Hall A'],
+    ['15U AA', 'gains', [2, 4], U(2026, 11, 1), U(2027, 0, 28), 'Tue &amp; Thu &middot; 7:00 p.m. &middot; Prospect Park, Diamond 2'],
+    ['12U AA', 'gains', [2, 4], U(2026, 11, 1), U(2027, 0, 28), 'Tue &amp; Thu &middot; 6:00 p.m. &middot; Prospect Park, Diamond 3'],
+    ['10U AA', 'gains', [3], U(2026, 11, 2), U(2027, 0, 27), 'Wed &middot; 5:30 p.m. &middot; Prospect Park, Diamond 4'],
+    ['9U AA', 'gains', [3], U(2026, 11, 2), U(2027, 0, 27), 'Wed &middot; 4:30 p.m. &middot; Prospect Park, Diamond 4'],
+    ['14U AA', 'gains', [2, 4], U(2026, 11, 3), U(2027, 0, 28), 'Tue &amp; Thu &middot; 7:00 p.m. &middot; Prospect Park, Diamond 1'],
+    ['16U AA', 'gains', [4], U(2026, 11, 3), U(2027, 0, 28), 'Thu &middot; 8:30 p.m. &middot; Prospect Park, Diamond 1'],
+    ['18U AA', 'gains', [4], U(2026, 11, 3), U(2027, 0, 28), 'Thu &middot; 8:30 p.m. &middot; Prospect Park, Diamond 2'],
+    ['12U A', 'gains', [1], U(2026, 11, 7), U(2027, 1, 1), 'Mon &middot; 6:00 p.m. &middot; Hall A'],
+    ['13U A', 'gains', [1], U(2026, 11, 7), U(2027, 1, 1), 'Mon &middot; 7:15 p.m. &middot; Hall A'],
+    ['10U A', 'moves', [6], U(2026, 11, 12), U(2027, 0, 2), 'Sat &middot; 9:00 a.m. &rarr; 10:30 a.m. &middot; Field 2']
+  ].map(function (m) { return { name: m[0], kind: m[1], dates: run(m[3], m[4], m[2]), what: m[5] }; })
+    .sort(function (a, b) { return a.dates[0] - b.dates[0]; });
+  var sum = { gains: 0, moves: 0, loses: 0 };
+  many.forEach(function (m) { sum[m.kind] += m.dates.length; });
+  var allN = sum.gains + sum.moves + sum.loses;
+  var manyHtml = many.map(function (m, i) {
+    var t = { name: m.name, groups: [{ head: m.kind + ' ' + m.dates.length + ' practices', sub: m.what + ' &middot; ' + md(m.dates[0]) + ' &ndash; ' + md(m.dates[m.dates.length - 1]), dates: m.dates }] };
+    return '<div class="mt" ' + (i > 2 ? 'hidden' : '') + '>' + team(t) + '</div>';
+  }).join('');
+  document.getElementById('frame-many').innerHTML = '<section class="attn solo"><div class="ahead"><h4>Needs attention</h4><small>1 item</small></div>' +
+    '<div class="row"><span class="kind">Unsent change</span><div class="body"><b>' + allN + ' changes since you sent it on Nov 17' + pin(1) + '</b>' +
+    '<small>12 teams &middot; ' + sum.gains + ' gained, ' + sum.moves + ' moved, ' + sum.loses + ' taken off</small><div class="teams">' + manyHtml + '</div>' +
+    '<button class="more" type="button" id="more-teams">Show 9 more teams</button><small class="tail">' + TAIL + '</small></div><span class="btnwrap"><button class="btn lime" type="button">Send the changes</button></span></div></section>';
+  document.querySelector('#frame-many .gh').insertAdjacentHTML('beforeend', pin(2));
+  document.getElementById('more-teams').insertAdjacentHTML('afterend', pin(3));
+  document.getElementById('cap-teams').innerHTML = 'Today this would be <b>' + allN + ' lines</b> behind &ldquo;All ' + allN + ' changes&rdquo;.';
+  var open3 = false;
+  document.getElementById('more-teams').addEventListener('click', function () {
+    open3 = !open3;
+    document.querySelectorAll('#frame-many .mt').forEach(function (el, i) { if (i > 2) el.hidden = !open3; });
+    this.textContent = open3 ? 'Show fewer teams' : 'Show 9 more teams';
+  });
+  var style = document.createElement('style'); style.textContent = '.spec .mt[hidden]{display:none}'; document.head.appendChild(style);
+
+  /* ---- tab 4: phone ---- */
+  function phoneRow() {
+    return '<div class="topbar same"><span>Harbourtown</span><span>Schedules</span></div><section class="attn solo" style="margin:10px"><div class="ahead"><h4>Needs attention</h4><small>1 item</small></div>' +
+      '<div class="row"><span class="kind">Unsent change</span><div class="body"><b>' + total + ' changes since you sent it on Nov 17</b><small>' + SUMLINE + '</small><div class="teams">' + proposedTeams.map(team).join('') +
+      '</div><small class="tail">' + TAIL + '</small></div><span class="btnwrap"><button class="btn lime" type="button">Send the changes</button></span></div></section>';
+  }
+  document.getElementById('frame-ph-a').innerHTML = phoneRow();
+  document.getElementById('frame-ph-b').innerHTML = phoneRow();
+  document.querySelectorAll('#phone .col').forEach(function (c, i) { c.querySelector('.spec').style.width = '390px'; });
+  document.querySelector('#frame-ph-a .body > b').insertAdjacentHTML('beforeend', pin(1));
+  document.querySelector('#frame-ph-b .btnwrap').insertAdjacentHTML('afterbegin', pin(2));
+
+  /* ---- tabs, toggles, pins ---- */
+  /* ---- tab 2: the Send window ---- */
+  function winFrame(rows) {
+    return '<div class="dlg"><div class="dhead"><div><span class="eyebrow">Fall practices</span><h4>Send the changes</h4></div><span class="x" aria-hidden="true">&times;</span></div>' +
+      '<div class="dbody"><div class="stmt"><b>The changes reach 2 teams&rsquo; schedules.</b> Only those teams&rsquo; coaches are told. Nothing else on the schedule moves.</div>' +
+      '<p class="flabel">Who is told &middot; 2 people</p><div class="srows">' + rows + '</div></div>' +
+      '<div class="dfoot"><button class="btn" type="button">Cancel</button><button class="btn lime" type="button">Send to 2 people</button></div></div>';
+  }
+  function srow(title, sub) {
+    return '<div class="srow"><span class="tick" aria-hidden="true">&#10003;</span><div class="sbody"><div class="stitle">' + title + '</div>' + sub + '</div></div>';
+  }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  var winLines14 = ['No longer ' + LOST].concat(a14.map(function (dt) { return 'Gains ' + wd(dt) + ', 7:00 p.m. &middot; Diamond 1 &middot; ' + PART; }));
+  var winLines15 = a15.map(function (dt) { return 'Gains ' + wd(dt) + ', 7:00 p.m. &middot; Diamond 2 &middot; ' + PART; });
+  document.getElementById('win-today').innerHTML = winFrame(
+    srow('<b>14U AA</b> &middot; Taylor Brooks', '<div class="ssub">' + winLines14.join('; ') + ' &middot; ' + MONEY14 + '</div>') +
+    srow('<b>15U AA</b> &middot; Sam Whitford', '<div class="ssub">' + winLines15.join('; ') + '</div>'));
+  function propGroups(gs) { return '<div class="teams wteams">' + gs.map(function (g) { var c = {}; for (var k in g) c[k] = g[k]; c.head = cap(g.head); return group(c, null); }).join('') + '</div>'; }
+  document.getElementById('win-prop').innerHTML = winFrame(
+    srow('<b>15U AA</b> &middot; Sam Whitford', propGroups([g15])) +
+    srow('<b>14U AA</b> &middot; Taylor Brooks', propGroups([g14lost, g14]) + '<div class="smoney">' + pin(3) + '<span><b>$60.00</b> comes off what 14U AA owes: its Jan 5 payment.</span></div>'));
+  var wp = document.getElementById('win-prop');
+  wp.querySelector('.stitle').insertAdjacentHTML('beforeend', pin(1));
+  wp.querySelector('.wteams .gs').insertAdjacentHTML('beforeend', pin(2));
+  wp.querySelectorAll('.srow')[1].querySelector('.plain .gh').insertAdjacentHTML('beforeend', pin(4));
+
+  var tabs = ['whole', 'window', 'rules', 'teams', 'phone', 'asks'];
+  function show(id) {
+    if (tabs.indexOf(id) < 0) id = 'whole';
+    tabs.forEach(function (t) {
+      document.getElementById(t).classList.toggle('on', t === id);
+      document.getElementById('t-' + t).setAttribute('aria-selected', t === id ? 'true' : 'false');
+    });
+    document.getElementById('viewrow').style.display = id === 'whole' ? '' : 'none';
+    try { history.replaceState(null, '', '#' + id); } catch (e) { /* the frame may refuse */ }
+  }
+  document.querySelectorAll('nav.tabs button').forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-tab')); }); });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  show(location.hash.slice(1) || 'whole');
+
+  function seg(id, fn) {
+    var wrap = document.getElementById(id);
+    wrap.querySelectorAll('button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        wrap.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+        fn(b.getAttribute('data-v'));
+      });
+    });
+  }
+  seg('seg-view', function (v) { document.body.classList.toggle('diff', v === 'diff'); });
+  seg('seg-row', function (v) { document.querySelectorAll('#whole details').forEach(function (d) { d.open = v === 'open'; }); });
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('.pin, ol.notes li'); if (!el) return;
+    e.preventDefault();
+    var n = el.getAttribute('data-pin') || el.getAttribute('data-note');
+    var scope = el.closest('section.tab'); if (!scope) return;
+    var on = !el.classList.contains('on');
+    scope.querySelectorAll('.pin.on, ol.notes li.on').forEach(function (x) { x.classList.remove('on'); });
+    if (on) scope.querySelectorAll('[data-pin="' + n + '"], [data-note="' + n + '"]').forEach(function (x) { x.classList.add('on'); });
+  });
+})();
+</script>

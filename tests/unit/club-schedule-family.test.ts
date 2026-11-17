@@ -135,7 +135,10 @@ describe('familyShown — the family read as one', () => {
   });
 
   it('an unsent part\'s practices read as the send says them', () => {
-    assert.deepEqual(partChangeLines(part), [{ teamId: 'aa14', teamName: '14U AA', lines: ['Gains Thu, Dec 10, 6:00 p.m. · Prospect Park · Diamond 1'] }]);
+    const [t] = partChangeLines(part);
+    assert.deepEqual({ ...t, groups: undefined }, { teamId: 'aa14', teamName: '14U AA', lines: ['Gains Thu, Dec 10, 6:00 p.m. · Prospect Park · Diamond 1'], groups: undefined });
+    // One practice is a group of one: its line, as the send says it (owner 2026-11-17).
+    assert.deepEqual(t.groups.map(g => [g.head, g.pattern]), [['Gains Thu, Dec 10, 6:00 p.m. · Prospect Park · Diamond 1', null]]);
   });
 });
 

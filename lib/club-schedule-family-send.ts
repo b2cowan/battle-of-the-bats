@@ -15,12 +15,15 @@
  */
 import type { Installment } from './club-schedule-bill';
 import type { CreditMove } from './club-hand-back-words';
+import { labelGroup, type ChangeGroup } from './club-schedule-words';
 
 /** What one member of the family brings to one team's email. `label` null: the schedule itself (its lines unsuffixed). */
 export interface MemberShare {
   memberId: string;
   label: string | null;
   lines: readonly string[];
+  /** The same changes as groups (owner 2026-11-17): a part's label is said once per group, never after every date. */
+  groups: readonly ChangeGroup[];
   /** A correction this member bills the team for time it gained (cents) — the schedule's own, or a sent part's own. */
   billedCents: number | null;
   /** Time this member credits the team for (Stage 11d, Ask 8). */
@@ -34,15 +37,19 @@ export interface LostShare { cents: number; creditCents: number; payCents: numbe
 /** A part's bill on one team's email and bells: "Fall practices · Time added Nov 16", its total and payments. */
 export interface PartBill { name: string; cents: number; installments: Installment[] }
 
-/** One team's email, told as one: its lines in member order, its money added up, each part's bill. */
+/** One team's email, told as one: its lines in member order (its groups soonest first), its money added up, each part's
+ *  bill. */
 export function familyTeamFacts(shares: readonly MemberShare[], landed?: ReadonlySet<string>): {
-  lines: string[]; billedCents: number | null; lost: LostShare | null; partBills: PartBill[];
+  lines: string[]; groups: ChangeGroup[]; billedCents: number | null; lost: LostShare | null; partBills: PartBill[];
 } {
   const mine = landed ? shares.filter(s => landed.has(s.memberId)) : shares;
   const lines = mine.flatMap(s => (s.label ? s.lines.map(l => `${l} · ${s.label}`) : [...s.lines]));
+  const groups = mine.flatMap(s => (s.label ? s.groups.map(g => labelGroup(g, s.label!)) : [...s.groups]))
+    .sort((a, b) => a.firstDay.localeCompare(b.firstDay));
   const billed = mine.reduce((n, s) => n + (s.billedCents ?? 0), 0);
   return {
     lines,
+    groups,
     billedCents: billed > 0 ? billed : null,
     lost: mine.reduce<LostShare | null>((a, s) => mergeLost(a, s.lost), null),
     partBills: mine.flatMap(s => (s.bill && s.bill.cents > 0 ? [s.bill] : [])),

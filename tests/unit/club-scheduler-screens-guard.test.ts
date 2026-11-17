@@ -386,7 +386,8 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
   it('a hand-back is never a change waiting for a send (Ask 9): the changes callout reads the club’s changes only', () => {
     assert.doesNotMatch(page, /handedBack\]|changes\.handedBack/);
     // Phase 8: the schedule's own changes, an unsent added part's new practices, a sent part's own changes — never a hand-back.
-    assert.match(page, /const changeLines = \[\.\.\.own\.changes\.teams, \.\.\.unsentParts\.flatMap\(partChangeLines\), \.\.\.sentPartChanges\]\.flatMap/);
+    // Said as groups, one entry per team (owner 2026-11-17), each part's groups naming the part.
+    assert.match(page, /const changeTeams = mergeChangeTeams\(\[\.\.\.own\.changes\.teams, \.\.\.unsentParts\.flatMap\(x => partChangeLines\(x\)\.map\(labelled\(x\.label\)\)\), \.\.\.sentPartChanges\]\)/);
   });
   it('the page reads ?answer= (D5): Answer opens over it for a money mover; an ask no longer waiting says so', () => {
     assert.match(page, /useRef<string \| null>\(search\.get\('answer'\)\)/);

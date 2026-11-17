@@ -30,8 +30,8 @@ import {
   type BillSlot, type Installment, type KeptRates, type PaymentPeriod, type TimeSplit,
 } from './club-schedule-bill';
 import {
-  SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, changeLine, houseLeagueUse, patternLine,
-  placeWords, unreachableSentence, billNotToldSentence, moneyCents, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
+  PART_WORDS, SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, changeGroups, changeLine, houseLeagueUse, linesAsGroups, patternLine,
+  placeWords, unreachableSentence, billNotToldSentence, moneyCents, type ChangeGroup, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
 } from './club-schedule-words';
 import {
   billSlotsOf, computeBill, liveSlots, loadSchedule, readBill, readBillTerms, readClubTeams, schedulePrices, stepRefusal, teamNamer, touchesRepTeams,
@@ -94,6 +94,8 @@ export interface PreviewTeam {
   /** The team's slots (review / final), or its changes (changes). */
   slots: number;
   lines: string[];
+  /** changes: the same changes as groups, soonest first — the window's row and the email read these (owner 2026-11-17). */
+  groups: ChangeGroup[];
   bill: { cents: number; installments: Installment[] } | null;
   /** Build question B, on Send the changes: a correction billed for time gained, in cents. */
   billedCents: number | null;
@@ -310,6 +312,10 @@ async function contextFor(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<C
 
 const placeOf = (c: Context, venueId: string, facilityId: string | null) =>
   placeWords(c.places.venueName.get(venueId) ?? '', facilityId ? c.places.facilityName.get(facilityId) ?? null : null);
+/** A change's place names the park AND the facility ("Prospect Park · Diamond 1"), as an added part's lines always did:
+ *  two parks can each have a Diamond 1 (owner 2026-11-17, ask 6 — the Send window said "Diamond 1", the page the park). */
+const changePlaceOf = (c: Context, venueId: string, facilityId: string | null) =>
+  [c.places.venueName.get(venueId) ?? '', facilityId ? c.places.facilityName.get(facilityId) ?? '' : ''].filter(Boolean).join(' · ');
 
 /** A team's slots as the email's pattern lines (specimen 9). */
 function patternsFor(c: Context, teamId: string): string[] {
@@ -415,13 +421,13 @@ export function planChanges(c: Context, practices: readonly Practice[]): Changes
     .push({ day: g.day, startMs: g.startMs, endMs: g.endMs, weight: g.weight, teamIds: [t], permitId: c.prices.priceKeyOf(g.permitId ?? null) });
   const placeOfPractice = (p: Practice) => {
     const from = slotById.get(p.club_schedule_slot_id);
-    return from ? placeOf(c, from.venueId, from.facilityId) : '';
+    return from ? changePlaceOf(c, from.venueId, from.facilityId) : '';
   };
   for (const m of diff.moves) {
     const p = practiceById.get(m.practiceId)!, g = slotByKey.get(m.toKey)!;
     const row = rowFor(c, g, m.teamId, p.program_year_id);
     plan.updates.push({ eventId: p.id, slotId: row.slotId, startsAt: row.startsAt, endsAt: row.endsAt, venueId: row.venueId, facilityId: row.facilityId, location: row.location, locationAddress: row.locationAddress, fieldNumber: row.fieldNumber });
-    push(m.teamId, { kind: 'moved', fromStartMs: Date.parse(p.starts_at), fromPlace: placeOfPractice(p), toStartMs: g.startMs, toEndMs: g.endMs, toPlace: placeOf(c, g.venueId, g.facilityId) });
+    push(m.teamId, { kind: 'moved', fromStartMs: Date.parse(p.starts_at), fromPlace: placeOfPractice(p), toStartMs: g.startMs, toEndMs: g.endMs, toPlace: changePlaceOf(c, g.venueId, g.facilityId) });
     gained(m.teamId, g);
   }
   for (const gn of diff.gains) {
@@ -429,7 +435,7 @@ export function planChanges(c: Context, practices: readonly Practice[]): Changes
     const season = c.teams.find(t => t.id === gn.teamId)?.season?.id ?? null;
     if (!season) { if (!plan.seasonless.includes(gn.teamId)) plan.seasonless.push(gn.teamId); continue; }
     plan.inserts.push(rowFor(c, g, gn.teamId, season));
-    push(gn.teamId, { kind: 'gains', startMs: g.startMs, endMs: g.endMs, place: placeOf(c, g.venueId, g.facilityId) });
+    push(gn.teamId, { kind: 'gains', startMs: g.startMs, endMs: g.endMs, place: changePlaceOf(c, g.venueId, g.facilityId) });
     gained(gn.teamId, g);
   }
   for (const l of diff.losses) {
@@ -955,12 +961,13 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
   const sharesOf = (teamId: string): MemberShare[] => [
     {
       memberId: row.id, label: null, lines: (plan?.byTeam.get(teamId) ?? []).map(ch => changeLine(ch, clockOf)),
+      groups: changeGroups(plan?.byTeam.get(teamId) ?? [], clockOf),
       billedCents: toldCorrections ? correction?.gains.get(teamId) ?? null : null, lost: toldCorrections ? lost.get(teamId) ?? null : null, bill: null,
     },
     ...subs.flatMap(s => {
       const st = s.preview.teams.find(x => x.teamId === teamId);
       return st ? [{
-        memberId: s.loaded.row.id, label: s.label, lines: st.lines, billedCents: st.billedCents, lost: st.lost,
+        memberId: s.loaded.row.id, label: s.label, lines: st.lines, groups: st.groups, billedCents: st.billedCents, lost: st.lost,
         bill: s.kind === 'final' && st.bill ? { name: s.loaded.row.name, ...st.bill } : null,
       }] : [];
     }),
@@ -982,6 +989,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
       const lines = facts ? facts.lines
         : partFirst ? (plan!.byTeam.get(t.id) ?? []).map(ch => changeLine(ch, clockOf))
         : kind === 'bill' ? [] : patternsFor(c, t.id);
+      const groups = facts ? facts.groups : partFirst ? changeGroups(plan!.byTeam.get(t.id) ?? [], clockOf) : [];
       const billedCents = facts?.billedCents ?? null;
       const teamLost = facts?.lost ?? null;
       const partBills = facts?.partBills ?? [];
@@ -993,13 +1001,13 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
       // recipients can't — the same words with the money off. A late bill's audience is the teams with a share (and only
       // its Money people), so `teamBill` is always there for it.
       const told = teamEmails({
-        kind, orgName: c.orgName, scheduleName: row.name, teamName: t.name, people: p.people, lines,
+        kind, orgName: c.orgName, scheduleName: row.name, teamName: t.name, people: p.people, lines, groups,
         venueName: joinWithAnd(venueNames), slotCount: slots, firstDay, lastDay, replyBy,
         bill: teamBill, billedCents, lost: teamLost, partBills,
         link: scheduleLink(t.id), moneyLink: moneySectionHref(`/${c.orgSlug}/coaches/teams/${t.id}`, 'club'),
       });
       if (told.billNotTold) billNotTold.push({ teamId: t.id, teamName: t.name, sentence: billNotToldSentence(t.name, !teamBill && !billedCents && !partBills.length) });
-      teams.push({ teamId: t.id, teamName: t.name, recipients: p.people, slots, lines, bill: teamBill, billedCents, lost: teamLost, partBills, sample: told.sample, plainSample: told.plainSample });
+      teams.push({ teamId: t.id, teamName: t.name, recipients: p.people, slots, lines, groups, bill: teamBill, billedCents, lost: teamLost, partBills, sample: told.sample, plainSample: told.plainSample });
     }
     return { teams, unreachable, billNotTold };
   };
@@ -1521,7 +1529,7 @@ export async function sendLog(orgId: string, scheduleId: string) {
  * without, it is already on the team's schedule and the club's page, so it has no lines here (part B removed the page's
  * hand-back branch with this one: §300 W10's dead end can't come back).
  */
-export async function changesSummary(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<{ teams: { teamId: string; teamName: string; lines: string[] }[] }> {
+export async function changesSummary(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<{ teams: { teamId: string; teamName: string; lines: string[]; groups: ChangeGroup[] }[] }> {
   if (loaded.row.state !== 'final') return { teams: [] };
   const orgId = sctx.ctx.org.id;
   const [c, practices] = await Promise.all([contextFor(sctx, loaded), readPractices(orgId, loaded.slots.map(s => s.id))]);
@@ -1536,10 +1544,11 @@ export async function changesSummary(sctx: SchedulerCtx, loaded: LoadedSchedule)
   });
   return {
     teams: [
-      ...[...plan.byTeam].map(([teamId, list]) => ({ teamId, teamName: name(teamId), lines: list.map(ch => changeLine(ch, clockOf)) })),
-      ...(half?.teams ?? []).map(t => ({ teamId: t.teamId, teamName: t.teamName, lines: t.lines })),
+      ...[...plan.byTeam].map(([teamId, list]) => ({ teamId, teamName: name(teamId), lines: list.map(ch => changeLine(ch, clockOf)), groups: changeGroups(list, clockOf) })),
+      // House league's rows are already said as runs ("Sundays from Nov 8: …"): carried as they are, a group of one each.
+      ...(half?.teams ?? []).map(t => ({ teamId: t.teamId, teamName: t.teamName, lines: t.lines, groups: linesAsGroups(t.lines) })),
       // 9d-2b Part 5: a change that moves only a division's games waits for the send too.
-      ...(half?.games ?? []).map(g => ({ teamId: `games:${g.key}`, teamName: g.name, lines: [g.line] })),
+      ...(half?.games ?? []).map(g => ({ teamId: `games:${g.key}`, teamName: g.name, lines: [g.line], groups: linesAsGroups([g.line]) })),
     ],
   };
 }

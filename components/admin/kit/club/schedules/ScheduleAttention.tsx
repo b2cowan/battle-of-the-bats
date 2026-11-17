@@ -5,7 +5,8 @@ import { ChevronRight } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
 import { pluralize } from '@/lib/utils';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
-import { PART_WORDS as P, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
+import { PART_WORDS as P, SCHEDULE_SCREEN_WORDS as W, changeCount, changesTotal, type ChangeTeam } from '@/lib/club-schedule-words';
+import { ChangeTeamBlock } from './ChangeGroups';
 import { weekdayPlural } from '@/lib/permit-words';
 import { orderScheduleAsks } from '@/lib/club-schedule-overview';
 import { askSundayLine, type ScheduleAsk, type SchedulePlace, type SlotView } from '@/lib/club-schedule-view';
@@ -21,15 +22,18 @@ export interface OutsideRow {
 }
 
 const FIRST_ASKS = 3;
+/** Teams shown before "Show N more teams" (ask 3: as the hand-back asks fold). */
+const FIRST_TEAMS = 3;
 
-export default function ScheduleAttention({ asks, slots, places, canMoney, changed, sentOn, changeLines, partNotes = [], outside = [], unbilledParts = [], onAnswer, onSend, onBillPart }: {
+export default function ScheduleAttention({ asks, slots, places, canMoney, changed, sentOn, changeTeams, partNotes = [], outside = [], unbilledParts = [], onAnswer, onSend, onBillPart }: {
   asks: readonly ScheduleAsk[];
   slots: readonly SlotView[];
   places: readonly SchedulePlace[];
   canMoney: boolean;
   changed: boolean;
   sentOn: string;
-  changeLines: readonly string[];
+  /** What waits for Send the changes, a team at a time, soonest first, said as groups (owner 2026-11-17). */
+  changeTeams: readonly ChangeTeam[];
   /** An added part with no bill yet (Phase 8, drawing tab 4 note 2): said in the change row, never in the bill tile —
    *  "Time added Nov 16 isn’t billed yet. You can bill it when you send the changes." */
   partNotes?: readonly string[];
@@ -43,6 +47,9 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
   onBillPart?: (partId: string) => void;
 }) {
   const [showAll, setShowAll] = useState(false);
+  const [allTeams, setAllTeams] = useState(false);
+  const changes = changeCount(changeTeams);
+  const teamsShown = allTeams ? changeTeams : changeTeams.slice(0, FIRST_TEAMS);
   const ordered = useMemo(() => orderScheduleAsks(asks, slots), [asks, slots]);
   const shown = showAll ? ordered : ordered.slice(0, FIRST_ASKS);
   const count = ordered.length + (changed ? 1 : 0) + outside.length + unbilledParts.length;
@@ -91,19 +98,31 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
       </button>}
       {changed && <>
         {ordered.length > FIRST_ASKS && <div className={sch.attentionGroup}>Schedule updates <span className={sch.attentionCount}>1</span><small>Kept visible while asks are collapsed</small></div>}
-        <div className={sch.attentionRow}>
+        {/* ⚖ A line per team, never per date (owner 2026-11-17, artifact YLos6rKun1mA612uRsChsG): the total, then — CLOSED
+            until asked, as the list was before (owner, browser check 2026-11-17: open, it took too much of the screen) —
+            each team's groups, the fourth team on folded; on a phone the button drops under the body (ask 4). */}
+        <div className={`${sch.attentionRow} ${sch.attentionRowChanges}`} data-unsent-changes>
           <span className={sch.attentionKind}>Unsent change</span>
           <div className={sch.attentionBody}>
-            <b>{changeLines.length ? W.changesHead(changeLines.length, sentOn) : W.changesNone}</b>
-            {changeLines.length > 0 && <small>{changeLines[0]}</small>}
-            {changeLines.length > 1 && <details className={sch.attentionDetails}>
-              <summary>All {pluralize(changeLines.length, 'change')}</summary>
-              <ul>{changeLines.map((line, i) => <li key={`${line}|${i}`}>{line}</li>)}</ul>
+            <b>{changes ? W.changesHead(changes, sentOn) : W.changesNone}</b>
+            {changes > 0 && <small>{changesTotal(changeTeams)}</small>}
+            {changes === 1 && <div className={sch.chList} data-unsent-list>
+              {teamsShown.map(t => <ChangeTeamBlock key={t.teamId} team={t} named />)}
+            </div>}
+            {changes > 1 && <details className={sch.attentionDetails} data-unsent-list>
+              <summary>{W.allChanges(changes)}</summary>
+              <div className={sch.chList}>
+                {teamsShown.map(t => <ChangeTeamBlock key={t.teamId} team={t} named />)}
+              </div>
+              {changeTeams.length > FIRST_TEAMS && <button type="button" className={sch.chMore} aria-expanded={allTeams}
+                onClick={() => setAllTeams(open => !open)}>
+                {allTeams ? W.fewerTeams : W.moreTeams(changeTeams.length - FIRST_TEAMS)}
+              </button>}
             </details>}
             {partNotes.map(note => <small key={note}>{note}</small>)}
-            {changeLines.length > 0 && <small>{W.changesTail}</small>}
+            {changes > 0 && <small>{W.changesTail}</small>}
           </div>
-          {changeLines.length > 0 && <button type="button" className={`btn ${(canMoney && ordered.length) || outsideAsks ? 'btn-outline' : 'btn-lime'}`} onClick={onSend}>{W.sendChanges}</button>}
+          {changes > 0 && <button type="button" className={`btn ${(canMoney && ordered.length) || outsideAsks ? 'btn-outline' : 'btn-lime'}`} onClick={onSend}>{W.sendChanges}</button>}
         </div>
       </>}
       {unbilledParts.map(p => <div key={p.id} className={sch.attentionRow} data-part-unbilled>

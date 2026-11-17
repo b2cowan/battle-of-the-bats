@@ -1,5 +1,5 @@
 import { canViewMoney, canViewSchedule, type CoachCapabilities } from './coach-capabilities';
-import { SCHEDULE_NOTICES, billEmail, changesEmail, teamEmail, withoutReviewReply, type EmailWords, type ScheduleUnreachableWhy } from './club-schedule-words';
+import { SCHEDULE_NOTICES, billEmail, changesEmail, teamEmail, withoutReviewReply, type ChangeGroup, type EmailWords, type ScheduleUnreachableWhy } from './club-schedule-words';
 import type { Installment } from './club-schedule-bill';
 import type { CreditMove } from './club-hand-back-words';
 import type { SendKind } from './club-schedule-send';
@@ -79,6 +79,8 @@ export function teamEmails(p: {
   people: readonly { name: string | null; money: boolean }[];
   /** review / final: the slots as pattern lines; changes: the change lines. */
   lines: string[];
+  /** changes: the same changes as groups — the email lists these (owner 2026-11-17, ask 7). */
+  groups?: readonly ChangeGroup[];
   venueName: string; slotCount: number; firstDay: string; lastDay: string; replyBy: string | null;
   bill: Bill | null; billedCents: number | null; lost: Lost | null;
   /** Send the changes on a schedule with added parts: each part's bill of its own that the send makes (Phase 8). */
@@ -95,7 +97,7 @@ export function teamEmails(p: {
       return billEmail({ ...base, bill: p.bill, link: p.moneyLink });
     }
     if (p.kind === 'changes') {
-      return changesEmail({ ...base, lines: p.lines, billedCents: withMoney ? p.billedCents : null, lost: withMoney ? p.lost : null, partBills: withMoney ? p.partBills ?? [] : [], link: p.link });
+      return changesEmail({ ...base, lines: p.lines, groups: p.groups, billedCents: withMoney ? p.billedCents : null, lost: withMoney ? p.lost : null, partBills: withMoney ? p.partBills ?? [] : [], link: p.link });
     }
     return teamEmail({
       ...base, kind: p.kind, venueName: p.venueName, slotCount: p.slotCount, firstDay: p.firstDay, lastDay: p.lastDay,

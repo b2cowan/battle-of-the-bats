@@ -46,7 +46,7 @@ import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
 import { sharingPools } from '@/lib/club-schedule-settings';
 import { matchesScheduleTeamFilter, scheduleOutsideWords } from '@/lib/club-schedule-overview';
-import { PART_WORDS as P, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
+import { PART_WORDS as P, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, labelGroup, mergeChangeTeams, type ChangeGroup } from '@/lib/club-schedule-words';
 import { addTeamResults, familyShown, memberView, partChangeLines, type PartRead } from '@/lib/club-schedule-family';
 import WhichPartWindow from '@/components/admin/kit/club/schedules/WhichPartWindow';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
@@ -64,7 +64,7 @@ import {
 interface PageRead extends ScheduleView {
   replies: { teamId: string; answer: 'looks_good' | 'ask_for_change'; words: string | null; at: string }[];
   sendLog: SendLogRow[];
-  changes: { teams: { teamId: string; teamName: string; lines: string[] }[] };
+  changes: { teams: { teamId: string; teamName: string; lines: string[]; groups: ChangeGroup[] }[] };
   /** Its added parts (Phase 8), oldest first — the page reads the family as one (`familyShown`). */
   parts?: PartRead[];
 }
@@ -96,11 +96,6 @@ type Lens = 'overview' | 'grid' | 'team' | 'group';
 
 /** One slot as it was before a change — what Undo puts back exactly. */
 interface Before { slotId: string; teamIds: string[]; locked: boolean; movedByHand: boolean }
-
-/** A change line after its team's name: "gains Sun, …", "no longer Sun, …" — a moved line starts with its day, which keeps
- *  its capital ("15U AAA · Sun, Dec 13, …"; it read "sun, Dec 13" — found building Stage 11d part B). */
-// A weekday keeps its capital: "Sun, Jan 10" and house league's "Sundays from Nov 8" (Stage 11b Part 5).
-const lowerFirst = (s: string) => (s && !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 
 export default function SchedulePage() {
   const { currentOrg, loading: orgLoading } = useOrg();
@@ -419,10 +414,11 @@ export default function SchedulePage() {
   );
   // The schedule's own changes, then each unsent part's new practices (Phase 8) — what Send the changes will send.
   const unsentParts = parts.filter(x => x.state !== 'final');
-  // A sent part's own changes (Session 3: taken off, regenerated) wait too, each line naming its part.
-  const sentPartChanges = parts.filter(x => x.state === 'final' && x.changedSinceSent)
-    .flatMap(x => x.changes.map(t => ({ ...t, lines: t.lines.map(l => `${l} · ${x.label}`) })));
-  const changeLines = [...own.changes.teams, ...unsentParts.flatMap(partChangeLines), ...sentPartChanges].flatMap(t => t.lines.map(l => W.changeTeamLine(t.teamName, lowerFirst(l))));
+  // A sent part's own changes (Session 3: taken off, regenerated) wait too. ⚖ Said as groups, one entry per team, soonest
+  // first (owner 2026-11-17, artifact YLos6rKun1mA612uRsChsG): a part's label once per group, as the send says it.
+  const labelled = (label: string) => (t: { teamId: string; teamName: string; groups: ChangeGroup[] }) => ({ ...t, groups: t.groups.map(g => labelGroup(g, label)) });
+  const sentPartChanges = parts.filter(x => x.state === 'final' && x.changedSinceSent).flatMap(x => x.changes.map(labelled(x.label)));
+  const changeTeams = mergeChangeTeams([...own.changes.teams, ...unsentParts.flatMap(x => partChangeLines(x).map(labelled(x.label))), ...sentPartChanges]);
   // A part with no bill yet is said here, never in the bill tile (drawing tab 4, note 2).
   const partNotes = unsentParts.filter(x => !x.billed).map(x => P.notBilledYet(x.label));
   // A part SENT without a bill (tab 5, note 2): the shipped final-not-billed path — Bill the teams, then Review the bill.
@@ -752,7 +748,7 @@ export default function SchedulePage() {
       {reviewCallout}
       <ScheduleAttention asks={v.asks} slots={v.slots} places={v.places} canMoney={v.canMoney}
         changed={final && s.changedSinceSent} sentOn={formatStoredDate(s.sent?.at ?? '', { withYear: false })}
-        changeLines={changeLines} partNotes={partNotes} outside={outsideRows} onAnswer={id => setWin({ kind: 'answer', id })}
+        changeTeams={changeTeams} partNotes={partNotes} outside={outsideRows} onAnswer={id => setWin({ kind: 'answer', id })}
         onSend={() => setWin({ kind: 'send', start: 'changes' })}
         unbilledParts={unbilledSent} onBillPart={own.canMoney && canChange ? id => setWin({ kind: 'bill', partId: id }) : undefined} />
       {!isPhone && fair && <FairSharesBand model={fair} onOpen={() => setWin({ kind: 'fair' })} />}

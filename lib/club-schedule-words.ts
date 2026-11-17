@@ -11,9 +11,10 @@
  * A5 "Words"); every `[marketing]` tag below is open until then.
  */
 import { formatTime, formatTimeRange, joinWithAnd, pluralize, possessive } from './utils';
-import { formatShortWeekdayDate, formatStoredDate, formatWeekRange } from './timezone';
+import { daysBetweenDateStrings, formatShortWeekdayDate, formatStoredDate, formatWeekRange } from './timezone';
 import { fmt } from './coach-money-summary';
-import { PERMIT_WORDS, hoursWords, weekdayCount, weekdayOne, weekdayPlural } from './permit-words';
+import { PERMIT_WORDS, hoursWords, weekdayCount, weekdayOne, weekdayPlural, weekdaysWords } from './permit-words';
+import { weekdayOf } from './permit-time';
 import type { DraftMeasure, DraftStrategy, ShareWarning, SlotPattern } from './club-schedule-engine';
 import type { ClosingRow, Installment, PriceMode } from './club-schedule-bill';
 import type { SendKind } from './club-schedule-send';
@@ -414,10 +415,165 @@ export function changeLine(c: TeamChange, clockOf: (ms: number) => { day: string
   return `No longer ${at(c.startMs, clockOf)} · ${c.place}`;
 }
 
+/**
+ * ⚖ A TEAM'S CHANGES ARE SAID AS GROUPS, NEVER ONE LINE PER DATE (owner 2026-11-17, artifact YLos6rKun1mA612uRsChsG,
+ * asks 1–7 ruled as recommended): the Needs attention row, the Send the changes window and the coaches' email all read
+ * these. A run collapses ONLY when every change in it is the same change — the same kind, start time and place, and for a
+ * move the same new time, place and number of days moved (ask 1). Anything else stays a group of one, which is the
+ * change's own line. Groups read soonest first (ask 3).
+ */
+export interface ChangeGroup {
+  /** null: a line said elsewhere and carried as-is (house league's rows, a division's games). */
+  kind: TeamChange['kind'] | null;
+  /** How many changes it holds. */
+  count: number;
+  /** "Gains 17 practices" — or, for a group of one, the change's own line ("No longer Thu, Dec 3, 6:00 p.m. · Diamond A"). */
+  head: string;
+  /** "Tue and Thu · 7:00 p.m. · Diamond 1 · Dec 3 – Jan 28"; null for a group of one. */
+  pattern: string | null;
+  /** Every date, one row per month ({ month: 'Dec', days: '3 · 8 · 10' }); empty for a group of one. */
+  months: { month: string; days: string }[];
+  /** The first club day it touches (YYYY-MM-DD). */
+  firstDay: string;
+}
+
+/** A run's head ("Gains 17 practices") and the one-line total's word for it ("17 gained") — /marketing settled 2026-11-17. */
+const GROUP_WORDS: Record<TeamChange['kind'], { head: (n: number) => string; total: string }> = {
+  gains: { head: n => `Gains ${pluralize(n, 'practice')}`, total: 'gained' },
+  // /marketing 2026-11-17: "lost", not "taken off" — that already means a permit taken off, or money off what a team owes.
+  loses: { head: n => `Loses ${pluralize(n, 'practice')}`, total: 'lost' },
+  moved: { head: n => `Moves ${pluralize(n, 'practice')}`, total: 'moved' },
+  handed_back: { head: n => `Handed back ${pluralize(n, 'practice')}`, total: 'handed back' },
+};
+
+/** A run's dates, one row per month, in order. */
+function monthRows(days: readonly string[]): { month: string; days: string }[] {
+  const rows: { key: string; month: string; days: number[] }[] = [];
+  for (const d of days) {
+    const key = d.slice(0, 7);
+    const last = rows[rows.length - 1];
+    if (last && last.key === key) last.days.push(Number(d.slice(8, 10)));
+    else rows.push({ key, month: formatStoredDate(d, { withYear: false }).split(' ')[0], days: [Number(d.slice(8, 10))] });
+  }
+  return rows.map(r => ({ month: r.month, days: r.days.join(' · ') }));
+}
+
+/** The soonest day a run touches: a move to an earlier day touches its new day first. */
+const soonest = (first: string, toDays: readonly string[]) => [first, ...toDays].sort()[0];
+
+/** One team's changes as groups, soonest first. */
+export function changeGroups(list: readonly TeamChange[], clockOf: (ms: number) => { day: string; time: string }): ChangeGroup[] {
+  const runs = new Map<string, { kind: TeamChange['kind']; changes: TeamChange[]; days: string[]; toDays: string[] }>();
+  for (const c of list) {
+    const from = clockOf(c.kind === 'moved' ? c.fromStartMs : c.startMs);
+    let key: string;
+    let toDay = '';
+    if (c.kind === 'moved') {
+      const to = clockOf(c.toStartMs);
+      toDay = to.day;
+      key = JSON.stringify(['moved', from.time, c.fromPlace, to.time, c.toPlace, daysBetweenDateStrings(from.day, to.day)]);
+    } else key = JSON.stringify([c.kind, from.time, c.place]);
+    const run = runs.get(key) ?? runs.set(key, { kind: c.kind, changes: [], days: [], toDays: [] }).get(key)!;
+    run.changes.push(c);
+    run.days.push(from.day);
+    if (toDay) run.toDays.push(toDay);
+  }
+  const groups: ChangeGroup[] = [];
+  for (const run of runs.values()) {
+    const order = run.days.map((d, i) => i).sort((a, b) => run.days[a].localeCompare(run.days[b]));
+    const days = order.map(i => run.days[i]);
+    const first = run.changes[order[0]];
+    if (run.changes.length === 1) {
+      groups.push({ kind: run.kind, count: 1, head: `${changeLine(first, clockOf)}`, pattern: null, months: [], firstDay: soonest(days[0], run.toDays) });
+      continue;
+    }
+    const range = formatWeekRange(days[0], days[days.length - 1], false);
+    const weekdays = weekdaysWords(days.map(weekdayOf));
+    let pattern: string;
+    if (first.kind === 'moved') {
+      const fromClock = formatTime(clockOf(first.fromStartMs).time), toClock = formatTime(clockOf(first.toStartMs).time);
+      const toWeekdays = weekdaysWords(run.toDays.map(weekdayOf));
+      const sameDay = weekdays === toWeekdays, samePlace = first.fromPlace === first.toPlace;
+      const was = `${weekdays}, ${fromClock}${samePlace || !first.fromPlace ? '' : ` · ${first.fromPlace}`}`;
+      const now = `${sameDay ? '' : `${toWeekdays}, `}${toClock}${first.toPlace ? ` · ${first.toPlace}` : ''}`;
+      // The dates a run lists are the ones it moves FROM (the shift is the same for every one); say so.
+      pattern = `${was} → ${now} · was ${range}`;
+    } else {
+      pattern = [weekdays, formatTime(clockOf(first.startMs).time), first.place, range].filter(Boolean).join(' · ');
+    }
+    groups.push({ kind: run.kind, count: run.changes.length, head: GROUP_WORDS[run.kind].head(run.changes.length), pattern, months: monthRows(days), firstDay: soonest(days[0], run.toDays) });
+  }
+  return groups.sort((a, b) => a.firstDay.localeCompare(b.firstDay));
+}
+
+/** A part's groups name the added time they came from ("Time added Nov 17") once each, never after every date. */
+export function labelGroup(g: ChangeGroup, label: string): ChangeGroup {
+  return g.pattern ? { ...g, pattern: `${g.pattern} · ${label}` } : { ...g, head: `${g.head} · ${label}` };
+}
+
+/** One team's changes as the Needs attention row reads them. */
+export interface ChangeTeam { teamId: string; teamName: string; groups: ChangeGroup[] }
+
+/** Soonest first; a carried line (no date of its own) after the dated ones. */
+const byFirstDay = (a: { firstDay: string }, b: { firstDay: string }) => {
+  // Plain code-unit order: localeCompare sorts punctuation before digits, which put the undated line first.
+  const x = a.firstDay || '9999', y = b.firstDay || '9999';
+  return x < y ? -1 : x > y ? 1 : 0;
+};
+
+/** The schedule's own changes and each part's, one entry per team (a team two members change reads once), its groups and
+ *  the teams soonest first (ask 3). */
+export function mergeChangeTeams(list: readonly { teamId: string; teamName: string; groups: readonly ChangeGroup[] }[]): ChangeTeam[] {
+  const by = new Map<string, ChangeTeam>();
+  for (const t of list) {
+    const team = by.get(t.teamId) ?? by.set(t.teamId, { teamId: t.teamId, teamName: t.teamName, groups: [] }).get(t.teamId)!;
+    team.groups.push(...t.groups);
+  }
+  const teams = [...by.values()].filter(t => t.groups.length);
+  for (const t of teams) t.groups.sort(byFirstDay);
+  return teams.sort((a, b) => byFirstDay(a.groups[0], b.groups[0]));
+}
+
+/** Lines already said elsewhere (house league's rows, a division's games), carried as groups of one. */
+export function linesAsGroups(lines: readonly string[]): ChangeGroup[] {
+  return lines.map(head => ({ kind: null, count: 1, head, pattern: null, months: [], firstDay: '' }));
+}
+
+/** How many changes the groups hold — the headline's count ("36 changes since you sent it"). */
+export const changeCount = (teams: readonly { groups: readonly ChangeGroup[] }[]) =>
+  teams.reduce((n, t) => n + t.groups.reduce((m, g) => m + g.count, 0), 0);
+
+/** The one-line total under the headline: "2 teams · 35 practices gained, 1 lost" (/marketing settled 2026-11-17). */
+export function changesTotal(teams: readonly { groups: readonly ChangeGroup[] }[]): string {
+  const by = new Map<TeamChange['kind'] | null, number>();
+  for (const t of teams) for (const g of t.groups) by.set(g.kind, (by.get(g.kind) ?? 0) + g.count);
+  const order: TeamChange['kind'][] = ['gains', 'moved', 'loses', 'handed_back'];
+  const parts = order.filter(k => by.get(k)).map((k, i) => `${i === 0 ? pluralize(by.get(k)!, 'practice') : by.get(k)} ${GROUP_WORDS[k].total}`);
+  const other = by.get(null);
+  if (other) parts.push(parts.length ? `${other} other ${other === 1 ? 'change' : 'changes'}` : pluralize(other, 'change'));
+  return `${pluralize(teams.length, 'team')} · ${parts.join(', ')}`;
+}
+
+/** A team's groups as the email's lists (ask 7): a run is a titled list of its dates, a month to an item (an email has no
+ *  Show dates, and a coach may copy the dates into a calendar); groups of one gather in an untitled list, in order. */
+export function changeGroupLists(groups: readonly ChangeGroup[]): { title: string | null; items: string[] }[] {
+  const lists: { title: string | null; items: string[] }[] = [];
+  for (const g of groups) {
+    if (g.pattern) { lists.push({ title: `${g.head}: ${g.pattern}`, items: g.months.map(m => `${g.kind === 'moved' ? 'Was ' : ''}${m.month} ${m.days}`) }); continue; }
+    const last = lists[lists.length - 1];
+    if (last && last.title === null) last.items.push(g.head);
+    else lists.push({ title: null, items: [g.head] });
+  }
+  return lists;
+}
+
 /** [marketing] What a team's coaches receive when the changes are sent (specimen 10), and the money it settles. */
 export function changesEmail(p: {
   orgName: string; scheduleName: string; teamName: string; recipientNames: readonly (string | null)[];
-  lines: string[]; billedCents: number | null;
+  lines: string[];
+  /** The lines as groups (owner 2026-11-17, ask 7): when given, the email lists these instead of a line per date. */
+  groups?: readonly ChangeGroup[];
+  billedCents: number | null;
   /** Stage 11d, Ask 8: time the club moved off the team — taken off what it owes, the rest owed back (never "ask for it"). */
   lost: { creditCents: number; payCents: number; moves: readonly CreditMove[] } | null;
   /** Phase 8 (Session 3): each added part's bill of its own, made by this send — listed after the changes, each saying why it
@@ -434,7 +590,7 @@ export function changesEmail(p: {
     subject: `${p.scheduleName}: ${possessive(p.teamName)} slots changed`,
     greeting: firstNames(p.recipientNames),
     paragraphs: [`${p.orgName} changed ${possessive(p.teamName)} slots on ${p.scheduleName}:`],
-    lists: [{ title: null, items: p.lines }, ...partBills.map(b => ({ title: PART_WORDS.emailBillTitle(b.name, billPhrase(b.cents, b.installments.length)), items: b.installments.map(paymentLine) }))],
+    lists: [...(p.groups?.length ? changeGroupLists(p.groups) : [{ title: null, items: p.lines }]), ...partBills.map(b => ({ title: PART_WORDS.emailBillTitle(b.name, billPhrase(b.cents, b.installments.length)), items: b.installments.map(paymentLine) }))],
     link: { label: `Open ${possessive(p.teamName)} schedule →`, path: p.link },
     outro: [...money2, 'Everything else stays as it was.'].join(' '),
   };
@@ -1227,6 +1383,16 @@ export const SCHEDULE_SCREEN_WORDS = {
   askedFor: (team: string, words: string) => `${team} asked for a change: “${words}”`,
   notReplied: (teams: string, many: boolean, replyBy: string | null) => `${teams} ${many ? 'haven’t' : 'hasn’t'} replied${replyBy ? ` (reply by ${replyBy})` : ''}`,
   changesHead: (n: number, day: string) => `${pluralize(n, 'change')} since you sent it on ${day}`,
+  /** The closed list's door, as it read before the groups (owner 2026-11-17: the list starts closed). */
+  allChanges: (n: number) => `All ${pluralize(n, 'change')}`,
+  /** A run of changes opens to its dates (owner 2026-11-17). */
+  showDates: 'Show dates',
+  /** Above a move run's dates: they are the dates it moves from. */
+  movedDates: 'The dates they move from',
+  hideDates: 'Hide dates',
+  /** More than three teams changed: the rest fold, as the hand-back asks do (ask 3). */
+  moreTeams: (n: number) => `Show ${pluralize(n, 'more team', 'more teams')}`,
+  fewerTeams: 'Show fewer teams',
   changesTail: 'The teams still have what you sent them. Send the changes to put these on their schedules and tell their coaches.',
   changesNone: 'The changes since the last send put things back as they were: nothing waits to be sent.',
   changeTeamLine: (team: string, line: string) => `${team} · ${line}`,
