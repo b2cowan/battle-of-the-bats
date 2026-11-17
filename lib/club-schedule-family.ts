@@ -15,7 +15,8 @@
  *   - `partChangeLines`: an unsent part's practices as Needs attention's change lines ("Gains Thu, Dec 10, 6:00 p.m. · …").
  */
 import { isProgramHolder } from './club-schedule-holders';
-import { changeLine } from './club-schedule-words';
+import { PART_WORDS, changeLine } from './club-schedule-words';
+import { addCalendarDays, formatStoredDate } from './timezone';
 import type { ScheduleView, SlotView } from './club-schedule-server';
 import type { TeamResult } from './club-schedule-engine';
 
@@ -192,4 +193,52 @@ export function partChangeLines(part: Pick<PartRead, 'view'>): { teamId: string;
     }
   }
   return [...out].map(([teamId, lines]) => ({ teamId, teamName: name.get(teamId) ?? 'A team', lines }));
+}
+
+// ── Add time makes a part (Session 2 — drawing tab 3; owner rulings 1 and 7) ─────────────────────────────────────────────
+
+/** A new part's label: "Time added Nov 17" — the date it was added, no name to type (ruling 1) — and "… (2)", "… (3)" for
+ *  a second and third the same day. `taken`: every label the schedule's parts already use. */
+export function partLabelFor(today: string, taken: readonly string[]): string {
+  const base = PART_WORDS.label(formatStoredDate(today, { withYear: false }));
+  const used = new Set(taken);
+  if (!used.has(base)) return base;
+  let n = 2;
+  while (used.has(`${base} (${n})`)) n++;
+  return `${base} (${n})`;
+}
+
+/** The time a family already uses on one permit: each distinct row of days and hours, and the last day any of it runs. */
+export interface PermitUse { rows: { weekdays: number[]; startTime: string; endTime: string }[]; until: string }
+
+/**
+ * WHAT THE FAMILY ALREADY USES OF A PERMIT (ruling 7): Add time offers every permit, and one already on the schedule (or
+ * on another part) brings only the time the family doesn't use. Its card says this in one line, and From starts where the
+ * use ends (`partFromFor`). What enforces it is the cut itself: a part's draft never holds a place the family holds then.
+ * Null: the family has no row on that permit.
+ */
+export function familyUseOf(members: readonly Pick<ScheduleView, 'schedule' | 'time'>[], permitId: string): PermitUse | null {
+  const rows = new Map<string, PermitUse['rows'][number]>();
+  let until = '';
+  for (const m of members) {
+    for (const b of m.time.blocks) {
+      if (b.permitId !== permitId) continue;
+      const days = [...b.weekdays].sort((x, y) => x - y);
+      const startTime = b.startTime.slice(0, 5), endTime = b.endTime.slice(0, 5);
+      rows.set(`${days.join()}|${startTime}|${endTime}`, { weekdays: days, startTime, endTime });
+      // A row runs to its own last day, and never past its schedule's.
+      const end = b.untilDate && b.untilDate < m.schedule.endsOn ? b.untilDate : m.schedule.endsOn;
+      if (end > until) until = end;
+    }
+  }
+  return rows.size ? { rows: [...rows.values()], until } : null;
+}
+
+/** Where a part's time on a permit starts: never before today (the schedule was sent), never before the permit, and — when
+ *  the family already uses it — the day after that use ends, unless the use reaches the permit's end (then the left-out
+ *  time is other days, hours or parks, and the cut leaves it out). */
+export function partFromFor(permit: { startsOn: string; endsOn: string }, use: PermitUse | null, today: string): string {
+  const after = use ? addCalendarDays(use.until, 1) : '';
+  const from = after && after <= permit.endsOn ? (after > permit.startsOn ? after : permit.startsOn) : permit.startsOn;
+  return from < today ? today : from;
 }

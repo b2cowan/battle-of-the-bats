@@ -1,21 +1,20 @@
 import { addCalendarDays, mondayOfDay, utcToZonedInputs } from './timezone';
-import { clock, overlappingBlocks, weekdayOf, type DateOff } from './permit-time';
+import { clock, overlappingBlocks, weekdayOf } from './permit-time';
 import { isPrimeSlot, type ScheduleBlock, type ScheduleTime, type Slot, type WeightOf } from './club-schedule-engine';
 import type { ScheduleSettings } from './club-schedule-settings';
-import { mergeDatesOff } from './club-schedule-permit-rows';
 
 // ---------------------------------------------------------------------------
 // WHAT A CHANGE TO A SCHEDULE'S TIME KEEPS EXACTLY AS IT IS (a schedule on several permits, Session E; owner rulings
 // S1 A, P10 A, P11 A). Pure: no database, no request — the routes read, this decides.
 //
-// Three changes reach the time of a schedule that exists, and each makes one promise:
+// Two changes reach the time of a schedule that exists, and each makes one promise:
 //   · REGENERATE (Settings…, "Regenerate the unlocked slots…", "Take … off"): on a SENT schedule, nothing before today
 //     moves (P10 A, finding F1). Every slot whose day has passed is kept as it was sent — its place, its teams, its row's
 //     permit (what prices it) — locked or not, even when the new time no longer holds it.
-//   · ADD TIME (S1 A): nothing already on the schedule moves, locked or not; only the NEW rows are cut into slots.
+//   (ADD TIME no longer reaches it: since Phase 8 Session 2 it makes a PART, a schedule of its own — nothing here.)
 //   · TAKE A PERMIT OFF (P11 A): only that permit's slots come off — from today on, on a sent schedule — and nothing
 //     else moves.
-// One rule, three doors: `pinnedSlots` says which stored slots stay, `timeKeeping` gives them the rows they need, and
+// One rule, two doors: `pinnedSlots` says which stored slots stay, `timeKeeping` gives them the rows they need, and
 // `slotsWithPinned` puts them in the cut. Guard 4 of the build prompt (`club-schedule-keep.test.ts`).
 // ---------------------------------------------------------------------------
 
@@ -36,7 +35,6 @@ export interface KeepSlot {
 
 export type KeepChange =
   | { kind: 'regenerate' }
-  | { kind: 'add' }
   | { kind: 'take_off'; permitId: string };
 
 /** A slot as the engine reads it, rebuilt from what is stored (the bill, the send and a kept slot all read it so). */
@@ -58,7 +56,6 @@ const clubDayOf = (s: Pick<KeepSlot, 'startsAt'>) => utcToZonedInputs(s.startsAt
 /**
  * The stored slots a change keeps EXACTLY as they are — never re-cut, never given other teams, never removed:
  *  · regenerate — on a sent schedule, every slot before `today` (P10 A);
- *  · add        — every slot on the schedule (S1 A);
  *  · take_off   — every slot not on that permit, and on a sent schedule that permit's own before `today` too (P11 A).
  * A slot removed and waiting for Send the changes is not kept (it is already going). A slot locked or moved by hand is
  * the regenerate's OTHER keep (Ask 19): kept only while the new time still holds it — not this rule's.
@@ -67,7 +64,6 @@ export function pinnedSlots<S extends KeepSlot>(stored: readonly S[], change: Ke
   const past = (s: S) => o.final && clubDayOf(s) < o.today;
   return stored.filter(s => {
     if (s.removed) return false;
-    if (change.kind === 'add') return true;
     if (change.kind === 'take_off') return s.permitId !== change.permitId || past(s);
     return past(s);
   });
@@ -90,7 +86,7 @@ export interface Keeping {
   pinned: Slot[];
   /** On a sent schedule, today: nothing NEW is cut before it. Null on a draft or a schedule in review. */
   pastFrom: string | null;
-  /** The rows fresh slots may be cut from (Add time: the new rows only; Take … off: none). Null = every row. */
+  /** The rows fresh slots may be cut from (Take … off: none). Null = every row. */
   freshBlocks: ReadonlySet<number> | null;
 }
 
@@ -109,7 +105,7 @@ export function timeKeeping(
   asked: ScheduleTime & { blockIds: readonly (string | null)[] },
   stored: { blocks: readonly ScheduleBlock[]; blockIds: readonly string[]; endsOn: string },
   pinnedStored: readonly KeepSlot[],
-  o: { settings: Pick<ScheduleSettings, 'prime'>; weightOf: WeightOf; venueFacilities: ReadonlyMap<string, readonly string[]>; pastFrom: string | null; freshBlocks?: 'all' | 'new' | 'none' },
+  o: { settings: Pick<ScheduleSettings, 'prime'>; weightOf: WeightOf; venueFacilities: ReadonlyMap<string, readonly string[]>; pastFrom: string | null; freshBlocks?: 'all' | 'none' },
 ): Keeping {
   const blocks: ScheduleBlock[] = asked.blocks.map(b => ({ ...b }));
   const blockIds: (string | null)[] = [...asked.blockIds];
@@ -183,9 +179,8 @@ export function timeKeeping(
   blocks.forEach((b, i) => { if (keep[i]) { index.set(i, outBlocks.length); outBlocks.push(b); outIds.push(blockIds[i]); } });
   const pinned = slots.map(({ stored: s, slot }) => ({ ...slot, blockIndex: index.get(at.get(s.key)!)! }));
 
-  const fresh = o.freshBlocks ?? 'all';
-  const freshBlocks = fresh === 'all' ? null
-    : new Set(fresh === 'none' ? [] : asked.blockIds.map((id, i) => (id == null && keep[i] ? index.get(i)! : -1)).filter(i => i >= 0));
+  // Take … off cuts nothing fresh: every slot it keeps is kept as it is.
+  const freshBlocks = (o.freshBlocks ?? 'all') === 'all' ? null : new Set<number>();
   return {
     time: { startsOn, endsOn, blocks: outBlocks, datesOff: asked.datesOff, blockIds: outIds },
     pinned, pastFrom: o.pastFrom, freshBlocks,
@@ -210,30 +205,6 @@ export function slotsWithPinned(fresh: readonly Slot[], k: Pick<Keeping, 'pinned
   for (const list of venueFacilities.values()) list.forEach((f, i) => order.set(f, i));
   return [...cut, ...k.pinned].sort((a, b) => a.startMs - b.startMs || a.venueId.localeCompare(b.venueId)
     || (order.get(a.facilityId ?? '') ?? 0) - (order.get(b.facilityId ?? '') ?? 0));
-}
-
-/**
- * ADD TIME's request, made whole: the schedule's own rows (by id, untouched) and then the new ones, its first day, the
- * later of the two last days, and the dates off one per day — what is stored, with the new ones joined in (All venues
- * stays all; otherwise the parks unite). The settings are the schedule's: Add time changes no setting.
- */
-export function addedTime(
-  stored: { startsOn: string; endsOn: string; blocks: readonly ScheduleBlock[]; blockIds: readonly string[]; datesOff: readonly DateOff[] },
-  added: { endsOn: string; blocks: readonly ScheduleBlock[]; datesOff: readonly DateOff[] },
-): ScheduleTime & { blockIds: (string | null)[] } {
-  // One per day: All venues wins, otherwise the parks unite (the form's own merge).
-  const datesOff = mergeDatesOff([...stored.datesOff, ...added.datesOff], { parks: [], permitParks: () => [] })
-    .sort((a, b) => a.day.localeCompare(b.day));
-  const widens = added.endsOn > stored.endsOn;
-  return {
-    startsOn: stored.startsOn,
-    endsOn: widens ? added.endsOn : stored.endsOn,
-    // A row that ran to the schedule's last day keeps that day when the end widens: the new weeks are the new rows' only
-    // (Milton spring ends May 29; widening to Jun 30 for Milton June never gives Milton spring a June).
-    blocks: [...stored.blocks.map(b => (widens && !b.untilDate ? { ...b, untilDate: stored.endsOn } : b)), ...added.blocks],
-    blockIds: [...stored.blockIds, ...added.blocks.map(() => null)],
-    datesOff,
-  };
 }
 
 /** The practices before today a change keeps on a sent schedule — kept slots with a team, before `pastFrom` (the

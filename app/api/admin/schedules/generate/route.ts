@@ -3,8 +3,8 @@ import { withObservability } from '@/lib/observability';
 import { isUuid } from '@/lib/utils';
 import { generateDrafts, seatCounts, shareTargets, slotsTeamsCanHold, teamsCanHold } from '@/lib/club-schedule-engine';
 import {
-  addTimeRequest, buildEngineInput, familyOthers, keepingFor, loadSchedule, pricePermitOf, readRequestPrices, readScheduleRequest, repTeamsRefusal, resolveScheduler,
-  schedulerRefusal, teamNamer,
+  buildEngineInput, familyOthers, hasPartOf, keepingFor, loadSchedule, partParent, partTimeRefusal, pricePermitOf, readRequestPrices, readScheduleRequest, repTeamsRefusal,
+  resolveScheduler, schedulerRefusal, teamNamer,
 } from '@/lib/club-schedule-server';
 import { datesOffKeepingParks } from '@/lib/club-schedule-permit-rows';
 import { pastPractices } from '@/lib/club-schedule-keep';
@@ -13,15 +13,16 @@ import { SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, measureLines, warningLine 
 // ---------------------------------------------------------------------------
 // New schedule's engine (Club Tier Stage 11a, part A — Asks 5, 18–22; hub specimens 4–5, 14 step 3).
 //
-// POST ?orgSlug=  { startsOn, endsOn, blocks, datesOff, settings, startedFromPermitId?, scheduleId?, round?, previewOnly? }
+// POST ?orgSlug=  { startsOn, endsOn, blocks, datesOff, settings, startedFromPermitId?, scheduleId? | partOf?, round?, previewOnly? }
 //   → previewOnly: what the time and the settings hand out, for step 1's summary and closing row ("12 weeks · 2 lanes ·
 //     30 slots a week · 354 slots"; each team's share in slots; what is left open; what a booking holds) — no drafts.
 //   → otherwise: THREE RANKED DRAFTS (round 0; "Three more drafts" asks round 1, 2, …), each with its score, its measures
 //     in words, its warnings, and its assignments; every slot the time holds, each marked prime / held.
 //   With `scheduleId` (Tools › Settings…, a regenerate): the slots locked or moved by hand there are KEPT (Ask 19), and on
 //   a sent schedule every slot before today, locked or not (P10 A; `club-schedule-keep.ts`).
-//   With `scheduleId` and `addTime: true` (Tools › Add time…, S1 A): the body's rows are the NEW ones only; the schedule's
-//   own rows, dates off and settings are read here, every slot on it is kept as it is, and only the new rows are cut.
+//   With `partOf` (Tools › Add time… on a FINAL schedule, Phase 8 Session 2): the drafts of a new PART of that schedule — a
+//   schedule of its own, asked exactly as New schedule asks (its time, its dates off, its teams, its settings), cut and
+//   shared with the WHOLE family's places and teams then taken, and never before today (the schedule was sent).
 // Nothing is written here: a draft is kept by POST /api/admin/schedules (or a regenerate's PATCH).
 // ---------------------------------------------------------------------------
 
@@ -33,17 +34,18 @@ export const POST = withObservability(async (req: Request) => {
 
   const scheduleId = isUuid(body.scheduleId) ? body.scheduleId : null;
   if (body.scheduleId && !scheduleId) return schedulerRefusal(404, 'not_found', R.notFound);
-  const adding = body.addTime === true;
-  if (adding && !scheduleId) return schedulerRefusal(404, 'not_found', R.notFound);
+  const partOf = hasPartOf(body);
+  if (partOf && scheduleId) return schedulerRefusal(400, 'bad_draft', R.notSaved);
   const scope = { houseLeague: r.houseLeague, repTeams: r.repTeams };
-  // Add time asks with the schedule's own rows and settings joined to the new rows (`addTimeRequest`), so it reads the
-  // schedule first; every other ask reads the request and the schedule together (one round trip, as before).
-  const own = adding ? await loadSchedule(orgId, scheduleId!) : null;
-  if (adding && !own) return schedulerRefusal(404, 'not_found', R.notFound);
-  const [asked, loaded] = adding
-    ? [await addTimeRequest(orgId, own!, body, scope), own] as const
-    : await Promise.all([readScheduleRequest(orgId, body, scope), scheduleId ? loadSchedule(orgId, scheduleId) : null]);
+  const [asked, loaded, part] = await Promise.all([
+    readScheduleRequest(orgId, body, scope),
+    scheduleId ? loadSchedule(orgId, scheduleId) : null,
+    partOf ? partParent(orgId, r, body.partOf) : null,
+  ]);
   if (!asked.ok) return asked.response;
+  if (part && !part.ok) return part.response;
+  const tooEarly = part?.ok ? partTimeRefusal(part.parent, asked.value.time) : null;
+  if (tooEarly) return tooEarly;
   if (scheduleId && !loaded) return schedulerRefusal(404, 'not_found', R.notFound);
   const closed = loaded ? repTeamsRefusal(r, loaded) : null;
   if (closed) return closed;
@@ -51,17 +53,18 @@ export const POST = withObservability(async (req: Request) => {
   // A saved schedule's date off whose request never said its parks (a tab from before mig 488) keeps the ones stored, so the
   // preview is cut exactly as the save will cut it — never widened to All venues (the regenerate's PATCH does the same).
   const askedTime = loaded ? { ...asked.value.time, datesOff: datesOffKeepingParks(asked.value.time.datesOff, loaded.time.datesOff) } : asked.value.time;
-  // What the change keeps exactly as it is: a sent schedule's past (P10 A); on Add time, everything already on it.
-  const keep = loaded ? keepingFor(loaded, askedTime, { kind: adding ? 'add' : 'regenerate' }, places) : null;
+  // What the change keeps exactly as it is: a sent schedule's past (P10 A). A new part keeps nothing: it has nothing yet.
+  const keep = loaded ? keepingFor(loaded, askedTime, { kind: 'regenerate' }, places) : null;
   const time = keep?.time ?? askedTime;
   // The price permit; each row is weighed by its own permit (a schedule on several permits).
   const permitId = isUuid(body.startedFromPermitId) ? body.startedFromPermitId : loaded ? pricePermitOf(loaded.row) : null;
-  const { prices, gone } = await readRequestPrices(orgId, permitId, time.blocks);
+  // The family (Phase 8): the places the schedule it was added to, or its parts, hold then are never cut, and their teams
+  // then are taken — so a draft never offers what the save would refuse. A part being made: the whole family.
+  const [{ prices, gone }, family] = await Promise.all([
+    readRequestPrices(orgId, permitId, time.blocks),
+    part?.ok ? part.family : loaded ? familyOthers(orgId, loaded.row) : [],
+  ]);
   if (gone) return gone;
-
-  // A saved schedule's family (Phase 8): the places the schedule it was added to, or its parts, hold then are never cut,
-  // and their teams then are taken — so a draft never offers what the save would refuse.
-  const family = loaded ? await familyOthers(orgId, loaded.row) : [];
   const built = await buildEngineInput(orgId, { time, settings, teams, storedSlots: loaded?.slots ?? [], permitId, places, prices, keep, family });
   if (!built.ok) return schedulerRefusal(400, built.code, built.error);
   const { input } = built;

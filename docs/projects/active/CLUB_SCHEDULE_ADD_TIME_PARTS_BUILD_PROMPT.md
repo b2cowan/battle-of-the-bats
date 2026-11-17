@@ -112,23 +112,30 @@ After the owner's yes on the storage decision:
 
 ## Session 2 — Add time makes a part; a draft is edited
 
-- [ ] **Tools:** Add time… only on a final schedule; its hint "More time, for the teams you choose, on a bill of its own. Nothing already on the
+> **BUILT 2026-11-17.** What was decided and how: plan Phase 8, "Session 2 BUILT". Mig 494 (the save writes the link on its
+> insert; dev only, prod step recorded); `tests/sql/schedule-part-save-fixture.sql` 6/6; `tests/unit/club-schedule-add-part.test.ts`.
+> **Session 3 must know:** a part is saved `state = 'draft'` (never in review) and waits as the parent's Changed since sent;
+> Send the changes still sends the PARENT alone, so a part can be added and seen but not yet sent, billed, regenerated or
+> removed — that is Session 3's whole job. The P9 B path (`changesMoney` billing a permit not behind the bill) is untouched and
+> now has no caller that adds time to a sent schedule; retire it there with `club-schedule-add-time-send.test.ts`.
+
+- [x] **Tools:** Add time… only on a final schedule; its hint "More time, for the teams you choose, on a bill of its own. Nothing already on the
       schedule moves." (words through `/marketing` at the Close).
-- [ ] **Settings… on draft / in review:** the Permits picker and the Find the time door (drawing tab 2). Unticking = the card's "Take it off…".
+- [x] **Settings… on draft / in review:** the Permits picker and the Find the time door (drawing tab 2). Unticking = the card's "Take it off…".
       The save is the existing Keep this draft (a draft regenerates; nobody has been told).
-- [ ] **Add time = New schedule's form for the part** (drawing tab 3): the Permits picker lists **every** permit; one already on the family
+- [x] **Add time = New schedule's form for the part** (drawing tab 3): the Permits picker lists **every** permit; one already on the family
       offers only time the family doesn't use (the card's one line; From defaults to where that use ends); "Shown on the schedule as" Time added
       {date} (fixed); the permit cards with Add hours; **From / To editable**, defaulting to the permit's dates, never before today (the schedule
       was sent); To past the parent's end widens what the page shows (under B the parent's own dates do not change — confirm with the page's meta
       line); slot length and changeover starting at the parent's; dates off **the part's own**; "Who, and how much" with nobody ticked; Rules
       folded; the new promise statement; "Generate drafts for the new time". Step 2 as shipped.
-- [ ] **Retire today's Add time internals** that write into the parent: `addTimeRequest` / `requestOnStored` / `addedTime` and the `add_time`
+- [x] **Retire today's Add time internals** that write into the parent: `addTimeRequest` / `requestOnStored` / `addedTime` and the `add_time`
       keep path [H: `lib/club-schedule-server.ts` ~515–539, `lib/club-schedule-keep.ts` ~220–237, the PATCH route ~104–117]. Under B the part is
       a new schedule generated with the family's slots taken; the parent is not saved at all. Remove dead code; keep the guards that still apply
       (nothing before today on a sent schedule).
-- [ ] The part's state while unsent: it waits as the parent's "Changed since sent" (chip + Needs attention), not as a separate draft anywhere a
+- [x] The part's state while unsent: it waits as the parent's "Changed since sent" (chip + Needs attention), not as a separate draft anywhere a
       list shows drafts.
-- [ ] Tests: the form's request (any permit; used time left out; From/To; nobody ticked), the part saved with the family taken, nothing on the
+- [x] Tests: the form's request (any permit; used time left out; From/To; nobody ticked), the part saved with the family taken, nothing on the
       parent changes (byte-identical slots, settings, bill).
 
 ## Session 3 — Send the changes sends the family; one part at a time

@@ -26,11 +26,11 @@ import {
   type BillSlot, type ClosingRow, type Installment, type PaymentPeriod, type KeptRates, type PaymentPlan, type PriceMode, type PricedBill,
 } from './club-schedule-bill';
 import { PART_WORDS, SCHEDULE_REFUSALS as R, houseLeagueUse } from './club-schedule-words';
-import { familyClashes, type FamilyMember, type FamilySlot, type PartRead } from './club-schedule-family';
+import { familyClashes, partLabelFor, type FamilyMember, type FamilySlot, type PartRead } from './club-schedule-family';
 import { clubDay, keptHandBacks, waitingAsksOfSchedule, type KeptHandBack } from './club-hand-back-reads';
 import { scheduleMoney, type ScheduleMoney } from './club-money-reads';
 import { HOUSE_LEAGUE, isProgramHolder, storedHolders, teamsOnly } from './club-schedule-holders';
-import { addedTime, engineSlotOf, pinnedSlots, slotsWithPinned, timeKeeping, type KeepChange, type Keeping } from './club-schedule-keep';
+import { engineSlotOf, pinnedSlots, slotsWithPinned, timeKeeping, type KeepChange, type Keeping } from './club-schedule-keep';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -126,6 +126,9 @@ export function floorRefusal(e: unknown): Response | null {
   if (/\bslot_both\b/.test(msg)) return refusal(409, 'slot_both', R.slotBoth);
   if (/\bchanged:/.test(msg)) return refusal(409, 'changed', R.changed);
   const code = (e as { code?: string } | null)?.code;
+  // Two saves racing on one family (mig 491's uniques): the same part label the same day, or one place held at one start.
+  // Someone else's save got there first — the schedule "changed since you opened it" (a reload shows it), never a 500.
+  if (code === '23505' && /club_schedules_part_label_once|club_schedule_slots_family_place_start/.test(msg)) return refusal(409, 'changed', R.changed);
   if (code === '23514' || code === '22003' || code === '22P02' || code === '23502') return refusal(400, 'schedule_value', R.scheduleValue);
   return null;
 }
@@ -517,11 +520,20 @@ function cutKeeping(time: ScheduleTime, settings: ScheduleSettings, places: Club
  * label). One read, by the slots' family. A schedule with no parts reads nothing more than that one empty answer.
  */
 export async function familyOthers(orgId: string, row: Pick<ScheduleRow, 'id' | 'part_of_schedule_id'>): Promise<FamilyMember[]> {
-  const root = row.part_of_schedule_id ?? row.id;
-  const slots = await fetchAll<{ id: string; schedule_id: string; org_venue_id: string; facility_id: string | null; starts_at: string; ends_at: string; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed; club_schedules: { name: string; part_label: string | null } | null }>((a, b) => supabaseAdmin
-    .from('club_schedule_slots')
-    .select('id, schedule_id, org_venue_id, facility_id, starts_at, ends_at, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program), club_schedules(name, part_label)')
-    .eq('org_id', orgId).eq('family_id', root).neq('schedule_id', row.id).is('removed_at', null).order('id').range(a, b));
+  return familyMembers(orgId, row.part_of_schedule_id ?? row.id, row.id);
+}
+
+/** The WHOLE family of a schedule — it and every part of it: what a part being made (Add time, Session 2) treats as taken. */
+export const wholeFamily = (orgId: string, rootId: string): Promise<FamilyMember[]> => familyMembers(orgId, rootId, null);
+
+async function familyMembers(orgId: string, root: string, except: string | null): Promise<FamilyMember[]> {
+  const slots = await fetchAll<{ id: string; schedule_id: string; org_venue_id: string; facility_id: string | null; starts_at: string; ends_at: string; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed; club_schedules: { name: string; part_label: string | null } | null }>((a, b) => {
+    const read = supabaseAdmin
+      .from('club_schedule_slots')
+      .select('id, schedule_id, org_venue_id, facility_id, starts_at, ends_at, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program), club_schedules(name, part_label)')
+      .eq('org_id', orgId).eq('family_id', root).is('removed_at', null);
+    return (except ? read.neq('schedule_id', except) : read).order('id').range(a, b);
+  });
   const members = new Map<string, FamilyMember & { slots: FamilySlot[] }>();
   for (const s of slots) {
     const m = members.get(s.schedule_id) ?? members.set(s.schedule_id, { id: s.schedule_id, name: s.club_schedules?.part_label ?? s.club_schedules?.name ?? '', slots: [] }).get(s.schedule_id)!;
@@ -542,7 +554,7 @@ export function familyTeamTwice(slots: readonly Pick<Slot, 'key' | 'venueId' | '
 /**
  * WHAT A CHANGE TO A SCHEDULE THAT EXISTS KEEPS (Session E; `club-schedule-keep.ts` holds the rule). Null when it keeps
  * nothing by this rule (a regenerate of a draft or a schedule in review: exactly as before). `asked` is the time the
- * change asks for (Add time: the schedule's own rows and the new ones, `addedTime`).
+ * change asks for.
  */
 export function keepingFor(loaded: LoadedSchedule, asked: ScheduleTime & { blockIds: (string | null)[] }, change: KeepChange, places: ClubPlaces, today = tournamentToday()): ServerKeeping | null {
   const final = loaded.row.state === 'final';
@@ -551,20 +563,46 @@ export function keepingFor(loaded: LoadedSchedule, asked: ScheduleTime & { block
   const stored = pinnedSlots(loaded.slots, change, { final, today });
   const k = timeKeeping(asked, loaded.time, stored, {
     settings: loaded.settings, weightOf: () => 1, venueFacilities: places.byVenue, pastFrom,
-    freshBlocks: change.kind === 'add' ? 'new' : change.kind === 'take_off' ? 'none' : 'all',
+    freshBlocks: change.kind === 'take_off' ? 'none' : 'all',
   });
   return { ...k, stored };
 }
 
 /**
- * ADD TIME's request (S1 A): the body names only the NEW time — its rows, the dates off that come with them, and the last
- * day it reaches. The schedule's own rows (by id, untouched), its first day, its dates off and its SETTINGS are read here,
- * never from the body: Add time changes nothing that is already on the schedule.
+ * ADD TIME MAKES A PART (Phase 8, Session 2; owner rulings 1, 2 and 6–7): the schedule the time is added to, checked —
+ * this club's, FINAL (a draft is simply edited in Settings…), not itself a part (one level) — and its whole family, which
+ * the part's drafts and its save treat as taken (the same place at the same time, the same team at the same time). The
+ * part is a schedule of its own, built from New schedule's request; nothing on the schedule it is added to is read into
+ * it or written. The database refuses all three again (mig 491's trigger); this says them in words first.
  */
-export async function addTimeRequest(orgId: string, loaded: LoadedSchedule, body: Record<string, unknown>, opts: { houseLeague?: boolean; repTeams?: boolean } = {}): Promise<{ ok: true; value: ScheduleRequest } | { ok: false; response: Response }> {
-  const t = readTimeBody({ ...body, startsOn: loaded.row.starts_on });
-  if (!t.ok) return { ok: false, response: refusal(400, t.code, t.error) };
-  return requestOnStored(orgId, loaded, addedTime({ ...loaded.time, startsOn: loaded.row.starts_on, endsOn: loaded.row.ends_on }, t.time), opts);
+export async function partParent(orgId: string, s: SchedulerCtx, parentId: unknown): Promise<{ ok: true; parent: LoadedSchedule; family: FamilyMember[] } | { ok: false; response: Response }> {
+  if (!isUuid(parentId)) return { ok: false, response: refusal(404, 'not_found', R.notFound) };
+  // Two independent reads, one round trip: the schedule, and the family it heads (read by its own id).
+  const [parent, family] = await Promise.all([loadSchedule(orgId, parentId), wholeFamily(orgId, parentId)]);
+  if (!parent) return { ok: false, response: refusal(404, 'not_found', R.notFound) };
+  const closed = repTeamsRefusal(s, parent);
+  if (closed) return { ok: false, response: closed };
+  if (parent.row.part_of_schedule_id) return { ok: false, response: refusal(409, 'part_of_part', PART_WORDS.addToPart) };
+  if (parent.row.state !== 'final') return { ok: false, response: refusal(409, 'not_final', PART_WORDS.addToDraft) };
+  return { ok: true, parent, family };
+}
+
+/** Does a request body name a schedule to add time to? (Add time makes a part; the preview and the save read it alike.) */
+export const hasPartOf = (body: Record<string, unknown>): boolean => body.partOf != null && body.partOf !== '';
+
+/** A part's time starts no earlier than today: the schedule it is added to has been sent (the shipped Add time's guard,
+ *  P10 A, for a part's own From). */
+export function partTimeRefusal(parent: LoadedSchedule, time: Pick<ScheduleTime, 'startsOn'>, today = tournamentToday()): Response | null {
+  return time.startsOn < today ? refusal(400, 'bad_time', PART_WORDS.fromBeforeToday(parent.row.name)) : null;
+}
+
+/** The new part's label — "Time added Nov 17", or "… (2)" for a second the same day (owner ruling 1). Every part's label
+ *  counts, a part taken off too: its row stays (11-17 ruling), and the label is unique per schedule (mig 491). */
+export async function nextPartLabel(orgId: string, parentId: string, today = tournamentToday()): Promise<string> {
+  // parts-ok: by the schedule it was added to — the labels its parts already use.
+  const { data, error } = await supabaseAdmin.from('club_schedules').select('part_label').eq('org_id', orgId).eq('part_of_schedule_id', parentId);
+  if (error) throw error;
+  return partLabelFor(today, (data ?? []).map(x => x.part_label as string | null).filter((x): x is string => !!x));
 }
 
 /** TAKE A PERMIT OFF's request (P11 A): the schedule's time without that permit's rows (the rest by id, untouched), its
@@ -576,7 +614,7 @@ export function timeWithoutPermit(loaded: LoadedSchedule, permitId: string): (Sc
 }
 
 /**
- * A request made from what is STORED (Add time, Take a permit off): the settings are the schedule's own — never the
+ * A request made from what is STORED (Take a permit off): the settings are the schedule's own — never the
  * body's — with only the teams whose season is running ticked (as Settings… opens them), the club's teams and places
  * read as every request reads them.
  */
@@ -616,7 +654,7 @@ export async function buildEngineInput(orgId: string, p: {
   if (!checked.ok) return checked;
   // A regenerate keeps every slot locked or moved by hand (Ask 19) — by place and start, so a slot whose time the new
   // settings no longer cut is not kept (its team is said, never silently dropped: `notKept`). What the change keeps
-  // EXACTLY (a sent schedule's past, P10 A; everything, on Add time) is always in the cut, so always kept.
+  // EXACTLY (a sent schedule's past, P10 A) is always in the cut, so always kept.
   const fixed = new Map<string, string[]>();
   const pinnedKeys = new Set(p.keep?.pinned.map(s => s.key) ?? []);
   for (const s of p.storedSlots) {

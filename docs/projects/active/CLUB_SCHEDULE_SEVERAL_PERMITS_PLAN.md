@@ -733,6 +733,40 @@ Existing dev schedules that used the retired Add time keep their rows as they ar
 - **Owed to Session 3:** Send the changes when ONLY a part changed (the page shows Changed since sent and the part's lines,
   but the send is still the parent's alone). No part can exist before Session 2's Add time, so nothing reaches it until then.
 
+**Session 2 BUILT 2026-11-17 — Add time makes a part; a draft is edited** (mig 494, applied to DEV 2026-11-17; prod step in
+`MANUAL_PROD_STEPS.json`; `tests/sql/schedule-part-save-fixture.sql` 6/6, the Session 1 fixture 7/7 and the several-permits and
+date-off fixtures re-run green; `tests/unit/club-schedule-add-part.test.ts`). Decisions it made:
+- **The part and its practices are saved in ONE step** (mig 494: `club_schedule_save` writes `part_of_schedule_id` and
+  `part_label` on its insert, 488's body otherwise exactly). A part with no practices can never be left behind by a failed save
+  (fixture 4); the schedule it was added to is byte-identical after (fixture 6 compares its row and slots).
+- **Add time is New schedule's form**, not a cut-down copy: the window opens as New schedule with the parent as `partOf`
+  (`editing` stays null, so nothing Settings… does can reach the parent). Name → "Shown on the schedule as Time added Nov 17"
+  (read-only; the server chooses the final label, "(2)" on a same-day clash); every permit in the picker; From and To editable,
+  From never before today (the form, its min, and the server — `partTimeRefusal`); slot length and changeover from the parent,
+  **every other setting New schedule's defaults** (the parent's rules name the parent's teams, so they were not carried — a
+  judgement call, say so at the walk); dates off the part's own; nobody ticked; every running team listed, one the parent
+  doesn't have saying "Not on {parent} yet" beside its season; the promise statement; Rules folded; step 2 as shipped (its
+  "nothing new" lines reworded: a part has no target from the parent, so "it already has its practices a week" was untrue).
+- **A permit already on the family** (ruling 7): its card says "{parent} already uses Mon and Wed, 6:00 – 9:00 p.m., to Jan 24.
+  That time is left out." and From defaults to the day after that use ends (`familyUseOf` / `partFromFor`, tested). What actually
+  leaves the time out is the cut: the generator and the save never hold a place the family holds then (Session 1's family
+  cut, now fed the WHOLE family — `wholeFamily`). When the family's use reaches the permit's end, From stays at the permit (the
+  time left is other days, hours or parks).
+- **To past the parent's end:** the parent's own dates do not change (storage B); the page's band widens through Session 1's
+  `familyShown`, and To's hint says "{parent} now runs to {date}" against the family's last day.
+- **Settings… on a draft or in review** shows the Permits picker and the Find the time door (seeded with the permits behind its
+  rows); unticking a permit already saved on the schedule opens its card's "Take it off…" question (same save); a permit
+  ticked in the window, or one nothing else would replace, just comes off the form. A ticked permit only WIDENS the schedule's
+  own dates. On a final schedule Settings… keeps no picker (new time is Add time's — ruling 2).
+- **Retired:** the `add_time` PATCH, `addTimeRequest`, `addedTime`, the keep rule's `add` kind and `'new'` fresh rows, the window's
+  read-only "On this schedule" box and its fixed From/To, and seven Add time words. Kept: "nothing before today on a sent
+  schedule" (regenerate and take-off, and now a part's From).
+- **A part while unsent:** saved `draft` (never in review — mig 491); every list hides it (Session 1); Find the time, asked by
+  ANOTHER schedule, shows its practices as "held by a draft (Fall practices · Time added Nov 17)" — the part's name says whose
+  it is, so it was left as is (the hold is real).
+- **Owed to Session 3**, unchanged: sending, billing, regenerating and removing a part. Until then a part added on dev can be
+  seen but not sent; the P9 B money path still exists and has no caller that adds time to a sent schedule.
+
 ## 9. Sequencing (recommended)
 
 - **Not straight after 13c.** Three things touch the same screens first:

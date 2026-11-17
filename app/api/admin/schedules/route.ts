@@ -6,13 +6,13 @@ import { andList } from '@/lib/tournament-board-words';
 import { readClubPlaces, readPermitTimes } from '@/lib/permit-lookup';
 import { isUuid } from '@/lib/utils';
 import {
-  buildEngineInput, draftToSave, loadSchedule, readClubTeams, readName, readRequestPrices, readScheduleRequest, resolveScheduler,
-  saveScheduleStep, scheduleList, schedulerRefusal, timePayload,
+  buildEngineInput, draftToSave, hasPartOf, loadSchedule, nextPartLabel, partParent, partTimeRefusal, readClubTeams, readName, readRequestPrices,
+  readScheduleRequest, resolveScheduler, saveScheduleStep, scheduleList, schedulerRefusal, timePayload,
 } from '@/lib/club-schedule-server';
 import { permitIssuers } from '@/lib/permit-server';
 import { sendSchedule } from '@/lib/club-schedule-send';
 import { HOUSE_LEAGUE } from '@/lib/club-schedule-holders';
-import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
+import { PART_WORDS, SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 
 // ---------------------------------------------------------------------------
 // The club's SCHEDULES (Club Tier Stage 11a, part A — plan CLUB_PERMITS_AND_SCHEDULER_PLAN.md §5.3–§5.4; hub
@@ -30,6 +30,10 @@ import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 //                           `giveToHouseLeague` (Stage 11b, k1 — all of it to house league): no drafts — every slot no
 //                           booking already holds goes to House league, and the schedule is finalized in the same request
 //                           (the one send path, `sendSchedule`), so its league admins can divide it right away. Never billed.
+//                           `partOf` (Tools › Add time… on a FINAL schedule, Phase 8 Session 2): the draft is kept as a PART
+//                           of that schedule — a schedule of its own with no name to type ("Time added Nov 17", the date it
+//                           was added; mig 494 writes the link with its practices in one step), cut with the whole family's
+//                           places and teams taken. The schedule it is added to is not saved: nothing on it changes.
 //
 // ⚖ WHO: the club's owner or an admin, on League Plus or a Club band (`resolveScheduler`). House league is offered when the
 // club has it (Stage 11b), so a League Plus club with no rep teams schedules too.
@@ -89,20 +93,28 @@ export const POST = withObservability(async (req: Request) => {
   const orgId = r.ctx.org.id;
   const body = await req.json().catch(() => ({})) as Record<string, unknown>;
 
-  const name = readName(body.name);
-  if (!name) return schedulerRefusal(400, 'bad_name', 'Name the schedule.');
+  // A part has no name to type: its label is the date it was added, and the database names it "{parent} · {label}".
+  const partOf = hasPartOf(body);
+  const name = partOf ? '' : readName(body.name);
+  if (!partOf && !name) return schedulerRefusal(400, 'bad_name', 'Name the schedule.');
   const permitId = isUuid(body.startedFromPermitId) ? body.startedFromPermitId : null;
   const fromSchedule = isUuid(body.startedFromScheduleId) ? body.startedFromScheduleId : null;
   const given = (v: unknown) => v !== undefined && v !== null && v !== '';
   if ((given(body.startedFromPermitId) && !permitId) || (given(body.startedFromScheduleId) && !fromSchedule)) {
     return schedulerRefusal(400, 'bad_start', 'Pick what the schedule starts from again.');
   }
-  const [asked, from] = await Promise.all([
+  // A part is never a copy, and never all of it to house league (that path finalizes a schedule of its own at once).
+  if (partOf && (fromSchedule || body.giveToHouseLeague === true)) return schedulerRefusal(400, 'bad_draft', fromSchedule ? R.notSaved : PART_WORDS.wholeToHouseLeague);
+  const [asked, from, part] = await Promise.all([
     readScheduleRequest(orgId, body, { houseLeague: r.houseLeague, repTeams: r.repTeams }),
     // "Last year's schedule" — one of THIS club's (a plain link, never another club's id).
     fromSchedule ? supabaseAdmin.from('club_schedules').select('id').eq('id', fromSchedule).eq('org_id', orgId).maybeSingle() : null,
+    partOf ? partParent(orgId, r, body.partOf) : null,
   ]);
   if (!asked.ok) return asked.response;
+  if (part && !part.ok) return part.response;
+  const tooEarly = part?.ok ? partTimeRefusal(part.parent, asked.value.time) : null;
+  if (tooEarly) return tooEarly;
   // The price permit (the first ticked, kept as started_from_permit_id for one release) and every row's own permit.
   const { prices, gone } = await readRequestPrices(orgId, permitId, asked.value.time.blocks);
   if (permitId && !prices.found) return schedulerRefusal(409, 'permit_gone', R.permitGone);
@@ -120,12 +132,15 @@ export const POST = withObservability(async (req: Request) => {
     if (!built.ok) return schedulerRefusal(400, built.code, built.error);
     assignments = built.input.slots.filter(s => !built.input.held.has(s.key)).map(s => ({ slotKey: s.key, teamIds: [HOUSE_LEAGUE] }));
   }
-  // The chosen draft's assignments, onto the slots the server cut.
-  const draft = draftToSave(asked.value, prices, assignments);
+  // The chosen draft's assignments, onto the slots the server cut — a part's never over its family's places or teams then.
+  const draft = draftToSave(asked.value, prices, assignments, new Map(), null, part?.ok ? part.family : []);
   if (!draft.ok) return draft.response;
 
+  const label = part?.ok ? await nextPartLabel(orgId, part.parent.row.id) : null;
   const saved = await saveScheduleStep(orgId, null, r.ctx.user.id, 1, {
-    name, settings: asked.value.settings, startedFromPermitId: permitId, startedFromScheduleId: fromSchedule,
+    // A part's name is the database's ("{parent} · {label}", mig 491's trigger); this one is only held until it writes it.
+    name: label ?? name, settings: asked.value.settings, startedFromPermitId: permitId, startedFromScheduleId: fromSchedule,
+    ...(part?.ok && label ? { partOfScheduleId: part.parent.row.id, partLabel: label } : {}),
     ...timePayload(asked.value.time), slots: draft.slots,
   });
   if (!saved.ok) return saved.response;
@@ -137,5 +152,5 @@ export const POST = withObservability(async (req: Request) => {
     if (!sent?.ok) return NextResponse.json({ id: saved.id, version: saved.version, sent: false }, { status: 201 });
     return NextResponse.json({ id: saved.id, version: sent.version, sent: true }, { status: 201 });
   }
-  return NextResponse.json({ id: saved.id, version: saved.version }, { status: 201 });
+  return NextResponse.json({ id: saved.id, version: saved.version, ...(label ? { label } : {}) }, { status: 201 });
 }, { route: '/api/admin/schedules' });

@@ -67,7 +67,10 @@ https://claude.ai/artifact/6Bz3gQSuyrot2HsQnkYX5P.
 added to (every bill, send and regenerate rule already works per schedule). Session 1 is built: the schedule page reads a
 schedule and its parts as one (a line naming the added time, a Part filter, a Part row on a practice, Needs attention saying
 when a part isn't billed yet), lists show only the original, and nothing in the family can double-book a place or a team.
-Nothing visible changes until Session 2 builds the new Add time. Next: Session 2 (Add time makes a part), then Session 3
-(sending and billing a part).
+Session 2 is built too: on a final schedule, Add time opens New schedule's form for the new time — any permit (one already
+on the schedule offers only the time the schedule doesn't use), its own dates from today on, its own dates off, and nobody
+ticked to start — and keeping the draft adds it as its own part without touching anything already on the schedule. On a
+draft, Add time is gone and Settings… has the Permits picker. Next: Session 3 (sending and billing a part; until then a
+part can be added and seen, not sent).
 
 Plan: `docs/projects/active/CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`.

@@ -588,41 +588,28 @@ export const SCHEDULE_SCREEN_WORDS = {
   //    2026-11-16 (the project's Close). ──
   /** Tools › first item (S1 A: beside Settings…, never inside it). */
   toolAddTime: 'Add time…',
-  toolAddTimeHint: 'Another permit’s time, or time you find. Nothing already on the schedule moves.',
+  /** Phase 8 ruling 2: on a final schedule only, and what it makes is a part of its own (its words: PART_WORDS). */
+  toolAddTimeHint: 'More time, for the teams you choose, on a bill of its own. Nothing already on the schedule moves.',
   addTitle: 'Add time',
   addStep1: 'Step 1 of 2 · the new time',
   addStep2: 'Step 2 of 2 · drafts for the new time',
-  /** The read-only field beside Permits: the permits already behind the schedule's rows. */
-  onSchedule: 'On this schedule',
-  onScheduleNone: 'No permit: typed time',
-  addPermitsHint: 'Each permit ticked brings its time. Untick one to take it away again.',
-  addPickPlaceholder: 'No permit ticked',
-  addNoOtherPermit: 'Every permit the club holds is on this schedule already. Find the time to add more of it.',
-  /** Under To, when the new time runs past the schedule's last day. */
-  addWidened: (was: string) => `Widened from ${was}`,
-  /** Step 1's promise, said where it is made (drawing note 4). */
-  addPromiseLead: 'Only the new time is scheduled. Nothing already on the schedule moves, locked or not, and nothing before today changes.',
-  addPromiseSent: 'Drafts are made for the new time, toward each team’s practices a week. They wait in Changed since sent until you send the changes. Send the changes bills them; earlier payments stay as they are.',
-  addPromiseDraft: 'Drafts are made for the new time, toward each team’s practices a week, and join this schedule’s drafts.',
   /** Generate can't go yet: nothing new is ticked or found. */
   addNeedTime: 'Tick a permit, or find the time, to add time.',
   addGenerate: 'Generate drafts for the new time',
   addBack: 'Back to the new time',
   /** Step 2's statement: "6 new practices, Jun 1 – Jun 29". */
   addDraftsLead: (practices: number, dates: string) => `${pluralize(practices, 'new practice')}, ${dates}`,
-  addDraftsRest: (permits: string, others: number, sent: boolean) =>
-    `${permits ? `From ${permits}. ` : ''}The other ${pluralize(others, 'practice')} ${others === 1 ? 'stays' : 'stay'} exactly where ${others === 1 ? 'it' : 'they'} ${sent ? (others === 1 ? 'was sent' : 'were sent') : (others === 1 ? 'is' : 'are')}.`,
+  addDraftsRest: (permits: string, others: number) =>
+    `${permits ? `From ${permits}. ` : ''}The other ${pluralize(others, 'practice')} ${others === 1 ? 'stays' : 'stay'} exactly where ${others === 1 ? 'it' : 'they'} ${others === 1 ? 'was sent' : 'were sent'}.`,
   addColTeam: 'Team',
   addColNew: 'New',
   addColHours: 'Hours',
   addTeamsTotal: (teams: number) => pluralize(teams, 'team'),
   /** A ticked team the new time gives nothing. */
-  addNothingFor: (team: string) => `${team} gets nothing new: it already has its practices a week.`,
+  addNothingFor: (team: string) => `${team} gets none of the new time: the schedule already holds it then, or it is booked.`,
   /** The draft gives no team anything (/ux 5): only Back. */
-  addNothingNew: (permits: number) => (permits > 1 ? 'No team needs more time from these permits.' : 'No team needs more time from this permit.'),
-  addNothingNewRest: 'Every team already has its practices a week. Go back to add other time, or cancel.',
-  /** The page's notice once the new time is kept. */
-  timeAdded: (name: string, sent: boolean) => (sent ? `The new time is on ${name}. The coaches aren’t told until you send the changes.` : `The new time is on ${name}.`),
+  addNothingNew: (permits: number) => (permits > 1 ? 'These permits give no team a practice.' : 'This permit gives no team a practice.'),
+  addNothingNewRest: 'The schedule already holds that time, or it is booked. Go back to choose other time, or cancel.',
   /** Settings… › a permit's card: the door to take it off (P11 A). */
   takeOffDoor: 'Take it off…',
   takeOffLabel: (permit: string) => `Take ${permit} off`,
@@ -1329,4 +1316,38 @@ export const PART_WORDS = {
   teamNotInPart: (label: string) => `Only the teams in ${label} can be given its time.`,
   /** The rest of the family holds that team then (a part's practice, or the schedule it was added to). */
   teamTwiceInFamily: (team: string, where: string) => `${team} already has a practice then, in ${where}.`,
+
+  // ── Add time makes a part (Session 2 — drawing tabs 2 and 3; owner rulings 1, 2, 6, 7) ──
+  /** The part's name: the date it was added (ruling 1). "… (2)" is added by `partLabelFor` for a second the same day. */
+  label: (day: string) => `Time added ${day}`,
+  /** Settings… on a draft or in review: the Permits picker's hint (drawing tab 2, note 2). */
+  settingsPermitsHint: 'Each permit brings its own time and dates off. Untick one to take its time off again.',
+  /** Add time's Permits hint (tab 3, note 1): every permit is offered. */
+  permitsHint: 'Any permit the club holds. One already on this schedule brings only the time the schedule doesn’t use.',
+  /** The read-only field where New schedule's Name sits (tab 3, note 2). */
+  shownAs: 'Shown on the schedule as',
+  shownAsHint: (parent: string) => `A part of ${parent}, with its own teams and bill`,
+  /** A permit already on the schedule: its card says the time the schedule uses, which the new part leaves out (ruling 7). */
+  permitUsed: (parent: string, uses: string, until: string) => `${parent} already uses ${uses}, to ${until}. That time is left out.`,
+  /** Under From: why it starts where it does. */
+  fromToday: (parent: string) => `Not before today: ${parent} has been sent.`,
+  fromAfterUse: (parent: string) => `Starts the day after ${possessive(parent)} time on this permit ends.`,
+  /** Under To: the permit's own run, or how far the schedule now reaches on its page. */
+  toPermit: (permit: string, dates: string) => `${permit} runs ${dates}.`,
+  toWidens: (parent: string, until: string) => `${parent} now runs to ${until}.`,
+  /** Dates off (tab 3, note 4). */
+  datesOffOwn: 'Dates off here are this time’s only.',
+  /** The team table (tab 3, note 5). */
+  teamNotOnParent: (parent: string) => `Not on ${parent} yet`,
+  teamsHint: 'Starts with nobody ticked. The teams you tick share only this time.',
+  /** The promise, said where it is made (tab 3, note 6). */
+  promiseLead: (parent: string) => `This time is its own part of ${parent}. Nothing already on the schedule moves.`,
+  promiseRest: 'Its practices stay on this time and with these teams, even when you regenerate. They wait in Changed since sent until you send the changes, and you choose then how to bill them, on a bill of their own.',
+  /** Kept: the page's notice. */
+  kept: (label: string) => `${label} is on the schedule. The coaches aren’t told until you send the changes.`,
+  /** Refusals, said before the database's own. */
+  fromBeforeToday: (parent: string) => `The new time can’t start before today: ${parent} has been sent.`,
+  addToDraft: 'Time is added to a final schedule. On a draft, use Settings… to change its time.',
+  addToPart: 'Add time to the schedule itself, not to a part of it.',
+  wholeToHouseLeague: 'Added time goes to the teams you tick. Give a whole permit to house league from New schedule.',
 } as const;

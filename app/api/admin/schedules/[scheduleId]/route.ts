@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { clearSettled } from '@/lib/needs-attention';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import {
-  addTimeRequest, draftToSave, editSlotsStep, familyOthers, familyTeamTwice, keepingFor, loadSchedule, readParts, requestOnStored, timeWithoutPermit, pricePermitOf, readBill, readClubTeams, readName, readRequestPrices, readScheduleRequest,
+  draftToSave, editSlotsStep, familyOthers, familyTeamTwice, keepingFor, loadSchedule, readParts, requestOnStored, timeWithoutPermit, pricePermitOf, readBill, readClubTeams, readName, readRequestPrices, readScheduleRequest,
   repTeamsRefusal, resolveScheduler, roomChecker, saveScheduleStep, schedulePermitIds, schedulePrices, scheduleView, schedulerRefusal, timePayload,
   type ScheduleRequest,
 } from '@/lib/club-schedule-server';
@@ -30,9 +30,8 @@ import type { KeepChange } from '@/lib/club-schedule-keep';
 //          regenerate  { startsOn, endsOn, blocks, datesOff, settings, assignments } — Tools › Settings… and "Regenerate
 //                      the unlocked slots": the slots locked or moved by hand stay where they are (Ask 19). On a sent
 //                      schedule it is a change to send (Ask 14), and nothing before today moves (P10 A).
-//          add_time    { endsOn, blocks, datesOff, assignments } — Tools › Add time… (S1 A): the NEW rows only; nothing on
-//                      the schedule moves, locked or not; the end widens. On a sent schedule the new slots wait for Send
-//                      the changes, which bills them (P9 B).
+//          (Tools › Add time… no longer writes here: since Phase 8 Session 2 it makes a PART — POST /api/admin/schedules
+//          with `partOf` — and the schedule it is added to is not saved at all.)
 //          take_permit_off { permitId } — Settings… › "Take it off…" (P11 A): that permit's rows and slots come off, and
 //                      nothing else moves. On a sent schedule its slots before today stay (and so does their bill); its rows
 //                      end the day before today; the rest waits for Send the changes, which credits it.
@@ -139,13 +138,6 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       // and the save keeps, what the day names today — never widened to All venues.
       const asked = { ...read, value: { ...read.value, time: { ...read.value.time, datesOff: datesOffKeepingParks(read.value.time.datesOff, loaded.time.datesOff) } } };
       return keepTime(asked.value, { kind: 'regenerate' });
-    }
-
-    if (body.action === 'add_time') {
-      // The new rows only: the schedule's own rows, dates off and settings are read from what is stored (`addTimeRequest`).
-      const asked = await addTimeRequest(orgId, loaded, body, { houseLeague: r.houseLeague, repTeams: r.repTeams });
-      if (!asked.ok) return asked.response;
-      return keepTime(asked.value, { kind: 'add' });
     }
 
     if (body.action === 'take_permit_off') {

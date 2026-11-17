@@ -324,8 +324,8 @@ describe('12 · copying is how New schedule opens, never a field inside it (owne
   const code = readCode(NEW);
   const opening = code.slice(code.indexOf('const choosing ='), code.indexOf('const timeSection'));
   const has = (src: string, piece: string, why?: string) => assert.ok(src.includes(piece), why ?? piece);
-  it('the opening screen shows only when there is a schedule to copy, and never in Settings…', () => {
-    has(code, 'const choosing = !editing && !started && !!inputs?.schedules.length;');
+  it('the opening screen shows only when there is a schedule to copy, and never in Settings… or Add time (a part is never a copy)', () => {
+    has(code, 'const choosing = !editing && !partOf && !started && !!inputs?.schedules.length;');
     has(code, 'else if (choosing) body = openingBody;');
   });
   it('the club’s schedules are rows with their dates and venues, then an "or"', () => {
@@ -349,7 +349,7 @@ describe('12 · copying is how New schedule opens, never a field inside it (owne
     // Find the time (a schedule on several permits, Session D) is its own level over step 1, with its Back to New schedule;
     // the opening screen still has none — it is never the finder (`inFinder` needs `!choosing`).
     // Add time (Session E) is the same window titled Add time: its levels go back to it.
-    has(code, "back={inFinder ? { label: addingTime ? W.addTitle : W.newTitle, onBack: () => setFinding(false) } : step === 'drafts' ? { label: addingTime ? W.addTitle : W.settingsBack, onBack: () => setStep('settings') } : undefined}");
+    has(code, "back={inFinder ? { label: partOf ? W.addTitle : W.newTitle, onBack: () => setFinding(false) } : step === 'drafts' ? { label: partOf ? W.addTitle : W.settingsBack, onBack: () => setStep('settings') } : undefined}");
     has(code, "const inFinder = finding && !!findFilters && !!inputs && !choosing && step === 'settings';");
   });
 });

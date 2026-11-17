@@ -1,21 +1,22 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { cutSlots, type ScheduleBlock, type ScheduleTime, type Slot } from '../../lib/club-schedule-engine.ts';
+import { cutSlots, type ScheduleBlock, type ScheduleTime } from '../../lib/club-schedule-engine.ts';
 import { defaultSettings } from '../../lib/club-schedule-settings.ts';
 import {
-  addedTime, blockHolds, pastPractices, pinnedSlots, slotsWithPinned, timeKeeping, type KeepChange, type KeepSlot,
+  blockHolds, pastPractices, pinnedSlots, slotsWithPinned, timeKeeping, type KeepChange, type KeepSlot,
 } from '../../lib/club-schedule-keep.ts';
 import { readSource } from './_source-code.ts';
 
 /**
  * GUARD 4 OF THE SEVERAL-PERMITS BUILD (Session E; owner rulings S1 A, P10 A, P11 A): what a change to a schedule that
- * exists keeps EXACTLY as it is. On a sent schedule, Regenerate, Add time and "Take … off" never move a slot before today;
- * Add time cuts only the new rows; taking a permit off removes only that permit's slots (from today on, once sent).
+ * exists keeps EXACTLY as it is. On a sent schedule, Regenerate and "Take … off" never move a slot before today; taking a
+ * permit off removes only that permit's slots (from today on, once sent). Add time no longer reaches a schedule's time: since
+ * Phase 8 Session 2 it makes a PART, a schedule of its own (`club-schedule-add-part.test.ts`).
  */
 
 const K = 'venue-kinsmen', P = 'venue-prospect';
 const FAC = new Map([[K, ['ka', 'kb']], [P, ['pa']]]);
-const A = 'permit-milton', B = 'permit-halton', C = 'permit-june';
+const A = 'permit-milton', B = 'permit-halton';
 const TODAY = '2027-04-01'; // a Thursday
 const settings = defaultSettings();
 
@@ -35,7 +36,7 @@ const keepFor = (asked: ScheduleTime & { blockIds: (string | null)[] }, change: 
   const stored = pinnedSlots(STORED, change, { final, today: TODAY });
   const k = timeKeeping(asked, STORED_TIME, stored, {
     settings, weightOf: () => 1, venueFacilities: FAC, pastFrom: final ? TODAY : null,
-    freshBlocks: change.kind === 'add' ? 'new' : change.kind === 'take_off' ? 'none' : 'all',
+    freshBlocks: change.kind === 'take_off' ? 'none' : 'all',
   });
   return { k, stored, slots: slotsWithPinned(cut(k.time), k, FAC) };
 };
@@ -50,12 +51,9 @@ describe('which stored slots a change keeps exactly (pinnedSlots)', () => {
     assert.ok(PAST.length > 0 && PAST.length < STORED.length);
     assert.deepEqual(pinnedSlots(STORED, { kind: 'regenerate' }, { final: true, today: TODAY }).map(keyOf), PAST.map(keyOf));
   });
-  it('Add time keeps every slot on the schedule (S1 A)', () => {
-    assert.equal(pinnedSlots(STORED, { kind: 'add' }, { final: true, today: TODAY }).length, STORED.length);
-  });
   it('a slot already removed and waiting for Send the changes is not kept', () => {
     const gone = STORED.map((s, i) => (i === 0 ? { ...s, removed: true } : s));
-    assert.equal(pinnedSlots(gone, { kind: 'add' }, { final: true, today: TODAY }).length, STORED.length - 1);
+    assert.equal(pinnedSlots(gone, { kind: 'take_off', permitId: 'none' }, { final: true, today: TODAY }).length, STORED.length - 1);
   });
 });
 
@@ -111,57 +109,6 @@ describe('a sent schedule regenerated: nothing before today moves (F1, P10 A)', 
   });
 });
 
-describe('Add time: only the new rows are cut (S1 A)', () => {
-  const june = row('', K, ['kb'], [2, 4], C, { fromDate: '2027-03-15', untilDate: '2027-05-31' });
-  const added = (final: boolean) => keepFor(addedTime(STORED_TIME, { endsOn: '2027-05-31', blocks: [june], datesOff: [] }), { kind: 'add' }, final);
-  it('every slot already on the schedule is in the cut exactly; the new ones come only from the new row', () => {
-    const { k, slots } = added(false);
-    assert.equal(k.time.endsOn, '2027-05-31');
-    assert.equal(k.time.startsOn, STORED_TIME.startsOn);
-    for (const s of STORED) assert.ok(slots.some(x => x.key === s.key), `kept ${s.key}`);
-    const old = new Set(STORED.map(keyOf));
-    const fresh = slots.filter(s => !old.has(s.key));
-    assert.ok(fresh.length > 0);
-    assert.ok(fresh.every(s => s.facilityId === 'kb' && s.permitId === C));
-    // Kinsmen's Diamond A after Apr 30 is not new time: the schedule's own row is never cut again.
-    assert.ok(!fresh.some(s => s.facilityId === 'ka'));
-  });
-  it('on a sent schedule the new row gives nothing before today', () => {
-    const { slots } = added(true);
-    const old = new Set(STORED.map(keyOf));
-    assert.ok(slots.filter(s => !old.has(s.key)).every(s => s.day >= TODAY));
-  });
-  it('the schedule’s rows keep their ids; the new ones have none', () => {
-    const { k } = added(true);
-    assert.deepEqual(k.time.blockIds, ['row-a', 'row-b', null]);
-  });
-  it('the end widens for the new rows only: a row that ran to the old last day stops there', () => {
-    const t = addedTime(STORED_TIME, { endsOn: '2027-05-31', blocks: [june], datesOff: [] });
-    assert.deepEqual(t.blocks.slice(0, 2).map(b => b.untilDate), ['2027-04-30', '2027-04-30']);
-    const same = addedTime(STORED_TIME, { endsOn: '2027-04-10', blocks: [june], datesOff: [] });
-    assert.equal(same.endsOn, '2027-04-30');
-    assert.deepEqual(same.blocks.slice(0, 2).map(b => b.untilDate), [null, null]);
-  });
-  it('a new row overlapping a kept slot on its facility gives no slot there', () => {
-    const same = row('', K, ['ka'], [2], C, { startTime: '18:30', endTime: '19:30', fromDate: '2027-03-01', untilDate: '2027-04-30' });
-    const t = addedTime(STORED_TIME, { endsOn: '2027-04-30', blocks: [same], datesOff: [] });
-    const stored = pinnedSlots(STORED, { kind: 'add' }, { final: false, today: TODAY });
-    const k = timeKeeping(t, STORED_TIME, stored, { settings, weightOf: () => 1, venueFacilities: FAC, pastFrom: null, freshBlocks: 'new' });
-    // (The cut is asked of the new row alone here: two rows holding one evening are refused before this, by checkTime.)
-    const fresh = cut({ ...k.time, blocks: [k.time.blocks[2]] }).map((s): Slot => ({ ...s, blockIndex: 2 }));
-    assert.equal(slotsWithPinned(fresh, k, FAC).filter(s => s.permitId === C).length, 0);
-  });
-  it('the dates off join one per day: All venues stays all; named parks unite', () => {
-    const t = addedTime({ ...STORED_TIME, datesOff: [{ day: '2027-04-05', note: 'Easter', venueIds: [] }, { day: '2027-04-06', note: null, venueIds: [P] }] },
-      { endsOn: '2027-04-30', blocks: [june], datesOff: [{ day: '2027-04-05', note: null, venueIds: [K] }, { day: '2027-04-06', note: null, venueIds: [K] }, { day: '2027-04-07', note: 'x', venueIds: [K] }] });
-    assert.deepEqual(t.datesOff, [
-      { day: '2027-04-05', note: 'Easter', venueIds: [] },
-      { day: '2027-04-06', note: null, venueIds: [P, K] },
-      { day: '2027-04-07', note: 'x', venueIds: [K] },
-    ]);
-  });
-});
-
 describe('taking a permit off (P11 A)', () => {
   const without = asOf({ ...STORED_TIME, blocks: [ROWS[0]] }, ['row-a']);
   it('a draft: its slots and rows come off; nothing else moves; nothing is cut fresh', () => {
@@ -182,11 +129,12 @@ describe('taking a permit off (P11 A)', () => {
 describe('the routes ask the rule (source guard)', () => {
   it('every save and preview of a schedule’s time goes through keepingFor', () => {
     const gen = readSource('app/api/admin/schedules/generate/route.ts');
-    assert.match(gen, /keepingFor\(loaded, askedTime, \{ kind: adding \? 'add' : 'regenerate' \}/);
+    assert.match(gen, /keepingFor\(loaded, askedTime, \{ kind: 'regenerate' \}/);
     const one = readSource('app/api/admin/schedules/[scheduleId]/route.ts');
-    // One save for the time (`keepTime`), asked by regenerate, add_time and take_permit_off.
+    // One save for the time (`keepTime`), asked by regenerate and take_permit_off. Add time is not here (it makes a part).
     assert.equal(one.match(/draftToSave\(/g)?.length, 1);
     assert.match(one, /keepingFor\(loaded, asked\.time, change/);
-    for (const kind of ["{ kind: 'regenerate' }", "{ kind: 'add' }", "{ kind: 'take_off', permitId }"]) assert.ok(one.includes(`keepTime(asked.value, ${kind}`), kind);
+    for (const kind of ["{ kind: 'regenerate' }", "{ kind: 'take_off', permitId }"]) assert.ok(one.includes(`keepTime(asked.value, ${kind}`), kind);
+    assert.ok(!one.includes("'add_time'"), 'the add_time action is retired');
   });
 });

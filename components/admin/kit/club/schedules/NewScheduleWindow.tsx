@@ -58,14 +58,15 @@ import { ViewSwitch } from '@/components/coaches/kit';
 import { spreadGroupFigure } from '@/lib/club-bill-split';
 import { formatTimeRange, joinWithAnd, pluralize, possessive } from '@/lib/utils';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
-import { formatShortWeekdayDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
+import { addCalendarDays, formatShortWeekdayDate, formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { WEEKDAY_OPTIONS, facilityListWords, renewedName } from '@/lib/permit-words';
 import { rulesOn, type ScheduleSettings } from '@/lib/club-schedule-settings';
 import {
   EMPTY_SETTINGS, figureOf as figureIn, groupsIn, newKey, positive, ruleApplies, ruleIsWhole, settingsDraftOf, settingsOf as settingsFromDraft, teamsIn, wholeWeekly,
   type DayOffRule, type FieldsRule, type SettingsDraft, type ShareRule, type WindowRule,
 } from '@/lib/club-schedule-form';
-import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, sharingSentence, sharingWho } from '@/lib/club-schedule-words';
+import { PART_WORDS, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, sharingSentence, sharingWho } from '@/lib/club-schedule-words';
+import { familyUseOf, partFromFor, partLabelFor, type PartRead } from '@/lib/club-schedule-family';
 import {
   NO_GROUP, PRIME_DAYS, closingNote, isStale, facilityNoun, footCount, nightsWords, placeKey, placeName, scheduleDates, summaryLine, teamColour, yearOn,
   type GenerateSummary, type ScheduleView,
@@ -264,8 +265,11 @@ export interface SettingsOf {
   /** 13c Session C (C2): “Take {day} and {day} off” — the permit’s pulled dates, added to the schedule’s OWN Dates off for
    *  this regenerate. Saved only if the admin keeps a draft (the regenerate’s one write); nothing else changes. */
   addDatesOff?: readonly DateOff[];
-  /** Tools › Add time… (Session E, S1 A): the same picker and finder, for NEW time only — nothing on the schedule moves. */
+  /** Tools › Add time… on a FINAL schedule (Phase 8, Session 2): New schedule's form, for a new PART of `view` — its own
+   *  permits, dates, dates off, teams and shares. Nothing on `view` is edited or saved; the part is a schedule of its own. */
   addTime?: boolean;
+  /** The schedule's added parts as its page read them: the time they already use, and the labels they hold. */
+  parts?: readonly PartRead[];
 }
 
 export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId = null, settingsOf, onCancel, onSaved }: {
@@ -281,9 +285,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   /** New schedule kept as a draft: its id. */
   onSaved?: (id: string) => void;
 }) {
-  const editing = settingsOf?.view ?? null;
-  /** Add time (S1 A): the window holds only the NEW rows; the schedule's own are read, never edited. */
-  const addingTime = !!editing && !!settingsOf?.addTime;
+  /** Add time (Phase 8, Session 2): the schedule the new PART is added to. The window is then New schedule's — nothing on
+   *  this schedule is edited — so `editing` (Settings…, Regenerate) stays null. */
+  const partOf = settingsOf?.addTime ? settingsOf.view : null;
+  const editing = partOf ? null : settingsOf?.view ?? null;
   const [inputs, setInputs] = useState<NewInputs | null>(null);
   const [inputsFailed, setInputsFailed] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY);
@@ -311,7 +316,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   /** Past the opening screen — a copy picked, or Start blank. */
   const [started, setStarted] = useState(false);
   /** The opening screen (0): only when there is one to copy, never in Settings… */
-  const choosing = !editing && !started && !!inputs?.schedules.length;
+  const choosing = !editing && !partOf && !started && !!inputs?.schedules.length;
   /** The inputs are still on their way — the window can't yet say which level it opens on. */
   const opening = !editing && !inputs && !inputsFailed;
   const set = useCallback((patch: Partial<Draft>) => setDraft(d => ({ ...d, ...patch })), []);
@@ -333,17 +338,20 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       if (!r.ok) { setInputsFailed(true); return; }
       setInputs(r.data);
       const running = new Set(r.data.teams.filter(t => t.season).map(t => t.id));
-      if (editing && addingTime) {
-        setDraft({
-          ...EMPTY, ...settingsDraftOf(editing.schedule.settings, running),
-          name: editing.schedule.name, startsOn: editing.schedule.startsOn, endsOn: editing.schedule.endsOn, rows: [],
-        });
+      if (partOf) {
+        // A part starts as New schedule does, with NOBODY ticked (ruling 6) and the schedule's slot length and changeover;
+        // every other choice is New schedule's, for this time only (drawing tab 3, note 5).
+        setDraft({ ...EMPTY, ticked: [], slotMinutes: partOf.schedule.settings.slotMinutes, changeoverMinutes: partOf.schedule.settings.changeoverMinutes });
         return;
       }
       if (editing) {
         const seed: Draft = {
           ...EMPTY, ...settingsDraftOf(editing.schedule.settings, running),
           name: editing.schedule.name, startsOn: editing.schedule.startsOn, endsOn: editing.schedule.endsOn,
+          // The permits behind its rows, ticked in the Permits picker (drawing tab 2; a draft or in review). Its dates are
+          // its own: a permit ticked here only ever widens them (`togglePermits`).
+          permitIds: [...new Set(editing.time.blocks.map(b => b.permitId).filter((x): x is string => !!x && r.data.permits.some(p => p.id === x)))],
+          datesTyped: { start: true, end: true },
           ...timeFromBlocks(editing.time.blocks, r.data.places),
           // "Take … off" days join the schedule's own, one per day: a day already off keeps All venues, else the parks unite.
           datesOff: offRows(mergeDatesOff([
@@ -423,10 +431,18 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       // The shared Venue and its facilities move together: a permit at another venue never leaves a copy's facilities behind.
       const placed = rows.find(r => r.place)?.place;
       const moved = !!placed && placed.venueId !== d.venueId;
+      let startsOn = span && !d.datesTyped.start ? span.startsOn : d.startsOn;
+      let endsOn = span && !d.datesTyped.end ? span.endsOn : d.endsOn;
+      // Settings…: a permit ticked widens the schedule's own dates to cover it, never narrows them.
+      const widen = editing && added.length ? permitsSpan(added.map(id => byId.get(id)!)) : null;
+      if (widen && isCalendarDate(startsOn) && widen.startsOn < startsOn) startsOn = widen.startsOn;
+      if (widen && isCalendarDate(endsOn) && widen.endsOn > endsOn) endsOn = widen.endsOn;
+      // A part: From starts where the family's use of a permit ends, and never before today (ruling 7, tab 3 note 3).
+      const partDates = partOf && ids.length ? partSpan(ids) : null;
+      if (partDates && !d.datesTyped.start) startsOn = partDates.startsOn;
+      if (partDates && !d.datesTyped.end) endsOn = partDates.endsOn;
       return fieldsInTime({
-        ...d, permitIds: ids, rows, datesOff,
-        startsOn: span && !d.datesTyped.start ? span.startsOn : d.startsOn,
-        endsOn: span && !d.datesTyped.end ? span.endsOn : d.endsOn,
+        ...d, permitIds: ids, rows, datesOff, startsOn, endsOn,
         venueId: moved ? placed.venueId : d.venueId,
         facilityIds: moved ? [...placed.facilityIds] : d.facilityIds,
         name: d.name.trim() || !first ? d.name : first.name,
@@ -456,7 +472,9 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     }));
     const spanOf = (rows: readonly { fromDate: string; untilDate: string }[]) =>
       permitsSpan(rows.map(f => ({ startsOn: f.fromDate, endsOn: f.untilDate })))!;
-    const { startsOn: lo, endsOn: hi } = spanOf(found);
+    const { startsOn: foundFrom, endsOn: hi } = spanOf(found);
+    // A part never starts before today (the schedule it is added to has been sent).
+    const lo = partOf && foundFrom < tournamentToday() ? tournamentToday() : foundFrom;
     setDraft(d => {
       const fresh = replacesTime(d, d.rows);
       const kept = fresh ? [] : typedRowsKept(d, d.rows);
@@ -477,8 +495,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         ...d, permitIds: ids, rows, datesOff: [...(fresh ? [] : d.datesOff), ...offs],
         venueId: moved ? placed.venueId : d.venueId,
         facilityIds: moved ? [...placed.facilityIds] : d.facilityIds,
-        startsOn: d.datesTyped.start ? d.startsOn : widen && d.startsOn < lo ? d.startsOn : lo,
-        endsOn: d.datesTyped.end ? d.endsOn : widen && d.endsOn > hi ? d.endsOn : hi,
+        // Settings… holds the schedule's own dates as typed, but found time only ever WIDENS them (as ticking a permit does):
+        // time found outside them would be cut to nothing, unsaid.
+        startsOn: d.datesTyped.start ? (editing && isCalendarDate(d.startsOn) && lo < d.startsOn ? lo : d.startsOn) : widen && d.startsOn < lo ? d.startsOn : lo,
+        endsOn: d.datesTyped.end ? (editing && isCalendarDate(d.endsOn) && hi > d.endsOn ? hi : d.endsOn) : widen && d.endsOn > hi ? d.endsOn : hi,
         name: d.name.trim() || !first ? d.name : first.name,
       }, inputs.places);
     });
@@ -544,15 +564,20 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const percentHundredths = draft.method === 'percentage'
     ? inOrder.reduce((s, t) => s + Math.round((positive(draft.values[t.id]) ?? 0) * 100), 0) : 10000;
 
-  /** Add time: the schedule's own rows, as blocks — read, never sent. Each keeps to the schedule's last day (the end widens
-   *  for the new rows only, `addedTime`), and a row of "every facility" names them, so a new row on one of them meets it. */
-  const scheduleRows = useMemo(() => (addingTime && editing && inputs ? editing.time.blocks.map(b => ({
-    venueId: b.venueId, facilityIds: facilitiesOf(b, inputs.places), weekdays: [...b.weekdays],
-    startTime: b.startTime.slice(0, 5), endTime: b.endTime.slice(0, 5), fromDate: b.fromDate, untilDate: b.untilDate ?? editing.schedule.endsOn,
-    permitId: b.permitId ?? null, onSchedule: true,
-  })) : []), [addingTime, editing, inputs]);
-  /** The permits already behind the schedule's rows, in their order (Add time's "On this schedule"). */
-  const onSchedule = useMemo(() => [...new Set(scheduleRows.map(b => b.permitId).filter((x): x is string => !!x))], [scheduleRows]);
+  /** Add time: the family — the schedule and its parts — whose use of a permit the new part leaves out (ruling 7). */
+  const family = useMemo(() => (partOf ? [partOf, ...(settingsOf?.parts ?? []).map(x => x.view)] : []), [partOf, settingsOf?.parts]);
+  const familyUse = (permitId: string) => familyUseOf(family, permitId);
+  /** The part's own dates from the permits ticked: each from where the family's use of it ends (or today), to its end. */
+  function partSpan(ids: readonly string[]): { startsOn: string; endsOn: string } | null {
+    const today = tournamentToday();
+    const ps = ids.map(id => permitById.get(id)).filter((x): x is InputPermit => !!x);
+    if (!ps.length) return null;
+    return permitsSpan(ps.map(x => ({ startsOn: partFromFor(x, familyUse(x.id), today), endsOn: x.endsOn })));
+  }
+  /** The part's name, as the save will give it (the server's word is final: "Time added Nov 17", "… (2)"). */
+  const partLabel = partOf ? partLabelFor(tournamentToday(), (settingsOf?.parts ?? []).map(x => x.label)) : '';
+  /** The family's last day, as the page shows it (its dates widen to cover every part). */
+  const familyEnds = family.reduce((m, v) => (v.schedule.endsOn > m ? v.schedule.endsOn : m), '');
   /** The permits behind the rows, in the order they were ticked (Settings…: in the rows' order). */
   const permitOrder = useMemo(() => [...new Set([...draft.permitIds, ...draft.rows.map(r => r.permitId).filter((x): x is string => !!x)])],
     [draft.permitIds, draft.rows]);
@@ -560,8 +585,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
    *  of them share settled: the permit ticked first keeps them (`settleOverlaps`, P4 A), and the form says so. */
   const settled = useMemo(() => {
     const facilityIds = venue && venue.facilities.length ? draft.facilityIds : [];
-    // Add time: the new rows always keep to their permit's own dates (the schedule is on several permits from here).
-    const several = addingTime || permitOrder.length > 1;
+    // A part: its rows always keep to their permit's own dates, inside the part's own From and To.
+    const several = !!partOf || permitOrder.length > 1;
     const blocks = draft.rows.filter(rowDone).map(r => ({
       venueId: r.place?.venueId ?? draft.venueId, facilityIds: r.place?.facilityIds ?? facilityIds,
       weekdays: r.weekdays, startTime: r.start, endTime: r.end,
@@ -569,36 +594,23 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       untilDate: r.dates?.untilDate ?? (several ? r.permitDates?.untilDate ?? null : null),
       permitId: r.permitId ?? null,
     }));
-    if (addingTime && editing) {
-      // The schedule's own rows rank first: an evening it already holds stays where it is, priced there (P4 A). Only the
-      // new rows are sent; the statement names only what the new rows lost.
-      const all = settleOverlaps([...scheduleRows, ...blocks.map(b => ({ ...b, onSchedule: false }))], [...onSchedule, ...permitOrder],
-        { startsOn: editing.schedule.startsOn, endsOn: editing.schedule.endsOn });
-      return { blocks: all.blocks.filter(b => !b.onSchedule).map(b => ({ venueId: b.venueId, facilityIds: b.facilityIds, weekdays: b.weekdays, startTime: b.startTime, endTime: b.endTime, fromDate: b.fromDate, untilDate: b.untilDate, permitId: b.permitId })), overlaps: all.overlaps.filter(o => !onSchedule.includes(o.permitId)) };
-    }
     return several ? settleOverlaps(blocks, permitOrder, { startsOn: draft.startsOn, endsOn: draft.endsOn }) : { blocks, overlaps: [] };
-  }, [draft.rows, draft.venueId, draft.facilityIds, draft.startsOn, draft.endsOn, venue, permitOrder, addingTime, editing, scheduleRows, onSchedule]);
+  }, [draft.rows, draft.venueId, draft.facilityIds, draft.startsOn, draft.endsOn, venue, permitOrder, partOf]);
   /** The parks the time uses, and each permit's — what a date off's "Applies to" offers and defaults to (P5 A). */
-  const offParks = useMemo(() => {
-    const ctx = parksCtx(draft.rows);
-    // Add time: the schedule's own parks count too — a new date off names the new permit's parks once there are two.
-    return addingTime ? { ...ctx, parks: [...new Set([...scheduleRows.map(b => b.venueId), ...ctx.parks])] } : ctx;
-  }, [parksCtx, draft.rows, addingTime, scheduleRows]);
-  /** Add time: the schedule's last day, or the new time's when it runs later (the end widens, drawing note 3). */
-  const addEndsOn = addingTime && editing
-    ? settled.blocks.reduce((m, b) => (b.untilDate && b.untilDate > m ? b.untilDate : m), editing.schedule.endsOn) : null;
+  // A part's dates off are its own (tab 3, note 4): its parks are its own rows'.
+  const offParks = useMemo(() => parksCtx(draft.rows), [parksCtx, draft.rows]);
   /** The schedule's time as the routes read it: the dates off one per day, each saying its parks (`mergeDatesOff`). */
   const timeBody = useMemo(() => ({
-    startsOn: addingTime && editing ? editing.schedule.startsOn : draft.startsOn, endsOn: addEndsOn ?? draft.endsOn, blocks: settled.blocks,
+    startsOn: draft.startsOn, endsOn: draft.endsOn, blocks: settled.blocks,
     datesOff: mergeDatesOff(draft.datesOff.filter(o => isCalendarDate(o.day)), offParks),
-  }), [draft.startsOn, draft.endsOn, draft.datesOff, settled, offParks, addingTime, editing, addEndsOn]);
+  }), [draft.startsOn, draft.endsOn, draft.datesOff, settled, offParks]);
   /** Find the time's reading, while it is open. The form's own time rides along, so it is never offered again. */
   // A finished row with no venue yet is left out (the route refuses a row without one): it holds no place to take.
   const findBlocks = timeBody.blocks.filter(b => b.venueId);
   const findOwn = isCalendarDate(timeBody.startsOn) && isCalendarDate(timeBody.endsOn) && timeBody.endsOn >= timeBody.startsOn && findBlocks.length
     ? { ...timeBody, blocks: findBlocks } : null;
-  // Add time asks as the schedule, so its own slots are taken too (Session D's note; drawing tab 3).
-  const freeRead = useFreeTime(q, finding ? findFilters : null, findOwn, addingTime ? editing!.schedule.id : null);
+  // Add time asks as the schedule, so the whole family's slots are taken too (Session D's note; drawing tab 3).
+  const freeRead = useFreeTime(q, finding ? findFilters : null, findOwn, partOf?.schedule.id ?? null);
   const rowsDone = draft.rows.filter(rowDone).length;
   const mixedPlaces = draft.rows.some(r => r.place);
   /** The rows sit in cards, each naming its place, once a permit gives the time or the places mix (N2 A: the read-only
@@ -621,9 +633,9 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const [summary, setSummary] = useState<GenerateSummary | null>(null);
   const [previewError, setPreviewError] = useState('');
   // Not while the opening screen is up: a permit's page pre-fills the time before anything is chosen (/review 2026-10-13).
-  const previewBody = useMemo(() => (!choosing && !addingTime && timeReady && percentHundredths <= 10000
-    ? { ...timeBody, settings: settingsBody(true), startedFromPermitId: permitId, scheduleId: editing?.schedule.id ?? null, previewOnly: true }
-    : null), [choosing, addingTime, timeReady, percentHundredths, timeBody, settingsBody, permitId, editing]);
+  const previewBody = useMemo(() => (!choosing && timeReady && percentHundredths <= 10000
+    ? { ...timeBody, settings: settingsBody(true), startedFromPermitId: permitId, scheduleId: editing?.schedule.id ?? null, ...(partOf ? { partOf: partOf.schedule.id } : {}), previewOnly: true }
+    : null), [choosing, timeReady, percentHundredths, timeBody, settingsBody, permitId, editing, partOf]);
   const previewKey = previewBody ? JSON.stringify(previewBody) : '';
   const latest = useRef(0);
   useEffect(() => {
@@ -653,12 +665,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
 
   /** Why Generate can't go yet, in words — or null. */
   const problem = (): string | null => {
-    // Add time asks only for new time: the settings are the schedule's, not this window's.
-    if (addingTime) return !timeBody.blocks.length ? W.addNeedTime : rowsDone !== draft.rows.length ? W.needHours : !inOrder.length ? W.needTeams : null;
-    if (!draft.name.trim()) return W.needName;
+    // A part has no name to type (ruling 1); it needs time first, and never starts before today.
+    if (partOf && !draft.permitIds.length && !rowsDone) return W.addNeedTime;
+    if (!partOf && !draft.name.trim()) return W.needName;
     if (!cards && !draft.venueId) return W.needVenue;
     if (!cards && venue?.facilities.length && !draft.facilityIds.length) return W.needFacility;
     if (!isCalendarDate(draft.startsOn) || !isCalendarDate(draft.endsOn) || draft.endsOn < draft.startsOn) return W.needDates;
+    if (partOf && draft.startsOn < tournamentToday()) return PART_WORDS.fromBeforeToday(partOf.schedule.name);
     if (rowsDone !== draft.rows.length || !timeBody.blocks.length) return W.needHours;
     if (!inOrder.length) return W.needTeams;
     if (wholeHouseLeague) return null;
@@ -684,7 +697,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     setBusy(true); setError('');
     try {
       const from = { time: timeBody, settings: settingsBody(false) };
-      const body = { ...from.time, settings: from.settings, startedFromPermitId: permitId, scheduleId: editing?.schedule.id ?? null, round: nextRound, ...(addingTime ? { addTime: true } : {}) };
+      const body = { ...from.time, settings: from.settings, startedFromPermitId: permitId, scheduleId: editing?.schedule.id ?? null, round: nextRound, ...(partOf ? { partOf: partOf.schedule.id } : {}) };
       // org-slug-ok: `q` is the host page's "orgSlug=…" query
       const r = await moneyFetch<GenerateRead>(`/api/admin/schedules/generate?${q}`, jsonInit('POST', body));
       if (!r.ok) { setError(refusalText(r.data, R.notSaved)); return; }
@@ -713,12 +726,15 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     setBusy(true); setError('');
     try {
       const body = {
-        name: draft.name.trim(), ...madeFrom.time, settings: madeFrom.settings, assignments: assignmentsOf(pick),
+        // A part: no name (its label is the date it was added) and its schedule — the save makes it a part (mig 494).
+        ...(partOf ? { partOf: partOf.schedule.id } : { name: draft.name.trim() }), ...madeFrom.time, settings: madeFrom.settings, assignments: assignmentsOf(pick),
         startedFromPermitId: permitId, startedFromScheduleId: fromScheduleId,
       };
       // org-slug-ok: `q` is the host page's "orgSlug=…" query
-      const r = await moneyFetch<{ id: string }>(`/api/admin/schedules?${q}`, jsonInit('POST', body));
+      const r = await moneyFetch<{ id: string; version: number; label?: string }>(`/api/admin/schedules?${q}`, jsonInit('POST', body));
       if (!r.ok) { setError(refusalText(r.data, R.notSaved)); setBusy(false); return; }
+      // A part lands on the page it was added from; nothing on that schedule changed, so its version is untouched.
+      if (partOf) { settingsOf!.onKept(partOf.schedule.version, true, PART_WORDS.kept(r.data.label ?? partLabel)); return; }
       onSaved?.(r.data.id);
     } catch {
       setError(R.notSaved);
@@ -747,24 +763,6 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       settingsOf!.onKept(version, renamed);
     } catch {
       setAsking(false);
-      setError(R.notSaved);
-      setBusy(false);
-    }
-  }
-
-  /** Add time: keep the draft — only the new time is written; nothing on the schedule moves (no question: nothing is lost). */
-  async function keepAdded() {
-    if (!pick || !editing || !madeFrom || busy) return;
-    setBusy(true); setError('');
-    try {
-      const url = `/api/admin/schedules/${encodeURIComponent(editing.schedule.id)}?${q}`;
-      const r = await moneyFetch<{ version: number }>(url, jsonInit('PATCH', {
-        action: 'add_time', version: editing.schedule.version, endsOn: madeFrom.time.endsOn, blocks: madeFrom.time.blocks, datesOff: madeFrom.time.datesOff,
-        assignments: assignmentsOf(pick),
-      }));
-      if (!r.ok) { if (isStale(r.data)) settingsOf?.onStale?.(); setError(refusalText(r.data, R.notSaved)); setBusy(false); return; }
-      settingsOf!.onKept(r.data.version, true, W.timeAdded(editing.schedule.name, editing.schedule.state === 'final'));
-    } catch {
       setError(R.notSaved);
       setBusy(false);
     }
@@ -846,9 +844,35 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const permitOptions = (inputs?.permits ?? []).map(x => ({ id: x.id, label: x.name, detail: W.permitOption(x.issuer, scheduleDates(x.startsOn, x.endsOn)) }));
   const permitsHint = cameOff ? W.permitCameOff(cameOff.name, cameOff.rows, cameOff.offs)
     : foundIn && draft.permitIds.length ? W.foundHint
+    : partOf ? PART_WORDS.permitsHint
+    : editing ? PART_WORDS.settingsPermitsHint
     : draft.permitIds.length ? W.permitsHint : draft.copyFrom ? W.permitReplacesCopy : W.permitHint;
-  /** Under To: the dates the permits set ("Widened to cover both permits"), or where they went back to. */
+  /** Settings… on a draft or in review (drawing tab 2): the Permits picker and the Find the time door, as in New schedule. A
+   *  final schedule's new time is Add time's (ruling 2), so its Settings… keeps no picker. */
+  const showPicker = !editing || editing.schedule.state !== 'final';
+  /** Settings…: unticking a permit already on the schedule is its card's "Take it off…" (tab 2, note 2) — the same question,
+   *  the same save. A permit ticked in this window, or one whose time nothing else would replace, simply comes off the form. */
+  const onPermits = (next: string[]) => {
+    const gone = draft.permitIds.filter(id => !next.includes(id));
+    if (editing && gone.length === 1 && next.length === draft.permitIds.length - 1
+      && editing.time.blocks.some(b => b.permitId === gone[0]) && canTakeOff(gone[0])) { setTakingOff(gone[0]); return; }
+    togglePermits(next);
+  };
+  /** Add time: a permit's card says the time the family already uses of it, which the part leaves out (ruling 7). */
+  const usedLine = (permitId: string) => {
+    const use = partOf ? familyUse(permitId) : null;
+    if (!use || !partOf) return null;
+    const uses = use.rows.map(r => `${joinWithAnd(r.weekdays.map(d => WEEKDAY_OPTIONS.find(o => o.id === String(d))?.label ?? ''))}, ${formatTimeRange(r.startTime, r.endTime)}`).join('; ');
+    return PART_WORDS.permitUsed(partOf.schedule.name, uses, formatStoredDate(use.until, { withYear: false }));
+  };
+  /** Add time's From and To hints (tab 3, note 3). */
+  const partFromHint = partOf ? (draft.permitIds.some(id => { const u = familyUse(id); return !!u && draft.startsOn === addCalendarDays(u.until, 1); })
+    ? PART_WORDS.fromAfterUse(partOf.schedule.name) : PART_WORDS.fromToday(partOf.schedule.name)) : null;
   const remaining = draft.permitIds.length === 1 ? permitById.get(draft.permitIds[0]) : undefined;
+  const partToHint = !partOf || !isCalendarDate(draft.endsOn) ? null
+    : familyEnds && draft.endsOn > familyEnds ? PART_WORDS.toWidens(partOf.schedule.name, formatStoredDate(draft.endsOn, { withYear: false }))
+      : remaining ? PART_WORDS.toPermit(remaining.name, scheduleDates(remaining.startsOn, remaining.endsOn)) : null;
+  /** Under To: the dates the permits set ("Widened to cover both permits"), or where they went back to. */
   const datesHint = draft.datesTyped.end ? null
     : draft.permitIds.length > 1 ? W.datesWidened(draft.permitIds.length)
       : cameOff && remaining ? W.datesBackTo(remaining.name) : null;
@@ -914,13 +938,15 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     <div className={sch.pair}>
       <label className={ck.field} htmlFor="ns-start">
         <span className={ck.label}>{W.from}<span className={repKit.req} aria-hidden>*</span></span>
-        <DateInput id="ns-start" className={ck.input} value={draft.startsOn} onChange={v => set({ startsOn: v, datesTyped: { ...draft.datesTyped, start: true } })} />
+        <DateInput id="ns-start" className={ck.input} value={draft.startsOn} min={partOf ? tournamentToday() : undefined}
+          onChange={v => set({ startsOn: v, datesTyped: { ...draft.datesTyped, start: true } })} />
+        {partFromHint && <span className={ck.hint}>{partFromHint}</span>}
       </label>
       <label className={ck.field} htmlFor="ns-end">
         <span className={ck.label}>{W.to}<span className={repKit.req} aria-hidden>*</span></span>
         <DateInput id="ns-end" className={ck.input} value={draft.endsOn} min={draft.startsOn || undefined} rangeStart={draft.startsOn || undefined}
           onChange={v => set({ endsOn: v, datesTyped: { ...draft.datesTyped, end: true } })} />
-        {datesHint && <span className={ck.hint}>{datesHint}</span>}
+        {(partOf ? partToHint : datesHint) && <span className={ck.hint}>{partOf ? partToHint : datesHint}</span>}
       </label>
     </div>
   );
@@ -935,64 +961,26 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         rest={W.overlapTail(o.startsOn ? formatShortWeekdayDate(o.startsOn) : null)} />
     );
   });
-  /** Add time's step 1 (drawing tab 3, frame "Add time"): the picker beside what is on the schedule, the new rows, the
-   *  dates (From fixed, To widening), and the promise said where it is made. */
-  const addOptions = permitOptions.filter(o => !onSchedule.includes(o.id));
-  const addSection = addingTime && editing && (
-    <section className={sch.section} aria-label={W.addTitle}>
-      <div className={sch.pair}>
-        <div>
-          <PickField id="ns-permits" label={W.permits} options={addOptions} selected={draft.permitIds} onChange={togglePermits} placeholder={W.addPickPlaceholder} />
-          <span className={ck.hint}>{cameOff ? W.permitCameOff(cameOff.name, cameOff.rows, cameOff.offs) : addOptions.length ? W.addPermitsHint : W.addNoOtherPermit}</span>
-          {permitOptions.length > 0 && (
-            <button type="button" className={`${sch.door} ${sch.findDoor}`} onClick={openFinder}>
-              <Search size={15} aria-hidden />{W.findDoor} ›
-            </button>
-          )}
-        </div>
-        <label className={ck.field} htmlFor="ns-on-schedule">
-          <span className={ck.label}>{W.onSchedule}</span>
-          <input id="ns-on-schedule" className={ck.input} readOnly disabled
-            value={onSchedule.map(id => permitById.get(id)?.name ?? '').filter(Boolean).join(', ') || W.onScheduleNone} />
-        </label>
-      </div>
-      {overlapStatements}
-      {cardGroups.length > 0 && (
-        <div className={sch.permitCards}>
-          {cardGroups.map(g => (
-            <div key={g.key} className={sch.permitCard}>
-              <p className={sch.permitCardHead}><strong>{g.title}</strong>{g.sub && <span>{g.sub}</span>}</p>
-              {g.rows.map(r => rowFields(r, true))}
-            </div>
-          ))}
-        </div>
-      )}
-      <div className={sch.pair}>
-        <label className={ck.field} htmlFor="ns-start">
-          <span className={ck.label}>{W.from}</span>
-          <input id="ns-start" className={ck.input} readOnly disabled value={formatShortWeekdayDate(editing.schedule.startsOn)} />
-        </label>
-        <label className={ck.field} htmlFor="ns-end">
-          <span className={ck.label}>{W.to}</span>
-          <input id="ns-end" className={ck.input} readOnly disabled value={formatShortWeekdayDate(addEndsOn ?? editing.schedule.endsOn)} />
-          {addEndsOn && addEndsOn > editing.schedule.endsOn && <span className={ck.hint}>{W.addWidened(formatShortWeekdayDate(editing.schedule.endsOn))}</span>}
-        </label>
-      </div>
-      <Statement lead={W.addPromiseLead} rest={sent ? W.addPromiseSent : W.addPromiseDraft} />
-    </section>
-  );
-
   const timeSection = (
     <section className={sch.section} aria-labelledby="ns-time">
       <h3 id="ns-time" className={sch.sectionTitle}>{W.sectionTime}</h3>
       <div className={sch.pair}>
-        <label className={ck.field} htmlFor="ns-name">
-          <span className={ck.label}>{W.name}<span className={repKit.req} aria-hidden>*</span></span>
-          <input id="ns-name" className={ck.input} value={draft.name} maxLength={120} placeholder={W.namePlaceholder} onChange={e => set({ name: e.target.value })} />
-        </label>
-        {!editing && (
+        {partOf ? (
+          // A part has no name to type: it is the date it was added (ruling 1; tab 3, note 2).
+          <label className={ck.field} htmlFor="ns-name">
+            <span className={ck.label}>{PART_WORDS.shownAs}</span>
+            <input id="ns-name" className={ck.input} readOnly disabled value={partLabel} />
+            <span className={ck.hint}>{PART_WORDS.shownAsHint(partOf.schedule.name)}</span>
+          </label>
+        ) : (
+          <label className={ck.field} htmlFor="ns-name">
+            <span className={ck.label}>{W.name}<span className={repKit.req} aria-hidden>*</span></span>
+            <input id="ns-name" className={ck.input} value={draft.name} maxLength={120} placeholder={W.namePlaceholder} onChange={e => set({ name: e.target.value })} />
+          </label>
+        )}
+        {showPicker && (
           <div>
-            <PickField id="ns-permits" label={W.permits} options={permitOptions} selected={draft.permitIds} onChange={togglePermits} placeholder={W.noPermitTyped} />
+            <PickField id="ns-permits" label={W.permits} options={permitOptions} selected={draft.permitIds} onChange={onPermits} placeholder={W.noPermitTyped} />
             <span className={ck.hint}>{permitsHint}</span>
             {/* N1 A: a door under the picker, never an entry in the tick list (a list of choices holding an action reads as one more permit). */}
             {permitOptions.length > 0 && (
@@ -1011,10 +999,11 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
               <div key={g.key} className={sch.permitCard}>
                 <p className={sch.permitCardHead}>
                   <strong>{g.title}</strong>{g.sub && <span>{g.sub}</span>}
-                  {editing && !addingTime && g.key !== '__typed' && canTakeOff(g.key) && (
+                  {editing && g.key !== '__typed' && canTakeOff(g.key) && (
                     <button type="button" className={`${sch.door} ${sch.cardDoor}`} aria-label={W.takeOffLabel(g.title)} onClick={() => setTakingOff(g.key)}>{W.takeOffDoor}</button>
                   )}
                 </p>
+                {g.key !== '__typed' && usedLine(g.key) && <p className={ck.hint}>{usedLine(g.key)}</p>}
                 {g.rows.map(r => rowFields(r, true))}
               </div>
             ))}
@@ -1078,6 +1067,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       </div>
       <div className={ck.field}>
         <span className={ck.label}>{W.datesOff}</span>
+        {partOf && <span className={ck.hint}>{PART_WORDS.datesOffOwn}</span>}
         {draft.datesOff.map((o, i) => (
           <div key={o.key} className={showApplies ? `${own.offRow} ${sch.offRowParks}` : own.offRow}>
             <label className={ck.field} htmlFor={`ns-off-${i}`}>
@@ -1168,7 +1158,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const isIn = tickedSet.has(t.id);
     const slots = isIn ? targetOf(t.id) : null;
     // House league's row says who divides it (k1), where a team's says its season.
-    const note = isProgramHolder(t.id) ? (wholeHouseLeague ? W.houseLeagueWhole : W.houseLeagueShare) : t.season!.name;
+    const season = isProgramHolder(t.id) ? (wholeHouseLeague ? W.houseLeagueWhole : W.houseLeagueShare) : t.season!.name;
+    // Add time lists every running team, one the schedule doesn't have too (ruling 6; tab 3, note 5).
+    const note = partOf && !isProgramHolder(t.id) && !partOf.schedule.settings.teamIds.includes(t.id)
+      ? `${season} · ${PART_WORDS.teamNotOnParent(partOf.schedule.name)}` : season;
     return {
       key: t.id, name: t.name, group: groupKeys.length ? groupKeyOf(t) : undefined, nameNote: note,
       ticked: isIn, tickLabel: W.tick(t.name), onTick: next => tickTo(next ? [...draft.ticked, t.id] : draft.ticked.filter(x => x !== t.id)),
@@ -1329,6 +1322,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       )}
       {wholeHouseLeague && <p className={sch.quiet}>{W.houseLeagueWholeHint}</p>}
       {houseLeagueShare && <p className={sch.quiet}>{W.houseLeagueShareHint}</p>}
+      {partOf && <p className={sch.quiet}>{PART_WORDS.teamsHint}</p>}
       {draft.method === 'percentage' && !wholeHouseLeague && <p className={sch.quiet}>{W.everyWeek}</p>}
       {noSeason.length > 0 && (
         <div className={mk.noSeason}>
@@ -1646,7 +1640,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   };
   /** Add time's step 2 (drawing frame "Drafts for the new time"): what the new time gives each team, from the draft picked. */
   const addDrafts = (() => {
-    if (!addingTime || !editing || !gen || !pick) return null;
+    if (!partOf || !gen || !pick) return null;
     const fresh = gen.slots.filter(x => !x.kept);
     const byTeam = new Map<string, { n: number; minutes: number; venues: Set<string> }>();
     for (const x of fresh) {
@@ -1661,14 +1655,15 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     return {
       byTeam, days, permits,
       practices: [...byTeam.values()].reduce((n, t) => n + t.n, 0),
-      others: editing.slots.reduce((n, x) => n + x.teamIds.length, 0),
+      // Every practice already on the schedule and its parts: none of them moves.
+      others: family.reduce((n, v) => n + v.slots.reduce((m, x) => m + x.teamIds.length, 0), 0),
     };
   })();
   const hoursOf = (minutes: number) => hoursNumber(minutes / 60);
   const addHead = addDrafts && (addDrafts.practices ? (
     <>
       <Statement lead={W.addDraftsLead(addDrafts.practices, scheduleDates(addDrafts.days[0], addDrafts.days[addDrafts.days.length - 1]))}
-        rest={W.addDraftsRest(joinWithAnd(addDrafts.permits), addDrafts.others, sent)} />
+        rest={W.addDraftsRest(joinWithAnd(addDrafts.permits), addDrafts.others)} />
       <div className={repKit.tableFrame}>
         <table className={repKit.table} aria-label={W.addStep2}>
           <thead>
@@ -1769,7 +1764,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             ))}
           </div>
         )}
-        {!addingTime && <Statement
+        {!partOf && <Statement
           lead={editing ? W.keepLead : W.saveLead(draft.name.trim())}
           rest={editing ? (editing.schedule.state === 'final' ? W.regenSent : W.regenNotSent) : W.saveRest}
           bullets={W.statementBullets(pick.totals.handedOut, pick.totals.slots, pick.teams.filter(t => t.got > 0).length, pick.totals.open, pick.totals.held)}
@@ -1825,21 +1820,21 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const footSettings = (
     <>
       <button type="button" className="btn btn-outline" onClick={onCancel} disabled={busy}>{W.cancel}</button>
-      {wholeHouseLeague && !editing
+      {wholeHouseLeague && !editing && !partOf
         ? <button type="button" className="btn btn-lime" onClick={() => void giveWhole()} disabled={busy || !inputs}>{busy ? W.saving : W.giveToHouseLeague}</button>
-        : <button type="button" className="btn btn-lime" onClick={() => void generate(0)} disabled={busy || !inputs}>{busy ? W.generating : addingTime ? W.addGenerate : W.generate}</button>}
+        : <button type="button" className="btn btn-lime" onClick={() => void generate(0)} disabled={busy || !inputs}>{busy ? W.generating : partOf ? W.addGenerate : W.generate}</button>}
     </>
   );
-  // Add time keeps with no question (nothing on the schedule moves); with nothing new to keep, only Back (/ux 5).
+  // Add time keeps the part with no question (nothing on the schedule moves); with nothing new to keep, only Back (/ux 5).
   const footAdded = (
     <>
       <button type="button" className="btn btn-outline" onClick={() => { setStep('settings'); setError(''); }} disabled={busy}>{W.addBack}</button>
       {!!addDrafts?.practices && (
-        <button type="button" className="btn btn-lime" disabled={busy || !pick} onClick={() => void keepAdded()}>{busy ? W.saving : W.keepDraft}</button>
+        <button type="button" className="btn btn-lime" disabled={busy || !pick} onClick={() => void save()}>{busy ? W.saving : W.keepDraft}</button>
       )}
     </>
   );
-  const footDrafts = addingTime ? footAdded : (
+  const footDrafts = partOf ? footAdded : (
     <>
       <button type="button" className="btn btn-outline" onClick={() => { setStep('settings'); setError(''); }} disabled={busy}>{W.backToSettings}</button>
       <button type="button" className="btn btn-lime" disabled={busy || !pick}
@@ -1880,28 +1875,33 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         pricedBy={findPriced} onPricedBy={(key, id) => setFindPriced(p => ({ ...p, [key]: id }))}
         places={places} permitById={permitById} orgSlug={orgSlug} />
     );
-  } else if (step === 'drafts' && gen) body = addingTime && !addDrafts?.practices ? <div className={sch.drafts}>{addHead}</div> : draftsBody;
-  else if (addingTime) body = <div className={sch.settings}>{addSection}</div>;
-  else body = <div className={sch.settings}>{timeSection}{whoSection}{!wholeHouseLeague && rulesSection}</div>;
+  } else if (step === 'drafts' && gen) body = partOf && !addDrafts?.practices ? <div className={sch.drafts}>{addHead}</div> : draftsBody;
+  else body = (
+    <div className={sch.settings}>
+      {timeSection}{whoSection}{!wholeHouseLeague && rulesSection}
+      {/* The promise, said where it is made (tab 3, note 6). */}
+      {partOf && <Statement lead={PART_WORDS.promiseLead(partOf.schedule.name)} rest={PART_WORDS.promiseRest} />}
+    </div>
+  );
 
   // While the inputs load, no step line and no step bar: the window may open on the opening screen instead (/review).
   let identity: string | undefined = copiedFrom ? W.copiedFrom(copiedFrom) : W.step1;
   if (opening) identity = undefined;
   else if (choosing) identity = startPermit ? W.openingLeadPermit : W.openingLead;
   else if (inFinder) identity = W.findIdentity;
-  else if (step === 'drafts') identity = addingTime ? W.addStep2 : W.step2(draft.name.trim() || W.newTitle);
-  else if (addingTime) identity = W.addStep1;
+  else if (step === 'drafts') identity = partOf ? W.addStep2 : W.step2(draft.name.trim() || W.newTitle);
+  else if (partOf) identity = W.addStep1;
 
   return (
     <>
       <KitDialog
         kind="form"
         size="wide"
-        eyebrow={editing ? editing.schedule.name : undefined}
-        title={inFinder ? W.findTitle : addingTime ? W.addTitle : editing ? W.settingsBack : W.newTitle}
+        eyebrow={editing ? editing.schedule.name : partOf ? partOf.schedule.name : undefined}
+        title={inFinder ? W.findTitle : partOf ? W.addTitle : editing ? W.settingsBack : W.newTitle}
         identity={identity}
         progress={choosing || opening || inFinder ? undefined : { at: step === 'drafts' ? 2 : 1, of: 2 }}
-        back={inFinder ? { label: addingTime ? W.addTitle : W.newTitle, onBack: () => setFinding(false) } : step === 'drafts' ? { label: addingTime ? W.addTitle : W.settingsBack, onBack: () => setStep('settings') } : undefined}
+        back={inFinder ? { label: partOf ? W.addTitle : W.newTitle, onBack: () => setFinding(false) } : step === 'drafts' ? { label: partOf ? W.addTitle : W.settingsBack, onBack: () => setStep('settings') } : undefined}
         levelKey={choosing ? 'opening' : inFinder ? 'finding' : step}
         onClose={onCancel}
         busy={busy}

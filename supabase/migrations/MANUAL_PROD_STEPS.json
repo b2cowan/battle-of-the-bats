@@ -802,6 +802,10 @@
     "493_club_emails_are_cleared_nightly.sql": {
       "prod": "pending",
       "note": "WATCHED AUTOMATION, its own commit (owner's go 2026-11-17, Club Communications Stage 1 Session 1: \"12 / 24 months, nightly\"). Schedule only: cron.schedule('club-email-retention-sweep', '45 8 * * *', select public.club_email_retention_sweep()). Pure SQL in the database, no app call, idempotent. INVISIBLE to check:migrations (no table or column changes). ORDER: after mig 492 (before it the job errors nightly on a missing function). The family log began 2026-10-22, so the first run that blanks anything is October 2027. Applied to DEV 2026-11-17. Verify on prod: select schedule, command from cron.job where jobname = 'club-email-retention-sweep' -> '45 8 * * *' and the sweep; the morning after, select status, return_message from cron.job_run_details where jobid = (select jobid from cron.job where jobname = 'club-email-retention-sweep') order by start_time desc limit 1 -> succeeded."
+    },
+    "494_the_save_makes_an_added_part.sql": {
+      "prod": "pending",
+      "note": "Add time makes a part, Session 2 (plan CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md §8 Phase 8; build prompt CLUB_SCHEDULE_ADD_TIME_PARTS_BUILD_PROMPT.md). club_schedule_save re-made: 488's body exactly, plus part_of_schedule_id and part_label on its INSERT branch from p_data 'partOfScheduleId' / 'partLabel' (absent = a schedule of its own, as before). Signature and grants unchanged. INVISIBLE to check:migrations (function body only). ORDER: AFTER 491 (the columns and the part trigger); BEFORE the Session 2 code (Add time's save sends the two keys; without 494 the insert ignores them and the part would land as a schedule of its own — the old code never sends them, so it keeps working after the apply). Idempotent (create or replace). Applied to DEV 2026-11-17; tests/sql/schedule-part-save-fixture.sql 6/6 (schedule-parts 7/7, several-permits 5/5, date-off-venues 5/5 re-run green). Verify on prod: select position('partOfScheduleId' in pg_get_functiondef('public.club_schedule_save(uuid,uuid,uuid,integer,jsonb)'::regprocedure)) > 0 -> true."
     }
   }
 }

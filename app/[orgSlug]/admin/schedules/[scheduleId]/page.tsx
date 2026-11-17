@@ -472,8 +472,9 @@ export default function SchedulePage() {
   );
   const tools = (
     <CoachToolbarMenu label={W.tools} icon={<MoreHorizontal size={isPhone ? 20 : 15} aria-hidden />} variant={isPhone ? 'glyph' : 'secondary'} drawerOnPhone drawerTitle={W.tools}>
-      {/* S1 A: Add time beside Settings…, first in Tools — it only adds; Settings… changes what is there. */}
-      {canChange && <CoachToolbarMenuItem label={W.toolAddTime} hint={W.toolAddTimeHint} onSelect={() => setWin({ kind: 'settings', addTime: true })} />}
+      {/* S1 A: Add time beside Settings…, first in Tools — it only adds; Settings… changes what is there. Phase 8 ruling 2: on a
+          FINAL schedule only — a draft or a schedule in review is simply edited (Settings… holds the Permits picker). */}
+      {canChange && final && <CoachToolbarMenuItem label={W.toolAddTime} hint={W.toolAddTimeHint} onSelect={() => setWin({ kind: 'settings', addTime: true })} />}
       {canChange && <CoachToolbarMenuItem label={W.toolSettings} hint={W.toolSettingsHint} onSelect={() => setWin({ kind: 'settings' })} />}
       {canChange && <CoachToolbarMenuItem label={W.toolRegenerate} onSelect={() => setWin({ kind: 'settings', regenerate: true })} />}
       {canChange && lens === 'grid' && <CoachToolbarMenuItem label={W.toolLockWeek(weekScope)} onSelect={lockWeek} />}
@@ -825,7 +826,7 @@ export default function SchedulePage() {
       {win?.kind === 'settings' && (
         <NewScheduleWindow q={q} orgSlug={slug} orgName={currentOrg?.name} onCancel={() => setWin(null)}
           settingsOf={{
-            view: own, regenerate: win.regenerate, addDatesOff: win.addDatesOff, addTime: win.addTime, onStale: () => void load(),
+            view: own, regenerate: win.regenerate, addDatesOff: win.addDatesOff, addTime: win.addTime, parts, onStale: () => void load(),
             onKept: (_version, renamed, said) => { setWin(null); setMoved(new Set()); say(said ?? (renamed ? W.regenerated(s.name) : W.regeneratedNotRenamed(s.name))); void load(); },
           }} />
       )}
