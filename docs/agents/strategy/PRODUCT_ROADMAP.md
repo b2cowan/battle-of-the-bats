@@ -49,7 +49,7 @@ column names, keep one item per row, and change a row's **Status** in the same u
 | Technology | Reliability | Backups documented, first restore rehearsed | Small | Not started | |
 | Technology | Reliability | Uptime monitoring and a public status page | Small | Not started | |
 | Technology | Quality and infrastructure | The whole-product layout check, back in every release | Small | Not started | |
-| Technology | Privacy, data ownership, continuity | Privacy policy and terms published | Small | In progress | |
+| Technology | Privacy, data ownership, continuity | Privacy policy and terms published | Small | Built | |
 | Technology | Privacy, data ownership, continuity | Data terms and the supplier list | Small | Not started | |
 | Technology | Privacy, data ownership, continuity | Deleting a club removes its files | Small | Not started | |
 
