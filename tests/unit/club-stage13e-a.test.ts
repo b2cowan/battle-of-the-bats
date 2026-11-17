@@ -223,7 +223,8 @@ describe('Find a child or a parent (13e-4, 13e-1)', () => {
     assert.equal(findStatus({ status: 'pending_review', waitlistPosition: null }), 'To review');
     assert.equal(findStatus({ status: 'declined', waitlistPosition: null }), 'Ended');
     assert.equal(findMoney(REGS[0], SEASON, [], TODAY, null), '$150 owing');
-    assert.equal(findMoney(REGS[2], SEASON, [], TODAY, DEBITS.partClearing), '$50 owing');
+    // 13e-9 A (owner 2026-11-17) moved this pin: part of the fee clearing says the owing part first, then the clearing part.
+    assert.equal(findMoney(REGS[2], SEASON, [], TODAY, DEBITS.partClearing), '$50 owing · $100 clearing');
     assert.equal(findMoney(REGS[3], SEASON, [], TODAY, DEBITS.allClearing), '$150 clearing');
     assert.equal(findMoney(REGS[4], SEASON, [paid('paid', 150)], TODAY, null), 'Paid');
     assert.equal(findMoney(REGS[6], SEASON, [], TODAY, null), FIND_WORDS.nothingYet);

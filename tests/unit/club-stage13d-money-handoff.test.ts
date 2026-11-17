@@ -193,7 +193,9 @@ describe('Owed to the club, and what Revenue includes (13d-5 A, tab 5 notes 2-4)
   it('the house league door is a line under the books, opening the season’s Money page — never a nav row or a cell link', () => {
     assert.equal(O.seasonDoor('2026 Fall House League', 1740), 'House league money: 2026 Fall House League · $1,740.00 still owing');
     const page = readCode('app/[orgSlug]/admin/accounting/page.tsx');
-    assert.match(page, /href=\{`\/\$\{slug\}\/admin\/house-league\/seasons\/\$\{s\.id\}\/money`\} className=\{kit\.footLink\}/);
+    // 13e-11 A (owner 2026-11-17) moved this pin: the line names what is still owing, so it lands on Still owing — the
+    // tab's own address (`?tab=owing`, 13e Session A), not Every line.
+    assert.match(page, /href=\{`\/\$\{slug\}\/admin\/house-league\/seasons\/\$\{s\.id\}\/money\?tab=owing`\} className=\{kit\.footLink\}/);
     assert.doesNotMatch(page, /admin\/house-league\/seasons`/, 'never House league’s season list');
   });
 });

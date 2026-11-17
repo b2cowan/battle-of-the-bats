@@ -141,6 +141,19 @@ export function endedKind(r: Pick<LeagueRegistration, 'status' | 'spotReleased'>
 
 // ── The Fee cell ────────────────────────────────────────────────────────────────────────────────
 
+/**
+ * What a fee with a bank debit on its way says (Club Tier Stage 13e-9 A, owner 2026-11-17): "$50 owing · $100 clearing" —
+ * the owing part first, THE one Still owing (`stillOwingCents`, the number Money's Still owing row shows), then the part
+ * clearing; "$150 clearing" when all of what was owing is on its way. Registrations' Fee cell and Find a child both say
+ * it, so the two cannot word the same child differently. `clearingCents` is `clearingShareCents` of the child's debit.
+ */
+export function clearingWords(fee: FeeState, clearingCents: number): string {
+  const F = REGS_WORDS.fee;
+  const left = stillOwingCents(fee, clearingCents);
+  const clearing = formatLeagueMoney(isOwing(fee) ? Math.min(clearingCents / 100, fee.owing) : clearingCents / 100);
+  return left > 0 ? F.owingClearing(formatLeagueMoney(left / 100), clearing) : F.clearing(clearing);
+}
+
 export interface FeeCellParts {
   kind: FeeState['kind'];
   /** The primary line, or null (an ended registration with nothing paid has no fee line). */
@@ -271,7 +284,7 @@ export function feeCell(
     const total = money(debit.totalCents / 100);
     if (debit.state === 'clearing') {
       const started = regDay(debit.startedAt, today);
-      chip = { text: F.clearing(money(debit.shareCents / 100)), tip: F.clearingTip(total, started, debit.familyPaysFee ? money(debit.shareCents / 100) : null) };
+      chip = { text: clearingWords(state, debit.shareCents), tip: F.clearingTip(total, started, debit.familyPaysFee ? money(debit.shareCents / 100) : null) };
       primary = null;
       sub = debit.siblings.length ? F.clearingSubSibling(total, childList(debit.siblings), started) : F.clearingSub(total, started);
       tone = 'plain';

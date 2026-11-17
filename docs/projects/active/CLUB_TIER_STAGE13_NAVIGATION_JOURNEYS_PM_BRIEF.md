@@ -181,7 +181,7 @@ league's home answers a parent's call ("which team, and when do they play?") in 
 **Why:** the walk's registrar took five taps and a wrong-tab detour to answer one phone call. **Success:** the call is answered from the
 page they land on; the two "who owes" lists never disagree.
 
-**13e Session B, the money screens (built 2026-11-17; one walk next).** The treasurer saw "Off-plan $3,660.00 · nobody budgeted this" and
+**13e Session B, the money screens (built and committed `c73e51310` 2026-11-17; one walk next).** The treasurer saw "Off-plan $3,660.00 · nobody budgeted this" and
 couldn't find which $3,660.00. Now the figure opens a list of the three lines nobody budgeted, adding up to it, each opening its own lines; Not
 filed's note links to the Ledger to file them. Figures that show up on two screens now say which they are: Revenue names its year, the books
 column reads **Balance today**, a closed year's **Owed to the club** says it is today's and not the close's, and Rep teams' Outstanding says
@@ -189,3 +189,10 @@ column reads **Balance today**, a closed year's **Owed to the club** says it is 
 and a tournament's book opens on **All time**, so its registrations show. **Why:** a number that can't be opened, or that means something
 different on the next screen, gets a treasurer asking the coach instead of the screen. **Success:** every money figure on these screens either
 opens its lines or names what it counts.
+
+**13e Session C, the four calls left open (built 2026-11-17; the one walk next).** A child whose bank debit covers part of the fee now reads
+**"$50 owing · $100 clearing"** on Registrations and in Find a child, the same $50 Money shows, so the registrar sees why they are on the Owing
+list. **Email these families** works for any number of children (past about 200 it used to fail to load). Accounting's "still owing" line opens
+Money on **Still owing**, and the tournament's own sidebar opens its book on **All time**, like the other two ways in. **Why:** each was a place
+where the screen told the reader less than the next screen did. **Success:** on the walk, the same child reads the same amount everywhere, and
+every door to a figure lands on the list behind it.

@@ -211,4 +211,10 @@ describe('B7 · a tournament’s or a season’s book opens the Ledger on All ti
     assert.equal(ledgerOpensAllTime(new URLSearchParams('book=b1&date=all')), true);
     assert.equal(ledgerOpensAllTime(new URLSearchParams('book=b1')), false);
   });
+  it('the third door — the tournament’s own sidebar — carries it too (13e-12 A, Session C)', () => {
+    const page = readCode('app/[orgSlug]/admin/accounting/page.tsx');
+    assert.match(page, /router\.replace\(bookLedgerHref\(base, book\.ledger\.id, book\.ledger\.entityType\)\)/);
+    assert.doesNotMatch(page, /router\.replace\(`\$\{base\}\/ledger\?book=/, 'never a bare book address on This month');
+    assert.equal(bookLedgerHref('/c/admin/accounting', 'b1', 'tournament'), '/c/admin/accounting/ledger?book=b1&date=all');
+  });
 });

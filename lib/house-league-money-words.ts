@@ -253,6 +253,8 @@ export const REGS_WORDS = {
     foot: 'The fee shown is the price fixed on each registration when the family signed up.',
     // 12c Part 6, words §3.1: a bank debit. The first line keeps the fee; the debit's total is on the second.
     clearing: (fee: string) => `${fee} clearing`,
+    // 13e-9 A (owner 2026-11-17): part of the fee clearing — the owing part first (it is why the child is on Fee: Owing).
+    owingClearing: (owing: string, clearing: string) => `${owing} owing · ${clearing} clearing`,
     clearingSub: (total: string, started: string) => `Bank debit · ${total} · started ${started}`,
     clearingSubSibling: (total: string, siblings: string, started: string) => `Part of one ${total} bank debit with ${siblings} · started ${started}`,
     clearingTip: (total: string, started: string, fee: string | null) =>

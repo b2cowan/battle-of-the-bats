@@ -23,7 +23,8 @@
  * in and made the club read ahead on money that was mostly the teams' — and the From/To pair (the Year
  * pill is the summary's period; the Ledger's Date pill reads any other window).
  * ⚖ The tournament rail's Accounting door still arrives with `?tournamentId=` and forwards to that
- * tournament's book on the Ledger (3a's behaviour, kept).
+ * tournament's book on the Ledger (3a's behaviour, kept) — on All time since 13e-12 A (owner 2026-11-17, `bookLedgerHref`),
+ * so all three doors to a tournament's book agree; the Ledger's own default stays This month.
  *
  * ⚖ STAGE 3c — THE FISCAL YEAR (hub v46, specimens 3–5; Asks 1–4, 8c):
  *   · the ENDED year's line (Ask 2's door): from the day after a year ends until someone closes it, one quiet line
@@ -165,7 +166,8 @@ export default function AccountingOverviewPage() {
     void moneyFetch<{ ledgers?: { ledger: { id: string; entityType: string; entityId: string | null } }[] }>(`/api/admin/accounting/ledgers?${q}`)
       .then(r => {
         const book = r.ok ? (r.data.ledgers ?? []).find(l => l.ledger.entityType === 'tournament' && l.ledger.entityId === forTournament) : null;
-        if (live && book) router.replace(`${base}/ledger?book=${book.ledger.id}`);
+        // 13e-12 A (owner 2026-11-17): on All time, like the books row and the dashboard's "In the club's book" row.
+        if (live && book) router.replace(bookLedgerHref(base, book.ledger.id, book.ledger.entityType));
       })
       .catch(() => {});
     return () => { live = false; };
@@ -379,9 +381,11 @@ export default function AccountingOverviewPage() {
           </ClubRowList>
         )}
         {/* House league money (13d-5, T5): one line per live season, opening its Money page — a door under the card, never
-            a link in a cell, never House league's season list (a treasurer can't open it). No nav row. */}
+            a link in a cell, never House league's season list (a treasurer can't open it). No nav row. ⚖ 13e-11 A (owner
+            2026-11-17): it lands on Still owing (`?tab=owing`, the tab's own address — This morning's tile uses it), since
+            the line names what is still owing. */}
         {(league?.seasons ?? []).map(s => (
-          <Link key={s.id} href={`/${slug}/admin/house-league/seasons/${s.id}/money`} className={kit.footLink}>
+          <Link key={s.id} href={`/${slug}/admin/house-league/seasons/${s.id}/money?tab=owing`} className={kit.footLink}>
             {OWED_TO_THE_CLUB_WORDS.seasonDoor(s.name, s.owing)} <ChevronRight size={14} aria-hidden />
           </Link>
         ))}

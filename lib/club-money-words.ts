@@ -585,7 +585,8 @@ export const CARRIED_WORDS = {
 export const OFF_PLAN_WORDS = {
   eyebrow: (yearName: string) => `Off-plan · ${yearName}`,
   title: (total: number) => `${fmt(total)} nobody budgeted`,
-  lead: 'Spending on a word this year’s plan has no line for, and spending not filed under a word yet. Each opens its lines.',
+  // 13e C6 (/marketing 2026-11-17): "budget word", the row's own term; "Open a row" says what to do.
+  lead: 'Spending under a budget word this year’s plan has no line for, and spending not filed under a budget word yet. Open a row to see its lines.',
   /** A row's sub-line after its category — the desk's; a phone's sheet reads the category alone (drawn so). */
   notPlannedMore: ' · not planned',
   notFiled: 'No budget word yet',

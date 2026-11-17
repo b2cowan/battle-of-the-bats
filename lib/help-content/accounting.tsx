@@ -57,27 +57,63 @@ const accountingHelp: HelpPageContent = {
       id: 'ledgers',
       summary: 'Every dollar lives in a book: the General ledger, a tournament’s book, or a fund you keep apart.',
       keywords: ['payouts status', 'house league card payments', 'families pay by card', 'online payments', 'payment processing', 'card refunds', 'ledger', 'book', 'general ledger', 'tournament ledger', 'tournament entry fees', 'filed under', 'entry fee income', 'org sub-ledger', 'overview', 'board summary', 'where the club stands', 'check your bank balance', 'cash on hand', 'owed to the club', 'owed by the teams', 'house league money', 'what families still owe', 'revenue includes', 'balance today', 'off-plan', 'waiting on you', 'held by the team', 'board report', 'fiscal year pill', 'still open', 'year-end report'],
-      searchText: 'ledger book general ledger tournament ledger tournament entry fees entry fee income posts by itself visiting team payment filed under event settings fees and payments void replacement not back-filled house league book house league registration fees row season under it mark received refund org sub-ledger reserve fund overview board summary board report where the club stands today cash on hand owed to the club owed by the teams teams and house league overdue players still owing house league money still owing the season’s money page who owes revenue includes house league fees tournament book balance today a book’s balance is all-time not the year’s float included from an earlier year off-plan row opens budget vs actual teams half from 2025–26 overdue waiting on you fiscal year pill year pill the year against the budget the teams teams card teams with money late request waiting teams table moved to the teams tab held by the teams held by the team lock team cash is the coaches never added to the club figures export board report excel pdf still open from last year from 2025–26 still open unpaid installments waiting requests from a closed year year-end report close the year ended still open bank line bank checked through oldest check not checked yet',
+      searchText: 'house league money still owing opens money on still owing who still owes ledger book general ledger tournament ledger tournament entry fees entry fee income posts by itself visiting team payment filed under event settings fees and payments void replacement not back-filled house league book house league registration fees row season under it mark received refund org sub-ledger reserve fund overview board summary board report where the club stands today cash on hand owed to the club owed by the teams teams and house league overdue players still owing house league money still owing the season’s money page who owes revenue includes house league fees tournament book balance today a book’s balance is all-time not the year’s float included from an earlier year off-plan row opens budget vs actual teams half from 2025–26 overdue waiting on you fiscal year pill year pill the year against the budget the teams teams card teams with money late request waiting teams table moved to the teams tab held by the teams held by the team lock team cash is the coaches never added to the club figures export board report excel pdf still open from last year from 2025–26 still open unpaid installments waiting requests from a closed year year-end report close the year ended still open bank line bank checked through oldest check not checked yet',
       content: (
-        <>
-          <p>The club’s money is kept in <strong>books</strong> (ledgers). Each has a kind:</p>
+        <p>The club’s money is kept in <strong>books</strong> (ledgers), and the <strong>Overview</strong> tab reads them for the board: where the club stands today, the year against its budget, the teams and every book’s balance.</p>
+      ),
+      subtopics: [
+        {
+          id: 'ledgers-kinds',
+          title: 'The kinds of book',
+          content: (
+            <>
+          <p>Every book the club keeps has one of three kinds:</p>
           <HelpDefs>
             <HelpDef term="Club">The <strong>General ledger</strong>, where the club’s everyday money lives, plus any book you open to keep money apart — an equipment reserve, a bursary fund.</HelpDef>
             <HelpDef term="Tournament">One tournament’s fees, costs and any float the club moves to it. When a visiting team’s payment is recorded on the tournament’s Teams page, its income line lands here by itself, filed under the name you chose in Event settings (<strong>Fees &amp; payments → Filed under</strong>). The line is dated the day the money arrived, which is the date you chose when you recorded the payment. Changing a payment voids its line and posts a corrected one; removing a payment voids its line, with who and when. A voided line is never brought back. Money recorded before payments were dated is not added to the book.</HelpDef>
             <HelpDef term="House league">A house league season’s registration fees. A line appears when a registration’s fee is marked received, and a refund is a line going out beside it. Cash on hand counts this book, and the fees file on Budget vs. Actual as one <strong>House league registration fees</strong> row with each season under it.</HelpDef>
           </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'ledgers-overview',
+          title: 'Reading the Overview',
+          content: (
+            <>
           <p>The <strong>Overview</strong> tab is the board summary. The <strong>Fiscal year</strong> pill picks the year; <strong>Export</strong> writes the whole summary as a board report (Excel first, then PDF or CSV), or on a closed year the <a href="#fiscal-year-papers">year-end report</a>. After a year ends, one line at the top offers to <a href="#fiscal-year-close">close it</a>. Top to bottom:</p>
           <HelpDefs>
             <HelpDef term="Where the club stands · today">Beside the heading, one line, however many bank accounts there are, says how far the bank is <a href="#bank-tab">checked</a>. Until the first check it reads <em>Check your bank balance</em>. Then three figures: <strong>Cash on hand</strong> (the club’s own books, never a team’s), <strong>Owed to the club</strong> (what the teams owe, with what is overdue, plus what house league families still owe across the running seasons and how many players that is; the same figure the club’s Overview shows the owner. The teams’ half says what of it is from an earlier year: <em>teams $10,950.00 ($3,450.00 overdue, $1,200.00 of it from 2025–26)</em>. On a closed year the figure is still today’s, and says so: <em>today, Nov 16, not at the close</em>) and <strong>Waiting on you</strong> (payment requests, and how many are holding up a payout).</HelpDef>
             <HelpDef term="From 2025–26, still open">After a year is closed, what it left unpaid or waiting, each row opening the page that settles it, until the last is settled.</HelpDef>
             <HelpDef term="The year against the budget">Revenue (a line under it names its year and what it includes from the other books, such as <em>2026–27 includes house league fees $2,355.00 · Harbourtown Invitational 2026 $1,440.00</em>, read from the year’s books; with what came from the teams, on allocations and on request), expenses (with what was paid to teams on request, and any <strong>off-plan</strong> spending, a link that opens Budget vs. Actual with its <a href="#budget-vs-actual">Off-plan window</a> open), and the <strong>net for the year</strong>, each against its plan. One sentence says how much <strong>headroom</strong> is left. <strong>Budget vs. Actual</strong> below it opens the full report. On a phone this is one row that opens Budget vs. Actual.</HelpDef>
+          </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'ledgers-overview-teams-books',
+          title: 'The teams and the books on the Overview',
+          content: (
+            <>
+          <p>Below the year against the budget, the Overview names the teams’ money and lists every book:</p>
+          <HelpDefs>
             <HelpDef term="The teams">How many teams have money late (on any year’s bills, as the teams’ part of <strong>Owed to the club</strong> counts it) and how many have a request waiting for you, then <strong>Teams</strong>, the door to the <a href="#teams-tab">Teams tab</a>, where every team’s figures are. On a phone this is one row.</HelpDef>
-            <HelpDef term="The club’s books">Every book with its kind and <strong>Balance today</strong>, ending on <strong>Cash on hand</strong>. A book’s balance is all-time and today’s, not the year’s, so a tournament can show $1,440.00 of the year’s revenue and a $1,940.00 balance today, float included. A tournament’s or house league season’s book opens the Ledger tab on <strong>All time</strong>, so every registration and float behind the balance shows; the General book opens it on This month. Under the books, one line for each running house league season (<em>House league money: Fall 2026 · $1,740.00 still owing</em>) opens that season’s Money page, where you can see who still owes.</HelpDef>
+            <HelpDef term="The club’s books">Every book with its kind and <strong>Balance today</strong>, ending on <strong>Cash on hand</strong>. A book’s balance is all-time and today’s, not the year’s, so a tournament can show $1,440.00 of the year’s revenue and a $1,940.00 balance today, float included. A tournament’s or house league season’s book opens the Ledger tab on <strong>All time</strong>, so every registration and float behind the balance shows; the General book opens it on This month. Under the books, one line for each running house league season (<em>House league money: Fall 2026 · $1,740.00 still owing</em>) opens that season’s Money page on <strong>Still owing</strong>, the list of who still owes.</HelpDef>
           </HelpDefs>
           <p>The board report (<strong>Export</strong>) still carries every team’s figures, and each team’s cash held by the team. On an open year it also carries what Revenue includes.</p>
+            </>
+          ),
+        },
+        {
+          id: 'ledgers-payouts',
+          title: 'Card payments on the Overview',
+          content: (
+            <>
           <p>Where the club takes card payments from tournament teams, one line under the year line gives the treasurer the state of <strong>Payouts</strong>: <em>Taking payments</em>, <em>Needs attention</em> (Stripe needs something from the owner, who fixes it in Settings &rsaquo; Payouts) or <em>Online payments are off</em>. A processing fee the club pays shows in the tournament’s own book as <strong>Payment processing</strong>, and a refund to a card as <strong>Refunds</strong>. See <em>Let teams pay online by card</em> in the Tournaments guide. House-league families pay by card the same way once payouts are set up; the season&rsquo;s Money page shows what came by card and any <strong>Payment processing</strong> cost (see the House league guide).</p>
-        </>
-      ),
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'recipe-create-ledger',
@@ -193,7 +229,7 @@ const accountingHelp: HelpPageContent = {
       heading: 'Reading the Ledger, and correcting a line',
       summary: 'Oldest first between a starting and an ending balance, each with its date; filters; Tools; editing, voiding, and lines that come from elsewhere.',
       keywords: ['entry', 'income', 'expense', 'transfer', 'posted', 'pending', 'void', 'edit entry', 'starting balance', 'ending balance', 'book pill', 'filters', 'tools', 'filter button', 'reset filters', 'not filed', 'filed under', 'item', 'budget item'],
-      searchText: 'ledger book pill switch books entry income expense transfer posted pending void edit entry saves as you type autosave starting balance ending balance oldest first bank statement running balance money out money in type status category item budget item item column not filed filed under date this month all time filters balance disappears balance column gone balance hidden when filtering category untick posted pending line faint void reason audit trail read only line from an allocation request fee where to change it team book team account tools menu payees transfer where did the payees button go where did the transfer button go year on the balance lines row shows only the day phone card filter button phone filter sheet filters on a phone where did the filters go reset filters closed fiscal year locked line no void no edit it cleared today pending cheque from a closed year written on',
+      searchText: 'tournament sidebar accounting opens its book on all time tournament dashboard in the club’s book all time ledger book pill switch books entry income expense transfer posted pending void edit entry saves as you type autosave starting balance ending balance oldest first bank statement running balance money out money in type status category item budget item item column not filed filed under date this month all time filters balance disappears balance column gone balance hidden when filtering category untick posted pending line faint void reason audit trail read only line from an allocation request fee where to change it team book team account tools menu payees transfer where did the payees button go where did the transfer button go year on the balance lines row shows only the day phone card filter button phone filter sheet filters on a phone where did the filters go reset filters closed fiscal year locked line no void no edit it cleared today pending cheque from a closed year written on',
       content: (
         <p>The <strong>Ledger</strong> tab shows one book at a time. The <strong>Book</strong> pill switches books — it opens on the General ledger and shows every book’s balance. <strong>Tools</strong> (⋯, beside Export) holds the rarer jobs: <a href="#recipe-transfer-between-ledgers">Transfer</a> and <a href="#payees">Payees</a>.</p>
       ),
@@ -219,7 +255,7 @@ const accountingHelp: HelpPageContent = {
               <HelpDef term="Status">Starts on <strong>Posted</strong> and <strong>Pending</strong>. A pending line is faint and keeps the balance before it until it clears. Tick <strong>Void</strong> to see voided lines, each with its reason, or <strong>All</strong> for every line. Untick <strong>Posted</strong> and the Balance column goes too — posted lines are the ones that move it.</HelpDef>
               <HelpDef term="Category">One or several budget categories, or <strong>Not filed</strong>. It lists only the categories on the lines in your dates, so change the dates and the list follows. Like Type, it hides the Balance column.</HelpDef>
               <HelpDef term="Item">One or several budget items, the second half of the word a line is filed under, again only those in your dates. An allocation’s lines carry the allocation’s name. Pick a category first and Item lists only that category’s items. Anything you’ve already ticked stays on its list. Like Category, it hides the Balance column.</HelpDef>
-              <HelpDef term="Date">Starts on <strong>This month</strong>, except when a tournament’s or house league season’s book is opened from the Overview’s <em>The club’s books</em> or the tournament dashboard’s <em>In the club’s book</em>: those open on <strong>All time</strong>, so every registration and float behind the balance shows. Picking a book from the <strong>Book</strong> pill, or the General book, stays on This month. Pick a preset, your own dates, or <strong>All time</strong>. The Balance column stays: the starting balance carries everything before your dates.</HelpDef>
+              <HelpDef term="Date">Starts on <strong>This month</strong>, except when a tournament’s or house league season’s book is opened from the Overview’s <em>The club’s books</em>, the tournament dashboard’s <em>In the club’s book</em>, or <strong>Accounting</strong> in a tournament’s own sidebar: those open on <strong>All time</strong>, so every registration and float behind the balance shows. Picking a book from the <strong>Book</strong> pill, or the General book, stays on This month. Pick a preset, your own dates, or <strong>All time</strong>. The Balance column stays: the starting balance carries everything before your dates.</HelpDef>
               </HelpDefs>
               <p><strong>On a phone the filters sit behind one Filter button</strong>, beside the balance. It opens a sheet showing what each filter is set to. A number on the button counts the ones you’ve changed; <strong>Reset filters</strong> puts them back.</p>
             </>
@@ -720,19 +756,52 @@ const accountingHelp: HelpPageContent = {
       keywords: ['budget vs actual', 'statement', 'by activity', 'did the tournament pay for itself', 'months', 'compare', 'whole year', 'to date', 'against last year', 'this year against last year', 'change', 'showing', 'scheduled', 'collected', 'spent', 'off-plan', 'cash on hand', 'open these lines in the ledger', 'off-plan window', 'nobody budgeted', 'file them on the ledger', 'see them on the ledger', 'expand all', 'last year’s bills paid this year', 'hosted tournament profit', 'gate and concessions', 'house league registration fees', 'house league fees', 'starting budget'],
       searchText: 'budget vs actual statement house league registration fees one row each season under it a fee counts in the fiscal year it was received a refund lowers the row never spending starting budget size times price planned once when registration opens by activity activity line item tournament revenue and costs together net paid for itself months view compare whole year to date showing budget scheduled cash difference actual this year only expand all collapse all collected spent off-plan nobody budgeted this cash on hand the club’s books budgeted figure opens the plan line actual figure opens the lines behind it open these lines in the ledger not filed is spending with no budget word yet it counts as off-plan file them on the ledger see them on the ledger off-plan window lists each line nobody budgeted name category amount rows add up to the figure export excel csv pdf year pill hosted tournament gate admission concession revenue sponsorship officials awards supplies tournament’s own words general tournaments words does not count',
       content: (
-        <>
-          <p>Budget vs. Actual reads the year’s plan against what the club’s books moved, including a hosted tournament’s book through the budget word its lines carry (a house league season’s fees file under one <strong>House league registration fees</strong> row with each season underneath: a fee counts in the fiscal year it was received, a refund lowers the row and never counts as spending, and the starting budget is each division’s size times its price, planned once when registration opens in the fiscal year sign-ups open, for the treasurer to change on the Budget page). A band across the top gives <strong>Collected</strong>, <strong>Spent</strong>, <strong>Off-plan</strong> (spending nobody budgeted, shown only when there is some) and <strong>Cash on hand</strong> (the club’s books, as of today — on a closed year, its closing at its last day). <strong>Off-plan</strong> opens a window (<em>Off-plan · 2026–27</em>, <em>$3,660.00 nobody budgeted</em>) listing each line nobody budgeted with its name, the category it sits under and its amount; the rows add up to the figure, and each opens that line’s actual lines, as below.</p>
-          <p>Money the club bills in one year often arrives in the next. A payment against last year’s bill counts in the year it arrives, on its own line under From the teams (<em>2025–26’s bills, paid this year</em>), with its Budgeted blank: it was planned in its own year.</p>
+        <p>Budget vs. Actual reads the year’s plan against what the club’s books moved, including a hosted tournament’s book through the budget word its lines carry. A band of four figures sits across the top, the report has three views, and every figure opens what is behind it.</p>
+      ),
+      subtopics: [
+        {
+          id: 'bva-band',
+          title: 'The band, and Off-plan',
+          content: (
+            <>
+          <p>A band across the top of Budget vs. Actual gives four figures:</p>
+          <HelpDefs>
+            <HelpDef term="Collected and Spent">The year’s revenue and spending: the same totals as the Statement’s <strong>Actual</strong>.</HelpDef>
+            <HelpDef term="Off-plan">Spending nobody budgeted, shown only when there is some.</HelpDef>
+            <HelpDef term="Cash on hand">The club’s books, as of today. On a closed year, its closing at its last day.</HelpDef>
+          </HelpDefs>
+          <p><strong>Off-plan</strong> opens a window (<em>Off-plan · 2026–27</em>, <em>$3,660.00 nobody budgeted</em>) listing each line nobody budgeted with its name, the category it sits under and its amount. The rows add up to the figure, and each opens that line’s actual lines.</p>
+            </>
+          ),
+        },
+        {
+          id: 'bva-views',
+          title: 'Statement, By activity and Months',
+          content: (
+            <>
+          <p>Budget vs. Actual reads the year three ways:</p>
           <HelpDefs>
             <HelpDef term="View">The <strong>Fiscal year</strong> pill picks the year. <strong>View</strong> switches between <strong>Statement</strong>, <strong>By activity</strong> and <strong>Months</strong>.</HelpDef>
             <HelpDef term="By activity">One row for each activity the club runs, such as a hosted tournament, with its revenue and its expenses together and the net, so you can see whether it paid for itself. A tournament appears under the name set in Event settings (<strong>Fees &amp; payments → Filed under</strong>). Its entry fees, gate, concessions, sponsorship and costs all count toward it when they are filed under that tournament’s words, whether typed in its own book or in the General ledger. Money filed on the general <strong>Tournaments</strong> words does not. The first column reads <strong>Activity / line item</strong>.</HelpDef>
             <HelpDef term="Statement">Revenue, then expenses, each category folding open to its lines, with the plan, <strong>Actual</strong> and <strong>Variance</strong>. <strong>Compare</strong> reads the plan for the <strong>Whole year</strong> or <strong>To date</strong>, or, once last year has money recorded in those months, sets this year <strong>Against</strong> last year: this year’s Actual, last year’s and the <strong>Change</strong>, over the same months a year apart (each heading says which). <strong>Expand all</strong> and <strong>Collapse all</strong> fold every category at once.</HelpDef>
             <HelpDef term="Months">The year month by month, with a running balance. <strong>Showing</strong> picks <strong>Budget</strong>, <strong>Scheduled</strong> (this year only), <strong>Cash</strong> or <strong>Difference</strong>. It opens with every category folded; <strong>Expand all</strong> opens them all at once. On a phone it opens scrolled to this month.</HelpDef>
           </HelpDefs>
-          <p><strong>Every figure opens what is behind it.</strong> A budgeted figure opens the plan line; an actual figure opens the actual lines, with <strong>Open these lines in the Ledger</strong>. Money filed under no budget word sits in a <strong>Not filed</strong> row until someone files it. Under it a note reads <em>Not filed is spending with no budget word yet. It counts as off-plan.</em> and ends with <strong>File them on the Ledger</strong>, which opens the Ledger narrowed to Not filed over the fiscal year (on a closed year it reads <strong>See them on the Ledger</strong>, since its lines are locked).</p>
+            </>
+          ),
+        },
+        {
+          id: 'bva-behind',
+          title: 'What is behind each figure',
+          content: (
+            <>
+          <p>Every figure on Budget vs. Actual opens what is behind it. A budgeted figure opens the plan line; an actual figure opens the actual lines, with <strong>Open these lines in the Ledger</strong>. Money filed under no budget word sits in a <strong>Not filed</strong> row until someone files it. Under it a note reads <em>Not filed is spending with no budget word yet. It counts as off-plan.</em> and ends with <strong>File them on the Ledger</strong>, which opens the Ledger narrowed to Not filed over the fiscal year (on a closed year it reads <strong>See them on the Ledger</strong>, since its lines are locked).</p>
+          <p>A house league season’s fees file under one <strong>House league registration fees</strong> row with each season underneath. A fee counts in the fiscal year it was received, and a refund lowers the row and never counts as spending. The starting budget is each division’s size times its price, planned once when registration opens in the fiscal year sign-ups open, for the treasurer to change on the Budget page.</p>
+          <p>Money the club bills in one year often arrives in the next. A payment against last year’s bill counts in the year it arrives, on its own line under From the teams (<em>2025–26’s bills, paid this year</em>), with its Budgeted blank: it was planned in its own year.</p>
           <p>Export from the <strong>Export</strong> menu — Excel and CSV are available on all plans; the <strong>PDF</strong> needs Tournament Plus or above, and is always the whole-year statement.</p>
-        </>
-      ),
+            </>
+          ),
+        },
+      ],
     },
     {
       group: 'The club and its teams',

@@ -14,7 +14,7 @@ import type { LeagueRegistration } from './types';
 import { feeState, formatLeagueMoney, isOwing, stillOwingCents, type LeagueMoneyLine, type LeagueMoneySeason } from './league-money';
 import { clearingShareCents, type RegDebit } from './league-debits';
 import type { SeasonBooking } from './league-season-calendar';
-import { guardianName, playerName, regTab } from './house-league-registrations';
+import { clearingWords, guardianName, playerName, regTab } from './house-league-registrations';
 import { MONEY_PAGE_WORDS, REGS_WORDS } from './house-league-money-words';
 import { formatTime, possessive } from './utils';
 import { formatInOrgZone, utcToZonedInputs } from './timezone';
@@ -34,14 +34,14 @@ export const FIND_WORDS = {
   failed: 'We couldn’t search just now.',
   retry: 'Try again',
   noTeam: 'no team yet',
-  miss: (q: string) => `No child or parent matches “${q}” in a season that’s running.`,
+  // 13e C6 (/marketing 2026-11-17): "any season that's running", parallel to the past-seasons miss.
+  miss: (q: string) => `No child or parent matches “${q}” in any season that’s running.`,
   missPast: (q: string) => `No child or parent matches “${q}” in any season.`,
   searchPast: 'Search past seasons too',
   /** Never promises more than "Show all" lists (FIND_ALL): past it, the button and the list's foot say so. */
   showAll: (n: number) => (n > FIND_ALL ? `Show the first ${FIND_ALL} of ${n}` : `Show all ${n}`),
   capped: (shown: number, n: number) => `Showing ${shown} of ${n}. Type more of the name to narrow it.`,
   owing: (amount: string) => `${amount} owing`,
-  clearing: (amount: string) => `${amount} clearing`,
   paid: 'Paid',
   nothingYet: 'Nothing owed yet',
   /** "Reds’ next: Thu, Nov 26, 6:00 p.m. · Reds vs Blues · Kinsmen Park, Diamond B" */
@@ -84,9 +84,10 @@ export function findMoney(
 ): string | null {
   const fee = feeState(r, season, lines, today);
   const clearing = clearingShareCents(debit);
+  // 13e-9 A: part of it on its way reads as Registrations' Fee cell does ("$50 owing · $100 clearing"), one wording.
+  if (clearing > 0 && isOwing(fee)) return clearingWords(fee, clearing);
   const left = stillOwingCents(fee, clearing);
   if (left > 0) return FIND_WORDS.owing(formatLeagueMoney(left / 100));
-  if (isOwing(fee)) return FIND_WORDS.clearing(formatLeagueMoney(Math.min(clearing / 100, fee.owing)));
   if (fee.kind === 'received') return FIND_WORDS.paid;
   if (fee.kind === 'review' || fee.kind === 'waitlist') return FIND_WORDS.nothingYet;
   return null;

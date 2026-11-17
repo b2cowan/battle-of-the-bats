@@ -22,6 +22,8 @@ export const maxDuration = 120;
  *
  *   GET  ?orgSlug&kind=season|season_divisions|season_teams|season_statuses|season_families&divisionIds|teamIds|statuses|
  *        registrationIds — the window's read: the Who list, the allowance, Last sent, and this choice's reach.
+ *   POST { action: 'preview', kind, …ids } — the same read with the ids in the body (13e-10: the window uses it, so a
+ *        long ticked list never rides in an address).
  *   POST { action: 'send', kind, …ids, subject, body, expected, copyCoaches } — the press (one household goes through the
  *        household door and never counts); { action: 'resend', sendId } — "Send to the N it missed" on a stopped email;
  *        { action: 'resendNotice', noticeId } — the same on a stopped Schedule published / Schedule changes notice
@@ -45,6 +47,15 @@ async function scopeInSeason(scope: FamilyAudienceScope, seasonId: string): Prom
   return true;
 }
 
+/** The window's read, from a query (GET) or a body (POST `preview`): the same scope, the same season check, the same read. */
+async function previewOf(ctx: NonNullable<Awaited<ReturnType<typeof getAuthContextWithRole>>>,
+  season: NonNullable<Awaited<ReturnType<typeof getLeagueSeasonById>>>, input: Record<string, unknown>) {
+  const scope = input.kind ? seasonScope(input, season.id) : null;
+  if (input.kind && !scope) return NextResponse.json({ error: 'Unknown audience', code: 'kind' }, { status: 400 });
+  if (scope && !(await scopeInSeason(scope, season.id))) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json(await seasonEmailPreview(ctx, season, scope));
+}
+
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   const url = new URL(req.url);
@@ -56,11 +67,7 @@ export const GET = withObservability(async (req: Request,
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
-  const q = Object.fromEntries(url.searchParams);
-  const scope = q.kind ? seasonScope(q, seasonId) : null;
-  if (q.kind && !scope) return NextResponse.json({ error: 'Unknown audience', code: 'kind' }, { status: 400 });
-  if (scope && !(await scopeInSeason(scope, seasonId))) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(await seasonEmailPreview(ctx!, season, scope));
+  return previewOf(ctx!, season, Object.fromEntries(url.searchParams));
 }, { route: '/api/admin/house-league/seasons/[seasonId]/emails' });
 
 export const POST = withObservability(async (req: Request,
@@ -72,15 +79,23 @@ export const POST = withObservability(async (req: Request,
   const { seasonId } = await params;
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-  // Email stays open on a finished season (§0c: a note to families is not a change to the season's record).
-  const refused = houseLeagueRefusal(ctx, 'email', season);
-  if (refused) return refused;
 
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
+  // ⚖ Not an object (null, an array, a number) is no request — a 400, never a read of a field off it.
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   const action = body.action;
+
+  // The window's read with the ticked list in the body (Club Tier Stage 13e-10, owner 2026-11-17): a few hundred
+  // registration ids outgrow an address, so the window posts them the way Send does. It is GET's read exactly — the
+  // same scope, season check and gate (the email right above; reading is not sending, so it runs before the send refusal).
+  if (action === 'preview') return previewOf(ctx!, season, body);
+
+  // Email stays open on a finished season (§0c: a note to families is not a change to the season's record).
+  const refused = houseLeagueRefusal(ctx, 'email', season);
+  if (refused) return refused;
 
   if (action === 'resend') {
     if (typeof body.sendId !== 'string') return NextResponse.json({ error: 'Not found' }, { status: 404 });

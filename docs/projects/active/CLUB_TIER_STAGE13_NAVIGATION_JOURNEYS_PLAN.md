@@ -900,6 +900,29 @@ ahead of the owner's rulings.
   permits) were not answered in the paste-back. **Owed:** `check:layout --changed` on the touched screens; teardown of `navj-club-13d` on the owner's word.
   13d is DONE; several-permits Session C's gate is met.
 
+- 2026-11-16 — **13e DRAWN for rulings** (https://claude.ai/artifact/ARCTT7eZvMZy3ZQQ6wzHSR, source [CLUB_TIER_STAGE13E_DRAWINGS.html](CLUB_TIER_STAGE13E_DRAWINGS.html),
+  captures `stage13e-shots/`, generator `.probe/nav-journeys/d13e-build.cjs` + `d13e-page.cjs`; 8 tabs, 8 asks). Fresh copy `navj-club-13e` on a local production
+  build; every count is from it. **Re-opened against the code:** seven of nine findings reproduce. **F-R5-4 re-framed:** the walk's next event (the Nov 19 game)
+  was already in the week shown; the schedule already skips an empty week (C3, `58ecf0ee6`); the need is the child's team's next event, so the
+  recommendation closes it into Find a child's result row (ask 1). The phone Schedule is the club's house-league season Schedule, not the Coaches Portal.
+  **F-T3-8 half built:** Not filed's figure already opens its lines; Off-plan ($3,660.00 = Field Equipment $1,200.00 + Paid to teams on request $120.00
+  + Not filed $2,340.00) has no door; the Actual window's eyebrow prints "[object Object]" (a bug, fixed in 13e). **F-R3-6:** Still owing and the Owing filter
+  share one rule (both 12), differing only on a clearing bank debit; link, not merge (ask 3). Found: Money's Received "8 players" vs the filter's 7
+  (Dev Sharma part-paid, ask 8). **F-O5-6** is the club's Ledger (This month is an owner rule, test-pinned): fix the door, not the default (ask 5).
+  **Settled, not redrawn:** F-T3-1 and F-T5-1 (13d-5, on the copy), F-T3-5 (bank check Find). Families' "Owes money" left to 13h. **Size: Medium,
+  two build sessions** (A the registrar's house league; B the money screens) **and one walk**, not Small. `/ux` (8 findings: the treasurer's rows stay
+  plain, Still owing gets an address, Find a child's other states drawn, the filter line's conditions, closed-year and zero-case words) and `/design`
+  (the phone Money band redrawn as shipped, the season bar, the tab strip, phone rows, a wrapping tab count) applied before publishing. **Next:** the
+  owner rules asks 13e-1…8; then `CLUB_TIER_STAGE13E_BUILD_PROMPT.md`.
+
+- 2026-11-16 — **13e RULED: asks 13e-1…8 all A** (owner paste-back). F-R5-4 closes into Find a child (the phone Schedule is unchanged; 13g takes nothing);
+  Email these families reuses the existing window (no new sender); who-owes = link both ways + the Owing filter treats a clearing debit as Still owing does
+  (no merge); Find a child on House league's home across running seasons; a tournament's or season's book opens the Ledger on All time (the Ledger's default
+  stays This month); the first two known lows + the open year's board report (the closed year's year-end file waits, its own small item); Rep teams keeps the
+  every-year Outstanding and says "includes $600.00 from 2025–26"; Received reads "8 players · 1 in part". **BUILD PROMPT WRITTEN**
+  [CLUB_TIER_STAGE13E_BUILD_PROMPT.md](CLUB_TIER_STAGE13E_BUILD_PROMPT.md): Session A the registrar's house league, Session B the money screens (either order,
+  no shared file), one walk after B. Only new read: Find a child across running seasons. Not built; uncommitted.
+
 - 2026-11-16 — **13e Session A BUILT** (the registrar's house league; build prompt Session A, drawing tabs 2, 3, 7). **One Still owing rule:**
   `stillOwingCents` + `clearingShareCents` / `clearingCentsByReg` (lib/league-money.ts, lib/league-debits.ts); Money's band, Money's Still owing
   rows, the season's Overview read, the club band and Registrations' Fee: Owing all call them, so a child with part of the fee on a clearing debit
@@ -953,7 +976,7 @@ ahead of the owner's rulings.
   a tournament's or a house-league season's book opens the Ledger with `?date=all` (the Overview's books row, the tournament dashboard's "In the club's
   book"); the Ledger reads it once on arrival; its default, the General book and the Book pill stay This month (3a's pin green). **Not built, owner
   call:** the tournament rail's arrival (`accounting?tournamentId=` forwarding to its book) still opens on This month — a third door to a tournament's
-  book the ruling did not name. **Known edge (recorded, not changed):** for a group-scoped reader, the Overview's "of it from 2025–26" uses the
+  book the ruling did not name (→ ruled 13e-12 A and built in Session C: it now opens on All time). **Known edge (recorded, not changed):** for a group-scoped reader, the Overview's "of it from 2025–26" uses the
   scoped allocations' first due (Accounting › Teams' rule, pinned) while Rep Teams and the account read every team's — they can differ only for a
   line-less bill spanning groups across a fiscal boundary. **/simplify** (4 lenses) applied: one carried-in entry point, the caption builder takes the
   fact (no placeholder zeros), the Not filed door from real inputs, word halves not sliced strings, the money kit's and club band's existing styles,
@@ -964,7 +987,41 @@ ahead of the owner's rulings.
   Ledger's Date, Teams, a team's account), rep-teams.tsx (Outstanding), tournaments.tsx (In the club's book). **Owed:** the Installments line's help
   (it lives only in org.tsx, which another session is editing); splitting the two long accounting help sections (both were over the limit before).
   `/legal` and `/accounting` not required (no family mail, nothing FieldLogicHQ charges). Unit suite 26 failures = the baseline, none in these files.
-  **Next:** the /marketing words pass, then the one walk.
+  **Committed `c73e51310` 2026-11-17** (31 files). **Next:** Session C (below), then the one walk.
+
+- 2026-11-17 — **13e owner calls RULED, all as recommended** (in the Session B chat): **13e-9 A** a partly cleared fee's Registrations cell reads
+  "$50 owing · $100 clearing" (owing first, Money's amount); **13e-10 A** "Email these families" past ~200 children is a defect to fix (the
+  window's list leaves the address; same audience, same rules; fixes the bulk bar too); **13e-11 A** Accounting's "still owing" season link opens
+  Money on Still owing (13d's pin moves); **13e-12 A** the tournament's own sidebar opens its book on All time (closes Session B's owner call).
+  **Session C written** into the build prompt (the four fixes, the help owed from B, then the build's one /marketing words pass); the walk follows C.
+
+- 2026-11-17 — **13e Session C BUILT** (the four rulings + the help owed + the build's one words pass; build prompt Session C). No figure's
+  arithmetic moved. **C1 (13e-9 A):** `clearingWords` (lib/house-league-registrations.ts) is the one wording for a fee with a debit on its way —
+  "$50 owing · $100 clearing" (owing = `stillOwingCents`, the number Money's Still owing row shows) or "$150 clearing"; Registrations' Fee chip and
+  Find a child both call it (Find's own "clearing" word removed). The clearing part is capped at what is owing (Find's existing rule, now the cell's
+  too — only differs from the old chip when a price was corrected down while a debit was on its way; the tip keeps the debit's share). **C2
+  (13e-10 A):** the Email families window's season read posts its picks (`{ action: 'preview', … }`, the shape Send already used) — no registration,
+  division, team or status list in an address; the route's GET and POST `preview` share one `previewOf` (same email gate, URL season always wins,
+  a foreign id 404). The club-wide kinds (rep teams, a season, a list) stay a query: bounded by what a club has. A non-object body is now a 400 (was
+  a throw). Both openers (Still owing, Registrations' bulk bar) pass the list in memory, so both are fixed. **C3 (13e-11 A):** Accounting's
+  "House league money: … still owing" opens `/money?tab=owing` (Session A's tab address); 13d's pin moved, saying why. **C4 (13e-12 A):** the
+  tournament rail's forward uses `bookLedgerHref`, so all three doors to a tournament's book open on All time; B7's test extended to the third
+  door. **C5 help:** This morning's Installments line in org.tsx (the club Overview article, exact-text lines only — org.tsx carries another
+  session's uncommitted line); house-league.tsx (Fee column's "$50 owing · $100 clearing", Bank debit on Registrations, Find a child's owing words;
+  the old "$150.00 clearing" corrected to the screen's "$150 clearing"); accounting.tsx (the season line opens Still owing; the Ledger's Date names
+  the tournament sidebar's door); **the two long sections split** — "The club's books, and the Overview" (802 words → 4 answers) and "Reading
+  Budget vs. Actual" (566 → 3 answers), each answer opening on its own sentence. Still over the limit, not touched: Payees (423) and three
+  sub-topics (403–474), all older. **C6 /marketing (one pass, whole stage):** two changes applied — the Off-plan window's lead ("Spending under a
+  budget word this year's plan has no line for, and spending not filed under a budget word yet. Open a row to see its lines.") and Find's miss
+  ("… in any season that's running."); everything else kept. Two **owner questions** on ruled words, no change proposed: is "clearing" clear to a
+  registrar (the help and the chip's tip both explain it), and could "1 in part" read as partly registered ("1 part-paid" if it misreads on the
+  walk). **/legal:** no change — the audience, consent rules and sender are the existing window's; only how the window carries its own read moved.
+  `/accounting` not required. **/simplify** not run (no new abstraction beyond two shared helpers that remove duplication). **/review (standard,
+  the email route high, 2 lenses): no Critical, High or Medium;** one Low refuted (a long division list cannot force many reads: the check stops
+  at the first foreign id and duplicates are dropped), advisories recorded above. **Layout** `--only` the 6 touched screens (Registrations, House
+  league's home, the Overview, Budget vs. Actual, both help guides), 390 + 1440: no new findings from this session — the two 390 tap-floor lines are
+  Registrations' rows' existing checkboxes, as Session A recorded. Unit failures seen in neighbouring suites belong to other work in the tree
+  (families-email's reply line, SeasonFrame's list mark, the workspace cards, release notes). **Next:** the one walk (after commit).
 
 ## 11. The external review, cross-checked (2026-11-07)
 

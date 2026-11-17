@@ -113,14 +113,18 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
   const sorted = (ids: readonly string[]) => [...ids].sort().join(',');
   // org-slug-ok: `q` IS the org ("orgSlug=…", passed by the opener — the send windows' shape).
   const base = season ? `/api/admin/house-league/seasons/${season.id}/emails?${q}` : `/api/admin/families/email?${q}`;
-  const scopeQuery = season
-    ? sKind === 'season_divisions' ? `&kind=season_divisions&divisionIds=${encodeURIComponent(sorted(divisionIds))}`
-      : sKind === 'season_teams' ? `&kind=season_teams&teamIds=${encodeURIComponent(sorted(leagueTeamIds))}`
-      : sKind === 'season_statuses' ? `&kind=season_statuses&statuses=${encodeURIComponent(statuses.join(','))}`
-      : sKind === 'season_families' ? `&kind=season_families&registrationIds=${encodeURIComponent(sorted(ticked ?? []))}`
-      : '&kind=season'
-    : kind === 'teams' ? `&kind=teams&teamIds=${encodeURIComponent(sorted(teamIds))}`
-      : kind === 'season' ? `&kind=season&seasonId=${encodeURIComponent(seasonId)}`
+  // ⚖ The season's read POSTS its picks (Club Tier Stage 13e-10, owner 2026-11-17), the way Send carries them: a few hundred
+  // ticked children outgrow an address and the window showed its failed state. Never a registration id in a URL. The club's
+  // own Who (rep teams, a season, a list) is bounded by what a club has, so it stays a query.
+  const seasonPick = season ? JSON.stringify(
+    sKind === 'season_divisions' ? { action: 'preview', kind: sKind, divisionIds: [...divisionIds].sort() }
+      : sKind === 'season_teams' ? { action: 'preview', kind: sKind, teamIds: [...leagueTeamIds].sort() }
+        : sKind === 'season_statuses' ? { action: 'preview', kind: sKind, statuses }
+          : sKind === 'season_families' ? { action: 'preview', kind: sKind, registrationIds: [...(ticked ?? [])].sort() }
+            : { action: 'preview', kind: 'season' },
+  ) : '';
+  const scopeQuery = kind === 'teams' ? `&kind=teams&teamIds=${encodeURIComponent(sorted(teamIds))}`
+    : kind === 'season' ? `&kind=season&seasonId=${encodeURIComponent(seasonId)}`
       : kind === 'list' ? `&kind=list&list=${encodeURIComponent(list)}` : '&kind=every';
 
   const beginRead = useLatestRead();
@@ -128,7 +132,7 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
     const current = beginRead();
     setFailed(false);
     if (season) {
-      const r = await moneyFetch<SeasonEmailPreview>(`${base}${scopeQuery}`).catch(() => null);
+      const r = await moneyFetch<SeasonEmailPreview>(base, jsonInit('POST', JSON.parse(seasonPick))).catch(() => null);
       if (!current()) return;
       if (!r?.ok) { setFailed(true); return; }
       setSPreview(r.data);
@@ -142,7 +146,7 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
     if (!current()) return;
     if (!r?.ok) { setFailed(true); return; }
     setPreview(r.data);
-  }, [base, scopeQuery, beginRead, season]);
+  }, [base, scopeQuery, seasonPick, beginRead, season]);
   // Every change of Who re-reads the count (the server's one audience — never a sum in the browser: two teams can
   // share a family). A tick waits a moment, so a run of ticks is one read.
   const ticking = season ? sKind !== 'season' && sKind !== 'season_families' : kind === 'teams';
