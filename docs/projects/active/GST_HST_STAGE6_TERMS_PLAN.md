@@ -180,6 +180,10 @@ questions.
 > - **L-c, parts 2 and 3 — NOT readable through Stripe's API:** the retry setting (F2; Dashboard → Settings → Billing → Revenue
 >   recovery → Retries) and the customer emails for successful payments and finalized invoices (Dashboard → Settings →
 >   Business → Customer emails). **Owner reads these two in the dashboard (~2 minutes)** — still a 6.7 prerequisite.
+>   **Read 2026-11-17 (owner, walk §533):** retries = **Smart Retries within 2 weeks; if all fail, cancel the subscription** (a first
+>   failed renewal leaves it past due); the customer-emails read was not needed — the owner chose Terms §6 line B ("invoices on the
+>   billing page, and our purchase email"), true either way. Live invoice preview carries the name and the GST/HST number;
+>   **0** live subscriptions predate Nov 6, 2026. **Phone and mailing address: ruled email only, 2026-11-17** (walk part 3 skipped by decision).
 
 **Terms**
 - **O1 — The seller's facts in §1.** Recommend: your legal name; a **domain contact address** (support@ — see P4) rather than the
@@ -539,6 +543,13 @@ files' "6.6" sections).
 > 4. **The price-rise procedure v0.2 is approved.**
 > 5. **"No contracts" reworded before 6.7** → `/marketing` ("No long-term contract — cancel any time"; for yearly, "Cancel any
 >    time; your plan runs to the end of the year you've paid for").
+>    **⚖ Words APPROVED 2026-11-17 (owner, "I approve all 4 as written", the `/brief do gst-hst` session) — four changes,
+>    copy only, before 6.7:** (1) the trust line "No contracts — cancel anytime" (pricing page, for-clubs, for-leagues, the
+>    pricing cards' free/trial notes) → "No long-term contract — cancel any time"; (2) the fine print "All plans are billed in
+>    CAD. No contracts. No setup fees." (pricing + the four segment pages) → "…No long-term contract. No setup fees."; (3) the
+>    pricing FAQ's yearly answer "No contracts, no penalties." → "Cancel any time; your plan runs to the end of the year you've
+>    paid for."; (4) "cancel anytime" → "cancel any time" wherever a customer reads it (the coach Premium price line, the team
+>    sign-up note), matching the Terms and checkout. "Upgrade or downgrade at any time" holds. Not yet applied to the pages.
 >
 > Owner's own blocking steps (email receiving, the Stripe reads, the contact facts, the breach record): the checkable walk
 > [GST_HST_STAGE6_7_OWNER_STEPS_WALK.html](GST_HST_STAGE6_7_OWNER_STEPS_WALK.html) (ledger §533).

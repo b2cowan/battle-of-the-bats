@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Version** | 0.1 |
-| **Status** | draft — not owner-approved, **not reviewed by a lawyer** |
+| **Status** | **owner-approved 2026-11-17** (walk call C2), **not reviewed by a lawyer** |
 | **Last reviewed** | 2026-11-08 |
 | **Re-verify by** | 2027-11-08, or a trigger: Bill C-36 passes; the first Québec customer (Law 25's confidentiality-incident register); a second person joins the business |
 | **Rests on** | PIPEDA s. 2 (definition), ss. 10.1–10.3, s. 28; Breach of Security Safeguards Regulations SOR/2018-64 ss. 2–6; OPC guidance (sources below) |
@@ -11,6 +11,7 @@
 
 **Change log:** 0.1 · 2026-11-08 · First draft (GST/HST Stage 6 step 6.1). Statute and regulation text read this session [V].
 0.1 · 2026-11-12 · §1 gains "a fraudulent two-step reset"; §3 step 1 gains the account-takeover containment line (Board Ready two-step Part 4).
+0.1 · 2026-11-17 · Owner approved it, with the record as a sheet in the business Google account (§6 decided; sheet started, 16 headings and the "No breaches as of" line, walk part 4).
 
 **No incident data in this repo, ever.** The record itself lives outside it (§6). This file holds the procedure and the
 record's shape only.
@@ -119,7 +120,7 @@ One row per breach.
 **An empty record is a record.** Start it now, with a heading line "No breaches as of [date]", and re-date that line at each
 review.
 
-## 6. Where the record lives — **owner question**
+## 6. Where the record lives — **decided 2026-11-17: option (a), a sheet in the business Google account**
 
 Not in this repo (version-controlled, and read by every assistant). Not in the product's database (a product breach could be the
 incident itself, and staff screens read that database). It needs: only the owner can open it; it survives a lost laptop; it can

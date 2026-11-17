@@ -237,6 +237,8 @@ async function settle() {
       if (mine && inv.created - c.created < 300) continue;
       const { data, error } = await db.from('platform_charge_tax_records').update({ billing_reason: inv.billing_reason })
         .eq('stripe_invoice_id', inv.id).is('billing_reason', null).select('invoice_number');
+      // An old record the guard (mig 451/478) freezes, such as another test's leftover from before 6.4, is not the walk's: skip it.
+      if (error && /keeps what it recorded/.test(error.message)) { console.log(`  (skipped ${inv.id}: an older record the tax-record guard will not change)`); continue; }
       die('settle', error);
       for (const r of data ?? []) { n++; ok(`${r.invoice_number ?? inv.id}: ${inv.billing_reason}`); }
     }

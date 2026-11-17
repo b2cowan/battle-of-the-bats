@@ -85,6 +85,34 @@ cancel-and-refund right accepted as the cost ("a small cost and an expectedly ve
 purchase (a yearly plan in full) if a coach cancels within the window, not a part-month. Revisit with L14 (incorporating
 removes the gap) or if consumer sales grow.
 
+## Email only, to start? (owner question 2026-11-17, walk part 3 — phone and mailing address)
+**Asked:** can we launch with email as the only contact method, with the Stripe invoice address reading "Ontario, Canada"?
+- **Only one rule in the stack actually asks for a phone and a premises address: O. Reg. 17/05 s. 32 item 2** (read in primary
+  text 2026-11-08, above) — and only toward an **individual buyer** (a coach buying for themselves), on an internet agreement
+  over $50, before the purchase and in the copy. It lists "the telephone number" and "the address of the premises" as separate
+  items and "other ways … such as … e-mail" as a third; email alone covers only the third.
+- **The remedy is the same bounded one the owner already accepted for the name (O1′):** the individual buyer may cancel until
+  7 days after the copy and be refunded. A club is not a consumer. So email-only is the **same class of known gap**, not a
+  new kind of exposure; it is a choice, not a breach that closes the business.
+- **CASL sender identification** (mailing address + a contact) applies to commercial electronic messages. Every email we send
+  today is treated as a service/transactional message (`CASL_PURCHASE_DETAILS_EMAIL.md`, `CASL_LATE_BILL_EMAIL.md`), so it is
+  **not triggered by the accounts' emails**. It starts to apply the day we send anything promotional (a newsletter, a
+  "new features" blast) — at which point a mailing address is mandatory, not optional.
+- **PIPEDA** (privacy officer contact): Schedule 1, 4.8.2(a) asks for "name or title, and the address" of the accountable
+  person; privacy@ is a defensible address; a mailing line is recommended, not required (privacy draft §2 note, P1).
+- **GST/HST invoice rules** need name, date, total, and the registration number from $100 — **no address and no phone**
+  (`docs/agents/accounting/GST_HST_RETURN_LINES.md` documentation tiers; `/accounting` owns it).
+- **Stripe** (docs.stripe.com/receipts, read 2026-11-17 via search snippet, page itself not opened): receipts need a legal
+  business name, a customer-support address, a support email and a privacy-policy URL; the phone is optional and can be left
+  off invoices. The live account's current public address is only "Ontario, Canada", so whether that satisfies Stripe's
+  "support address" is **unconfirmed** (the owner's dashboard shows it printing that way today).
+- **CPA 2023 still not in force** as of 2026-11-17 (searched; no proclamation found) — so the 2002 Act's items above are the
+  live rule. Re-check before any coach plan's terms are published.
+- **Recommendation:** launching on email only is a reasonable, reversible owner call **if** the Terms and the purchase email
+  stop promising a phone and mailing address they do not carry (today the Terms §1 draft has blank `[phone]` and
+  `[mailing address]` lines, the privacy draft §2 a `[mailing address]` line; the purchase email already drops both lines).
+  Cheapest fix when there is a first coach buyer: a VoIP number and a mailbox-store street address (prices not researched).
+
 ## Sources
 - [O. Reg. 17/05, Word copy from e-Laws](https://www.ontario.ca/laws/docs/050017_e.doc) — s. 32 read 2026-11-08
 - [Business Names Act, R.S.O. 1990, c. B.17, Word copy from e-Laws](https://www.ontario.ca/laws/docs/90b17_e.doc) — ss. 1.1(4), 2(2), 2(6), 4(4) read 2026-11-08 (the copy's text came through garbled; re-read before relying on exact words)

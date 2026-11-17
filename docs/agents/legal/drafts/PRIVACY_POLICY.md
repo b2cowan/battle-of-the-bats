@@ -9,6 +9,7 @@
 | **Backlog** | L2 (with L9 findings); children's consent wording (L5) and CASL lawful basis (L6) are referenced, not settled |
 
 **Change log**
+- 0.3 · 2026-11-17 · **Email only, by owner ruling:** §2 and §15 list only privacy@fieldlogichq.ca; the mailing-address line is gone.
 - 0.3 · 2026-11-17 · Club Communications Stage 1, Session 1 (`docs/agents/legal/CLUB_COMMUNICATIONS_STAGE1.md` §4 and the
   2026-11-17 addendum; **text goes live only with the promote that puts migrations 492 and 493 on production**). §5: the
   paragraph on emails a club sends (what the record keeps, no address, who reads it). §9: the owner-ruled clock (2026-11-17):
@@ -56,8 +57,8 @@
   reminder email. §9: how long the answers and notes are kept. **Rewritten 2026-11-14 for One attendance record** (the answer is the player's attendance, a coach can change it, nothing clears on a new day, the clean-up never deletes an answer). New finding 11 (the in-app bell lines have no retention clock). Read against
   `FAMILY_ANSWERS_AND_REMINDER_PRIVACY.md`.
 
-> **How to read this draft.** `[square brackets]` = a fact the owner fills in (only the mailing address is
-> left, and that one is optional — §2 note). `> NOTE` blocks are for the owner and are deleted before publication. The law this is written to is **PIPEDA**
+> **How to read this draft.** `[square brackets]` = a fact the owner fills in (none are left since the 2026-11-17
+> email-only ruling dropped the mailing address — §2 note). `> NOTE` blocks are for the owner and are deleted before publication. The law this is written to is **PIPEDA**
 > (Canada's federal private-sector privacy law, still in force — its proposed replacement, Bill C-36, was introduced in June
 > 2026 and is not law). Ontario has no separate private-sector privacy law for this business. Québec: not offered (§14).
 > **Facts marked** [V] were opened in the 2026-11-08 session; [H] came from a helper's census that day, cited lines opened
@@ -84,7 +85,6 @@ we hold personal information in **two different roles**, and this policy keeps t
 The **Privacy Officer, FieldLogicHQ** is responsible for this policy and for how we handle personal information.
 
 - Email: **privacy@fieldlogichq.ca**
-- Mail: **[mailing address]**
 
 Questions, requests and complaints go here (see §11).
 
@@ -92,7 +92,8 @@ Questions, requests and complaints go here (see §11).
 > "the name or title, and the address" of the accountable person "to whom complaints or inquiries can be forwarded" — a title
 > satisfies the first half. "Address" is not defined: privacy@ is an address complaints can be forwarded to, so the email
 > alone is a defensible reading; the mailing line is **recommended, not required** (it is the conservative reading, and the
-> Commissioner may write by mail). If kept, it is the same mail-service address as the Terms §1, never the home address.
+> Commissioner may write by mail). **Owner ruled 2026-11-17: email only — the line is removed.** Add it back, as the same
+> mail-service address the Terms would use (never the home address), if a regulator or complainant asks for a postal address.
 > PIPEDA 4.1.2 adds one duty: the identity of the designated person is "made known upon request" — to a person who asks,
 > not on the page.
 > **privacy@fieldlogichq.ca must exist before publication** (forwarding into the business Gmail is enough, P4).
@@ -570,14 +571,14 @@ This policy is written for Canada. FieldLogicHQ is **not currently offered in Qu
 
 ## 15. Contact
 
-Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca · [mailing address]
+Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca
 
 ---
 
 ## Before this can be published (owner — delete this section on publication)
 
 **Owner, before 6.7:**
-- P1 · privacy@fieldlogichq.ca working; the mailing address (shared with the Terms §1) if you keep that line (§2 note).
+- P1 · privacy@fieldlogichq.ca working. (The mailing address was dropped by the 2026-11-17 email-only ruling — §2 note.)
 - P3 · record the acceptance date of each supplier's terms in `LEGAL_FACTS.md` (mechanisms already recorded there).
 - P6 · approve `BREACH_PROCEDURE.md`, choose where the record lives, and start it.
 - (P2, P4, P5 are done: region, Gmail named, encryption wording read. P7 is built, `45c134bea`.)

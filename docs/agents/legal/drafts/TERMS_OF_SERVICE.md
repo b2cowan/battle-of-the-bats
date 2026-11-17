@@ -41,8 +41,11 @@
   "Card" becomes "payment method" in §6, §7, §8 and §20 (3), and "resubscribe" becomes "reactivate" in §9, matching the
   product's words. Still a draft: the version stays 0.3.
 
-> **How to read this draft.** `[square brackets]` = a fact the owner must supply (only the phone and mailing address are left
-> — no personal name, by ruling O1′ — and the one Stripe choice in §6). A `> NOTE` block is for the owner and is deleted before publication.
+- **0.3 · 2026-11-17 · Email only, by owner ruling.** §1 lists only the support email: the phone and mailing-address lines are
+  gone, and a plain sentence says email is how we answer. Nothing else in the customer text named either. Notes updated to match.
+
+> **How to read this draft.** `[square brackets]` = a fact the owner must supply (none are left — the Stripe receipts choice in §6 was
+> settled 2026-11-17 as line B; the phone and mailing address were dropped by the 2026-11-17 email-only ruling — no personal name either, by ruling O1′). A `> NOTE` block is for the owner and is deleted before publication.
 > Everything else is the customer-facing text, in plain Canadian English so a club treasurer can follow it.
 > **Facts marked** [V] were opened in the 2026-11-08 session; [H] were handed over by the Stage 6 plan.
 
@@ -54,8 +57,8 @@
 "us"). You can reach us at:
 
 - Email: **support@fieldlogichq.ca**
-- Telephone: **[phone]**
-- Mail: **[mailing address]**
+
+Email is how we answer questions, requests and notices. We reply to each message.
 
 These Terms of Service ("Terms") are the agreement between us and you when you create an account, use FieldLogicHQ, or
 buy a plan. "You" means the person accepting these Terms and, if you accept them for a club, league, association or
@@ -70,9 +73,11 @@ Our [Privacy Policy](/privacy) explains how we handle personal information.
 > for that purchase — a yearly plan in full, not a part-month (remedy per the law-firm pointer; the Act's ss. 40 and 96 not
 > read). The owner accepts it: rare and small at this scale. Revisit if incorporating (L14 — the corporation's name would
 > then fill item 1 with no personal name), or if consumer sales grow. Detail: `ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md` §
-> "The seller's identity without personal details". Clubs are not consumers; nothing changes for them. Still owed: a phone
-> line (a VoIP number is fine) and a mail service's street address in Ontario (item 2's "premises" wording is a weaker fit
-> for a mailbox — same accepted remedy). **support@fieldlogichq.ca must exist before publication**
+> "The seller's identity without personal details". Clubs are not consumers; nothing changes for them. **⚖ EMAIL ONLY RULED
+> 2026-11-17 (owner):** no phone and no mailing address at launch. Same accepted remedy as the name: s. 32 item 2 lists the
+> telephone number and the premises address, so a consumer buyer may cancel until 7 days after the copy and be refunded
+> (`ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md` § "Email only, to start?"). Add them when the first coach buys, or before any
+> promotional email (CASL then requires a mailing address). **support@fieldlogichq.ca must exist before publication**
 > (forwarding into the business Gmail is enough). The product already uses **hello@fieldlogichq.ca** as its reply-to and
 > contact address [V `lib/email-sender.ts:194`, `lib/online-payment-words.ts:1129`] — make sure it receives mail too, or
 > point those at support@ in 6.2. **Do not put any owner name, phone or address in this repo**; they go in the product at 6.7.
@@ -173,20 +178,16 @@ We may suspend access that puts other customers, children, or the platform at ri
   next invoice changes with it. A change in a tax rate is not a price change under §8.
 - **Payment.** Payments are processed by Stripe. We do not see or store your full card number. Your payment method stays on file
   with Stripe so your plan can renew.
-- **[STRIPE CHOICE — keep one line, delete the other]**
-  - *(A — Stripe's receipt and invoice emails are on)* **Receipts and invoices** are emailed to the account owner. Your
-    invoices, which show the tax charged, are always available from your billing page.
-  - *(B — they are off)* **Your invoices**, which show the tax charged, are always available from your billing page. We also
-    email the account owner the details when you start a plan or move up to a higher one (§16).
+- **Your invoices**, which show the tax charged, are always available from your billing page. We also email the account owner
+  the details when you start a plan or move up to a higher one (§16).
 
 > NOTES —
 > 1. **No price appears in this document on purpose**: prices have one home (the pricing page, kept matched to the Plan &
 >    Pricing Facts).
 > 2. **"Shown before you pay" is true only where taxed checkout runs** — GST/HST Stage 2, on dev [H]. Publication rides the
 >    release that carries taxed checkout to production (Stage 6 plan §6.7), or this line says less.
-> 3. **The Stripe choice** (the only one left in this draft): the owner reads Stripe Dashboard → Settings → Business →
->    Customer emails ("successful payments" and "finalized invoices") before 6.7, and keeps line A or B. Either way the
->    second half is already true: our billing page opens Stripe's portal with **invoice history switched on** in our own
+> 3. **The Stripe choice — RESOLVED 2026-11-17 (owner, walk call C1): line B kept, line A deleted** ("recommended; true either way, no
+>    dashboard read needed"). The invoices half is true our billing page opens Stripe's portal with **invoice history switched on** in our own
 >    portal settings [V `lib/stripe-portal-settings.ts` on production: `invoice_history: { enabled: true }`]. Line B leans on
 >    the §16 purchase email, which 6.4 builds.
 > 4. `/accounting` read §6–§8 and §16 on 2026-11-08 — see "From the `/accounting` read" at the bottom.
@@ -258,7 +259,9 @@ unused part** of the period you paid for, including the tax on it, and send you 
 >    the plan past due and tells the owners [V `lib/billing-webhook-handler.ts:887–935`], a past-due plan keeps working
 >    [V `lib/org-billing-access.ts:30–33`], and only Stripe giving up ends it. "May end" stays true if the live setting leaves a
 >    plan past due. Read F2 anyway before 6.7: in test mode Stripe's retries ended a plan earlier than the date we had told the
->    customer [H].
+>    customer [H]. **F2 read 2026-11-17 (owner, live Stripe, walk A1/A2): Smart Retries within 2 weeks; if all retries fail, Stripe
+>    cancels the subscription** (and the first failed renewal leaves it past due). The paragraph holds: "may end" is true and a
+>    plan ends only when Stripe gives up.
 > 5. **Refund when we end a plan (O3, ruled)** — by hand at this scale, through platform admin's refund tool, which issues the
 >    credit note. **Never a bare card refund in Stripe's dashboard**: without a credit note our own GST/HST is not reduced
 >    (`/accounting`, `CREDIT_NOTES_ON_REFUNDS.md` §Finding and closeout 1 [V]). **"The unused part" = daily pro-rata of the
@@ -376,8 +379,8 @@ agreement.
 > and can be printed. That is "a copy in a form the consumer can keep and print". The conservative alternative (the Terms text
 > in or attached to every email) costs a build and makes a long email for a remedy that is a consumer's cancel right, bounded at
 > this scale. **Two gaps carried:** the regulation's copy section (O. Reg. 17/05 s. 33) was not read in the primary text — e-Laws
-> and CanLII refused the fetch again 2026-11-16 (lawyer's-eye list); and the phone and business address in §1 are still owed,
-> so until the owner fills them the copy lacks two items (O1′'s accepted remedy).
+> and CanLII refused the fetch again 2026-11-16 (lawyer's-eye list); and the phone and business address are left out by the
+> owner's email-only ruling of 2026-11-17, so the copy lacks two items (the same accepted remedy as O1′).
 
 ## 17. Where you are
 
@@ -493,7 +496,8 @@ Above the text a page shows only its title and one line below it. Dates are writ
   > This is an earlier version, in effect from March 1, 2027 to August 31, 2027. [Read the current version.]
 - **(4c) Draft banner**, dev preview only, above the title, one line:
   > Draft — not published. The text can change before it goes live.
-- **(4d) A fact still blank** in the preview, in place of `[phone]` and `[mailing address]`. The mark keeps the fact's name so a
+- **(4d) A fact still blank** in the preview, in place of `[phone]` and `[mailing address]` (none are blank since the
+  2026-11-17 email-only ruling; the rule stays for any future blank). The mark keeps the fact's name so a
   reader knows what is missing:
   > [phone — to be filled]  ·  [mailing address — to be filled]
 
@@ -618,11 +622,11 @@ open. Read them again."
 5. Taxed checkout on production (§6 "shown before you pay"), and the 6.4 migration applied there.
 
 **Owner, before 6.7:**
-- O1 · the phone and mailing address (§1; the seller's identity is ruled — O1′, no name). Until they are filled, the purchase
-  email simply leaves both lines out.
+- ~~O1 · the phone and mailing address~~ — **ruled 2026-11-17: email only** (§1 reworded; the seller's identity is ruled — O1′, no
+  name). The purchase email already leaves both lines out. Revisit at the first coach buyer or the first promotional email.
 - **support@fieldlogichq.ca receiving mail.** These Terms name support@ in five places; the product shows **hello@** everywhere
   today (ruling Q3), and one edit at 6.7 moves it to support@. If support@ is not working by then, these Terms say hello@ instead.
-- The two Stripe dashboard reads: customer emails (the §6 choice) and the retry setting (F2, §8 note 4).
+- ~~The two Stripe dashboard reads~~ — **done 2026-11-17:** the §6 choice is line B (walk call C1); the retry setting is read (F2, §8 note 4).
 - ~~Approve `PRICE_CHANGE_NOTICE_PROCEDURE.md`~~ — approved 2026-11-16.
 - Your own steps are one checkable walk: `docs/projects/active/GST_HST_STAGE6_7_OWNER_STEPS_WALK.html` (ledger §533).
 - **"No contracts" on the marketing pages** (`/legal` 6.6, the item the 6.2 session left for it): the pricing page, the three

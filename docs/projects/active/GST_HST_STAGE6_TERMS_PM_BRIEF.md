@@ -66,6 +66,22 @@ Plan: [GST_HST_STAGE6_TERMS_PLAN.md](GST_HST_STAGE6_TERMS_PLAN.md) · Written 20
   - nothing a Québec account already has changes.
 - Order: two builds (the email first; then the reminder and Québec), then the walk.
 
+## Step 6.6 — the reviews, and two fixes before publishing (2026-11-16)
+- **The reviews ran** (accounting, legal, help, demos). The Terms and Privacy Policy drafts now match what the product does;
+  the help no longer says cancelling switches a plan off at once.
+- **Two fixes, ruled by the owner, built before publication:**
+  - **The yearly reminder keeps its date, amount and cancel line.** Today a staff edit of the email's template could delete
+    them. After the fix the product writes them after the staff text, as the purchase email already does. Customers see no
+    change.
+  - **A move up during a free trial gets its email.** Today nothing goes, and the trial email still quotes the old plan's
+    first payment. After the fix, every owner is told the new plan, "nothing charged today", and the new first payment.
+- **First, a test in Stripe's test mode:** what Stripe does when a trialing plan moves up. It decides how the second fix is
+  built, and shows whether the move window tells a trialing club the wrong amount "due today".
+- **Success:** no customisation can drop the reminder's date, amount or cancel line; a customer never gets two buttons; every
+  move up sends exactly one details email with the right first payment.
+- **The owner's own steps** (email receiving, two Stripe readings, a phone and address, the breach record) are one checkable
+  walk (ledger §533).
+
 ## Why it matters
 - Today the Terms bind nobody: nothing records that anyone agreed to them, and they aren't published.
 - A coach buying a yearly Coaches Portal is a consumer under Ontario law, which requires a copy of the agreement within 15 days.

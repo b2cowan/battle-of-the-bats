@@ -1,5 +1,5 @@
 # FieldLogicHQ — Legal Facts
-**Last updated:** 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
+**Last updated:** 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
 Stage 6 step 6.1). Seeded 2026-11-04 from a repo census — each fact carries its source; re-open the source before a draft
 rests on it.
 
@@ -86,8 +86,9 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
     honestly in the privacy policy §6 (P4).
 - **Supabase encryption** (its own security page, [supabase.com/security](https://supabase.com/security), read 2026-11-08): "All
   customer data is encrypted at rest with AES-256 and in transit via TLS." Used in the privacy policy §10.
-- **Breach procedure and record:** `BREACH_PROCEDURE.md` v0.1 (2026-11-08, draft, owner approval owed). Where the record lives:
-  **[owner to choose — record the place here, never its contents]**.
+- **Breach procedure and record:** `BREACH_PROCEDURE.md` v0.1, **owner-approved 2026-11-17**. The record lives in **a spreadsheet in
+  the business Google account** (two-step sign-in checked on, shared with no one; started 2026-11-17 with the "No breaches as of"
+  line). Place only — never its contents.
 - **Payments:** Stripe Connect direct charges; **the club is the merchant of record**; no card data stored.
   The fee is legally FieldLogicHQ's charge to the club (`BUSINESS_DECISIONS.md` T3, ~L243).
 
