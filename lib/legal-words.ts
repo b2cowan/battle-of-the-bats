@@ -1,7 +1,8 @@
 /**
  * The words the legal pages and the links to them show (GST/HST Stage 6 step 6.2). Every string here is `/legal`-owned:
  * they are copied from the Terms draft §20 "Page words" block (items 4a–4f, `docs/agents/legal/drafts/TERMS_OF_SERVICE.md`),
- * never invented by the build. A change of wording is a `/legal` edit to that block first, then one edit here.
+ * never invented by the build. Since 6.7 (2026-11-17) the draft is deleted and this file is the words' one home; a change of
+ * wording is a `/legal` pass, then one edit here.
  *
  * One constant per title, so a spelling change is one edit (no spelling-gate rule: the owner has not ruled to widen the gate).
  * Dates are written with `formatStoredDate(..., { longMonth: true })` ("November 8, 2026") by the caller — a legal page is a

@@ -7,6 +7,13 @@
  * entry below gains `{ version, sha256 }`. A published version is FROZEN by the build: its sha256 is the hash of the file's text
  * with line endings normalized to LF, and an edit fails `tests/unit/legal-documents.test.ts`.
  *
+ * ── 6.7, written 2026-11-17 ─────────────────────────────────────────────────────────────────────────────────────────────────
+ *   Both documents' owner-approved 0.3 text is frozen as `2026-11-17` (the draft filter's output, so the words are the approved
+ *   ones minus every owner note) and the drafts are deleted. ⚠ The version is named for the day it takes effect, and the owner
+ *   ruled (2026-11-17) that it is the RELEASE DAY. If the promote that carries `LEGAL_PAGES_PUBLISHED = true` to production is
+ *   not on 2026-11-17, rename BOTH files to the promote day and change the six date strings below in the same commit, before
+ *   promoting. The text, so the sha256, does not change. After production serves a version, never rename it again.
+ *
  * ── How 6.3 (acceptance at every door) uses the two values — build it there, NOT here ──────────────────────────────────────
  *   · `currentVersion(doc)` is what a door records when someone accepts: the dated `current` when published, `'draft'` in the
  *     preview, `null` when the pages are off (record nothing, show no tick box line).
@@ -39,19 +46,31 @@ export interface PublishedVersion {
 }
 
 export interface LegalDocument {
-  /** The draft file, repo-relative — the preview reads it until 6.7. */
-  draftPath: string;
-  /** Every published version (empty until 6.7). */
+  /** The draft file, repo-relative, while a version is being written — the dev preview reads it. null when there is no draft
+   *  (since 6.7, 2026-11-17: the approved text is the frozen version file and the draft was deleted). A later change writes a new
+   *  draft in `docs/agents/legal/drafts/` and sets this again. */
+  draftPath: string | null;
+  /** Every published version. */
   published: PublishedVersion[];
-  /** The version in force; null until 6.7. */
+  /** The version in force. */
   current: string | null;
-  /** The oldest version still treated as accepted; null until 6.7. */
+  /** The oldest version still treated as accepted. */
   oldestAccepted: string | null;
 }
 
 export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
-  terms: { draftPath: 'docs/agents/legal/drafts/TERMS_OF_SERVICE.md', published: [], current: null, oldestAccepted: null },
-  privacy: { draftPath: 'docs/agents/legal/drafts/PRIVACY_POLICY.md', published: [], current: null, oldestAccepted: null },
+  terms: {
+    draftPath: null,
+    published: [{ version: '2026-11-17', sha256: 'b5f8e3d6428cc4709908b4bb199c95ea4ee47df993300589dfc29a5cca877eba' }],
+    current: '2026-11-17',
+    oldestAccepted: '2026-11-17',
+  },
+  privacy: {
+    draftPath: null,
+    published: [{ version: '2026-11-17', sha256: '3a64e4d3c711372c7f40f87dda042e1ac5cbd8f7d7e448fb7ef0d299b064c76f' }],
+    current: '2026-11-17',
+    oldestAccepted: '2026-11-17',
+  },
 };
 
 const VERSION_RE = /^\d{4}-\d{2}-\d{2}$/;

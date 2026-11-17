@@ -22,8 +22,9 @@ describe('the registry', () => {
   for (const doc of LEGAL_DOC_KEYS) {
     const entry = LEGAL_DOCUMENTS[doc];
 
-    it(`${doc}: the draft file exists`, () => {
-      assert.ok(sourceExists(entry.draftPath), entry.draftPath);
+    it(`${doc}: a named draft file exists, and a document with no published version has one`, () => {
+      if (entry.draftPath !== null) assert.ok(sourceExists(entry.draftPath), entry.draftPath);
+      else assert.ok(entry.published.length > 0, `${doc} has neither a draft nor a published version`);
     });
 
     it(`${doc}: every published version is a dated, frozen file`, () => {

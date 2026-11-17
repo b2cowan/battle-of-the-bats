@@ -11,7 +11,9 @@ import { readCode, readSource } from './_source-code.ts';
  */
 describe('the filter on the real drafts', () => {
   for (const doc of LEGAL_DOC_KEYS) {
-    const out = filterDraftForPreview(readSource(LEGAL_DOCUMENTS[doc].draftPath));
+    const draftPath = LEGAL_DOCUMENTS[doc].draftPath;
+    if (draftPath === null) continue; // no draft in progress (the published version is the text; legal-documents.test.ts holds it)
+    const out = filterDraftForPreview(readSource(draftPath));
 
     it(`${doc}: no owner note reaches the preview`, () => {
       assert.deepEqual(filterMarkers(out), []);

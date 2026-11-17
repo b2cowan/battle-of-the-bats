@@ -105,11 +105,12 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   settled before one is sent (`BUSINESS_DECISIONS.md` ~L3537).
 
 ## What does NOT exist
-- No **published** FieldLogicHQ Terms of Service, privacy policy, cookie notice or subprocessor list (drafts of the
-  Terms and the privacy policy exist — v0.1 2026-11-05, **v0.2 2026-11-08** with the owner's Stage 6 rulings — see the index; the
-  privacy draft's §6 doubles as the first subprocessor list).
-- No legal links in the site footer; the account page leaves Terms and Privacy out on purpose (owner
-  2026-07-20: omit rather than link a page that 404s).
+- No cookie notice and no separate subprocessor list (the Privacy Policy's §6 is the first one).
+- ~~No published Terms of Service or privacy policy; no legal links.~~ **Superseded 2026-11-17 (Stage 6 step 6.7):** both are
+  published in code as version 2026-11-17 (frozen files in `lib/legal-documents/`, the switch `LEGAL_PAGES_PUBLISHED` on), with
+  the links in the site footer, the account menu and page, and the sign-in and sign-up cards, and acceptance at every door. **On
+  production from the promote that carries the switch** (the release history records the day). The product's contact address
+  is support@ from step 6.7 (was hello@).
 - ~~No "I agree" at account or organization signup.~~ **Superseded 2026-11-16 (6.6 review):** the accept step is built
   (Stage 6 step 6.3, walked §506) and held behind the legal-pages switch until 6.7 — every account door refuses without the
   tick; the record is append-only (account id, email as text, both versions, the exact box sentence, door, time; **no IP**;

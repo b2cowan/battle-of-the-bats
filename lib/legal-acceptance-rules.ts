@@ -8,8 +8,9 @@
  * who never sees any of it is `lib/legal-acceptance-exempt.ts`.
  *
  * ⚖ The words are `/legal`'s, copied from the Terms draft §20 (`docs/agents/legal/drafts/TERMS_OF_SERVICE.md`), items (1), (2)
- * and (5). A change of wording is a `/legal` edit there first, then one edit here; `tests/unit/legal-acceptance.test.ts` reads
- * the draft and fails when the box sentence drifts from item (1). The draft writes a straight apostrophe; the product sets
+ * and (5). Since 6.7 (2026-11-17) the draft is deleted and THIS file is the words' one home; a change of wording is a `/legal`
+ * pass, then one edit here. While a new Terms draft exists `tests/unit/legal-acceptance.test.ts` reads it and fails when the
+ * box sentence drifts from item (1). The draft writes a straight apostrophe; the product sets
  * the typographic one (’), as every other product string does — the test treats the two as the same letter.
  */
 

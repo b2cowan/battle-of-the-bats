@@ -13,6 +13,8 @@ import { filterDraftForPreview } from './legal-draft-filter';
  */
 export function readDraftForPreview(doc: LegalDocKey, env: Record<string, string | undefined> = process.env): string | null {
   if (legalPagesMode(env) !== 'preview') return null;
-  const raw = readFileSync(path.join(process.cwd(), LEGAL_DOCUMENTS[doc].draftPath), 'utf8');
+  const draftPath = LEGAL_DOCUMENTS[doc].draftPath;
+  if (draftPath === null) return null; // no draft in progress
+  const raw = readFileSync(path.join(process.cwd(), draftPath), 'utf8');
   return filterDraftForPreview(raw);
 }

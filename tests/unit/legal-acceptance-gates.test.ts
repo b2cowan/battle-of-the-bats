@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { createElement, type ReactElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { billingTestLoader } from './_billing-test-loader.ts';
+import { LEGAL_DOCUMENTS } from '../../lib/legal-documents.ts';
 import {
   ACCEPTANCE_BOX_TEXT,
   ACCEPT_ROUTE_DOORS,
@@ -335,10 +336,14 @@ describe('the callers (C3/C4): every caller of a gated route sends through the T
 // ════════════════════════════════════════════════════════════════ 5. the window, the line, the words
 
 /** The draft's §20 lines, flattened: quote marks and link brackets off, one apostrophe, one space. */
-const draft = read('docs/agents/legal/drafts/TERMS_OF_SERVICE.md').replace(/^\s*> ?/gm, '').replace(/[[\]]/g, '').replace(/\s+/g, ' ').replace(/’/g, "'");
+// Since 6.7 (2026-11-17) the product's words are their own one home and there is no draft; a later Terms draft (the registry's
+// `draftPath`) brings the comparison back, so a /legal edit to §20 fails loudly again.
+const termsDraftPath = LEGAL_DOCUMENTS.terms.draftPath;
+const draft = termsDraftPath === null ? null : read(termsDraftPath).replace(/^\s*> ?/gm, '').replace(/[[\]]/g, '').replace(/\s+/g, ' ').replace(/’/g, "'");
 const flat = (s: string) => s.replace(/’/g, "'");
 
-describe('the words (§20 (3) and (5d)): copied exactly from the Terms draft', () => {
+describe('the words (§20 (3) and (5d)): copied exactly from the Terms draft', { skip: draft === null ? 'no Terms draft in progress' : false }, () => {
+  if (draft === null) return;
   it('(3) the paid-plan line, and its trial sentence', () => {
     assert.ok(draft.includes(flat(PLAN_LINE_WORDS.lead + PLAN_LINE_WORDS.terms + PLAN_LINE_WORDS.end)), 'the line drifted from §20 (3)');
     assert.ok(draft.includes(flat(PLAN_LINE_WORDS.trial.trim())), 'the trial sentence drifted from §20 (3)');

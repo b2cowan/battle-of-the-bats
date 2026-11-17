@@ -14,6 +14,7 @@ import {
   mirroredTermsVersion,
 } from '../../lib/legal-acceptance-rules.ts';
 import { recordLegalAcceptance, writeFixtureAcceptance } from '../../scripts/lib/record-legal-acceptance.mjs';
+import { LEGAL_DOCUMENTS } from '../../lib/legal-documents.ts';
 
 /**
  * ACCEPTANCE OF THE TERMS — the engine (GST/HST Stage 6 step 6.3, Chunk A; rulings R1–R10 of 2026-11-09). Behaviour, run for
@@ -65,8 +66,10 @@ describe('isAccepted: the truth table', () => {
 // ---------------------------------------------------------------- the words and the schema agree
 
 describe('the box sentence and the door list have one home each', () => {
-  it('the box text is Terms §20 (1) with the link markup stripped (read from the draft until 6.7, so a /legal edit fails loudly)', () => {
-    const draft = readFileSync(resolve(root, 'docs/agents/legal/drafts/TERMS_OF_SERVICE.md'), 'utf8');
+  it('the box text is Terms §20 (1) with the link markup stripped (read from a Terms draft while one exists, so a /legal edit fails loudly; since 6.7 the product words are their own one home)', (t) => {
+    const draftPath = LEGAL_DOCUMENTS.terms.draftPath;
+    if (draftPath === null) { t.skip('no Terms draft in progress'); return; }
+    const draft = readFileSync(resolve(root, draftPath), 'utf8');
     const item1 = draft.slice(draft.indexOf('**(1) Account creation'), draft.indexOf('**(2) The sign-in screen'));
     const line = item1.split(/\r?\n/).find(l => l.startsWith('> ☐ '));
     assert.ok(line, 'the draft §20 (1) box line was found');
