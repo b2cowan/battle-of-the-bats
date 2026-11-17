@@ -1266,11 +1266,11 @@ function EndPlanNowWindow({ orgId, orgName, hasStripe, ending, onDone, onClose }
     <RecordWindow
       title={`End the plan for ${orgName} today`}
       sentence={failed ? <>{failed}</> : <>
-        This ends the plan today{daysLost > 0 ? <>, {daysLost} day{daysLost === 1 ? '' : 's'} before the period it paid for is over</> : null}. Nothing is refunded.
+        This ends the plan today{daysLost > 0 ? <>, {daysLost} day{daysLost === 1 ? '' : 's'} before the period it paid for is over</> : null}. Ending it refunds nothing by itself: fraud, abuse and disputed charges get no refund. If the club did nothing wrong, refund the unused part afterwards with Refund this charge on its Money tab, never from Stripe’s own dashboard, so a credit note is issued.
         {' '}{orgName} is suspended now.{archivedLine(pre)} <strong>This cannot be put back</strong>: the owner would have to buy again.
       </>}
       whyPlaceholder="Fraud, abuse, a chargeback…"
-      footNote={`Ends immediately. No refund. This cannot be put back.${hasStripe ? ' Reaches Stripe.' : ''}`}
+      footNote={`Ends immediately. Refunds nothing by itself; a refund when it is not the club’s doing goes through its Money tab. This cannot be put back.${hasStripe ? ' Reaches Stripe.' : ''}`}
       cancelLabel="Keep it"
       confirmLabel="End the plan now"
       danger

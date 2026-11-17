@@ -94,7 +94,7 @@ export const PLAN_BILLING_WORDS = {
     status: subscriptionStatusLabel,
     payment: 'Payment method & invoices', openingPortal: 'Opening payment portal…', openingCheckout: 'Opening checkout…',
     paymentHelp: 'Open the secure billing portal for payment methods, invoices, and billing details.',
-    pastDue: 'Your last payment didn’t go through. Everything stays open during the grace period — update your card in Payment method & invoices to keep it that way.',
+    pastDue: 'Your last payment didn’t go through. Everything stays open during the grace period — update your payment method in Payment method & invoices to keep it that way.',
     scheduled: (label: string, iso: string | null) => `Moves to ${label}${iso ? ` on ${day(iso)}` : ' at renewal'}.`,
     scheduledFrom: (iso: string | null) => `From ${iso ? formatStoredDate(iso, { withYear: false }) : 'renewal'}`,
     keep: (label: string) => `Keep ${label}`,
