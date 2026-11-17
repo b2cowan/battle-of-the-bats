@@ -3,7 +3,7 @@ import { withObservability } from '@/lib/observability';
 import { isUuid } from '@/lib/utils';
 import { generateDrafts, seatCounts, shareTargets, slotsTeamsCanHold, teamsCanHold } from '@/lib/club-schedule-engine';
 import {
-  addTimeRequest, buildEngineInput, keepingFor, loadSchedule, pricePermitOf, readRequestPrices, readScheduleRequest, repTeamsRefusal, resolveScheduler,
+  addTimeRequest, buildEngineInput, familyOthers, keepingFor, loadSchedule, pricePermitOf, readRequestPrices, readScheduleRequest, repTeamsRefusal, resolveScheduler,
   schedulerRefusal, teamNamer,
 } from '@/lib/club-schedule-server';
 import { datesOffKeepingParks } from '@/lib/club-schedule-permit-rows';
@@ -59,7 +59,10 @@ export const POST = withObservability(async (req: Request) => {
   const { prices, gone } = await readRequestPrices(orgId, permitId, time.blocks);
   if (gone) return gone;
 
-  const built = await buildEngineInput(orgId, { time, settings, teams, storedSlots: loaded?.slots ?? [], permitId, places, prices, keep });
+  // A saved schedule's family (Phase 8): the places the schedule it was added to, or its parts, hold then are never cut,
+  // and their teams then are taken — so a draft never offers what the save would refuse.
+  const family = loaded ? await familyOthers(orgId, loaded.row) : [];
+  const built = await buildEngineInput(orgId, { time, settings, teams, storedSlots: loaded?.slots ?? [], permitId, places, prices, keep, family });
   if (!built.ok) return schedulerRefusal(400, built.code, built.error);
   const { input } = built;
   const nameOf = teamNamer(teams);

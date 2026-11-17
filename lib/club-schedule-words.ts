@@ -1306,3 +1306,27 @@ export const SCHEDULE_COACH_WORDS = {
   budgetCellBill: (money: string) => `the club’s bill ${money}`,
   budgetWas: (money: string) => `was your ${money}`,
 } as const;
+
+// ── Time added as its own part (Phase 8, Session 1 — drawing tab 4; every line to /marketing at the Close) ───────────────
+
+/** [marketing] An added part of a final schedule (plan Phase 8): its line under the page's meta line, the Part filter, the
+ *  slot window's Part row, Needs attention's unbilled note, and the refusals that keep a practice on its own part's bill. */
+export const PART_WORDS = {
+  /** The line under the page's first line, after the part's name and its permits' doors: "Thu, Dec 10 · 14U AA · not sent yet". */
+  metaRest: (dates: string, teams: string, sentOn: string | null) => `${dates} · ${teams} · ${sentOn ? `sent ${sentOn}` : 'not sent yet'}`,
+  /** Three added parts read as one door that opens the Part filter: "Time added Nov 16 and 2 more ›". */
+  metaMore: (label: string, more: number) => `${label} and ${more} more`,
+  /** The part's teams on its line: "14U AA", "14U AA and 15U AA", "4 teams". */
+  metaTeams: (names: readonly string[]) => (names.length === 0 ? 'no teams yet' : names.length <= 2 ? joinWithAnd([...names]) : `${names.length} teams`),
+  partPill: 'Part',
+  everyPart: 'Every part',
+  slotPart: 'Part',
+  /** Needs attention's change row, for a part with no bill yet (drawing tab 4, note 2). */
+  notBilledYet: (label: string) => `${label} isn’t billed yet. You can bill it when you send the changes.`,
+  /** A drop onto another part's practice: it would cross bills. */
+  moveAcrossParts: 'That practice is on another part’s bill, so a team can’t move there. Give it from that part’s own practices.',
+  /** Give it to a team that isn't in the part (the server's refusal; the window lists only the part's teams). */
+  teamNotInPart: (label: string) => `Only the teams in ${label} can be given its time.`,
+  /** The rest of the family holds that team then (a part's practice, or the schedule it was added to). */
+  teamTwiceInFamily: (team: string, where: string) => `${team} already has a practice then, in ${where}.`,
+} as const;

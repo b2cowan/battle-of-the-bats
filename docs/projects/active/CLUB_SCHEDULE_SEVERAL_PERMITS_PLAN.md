@@ -695,6 +695,44 @@ row on the slot) vs a list; 4 Regenerate and Settings… one part at a time; 5 t
 the schedule offered with its used time left out. Drawn defaults to confirm at the walk: Give it to lists only the
 part's teams; "Bill the corrections" absent when the only change is new time; a part may be sent unbilled.
 
+**Storage RULED 2026-11-17: (B), an added part is its own `club_schedules` row** linked to the one it was added to (owner:
+"yes b"), after the 57-row reader census and `/dba` (`docs/agents/db/DB_ARCHITECTURE_REVIEW.md` Finding #52, which holds the
+migration shape). Three rules ruled with it (owner "yes that is fine" / "agree" / "agree"):
+- **A hand-back's "this & future" stops at a part's edge** — one hand-back draws on one bill (a Tuesday series running on into
+  added spring time hands back the fall only; the spring is handed back separately).
+- **Taking off a part that was already sent** credits its practices at Send the changes; the part then leaves the page and the
+  Part filter while its bill and send record are kept (the row stays). An unsent part is simply deleted.
+- **An added part's practices are named "From {parent} · {label}"** on the coach's schedule and the calendar (matching the
+  coach's charge name).
+Existing dev schedules that used the retired Add time keep their rows as they are (pre-customer; no data migration).
+
+**Session 1 BUILT 2026-11-17 — the storage, the family page, clashes across it** (mig 491, applied to DEV 2026-11-17;
+`tests/sql/schedule-parts-fixture.sql` 7/7; prod step in `MANUAL_PROD_STEPS.json`). Decisions it was asked to make:
+- **A part's name is kept by trigger as "{parent} · {label}"**, so every reader that names a schedule (the coach's and the
+  calendar's "From …", house league's "Time from …", the bill's charge, emails, bells, a permit's "used by", the budget's
+  "being billed") names the part with no reader change — the 11-17 ruling "From Fall practices · Time added Nov 16". House
+  league's time window groups a part as its own source under that name (left as is: honest, and it is a separate bill).
+- **Lists hide a part:** the Schedules list folds it into its parent (counts, places, teams, dates widen the band, Changed
+  since sent while unsent); New schedule's "start from" never offers one; the UAT fixture's schedule picks skip them. Find the
+  time counts the asker's whole family as its own time. Build-enforced: `tests/unit/club-schedule-parts-guard.test.ts` (every
+  reader of the table is by id, hides, folds, or says `parts-ok:` why it is right as itself).
+- **A part's address opens the family's page** (the GET reads the parent; the page settles on the parent's address).
+- **Clashes across the family:** the database refuses the same place and start (`club_schedule_slots_family_place_start`) and
+  a team twice (`club_schedule_assert_no_team_twice`, family-wide); the generator and the save never cut a place the family
+  holds then and count the family's teams as booked (`familyOthers` → `cutKeeping` / `engineContext` / `draftToSave`); a hand
+  edit refuses a team the family already has then, in words, and a part's practice goes only to that part's teams. The page
+  marks an overlap as held by the other part. One pure function, `familyClashes` (`lib/club-schedule-family.ts`, tested). The
+  wider "generator blind to OTHER schedules' final open slots" stays the open Used-figure item (not widened).
+- **Fair shares band counts the family** (Handed out, Open, Short, Clashes — drawing tab 1); **The bill** tile and the "Fair
+  shares and the bill" window stay the parent's own bill (tab 4 note 2). By team adds the parts up, narrowed by the Part filter.
+- **The page reads the family; the windows that write keep the parent's view** — Settings…, Bill the teams, Send, the send
+  log — until Session 3's "which part?" questions. An edit goes to the part that owns its slot (its own address and version);
+  a drag never crosses parts; a week's lock or clear reaches every part on screen, one save each.
+- `club_schedule_slots.family_id` has **no FK on purpose** (a second FK to `club_schedules` makes every PostgREST embed of
+  the schedule from a slot ambiguous — twelve readers); /dba #52 amended.
+- **Owed to Session 3:** Send the changes when ONLY a part changed (the page shows Changed since sent and the part's lines,
+  but the send is still the parent's alone). No part can exist before Session 2's Add time, so nothing reaches it until then.
+
 ## 9. Sequencing (recommended)
 
 - **Not straight after 13c.** Three things touch the same screens first:

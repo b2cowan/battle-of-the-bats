@@ -3690,6 +3690,15 @@
     "ordinal_position": 16
   },
   {
+    "table_name": "club_schedule_slots",
+    "column_name": "family_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
     "table_name": "club_schedules",
     "column_name": "id",
     "data_type": "uuid",
@@ -3949,6 +3958,24 @@
     "is_nullable": "NO",
     "column_default": "'each_permit'::text",
     "ordinal_position": 29
+  },
+  {
+    "table_name": "club_schedules",
+    "column_name": "part_of_schedule_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
+    "table_name": "club_schedules",
+    "column_name": "part_label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 31
   },
   {
     "table_name": "diamonds",

@@ -391,6 +391,8 @@
 .slotClash { border-color: rgba(var(--home-amber-rgb), 0.6); box-shadow: 0 0 0 1px rgba(var(--home-amber-rgb), 0.45); }
 /* Moved in this visit — ringed in amber until the next send (specimens 7, 10). */
 .slotMoved, .slotAsked { box-shadow: 0 0 0 2px rgba(var(--home-amber-rgb), 0.7); }
+/* An added part's practice not yet sent (Phase 8, drawing tab 4 note 4): the soft olive of a change that waits to be sent. */
+.slotUnsent { background: var(--home-olive-soft); }
 /* A Sunday in a waiting ask (Stage 11d part B, /design D1): the same amber ring — it waits on someone — AND Hand back's own
    glyph in the chip's corner (`slotAskGlyph`, its own class), so it never reads as a moved slot: a status is never colour
    only. The chip stays the team's. */

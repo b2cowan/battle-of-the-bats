@@ -88,20 +88,27 @@ The sessions below are written for (B). If the owner picks (A), rewrite Sessions
 
 ## Session 1 — the storage, the family page, and clashes across it
 
+> **BUILT 2026-11-17** after the owner's yes to (B) ("yes b") and three rulings (a hand-back stops at a part's edge; a sent
+> part taken off is credited and hidden, never deleted; an added part's practices read "From {parent} · {label}"). What was
+> decided and how: plan Phase 8, "Session 1 BUILT". /dba: Finding #52 (amended: `family_id` has no FK).
+> **Session 2/3 must know:** the page's windows that write (Settings…, Bill, Send, the log) still get the PARENT's view;
+> `familyOthers` + `buildEngineInput({ family })` already make a part's draft avoid the family; a part is inserted with
+> `part_of_schedule_id` + `part_label` only (the trigger writes its name); Send the changes for a part-only change is owed.
+
 After the owner's yes on the storage decision:
 
-- [ ] The migration (under B: the parent link + label + constraints `/dba` asked for), dictionary, snapshots, SQL fixture, prod step recorded.
-- [ ] Every reader from the census does what the census decided (lists hide children; "used by" / "held by" name the parent, or the part —
+- [x] The migration (under B: the parent link + label + constraints `/dba` asked for), dictionary, snapshots, SQL fixture, prod step recorded.
+- [x] Every reader from the census does what the census decided (lists hide children; "used by" / "held by" name the parent, or the part —
       decide with the census; money readers do **not** double count a child's bill against the parent's).
-- [ ] The schedule page reads the family: the meta line (ruling 3; never more than one line), the **Part** filter (built like Facility and Team;
+- [x] The schedule page reads the family: the meta line (ruling 3; never more than one line), the **Part** filter (built like Facility and Team;
       "Every part", the parent's name, each part's label; filters Grid and By team), the slot window's Part row, Give it to limited to that part's
       teams, Needs attention's change row naming the part when it is unbilled (tab 4 of the drawing, note 2).
-- [ ] **Clashes across the family:** generating or hand-editing a part treats the rest of the family's slots as taken — same place and hour, and
+- [x] **Clashes across the family:** generating or hand-editing a part treats the rest of the family's slots as taken — same place and hour, and
       the same team at the same time. One pure function, tested. (This is a subset of the open "Used figure" item — generator blind to other
       schedules' final slots — do the family case here; do not widen to every schedule unasked, record it.)
-- [ ] Fair shares band: unchanged in look. **Decide and record** whether Handed out / Short / Clashes count the family (the drawing's tab 1 says
+- [x] Fair shares band: unchanged in look. **Decide and record** whether Handed out / Short / Clashes count the family (the drawing's tab 1 says
       they count the whole schedule) — they should.
-- [ ] Tests: the census decisions (a guard that every list reader filters children), family clash function, page reads.
+- [x] Tests: the census decisions (a guard that every list reader filters children), family clash function, page reads.
 
 ## Session 2 — Add time makes a part; a draft is edited
 

@@ -46,7 +46,8 @@ import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
 import { sharingPools } from '@/lib/club-schedule-settings';
 import { matchesScheduleTeamFilter, scheduleOutsideWords } from '@/lib/club-schedule-overview';
-import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
+import { PART_WORDS as P, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
+import { addTeamResults, familyShown, memberView, partChangeLines, type PartRead } from '@/lib/club-schedule-family';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
 import { isProgramHolder } from '@/lib/club-schedule-holders';
 import { fetchDoorNote } from '@/lib/needs-attention-door';
@@ -63,7 +64,13 @@ interface PageRead extends ScheduleView {
   replies: { teamId: string; answer: 'looks_good' | 'ask_for_change'; words: string | null; at: string }[];
   sendLog: SendLogRow[];
   changes: { teams: { teamId: string; teamName: string; lines: string[] }[] };
+  /** Its added parts (Phase 8), oldest first — the page reads the family as one (`familyShown`). */
+  parts?: PartRead[];
 }
+
+const NO_PARTS: PartRead[] = [];
+/** The Part filter's id for the schedule itself (a part's is its id). */
+const PARENT_PART = 'schedule';
 
 type Win =
   | { kind: 'slot'; key: string }
@@ -101,10 +108,15 @@ export default function SchedulePage() {
 
   const [read, setRead] = useState<PageRead | null>(null);
   const [failed, setFailed] = useState<{ notFound: boolean; text: string } | null>(null);
+  // ⚖ PHASE 8: a schedule and its added parts are read as ONE page. `read` is the schedule's own view — what Settings…,
+  // Bill the teams and Send act on; `shown` is the family's, which every READ on the page uses (the grid, the overview, By
+  // team, the band, the slot window). An edit goes to the part that owns its slot.
+  const parts = read?.parts ?? NO_PARTS;
+  const shown = useMemo(() => (read ? familyShown(read, read.parts ?? NO_PARTS) : null), [read]);
   usePageTitle(read?.schedule.name ?? W.title);
   // THE STATE PILL: every schedule wears its state in the header — Draft, In review, Final (and the amber Changed since sent
   // beside Final). Owner ruling 2026-11-14: a final schedule is no longer silent; the list wears the same pill.
-  const stateChip = read ? <ScheduleStateChip state={read.schedule.state} changed={read.schedule.changedSinceSent} /> : undefined;
+  const stateChip = shown ? <ScheduleStateChip state={shown.schedule.state} changed={shown.schedule.changedSinceSent} /> : undefined;
   // ⚖ Admin header Phase 3 (A8, round 5): the header names the schedule ("← Schedules │ name", its chip); the address gave
   // "Schedule" and the way back at once, this hands over the name once the schedule has loaded.
   useHandNamedPlace(read ? { title: read.schedule.name, chip: stateChip } : null);
@@ -115,6 +127,7 @@ export default function SchedulePage() {
   const [facilityFilter, setFacilityFilter] = useState<Set<string>>(() => new Set());
   const [groupFilter, setGroupFilter] = useState<Set<string>>(() => new Set());
   const [teamFilter, setTeamFilter] = useState<Set<string>>(() => new Set());
+  const [partFilter, setPartFilter] = useState<Set<string>>(() => new Set());
   const [clashesOnly, setClashesOnly] = useState(false);
   const [win, setWin] = useState<Win | null>(null);
   const [pending, setPending] = useState<PendingMove | null>(null);
@@ -143,12 +156,15 @@ export default function SchedulePage() {
       return;
     }
     setFailed(null);
+    // A part's address (a practice's "From …") reads the family's page: settle on the schedule's own address.
+    if (r.data.schedule.id !== scheduleId) router.replace(`/${slug}/admin/schedules/${encodeURIComponent(r.data.schedule.id)}`, { scroll: false });
     setRead(r.data);
     if (initializedSchedule.current !== r.data.schedule.id) {
       initializedSchedule.current = r.data.schedule.id;
       setLens(r.data.schedule.state === 'final' && oneWeekdayOf(r.data.slots) != null && slotDays(r.data.slots).length > 1 ? 'overview' : 'grid');
     }
-    const { startsOn, endsOn } = r.data.schedule;
+    // The page shows the family's dates (a part may run past the schedule's own end).
+    const { startsOn, endsOn } = familyShown(r.data, r.data.parts ?? NO_PARTS).schedule;
     setCursor(c => (c && c >= startsOn && c <= endsOn ? c : firstCursor(startsOn, endsOn, today)));
     const asked = door.current;
     if (asked) {
@@ -182,41 +198,54 @@ export default function SchedulePage() {
   useDeferredLoad(outsideVersion != null, loadOutside);
 
   // ── Names, colours, places — looked up by id, once per read ──
-  const teamById = useMemo(() => new Map((read?.teams ?? []).map(t => [t.id, t])), [read]);
-  const slotByKey = useMemo(() => new Map((read?.slots ?? []).map(x => [x.key, x])), [read]);
+  const teamById = useMemo(() => new Map((shown?.teams ?? []).map(t => [t.id, t])), [shown]);
+  const slotByKey = useMemo(() => new Map((shown?.slots ?? []).map(x => [x.key, x])), [shown]);
   const nameOf = useCallback((id: string) => teamById.get(id)?.name ?? (isProgramHolder(id) ? W.heldByHouseLeague : 'A team'), [teamById]);
-  const colourOf = useCallback((id: string) => teamColour(read?.teams ?? [], id), [read]);
+  const colourOf = useCallback((id: string) => teamColour(shown?.teams ?? [], id), [shown]);
   const groupOf = useCallback((id: string) => teamById.get(id)?.groupId ?? null, [teamById]);
-  const placeOfSlot = useCallback((x: Pick<SlotView, 'venueId' | 'facilityId'>) => placeName(read?.places ?? [], x.venueId, x.facilityId), [read]);
+  const placeOfSlot = useCallback((x: Pick<SlotView, 'venueId' | 'facilityId'>) => placeName(shown?.places ?? [], x.venueId, x.facilityId), [shown]);
   // The schedule's sharing rules read against its teams: a slot's room (Stage 11c) — the moves, the drop and the slot window.
-  const sharing = useMemo(() => sharingPools(read?.schedule.settings.rules.sharing ?? [], read?.teams ?? []), [read]);
+  const sharing = useMemo(() => sharingPools(read?.schedule.settings.rules.sharing ?? [], shown?.teams ?? []), [read, shown]);
   // The Sundays a waiting ask counts, by slot id — ringed on the grid, marked on a phone's Day, named in the slot window.
-  const asked = useMemo(() => askedSlots(read?.asks ?? []), [read]);
+  const asked = useMemo(() => askedSlots(shown?.asks ?? []), [shown]);
   const askedIds = useMemo(() => new Set(asked.keys()), [asked]);
 
-  const oneWeekday = useMemo(() => (read ? oneWeekdayOf(read.slots) : null), [read]);
-  const range = read && cursor ? { startsOn: read.schedule.startsOn, endsOn: read.schedule.endsOn, oneWeekday, cursor } : null;
+  const oneWeekday = useMemo(() => (shown ? oneWeekdayOf(shown.slots) : null), [shown]);
+  const range = shown && cursor ? { startsOn: shown.schedule.startsOn, endsOn: shown.schedule.endsOn, oneWeekday, cursor } : null;
   const cols = range ? gridColumns(range) : null;
-  const allRows = useMemo(() => (read ? placeRows(read.places, read.slots) : []), [read]);
+  const allRows = useMemo(() => (shown ? placeRows(shown.places, shown.slots) : []), [shown]);
   const rows = facilityFilter.size ? allRows.filter(r => facilityFilter.has(r.key)) : allRows;
   const weekSet = new Set(cols?.days ?? []);
-  const weekClashes = read ? read.slots.filter(x => weekSet.has(x.day) && x.clash).length : 0;
+  const weekClashes = shown ? shown.slots.filter(x => weekSet.has(x.day) && x.clash).length : 0;
   // A phone's Day: the dates with slots; the day picked, or where it opens (today's, or the next with slots).
-  const days = useMemo(() => (read ? slotDays(read.slots) : []), [read]);
-  const shownDay = phoneDay && days.includes(phoneDay) ? phoneDay : read ? openingDay(days, read.schedule.startsOn, read.schedule.endsOn, today) : null;
+  const days = useMemo(() => (shown ? slotDays(shown.slots) : []), [shown]);
+  const shownDay = phoneDay && days.includes(phoneDay) ? phoneDay : shown ? openingDay(days, shown.schedule.startsOn, shown.schedule.endsOn, today) : null;
 
   // ── Writes: every hand edit, its Undo ──
   const slotOfKey = (key: string) => slotByKey.get(key) ?? null;
+  /** Each family member's share of a set of slots (Phase 8): its address and the version it read — the schedule's own, or
+   *  its part's. A week's lock or clear reaches every part on screen; a move never crosses parts. */
+  function byMember<T>(items: readonly T[], slotIdOf: (x: T) => string): { id: string; version: number; items: T[] }[] {
+    const partOf = new Map((shown?.slots ?? []).map(x => [x.id, x.partId ?? null]));
+    const out = new Map<string | null, T[]>();
+    for (const x of items) { const k = partOf.get(slotIdOf(x)) ?? null; (out.get(k) ?? out.set(k, []).get(k)!).push(x); }
+    return [...out].map(([partId, list]) => {
+      const part = partId ? parts.find(x => x.id === partId) : null;
+      return { id: part?.id ?? read!.schedule.id, version: part?.version ?? read!.schedule.version, items: list };
+    });
+  }
   async function edit(edits: { slotKey: string; teamIds?: string[]; locked?: boolean }[], text: string, opts: { mark?: boolean } = {}) {
     if (!read || busy || !edits.length) return;
     const before: Before[] = edits.map(e => slotOfKey(e.slotKey)).filter((x): x is SlotView => !!x).map(x => ({ slotId: x.id, teamIds: x.teamIds, locked: x.locked, movedByHand: x.movedByHand }));
     setBusy(true);
     try {
-      const r = await moneyFetch<{ version: number }>(`/api/admin/schedules/${encodeURIComponent(read.schedule.id)}?${q}`, jsonInit('PATCH', {
-        action: 'edit', version: read.schedule.version,
-        edits: edits.map(e => ({ slotId: slotOfKey(e.slotKey)!.id, ...(e.teamIds ? { teamIds: e.teamIds } : {}), ...(e.locked !== undefined ? { locked: e.locked } : {}) })),
-      }));
-      if (!r.ok) { say(refusalText(r.data, R.notSaved)); await load(); return; }
+      for (const m of byMember(edits, e => slotOfKey(e.slotKey)!.id)) {
+        const r = await moneyFetch<{ version: number }>(`/api/admin/schedules/${encodeURIComponent(m.id)}?${q}`, jsonInit('PATCH', {
+          action: 'edit', version: m.version,
+          edits: m.items.map(e => ({ slotId: slotOfKey(e.slotKey)!.id, ...(e.teamIds ? { teamIds: e.teamIds } : {}), ...(e.locked !== undefined ? { locked: e.locked } : {}) })),
+        }));
+        if (!r.ok) { say(refusalText(r.data, R.notSaved)); await load(); return; }
+      }
       if (opts.mark !== false) setMoved(m => new Set([...m, ...edits.filter(e => e.teamIds).map(e => e.slotKey)]));
       await load();
       say(text, before);
@@ -230,12 +259,14 @@ export default function SchedulePage() {
     if (!read || busy) return;
     setBusy(true);
     try {
-      const r = await moneyFetch<{ version: number }>(`/api/admin/schedules/${encodeURIComponent(read.schedule.id)}?${q}`, jsonInit('PATCH', {
-        action: 'edit', undo: true, version: read.schedule.version, edits: before,
-      }));
-      if (!r.ok) { say(refusalText(r.data, R.notSaved)); await load(); return; }
+      for (const m of byMember(before, b => b.slotId)) {
+        const r = await moneyFetch<{ version: number }>(`/api/admin/schedules/${encodeURIComponent(m.id)}?${q}`, jsonInit('PATCH', {
+          action: 'edit', undo: true, version: m.version, edits: m.items,
+        }));
+        if (!r.ok) { say(refusalText(r.data, R.notSaved)); await load(); return; }
+      }
       const ids = new Set(before.map(b => b.slotId));
-      const keys = new Set(read.slots.filter(x => ids.has(x.id)).map(x => x.key));
+      const keys = new Set((shown?.slots ?? []).filter(x => ids.has(x.id)).map(x => x.key));
       setMoved(m => new Set([...m].filter(k => !keys.has(k))));
       await load();
       say(W.undone);
@@ -249,18 +280,22 @@ export default function SchedulePage() {
   // ── A drop, and the weeks it reaches ──
   function onDrop(d: GridDrop) {
     setRefused('');
+    // A practice stays on its own part's bill (Phase 8): a team never moves into another part's practice.
+    if ((d.from.partId ?? null) !== (d.to.partId ?? null)) { setRefused(P.moveAcrossParts); say(P.moveAcrossParts); return; }
     setPending({ from: d.from, to: d.to, teamId: d.teamId, at: d.at });
   }
   function pickWeeks(scope: WeeksScope) {
-    if (!read || !pending) return;
+    if (!shown || !pending) return;
     const m = pending;
     setPending(null);
-    const plan = planMove(engineSlotsOf(read.slots), new Map(read.slots.map(x => [x.key, x.teamIds])), {
+    // The weeks a move reaches are its own part's (Phase 8): the same night in another part is another bill.
+    const mine = shown.slots.filter(x => (x.partId ?? null) === (m.from.partId ?? null));
+    const plan = planMove(engineSlotsOf(mine), new Map(mine.map(x => [x.key, x.teamIds])), {
       fromKey: m.from.key, toKey: m.to.key, teamId: m.teamId, scope, sharing,
     });
     if (!plan.edits.length) { say(W.skipped(plan.skipped.length || 1, W.skippedWhy[plan.skipped[0]?.why ?? 'no_slot'])); return; }
     const moved = new Set(plan.moved);
-    const toDays = read.slots.filter(x => moved.has(x.week) && x.weekday === m.to.weekday && x.startClock === m.to.startClock
+    const toDays = mine.filter(x => moved.has(x.week) && x.weekday === m.to.weekday && x.startClock === m.to.startClock
       && x.venueId === m.to.venueId && x.facilityId === m.to.facilityId).map(x => x.day).sort();
     const landing = dropLanding(m.from, m.to, m.teamId, sharing);
     const swapWith = landing?.kind === 'swap' ? landing.withTeam : null;
@@ -271,7 +306,7 @@ export default function SchedulePage() {
   }
 
   // ── Tools ──
-  const weekSlots = read ? read.slots.filter(x => weekSet.has(x.day)) : [];
+  const weekSlots = shown ? shown.slots.filter(x => weekSet.has(x.day)) : [];
   /** The week's handed-out slots no lock holds — what Lock this week and Clear this week reach, and the question counts. */
   const unlockedHeld = weekSlots.filter(x => x.teamIds.length && !x.locked);
   const weekScope = cols?.mode === 'dates' && oneWeekday ? W.scopeDates(oneWeekday) : W.scopeWeek;
@@ -310,7 +345,9 @@ export default function SchedulePage() {
       </div>
     );
   }
-  const v = read!;
+  // The schedule's own view (what its windows act on) and the family's (what the page reads) — Phase 8.
+  const own = read!;
+  const v = shown!;
   const s = v.schedule;
   const draft = s.state === 'draft';
   const review = s.state === 'in_review';
@@ -318,15 +355,40 @@ export default function SchedulePage() {
   const canChange = !isPhone;
 
   // ── The head's facts ──
-  const placeWords = v.places.map(p => {
-    const names = p.facilities.filter(f => v.slots.some(x => x.facilityId === f.id)).map(f => f.name);
+  // The first line is the schedule's OWN time (its places, its dates); each added part says its own on the line below.
+  const placeWords = own.places.map(p => {
+    const names = p.facilities.filter(f => own.slots.some(x => x.facilityId === f.id)).map(f => f.name);
     return names.length ? `${p.venueName} · ${names.length >= 3 ? facilityListWords(names) : names.join(', ')}` : p.venueName;
   }).join('; ');
-  const dates = oneWeekday ? `${weekdayPlural(oneWeekday)}, ${scheduleDates(s.startsOn, s.endsOn)}` : scheduleDates(s.startsOn, s.endsOn);
-  const teamsInSlots = v.teams.filter(t => v.slots.some(x => x.teamIds.includes(t.id)));
+  const ownWeekday = oneWeekdayOf(own.slots);
+  const ownDates = scheduleDates(own.schedule.startsOn, own.schedule.endsOn);
+  const dates = ownWeekday ? `${weekdayPlural(ownWeekday)}, ${ownDates}` : ownDates;
+  const ownTeams = own.teams.filter(t => own.slots.some(x => x.teamIds.includes(t.id)));
+  // The Part filter (Phase 8, drawing tab 4 note 3): it narrows the grid and By team, as Team does.
+  const partOptions = parts.length ? [{ id: PARENT_PART, label: own.schedule.name }, ...parts.map(x => ({ id: x.id, label: x.label }))] : [];
+  const selectedParts = new Set([...partFilter].filter(id => partOptions.some(o => o.id === id)));
+  const inParts = (x: Pick<SlotView, 'partId'>) => !selectedParts.size || selectedParts.has(x.partId ?? PARENT_PART);
+  const partSlots = selectedParts.size ? v.slots.filter(inParts) : v.slots;
+  const teamsInSlots = v.teams.filter(t => partSlots.some(x => x.teamIds.includes(t.id)));
   const meta = final && s.sent ? W.metaSent(placeWords, dates, formatStoredDate(s.sent.at, { withYear: false }), s.sent.by)
     : review && s.sent ? W.metaReview(placeWords, dates, formatStoredDate(s.sent.at, { withYear: false }), s.sent.by)
-    : W.meta(placeWords, dates, teamsInSlots.length);
+    : W.meta(placeWords, dates, ownTeams.length);
+  // ONE line under it for the added parts, never more (ruling 3): the oldest, and "and 2 more ›" opening the Part filter.
+  const firstPart = parts[0] ?? null;
+  const partLine = firstPart && (() => {
+    const pv = firstPart.view;
+    const partDays = slotDays(pv.slots);
+    const when = partDays.length === 1 ? formatShortWeekdayDate(partDays[0]) : scheduleDates(firstPart.startsOn, firstPart.endsOn);
+    const names = pv.teams.filter(t => pv.slots.some(x => x.teamIds.includes(t.id))).map(t => t.name);
+    return P.metaRest(when, P.metaTeams(names), firstPart.sent ? formatStoredDate(firstPart.sent.at, { withYear: false }) : null);
+  })();
+  const openPartFilter = () => {
+    setLens('grid');
+    requestAnimationFrame(() => {
+      const d = document.querySelector<HTMLDetailsElement>('[data-part-filter] details');
+      if (d) { d.open = true; d.querySelector<HTMLElement>('summary')?.focus(); }
+    });
+  };
 
   // ── The callouts ──
   const replies = v.replies;
@@ -345,7 +407,11 @@ export default function SchedulePage() {
       {!isPhone && <button type="button" className="btn btn-lime" onClick={() => setWin({ kind: 'send', start: 'final' })}>{W.finalize}</button>}
     </div>
   );
-  const changeLines = v.changes.teams.flatMap(t => t.lines.map(l => W.changeTeamLine(t.teamName, lowerFirst(l))));
+  // The schedule's own changes, then each unsent part's new practices (Phase 8) — what Send the changes will send.
+  const unsentParts = parts.filter(x => x.state !== 'final');
+  const changeLines = [...own.changes.teams, ...unsentParts.flatMap(partChangeLines)].flatMap(t => t.lines.map(l => W.changeTeamLine(t.teamName, lowerFirst(l))));
+  // A part with no bill yet is said here, never in the bill tile (drawing tab 4, note 2).
+  const partNotes = unsentParts.filter(x => !x.billed).map(x => P.notBilledYet(x.label));
 
   // ── The permit's pulled dates (13c Session C, C2 = A): the words are scheduleOutsideWords'; the page adds the one ask,
   // a computer's only (as Regenerate is). The days go into the schedule's OWN Dates off, in today's Regenerate; nothing is
@@ -353,12 +419,12 @@ export default function SchedulePage() {
   // A schedule on several permits (Session B): ONE ROW PER PERMIT, each counting only the practices at its parks, and its
   // "Take … off" closing only those parks (P5 A) — named once the schedule's time uses more than one park. The warnings'
   // first line still reads every permit's days together.
-  const outsideWords = outside ? scheduleOutsideWords(outside, v, { draft, nameOf }) : null;
+  const outsideWords = outside ? scheduleOutsideWords(outside, own, { draft, nameOf }) : null;
   const scheduleParks = [...new Set(v.time.blocks.map(b => b.venueId))];
   const outsideRows = outside ? outside.rows.map(row => {
     const parks = scheduleParks.length > 1 ? row.venueIds : [];
     const at = parks.length ? joinWithAnd(parks.map(id => placeName(v.places, id, null)).filter(Boolean)) : null;
-    const words = scheduleOutsideWords({ ...outside, permitName: row.permitName, days: row.days, league: row.league, leagueDays: row.leagueDays }, v,
+    const words = scheduleOutsideWords({ ...outside, permitName: row.permitName, days: row.days, league: row.league, leagueDays: row.leagueDays }, own,
       { draft, nameOf, permitNamed: outside.rows.length > 1, at });
     return {
       ...words,
@@ -416,7 +482,8 @@ export default function SchedulePage() {
       {canChange && !final && <CoachToolbarMenuItem label={W.toolDelete} onSelect={() => setWin({ kind: 'delete' })} />}
     </CoachToolbarMenu>
   );
-  const clashPill = (weekClashes > 0 || clashesOnly) && (
+  // The grid's own narrowing: By team carries only the Part filter (Phase 8).
+  const clashPill = lens === 'grid' && (weekClashes > 0 || clashesOnly) && (
     <button type="button" className={sch.amberPill} aria-pressed={clashesOnly} onClick={() => setClashesOnly(on => !on)}>
       <AlertTriangle size={13} aria-hidden />{pluralize(weekClashes, 'clash', 'clashes')}
     </button>
@@ -426,7 +493,11 @@ export default function SchedulePage() {
   // ── By team · By group (specimen 8) ──
   const weeks = new Set(v.slots.map(x => x.week)).size || 1;
   const hasPrime = !!v.schedule.settings.prime;
-  const resultById = new Map(v.fairness.teams.map(r => [r.teamId, r]));
+  // By team reads the parts the Part filter keeps (Phase 8): each part's own results, added up.
+  const partResults = selectedParts.size
+    ? addTeamResults([...(selectedParts.has(PARENT_PART) ? [own.fairness.teams] : []), ...parts.filter(x => selectedParts.has(x.id)).map(x => x.view.fairness.teams)])
+    : v.fairness.teams;
+  const resultById = new Map(partResults.map(r => [r.teamId, r]));
   const resultOf = (id: string) => resultById.get(id);
   const teamGroups = (() => {
     const out = new Map<string, { name: string; teams: typeof teamsInSlots }>();
@@ -451,7 +522,7 @@ export default function SchedulePage() {
       setTeamFilter(current => new Set([...current].filter(id => allowed.has(id))));
     }
   };
-  const dim = (x: SlotView) => (clashesOnly && !x.clash)
+  const dim = (x: SlotView) => (clashesOnly && !x.clash) || !inParts(x)
     || !matchesScheduleTeamFilter(x.teamIds, selectedGroups, selectedTeams, id => groupOf(id) ?? NO_GROUP);
   const counts = weekCounts(v.slots, cols?.days ?? []);
   const weeksShown = cols ? weeksOnScreen(cols.mode, cols.days, v.slots) : 1;
@@ -596,6 +667,9 @@ export default function SchedulePage() {
 
   // Fair shares' figures answer for the whole schedule; its team detail opens from the band's Bill tile (13c C4).
   const fair = cols ? fairShares({ view: v, week: cols.days, weeks: weeksShown, scope: weekScope, nameOf, placeOf: (a, b) => placeName(v.places, a, b) }) : null;
+  // The band counts the family (Handed out, Short, Clashes); Fair shares and the bill — the window — is the schedule's own
+  // bill, so it reads the schedule's own view (Phase 8: a part's bill is set in Send the changes).
+  const fairOwn = !parts.length ? fair : cols ? fairShares({ view: own, week: cols.days, weeks: weeksShown, scope: weekScope, nameOf, placeOf: (a, b) => placeName(own.places, a, b) }) : null;
   const canOverview = final && oneWeekday != null && days.length > 1;
   const desktopViews: { id: Lens; label: string }[] = [
     ...(canOverview ? [{ id: 'overview' as const, label: W.viewOverview }] : []),
@@ -631,11 +705,30 @@ export default function SchedulePage() {
         </>}
         {meta}
       </p>
+      {firstPart && (
+        <p className={sch.meta} data-part-line>
+          {parts.length > 1 ? (
+            <button type="button" className={`${sch.door} ${sch.metaDoor}`} onClick={openPartFilter}>{P.metaMore(firstPart.label, parts.length - 1)} ›</button>
+          ) : <>
+            {firstPart.label}
+            {firstPart.view.fromPermits.length > 0 && permitsLink && <>
+              {' · '}{firstPart.view.fromPermits.length === 1 ? W.metaFrom : W.metaFromMany}{' '}
+              {firstPart.view.fromPermits.map((fp, i) => (
+                <Fragment key={fp.id}>
+                  {!isPhone && i > 0 && (i === firstPart.view.fromPermits.length - 1 ? ' and ' : ', ')}
+                  <Link href={permitDoor(permitsLink.href, [fp.id])} className={`${sch.door} ${sch.metaDoor}`} data-permit-door>{fp.name} ›</Link>
+                </Fragment>
+              ))}
+            </>}
+            {' · '}{partLine}
+          </>}
+        </p>
+      )}
       {failed && <LoadFailed title={failed.text} onRetry={() => void load()} />}
       {reviewCallout}
       <ScheduleAttention asks={v.asks} slots={v.slots} places={v.places} canMoney={v.canMoney}
         changed={final && s.changedSinceSent} sentOn={formatStoredDate(s.sent?.at ?? '', { withYear: false })}
-        changeLines={changeLines} outside={outsideRows} onAnswer={id => setWin({ kind: 'answer', id })}
+        changeLines={changeLines} partNotes={partNotes} outside={outsideRows} onAnswer={id => setWin({ kind: 'answer', id })}
         onSend={() => setWin({ kind: 'send', start: 'changes' })} />
       {!isPhone && fair && <FairSharesBand model={fair} onOpen={() => setWin({ kind: 'fair' })} />}
 
@@ -669,12 +762,18 @@ export default function SchedulePage() {
                 {draft && <button type="button" className="btn btn-lime" onClick={() => setWin({ kind: 'send', start: 'draft' })}>{W.send}</button>}
               </>
             )}
-            filters={lens === 'grid' && (
+            filters={(lens === 'grid' || (lens === 'team' && partOptions.length > 0)) && (
               <>
                 <FilterGroup>
-                  <MultiSelectDropdown restQuiet label={W.facilityPill} options={facilityOptions} selected={facilityFilter} onChange={setFacilityFilter} allLabel={W.everyFacility} />
-                  {groupOptions.length > 0 && <MultiSelectDropdown restQuiet label={W.groupPill} options={groupOptions} selected={selectedGroups} onChange={changeGroups} allLabel={W.everyGroup} />}
-                  <MultiSelectDropdown restQuiet label={W.teamPill} options={teamOptions} selected={selectedTeams} onChange={setTeamFilter} allLabel={W.everyTeam} />
+                  {lens === 'grid' && <MultiSelectDropdown restQuiet label={W.facilityPill} options={facilityOptions} selected={facilityFilter} onChange={setFacilityFilter} allLabel={W.everyFacility} />}
+                  {lens === 'grid' && groupOptions.length > 0 && <MultiSelectDropdown restQuiet label={W.groupPill} options={groupOptions} selected={selectedGroups} onChange={changeGroups} allLabel={W.everyGroup} />}
+                  {lens === 'grid' && <MultiSelectDropdown restQuiet label={W.teamPill} options={teamOptions} selected={selectedTeams} onChange={setTeamFilter} allLabel={W.everyTeam} />}
+                  {/* The Part filter (Phase 8): only on a schedule with time added; the meta line's "and 2 more ›" opens it. */}
+                  {partOptions.length > 0 && (
+                    <span data-part-filter>
+                      <MultiSelectDropdown restQuiet label={P.partPill} options={partOptions} selected={selectedParts} onChange={setPartFilter} allLabel={P.everyPart} />
+                    </span>
+                  )}
                 </FilterGroup>
                 {clashPill}
               </>
@@ -706,10 +805,11 @@ export default function SchedulePage() {
       )}
 
       {pending && (
-        <WhichWeeks view={v} move={pending} sharing={sharing} nameOf={nameOf} placeOf={placeOfSlot} onPick={pickWeeks} onCancel={() => setPending(null)} />
+        <WhichWeeks view={memberView(own, parts, pending.from.partId)} move={pending} sharing={sharing} nameOf={nameOf} placeOf={placeOfSlot} onPick={pickWeeks} onCancel={() => setPending(null)} />
       )}
       {win?.kind === 'slot' && slotWin && (
-        <SlotWindow view={v} slot={slotWin} sharing={sharing} nameOf={nameOf} colourOf={colourOf} placeOf={placeOfSlot} busy={busy} canChange={canChange}
+        // A part's practice reads in its part's own view: Give it to lists only that part's teams (Phase 8, tab 4 note 4).
+        <SlotWindow view={memberView(own, parts, slotWin.partId)} part={slotWin.partId ? parts.find(x => x.id === slotWin.partId)?.label ?? null : null} slot={slotWin} sharing={sharing} nameOf={nameOf} colourOf={colourOf} placeOf={placeOfSlot} busy={busy} canChange={canChange}
           ask={slotAsk}
           onAnswer={v.canMoney && slotAsk ? () => setWin({ kind: 'answer', id: slotAsk.id }) : undefined}
           onClose={() => setWin(null)}
@@ -719,35 +819,35 @@ export default function SchedulePage() {
           onClear={() => { setWin(null); void edit([{ slotKey: slotWin.key, teamIds: [] }], W.cleared(1)); }} />
       )}
       {win?.kind === 'swap' && slotWin && (
-        <SwapWindow view={v} slot={slotWin} nameOf={nameOf} placeOf={placeOfSlot} onClose={() => setWin(null)}
+        <SwapWindow view={memberView(own, parts, slotWin.partId)} slot={slotWin} nameOf={nameOf} placeOf={placeOfSlot} onClose={() => setWin(null)}
           onPick={to => { setWin(null); setPending({ from: slotWin, to, teamId: slotWin.teamIds[0], at: { left: window.innerWidth / 2 - 150, top: window.innerHeight / 3 } }); }} />
       )}
       {win?.kind === 'settings' && (
         <NewScheduleWindow q={q} orgSlug={slug} orgName={currentOrg?.name} onCancel={() => setWin(null)}
           settingsOf={{
-            view: v, regenerate: win.regenerate, addDatesOff: win.addDatesOff, addTime: win.addTime, onStale: () => void load(),
+            view: own, regenerate: win.regenerate, addDatesOff: win.addDatesOff, addTime: win.addTime, onStale: () => void load(),
             onKept: (_version, renamed, said) => { setWin(null); setMoved(new Set()); say(said ?? (renamed ? W.regenerated(s.name) : W.regeneratedNotRenamed(s.name))); void load(); },
           }} />
       )}
       {/* ⚖ 13c Session C (C4 = A): Fair shares and the bill, in a window — the team table and its bill door. A reader
           without the club's money reads Fair shares alone (the window is titled so), and nobody lost the view. */}
-      {win?.kind === 'fair' && fair && (
+      {win?.kind === 'fair' && fairOwn && (
         <KitDialog kind="form" size="wide" eyebrow={s.name} title={v.canMoney ? W.fairBillTitle : W.fairTitle} onClose={() => setWin(null)}>
           {/* The bill's door is the money reader's: before Finalize the bill rides with the schedule, once it exists it reads, and a
               schedule finalized WITHOUT one can still be billed (Send the bill; the schedule stays final) — if any rep team holds
               time on it (a schedule given wholly to house league has nothing to bill). */}
-          <FairSharesTeams model={fair} nameOf={nameOf} colourOf={colourOf}
-            onBill={v.canMoney && (!final || !!v.bill || v.slots.some(x => x.teamIds.some(id => teamById.has(id)))) ? () => setWin({ kind: 'bill' }) : undefined} />
+          <FairSharesTeams model={fairOwn} nameOf={nameOf} colourOf={colourOf}
+            onBill={own.canMoney && (!final || !!own.bill || own.slots.some(x => x.teamIds.some(id => teamById.has(id)))) ? () => setWin({ kind: 'bill' }) : undefined} />
         </KitDialog>
       )}
       {win?.kind === 'bill' && (
-        <BillWindow q={q} view={v} nameOf={nameOf} onClose={() => setWin(null)} onStale={() => void load()} onSaved={text => { setWin(null); say(text); void load(); }}
+        <BillWindow q={q} view={own} nameOf={nameOf} onClose={() => setWin(null)} onStale={() => void load()} onSaved={text => { setWin(null); say(text); void load(); }}
           onReview={terms => setWin({ kind: 'send', start: 'bill', bill: terms })} />
       )}
       {win?.kind === 'send' && (
-        <SendWindow q={q} view={v} start={win.start} bill={win.bill} onClose={() => setWin(null)} onStale={() => void load()} onSent={text => { setWin(null); setMoved(new Set()); say(text); void load(); }} />
+        <SendWindow q={q} view={own} start={win.start} bill={win.bill} onClose={() => setWin(null)} onStale={() => void load()} onSent={text => { setWin(null); setMoved(new Set()); say(text); void load(); }} />
       )}
-      {win?.kind === 'log' && <SendLogWindow view={v} log={v.sendLog} nameOf={nameOf} onClose={() => setWin(null)} />}
+      {win?.kind === 'log' && <SendLogWindow view={own} log={own.sendLog} nameOf={nameOf} onClose={() => setWin(null)} />}
       {/* The one Answer window (Stage 11d, Ask 4) — the same from every door: Payment requests, the bell, this page. */}
       {win?.kind === 'answer' && (
         <AnswerWindow q={q} handBackId={win.id} onClose={() => setWin(null)} onDone={text => { setWin(null); say(text); void load(); }} />

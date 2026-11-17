@@ -63,5 +63,11 @@ The schedule page stays one schedule, with a Part filter and a line naming the a
 more of a permit already on the schedule, or pick the dates of the new time. Success: one extra practice for 14U AA on
 one evening, billed $135.00 to 14U AA alone, with every earlier payment unchanged. Drawing:
 https://claude.ai/artifact/6Bz3gQSuyrot2HsQnkYX5P.
+**Where it stands (2026-11-17):** the owner chose to store an added part as its own schedule, linked to the one it was
+added to (every bill, send and regenerate rule already works per schedule). Session 1 is built: the schedule page reads a
+schedule and its parts as one (a line naming the added time, a Part filter, a Part row on a practice, Needs attention saying
+when a part isn't billed yet), lists show only the original, and nothing in the family can double-book a place or a team.
+Nothing visible changes until Session 2 builds the new Add time. Next: Session 2 (Add time makes a part), then Session 3
+(sending and billing a part).
 
 Plan: `docs/projects/active/CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`.

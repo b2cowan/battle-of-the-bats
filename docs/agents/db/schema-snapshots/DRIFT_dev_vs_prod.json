@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-17",
-  "total": 34,
+  "total": 45,
   "counts": {
     "tables": 2,
-    "columns": 12,
-    "indexes": 8,
-    "constraints": 10,
-    "rls": 2
+    "columns": 15,
+    "indexes": 12,
+    "constraints": 11,
+    "rls": 5
   },
   "items": [
     {
@@ -15,6 +15,18 @@
     },
     {
       "key": "check:only-dev:club_schedules.club_schedules_bill_price_mode_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedules.club_schedules_part_label_length",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedules.club_schedules_part_label_pairs",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedules.club_schedules_part_never_in_review",
       "sig": ""
     },
     {
@@ -50,7 +62,19 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:club_schedule_slots.family_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:club_schedules.bill_price_mode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedules.part_label",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedules.part_of_schedule_id",
       "sig": ""
     },
     {
@@ -90,6 +114,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:club_schedules.club_schedules_part_of_schedule_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:org_time_date_off_venues.org_time_date_off_venues_date_off_id_fkey",
       "sig": ""
     },
@@ -126,6 +154,18 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:club_schedule_slots_family_place_start",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedules_part_label_once",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedules_part_of_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:org_time_date_off_venues_org_idx",
       "sig": ""
     },
@@ -135,6 +175,10 @@
     },
     {
       "key": "index:only-dev:org_time_date_off_venues_venue_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:club_schedule_slots_place_start",
       "sig": ""
     },
     {

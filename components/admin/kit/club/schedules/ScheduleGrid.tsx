@@ -189,7 +189,7 @@ function SlotChip({ s, canDrag, dimmed, moved, ask, over, dragging, nameOf, colo
     : undefined;
   const overCls = over === 'free' ? sch.slotOver : over === 'warn' ? sch.slotOverWarn : over === 'bad' ? sch.slotOverBad : '';
   const cls = [
-    sch.slot, open ? sch.slotOpen : '', held ? sch.slotHeld : '', shared ? sch.slotShared : '', s.clash ? sch.slotClash : '', moved ? sch.slotMoved : '',
+    sch.slot, open ? sch.slotOpen : '', held ? sch.slotHeld : '', shared ? sch.slotShared : '', s.clash ? sch.slotClash : '', moved ? sch.slotMoved : '', s.unsent ? sch.slotUnsent : '',
     ask ? sch.slotAsked : '', handed ? sch.slotHanded : '', dragging ? sch.slotDragging : '', overCls,
   ].filter(Boolean).join(' ');
   const label = `${slotTime(s)}, ${placeOf(s)}: ${who}${shared ? `, ${W.slotShared}` : ''}${s.locked ? ', locked' : ''}${s.clash ? ', clashes with a booking' : ''}${ask ? `, ${H.pill.toLowerCase()} by ${ask.teamName}` : ''}`;

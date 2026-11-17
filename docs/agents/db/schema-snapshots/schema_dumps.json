@@ -3692,6 +3692,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "club_schedule_slots",
+        "pos": 17,
+        "column_name": "family_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "club_schedules",
         "pos": 1,
         "column_name": "id",
@@ -3951,6 +3960,24 @@
         "udt_name": "text",
         "is_nullable": "NO",
         "column_default": "'each_permit'::text"
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 30,
+        "column_name": "part_of_schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 31,
+        "column_name": "part_label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "diamonds",
@@ -32007,6 +32034,13 @@
       },
       {
         "table_name": "club_schedules",
+        "column_name": "part_of_schedule_id",
+        "foreign_table": "club_schedules",
+        "foreign_column": "id",
+        "constraint_name": "club_schedules_part_of_schedule_id_fkey"
+      },
+      {
+        "table_name": "club_schedules",
         "column_name": "sent_by",
         "foreign_table": null,
         "foreign_column": null,
@@ -38220,6 +38254,11 @@
       },
       {
         "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_family_place_start",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_family_place_start ON public.club_schedule_slots USING btree (family_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
+      },
+      {
+        "tablename": "club_schedule_slots",
         "indexname": "club_schedule_slots_handed_back_by_idx",
         "indexdef": "CREATE INDEX club_schedule_slots_handed_back_by_idx ON public.club_schedule_slots USING btree (handed_back_by) WHERE (handed_back_by IS NOT NULL)"
       },
@@ -38237,11 +38276,6 @@
         "tablename": "club_schedule_slots",
         "indexname": "club_schedule_slots_pkey",
         "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_pkey ON public.club_schedule_slots USING btree (id)"
-      },
-      {
-        "tablename": "club_schedule_slots",
-        "indexname": "club_schedule_slots_place_start",
-        "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_place_start ON public.club_schedule_slots USING btree (schedule_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
       },
       {
         "tablename": "club_schedule_slots",
@@ -38282,6 +38316,16 @@
         "tablename": "club_schedules",
         "indexname": "club_schedules_org_idx",
         "indexdef": "CREATE INDEX club_schedules_org_idx ON public.club_schedules USING btree (org_id, starts_on)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_part_label_once",
+        "indexdef": "CREATE UNIQUE INDEX club_schedules_part_label_once ON public.club_schedules USING btree (part_of_schedule_id, part_label) WHERE (part_of_schedule_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_part_of_idx",
+        "indexdef": "CREATE INDEX club_schedules_part_of_idx ON public.club_schedules USING btree (part_of_schedule_id) WHERE (part_of_schedule_id IS NOT NULL)"
       },
       {
         "tablename": "club_schedules",
@@ -44492,6 +44536,24 @@
         "table_name": "club_schedules",
         "detail": "club_schedules_name_check",
         "check_clause": "((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_part_label_length",
+        "check_clause": "((part_label IS NULL) OR ((length(btrim(part_label)) >= 1) AND (length(btrim(part_label)) <= 60)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_part_label_pairs",
+        "check_clause": "((part_of_schedule_id IS NULL) = (part_label IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_part_never_in_review",
+        "check_clause": "((part_of_schedule_id IS NULL) OR (state <> 'in_review'::text))"
       },
       {
         "kind": "CHECK",

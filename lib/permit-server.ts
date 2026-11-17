@@ -227,6 +227,8 @@ export async function readPermitsYear(orgId: string, opts: {
  *  (Club Tier Stage 11a; kept for one release as the fallback). The permit's "used by" and its delete guard read this. */
 export async function schedulesHandingOut(orgId: string, permitId: string): Promise<{ id: string; name: string }[]> {
   const [linked, rows] = await Promise.all([
+    // parts-ok: a part on the permit is named as itself ("{schedule} · Time added …", kept by trigger) — the permit's
+    // "used by" says which part holds it, and the delete guard counts it.
     supabaseAdmin.from('club_schedules').select('id, name').eq('org_id', orgId)
       .or(`started_from_permit_id.eq.${permitId},bill_permit_id.eq.${permitId}`),
     fetchAll<{ schedule_id: string | null }>((a, b) => supabaseAdmin.from('org_time_blocks').select('schedule_id')

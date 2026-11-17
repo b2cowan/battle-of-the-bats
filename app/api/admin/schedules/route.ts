@@ -53,7 +53,8 @@ export const GET = withObservability(async (req: Request) => {
     readClubPlaces(orgId),
     readPermitTimes(orgId, {}),
     fetchAll<{ id: string; name: string; starts_on: string; ends_on: string }>((a, b) => supabaseAdmin.from('club_schedules')
-      .select('id, name, starts_on, ends_on').eq('org_id', orgId).order('starts_on', { ascending: false }).range(a, b)),
+      // An added part (Phase 8) is never a schedule to start from: its parent is.
+      .select('id, name, starts_on, ends_on').eq('org_id', orgId).is('part_of_schedule_id', null).order('starts_on', { ascending: false }).range(a, b)),
     fetchAll<{ id: string; name: string; display_order: number | null }>((a, b) => supabaseAdmin.from('rep_team_groups')
       .select('id, name, display_order').eq('org_id', orgId).order('display_order').order('name').range(a, b)),
   ]);

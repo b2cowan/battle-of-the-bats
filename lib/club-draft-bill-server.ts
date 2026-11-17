@@ -18,6 +18,7 @@ import type { DraftBill, DraftBillTeam } from './club-draft-bill';
  * `scope` is the reader's teams (`teamIdsInScope`): teams outside it are folded into one counted row, never named (B11).
  */
 export async function readDraftBills(orgId: string, opts: { lineId?: string | null; scope?: Set<string> | null } = {}): Promise<DraftBill[]> {
+  // parts-ok: an added part's bill is its own (Phase 8), named "{schedule} · Time added …" — it is listed as itself.
   let query = supabaseAdmin.from('club_schedules')
     .select('id, bill_line_id')
     .eq('org_id', orgId).in('state', [...BILL_PENDING_STATES]).not('bill_line_id', 'is', null).not('bill_plan', 'is', null).is('allocation_id', null);

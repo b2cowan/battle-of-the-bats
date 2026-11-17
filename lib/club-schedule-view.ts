@@ -430,7 +430,8 @@ export function fairBill(view: Pick<ScheduleView, 'pays' | 'bill' | 'pricing' | 
   // The bill's own minutes (a shared slot split among its teams) in the club's team order — never the engine's per-team
   // count, which gives each team in a shared slot the whole of it (/review). Each slot at its permit's price, or one rate
   // (Session C) — Bill the teams' own rule.
-  return new Map(priceTheBill(viewBillSlots(view.slots), { hourOf: pricingHourOf(view.pricing), mode: view.pricing.mode, amount: null, teamOrder: view.teamOrder })?.shares ?? []);
+  // The parent's own slots only (Phase 8): an added part's time is on its OWN bill, set in Send the changes.
+  return new Map(priceTheBill(viewBillSlots(view.slots.filter(s => !s.partId)), { hourOf: pricingHourOf(view.pricing), mode: view.pricing.mode, amount: null, teamOrder: view.teamOrder })?.shares ?? []);
 }
 
 // ── An ask on the schedule (Stage 11d part B — the callout, the ringed Sundays, the slot window) ──────

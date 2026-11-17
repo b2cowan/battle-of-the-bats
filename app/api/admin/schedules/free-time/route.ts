@@ -69,10 +69,11 @@ export const POST = withObservability(async (req: Request) => {
   let scheduleId: string | null = null;
   if (body.scheduleId != null) {
     if (!isUuid(body.scheduleId)) return schedulerRefusal(404, 'not_found', R.notFound);
-    const { data, error } = await supabaseAdmin.from('club_schedules').select('id').eq('org_id', orgId).eq('id', body.scheduleId).maybeSingle();
+    const { data, error } = await supabaseAdmin.from('club_schedules').select('id, part_of_schedule_id').eq('org_id', orgId).eq('id', body.scheduleId).maybeSingle();
     if (error) throw error;
     if (!data) return schedulerRefusal(404, 'not_found', R.notFound);
-    scheduleId = data.id as string;
+    // The asker's FAMILY is its own time (Phase 8): the schedule a part was added to, and its parts.
+    scheduleId = (data.part_of_schedule_id as string | null) ?? (data.id as string);
   }
 
   return NextResponse.json(await readFreeTime(orgId, filters, { scheduleId, own }));

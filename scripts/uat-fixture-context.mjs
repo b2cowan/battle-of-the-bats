@@ -569,7 +569,7 @@ export async function resolveAdminContext() {
     /** The club's newest schedule (Club Tier 11a part B) — null until one exists: the fixture seeds none, the dome walk
      *  builds it. Never thrown, so the rest of the admin sweep runs without one; its entries wait for the schedule
      *  page's own switch, so a club with none is reported as unmeasured rather than measured on a "not found". */
-    clubScheduleId: (await db.from('club_schedules').select('id').eq('org_id', club.id).order('created_at', { ascending: false }).limit(1).maybeSingle()).data?.id ?? null,
+    clubScheduleId: (await db.from('club_schedules').select('id').eq('org_id', club.id).is('part_of_schedule_id', null).order('created_at', { ascending: false }).limit(1).maybeSingle()).data?.id ?? null,
     /** The first date off of the 13c fixture permit ("Saturday diamonds", `--club-dates-off`) — the day its bookings stand
      *  on, where the Calendar's day mark is drawn. Null until that step has run: never thrown, as the schedule above. */
     clubDatesOffDay: await (async () => {
@@ -583,7 +583,7 @@ export async function resolveAdminContext() {
     clubDatesOffScheduleId: await (async () => {
       const permit = (await db.from('org_permits').select('id').eq('org_id', club.id).eq('notes', DATES_OFF_MARK).maybeSingle()).data;
       if (!permit) return null;
-      return (await db.from('club_schedules').select('id').eq('org_id', club.id).eq('started_from_permit_id', permit.id).limit(1).maybeSingle()).data?.id ?? null;
+      return (await db.from('club_schedules').select('id').eq('org_id', club.id).eq('started_from_permit_id', permit.id).is('part_of_schedule_id', null).limit(1).maybeSingle()).data?.id ?? null;
     })(),
     onboardingOrgSlug,
     tournOrgSlug,

@@ -27,7 +27,7 @@ import { formatTime, joinWithAnd, pluralize } from '@/lib/utils';
 import { slotHolds } from '@/lib/club-schedule-settings';
 import { HOUSE_LEAGUE, isProgramHolder } from '@/lib/club-schedule-holders';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
-import { SCHEDULE_SCREEN_WORDS as W, sendLogLine } from '@/lib/club-schedule-words';
+import { PART_WORDS, SCHEDULE_SCREEN_WORDS as W, sendLogLine } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
 import type { SendKind } from '@/lib/club-schedule-send';
 import { dayHead, dropLanding, engineSlotsOf, heldWords, slotTime, type ScheduleAsk, type ScheduleView, type SharingRead, type SlotView } from '@/lib/club-schedule-view';
@@ -101,8 +101,11 @@ export function WhichWeeks({ view, move, sharing, nameOf, placeOf, onPick, onCan
   );
 }
 
-export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, busy, canChange, ask, onAnswer, onChangeTeams, onLock, onSwap, onClear, onClose }: {
+export function SlotWindow({ view, slot, part = null, sharing, nameOf, colourOf, placeOf, busy, canChange, ask, onAnswer, onChangeTeams, onLock, onSwap, onClear, onClose }: {
   view: ScheduleView;
+  /** The added part it is on (Phase 8): a "Part" row under Team. `view` is then the part's own, so Give it to lists only
+   *  its teams. Null on the schedule's own time. */
+  part?: string | null;
   slot: SlotView;
   sharing: SharingRead;
   nameOf: (id: string) => string;
@@ -185,6 +188,7 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
           ) : slot.handedBack?.teamId ? W.handedBackSlot(nameOf(slot.handedBack.teamId)) : W.openSlot}
           {repeats && <small>{repeats}</small>}
         </dd>
+        {part && <><dt>{PART_WORDS.slotPart}</dt><dd>{part}</dd></>}
         {slot.heldBy && <><dt>{W.slotHeld}</dt><dd>{heldWords(slot.heldBy)}</dd></>}
         {ask && (
           <>

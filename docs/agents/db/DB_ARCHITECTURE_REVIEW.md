@@ -28,6 +28,53 @@
 
 ---
 
+### [2026-11-16] — Finding #52: Phase 8 storage — an added part of a final schedule is its own `club_schedules` row (B), not a parts table (A)
+**Severity:** Advisory (design review before any migration; owner call owed)
+**Finding:** Phase 8 (plan `CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`, prompt `CLUB_SCHEDULE_ADD_TIME_PARTS_BUILD_PROMPT.md`) needs, per
+added part, everything held once per schedule today: settings, dates, dates off (UNIQUE schedule+day 326:139), bill columns +
+`allocation_id`, bill rates (UNIQUE schedule+permit 489:77), the send baseline, keep rules. Census (57 reader rows, 2026-11-16):
+~16 list/name readers need HIDE or a name roll-up (small); no money reader double counts a child (`readDraftBills` excludes a
+row with `allocation_id`; coach Money already sums several allocations under one word). The not-small items, and how each
+weighs between B and A:
+- **Place double booking.** `club_schedule_slots_place_start` is per `schedule_id` (326:213). Under A it holds for free; under B
+  it needs a family key. Fix under B: `club_schedule_slots.family_id` set by the existing BEFORE trigger
+  `club_schedule_slots_check` from the schedule's `coalesce(part_of_schedule_id, id)`, and the unique index re-keyed to
+  `(family_id, venue, coalesce(facility), starts_at)` — strictly stronger than today's, backfill = `schedule_id` (no children exist).
+- **Team twice.** `club_schedule_assert_no_team_twice(p_schedule)` (326:488) compares one schedule. Fix under B: replace only
+  this function so both sides range over the family (signature unchanged, so save 488:264 and edit 392:414 inherit it), and lock
+  the family's root row `for update` inside it to serialize a parent save against a part save (lock order child→root; the root's
+  own save already holds the root, so no deadlock).
+- **Bill pool / hand-back room / "this & future"** (328:630/649, `practiceSeries`, `club_schedule_hand_back(p_schedule)`): keyed
+  per schedule = **per bill**, which is exactly the ruling (each part its own bill). Under A every one of these would have to be
+  split by `part_id` instead. A series that runs on into a part stops at the part's edge (one hand-back = one bill) — product
+  rule to record, not a schema defect.
+- **One send for the family.** Finalize / `apply_changes` lock and version one row. Under B: one wrapper RPC that locks root then
+  parts by id, runs `apply_changes_priced` on the root (when it has changes) and `finalize_priced` on each unsent part, in one
+  transaction. Under A the same per-part bill making is needed inside the one send — no saving either way.
+- **Cost of A:** a part row per existing schedule (backfill), `part_id` on blocks, dates off, slots, bill rates, sends, and every
+  SECURITY DEFINER function rewritten part-aware (save, edit_slots, finalize(_priced), bill_late(_priced), apply_changes(_priced),
+  bill_rates_put, bill_pool, hand_back_room, hand_back) plus generate/keep/settings readers — re-plumbing what 487–489 just built.
+**Tables affected:** club_schedules, club_schedule_slots (family_id), functions club_schedule_assert_no_team_twice, club_schedule_slots_check
+**Recommendation:** **B.** Migration shape (one migration, next free number):
+1. `club_schedules.part_of_schedule_id uuid null references club_schedules(id)` **NO ACTION** (not CASCADE: deleting a parent
+   must never silently delete a billed part; an org delete removes both rows in one statement, which NO ACTION allows — 488's
+   precedent). Partial index `where part_of_schedule_id is not null`.
+2. `club_schedules.part_label text null`; named CHECK `club_schedules_part_label_pairs` (`(part_of_schedule_id is null) = (part_label is null)`);
+   partial UNIQUE `(part_of_schedule_id, part_label)`; named CHECK `club_schedules_part_never_in_review` (`part_of_schedule_id is null or state <> 'in_review'`).
+3. Trigger `club_schedules_part_check` (BEFORE INSERT OR UPDATE): parent same org; parent has no parent (one level); parent is
+   `final` at insert; `part_of_schedule_id` immutable after insert; a row with parts can never gain a parent.
+4. `club_schedule_slots.family_id` + trigger set + family unique index (above); replace the per-schedule index in the same migration.
+5. Replace `club_schedule_assert_no_team_twice` (family-wide + root lock).
+6. **Do not store** the parent's "Changed since sent" for an unsent part: derive it (`parent.changed_since_sent OR a part not final`)
+   in one TS helper for the ~6 readers — a stored flag goes stale when an unsent part is deleted.
+Session 3 note: a part that has been sent owns an allocation and a send log, so "removed" after the send = its practices credited
+and the part hidden when it has no live slots, not a deleted row. **Would flip to A:** a ruling that parts share one bill, one
+hand-back series, or one slot — none of the seven rulings asks for it.
+**Amended at the build (2026-11-17):** `family_id` carries NO foreign key — a second FK from `club_schedule_slots` to `club_schedules` makes every PostgREST embed of the schedule from a slot ambiguous (twelve readers); the trigger sets it from the slot's own schedule, a part's link is immutable and a schedule with a part can't be deleted, so it is always valid. Proven on dev: the embed reads, a club delete removes a schedule and its part in one statement, fixture 7/7.
+**Status:** Addressed — owner ruled B 2026-11-17 ("yes b"); mig 491 applied to DEV 2026-11-17 (prod step recorded)
+
+---
+
 ### [2026-11-15] — Finding #51: Migration 489 (several permits, Session C — the bill's rates) reviewed before it was written
 **Severity:** None blocking; Medium ×1 (a bill with no rate rows), Low ×3
 **Finding:** Pre-write pass on Finding #50's mig 3 plus four refinements. Live schema (snapshots 2026-11-15, dev + prod):

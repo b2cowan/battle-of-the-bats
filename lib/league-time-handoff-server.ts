@@ -198,6 +198,7 @@ export async function readTimeAsk(orgId: string, seasonId: string): Promise<stri
 async function askDoor(orgId: string) {
   const [permits, schedules] = await Promise.all([
     supabaseAdmin.from('org_permits').select('id').eq('org_id', orgId).order('id').limit(2),
+    // parts-ok: only none vs some matters, and a part has a parent.
     supabaseAdmin.from('club_schedules').select('id', { count: 'exact', head: true }).eq('org_id', orgId),
   ]);
   if (permits.error) throw permits.error;

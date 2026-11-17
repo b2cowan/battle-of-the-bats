@@ -124,7 +124,8 @@ describe('2 · the phone reads; the desk changes (P11-10)', () => {
   it('a phone reads Day · By team: one day, its arrows over the days with slots — never the desk’s seven columns (owner, 2026-10-12)', () => {
     const page = readCode(PAGE);
     assert.match(page, /views=\{\[\{ id: 'grid', label: W\.phoneDay \}, \{ id: 'team', label: W\.viewTeam \}\]\}/);
-    assert.match(page, /const days = useMemo\(\(\) => \(read \? slotDays\(read\.slots\) : \[\]\), \[read\]\);/);
+    // Phase 8: the days are the family's (a schedule and its added parts read as one page).
+    assert.match(page, /const days = useMemo\(\(\) => \(shown \? slotDays\(shown\.slots\) : \[\]\), \[shown\]\);/);
     assert.match(page, /<ScopeNav placement="row"/);
     assert.doesNotMatch(page, /phoneWeek|phoneSeg/, 'the phone no longer borrows the desk’s seven columns (seven Sundays on the dome)');
     assert.equal(SCHEDULE_SCREEN_WORDS.phoneDay, 'Day');
@@ -384,7 +385,8 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
   });
   it('a hand-back is never a change waiting for a send (Ask 9): the changes callout reads the club’s changes only', () => {
     assert.doesNotMatch(page, /handedBack\]|changes\.handedBack/);
-    assert.match(page, /const changeLines = v\.changes\.teams\.flatMap/);
+    // Phase 8: the schedule's own changes, then an unsent added part's new practices — never a hand-back.
+    assert.match(page, /const changeLines = \[\.\.\.own\.changes\.teams, \.\.\.unsentParts\.flatMap\(partChangeLines\)\]\.flatMap/);
   });
   it('the page reads ?answer= (D5): Answer opens over it for a money mover; an ask no longer waiting says so', () => {
     assert.match(page, /useRef<string \| null>\(search\.get\('answer'\)\)/);
@@ -402,8 +404,9 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
     assert.match(page, /type Lens = 'overview' \| 'grid' \| 'team' \| 'group';/, 'no fair lens');
     assert.doesNotMatch(page, /id: 'fair'|lens === 'fair'/, 'the View menu holds Overview, Grid, By team and By group');
     assert.match(page, /<FairSharesBand model=\{fair\} onOpen=\{\(\) => setWin\(\{ kind: 'fair' \}\)\} \/>/, 'the band’s tile opens the window');
-    assert.match(page, /\{win\?\.kind === 'fair' && fair && \(\s*<KitDialog [^>]*title=\{v\.canMoney \? W\.fairBillTitle : W\.fairTitle\}/, 'titled for whether the bill is in it — the bill is a money reader’s, always (13c: even a finalized schedule with none can be billed)');
-    assert.match(page, /<FairSharesTeams model=\{fair\} nameOf=\{nameOf\} colourOf=\{colourOf\}\s+onBill=\{v\.canMoney && \(!final \|\| !!v\.bill \|\| v\.slots\.some\(x => x\.teamIds\.some\(id => teamById\.has\(id\)\)\)\) \? \(\) => setWin\(\{ kind: 'bill' \}\) : undefined\} \/>/, 'a money reader’s door — not on a schedule given wholly to house league');
+    // Phase 8: the window is the schedule's OWN bill (fairOwn); the band above counts the family.
+    assert.match(page, /\{win\?\.kind === 'fair' && fairOwn && \(\s*<KitDialog [^>]*title=\{v\.canMoney \? W\.fairBillTitle : W\.fairTitle\}/, 'titled for whether the bill is in it — the bill is a money reader’s, always (13c: even a finalized schedule with none can be billed)');
+    assert.match(page, /<FairSharesTeams model=\{fairOwn\} nameOf=\{nameOf\} colourOf=\{colourOf\}\s+onBill=\{own\.canMoney && \(!final \|\| !!own\.bill \|\| own\.slots\.some\(x => x\.teamIds\.some\(id => teamById\.has\(id\)\)\)\) \? \(\) => setWin\(\{ kind: 'bill' \}\) : undefined\} \/>/, 'a money reader’s door — not on a schedule given wholly to house league');
     assert.doesNotMatch(readCode(`${KIT}/FairShares.tsx`), /onTeams/, 'no redundant Fair shares link beside the tab');
     assert.doesNotMatch(css, /\.body \{ display: grid; grid-template-columns: minmax\(0, 1fr\) 300px/, 'no 300 column beside the grid');
   });
@@ -435,7 +438,8 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     assert.match(parts, /: <RepChip tone="good">\{SCHEDULE_WORDS\.final\}<\/RepChip>;/, 'an unchanged final schedule wears the shipped good-tone chip alone');
     assert.match(parts, /<span className=\{sch\.stateChips\}><RepChip tone="good">\{SCHEDULE_WORDS\.final\}<\/RepChip><RepChip tone="warn">\{SCHEDULE_WORDS\.changedSinceSent\}<\/RepChip><\/span>/, 'Changed since sent sits BESIDE Final, never instead of it');
     assert.doesNotMatch(parts, /state === 'final'\) return changed \? [^:]+: null/, 'a final schedule is never silent again');
-    assert.match(page, /const stateChip = read \? <ScheduleStateChip state=\{read\.schedule\.state\} changed=\{read\.schedule\.changedSinceSent\} \/> : undefined;/, 'the header wears the pill for every state');
+    // Phase 8: the family's state — an unsent added part reads as Changed since sent on the schedule's header.
+    assert.match(page, /const stateChip = shown \? <ScheduleStateChip state=\{shown\.schedule\.state\} changed=\{shown\.schedule\.changedSinceSent\} \/> : undefined;/, 'the header wears the pill for every state');
     assert.equal((list.match(/<ScheduleStateChip state=\{r\.state\} changed=\{r\.changedSinceSent\} \/>/g) ?? []).length, 2, 'the list wears it on a computer row and a phone row');
     assert.doesNotMatch(parts + page + list, /tileNotBilled|Not billed/, '"Not billed" is a Bill-tile figure, never a state pill, a header chip or a list row mark');
     assert.match(fair, /value: finalNoBill \? W\.tileNotBilled : money\(billTotal\), quiet: finalNoBill/, 'the Bill tile is the one place it is said');
@@ -446,7 +450,7 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     assert.match(parts, /<button key=\{t\.key\} type="button" className=\{`\$\{sch\.bandTile\} \$\{sch\.bandDoor\}`\} onClick=\{t\.onOpen\}>/);
     // 13c: a schedule finalized WITHOUT a bill can still be billed (Send the bill, mig 481), so the door is the money reader's
     // always — it was once shut after Finalize unless a bill existed, which left a finalized, unbilled schedule stuck.
-    assert.match(page, /onBill=\{v\.canMoney && /, 'the bill door only for a money reader');
+    assert.match(page, /onBill=\{own\.canMoney && /, 'the bill door only for a money reader');
     assert.match(page, /onReview=\{terms => setWin\(\{ kind: 'send', start: 'bill', bill: terms \}\)\}/, 'Bill the teams on an unbilled final schedule goes on to Send the bill');
     assert.match(page, /\{!isPhone && fair && <FairSharesBand/, 'the phone keeps no band (unchanged)');
   });

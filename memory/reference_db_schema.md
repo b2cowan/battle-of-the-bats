@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-11-15 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-17 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-11-15
+# DB Schema Reference — 2026-11-17
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -864,12 +864,12 @@ slot_id (uuid) → club_schedule_slots.id NOT NULL, team_id (uuid) → rep_teams
 - Indexes: club_schedule_slot_teams_org_idx, club_schedule_slot_teams_team_idx
 
 ### club_schedule_slots
-id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, block_id (uuid) → org_time_blocks.id, org_venue_id (uuid) → org_venues.id NOT NULL, facility_id (uuid) → org_venue_facilities.id, starts_at NOT NULL, ends_at NOT NULL, locked (boolean), moved_by_hand (boolean), handed_back_at, handed_back_by (uuid), handed_back_team_id (uuid) → rep_teams.id, removed_at, created_at, updated_at
-- Indexes: club_schedule_slots_block_idx, club_schedule_slots_facility_idx, club_schedule_slots_handed_back_by_idx, club_schedule_slots_handed_back_team_idx, club_schedule_slots_org_idx, club_schedule_slots_place_start, club_schedule_slots_venue_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, block_id (uuid) → org_time_blocks.id, org_venue_id (uuid) → org_venues.id NOT NULL, facility_id (uuid) → org_venue_facilities.id, starts_at NOT NULL, ends_at NOT NULL, locked (boolean), moved_by_hand (boolean), handed_back_at, handed_back_by (uuid), handed_back_team_id (uuid) → rep_teams.id, removed_at, created_at, updated_at, family_id (uuid) NOT NULL
+- Indexes: club_schedule_slots_block_idx, club_schedule_slots_facility_idx, club_schedule_slots_family_place_start, club_schedule_slots_handed_back_by_idx, club_schedule_slots_handed_back_team_idx, club_schedule_slots_org_idx, club_schedule_slots_venue_idx
 
 ### club_schedules
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, state, starts_on NOT NULL, ends_on NOT NULL, settings (jsonb), version (integer), started_from_permit_id (uuid) → org_permits.id, started_from_schedule_id (uuid) → club_schedules.id, reply_by, sent_at, sent_by (uuid), finalized_at, finalized_by (uuid), changed_since_sent (boolean), bill_line_id (uuid) → org_budget_lines.id, bill_permit_id (uuid) → org_permits.id, bill_amount (numeric), bill_plan, bill_first_due, bill_dates, bill_scale (numeric), allocation_id (uuid) → rep_cost_allocations.id, created_by (uuid), updated_by (uuid), created_at, updated_at, bill_price_mode
-- Indexes: club_schedules_allocation_idx, club_schedules_bill_line_idx, club_schedules_bill_permit_idx, club_schedules_created_by_idx, club_schedules_finalized_by_idx, club_schedules_from_schedule_idx, club_schedules_org_idx, club_schedules_permit_idx, club_schedules_sent_by_idx, club_schedules_updated_by_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, state, starts_on NOT NULL, ends_on NOT NULL, settings (jsonb), version (integer), started_from_permit_id (uuid) → org_permits.id, started_from_schedule_id (uuid) → club_schedules.id, reply_by, sent_at, sent_by (uuid), finalized_at, finalized_by (uuid), changed_since_sent (boolean), bill_line_id (uuid) → org_budget_lines.id, bill_permit_id (uuid) → org_permits.id, bill_amount (numeric), bill_plan, bill_first_due, bill_dates, bill_scale (numeric), allocation_id (uuid) → rep_cost_allocations.id, created_by (uuid), updated_by (uuid), created_at, updated_at, bill_price_mode, part_of_schedule_id (uuid) → club_schedules.id, part_label
+- Indexes: club_schedules_allocation_idx, club_schedules_bill_line_idx, club_schedules_bill_permit_idx, club_schedules_created_by_idx, club_schedules_finalized_by_idx, club_schedules_from_schedule_idx, club_schedules_org_idx, club_schedules_part_label_once, club_schedules_part_of_idx, club_schedules_permit_idx, club_schedules_sent_by_idx, club_schedules_updated_by_idx
 
 ### error_events
 id (uuid), group_id (uuid) → error_groups.id NOT NULL, occurred_at, env, source, route, http_method, status_code (integer), error_name, error_message, stack_trace, org_id (uuid) → organizations.id, org_slug, user_id (uuid), user_email, user_role, request_id, ip_address, user_agent, request_context (jsonb), created_at

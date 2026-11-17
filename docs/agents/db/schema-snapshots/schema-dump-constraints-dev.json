@@ -1601,6 +1601,16 @@
   },
   {
     "table_name": "club_schedules",
+    "constraint_name": "club_schedules_part_of_schedule_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "part_of_schedule_id",
+    "foreign_table": "club_schedules",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedules",
     "constraint_name": "club_schedules_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",

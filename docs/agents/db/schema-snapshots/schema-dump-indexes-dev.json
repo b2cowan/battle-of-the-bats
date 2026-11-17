@@ -731,6 +731,11 @@
   },
   {
     "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_family_place_start",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_family_place_start ON public.club_schedule_slots USING btree (family_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
+  },
+  {
+    "tablename": "club_schedule_slots",
     "indexname": "club_schedule_slots_handed_back_by_idx",
     "indexdef": "CREATE INDEX club_schedule_slots_handed_back_by_idx ON public.club_schedule_slots USING btree (handed_back_by) WHERE (handed_back_by IS NOT NULL)"
   },
@@ -748,11 +753,6 @@
     "tablename": "club_schedule_slots",
     "indexname": "club_schedule_slots_pkey",
     "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_pkey ON public.club_schedule_slots USING btree (id)"
-  },
-  {
-    "tablename": "club_schedule_slots",
-    "indexname": "club_schedule_slots_place_start",
-    "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_place_start ON public.club_schedule_slots USING btree (schedule_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
   },
   {
     "tablename": "club_schedule_slots",
@@ -793,6 +793,16 @@
     "tablename": "club_schedules",
     "indexname": "club_schedules_org_idx",
     "indexdef": "CREATE INDEX club_schedules_org_idx ON public.club_schedules USING btree (org_id, starts_on)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_part_label_once",
+    "indexdef": "CREATE UNIQUE INDEX club_schedules_part_label_once ON public.club_schedules USING btree (part_of_schedule_id, part_label) WHERE (part_of_schedule_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_part_of_idx",
+    "indexdef": "CREATE INDEX club_schedules_part_of_idx ON public.club_schedules USING btree (part_of_schedule_id) WHERE (part_of_schedule_id IS NOT NULL)"
   },
   {
     "tablename": "club_schedules",

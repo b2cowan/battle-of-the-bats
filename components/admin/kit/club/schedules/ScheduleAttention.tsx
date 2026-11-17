@@ -22,7 +22,7 @@ export interface OutsideRow {
 
 const FIRST_ASKS = 3;
 
-export default function ScheduleAttention({ asks, slots, places, canMoney, changed, sentOn, changeLines, outside = [], onAnswer, onSend }: {
+export default function ScheduleAttention({ asks, slots, places, canMoney, changed, sentOn, changeLines, partNotes = [], outside = [], onAnswer, onSend }: {
   asks: readonly ScheduleAsk[];
   slots: readonly SlotView[];
   places: readonly SchedulePlace[];
@@ -30,6 +30,9 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
   changed: boolean;
   sentOn: string;
   changeLines: readonly string[];
+  /** An added part with no bill yet (Phase 8, drawing tab 4 note 2): said in the change row, never in the bill tile —
+   *  "Time added Nov 16 isn’t billed yet. You can bill it when you send the changes." */
+  partNotes?: readonly string[];
   /** The permits' pulled dates (C2), first — one row per permit (a schedule on several permits, Session B). */
   outside?: readonly OutsideRow[];
   onAnswer: (id: string) => void;
@@ -93,6 +96,7 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
               <summary>All {pluralize(changeLines.length, 'change')}</summary>
               <ul>{changeLines.map((line, i) => <li key={`${line}|${i}`}>{line}</li>)}</ul>
             </details>}
+            {partNotes.map(note => <small key={note}>{note}</small>)}
             {changeLines.length > 0 && <small>{W.changesTail}</small>}
           </div>
           {changeLines.length > 0 && <button type="button" className={`btn ${(canMoney && ordered.length) || outsideAsks ? 'btn-outline' : 'btn-lime'}`} onClick={onSend}>{W.sendChanges}</button>}

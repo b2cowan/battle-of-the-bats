@@ -150,6 +150,7 @@ export async function teamReviews(orgId: string, teamId: string): Promise<Review
 /** The schedules in review where this team has a slot (one read each way). */
 async function reviewsGivingTime(orgId: string, teamId: string, only?: string): Promise<string[]> {
   const inReview = await fetchAll<{ id: string }>((a, b) => {
+    // parts-ok: a part is never in review (CHECK club_schedules_part_never_in_review).
     const q = supabaseAdmin.from('club_schedules').select('id').eq('org_id', orgId).eq('state', 'in_review');
     return (only ? q.eq('id', only) : q).order('id').range(a, b);
   });

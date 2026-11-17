@@ -3,13 +3,13 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { clearSettled } from '@/lib/needs-attention';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import {
-  addTimeRequest, draftToSave, editSlotsStep, keepingFor, loadSchedule, requestOnStored, timeWithoutPermit, pricePermitOf, readBill, readClubTeams, readName, readRequestPrices, readScheduleRequest,
+  addTimeRequest, draftToSave, editSlotsStep, familyOthers, familyTeamTwice, keepingFor, loadSchedule, readParts, requestOnStored, timeWithoutPermit, pricePermitOf, readBill, readClubTeams, readName, readRequestPrices, readScheduleRequest,
   repTeamsRefusal, resolveScheduler, roomChecker, saveScheduleStep, schedulePermitIds, schedulePrices, scheduleView, schedulerRefusal, timePayload,
   type ScheduleRequest,
 } from '@/lib/club-schedule-server';
 import { changesSummary, sendLog } from '@/lib/club-schedule-send';
 import { scheduleReplies } from '@/lib/club-schedule-coach';
-import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
+import { PART_WORDS, SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 import { readScheduleOutside } from '@/lib/permit-dates-off';
 import { datesOffKeepingParks } from '@/lib/club-schedule-permit-rows';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
@@ -23,6 +23,8 @@ import type { KeepChange } from '@/lib/club-schedule-keep';
 // GET    ?orgSlug=  — its page: the schedule, its time, every slot (held and clashing marked), fairness, the bill (money
 //                     readers only), the review round's replies, the changes since it was sent, the send log, and the
 //                     asks waiting on it (Stage 11d part B — their figures and what each team pays, money readers only).
+//                     Phase 8: and its ADDED PARTS (`parts`, each with its own view — the page reads the family as one).
+//                     An added part's own address reads the schedule it was added to: the page is the family's.
 // PATCH  ?orgSlug=  { action, version, … } — every write acts on the version it read (409 `changed` otherwise):
 //          rename      { name }
 //          regenerate  { startsOn, endsOn, blocks, datesOff, settings, assignments } — Tools › Settings… and "Regenerate
@@ -50,9 +52,12 @@ type Params = { params: Promise<{ scheduleId: string }> };
 export const GET = withObservability(async (req: Request, { params }: Params) => {
   const r = await resolveScheduler(req);
   if ('error' in r) return r.error;
-  const { scheduleId } = await params;
-  const loaded = await loadSchedule(r.ctx.org.id, scheduleId);
+  const { scheduleId: asked } = await params;
+  const first = await loadSchedule(r.ctx.org.id, asked);
+  // A part's link (a practice's "From …", a bell) opens the family's page: the schedule it was added to.
+  const loaded = first?.row.part_of_schedule_id ? await loadSchedule(r.ctx.org.id, first.row.part_of_schedule_id) : first;
   if (!loaded) return schedulerRefusal(404, 'not_found', R.notFound);
+  const scheduleId = loaded.row.id;
   const closed = repTeamsRefusal(r, loaded);
   if (closed) return closed;
   // ⚖ 13c Session C (C2): what the permit's own dates off took of THIS schedule — Needs attention's "Outside the permit"
@@ -74,8 +79,10 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     );
     return NextResponse.json({ outside, version: loaded.row.version }, noStore);
   }
+  // Its added parts first: their slot ids are the family's, which neither view reads as a booking (Phase 8).
+  const family = await readParts(r.ctx.org.id, loaded, { houseLeague: r.houseLeague });
   const [view, replies, log, changes] = await Promise.all([
-    scheduleView(r.ctx.org.id, loaded, r.canMoney, { houseLeague: r.houseLeague }),
+    scheduleView(r.ctx.org.id, loaded, r.canMoney, { houseLeague: r.houseLeague, familySlotIds: family.familySlotIds }),
     scheduleReplies(r.ctx.org.id, scheduleId),
     sendLog(r.ctx.org.id, scheduleId),
     loaded.row.changed_since_sent ? changesSummary(r, loaded) : Promise.resolve({ teams: [] }),
@@ -83,7 +90,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   // The send log's money (what a correction billed, what a team is owed back, the bill it made) reads only to a money
   // reader, as the page's bill does.
   const shownLog = r.canMoney ? log : log.map(s => ({ ...s, billed: {}, owedBack: {}, settled: {}, allocationId: null }));
-  return NextResponse.json({ ...view, replies, sendLog: shownLog, changes });
+  return NextResponse.json({ ...view, replies, sendLog: shownLog, changes, parts: family.parts });
 }, { route: '/api/admin/schedules/[scheduleId]' });
 
 export const PATCH = withObservability(async (req: Request, { params }: Params) => {
@@ -108,7 +115,8 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     const { prices, gone } = await readRequestPrices(orgId, pricePermitOf(loaded.row), req.time.blocks);
     if (gone) return gone;
     const kept = new Map(loaded.slots.filter(s => !s.removed && (s.locked || s.movedByHand)).map(s => [s.key, s]));
-    const draft = draftToSave(req, prices, assignments, kept, keep);
+    // Never over the rest of the family's places, never a team it already has then (Phase 8).
+    const draft = draftToSave(req, prices, assignments, kept, keep, await familyOthers(orgId, loaded.row));
     if (!draft.ok) return draft.response;
     const saved = await saveScheduleStep(orgId, scheduleId, actor, version, {
       settings: req.settings, ...timePayload(req.time), slots: draft.slots,
@@ -200,6 +208,25 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
           const full = (x.teamIds?.length ?? 0) > 1 ? room(x.teamIds!, prices.weightOf(slot.facilityId, slot.permitId)) : null;
           if (full) return schedulerRefusal(409, 'slot_full', full);
         }
+      }
+      // An added part's practice goes only to its own teams, so it never moves onto another bill (Phase 8, drawing tab 4).
+      const label = loaded.row.part_label;
+      if (label && !undo) {
+        const own = new Set(loaded.settings.teamIds);
+        for (const x of edits) {
+          const here = new Set(bySlot.get(x.slotId)!.teamIds);
+          if (x.teamIds?.some(t => !own.has(t) && !here.has(t))) return schedulerRefusal(409, 'team_not_in_part', PART_WORDS.teamNotInPart(label));
+        }
+      }
+      // A team the rest of the family already has then (the schedule it was added to, or another part).
+      const given = edits.filter(x => x.teamIds?.length);
+      if (given.length) {
+        const family = await familyOthers(orgId, loaded.row);
+        const nameOf = (id: string) => teams.find(c => c.id === id)?.name ?? 'A team';
+        const twice = familyTeamTwice(
+          given.map(x => { const s = bySlot.get(x.slotId)!; return { key: s.id, venueId: s.venueId, facilityId: s.facilityId, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt) }; }),
+          key => given.find(x => x.slotId === key)?.teamIds ?? [], family, nameOf);
+        if (twice) return schedulerRefusal(409, 'team_twice', twice);
       }
       const saved = await editSlotsStep(orgId, scheduleId, actor, version, edits);
       return saved.ok ? NextResponse.json({ version: saved.version }) : saved.response;
