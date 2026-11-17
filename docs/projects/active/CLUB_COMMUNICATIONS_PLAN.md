@@ -2,7 +2,7 @@
 
 > **Status:** Stage 1 fully ruled 2026-11-16 (direction 1–12, Stage 1 asks 1–14, the board asks 15–19, and the coach
 > email drawing's ten standing asks, all as recommended). Build prompt: `CLUB_COMMUNICATIONS_STAGE1_BUILD_PROMPT.md`.
-> Build state: §3 Stage 1 (Session 1 committed; Session 2 built 2026-11-17, commit and Walk A owed).
+> Build state: §3 Stage 1 (Sessions 1 and 2 committed; Walk A §537 owed by the owner; next Session 3).
 > **Created:** 2026-11-16
 > **Branch:** dev
 > **PM brief:** `CLUB_COMMUNICATIONS_PM_BRIEF.md`
@@ -172,7 +172,7 @@ R2–R4 need `/legal` on the changed fixed lines before the build guard pins the
     `EmailLog` shows a blanked family subject as "A message to this family" — render `RECORD.wordsCleared` via
     `ClubEmailRecord.wordsCleared`. **For Session 3:** the season window's one-family branch ignores `replyTo`/`copyClub`
     (hide the switch there, or carry it into the one-family send).
-- [x] **Session 2 · the place — BUILT 2026-11-17** (commit owed: the owner's yes; **Walk A owed**). Owner rulings that
+- [x] **Session 2 · the place — committed `684ee0b38` 2026-11-17; Walk A §537 published** (https://claude.ai/artifact/Gjr6mGZgvZzf7J1YAQfn14, source `CLUB_COMMUNICATIONS_WALK_A.html`, fixture `navj-club-comms` via `.probe/club-emails/walk-a-run.cjs`; owner walk owed). Owner rulings that
   session (asked before code, both as recommended): **(S2-1)** the club-wide family window is the owner's and admins'
   ONLY, as legal §2c's route table and drawing tab 4 rule — a staff member, league admin or registrar who holds the
   Families book loses the club-wide send and a list's "Email these families" (a league seat keeps its season's window);

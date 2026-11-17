@@ -1,0 +1,294 @@
+<title>Communications Walk A</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame, as the 13e walk). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { button { min-height: 44px; } }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Communications Stage 1 · Walk A · §537</span>
+    <h1>Communications: one place for the club’s group email, and each person sees only their share</h1>
+    <p class="sub">Written 2026-11-17, after Session 1 (the engine, committed <code>95cac82d6</code> and <code>817c95523</code>) and Session 2 (the place, committed <code>684ee0b38</code>). One purpose: <strong>the place and who sees what</strong>. The coach and board windows are Session 3’s and Walk B’s.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Families › Emails has become <strong>Communications</strong>, in the Club group after Families. You find it as the owner and email every family. Dana Kowalski, an admin who does <em>not</em> hold the Families book, does the same without ever landing on a Families screen. Riley Okonkwo, the registrar, sees the club-wide email with its message and counts and no family names, and the coaches’ email with only her house-league coaches named. Avery Chen, the treasurer, has no place yet. Then you turn Jules Moreau’s Communications switch off and every group-email button leaves his screens.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1–2</strong> The owner finds Communications between Families and Public site, reads the list, and emails every family from it.</li>
+    <li><strong>3</strong> An admin without the Families book emails families from Communications, never sees a one-family message or a Families list, and the old Emails address lands on Communications.</li>
+    <li><strong>4</strong> The registrar sees the club-wide family email with <strong>no family names</strong>, the coaches’ email naming only house-league coaches, and not the rep-team email.</li>
+    <li><strong>5</strong> The treasurer has no Communications row; its address says it isn’t theirs.</li>
+    <li><strong>6</strong> With the switch off, the league admin has no place and no Email families button anywhere; on again, it all comes back.</li>
+    <li><strong>7–8</strong> Families has two tabs; on a phone Communications is a More-sheet row and the bottom bar is unchanged.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk (not defects of this walk)</h2><ul>
+    <li><strong>The “?” on Communications opens the old emailing article</strong>, which still describes Families › Emails. The Close session rewrites it.</li>
+    <li><strong>The treasurer’s “not yours” sentence</strong> reads “…and the people on the club’s board open it”, though a treasurer is on the board. Session 3 gives the treasurer the place (Email the board), so the sentence goes away for them.</li>
+    <li><strong>No “Send again to these people”</strong> on the coaches’ email record: it opens the coach window, which is Session 3’s.</li>
+    <li><strong>Nothing leaves the machine.</strong> Every family, guardian and coach address in this copy ends in <code>.local</code>, which the product never sends to. The sends are real; the mail service is never asked.</li>
+    <li><strong>The owner’s list before you start:</strong> “Coaches meeting, Nov 26” (All coaches, sent by the setup through the product) and two one-family messages (Chidi Okafor from Families; the Hollis family from the season).</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd><strong>Restart it once</strong> (this session added pages and changed shared modules and the site’s address forwarding): stop it, then <code>npm run dev</code>, and wait for “Ready”. Then <code>http://localhost:3000</code>.</dd>
+    <dt>The club</dt><dd>A fresh copy of <strong>Harbourtown Minor Ball</strong>, <code>navj-club-comms</code>. 102 families; the Okafor family has opted out of club email; Dana Kowalski’s Families book is switched off. Figures below were read back from this copy.</dd>
+    <dt>Sign in</dt><dd><code>http://localhost:3000/login</code> · password <code>devpass123</code> for every account. A private window per person (or sign out between).</dd>
+    <dt>Accounts</dt><dd><code>navj-club-comms-owner@dev.local</code> (Morgan Ellis, owner) · <code>navj-club-comms-admin@dev.local</code> (Dana Kowalski, admin without the Families book) · <code>navj-club-comms-registrar@dev.local</code> (Riley Okonkwo) · <code>navj-club-comms-leagueadmin@dev.local</code> (Jules Moreau) · <code>navj-club-comms-treasurer@dev.local</code> (Avery Chen)</dd>
+    <dt>Widths</dt><dd>“Desk” = a full browser window. “Phone” = the browser’s device view at <strong>390 px</strong>.</dd>
+    <dt>Order</dt><dd>In order: parts 3 and 4 read the email you send in part 2. The club’s 3-in-24-hours allowance is used twice (parts 2 and 3).</dd>
+    <dt>Keep private</dt><dd>Dev-only accounts; the page carries the password, so do not share the link.</dd>
+    <dt>When done</dt><dd>Tell Claude “Communications walk A done” with the build summary; it records the result and removes the copy and its accounts.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The switch’s line (6.1).</strong> “Group email and the list of what was sent. Off: none from any screen; board email still arrives.” Clear enough on the member window, or want it said differently? (Close runs the one words pass.)</li>
+    <li><strong>The filter (1.2).</strong> It reads “Show: All” with To families and To coaches inside, shown because the club has sent more than one kind. Is that where you expect it?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "club-communications-walk-a-v1";
+  var TITLE = "Club Communications Walk A §537 · The place and who sees what (2026-11-17)";
+  var OWNER = "Owner · navj-club-comms-owner@dev.local";
+  var ADMIN = "Admin, no Families book · navj-club-comms-admin@dev.local";
+  var REG = "Registrar · navj-club-comms-registrar@dev.local";
+  var LA = "League admin · navj-club-comms-leagueadmin@dev.local";
+  var TRE = "Treasurer · navj-club-comms-treasurer@dev.local";
+  var FIELDS = "<strong>Fields closed Saturday</strong>";
+  var COACHES = "<strong>Coaches meeting, Nov 26</strong>";
+  var PARTS = [
+ { id: "1", title: "The owner finds Communications (desk)", steps: [
+  { who: OWNER + " · desk", do: "Sign in and look at the sidebar’s <strong>Club</strong> group.",
+    see: "Accounting · Families · <strong>Communications</strong> (an envelope) · Public site · Organization." },
+  { who: OWNER, do: "Press <strong>Communications</strong>.",
+    see: "The bar names <strong>Communications</strong>, with no tab row under it. The row above the list reads “<strong>3 emails sent</strong>”, a <strong>Show</strong> filter on All, and a lime <strong>+ Email families</strong> button. Columns Sent · Subject · To · By · Reached.", call: "Call: the filter’s place." },
+  { who: OWNER, do: "Read the three rows.",
+    see: COACHES + " · All coaches · Morgan Ellis · <strong>9 of 9</strong>; “A message to this family” · 2026 Fall House League · Dana Hollis · Riley Okonkwo · 1 family; “A message to this family” · Chidi Okafor · Morgan Ellis · 1 family." },
+  { who: OWNER, do: "Open " + COACHES + ".",
+    see: "Eyebrow <strong>Communications</strong>. Sent, By Morgan Ellis, To All coaches, Reached 9 of 9; the message; “<strong>Who it went to · 9</strong>”: Casey Morgan, Jordan Reyes, Marcus Bell, Pat Doucet (House league · Reds, U9 Rookie), Priya Nair, Riley Assistant, Robin Hale (House league · Hawks, U11 Pinto), Sam Whitford, Taylor Brooks, each Sent; “Replies went to Morgan Ellis”; the line “Sent means the mail service accepted it…”. No email address anywhere." },
+  { who: OWNER, do: "Close the record and open the <strong>Show</strong> filter.",
+    see: "All · To families · To coaches · 2026 Fall House League." }
+ ]},
+ { id: "2", title: "The owner emails every family (desk)", steps: [
+  { who: OWNER, do: "Press <strong>+ Email families</strong>.",
+    see: "The family window, eyebrow <strong>Communications</strong>, title Email families. Who: Every family, Some rep teams, A house league season, <strong>Families from a list</strong>. Under the message box: “<strong>The club’s owner and admins can read this in Communications and see who it reached. League admins and registrars can read it too when it reaches house-league families or coaches.</strong>”" },
+  { who: OWNER, do: "Leave Every family, type the subject <code>Fields closed Saturday</code> and a one-line message.",
+    see: "The foot counts <strong>102 families</strong> (the Okafors left out as opted out) and the button reads <strong>Send to 102</strong>." },
+  { who: OWNER, do: "Press <strong>Send to 102</strong>.",
+    see: "The window closes; the note “Sent. Reached 102 of 102 families.” The list now reads “<strong>4 emails sent</strong>”, " + FIELDS + " at the top · Every family · Morgan Ellis · 102 of 102." },
+  { who: OWNER, do: "Open " + FIELDS + ".",
+    see: "Going to 102 · Reached 102 of 102 · <strong>Opted out 1: the Okafor family</strong> · Didn’t go 0 · Head coaches copied 5, then the message." }
+ ]},
+ { id: "3", title: "An admin without the Families book (desk)", steps: [
+  { who: ADMIN + " · desk", do: "Sign in and look at the sidebar’s Club group.",
+    see: "Accounting · <strong>Communications</strong> · Public site · Organization. No Families." },
+  { who: ADMIN, do: "Open <strong>Communications</strong>.",
+    see: "“<strong>2 emails sent</strong>”: " + FIELDS + " and " + COACHES + ". <strong>No one-family messages</strong> (they are the Families book’s)." },
+  { who: ADMIN, do: "Open " + FIELDS + ".",
+    see: "The same facts as the owner’s, including <strong>Opted out 1: the Okafor family</strong> (an admin sees family names, ruled ask 12). No link to a household." },
+  { who: ADMIN, do: "Close it and press <strong>+ Email families</strong>.",
+    see: "Who: Every family, Some rep teams, A house league season. <strong>No Families from a list.</strong> The readers line under the message box." },
+  { who: ADMIN, do: "Choose <strong>Some rep teams</strong>, tick <strong>15U AAA</strong>, type the subject <code>15U AAA picture day</code> and a message, and press Send.",
+    see: "Sent, with the reached figure. The list reads “<strong>3 emails sent</strong>”, 15U AAA picture day at the top. You never left Communications." },
+  { who: ADMIN, do: "In the address bar, open <code>http://localhost:3000/navj-club-comms/admin/families/emails</code>.",
+    see: "You land on <strong>Communications</strong> (the old Emails address forwards), not on a Families “not yours” screen." }
+ ]},
+ { id: "4", title: "The registrar sees only her share (desk)", steps: [
+  { who: REG + " · desk", do: "Sign in and look at the sidebar’s Club group.",
+    see: "<strong>Communications</strong> · Organization." },
+  { who: REG, do: "Open <strong>Communications</strong>.",
+    see: "“<strong>3 emails sent</strong>”: " + FIELDS + " (Every family), " + COACHES + ", and the one-family message to <strong>the Hollis family</strong> from the season. <strong>Not</strong> 15U AAA picture day (a rep team’s) and not the Okafors’ message (sent from Families)." },
+  { who: REG, do: "Open " + FIELDS + ".",
+    see: "The message and the counts: Going to 102 · Reached 102 of 102 · <strong>Opted out 1</strong> · <strong>Didn’t go 0</strong> · Head coaches copied 5, with <strong>no family name</strong> anywhere." },
+  { who: REG, do: "Close it and open " + COACHES + ".",
+    see: "“Who it went to · 9”: <strong>Pat Doucet</strong> and <strong>Robin Hale</strong> by name with their house-league teams, then one line “<strong>7 rep coaches</strong> · Names are shown only to people who send to rep coaches · 7 sent”." },
+  { who: REG, do: "Close it and press <strong>+ Email families</strong>.",
+    see: "The <strong>season’s own window</strong>: eyebrow <strong>2026 Fall House League</strong>, its Who choices (everyone, divisions, teams, registration statuses), and the readers line under the message box." },
+  { who: REG, do: "Close the window <strong>without sending</strong>.",
+    see: "Back on Communications; nothing was sent." }
+ ]},
+ { id: "5", title: "The treasurer has no place yet (desk)", steps: [
+  { who: TRE + " · desk", do: "Sign in and look at the sidebar.",
+    see: "No Communications row (the treasurer’s one button, Email the board, arrives with Session 3)." },
+  { who: TRE, do: "Open <code>http://localhost:3000/navj-club-comms/admin/club-emails</code>.",
+    see: "“<strong>Communications isn’t one of your pages</strong>” · “It’s where the club’s emails to families and coaches are written, and what was sent.” · a button back to <strong>Accounting</strong>; the bar keeps the club’s name." }
+ ]},
+ { id: "6", title: "The switch: off means no group email from any screen (desk)", steps: [
+  { who: OWNER, do: "Open <strong>Organization › Members</strong> and Manage <strong>Jules Moreau</strong>.",
+    see: "Under What they can open, a <strong>Communications</strong> row (On, as every league admin has it) with the line “Group email and the list of what was sent. Off: none from any screen; board email still arrives.” It is no longer folded under Tournaments.", call: "Call: the line’s words." },
+  { who: OWNER, do: "Set Communications to <strong>Off</strong> and save.",
+    see: "The row says Jules will no longer see the club’s sent emails or send a group email; saved." },
+  { who: LA + " · desk", do: "Sign in as Jules and look at the sidebar.",
+    see: "<strong>No Communications row</strong> (Club: Organization only)." },
+  { who: LA, do: "Open House league › <strong>2026 Fall House League</strong> › <strong>Email families</strong>.",
+    see: "The season’s sent list is still there to read, with <strong>no Email families button</strong>." },
+  { who: LA, do: "Open the season’s <strong>Registrations</strong> and tick one row.",
+    see: "The ticked-rows actions have <strong>no Email</strong>." },
+  { who: LA, do: "Open the season’s <strong>Money › Still owing</strong>.",
+    see: "<strong>No Email these families</strong> button." },
+  { who: LA, do: "Open <code>http://localhost:3000/navj-club-comms/admin/club-emails</code>.",
+    see: "“Communications isn’t one of your pages” · “<strong>Morgan Ellis (owner) can give a league admin access.</strong>”" },
+  { who: OWNER, do: "Set Jules’s Communications back to <strong>On</strong> and save; Jules reloads.",
+    see: "Communications is back in Jules’s sidebar, and the season’s Email families button is back." }
+ ]},
+ { id: "7", title: "Families after the move (desk)", steps: [
+  { who: OWNER, do: "Open <strong>Families</strong>.",
+    see: "Two tabs: <strong>Families · Duplicates</strong>. No Emails tab and no “moved” note." },
+  { who: OWNER, do: "Pick <strong>Owes money</strong> in Show.",
+    see: "<strong>Email these families</strong> is still there (it opens the family window on that list; close it without sending)." }
+ ]},
+ { id: "8", title: "The phone (390 px)", steps: [
+  { who: OWNER + " · phone", do: "At 390 px, look at the bottom bar, then open <strong>More</strong>.",
+    see: "The bar is unchanged: Overview · Calendar · Rep teams · Accounting · More. In the sheet, the Club group’s first row is <strong>Communications</strong>, above Public site and Organization." },
+  { who: OWNER + " · phone", do: "Press <strong>Communications</strong>.",
+    see: "The list as framed rows (subject and reached figure, then Sent · To · By), and the button keeps its words: <strong>Email families</strong>." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + '.' + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

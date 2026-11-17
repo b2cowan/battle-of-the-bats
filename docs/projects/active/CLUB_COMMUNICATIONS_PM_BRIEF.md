@@ -45,8 +45,7 @@ an Organization tab first would mean moving the tab, its help page and its list 
 **Rulings.** All 12 asks on the evaluation (https://claude.ai/artifact/6wvN7LEUw3mfUEdSXYSryY) ruled as recommended,
 owner 2026-11-16. Plan: `CLUB_COMMUNICATIONS_PLAN.md`.
 
-**Where it stands (2026-11-17).** Session 2, the place, is built on dev and reviewed (commit and the owner's walk
-owed): Communications in the sidebar and the phone's More sheet; one list of family, coach and board emails, each
+**Where it stands (2026-11-17).** Session 2, the place, is committed and its walk (§537) is ready for the owner: Communications in the sidebar and the phone's More sheet; one list of family, coach and board emails, each
 person seeing only their share; the owner and admins email families without the Families book; Families down to two
 tabs, its old Emails address forwarding; the Communications switch on by default for league admins, registrars and
 treasurers, and off meaning no group email from any screen. The owner ruled two things that session: the club-wide
