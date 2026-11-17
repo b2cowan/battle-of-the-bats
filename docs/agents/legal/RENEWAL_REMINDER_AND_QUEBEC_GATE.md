@@ -39,6 +39,21 @@ As above, from the cited lines.
 - **Decision (b), late send:** unchanged — an operating failure; the Terms keep "at least 30 days". The owner's refund-on-complaint
   call stays open (not a 6.7 blocker).
 
+## The 6.6 fixes, Part A (owner ruling 1, 2026-11-16) — light review of the build, uncommitted at review
+Read: the build prompt `GST_HST_STAGE6_6_FIXES_BUILD_PROMPT.md` §6, mig 490 and the reminder's code as built (the session's own
+diff); no new statute text (CASL s.6(6) as read 2026-11-06).
+- **Finding 3 closed by the build** (committed `a9d559062` 2026-11-16): the date-and-amount paragraph, the move-down line,
+  the keep-or-stop sentence and the billing button are rendered by code after a customised template's words, and a customised
+  row's own button is dropped (one button). Uncustomised, the email is unchanged (pinned by a test). The §8 promise no longer
+  rests on an operator not editing the template.
+- **Seeded body "A note about {{orgName}}’s yearly plan." — change (low, wording):** a hand-built possessive reads "The Hawks’s"
+  for a name ending in s (the product's own rule is `possessive()`, which a template cannot call). Use **"A note about the yearly
+  plan for {{orgName}}."** Transactional either way.
+- **Description line — OK, one clause to fix (accuracy, staff-only):** the existing "{{lead}} is the app's sentence with the date,
+  the price and the tax" now invites an operator to insert it, and it would then show twice. Reword to **"{{lead}} repeats the
+  app's sentence with the date, the price and the tax, which the app adds below your text anyway."** The subject and heading stay
+  operator-editable; "Keep this email transactional" covers them (a promotional subject would make the email a CEM).
+
 ## Sources
 - [Canada's Anti-Spam Legislation, s.6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-06 (via `CASL_SECOND_PARENT_EMAIL.md`)
 

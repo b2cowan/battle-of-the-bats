@@ -67,6 +67,27 @@ Read from code (helper census, cited lines opened for the decisions): `lib/purch
    keep the plan), they stay outside "commercial"; if they ever name another plan or a price, they become CEMs (consent is
    implied by the purchase, but they would need the s.6(2) unsubscribe). Reword to "Keep your plan" at the next touch.
 
+## The 6.6 fixes (owner rulings 1 and 2, 2026-11-16) — light review of the build, uncommitted at review
+Read: the build prompt `GST_HST_STAGE6_6_FIXES_BUILD_PROMPT.md` §6, mig 490, `lib/purchase-details.ts` as built, the probe
+`.probe/66fix/trial-move-up-run1.txt` and `trial-change-email-run1.txt`; no new statute text.
+1. **Owner question 1 closed by the build** (`a9d559062`; the trial move up `873fc7c76`): the description gains the
+   keep-transactional line (mig 490). **Change (low):** for
+   `purchase_details` keep only its first sentence, **"Keep this email transactional: no offers, no other plans’ prices, and no
+   links."** The description already lists what the app adds ("the figures, the dates, the cancel and refund lines, the seller and
+   the Terms line"), and a second, different list is two statements that can disagree.
+2. **A move up during a trial earns the email (ruling 2). The opening "{orgName} is now on {planLabel}. Your free trial continues,
+   and nothing has been charged today." is TRUE** on the probe's facts: the price changes at once, the status stays trialing, the
+   trial end does not move, the invoice is $0 paid. **Still transactional:** it confirms a transaction the buyer just entered
+   (s.6(6)(b)) and gives factual information about their subscription (s.6(6)(d)(i)); the only links stay the invoice, the billing
+   page and the Terms. It also repairs a real gap: the trial email already in the inbox quoted the OLD plan's first payment, and
+   for a yearly trial that email is the §8 notice of the first charge (`RENEWAL_REMINDER_AND_QUEBEC_GATE.md`); the new email states
+   the new plan's.
+3. **Terms §16 "When you start a plan, or move up to a higher one" — OK**, and the same in §6 line B. The §16 NOTE should read:
+   "…a comeback and a move up (charged, or during a trial); never on a renewal or a move down." **Known edge (low, existing):** a
+   start or a move up that charges $0 outside a trial (a 100% coupon, an operator's comp) sends no email, so the body's "when you
+   start a plan, or move up" is not literally every case. Comps are arranged by staff, not bought; record it in the NOTE, not the
+   body.
+
 ## Sources
 - [Canada's Anti-Spam Legislation — s.6(6)](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/page-1.html) — accessed 2026-11-06 (via `CASL_SECOND_PARENT_EMAIL.md`)
 

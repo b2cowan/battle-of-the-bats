@@ -506,7 +506,20 @@ files' "6.6" sections).
 > 1. **Build** the reminder's fixed block (the date-and-amount paragraph and the cancel sentence rendered by code; the template
 >    description says "keep this transactional") **before 6.7** → `/plan` for the build prompt.
 > 2. **Send** the details email for a move up during a trial (trial words, the new plan's first payment) **before 6.7** → `/plan`,
->    same build as 1.
+>    same build as 1. **Build prompt for 1 and 2: [GST_HST_STAGE6_6_FIXES_BUILD_PROMPT.md](GST_HST_STAGE6_6_FIXES_BUILD_PROMPT.md)**
+>    (written 2026-11-16; a Stripe test-mode probe first — whether a trialing move up makes a $0 invoice decides how 2 is built,
+>    and whether the move window shows a wrong "due today" during a trial; migration 490, data only).
+>    **1 and 2 BUILT 2026-11-16: Part A committed `a9d559062`, Part B committed `873fc7c76`.** Probe (`.probe/66fix/`): the move
+>    window reads $0.00 due today for a trialing subscription (no defect); a trialing move up makes a $0 paid
+>    `subscription_update` invoice with the move metadata, so Part B rides the existing record, claim and catch-up. Mig 490
+>    applied to dev (prod rides 6.7, `MANUAL_PROD_STEPS.json`). `/legal` and `/accounting` light reviews run (three wordings
+>    applied; `/accounting` item E closed); Terms draft §16 / §6 line B and the club guide read "or move up"; `/review` run
+>    (one fix: a next-season choice is excluded). **New owner question:** a club holding a **next-season choice** (its
+>    subscription is `trialing` until the season starts, with no free trial) can move up before then; that move sends no
+>    email, so the next-season email in its inbox quotes the old plan's first payment — the same gap ruling 2 closed for a
+>    trial. Recommendation: the same email with its own opening ("{orgName} is now on {planLabel} for next season. Nothing has
+>    been charged today."), `/legal` to read it; small. Owner walk proposed, not published (~12 boxes; it needs a dev yearly
+>    account 30–37 days from renewal, since the template editor's preview and test send show no fixed block).
 > 3. **"The unused part" (O3) = daily pro-rata of the last invoice**; a few cents' rounding under is accepted. No build: staff type
 >    the figure into the refund tool.
 > 4. **The price-rise procedure v0.2 is approved.**

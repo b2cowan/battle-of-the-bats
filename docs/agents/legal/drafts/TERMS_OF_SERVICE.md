@@ -34,6 +34,8 @@
   buyer and the date, and a link to the accepted version is the copy (the "a copy" question settled). §17: no new purchase,
   upgrade or plan choice from a Québec billing address; a Québec account keeps its plan. §20: "at least" six years. Notes on
   §8, §16, §17 brought up to the build.
+- 0.3 · 2026-11-16 · The two 6.6 fixes (owner rulings 1 and 2): §16 and §6 line B "or move up to a higher one" (a move up during a
+  trial now sends the details email too); §16's NOTE says which moves; `/accounting` item E closed.
 
 > **How to read this draft.** `[square brackets]` = a fact the owner must supply (only the phone and mailing address are left
 > — no personal name, by ruling O1′ — and the one Stripe choice in §6). A `> NOTE` block is for the owner and is deleted before publication.
@@ -171,7 +173,7 @@ We may suspend access that puts other customers, children, or the platform at ri
   - *(A — Stripe's receipt and invoice emails are on)* **Receipts and invoices** are emailed to the account owner. Your
     invoices, which show the tax charged, are always available from your billing page.
   - *(B — they are off)* **Your invoices**, which show the tax charged, are always available from your billing page. We also
-    email the account owner the details when you start a plan or pay to move up to a higher one (§16).
+    email the account owner the details when you start a plan or move up to a higher one (§16).
 
 > NOTES —
 > 1. **No price appears in this document on purpose**: prices have one home (the pricing page, kept matched to the Plan &
@@ -341,15 +343,16 @@ may be a **consumer** under your province's consumer protection law. **Nothing i
 gives you**, and if a section of these Terms conflicts with it, the law wins. In particular, §14's limits and §15 apply to
 you only as far as that law allows.
 
-When you start a plan, or pay to move up to a higher one, we email the account owner the details of the purchase: what was
+When you start a plan, or move up to a higher one, we email the account owner the details of the purchase: what was
 bought, by whom and when, the price, each tax by name and rate, the total, how often you will be charged, when the plan starts
 and renews, how to cancel, and a link to the version of these Terms you accepted. That version stays at its own address, word
 for word, so you can read or print it at any time. Keep the email: with the version it links to, it is your copy of our
 agreement.
 
 > NOTE — **the purchase email is built** (Stage 6 step 6.4 Part A, walked §525 2026-11-16) and goes to every owner on a first
-> plan, a trial, a next-season choice, a comeback and a charged move up; never on a renewal, a move down, or a move up that
-> charges nothing (during a trial — owner question E in the `/accounting` review). Ontario's Consumer Protection Act, 2002
+> plan, a trial, a next-season choice, a comeback and a move up (charged, or during a trial: the 6.6 fixes, owner ruling 2,
+> 2026-11-16); never on a renewal or a move down. Known edge (`/legal`, low): a start or a move up that charges $0 outside a trial
+> (a 100% coupon, a comp staff arrange) sends none; comps are not bought, so the body's words stand. Ontario's Consumer Protection Act, 2002
 > (internet agreements over $50) wants the disclosures before purchase, an express chance to accept, decline and correct, and
 > **a copy within 15 days** — miss the copy and the consumer may cancel within 30 days (`ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md`).
 > **Settled in 6.6 (`/legal`, 2026-11-16): a link is enough, with the list in the email.** The email itself carries the listed
@@ -674,8 +677,17 @@ fee line never inflates them).
 **Ruled 2026-11-16 (owner):** A — daily pro-rata of the last invoice, rounding under accepted; E — send the details email for a
 trial move up, built before 6.7. **Still open:** D (a **live** invoice and credit note print our GST/HST number
 and Ontario details; the count of production subscriptions made before 2026-11-06, which renew **untaxed** until moved — the
-tax on them is ours to remit). New: **E** a move up **during a trial** changes the plan and charges nothing, so no email goes
-and the trial email's "first payment" figure is now the old plan's — see the 6.6 owner questions in the Stage 6 plan.
+tax on them is ours to remit).
+
+**E closed by the 6.6 fixes build (2026-11-16, `/accounting` light review; committed `873fc7c76`).** Stripe test
+mode: a trialing move up swaps the price at once, keeps the trial end, and makes a **$0 paid** `subscription_update` invoice
+(`.probe/66fix/trial-move-up-run1.txt`); that invoice now sends "The details of your purchase" with the trial's figures: today's
+rows are the $0 invoice's own record ($0.00 before tax, $0.00 tax, $0.00 total, charged today $0.00), and the first payment is
+the **new** plan's price at send time plus Stripe's preview estimate, labelled as one (`trial-change-email-run1.txt`: $379.00
+plus applicable taxes on December 16, 2026; HST 13% $49.27, $428.27 CAD). The date is the trial end read in Ontario time (the
+charge lands at 9:12 p.m. on the 16th). **No bookkeeping or return issue:** a $0 record is the class the trial's own first
+invoice already writes; it adds $0 to sales and to tax collected, and nothing to the $30,000 specified-system count. The move
+window reads $0.00 due today for a trialing subscription (`amount_due` 0), so it has no defect.
 
 ## For a lawyer's eye
 
