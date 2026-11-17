@@ -362,7 +362,7 @@ export default async function ForCoachesPage() {
             </Link>
           </div>
           <div className={fp.afterNote}>
-            <p className={kit.small}>All plans are billed in CAD. No contracts. No setup fees.</p>
+            <p className={kit.small}>All plans are billed in CAD. No long-term contract. No setup fees.</p>
           </div>
         </div>
       </section>

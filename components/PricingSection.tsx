@@ -82,8 +82,8 @@ const PLANS: Plan[] = [
     annualSavings: `${formatAnnualSavings('tournament_plus')}`,
     currency: 'CAD',
     period: '/mo',
-    freeNote: 'No contracts — cancel anytime',
-    trialNote: 'No contracts — cancel anytime',
+    freeNote: 'No long-term contract — cancel any time',
+    trialNote: 'No long-term contract — cancel any time',
     promoNote: `Normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month · ${formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year`,
     features: [
       'Everything in Tournament',

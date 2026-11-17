@@ -22,7 +22,7 @@ export const metadata = marketingMetadata({
 
 const TRUST_SIGNALS = [
   'Billed in CAD — no conversion surprises',
-  'No contracts — cancel anytime',
+  'No long-term contract — cancel any time',
   'Tournament is free — no credit card required',
   'Upgrade or downgrade at any time',
 ];
@@ -135,7 +135,7 @@ const FAQS = [
   },
   {
     q: 'How does billing work?',
-    a: `Tournament Plus is billed monthly or annually in Canadian dollars. ${BILLING_TAX_WORDS.pricesPlusTax} Monthly billing renews automatically each month. Annual billing is charged once per year — you pay for 10 months and get 12, which works out to roughly two months free. No contracts, no penalties.`,
+    a: `Tournament Plus is billed monthly or annually in Canadian dollars. ${BILLING_TAX_WORDS.pricesPlusTax} Monthly billing renews automatically each month. Annual billing is charged once per year — you pay for 10 months and get 12, which works out to roughly two months free. Cancel any time; your plan runs to the end of the year you've paid for.`,
   },
   {
     q: 'What happens after the Founding Season offer ends?',
@@ -201,7 +201,7 @@ export default async function PricingPage() {
         if (faq.q === 'What if I only manage one competitive team?') {
           return {
             ...faq,
-            a: `Use the Coaches Portal. Registering for a tournament gives you the free portal — your tournament record${CHAT_PAUSED ? ' and schedule' : ', schedule, and team chat'} in one place. The Premium Coaches Portal is the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. ${teamPromoActive ? `Sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} and it's free through ${FOUNDING_SEASON_END_LABEL} — normally $29/month.` : 'It\'s $29/month, cancel anytime.'} If your organization moves to Club later, it can bring your team in with everything you\'ve built.`,
+            a: `Use the Coaches Portal. Registering for a tournament gives you the free portal — your tournament record${CHAT_PAUSED ? ' and schedule' : ', schedule, and team chat'} in one place. The Premium Coaches Portal is the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. ${teamPromoActive ? `Sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} and it's free through ${FOUNDING_SEASON_END_LABEL} — normally $29/month.` : 'It\'s $29/month, cancel any time.'} If your organization moves to Club later, it can bring your team in with everything you\'ve built.`,
           };
         }
         if (faq.q === 'Can I buy League Plus, Club, or the Coaches Portal today?') {
@@ -480,7 +480,7 @@ export default async function PricingPage() {
               Express interest in League Plus or Club
             </EarlyAccessModalTrigger>
           </div>
-          <p className={kit.small}>All plans are billed in CAD. No contracts. No setup fees.</p>
+          <p className={kit.small}>All plans are billed in CAD. No long-term contract. No setup fees.</p>
         </div>
       </section>
 

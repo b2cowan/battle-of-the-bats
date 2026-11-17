@@ -578,7 +578,7 @@ export default function TeamSignupClient({
               </button>
             )}
             {isWarmUpgrade && (
-              <p className={accountForm.fine}>Your roster, schedule and fees come with you; your free team stays as history. Cancel anytime.</p>
+              <p className={accountForm.fine}>Your roster, schedule and fees come with you; your free team stays as history. Cancel any time.</p>
             )}
           </form>
 

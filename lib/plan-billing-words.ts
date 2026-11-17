@@ -75,7 +75,7 @@ export const PLAN_BILLING_WORDS = {
       : `Premium is ${coachMonthlyPrice()} ${PLUS_TAX}.`,
     ceiling: (founding: boolean) => founding
       ? `Free through ${END} — normally ${coachMonthlyPrice()}. No credit card required.`
-      : `${coachMonthlyPrice()} ${PLUS_TAX}, cancel anytime.`,
+      : `${coachMonthlyPrice()} ${PLUS_TAX}, cancel any time.`,
   },
   page: {
     title: PLAN_BILLING_TITLE, eyebrow: 'Organization', loading: 'Loading plan & billing…',

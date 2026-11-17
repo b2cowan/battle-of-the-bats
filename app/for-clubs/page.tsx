@@ -92,7 +92,7 @@ export default async function ForClubsPage() {
           </p>
           <div className={fp.afterNote}>
             <ul className={kit.facts}>
-              {['No contracts — cancel anytime', 'Billed in CAD', 'Upgrade or downgrade at any time'].map(s => (
+              {['No long-term contract — cancel any time', 'Billed in CAD', 'Upgrade or downgrade at any time'].map(s => (
                 <li key={s}>{s}</li>
               ))}
             </ul>
@@ -306,7 +306,7 @@ export default async function ForClubsPage() {
             </Link>
           </div>
           <div className={fp.afterNote}>
-            <p className={kit.small}>All plans are billed in CAD. No contracts. No setup fees.</p>
+            <p className={kit.small}>All plans are billed in CAD. No long-term contract. No setup fees.</p>
           </div>
         </div>
       </section>
