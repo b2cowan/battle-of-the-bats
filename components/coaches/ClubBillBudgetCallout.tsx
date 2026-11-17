@@ -59,9 +59,13 @@ export function clubBillsOnLines(splits: readonly ClubBillSplit[], lines: readon
     const cents = list.reduce((n, s) => n + Math.round(s.amount * 100), 0);
     const dues = [...new Set(list.flatMap(s => s.installments.map(i => i.dueDate)))].sort();
     const first = list[0];
+    // Several bills of one schedule under the word (a correction "Fall practices · changes …", an added part's bill of its
+    // own "Fall practices · Time added Nov 16" — Phase 8) are named by the schedule they share, whichever came first.
+    const names = [...new Set(list.map(s => s.allocationDescription))];
+    const named = names.find(n => names.every(m => m === n || m.startsWith(`${n} · `))) ?? first.allocationDescription;
     out.push({
       itemId, lineId: line.id, word: first.budgetItemName ?? line.description, amount: cents / 100, plan: line.totalAmount,
-      caption: C.budgetLineBill(first.allocationDescription, fmt(cents / 100),
+      caption: C.budgetLineBill(named, fmt(cents / 100),
         `${pluralize(dues.length, 'payment')}${dues.length ? ` (${dues.map(d => formatStoredDate(d, { withYear: false })).join(', ')})` : ''}`),
     });
   }

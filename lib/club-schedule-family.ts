@@ -87,6 +87,10 @@ export interface PartRead {
   sent: { at: string } | null;
   /** A bill rides with it (chosen at Send the changes, or made): Needs attention says so while it has none. Never money. */
   billed: boolean;
+  /** A sent part's own changes wait for Send the changes (Session 3: a part taken off, a part regenerated). */
+  changedSinceSent: boolean;
+  /** Those changes, team by team, as Needs attention lists them (empty while the part is unsent: its practices are new). */
+  changes: { teamId: string; teamName: string; lines: string[] }[];
   view: ScheduleView;
 }
 
@@ -153,7 +157,7 @@ export function familyShown<V extends ScheduleView>(parent: V, parts: readonly P
       ...s,
       startsOn: members.reduce((d, m) => (m.view.schedule.startsOn < d ? m.view.schedule.startsOn : d), s.startsOn),
       endsOn: members.reduce((d, m) => (m.view.schedule.endsOn > d ? m.view.schedule.endsOn : d), s.endsOn),
-      changedSinceSent: s.changedSinceSent || parts.some(p => p.state !== 'final'),
+      changedSinceSent: s.changedSinceSent || parts.some(p => p.state !== 'final' || p.changedSinceSent),
     },
     places: [...places.values()],
     teams,

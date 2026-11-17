@@ -767,6 +767,49 @@ date-off fixtures re-run green; `tests/unit/club-schedule-add-part.test.ts`). De
 - **Owed to Session 3**, unchanged: sending, billing, regenerating and removing a part. Until then a part added on dev can be
   seen but not sent; the P9 B money path still exists and has no caller that adds time to a sent schedule.
 
+**Session 3 BUILT 2026-11-17 — Send the changes sends the family; one part at a time** (no migration: every step it runs
+already existed per schedule; `tests/sql/schedule-part-send-fixture.sql` 5/5 on DEV; `tests/unit/club-schedule-family-send.test.ts`
+15/15; the schedule suites 546/546). Decisions it made:
+- **One send, each member its own step.** Send the changes on the schedule's address previews every part with something to
+  send (`partsToSend`: a draft part's FIRST send, a sent part's own changes) as its own preview — Finalize's for a draft part,
+  Send the changes' for a sent one, with the same corrections switch — and folds them in: one WHO IS TOLD, one email per team
+  (`familyTeamFacts`: the schedule's lines, then each part's suffixed "· Time added Nov 16"; corrections and credits added up;
+  each part's bill listed by its name with "billed on its own … Nothing already billed changes"), one bell per bill (a part's
+  "For Fall practices · Time added Nov 16 · 1 payment, …"). The press runs the schedule's own step first (only when it has
+  something of its own), then each part's, each with its own claim and log row (`stepFor`). ⚖ **A later member refused after
+  an earlier one landed** stops there: the coaches are told only what landed (`teamsFor(landed)`), and the window says the
+  refusal after "Sent to …" (`notAll`); the rest waits in Changed since sent. Not one transaction across the family — each
+  step is atomic on its own, as Finalize and Send the changes always were.
+- **A part's first send is the shipped Finalize step on the part** (`club_schedule_finalize_priced`): its practices land, and
+  its bill (when Bill the teams set one on the part) is an allocation of its own named as the part is ("Fall practices · Time
+  added Nov 16" — the coach's second charge on Money › Club). The schedule it was added to is byte-identical after (fixture 2).
+  **Added time is never a correction on the parent's bill** — it isn't on the parent at all. A part may be sent unbilled (its
+  bill is then the shipped final-not-billed path, below).
+- **The bill line** (tab 5): under WHO IS TOLD, per unsent part, "Time added Nov 16 · its bill" → "Not billed" / "$135.00 · 14U AA
+  · one payment, due Dec 1" over "1.5 hours of {permits} for {teams}", and **Bill it… / Change…** opening the whole Bill the
+  teams window on the part (eyebrow = the part's name; statement "A bill of its own, for …"; footer as shipped "Add the bill to
+  the schedule"); saving or Cancel goes back to Send the changes. People without the club's Accounting see "Not billed" or
+  **"Billed"** (no figure — the route strips the part's bill as it strips every bill; the drawing said "or the figure", the
+  shipped rule won) and no door. With parts and nothing to correct, "Bill the corrections" is absent and one hint says why.
+- **A part sent without a bill** gets its own Needs attention row ("{label} was sent without a bill…", chip "Not billed") with
+  **Bill it…** for a money reader → Bill the teams on the part → Review the bill → the shipped late-bill send, on the part.
+- **Regenerate which part? / Settings for which part?** (`WhichPartWindow`, the shipped view switch; a select past three
+  choices): asked only with parts; then the shipped window on that part's own view and address. Its hint names what stays.
+- **Taking an added part's only permit off removes the part.** Its permit card offers Take it off… even when nothing else would
+  stay. Unsent: the part row is deleted (version-checked), "Time added Nov 16 is off the schedule." Sent with nothing played:
+  every slot comes off (the save with no rows and no slots), the part waits as Changed since sent, and Send the changes
+  credits it on its own bill; then it leaves the page and the Part filter (`partIsGone`), its row, bill and send record kept.
+  Sent with practices played: the shipped take-off (they stay).
+- **The page reads what a sent part waits to send:** its changes join Needs attention's change lines ("· {label}"), the chip
+  and the Schedules list's Changed since sent fold it in. Part views now read money for a money reader (Bill the teams needs
+  the part's bill). **The send log is the family's**: a part's sends listed with its label, a part taken off included.
+- **Coach side:** the charge, the bell and the email name the part through its row name (Session 1's trigger). The budget
+  line's callout, when a schedule's bills share one line, now names the schedule they share rather than whichever came first.
+- **P9 B (added time billed as a correction) is NOT retired:** Add time no longer reaches it, but Settings… on a FINAL schedule
+  can still add a typed row (Session 2's review item 1, the owner's call). `changesMoney`'s `fresh` and
+  `club-schedule-add-time-send.test.ts` stay until that call; the test's header says so.
+- **Phase 7 (each team's amount) is not in the tree**: the Bill window is used as shipped.
+
 ## 9. Sequencing (recommended)
 
 - **Not straight after 13c.** Three things touch the same screens first:

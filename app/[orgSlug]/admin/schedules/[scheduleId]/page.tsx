@@ -48,6 +48,7 @@ import { sharingPools } from '@/lib/club-schedule-settings';
 import { matchesScheduleTeamFilter, scheduleOutsideWords } from '@/lib/club-schedule-overview';
 import { PART_WORDS as P, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
 import { addTeamResults, familyShown, memberView, partChangeLines, type PartRead } from '@/lib/club-schedule-family';
+import WhichPartWindow from '@/components/admin/kit/club/schedules/WhichPartWindow';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
 import { isProgramHolder } from '@/lib/club-schedule-holders';
 import { fetchDoorNote } from '@/lib/needs-attention-door';
@@ -75,10 +76,15 @@ const PARENT_PART = 'schedule';
 type Win =
   | { kind: 'slot'; key: string }
   | { kind: 'swap'; key: string }
-  | { kind: 'settings'; regenerate?: boolean; addDatesOff?: DateOff[]; addTime?: boolean }
+  /** `partId`: Settings… or Regenerate of an added part (Phase 8, Session 3 — after "which part?"). */
+  | { kind: 'settings'; regenerate?: boolean; addDatesOff?: DateOff[]; addTime?: boolean; partId?: string }
+  /** Regenerate / Settings… on a schedule with added parts asks which part first (drawing tab 4, ruling 4). */
+  | { kind: 'which'; then: 'settings' | 'regenerate' }
   | { kind: 'fair' }
-  | { kind: 'bill' }
-  | { kind: 'send'; start: 'draft' | 'final' | 'changes' | 'bill'; bill?: object }
+  /** `partId`: an added part's bill — from Send the changes' "Bill it…" (`back: 'send'`) or Needs attention's (a part sent
+   *  without one). */
+  | { kind: 'bill'; partId?: string; back?: 'send' }
+  | { kind: 'send'; start: 'draft' | 'final' | 'changes' | 'bill'; bill?: object; partId?: string }
   | { kind: 'log' }
   | { kind: 'team'; teamId: string }
   | { kind: 'clearWeek' }
@@ -129,7 +135,11 @@ export default function SchedulePage() {
   const [teamFilter, setTeamFilter] = useState<Set<string>>(() => new Set());
   const [partFilter, setPartFilter] = useState<Set<string>>(() => new Set());
   const [clashesOnly, setClashesOnly] = useState(false);
-  const [win, setWin] = useState<Win | null>(null);
+  const [openWin, setWin] = useState<Win | null>(null);
+  // A window opened for an added part is closed once the part is gone on the next read (taken off, or sent away by another
+  // admin) — never falls back to the schedule itself, where Settings would edit it and a bill would be made on it.
+  const win = openWin && (openWin.kind === 'settings' || openWin.kind === 'bill' || openWin.kind === 'send')
+    && openWin.partId && !parts.some(x => x.id === openWin.partId) ? null : openWin;
   const [pending, setPending] = useState<PendingMove | null>(null);
   const [notice, setNotice] = useState<{ id: number; text: string; undo?: Before[] } | null>(null);
   const [moved, setMoved] = useState<Set<string>>(() => new Set());
@@ -409,9 +419,22 @@ export default function SchedulePage() {
   );
   // The schedule's own changes, then each unsent part's new practices (Phase 8) — what Send the changes will send.
   const unsentParts = parts.filter(x => x.state !== 'final');
-  const changeLines = [...own.changes.teams, ...unsentParts.flatMap(partChangeLines)].flatMap(t => t.lines.map(l => W.changeTeamLine(t.teamName, lowerFirst(l))));
+  // A sent part's own changes (Session 3: taken off, regenerated) wait too, each line naming its part.
+  const sentPartChanges = parts.filter(x => x.state === 'final' && x.changedSinceSent)
+    .flatMap(x => x.changes.map(t => ({ ...t, lines: t.lines.map(l => `${l} · ${x.label}`) })));
+  const changeLines = [...own.changes.teams, ...unsentParts.flatMap(partChangeLines), ...sentPartChanges].flatMap(t => t.lines.map(l => W.changeTeamLine(t.teamName, lowerFirst(l))));
   // A part with no bill yet is said here, never in the bill tile (drawing tab 4, note 2).
   const partNotes = unsentParts.filter(x => !x.billed).map(x => P.notBilledYet(x.label));
+  // A part SENT without a bill (tab 5, note 2): the shipped final-not-billed path — Bill the teams, then Review the bill.
+  const unbilledSent = parts.filter(x => x.state === 'final' && !x.billed && x.view.slots.some(sl => sl.teamIds.some(id => !isProgramHolder(id))))
+    .map(x => ({ id: x.id, text: P.sentNotBilled(x.label) }));
+  /** The family member a window acts on: an added part's own view, or the schedule's. */
+  const winPart = win?.kind === 'settings' || win?.kind === 'bill' ? parts.find(x => x.id === win.partId) ?? null : null;
+  const winName = winPart ? winPart.label : s.name;
+  const partWords = winPart ? { label: winPart.label, parentName: own.schedule.name } : null;
+  /** Bill the teams opened from Send the changes' "Bill it…" goes back there; anywhere else it closes. */
+  const billBacksToSend = win?.kind === 'bill' && win.back === 'send';
+  const billBack = () => setWin(billBacksToSend ? { kind: 'send', start: 'changes' } : null);
 
   // ── The permit's pulled dates (13c Session C, C2 = A): the words are scheduleOutsideWords'; the page adds the one ask,
   // a computer's only (as Regenerate is). The days go into the schedule's OWN Dates off, in today's Regenerate; nothing is
@@ -475,8 +498,8 @@ export default function SchedulePage() {
       {/* S1 A: Add time beside Settings…, first in Tools — it only adds; Settings… changes what is there. Phase 8 ruling 2: on a
           FINAL schedule only — a draft or a schedule in review is simply edited (Settings… holds the Permits picker). */}
       {canChange && final && <CoachToolbarMenuItem label={W.toolAddTime} hint={W.toolAddTimeHint} onSelect={() => setWin({ kind: 'settings', addTime: true })} />}
-      {canChange && <CoachToolbarMenuItem label={W.toolSettings} hint={W.toolSettingsHint} onSelect={() => setWin({ kind: 'settings' })} />}
-      {canChange && <CoachToolbarMenuItem label={W.toolRegenerate} onSelect={() => setWin({ kind: 'settings', regenerate: true })} />}
+      {canChange && <CoachToolbarMenuItem label={W.toolSettings} hint={W.toolSettingsHint} onSelect={() => setWin(parts.length ? { kind: 'which', then: 'settings' } : { kind: 'settings' })} />}
+      {canChange && <CoachToolbarMenuItem label={W.toolRegenerate} onSelect={() => setWin(parts.length ? { kind: 'which', then: 'regenerate' } : { kind: 'settings', regenerate: true })} />}
       {canChange && lens === 'grid' && <CoachToolbarMenuItem label={W.toolLockWeek(weekScope)} onSelect={lockWeek} />}
       {canChange && lens === 'grid' && <CoachToolbarMenuItem label={W.toolClearWeek(weekScope)} onSelect={() => setWin({ kind: 'clearWeek' })} />}
       <CoachToolbarMenuItem label={W.toolSendLog} onSelect={() => setWin({ kind: 'log' })} />
@@ -730,7 +753,8 @@ export default function SchedulePage() {
       <ScheduleAttention asks={v.asks} slots={v.slots} places={v.places} canMoney={v.canMoney}
         changed={final && s.changedSinceSent} sentOn={formatStoredDate(s.sent?.at ?? '', { withYear: false })}
         changeLines={changeLines} partNotes={partNotes} outside={outsideRows} onAnswer={id => setWin({ kind: 'answer', id })}
-        onSend={() => setWin({ kind: 'send', start: 'changes' })} />
+        onSend={() => setWin({ kind: 'send', start: 'changes' })}
+        unbilledParts={unbilledSent} onBillPart={own.canMoney && canChange ? id => setWin({ kind: 'bill', partId: id }) : undefined} />
       {!isPhone && fair && <FairSharesBand model={fair} onOpen={() => setWin({ kind: 'fair' })} />}
 
       {isPhone ? (
@@ -823,12 +847,20 @@ export default function SchedulePage() {
         <SwapWindow view={memberView(own, parts, slotWin.partId)} slot={slotWin} nameOf={nameOf} placeOf={placeOfSlot} onClose={() => setWin(null)}
           onPick={to => { setWin(null); setPending({ from: slotWin, to, teamId: slotWin.teamIds[0], at: { left: window.innerWidth / 2 - 150, top: window.innerHeight / 3 } }); }} />
       )}
+      {/* Settings… or Regenerate of one added part (ruling 4): its own view, its own address; the window's eyebrow is the
+          part's name ("Fall practices · Time added Nov 16"). A regenerate of one part never touches another. */}
       {win?.kind === 'settings' && (
         <NewScheduleWindow q={q} orgSlug={slug} orgName={currentOrg?.name} onCancel={() => setWin(null)}
           settingsOf={{
-            view: own, regenerate: win.regenerate, addDatesOff: win.addDatesOff, addTime: win.addTime, parts, onStale: () => void load(),
-            onKept: (_version, renamed, said) => { setWin(null); setMoved(new Set()); say(said ?? (renamed ? W.regenerated(s.name) : W.regeneratedNotRenamed(s.name))); void load(); },
+            view: winPart?.view ?? own, regenerate: win.regenerate, addDatesOff: win.addDatesOff, addTime: win.addTime, parts, onStale: () => void load(),
+            part: partWords,
+            onKept: (_version, renamed, said) => { setWin(null); setMoved(new Set()); say(said ?? (renamed ? W.regenerated(winName) : W.regeneratedNotRenamed(winName))); void load(); },
           }} />
+      )}
+      {win?.kind === 'which' && (
+        <WhichPartWindow then={win.then} parentName={own.schedule.name} parentView={own} parts={parts}
+          onClose={() => setWin(null)}
+          onPick={partId => setWin({ kind: 'settings', regenerate: win.then === 'regenerate', partId: partId ?? undefined })} />
       )}
       {/* ⚖ 13c Session C (C4 = A): Fair shares and the bill, in a window — the team table and its bill door. A reader
           without the club's money reads Fair shares alone (the window is titled so), and nobody lost the view. */}
@@ -841,12 +873,17 @@ export default function SchedulePage() {
             onBill={own.canMoney && (!final || !!own.bill || own.slots.some(x => x.teamIds.some(id => teamById.has(id)))) ? () => setWin({ kind: 'bill' }) : undefined} />
         </KitDialog>
       )}
+      {/* An added part's bill (Session 3, drawing tab 5): opened from Send the changes' "Bill it…", it goes back there. */}
       {win?.kind === 'bill' && (
-        <BillWindow q={q} view={own} nameOf={nameOf} onClose={() => setWin(null)} onStale={() => void load()} onSaved={text => { setWin(null); say(text); void load(); }}
-          onReview={terms => setWin({ kind: 'send', start: 'bill', bill: terms })} />
+        <BillWindow q={q} view={winPart?.view ?? own} addedPart={partWords} nameOf={nameOf}
+          onClose={billBack} onStale={() => void load()}
+          onSaved={text => { billBack(); if (!billBacksToSend) say(text); void load(); }}
+          onReview={terms => setWin({ kind: 'send', start: 'bill', bill: terms, partId: winPart?.id })} />
       )}
       {win?.kind === 'send' && (
-        <SendWindow q={q} view={own} start={win.start} bill={win.bill} onClose={() => setWin(null)} onStale={() => void load()} onSent={text => { setWin(null); setMoved(new Set()); say(text); void load(); }} />
+        <SendWindow q={q} view={memberView(own, parts, win.partId)} start={win.start} bill={win.bill} onClose={() => setWin(null)} onStale={() => void load()}
+          onSent={text => { setWin(null); setMoved(new Set()); say(text); void load(); }}
+          onBillPart={own.canMoney ? partId => setWin({ kind: 'bill', partId, back: 'send' }) : undefined} />
       )}
       {win?.kind === 'log' && <SendLogWindow view={own} log={own.sendLog} nameOf={nameOf} onClose={() => setWin(null)} />}
       {/* The one Answer window (Stage 11d, Ask 4) — the same from every door: Payment requests, the bell, this page. */}

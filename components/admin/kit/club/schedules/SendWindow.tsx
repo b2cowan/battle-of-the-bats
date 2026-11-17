@@ -27,12 +27,13 @@ import ck from '../ClubKit.module.css';
 import { Callout, repKit, useLatestRead } from '../RepKit';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import { addCalendarDays, formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
-import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, billPhrase, moneyCents as money, withoutReviewReply, type EmailWords } from '@/lib/club-schedule-words';
+import { PART_WORDS as P, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, billPhrase, moneyCents as money, withoutReviewReply, type EmailWords } from '@/lib/club-schedule-words';
 import { isStale, oneWeekdayOf, type ScheduleView } from '@/lib/club-schedule-view';
 import type { SendKind } from '@/lib/club-schedule-send';
 import { getsPlainEmail } from '@/lib/club-schedule-money-audience';
 import { HAND_BACK_WORDS, type CreditMove } from '@/lib/club-hand-back-words';
 import { TIME_HANDOFF_WORDS, type LeagueTimeLine } from '@/lib/league-time-handoff';
+import { hoursOf } from '@/lib/league-time';
 import { Statement } from './ScheduleParts';
 import { EmailWordsSample, MailView, SendDoor, SendDoors, SendRow, SendRows, useSendLevel } from '../SendParts';
 import sch from './Schedules.module.css';
@@ -74,10 +75,18 @@ interface Preview {
   /** Stage 13d (A2): who hears the time-given bell, and the week's hours this send gives or takes back. Null: house league
    *  gets nothing from this send, so the line is held off. */
   leagueTime?: LeagueTimeLine | null;
+  /** Phase 8 (Session 3, drawing tab 5): each added part this Send the changes takes with it — a first send carries its bill
+   *  line (its bill's figure to a money reader only). */
+  parts?: {
+    id: string; label: string; name: string; version: number; first: boolean; billSet: boolean;
+    line: { minutes: number; permitNames: string[]; teamNames: string[]; bill: { cents: number; teamNames: string[]; payments: number; firstDue: string | null } | null } | null;
+  }[];
 }
 
+/** "1.5 hours", "1 hour" — a part's time on its bill line. */
 
-export default function SendWindow({ q, view, start, bill, onSent, onStale, onClose }: {
+
+export default function SendWindow({ q, view, start, bill, onSent, onStale, onClose, onBillPart }: {
   q: string;
   view: ScheduleView;
   /** What opened it: Send on a draft (`draft`), Finalize and send (`final`), Send the changes (`changes`), or Send the bill
@@ -89,6 +98,9 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   /** The schedule changed under the window: the page re-reads it. */
   onStale?: () => void;
   onClose: () => void;
+  /** An added part's "Bill it…" / "Change…" (drawing tab 5): Bill the teams for that part, then back here. Absent for a
+   *  reader without the club's Accounting — they see "Not billed" or "Billed", and no door. */
+  onBillPart?: (partId: string) => void;
 }) {
   const [kind, setKind] = useState<SendKind>(start !== 'draft' ? start : view.bill ? 'review' : 'final');
   const [replyBy, setReplyBy] = useState(view.schedule.replyBy ?? addCalendarDays(tournamentToday(), 7));
@@ -163,20 +175,25 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
   const sampleName = doorTeam ? (getsSample(doorTeam).find(r => r.isHeadCoach)?.name ?? getsSample(doorTeam)[0]?.name ?? doorTeam.teamName) : null;
   const plainName = plainTeam ? (getsPlain(plainTeam)[0]?.name ?? getsPlain(plainTeam)[0]?.email ?? plainTeam.teamName) : null;
   const [variant, setVariant] = useState<'money' | 'plain'>('money');
+  const firstParts = (shown?.parts ?? []).filter(p => p.first);
+  // The switch shows for a correction of the schedule's own, and ALSO whenever one is blocked (a sent part's correction can block
+  // the send while the schedule has none of its own): the blocked send says why and can turn the billing off.
+  const correctionShown = kind === 'changes' && (!!shown?.correctionBlocked
+    || (!!shown?.correction && (Object.keys(shown.correction.billed).length > 0 || Object.keys(shown.correction.lost).length > 0)));
   const blocked = (shown?.blockers.length ?? 0) > 0 || (kind === 'changes' && corrections && !!shown?.correctionBlocked);
 
   async function send() {
     if (busy || !shown || blocked || reading || failed) return;
     setBusy(true); setError('');
     try {
-      const r = await moneyFetch<{ teams: number; people: number; failed: number; version: number; checks: { clashes: number } }>(url, jsonInit('POST', {
-        kind, version: view.schedule.version, teamIds: ticked.map(t => t.teamId), replyBy: kind === 'review' ? replyBy : null,
+      const r = await moneyFetch<{ teams: number; people: number; failed: number; version: number; checks: { clashes: number }; notAll?: string }>(url, jsonInit('POST', {
+        kind, version: shown.version, teamIds: ticked.map(t => t.teamId), replyBy: kind === 'review' ? replyBy : null,
         billCorrections: kind === 'changes' ? corrections : undefined,
         bill,
-        ...(kind === 'changes' ? { leagueTeamIds: leagueTicked.map(t => t.teamId), leagueSeen: shown.league?.seen ?? '' } : {}),
+        ...(kind === 'changes' ? { leagueTeamIds: leagueTicked.map(t => t.teamId), leagueSeen: shown.league?.seen ?? '', parts: (shown.parts ?? []).map(p => ({ id: p.id, version: p.version })) } : {}),
       }));
       if (!r.ok) { if (isStale(r.data)) onStale?.(); setError(refusalText(r.data, R.notSaved)); void load(); setBusy(false); return; }
-      const text = [gamesOnly ? W.sentNoticeGamesOnly : kind === 'bill' ? W.billSentNotice(r.data.people, r.data.teams, r.data.failed) : W.sentNotice(r.data.people, r.data.teams, r.data.failed), r.data.checks.clashes ? W.sentClash(r.data.checks.clashes) : ''].filter(Boolean).join(' ');
+      const text = [gamesOnly ? W.sentNoticeGamesOnly : kind === 'bill' ? W.billSentNotice(r.data.people, r.data.teams, r.data.failed) : W.sentNotice(r.data.people, r.data.teams, r.data.failed), r.data.checks.clashes ? W.sentClash(r.data.checks.clashes) : '', r.data.notAll ?? ''].filter(Boolean).join(' ');
       onSent(text);
     } catch {
       setError(R.notSaved);
@@ -330,7 +347,20 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
               {billNotTold.map(u => <span key={u.teamId} className={repKit.calloutSub}>{u.sentence}</span>)}
             </Callout>
           )}
-          {kind === 'changes' && shown.correction && (Object.keys(shown.correction.billed).length > 0 || Object.keys(shown.correction.lost).length > 0) && (
+          {/* Phase 8 (drawing tab 5, note 2): each unsent part's bill of its own — "Not billed · Bill it…", then the figure and
+              "Change…". The window it opens is the whole Bill the teams, for that part. */}
+          {kind === 'changes' && firstParts.map(p => (
+            <div key={p.id}>
+              <p className={repKit.factsLabel}>{P.billLineHead(p.label)}</p>
+              <SendRows>
+                <SendRow
+                  title={<b>{p.line?.bill ? P.billLineSet(money(p.line.bill.cents), p.line.bill.teamNames, p.line.bill.payments, p.line.bill.firstDue ? formatStoredDate(p.line.bill.firstDue, { withYear: false }) : null) : p.billSet ? P.billedNoFigure : P.notBilled}</b>}
+                  sub={p.line ? P.billLineTime(hoursOf(p.line.minutes), p.line.permitNames, p.line.teamNames) : undefined}
+                  below={onBillPart ? <button type="button" className={sch.door} onClick={() => onBillPart(p.id)} disabled={busy}>{p.billSet ? P.billChange : P.billIt}</button> : null} />
+              </SendRows>
+            </div>
+          ))}
+          {correctionShown && shown && (
             <label className={sch.switchLine}>
               <input type="checkbox" checked={corrections} onChange={e => setCorrections(e.target.checked)} />
               <span>
@@ -343,6 +373,8 @@ export default function SendWindow({ q, view, start, bill, onSent, onStale, onCl
               </span>
             </label>
           )}
+          {/* Tab 5, note 3: with added parts and nothing to correct, the switch is absent — said once, so its absence reads. */}
+          {kind === 'changes' && firstParts.length > 0 && !correctionShown && <p className={ck.hint}>{P.correctionsOnlyOwn(view.schedule.name)}</p>}
           <p className={ck.hint}>
             {gamesOnly ? <>{W.changesHintLeagueGames}{' '}</> : <>
               {kind === 'review' ? W.reviewHint : kind === 'changes' ? W.changesHint : kind === 'bill' ? W.billSendHint : W.emailHint}{' '}

@@ -270,6 +270,9 @@ export interface SettingsOf {
   addTime?: boolean;
   /** The schedule's added parts as its page read them: the time they already use, and the labels they hold. */
   parts?: readonly PartRead[];
+  /** Settings… or Regenerate of an ADDED PART (Phase 8, Session 3 — after "which part?"): `view` is the part's own. Taking
+   *  its only permit off removes the part (drawing tab 4): before its first send it simply goes; after, the usual credit. */
+  part?: { label: string; parentName: string } | null;
 }
 
 export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId = null, settingsOf, onCancel, onSaved }: {
@@ -788,6 +791,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   // (Asked while the cards render — above `teamName` — so it counts without naming a team.)
   const canTakeOff = (permitId: string) => {
     if (!editing) return false;
+    // An added part's only permit may come off too: the part goes with it (Phase 8, Session 3).
+    if (settingsOf?.part) return editing.time.blocks.some(b => b.permitId === permitId);
     if (editing.time.blocks.some(b => b.permitId !== permitId)) return true;
     const today = tournamentToday();
     return sent && editing.slots.some(x => x.rowPermitId === permitId && x.teamIds.length > 0 && x.day < today);
@@ -797,9 +802,11 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     setBusy(true); setError('');
     try {
       const url = `/api/admin/schedules/${encodeURIComponent(editing.schedule.id)}?${q}`;
-      const r = await moneyFetch<{ version: number }>(url, jsonInit('PATCH', { action: 'take_permit_off', version: editing.schedule.version, permitId }));
+      const r = await moneyFetch<{ version: number | null; removed?: boolean }>(url, jsonInit('PATCH', { action: 'take_permit_off', version: editing.schedule.version, permitId }));
       if (!r.ok) { if (isStale(r.data)) settingsOf?.onStale?.(); setTakingOff(null); setError(refusalText(r.data, R.notSaved)); setBusy(false); return; }
-      settingsOf!.onKept(r.data.version, true, W.permitTakenOff(permitById.get(permitId)?.name ?? '', editing.schedule.name));
+      // An unsent part whose only permit came off is gone (Phase 8): the page says so by its label.
+      if (r.data.removed && settingsOf?.part) { settingsOf.onKept(editing.schedule.version, true, PART_WORDS.partTakenOff(settingsOf.part.label)); return; }
+      settingsOf!.onKept(r.data.version ?? editing.schedule.version, true, W.permitTakenOff(permitById.get(permitId)?.name ?? '', settingsOf?.part?.label ?? editing.schedule.name));
     } catch {
       setTakingOff(null);
       setError(R.notSaved);
@@ -1933,10 +1940,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       {takingOff && editing && (() => {
         const t = takeOffOf(takingOff);
         const dirty = opened !== null && opened !== JSON.stringify(draft);
+        // An added part's ONLY permit: the part comes off with it (Phase 8, drawing tab 4).
+        const wholePart = settingsOf?.part && !editing.time.blocks.some(b => b.permitId !== takingOff) ? settingsOf.part : null;
         return (
           <KitDialog
             kind="question"
-            title={W.takeOffTitle(permitById.get(takingOff)?.name ?? '')}
+            title={wholePart ? PART_WORDS.takeOffPartTitle(wholePart.label) : W.takeOffTitle(permitById.get(takingOff)?.name ?? '')}
             onClose={() => setTakingOff(null)}
             busy={busy}
             footer={(
@@ -1951,8 +1960,9 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
                 <p>{W.takeOffFuture(t.practices, formatShortWeekdayDate(t.today), joinWithAnd(t.teams))}</p>
                 {t.past > 0 && <p>{W.takeOffPast(t.past)}</p>}
                 <p>{W.takeOffSend}</p>
+                {wholePart && t.past === 0 && <p>{PART_WORDS.takeOffPartLeaves(wholePart.label)}</p>}
               </>
-            ) : <p>{W.takeOffDraft(t.slots)}</p>}
+            ) : wholePart ? <p>{PART_WORDS.takeOffPartDraft(t.practices)}</p> : <p>{W.takeOffDraft(t.slots)}</p>}
             {dirty && <p>{W.takeOffEdits}</p>}
           </KitDialog>
         );

@@ -48,6 +48,20 @@ import type { KeepChange } from '@/lib/club-schedule-keep';
 
 type Params = { params: Promise<{ scheduleId: string }> };
 
+/** The family's send log (Phase 8, Session 3): the schedule's sends and each added part's — a part taken off too (its send
+ *  record is kept, 11-17 ruling) — newest first, a part's named by its label. */
+async function familySendLog(orgId: string, scheduleId: string) {
+  // parts-ok: by the schedule they were added to — every part's sends belong in its log, a part taken off included.
+  const { data, error } = await supabaseAdmin.from('club_schedules').select('id, part_label').eq('org_id', orgId).eq('part_of_schedule_id', scheduleId);
+  if (error) throw error;
+  const parts = (data ?? []) as { id: string; part_label: string | null }[];
+  const logs = await Promise.all([
+    sendLog(orgId, scheduleId).then(rows => rows.map(x => ({ ...x, partLabel: null as string | null }))),
+    ...parts.map(p => sendLog(orgId, p.id).then(rows => rows.map(x => ({ ...x, partLabel: p.part_label })))),
+  ]);
+  return logs.flat().sort((a, b) => b.at.localeCompare(a.at));
+}
+
 export const GET = withObservability(async (req: Request, { params }: Params) => {
   const r = await resolveScheduler(req);
   if ('error' in r) return r.error;
@@ -79,11 +93,11 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     return NextResponse.json({ outside, version: loaded.row.version }, noStore);
   }
   // Its added parts first: their slot ids are the family's, which neither view reads as a booking (Phase 8).
-  const family = await readParts(r.ctx.org.id, loaded, { houseLeague: r.houseLeague });
+  const family = await readParts(r.ctx.org.id, loaded, { houseLeague: r.houseLeague, canMoney: r.canMoney, repTeams: r.repTeams, changesOf: part => changesSummary(r, part) });
   const [view, replies, log, changes] = await Promise.all([
     scheduleView(r.ctx.org.id, loaded, r.canMoney, { houseLeague: r.houseLeague, familySlotIds: family.familySlotIds }),
     scheduleReplies(r.ctx.org.id, scheduleId),
-    sendLog(r.ctx.org.id, scheduleId),
+    familySendLog(r.ctx.org.id, scheduleId),
     loaded.row.changed_since_sent ? changesSummary(r, loaded) : Promise.resolve({ teams: [] }),
   ]);
   // The send log's money (what a correction billed, what a team is owed back, the bill it made) reads only to a money
@@ -145,8 +159,24 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       // The time without that permit's rows (the rest by id, untouched); its past comes back through the keeping rule.
       const time = timeWithoutPermit(loaded, permitId);
       if (!time) return schedulerRefusal(409, 'changed', R.changed, { version: loaded.row.version });
+      // ⚖ PHASE 8 (Session 3, drawing tab 4): an added part's ONLY permit taken off removes the part. Before its first send
+      // it simply goes (nobody was told; the row and its slots are deleted); after it, see below.
+      if (loaded.row.part_of_schedule_id && !time.blocks.length && loaded.row.state !== 'final') {
+        const { data: gone, error: delError } = await supabaseAdmin.from('club_schedules').delete()
+          .eq('id', scheduleId).eq('org_id', orgId).eq('version', version).neq('state', 'final').select('id');
+        if (delError) throw delError;
+        if (!gone?.length) return schedulerRefusal(409, 'changed', R.changed, { version: loaded.row.version });
+        return NextResponse.json({ version: null, removed: true });
+      }
       const asked = await requestOnStored(orgId, loaded, time, { houseLeague: r.houseLeague, repTeams: r.repTeams });
       if (!asked.ok) return asked.response;
+      // A SENT part with nothing played on it: every practice comes off and waits for Send the changes, which credits it;
+      // once that is sent the part leaves the page (its row, bill and send record stay — 11-17 ruling). With practices
+      // already played, the usual take-off keeps them (and their rows, ending yesterday).
+      if (loaded.row.part_of_schedule_id && !time.blocks.length && !keepingFor(loaded, time, { kind: 'take_off', permitId }, asked.value.places)?.stored.length) {
+        const saved = await saveScheduleStep(orgId, scheduleId, actor, version, { ...timePayload(time), slots: [] });
+        return saved.ok ? NextResponse.json({ version: saved.version }) : saved.response;
+      }
       return keepTime(asked.value, { kind: 'take_off', permitId }, []);
     }
 

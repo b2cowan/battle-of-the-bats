@@ -279,6 +279,9 @@ export interface SendLogRow {
   id: string; kind: SendKind; at: string; by: string | null; teamIds: string[]; people: number; failed: number;
   /** Stage 11b Part 5: the house-league teams a Send the changes told, by name. */
   leagueTeams?: string[];
+  /** Phase 8 (Session 3): the added part this send was ("Time added Nov 16") — its first send or its own changes, sent with
+   *  the schedule's. Null: the schedule's own. */
+  partLabel?: string | null;
 }
 
 export function SendLogWindow({ view, log, nameOf, onClose }: { view: ScheduleView; log: readonly SendLogRow[]; nameOf: (id: string) => string; onClose: () => void }) {
@@ -289,7 +292,7 @@ export function SendLogWindow({ view, log, nameOf, onClose }: { view: ScheduleVi
         <div className={sch.logRows} role="list">
           {log.map(r => (
             <div key={r.id} className={sch.logRow} role="listitem">
-              <b>{sendLogLine({ kind: r.kind, teams: r.teamIds.length + (r.leagueTeams?.length ?? 0), people: r.people })}</b>
+              <b>{sendLogLine({ kind: r.kind, teams: r.teamIds.length + (r.leagueTeams?.length ?? 0), people: r.people })}{r.partLabel ? ` · ${r.partLabel}` : ''}</b>
               <small>{W.sendLogSub(at(r.at), r.by, r.kind === 'final' ? '' : [...r.teamIds.map(nameOf), ...(r.leagueTeams ?? [])].join(', '))}</small>
             </div>
           ))}

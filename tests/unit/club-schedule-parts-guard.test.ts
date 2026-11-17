@@ -47,7 +47,7 @@ describe('every list of schedules decides what an added part is', () => {
     const list = src.slice(src.indexOf('export async function scheduleList'), src.indexOf('// ── The writers'));
     assert.match(list, /const rows = all\.filter\(r => !r\.part_of_schedule_id\)/, 'a part is never a row of the list');
     assert.match(list, /family\.has\(s\.schedule_id\)/, 'its slots count with its parent\'s');
-    assert.match(list, /parts\.some\(x => x\.state !== 'final'\)/, 'an unsent part reads as Changed since sent');
+    assert.match(list, /parts\.some\(x => x\.state !== 'final' \|\| x\.changed_since_sent\)/, 'an unsent part, or a sent part with changes waiting (Session 3), reads as Changed since sent');
   });
 
   it('New schedule\'s "start from" picker never offers a part', () => {

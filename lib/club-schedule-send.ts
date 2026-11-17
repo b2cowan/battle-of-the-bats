@@ -34,7 +34,7 @@ import {
   placeWords, unreachableSentence, billNotToldSentence, moneyCents, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
 } from './club-schedule-words';
 import {
-  billSlotsOf, computeBill, liveSlots, readBill, readBillTerms, readClubTeams, schedulePrices, stepRefusal, teamNamer,
+  billSlotsOf, computeBill, liveSlots, loadSchedule, readBill, readBillTerms, readClubTeams, schedulePrices, stepRefusal, teamNamer, touchesRepTeams,
   type BillTerms, type ClubTeam, type LoadedSchedule, type Prices, type SchedulerCtx,
 } from './club-schedule-server';
 import type { WeightOf } from './club-schedule-engine';
@@ -54,6 +54,7 @@ import {
   leagueRowLine, type FamilyPart, type LeagueNoticeCounts, type LeaguePlace,
 } from './club-schedule-league-words';
 import { readHouseholds, sendPracticeChangeNotices, type Household } from './club-schedule-league-mail';
+import { familyTeamFacts, partBillOf, samePartsSeen, type LostShare, type MemberShare, type PartBill, type PartBillLine } from './club-schedule-family-send';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -97,8 +98,12 @@ export interface PreviewTeam {
   /** Build question B, on Send the changes: a correction billed for time gained, in cents. */
   billedCents: number | null;
   /** Stage 11d, Ask 8: time the club moved off the team — taken off what it owes (latest payment first), the rest owed
-   *  back by the club as an accepted request. Settled in the send's own step, under Bill the corrections. */
-  lost: LostTime | null;
+   *  back by the club as an accepted request. Settled in the send's own step, under Bill the corrections. On a family's
+   *  Send the changes, every member's credit to the team added up (Phase 8). */
+  lost: LostShare | null;
+  /** Phase 8 (Session 3): each added part's bill of its own that this send makes (its first send), by the part's name —
+   *  the coach's second charge. Empty on every other send. MONEY: the route sends it to a money reader only. */
+  partBills: PartBill[];
   /** "See 15U AAA's email" — the email this team's coaches get: the money one when any recipient can open Money, else
    *  the plain one (owner 2026-11-13 — `lib/club-schedule-money-audience.ts`). */
   sample: EmailWords;
@@ -147,7 +152,44 @@ export interface SendPreview {
   /** Stage 13d (A2): WHO IS TOLD's house league line — the league admins by name (none: owners and admins) and the week's
    *  hours this send gives or takes back. Null when the send gives house league nothing (no season hears a bell). */
   leagueTime: LeagueTimeLine | null;
+  /** Phase 8 (Session 3, drawing tab 5): Send the changes on a schedule with added parts sends each part that has something
+   *  to send with it — empty on every other send. */
+  parts: PartToSend[];
 }
+
+/** An added part in its schedule's Send the changes: its first send (with its bill line) or its own changes. */
+export interface PartToSend {
+  id: string;
+  /** "Time added Nov 16". */
+  label: string;
+  /** "Fall practices · Time added Nov 16" — its bill's name on the coach's Money › Club tab. */
+  name: string;
+  /** The version the window saw: the POST names it back, and a part changed since is read again. */
+  version: number;
+  /** Its first send (the part is still a draft): its practices land, and its bill is made with them when one rides with it.
+   *  False: a part already sent, whose own changes go (and are corrected or credited on its own bill). */
+  first: boolean;
+  /** A bill rides with it (Bill the teams has set its terms). Said to a reader without the club's Accounting too. */
+  billSet: boolean;
+  /** A first send's bill line (drawing tab 5, note 2): its time, and its bill as it would be made — the bill is MONEY, and
+   *  the route sends it to a money reader only. Null on a part's own changes. */
+  line: PartBillLine | null;
+}
+
+/** The whole preview, with what the step and the telling need — the route sends only the `SendPreview` half. */
+export type FullPreview = SendPreview & {
+  plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; rates?: KeptRateRow[];
+  teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> };
+  lost?: Map<string, LostTime>; half?: LeagueHalf | null; billTerms?: BillTerms | null; timeHandoff?: SendTimeHandoff | null;
+  /** An added part's first send: its bill line, as its schedule's Send the changes shows it. */
+  partLine?: PartBillLine | null;
+  /** Phase 8: the added parts sent with this Send the changes (each its own preview, its own step), and the team rows told
+   *  again for the members whose steps landed (a later member refused tells no coach of practices that did not land). */
+  family?: { subs: FamilySub[]; teamsFor: (landed: ReadonlySet<string>) => PreviewTeam[] };
+};
+
+/** One added part, sent with its schedule's changes: its loaded row, the send it makes and that send's own preview. */
+export interface FamilySub { loaded: LoadedSchedule; kind: 'final' | 'changes'; label: string; preview: FullPreview }
 
 /** A house-league division's games the send moves or takes off their time, one row per slot (9d-2b Part 5; 9d2·13,
  *  9d2·16): "U9 Rookie games · Sun, Nov 15: Field 2 → Field 4" over "2 games move. A league admin sends them …". */
@@ -742,7 +784,7 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
    *  its credit (the emails, the correction bell, the window's line) — the step already skips them itself under the same
    *  switch. ⚠ Only what is told: the plan, the splits, the baseline and the `lost` map the step reads are untouched. */
   corrections?: boolean;
-} = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; rates?: KeptRateRow[]; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> }; lost?: Map<string, LostTime>; half?: LeagueHalf | null; billTerms?: BillTerms | null; timeHandoff?: SendTimeHandoff | null }> {
+} = {}): Promise<FullPreview> {
   // ⚖ A FINAL SCHEDULE'S FIRST BILL, MADE LATER (mig 481): its terms ride with the REQUEST, not the schedule — nothing is
   // stored until the send lands, so a window closed halfway leaves nothing half-billed. The schedule is read as if it
   // carried them, so the bill is worked out by the one `computeBill` Finalize uses.
@@ -877,10 +919,25 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
     }
   }
 
+  // ⚖ PHASE 8 (Session 3, drawing tab 5; owner rulings 4 and 5): SEND THE CHANGES SENDS THE FAMILY. On a schedule with added
+  // parts, every part with something to send goes with it — an unsent part's first send (Finalize's step on the part: its
+  // practices, and its bill of its own when one rides with it) and a sent part's own changes. Each is worked out by its own
+  // preview here and runs its own step at the send; the teams are told once.
+  const subs = kind === 'changes' && !row.part_of_schedule_id ? await partsToSend(sctx, row.id, opts.corrections !== false) : [];
+  // The parent's own Rep Teams gate, asked of each part too: a member kept out of Rep Teams never sends a part that holds them.
+  if (!sctx.repTeams && subs.some(s => touchesRepTeams(s.loaded))) blockers.push({ code: 'rep_teams_closed', error: R.repTeamsClosed });
+  for (const s of subs) for (const b of s.preview.blockers) if (!blockers.some(x => x.code === b.code && x.error === b.error)) blockers.push(b);
+  if (!correctionBlocked) correctionBlocked = subs.find(s => s.preview.correctionBlocked)?.preview.correctionBlocked ?? null;
+  // An added part's FIRST send: its practices are new to each team, so the team is told them as the gains they are.
+  const partFirst = kind === 'final' && !!row.part_of_schedule_id;
+  if (partFirst) plan = planChanges(c, []);
+
   // Who is told.
   const billedSplits = splits ?? [];
-  // A late bill tells only the teams it bills — a team in the slots with no share has nothing to hear.
-  const audienceIds = new Set(kind === 'changes' ? plan?.byTeam.keys() ?? [] : kind === 'bill' ? billedSplits.map(s => s.teamId) : scheduled.map(t => t.id));
+  // A late bill tells only the teams it bills — a team in the slots with no share has nothing to hear. A family's Send the
+  // changes tells every team any member changes.
+  const subAudience = subs.flatMap(s => [...s.preview.teams.map(t => t.teamId), ...s.preview.unreachable.map(u => u.teamId)]);
+  const audienceIds = new Set(kind === 'changes' ? [...(plan?.byTeam.keys() ?? []), ...subAudience] : kind === 'bill' ? billedSplits.map(s => s.teamId) : scheduled.map(t => t.id));
   const audience = c.teams.filter(t => audienceIds.has(t.id));
   const people = await schedulePeople(c.orgId, audience.map(t => t.id), c.senderId, kind);
   const toldCorrections = opts.corrections !== false;
@@ -893,33 +950,68 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
   const slotCount = new Map<string, number>();
   for (const s of c.slots) for (const t of c.assignments.get(s.key) ?? []) slotCount.set(t, (slotCount.get(t) ?? 0) + 1);
   const splitOf = new Map(billedSplits.map(s => [s.teamId, s]));
-  const teams: PreviewTeam[] = [];
-  const unreachable: SendPreview['unreachable'] = [];
-  const billNotTold: SendPreview['billNotTold'] = [];
-  for (const t of audience) {
-    const p = people.get(t.id)!;
-    const slots = slotCount.get(t.id) ?? 0;
-    const split = splitOf.get(t.id);
-    const teamBill = kind !== 'changes' && split ? { cents: toCents(split.amount), installments: split.installments } : null;
-    const lines = kind === 'changes' ? (plan!.byTeam.get(t.id) ?? []).map(ch => changeLine(ch, clockOf)) : kind === 'bill' ? [] : patternsFor(c, t.id);
-    const billedCents = kind === 'changes' && toldCorrections ? correction?.gains.get(t.id) ?? null : null;
-    const teamLost = kind === 'changes' && toldCorrections ? lost.get(t.id) ?? null : null;
-    if (!p.people.length) {
-      unreachable.push({ teamId: t.id, teamName: t.name, why: p.why!, sentence: unreachableSentence(t.name, p.why!, slots, kind) });
-      continue;
+  // What each member of the family tells a team on Send the changes: the schedule's own lines and money, then each part's
+  // (its lines, its own correction or credit, a first send's bill of its own). One member — the schedule — when it has none.
+  const sharesOf = (teamId: string): MemberShare[] => [
+    {
+      memberId: row.id, label: null, lines: (plan?.byTeam.get(teamId) ?? []).map(ch => changeLine(ch, clockOf)),
+      billedCents: toldCorrections ? correction?.gains.get(teamId) ?? null : null, lost: toldCorrections ? lost.get(teamId) ?? null : null, bill: null,
+    },
+    ...subs.flatMap(s => {
+      const st = s.preview.teams.find(x => x.teamId === teamId);
+      return st ? [{
+        memberId: s.loaded.row.id, label: s.label, lines: st.lines, billedCents: st.billedCents, lost: st.lost,
+        bill: s.kind === 'final' && st.bill ? { name: s.loaded.row.name, ...st.bill } : null,
+      }] : [];
+    }),
+  ];
+  /** The rows of WHO IS TOLD and each team's emails — for the members whose steps `landed` (the send's telling, after a later
+   *  member was refused), or all of them (the preview). */
+  const tell = (landed?: ReadonlySet<string>) => {
+    const teams: PreviewTeam[] = [];
+    const unreachable: SendPreview['unreachable'] = [];
+    const billNotTold: SendPreview['billNotTold'] = [];
+    for (const t of audience) {
+      const p = people.get(t.id)!;
+      const slots = slotCount.get(t.id) ?? 0;
+      const split = splitOf.get(t.id);
+      const teamBill = kind !== 'changes' && split ? { cents: toCents(split.amount), installments: split.installments } : null;
+      const facts = kind === 'changes' ? familyTeamFacts(sharesOf(t.id), landed) : null;
+      // A team only an unlanded member reached has nothing to be told.
+      if (landed && facts && !facts.lines.length && !facts.partBills.length && !facts.billedCents && !facts.lost) continue;
+      const lines = facts ? facts.lines
+        : partFirst ? (plan!.byTeam.get(t.id) ?? []).map(ch => changeLine(ch, clockOf))
+        : kind === 'bill' ? [] : patternsFor(c, t.id);
+      const billedCents = facts?.billedCents ?? null;
+      const teamLost = facts?.lost ?? null;
+      const partBills = facts?.partBills ?? [];
+      if (!p.people.length) {
+        unreachable.push({ teamId: t.id, teamName: t.name, why: p.why!, sentence: unreachableSentence(t.name, p.why!, slots, kind) });
+        continue;
+      }
+      // ⚖ Money terms go only to people who can open Money (owner 2026-11-13): the money email, and — for a team where some
+      // recipients can't — the same words with the money off. A late bill's audience is the teams with a share (and only
+      // its Money people), so `teamBill` is always there for it.
+      const told = teamEmails({
+        kind, orgName: c.orgName, scheduleName: row.name, teamName: t.name, people: p.people, lines,
+        venueName: joinWithAnd(venueNames), slotCount: slots, firstDay, lastDay, replyBy,
+        bill: teamBill, billedCents, lost: teamLost, partBills,
+        link: scheduleLink(t.id), moneyLink: moneySectionHref(`/${c.orgSlug}/coaches/teams/${t.id}`, 'club'),
+      });
+      if (told.billNotTold) billNotTold.push({ teamId: t.id, teamName: t.name, sentence: billNotToldSentence(t.name, !teamBill && !billedCents && !partBills.length) });
+      teams.push({ teamId: t.id, teamName: t.name, recipients: p.people, slots, lines, bill: teamBill, billedCents, lost: teamLost, partBills, sample: told.sample, plainSample: told.plainSample });
     }
-    // ⚖ Money terms go only to people who can open Money (owner 2026-11-13): the money email, and — for a team where some
-    // recipients can't — the same words with the money off. A late bill's audience is the teams with a share (and only
-    // its Money people), so `teamBill` is always there for it.
-    const told = teamEmails({
-      kind, orgName: c.orgName, scheduleName: row.name, teamName: t.name, people: p.people, lines,
-      venueName: joinWithAnd(venueNames), slotCount: slots, firstDay, lastDay, replyBy,
-      bill: teamBill, billedCents, lost: teamLost,
-      link: scheduleLink(t.id), moneyLink: moneySectionHref(`/${c.orgSlug}/coaches/teams/${t.id}`, 'club'),
-    });
-    if (told.billNotTold) billNotTold.push({ teamId: t.id, teamName: t.name, sentence: billNotToldSentence(t.name, !teamBill && !billedCents) });
-    teams.push({ teamId: t.id, teamName: t.name, recipients: p.people, slots, lines, bill: teamBill, billedCents, lost: teamLost, sample: told.sample, plainSample: told.plainSample });
-  }
+    return { teams, unreachable, billNotTold };
+  };
+  const { teams, unreachable, billNotTold } = tell();
+  // A part's first send, as its schedule's Send window shows its bill line: its time, and the bill as it would be made.
+  const teamSlots = c.slots.filter(s => teamsOnly(c.assignments.get(s.key) ?? []).length);
+  const partLine: PartBillLine | null = partFirst ? {
+    minutes: teamSlots.reduce((n, s) => n + (s.endMs - s.startMs) / 60_000, 0),
+    permitNames: [...new Set(c.slots.map(s => (s.permitId ? c.prices.names.get(s.permitId) ?? '' : '')).filter(Boolean))],
+    teamNames: scheduled.filter(t => teamsOnly([t.id]).length).map(t => t.name),
+    bill: partBillOf(billedSplits.map(s => ({ teamName: teamName(s.teamId), cents: toCents(s.amount), installments: s.installments }))),
+  } : null;
 
   const finalRows = kind === 'final' ? scheduled.flatMap(t => t.season ? c.slots.filter(s => (c.assignments.get(s.key) ?? []).includes(t.id)).map(s => rowFor(c, s, t.id, t.season!.id)) : []) : undefined;
   // House league's half (Stage 11b Part 5): only a final schedule's changes move its practices.
@@ -930,24 +1022,50 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
     timeHandoffFor({ orgId: c.orgId, kind, state: row.state, senderId: c.senderId, slots: c.loaded.slots, places: c.places, lastTold: practicesTold })
       .catch(e => { console.error('[club-schedule-send] house league’s time could not be read for the send:', e); return null; }),
   ]);
-  const leagueTeams = half?.teams ?? [];
-  const changedTeams = plan ? plan.byTeam.size : 0;
+  // House league's half of every member (a part's own changes can move its league practices too): one list in the window,
+  // one fingerprint the press must find; each member's step and its families' notices take its own half.
+  const halves = [half, ...subs.map(s => s.preview.half ?? null)];
+  const leagueTeams = halves.flatMap(h => h?.teams ?? []);
+  const leagueGames = halves.flatMap(h => h?.games ?? []);
   const statement = kind === 'review' ? W.reviewStatement(replyBy)
     : kind === 'bill' ? W.lateBillStatement(billedSplits.length, moneyCents(billedSplits.reduce((n, s) => n + toCents(s.amount), 0)))
-    : kind === 'final' ? W.finalStatement(c.slots.filter(s => teamsOnly(c.assignments.get(s.key) ?? []).length).length, scheduled.length)
-    : W.changesStatement(changedTeams, handedBack.map(h => h.teamName), leagueTeams.length, new Set((half?.games ?? []).map(g => g.divisionName)).size);
+    : kind === 'final' ? W.finalStatement(teamSlots.length, scheduled.length)
+    : W.changesStatement(audienceIds.size, handedBack.map(h => h.teamName), leagueTeams.length, new Set(leagueGames.map(g => g.divisionName)).size);
   return {
     kind, scheduleId: row.id, version: row.version, statement, teams, unreachable, billNotTold, blockers, correctionBlocked, replyBy,
-    newPrices: kind === 'changes' ? rates.map(x => ({ permitName: x.permitName, fullHour: hourOfScale(x.scale) })) : [],
+    newPrices: kind === 'changes' ? [...rates, ...subs.flatMap(s => s.preview.rates ?? [])].map(x => ({ permitName: x.permitName, fullHour: hourOfScale(x.scale) })) : [],
     lastSent: last ? { at: last.sent_at, by: nameOf(last.sent_by), kind: last.kind } : null,
     handedBack,
     // People who'd be emailed: the rep teams' coaches, and each house-league team's coaches and households (9d2·2).
     recipientCount: teams.reduce((n, t) => n + t.recipients.length, 0) + leagueTeams.reduce((n, t) => n + t.coaches.length, 0)
       + new Set(leagueTeams.flatMap(t => t.households)).size,
-    league: half ? { teams: leagueTeams, games: half.games, seen: half.seen } : null,
-    leagueTime: timeHandoff?.told?.line ?? null,
+    league: halves.some(Boolean) ? { teams: leagueTeams, games: leagueGames, seen: halves.map(h => h?.seen ?? '').join('|') } : null,
+    leagueTime: timeHandoff?.told?.line ?? subs.find(s => s.preview.leagueTime)?.preview.leagueTime ?? null,
+    parts: subs.map(s => ({
+      id: s.loaded.row.id, label: s.label, name: s.loaded.row.name, version: s.loaded.row.version, first: s.kind === 'final',
+      billSet: !!s.loaded.row.bill_plan, line: s.preview.partLine ?? null,
+    })),
+    partLine,
     plan, finalRows, splits, rate, rates, teamValues, correction, lost, half, billTerms, timeHandoff,
+    family: subs.length ? { subs, teamsFor: landed => tell(landed).teams } : undefined,
   };
+}
+
+/**
+ * THE ADDED PARTS A SEND THE CHANGES TAKES WITH IT (Phase 8, Session 3): each part still a draft (its first send) and each
+ * sent part with changes waiting (its own). Oldest first, as the page lists them. Each is previewed as its own send —
+ * Finalize's on a draft part, Send the changes' on a sent one — with the same "Bill the corrections" switch.
+ */
+async function partsToSend(sctx: SchedulerCtx, parentId: string, corrections: boolean): Promise<FamilySub[]> {
+  // parts-ok: by the schedule they were added to — the parts this send takes with it.
+  const ids = await fetchAll<{ id: string }>((a, b) => supabaseAdmin.from('club_schedules').select('id')
+    .eq('org_id', sctx.ctx.org.id).eq('part_of_schedule_id', parentId).or('state.eq.draft,changed_since_sent.eq.true')
+    .order('created_at').order('id').range(a, b));
+  const loaded = (await Promise.all(ids.map(x => loadSchedule(sctx.ctx.org.id, x.id)))).filter((x): x is LoadedSchedule => !!x);
+  return Promise.all(loaded.map(async l => {
+    const kind = l.row.state === 'final' ? 'changes' as const : 'final' as const;
+    return { loaded: l, kind, label: l.row.part_label ?? l.row.name, preview: await previewSend(sctx, l, kind, { corrections }) };
+  }));
 }
 
 // ── The send ─────────────────────────────────────────────────────────────────────────────────────
@@ -955,15 +1073,28 @@ export async function previewSend(sctx: SchedulerCtx, asked: LoadedSchedule, kin
 export type SendResult =
   | { ok: true; teams: number; people: number; failed: number; allocationId: string | null; version: number;
       /** What it wrote, checked as every writer's reply is (6a): practices that clash with another booking, and outside a permit. */
-      checks: { clashes: number; outsidePermit: number } }
+      checks: { clashes: number; outsidePermit: number };
+      /** Phase 8: a family's send whose later member was refused after earlier ones landed — the refusal, in words. What
+       *  landed was told; the rest still waits in Changed since sent. */
+      notAll?: string }
   | { ok: false; response: Response };
 
 const json = (status: number, body: object) => ({ ok: false as const, response: new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } }) });
+
+/** One member's step, landed: its claimed log row, what it made and wrote. */
+interface Landed {
+  loaded: LoadedSchedule; kind: SendKind; preview: FullPreview; sendId: string; allocationId: string | null; version: number;
+  written: { slotIds: string[]; teamIds: Set<string> | null };
+  leagueDone: { moved: number; cancelled: number; uses: number; gamesMoved?: number; gamesPostponed?: number; gamesRemoved?: number } | null;
+}
 
 /**
  * SEND. The server recomputes the preview, refuses on any blocker or a version the sender didn't see, claims the send
  * (a double press is refused before a single email), does the one database step, then emails the confirmed teams'
  * people (reply-to the sender), tells them in the bell, and completes the log with what actually went.
+ * ⚖ PHASE 8 (Session 3): Send the changes on a schedule with added parts does each member's step in turn — the schedule's
+ * own changes first (when it has any), then each part's (its first send, or its own changes) — each with its own claim and
+ * log row. The teams are told ONCE, of what landed.
  */
 export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKind, body: {
   version?: unknown; teamIds?: unknown; replyBy?: unknown; billCorrections?: unknown;
@@ -971,6 +1102,8 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
   bill?: unknown;
   /** Stage 11b Part 5: the house-league teams to email (absent: every one the preview named), and the plan it showed. */
   leagueTeamIds?: unknown; leagueSeen?: unknown;
+  /** Phase 8: the added parts the window showed with their versions — a part added, changed or sent since is read again. */
+  parts?: unknown;
 }): Promise<SendResult> {
   const row = loaded.row;
   if (Number(body.version) !== row.version) return json(409, { error: R.changed, code: 'changed', version: row.version });
@@ -979,25 +1112,144 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
   // Q-D (owner 2026-11-13): the switch off, the emails and the correction bell say no correction and no credit.
   const preview = await previewSend(sctx, loaded, kind, { replyBy: typeof body.replyBy === 'string' ? body.replyBy : null, bill: body.bill, corrections: billCorrectionsOn });
   if (preview.blockers.length) return json(409, { error: preview.blockers[0].error, code: preview.blockers[0].code, blockers: preview.blockers });
+  const subs = preview.family?.subs ?? [];
+  // The parts the window showed, each at the version it read: one added, changed or sent since is never sent unseen.
+  if (kind === 'changes' && !samePartsSeen(body.parts, subs.map(s => ({ id: s.loaded.row.id, version: s.loaded.row.version })))) {
+    return json(409, { error: R.changed, code: 'changed', version: row.version });
+  }
   // ⚖ THE PLAN THE OWNER SAW: a league admin's hand-out moves no schedule version, so the house-league half is compared by
   // its fingerprint — a plan that changed under the window is read again, never sent unseen.
   const half = preview.half ?? null;
-  if (kind === 'changes' && (typeof body.leagueSeen === 'string' ? body.leagueSeen : '') !== (half?.seen ?? '')) {
+  if (kind === 'changes' && (typeof body.leagueSeen === 'string' ? body.leagueSeen : '') !== (preview.league?.seen ?? '')) {
     return json(409, { error: R.changed, code: 'changed', version: row.version });
   }
   const leagueConfirmed = new Set(Array.isArray(body.leagueTeamIds)
     ? body.leagueTeamIds.filter((x): x is string => typeof x === 'string')
-    : (half?.teams ?? []).map(t => t.teamId));
-  const leagueTeams = (half?.teams ?? []).filter(t => leagueConfirmed.has(t.teamId));
+    : (preview.league?.teams ?? []).map(t => t.teamId));
   if (kind === 'changes' && billCorrectionsOn && preview.correctionBlocked) {
     return json(409, { error: preview.correctionBlocked.error, code: preview.correctionBlocked.code, correction: true });
   }
   const confirmed = new Set(body.teamIds as string[]);
-  const teams = preview.teams.filter(t => confirmed.has(t.teamId));
   const orgId = sctx.ctx.org.id, actor = sctx.ctx.user.id;
   const teamName = teamNamer(preview.teams.map(t => ({ id: t.teamId, name: t.teamName })));
 
-  // ⚖ CLAIM BEFORE ANY EMAIL (the reminders' lesson, /review 2026-10-01).
+  // The schedule's own step — on a family's Send the changes, only when the schedule itself has something to send.
+  const plan = preview.plan;
+  const ownWork = kind !== 'changes' || !subs.length || row.changed_since_sent
+    || (!!plan && (plan.inserts.length > 0 || plan.updates.length > 0 || plan.retire.length > 0))
+    || (!!half && !isEmptyLeagueStep(half.step));
+  const landed: Landed[] = [];
+  if (ownWork) {
+    const own = await stepFor(sctx, loaded, kind, preview, { billCorrectionsOn, half, teamName });
+    if (!own.ok) return own;
+    landed.push(own.landed);
+  }
+  // Each part's own step, in turn. A refusal after something landed stops there: what landed is told, the rest waits.
+  let notAll: string | null = null;
+  for (const s of subs) {
+    let r: Awaited<ReturnType<typeof stepFor>>;
+    try {
+      r = await stepFor(sctx, s.loaded, s.kind, s.preview, { billCorrectionsOn, half: s.preview.half ?? null, teamName });
+    } catch (e) {
+      // A step that THREW after an earlier member landed is a refusal too: that member's change is committed, so its families
+      // must still be told (a bare 500 here left them never told, and the retry read the parent as already sent).
+      if (!landed.length) throw e;
+      console.error('[club-schedule-send] a part’s step failed after an earlier member landed — telling what landed:', e);
+      notAll = R.notSaved;
+      break;
+    }
+    if (!r.ok) {
+      if (!landed.length) return r;
+      notAll = await r.response.clone().json().then((x: { error?: string }) => x.error ?? R.notSaved, () => R.notSaved);
+      break;
+    }
+    landed.push(r.landed);
+  }
+  // Needs attention clears itself (owner 2026-10-16): a review still waiting on a team ends with Finalize.
+  if (kind === 'final') await clearSettled({ orgIds: [orgId], kinds: ['club_schedule_review'] });
+
+  // What it wrote, checked (6a): every writer of a booking's time or place answers with the one clash rule's findings.
+  const names = preview.teams.map(t => ({ id: t.teamId, name: t.teamName }));
+  const checked = await Promise.all(landed.map(l => checkWritten(orgId, l.written, names)));
+  const checks = checked.reduce((a, b) => ({ clashes: a.clashes + b.clashes, outsidePermit: a.outsidePermit + b.outsidePermit }), { clashes: 0, outsidePermit: 0 });
+
+  // Who is told: every member's news when all landed; else only the landed members' (never practices that did not land).
+  const toldTeams = notAll && preview.family ? preview.family.teamsFor(new Set(landed.map(l => l.loaded.row.id))) : preview.teams;
+  const teams = toldTeams.filter(t => confirmed.has(t.teamId));
+
+  // The emails: one per team's person, colleague mail, reply-to the sender (never a recipient — the preview left them out).
+  // ⚖ Each person gets the email for them: the money one only if they can open Money (owner 2026-11-13).
+  const sends = teams.flatMap(t => t.recipients.map(p => {
+    const w = emailForPerson(kind, preview.replyBy, t, p);
+    return { teamId: t.teamId, email: p.email, subject: w.subject, html: emailHtml(w) };
+  }));
+  const results = await inParallel(sends, 5, s => sendEmail(s.email, s.subject, s.html, { kind: 'club_schedule_coach', replyTo: sctx.ctx.user.email ?? null }));
+  const sent = results.filter(r => r.status === 'sent').length;
+  const reached = [...new Set(sends.filter((s, i) => results[i].status === 'sent').map(s => s.teamId))];
+
+  // The bells ("Your club"): every staff member who sees the schedule, whether or not they have an email — and a bill
+  // notice per bill (a part's bill of its own is its own notice, named as the coach's charge is).
+  await tellTeams(sctx, row.name, kind, teams.map(t => t.teamId), { ...preview, teams: toldTeams });
+
+  let league = { people: 0, failed: 0, teams: 0 };
+  // What house league's half told, per member (its coaches and families, and what failed) — the member's own log row counts it.
+  const leagueTold = new Map<string, { people: number; failed: number }>();
+  for (const l of landed) {
+    const mine = l.preview.half ?? null;
+    // House league's half, AFTER its step committed (never inside it): each confirmed team's coaches, its families, and
+    // the league admins (Stage 11b Part 5; 9d2·2, 9d2·13).
+    if (mine && l.leagueDone) {
+      const told = await tellHouseLeague(sctx, l.loaded.row.name, mine, mine.teams.filter(t => leagueConfirmed.has(t.teamId)), l.sendId);
+      league = { people: league.people + told.people, failed: league.failed + told.failed, teams: league.teams + told.teams };
+      leagueTold.set(l.sendId, told);
+    }
+    // Stage 13d (A1): the time this send gave or took back — a bell per season to whoever runs house league (never the sender).
+    if (l.preview.timeHandoff) {
+      await tellTimeGiven({ orgId, orgSlug: sctx.ctx.org.slug, senderId: actor, scheduleName: l.loaded.row.name, sendId: l.sendId, handoff: l.preview.timeHandoff });
+    }
+  }
+
+  // Each member's log, completed with who was actually told of IT (its money landed with its step).
+  for (const l of landed) {
+    const mineTeams = new Set(l.kind === 'changes' ? [...(l.preview.plan?.byTeam.keys() ?? [])] : l.preview.teams.map(t => t.teamId));
+    const mineSends = sends.map((s, i) => ({ s, ok: results[i].status === 'sent' })).filter(x => mineTeams.has(x.s.teamId));
+    const mineLeague = (l.preview.half?.teams ?? []).filter(t => leagueConfirmed.has(t.teamId));
+    const changesLog = l.kind === 'changes' ? [
+      ...[...(l.preview.plan?.byTeam ?? new Map<string, TeamChange[]>())].map(([teamId, list]) => ({ teamId, changes: list.length })),
+      ...mineLeague.map(t => ({ leagueTeamId: t.teamId, teamName: t.teamName, changes: t.lines.length })),
+    ] : [];
+    const { error: logError } = await supabaseAdmin.from('club_schedule_sends').update({
+      team_ids: reached.filter(t => mineTeams.has(t)),
+      people_count: mineSends.filter(x => x.ok).length + (leagueTold.get(l.sendId)?.people ?? 0),
+      failed_count: mineSends.filter(x => !x.ok).length + (leagueTold.get(l.sendId)?.failed ?? 0),
+      reply_by: preview.replyBy, changes: changesLog,
+      // Stage 13d (mig 486): house league's slots as this send left them — the next Send the changes' "given / taken back".
+      // From the schedule itself, never from the bell's read: a failed read costs a bell, never the next send's baseline.
+      ...(l.kind === 'final' || l.kind === 'changes' ? { league_slot_ids: heldHouseLeagueSlotIds(l.loaded.slots) } : {}),
+    }).eq('id', l.sendId);
+    if (logError) console.error('[club-schedule-send] the send log could not be completed (the send went):', logError);
+  }
+
+  const own = landed.find(l => l.loaded.row.id === row.id) ?? null;
+  return {
+    ok: true, teams: reached.length + league.teams, people: sent + league.people, failed: results.length - sent + league.failed,
+    allocationId: own?.allocationId ?? null, version: own?.version ?? row.version, checks,
+    ...(notAll ? { notAll } : {}),
+  };
+}
+
+/**
+ * ONE MEMBER'S STEP: the claim (before any email — the reminders' lesson, /review 2026-10-01), then the one database step
+ * for its kind, the claim released if the step refuses. Each step marks the claimed log row landed and writes its money
+ * (the next Send the changes' baseline) itself — never after the emails, where a failure left `{}` and the next send
+ * billed every team its whole share again (/review).
+ */
+async function stepFor(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKind, preview: FullPreview, o: {
+  billCorrectionsOn: boolean; half: LeagueHalf | null; teamName: (id: string) => string;
+}): Promise<{ ok: true; landed: Landed } | { ok: false; response: Response }> {
+  const row = loaded.row;
+  const orgId = sctx.ctx.org.id, actor = sctx.ctx.user.id;
+  const { billCorrectionsOn, half, teamName } = o;
   const claim = await supabaseAdmin.rpc('club_schedule_send_claim', { p_org: orgId, p_schedule: row.id, p_actor: actor, p_kind: kind, p_reply_by: preview.replyBy });
   if (claim.error) throw claim.error;
   const claimed = claim.data as { ok: boolean; code?: string; sendId?: string };
@@ -1008,13 +1260,10 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     if (error) console.error('[club-schedule-send] could not release a claim whose step was refused:', error);
   };
 
-  // The one database step.
   let allocationId: string | null = null;
   let version = row.version;
-  let written: { slotIds: string[]; teamIds: Set<string> | null } = { slotIds: [], teamIds: null };
-  let leagueDone: { moved: number; cancelled: number; uses: number; gamesMoved?: number; gamesPostponed?: number; gamesRemoved?: number } | null = null;
-  // Each step marks the claimed log row landed and writes its money (the next Send the changes' baseline) itself — never
-  // after the emails, where a failure left `{}` and the next send billed every team its whole share again (/review).
+  let written: Landed['written'] = { slotIds: [], teamIds: null };
+  let leagueDone: Landed['leagueDone'] = null;
   if (kind === 'review') {
     const { data, error } = await supabaseAdmin.rpc('club_schedule_send_review', {
       p_org: orgId, p_schedule: row.id, p_actor: actor, p_version: row.version, p_reply_by: preview.replyBy, p_send: sendId,
@@ -1024,6 +1273,8 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     if (!r.ok) { await release(); return { ok: false, response: stepRefusal(r, teamName) }; }
     version = r.version!;
   } else if (kind === 'final') {
+    // An added part's first send is this step on the part: its bill is an allocation of its own, named as the part is
+    // ("Fall practices · Time added Nov 16" — the trigger keeps its name).
     const bill = preview.splits?.length ? { description: row.name, lineId: row.bill_line_id, notes: null, splits: preview.splits } : null;
     // ⚖ The _priced step (mig 489): the bill, and the rate each permit behind it is billed at, in one transaction.
     const { data, error } = await supabaseAdmin.rpc('club_schedule_finalize_priced', {
@@ -1036,8 +1287,6 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     allocationId = r.allocationId ?? null;
     version = row.version + 1;
     written = { slotIds: loaded.slots.filter(s => !s.removed).map(s => s.id), teamIds: null };
-    // Needs attention clears itself (owner 2026-10-16): a review still waiting on a team ends with Finalize.
-    await clearSettled({ orgIds: [orgId], kinds: ['club_schedule_review'] });
   } else if (kind === 'bill') {
     // A final schedule's first bill, made later: the allocation, the terms and the next Send the changes' baseline in ONE
     // step; the schedule stays final and no practice moves. The server's own terms (`preview.billTerms`), never the browser's.
@@ -1090,7 +1339,7 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     // send again — never a raw error (/review 2026-10-13).
     if (error && /changed:/.test(error.message ?? '')) { await release(); return { ok: false, response: stepRefusal({ code: 'changed' }, teamName) }; }
     if (error) { await release(); throw error; }
-    const r = data as { ok: boolean; code?: string; teamId?: string; left?: number; allocationId?: string | null; league?: NonNullable<typeof leagueDone> };
+    const r = data as { ok: boolean; code?: string; teamId?: string; left?: number; allocationId?: string | null; league?: NonNullable<Landed['leagueDone']> };
     if (!r.ok) { await release(); return { ok: false, response: stepRefusal(r, teamName) }; }
     allocationId = r.allocationId ?? null;
     version = row.version + 1;
@@ -1098,47 +1347,7 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     // What house league's half did, as the step counted it (the plan asked; the step may skip a practice deleted since).
     if (half && r.league) leagueDone = r.league;
   }
-
-  // What it wrote, checked (6a): every writer of a booking's time or place answers with the one clash rule's findings.
-  const checks = await checkWritten(orgId, written, preview.teams.map(t => ({ id: t.teamId, name: t.teamName })));
-
-  // The emails: one per team's person, colleague mail, reply-to the sender (never a recipient — the preview left them out).
-  // ⚖ Each person gets the email for them: the money one only if they can open Money (owner 2026-11-13).
-  const sends = teams.flatMap(t => t.recipients.map(p => {
-    const w = emailForPerson(kind, preview.replyBy, t, p);
-    return { teamId: t.teamId, email: p.email, subject: w.subject, html: emailHtml(w) };
-  }));
-  const results = await inParallel(sends, 5, s => sendEmail(s.email, s.subject, s.html, { kind: 'club_schedule_coach', replyTo: sctx.ctx.user.email ?? null }));
-  const sent = results.filter(r => r.status === 'sent').length;
-  const reached = [...new Set(sends.filter((s, i) => results[i].status === 'sent').map(s => s.teamId))];
-
-  // The bells ("Your club"): every staff member who sees the schedule, whether or not they have an email.
-  await tellTeams(sctx, row.name, kind, teams.map(t => t.teamId), preview);
-
-  // House league's half, AFTER the step committed (never inside it): each confirmed team's coaches, its families, and
-  // the league admins (Stage 11b Part 5; 9d2·2, 9d2·13).
-  const league = half && leagueDone ? await tellHouseLeague(sctx, row.name, half, leagueTeams, sendId) : { people: 0, failed: 0, teams: 0 };
-
-  // Stage 13d (A1): the time this send gave or took back — a bell per season to whoever runs house league (never the sender).
-  if (preview.timeHandoff) {
-    await tellTimeGiven({ orgId, orgSlug: sctx.ctx.org.slug, senderId: actor, scheduleName: row.name, sendId, handoff: preview.timeHandoff });
-  }
-
-  // The log, completed with who was actually told (its money landed with the step).
-  const changesLog = kind === 'changes' ? [
-    ...[...(preview.plan?.byTeam ?? new Map())].map(([teamId, list]) => ({ teamId, changes: list.length })),
-    ...leagueTeams.map(t => ({ leagueTeamId: t.teamId, teamName: t.teamName, changes: t.lines.length })),
-  ] : [];
-  const { error: logError } = await supabaseAdmin.from('club_schedule_sends').update({
-    team_ids: reached, people_count: sent + league.people, failed_count: results.length - sent + league.failed,
-    reply_by: preview.replyBy, changes: changesLog,
-    // Stage 13d (mig 486): house league's slots as this send left them — the next Send the changes' "given / taken back".
-    // From the schedule itself, never from the bell's read: a failed read costs a bell, never the next send's baseline.
-    ...(kind === 'final' || kind === 'changes' ? { league_slot_ids: heldHouseLeagueSlotIds(loaded.slots) } : {}),
-  }).eq('id', sendId);
-  if (logError) console.error('[club-schedule-send] the send log could not be completed (the send went):', logError);
-
-  return { ok: true, teams: reached.length + league.teams, people: sent + league.people, failed: results.length - sent + league.failed, allocationId, version, checks };
+  return { ok: true, landed: { loaded, kind, preview, sendId, allocationId, version, written, leagueDone } };
 }
 
 /**

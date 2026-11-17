@@ -18,6 +18,9 @@ import { carriesMoney } from '@/lib/club-schedule-money-audience';
 //      The server recomputes everything; a send the sender didn't preview (a newer version) is refused; a double press
 //      inside a minute is refused (the claim). 409 `changed` · `just_sent` · a blocker's own code; the database step's
 //      refusals in words (`season_closed`, `year_closed`, `over_line`).
+//      Phase 8 (Session 3): on a schedule with added parts, Send the changes sends each part with something to send (its
+//      first send, its bill of its own; or its own changes) — the preview's `parts` (a part's bill figure to a money reader
+//      only), and the POST names them back with their versions (`parts: [{ id, version }]`). The schedule's own address only.
 //
 // ⚠ Emails leave only from this POST (the proxy refuses a demo club's POST; `sendEmail` has no demo check of its own).
 // ---------------------------------------------------------------------------
@@ -52,7 +55,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   const money = r.canMoney;
   const teams = money ? p.teams : p.teams.map(t => {
     const moneySample = carriesMoney(t) && t.recipients.some(x => x.money);
-    return { ...t, bill: null, billedCents: null, lost: null, sample: moneySample ? null : t.sample };
+    return { ...t, bill: null, billedCents: null, lost: null, partBills: [], sample: moneySample ? null : t.sample };
   });
   // A lost Sunday's request filing stays on the server (Stage 11d): the window reads the money and its moves.
   const shownTeams = teams.map(t => ({ ...t, lost: t.lost ? { cents: t.lost.cents, creditCents: t.lost.creditCents, payCents: t.lost.payCents, moves: t.lost.moves } : null }));
@@ -71,6 +74,8 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     leagueTime: p.leagueTime,
     // Stage 11d, Ask 8: a loss is settled at the send (credited, or owed back) — never "owed back: its coach asks".
     correction: money && p.correction ? { billed: Object.fromEntries(p.correction.gains), lost: Object.fromEntries(p.correction.losses) } : null,
+    // Phase 8: each added part this send takes with it, and a first send's bill line — its bill's figure is money's.
+    parts: p.parts.map(x => ({ ...x, line: x.line ? { ...x.line, bill: money ? x.line.bill : null } : null })),
   });
 }, { route: '/api/admin/schedules/[scheduleId]/send' });
 

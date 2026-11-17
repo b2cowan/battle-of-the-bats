@@ -147,24 +147,70 @@ After the owner's yes on the storage decision:
 
 ## Session 3 — Send the changes sends the family; one part at a time
 
-- [ ] **Send the changes** (drawing tab 5): the coach row names the part ("Gains Thu, Dec 10 at 6:00 p.m. · Time added Nov 16", no money there);
+> **BUILT 2026-11-17** (commit owed — the owner's yes). No migration. What was decided and how: plan Phase 8, "Session 3 BUILT".
+> `tests/sql/schedule-part-send-fixture.sql` 5/5 (DEV); `tests/unit/club-schedule-family-send.test.ts` 15/15; schedule suites 546/546.
+> **The Close must know:** the new words are one block in `PART_WORDS` ("Time added as its own part: sending it and its bill"),
+> incl. "Billed" (no figure, a reader without Accounting — the drawing said "or the figure"; the shipped money rule won), the
+> sent-without-a-bill row, the take-off-part question and the email's separate-bill title + outro (for `/legal`). A family send
+> that is refused part-way tells only what landed and adds the refusal to the notice (`notAll`) — check its wording too.
+> P9 B is NOT retired (Settings… on a final schedule still adds typed rows — Session 2's open item 1, the owner's call).
+> Dev-server restart owed (new files). Not walked in a browser.
+>
+> **/simplify + /review (high) on Session 3, 2026-11-17 — APPLIED:** (1) a part's step that THROWS after an earlier member landed is now
+> treated like a refusal (what landed is told, `notAll` says the rest waits) — before, a bare 500 left landed members' families never
+> told and the retry read the parent as already sent; (2) the "Bill the corrections" switch also shows when a correction is BLOCKED
+> (a sent part's correction can block the send while the schedule has none of its own — Send was dead with no message); (3) the send
+> log's people/failed counts again include house league's coaches AND families and its failures (a regression on every send with a
+> league half); (4) the Rep Teams gate is asked of each part (a member kept out of Rep Teams neither sees nor sends a part that holds
+> them); (5) a window opened for a part closes if that part is gone on the next read (it fell back to the parent — Settings would edit
+> it, a bill would be made on it); (6) the send posts the version the preview showed; (7) SQL fixture guards a null bill.
+>
+> **Left for the owner (judged not defects, or a design call):**
+> - **Send-window choices reset on the "Bill it…" round trip** (unticked teams, "Bill the corrections" off return to defaults when the
+>   Bill window closes). Lifting them into the page is a small build — owner's call whether it is worth it before the walk.
+> - **A sender without Accounting cannot send a family that includes an unsent part WITH a bill** (`bill_money`, same as a standalone
+>   Finalize), though the window shows them "Billed". Probably intended — confirm.
+> - **"Sent without a bill" in Needs attention never clears** for a part the club deliberately sends free, and shows to readers who have
+>   no "Bill it…" door. Owner's call: a dismiss, or hide it from readers without Accounting.
+> - **Corrections added up:** the parent's correction and a sent part's correction are one figure in the email and one bell, though two
+>   allocations exist (two charges on Money › Club). The plan said "added up" — confirm it reads right to a coach.
+> - **"Who is told" for house league** lists a team once per member that names it, and the time-given line shows only the first member's;
+>   a family send's log counts a team named by two members under each. Cosmetic; no money.
+> - **"Billed from this send at its own price"** can list a part's first-send permits that already had a price (its `rates` is every permit
+>   behind its first bill). Wording only; money readers only.
+> - **Blockers are per member, not cumulative:** the parent's correction + two parts' bills can each fit a budget line and not their
+>   sum; the step then refuses `over_line` part-way (`notAll`, handled cleanly) where the preview could have said so first.
+> - **Taking a SENT part off is blocked by `requestOnStored`'s unrelated refusals** (no team has a running season; a date-off on a deleted
+>   park) — the cases where an admin would most want it gone; a DRAFT part's delete runs before that check.
+> - **The take-off dialog's "nothing played" rule is looser than the server's** (a past slot with no team, or a slot with no permit, keeps
+>   the part though the dialog says it leaves). The server's behaviour is the safe one; the sentence can over-promise.
+> - **A hand-back (team's late money ask) still waiting on a part that left the page** is no longer shown; `scheduleList` still counts a
+>   gone part's dates and teams. Check with the Close walk.
+> - **Cost:** each part's preview re-reads the org's teams, places and venues (~9 queries a part per preview; the POST repeats it), and
+>   the page's GET reads `contextFor` again for each sent-and-changed part. Fine at one to three parts; share the context if parts grow.
+> - **The 'final' step has no closed-year / `changed:` mapping** (the 'bill' and 'changes' steps do) — pre-existing, so a part's first send
+>   in a closed year throws; with the fix above it is told as `notAll`, not a clean refusal.
+> - The fixture's take-off case (5) runs with no blocks and never sends the follow-up (credit, `apply_changes`, `partIsGone`) — a
+>   walk step for the Close, not covered by `5/5`.
+
+- [x] **Send the changes** (drawing tab 5): the coach row names the part ("Gains Thu, Dec 10 at 6:00 p.m. · Time added Nov 16", no money there);
       a bill line per unsent part ("Not billed · Bill it…" → the Bill window on that part, eyebrow "{parent} · {label}", statement "A bill of its
       own…", footer as shipped "Add the bill to the schedule"; then "$… · team · payments" + "Change…"); "Bill the corrections" only when a change
       touches the parent's own time. One send: the parent's changes (if any) and each part's first send, **one email per team** listing both, one
       notice per bill.
-- [ ] The part's bill is its **own allocation** named "{parent} · {label}" (under B: the shipped Finalize / late-bill path on the child). **Time
+- [x] The part's bill is its **own allocation** named "{parent} · {label}" (under B: the shipped Finalize / late-bill path on the child). **Time
       added no longer becomes a correction on the parent's bill** (this retires the P9 B path *for added time only*; corrections for changes to the
       parent's own time are unchanged). Earlier payments untouched — test it byte-for-byte like `club-schedule-add-time-send.test.ts` does today.
-- [ ] Who sees the bill line and "Bill it…": people with the club's Accounting (as the Bill window today); others see "Not billed" or the figure,
+- [x] Who sees the bill line and "Bill it…": people with the club's Accounting (as the Bill window today); others see "Not billed" or the figure,
       no door.
-- [ ] **Regenerate which part? / Settings for which part?** questions (drawing tab 4), only with more than one part; then the shipped question
+- [x] **Regenerate which part? / Settings for which part?** questions (drawing tab 4), only with more than one part; then the shipped question
       or window for that part, eyebrow "{parent} · {label}". A regenerate of one part never touches another.
-- [ ] Taking an added part's only permit off removes the part (before its first send: gone; after: credits at Send the changes). Removing the
+- [x] Taking an added part's only permit off removes the part (before its first send: gone; after: credits at Send the changes). Removing the
       part when nothing else would stay must not leave an empty child behind.
-- [ ] Coach side: the second charge "{parent} · {label}" on Money › Club, the bill email and the bell read right (`lib/club-money-reads.ts`,
+- [x] Coach side: the second charge "{parent} · {label}" on Money › Club, the bill email and the bell read right (`lib/club-money-reads.ts`,
       `ClubBillBudgetCallout.tsx`, `teamEmails` / `teamBells` / `tellTeams` [H]). The coach's schedule shows the part's practices with the
       parent's (check how a coach's practice names its schedule).
-- [ ] Tests: one send with a parent change + a new part (two allocations, correct names, earlier payments identical); unbilled part; a part-only
+- [x] Tests: one send with a parent change + a new part (two allocations, correct names, earlier payments identical); unbilled part; a part-only
       send has no corrections switch; regenerate scoped to one part.
 
 ## Close

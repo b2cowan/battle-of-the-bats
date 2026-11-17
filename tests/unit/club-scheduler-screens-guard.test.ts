@@ -385,8 +385,8 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
   });
   it('a hand-back is never a change waiting for a send (Ask 9): the changes callout reads the club’s changes only', () => {
     assert.doesNotMatch(page, /handedBack\]|changes\.handedBack/);
-    // Phase 8: the schedule's own changes, then an unsent added part's new practices — never a hand-back.
-    assert.match(page, /const changeLines = \[\.\.\.own\.changes\.teams, \.\.\.unsentParts\.flatMap\(partChangeLines\)\]\.flatMap/);
+    // Phase 8: the schedule's own changes, an unsent added part's new practices, a sent part's own changes — never a hand-back.
+    assert.match(page, /const changeLines = \[\.\.\.own\.changes\.teams, \.\.\.unsentParts\.flatMap\(partChangeLines\), \.\.\.sentPartChanges\]\.flatMap/);
   });
   it('the page reads ?answer= (D5): Answer opens over it for a money mover; an ask no longer waiting says so', () => {
     assert.match(page, /useRef<string \| null>\(search\.get\('answer'\)\)/);
@@ -451,7 +451,8 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     // 13c: a schedule finalized WITHOUT a bill can still be billed (Send the bill, mig 481), so the door is the money reader's
     // always — it was once shut after Finalize unless a bill existed, which left a finalized, unbilled schedule stuck.
     assert.match(page, /onBill=\{own\.canMoney && /, 'the bill door only for a money reader');
-    assert.match(page, /onReview=\{terms => setWin\(\{ kind: 'send', start: 'bill', bill: terms \}\)\}/, 'Bill the teams on an unbilled final schedule goes on to Send the bill');
+    // Phase 8 (Session 3): an added part sent without a bill goes the same way, on the part.
+    assert.match(page, /onReview=\{terms => setWin\(\{ kind: 'send', start: 'bill', bill: terms, partId: winPart\?\.id \}\)\}/, 'Bill the teams on an unbilled final schedule goes on to Send the bill');
     assert.match(page, /\{!isPhone && fair && <FairSharesBand/, 'the phone keeps no band (unchanged)');
   });
   it('Needs attention’s "Outside the permit" row comes from the ONE rule, its own read, after the page has read (C2)', () => {
@@ -465,7 +466,7 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     assert.match(page, /setOutsideRead\(\{ version: r\?\.ok \? r\.data\.version : outsideVersion,/, 'tagged with the version the server read');
     assert.match(page, /useDeferredLoad\(outsideVersion != null, loadOutside\);/, 'after the page has read, the kit’s read pattern');
     assert.match(outside, /notice\?\.doors\.find\(d => d\.kind === 'season'\) \?\? notice\?\.doors\.find\(d => d\.kind === 'calendar'\)/, 'a door by its kind, never its address');
-    assert.match(attention, /const count = ordered\.length \+ \(changed \? 1 : 0\) \+ outside\.length;/, 'the heading counts each permit\'s row');
+    assert.match(attention, /const count = ordered\.length \+ \(changed \? 1 : 0\) \+ outside\.length \+ unbilledParts\.length;/, 'the heading counts each permit\'s row (and each part sent without a bill)');
   });
   it('"Take {day} off" writes ONLY the schedule’s own Dates off, through today’s Regenerate — no sync, nothing else (C2)', () => {
     // Session B: each permit's row adds ITS days, closing only its parks once the schedule uses more than one (P5 A).

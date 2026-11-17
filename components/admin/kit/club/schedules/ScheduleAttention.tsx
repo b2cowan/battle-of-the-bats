@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
 import { pluralize } from '@/lib/utils';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
-import { SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
+import { PART_WORDS as P, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
 import { weekdayPlural } from '@/lib/permit-words';
 import { orderScheduleAsks } from '@/lib/club-schedule-overview';
 import { askSundayLine, type ScheduleAsk, type SchedulePlace, type SlotView } from '@/lib/club-schedule-view';
@@ -22,7 +22,7 @@ export interface OutsideRow {
 
 const FIRST_ASKS = 3;
 
-export default function ScheduleAttention({ asks, slots, places, canMoney, changed, sentOn, changeLines, partNotes = [], outside = [], onAnswer, onSend }: {
+export default function ScheduleAttention({ asks, slots, places, canMoney, changed, sentOn, changeLines, partNotes = [], outside = [], unbilledParts = [], onAnswer, onSend, onBillPart }: {
   asks: readonly ScheduleAsk[];
   slots: readonly SlotView[];
   places: readonly SchedulePlace[];
@@ -35,13 +35,17 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
   partNotes?: readonly string[];
   /** The permits' pulled dates (C2), first — one row per permit (a schedule on several permits, Session B). */
   outside?: readonly OutsideRow[];
+  /** An added part SENT without a bill (Phase 8, Session 3 — drawing tab 5, note 2): its row, and Bill it… for a money reader
+   *  (the shipped final-not-billed path: Bill the teams, then Review the bill). */
+  unbilledParts?: readonly { id: string; text: string }[];
   onAnswer: (id: string) => void;
   onSend: () => void;
+  onBillPart?: (partId: string) => void;
 }) {
   const [showAll, setShowAll] = useState(false);
   const ordered = useMemo(() => orderScheduleAsks(asks, slots), [asks, slots]);
   const shown = showAll ? ordered : ordered.slice(0, FIRST_ASKS);
-  const count = ordered.length + (changed ? 1 : 0) + outside.length;
+  const count = ordered.length + (changed ? 1 : 0) + outside.length + unbilledParts.length;
   if (!count) return null;
   // One lime a screen: the first outside row that asks takes it; the asks and Send changes below it go outline.
   const firstOutsideAsk = outside.findIndex(o => o.action);
@@ -102,6 +106,11 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
           {changeLines.length > 0 && <button type="button" className={`btn ${(canMoney && ordered.length) || outsideAsks ? 'btn-outline' : 'btn-lime'}`} onClick={onSend}>{W.sendChanges}</button>}
         </div>
       </>}
+      {unbilledParts.map(p => <div key={p.id} className={sch.attentionRow} data-part-unbilled>
+        <span className={sch.attentionKind}>{P.sentNotBilledChip}</span>
+        <div className={sch.attentionBody}><b>{p.text}</b></div>
+        {onBillPart && <button type="button" className="btn btn-outline" onClick={() => onBillPart(p.id)}>{P.billIt}</button>}
+      </div>)}
     </section>
   );
 }

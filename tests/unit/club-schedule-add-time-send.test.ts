@@ -13,6 +13,12 @@ import { billingTestLoader } from './_billing-test-loader.ts';
  * what the teams were sent against what the schedule holds now) and its own money (`changesMoney`: the kept rates, the
  * teams it touches, the correction and its payments) — the functions Send the changes calls, loaded with the database
  * stubbed out. Fixture: Milton $40 an hour and Halton Hills $60 billed at Finalize; Milton June ($50) added by Add time.
+ *
+ * ⚖ PHASE 8 (Session 3, 2026-11-17): ADD TIME NO LONGER REACHES THIS PATH. It makes a part of its own, with a bill of its own
+ * at Send the changes (tests/unit/club-schedule-family-send.test.ts; the database half, two allocations and the schedule's
+ * payments byte-identical, tests/sql/schedule-part-send-fixture.sql). The path stays for time that still lands on the
+ * schedule itself on a permit not behind its bill — Settings… on a FINAL schedule can still add a typed row (Session 2's
+ * review, open item 1: the owner's call whether to refuse it). Retire `fresh` and this file with that call.
  */
 
 const stub = new Proxy({}, { get: () => () => { throw new Error('no database in this test'); } });

@@ -27,6 +27,7 @@ import {
 } from './club-schedule-bill';
 import { PART_WORDS, SCHEDULE_REFUSALS as R, houseLeagueUse } from './club-schedule-words';
 import { familyClashes, partLabelFor, type FamilyMember, type FamilySlot, type PartRead } from './club-schedule-family';
+import { partIsGone } from './club-schedule-family-send';
 import { clubDay, keptHandBacks, waitingAsksOfSchedule, type KeptHandBack } from './club-hand-back-reads';
 import { scheduleMoney, type ScheduleMoney } from './club-money-reads';
 import { HOUSE_LEAGUE, isProgramHolder, storedHolders, teamsOnly } from './club-schedule-holders';
@@ -92,9 +93,13 @@ async function houseLeagueRuns(orgId: string): Promise<boolean> {
  *  (the plan dropped them, or the owner kept this member out) — in words, never a 500. Null when theirs to change. */
 export function repTeamsRefusal(s: SchedulerCtx, loaded: LoadedSchedule): Response | null {
   if (s.repTeams) return null;
-  const touches = teamsOnly(loaded.settings.teamIds).length > 0 || loaded.slots.some(x => teamsOnly(x.teamIds).length > 0);
-  return touches ? refusal(403, 'rep_teams_closed', R.repTeamsClosed) : null;
+  return touchesRepTeams(loaded) ? refusal(403, 'rep_teams_closed', R.repTeamsClosed) : null;
 }
+
+/** Whether a schedule hands time to rep teams (its ticked teams or its slots) — an added part is its own schedule with its own
+ *  teams, so the family's reads and sends ask it of each part, not only of the schedule they started from. */
+export const touchesRepTeams = (loaded: LoadedSchedule) =>
+  teamsOnly(loaded.settings.teamIds).length > 0 || loaded.slots.some(x => teamsOnly(x.teamIds).length > 0);
 
 /** THE GATE: signed in, the plan carries the scheduler, an owner or an admin. `write` also needs something to hand time
  *  to: rep teams, or house league. */
@@ -1033,22 +1038,36 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
 /**
  * A SCHEDULE'S ADDED PARTS, read for its page (Phase 8): each part's row facts and its own view — read beside the
  * schedule's, with the family's slot ids, so neither reads the other's practices as bookings. The page lays them in with
- * `familyShown`. Oldest part first. A part's money (its bill) is not on this read: it is set and shown in Send the changes.
+ * `familyShown`. Oldest part first. A part's bill reads as the schedule's does — to a money reader only (`canMoney`): its Bill
+ * the teams window ("Bill it…" / "Change…", Session 3) opens on it. A sent part TAKEN OFF (no practices left, nothing waiting
+ * to send — `partIsGone`) leaves the page; its row, bill and send record stay (11-17 ruling). `changesOf`: a sent part's own
+ * changes waiting for Send the changes, as Needs attention lists them.
  */
-export async function readParts(orgId: string, parent: LoadedSchedule, opts: { houseLeague?: boolean } = {}): Promise<{ parts: PartRead[]; familySlotIds: string[] }> {
+export async function readParts(orgId: string, parent: LoadedSchedule, opts: {
+  houseLeague?: boolean; canMoney?: boolean;
+  /** False: a reader who can't open Rep Teams is not shown a part that holds rep teams (the parent's own gate, for each part). */
+  repTeams?: boolean;
+  changesOf?: (part: LoadedSchedule) => Promise<{ teams: { teamId: string; teamName: string; lines: string[] }[] }>;
+} = {}): Promise<{ parts: PartRead[]; familySlotIds: string[] }> {
   const ids = await fetchAll<{ id: string }>((a, b) => supabaseAdmin.from('club_schedules').select('id')
     .eq('org_id', orgId).eq('part_of_schedule_id', parent.row.id).order('created_at').order('id').range(a, b));
   if (!ids.length) return { parts: [], familySlotIds: [] };
-  const loaded = (await Promise.all(ids.map(x => loadSchedule(orgId, x.id)))).filter((x): x is LoadedSchedule => !!x);
+  const loaded = (await Promise.all(ids.map(x => loadSchedule(orgId, x.id)))).filter((x): x is LoadedSchedule => !!x)
+    .filter(l => opts.repTeams !== false || !touchesRepTeams(l))
+    .filter(l => !partIsGone({ state: l.row.state, changedSinceSent: l.row.changed_since_sent, liveSlots: l.slots.filter(s => !s.removed).length }));
+  if (!loaded.length) return { parts: [], familySlotIds: [] };
   const familySlotIds = [parent, ...loaded].flatMap(l => l.slots.map(s => s.id));
-  // A part's view never reads money: Needs attention only says whether a bill rides with it.
-  const views = await Promise.all(loaded.map(l => scheduleView(orgId, l, false, { ...opts, familySlotIds })));
+  const [views, changes] = await Promise.all([
+    Promise.all(loaded.map(l => scheduleView(orgId, l, !!opts.canMoney, { houseLeague: opts.houseLeague, familySlotIds }))),
+    Promise.all(loaded.map(l => (opts.changesOf && l.row.state === 'final' && l.row.changed_since_sent ? opts.changesOf(l) : Promise.resolve(null)))),
+  ]);
   return {
     familySlotIds,
     parts: loaded.map((l, i) => ({
       id: l.row.id, label: l.row.part_label ?? l.row.name, state: l.row.state, version: l.row.version,
       startsOn: l.row.starts_on, endsOn: l.row.ends_on, sent: l.row.sent_at ? { at: l.row.sent_at } : null,
-      billed: !!l.row.bill_plan || !!l.row.allocation_id, view: views[i],
+      billed: !!l.row.bill_plan || !!l.row.allocation_id, changedSinceSent: l.row.changed_since_sent,
+      changes: changes[i]?.teams ?? [], view: views[i],
     })),
   };
 }
@@ -1104,7 +1123,7 @@ export async function scheduleList(orgId: string): Promise<ScheduleListRow[]> {
       return facilities.length ? `${venue} · ${facilities.length >= 3 ? facilityListWords(facilities) : facilities.join(', ')}` : venue;
     });
     return {
-      id: r.id, name: r.name, state: r.state, changedSinceSent: r.changed_since_sent || parts.some(x => x.state !== 'final'), startsOn, endsOn,
+      id: r.id, name: r.name, state: r.state, changedSinceSent: r.changed_since_sent || parts.some(x => x.state !== 'final' || x.changed_since_sent), startsOn, endsOn,
       band: endsOn < today ? 'ended' as const : startsOn > today ? 'coming_up' as const : 'in_use' as const,
       places: [...new Set(placeWords)], teams: teamIds.length,
       handedOut, open: Math.max(0, mine.length - handedOut),

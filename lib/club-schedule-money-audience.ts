@@ -3,6 +3,7 @@ import { SCHEDULE_NOTICES, billEmail, changesEmail, teamEmail, withoutReviewRepl
 import type { Installment } from './club-schedule-bill';
 import type { CreditMove } from './club-hand-back-words';
 import type { SendKind } from './club-schedule-send';
+import type { PartBill } from './club-schedule-family-send';
 import type { NotificationEventType } from './types';
 import type { NoticeFacts } from './notification-facts';
 
@@ -46,8 +47,8 @@ type Lost = { creditCents: number; payCents: number; moves: readonly CreditMove[
 
 /** Does a team's send carry money words? The SAME truthiness the words use (`teamEmail` on `bill`, `changesEmail` on
  *  `billedCents` and a `lost` with an amount) — so "carries money" ⇔ the plain email actually differs. */
-export function carriesMoney(t: { bill: unknown; billedCents: number | null; lost: { creditCents: number; payCents: number } | null }): boolean {
-  return !!t.bill || !!t.billedCents || !!(t.lost && (t.lost.creditCents || t.lost.payCents));
+export function carriesMoney(t: { bill: unknown; billedCents: number | null; lost: { creditCents: number; payCents: number } | null; partBills?: readonly unknown[] }): boolean {
+  return !!t.bill || !!t.billedCents || !!(t.lost && (t.lost.creditCents || t.lost.payCents)) || !!t.partBills?.length;
 }
 
 /**
@@ -80,6 +81,8 @@ export function teamEmails(p: {
   lines: string[];
   venueName: string; slotCount: number; firstDay: string; lastDay: string; replyBy: string | null;
   bill: Bill | null; billedCents: number | null; lost: Lost | null;
+  /** Send the changes on a schedule with added parts: each part's bill of its own that the send makes (Phase 8). */
+  partBills?: readonly PartBill[];
   /** The schedule's link (review / final / changes) and the Money › Club tab's (the late bill). */
   link: string; moneyLink: string;
 }): { sample: EmailWords; plainSample: EmailWords | null; carries: boolean; billNotTold: boolean } {
@@ -92,7 +95,7 @@ export function teamEmails(p: {
       return billEmail({ ...base, bill: p.bill, link: p.moneyLink });
     }
     if (p.kind === 'changes') {
-      return changesEmail({ ...base, lines: p.lines, billedCents: withMoney ? p.billedCents : null, lost: withMoney ? p.lost : null, link: p.link });
+      return changesEmail({ ...base, lines: p.lines, billedCents: withMoney ? p.billedCents : null, lost: withMoney ? p.lost : null, partBills: withMoney ? p.partBills ?? [] : [], link: p.link });
     }
     return teamEmail({
       ...base, kind: p.kind, venueName: p.venueName, slotCount: p.slotCount, firstDay: p.firstDay, lastDay: p.lastDay,
@@ -152,12 +155,12 @@ export interface TeamBell {
 export function teamBells(p: {
   kind: SendKind;
   orgName: string; scheduleName: string; replyBy: string | null;
-  team: { teamName: string; slots: number; lines: string[]; bill: Bill | null; billedCents: number | null };
+  team: { teamName: string; slots: number; lines: string[]; bill: Bill | null; billedCents: number | null; partBills?: readonly PartBill[] };
   staff: readonly { userId: string; money: boolean; isHeadCoach?: boolean }[];
 }): TeamBell[] {
   const t = p.team;
-  const billBell = (userIds: string[], cents: number, first: Installment | null, payments: number): TeamBell =>
-    ({ eventType: 'club_bill_arrived', userIds, toMoney: true, ...SCHEDULE_NOTICES.bill({ orgName: p.orgName, teamName: t.teamName, cents, scheduleName: p.scheduleName, first, payments }) });
+  const billBell = (userIds: string[], cents: number, first: Installment | null, payments: number, scheduleName = p.scheduleName): TeamBell =>
+    ({ eventType: 'club_bill_arrived', userIds, toMoney: true, ...SCHEDULE_NOTICES.bill({ orgName: p.orgName, teamName: t.teamName, cents, scheduleName, first, payments }) });
   const slotsBell = (eventType: NotificationEventType, userIds: string[], words: { title: string; body: string; facts?: NoticeFacts }): TeamBell =>
     ({ eventType, userIds, toMoney: false, ...words });
   const out: TeamBell[] = [];
@@ -176,9 +179,14 @@ export function teamBells(p: {
     if (p.kind === 'final') out.push(slotsBell('club_schedule_final', g.everyone, SCHEDULE_NOTICES.final({ scheduleName: p.scheduleName, teamName: t.teamName, slots: t.slots })));
     if (t.bill) out.push(billBell(g.money, t.bill.cents, t.bill.installments[0] ?? null, t.bill.installments.length));
   } else {
-    const g = bellGroups({ staff: p.staff, hasBill: !!t.billedCents });
+    const g = bellGroups({ staff: p.staff, hasBill: !!t.billedCents || !!t.partBills?.length });
     out.push(slotsBell('club_schedule_changes', g.everyone, SCHEDULE_NOTICES.changes({ scheduleName: p.scheduleName, teamName: t.teamName, changes: t.lines.length })));
     if (t.billedCents) out.push(billBell(g.money, t.billedCents, null, 1));
+    // Phase 8: one notice per bill — an added part's bill of its own is named as the part is ("For Fall practices · Time
+    // added Nov 16 · 1 payment, …"), as its charge is on the team's Money › Club tab.
+    for (const b of t.partBills ?? []) {
+      out.push(billBell(g.money, b.cents, b.installments[0] ?? null, b.installments.length, b.name));
+    }
   }
   return out.filter(b => b.userIds.length > 0);
 }

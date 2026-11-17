@@ -420,16 +420,21 @@ export function changesEmail(p: {
   lines: string[]; billedCents: number | null;
   /** Stage 11d, Ask 8: time the club moved off the team — taken off what it owes, the rest owed back (never "ask for it"). */
   lost: { creditCents: number; payCents: number; moves: readonly CreditMove[] } | null;
+  /** Phase 8 (Session 3): each added part's bill of its own, made by this send — listed after the changes, each saying why it
+   *  is separate (the build prompt's /legal light check, owed at the Close: a second bill email for one schedule says why). */
+  partBills?: readonly { name: string; cents: number; installments: Installment[] }[];
   link: string;
 }): EmailWords {
   const money2: string[] = [];
   if (p.billedCents) money2.push(`The time ${p.teamName} gained is billed: a correction of ${moneyCents(p.billedCents)} is on your Money › Club tab.`);
   if (p.lost && (p.lost.creditCents || p.lost.payCents)) money2.push(HAND_BACK_WORDS.lostEmail({ teamName: p.teamName, ...p.lost }));
+  const partBills = p.partBills ?? [];
+  if (partBills.length) money2.push(PART_WORDS.emailBillsOutro(partBills.length));
   return {
     subject: `${p.scheduleName}: ${possessive(p.teamName)} slots changed`,
     greeting: firstNames(p.recipientNames),
     paragraphs: [`${p.orgName} changed ${possessive(p.teamName)} slots on ${p.scheduleName}:`],
-    lists: [{ title: null, items: p.lines }],
+    lists: [{ title: null, items: p.lines }, ...partBills.map(b => ({ title: PART_WORDS.emailBillTitle(b.name, billPhrase(b.cents, b.installments.length)), items: b.installments.map(paymentLine) }))],
     link: { label: `Open ${possessive(p.teamName)} schedule →`, path: p.link },
     outro: [...money2, 'Everything else stays as it was.'].join(' '),
   };
@@ -1350,4 +1355,48 @@ export const PART_WORDS = {
   addToDraft: 'Time is added to a final schedule. On a draft, use Settings… to change its time.',
   addToPart: 'Add time to the schedule itself, not to a part of it.',
   wholeToHouseLeague: 'Added time goes to the teams you tick. Give a whole permit to house league from New schedule.',
+
+  // ── Time added as its own part: sending it and its bill (Session 3 — drawing tabs 4 and 5; owner rulings 4 and 5) ──
+  /** Send the changes: the bill line's heading, per unsent part (tab 5, note 2). */
+  billLineHead: (label: string) => `${label} · its bill`,
+  notBilled: 'Not billed',
+  /** A reader without the club's Accounting: a bill rides with the part; its figure is for people with Accounting only. */
+  billedNoFigure: 'Billed',
+  /** "1.5 hours of Halton Hills evenings for 14U AA". */
+  billLineTime: (hours: string, permits: readonly string[], teams: readonly string[]) =>
+    `${hours} of ${permits.length ? joinWithAnd([...permits]) : 'the time'} for ${PART_WORDS.metaTeams(teams)}`,
+  /** "$135.00 · 14U AA · one payment, due Dec 1". */
+  billLineSet: (total: string, teams: readonly string[], payments: number, firstDue: string | null) =>
+    `${total} · ${PART_WORDS.metaTeams(teams)} · ${payments === 1 ? `one payment${firstDue ? `, due ${firstDue}` : ''}` : `${payments} payments${firstDue ? `, the first due ${firstDue}` : ''}`}`,
+  billIt: 'Bill it…',
+  billChange: 'Change…',
+  /** Tab 5, note 3: the corrections switch is the schedule's own time's. */
+  correctionsOnlyOwn: (parent: string) => `“Bill the corrections” appears only when a change touches ${possessive(parent)} own time.`,
+  /** Bill the teams, for an added part (tab 5): the statement. */
+  billPartLead: (label: string) => `A bill of its own, for ${label}.`,
+  billPartRest: (name: string, parent: string) =>
+    `It goes to the team when you send the changes and arrives on its Money › Club tab as “${name}”. ${possessive(parent)} bill and its payments stay as they are.`,
+  /** The coach's email: each part's bill, listed under the changes, and why it is separate (/legal light check). */
+  emailBillTitle: (name: string, phrase: string) => `${name}, a bill of its own: ${phrase}.`,
+  emailBillsOutro: (bills: number) => (bills === 1
+    ? 'The added time is billed on its own, so it is a separate charge on your Money › Club tab. Nothing already billed changes.'
+    : 'Each part of the added time is billed on its own, as separate charges on your Money › Club tab. Nothing already billed changes.'),
+  /** Needs attention: a part sent without a bill (the shipped final-not-billed path offers Review the bill). */
+  sentNotBilled: (label: string) => `${label} was sent without a bill. Bill the teams when you’re ready; its practices stay as they are.`,
+  sentNotBilledChip: 'Not billed',
+  /** Regenerate and Settings… on a schedule with parts ask which part first (tab 4, ruling 4). */
+  whichRegenTitle: 'Regenerate which part?',
+  whichSettingsTitle: 'Settings for which part?',
+  whichPart: 'Part',
+  whichRegenHint: (chosen: string, others: readonly string[]) =>
+    `Each part keeps its own time and teams. The draft you pick replaces ${possessive(chosen)} slots from today on, except the ones someone placed by hand. ${joinWithAnd([...others])} ${others.length === 1 ? 'stays' : 'stay'} exactly as ${others.length === 1 ? 'it is' : 'they are'}.`,
+  whichSettingsHint: (label: string, summary: string) => `${label}: ${summary}.`,
+  whichBack: 'Go back',
+  whichRegenGo: 'Choose a draft',
+  whichSettingsGo: 'Open its settings',
+  /** Taking an added part's only permit off removes the part (tab 4, Settings… note). */
+  takeOffPartTitle: (label: string) => `Take ${label} off?`,
+  takeOffPartDraft: (practices: number) => `Its ${pluralize(practices, 'practice')} go. Nobody has been told about them, and nothing else on the schedule moves.`,
+  takeOffPartLeaves: (label: string) => `Once that is sent, ${label} leaves the schedule. Its bill and what was sent are kept.`,
+  partTakenOff: (label: string) => `${label} is off the schedule.`,
 } as const;

@@ -28,7 +28,7 @@ import { fmt } from '@/lib/coach-money-summary';
 import { formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { pluralize } from '@/lib/utils';
 import { closingRow, DEFAULT_PRICE_MODE, paymentPeriods, priceTheBill, pricedMinutes, pricedMinutesByPermit, teamInstallments, type BillSlot, type PaymentPlan, type PriceMode } from '@/lib/club-schedule-bill';
-import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, closingRowLine, moneyCents as money } from '@/lib/club-schedule-words';
+import { PART_WORDS, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, closingRowLine, moneyCents as money } from '@/lib/club-schedule-words';
 import { NO_GROUP, isStale, pricingHourOf, viewBillSlots, type ScheduleView } from '@/lib/club-schedule-view';
 import { Statement } from './ScheduleParts';
 import sch from './Schedules.module.css';
@@ -43,9 +43,12 @@ const PLANS: { id: PaymentPlan; label: string }[] = [
   { id: 'one', label: W.billOne }, { id: 'monthly', label: W.billMonthly }, { id: 'two_months', label: W.billTwoMonths }, { id: 'dates', label: W.billDates },
 ];
 
-export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale, onClose }: {
+export default function BillWindow({ q, view, addedPart = null, nameOf, onSaved, onReview, onStale, onClose }: {
   q: string;
   view: ScheduleView;
+  /** An added part's bill (Phase 8, Session 3 — drawing tab 5): opened from Send the changes' "Bill it…". Its eyebrow is the
+   *  part's own name ("Fall practices · Time added Nov 16"); only the statement differs — a bill of its own. */
+  addedPart?: { label: string; parentName: string } | null;
   nameOf: (teamId: string) => string;
   onSaved: (text: string) => void;
   /** A schedule finalized WITHOUT a bill (13c): its terms go on to Send the bill, which makes the bill and tells the
@@ -372,7 +375,9 @@ export default function BillWindow({ q, view, nameOf, onSaved, onReview, onStale
         </div>
       </div>
       {rows.length > 0 ? table : <p className={ck.hint}>{problem() ?? W.billNoTimeYet}</p>}
-      <Statement lead={late ? W.billLateLead : W.billStatementLead} rest={(late ? W.billLateStatement : W.billStatement)(dues.length, word)} />
+      {addedPart && !late
+        ? <Statement lead={PART_WORDS.billPartLead(addedPart.label)} rest={PART_WORDS.billPartRest(view.schedule.name, addedPart.parentName)} />
+        : <Statement lead={late ? W.billLateLead : W.billStatementLead} rest={(late ? W.billLateStatement : W.billStatement)(dues.length, word)} />}
       {existing && (
         <div className={sch.ends}>
           <RecordAction icon={<Trash2 size={14} aria-hidden />} onClick={() => void save(null)} disabled={busy}>{W.billRemove}</RecordAction>

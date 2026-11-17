@@ -96,11 +96,13 @@ describe('the scheduler rides League Plus and both Club bands, checked on the se
   });
   it('⚖ Stage 11b Part 5: house league\'s half is the plan the owner saw, and its people hear only after the step', () => {
     const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
+    // Phase 8 (Session 3): each member's step lives in `stepFor` (a schedule and its added parts send together).
+    const step = functionBody(readCode('lib/club-schedule-send.ts'), 'stepFor');
     // The step gets the previewed plan (never a fresh one), and a plan that changed under the window is read again.
-    assert.match(send, /p_league: half\?\.step \?\? null/);
-    assert.match(send, /body\.leagueSeen[\s\S]*half\?\.seen/);
-    // Coaches, families and league admins hear after the one step has landed — never inside its transaction.
-    assert.ok(send.indexOf('club_schedule_apply_changes') < send.indexOf('tellHouseLeague('), 'house league hears after the step');
+    assert.match(step, /p_league: half\?\.step \?\? null/);
+    assert.match(send, /body\.leagueSeen[\s\S]*preview\.league\?\.seen/);
+    // Coaches, families and league admins hear after every step has landed — never inside a transaction.
+    assert.ok(send.lastIndexOf('stepFor(') < send.indexOf('tellHouseLeague('), 'house league hears after the steps');
     // The bell reaches everyone who runs house league — owners and admins too (owner 2026-10-27), never the sender.
     const tell = functionBody(readCode('lib/club-schedule-send.ts'), 'tellHouseLeague');
     // Stage 13d: the list lives in one helper (owners, admins, league admins), shared with the time-given bell.
@@ -225,13 +227,16 @@ describe('the club\'s practice is the club\'s; the coach keeps their own parts (
 
 describe('one club send (Ask 9): a claim before any email, emails only from the POST, reply-to the sender', () => {
   const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
+  // Phase 8 (Session 3): each member's claim and step live in `stepFor`; the send runs every step before any email.
+  const step = functionBody(readCode('lib/club-schedule-send.ts'), 'stepFor');
   it('claims before the step and before a single email', () => {
-    const claim = send.indexOf("rpc('club_schedule_send_claim'"), email = send.indexOf('sendEmail(');
-    assert.ok(claim > 0 && email > claim, 'the claim comes first');
+    const claim = step.indexOf("rpc('club_schedule_send_claim'");
+    assert.ok(claim > 0 && claim < step.indexOf("rpc('club_schedule_send_review'"), 'the claim comes before the step');
+    assert.ok(send.lastIndexOf('stepFor(') > 0 && send.indexOf('sendEmail(') > send.lastIndexOf('stepFor('), 'every step (its claim) before any email');
     assert.match(send, /replyTo: sctx\.ctx\.user\.email \?\? null/);
   });
   it('a refused step releases its claim, so a retry is not "just sent"', () => {
-    assert.ok((send.match(/await release\(\)/g) ?? []).length >= 4);
+    assert.ok((step.match(/await release\(\)/g) ?? []).length >= 4);
   });
   it('the sender is never a recipient (the people resolver leaves them out)', () => {
     assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'schedulePeople'), /\.filter\(\(\{ m \}\) => m\.userId !== senderId/);
@@ -291,7 +296,7 @@ describe('the money: one step, build questions A and B (ruled 2026-10-11)', () =
     assert.match(money, /valuesAfterChanges\(before, atRate, new Set\(plan\.byTeam\.keys\(\)\)\)/);
     assert.match(money, /measureWithHandBacks\(handBacks,/);
     assert.match(preview, /await withHandedBack\(/);
-    const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
+    const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule') + functionBody(readCode('lib/club-schedule-send.ts'), 'stepFor');
     assert.doesNotMatch(send, /owedBack/, 'build question B\'s owed-back is retired (Ask 8)');
     assert.match(send, /const losses = billCorrectionsOn \?/, 'one switch for both halves');
     assert.match(send, /p_losses: losses/);
@@ -324,7 +329,7 @@ describe('the money: one step, build questions A and B (ruled 2026-10-11)', () =
     assert.match(mig, /create trigger rep_team_payment_requests_club_guard/);
   });
   it('the next send\'s baseline lands IN the step, never after the emails (/review 2026-10-11: a lost completion double-billed)', () => {
-    const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
+    const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule') + functionBody(readCode('lib/club-schedule-send.ts'), 'stepFor');
     for (const step of ['club_schedule_send_review', 'club_schedule_finalize_priced', 'club_schedule_apply_changes_priced']) {
       const at = send.indexOf(`rpc('${step}'`);
       assert.ok(at > 0, step);
@@ -361,7 +366,7 @@ describe('the money: one step, build questions A and B (ruled 2026-10-11)', () =
     assert.match(fn, /update club_schedule_sends set landed_at = now\(\), team_values = coalesce\(p_log->'teamValues'/);
     assert.match(mig, /check \(kind in \('review', 'final', 'changes', 'bill'\)\)/);
     assert.match(mig, /revoke all on function public\.club_schedule_bill_late[\s\S]*to service_role;/);
-    const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
+    const send = functionBody(readCode('lib/club-schedule-send.ts'), 'stepFor');
     const at = send.indexOf("rpc('club_schedule_bill_late_priced'");
     assert.ok(at > 0);
     assert.match(send.slice(at, at + 500), /p_send: sendId/, 'the late bill carries the claimed row');
@@ -414,8 +419,10 @@ describe('money terms go only to people who can open Money (owner 2026-11-13, CA
   it('Bill the corrections off: the send recomputes its preview with the switch, so nothing told carries a correction', () => {
     assert.match(functionBody(code, 'sendSchedule'), /previewSend\([^)]*corrections: billCorrectionsOn \}\)/);
     const preview = functionBody(code, 'previewSend');
-    assert.match(preview, /const billedCents = kind === 'changes' && toldCorrections \?/);
-    assert.match(preview, /const teamLost = kind === 'changes' && toldCorrections \?/);
+    // Phase 8: what each member tells a team (`sharesOf`) — the schedule's correction and credit only under the switch;
+    // a part's own come from its preview, made with the same switch.
+    assert.match(preview, /billedCents: toldCorrections \? correction\?\.gains\.get\(teamId\) \?\? null : null, lost: toldCorrections \? lost\.get\(teamId\) \?\? null : null/);
+    assert.match(functionBody(code, 'partsToSend'), /previewSend\(sctx, l, kind, \{ corrections \}\)/);
     // ⚠ Only what is told: the step's own inputs (the lost map, the correction, the splits) stay whole.
     assert.match(preview, /lost\.set\(t, settled\.lost\);/);
   });
