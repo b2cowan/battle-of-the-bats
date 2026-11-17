@@ -51,7 +51,7 @@ import {
   type ClubBookMovementFacts, type ClubInstallmentFacts, type CountAndAmount, type TeamCashHeld,
 } from './club-money-figures';
 import { fiscalQuarters, fiscalYearMonths, fiscalYearOf, type FiscalSetting, type FiscalYear } from './club-fiscal-year';
-import { earlierYearLines, type EarlierYearLine } from './club-team-needs';
+import { carriedIn, earlierYearLines, type CarriedIn, type EarlierYearLine, type YearBill } from './club-team-needs';
 
 /* The ids the rest of the club reads from here (they live with the filing rule, lib/club-ledger.ts). */
 export { FROM_THE_TEAMS_ID, NOT_FILED_ID, ON_REQUEST_ID, TEAM_SUPPORT_WORD_IDS } from './club-ledger';
@@ -846,7 +846,12 @@ export interface BoardSummary {
     pending: { count: number; moneyIn: number; moneyOut: number };
     /** `lateTeams`: how many teams have money late, counted over the same installments (every year) — the Overview's
      *  teams card (Club Accounting · Teams, correction C1). */
-    owedByTheTeams: { amount: number; overdue: CountAndAmount; sent: CountAndAmount; lateTeams: number };
+    owedByTheTeams: {
+      amount: number; overdue: CountAndAmount; sent: CountAndAmount; lateTeams: number;
+      /** Of `amount` (every year), what is from a year before TODAY's (13e B5) — the caption's "$1,200.00 of it from
+       *  2025–26". Today's year, not the year on screen: the figure is today's, whatever year is picked. */
+      carried: CarriedIn | null;
+    };
     /** `teams`: how many teams have a request waiting (the teams card). */
     waitingOnYou: CountAndAmount & { holdingPayout: number; teams: number };
   };
@@ -881,6 +886,14 @@ function itemActual(section: ReportSection, categoryId: string, itemId: string |
     .map(i => ({ amount: of === 'actual' ? i.actual : (i.inPlan ? i.budgeted : 0) })));
 }
 
+/** Each team's bill with the year it counts in (the year rule) — what `earlierYearLines` reads. */
+function billsByYear(allocations: readonly ClubAllocationFacts[], setting: FiscalSetting): YearBill[] {
+  return allocations.flatMap(a => {
+    const y = fiscalYearOf(allocationYearKey(a, setting), setting);
+    return a.splits.map(sp => ({ year: { key: y.key, name: y.name }, teamId: sp.teamId, installments: sp.installments }));
+  });
+}
+
 export function buildBoardSummary(input: {
   report: ClubReport;
   /** The club's fiscal years (which year each team's allocations count in). */
@@ -894,6 +907,8 @@ export function buildBoardSummary(input: {
 }): BoardSummary {
   const { report, allocations, requests, books, teams, teamCash } = input;
   const { year, today, statement } = report;
+  const bills = billsByYear(allocations, input.setting);
+  const todayYearKey = fiscalYearOf(today, input.setting).key;
 
   // "Where the club stands · today" is TODAY, whatever year is picked (3b, Ask 1): the club's books now, never
   // Budget vs. Actual's band, which on a CLOSED year reads the year's locked closing (3c, Ask 1).
@@ -903,6 +918,8 @@ export function buildBoardSummary(input: {
     owedByTheTeams: {
       ...owedByTheTeams(allocations.flatMap(installmentsOf), today),
       lateTeams: teamsWithMoneyLate(allocations.flatMap(a => a.splits), today),
+      // 13e B5: of the every-year figure, what is from a year before TODAY's — Accounting › Teams' own split, all teams.
+      carried: carriedIn([...earlierYearLines(bills, todayYearKey, today).values()].flat()),
     },
     waitingOnYou: {
       ...waitingOnYou(requests),
@@ -940,10 +957,7 @@ export function buildBoardSummary(input: {
   const requestsBy = new Map<string, SummaryRequest[]>();
   for (const r of requests) requestsBy.set(r.teamId, [...(requestsBy.get(r.teamId) ?? []), r]);
   const cashByTeam = new Map(teamCash.map(t => [t.teamId, t]));
-  const earlier = earlierYearLines(allocations.flatMap(a => {
-    const y = fiscalYearOf(allocationYearKey(a, input.setting), input.setting);
-    return a.splits.map(sp => ({ year: { key: y.key, name: y.name }, teamId: sp.teamId, installments: sp.installments }));
-  }), year.key, today);
+  const earlier = earlierYearLines(bills, year.key, today);
 
   const rows: SummaryTeamRow[] = teams.map(t => {
     const mine = yearSplits.get(t.teamId) ?? [];

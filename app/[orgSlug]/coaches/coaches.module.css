@@ -14181,6 +14181,19 @@ div.gdRow { cursor: default; }
   min-width: 0;
 }
 
+/* A tile that opens its lines (13e B1, `onOpen`): the same tile as a button — the label's chevron says it opens. */
+.moneyBandTileDoor {
+  border: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+/* The club band's door tile's own hover and focus (ClubBand.module.css `a.tile`), so a figure that opens reads one way. */
+.moneyBandTileDoor:hover { background: var(--home-card-hover, var(--white-8, var(--home-card))); }
+.moneyBandTileDoor:focus-visible { outline: 2px solid var(--accent, currentColor); outline-offset: -2px; }
+.moneyBandDoorChevron { vertical-align: -2px; margin-left: 0.15rem; }
+
 /* The three type steps, fixed. A tab that wants a different size wants a different component. */
 .moneyBandLabel {
   font-size: var(--type-label);

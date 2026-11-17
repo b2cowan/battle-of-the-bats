@@ -931,7 +931,40 @@ ahead of the owner's rulings.
   Registrations' Fee: Owing (as on Money) but the row's fee cell shows only "$100 clearing", not "$50 owing" (the 12c cell); (2) "Email these
   families" sends Still owing's ids in the window's GET, so past ~200 owing children the address can outgrow the host's limit and the window
   shows its failed state (the window's own read, shared with the bulk bar); (3) Accounting's "House league money: … still owing" door still opens
-  Money on Every line (13d's door, pinned by its test). Owed: Session B; one walk after B.
+  Money on Every line (13d's door, pinned by its test). **Committed `b52e2cd5a` 2026-11-16** (32 files). Owed: Session B; one walk after B.
+
+- 2026-11-17 — **13e Session B BUILT** (the money screens; build prompt Session B, drawing tabs 4, 5, 6). Words and doors only; no figure's arithmetic moved.
+  **B1 Off-plan opens its lines:** the band tile is a door (`MoneyTile.onOpen`, a chevron by its label, words unchanged, no "N lines") onto
+  `OffPlanWindow` ("Off-plan · 2026–27", "$3,660.00 nobody budgeted"): one row per expense item the plan has no line for (`offPlanLines`, the same
+  `isOffPlan` test and the same statement rows as the tile's `offPlan`, so the rows add up by construction; fixture with all three kinds in
+  `tests/unit/club-stage13e-b.test.ts`), each opening that line's Actual window, × back to the list; no Ledger button, no Bill window. The Overview's
+  Off-plan word is a link to `budget-vs-actual?open=off-plan` (the same window; the address word is dropped on arrival, a year with nothing off-plan opens
+  nothing). **Departure:** the drawing's Overview row "opens the same window"; it opens Budget vs. Actual with that window open — the Overview holds no
+  lines. **B2:** the Not filed note reads the drawing's words and ends "File them on the Ledger" ("See them on the Ledger" on a closed year), the
+  Actual window's own address (`ledgerLinesHref`) over Not filed. **B3:** the Actual window's eyebrow printed the year object; now its name (the only
+  window that did; guard over the club's year windows). **B4:** Revenue's caption names its year; the books column reads "Balance today"; on a closed year
+  Owed to the club reads "today, {day}, not at the close · teams … · house league …" (`owedToTheClub(…, { halvesOnly })`); the open year's board report
+  carries what Revenue includes (year line + PDF row). The closed year's year-end file is untouched (its own small item, TODO). **B5:** what an
+  every-year Outstanding carries from a year before TODAY's — `earlierYearLines` (Accounting › Teams' own split) via `carriedByTeam`; the year of each
+  bill from one server read, `allocationYears` (lines' years + first due across every team), shared by a team's account (Needs you unchanged) and
+  Rep Teams (`/api/admin/accounting/teams?carried=1`, Rep Teams only; a failed read drops the caption, never the column). Rep Teams' column and the
+  account band read "includes $600.00 from 2025–26"; the Overview's teams half "($3,450.00 overdue, $1,200.00 of it from 2025–26)". Accounting › Teams
+  unchanged. **B6:** "7 overdue · 5 more in the next 14 days" (`installmentsDueWords`, overdue first in the money kit's late red). **B7:** `bookLedgerHref`:
+  a tournament's or a house-league season's book opens the Ledger with `?date=all` (the Overview's books row, the tournament dashboard's "In the club's
+  book"); the Ledger reads it once on arrival; its default, the General book and the Book pill stay This month (3a's pin green). **Not built, owner
+  call:** the tournament rail's arrival (`accounting?tournamentId=` forwarding to its book) still opens on This month — a third door to a tournament's
+  book the ruling did not name. **Known edge (recorded, not changed):** for a group-scoped reader, the Overview's "of it from 2025–26" uses the
+  scoped allocations' first due (Accounting › Teams' rule, pinned) while Rep Teams and the account read every team's — they can differ only for a
+  line-less bill spanning groups across a fiscal boundary. **/simplify** (4 lenses) applied: one carried-in entry point, the caption builder takes the
+  fact (no placeholder zeros), the Not filed door from real inputs, word halves not sliced strings, the money kit's and club band's existing styles,
+  the Ledger's word parsed beside where it is written; skipped: an arrival-window hook, a link-or-button tile, a typed lint rule. **/review (standard,
+  3 lenses): no Critical or High;** fixed the Medium (a failed carried read hid Rep Teams' column) and three Lows (arrival with nothing off-plan, the
+  closed-year export words, a trailing space in the Excel note). **Layout** (dev server restarted, `--only` the 10 touched screens, the two window
+  states through temporary entries since removed), 390 + 1440: no new findings. **/docs:** accounting.tsx (the Overview, Budget vs. Actual, the
+  Ledger's Date, Teams, a team's account), rep-teams.tsx (Outstanding), tournaments.tsx (In the club's book). **Owed:** the Installments line's help
+  (it lives only in org.tsx, which another session is editing); splitting the two long accounting help sections (both were over the limit before).
+  `/legal` and `/accounting` not required (no family mail, nothing FieldLogicHQ charges). Unit suite 26 failures = the baseline, none in these files.
+  **Next:** the /marketing words pass, then the one walk.
 
 ## 11. The external review, cross-checked (2026-11-07)
 

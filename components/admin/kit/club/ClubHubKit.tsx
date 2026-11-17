@@ -24,7 +24,7 @@
  * door), and the league and tournament registration counts today's hub shows in its attention box
  * (a club that runs either keeps that signal; drawn clubs run neither).
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
@@ -41,12 +41,14 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { closedProgramPlansSentence } from '@/lib/plan-config';
 import { joinWithAnd, pluralize, possessive } from '@/lib/utils';
+import { installmentsDueWords } from '@/lib/club-money-words';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, CoachChip, kit } from '@/components/coaches/kit';
 import { useAdminKitNav } from '../useAdminKitNav';
 import { useClubBrief, briefProgramCount, type BriefKey, type ClubBrief } from './ClubBriefProvider';
 import { accountingTabs, kitCountText, type AdminProgramKey } from '@/lib/admin-kit-nav';
 import ck from './ClubKit.module.css';
 import styles from './ClubHub.module.css';
+import moneyKit from './money/Money.module.css';
 import frame from '../AdminKitFrame.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import PageNotice from '@/components/shared/PageNotice';
@@ -73,7 +75,7 @@ type BriefCardSpec = {
   key: BriefKey;
   label: string;
   /** The line under the figure — facts only (a count of teams, an age), never an amount. */
-  sub: (n: number, brief: ClubBrief) => string;
+  sub: (n: number, brief: ClubBrief) => ReactNode;
   /** Where the card opens, or null when this person cannot open that page. */
   href: (base: string, brief: ClubBrief, can: { repTeams: boolean; accounting: boolean }) => string | null;
 };
@@ -115,10 +117,13 @@ const BRIEF_CARDS: BriefCardSpec[] = [
   {
     key: 'installmentsDue',
     label: 'Installments due',
+    /* 13e B6 (F-O6-2): "7 overdue · 5 more in the next 14 days" — the 7 are INSIDE the 12 (it read as 12 coming up plus 7
+       late). Overdue first, in red: it is the call to act. Derived from the counts the brief already sends. */
     sub: (n, b) => {
-      if (n === 0) return 'none in the next 14 days';
-      const overdue = b.detail.installmentsDue?.overdue ?? 0;
-      return overdue > 0 ? `in the next 14 days · ${overdue} overdue` : 'in the next 14 days';
+      const w = installmentsDueWords(n, b.detail.installmentsDue?.overdue ?? 0);
+      return w.overdue
+        ? <><span className={moneyKit.owedLate}>{w.overdue}</span>{w.rest ? ` · ${w.rest}` : ''}</>
+        : w.rest;
     },
     // Allocations on Coming due: the same 14-day window with the overdue band, so the count and the
     // bands agree (the one definition, S3A-05).

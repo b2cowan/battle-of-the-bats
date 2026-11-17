@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Lock } from 'lucide-react';
+import { ChevronRight, Lock } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -80,6 +80,13 @@ export interface MoneyTile {
    * teams table's held column lost its edge for the same reason (2026-10-07). The lock and the words carry the meaning.
    */
   held?: boolean;
+  /**
+   * ⚠ A FIGURE THAT OPENS ITS LINES (Club Tier 13e B1, theme 4: "every figure opens its lines"): the tile becomes a
+   * button, a chevron by its label, and opens what the figure adds up (Budget vs. Actual's Off-plan → its window). Its
+   * words don't change and it never gains an "N lines" count (bva-figure-doors-guard). Opt-in; a tile without it is
+   * the plain figure it always was.
+   */
+  onOpen?: () => void;
 }
 
 /**
@@ -122,9 +129,15 @@ export default function MoneySummaryBand({
         role="group"
         aria-label={ariaLabel}
       >
-        {shown.map(t => (
-          <div key={t.key} className={styles.moneyBandTile}>
-            <span className={styles.moneyBandLabel}>{t.held && <Lock size={11} aria-hidden className={styles.moneyBandHeldLock} />}{t.label}</span>
+        {shown.map(t => {
+          const Tile = t.onOpen ? 'button' : 'div';
+          return (
+          <Tile key={t.key} className={t.onOpen ? `${styles.moneyBandTile} ${styles.moneyBandTileDoor}` : styles.moneyBandTile}
+            {...(t.onOpen ? { type: 'button' as const, onClick: t.onOpen, 'aria-haspopup': 'dialog' as const } : {})}>
+            <span className={styles.moneyBandLabel}>
+              {t.held && <Lock size={11} aria-hidden className={styles.moneyBandHeldLock} />}{t.label}
+              {t.onOpen && <ChevronRight size={13} aria-hidden className={styles.moneyBandDoorChevron} />}
+            </span>
             <span className={styles.moneyBandFigure} data-tone={t.tone ?? 'plain'}>{t.figure}</span>
             {/* ⚠ RENDERED ONLY WHEN THERE IS ONE. An empty caption element still occupies a line
                 box, which is what left two of Fundraising's four cards a row shorter than their
@@ -139,8 +152,9 @@ export default function MoneySummaryBand({
                 ) : t.caption}
               </span>
             )}
-          </div>
-        ))}
+          </Tile>
+          );
+        })}
       </div>
       {note != null && <p className={styles.moneyBandNote}>{note}</p>}
     </>

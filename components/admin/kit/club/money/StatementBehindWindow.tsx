@@ -26,6 +26,25 @@ import type { ClubReport } from '@/lib/club-budget-report';
 import { money } from './MoneyKit';
 import cr from './ClubReport.module.css';
 
+const booksOf = (lineIds: readonly string[], report: Pick<ClubReport, 'lineBooks'>) =>
+  [...new Set(lineIds.map(id => report.lineBooks[id]?.ledgerId).filter((x): x is string => !!x))];
+
+/**
+ * THE LEDGER, NARROWED TO SOME LINES — this window's "Open these lines in the Ledger", and the Not filed note's "File them
+ * on the Ledger" (13e B2), one address: the year's two days, the category, the item when there is one, and the book when
+ * the lines all sit on one.
+ */
+export function ledgerLinesHref(
+  lines: { categoryName: string; itemName: string | null; lineIds: readonly string[] },
+  report: Pick<ClubReport, 'year' | 'lineBooks'>, accountingBase: string,
+): string {
+  const params = new URLSearchParams({ from: report.year.firstDay, to: report.year.lastDay, category: lines.categoryName });
+  if (lines.itemName) params.set('item', lines.itemName);
+  const books = booksOf(lines.lineIds, report);
+  if (books.length === 1) params.set('book', books[0]);
+  return `${accountingBase}/ledger?${params}`;
+}
+
 export default function StatementBehindWindow({ item, categoryName, report, q, orgSlug, accountingBase, onChanged, onClose }: {
   item: ItemResult;
   /** The category the row sits under — its filing, and the Ledger's Category to narrow by. */
@@ -44,17 +63,14 @@ export default function StatementBehindWindow({ item, categoryName, report, q, o
   // A revenue row can be net NEGATIVE since Club Tier 9b-2 (house-league refunds net their fees row): a year with more
   // refunded than received reads "returned", never a sign-less "received".
   const moved = item.direction === 'in' ? (item.actual < 0 ? 'returned' : 'received') : 'paid';
-  const books = [...new Set(costs.map(c => report.lineBooks[c.id]?.ledgerId).filter((x): x is string => !!x))];
+  const books = booksOf(costs.map(c => c.id), report);
   const bookName = books.length === 1 ? costs.map(c => report.lineBooks[c.id]?.bookName).find(Boolean) ?? null : null;
   const where = bookName ? `on ${bookName}` : 'on the club’s books';
   const filed = item.itemName && item.itemName !== categoryName ? `${categoryName} › ${item.itemName}` : categoryName;
-  const params = new URLSearchParams({ from: report.year.firstDay, to: report.year.lastDay, category: categoryName });
   /* "These lines" are the ITEM's, not the whole category's: the Ledger's Item filter (owner 2026-10-07) narrows to
      them. Keyed on the item's id, never on its name matching the category's: a word may be "Insurance › Insurance",
      while a Not filed row (and a category's "Not itemized" bucket) has no item half — the category alone is exact. */
-  if (item.itemId && item.itemName) params.set('item', item.itemName);
-  if (books.length === 1) params.set('book', books[0]);
-  const ledgerHref = `${accountingBase}/ledger?${params}`;
+  const ledgerHref = ledgerLinesHref({ categoryName, itemName: item.itemId ? item.itemName || null : null, lineIds: costs.map(c => c.id) }, report, accountingBase);
   const typed = costs.some(c => !report.lineSources[c.id]);
   const day = (d: string | null) => (d ? formatStoredDate(d, { withYear: false }) : 'no date');
 
@@ -63,7 +79,8 @@ export default function StatementBehindWindow({ item, categoryName, report, q, o
   return (
     <KitDialog
       kind="form"
-      eyebrow={`Actual · ${report.year}`}
+      /* 13e B3: the year's NAME. It printed the year itself (an object) — "ACTUAL · [OBJECT OBJECT]" on the copy. */
+      eyebrow={`Actual · ${report.year.name}`}
       title={item.itemName}
       onClose={onClose}
       footer={(

@@ -41,7 +41,7 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useTournament } from '@/lib/tournament-context';
 import { tournamentToday, addCalendarDays } from '@/lib/timezone';
 import { resolveDateRangePreset, type DateRangeSelection } from '@/lib/coach-date-range';
-import { LINE_TYPE_WORD, ledgerOptionCounts, type LineType } from '@/lib/club-ledger';
+import { LINE_TYPE_WORD, ledgerOpensAllTime, ledgerOptionCounts, type LineType } from '@/lib/club-ledger';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
@@ -112,6 +112,12 @@ export default function LedgerTab() {
   const [range, setRange] = useState<{ selection: DateRangeSelection; from: string; to: string }>(() => {
     const from = search.get('from'), to = search.get('to');
     if (from && to && /^\d{4}-\d{2}-\d{2}$/.test(from) && /^\d{4}-\d{2}-\d{2}$/.test(to)) return { selection: 'custom', from, to };
+    /* ⚖ A tournament's or a season's book opens on All time from its door (13e B7, ask 13e-5 A: `bookLedgerHref`) — the
+       registrations came in weeks before the event. Only a door sets it; the Ledger's own default is This month. */
+    if (ledgerOpensAllTime(search)) {
+      const all = resolveDateRangePreset('season', today, bounds);
+      return { selection: 'season', from: all.from, to: all.to };
+    }
     const r = resolveDateRangePreset('thisMonth', today, bounds);
     return { selection: 'thisMonth', from: r.from, to: r.to };
   });

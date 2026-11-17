@@ -182,8 +182,11 @@ export interface EarlierYearLine { yearKey: string; yearName: string; amount: nu
  * are not in it: the line explains the gap between the row's Outstanding and the team's every-year Outstanding, which
  * counts installments only. No figure's definition changes; the row keeps the year's figure.
  */
+/** One team's bill with the fiscal year it counts in (the year rule) — what the earlier-year reads take. */
+export interface YearBill { year: YearName; teamId: string; installments: readonly ClubInstallmentFacts[] }
+
 export function earlierYearLines(
-  bills: readonly { year: YearName; teamId: string; installments: readonly ClubInstallmentFacts[] }[],
+  bills: readonly YearBill[],
   onScreenYearKey: string,
   today: string,
 ): Map<string, EarlierYearLine[]> {
@@ -205,6 +208,36 @@ export function earlierYearLines(
   for (const [teamId, years] of byTeam) {
     out.set(teamId, [...years.entries()].sort((a, b) => a[0].localeCompare(b[0]))
       .map(([yearKey, y]) => ({ yearKey, yearName: y.name, amount: sumMoney(y.amounts), late: y.late })));
+  }
+  return out;
+}
+
+/** What an every-year Outstanding carries from earlier years: the amount, and the year's name when it is one year. */
+export interface CarriedIn { amount: number; yearName: string | null }
+
+/**
+ * CARRIED IN, SAID (Club Tier 13e B5, ask 13e-7 A): earlier-year lines summed into the one fact a caption names —
+ * "includes $600.00 from 2025–26" (the year named when there is one, "earlier years" when there are several). Null when
+ * nothing is carried, so no caption is drawn. A sum of `earlierYearLines`' own lines: no figure is worked out again.
+ */
+export function carriedIn(lines: readonly Pick<EarlierYearLine, 'yearName' | 'amount'>[]): CarriedIn | null {
+  const owed = lines.filter(l => l.amount > 0.005);
+  const amount = sumMoney(owed);
+  if (amount <= 0.005) return null;
+  const years = [...new Set(owed.map(l => l.yearName))];
+  return { amount, yearName: years.length === 1 ? years[0] : null };
+}
+
+/**
+ * EACH TEAM'S CARRIED-IN, AGAINST TODAY'S YEAR (13e B5) — the one entry point Rep Teams' column and a team's account band
+ * read: `earlierYearLines` over the bills against TODAY's fiscal year (the figure is every year's, today), summed per team.
+ * Teams with nothing carried are absent.
+ */
+export function carriedByTeam(bills: readonly YearBill[], todayYearKey: string, today: string): Map<string, CarriedIn> {
+  const out = new Map<string, CarriedIn>();
+  for (const [teamId, lines] of earlierYearLines(bills, todayYearKey, today)) {
+    const c = carriedIn(lines);
+    if (c) out.set(teamId, c);
   }
   return out;
 }

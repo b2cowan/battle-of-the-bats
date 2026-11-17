@@ -155,7 +155,10 @@ describe('the Teams table\'s earlier year\'s line (Ask 8 + C2 — any earlier ye
   });
   it('the board summary carries each team\'s lines, from its own allocations — the year rule, closed or not, no new read', () => {
     const report = readFileSync('lib/club-budget-report.ts', 'utf8');
-    assert.match(report, /const earlier = earlierYearLines\(allocations\.flatMap\(a => \{\s*const y = fiscalYearOf\(allocationYearKey\(a, input\.setting\), input\.setting\);/);
+    // 13e B5 moved the year rule's bills into one helper, so the Overview's "Owed to the club" reads the same split.
+    assert.match(report, /const bills = billsByYear\(allocations, input\.setting\);/);
+    assert.match(report, /const earlier = earlierYearLines\(bills, year\.key, today\);/);
+    assert.match(report, /function billsByYear\([^)]*\)(?:: YearBill\[\])? \{\s*return allocations\.flatMap\(a => \{\s*const y = fiscalYearOf\(allocationYearKey\(a, setting\), setting\);/);
     assert.match(report, /earlier: earlier\.get\(t\.teamId\) \?\? \[\],/);
   });
 });

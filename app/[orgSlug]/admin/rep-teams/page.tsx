@@ -48,6 +48,8 @@ import {
 import type { ClubBoardRow } from '@/lib/club-team-board';
 import type { RepTeam, RepTeamGroup } from '@/lib/types';
 import { fmt as fmtMoney } from '@/lib/coach-money-summary';
+import { CARRIED_WORDS } from '@/lib/club-money-words';
+import type { CarriedIn } from '@/lib/club-team-needs';
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 
 const boardLate = cr.lateCaption;
@@ -61,7 +63,7 @@ const UNGROUPED = 'none';
 const ARCHIVED = 'archived';
 
 /** What a team owes the club, from Accounting's own read (3a's definitions). */
-interface TeamMoney { teamId: string; outstanding: number; overdue: { count: number; amount: number } }
+interface TeamMoney { teamId: string; outstanding: number; overdue: { count: number; amount: number }; carried?: CarriedIn | null }
 
 export default function RepTeamsBoardPage() {
   const { currentOrg, user, userRole, loading: orgLoading, canOpen } = useOrg();
@@ -94,7 +96,7 @@ export default function RepTeamsBoardPage() {
         fetch(`/api/admin/rep-teams/teams?archived=true&${q}`, { cache: 'no-store' }),
         fetch(`/api/admin/rep-teams/groups?${q}`, { cache: 'no-store' }),
         // The money column's read: only for someone who can open Accounting (it fails soft — the column hides).
-        seesMoney ? fetch(`/api/admin/accounting/teams?${q}`, { cache: 'no-store' }).catch(() => null) : Promise.resolve(null),
+        seesMoney ? fetch(`/api/admin/accounting/teams?carried=1&${q}`, { cache: 'no-store' }).catch(() => null) : Promise.resolve(null),
       ]);
       const teamsData = await teamsRes.json().catch(() => ({}));
       if (!teamsRes.ok) throw new Error(teamsData.error ?? 'The teams could not be loaded.');
@@ -358,13 +360,16 @@ function BandRows({ label, rows, base, money }: { label: string; rows: Row[]; ba
   );
 }
 
-/** What the team owes the club; a late payment is a red caption under it (the summary's word, "Outstanding"). */
+/** What the team owes the club; a late payment is a red caption under it (the summary's word, "Outstanding"). The figure
+ *  is every year; what of it is from an earlier year is said under it, never taken out (13e B5, ask 13e-7 A) —
+ *  Accounting › Teams shows the year's figure with the earlier year as its own line, so the two now say the same thing. */
 function OutstandingCell({ m }: { m: TeamMoney | null }) {
   if (!m || m.outstanding <= 0.005) return <td className={`${repKit.num} ${repKit.dim}`}>{m ? '$0.00' : '—'}</td>;
   return (
     <td className={repKit.num}>
       {fmtMoney(m.outstanding)}
       {m.overdue.amount > 0.005 && <span className={`${repKit.cellSub} ${boardLate}`}>{fmtMoney(m.overdue.amount)} overdue</span>}
+      {m.carried && <span className={`${repKit.cellSub} ${repKit.dim}`}>{CARRIED_WORDS.includes(m.carried)}</span>}
     </td>
   );
 }

@@ -11,6 +11,8 @@
  */
 
 import { fmt } from './coach-money-summary';
+import { CARRIED_WORDS } from './club-money-words';
+import type { CarriedIn } from './club-team-needs';
 
 export type ClubBandPart = 'cash' | 'owed' | 'week' | 'needs';
 
@@ -51,7 +53,11 @@ export const CLUB_BAND_WORDS = {
   owed: {
     label: 'Owed to the club',
     nothing: 'Nothing owed',
-    teams: (amt: string, overdue: string | null) => (overdue ? `teams ${amt} (${overdue} overdue)` : `teams ${amt}`),
+    /** 13e B5: `carried` ("$1,200.00 of it from 2025–26") joins the overdue words inside the brackets. */
+    teams: (amt: string, overdue: string | null, carried: string | null = null) => {
+      const inside = [overdue ? `${overdue} overdue` : null, carried].filter(Boolean).join(', ');
+      return inside ? `teams ${amt} (${inside})` : `teams ${amt}`;
+    },
     league: (amt: string) => `house league ${amt}`,
     overdueShort: (overdue: string) => `${overdue} overdue`,
     door: 'see each team’s standing',
@@ -84,17 +90,23 @@ export const CLUB_BAND_WORDS = {
  * Owed plus house league's Still owing, to the cent, and its caption — each half said only when there is something in it.
  * The band and the Overview both call this, so "one figure, one name, both screens" holds by construction.
  * `players`: the Overview says how many players owe house league ("(12 players)"); the band says that on its Needs line.
+ * `carried`: the Overview says what of the teams' half is from an earlier year (13e B5) — words only, the sum unchanged.
+ * `halvesOnly`: the two halves and nothing in brackets — a CLOSED year's caption (13e B4), where today's overdue, players and
+ * "from 2025–26" would read as the year's own.
  */
-export function owedToTheClub(owed: NonNullable<ClubBand['owed']>, opts: { players?: boolean } = {}): {
+export function owedToTheClub(owed: NonNullable<ClubBand['owed']>, opts: { players?: boolean; carried?: CarriedIn | null; halvesOnly?: boolean } = {}): {
   total: number; overdue: number; caption: string;
 } {
   const { teams, league } = owed;
   const total = Math.round(((teams?.amount ?? 0) + (league?.amount ?? 0)) * 100) / 100;
   const overdue = teams && teams.overdue > 0 ? teams.overdue : 0;
   const caption = [
-    teams && teams.amount > 0 ? CLUB_BAND_WORDS.owed.teams(fmt(teams.amount), overdue ? fmt(overdue) : null) : null,
+    teams && teams.amount > 0
+      ? CLUB_BAND_WORDS.owed.teams(fmt(teams.amount), overdue && !opts.halvesOnly ? fmt(overdue) : null,
+        opts.carried && !opts.halvesOnly ? CARRIED_WORDS.ofIt(opts.carried) : null)
+      : null,
     league && league.amount > 0
-      ? `${CLUB_BAND_WORDS.owed.league(fmt(league.amount))}${opts.players && league.players > 0 ? ` (${league.players} ${league.players === 1 ? 'player' : 'players'})` : ''}`
+      ? `${CLUB_BAND_WORDS.owed.league(fmt(league.amount))}${opts.players && !opts.halvesOnly && league.players > 0 ? ` (${league.players} ${league.players === 1 ? 'player' : 'players'})` : ''}`
       : null,
   ].filter(Boolean).join(' · ');
   return { total, overdue, caption };

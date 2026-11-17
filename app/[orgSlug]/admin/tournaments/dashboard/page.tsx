@@ -48,6 +48,7 @@ import { hasFiniteSlots, holdsSlot } from '@/lib/tournament-slot';
 import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
 import { DRAFT_BOARD_WORDS, type BoardFees, type DraftSetup } from '@/lib/tournament-board-words';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import { bookLedgerHref } from '@/lib/club-ledger';
 import GameDayBoard, {
   BoardNote, CustomizeLink, EMPTY_GAME_DAY, GAME_DAY_PARTS, type GameDayPartId, type GameDayStats,
 } from './GameDayBoard';
@@ -735,7 +736,8 @@ export default function AdminDashboard() {
             pay={visibleStats.payment}
             fees={visibleStats.fees}
             clubBook={visibleStats.clubBook && currentOrg?.slug
-              ? { ...visibleStats.clubBook, href: `/${currentOrg.slug}/admin/accounting/ledger?book=${visibleStats.clubBook.ledgerId}` }
+              // The event's book opens the Ledger on All time (13e B7): its registrations came in weeks before the event.
+              ? { ...visibleStats.clubBook, href: bookLedgerHref(`/${currentOrg.slug}/admin/accounting`, visibleStats.clubBook.ledgerId, 'tournament') }
               : null}
             chat={visibleStats.chatAdoption}
             chatSettled={statsSettledFor === statsAttemptKey}

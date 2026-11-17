@@ -31,7 +31,7 @@ import { bvaActivityRows, bvaExportColumns, type ExportRow, type MoneyRowKind } 
 import type { MoneyReport } from '../components/coaches/MoneyStatementRows';
 import type { ClubMonthsFeed } from './club-budget-report';
 import type { AgainstLastYear, YearEndReport } from './club-year-compare';
-import { AGAINST_LAST_YEAR_WORDS, OTHER_BOOKS_WORD, YEAR_END_NO_TEAM_CASH, YEAR_END_WORDS, netForYearWord } from './club-money-words';
+import { AGAINST_LAST_YEAR_WORDS, OFF_PLAN_WORDS, OTHER_BOOKS_WORD, YEAR_END_NO_TEAM_CASH, YEAR_END_WORDS, netForYearWord } from './club-money-words';
 import { fmt as paperMoney } from './coach-money-summary';
 import { formatStoredDate } from './timezone';
 import { sumMoney } from './club-money-figures';
@@ -58,6 +58,8 @@ export interface ClubStatementNoteInput {
   pending: { count: number; moneyOut: string | null; moneyIn: string | null } | null;
   /** Is there a "Not filed" row on the statement? */
   notFiled: boolean;
+  /** A closed year: its lines are locked, so the Not filed note's door reads them rather than files them (13e B2). */
+  yearLocked?: boolean;
 }
 
 export function clubStatementNotes(input: ClubStatementNoteInput): ReportNote[] {
@@ -94,9 +96,12 @@ export function clubStatementNotes(input: ClubStatementNoteInput): ReportNote[] 
   }
 
   if (input.notFiled) {
+    // 13e B2 (drawing tab 4 note 3): the note ends with its door — the Ledger narrowed to Not filed over the year.
     out.push(note('club-not-filed', [
       { text: 'Not filed', bold: true },
-      { text: ' is spending with no budget word yet — lines typed before an entry could be filed, until someone files them on the Ledger. It counts as off-plan.' },
+      { text: ' is spending with no budget word yet. It counts as off-plan.' },
+      { text: ' ', screenOnly: true },
+      { text: OFF_PLAN_WORDS.ledgerDoor(!!input.yearLocked), control: 'ledger-not-filed', screenOnly: true },
     ]));
   }
   return out;

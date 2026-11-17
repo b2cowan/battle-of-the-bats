@@ -63,7 +63,7 @@ const repTeamsHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'Reading the Teams board',
       summary: 'One row per team: its season and record, head coach, roster, next event and documents — and what only the club can fix, in red.',
-      keywords: ['teams board', 'health board', 'no head coach', 'no players', 'invited', 'documents column', 'next event', 'team list', 'outstanding column', 'what a team owes'],
+      keywords: ['teams board', 'health board', 'no head coach', 'no players', 'invited', 'documents column', 'next event', 'team list', 'outstanding column', 'what a team owes', 'includes from an earlier year'],
       searchText: 'rep teams board health board one row per team season live closed record head coach no head coach invited roster no players next event documents signed of players band rows groups ungrouped archived filter phone cards open a team click row outstanding column what the team owes the club overdue accounting access',
       content: (
         <>
@@ -74,7 +74,7 @@ const repTeamsHelp: HelpPageContent = {
             <li><strong>Roster</strong> — the players on the live season. A live season with nobody on it shows a red <strong>No players</strong>.</li>
             <li><strong>Next event</strong> — the next thing on the coach&apos;s schedule.</li>
             <li><strong>Documents</strong> — how many players on the live season have every form the team asks for on file. Waivers and the code of conduct are signed again each season, so a new season starts with those showing as needing a signature; a form set to <strong>Good until replaced</strong> (a medical consent, by default) stays on file from an earlier season on the same team.</li>
-            <li><strong>Outstanding</strong> — what the team owes the club, with any late amount in red under it. It shows on a computer, and only for someone who can open Accounting.</li>
+            <li><strong>Outstanding</strong> — what the team owes the club, with any late amount in red under it. It counts every year’s bills, and adds <em>includes $600.00 from 2025–26</em> when some of it is from an earlier fiscal year (nothing is shown when none is). It shows on a computer, and only for someone who can open Accounting.</li>
           </ul>
           <p>Click anywhere on a team&apos;s row to open its page. Use the filter to see one group, <strong>Ungrouped</strong>, or <strong>Archived</strong> teams.</p>
         </>

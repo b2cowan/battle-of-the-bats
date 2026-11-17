@@ -35,9 +35,15 @@
  *     it covers (the server's spans: whole years, to the same day, or the same months against a short year). The
  *     rows fold like the Statement's; ⚠ its figures are NOT doors (departure, recorded: the comparison carries no
  *     line lists — the year's own Statement, one pick away on the same pill, keeps them).
+ *
+ * ⚖ STAGE 13e (B1–B3; drawing tab 4): the Off-plan tile opens its lines (`OffPlanWindow`, each row that line's Actual
+ *   window, × going back to the list) — also reached from the Overview's Off-plan row (`?open=off-plan`); the Not filed
+ *   note ends with its Ledger door (the Actual window's own address, `actualLedgerHref`); the Actual window names its year.
  */
-import { Fragment, useCallback, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { toggleAllKeys, toggleKey } from '@/lib/toggle-key';
@@ -55,7 +61,8 @@ import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import { LoadFailed, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { money, moneyFetch } from '@/components/admin/kit/club/money/MoneyKit';
 import YearPill, { useClubYear } from '@/components/admin/kit/club/money/YearPill';
-import StatementBehindWindow from '@/components/admin/kit/club/money/StatementBehindWindow';
+import StatementBehindWindow, { ledgerLinesHref } from '@/components/admin/kit/club/money/StatementBehindWindow';
+import OffPlanWindow from '@/components/admin/kit/club/money/OffPlanWindow';
 import AllocationRecordWindow from '@/components/admin/kit/club/money/AllocationRecordWindow';
 import { BudgetLineWindow } from '@/components/admin/kit/club/money/BudgetWindows';
 import { PermitWindow } from '@/components/admin/kit/club/PermitWindows';
@@ -101,6 +108,7 @@ type ClubLens = Exclude<MoneyLens, 'spending'>;
 export default function BudgetVsActualTab() {
   const { currentOrg, loading: orgLoading } = useOrg();
   const router = useRouter();
+  const search = useSearchParams();
   const isPhone = useIsPhone();
   const slug = currentOrg?.slug ?? '';
   const q = `orgSlug=${encodeURIComponent(slug)}`;
@@ -119,6 +127,16 @@ export default function BudgetVsActualTab() {
      them — the coach's Months gained it the same day (owner, 2026-10-07; see `monthGridFoldKeys`). */
   const [monthOpen, setMonthOpen] = useState<Set<string>>(() => new Set());
   const [behind, setBehind] = useState<{ item: ItemResult; categoryName: string } | null>(null);
+  /** The Off-plan window (13e B1) — open on arrival from the Overview's Off-plan row (`?open=off-plan`). It stays open
+   *  under a line's Actual window and shows again when that one closes: × goes back to the list. */
+  const [offPlanOpen, setOffPlanOpen] = useState(() => search.get('open') === 'off-plan');
+  // The Overview's door is read once: its word leaves the address on arrival, so a reload or the year pill can't reopen it.
+  useEffect(() => {
+    if (search.get('open') !== 'off-plan') return;
+    const rest = new URLSearchParams(search.toString());
+    rest.delete('open');
+    window.history.replaceState(null, '', `${window.location.pathname}${rest.size ? `?${rest}` : ''}`);
+  }, [search]);
   /** A "from the teams" Budgeted figure's allocation, open over the page (Stage 3d). */
   const [allocationId, setAllocationId] = useState<string | null>(null);
   const [lineId, setLineId] = useState<string | null>(null);
@@ -196,6 +214,7 @@ export default function BudgetVsActualTab() {
         ? { count: report.pending.count, moneyOut: report.pending.moneyOut > 0.005 ? money(report.pending.moneyOut) : null, moneyIn: report.pending.moneyIn > 0.005 ? money(report.pending.moneyIn) : null }
         : null,
       notFiled: statement.expenses.categories.some(c => c.categoryId === NOT_FILED_ID),
+      yearLocked: read.year.locked,
     });
   }, [report, statement, read, basis]);
 
@@ -251,6 +270,15 @@ export default function BudgetVsActualTab() {
   if (!read || !report || !statement) return <LoadingState label="Loading budget and actual figures…" />;
 
   const { band } = report;
+  // The Not filed note's door (13e B2): the Ledger narrowed to Not filed over the year — the Actual window's own address.
+  const notFiledCat = report.statement.expenses.categories.find(c => c.categoryId === NOT_FILED_ID) ?? null;
+  // A door that arrived on a year with nothing off-plan opens nothing, and does not wait to open later (/review).
+  if (offPlanOpen && !(band.offPlan > 0.005)) setOffPlanOpen(false);
+  const notFiledHref = notFiledCat
+    ? ledgerLinesHref({ categoryName: notFiledCat.categoryName, itemName: null, lineIds: notFiledCat.items.flatMap(i => (i.costs ?? []).map(c => c.id)) }, report, base)
+    : null;
+  // The Overview's door arrives with `?open=off-plan`; closing drops that word from the address, without a navigation.
+  const closeOffPlan = () => setOffPlanOpen(false);
   const empty = statement.revenue.categories.length === 0 && statement.expenses.categories.length === 0;
   const plan = read.plan;
   const openLine = lineId ? [...plan.revenue.categories, ...plan.expenses.categories].flatMap(c => c.lines).find(l => l.id === lineId) ?? null : null;
@@ -297,7 +325,8 @@ export default function BudgetVsActualTab() {
               caption: band.collected.planned > 0.005 ? `of ${money(band.collected.planned)} planned` : undefined,
             },
             { key: 'spent', label: 'Spent', figure: money(band.spent.amount), caption: `of ${money(band.spent.planned)} planned` },
-            { key: 'offplan', label: 'Off-plan', figure: money(band.offPlan), tone: 'warn', caption: 'nobody budgeted this', hidden: !(band.offPlan > 0.005) },
+            // 13e B1: the figure opens its lines — the words unchanged, no "N lines" (bva-figure-doors-guard).
+            { key: 'offplan', label: 'Off-plan', figure: money(band.offPlan), tone: 'warn', caption: 'nobody budgeted this', hidden: !(band.offPlan > 0.005), onOpen: () => setOffPlanOpen(true) },
             {
               key: 'cash', label: 'Cash on hand', figure: fmtSigned(band.cashOnHand),
               tone: band.cashOnHand < -0.005 ? 'danger' : 'plain',
@@ -317,7 +346,7 @@ export default function BudgetVsActualTab() {
           )}
         >
           <YearPill year={report.year.key} years={read.years}
-            onChange={y => { setYear(y); setBehind(null); setLineId(null); setAllocationId(null); setAgainstLast(false); }} />
+            onChange={y => { setYear(y); setBehind(null); setOffPlanOpen(false); setLineId(null); setAllocationId(null); setAgainstLast(false); }} />
           <SingleSelectDropdown label="View" lead value={view}
             options={[{ id: 'statement', label: 'Statement' }, { id: 'activity', label: 'By activity' }, { id: 'months', label: 'Months' }]}
             onChange={next => { setView(next as View); if (next !== 'statement') setAgainstLast(false); }} />
@@ -414,6 +443,9 @@ export default function BudgetVsActualTab() {
                   'compare-to-date': text => (
                     <button type="button" className={bvaStyles.bridgeLink} onClick={() => setBasis('todate')}>{text}</button>
                   ),
+                  'ledger-not-filed': text => (notFiledHref
+                    ? <Link href={notFiledHref} className={bvaStyles.bridgeLink}>{text} <ChevronRight size={13} aria-hidden /></Link>
+                    : null),
                 }}
               />
             </div>
@@ -421,6 +453,10 @@ export default function BudgetVsActualTab() {
         )}
       </div>
 
+      {offPlanOpen && !behind && band.offPlan > 0.005 && (
+        <OffPlanWindow yearName={report.year.name} total={band.offPlan} categories={report.statement.expenses.categories} locked={read.year.locked}
+          onOpenLine={(item, categoryName) => setBehind({ item, categoryName })} onClose={closeOffPlan} />
+      )}
       {behind && (
         <StatementBehindWindow item={behind.item} categoryName={behind.categoryName} report={report} q={q} orgSlug={slug} accountingBase={base}
           onChanged={() => void load()} onClose={() => setBehind(null)} />

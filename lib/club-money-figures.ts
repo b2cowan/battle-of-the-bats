@@ -826,8 +826,24 @@ export function collectedByBook(lines: readonly (ActualLine & { ledgerId: string
  */
 export function offPlan(expenseRows: readonly { inPlan: boolean; actual: number }[]): number {
   let c = 0;
-  for (const r of expenseRows) if (!r.inPlan) c += cents(r.actual);
+  for (const r of expenseRows) if (isOffPlan(r)) c += cents(r.actual);
   return dollars(c);
+}
+
+/** The ONE test of "nobody budgeted this" — the band's figure and the window that opens it both ask it (13e B1). */
+export const isOffPlan = (row: { inPlan: boolean }): boolean => !row.inPlan;
+
+/**
+ * THE LINES BEHIND OFF-PLAN (Club Tier 13e, B1): one row per expense item the plan has no line for, in the statement's
+ * order (Not filed last), with the category it sits under. Their actuals add up to `offPlan` over the same rows — the
+ * same test, the same rows, a zero row left out (it adds nothing). Pinned in tests/unit/club-stage13e-b.test.ts.
+ */
+export function offPlanLines<C extends { items: readonly { inPlan: boolean; actual: number }[] }>(
+  categories: readonly C[],
+): { category: C; item: C['items'][number] }[] {
+  return categories.flatMap(category => category.items
+    .filter(item => isOffPlan(item) && cents(item.actual) !== 0)
+    .map(item => ({ category, item })));
 }
 
 /**

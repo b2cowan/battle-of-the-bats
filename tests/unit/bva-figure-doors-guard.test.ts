@@ -436,3 +436,50 @@ test('the statement panels stand on the one window\'s scrolling body, not the ol
     'A statement panel asks for the old scrolling recipe again. Its frame clips; a list without the one '
     + 'child it expects ends early, silently.');
 });
+
+/**
+ * **THE CLUB'S BUDGET VS. ACTUAL: EVERY FIGURE OPENS WHAT IS BEHIND IT, THE BAND'S OFF-PLAN TOO** (Club Tier 13e B1–B3,
+ * theme 4: "every figure opens its lines"). The rows are the coach's own (above); this pins the club page's own doors.
+ *   · the Off-plan tile opens its lines (`onOpen`) and carries NO "N lines" count — the §133 rule, on the band;
+ *   · the window it opens is spending only and has NO Ledger button (the Ledger has no "off-plan" filter and must not
+ *     gain one by guessing items across categories), and never touches the schedule's Bill window;
+ *   · each row's Actual window names its year (it printed "ACTUAL · [OBJECT OBJECT]");
+ *   · the Overview's Off-plan word is a door to the same window.
+ */
+const CLUB_BVA = codeOnly(readFileSync(join(ROOT, 'app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx'), 'utf8'));
+const OFF_PLAN_WINDOW = codeOnly(readFileSync(join(ROOT, 'components/admin/kit/club/money/OffPlanWindow.tsx'), 'utf8'));
+
+test('the club’s Off-plan tile opens its lines, words unchanged, no count', () => {
+  const tile = CLUB_BVA.split('\n').find(l => /key: 'offplan'/.test(l)) ?? '';
+  assert.match(tile, /label: 'Off-plan'.*caption: 'nobody budgeted this'.*onOpen: \(\) => setOffPlanOpen\(true\)/,
+    'The Off-plan tile is a door to its lines, its words as they were.');
+  assert.doesNotMatch(tile, /\blines?\b|lineCount|\.length/, 'The Off-plan tile counts its lines. A figure that opens them needs no label promising them (QA §133).');
+  assert.match(CLUB_BVA, /<OffPlanWindow [^>]*total=\{band\.offPlan\}[^>]*categories=\{report\.statement\.expenses\.categories\}/,
+    'The window reads the tile’s own figure and the statement’s own rows.');
+});
+
+test('the Off-plan window is plan lines only: no Ledger button, no Bill window, each row its Actual window', () => {
+  assert.match(OFF_PLAN_WINDOW, /offPlanLines\(categories\)/, 'The rows are the one Off-plan test over the statement.');
+  assert.doesNotMatch(OFF_PLAN_WINDOW, /<Link\b|href=|\/ledger/,
+    'The Off-plan window links somewhere itself. Its rows open their Actual windows, which hold the Ledger door.');
+  assert.doesNotMatch(OFF_PLAN_WINDOW, /BillWindow|being billed|beingBilled/i, 'Off-plan never reaches the schedule’s Bill window (13e stays on its side).');
+  assert.match(OFF_PLAN_WINDOW, /onClick=\{\(\) => onOpenLine\(item, category\.categoryName\)\}/);
+});
+
+test('no window heading prints a year as a raw value ("[object Object]")', () => {
+  const behind = codeOnly(readFileSync(join(ROOT, 'components/admin/kit/club/money/StatementBehindWindow.tsx'), 'utf8'));
+  assert.match(behind, /eyebrow=\{`Actual · \$\{report\.year\.name\}`\}/);
+  assert.doesNotMatch(behind, /\$\{report\.year\}/, 'The Actual window prints the year object, not its name.');
+  for (const f of ['components/admin/kit/club/money/BudgetWindows.tsx', 'components/admin/kit/club/PermitWindows.tsx',
+    'components/admin/kit/club/money/AllocationRecordWindow.tsx', 'components/admin/kit/club/money/FiscalYearParts.tsx',
+    'components/admin/kit/club/money/OffPlanWindow.tsx']) {
+    const src = codeOnly(readFileSync(join(ROOT, f), 'utf8'));
+    assert.doesNotMatch(src, /eyebrow=\{`[^`]*\$\{(?:report\.|view\.|read\.)?year\}`\}/, `${f}: a heading prints a year object.`);
+  }
+});
+
+test('the Overview’s Off-plan word is the door to the same window', () => {
+  const overview = codeOnly(readFileSync(join(ROOT, 'app/[orgSlug]/admin/accounting/page.tsx'), 'utf8'));
+  assert.match(overview, /href=\{`\$\{base\}\/budget-vs-actual\?open=off-plan`\}[^>]*>Off-plan/);
+  assert.match(CLUB_BVA, /useState\(\(\) => search\.get\('open'\) === 'off-plan'\)/);
+});

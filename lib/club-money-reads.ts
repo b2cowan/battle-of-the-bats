@@ -19,7 +19,7 @@ import {
 import { howItCame, methodWord, teamsWord } from './club-money-words';
 import { toCents } from './coach-register';
 import { latestClosedSeasonOf, liveSeasonOf } from './season-live';
-import { owedRows, teamNeedsYou, type TeamNeedsYou, type YearName } from './club-team-needs';
+import { carriedByTeam, owedRows, teamNeedsYou, type CarriedIn, type TeamNeedsYou, type YearBill, type YearName } from './club-team-needs';
 import { askSummaries } from './club-hand-back-reads';
 import type { CreditMove } from './club-hand-back-words';
 import type { RepAllocationInstallment } from './types';
@@ -563,6 +563,47 @@ async function pendingRequestCounts(orgId: string, teamIds: string[]): Promise<M
   return out;
 }
 
+/**
+ * THE YEAR EACH BILL COUNTS IN — the year rule (`allocationYear`: its line's year, else the year its FIRST payment falls due
+ * in, across every team it bills, else the day it was made), for the allocations asked. Its lines' years and its payments'
+ * due days are each read in ONE query; the due days are every team's (a team-scoped loop holds that team's only). A team's
+ * account (Needs you's closed years, 13e's carried-in) and Rep Teams' column (13e B5) read it, so they cannot disagree.
+ */
+export async function allocationYears(orgId: string, loop: ClubLoop, setting: FiscalSetting, allocationIds: readonly string[]): Promise<Map<string, FiscalYear>> {
+  const ids = [...new Set(allocationIds)].filter(id => loop.allocations.has(id));
+  const lineIds = [...new Set(ids.map(id => loop.allocations.get(id)?.sourceBudgetLineId).filter((x): x is string => !!x))];
+  const [lineYears, billDues] = await Promise.all([
+    fetchAllIn<{ id: string; fiscal_year_id: string }>(lineIds, (c, a, b) => supabaseAdmin
+      .from('org_budget_lines').select('id, fiscal_year_id').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
+    fetchAllIn<{ allocation_id: string; rep_allocation_installments: { due_date: string }[] | null }>(ids, (c, a, b) => supabaseAdmin
+      .from('rep_allocation_splits').select('allocation_id, rep_allocation_installments ( due_date )')
+      .eq('org_id', orgId).in('allocation_id', c).order('id').range(a, b)),
+  ]);
+  const keyOfYearRow = new Map(setting.rows.map(r => [r.id, r.firstDay] as const));
+  const lineYear = new Map(lineYears.map(l => [l.id, keyOfYearRow.get(l.fiscal_year_id) ?? null] as const));
+  const firstDue = new Map<string, string>();
+  for (const sp of billDues) {
+    for (const i of sp.rep_allocation_installments ?? []) {
+      const was = firstDue.get(sp.allocation_id);
+      if (!was || i.due_date < was) firstDue.set(sp.allocation_id, i.due_date);
+    }
+  }
+  return new Map(ids.map(id => {
+    const a = loop.allocations.get(id)!;
+    const firstDueDate = firstDue.get(id) ?? null;
+    const key = allocationYearKeyOf({ lineYearKey: a.sourceBudgetLineId ? lineYear.get(a.sourceBudgetLineId) ?? null : null, firstDueDate, createdOn: orgDayKey(a.createdAt) }, setting);
+    return [id, fiscalYearOf(key, setting)] as const;
+  }));
+}
+
+/** The loop's bills with the year each counts in (`allocationYears`) — what `carriedByTeam` reads. */
+export function yearBills(loop: ClubLoop, yearOf: ReadonlyMap<string, FiscalYear>): YearBill[] {
+  return loop.splits.flatMap(sp => {
+    const y = yearOf.get(sp.allocationId);
+    return y ? [{ year: { key: y.key, name: y.name }, teamId: sp.teamId, installments: sp.installments }] : [];
+  });
+}
+
 /** One team's line on Rep Teams' team page: what it owes the club, next due, and whether a request waits. */
 export async function withTheClub(orgId: string, teamId: string, today: string = tournamentToday()): Promise<TeamWithTheClub | null> {
   const loop = await loadClubLoop(orgId, new Set([teamId]), { teamId });
@@ -591,6 +632,8 @@ export async function teamAccountRead(
 ): Promise<{
   account: TeamAccount; seasons: { id: string; name: string; status: string }[]; withTheClub: TeamWithTheClub | null;
   season: TeamAccountSeason | null; headCoaches: string[]; needsYou: TeamNeedsYou;
+  /** Of `account.outstanding` (every year), what is from a year before today's (13e B5) — the band's "includes …". */
+  carried: CarriedIn | null;
 }> {
   const reqP = fetchAll<Record<string, any>>((a, b) =>
     supabaseAdmin.from('rep_team_payment_requests').select('*')
@@ -650,19 +693,17 @@ export async function teamAccountRead(
   // payments' due days are each read in ONE query; the due days are every team's (this loop holds this team's only).
   const owed = owedRows(loop, [...loop.allocations.values()], () => true, today, null);
   const needBills = [...new Set(owed.filter(o => o.state !== 'upcoming').map(o => o.allocationId))];
-  const lineIds = [...new Set(needBills.map(id => loop.allocations.get(id)?.sourceBudgetLineId).filter((x): x is string => !!x))];
+  /* 13e B5: the year of EVERY bill still owed on (upcoming too), by the same rule — what of Outstanding is from an earlier
+     year is the band's caption. Needs you still names a year for its late and sent bills only. */
+  const owingBills = [...new Set(owed.map(o => o.allocationId))];
   const closed = (y: { key: string; name: string; locked: boolean }): YearName | null => (y.locked ? { key: y.key, name: y.name } : null);
   const askIds = waitingRows.map(r => r.club_hand_back_id as string | null).filter((x): x is string => !!x);
 
   // The statement prints WHO recorded a payment (C17), and Needs you who asked: names, never ids, on the way out.
-  const [rows, nameOf, lineYears, billDues, asks] = await Promise.all([
+  const [rows, nameOf, yearOf, asks] = await Promise.all([
     teamsWithTheClub(orgId, loop, today, waiting),
     resolvePersonNamer(orgId, [...computed.seasons.flatMap(s => s.rows.map(r => r.recordedBy ?? null)), ...waitingRows.map(r => r.created_by ?? null)]),
-    fetchAllIn<{ id: string; fiscal_year_id: string }>(lineIds, (c, a, b) => supabaseAdmin
-      .from('org_budget_lines').select('id, fiscal_year_id').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
-    fetchAllIn<{ allocation_id: string; rep_allocation_installments: { due_date: string }[] | null }>(needBills, (c, a, b) => supabaseAdmin
-      .from('rep_allocation_splits').select('allocation_id, rep_allocation_installments ( due_date )')
-      .eq('org_id', orgId).in('allocation_id', c).order('id').range(a, b)),
+    allocationYears(orgId, loop, setting, owingBills),
     // A waiting hand-back ask's live figure (`requestAskedAmount`), as Payment requests and the request's window read it.
     askIds.length ? askSummaries(orgId, askIds) : Promise.resolve(new Map<string, { state: string; cents: number }>()),
   ]);
@@ -670,21 +711,9 @@ export async function teamAccountRead(
     ...computed,
     seasons: computed.seasons.map(s => ({ ...s, rows: s.rows.map(r => (r.recordedBy ? { ...r, recordedBy: nameOf(r.recordedBy) } : r)) })),
   };
-  const keyOfYearRow = new Map(setting.rows.map(r => [r.id, r.firstDay] as const));
-  const lineYear = new Map(lineYears.map(l => [l.id, keyOfYearRow.get(l.fiscal_year_id) ?? null] as const));
-  const firstDue = new Map<string, string>();
-  for (const sp of billDues) {
-    for (const i of sp.rep_allocation_installments ?? []) {
-      const was = firstDue.get(sp.allocation_id);
-      if (!was || i.due_date < was) firstDue.set(sp.allocation_id, i.due_date);
-    }
-  }
-  const yearOfBill = new Map(needBills.map(id => {
-    const a = loop.allocations.get(id)!;
-    const firstDueDate = firstDue.get(id) ?? null;
-    const key = allocationYearKeyOf({ lineYearKey: a.sourceBudgetLineId ? lineYear.get(a.sourceBudgetLineId) ?? null : null, firstDueDate, createdOn: orgDayKey(a.createdAt) }, setting);
-    return [id, closed(fiscalYearOf(key, setting))] as const;
-  }));
+  const yearOfBill = new Map(needBills.map(id => [id, closed(yearOf.get(id)!)] as const));
+  // What of Outstanding is from a year before today's (13e B5) — the one rule Rep Teams' column reads too.
+  const carried = carriedByTeam(yearBills(loop, yearOf), fiscalYearOf(today, setting).key, today).get(teamId) ?? null;
   const needsYou = teamNeedsYou({
     owed,
     closedYearOf: id => yearOfBill.get(id) ?? null,
@@ -697,7 +726,7 @@ export async function teamAccountRead(
       };
     }),
   });
-  return { account, seasons, withTheClub: rows[0] ?? null, season, headCoaches, needsYou };
+  return { account, seasons, withTheClub: rows[0] ?? null, season, headCoaches, needsYou, carried };
 }
 
 // ── Payment requests ───────────────────────────────────────────────────────────────────────────

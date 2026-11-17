@@ -22,6 +22,7 @@ import { sumMoney } from './club-money-figures';
 import { MONTH_NAMES_LONG, formatMonthLong, type MonthKey } from './coach-budget-months';
 import { joinWithAnd, pluralize, possessive } from './utils';
 import { FACT_LABELS, factRow, noticeFacts } from './notification-facts';
+import type { CarriedIn } from './club-team-needs';
 
 /** The product's one method list (the dues tokens) — the club's money moves take exactly these. */
 export function isClubMoneyMethod(v: unknown): v is DuesPaymentMethod {
@@ -501,9 +502,13 @@ export const SUMMARY_WORDS = {
     `the club’s ${books} ${books === 1 ? 'book' : 'books'}${pendingCount > 0
       ? ` · ${pendingCount === 1 ? `a ${fmt(pendingOut)} cheque` : `${fmt(pendingOut)} in ${pendingCount} lines`} not yet cleared`
       : ''}`,
-  owedCaption: (overdue: number, sent: number) =>
-    [overdue > 0.005 ? `${fmt(overdue)} overdue` : null, sent > 0.005 ? `${fmt(sent)} sent, waiting for you` : null]
+  owedCaption: (overdue: number, sent: number, carried: CarriedIn | null = null) =>
+    [overdue > 0.005 ? `${fmt(overdue)} overdue` : null, carried ? CARRIED_WORDS.ofIt(carried) : null,
+      sent > 0.005 ? `${fmt(sent)} sent, waiting for you` : null]
       .filter(Boolean).join(' · ') || 'nothing overdue',
+  /** "Owed to the club" on a CLOSED year (13e B4, ask 13e-6 A): the figure is today's, never the year's close — said so,
+   *  words only (the closing figure would be a new read). */
+  notAtClose: (today: string) => `today, ${formatStoredDate(today, { withYear: false })}, not at the close`,
   waitingCaption: (count: number, holding: number) =>
     count === 0 ? 'nothing waiting'
       : `${count} ${count === 1 ? 'request' : 'requests'}${holding > 0 ? ` · ${holding} holding up a payout` : ''}`,
@@ -534,20 +539,75 @@ export const SUMMARY_WORDS = {
  * figure, name and caption (`owedToTheClub`, lib/club-band-view.ts). Here: what Revenue includes from the other books, and
  * the line under the books that opens a live season's Money page.
  */
+type RevenueIncludes = { leagueFees: number; tournaments: readonly { name: string; amount: number }[] };
+
 export const OWED_TO_THE_CLUB_WORDS = {
   /** Under Revenue: the money from the books beside the General ledger — null when there is none. */
-  revenueIncludes: (inc: { leagueFees: number; tournaments: readonly { name: string; amount: number }[] }) => {
+  /** 13e B4 (ask 13e-6 A): the caption names its year — "2026–27 includes …" — so the tournament's year of revenue is
+   *  never read as its book's balance today. */
+  revenueIncludes: (inc: RevenueIncludes, yearName?: string) => {
+    const parts = OWED_TO_THE_CLUB_WORDS.revenueParts(inc);
+    return parts ? `${yearName ? `${yearName} ` : ''}includes ${parts}` : null;
+  },
+  /** What Revenue includes, the parts alone ("house league fees $2,355.00 · Harbourtown Invitational 2026 $1,440.00") — the
+   *  board report's PDF row, whose label already says "what it includes". Null when there is none. */
+  revenueParts: (inc: RevenueIncludes): string | null => {
     const parts = [
       Math.abs(inc.leagueFees) > 0.005 ? `house league fees ${fmt(inc.leagueFees)}` : null,
       ...inc.tournaments.map(t => `${t.name} ${fmt(t.amount)}`),
     ].filter(Boolean);
-    return parts.length ? `includes ${parts.join(' · ')}` : null;
+    return parts.length ? parts.join(' · ') : null;
   },
+  /** The books table's column (13e B4): a book's balance is all-time, today's — never the year's. */
+  balanceToday: 'Balance today',
   /** Said on the Overview's figure when house league's half could not be read, so the teams' part is never taken for the whole. */
   leagueDidntLoad: 'House league’s part didn’t load.',
   seasonDoor: (season: string, owing: number) =>
     `House league money: ${season} · ${owing > 0.005 ? `${fmt(owing)} still owing` : 'nothing owing'}`,
 } as const;
+
+/**
+ * WHAT AN EVERY-YEAR OUTSTANDING INCLUDES (Club Tier 13e B5, ask 13e-7 A): Rep teams' Outstanding, a team's account band
+ * and the Overview's "Owed to the club" keep their every-year figure and say what of it is from an earlier year.
+ * Accounting › Teams is unchanged (the year's figure, the earlier year its own "+ $600.00 overdue from 2025–26" line).
+ */
+export const CARRIED_WORDS = {
+  /** "includes $600.00 from 2025–26" — under a team's Outstanding. */
+  includes: (c: CarriedIn) => `includes ${fmt(c.amount)} from ${c.yearName ?? 'earlier years'}`,
+  /** "$1,200.00 of it from 2025–26" — inside the Overview's teams half. */
+  ofIt: (c: CarriedIn) => `${fmt(c.amount)} of it from ${c.yearName ?? 'earlier years'}`,
+} as const;
+
+/**
+ * OFF-PLAN, LINE BY LINE (Club Tier 13e B1 + B2, drawing tab 4): the window Budget vs. Actual's Off-plan tile opens, and
+ * the Not filed note's door to the Ledger. Off-plan is spending only; the rows add up to the tile.
+ */
+export const OFF_PLAN_WORDS = {
+  eyebrow: (yearName: string) => `Off-plan · ${yearName}`,
+  title: (total: number) => `${fmt(total)} nobody budgeted`,
+  lead: 'Spending on a word this year’s plan has no line for, and spending not filed under a word yet. Each opens its lines.',
+  /** A row's sub-line after its category — the desk's; a phone's sheet reads the category alone (drawn so). */
+  notPlannedMore: ' · not planned',
+  notFiled: 'No budget word yet',
+  /** After "No budget word yet" on an open year, at a desk. */
+  notFiledMore: ' · file them on the Ledger',
+  /** The Not filed note's door: to file on an open year; on a closed one the lines are locked, so to read them. */
+  ledgerDoor: (locked: boolean) => (locked ? 'See them on the Ledger' : 'File them on the Ledger'),
+  done: 'Done',
+} as const;
+
+/**
+ * THIS MORNING'S INSTALLMENTS DUE, IN WORDS (Club Tier 13e B6, F-O6-2). The figure counts the overdue installments AND the
+ * ones due in the next 14 days, so the line says the overdue first (the screen inks it red) and the rest as "more":
+ * "7 overdue · 5 more in the next 14 days"; none overdue → "in the next 14 days"; none coming → "7 overdue".
+ */
+export function installmentsDueWords(total: number, overdue: number): { overdue: string | null; rest: string | null } {
+  if (total <= 0) return { overdue: null, rest: 'none in the next 14 days' };
+  const late = Math.min(Math.max(0, overdue), total);
+  const coming = total - late;
+  if (late === 0) return { overdue: null, rest: 'in the next 14 days' };
+  return { overdue: `${late} overdue`, rest: coming > 0 ? `${coming} more in the next 14 days` : null };
+}
 
 /** A team's cash, as the club reads it (D1, Ask 4e): whose figure, and from which season. */
 export function teamCashCaption(season: { live: boolean; closedOn: string | null } | null): string {

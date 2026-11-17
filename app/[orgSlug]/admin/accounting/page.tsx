@@ -63,7 +63,7 @@ import { CloseYearQuestion, EndedYearLine, ReopenYearQuestion, YearLine } from '
 import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/components/admin/kit/club/money/ClubMoneyExport';
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 import { fmt as fmtSigned } from '@/lib/coach-money-summary';
-import { LEDGER_KIND_WORD, type LedgerKind } from '@/lib/club-ledger';
+import { LEDGER_KIND_WORD, bookLedgerHref, type LedgerKind } from '@/lib/club-ledger';
 import { CLUB_BAND_WORDS, owedToTheClub } from '@/lib/club-band-view';
 import {
   OWED_TO_THE_CLUB_WORDS, STILL_OPEN_WORDS, SUMMARY_WORDS, TEAMS_CARD_WORDS, YEAR_END_WORDS, fiscalYearSpanWords, netForYearWord, stillOpenFromWord,
@@ -83,16 +83,22 @@ import BankOverviewLine, { type BankMarks } from '@/components/admin/kit/club/mo
 /** The Overview's read (Stage 3c): the fiscal year read, the Year pill, the summary — and the year's own reads
  *  session 2 draws (the ended year's door, "From 2025–26, still open", a closed year's year-end report). */
 /** "Owed to the club" (Stage 13d-5): the owner's band's own sum and caption (`owedToTheClub`) over this page's two reads —
- *  the teams' Owed and house league's Still owing. Without house league money to read, the teams' Owed as it always read. */
-function owedFigure(p: BoardSummary['position'], league: Read['leagueOwed'], leagueFailed = false): { total: number; caption: string } {
-  if (!league) {
-    const caption = SUMMARY_WORDS.owedCaption(p.owedByTheTeams.overdue.amount, p.owedByTheTeams.sent.amount);
-    return { total: p.owedByTheTeams.amount, caption: leagueFailed ? `${caption} ${OWED_TO_THE_CLUB_WORDS.leagueDidntLoad}`.trim() : caption };
-  }
+ *  the teams' Owed and house league's Still owing. Without house league money to read, the teams' Owed as it always read.
+ *  ⚖ 13e (asks 13e-6 A, 13e-7 A), words only — the figure is the same sum on every year:
+ *    · the teams' half says what of it is from an earlier year ("$1,200.00 of it from 2025–26"), against TODAY's year;
+ *    · on a CLOSED year (`closedToday`: today's day) it says the figure is today's, not the close's, and gives the two
+ *      halves plainly — today's overdue and an "earlier year" read oddly under a year that has closed. */
+function owedFigure(p: BoardSummary['position'], league: Read['leagueOwed'], leagueFailed = false, closedToday: string | null = null): { total: number; caption: string } {
+  const didntLoad = (caption: string) => (leagueFailed ? `${caption} ${OWED_TO_THE_CLUB_WORDS.leagueDidntLoad}`.trim() : caption);
+  const carried = p.owedByTheTeams.carried;
   const o = owedToTheClub({
     teams: { amount: p.owedByTheTeams.amount, overdue: p.owedByTheTeams.overdue.amount },
-    league: { amount: league.amount, players: league.players },
-  }, { players: true });
+    ...(league ? { league: { amount: league.amount, players: league.players } } : {}),
+  }, { players: true, carried, halvesOnly: !!closedToday });
+  if (closedToday) return { total: o.total, caption: didntLoad([SUMMARY_WORDS.notAtClose(closedToday), o.caption].filter(Boolean).join(' · ')) };
+  if (!league) {
+    return { total: o.total, caption: didntLoad(SUMMARY_WORDS.owedCaption(p.owedByTheTeams.overdue.amount, p.owedByTheTeams.sent.amount, carried)) };
+  }
   return { total: o.total, caption: o.caption || CLUB_BAND_WORDS.owed.nothing };
 }
 
@@ -210,9 +216,11 @@ export default function AccountingOverviewPage() {
     const rows = boardTeamsExportRows(summary);
     const kinds: (MoneyRowKind | undefined)[] = rows.map((_, i) => (i >= rows.length - 2 ? 'total' : undefined));
     // One figure, one name (13d-5): the file says what the screen says.
-    const owed = owedFigure(p, leagueOwed, leagueFailed);
+    const owed = owedFigure(p, leagueOwed, leagueFailed, summary.year.closed ? summary.today : null);
+    // 13e B4 (ask 13e-6 A): the open year's report carries what Revenue includes, as the screen says it.
+    const includes = OWED_TO_THE_CLUB_WORDS.revenueIncludes(a.revenueIncludes);
     const position = `Where the club stands, ${formatStoredDate(summary.today, { withYear: true, longMonth: true })}: Cash on hand ${fmtSigned(p.cashOnHand)} (the club’s own books, never a team’s) · ${CLUB_BAND_WORDS.owed.label} ${money(owed.total)} (${owed.caption}) · Waiting on you ${money(p.waitingOnYou.amount)} (${SUMMARY_WORDS.waitingCaption(p.waitingOnYou.count, p.waitingOnYou.holdingPayout)}).`;
-    const yearLine = `${summary.year.name} against the budget: revenue ${money(a.revenue.actual)} of ${money(a.revenue.planned)} planned (from the teams ${money(a.fromTheTeams.allocations)} on allocations and ${money(a.fromTheTeams.onRequest)} on request) · expenses ${money(a.expenses.actual)} of ${money(a.expenses.planned)} planned (paid to teams on request ${money(a.paidToTeamsOnRequest)}; off-plan ${money(a.offPlan)}) · ${netForYearWord(summary.year.name)} ${fmtSigned(a.net.actual)} against ${fmtSigned(a.net.planned)} planned.`;
+    const yearLine = `${summary.year.name} against the budget: revenue ${money(a.revenue.actual)} of ${money(a.revenue.planned)} planned (from the teams ${money(a.fromTheTeams.allocations)} on allocations and ${money(a.fromTheTeams.onRequest)} on request${includes ? `; ${includes}` : ''}) · expenses ${money(a.expenses.actual)} of ${money(a.expenses.planned)} planned (paid to teams on request ${money(a.paidToTeamsOnRequest)}; off-plan ${money(a.offPlan)}) · ${netForYearWord(summary.year.name)} ${fmtSigned(a.net.actual)} against ${fmtSigned(a.net.planned)} planned.`;
     const booksLine = `The club’s books: ${summary.books.map(b => `${b.name} ${fmtSigned(b.balance)}`).join(' · ')} — Cash on hand ${fmtSigned(p.cashOnHand)}.`;
     return {
       dataset: 'board-report',
@@ -230,6 +238,7 @@ export default function AccountingOverviewPage() {
           [CLUB_BAND_WORDS.owed.label, money(owed.total)],
           ['Waiting on you', money(p.waitingOnYou.amount)],
           [`Revenue ${summary.year.name} · ${summary.year.lastDay < summary.today ? 'actual' : 'so far'} of planned`, `${money(a.revenue.actual)} of ${money(a.revenue.planned)}`],
+          ...(includes ? [[`Revenue ${summary.year.name} · what it includes`, OWED_TO_THE_CLUB_WORDS.revenueParts(a.revenueIncludes) ?? ''] as [string, string]] : []),
           [`Expenses ${summary.year.name} · ${summary.year.lastDay < summary.today ? 'actual' : 'so far'} of planned`, `${money(a.expenses.actual)} of ${money(a.expenses.planned)}`],
           ['Off-plan spending', money(a.offPlan)],
           ['Headroom', fmtSigned(a.headroom)],
@@ -253,9 +262,10 @@ export default function AccountingOverviewPage() {
   const p = summary.position;
   const a = summary.againstBudget;
   const league = read.leagueOwed ?? null;
-  const owed = owedFigure(p, league, leagueFailed);
-  const revenueIncludes = OWED_TO_THE_CLUB_WORDS.revenueIncludes(a.revenueIncludes);
-  const bookHref = (id: string) => `${base}/ledger?book=${id}`;
+  const owed = owedFigure(p, league, leagueFailed, summary.year.closed ? summary.today : null);
+  const revenueIncludes = OWED_TO_THE_CLUB_WORDS.revenueIncludes(a.revenueIncludes, summary.year.name);
+  // A tournament's or a season's book opens the Ledger on All time; the General book on This month (13e B7).
+  const bookHref = (b: { id: string; kind: string }) => bookLedgerHref(base, b.id, b.kind);
   const bookIds = new Set(summary.books.filter(b => b.kind === 'tournament').map(b => b.entityId));
   const tournamentsWithoutBook = tournaments.filter(t => t.status !== 'archived' && !bookIds.has(t.id));
   // The card is the Teams tab's door: only where that tab exists (a club that runs rep teams), and only with teams to count.
@@ -329,7 +339,9 @@ export default function AccountingOverviewPage() {
                 <tr><td className={repKit.dim}>From the teams, on request</td><td className={repKit.num} /><td className={repKit.num}>{money(a.fromTheTeams.onRequest)}</td></tr>
                 <tr><td className={moneyKit.what}>Expenses</td><td className={repKit.num}>{money(a.expenses.planned)}</td><td className={repKit.num}>{money(a.expenses.actual)}</td></tr>
                 <tr><td className={repKit.dim}>Paid to teams on request</td><td className={repKit.num}>{a.paidToTeamsOnRequestPlanned > 0.005 ? money(a.paidToTeamsOnRequestPlanned) : ''}</td><td className={repKit.num}>{money(a.paidToTeamsOnRequest)}</td></tr>
-                {a.offPlan > 0.005 && <tr><td className={repKit.dim}>Off-plan</td><td className={repKit.num} /><td className={repKit.num}>{money(a.offPlan)}</td></tr>}
+                {/* 13e B1 (drawing tab 4 note 5): the word is the door — Budget vs. Actual with the Off-plan window open, its rows
+                    each opening that line's Actual window. The same year: the Year pill is one choice across the tabs. */}
+                {a.offPlan > 0.005 && <tr><td className={repKit.dim}><Link href={`${base}/budget-vs-actual?open=off-plan`} className={repKit.nameLink}>Off-plan <ChevronRight size={13} aria-hidden /></Link></td><td className={repKit.num} /><td className={repKit.num}>{money(a.offPlan)}</td></tr>}
                 <tr className={moneyKit.closeRow}>
                   <td>{netForYearWord(summary.year.name)}</td>
                   <td className={`${repKit.num}${a.net.planned < -0.005 ? ` ${cr.negative}` : ''}`}>{fmtSigned(a.net.planned)}</td>
@@ -361,7 +373,7 @@ export default function AccountingOverviewPage() {
         ) : (
           <ClubRowList inset label="The club’s books">
             {summary.books.map(b => (
-              <ClubRow key={b.id} as="link" href={bookHref(b.id)} title={b.name}
+              <ClubRow key={b.id} as="link" href={bookHref(b)} title={b.name}
                 caption={`${LEDGER_KIND_WORD[b.kind as LedgerKind] ?? 'Club'} · ${fmtSigned(b.balance)}`} chevron />
             ))}
           </ClubRowList>
@@ -393,7 +405,7 @@ export default function AccountingOverviewPage() {
           q={q}
           tournaments={tournamentsWithoutBook.map(t => ({ id: t.id, name: t.name }))}
           onClose={() => setAdding(false)}
-          onCreated={id => { setAdding(false); router.push(bookHref(id)); }}
+          onCreated={id => { setAdding(false); router.push(`${base}/ledger?book=${id}`); }}
           onFailed={text => setNotice({ tone: 'bad', text })}
         />
       )}
@@ -436,8 +448,9 @@ function TeamsCard({ summary, href, isPhone }: { summary: BoardSummary; href: st
   );
 }
 
-/** The club's books at a desk: Ledger · Kind · Balance · the chevron; the closing row is Cash on hand. */
-function BooksTable({ summary, hrefOf }: { summary: BoardSummary; hrefOf: (id: string) => string }) {
+/** The club's books at a desk: Ledger · Kind · Balance today · the chevron; the closing row is Cash on hand. A book's balance is
+ *  all-time, today's (13e B4) — beside Revenue's year it says so. */
+function BooksTable({ summary, hrefOf }: { summary: BoardSummary; hrefOf: (b: { id: string; kind: string }) => string }) {
   const router = useRouter();
   return (
     <div className={repKit.tableFrame}>
@@ -446,13 +459,13 @@ function BooksTable({ summary, hrefOf }: { summary: BoardSummary; hrefOf: (id: s
           <tr>
             <th scope="col">Ledger</th>
             <th scope="col">Kind</th>
-            <th scope="col" className={repKit.num}>Balance</th>
+            <th scope="col" className={repKit.num}>{OWED_TO_THE_CLUB_WORDS.balanceToday}</th>
             <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
           </tr>
         </thead>
         <tbody>
           {summary.books.map(b => {
-            const href = hrefOf(b.id);
+            const href = hrefOf(b);
             const kind = b.kind as LedgerKind;
             return (
               <tr key={b.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; router.push(href); }}>

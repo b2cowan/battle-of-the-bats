@@ -36,6 +36,25 @@ export const LEDGER_KIND_WORD: Record<LedgerKind, string> = {
   league_season: 'House league',
 };
 
+/**
+ * THE LEDGER'S "ALL TIME", BY A LINK (Club Tier 13e B7, ask 13e-5 A): `?date=all` — the one range a link can set besides
+ * an exact `from`/`to`. The Ledger's own default stays This month (the owner rule, test-pinned); so does picking a book
+ * from its Book pill.
+ */
+const LEDGER_ALL_TIME = 'date=all';
+/** Did a door ask for All time? (The Ledger reads it once, on arrival.) */
+export const ledgerOpensAllTime = (search: { get(name: string): string | null }) => search.get('date') === 'all';
+
+/**
+ * THE DOOR FROM A BOOK TO ITS LINES (13e B7). A tournament's or a house-league season's book is an event's: its money came
+ * in weeks before the event and a float moved in later, so its door opens the Ledger on All time — every line behind the
+ * balance the Overview shows. The General book's door opens on the Ledger's own default, This month.
+ */
+export function bookLedgerHref(accountingBase: string, ledgerId: string, kind: string): string {
+  const event = kind === 'tournament' || kind === 'league_season';
+  return `${accountingBase}/ledger?book=${ledgerId}${event ? `&${LEDGER_ALL_TIME}` : ''}`;
+}
+
 export type LineType = 'expense' | 'income' | 'team_allocations' | 'team_support' | 'transfer' | 'house_league_fees' | 'tournament_fees';
 
 /** A line's status on the book. Void is off the book until a Status filter asks for it. */

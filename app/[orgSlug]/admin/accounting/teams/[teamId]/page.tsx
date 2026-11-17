@@ -46,14 +46,14 @@ import RequestFlow from '@/components/admin/kit/club/money/RequestFlow';
 import type { RequestRow, RequestsRead } from '@/components/admin/kit/club/money/RequestWindows';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import {
-  STILL_OPEN_WORDS, TEAMS_WORDS, TEAM_ACCOUNT_WORDS as W, billOutstandingLine, howItCame, teamCashCaption,
+  CARRIED_WORDS, STILL_OPEN_WORDS, TEAMS_WORDS, TEAM_ACCOUNT_WORDS as W, billOutstandingLine, howItCame, teamCashCaption,
 } from '@/lib/club-money-words';
 import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 import { fmt as fmtSigned } from '@/lib/coach-money-summary';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import { pluralize, possessive } from '@/lib/utils';
 import type { AccountRow, TeamAccount, TeamCashHeld } from '@/lib/club-money-figures';
-import { teamsByGroup, type NeedsYouBillRow, type NeedsYouRequestRow, type NeedsYouRow, type TeamNeedsYou } from '@/lib/club-team-needs';
+import { teamsByGroup, type CarriedIn, type NeedsYouBillRow, type NeedsYouRequestRow, type NeedsYouRow, type TeamNeedsYou } from '@/lib/club-team-needs';
 import type { TeamAccountSeason, TeamWithTheClub } from '@/lib/club-money-reads';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -70,6 +70,8 @@ interface AccountRead {
   season: TeamAccountSeason | null;
   headCoaches: string[];
   needsYou: TeamNeedsYou;
+  /** What of Outstanding is from an earlier year (13e B5); null when nothing is carried. */
+  carried?: CarriedIn | null;
 }
 
 /** The Team pill's "All teams" choice. */
@@ -221,9 +223,13 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
         tiles={[
           {
             key: 'outstanding', label: 'Outstanding', figure: money(account.outstanding),
-            caption: owedLine
-              ? (owedLine.late ? <span className={moneyKit.owedLate}><AlertTriangle size={11} aria-hidden />{owedLine.text}</span> : owedLine.text)
-              : left > 0 ? pluralize(left, 'installment') + ' not yet received' : 'Nothing owed',
+            caption: <>
+              {owedLine
+                ? (owedLine.late ? <span className={moneyKit.owedLate}><AlertTriangle size={11} aria-hidden />{owedLine.text}</span> : owedLine.text)
+                : left > 0 ? pluralize(left, 'installment') + ' not yet received' : 'Nothing owed'}
+              {/* 13e B5 (ask 13e-7 A): every year's figure, saying what of it is from an earlier year — as Rep Teams says it. */}
+              {read.carried && <> · {CARRIED_WORDS.includes(read.carried)}</>}
+            </>,
           },
           // Late money is said under Outstanding now (Ask 4), so Next due no longer repeats it when nothing is coming due.
           { key: 'next', label: 'Next due', figure: f.nextDue ? money(f.nextDue.amount) : '—', caption: f.nextDue ? day(f.nextDue.dueDate) : 'Nothing coming due' },

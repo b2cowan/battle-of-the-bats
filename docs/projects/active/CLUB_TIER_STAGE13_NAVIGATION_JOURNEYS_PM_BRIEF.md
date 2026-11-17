@@ -180,3 +180,12 @@ reads **"8 players · 1 in part"**; a search that misses on one tab says which t
 league's home answers a parent's call ("which team, and when do they play?") in one search, with the team's next game or practice.
 **Why:** the walk's registrar took five taps and a wrong-tab detour to answer one phone call. **Success:** the call is answered from the
 page they land on; the two "who owes" lists never disagree.
+
+**13e Session B, the money screens (built 2026-11-17; one walk next).** The treasurer saw "Off-plan $3,660.00 · nobody budgeted this" and
+couldn't find which $3,660.00. Now the figure opens a list of the three lines nobody budgeted, adding up to it, each opening its own lines; Not
+filed's note links to the Ledger to file them. Figures that show up on two screens now say which they are: Revenue names its year, the books
+column reads **Balance today**, a closed year's **Owed to the club** says it is today's and not the close's, and Rep teams' Outstanding says
+**"includes $600.00 from 2025–26"** so it agrees with Accounting › Teams. This morning's line reads **"7 overdue · 5 more in the next 14 days"**,
+and a tournament's book opens on **All time**, so its registrations show. **Why:** a number that can't be opened, or that means something
+different on the next screen, gets a treasurer asking the coach instead of the screen. **Success:** every money figure on these screens either
+opens its lines or names what it counts.

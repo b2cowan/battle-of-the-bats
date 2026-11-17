@@ -68,7 +68,8 @@ export interface NoteSegment {
 }
 
 /** The bridge links these notes can carry. Each screen supplies the handler. */
-export type NoteControl = 'compare-to-date' | 'months-view' | 'set-dues';
+/** `ledger-not-filed`: the club's Not filed note's door to the Ledger (Club Tier 13e B2). */
+export type NoteControl = 'compare-to-date' | 'months-view' | 'set-dues' | 'ledger-not-filed';
 
 export interface ReportNote {
   /** Stable key — React's, and the id a test names when it asserts a note is present. */
