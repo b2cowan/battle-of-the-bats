@@ -44,6 +44,7 @@ import styles from './Members.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import { possessive } from '@/lib/utils';
 import { FAMILIES_LIMITED_ROW } from '@/lib/families-words';
+import { PLACE } from '@/lib/club-group-email-words';
 
 /** The tournament fine-grained controls, folded under "Tournaments ›" (specimen 5). */
 const TOURNAMENT_CONTROLS: { cap: Capability; label: string }[] = [
@@ -59,7 +60,6 @@ const TOURNAMENT_CONTROLS: { cap: Capability; label: string }[] = [
   { cap: 'send_communications', label: 'Send email communications' },
   { cap: 'seal_tournaments', label: 'Seal (archive) tournaments' },
   { cap: 'manage_branding', label: 'Manage tournament branding' },
-  { cap: 'module_communications', label: 'Communications' },
 ];
 
 type Refusal = { text: string; seat?: boolean };
@@ -482,7 +482,9 @@ export default function ManageMemberDialog({
                   // ⚖ Families is never given to a member limited to some teams (Ask 12): the server refuses it; the row
                   // says why, where it is (Club Tier Stage 5b).
                   const familiesBarred = a.module === 'module_families' && familiesBarredFor(role, groupIds.length > 0);
-                  const sentence = familiesBarred ? FAMILIES_LIMITED_ROW : consequence(a.module, saved.get(a.module) ?? false, a.canOpen, first, noun);
+                  const sentence = familiesBarred ? FAMILIES_LIMITED_ROW
+                    // The Communications switch says what it covers, always, so turning it off never surprises (tab 4, ask 5).
+                    : consequence(a.module, saved.get(a.module) ?? false, a.canOpen, first, noun) ?? (a.module === 'module_communications' ? PLACE.switchLine : null);
                   const fold = a.module === 'module_tournaments' && (canChangeAccess || canScopeTournaments) && a.canOpen ? 'tournaments'
                     : a.module === 'module_rep_teams' && canScopeGroups && a.canOpen ? 'rep-teams'
                     : a.module === 'module_members' && canChangeAccess ? 'members' : null;

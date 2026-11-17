@@ -16,10 +16,11 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier, orgSettingsOnTournamentSide } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, isTournamentEventShell, tournamentSettingsTabs, canOpenPdfSettings, type KitLink, type PlaceTab } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitCommunicationsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, isTournamentEventShell, tournamentSettingsTabs, canOpenPdfSettings, type KitLink, type PlaceTab } from '@/lib/admin-kit-nav';
 import { deskTournamentGroups, kitTournamentGroups } from './kit-tournament-groups';
 import type { TourGroup } from '../admin-nav-config';
 import { useClubBrief } from './club/ClubBriefProvider';
+import { opensCommunications, placeFacts } from '@/lib/club-communications-place';
 
 /**
  * The Organization links alone — what `useAdminKitNav` builds for the rail, without the rest of it. Organization's frame and
@@ -87,6 +88,16 @@ export function usePermitsLink() {
   });
 }
 
+/** Communications' row (Club Communications Stage 1) or null — the rail, the More sheet and the bar's place read this one
+ *  answer, which is the one the page's layout and its routes ask (`opensCommunications`). */
+export function useCommunicationsLink() {
+  const { currentOrg, userRole, userCapabilities, limitedToTeamGroups } = useOrg();
+  const { base, isCanceled } = useOrgLinks();
+  const opens = !!currentOrg && !!userRole
+    && opensCommunications(placeFacts({ role: userRole, capabilities: userCapabilities, limited: limitedToTeamGroups }, currentOrg));
+  return kitCommunicationsLink({ base, opens, isCanceled, tournamentTier: isTournamentTier(currentOrg?.planId) });
+}
+
 export function useAdminKitNav() {
   const pathname = usePathname();
   const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
@@ -129,6 +140,7 @@ export function useAdminKitNav() {
   });
   // The club's permits (Club Tier 13c, C1): between Calendar and Schedules in the rail, the More sheet's lone row — one gate.
   const permitsLink = usePermitsLink();
+  const communicationsLink = useCommunicationsLink();
   const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, accountKind: currentOrg?.accountKind, role: userRole, capabilities: userCapabilities, isSandbox });
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachAccess = useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled);
@@ -149,7 +161,7 @@ export function useAdminKitNav() {
   // sidebar and the More sheet read this list. None for a tournament-only organization (its flat Account list) or a
   // cancelled club. One club row is lit: the place you are in at any depth, none on Plan & billing's page (its foot row).
   const placeGroups = tournamentOnly || isCanceled ? [] : clubPlaceGroups<KitLink>({
-    programs: navPrograms, alsoOnPlan, organization: kitOrgPlace({ base, orgLinks, tournamentOnly }),
+    programs: navPrograms, alsoOnPlan, organization: kitOrgPlace({ base, orgLinks, tournamentOnly }), communications: communicationsLink,
   });
   const litPlace = litClubPlace(pathname, base, billingLink);
   const onTournaments = pathname.startsWith(`${base}/tournaments`);

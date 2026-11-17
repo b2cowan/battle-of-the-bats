@@ -119,6 +119,11 @@ const nextConfig: NextConfig = {
       // The public face, warm: S4 (owner, 2026-10-23): nothing linked to them, they were out of the sitemap, and the warm
       // marketing set would have left them dark under a warm bar. An old bookmark or search result lands on the home page.
       { source: '/platform/:page(accounting|house-league|rep-teams|tournaments)', destination: '/', permanent: true },
+      // Families › Emails became Communications (Club Communications Stage 1, ask 7): a bookmark or an old notification's
+      // link still lands. It forwards HERE, before any page renders, because the Families layout refuses an admin without
+      // the Families book before a page under it could forward (T23); the destination applies Communications' own gate.
+      // Not permanent: no browser should learn it, in case the address is ever used again.
+      { source: '/:orgSlug/admin/families/emails', has: ownHost, destination: '/:orgSlug/admin/club-emails', permanent: false },
     ];
   },
 };

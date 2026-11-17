@@ -19,7 +19,7 @@ import { OVERVIEW_ITEM, SEASON_END_ITEM, COACH_NAV_ITEMS } from '../../lib/coach
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
 import {
-  kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink, kitPermitsLink, clubProgramOrder, personClubShape, clubSheetGroups, orgTabs,
+  kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitCommunicationsLink, clubProgramOrder, personClubShape, clubSheetGroups, orgTabs,
   placeGroupHeading, showsOrgBoard, adminHelpHref, kitPortalDoors,
 } from '../../lib/admin-kit-nav.ts';
 import { adminStripWord } from '../../lib/workspace-labels.ts';
@@ -59,6 +59,8 @@ describe('N5 · the icon dictionary', () => {
     // Permits (13c, N5): a document with a check — never Venue library's pin nor PDF settings' plain document.
     const permits = kitPermitsLink({ base: '/o/admin', role: 'owner', isCanceled: false, tournamentTier: false, hasVenueLibrary: true })?.icon;
     assert.equal(permits, FileCheck);
+    // Communications (Club Communications Stage 1, N5 row 11): the envelope, "email to many people".
+    assert.equal(kitCommunicationsLink({ base: '/o/admin', opens: true, isCanceled: false, tournamentTier: false })?.icon, Mail);
     const org = kitOrgLinks({ base: '/o/admin', role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true });
     assert.equal(org.find(l => l.key === 'org/venues')?.icon, MapPin);
     assert.equal(org.find(l => l.key === 'org/pdf')?.icon, FileText);
@@ -566,13 +568,26 @@ describe('13i · places in the sidebar, pages on the page', () => {
 
   // ⚖ Navigation Phase 1 (E4): Tournaments left the sheet's Programs group for a door in You, so the owner's place rows are
   // Club's two; the count is unchanged (a place row became a You row).
-  it('the owner’s sheet: the place rows are Club: Public site, Organization; Tournaments is a door in You — 14 entries', () => {
+  // Club Communications Stage 1 (ask 6): Communications is the first row under Club, never a bar tab or a tile — 15 entries.
+  it('the owner’s sheet: the place rows are Club: Communications, Public site, Organization; Tournaments is a door in You — 15 entries', () => {
     const n = clubNavFor('owner', RUNS_BOTH);
     const groups = clubSheetGroups(n.groups, n.phone);
-    assert.deepEqual(groups.map(g => [placeGroupHeading(g), g.places.map(p => p.key)]), [['Club', ['public-site', 'org']]]);
+    assert.deepEqual(groups.map(g => [placeGroupHeading(g), g.places.map(p => p.key)]), [['Club', ['club-emails', 'public-site', 'org']]]);
     assert.equal(n.tournamentsDoor, true);
     // Notifications 1 + tiles 3 + places 2 + You (Account, Home, Tournaments, Plan & billing) 4 + the foot (Help, Send
     // feedback, Download app, Sign out) 4 = 14.
-    assert.equal(1 + n.phone.tiles!.length + groups.flatMap(g => g.places).length + 4 + 4, 14);
+    assert.equal(1 + n.phone.tiles!.length + groups.flatMap(g => g.places).length + 4 + 4, 15);
+  });
+
+  // ⚖ Club Communications Stage 1 (drawing tab 4): Communications between Families and Public site, for every seat with
+  // somebody to write to; Session 2 = a family choice, so the treasurer has none until the board window ships (Session 3).
+  it('Communications sits in the Club group after Families, per seat (drawing tab 4)', () => {
+    const club = (role: OrgRole) => clubNavFor(role, RUNS_BOTH).groups.find(g => g.key === 'club')?.places.map(p => p.key);
+    assert.deepEqual(club('owner'), ['accounting', 'families', 'club-emails', 'public-site', 'org']);
+    assert.deepEqual(club('admin'), ['accounting', 'club-emails', 'public-site', 'org']);
+    assert.deepEqual(club('league_admin'), ['club-emails', 'org']);
+    assert.deepEqual(club('league_registrar'), ['club-emails', 'org']);
+    assert.ok(!club('treasurer')?.includes('club-emails'), 'the treasurer: no place until Session 3');
+    assert.equal(clubNavFor('admin', RUNS_BOTH, { module_communications: false }).communications, null, 'the switch off: no row');
   });
 });

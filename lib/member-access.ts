@@ -1,7 +1,7 @@
 import { hasCapability, ROLE_DEFAULTS, type Capability } from './roles';
 import { volunteerJobOf } from './volunteer-jobs';
 import { VOLUNTEER_OPENS } from './volunteer-words';
-import { hasModuleEntitlement, planCarriesModule, type EntitlementOrg } from './module-entitlements';
+import { hasModuleEntitlement, isTournamentOnlyWorkspace, planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import type { OrgRole } from './types';
 
 /**
@@ -82,6 +82,9 @@ export const MEMBER_PROGRAMS: readonly { module: Capability; label: string }[] =
   { module: 'module_rep_teams', label: 'Rep teams' },
   { module: 'module_accounting', label: 'Accounting' },
   { module: 'module_families', label: 'Families' },
+  // Club Communications Stage 1 (ruling 11): the place's on/off, and every group email's, from every screen. Listed with the
+  // programs (it was folded under Tournaments, where it switched nothing). Not on a tournament-only plan (no club side).
+  { module: 'module_communications', label: 'Communications' },
   { module: 'module_public_site', label: 'Public site' },
   { module: 'module_house_league', label: 'House league' },
   { module: 'module_tournaments', label: 'Tournaments' },
@@ -108,9 +111,14 @@ export type ProgramAccess = {
  * carry is not offered, so it is not listed). On a cancelled org the rows remain and every
  * `canOpen` is false — the plan still carries them; the account is what is closed.
  */
+const COMMUNICATIONS_SEATS: readonly OrgRole[] = ['owner', 'admin', 'league_admin', 'league_registrar', 'treasurer'];
+
 export function whatTheyCanOpen(member: MemberAccessInput, org: EntitlementOrg): ProgramAccess[] {
   return MEMBER_PROGRAMS
-    .filter(p => planCarriesModule(org, p.module))
+    // Communications is a board seat's switch (asks 5, 16): staff, a volunteer or a coach has nobody to write to, so the
+    // row would switch nothing (/review 2026-11-17). Never on a tournament-only plan.
+    .filter(p => planCarriesModule(org, p.module) && (p.module !== 'module_communications'
+      || (!isTournamentOnlyWorkspace(org) && COMMUNICATIONS_SEATS.includes(member.role))))
     .map(p => {
       const roleDefault = member.role === 'owner' || ROLE_DEFAULTS[member.role]?.has(p.module) === true;
       const explicit = member.role === 'owner' ? undefined : member.capabilities?.[p.module];

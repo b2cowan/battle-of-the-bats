@@ -12,7 +12,7 @@
 import type { ReactNode } from 'react';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { markTabs, useClubPlaceAt } from '@/components/admin/AdminBarPlace';
-import { FAMILY_EMAILS_TAB_WORDS as EW, FAMILY_LIST_WORDS as W } from '@/lib/families-words';
+import { FAMILY_LIST_WORDS as W } from '@/lib/families-words';
 import { familyDuplicatesTotal, useClubBrief } from '../ClubBriefProvider';
 import { WaitingCount } from '../money/MoneyKit';
 import PlaceFrame from '../PlaceFrame';
@@ -25,7 +25,7 @@ export default function FamiliesFrame({ children }: { children: ReactNode }) {
   const tab = place?.key === 'families' ? place.activeId : null;
 
   // The browser tab names the tab on its own address (a child's page names the child itself).
-  usePageTitle(!tab ? null : tab === 'duplicates' ? `${W.tabDuplicates} · ${W.title}` : tab === 'emails' ? `${EW.tab} · ${W.title}` : W.title);
+  usePageTitle(!tab ? null : tab === 'duplicates' ? `${W.tabDuplicates} · ${W.title}` : W.title);
 
   if (!place || !tab) return <>{children}</>;
   const tabs = markTabs(place.tabs, id => (id === 'duplicates' && waiting > 0 ? <WaitingCount n={waiting} /> : null));

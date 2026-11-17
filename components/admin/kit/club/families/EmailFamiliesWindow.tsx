@@ -45,6 +45,7 @@ import {
   type AllowanceOwner,
 } from '@/lib/families-words';
 import { familySenderName } from '@/lib/email-club-identity';
+import { WINDOW as CW } from '@/lib/club-group-email-words';
 import type { FamilyListKey } from '@/lib/families-lists';
 import { familyEnvelopeFooterWords } from '@/lib/family-mail-footer';
 import type { FamilyEmailPreview } from '@/lib/families-email';
@@ -70,13 +71,16 @@ export interface SeasonDoor {
   teamsHref: string;
 }
 
-export default function EmailFamiliesWindow({ q, initialList, season, onClose, onShowNoFamily, onSent }: {
+export default function EmailFamiliesWindow({ q, initialList, season, eyebrow, onClose, onShowNoFamily, onSent }: {
   /** `orgSlug=…` */
   q: string;
   /** Opened from a Families list ("Email these families"): Who starts on that list. */
   initialList?: FamilyListKey;
   /** Opened from a house-league season: its own Who list (9d1·1). */
   season?: SeasonDoor;
+  /** The small line above the title for the club's window: "Communications" when opened there (Communications ask 9). A
+   *  season's window always names its season. */
+  eyebrow?: string;
   onClose: () => void;
   /** "Show them": the window closes and the list of children with no family on file opens. */
   onShowNoFamily: () => void;
@@ -303,7 +307,7 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
       kind="form"
       size="medium"
       {...(showForm ? {} : lv.dialog)}
-      eyebrow={season ? season.name : W.eyebrow}
+      eyebrow={season ? season.name : eyebrow ?? W.eyebrow}
       title={title}
       onClose={onClose}
       busy={busy}
@@ -359,10 +363,13 @@ export default function EmailFamiliesWindow({ q, initialList, season, onClose, o
               placeholder={season ? W.messagePlaceholder : undefined}
               onChange={e => { setMessage(e.target.value); setError(''); }} aria-required />
           </label>
+          {/* Who can read this afterwards (Communications ask 11; the wording /legal corrected, C7: it promises a registrar no names). */}
+          <p className={ck.hint}>{CW.readers}</p>
           {ready && (season ? sPreview!.noFamily > 0 && families > 0 : preview!.noFamily > 0) && (
             <p className={ck.hint}>
               {season ? SW.noAddress(sPreview!.noFamily) : <><b>{W.nobodyLead}</b> {W.noFamily(preview!.noFamily)}</>}
-              {!typed && <> <button type="button" className={repKit.inlineLink} onClick={onShowNoFamily}>{W.showThem}</button></>}
+              {/* The link lands in Families: a sender without the book gets the count alone (Communications ask 3). */}
+              {!typed && (season || preview?.holdsBook !== false) && <> <button type="button" className={repKit.inlineLink} onClick={onShowNoFamily}>{W.showThem}</button></>}
             </p>
           )}
           <SendDoors>

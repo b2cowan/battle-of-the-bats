@@ -50,6 +50,7 @@ import FamilyRecordWindow from './FamilyRecordWindow';
 import CoachAskWindow from './CoachAskWindow';
 import EmailFamiliesWindow from './EmailFamiliesWindow';
 import fam from './Families.module.css';
+import { useClubFamilyEmailOpen } from '../../useCommunicationsFacts';
 
 type Question = keyof typeof W.questions;
 const QUESTIONS: readonly Question[] = ['nofamily', 'owes', 'forms', 'consent', 'notback', 'all'];
@@ -100,6 +101,7 @@ function ChasedChip({ f }: { f: WorklistFamily }) {
 type Open = { personId: string; fromList: boolean };
 
 export default function FamiliesBook() {
+  const emailsLists = useClubFamilyEmailOpen();
   const { currentOrg, loading: orgLoading } = useOrg();
   const router = useRouter();
   const search = useSearchParams();
@@ -226,8 +228,9 @@ export default function FamiliesBook() {
         <span className={tb.toolbarSpacer} aria-hidden />
         <div className={tb.deskFilters}><SearchField value={query} onChange={onSearch} label={searchLabel} /></div>
         {/* Email these families (owner 2026-10-22): present only on a list that names families — the pill's list, never
-            narrowed by the search (the window says who it reaches). The Emails tab is the door to every other send. */}
-        {isFamilyListKey(show) && counts[show] > 0 && (
+            narrowed by the search (the window says who it reaches). Communications is the door to every other send.
+            Since Club Communications Stage 1 the owner's and admins' alone, and only with the switch on (ask 5, legal §2c). */}
+        {emailsLists && isFamilyListKey(show) && counts[show] > 0 && (
           <button type="button" className="btn btn-outline" onClick={() => setEmailing(show)} aria-haspopup="dialog">
             <Mail size={14} aria-hidden />{EW.doorThese}
           </button>

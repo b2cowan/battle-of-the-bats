@@ -79,6 +79,7 @@ import FriendRequestsView from './FriendRequestsView';
 import { askedText, buildQueue, friendTallies, honouredText, requestLines, toConfirmCount, FRIEND_QUEUE_WORDS, type FriendPlacement, type FriendsRead } from '@/lib/league-friend-queue';
 import { divisionDrafted, friendResult, FRIEND_RESULT_WORDS } from '@/lib/league-friend-draft';
 import css from './Registrations.module.css';
+import { useSeasonEmailOpen } from '@/components/admin/kit/useCommunicationsFacts';
 
 /** A list longer than this draws its first rows and "… n more". */
 const PAGE = 50;
@@ -135,6 +136,7 @@ export default function RegistrationsScreen() {
   // null until the season has loaded, so nothing writable paints before the page knows the season is finished (Q16).
   const gate = useHouseLeagueAccess();
   const access = useSeasonAccess(season);
+  const emailOpen = useSeasonEmailOpen();
 
   const [scope, setScope] = useState('');
   const [query, setQuery] = useState('');
@@ -201,9 +203,10 @@ export default function RegistrationsScreen() {
   const placement = useMemo<FriendPlacement>(() => friends?.placement ?? {}, [friends]);
   const today = read?.today ?? '';
   const rights: RegRights = useMemo(() => ({
-    register: !!access?.register, takeFees: !!access?.takeFees, run: !!access?.run, email: !!access?.email,
+    // Email needs the Communications switch too (Club Communications ask 5: off = no group email from any screen).
+    register: !!access?.register, takeFees: !!access?.takeFees, run: !!access?.run, email: !!access?.email && emailOpen,
     payLinks: !!read?.payLinks,
-  }), [access, read?.payLinks]);
+  }), [access, read?.payLinks, emailOpen]);
   const charges = season ? seasonHasFees(season, divisions) : false;
 
   const linesOf = useCallback((id: string): LeagueMoneyLine[] => read?.money[id] ?? [], [read]);

@@ -240,4 +240,48 @@ export const RECORD = {
   wordsCleared: 'The subject and message were deleted 12 months after it was sent.',
   namesCleared: 'Who it went to was deleted 24 months after it was sent.',
   sendAgain: 'Send again to these people',
+  /** The coach and board record (coach drawing tab 6; Stage 1 drawing tabs 3 and 8). */
+  whoWent: (n: number) => `Who it went to · ${n}`,
+  statusSent: 'Sent',
+  statusFailed: 'Didn’t go',
+  statusPending: 'Not sent',
+  statusSending: 'Sending…',
+  finish: (n: number) => `Send to the ${n} it missed`,
+  finishHint: (n: number) => `Sends the same email to the ${plural(n, 'person', 'people')} it missed, and nobody else.`,
+  finishing: 'Sending…',
+  finished: (reached: number, failed: number) => failed > 0
+    ? `Sent to ${reached} it missed. ${plural(failed, 'person', 'people')} still didn’t get it.`
+    : `Sent to the ${reached} it missed.`,
+  othersFailed: (n: number) => `${n} didn’t go`,
+};
+
+// ── The place: Communications (Stage 1, Session 2; drawing tabs 1, 3, 4, 5). Close runs ONE /marketing pass over it. ────
+
+export const PLACE = {
+  name: 'Communications',
+  /** The list's lede (tab 1: "7 emails sent"). */
+  lede: (n: number) => plural(n, 'email sent', 'emails sent'),
+  emptyTitle: 'No emails yet',
+  emptyBody: 'Emails the club sends to families and coaches are listed here, with who they reached.',
+  loading: 'Loading emails…',
+  loadFailed: 'We couldn’t load the emails.',
+  tryAgain: 'Try again',
+  showMore: 'Show more',
+  /** The filter (ask 8): All · To families · To coaches · To the board, then each season emailed. */
+  filterLabel: 'Show',
+  filterAll: 'All',
+  filterFamilies: 'To families',
+  filterCoaches: 'To coaches',
+  filterBoard: 'To the board',
+  /** New email (asks 1, 10): with one choice the button names it; with more, the create menu. */
+  newEmail: 'New email',
+  emailFamilies: 'Email families',
+  toFamilies: 'To families',
+  toFamiliesSub: 'Every family, rep teams, a season or a list',
+  /** The small line above a window's title when opened here (ask 9; a season's window keeps the season's name). */
+  eyebrow: 'Communications',
+  /** The member window's one line for the switch (tab 4, ask 5). */
+  switchLine: 'Group email and the list of what was sent. Off: none from any screen; board email still arrives.',
+  /** The "not yours" screen's middle sentence (tab 4). */
+  notYoursWhat: 'It’s where the club’s emails to families and coaches are written, and what was sent.',
 };

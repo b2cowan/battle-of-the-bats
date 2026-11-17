@@ -429,7 +429,7 @@ export const FAMILY_EMAIL_WORDS = {
   tooLong: 'The subject can be up to 200 characters, and the message up to 5,000.',
   failed: 'The email couldn’t be sent. Please try again.',
   sentNoneDelivered: `This didn’t reach any family, so it doesn’t count toward the club’s ${CLUB_EMAIL_CAP}. Please try again.`,
-  unknown: 'We couldn’t tell whether this went out. Check the Emails tab before you send it again.',
+  unknown: 'We couldn’t tell whether this went out. Check Communications before you send it again.',
   loadFailed: 'We couldn’t load who this would reach.',
   tryAgain: 'Try again',
   /** Who it went to, in words — the log's To. */
@@ -444,7 +444,8 @@ export const FAMILY_EMAIL_WORDS = {
   coachOutro: (sender: string) => `Reply to this email to reach ${sender}.`,
 } as const;
 
-/** The Emails tab (drawing 5): every email the club sent from Families, newest first. Nothing here is editable. */
+/** The sent list's and the family record's words (drawing 5; since Club Communications Stage 1 they read in Communications —
+ *  the place's own lede, filter and empty state are `PLACE` in lib/club-group-email-words.ts). Nothing here is editable. */
 export const FAMILY_EMAILS_TAB_WORDS = {
   tab: 'Emails',
   lede: (n: number) => `${pluralize(n, 'email')} sent from Families`,
@@ -461,6 +462,10 @@ export const FAMILY_EMAILS_TAB_WORDS = {
   /** A one-household message (Stage 5a) keeps its date and sender, never its words or a count. */
   oneFamily: '1 family',
   oneFamilySubject: 'A message to this family',
+  /** A one-family row whose family has no name on file: never its address (legal §2c, T17). */
+  nameless: 'A family',
+  /** A typed email whose subject and message the clock deleted, 12 months after the send (Club Communications, mig 492). */
+  subjectCleared: 'Its words were deleted',
   // This year's emails are "Oct 22 · 1:44 p.m." (drawing 5); an earlier year keeps its year.
   sentAt: (at: string) => `${formatStoredDate(at, { withYear: !inThisYear(at) })} · ${clock(at)}`,
   emptyTitle: 'No emails yet',

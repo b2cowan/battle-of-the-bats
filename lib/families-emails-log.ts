@@ -2,8 +2,8 @@ import 'server-only';
 import { TC_HISTORY } from './house-league-team-changes-words';
 import { supabaseAdmin } from './supabase-admin';
 import { getLeagueEmailLog, resolvePersonNamer } from './db';
-import { personDisplayName } from './families-read';
-import { CLUB_EMAIL_STOPPED_AFTER_MS, SEASON_EMAIL_WORDS as SW, familiesNamed } from './families-words';
+import type { ColleagueKind } from './club-group-email-words';
+import { CLUB_EMAIL_STOPPED_AFTER_MS, FAMILY_EMAILS_TAB_WORDS as W, SEASON_EMAIL_WORDS as SW, familiesNamed } from './families-words';
 import { PRACTICES_CHANGED_NOTICE } from './club-schedule-league-words';
 import { PRACTICES_SENT_NOTICE } from './league-practice-tell';
 import { SCHEDULE_NOTICE_WORDS } from './league-schedule-words';
@@ -31,11 +31,17 @@ import { pluralize } from './utils';
 
 const EMAILS_PAGE = 50;
 
+/** A one-family row's name: the person's name as the club holds it, or "A family" — NEVER the address `personDisplayName`
+ *  falls back to (Club Communications, legal §2c no-address-fallback rule, T17). */
+function familyNameOf(p: { first_name?: string | null; last_name?: string | null }): string {
+  return [p.first_name, p.last_name].filter(Boolean).join(' ').trim() || W.nameless;
+}
+
 export interface EmailLogRow {
   key: string;
   /** club: a typed email (club-wide or a season's); family: a one-household message; notice: an automatic notice to many
    *  families (9d1·4); earlier: the old season log (read-only, counted per child). */
-  kind: 'club' | 'family' | 'notice' | 'earlier';
+  kind: 'club' | 'family' | 'notice' | 'earlier' | ColleagueKind;
   id: string;
   sentAt: string;
   /** The subject (a typed email), or null (a one-household message keeps no words). */
@@ -57,6 +63,8 @@ export interface EmailLogRow {
   /** A notice's division, for its body's words ("when U12 Division's schedule was published"). */
   division?: string | null;
   state: 'sending' | 'stopped' | 'done';
+  /** A typed email's audience kind as sent (every · teams · season · list): who may finish it follows it (ask 14). */
+  audienceKind?: string;
 }
 
 export type NoticeKind = 'teams_published' | 'practices_changed' | 'schedule_published' | 'games_changed' | 'practices_sent' | 'team_changes';
@@ -122,7 +130,7 @@ const CLUB_COLS = 'id, sent_at, sent_by, subject, audience_kind, audience_label,
 function clubRow(r: any, by: string | null, now: number, to: string = r.audience_label): EmailLogRow {
   const since = Math.max(new Date(r.sent_at).getTime(), r.retried_at ? new Date(r.retried_at).getTime() : 0);
   return {
-    key: `club:${r.id}`, kind: 'club', id: r.id, sentAt: r.sent_at, subject: r.subject, to, by, seasonId: r.season_id ?? null,
+    key: `club:${r.id}`, kind: 'club', id: r.id, sentAt: r.sent_at, subject: r.subject, to, by, seasonId: r.season_id ?? null, audienceKind: r.audience_kind,
     state: r.status === 'done' ? 'done' : now - since > CLUB_EMAIL_STOPPED_AFTER_MS ? 'stopped' : 'sending',
     counts: { families: r.family_count, reached: r.reached_count, optedOut: r.opted_out_count, failed: r.failed_count, coaches: r.coach_count },
   };
@@ -135,26 +143,51 @@ async function seasonNames(orgId: string, ids: readonly string[]): Promise<Map<s
   return new Map((data ?? []).map(s => [s.id as string, s.name as string]));
 }
 
-export async function readEmailLog(orgId: string, before: string | null, filter: EmailLogFilter = 'all'): Promise<EmailLogPage> {
+/**
+ * Which family emails this reader may see (Club Communications, legal §2c; built by `familyReader`,
+ * `lib/club-communications-place.ts`). The rows a reader may not read are never READ, so they are absent, not hidden:
+ *   · all    — every typed email; a one-family message only with the Families book (ask 13);
+ *   · league — a league seat: a season's emails (from either door) and "Every family"; a one-family message only when it
+ *              was sent from a season. Never a rep team's, a Families list's, or a message to one family sent from Families.
+ */
+export type FamilyLogReader = { scope: 'all'; oneFamily: boolean } | { scope: 'league' };
+const EVERY_READER: FamilyLogReader = { scope: 'all', oneFamily: true };
+
+/** A typed email this reader may read (the league rule, as one predicate on a row). */
+export function familySendReadable(reader: FamilyLogReader, row: { season_id: string | null; audience_kind: string }): boolean {
+  return reader.scope === 'all' || !!row.season_id || row.audience_kind === 'every';
+}
+/** A league seat reading a club-wide family email sees its message and counts and NO names (ask 4): the record can't tell
+ *  which of its named families are house-league ones. */
+export function familyNamesShown(reader: FamilyLogReader, row: { season_id: string | null }): boolean {
+  return reader.scope === 'all' || !!row.season_id;
+}
+
+export async function readEmailLog(orgId: string, before: string | null, filter: EmailLogFilter = 'all', reader: FamilyLogReader = EVERY_READER): Promise<EmailLogPage> {
   // The Season filter, on any of the three reads below (each a query on a table with season_id).
   const narrow = (q: any) => (filter === 'all' ? q : filter === 'club' ? q.is('season_id', null) : q.eq('season_id', filter.seasonId));
-  const club = narrow(supabaseAdmin.from('family_email_sends').select(CLUB_COLS).eq('org_id', orgId));
-  const family = narrow(supabaseAdmin.from('family_messages').select('id, sent_at, sent_by, person_id, season_id').eq('org_id', orgId));
+  // The reader's own rows (legal §2c), on top of the filter.
+  const sendsFor = (q: any) => (reader.scope === 'league' ? q.or('season_id.not.is.null,audience_kind.eq.every') : q);
+  const messagesFor = (q: any) => (reader.scope === 'league' ? q.not('season_id', 'is', null) : q);
+  const readsMessages = reader.scope === 'league' || reader.oneFamily;
+  const none = { data: [] as any[], count: 0, error: null };
+  const club = sendsFor(narrow(supabaseAdmin.from('family_email_sends').select(CLUB_COLS).eq('org_id', orgId)));
+  const family = messagesFor(narrow(supabaseAdmin.from('family_messages').select('id, sent_at, sent_by, person_id, season_id').eq('org_id', orgId)));
   // The totals are the first page's: a "Show more" page does not re-count.
   const total = (table: 'family_email_sends' | 'family_messages') => before
     ? Promise.resolve({ count: 0, error: null })
-    : narrow(supabaseAdmin.from(table).select('id', { count: 'exact', head: true }).eq('org_id', orgId));
+    : (table === 'family_email_sends' ? sendsFor : messagesFor)(narrow(supabaseAdmin.from(table).select('id', { count: 'exact', head: true }).eq('org_id', orgId)));
   // The filter's seasons: every season the club has emailed (first page only; one column, bounded).
   const withSeason = (table: 'family_email_sends' | 'family_messages') => before
     ? Promise.resolve({ data: [] as { season_id: string }[], error: null })
     : supabaseAdmin.from(table).select('season_id').eq('org_id', orgId).not('season_id', 'is', null).limit(2000);
   const [clubRows, familyRows, clubTotal, familyTotal, sendSeasons, messageSeasons] = await Promise.all([
     (before ? club.lt('sent_at', before) : club).order('sent_at', { ascending: false }).limit(EMAILS_PAGE),
-    (before ? family.lt('sent_at', before) : family).order('sent_at', { ascending: false }).limit(EMAILS_PAGE),
+    readsMessages ? (before ? family.lt('sent_at', before) : family).order('sent_at', { ascending: false }).limit(EMAILS_PAGE) : Promise.resolve(none),
     total('family_email_sends'),
-    total('family_messages'),
+    readsMessages ? total('family_messages') : Promise.resolve(none),
     withSeason('family_email_sends'),
-    withSeason('family_messages'),
+    readsMessages ? withSeason('family_messages') : Promise.resolve(none),
   ]);
   for (const r of [clubRows, familyRows, clubTotal, familyTotal, sendSeasons, messageSeasons]) if (r.error) throw r.error;
 
@@ -174,7 +207,10 @@ export async function readEmailLog(orgId: string, before: string | null, filter:
     seasonNames(orgId, [...filterSeasonIds, ...merged.map(m => m.r.season_id).filter(Boolean)]),
   ]);
   if (people.error) throw people.error;
-  const familyName = new Map((people.data ?? []).map((p: any) => [p.id as string, personDisplayName(p)]));
+  // A family with no name on file reads "A family", never its address (legal §2c, T17).
+  // A league seat reads a one-family row as its season's own list shows it: "the Patel family", never a first name.
+  const familyName = new Map((people.data ?? []).map((p: any) => [p.id as string,
+    reader.scope === 'league' ? (p.last_name ? SW.oneFamilyTo(p.last_name) : W.nameless) : familyNameOf(p)]));
 
   const now = Date.now();
   // A season's email names its season (9d1·7): "Dev House League 2026 · Jays".
@@ -186,7 +222,7 @@ export async function readEmailLog(orgId: string, before: string | null, filter:
     ? clubRow(m.r, nameOf(m.r.sent_by), now, named(m.r.season_id, m.r.audience_label))
     : {
       key: `family:${m.r.id}`, kind: 'family', id: m.r.id, sentAt: m.r.sent_at, subject: null, seasonId: m.r.season_id ?? null,
-      to: named(m.r.season_id, familyName.get(m.r.person_id) ?? '—'), by: nameOf(m.r.sent_by), counts: null, state: 'done',
+      to: named(m.r.season_id, familyName.get(m.r.person_id) ?? W.nameless), by: nameOf(m.r.sent_by), counts: null, state: 'done',
     });
   // More to read when either source filled its page, or the merge left rows over (they are older than the cursor).
   const clubN = clubRows.data?.length ?? 0;
@@ -207,22 +243,28 @@ export interface ClubEmailRecord extends EmailLogRow {
   body: string;
   wordsCleared: boolean;
   missed: number;
-  missedNamed: string | null;
-  optedOutNamed: string | null;
+  /** ABSENT (not null, not hidden) for a reader who may not see this email's names (ask 4, T12). */
+  missedNamed?: string | null;
+  optedOutNamed?: string | null;
 }
 
-export async function readClubEmail(orgId: string, sendId: string): Promise<ClubEmailRecord | null> {
+/** One typed email for THIS reader: null when they may not read it (the route answers Not found). */
+export async function readClubEmail(orgId: string, sendId: string, reader: FamilyLogReader = EVERY_READER): Promise<ClubEmailRecord | null> {
   const { data, error } = await supabaseAdmin.from('family_email_sends')
     .select(`${CLUB_COLS}, body, words_cleared_at`).eq('org_id', orgId).eq('id', sendId).maybeSingle();
   if (error) throw error;
   if (!data) return null;
+  if (!familySendReadable(reader, data as any)) return null;
+  const names = familyNamesShown(reader, data as any);
   const [nameOf, recipients, seasons] = await Promise.all([
     resolvePersonNamer(orgId, [data.sent_by]),
-    supabaseAdmin.from('family_email_recipients').select('family_name, status').eq('send_id', sendId),
+    // A reader who may not see names never has them read (the counts below come from the row itself, `clubRow`).
+    names ? supabaseAdmin.from('family_email_recipients').select('family_name, status').eq('send_id', sendId)
+      : supabaseAdmin.from('family_email_recipients').select('status').eq('send_id', sendId),
     seasonNames(orgId, data.season_id ? [data.season_id] : []),
   ]);
   if (recipients.error) throw recipients.error;
-  const rows = recipients.data ?? [];
+  const rows = (recipients.data ?? []) as { family_name?: string | null; status: string }[];
   const missed = rows.filter(r => r.status === 'pending' || r.status === 'failed');
   const optedOut = rows.filter(r => r.status === 'opted_out');
   const season = data.season_id ? seasons.get(data.season_id) : null;
@@ -231,8 +273,10 @@ export async function readClubEmail(orgId: string, sendId: string): Promise<Club
     body: data.body ?? '',
     wordsCleared: !!data.words_cleared_at,
     missed: missed.length,
-    missedNamed: familiesNamed(missed.map(r => r.family_name)),
-    optedOutNamed: familiesNamed(optedOut.map(r => r.family_name)),
+    ...(names ? {
+      missedNamed: familiesNamed(missed.map(r => r.family_name ?? null)),
+      optedOutNamed: familiesNamed(optedOut.map(r => r.family_name ?? null)),
+    } : {}),
   };
 }
 
@@ -274,7 +318,7 @@ export async function readSeasonHistory(orgId: string, seasonId: string): Promis
   ]);
   if (people.error) throw people.error;
   if (divisions.error) throw divisions.error;
-  const familyOf = new Map((people.data ?? []).map((p: any) => [p.id as string, p.last_name ? SW.oneFamilyTo(p.last_name) : personDisplayName(p)]));
+  const familyOf = new Map((people.data ?? []).map((p: any) => [p.id as string, p.last_name ? SW.oneFamilyTo(p.last_name) : familyNameOf(p)]));
   const divisionOf = new Map((divisions.data ?? []).map((d: any) => [d.id as string, d.name as string]));
   const inFlight = await noticesSending((notices.data ?? []).filter(n => n.failed_count > 0).map(n => n.id as string));
 
@@ -283,7 +327,7 @@ export async function readSeasonHistory(orgId: string, seasonId: string): Promis
     ...(sends.data ?? []).map(r => clubRow(r, nameOf(r.sent_by), now)),
     ...(messages.data ?? []).map((m): EmailLogRow => ({
       key: `family:${m.id}`, kind: 'family', id: m.id, sentAt: m.sent_at, subject: null, seasonId,
-      to: familyOf.get(m.person_id) ?? '—', by: nameOf(m.sent_by), counts: null, state: 'done',
+      to: familyOf.get(m.person_id) ?? W.nameless, by: nameOf(m.sent_by), counts: null, state: 'done',
     })),
     ...(notices.data ?? []).map((n): EmailLogRow => {
       const division = n.division_id ? divisionOf.get(n.division_id) ?? null : null;

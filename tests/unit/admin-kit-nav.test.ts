@@ -269,14 +269,14 @@ describe('the admin kit nav — where you are', () => {
     for (const t of accountingTabs(BASE, { runsRepTeams: true })) assert.ok(routeExists(t.href), `${t.label} → ${t.href}`);
   });
 
-  it('Families is one page with three tabs, its rail row with no pages (Club Tier Stage 5b, Ask 14; Stage 7c, Ask 7)', () => {
+  it('Families is one page with two tabs, its rail row with no pages (Club Tier Stage 5b, Ask 14; Emails moved to Communications)', () => {
     const [fam] = kitPrograms({ base: BASE, canUse: c => c === 'module_families' });
     assert.equal(fam.key, 'families');
-    assert.deepEqual(fam.pages, [], 'no rail pages under Families — the tab row moves between the three');
-    assert.deepEqual(familiesTabs(BASE).map(t => t.label), ['Families', 'Duplicates', 'Emails']);
+    assert.deepEqual(fam.pages, [], 'no rail pages under Families — the tab row moves between the two');
+    // Club Communications Stage 1 (ask 7): the Emails tab left for Communications; no pointer is left on Families.
+    assert.deepEqual(familiesTabs(BASE).map(t => t.label), ['Families', 'Duplicates']);
     assert.equal(familiesTabFor(`${BASE}/families`, BASE), 'families');
     assert.equal(familiesTabFor(`${BASE}/families/duplicates`, BASE), 'duplicates', 'Duplicates wins its own address');
-    assert.equal(familiesTabFor(`${BASE}/families/emails`, BASE), 'emails', 'Emails wins its own address');
     // A family is a record OVER the Families tab: its address lights Families, one segment down only.
     assert.equal(familiesTabFor(`${BASE}/families/p1`, BASE), 'families');
     assert.equal(familiesTabFor(`${BASE}/families/p1/x`, BASE), null);
@@ -402,12 +402,14 @@ describe('13i · the club sidebar lists places only', () => {
   // ⚖ 13c C1 = A (owner 2026-11-08): Permits is a place between Calendar and Schedules for every role that opened the permit
   // list before — owner 10 → 11, admin 9 → 10, league admin 4 → 5, registrar 4 → 5, treasurer 3 → 4 (and staff, the same day).
   // ⚖ E4 (navigation Phase 1, owner 2026-11-09): a hosted Tournaments left the places for the foot's door — owner 11 → 10,
-  // admin 10 → 9 (the door is `tournamentsDoor`, below).
-  it('the place lists and their gates: owner 10, admin 9, league admin 5, registrar 5, treasurer 4', () => {
-    assert.deepEqual(rows('owner'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'accounting', 'families', 'public-site', 'org']);
-    assert.deepEqual(rows('admin'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'accounting', 'public-site', 'org'], 'no Families: an explicit grant only');
-    assert.deepEqual(rows('league_admin'), ['overview', 'calendar', 'permits', 'house-league', 'org']);
-    assert.deepEqual(rows('league_registrar'), ['overview', 'calendar', 'permits', 'house-league', 'org']);
+  // admin 10 → 9 (the door is `tournamentsDoor`, below). ⚖ Club Communications Stage 1 (tab 4): Communications after
+  // Families for every seat with a family choice — owner 11, admin 10, league admin 6, registrar 6; the treasurer waits for
+  // Session 3's board window.
+  it('the place lists and their gates: owner 11, admin 10, league admin 6, registrar 6, treasurer 4', () => {
+    assert.deepEqual(rows('owner'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'accounting', 'families', 'club-emails', 'public-site', 'org']);
+    assert.deepEqual(rows('admin'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'accounting', 'club-emails', 'public-site', 'org'], 'no Families: an explicit grant only');
+    assert.deepEqual(rows('league_admin'), ['overview', 'calendar', 'permits', 'house-league', 'club-emails', 'org']);
+    assert.deepEqual(rows('league_registrar'), ['overview', 'calendar', 'permits', 'house-league', 'club-emails', 'org']);
     assert.deepEqual(rows('treasurer'), ['overview', 'permits', 'accounting', 'org']);
   });
 
@@ -424,6 +426,16 @@ describe('13i · the club sidebar lists places only', () => {
     assert.equal(permitsFor('owner', { isCanceled: true }), null);
   });
 
+  it('Club Communications · the bar names Communications where the rail lists it — one page, no tab row', () => {
+    const access = { canUse: () => true, seasonAccess: null, orgTabs: null, runsRepTeams: true, hasPayouts: false, opensFamilies: true };
+    const place = clubPlaceAt('/o/admin/club-emails', '/o/admin', { ...access, opensCommunications: true });
+    assert.equal(place?.key, 'club-emails');
+    assert.equal(place?.title, 'Communications');
+    assert.equal(place?.tabs.length, 1, 'a row of one tab is no row');
+    assert.equal(clubPlaceAt('/o/admin/club-emails', '/o/admin', access), null, 'not for someone the rail does not list it for');
+    assert.ok(routeExists('/demo-club/admin/club-emails'), 'the page exists');
+  });
+
   it('13c · the bar names Permits where the rail lists it — a one-page place, so no tab row', () => {
     const access = { canUse: () => true, seasonAccess: null, orgTabs: null, runsRepTeams: true, hasPayouts: false, opensFamilies: true };
     const place = clubPlaceAt('/o/admin/permits', '/o/admin', { ...access, opensPermits: true });
@@ -436,10 +448,10 @@ describe('13i · the club sidebar lists places only', () => {
 
   it('the groups: Programs (Rep teams, House league), then Also on your plan, then Club with Organization last', () => {
     const owner = clubNavFor('owner', RUNS_BOTH).groups.map(g => [g.key, g.places.map(p => p.key)]);
-    assert.deepEqual(owner, [['programs', ['rep-teams', 'house-league']], ['club', ['accounting', 'families', 'public-site', 'org']]], 'a hosted Tournaments is the foot’s door, not a place');
+    assert.deepEqual(owner, [['programs', ['rep-teams', 'house-league']], ['club', ['accounting', 'families', 'club-emails', 'public-site', 'org']]], 'a hosted Tournaments is the foot’s door, not a place');
     assert.equal(clubNavFor('owner', RUNS_BOTH).tournamentsDoor, true);
     const notYet = clubNavFor('owner', RUNS_NEITHER).groups.map(g => [g.key, g.places.map(p => p.key)]);
-    assert.deepEqual(notYet, [['programs', ['rep-teams']], ['also', ['house-league']], ['club', ['accounting', 'families', 'public-site', 'org']]], 'Tournaments is never a row in the middle');
+    assert.deepEqual(notYet, [['programs', ['rep-teams']], ['also', ['house-league']], ['club', ['accounting', 'families', 'club-emails', 'public-site', 'org']]], 'Tournaments is never a row in the middle');
     assert.equal(clubNavFor('owner', RUNS_NEITHER).tournamentsDoor, true, 'one place before and after the first tournament (owner 2026-11-11): the foot door');
   });
 
@@ -509,7 +521,7 @@ describe('13i · the club sidebar lists places only', () => {
     assert.doesNotMatch(rail, /RepTeamBlock|SeasonBlock|repTeamPages|seasonPages|\.pages\.map|programOpen|useRailTeam/, 'a row opens pages under it again');
     assert.ok(!existsSync(path.join(process.cwd(), 'components/admin/kit/useRailTeam.ts')), 'the rail’s team name store is back');
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
-    assert.match(hook, /const placeGroups = tournamentOnly \|\| isCanceled \? \[\] : clubPlaceGroups<KitLink>\(\{\s*programs: navPrograms, alsoOnPlan, organization: kitOrgPlace\(\{ base, orgLinks, tournamentOnly \}\),\s*\}\);/);
+    assert.match(hook, /const placeGroups = tournamentOnly \|\| isCanceled \? \[\] : clubPlaceGroups<KitLink>\(\{\s*programs: navPrograms, alsoOnPlan, organization: kitOrgPlace\(\{ base, orgLinks, tournamentOnly \}\), communications: communicationsLink,\s*\}\);/);
     assert.match(hook, /const litPlace = litClubPlace\(pathname, base, billingLink\);/);
   });
 
@@ -577,10 +589,10 @@ describe('the place an address is in (the pinned bar, Phase 2)', () => {
     assert.equal(clubPlaceAt(`${B}/accounting`, B, accessFor('treasurer'))?.key, 'accounting', 'the treasurer is in');
   });
 
-  it('Families: three tabs, a family lights Families, a child’s page is a record page', () => {
+  it('Families: two tabs, a family lights Families, a child’s page is a record page', () => {
     const p = clubPlaceAt(`${B}/families/duplicates`, B, accessFor('owner', { opensFamilies: true }));
     assert.equal(p?.key, 'families');
-    assert.deepEqual(p?.tabs.map(t => t.id), ['families', 'duplicates', 'emails']);
+    assert.deepEqual(p?.tabs.map(t => t.id), ['families', 'duplicates']);
     assert.equal(p?.activeId, 'duplicates');
     assert.equal(clubPlaceAt(`${B}/families/p1`, B, accessFor('owner', { opensFamilies: true }))?.activeId, 'families');
     // Phase 3 (A8): a child's page is a record page — "← Families" from the address, never the Families tab row.

@@ -77,6 +77,7 @@ const LOSES: Partial<Record<Capability, (org: string) => string>> = {
   module_house_league: () => 'the house league',
   module_tournaments: () => 'any tournament',
   module_members: () => 'the member list',
+  module_communications: () => 'the club’s sent emails, and can’t send a group email from any screen',
 };
 const GAINS: Partial<Record<Capability, (org: string) => string>> = {
   // Families concentrates every household's personal information (plan §5.3) — say so, every time. Since Club Tier Stage 14
@@ -89,6 +90,7 @@ const GAINS: Partial<Record<Capability, (org: string) => string>> = {
   module_house_league: () => 'the house league',
   module_tournaments: () => 'the tournaments',
   module_members: () => 'the member list',
+  module_communications: () => 'the club’s sent emails, and can send group emails to the people they work with',
 };
 
 /**

@@ -18,6 +18,7 @@ import { PRACTICES_CHANGED_NOTICE } from '@/lib/club-schedule-league-words';
 import { SCHEDULE_NOTICE_WORDS } from '@/lib/league-schedule-words';
 import { PRACTICES_SENT_NOTICE } from '@/lib/league-practice-tell';
 import type { ClubEmailRecord, EmailLogRow } from '@/lib/families-emails-log';
+import { RECORD } from '@/lib/club-group-email-words';
 import LoadingState from '@/components/shared/LoadingState';
 import KitDialog, { DialogCancel } from '../KitDialog';
 import { TC_HISTORY } from '@/lib/house-league-team-changes-words';
@@ -43,7 +44,8 @@ export const reachedText = (r: EmailLogRow) => {
 const reachedCell = (r: EmailLogRow) => (r.counts && r.state === 'stopped'
   ? <><span className={fam.chipGap}><RepChip tone="warn">{W.stoppedChip}</RepChip></span>{W.reached(r.counts.reached, r.counts.families)}</>
   : reachedText(r));
-export const subjectText = (r: EmailLogRow) => r.subject ?? W.oneFamilySubject;
+/** A one-family message keeps no words; a typed email whose words the clock deleted (12 months, mig 492) says so. */
+export const subjectText = (r: EmailLogRow) => r.subject ?? (r.kind === 'family' ? W.oneFamilySubject : W.subjectCleared);
 
 /** The subject, with the Automatic tag on a notice — a button, since every highlight opens (memory `feedback_clickable_design_annotations`). */
 function SubjectCell({ r, onOpen }: { r: EmailLogRow; onOpen: (r: EmailLogRow) => void }) {
@@ -148,11 +150,13 @@ export function EmailLogList({ rows, earlier = [], isPhone, label, onOpen }: {
  * missed" (its URL and body, and whose allowance it would have counted toward); `teamsHref` is Teams & draft's door on a
  * notice.
  */
-export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClose, onResent }: {
+export function EmailRecord({ row, eyebrow, detailUrl, resend, finishLine, teamsHref, onClose, onResent }: {
   row: EmailLogRow;
   eyebrow: string;
   detailUrl: string;
   resend: { url: string; body: Record<string, unknown>; owner: 'season' | 'club' } | null;
+  /** A stopped email this reader may not finish: who can (Communications ask 14), in place of the button. */
+  finishLine?: string;
   teamsHref?: string;
   onClose: () => void;
   onResent: (text: string) => void;
@@ -174,7 +178,8 @@ export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClos
   const c = r.counts;
   // A typed email's families still to reach come with its detail; a schedule notice's are its failed count (9d-2b).
   const missed = r.kind === 'notice' ? c?.failed ?? 0 : detail?.missed ?? 0;
-  const canResend = !!resend && r.state === 'stopped' && missed > 0;
+  // Words the clock deleted can't be sent again (T25): no button to a refusal.
+  const canResend = !!resend && r.state === 'stopped' && missed > 0 && !detail?.wordsCleared;
 
   async function sendMissed() {
     if (!resend || busy) return;
@@ -194,7 +199,8 @@ export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClos
 
   return (
     <KitDialog kind="form" record size="medium" eyebrow={eyebrow} title={subjectText(r)} onClose={onClose} busy={busy}
-      footerStart={error ? <SendStanding>{error}</SendStanding> : canResend ? <p className={ck.hint}>{SW.resendNote(resend!.owner)}</p> : undefined}
+      footerStart={error ? <SendStanding>{error}</SendStanding> : canResend ? <p className={ck.hint}>{SW.resendNote(resend!.owner)}</p>
+        : r.state === 'stopped' && missed > 0 && finishLine ? <p className={ck.hint}>{finishLine}</p> : undefined}
       footer={canResend ? (
         <>
           <DialogCancel>{W.close}</DialogCancel>
@@ -226,6 +232,7 @@ export function EmailRecord({ row, eyebrow, detailUrl, resend, teamsHref, onClos
           <div className={fam.readAfter} />
           {failed ? <p className={repKit.formError}>{W.loadFailed}</p>
             : body == null ? <LoadingState inline label="Loading the email…" />
+            : detail?.wordsCleared ? <p className={`${ck.hint} ${fam.quiet}`}>{RECORD.wordsCleared}</p>
             : <p className={fam.emailBody}>{body}</p>}
           <p className={ck.hint}>{r.state === 'stopped' && detail ? SW.stoppedNote(detail.missed) : W.reachedNote}</p>
         </>

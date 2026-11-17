@@ -45,7 +45,15 @@ an Organization tab first would mean moving the tab, its help page and its list 
 **Rulings.** All 12 asks on the evaluation (https://claude.ai/artifact/6wvN7LEUw3mfUEdSXYSryY) ruled as recommended,
 owner 2026-11-16. Plan: `CLUB_COMMUNICATIONS_PLAN.md`.
 
-**Where it stands (2026-11-17).** Session 1, the engine, is built on dev (no screens yet; commit owed). It covers who
+**Where it stands (2026-11-17).** Session 2, the place, is built on dev and reviewed (commit and the owner's walk
+owed): Communications in the sidebar and the phone's More sheet; one list of family, coach and board emails, each
+person seeing only their share; the owner and admins email families without the Families book; Families down to two
+tabs, its old Emails address forwarding; the Communications switch on by default for league admins, registrars and
+treasurers, and off meaning no group email from any screen. The owner ruled two things that session: the club-wide
+family window is the owner's and admins' only (someone else holding the Families book loses it), and a league admin or
+registrar keeps the place between seasons with no New email button. Session 3 adds the coach and board windows.
+
+Session 1, the engine, is committed (no screens). It covers who
 can email whom, who can read what was sent, the email itself, and the clean-up of old emails. The owner ruled four
 things that session:
 - **How long sent emails are kept.** The words go 12 months after sending and the names 24 months after, removed
@@ -55,5 +63,5 @@ things that session:
   can choose "Replies come to me" instead. This covers all three windows.
 - **No typed CC or BCC.** A "Send a copy to the club's inbox" tick takes their place.
 
-Next is Session 2, the place itself. Nothing reaches production until the clock, the nightly job and the privacy-policy
+Nothing reaches production until the clock, the nightly job and the privacy-policy
 sentences go together.

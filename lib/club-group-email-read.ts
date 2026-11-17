@@ -100,14 +100,15 @@ const listed = (ctx: AuthContextWithRole, x: ReadableSend): ListedSend => {
 };
 
 /** Readable sends, newest first, read in slices until `want` are found or the log ends. `scanned`: where the scan stopped. */
-async function scan(ctx: AuthContextWithRole, seat: Seat, before: string | null, want: number, kind?: ColleagueKind):
+async function scan(ctx: AuthContextWithRole, seat: Seat, before: string | null, want: number, opts: { kind?: ColleagueKind; reachedOnly?: boolean } = {}):
   Promise<{ rows: ReadableSend[]; scanned: string | null }> {
   const out: ReadableSend[] = [];
   let cursor = before;
   for (let guard = 0; guard < 20 && out.length < want; guard++) {
     let q = supabaseAdmin.from('club_group_email_sends').select(SEND_COLS).eq('org_id', ctx.org.id)
       .order('sent_at', { ascending: false }).limit(SLICE);
-    if (kind) q = q.eq('kind', kind).gt('reached_count', 0);
+    if (opts.kind) q = q.eq('kind', opts.kind);
+    if (opts.reachedOnly) q = q.gt('reached_count', 0);
     if (cursor) q = q.lt('sent_at', cursor);
     const { data, error } = await q;
     if (error) throw error;
@@ -120,9 +121,9 @@ async function scan(ctx: AuthContextWithRole, seat: Seat, before: string | null,
 }
 
 /** The list's coach and board rows this reader may read, newest first, a page at a time (`before` = the `next` it was given). */
-export async function listColleagueEmails(ctx: AuthContextWithRole, seat: Seat, before: string | null): Promise<{ rows: ListedSend[]; next: string | null }> {
+export async function listColleagueEmails(ctx: AuthContextWithRole, seat: Seat, before: string | null, kind?: ColleagueKind): Promise<{ rows: ListedSend[]; next: string | null }> {
   if (!seat.any) return { rows: [], next: null };
-  const { rows, scanned } = await scan(ctx, seat, before, COLLEAGUE_PAGE + 1);
+  const { rows, scanned } = await scan(ctx, seat, before, COLLEAGUE_PAGE + 1, { kind });
   const page = rows.slice(0, COLLEAGUE_PAGE);
   // More readable rows past the page: continue after its last row. Otherwise continue where the scan stopped (it always
   // moves forward, even past a long run of rows this reader may not read), or end.
@@ -133,7 +134,7 @@ export async function listColleagueEmails(ctx: AuthContextWithRole, seat: Seat, 
 /** A window's "Last sent" line (follows the read rule: never a board subject to a non-reader). */
 export async function lastColleagueSend(ctx: AuthContextWithRole, seat: Seat, kind: ColleagueKind): Promise<{ at: string; by: string | null; subject: string | null; reached: number } | null> {
   if (!seat.any) return null;
-  const first = (await scan(ctx, seat, null, 1, kind)).rows[0];
+  const first = (await scan(ctx, seat, null, 1, { kind, reachedOnly: true })).rows[0];
   return first ? { at: first.sentAt, by: first.senderName, subject: first.subject, reached: first.reached } : null;
 }
 
@@ -172,4 +173,21 @@ export async function readColleagueEmail(ctx: AuthContextWithRole, seat: Seat, s
     canSendAgain: !send.namesClearedAt && (send.kind === 'board' ? seat.board : !!seat.coaches),
     isMine: send.sentBy === ctx.user.id,
   };
+}
+
+/**
+ * How many coach and board emails this reader may read, and of which kinds (Communications' lede "7 emails sent" and its
+ * filter, Session 2). The facts only — no subject, no body, no recipient — filtered by the same `canReadSend`.
+ */
+export async function colleagueSummary(ctx: AuthContextWithRole, seat: Seat): Promise<Record<ColleagueKind, number>> {
+  if (!seat.any) return { coaches: 0, board: 0 };
+  const { data, error } = await supabaseAdmin.from('club_group_email_sends').select('id, kind, group_kind, reaches_rep, sent_by')
+    .eq('org_id', ctx.org.id).limit(5000);
+  if (error) throw error;
+  const rows = (data ?? []) as unknown as Row[];
+  const mine = await recipientOf(ctx.user.id, rows.filter(r => r.kind === 'board').map(r => r.id as string));
+  const kept = rows.filter(r => canReadSend(seat, ctx.user.id, {
+    kind: r.kind as ColleagueKind, groupKind: r.group_kind as string, reachesRep: !!r.reaches_rep, sentBy: (r.sent_by as string | null) ?? null,
+  }, mine.has(r.id as string)));
+  return { coaches: kept.filter(r => r.kind === 'coaches').length, board: kept.filter(r => r.kind === 'board').length };
 }

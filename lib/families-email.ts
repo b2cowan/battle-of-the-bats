@@ -83,6 +83,8 @@ export interface FamilyEmailPreview {
   season: { id: string; name: string } | null;
   orgName: string;
   reason: string;
+  /** The sender may open the Families book: "Families from a list" and the "Show them" link are theirs (Communications ask 3). */
+  holdsBook?: boolean;
   /** The club's face and the reply line the email will carry (S3b): the sample draws its band and foot from these. */
   club: ClubEmailFacts | null;
   replyLine: string;
@@ -160,10 +162,12 @@ export async function lastFamilyEmail(orgId: string, seasonId?: string): Promise
 /** The reason a family is getting it, completing "Sent by {club} because …": a season's email names the season. */
 export const reasonFor = (seasonName: string | null) => (seasonName ? seasonEmailReason(seasonName) : FAMILY_MESSAGE_REASON);
 
-export async function familyEmailPreview(ctx: AuthContextWithRole, scope: FamilyAudienceScope): Promise<FamilyEmailPreview> {
+/** `holdsBook`: the sender may open the Families book. Only then are its lists offered (Communications ask 3) and the
+ *  window's "Show them" link drawn (it lands in Families). */
+export async function familyEmailPreview(ctx: AuthContextWithRole, scope: FamilyAudienceScope, opts: { holdsBook: boolean } = { holdsBook: true }): Promise<FamilyEmailPreview> {
   const seasonId = scopeSeasonId(scope);
   const [world, lastSent, cap, club, sender] = await Promise.all([
-    loadFamilyAudience(ctx.org.id, ctx.org.slug, { lists: true }), lastFamilyEmail(ctx.org.id), emailAllowance(ctx.org.id, seasonId || null),
+    loadFamilyAudience(ctx.org.id, ctx.org.slug, { lists: opts.holdsBook }), lastFamilyEmail(ctx.org.id), emailAllowance(ctx.org.id, seasonId || null),
     clubEmailFacts(ctx.org), senderName(ctx).catch(() => null),
   ]);
   const senderEmail = ctx.user.email ?? null;
@@ -195,7 +199,7 @@ export async function familyEmailPreview(ctx: AuthContextWithRole, scope: Family
     optedOutNamed: familiesNamed(audience.optedOutFamilies.map(f => f.familyName)), senderSkipped: audience.senderSkipped,
     coaches: coaches.length, noFamily: noFamilyIn(world, scope),
     lastSent, cap, season: seasonId && seasonName ? { id: seasonId, name: seasonName } : null,
-    orgName: ctx.org.name, reason: reasonFor(seasonName),
+    orgName: ctx.org.name, reason: reasonFor(seasonName), holdsBook: opts.holdsBook,
     club, replyLine: familyReplyPlan({ kind: 'person', clubName: ctx.org.name, senderEmail, senderName: sender }).line,
   };
 }
@@ -456,7 +460,8 @@ export async function deliverFamilyEmail(d: {
  * it is NOW (a corrected address is reached; one opted out since is skipped). `seasonId`: the season's door may resend
  * only its own; the Families door any of the club's.
  */
-export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: string, opts: { seasonId?: string } = {}): Promise<FamilyEmailResult> {
+/** `noLists`: the sender doesn't hold the Families book, so an email to a Families list is not theirs to finish (asks 3, 14). */
+export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: string, opts: { seasonId?: string; noLists?: boolean } = {}): Promise<FamilyEmailResult> {
   const cutoff = new Date(Date.now() - CLUB_EMAIL_STOPPED_AFTER_MS).toISOString();
   // Before taking the row: words the clock deleted can't be sent (T25), and a club-mode send whose club contact is gone
   // can't keep its promise (one mode per send: never switched to the sender part-way).
@@ -465,6 +470,7 @@ export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: str
   let pre = supabaseAdmin.from('family_email_sends')
     .select('words_cleared_at, reply_to').eq('id', sendId).eq('org_id', ctx.org.id).eq('status', 'sending');
   if (opts.seasonId) pre = pre.eq('season_id', opts.seasonId);
+  if (opts.noLists) pre = pre.neq('audience_kind', 'list');
   const { data: before, error: bErr } = await pre.maybeSingle();
   if (bErr) throw bErr;
   if (before?.words_cleared_at) return refuse(409, CW.wordsGone, 'words_gone');
@@ -476,6 +482,7 @@ export async function resendMissedFamilies(ctx: AuthContextWithRole, sendId: str
     .eq('id', sendId).eq('org_id', ctx.org.id).eq('status', 'sending').lt('sent_at', cutoff)
     .or(`retried_at.is.null,retried_at.lt.${cutoff}`).is('words_cleared_at', null);
   if (opts.seasonId) q = q.eq('season_id', opts.seasonId);
+  if (opts.noLists) q = q.neq('audience_kind', 'list');
   // Taking the row is the press's claim: a second press finds it already taken, and nothing goes twice.
   const { data: taken, error } = await q.select('id, subject, body, season_id, family_count').maybeSingle();
   if (error) throw error;

@@ -29,7 +29,7 @@
  */
 import {
   Users, DollarSign, Contact, Globe, CalendarDays, CalendarClock, Trophy, Building2, IdCard, CreditCard, Settings,
-  MapPin, FileText, ScrollText, ChartGantt, FileCheck, Shield, Users2,
+  MapPin, FileText, ScrollText, ChartGantt, FileCheck, Shield, Users2, Mail,
   type LucideIcon,
 } from 'lucide-react';
 import type { Capability } from '@/lib/roles';
@@ -373,6 +373,23 @@ export function kitPermitsLink({ base, role, isCanceled, tournamentTier, hasVenu
   return { key: 'permits', label: 'Permits', href: `${base}/permits`, icon: FileCheck };
 }
 
+/** Communications' address segment: never the tournament's `communication` page or `/api/admin/communications`. */
+export const COMMUNICATIONS_SEGMENT = 'club-emails';
+
+/**
+ * ⚖ COMMUNICATIONS IS A CLUB PLACE (Club Communications Stage 1, direction rulings 1–3, ask 6, owner 2026-11-16): the Club
+ * group's row between Families and Public site, the envelope (N5 row 11), and on a phone a row in the More sheet's Club
+ * group. It is NOT a program: it never joins the bar's and tiles' fill order (ask 6), so no seat's phone changes. `opens` is
+ * `opensCommunications` (`lib/club-communications-place.ts`), the one answer the page's layout and its routes ask too.
+ */
+export function kitCommunicationsLink({ base, opens, isCanceled, tournamentTier }: {
+  base: string; opens: boolean; isCanceled: boolean; tournamentTier: boolean;
+}): KitLink | null {
+  if (!opens || isCanceled || tournamentTier) return null;
+  return { key: COMMUNICATIONS_SEGMENT, label: 'Communications', // = PLACE.name (lib/club-group-email-words.ts); not imported: the mail renderer stays out of every page's nav
+    href: `${base}/${COMMUNICATIONS_SEGMENT}`, icon: Mail };
+}
+
 /** Organization's icon (its sidebar row and its More sheet row share it). */
 export const ORGANIZATION_ICON: LucideIcon = Building2;
 
@@ -505,16 +522,23 @@ export type ClubPlaceGroup<T> = { key: ClubPlaceGroupKey; heading: string; place
  * under the sidebar's names, in the sidebar's order). Programs, then "Also on your plan" (what the plan carries that the club
  * does not run yet, as today), then Club with Organization last. A group with no place is not returned.
  */
-export function clubPlaceGroups<T extends { key: string }>({ programs, alsoOnPlan, organization }: {
+export function clubPlaceGroups<T extends { key: string }>({ programs, alsoOnPlan, organization, communications = null }: {
   programs: readonly T[];
   alsoOnPlan: readonly T[];
   organization: T | null;
+  /** Communications' row (`kitCommunicationsLink`): after Families, before Public site — not a program (ask 6). */
+  communications?: T | null;
 }): ClubPlaceGroup<T>[] {
   const of = (group: 'programs' | 'club') => programs.filter(p => PLACE_GROUP[p.key as AdminProgramKey] === group);
+  const club = of('club');
+  if (communications) {
+    const at = club.findIndex(p => p.key === 'public-site');
+    club.splice(at < 0 ? club.length : at, 0, communications);
+  }
   const groups: ClubPlaceGroup<T>[] = [
     { key: 'programs', heading: 'Programs', places: of('programs') },
     { key: 'also', heading: 'Also on your plan', places: [...alsoOnPlan] },
-    { key: 'club', heading: 'Club', places: [...of('club'), ...(organization ? [organization] : [])] },
+    { key: 'club', heading: 'Club', places: [...club, ...(organization ? [organization] : [])] },
   ];
   return groups.filter(g => g.places.length > 0);
 }
@@ -559,8 +583,10 @@ export function kitOrgPlace({ base, orgLinks, tournamentOnly }: {
  * Organization tab (Ask 4 = B): on its page the FOOT row is the lit one, so no place is. Overview, Calendar and Schedules
  * light on their own addresses (`isKitLinkActive`), none of which is under a place.
  */
-export function litClubPlace(pathname: string, base: string, billingLink: KitLink | null): AdminProgramKey | 'org' | null {
+export function litClubPlace(pathname: string, base: string, billingLink: KitLink | null): AdminProgramKey | 'org' | typeof COMMUNICATIONS_SEGMENT | null {
   if (billingLink && isKitLinkActive(pathname, billingLink)) return null;
+  const comms = `${base}/${COMMUNICATIONS_SEGMENT}`;
+  if (pathname === comms || pathname.startsWith(`${comms}/`)) return COMMUNICATIONS_SEGMENT;
   return activeKitSection(pathname, base);
 }
 
@@ -652,11 +678,12 @@ function litTab<Id extends string>(tabs: readonly ProgramTab<Id>[], pathname: st
 
 /**
  * ⚖ FAMILIES' TABS (Club Tier Stage 5b, Ask 14): Families (the book and its questions) · Duplicates (the queue, its
- * waiting count the amber pill) · Emails (Stage 7c, Ask 7 A: every email the club sent from Families). A family is a
- * record OVER the Families tab, at `/families/{personId}` — so that tab lights one segment under its address too
- * (`views`), and Duplicates' and Emails' own addresses win first.
+ * waiting count the amber pill). A family is a record OVER the Families tab, at `/families/{personId}` — so that tab
+ * lights one segment under its address too (`views`), and Duplicates' own address wins first.
+ * ⚖ The Emails tab LEFT Families for Communications (Club Communications Stage 1, direction ruling 3, ask 7): no pointer is
+ * left here; its old address forwards (`next.config.ts`, above the Families layout's refusal).
  */
-export type FamiliesTabId = 'families' | 'duplicates' | 'emails';
+export type FamiliesTabId = 'families' | 'duplicates';
 export type FamiliesTab = { id: FamiliesTabId; label: string; href: string; views?: true };
 
 export function familiesTabs(base: string): FamiliesTab[] {
@@ -664,7 +691,6 @@ export function familiesTabs(base: string): FamiliesTab[] {
   return [
     { id: 'families', label: 'Families', href: f, views: true },
     { id: 'duplicates', label: 'Duplicates', href: `${f}/duplicates` },
-    { id: 'emails', label: 'Emails', href: `${f}/emails` },
   ];
 }
 
@@ -784,6 +810,8 @@ export type ClubPlaceAccess = {
   opensFamilies: boolean;
   /** The Permits place (Club Tier 13c, C1): `kitPermitsLink`'s gate answered — the rail row and the bar agree. Absent = no. */
   opensPermits?: boolean;
+  /** Communications' own gate (`kitCommunicationsLink`): the bar names it exactly where the sidebar lists it. */
+  opensCommunications?: boolean;
   /* Phase 3's named screens, each its page's own refusal rule (absent = no, so the screen keeps the club's name): */
   /** Calendar: not a Tournament-tier org, and at least one of its programs is this person's (`calendarPrograms`, the API's). */
   opensCalendar?: boolean;
@@ -810,7 +838,7 @@ const flatPlace = (key: string, title: string, tabs: readonly PlaceTab[], active
   activeId ? { key, title, facts: [], tabs, activeId, ariaLabel: title } : null;
 
 export function clubPlaceAt(pathname: string, base: string, {
-  canUse, seasonAccess, orgTabs, runsRepTeams, hasPayouts, opensFamilies, opensPermits = false,
+  canUse, seasonAccess, orgTabs, runsRepTeams, hasPayouts, opensFamilies, opensPermits = false, opensCommunications = false,
   opensCalendar = false, opensSchedules = false, opensPublicSite = false, opensBilling = false, tournamentSettingsTabs = null,
 }: ClubPlaceAccess): ClubPlaceAt | null {
   // ⚖ A TOURNAMENT-ONLY ORGANIZATION'S SETTINGS & ACCESS IS A PLACE (navigation Phase 2 Part B, E3 + P1, owner 2026-11-09 /
@@ -829,6 +857,13 @@ export function clubPlaceAt(pathname: string, base: string, {
   const permits = `${base}/permits`;
   if (isAtOrUnder(pathname, permits)) {
     return opensPermits ? flatPlace('permits', 'Permits', [{ id: 'permits', label: 'Permits', href: permits }], 'permits') : null;
+  }
+  // Communications (Club Communications Stage 1): one page, so no tab row (N11), as Permits. Not its place = the club's name.
+  const comms = `${base}/${COMMUNICATIONS_SEGMENT}`;
+  if (isAtOrUnder(pathname, comms)) {
+    return opensCommunications
+      ? flatPlace(COMMUNICATIONS_SEGMENT, 'Communications', [{ id: COMMUNICATIONS_SEGMENT, label: 'Communications', href: comms }], COMMUNICATIONS_SEGMENT)
+      : null;
   }
   // ── Phase 3's named screens (round 5): one address each, the page's own gate. ──
   if (pathname === `${base}/calendar`) return opensCalendar ? namedScreen('calendar', 'Calendar') : null;

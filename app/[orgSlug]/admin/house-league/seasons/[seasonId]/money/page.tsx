@@ -34,6 +34,7 @@ import Link from 'next/link';
 import PayoutsStatusLine from '@/components/admin/kit/club/PayoutsStatusLine';
 import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import { buildFilename, downloadCSVBlob, downloadXLSX, generateCSV } from '@/lib/export';
+import { useSeasonEmailOpen } from '@/components/admin/kit/useCommunicationsFacts';
 
 interface BookLine {
   id: string; regId: string; player: string | null; day: string; amount: number; method: string | null; receiptNo?: number | null;
@@ -73,6 +74,7 @@ export default function MoneyPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const { currentOrg, user } = useOrg();
   const access = useHouseLeagueAccess();
+  const emailOpen = useSeasonEmailOpen();
   const canView = !!access?.readMoney;
   const [read, setRead] = useState<MoneyRead | null>(null);
   const [failed, setFailed] = useState(false);
@@ -190,7 +192,8 @@ export default function MoneyPage() {
   // this page (13d's door) but not Registrations, so their rows stay plain and both buttons are absent — never a door to a
   // refused page. Emailing families is the desk's (the Email families window's own gate).
   const opensRegistrations = !!access?.read;
-  const emailsFamilies = opensRegistrations && !!access?.email;
+  // …and the Communications switch (Club Communications ask 5: off = no group email from any screen).
+  const emailsFamilies = opensRegistrations && !!access?.email && emailOpen;
   const regsHref = `${base}/registrations`;
   const childHref = (regId: string) => `${regsHref}?reg=${regId}&at=fee`;
   const toneClass = (t: Row['tone']) => (t === 'out' ? s.out : t === 'voided' ? s.voided : t === 'history' ? s.history : '');

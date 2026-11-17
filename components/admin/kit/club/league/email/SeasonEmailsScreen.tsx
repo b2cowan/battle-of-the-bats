@@ -28,6 +28,7 @@ import { moneyFetch } from '../../money/MoneyKit';
 import EmailFamiliesWindow, { type EmailSent } from '../../families/EmailFamiliesWindow';
 import { EmailLogList, EmailRecord } from '../../families/EmailLog';
 import fam from '../../families/Families.module.css';
+import { useSeasonEmailOpen } from '../../../useCommunicationsFacts';
 
 interface History {
   season: { id: string; name: string; status: string };
@@ -42,6 +43,7 @@ export default function SeasonEmailsScreen() {
   const { currentOrg, loading: orgLoading } = useOrg();
   const isPhone = useIsPhone();
   const gate = useHouseLeagueAccess();
+  const emailOpen = useSeasonEmailOpen();
   const slug = currentOrg?.slug ?? '';
   const q = `orgSlug=${encodeURIComponent(slug)}`;
   const seasonHref = `/${slug}/admin/house-league/seasons/${seasonId}`;
@@ -65,7 +67,8 @@ export default function SeasonEmailsScreen() {
 
   const season = history?.season ?? null;
   const finished = !!season && isFinishedLeagueSeason(season);
-  const door = history?.hasFamilies ? (
+  // Club Communications ask 5: the Communications switch off = no group email from this screen (the history still reads).
+  const door = history?.hasFamilies && emailOpen ? (
     <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setEmailing(true)} aria-haspopup="dialog"
       aria-label={isPhone ? SW.historyTitle : undefined}>
       <Mail size={14} aria-hidden /><span className={ck.btnWord}>{isPhone ? SW.historyButtonPhone : SW.historyTitle}</span>
@@ -103,7 +106,9 @@ export default function SeasonEmailsScreen() {
           detailUrl={`/api/admin/house-league/seasons/${seasonId}/emails/history?${q}&send=${encodeURIComponent(open.id)}`}
           // A schedule notice (9d-2b) finishes from its own rows; a typed email from its send.
           // The practice times' notice is the runners' (the registrar sees it in the history but cannot finish it — the server refuses).
+          // The Communications switch off: a typed email is not theirs to finish (ask 5); an automatic notice still is.
           resend={open.kind === 'notice' && open.noticeKind === 'practices_sent' && !gate.run ? null
+            : open.kind !== 'notice' && !emailOpen ? null
             : { url: `/api/admin/house-league/seasons/${seasonId}/emails?${q}`, body: open.kind === 'notice' ? { action: 'resendNotice', noticeId: open.id } : { action: 'resend', sendId: open.id }, owner: 'season' }}
           teamsHref={`${seasonHref}/teams`}
           onClose={() => setOpen(null)}

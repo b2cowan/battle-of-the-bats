@@ -211,8 +211,9 @@ describe('Email families — the words', () => {
       const rel = `${dir}/${n}`;
       return statSync(join(REPO, rel)).isDirectory() ? walk(rel) : [rel];
     });
-    for (const f of ['components/admin/kit/club/families/EmailFamiliesWindow.tsx', 'components/admin/kit/club/families/EmailsTab.tsx',
-      ...walk('app/[orgSlug]/admin/families/emails')]) {
+    // The Emails tab became Communications (Club Communications Stage 1): its screen and page are read in its place.
+    for (const f of ['components/admin/kit/club/families/EmailFamiliesWindow.tsx', 'components/admin/kit/club/communications/CommunicationsScreen.tsx',
+      ...walk('app/[orgSlug]/admin/club-emails')]) {
       assert.ok(!/\bMessages\b/.test(code(f)), `${f} says "Messages"`);
     }
   });

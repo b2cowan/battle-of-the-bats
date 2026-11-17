@@ -93,12 +93,11 @@ export const CLUB_PLACE_HELP: Readonly<Record<string, PageHelpTopic>> = {
   'accounting/payment-requests': acc(['payment-requests'], 'Payment requests'),
   'accounting/budget-vs-actual': acc(['budget-vs-actual'], 'Budget vs. Actual'),
   'accounting/payouts': acc(['payouts-tab'], 'Payouts'),
-  // ── Families (three tabs) and a child's page ──
+  // ── Families (two tabs) and a child's page ──
   'families/families': fam(['families-worklist'], 'Families'),
   // A family's record: over Families (its address lights Families).
   'families/families/record': fam(['families-family-page'], 'Family'),
   'families/duplicates': fam(['families-duplicates'], 'Duplicates'),
-  'families/emails': fam(['families-email'], 'Emails'),
   child: fam(['families-child-page'], 'Child'),
   // ── Organization (the person's own tabs, six at most) ──
   'org/org/board': org(['the-board', 'roles'], 'The board'),
@@ -109,6 +108,8 @@ export const CLUB_PLACE_HELP: Readonly<Record<string, PageHelpTopic>> = {
   'org/org/pdf': inGuide('exports')(['pdf-settings'], 'PDF settings'),
   // ── The screens with no tab row ──
   'permits/permits': org(['permits'], 'Permits'),
+  // Communications (Club Communications Stage 1, N12): the emailing article until Close's /docs gives the place its own topic.
+  'club-emails/club-emails': fam(['families-email'], 'Communications'),
   calendar: org(['club-calendar'], 'Calendar'),
   schedules: org(['club-schedules'], 'Schedules', 'club-schedules-t-list'),
   schedule: org(['club-schedules'], 'Schedule', 'club-schedules-t-page'),

@@ -1,5 +1,6 @@
 import { roleWithArticle } from './board-people';
 import { PLAN_BILLING_TITLE } from './plan-billing-title';
+import { PLACE } from './club-group-email-words';
 import type { OrgRole } from './types';
 
 /**
@@ -31,11 +32,14 @@ export type NotYoursWho =
   /** The people who run the league's desk, by role (a season's email). */
   | 'leagueDesk'
   /** Anyone not limited to certain teams: no grant can change it for a limited member (Families, Stage 5a Ask 12). */
-  | 'wholeClub';
+  | 'wholeClub'
+  /** The people on the club's board, by seat: no switch can give it to a seat with nobody to write to (Communications, tab 4). */
+  | 'board';
 
 export type NotYoursPage =
   | 'families' | 'familiesLimited' | 'accounting' | 'repTeams' | 'publicSite' | 'houseLeague' | 'seasonMoney' | 'seasonEmails'
-  | 'pdfSettings' | 'settings' | 'billing' | 'auditLog' | 'members' | 'schedules' | 'calendar' | 'organization';
+  | 'pdfSettings' | 'settings' | 'billing' | 'auditLog' | 'members' | 'schedules' | 'calendar' | 'organization'
+  | 'communications' | 'communicationsBoard';
 
 type PageWords = { title: string; what: string; who: NotYoursWho };
 
@@ -59,6 +63,10 @@ export const NOT_YOURS_PAGES: Record<NotYoursPage, PageWords> = {
   schedules: { title: 'Schedules', what: 'It’s where the club hands out its field time to its programs.', who: 'ownerOrAdmin' },
   calendar: { title: 'Calendar', what: 'It shows the games, practices and events of the programs you open.', who: 'grant' },
   organization: { title: 'Organization', what: 'It holds the club’s board, its venues and its settings.', who: 'grant' },
+  // Club Communications Stage 1 (tab 4): a board seat whose switch is off is given it back by the owner (`grant`); staff and
+  // volunteers have nobody to write to, so no switch gives it to them (`board`). Words: PLACE.notYoursWhat (one block).
+  communications: { title: PLACE.name, what: PLACE.notYoursWhat, who: 'grant' },
+  communicationsBoard: { title: PLACE.name, what: PLACE.notYoursWhat, who: 'board' },
 };
 
 export const NOT_YOURS_WORDS = {
@@ -96,5 +104,7 @@ export function notYoursWhoSentence(who: NotYoursWho, ownerName: string | null, 
       return 'It opens only for people who aren’t limited to certain teams.';
     case 'leagueDesk':
       return `${owner}, ${ownerName ? 'the club’s' : 'its'} admins, league admins and league registrars open it.`;
+    case 'board':
+      return `${owner} and the people on the club’s board open it.`;
   }
 }

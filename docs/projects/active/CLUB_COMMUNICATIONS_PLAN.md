@@ -2,7 +2,7 @@
 
 > **Status:** Stage 1 fully ruled 2026-11-16 (direction 1–12, Stage 1 asks 1–14, the board asks 15–19, and the coach
 > email drawing's ten standing asks, all as recommended). Build prompt: `CLUB_COMMUNICATIONS_STAGE1_BUILD_PROMPT.md`.
-> Nothing built.
+> Build state: §3 Stage 1 (Session 1 committed; Session 2 built 2026-11-17, commit and Walk A owed).
 > **Created:** 2026-11-16
 > **Branch:** dev
 > **PM brief:** `CLUB_COMMUNICATIONS_PM_BRIEF.md`
@@ -130,7 +130,7 @@ R2–R4 need `/legal` on the changed fixed lines before the build guard pins the
   family log, and (3) the privacy §5/§9 sentences are in `docs/agents/legal/drafts/PRIVACY_POLICY.md`. Session 1 does
   all three, so a promote after Session 1 is inside the gate. Same shape as the friend-requests gate.
 - [ ] Session 1 · Session 2 (Walk A) · Session 3 (Walk B) · Close — commit hashes and walk numbers recorded here as each lands.
-- [x] **Session 1 · the engine — BUILT 2026-11-17** (commit owed: the owner's yes; walk: none, no screen). Owner rulings that
+- [x] **Session 1 · the engine — committed `95cac82d6` (engine, mig 492) + `817c95523` (mig 493, the nightly job, watched automation) 2026-11-17** (walk: none, no screen). Owner rulings that
   session: the retention clock (§8) and R1–R4 (§1). **Hand-off for Sessions 2 and 3 — call these, do not re-derive them:**
   - **Migrations** 492 (the three `club_group_email_*` tables, `family_email_sends.reply_to / club_copy / words_cleared_at /
     names_cleared_at`, subject/body nullable, `club_group_email_claim`, `club_email_retention_sweep`) and **493** (the nightly
@@ -172,6 +172,82 @@ R2–R4 need `/legal` on the changed fixed lines before the build guard pins the
     `EmailLog` shows a blanked family subject as "A message to this family" — render `RECORD.wordsCleared` via
     `ClubEmailRecord.wordsCleared`. **For Session 3:** the season window's one-family branch ignores `replyTo`/`copyClub`
     (hide the switch there, or carry it into the one-family send).
+- [x] **Session 2 · the place — BUILT 2026-11-17** (commit owed: the owner's yes; **Walk A owed**). Owner rulings that
+  session (asked before code, both as recommended): **(S2-1)** the club-wide family window is the owner's and admins'
+  ONLY, as legal §2c's route table and drawing tab 4 rule — a staff member, league admin or registrar who holds the
+  Families book loses the club-wide send and a list's "Email these families" (a league seat keeps its season's window);
+  **(S2-2)** a league admin or registrar keeps the place between seasons: the list stays, New email is absent until a
+  season is under way (the drawing's "nobody to write to, no place" read literally would make the sidebar change with
+  the calendar). **Hand-off for Session 3 — call these, do not re-derive them:**
+  - **The place** is `/[orgSlug]/admin/club-emails` (layout = the server gate + the "not yours" screen; page →
+    `components/admin/kit/club/communications/CommunicationsScreen.tsx`; frame `CommunicationsFrame`). Not a program:
+    `kitCommunicationsLink` + `clubPlaceGroups({ communications })` put it after Families; it never joins the phone's
+    fill (N10). `litClubPlace` and `clubPlaceAt` know `COMMUNICATIONS_SEGMENT`. Help topic `'club-emails/club-emails'`
+    (points at the emailing article until Close's `/docs`).
+  - **Who has the place** is ONE pure answer, `lib/club-communications-place.ts`: `opensCommunications` (Session 2 =
+    a family door; **Session 3 widens it to `|| seat.any`** — the colleague seat — so the treasurer and a coach-only seat
+    get it), `familyDoor` ('club' owner/admin · 'season' league seat), `seasonDoorOpen`, `familyReader`. The server's
+    gates are `lib/club-communications-auth.ts` (`requireClubFamilyEmail`, `requireCommunications`, `seasonEmailSwitch`,
+    `placeFactsFor`); the browser's are `components/admin/kit/useCommunicationsFacts.ts`. The layout picks the "not
+    yours" words: a board seat other than the treasurer → `communications` (grant), everyone else →
+    `communicationsBoard` ("…and the people on the club's board open it"). **Session 3: the treasurer gets the place,
+    so move the treasurer out of that `communicationsBoard` branch.**
+  - **The list** is `GET /api/admin/club-emails/log?filter=all|families|coaches|board|season:<id>&before=` →
+    `readCommunications` (`lib/club-communications-log.ts`): the family log narrowed by `familyReader` (a league seat
+    reads season rows + Every family; one-family rows only with the book, or from a season) merged with
+    `listColleagueEmails`; paged on the later of the two cursors. Rows are `EmailLogRow` (kind `coaches`/`board` for
+    colleague rows); a stopped family row carries `finish` (`{door}` or `{line}`). First page: `total`, `kinds`, `seasons`.
+  - **Records:** family → `GET /api/admin/club-emails/family/[sendId]` (`readCommunicationsFamily`: a league seat's
+    record of a club-wide email has NO named-lines keys; Not found when unreadable); coach/board → Session 1's
+    `/api/admin/club-emails/[sendId]`, drawn by `ColleagueRecord.tsx` (finish wired; **"Send again to these people" is
+    Session 3's**, it opens the coach/board window with the pick filled in from `/[sendId]/again`).
+  - **New email** today: one choice → "Email families" (lime, plus); a league seat with two or more seasons under way →
+    `CoachToolbarMenu variant="primary"`, one item per season. **Session 3 adds To coaches / To the board to that same
+    menu** (choices in `CommunicationsScreen`'s `choices`). The club window opens with `eyebrow="Communications"`.
+  - **The family window** (`EmailFamiliesWindow`): the readers line `WINDOW.readers` under the message box (both
+    doors); the "Show them" link hidden when the preview says `holdsBook: false`; `eyebrow` prop. Session 3 adds the
+    reply switch and the inbox tick (R2–R4).
+  - **The switch:** `module_communications` on by default for league admin, registrar and treasurer (`lib/roles.ts`);
+    listed with the programs in the member window (`MEMBER_PROGRAMS`, its always-on line `PLACE.switchLine`; no longer
+    folded under Tournaments; not on a tournament-only plan). Off → no place, the season's window refuses (every
+    action but `resendNotice`, an automatic notice), and the buttons are absent: the season tab's door and its record's
+    resend, Registrations' Email, the owing list's "Email these families", a Families list's "Email these families".
+  - **Families after the move:** tabs Families · Duplicates; `/:orgSlug/admin/families/emails` forwards in
+    `next.config.ts` (above the Families layout, T23); the old list/record routes are deleted; "the Emails tab" strings
+    re-pointed (`FAMILY_EMAIL_WORDS.unknown`, the support console's sent-log lines).
+  - **Words:** the place's are `PLACE` in `lib/club-group-email-words.ts` (+ `RECORD.whoWent/status*/finish*`); also
+    written this session, outside that block, for Close's `/marketing` pass: `FAMILY_EMAILS_TAB_WORDS.nameless` ("A
+    family") and `.subjectCleared`, the member window's `LOSES`/`GAINS` lines for Communications
+    (`member-summary.ts`), the "not yours" `board` sentence (`not-yours-words.ts`).
+  - **Tests:** `tests/unit/club-communications-place.test.ts` (T9, T10 family half, T11, T12, T22 family window, T23);
+    nav-standard-guard (Communications per seat, the owner's sheet 15, the bar/tiles snapshot unchanged). **Probe:**
+    `.probe/club-emails/place.ts` (`node --env-file=.env.local .probe/club-emails/place-run.cjs`): owner 10 rows, admin
+    without the book 7 (names in Opted out / Didn't go, no one-family rows), league seats 6 (Every family with NO
+    surname in the JSON; rep-team and list emails Not found; the season's one-family message only), switch off and
+    staff-with-the-book refused, "A family" for a nameless one, zero addresses in any response.
+  - **`/review` 2026-11-17 (high-risk, 4 lenses, 0 Critical/High; no leak or unauthorised send found).** Fixed the same
+    session: a league seat's season menu reads "To families" with the season as its second line (tab 2, not the season
+    as the title); the filter shows once the reader has more than one kind (tab 1); a league seat reads a one-family row
+    by surname, as the season's list does; a stopped season email an owner/admin can't finish by the season's door is
+    offered by the club's (screen and route agreed); the Communications row in the member window is a board seat's only
+    (staff, a volunteer or a coach: it switched nothing); the finish message is past tense with what it reached; no
+    finish/resend button once the clock deleted the words; a stale "Show more" can't append another filter's rows; a
+    first page with nothing readable but more behind it shows Show more, not the empty card; one sort order; the list
+    cursor must be a timestamp. **Left, recorded (Low/Advisory):** the readers' `reader` argument defaults to the
+    widest (the season history route relies on it, season-scoped); `colleagueSummary` counts at most 5,000 sends; the
+    redirect's `:orgSlug` also matches `/api/…/families/emails` (a 404 either way); "{Sender} or an admin can send it…"
+    is shown to an admin who lacks the book on a list email; `resendNotice` (an automatic notice's "send to the ones it
+    missed") stays open with the switch off, as ask 5's "automatic emails still go" reads — **owner to confirm**.
+    Data: no dev member has `module_communications` saved off (a saved off would keep the place shut) — **check prod
+    before the promote**.
+  - **Owed by others / later:** `scripts/layout-screens.mjs` still sweeps `admin-families-emails` and
+    `admin-families-email-window` at the old address (it forwards now) — that file carries another session's
+    uncommitted edits, so it waits for the owner's word; the emailing help article still describes the Emails tab (the
+    "?" on Communications points at it) — Close's `/docs`.
+  - **Not done here (owed):** `check:layout --changed` on the place, Families and the member window (needs the dev
+    server; Walk A covers the eye). A season filter lists that season's FAMILY emails (a coach email to the season is
+    under To coaches). Pre-existing, not this session's: a club-door "A house league season" row reads "{season} ·
+    {season}" in To (the shipped `seasonTo` over a label that is the season's name).
 - [ ] **Migration first:** the coach-email send log and its recipients table, as the coach email drawing specifies
   (sender, group label, counts, status, body; recipients by name, team line, status), group kinds open-ended.
   `docs/agents/db/DATA_DICTIONARY.md` + `npm run refresh:snapshots` (dev + prod) in the same unit of work.

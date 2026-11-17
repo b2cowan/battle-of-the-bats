@@ -86,7 +86,7 @@ export function whatToDo(state: SentState, reason: BounceReason | null): string 
 }
 
 export const SENT_LOG_FOOT =
-  'Delivered means their mail server accepted it. It can still be in spam; we do not know whether it was opened. Kept 90 days. Emails a club sends to families are in the club\'s own Emails tab, not here.';
+  'Delivered means their mail server accepted it. It can still be in spam; we do not know whether it was opened. Kept 90 days. Emails a club sends to families are in the club\'s own Communications list, not here.';
 export const EMAIL_WINDOW_FOOT = 'The email itself is not kept.';
 export const NO_EMAILS_FOR_PERSON = 'No emails recorded for this person.';
 export const NO_EMAILS_TO_ADDRESS = 'Nothing was sent to this address in the last 90 days.';
@@ -96,7 +96,7 @@ export const NO_EMAILS_TO_ADDRESS_HINT =
 /** "Recording started on {date}; anything sent before then was not kept. …" — the date is the first row ever kept. */
 export function recordingStartedLine(startedOn: string | null): string {
   const lead = startedOn ? `Recording started on ${startedOn}; anything sent before then was not kept.` : NO_EMAILS_YET;
-  return `${lead} Emails a club sends to families are in that club's own Emails tab.`;
+  return `${lead} Emails a club sends to families are in that club's own Communications list.`;
 }
 
 /** The line of a timeline event for a bounce, after "Bounced 2 seconds later, for good." (E4). */

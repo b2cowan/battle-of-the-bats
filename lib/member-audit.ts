@@ -31,8 +31,6 @@ export const MEMBER_AUDIT_ACTIONS = [
 const PROGRAM_LABEL: Partial<Record<string, string>> = Object.fromEntries(
   MEMBER_PROGRAMS.map(p => [p.module, p.label]),
 );
-// Communications is a module switch the Members screen folds under Tournaments.
-PROGRAM_LABEL.module_communications = 'Communications';
 // The one non-tournament power Manage offers (it folds under Members) — named, never lumped in with
 // "tournament controls" (/review 2026-09-26).
 PROGRAM_LABEL.manage_members = 'Managing members';

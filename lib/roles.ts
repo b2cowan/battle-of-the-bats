@@ -66,16 +66,22 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
     'module_tournaments',
   ]),
   official: new Set<Capability>(['submit_scores', 'check_in_teams']),
+  // ⚖ module_communications (Club Communications Stage 1, asks 5 and 16, owner 2026-11-16): ON by default for every seat on
+  // the club's board — the league admin and registrar (their season's families and house-league coaches) and the treasurer
+  // (the board). Off = no group email from any screen; receiving board email never asks it. Pinned by role-defaults-guard.
   league_admin: new Set<Capability>([
     'module_house_league',
     'module_members',
+    'module_communications',
   ]),
   league_registrar: new Set<Capability>([
     'module_house_league',
+    'module_communications',
   ]),
   treasurer: new Set<Capability>([
     'module_accounting',
     'module_members',
+    'module_communications',
   ]),
   coach: new Set<Capability>([
     // Intentionally empty. A coach reaches the Coaches Portal via their

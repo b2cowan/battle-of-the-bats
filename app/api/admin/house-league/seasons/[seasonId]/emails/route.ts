@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
+import { seasonEmailSwitch } from '@/lib/club-communications-auth';
 import { getLeagueSeasonById } from '@/lib/db';
 import { divisionInSeason, registrationsInSeason, teamsInSeason } from '@/lib/league-season-scope';
 import { isSeasonDoorScope, parseScope, type FamilyAudienceScope } from '@/lib/families-audience';
@@ -62,6 +63,9 @@ export const GET = withObservability(async (req: Request,
   const ctx = await getAuthContextWithRole({ orgSlug: url.searchParams.get('orgSlug') ?? undefined, requireOrgSlug: true });
   const err = houseLeagueRefusal(ctx, 'email');
   if (err) return err;
+  // Club Communications ask 5: the Communications switch off = no group email from any screen, a season's included.
+  const off = seasonEmailSwitch(ctx!);
+  if (off) return off;
 
   const { seasonId } = await params;
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
@@ -87,6 +91,12 @@ export const POST = withObservability(async (req: Request,
   // ⚖ Not an object (null, an array, a number) is no request — a 400, never a read of a field off it.
   if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   const action = body.action;
+  // Club Communications ask 5: the switch off = no group email from this screen either. An automatic notice an action
+  // caused (Send to the ones it missed on a schedule or practice notice) still goes: it is not the sender's group email.
+  if (action !== 'resendNotice') {
+    const off = seasonEmailSwitch(ctx!);
+    if (off) return off;
+  }
 
   // The window's read with the ticked list in the body (Club Tier Stage 13e-10, owner 2026-11-17): a few hundred
   // registration ids outgrow an address, so the window posts them the way Send does. It is GET's read exactly — the

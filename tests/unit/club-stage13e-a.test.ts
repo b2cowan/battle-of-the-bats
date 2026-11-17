@@ -131,7 +131,8 @@ describe('Money · Still owing: its address, its rows, its doors (13e-2, 13e-3)'
   });
   it('rows and both buttons only for someone who can open Registrations: never a door to a refused page', () => {
     assert.match(page, /const opensRegistrations = !!access\?\.read;/);
-    assert.match(page, /const emailsFamilies = opensRegistrations && !!access\?\.email;/);
+    // …and the Communications switch (Club Communications Stage 1, ask 5: off = no group email from any screen).
+    assert.match(page, /const emailsFamilies = opensRegistrations && !!access\?\.email && emailOpen;/);
     assert.match(page, /\{opensRegistrations && \(\s*<div className=\{s\.owingActions\}>/);
     assert.match(page, /\{emailsFamilies && \(/);
     // Every link into Registrations is behind the gate (the Refunds line's names too).
