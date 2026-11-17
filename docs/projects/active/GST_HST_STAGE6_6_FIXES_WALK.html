@@ -1,0 +1,249 @@
+<title>6.6 Fixes Owner Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame, from walk §533). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { button { min-height: 44px; } }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.warnline { color: var(--warn); }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner walk · GST/HST Stage 6 · the two 6.6 fixes · ledger §534</span>
+    <h1>The yearly reminder keeps its date and amount, and a move up during a trial gets its email</h1>
+    <p class="sub">Written 2026-11-16, after the build (Part A <code>a9d559062</code>, Part B <code>873fc7c76</code>). One purpose: see the two fixes the way a customer and a staff member meet them. On the dev site, with real emails to your inbox. About 30 minutes.</p>
+  </header>
+  <section class="card"><h2>What changed</h2><ul>
+    <li><strong>The yearly reminder.</strong> The renewal date, the amount and its tax, the “to stop it, cancel before…” sentence and the billing button are now added by the product after whatever a staff member writes in the template. An edit can no longer remove them, and an edit’s own button gives way to the product’s, so the email has one.</li>
+    <li><strong>Both billing templates</strong> tell staff to keep the email transactional (no offers, no other plans’ prices, no links).</li>
+    <li><strong>A move up during a free trial</strong> now sends every owner “The details of your purchase”: the trial continues, nothing charged today, the new plan’s first payment and its estimated tax.</li>
+  </ul></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>A</strong> The reminder template starts from one plain line with no button, and both descriptions carry the “keep this email transactional” line.</li>
+    <li><strong>B</strong> With the template customised (your own line and your own button), both owners’ reminder shows your line first, then the date, amount and cancel sentence, and exactly one button.</li>
+    <li><strong>C</strong> A trialing club’s move up shows $0.00 due today, and both owners get the details email with the new plan’s first payment and the trial’s end date.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>Running on your PC at <code>http://localhost:3000</code> (<code>npm run dev</code>). It is running now.</dd>
+    <dt>The fixture</dt><dd>Ask Claude to run it, or run it yourself in the repo folder: <code>node --env-file=.env.local scripts/seed-gst-6-6-fixes-walk-fixture.mjs setup --inbox YOU@gmail.com</code> (a plain address, no + part). It makes two clubs, each with two owners on your inbox. <strong>Stop check:</strong> it ends with “Done.” and three “What the walk will read” lines. Keep those lines open: they give this run’s renewal date, trial end date and figures (the dry run read December 19, 2026 and $390.00 for Part B; December 16, 2026, $379.00, HST $49.27 and $428.27 for Part C).</dd>
+    <dt>Staff sign-in (Part A, B8)</dt><dd><code>uat-platform@fieldlogichq.ca</code> at <code>http://localhost:3000/platform-admin/login</code>, your usual UAT platform admin password.</dd>
+    <dt>Club owner sign-in (Part C)</dt><dd><code>YOU+w66a@gmail.com</code>, password <code>UATPassword2026!</code>, at <code>http://localhost:3000/login</code>, in a <strong>private window</strong> (so the staff sign-in stays put).</dd>
+    <dt>Inboxes to read</dt><dd><code>+w66r</code> and <code>+w66s</code> (the two owners of Walk66 Reminder Club, Part B); <code>+w66a</code> and <code>+w66b</code> (Walk66 Trial Club, Part C). All arrive in your one inbox.</dd>
+    <dt>The daily job</dt><dd>Stripe’s test messages go to the deployed dev site, not your PC, so the emails go when the daily job runs here: <code>node --env-file=.env.local scripts/seed-gst-6-6-fixes-walk-fixture.mjs run-daily</code>. Claude can run it when a step says so.</dd>
+    <dt>Order</dt><dd>A, then B (B reads A’s edit). C any time after setup.</dd>
+  </dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+  <section class="card" id="callsCard"><h2>Your calls (not counted in the progress)</h2><div id="calls" style="display:flex;flex-direction:column;gap:14px"></div></section>
+  <section class="card"><h2>Not in this walk (for your reference; no boxes)</h2><ul>
+    <li><strong>The reminder nobody customised.</strong> It is the same email you passed in walk §525, character for character: a test pins it and the build compared it against the old version on seven cases.</li>
+    <li><strong>The editor’s “Send test”.</strong> It still sends only the template’s own words, without the date, amount and cancel line the product adds (left out of this build on purpose; the description now tells staff what the product adds).</li>
+    <li><strong>A next-season choice that moves up.</strong> You ruled it gets the email too, with its own opening; not built yet.</li>
+    <li><strong>A move up that charges money.</strong> Unchanged since walk §525.</li>
+  </ul></section>
+</main>
+<script>
+(function () {
+  var D = {"KEY":"gst-6-6-fixes-walk-v1","TITLE":"GST/HST 6.6 fixes · Owner walk §534 (2026-11-16)","PARTS":[
+{"id":"A","title":"The two billing templates (staff, platform admin)","intro":"Signed in as uat-platform@fieldlogichq.ca. Platform admin › Email templates.","steps":[
+{"who":"You · /platform-admin/email-templates","do":"Open <strong>Yearly renewal reminder</strong>.","see":"The <strong>Default</strong> badge; the Body reads only <code>A note about the yearly plan for {{orgName}}.</code>; the CTA button label is empty."},
+{"who":"You · the same page","do":"Read the template’s description.","see":"It says <code>{{lead}}</code> repeats the app’s sentence with the date, the price and the tax, which the app adds below your text anyway, and it ends “Keep this email transactional: no offers, no other plans’ prices, and no links. The app adds the figures, the cancel line and the billing button after your text, so they cannot be removed.”"},
+{"who":"You · Email templates","do":"Open <strong>Purchase details</strong> and read its description.","see":"It ends with “Keep this email transactional: no offers, no other plans’ prices, and no links.” once, after the sentence that lists what the app adds."},
+{"who":"You · Yearly renewal reminder","do":"Replace the Body with <code>Hello from the walk. This is our own line for {{orgName}}.</code>","see":"<strong>Save</strong> becomes pressable."},
+{"who":"You · the same page","do":"Type <code>Open billing</code> in <strong>CTA button label</strong>.","see":"The field holds “Open billing”. This is a staff member adding a button of their own."},
+{"who":"You · the same page","do":"Press <strong>Save</strong>.","see":"The badge reads <strong>Customised</strong>."}
+]},
+{"id":"B","title":"A real reminder after the customised words (both owners of Walk66 Reminder Club)","intro":"The editor’s Send test does not show the product’s part, so this is the daily job’s real reminder.","steps":[
+{"who":"You or Claude · terminal","do":"Run the daily job (<code>… run-daily</code>).","see":"<code>renewal_reminders ok=true {\"sent\":1, …}</code>.","check":true},
+{"who":"You · inbox, the +w66r email","do":"Find the new email.","see":"Subject “Tournament Plus renews on {the renewal date setup printed}”, heading “Your yearly plan renews on {that date}”."},
+{"who":"You · that email","do":"Read the first paragraph under the heading.","see":"Your own line: “Hello from the walk. This is our own line for Walk66 Reminder Club.”"},
+{"who":"You · that email","do":"Read the paragraph after your line.","see":"“Walk66 Reminder Club’s yearly Tournament Plus plan renews on {date}. We’ll charge the card on file $390.00 plus applicable taxes. Based on today’s tax rates and your billing address on file, that’s HST … $50.70, for a total of $440.70 CAD. If either changes, the tax will too.”","check":true},
+{"who":"You · that email","do":"Read the next paragraph.","see":"“To keep it, there’s nothing to do. To stop it, cancel from your billing page before {date}; your plan stays active until then.”","check":true},
+{"who":"You · that email","do":"Count the buttons.","see":"Exactly <strong>one</strong>, “Your billing page”. No “Open billing” button.","check":true},
+{"who":"You · inbox, the +w66s email","do":"Open the same reminder sent to the second owner.","see":"The same email: every owner is told."},
+{"who":"You · platform admin › Yearly renewal reminder","do":"Press <strong>Reset to default</strong> and confirm.","see":"The badge reads <strong>Default</strong>. Your edited words stay showing in the editor: that is how Reset works for every transactional template today (the product goes back to sending its built-in email). Claude puts the opening line back at hand-back."}
+]},
+{"id":"C","title":"A move up during a free trial (an owner of Walk66 Trial Club)","intro":"In a private window, signed in as YOU+w66a@gmail.com. The club is on Club, monthly, with a real 30-day free trial in Stripe.","steps":[
+{"who":"You · http://localhost:3000/walk66-trial-club/admin/billing","do":"Open the billing page.","see":"The plan is <strong>Club</strong>, and the page shows the club is on its free trial (to the trial end date setup printed). If it does not mention the trial, say so in the notes."},
+{"who":"You · the billing page","do":"Press <strong>Move to Club · Association</strong>.","see":"The window says <strong>Due today $0.00</strong>.","check":true},
+{"who":"You · the move window","do":"Press the window’s button to make the move.","see":"The page reads <strong>Club · Association</strong>, and the trial and its end date are as before."},
+{"who":"You or Claude · terminal","do":"Run the daily job again.","see":"<code>purchase_emails … \"sent\":1</code> and <code>renewal_reminders … \"sent\":0</code> (the reminder went once for its date).","check":true},
+{"who":"You · inbox, the +w66a email","do":"Find the new email.","see":"Subject “The details of your purchase: Club · Association”."},
+{"who":"You · that email","do":"Read the first paragraph.","see":"“Walk66 Trial Club is now on Club · Association. Your free trial continues, and nothing has been charged today.”","check":true},
+{"who":"You · that email","do":"Read the table.","see":"“Bought by Walk66 Trial Owner A, on {today}”, “Plan Club · Association, billed monthly…”, and <strong>Charged today $0.00</strong>."},
+{"who":"You · that email","do":"Read the paragraph under the table.","see":"“Your first payment: $379.00 plus applicable taxes, on {the trial end date}. Estimated tax, based on your billing address today: HST … $49.27, for a total of $428.27 CAD.” The new plan’s price, not Club’s.","check":true},
+{"who":"You · that email","do":"Read the next sentence.","see":"“Cancel from your billing page before {the trial end date} and you won’t be charged.”","check":true},
+{"who":"You · that email","do":"Look over the whole email.","see":"No “receipt”, no other plan or price; the only links are View your invoice, Your billing page and the Terms line.","check":true},
+{"who":"You · inbox, the +w66b email","do":"Open the same email sent to the second owner.","see":"The same email: every owner gets it, and “Bought by” still names Owner A."}
+]},
+{"id":"D","title":"Hand back","steps":[
+{"who":"You","do":"Press <strong>Build summary</strong> at the top and paste it to Claude, with “§534 done”.","see":"Claude records the result in the ledger and the Stage 6 plan, tears the fixture down, and puts the reminder template’s opening line back on dev."}
+]}
+],"CALLS":[]};
+  var KEY = D.KEY, TITLE = D.TITLE, PARTS = D.PARTS, CALLS = D.CALLS;
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    if (p.intro) body.appendChild(el('p', 'sub', p.intro));
+    p.steps.forEach(function (s, i) {
+      var id = p.id + '.' + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', (s.check ? 'Check: ' : 'You should see: ') + s.see));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id + ' (no phone numbers, addresses or account numbers)'; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  var callHost = document.getElementById('calls');
+  CALLS.forEach(function (c) {
+    var box = el('div', 'callbox'); box.style.cssText = 'display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px';
+    box.appendChild(el('strong', null, c.id + ' · ' + c.title));
+    box.appendChild(el('span', 'see', c.text));
+    c.options.forEach(function (o, i) {
+      var key = c.id + '.' + i;
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'call-' + key.replace('.', '-'); cb.checked = !!state.calls[key]; cb.style.cssText = 'width:18px;height:18px;margin-top:3px;accent-color:var(--accent);flex:none';
+      cb.addEventListener('change', function () { state.calls[key] = cb.checked; save(); });
+      var row = el('label', 'step'); row.style.borderTop = '0'; row.style.paddingBlock = '4px';
+      row.appendChild(cb); row.appendChild(el('span', 'txt', o)); box.appendChild(row);
+    });
+    var ta = document.createElement('textarea'); ta.id = 'callnote-' + c.id; ta.placeholder = 'Note (optional; no personal details)'; ta.value = state.callNotes[c.id] || '';
+    ta.addEventListener('input', function () { state.callNotes[c.id] = ta.value; save(); });
+    box.appendChild(ta); callHost.appendChild(box);
+  });
+  if (!CALLS.length) document.getElementById('callsCard').hidden = true;
+
+  function doneSteps(partId) { return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; }); }
+  var totalSteps = boxes.length;
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length, v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    if (CALLS.length) {
+      lines.push('Answers and calls (not counted):');
+      CALLS.forEach(function (c) {
+        var chosen = c.options.filter(function (o, i) { return state.calls[c.id + '.' + i]; });
+        lines.push('  ' + c.id + ' ' + c.title + ': ' + (chosen.length ? chosen.join(' / ') : 'not answered') + (state.callNotes[c.id] ? ' — ' + state.callNotes[c.id] : ''));
+      });
+    }
+    return lines.join('\n');
+  }
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, callNotes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    CALLS.forEach(function (c) { document.getElementById('callnote-' + c.id).value = ''; });
+    Array.prototype.forEach.call(document.querySelectorAll('#calls input[type=checkbox]'), function (b) { b.checked = false; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

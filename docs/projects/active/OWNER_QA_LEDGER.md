@@ -28446,3 +28446,13 @@ performed over the shared working tree. The original walk result is not claimed 
 **Keep out of the summary:** the phone number, the mailing address and any account number (the walk says so twice); they go to Claude in the chat at 6.7.
 **Owed after the walk:** an outside check of the domain's MX and SPF records; the readings into the Stage 6 plan (§3 L-c) and the Terms draft (§6 line, §8 note 4); the breach record's place into `LEGAL_FACTS.md` (where, never what).
 <!-- /§533 -->
+
+## §534 · GST/HST Stage 6 · the two 6.6 fixes — **the yearly reminder keeps its date, amount and cancel line (rendered by the product after a customised template's words, one button; both billing templates say keep it transactional), and a move up during a free trial sends "The details of your purchase" (trial continues, $0.00 today, the new plan's first payment and estimated tax)** · walk published 2026-11-16, owner walk owed
+<!-- §534 -->
+**Walk (checkable):** https://claude.ai/artifact/EydBVx3ubYdK7BTRBNjNhp (source `docs/projects/active/GST_HST_STAGE6_6_FIXES_WALK.html`); 4 parts, 26 steps, no calls. Fixture `scripts/seed-gst-6-6-fixes-walk-fixture.mjs` (`setup --inbox` · `status` · `run-daily` · `teardown`): Walk66 Reminder Club (Tournament Plus yearly, renews in 33 days, owners +w66r/+w66s) and Walk66 Trial Club (Club monthly, a real 30-day Stripe trial, owners +w66a/+w66b).
+**Built:** Part A `a9d559062` (mig 490, data only, dev applied; prod rides 6.7), Part B `873fc7c76`, records `72768e322`. Plan `GST_HST_STAGE6_TERMS_PLAN.md` §5 6.6 (owner rulings 1 and 2, 2026-11-16); build prompt `GST_HST_STAGE6_6_FIXES_BUILD_PROMPT.md`.
+**Dry-run by Claude before publishing (2026-11-16, a `.local` inbox, torn down after):** setup, the daily job (reminder sent to both owners), the move up made with the move's own Stripe call (`.probe/66fix/walk-dryrun-move.mjs`), the daily job again (the details email to both owners, the reminder not again). Not dry-run: the billing page's Move button itself, and the customised template (the walk's Parts A–B).
+**Not walked:** the uncustomised reminder (byte-identical to walk §525's, pinned by a test); the editor's Send test (shows no fixed block, out of scope); a next-season choice's move up (ruled 2026-11-16 to send with its own opening, not built); a charged move up (unchanged since §525).
+**Known, not this build's:** "Reset to default" on a transactional template only clears the customised flag, so the edited words stay showing in the editor (the product sends its built-in email, as it should). Claude restores the reminder row's opening line on dev at hand-back (re-apply mig 490).
+**Owed after the walk:** teardown; re-apply mig 490 on dev; the result into the Stage 6 plan's 6.6 block.
+<!-- /§534 -->

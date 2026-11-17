@@ -518,8 +518,11 @@ files' "6.6" sections).
 >    subscription is `trialing` until the season starts, with no free trial) can move up before then; that move sends no
 >    email, so the next-season email in its inbox quotes the old plan's first payment — the same gap ruling 2 closed for a
 >    trial. Recommendation: the same email with its own opening ("{orgName} is now on {planLabel} for next season. Nothing has
->    been charged today."), `/legal` to read it; small. Owner walk proposed, not published (~12 boxes; it needs a dev yearly
->    account 30–37 days from renewal, since the template editor's preview and test send show no fixed block).
+>    been charged today."), `/legal` to read it; small. **⚖ RULED 2026-11-16 (owner): as recommended** — a next-season choice's
+>    move up sends the details email with its own opening, `/legal` reads it first; not built yet. Owner walk: built 2026-11-16
+>    on the owner's go — ledger §534, https://claude.ai/artifact/EydBVx3ubYdK7BTRBNjNhp, 26 steps, fixture
+>    `scripts/seed-gst-6-6-fixes-walk-fixture.mjs`, dry-run by Claude before publishing; owner walk owed ( it needs a dev yearly account 30–37 days from renewal, since the template editor's preview
+>    and test send show no fixed block).
 > 3. **"The unused part" (O3) = daily pro-rata of the last invoice**; a few cents' rounding under is accepted. No build: staff type
 >    the figure into the refund tool.
 > 4. **The price-rise procedure v0.2 is approved.**
