@@ -12,7 +12,7 @@ import ck from '../../ClubKit.module.css';
 import { FRIEND_RESULT_WORDS } from '@/lib/league-friend-draft';
 import { Facts } from '../../money/MoneyKit';
 import { REG_RECORD_WORDS as W, REGS_WORDS } from '@/lib/house-league-money-words';
-import { formatLeagueMoney, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
+import { formatLeagueMoney, isOwing, receivedOf, stillOwingCents, type LeagueMoneyLine } from '@/lib/league-money';
 import { endedKind, isOpenReg, owesNow, regDay, registrationHistory, type PriceChange, type RegsSeason, type RowActionKey } from '@/lib/house-league-registrations';
 import type { FamilyAddressStatus, LeagueRegistration } from '@/lib/types';
 import FeeCell from './FeeCell';
@@ -91,8 +91,10 @@ function SecondParentFact({ reg, onSave, family }: {
 export default function RegistrationRecordWindow({
   model, season, seasonName, teamName, lines, changes, today, showFee, statusWord, steps, onPick, onNote, onClose,
   cardRefunds = [], dispute = null, orgSlug = '', canDesk = false, isPhone = false, focus = null, onAnotherWay, onSecondEmail = null, onFamily = null,
-  friends = null,
+  friends = null, clearingCents = 0,
 }: {
+  /** This child's fee on a bank debit on its way (`clearingShareCents`): Still owing is after it, as on the Fee cell (13e-9). */
+  clearingCents?: number;
   model: RegRowModel;
   season: RegsSeason;
   seasonName: string;
@@ -162,10 +164,15 @@ export default function RegistrationRecordWindow({
     reg.adminNotes ? [F.adminNotes, reg.adminNotes] as const : null,
   ];
 
+  const owingLeft = stillOwingCents(fee, clearingCents);
+  const clearingShown = isOwing(fee) ? Math.min(clearingCents, Math.round(fee.owing * 100)) : 0;
   const feeRows = [
     [F.price, money(owesNow(reg, season))] as const,
     got > 0 ? [F.received, money(got)] as const : null,
-    fee.kind === 'owing' || fee.kind === 'part' ? [F.owing, money(fee.owing)] as const : null,
+    // ⚖ 13e-9 (Session C walk prep, 2026-11-17): THE one Still owing, after what is clearing — the Fee cell above says
+    // "$50 owing · $100 clearing", so the box never says "Still owing $150" beside it.
+    owingLeft > 0 ? [F.owing, money(owingLeft / 100)] as const : null,
+    clearingShown > 0 ? [F.clearing, money(clearingShown / 100)] as const : null,
     fee.kind === 'refunded' ? [F.refunded, money(fee.refunded)] as const : null,
     fee.kind === 'kept' ? [F.kept, `${money(fee.kept)}${fee.reason ? ` · ${fee.reason}` : ''}`] as const : null,
     fee.kind === 'kept' && fee.refunded ? [F.refunded, money(fee.refunded)] as const : null,

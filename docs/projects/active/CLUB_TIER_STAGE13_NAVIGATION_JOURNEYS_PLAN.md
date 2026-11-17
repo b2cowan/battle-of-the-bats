@@ -1021,7 +1021,18 @@ ahead of the owner's rulings.
   at the first foreign id and duplicates are dropped), advisories recorded above. **Layout** `--only` the 6 touched screens (Registrations, House
   league's home, the Overview, Budget vs. Actual, both help guides), 390 + 1440: no new findings from this session — the two 390 tap-floor lines are
   Registrations' rows' existing checkboxes, as Session A recorded. Unit failures seen in neighbouring suites belong to other work in the tree
-  (families-email's reply line, SeasonFrame's list mark, the workspace cards, release notes). **Next:** the one walk (after commit).
+  (families-email's reply line, SeasonFrame's list mark, the workspace cards, release notes). **Committed `b05858382` 2026-11-17** (18 files).
+  **Next:** the one walk.
+
+- 2026-11-17 — **13e walk PUBLISHED, Owner QA Ledger §536** (https://claude.ai/artifact/NSzd989yEK4U6QJvSi9BLs; 14 parts, 40 steps, 3 calls) on a
+  fresh copy `navj-club-13e` (seed + `fx-13e.mjs`: two clearing bank debits and an owing sibling pair). **Found readying it:** (1) the child's record
+  window printed Still owing before what is clearing ("$150" beside the cell's "$50 owing · $100 clearing") — fixed in the working tree
+  (`RegistrationRecordWindow` reads `stillOwingCents` + a Clearing line; pinned in `club-stage13e-c.test.ts`), commit owed on the owner's yes;
+  (2) **13e-12's door does not exist** — the tournament sidebar's Accounting row was removed by `2751ba190`; Session C's change only makes the old
+  address open on All time (harmless, unreachable from any screen); (3) **open item, not 13e's:** on a closed year the Accounting Overview's headroom
+  sentence uses today's every-year teams owed ("$1,800.00 of that is what the teams still owe") where Budget vs. Actual reads the year's own
+  ($1,200.00) — a money reading, needs its own small fix and test (stop rule: no money definition moves inside 13e); (4) Back from a child took two
+  presses in a script (the window closes first) — walked with a call. **Next:** the owner's walk; then teardown.
 
 ## 11. The external review, cross-checked (2026-11-07)
 

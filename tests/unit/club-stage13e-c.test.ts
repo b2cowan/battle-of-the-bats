@@ -57,6 +57,14 @@ describe('C1 · 13e-9 A — a partly cleared fee says what is owing first', () =
     assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/ledger/route.ts'),
       /const left = stillOwingCents\(fee, clearingCents\.get\(o\.regId\) \?\? 0\);/, 'Money’s row asks the one rule');
   });
+  it('the child’s record window says the same: Still owing after what is clearing, then a Clearing line (walk prep)', () => {
+    const win = readCode('components/admin/kit/club/league/registrations/RegistrationRecordWindow.tsx');
+    assert.match(win, /const owingLeft = stillOwingCents\(fee, clearingCents\);/);
+    assert.match(win, /owingLeft > 0 \? \[F\.owing, money\(owingLeft \/ 100\)\] as const : null,/);
+    assert.match(win, /clearingShown > 0 \? \[F\.clearing, money\(clearingShown \/ 100\)\] as const : null,/);
+    assert.doesNotMatch(win, /\[F\.owing, money\(fee\.owing\)\]/, 'never the fee before what is clearing');
+    assert.match(readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx'), /clearingCents=\{clearingOf\(openReg\)\}/);
+  });
 });
 
 describe('C2 · 13e-10 A — "Email these families" past ~200 children', () => {

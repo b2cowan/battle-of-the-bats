@@ -1,0 +1,318 @@
+<title>13e Numbers Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame, as the 13d walk). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { button { min-height: 44px; } }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier Stage 13e · Numbers open their lines · §536</span>
+    <h1>A number opens the lines behind it, and two screens that show the same figure say so</h1>
+    <p class="sub">Written 2026-11-17, after Stage 13e Session A (the registrar’s house league, committed <code>b52e2cd5a</code>), Session B (the money screens, committed <code>c73e51310</code>) and Session C (the four rulings of 2026-11-17, committed <code>b05858382</code>). One purpose: when a screen shows a figure, you can open the people or lines behind it, and the same child or the same money reads the same way wherever you meet it.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Harbourtown’s <strong>2026 Fall House League</strong> has 14 children still owing $1,940. One of them, <strong>Ellis Marchetti</strong>, has $100 of a $150 fee in a bank debit that hasn’t cleared; another, <strong>Quinn Rousseau</strong>, has the whole $150 clearing. You follow the registrar from Money’s Still owing to the child, to the families’ email (stopping before Send), to Registrations and back, and into Find a child. Then the owner and treasurer open the club’s money figures (Off-plan, the year’s revenue, what is owed, a closed year, a team’s balance from last year) and each one either opens its lines or says what it counts.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1–3</strong> Still owing opens each child; the families’ email opens with the same 14 children as 13 families; Registrations’ Owing list says it is the same list; Ellis reads <strong>$50 owing</strong> on Money, on Registrations, in the child’s window and in Find a child.</li>
+    <li><strong>4–5</strong> Find a child answers a parent’s call (team, what is owing, the next game), and a search that misses names the tab that has the child.</li>
+    <li><strong>6–7</strong> The league admin works as the registrar does; the treasurer reaches Still owing from Accounting and sees no door they can’t open.</li>
+    <li><strong>8–13</strong> The owner’s figures say which they are, Off-plan opens its three lines and they add up, a closed year says its owed figure is today’s, last year’s money is named on a team’s balance, and a tournament’s book opens on All time while the General book opens on this month (part 13).</li>
+    <li><strong>14</strong> The phone reads the same, as rows.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk (not defects of this walk)</h2><ul>
+    <li><strong>One fix made while readying this walk is in the working tree, not yet committed.</strong> Ellis’s record window said “Still owing $150” beside a Fee cell reading “$50 owing · $100 clearing”. It now reads Still owing $50 and Clearing $100 (step 1.3), with a test. Commit awaits your yes.</li>
+    <li><strong>The tournament’s own sidebar has no Accounting row, so ruling 13e-12 has nothing to walk.</strong> The row was taken out on purpose earlier (“A tournament’s menu no longer lists the club’s Accounting row”). Session C made the old address open the tournament’s book on All time, so an old bookmark lands right; no screen links to it. The other two doors to a tournament’s book are walked in part 13.</li>
+    <li><strong>Found, not changed (a money reading, outside this stage):</strong> on the closed year 2025–26, the Accounting Overview says “$1,800.00 of that is what the teams still owe” while Budget vs. Actual says “$1,200.00”. The two unpaid installments total $1,200. It is recorded for its own fix.</li>
+    <li><strong>Most owing children read “0 days”.</strong> The copy accepted them today; only Hudson Byrne shows 26 days.</li>
+    <li><strong>The 200-plus mailing is proven by tests, not walked.</strong> A fixture of 200 owing children is not a walk step; you open the email window once, from Still owing.</li>
+    <li><strong>The General book’s Date pill shows no word on its default.</strong> The dates read this month; the pill stays quiet until you change it (the Ledger’s rule since Stage 3a).</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd><code>http://localhost:3000</code> (no restart needed: this session added no screen files).</dd>
+    <dt>The club</dt><dd>A fresh copy of <strong>Harbourtown Minor Ball</strong>, <code>navj-club-13e</code>, with two bank debits added (Ellis’s $100, Quinn’s $150). Counts below were read back from this copy before the walk was written.</dd>
+    <dt>Sign in</dt><dd><code>http://localhost:3000/login</code> · password <code>devpass123</code> for every account. Use a private window per person (or sign out between).</dd>
+    <dt>Accounts</dt><dd><code>navj-club-13e-registrar@dev.local</code> (registrar) · <code>navj-club-13e-leagueadmin@dev.local</code> (league admin) · <code>navj-club-13e-treasurer@dev.local</code> (treasurer) · <code>navj-club-13e-owner@dev.local</code> (owner) · <code>navj-club-13e-admin@dev.local</code> (admin, reads as the owner here)</dd>
+    <dt>Widths</dt><dd>“Desk” = a full browser window. “Phone” = the browser’s device view at <strong>390 px</strong>.</dd>
+    <dt>Order</dt><dd>Any order works: nothing in this walk changes the club’s data. Part 2 stops before Send.</dd>
+    <dt>Keep private</dt><dd>Dev-only accounts; the page carries the password, so do not share the link.</dd>
+    <dt>When done</dt><dd>Tell Claude “13e walk done” with the build summary; it records the result and removes the copy and its accounts.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>“clearing” (1.3, 3.2, 4.3).</strong> Does “$50 owing · $100 clearing” tell a registrar that a bank debit is on its way? The chip’s tap-for-detail and the help both explain it. Keep the word, or want a line of help on the screen?</li>
+    <li><strong>“1 in part” (1.1).</strong> Does “8 players · 1 in part” read as partly <em>paid</em>? If it made you stop, “1 part-paid” is the alternative.</li>
+    <li><strong>Back from the child (1.4).</strong> One Back should return you to Still owing. A script readying this walk needed two (the first closed the window). If you need two as well, is that acceptable (Back closes the window first, as elsewhere), or should it go straight back?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "club-stage13e-numbers-walk-v1";
+  var TITLE = "Stage 13e walk §536 · Numbers open their lines (2026-11-17)";
+  var REG = "Registrar · navj-club-13e-registrar@dev.local";
+  var LA = "League admin · navj-club-13e-leagueadmin@dev.local";
+  var TRE = "Treasurer · navj-club-13e-treasurer@dev.local";
+  var OWNER = "Owner · navj-club-13e-owner@dev.local";
+  var SEASON = "<strong>2026 Fall House League</strong>";
+  var ELLIS = "<strong>Ellis Marchetti</strong>";
+  var QUINN = "<strong>Quinn Rousseau</strong>";
+  var EC = "“<strong>$50 owing · $100 clearing</strong>”";
+  var PARTS = [
+ { id: "1", title: "Still owing opens each child (desk)", steps: [
+  { who: REG + " · desk", do: "Sign in (you land on House league) and open " + SEASON + " › <strong>Money</strong>.",
+    see: "The band: Owed <strong>$3,345</strong> · 22 players; Received <strong>$1,155</strong> · “<strong>8 players · 1 in part</strong>” (the one in part is Dev Sharma, $75 of $150); Clearing <strong>$250</strong> · 2 players · bank debits; Still owing <strong>$1,940</strong> · 14 players.", call: "Call: does “1 in part” read as partly paid?" },
+  { who: REG, do: "Open the <strong>Still owing</strong> tab.",
+    see: "14 rows. " + ELLIS + " reads <strong>$50</strong> (not $150) and Dev Sharma <strong>$75</strong>. " + QUINN + " is not on the list (all of his fee is on its way). Two buttons: <strong>Email these families</strong> and <strong>Open on Registrations</strong>." },
+  { who: REG, do: "Press " + ELLIS + "’s row.",
+    see: "Registrations opens Ellis’s registration at its fee. The Fee reads " + EC + " with “Bank debit · $100 · started Nov 17” under it. The box reads Price $150 · <strong>Still owing $50</strong> · <strong>Clearing $100</strong> (the fix made while readying this walk).", call: "Call: is “clearing” clear?" },
+  { who: REG, do: "Press the browser’s <strong>Back</strong>.",
+    see: "Money again, on the <strong>Still owing</strong> tab, with the same 14 rows.", call: "Call: if it took two presses, note it." }
+ ]},
+ { id: "2", title: "Email these families stops before Send (desk)", steps: [
+  { who: REG, do: "On Still owing, press <strong>Email these families</strong>.",
+    see: "After a moment of “Loading who this reaches…”, the window <strong>Email 13 families</strong>: “The 13 families you ticked” and “Sharma (Dev) · <strong>Okonkwo (Eli and Tess)</strong> · Marchetti (Ellis) · …and 8 more”. Two siblings are one family. The foot reads “13 families get it (14 children)” and the button <strong>Send to 13</strong>." },
+  { who: REG, do: "Close the window <strong>without pressing Send</strong>.",
+    see: "Back on Still owing. Nothing was sent (R3: the walk stops before a send)." }
+ ]},
+ { id: "3", title: "Registrations’ Owing list says it is the same list (desk)", steps: [
+  { who: REG, do: "Press <strong>Open on Registrations</strong>.",
+    see: "Registrations on <strong>Active</strong>, with the Filter on <strong>Owing</strong>, and a line: “<strong>14 owing, the same 14 as Money’s Still owing.</strong>” with <strong>Open Still owing</strong>." },
+  { who: REG, do: "Find " + ELLIS + "’s row and read the Fee cell.",
+    see: EC + " (owing first, the same $50 as Money), with “Bank debit · $100 · started Nov 17” under it. No Mark received on it." },
+  { who: REG, do: "Press <strong>Open Still owing</strong>.",
+    see: "Money, on the Still owing tab." },
+  { who: REG, do: "Go back to Registrations › Active, take the Owing filter off and type <code>Quinn</code> in the search.",
+    see: QUINN + "’s Fee reads “<strong>$150 clearing</strong>” (all of it on its way, nothing owing to say), with “Bank debit · $150 · started Nov 17”." }
+ ]},
+ { id: "4", title: "Find a child or a parent (desk)", steps: [
+  { who: REG, do: "Open <strong>House league</strong> (your landing page). Find <strong>Find a child or a parent</strong> above Running now and type <code>Mateo</code>.",
+    see: "Mateo Alvarez: “U9 Rookie · Reds · 2026 Fall House League”, the parent, “Active · Paid”, and under it “<strong>Reds’ next: Thu, Nov 26, 6:00 p.m. · Reds vs Blues · Kinsmen Park, Diamond B</strong>”." },
+  { who: REG, do: "Replace it with <code>Aiden Park</code>.",
+    see: "“U11 Pinto · <strong>no team yet</strong>”, “Active · Paid”, and no next-game line." },
+  { who: REG, do: "Replace it with <code>Marchetti</code>.",
+    see: "Ellis on the Hawks, reading " + EC + ": the same words as Registrations’ Fee cell." },
+  { who: REG, do: "Replace it with <code>Zzyzx</code>.",
+    see: "“<strong>No child or parent matches “Zzyzx” in any season that’s running.</strong>” and a button <strong>Search past seasons too</strong>." },
+  { who: REG, do: "Replace it with <code>Early-A</code> and press <strong>Search past seasons too</strong>.",
+    see: "Ari Early-A appears: “U9 Rookie · Cubs · <strong>2026 Early Fall League</strong>”, “Active · Paid” (a finished season, named on the row)." }
+ ]},
+ { id: "5", title: "A search names the tab that has the child (desk)", steps: [
+  { who: REG, do: "Open <strong>Registrations › To review</strong> and type <code>Marchetti</code> in the search.",
+    see: "“<strong>No one in To review matches “Marchetti”.</strong>” and “1 match in Active”, with a button <strong>Show it in Active</strong>." },
+  { who: REG, do: "Press <strong>Show it in Active</strong>.",
+    see: "The Active tab, with “Marchetti” still in the search and Ellis’s row showing." }
+ ]},
+ { id: "6", title: "The league admin works as the registrar does (desk)", steps: [
+  { who: LA + " · desk", do: "Sign in, open " + SEASON + " › Money › Still owing and press any row.",
+    see: "The same 14 rows and both buttons; the row opens that child on Registrations. (Find a child is on House league’s page too.)" }
+ ]},
+ { id: "7", title: "The treasurer: Still owing with no door they can’t open (desk)", steps: [
+  { who: TRE + " · desk", do: "Sign in (you land on Accounting). On the Overview, under the books, press “<strong>House league money: 2026 Fall House League · $1,940.00 still owing</strong>”.",
+    see: "The season’s Money page opens on the <strong>Still owing</strong> tab (not Every line), with the same 14 rows (ruling 13e-11)." },
+  { who: TRE, do: "Try to press a row, and look for the two buttons.",
+    see: "The rows are plain (not links), and there is <strong>no Email these families and no Open on Registrations</strong>: the treasurer can’t open Registrations, so no door leads there. No Find a child anywhere." }
+ ]},
+ { id: "8", title: "The owner’s This morning (desk)", steps: [
+  { who: OWNER + " · desk", do: "Sign in and open the Overview. Under <strong>Needs someone</strong>, press “<strong>14 players owe house league fees</strong>”.",
+    see: "The season’s Money page on the <strong>Still owing</strong> tab." },
+  { who: OWNER, do: "Back on the Overview, read <strong>Installments due</strong> under This morning.",
+    see: "<strong>12</strong> · “<strong>7 overdue</strong> · 5 more in the next 14 days”, the “7 overdue” in red. The 7 are part of the 12." }
+ ]},
+ { id: "9", title: "The Accounting Overview’s figures say which they are (desk)", steps: [
+  { who: OWNER, do: "Open <strong>Accounting › Overview</strong> (2026–27) and read the line under Revenue.",
+    see: "“<strong>2026–27 includes house league fees $2,355.00 · Harbourtown Invitational 2026 $1,440.00</strong>”." },
+  { who: OWNER, do: "Read <strong>Owed to the club</strong>.",
+    see: "<strong>$12,890.00</strong> · “teams $10,950.00 ($3,450.00 overdue, <strong>$1,200.00 of it from 2025–26</strong>) · house league $1,940.00 (14 players)”." },
+  { who: OWNER, do: "Read the books table.",
+    see: "Its column is headed <strong>Balance today</strong>: General ($1,425.00), Harbourtown Invitational 2026 $1,940.00, 2026 Fall House League $1,155.00, 2026 Early Fall League $1,200.00, ending on Cash on hand <strong>$2,870.00</strong>." },
+  { who: OWNER, do: "Press “House league money: 2026 Fall House League · $1,940.00 still owing”.",
+    see: "Money on the <strong>Still owing</strong> tab, with the rows as links and both buttons (the owner can open Registrations)." }
+ ]},
+ { id: "10", title: "Off-plan opens its lines, and they add up (desk)", steps: [
+  { who: OWNER, do: "Open <strong>Accounting › Budget vs. Actual</strong> (2026–27) and press the <strong>Off-plan $3,660.00</strong> figure in the band.",
+    see: "A window “<strong>Off-plan · 2026–27</strong>”, “<strong>$3,660.00 nobody budgeted</strong>”, the line “Spending under a budget word this year’s plan has no line for, and spending not filed under a budget word yet. Open a row to see its lines.”" },
+  { who: OWNER, do: "Read the rows.",
+    see: "Field Equipment <strong>$1,200.00</strong> (Facilities · not planned) · Paid to teams on request <strong>$120.00</strong> (Team support · not planned) · Not filed <strong>$2,340.00</strong> (“No budget word yet · file them on the Ledger”). They add to $3,660.00. No Ledger button on the window." },
+  { who: OWNER, do: "Press <strong>Field Equipment</strong>.",
+    see: "Its Actual window, headed “<strong>ACTUAL · 2026–27</strong> | Field Equipment”, listing its lines. Nothing reads “[object Object]”." },
+  { who: OWNER, do: "Close the windows. Under the statement, find the Not filed note and press <strong>File them on the Ledger</strong>.",
+    see: "The Ledger, narrowed to <strong>Not filed</strong> from Sep 1, 2026 to Aug 31, 2027." }
+ ]},
+ { id: "11", title: "A closed year says its figure is today’s (desk)", steps: [
+  { who: OWNER, do: "Open <strong>Accounting › Overview</strong> and pick <strong>2025–26</strong> in the Fiscal year pill.",
+    see: "“2025–26 is closed. Avery Chen closed it on Nov 17, 2026.” Owed to the club reads “<strong>today, Nov 17, not at the close</strong> · teams $10,950.00 · house league $1,940.00”. No write buttons." },
+  { who: OWNER, do: "Open <strong>Budget vs. Actual</strong> on 2025–26 and find the Not filed note.",
+    see: "Off-plan <strong>$185.00</strong>; the note’s link reads “<strong>See them on the Ledger</strong>” (the year is locked, so not “File them”)." }
+ ]},
+ { id: "12", title: "Last year’s money is named on a team’s balance (desk)", steps: [
+  { who: OWNER, do: "Open <strong>Rep teams</strong> and read the Outstanding column.",
+    see: "13U AAA “<strong>$3,900.00</strong> · $600.00 overdue · <strong>includes $600.00 from 2025–26</strong>”; 14U AA “$600.00 · $600.00 overdue · includes $600.00 from 2025–26”." },
+  { who: OWNER, do: "Open <strong>13U AAA</strong>’s account and read the band.",
+    see: "“OUTSTANDING <strong>$3,900.00</strong> · Jul 15 · 125 days late · <strong>includes $600.00 from 2025–26</strong>”: the same figure, saying what it holds." }
+ ]},
+ { id: "13", title: "A tournament’s book opens on All time; the General book on this month (desk)", steps: [
+  { who: OWNER, do: "On Accounting › Overview (2026–27), press <strong>Harbourtown Invitational 2026</strong> in the books table.",
+    see: "The Ledger on that book with the Date pill reading <strong>All time</strong>, so every registration and float behind its $1,940.00 shows." },
+  { who: OWNER, do: "Go back and press <strong>General</strong>.",
+    see: "The Ledger on the General book, dated <strong>Nov 1 – Nov 30</strong> (this month; the pill shows no word at rest)." },
+  { who: OWNER, do: "Open <strong>Tournaments</strong> › Harbourtown Invitational 2026’s Dashboard and press “<strong>In the club’s book: $1,440 in</strong>” on the Payments card.",
+    see: "The Ledger on the Invitational’s book, on <strong>All time</strong>." }
+ ]},
+ { id: "14", title: "The phone, as rows", steps: [
+  { who: REG + " · phone", do: "At 390 px open House league and type <code>Marchetti</code> in Find a child.",
+    see: "The box and the result fill the width; the result is one row you can press, reading " + EC + "." },
+  { who: REG + " · phone", do: "Open " + SEASON + " › Money › Still owing.",
+    see: "Each child is a full-width row with the amount at the right; the buttons read <strong>Email these</strong> and <strong>Open on Registrations</strong>." },
+  { who: OWNER + " · phone", do: "At 390 px open Budget vs. Actual and press Off-plan.",
+    see: "A full-screen sheet with the same three rows adding to $3,660.00." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + '.' + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

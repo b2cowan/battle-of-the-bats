@@ -913,6 +913,7 @@ export default function RegistrationsScreen() {
         <RegistrationRecordWindow
           key={openReg.id}
           model={modelFor(openReg)}
+          clearingCents={clearingOf(openReg)}
           season={season}
           seasonName={season.name}
           teamName={teamName(openReg.teamId)}

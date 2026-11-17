@@ -668,7 +668,7 @@ export const REG_RECORD_WORDS = {
     division: 'Division', team: 'Team', guardian: 'Guardian', email: 'Email', phone: 'Phone',
     born: 'Date of birth', signedUp: 'Signed up', addedByHand: 'Added by hand', accepted: 'Accepted',
     ended: 'Ended', reference: 'Sign-up reference', position: 'Waitlist place',
-    price: 'Price', received: 'Received', owing: 'Still owing', refunded: 'Refunded', kept: 'Kept by the club',
+    price: 'Price', received: 'Received', owing: 'Still owing', clearing: 'Clearing', refunded: 'Refunded', kept: 'Kept by the club',
     notes: 'Player notes', adminNotes: 'Notes',
   },
   timeline: {
