@@ -4,7 +4,8 @@ import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getDivisionsForSeason, getLeagueSeasonById, getRegistrationsForSeason } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { seasonCharges } from '@/lib/league-price';
-import { feeState, isOwing, seasonMoney } from '@/lib/league-money';
+import { feeState, isOwing, seasonMoney, stillOwingCents } from '@/lib/league-money';
+import { clearingCentsByReg } from '@/lib/league-debits';
 import { filesToClubStatement, loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { fetchAll } from '@/lib/supabase-paging';
@@ -120,7 +121,7 @@ export const GET = withObservability(async (_req: Request,
       return [{
         regId: r.id, player: `${r.playerFirstName} ${r.playerLastName}`,
         division: r.divisionId ? divName.get(r.divisionId) ?? null : null,
-        owing: s.owing,
+        owing: s.owing, fee: s,
         acceptedDay, days, late: days != null && days >= season.owingAmberDays,
       }];
     })
@@ -129,7 +130,7 @@ export const GET = withObservability(async (_req: Request,
   // 12c Part 6: each child's fee on a bank debit on its way (the band's Clearing), and Received by rail.
   const debits = await loadRegistrationDebits(ctx!.org.id, regs.map(r => r.id));
   const activeIds = new Set(regs.filter(r => r.status === 'active').map(r => r.id));
-  const clearingCents = new Map(Object.entries(debits).filter(([id, d]) => d.state === 'clearing' && activeIds.has(id)).map(([id, d]) => [id, d.shareCents]));
+  const clearingCents = clearingCentsByReg(debits, activeIds);
   const { data: reversedRows } = await supabaseAdmin.from('online_payment_items')
     .select('registration_id, online_payments!inner(receipt_no, return_reason, reversed_at, status, rail, stripe_dispute_id)')
     .in('registration_id', regs.map(r => r.id)).eq('online_payments.status', 'reversed');
@@ -187,9 +188,10 @@ export const GET = withObservability(async (_req: Request,
       day: orgDayKey(r.succeededAt ?? r.createdAt),
     })),
     history,
-    // 12c Part 6: what is clearing is on its way, not owing (the band adds up the same way).
-    owing: owing.flatMap(o => {
-      const left = Math.round(o.owing * 100) - (clearingCents.get(o.regId) ?? 0);
+    // 12c Part 6: what is clearing is on its way, not owing (the band adds up the same way). ⚖ 13e-3: the ONE rule,
+    // `stillOwingCents` — Registrations' Fee: Owing filter asks it too, so the two lists are the same children.
+    owing: owing.flatMap(({ fee, ...o }) => {
+      const left = stillOwingCents(fee, clearingCents.get(o.regId) ?? 0);
       return left > 0 ? [{ ...o, owing: left / 100 }] : [];
     }),
     today,

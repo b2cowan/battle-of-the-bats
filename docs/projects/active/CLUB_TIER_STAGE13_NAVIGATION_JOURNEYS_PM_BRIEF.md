@@ -171,3 +171,12 @@ coming"**; older requests say **"Payment method (as filed)"** and keep their wor
 paid: **"Paid · $120.00 by E-Transfer on Oct 19"** with the reference, and the list row reads **"Paid Oct 19"** instead of "Approved".
 **Why:** the club already recorded the payment; the coach just couldn't see it, and the treasurer re-typed what the coach had already said.
 **Success:** Approve is pre-filled for every new request, and a coach never has to ask the club "did you pay us, and how?".
+
+**13e Session A, the registrar's house league (built 2026-11-16; one walk after Session B).** The registrar found the 12 names on Money's
+Still owing and could do nothing with them there. Now each name opens the child's registration at the fee, and two buttons take the whole
+list where the work is: **Open on Registrations** (the same 12, Mark received on each) and **Email these families** (the season's own email
+window, those families ticked; nothing sends until Send). Registrations' Owing filter and Still owing are now one rule and say so; Received
+reads **"8 players · 1 in part"**; a search that misses on one tab says which tab has the child; and **Find a child or a parent** on House
+league's home answers a parent's call ("which team, and when do they play?") in one search, with the team's next game or practice.
+**Why:** the walk's registrar took five taps and a wrong-tab detour to answer one phone call. **Success:** the call is answered from the
+page they land on; the two "who owes" lists never disagree.

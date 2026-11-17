@@ -91,7 +91,8 @@ export function leagueMorning(input: LeagueMorningInput): LeagueMorningTile[] {
       key: 'owing', label: W.owing.label,
       figure: formatLeagueMoney(input.money.owing),
       sub: input.money.owingPlayers > 0 ? W.owing.some(input.money.owingPlayers) : W.owing.nothing,
-      href: `${season}/money`,
+      // 13e: lands on Still owing (its own address), where the players are — not on Every line.
+      href: `${season}/money?tab=owing`,
       quiet: input.money.owing <= 0,
     });
   }

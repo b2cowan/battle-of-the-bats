@@ -150,6 +150,7 @@ export default function PlatformAdminHelpPage() {
       title: 'Registrar or League Admin',
       steps: [
         { label: 'Launch a house league season', href: '/platform-admin/help/house-league#recipe-launch-season' },
+        { label: 'Find a child or a parent', href: '/platform-admin/help/house-league#find-a-child' },
         { label: 'Work the daily registration queue', href: '/platform-admin/help/registrations#recipe-daily-review-queue' },
         { label: 'Promote a waitlisted player', href: '/platform-admin/help/registrations#recipe-promote-waitlisted-player' },
         { label: 'Rate, draft and publish teams', href: '/platform-admin/help/house-league#recipe-build-teams' },

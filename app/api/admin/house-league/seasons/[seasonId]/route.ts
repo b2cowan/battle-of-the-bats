@@ -25,6 +25,7 @@ import { isCalendarDate } from '@/lib/timezone';
 import { clubWallClock, registrationState } from '@/lib/league-registration-state';
 import { loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { seasonMoney } from '@/lib/league-money';
+import { clearingCentsByReg } from '@/lib/league-debits';
 import { seedLeagueSeasonBudget } from '@/lib/house-league-budget';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
 import { seasonTimeFacts } from '@/lib/league-time-server';
@@ -133,7 +134,7 @@ export const GET = withObservability(async (_req: Request,
 
   // 12c Part 6: each accepted child's fee on a bank debit on its way.
   const seasonDebits = await loadRegistrationDebits(ctx!.org.id, regs.filter(r => r.status === 'active').map(r => r.id));
-  const clearingCents = new Map(Object.entries(seasonDebits).filter(([, d]) => d.state === 'clearing').map(([id, d]) => [id, d.shareCents]));
+  const clearingCents = clearingCentsByReg(seasonDebits);
   return NextResponse.json({
     season,
     deletable,

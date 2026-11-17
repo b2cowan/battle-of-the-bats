@@ -13,6 +13,7 @@ import { teamIdsInScope } from './club-team-route';
 import { seasonMoney } from './league-money';
 import { loadSeasonMoneyLines } from './league-money-read';
 import { loadRegistrationDebits } from './league-pay-facts';
+import { clearingCentsByReg } from './league-debits';
 import { liveLeagueSeasons } from './house-league-season';
 import { calendarPrograms, readComingBookings } from './club-calendar';
 import { listTeamsWithActiveHeadCoach } from './coach-membership';
@@ -56,7 +57,7 @@ export async function leagueOwing(ctx: AuthContextWithRole): Promise<{
     const [lines, debits] = await Promise.all([
       linesP, loadRegistrationDebits(ctx.org.id, regs.filter(r => r.status === 'active').map(r => r.id)),
     ]);
-    const clearing = new Map(Object.entries(debits).filter(([, d]) => d.state === 'clearing').map(([id, d]) => [id, d.shareCents]));
+    const clearing = clearingCentsByReg(debits);
     const m = seasonMoney(regs, season, lines, clearing);
     return { id: season.id, name: season.name, owing: m.owing, players: m.owingPlayers };
   }));

@@ -132,8 +132,21 @@ export function feeState(
   return { kind: 'owing', owing, price, acceptedDay, days, late: days != null && days >= season.owingAmberDays };
 }
 
-/** Is this registration owing (the Paid / Owing filter's "Owing")? */
+/** Is this registration owing (before what is clearing: `stillOwingCents` is the lists' test)? */
 export const isOwing = (s: FeeState): s is Extract<FeeState, { kind: 'owing' | 'part' }> => s.kind === 'owing' || s.kind === 'part';
+
+/** What a fee leaves owing once a bank debit on its way is set against it, in cents: never below zero. */
+const leftAfterClearing = (owingCents: number, clearingCents: number) => Math.max(0, owingCents - Math.max(0, clearingCents));
+
+/**
+ * ⚖ THE ONE "STILL OWING" (Club Tier Stage 13e-3, owner 2026-11-16): what this child still owes, in cents, after whatever of
+ * the fee is clearing (`clearingShareCents`, lib/league-debits.ts). Money's Still owing rows and Registrations' Fee: Owing
+ * filter both ask this, and `seasonMoney` (the band) sets clearing against the fee the same way — so a child with part of
+ * the fee clearing stays on both lists with the rest, and the two counts cannot drift. Never re-derive it.
+ */
+export function stillOwingCents(fee: FeeState, clearingCents = 0): number {
+  return isOwing(fee) ? leftAfterClearing(cents(fee.owing), clearingCents) : 0;
+}
 
 export interface SeasonMoney {
   /** The price fixed on each accepted registration. */
@@ -142,6 +155,8 @@ export interface SeasonMoney {
   /** Posted in, less posted out, across every registration (a fee the club kept on an ended one included). */
   received: number;
   receivedPlayers: number;
+  /** Of `receivedPlayers`, the accepted ones who have paid part of the fee and still owe the rest (13e-8: "1 in part"). */
+  partPlayers: number;
   /** Money given back. */
   refunded: number;
   /** What accepted registrations still owe, player by player — less what is clearing. */
@@ -163,7 +178,7 @@ export function seasonMoney(
   clearingCents: ReadonlyMap<string, number> = new Map(),
 ): SeasonMoney {
   let owed = 0, owedPlayers = 0, received = 0, receivedPlayers = 0, refunded = 0, owing = 0, owingPlayers = 0;
-  let clearing = 0, clearingPlayers = 0;
+  let clearing = 0, clearingPlayers = 0, partPlayers = 0;
   for (const reg of regs) {
     const lines = linesByReg.get(reg.id) ?? [];
     const got = cents(receivedOf(lines));
@@ -175,12 +190,16 @@ export function seasonMoney(
     if (price <= 0) continue;
     owed += price; owedPlayers += 1;
     if (price - got <= 0) continue;
-    const onTheWay = Math.min(clearingCents.get(reg.id) ?? 0, price - got);
+    const left = leftAfterClearing(price - got, clearingCents.get(reg.id) ?? 0);
+    const onTheWay = price - got - left;
     if (onTheWay > 0) { clearing += onTheWay; clearingPlayers += 1; }
-    if (price - got - onTheWay > 0) { owing += price - got - onTheWay; owingPlayers += 1; }
+    if (left > 0) { owing += left; owingPlayers += 1; }
+    // Received's "1 in part" (13e-8): an accepted child who has paid some of the fee and owes the rest (inside Received's
+    // players, never taken out of them: Registrations' Received filter counts paid in full, and this says why they differ).
+    if (got > 0) partPlayers += 1;
   }
   return {
-    owed: dollars(owed), owedPlayers, received: dollars(received), receivedPlayers,
+    owed: dollars(owed), owedPlayers, received: dollars(received), receivedPlayers, partPlayers,
     refunded: dollars(refunded), owing: dollars(owing), owingPlayers, clearing: dollars(clearing), clearingPlayers,
   };
 }

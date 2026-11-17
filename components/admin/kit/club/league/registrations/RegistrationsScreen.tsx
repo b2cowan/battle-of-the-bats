@@ -23,6 +23,7 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { kitCountText } from '@/lib/admin-kit-nav';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -47,6 +48,7 @@ import {
 import { awaitsAnswer, refundTarget, type CardRefund } from '@/lib/league-card-refunds';
 import { formatLeagueMoney, isOwing, lastPayment, receivedOf, type LeagueMoneyLine } from '@/lib/league-money';
 import { orgDayKey } from '@/lib/timezone';
+import { clearingShareCents, isClearing } from '@/lib/league-debits';
 import {
   bulkActions, bulkResult, endedKind, feeCell, isOpenReg, matchesPicks, matchesSearch, owesNow, phoneDetail, playerName, guardianName,
   priceOn, REG_TABS, regDay, regTab, regFilterCounts, regFilterOffer, rowActions, seasonHasFees, signupChildren, tallyWhy, whyOf, isRegTab,
@@ -136,7 +138,9 @@ export default function RegistrationsScreen() {
 
   const [scope, setScope] = useState('');
   const [query, setQuery] = useState('');
-  const [picks, setPicks] = useState<RegFilterPicks>(NO_PICKS);
+  // 13e-3: Money's "Open on Registrations" arrives with Fee: Owing on (`?tab=active&fee=owing`) — the one Fee pick a link
+  // can set (Registrations' link vocabulary is not widened past it). Read once, on arrival.
+  const [picks, setPicks] = useState<RegFilterPicks>(() => (search.get('fee') === 'owing' ? { ...NO_PICKS, fee: new Set(['owing']) } : NO_PICKS));
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [shown, setShown] = useState(PAGE);
   const [act, setAct] = useState<Act | null>(null);
@@ -254,6 +258,16 @@ export default function RegistrationsScreen() {
     for (const r of scoped) c[regTab(r.status)] += 1;
     return c;
   }, [scoped]);
+  // F-R5-1 (13e, drawing tab 3 note 3): while a search is typed, each view's count is its matches — the match shows on its
+  // tab before anyone taps. Never one list across views: their rows carry different buttons (Approve is To review's).
+  const searching = query.trim().length > 0;
+  // The search runs once over the scoped list; each view's matches and the open view's rows are both read from it.
+  const matched = useMemo(() => (searching ? scoped.filter(r => matchesSearch(r, query)) : scoped), [scoped, query, searching]);
+  const matchCounts = useMemo(() => {
+    const c: Record<RegTab, number> = { review: 0, active: 0, waitlist: 0, ended: 0 };
+    if (searching) for (const r of matched) c[regTab(r.status)] += 1;
+    return c;
+  }, [matched, searching]);
   const reviewByDivision = useMemo(() => {
     const m = new Map<string, number>();
     for (const r of regs) if (r.status === 'pending_review' && r.divisionId) m.set(r.divisionId, (m.get(r.divisionId) ?? 0) + 1);
@@ -295,6 +309,9 @@ export default function RegistrationsScreen() {
     for (const r of regs) m.set(r.id, feeCell(r, season, linesOf(r.id), read.today, changesByReg.get(r.id) ?? [], refundsOf(r.id), read.notMatched?.[r.id] ?? null, read.debits?.[r.id] ?? null, read.disputes?.[r.id] ?? null));
     return m;
   }, [regs, season, read, linesOf, changesByReg, refundsOf]);
+  // ⚖ 13e-3: what of each child's fee is clearing — the same reading Money's Still owing takes (`clearingShareCents`), so
+  // Fee: Owing keeps a child with part of the fee clearing, owing the rest, as Money does.
+  const clearingOf = useCallback((r: LeagueRegistration) => clearingShareCents(read?.debits?.[r.id]), [read]);
 
   // The Filter (Team · Fee · Flags). A pick belongs to the tab whose menu offers it (Refunded is the Ended tab's, Team the
   // Active tab's): a hidden pick filters nothing.
@@ -308,13 +325,13 @@ export default function RegistrationsScreen() {
     return { team: only('team'), fee: only('fee'), flags: only('flags') };
   }, [picks, offer]);
   const filterOn = activePicks.team.size + activePicks.fee.size + activePicks.flags.size > 0;
-  const searchedTab = useMemo(() => scoped.filter(r => regTab(r.status) === tab && matchesSearch(r, query)), [scoped, tab, query]);
+  const searchedTab = useMemo(() => matched.filter(r => regTab(r.status) === tab), [matched, tab]);
   const tabRegs = useMemo(() => {
-    const list = searchedTab.filter(r => !filterOn || matchesPicks(activePicks, r, fees.get(r.id)!.state, undefined, !!fees.get(r.id)!.chip, hasFriend(r)));
+    const list = searchedTab.filter(r => !filterOn || matchesPicks(activePicks, r, fees.get(r.id)!.state, undefined, clearingOf(r), hasFriend(r)));
     if (tab === 'waitlist') return list.sort((a, b) => (a.waitlistPosition ?? 9999) - (b.waitlistPosition ?? 9999));
     if (tab === 'ended') return list.sort((a, b) => Date.parse(b.endedAt ?? b.updatedAt) - Date.parse(a.endedAt ?? a.updatedAt));
     return list;
-  }, [searchedTab, tab, filterOn, fees, activePicks, hasFriend]);
+  }, [searchedTab, tab, filterOn, fees, activePicks, hasFriend, clearingOf]);
 
   const bulkKeys = useMemo(() => bulkActions(tab, rights, charges), [tab, rights, charges]);
   const selectable = bulkKeys.length > 0;
@@ -355,7 +372,7 @@ export default function RegistrationsScreen() {
       ? REGS_WORDS.player[kind](regDay(reg.endedAt, today))
       : reg.source === 'admin_manual' ? REGS_WORDS.player.byHand(regDay(reg.registeredAt, today)) : REGS_WORDS.player.signedUp(regDay(reg.registeredAt, today));
     const asked = !ended && reg.withdrawRequestedAt ? REGS_WORDS.player.asked(regDay(reg.withdrawRequestedAt, today)) : null;
-    const actions = rowActions(reg, fee.state, linesOf(reg.id), rights, read?.debits?.[reg.id]?.state === 'clearing');
+    const actions = rowActions(reg, fee.state, linesOf(reg.id), rights, isClearing(read?.debits?.[reg.id]));
     // 12b: a card payment that couldn't go on this row, or a card refund that came back — the desk's doors (any tab).
     // 12d-1 Part 3 (words §1.2): no refund to the card while a dispute on it is open (the record's block says why).
     if (rights.takeFees && read?.unrecordedCard?.[reg.id]?.length && !blocksRefund(read?.disputes?.[reg.id]?.status ?? '')) actions.all.push('refundCard');
@@ -685,7 +702,9 @@ export default function RegistrationsScreen() {
     ...REG_TABS.map(id => ({
       id,
       label: REGS_WORDS.tab[id],
-      mark: counts[id] > 0
+      mark: searching
+        ? <span className={css.tabCount} aria-label={REGS_WORDS.matchesAria(matchCounts[id])}>{matchCounts[id]}</span>
+        : counts[id] > 0
         ? (id === 'review'
           ? <span className={frame.count} aria-label={REGS_WORDS.reviewAria(counts[id])}>{kitCountText(counts[id])}</span>
           : <span className={css.tabCount}>{counts[id]}</span>)
@@ -736,7 +755,7 @@ export default function RegistrationsScreen() {
   }
 
   // ── The Filter: Team · Fee · Flags, each choice counted given the other groups' ticks ──────────────────
-  const filterCounts = regFilterCounts(searchedTab, r => fees.get(r.id)!.state, activePicks, offer, r => !!fees.get(r.id)?.chip, hasFriend);
+  const filterCounts = regFilterCounts(searchedTab, r => fees.get(r.id)!.state, activePicks, offer, clearingOf, hasFriend);
   const W = REGS_WORDS;
   const optionWord: Record<RegFilterGroup, (k: string) => string> = {
     team: k => (k === NOT_PLACED ? W.notPlaced : scopeTeams.find(t => t.id === k)?.name ?? k),
@@ -766,11 +785,36 @@ export default function RegistrationsScreen() {
   const E = REGS_WORDS.empty;
   const emptyCard = (() => {
     if (regs.length === 0) return <EmptyCard title={E.all.title}>{E.all.body}</EmptyCard>;
-    if (query.trim()) return <EmptyCard title={E.search} />;
+    if (searching) {
+      // 13e (drawing tab 3 note 4): a miss on this view names the view that has the child, and goes there keeping the search.
+      const elsewhere = searchedTab.length === 0 ? REG_TABS.filter(id => id !== tab && matchCounts[id] > 0) : [];
+      if (elsewhere.length === 0) return <EmptyCard title={E.search} />;
+      const go = elsewhere[0];
+      // The count is the search's matches, so the button clears the Filter as it goes: a pick kept from here (Fee: Owing,
+      // from Money's "Open on Registrations") would hide the very child it promises on a view whose children cannot owe.
+      const showIn = () => { setPicks(NO_PICKS); router.push(`${base}?tab=${go}`, { scroll: false }); };
+      return (
+        <EmptyCard
+          title={`${E.searchMiss(W.tab[tab], query.trim())} ${E.searchElsewhere(elsewhere.map(id => ({ n: matchCounts[id], tab: W.tab[id] })))}`}
+          action={<button type="button" className="btn btn-outline" onClick={showIn}>{E.showIn(matchCounts[go], W.tab[go])}</button>}
+        />
+      );
+    }
     if (filterOn) return <EmptyCard title={E.filter} action={<button type="button" className="btn btn-outline" onClick={resetFilter}>{REGS_WORDS.filterClear}</button>} />;
     const e = tab === 'review' ? (season.autoApproveUnderCapacity ? E.reviewAuto : E.review) : tab === 'active' ? E.active : tab === 'waitlist' ? E.waitlist : E.ended;
     return <EmptyCard title={e.title}>{e.body}</EmptyCard>;
   })();
+
+  // ⚖ 13e-3 (drawing tab 2, the way back): Fee: Owing names its twin — only when it is TRUE: Active, every division, no
+  // search, Owing the only pick. Both lists ask the one rule (`stillOwingCents`), so the count is the same children as Money's
+  // Still owing; with a division picked the list is a part of them and the line goes. The count is the list's own.
+  const onlyOwing = activePicks.fee.size === 1 && activePicks.fee.has('owing') && activePicks.team.size === 0 && activePicks.flags.size === 0;
+  const twinLine = tab === 'active' && !scope && !searching && onlyOwing && tabRegs.length > 0 ? (
+    <p className={css.twinLine}>
+      {W.twin(tabRegs.length)}{' '}
+      <Link href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/money?tab=owing`}>{W.twinOpen}</Link>
+    </p>
+  ) : null;
 
   const raised = openId != null;
   const picked = selectedRegs.length;
@@ -825,6 +869,7 @@ export default function RegistrationsScreen() {
       </div>
       {searchField.row}
       <FilterLine picks={pickedLabels(groups)} label={REGS_WORDS.filter} />
+      {twinLine}
 
       {result && (
         <Callout tone="warn" role="status" action={<button type="button" className="btn btn-outline" onClick={() => setResult(null)}>{BULK_WORDS.dismiss}</button>}>

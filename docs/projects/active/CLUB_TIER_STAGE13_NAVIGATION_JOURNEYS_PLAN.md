@@ -900,6 +900,39 @@ ahead of the owner's rulings.
   permits) were not answered in the paste-back. **Owed:** `check:layout --changed` on the touched screens; teardown of `navj-club-13d` on the owner's word.
   13d is DONE; several-permits Session C's gate is met.
 
+- 2026-11-16 — **13e Session A BUILT** (the registrar's house league; build prompt Session A, drawing tabs 2, 3, 7). **One Still owing rule:**
+  `stillOwingCents` + `clearingShareCents` / `clearingCentsByReg` (lib/league-money.ts, lib/league-debits.ts); Money's band, Money's Still owing
+  rows, the season's Overview read, the club band and Registrations' Fee: Owing all call them, so a child with part of the fee on a clearing debit
+  stays on both lists owing the rest (the filter used to drop them). No figure's arithmetic moved (`seasonMoney` re-expressed, same sums;
+  `club-money-one-definition-guard` and `club-stage13d-money-handoff` green). **Money:** Still owing has its own address (`?tab=owing`, the same
+  `?tab=` Registrations uses); This morning's Still owing tile and the club band's owing line land on it; rows open the child at its fee; "Open on
+  Registrations" (`?tab=active&fee=owing`, the ONE pick a link can set) and "Email these families" (the existing window, `ticked` = Still owing).
+  Gate: `access.read` for rows + Open, `access.email` for Email; the treasurer sees plain rows, no buttons. **Departure:** the Refunds tab's
+  never-booked names also stop linking for a reader without Registrations (they were a dead door before). Received reads "8 players · 1 in part"
+  (`partPlayers` added to SeasonMoney, a count only). **Registrations:** the twin line (only when Active, all divisions, no search, Owing the only pick);
+  while searching each view's count is its matches and a miss names the view with "Show it in Active" (search kept). **Find a child or a parent** on
+  House league's home: GET /api/admin/house-league/find (gated `houseLeagueRefusal(ctx,'read')`, read-only, running seasons; past on ask; 8 then
+  Show all); the next line is `teamNextBooking` over `seasonCalendar` (the schedule's own bookings). Tests `tests/unit/club-stage13e-a.test.ts`.
+  `/docs` (find-a-child article, money-still-owing, Received, the search; hub links); `/legal` no change (`HOUSE_LEAGUE_FIND_AND_OWING_EMAIL.md`).
+  **Layout (2026-11-16, after a dev-server restart; screens by `--only`, the typed states through temporary entries since removed):** House
+  league's home (Find a child empty, results, a miss), Money on Still owing, Registrations (Fee: Owing + twin line, a search miss on To review),
+  390 + 1440 — one finding, fixed: the twin line's "Open Still owing" was 34 px on a phone (now 44 px); the rest are the rows' existing checkboxes.
+  **/simplify:** the status words and the row's name reuse Registrations' and Money's own; the PostgREST escape has one home (`likeOrTerm`,
+  lib/house-league-registrations.ts; the season list's route calls it, and `seat-reads-guard` now pins the helper and both callers); Find reads the
+  shown children's own lines (`loadRegistrationMoneyLines`, as the child's page does) and the place names as the public schedule does
+  (`getOrgPlaceNames`), not each season's whole book and venues; Registrations matches the search once; Money's "since" words are one helper.
+  Skipped: the band calling `stillOwingCents` per child (it shares `leftAfterClearing`; equal by the tests), threading one per-row fact through the
+  filter functions, `SeasonBooking.teamIds`. **/review (high), no Critical or High.** Fixed: Find a child no longer jumps while it reads ("Looking…"
+  sits in the field's scope slot, the last answer stays dimmed, a miss too; the live region is always in the page), an abort mid-body can't read
+  as "no match", a short or trailing-space edit no longer resets "Show all"; "Show all" past 100 says "Show the first 100 of N" and the list's foot
+  "Showing 100 of N. Type more of the name to narrow it." (new words for the /marketing pass); the read is ordered; the next line skips a game
+  already scored; "Show it in …" clears the Filter as it goes (Fee: Owing from "Open on Registrations" hid a To review child it promised); the
+  season Overview's Still owing tile now lands on `?tab=owing` too. **Owner calls (not built):** (1) a child with part of the fee clearing is on
+  Registrations' Fee: Owing (as on Money) but the row's fee cell shows only "$100 clearing", not "$50 owing" (the 12c cell); (2) "Email these
+  families" sends Still owing's ids in the window's GET, so past ~200 owing children the address can outgrow the host's limit and the window
+  shows its failed state (the window's own read, shared with the bulk bar); (3) Accounting's "House league money: … still owing" door still opens
+  Money on Every line (13d's door, pinned by its test). Owed: Session B; one walk after B.
+
 ## 11. The external review, cross-checked (2026-11-07)
 
 Source: `CLUB_TIER_PRODUCT_IA_REVIEW.md` (an outside reviewer's first look; its IDs are written **R-F-nn** here so they

@@ -11,7 +11,7 @@
  */
 import type { LeagueRegistration, LeagueRegistrationStatus } from './types';
 import {
-  feeState, formatLeagueMoney, isOwing, lastPayment, receivedOf,
+  feeState, formatLeagueMoney, isOwing, lastPayment, receivedOf, stillOwingCents,
   type FeeState, type LeagueMoneyLine,
 } from './league-money';
 import { leaguePrice, registrationOwes, type LeaguePrice } from './league-price';
@@ -448,10 +448,18 @@ export function matchesSearch(r: LeagueRegistration, query: string): boolean {
   return [playerName(r), guardianName(r), r.guardianEmail, r.guardianEmail2 ?? ''].some(s => s.toLowerCase().includes(q));
 }
 
-/** The Fee filter: several picks widen it (any of them). */
-export function matchesFee(fee: FeeState, picks: ReadonlySet<string>, clearing = false): boolean {
+/** Typed search text, made safe for a PostgREST `.or()` `ilike` pattern (Board Ready W2 fix E, sweep 3) — the ONE escape the
+ *  season's list and Find a child both use. A comma starts another condition and brackets or quotes group one, so `%`, `_`
+ *  and `\` are escaped for LIKE and `, ( ) " .` become the single-character wildcard: "ann.lee@x.com" still finds itself and
+ *  nothing typed can add a condition. */
+export const likeOrTerm = (text: string): string => text.trim().replace(/[%_\\]/g, '\\$&').replace(/[,()".]/g, '_');
+
+/** The Fee filter: several picks widen it (any of them). `clearingCents` is this child's fee on a bank debit on its way
+ *  (`clearingShareCents`). ⚖ "Owing" is THE one Still owing rule (`stillOwingCents`, Club Tier Stage 13e-3): a child with
+ *  part of the fee clearing stays, owing the rest, exactly as on Money's Still owing — so both lists are the same children. */
+export function matchesFee(fee: FeeState, picks: ReadonlySet<string>, clearingCents = 0): boolean {
   if (picks.size === 0) return true;
-  return (picks.has('owing') && isOwing(fee) && !clearing)
+  return (picks.has('owing') && stillOwingCents(fee, clearingCents) > 0)
     || (picks.has('received') && fee.kind === 'received')
     || (picks.has('refunded') && fee.kind === 'refunded');
 }
@@ -486,8 +494,9 @@ export function regFilterOffer(tab: RegTab, o: { charges: boolean; payLinks: boo
 }
 
 /** A row's flags. "Late" is the row's own amber (owing, past the season's days); a pay link counts once it was ever sent. */
-export function regFlags(r: LeagueRegistration, fee: FeeState, clearing = false, friend = false): Set<RegFlag> {
+export function regFlags(r: LeagueRegistration, fee: FeeState, clearingCents = 0, friend = false): Set<RegFlag> {
   const f = new Set<RegFlag>();
+  const clearing = clearingCents > 0;
   if (isOpenReg(r) && r.withdrawRequestedAt) f.add('asked');
   // 12c Part 6: a bank debit on its way is never late, and needs no pay link (the row offers neither).
   if (!clearing && fee.kind === 'owing' && fee.late) f.add('late');
@@ -498,24 +507,25 @@ export function regFlags(r: LeagueRegistration, fee: FeeState, clearing = false,
 }
 
 /** One group's test on one row. Several picks in a group widen it (any of them); no picks admit everything. */
-export function matchesGroup(group: RegFilterGroup, picks: ReadonlySet<string>, r: LeagueRegistration, fee: FeeState, clearing = false, friend = false): boolean {
+export function matchesGroup(group: RegFilterGroup, picks: ReadonlySet<string>, r: LeagueRegistration, fee: FeeState, clearingCents = 0, friend = false): boolean {
   if (picks.size === 0) return true;
-  if (group === 'fee') return matchesFee(fee, picks, clearing);
+  if (group === 'fee') return matchesFee(fee, picks, clearingCents);
   if (group === 'team') return picks.has(r.teamId ?? NOT_PLACED);
-  const flags = regFlags(r, fee, clearing, friend);
+  const flags = regFlags(r, fee, clearingCents, friend);
   return [...picks].some(k => flags.has(k as RegFlag));
 }
 
 /** Every group but `except` (the counts' base: what ticking a choice would list, given the OTHER groups' ticks). */
-export function matchesPicks(picks: RegFilterPicks, r: LeagueRegistration, fee: FeeState, except?: RegFilterGroup, clearing = false, friend = false): boolean {
-  return (['team', 'fee', 'flags'] as const).every(g => g === except || matchesGroup(g, picks[g], r, fee, clearing, friend));
+export function matchesPicks(picks: RegFilterPicks, r: LeagueRegistration, fee: FeeState, except?: RegFilterGroup, clearingCents = 0, friend = false): boolean {
+  return (['team', 'fee', 'flags'] as const).every(g => g === except || matchesGroup(g, picks[g], r, fee, clearingCents, friend));
 }
 
 /** Each offered choice's count: the rows ticking it would list, given the other groups' ticks (Filter Counts D5). */
 export function regFilterCounts(
   rows: readonly LeagueRegistration[], stateOf: (r: LeagueRegistration) => FeeState, picks: RegFilterPicks,
   offer: Record<RegFilterGroup, readonly string[]>,
-  clearingOf: (r: LeagueRegistration) => boolean = () => false,
+  /** This child's fee on a bank debit on its way, in cents (`clearingShareCents`). */
+  clearingOf: (r: LeagueRegistration) => number = () => 0,
   /** The family named a friend for this child (Board Ready Stage 1 Part 2). */
   friendOf: (r: LeagueRegistration) => boolean = () => false,
 ): Record<RegFilterGroup, Map<string, number>> {

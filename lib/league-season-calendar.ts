@@ -300,6 +300,26 @@ export function seasonOpeningDay(bookings: readonly { day: string }[], today: st
 }
 
 /**
+ * A team's next game or practice (Club Tier Stage 13e-1, F-R5-4 closed into Find a child): over the bookings the schedule
+ * itself draws (`seasonCalendar` — a postponed game has already left them), the first one still to come or under way that
+ * is on (never called off) and not already scored, whatever its kind. A game is the team's when it is home or away; a
+ * practice when it is its own.
+ * Null when the team has nothing ahead.
+ */
+export function teamNextBooking(bookings: readonly SeasonBooking[], teamId: string, nowMs: number): SeasonBooking | null {
+  for (const b of bookings) {
+    if (b.state || b.endMs <= nowMs) continue;
+    // A game already scored is played, even inside its default window (a score entered before the hour is up).
+    if (b.source.kind === 'game' && b.source.game.status === 'completed') continue;
+    const mine = b.source.kind === 'game'
+      ? b.source.game.homeTeamId === teamId || b.source.game.awayTeamId === teamId
+      : b.source.practice.teamId === teamId;
+    if (mine) return b;
+  }
+  return null;
+}
+
+/**
  * Where the "Today · Thu, Jun 17" line sits in a week (C7): before its first booking on or after today, or after the last
  * when the week's bookings are all behind today; null in any week but this one.
  */

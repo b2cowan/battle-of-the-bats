@@ -23,6 +23,7 @@ import assert from 'node:assert/strict';
 import { readCode } from './_source-code.ts';
 import { canManageRegistrations } from '../../lib/registration-access.ts';
 import { canOpenPermitDocument } from '../../lib/venue-library.ts';
+import { likeOrTerm } from '../../lib/house-league-registrations.ts';
 
 describe('the two small rules', () => {
   it('canManageRegistrations: owners, admins and the capability holders; not tournament staff or volunteers', () => {
@@ -134,13 +135,19 @@ describe('the coach removing a family connection', () => {
 });
 
 describe('the house-league registrations search', () => {
+  // The escape has ONE home (`likeOrTerm`, lib/house-league-registrations.ts, Club Tier Stage 13e): the season's list and Find
+  // a child (the cross-season search) both put typed text into a PostgREST `.or()` through it, never a copy of their own.
   it('turns commas, brackets, quotes and dots into the single-character wildcard before the .or()', () => {
-    const code = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts');
-    assert.match(code, /\.replace\(\/\[,\(\)"\.\]\/g, '_'\)/);
+    const helper = readCode('lib/house-league-registrations.ts');
+    assert.match(helper, /export const likeOrTerm = [^\n]*\.replace\(\/\[,\(\)"\.\]\/g, '_'\)/);
+    for (const route of ['app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts', 'app/api/admin/house-league/find/route.ts']) {
+      const code = readCode(route);
+      assert.match(code, /= likeOrTerm\(/, `${route} escapes through likeOrTerm`);
+      assert.doesNotMatch(code, /\.replace\(\/\[,\(\)"\.\]\/g/, `${route} keeps no copy of the escape`);
+    }
   });
   it('the replacement leaves no condition separator in a hostile string', () => {
-    const s = 'x,status.eq.paid)(y'.trim().replace(/[%_\\]/g, '\\$&').replace(/[,()".]/g, '_');
-    assert.doesNotMatch(s, /[,()".]/);
+    assert.doesNotMatch(likeOrTerm('x,status.eq.paid)(y'), /[,()".]/);
   });
 });
 

@@ -30,3 +30,15 @@ export interface RegDebit {
 }
 
 export const isClearing = (d: RegDebit | null | undefined): d is RegDebit => d?.state === 'clearing';
+
+/** This child's registration fee on a bank debit still on its way, in cents (0 when nothing is clearing). ⚖ The ONE reading
+ *  of "what is clearing" (Club Tier Stage 13e-3): Money's band and Still owing, the season's Overview and Registrations'
+ *  Fee: Owing filter all take it from here, then `stillOwingCents` (lib/league-money.ts) — so the two lists cannot drift. */
+export const clearingShareCents = (d: RegDebit | null | undefined): number => (isClearing(d) ? d.shareCents : 0);
+
+/** `clearingShareCents` for each child that has some, keyed by registration id; `only` narrows it (Money: active ones). */
+export function clearingCentsByReg(debits: Readonly<Record<string, RegDebit>>, only?: ReadonlySet<string>): Map<string, number> {
+  return new Map(Object.entries(debits)
+    .filter(([id, d]) => isClearing(d) && (!only || only.has(id)))
+    .map(([id, d]) => [id, clearingShareCents(d)]));
+}

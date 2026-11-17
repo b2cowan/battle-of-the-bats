@@ -91,6 +91,8 @@ export const MONEY_PAGE_WORDS = {
   band: {
     owed: 'Owed', received: 'Received', owing: 'Still owing',
     players: (n: number) => pluralize(n, 'player'),
+    // 13e-8: Received's part-paid, counted and said ("8 players · 1 in part").
+    inPart: (n: number) => `${n} in part`,
     afterRefunds: (amount: string) => `after ${amount} refunded`,
     // 12c words §3.4: the card/bank split moves from Received's caption to the band's note; Clearing while there is some.
     clearing: 'Clearing',
@@ -104,7 +106,12 @@ export const MONEY_PAGE_WORDS = {
   },
   finished: 'This season is finished. You can still mark fees received and record refunds.',
   tabs: { all: 'Every line', owing: 'Still owing', refunds: 'Refunds' },
-  col: { date: 'Date', player: 'Player', what: 'What', how: 'How', amount: 'Amount', division: 'Division', since: 'Owing since', owing: 'Owing' },
+  col: { date: 'Date', player: 'Player', what: 'What', how: 'How', amount: 'Amount', division: 'Division', since: 'Owing since', owing: 'Owing', open: 'Open' },
+  // 13e (drawing tab 2): Still owing's two doors, and a row's spoken name. "Email these" is the phone's label; it speaks in full.
+  toRegistrations: 'Open on Registrations',
+  emailThese: 'Email these families',
+  emailTheseShort: 'Email these',
+  openChild: (player: string) => `Open ${possessive(player)} registration`,
   what: {
     fee: (kind: 'regular' | 'corrected' | null) => `Registration fee · ${kind === 'corrected' ? 'corrected price' : 'regular price'}`,
     refund: (why: string | null) => `Refund · ${why === 'released' ? 'spot released' : why === 'corrected' ? 'price corrected' : why ?? 'refund'}`,
@@ -191,6 +198,10 @@ export const REGS_WORDS = {
   filterOn: (n: number) => `${n} on`,
   filterFee: 'Fee',
   filterOwing: 'Owing',
+  // 13e-3: Fee: Owing names its twin on Money (shown only when it is the same list).
+  twin: (n: number) => `${n} owing, the same ${n} as Money’s Still owing.`,
+  twinOpen: 'Open Still owing',
+  matchesAria: (n: number) => (n === 1 ? '1 match' : `${n} matches`),
   filterReceived: 'Received',
   filterRefunded: 'Refunded',
   filterClear: 'Clear filter',
@@ -321,6 +332,11 @@ export const REGS_WORDS = {
     ended: { title: 'Nothing has ended', body: 'Declined, withdrawn and released registrations show here, with what happened to any money.' },
     all: { title: 'No registrations yet', body: 'Families sign up on the season’s page. You can also add a registration by hand.' },
     search: 'No registrations match your search.',
+    // 13e (F-R5-1, drawing tab 3 note 4): a miss names the view that has the child, and its button keeps the search.
+    searchMiss: (tab: string, q: string) => `No one in ${tab} matches “${q}”.`,
+    searchElsewhere: (where: readonly { n: number; tab: string }[]) =>
+      where.map((x, i) => (i === 0 ? `${x.n === 1 ? '1 match' : `${x.n} matches`} in ${x.tab}` : `${x.n} in ${x.tab}`)).join(' · '),
+    showIn: (n: number, tab: string) => (n === 1 ? `Show it in ${tab}` : `Show them in ${tab}`),
     filter: 'No registrations match this filter.',
   },
   more: (n: number) => `… ${n} more`,

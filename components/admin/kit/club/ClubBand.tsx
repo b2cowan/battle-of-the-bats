@@ -128,7 +128,7 @@ export default function ClubBand({ slug, base, ready }: {
       key: 'owing',
       desk: W.needs.leagueOwing(n.leagueOwing.players),
       phone: W.needs.leagueOwingShort(n.leagueOwing.players),
-      href: n.leagueOwing.seasonId ? `${base}/house-league/seasons/${n.leagueOwing.seasonId}/money` : `${base}/house-league`,
+      href: n.leagueOwing.seasonId ? `${base}/house-league/seasons/${n.leagueOwing.seasonId}/money?tab=owing` : `${base}/house-league`,
     });
   }
   if (n?.formsMissing && n.formsMissing.forms > 0) {

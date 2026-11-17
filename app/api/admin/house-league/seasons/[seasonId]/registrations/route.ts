@@ -16,6 +16,7 @@ import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { readRegistrationDisputes } from '@/lib/online-dispute-read';
 import { loadSeasonMoneyLines } from '@/lib/league-money-read';
+import { likeOrTerm } from '@/lib/house-league-registrations';
 import { clubPayoutsConnected, clubTakesCards, loadCardRefunds, loadRegistrationDebits, loadUnassignedRefunds, returnedCardRefunds, unrecordedCardShares } from '@/lib/league-pay-facts';
 
 export const GET = withObservability(async (req: Request,
@@ -40,10 +41,8 @@ export const GET = withObservability(async (req: Request,
   if (status)     q = q.eq('status', status as LeagueRegistrationStatus);
   if (divisionId) q = q.eq('division_id', divisionId);
   if (search) {
-    // The text goes into a PostgREST `.or()` string, where a comma starts another condition and brackets or quotes group one
-    // (Board Ready W2 fix E, sweep 3). `%`, `_` and `\` are escaped for LIKE; `, ( ) " .` become the single-character wildcard,
-    // so "ann.lee@x.com" still finds itself and nothing typed can add a condition.
-    const s = search.trim().replace(/[%_\\]/g, '\\$&').replace(/[,()".]/g, '_');
+    // The text goes into a PostgREST `.or()` string, escaped by the one helper (`likeOrTerm`, Board Ready W2 fix E, sweep 3).
+    const s = likeOrTerm(search);
     q = q.or(
       `player_first_name.ilike.%${s}%,player_last_name.ilike.%${s}%,guardian_email.ilike.%${s}%,guardian_email_2.ilike.%${s}%`,
     );

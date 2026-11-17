@@ -66,7 +66,7 @@ describe('what the tiles say', () => {
   it('every tile opens the page that holds its lines', () => {
     const hrefs = Object.fromEntries(leagueMorning(base).map(t => [t.key, t.href]));
     assert.equal(hrefs.review, '/harbourtown/admin/house-league/seasons/s1/registrations?tab=review');
-    assert.equal(hrefs.owing, '/harbourtown/admin/house-league/seasons/s1/money');
+    assert.equal(hrefs.owing, '/harbourtown/admin/house-league/seasons/s1/money?tab=owing');
     assert.equal(hrefs.waitlist, '/harbourtown/admin/house-league/seasons/s1/registrations?tab=waitlist');
   });
 });

@@ -27,6 +27,7 @@ import type { LeagueCapKind, SeasonSlotHolder } from '@/lib/free-floor';
 import type { LeagueSeasonSummary } from '@/lib/types';
 import styles from '@/components/admin/kit/club/HouseLeagueHome.module.css';
 import { NotYours } from '@/components/admin/kit/club/NotYours';
+import FindChild from '@/components/admin/kit/club/league/FindChild';
 import { useBoardPeople } from '@/lib/use-board-people';
 import { seasonCreatorsSentence } from '@/lib/board-people';
 
@@ -135,6 +136,9 @@ export default function HouseLeagueHome() {
 
       {!failed && summaries.length > 0 && (
         <>
+          {/* 13e-4 A: where the registrar lands, the answer to "which team is she on, and when does she play?" — every
+              running season, every tab; read-only, gated as Registrations is (this page's own `access.read`). */}
+          <FindChild orgSlug={orgSlug} />
           <ClubSection title="Running now" list>
             {running.length > 0
               ? <ClubRowList inset label="Running now">{running.map(row)}</ClubRowList>

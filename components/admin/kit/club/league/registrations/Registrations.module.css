@@ -344,3 +344,7 @@
 .recordLine + .recordLine { margin-top: 0.2rem; }
 .recordLink { align-self: flex-start; min-height: 32px; padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
 @media (max-width: 640px) { .recordLink { min-height: 44px; } }
+/* 13e-3 (drawing tab 2, the way back): Fee: Owing names its twin on Money, under the filter line. */
+.twinLine { margin: 0 0 0.75rem; font-size: var(--type-support); color: var(--text-secondary); }
+.twinLine a { font-weight: 600; }
+@media (max-width: 640px) { .twinLine a { display: inline-flex; align-items: center; min-height: 44px; } }

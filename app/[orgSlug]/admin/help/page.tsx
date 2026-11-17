@@ -189,6 +189,7 @@ export default function AdminHelpHubPage() {
         title: 'League registrar',
         roles: ['league_registrar'] as const,
         steps: [
+          { label: 'Find a child or a parent', href: `${helpBase}/house-league#find-a-child` },
           { label: 'Work the daily review queue', href: `${helpBase}/registrations#recipe-daily-review-queue` },
           { label: 'Promote a waitlisted player', href: `${helpBase}/registrations#recipe-promote-waitlisted-player` },
           { label: 'Add a manual registration', href: `${helpBase}/registrations#recipe-add-manual-registration` },

@@ -358,7 +358,8 @@ export default function SeasonOverviewPage() {
                 <span className={s.tileHint}>{pluralize(detail.money.owedPlayers, 'player')}</span>
               </Link>
               <Link
-                href={`/${orgSlug}/admin/house-league/seasons/${season.id}/money`}
+                // 13e: the Still owing figure opens Money on Still owing (its own address), as This morning's tile does.
+                href={`/${orgSlug}/admin/house-league/seasons/${season.id}/money?tab=owing`}
                 className={`${s.tile} ${s.tileLink}`}
                 aria-label={TILE_WORDS.aria(TILE_WORDS.owing, formatLeagueMoney(detail.money.owing), detail.money.owingPlayers)}
               >
