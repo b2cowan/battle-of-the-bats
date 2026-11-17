@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Version** | 0.3 (draft) |
-| **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
+| **Status** | draft — **owner-approved 2026-11-17 (this 0.3 text)**, not published (publishes at GST/HST Stage 6 step 6.7), **not reviewed by a lawyer** |
 | **Effective date** | — (set on publication; the version then becomes that date, `YYYY-MM-DD`) |
 | **Last reviewed** | 2026-11-16 |
 | **Backlog** | L2 (with L9 findings); children's consent wording (L5) and CASL lawful basis (L6) are referenced, not settled |

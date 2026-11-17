@@ -8,8 +8,10 @@
 //   - walks owed            -> docs/projects/active/OWNER_QA_LEDGER.md
 //   - not yet live          -> origin/master..dev, the release tags, MANUAL_PROD_STEPS.json
 //   - roadmap items         -> the tables in docs/agents/strategy/PRODUCT_ROADMAP.md §2
-// The registry (OWNER_BRIEF_PROJECTS.json) only names and groups projects, and records a project the
-// owner PARKED or CLOSED. A plan file it does not list still appears, under its file name.
+// The registry (OWNER_BRIEF_PROJECTS.json) is THE BOARD (owner ruling 2026-11-17, ONE_BOARD_PLAN.md): the
+// only place a project's status is written — goals, lane, phase, now → next, the next action, what it waits on
+// and the owner's own steps. Activity, walks owed and production state are still derived, never typed.
+// A plan file it does not list still appears, under its file name, flagged "not on the board".
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -168,7 +170,10 @@ function readProjects(walks) {
     else if (quietDays === null || quietDays > QUIET_AFTER_DAYS) status = owed.length ? 'waiting' : 'quiet';
     return { id: p.id, name: p.name, track: p.track || 'product', status, last, quietDays, started: starts[0] || null,
       commitsThisWeek: facts.reduce((s, f) => s + f.week, 0), uncommitted: isUncommitted, walksOwed: owed.map((w) => w.section),
-      parked: p.parked || null, remains: p.remains || '', auto: p.auto };
+      parked: p.parked || null, remains: p.remains || '', auto: p.auto,
+      goals: p.goals || [], lane: p.lane || null, order: p.order ?? 99, phase: p.phase || null, stage: p.stage || '',
+      next: p.next || '', waitsOn: p.waitsOn || [], finishesAfter: p.finishesAfter || [], youOwe: p.youOwe || [],
+      state: p.state || 'open', checked: p.checked !== false };
   });
   // what overtook a project that stopped: projects that started after its last activity
   for (const p of out) {
@@ -181,11 +186,65 @@ function readProjects(walks) {
   return out.filter((p) => p.last || !p.auto).sort((a, b) => rank[a.status] - rank[b.status] || (a.quietDays ?? 999) - (b.quietDays ?? 999));
 }
 
+// ---- the board ----------------------------------------------------------------------------------
+// Lanes: now (at most three, the owner's order) · next · later · after (a project whose goals are all "after").
+// Two kinds of dependency: waitsOn = the NEXT step cannot start until that project is done (a Now project
+// must have none open); finishesAfter = this project cannot FINISH until that one does (sequencing only).
+// "Waiting on you" = every owner-only step typed on the board; walks owed come from the ledger, never typed.
+// checked: false = not yet truth-checked (ONE_BOARD_PLAN Session 2) — counted, not warned about.
+// The board's own rules are printed as warnings, so a broken board shows at the refresh.
+const MAX_NOW = 3;
+function buildBoard(projects) {
+  const reg = JSON.parse(read(REGISTRY));
+  const goalsDef = reg.goals || [];
+  const afterGoals = new Set(goalsDef.filter((g) => g.after).map((g) => g.id));
+  const byId = new Map(projects.map((p) => [p.id, p]));
+  const isDone = (p) => p.state === 'closed' || p.phase === 'Live';
+  const open = projects.filter((p) => !p.auto && p.state !== 'closed' && p.state !== 'parked');
+  const laneOf = (p) => {
+    if (p.goals.length && p.goals.every((g) => afterGoals.has(g))) return 'after';
+    return ['now', 'next', 'later'].includes(p.lane) ? p.lane : 'later';
+  };
+  const lanes = { now: [], next: [], later: [], after: [] };
+  for (const p of [...open].sort((a, b) => a.order - b.order)) lanes[laneOf(p)].push(p.id);
+  const warnings = [];
+  if (lanes.now.length > MAX_NOW) warnings.push(`${lanes.now.length} projects are in Now; the board allows ${MAX_NOW}.`);
+  for (const p of open) {
+    if (!p.phase && p.checked) warnings.push(`${p.name} has no phase.`);
+    if (!p.goals.length) warnings.push(`${p.name} serves no goal.`);
+    for (const g of p.goals) if (!goalsDef.some((d) => d.id === g)) warnings.push(`${p.name} names an unknown goal "${g}".`);
+    for (const w of p.waitsOn) {
+      const dep = byId.get(w);
+      if (!dep) { warnings.push(`${p.name} waits on an unknown project "${w}".`); continue; }
+      if (laneOf(p) === 'now' && !isDone(dep)) warnings.push(`${p.name} is in Now but waits on ${dep.name}, which is not done.`);
+    }
+    for (const w of p.finishesAfter) if (!byId.has(w)) warnings.push(`${p.name} finishes after an unknown project "${w}".`);
+    if (laneOf(p) === 'after' && open.some((q) => laneOf(q) !== 'after' && (q.waitsOn.includes(p.id) || q.finishesAfter.includes(p.id))))
+      warnings.push(`${p.name} is after launch, but a launch project depends on it.`);
+  }
+  const notOnBoard = projects.filter((p) => p.auto).map((p) => p.name);
+  if (notOnBoard.length) warnings.push(`${notOnBoard.length} active plan(s) are not on the board: ${notOnBoard.join(', ')}.`);
+  const unchecked = open.filter((p) => !p.checked).map((p) => p.id);
+  const waitedOnBy = (id) => open.filter((p) => p.waitsOn.includes(id) || p.finishesAfter.includes(id)).map((p) => p.id);
+  const goals = goalsDef.map((g) => {
+    const mine = projects.filter((p) => !p.auto && p.goals.includes(g.id));
+    return { id: g.id, name: g.name, doneWhen: g.doneWhen || '', after: Boolean(g.after),
+      total: mine.length, done: mine.filter(isDone).length, projects: mine.map((p) => p.id) };
+  });
+  const youOwe = [];
+  for (const p of open) for (const text of p.youOwe) youOwe.push({ project: p.id, name: p.name, text, lane: laneOf(p) });
+  const rank = { now: 0, next: 1, later: 2, after: 3 };
+  youOwe.sort((a, b) => rank[a.lane] - rank[b.lane]);
+  const cards = Object.fromEntries(open.map((p) => [p.id, { blocks: waitedOnBy(p.id) }]));
+  return { lanes, goals, youOwe, warnings, cards, unchecked, maxNow: MAX_NOW };
+}
+
 // ---- run ----------------------------------------------------------------------------------------
 const walks = readWalks();
 const production = readProduction();
 const roadmap = readRoadmap();
 const projects = readProjects(walks);
+const board = buildBoard(projects);
 const count = (list, key) => list.reduce((m, x) => { m[x[key]] = (m[x[key]] || 0) + 1; return m; }, {});
 const DONE_STATUS = /^(live|done)$/i;
 const horizons = [...new Set(roadmap.map((r) => r.horizon))].map((name) => {
@@ -202,6 +261,7 @@ write('meta', meta);
 write('projects', { items: projects });
 write('roadmap', { items: roadmap });
 write('walks', { items: walks });
+write('board', board);
 
 // compact summary for the session that writes the day's priorities
 const line = (s) => console.log(s);
@@ -216,4 +276,9 @@ for (const p of projects) {
   line(`  [${p.status}] ${p.name}${p.auto ? ' (unregistered)' : ''} · last ${p.last ?? 'never'} (${p.quietDays ?? '?'}d) · ${p.commitsThisWeek} this week${p.uncommitted ? ' · uncommitted' : ''}${p.walksOwed.length ? ` · walks §${p.walksOwed.join(' §')}` : ''}`);
 }
 for (const h of horizons) line(`roadmap ${h.name}: product ${h.product.live}/${h.product.total} live (${h.product.built} built, ${h.product.inProgress} in progress) · tech ${h.tech.live}/${h.tech.total} live (${h.tech.built} built, ${h.tech.inProgress} in progress)`);
-line(`wrote ${path.relative(ROOT, OUT)}/{meta,projects,roadmap,walks}.json`);
+for (const lane of ['now', 'next', 'later', 'after']) line(`board ${lane}: ${board.lanes[lane].join(', ') || '—'}`);
+for (const g of board.goals) line(`goal ${g.name}: ${g.done} of ${g.total} done`);
+line(`waiting on you: ${board.youOwe.length} owner steps, ${walks.length} walks`);
+if (board.unchecked.length) line(`not yet truth-checked: ${board.unchecked.join(', ')}`);
+for (const w of board.warnings) line(`  ⚠ ${w}`);
+line(`wrote ${path.relative(ROOT, OUT)}/{meta,projects,roadmap,walks,board}.json`);

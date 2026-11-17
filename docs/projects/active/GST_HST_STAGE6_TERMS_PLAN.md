@@ -280,6 +280,8 @@ all thirteen ruled as recommended; L-a, L-b and G13(b) read — see §3. Left fr
 > owners; only Stripe giving up ends it). **Left for the owner before 6.7:** the phone and mailing address (O1/P1 — no personal name anywhere, O1′ ruled 2026-11-08); the
 > one Stripe choice (customer emails); F2; support@ and privacy@ on fieldlogichq.ca (and hello@, which the product already
 > uses as its reply-to). Next: 6.2 via `/plan`; 6.5 can start any time.
+> **Owner 2026-11-17:** approved the Terms and Privacy Policy (the 0.3 text), and confirmed support@, privacy@ and hello@ on
+> fieldlogichq.ca all receive mail. (Phone and mailing address were ruled email-only the same day, walk §533.)
 - Apply §1's truth table and §2's edits; strike every stale note (production cancel; L13).
 - Apply O1–O8 and P1–P7. Add the **"If you joined through an organization"** section (O7). Add the **acceptance wording** as a
   short section of the Terms draft (the tick-box line, the sign-in screen's two sentences, the purchase-line), so the build copies

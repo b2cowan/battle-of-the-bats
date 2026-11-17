@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Version** | 0.3 (draft) |
-| **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
+| **Status** | draft — **owner-approved 2026-11-17 (this 0.3 text)**, not published (publishes at GST/HST Stage 6 step 6.7), **not reviewed by a lawyer** |
 | **Effective date** | — (set on publication; the version then becomes that date, `YYYY-MM-DD`) |
 | **Last reviewed** | 2026-11-16 |
 | **Backlog** | L1 (with L8 and L12 folded in); Québec (L7) answered by not selling there (§17); payments terms (L3) left out until written |

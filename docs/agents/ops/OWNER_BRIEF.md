@@ -1,30 +1,30 @@
 # Owner Morning Brief — how to refresh it
 
-The owner's one-page view of the business: today's priorities in order, what is waiting on him, which projects are
-moving or have gone quiet, and progress against the product and technology roadmaps.
+The owner's one-page view of the business, and since 2026-11-17 **the board** (`docs/projects/active/ONE_BOARD_PLAN.md`):
+the goals, the projects in Now in his order, every step waiting on him, what comes next and after launch, which projects
+are moving or have gone quiet, and progress against the product and technology roadmaps.
+
+**The board file `docs/agents/strategy/OWNER_BRIEF_PROJECTS.json` is the ONLY place a project's status is written**
+(goals, lane, phase, now → next, next action, waitsOn / finishesAfter, the owner's own steps). Its `_readme` defines every
+field. A session that moves a project changes that project's line **in the same commit as the work**. Every other
+tracker points here.
 
 - **Page:** https://claude.ai/artifact/XihEHvASiYUqYKPUJScVUX (private to the owner). Source: `docs/agents/strategy/OWNER_BRIEF.html`.
 - **The command is `/brief`** (`.claude/commands/brief.md`, added 2026-11-14 on the owner's word). `/brief park <project>: <reason>` parks a project first.
 - **Refresh only when the owner asks** (`/brief`, "refresh the brief", "morning brief"). It is never scheduled (owner, 2026-11-14:
   "no need to waste energy refreshing statuses on a day I am not here").
-- **Nothing on the page is typed status.** The page renders five documents from its own database (`brief/meta`,
-  `projects`, `roadmap`, `walks`, `priorities`). Four are written by code; only `priorities` is judgment.
+- **Nothing on the page is typed into the page.** It renders five documents from its own database (`brief/meta`,
+  `projects`, `roadmap`, `walks`, `board`), all written by the script. The judgment lives in the board file in the repo.
+  (The old typed `priorities` document was retired 2026-11-17: the Now lane is the order.)
 
 ## A refresh, start to finish (keep it cheap: do it in a fresh session, read nothing else)
 
-1. `node scripts/owner-brief.mjs` — read-only. Prints a short summary and writes
-   `.probe/owner-brief/out/{meta,projects,roadmap,walks}.json`.
-2. From that summary alone, write `.probe/owner-brief/out/priorities.json`: `{ "setOn": "YYYY-MM-DD", "items": [ … ] }`,
-   three to five items in order, each `{ title, kind, why, link, linkLabel }`.
-   - `kind` is one word: Walk · Ruling · Commit · Read · Build · Release.
-   - Order by what unblocks the most, and by what only the owner can do (rulings, walks, commit approvals). Recommend
-     the order; do not ask him what comes first.
-   - A walk's `link` comes from `walks.json`, never from memory.
-   - Product-owner voice. No file paths, hashes or internal stage codes beyond a § walk number.
-3. `ArtifactData` `list` on collection `brief` (to learn each document's current `version`), then ONE `batch` of five
+1. `node scripts/owner-brief.mjs` — read-only. Prints a short summary, the lanes, the goals, and a ⚠ line for every
+   place the board breaks its own rules, and writes `.probe/owner-brief/out/{meta,projects,roadmap,walks,board}.json`.
+2. `ArtifactData` `list` on collection `brief` (to learn each document's current `version`), then ONE `batch` of five
    `set` writes with `file_path` pointing at the five JSON files and `if_version` on each. The data never passes
    through the conversation.
-4. Tell the owner, in a few lines: what changed since the last brief that matters, and the link.
+3. Tell the owner, in a few lines: what changed since the last brief that matters, every ⚠ line, and the link.
 
 **Republish the page only when its layout changes.** News is a data write, never a republish.
 
@@ -39,7 +39,7 @@ moving or have gone quiet, and progress against the product and technology roadm
 | Parked on purpose, closed | `docs/agents/strategy/OWNER_BRIEF_PROJECTS.json` | Only on the owner's word: `state` + `parked: { since, reason }` |
 | A project's name, grouping, "what remains" line | The same registry | Edit the registry |
 | Roadmap items and their status | The tables in `docs/agents/strategy/PRODUCT_ROADMAP.md` §2 | Change the row's Status in the unit of work that changes the fact |
-| Today's priorities | Written at each refresh (step 2) | The owner overrules; the next refresh follows his order |
+| Goals, lanes, phase, next step, dependencies, steps waiting on him | The board file `OWNER_BRIEF_PROJECTS.json` | The session doing the work, in the same commit; lanes and Now order only on the owner's word |
 
 ## Rules the script applies
 
@@ -55,5 +55,6 @@ moving or have gone quiet, and progress against the product and technology roadm
 - Activity is read from plan files, so a project worked on without touching its plan looks quiet.
 - The ledger is free text. A new way of wording a result needs adding to `DONE` in the script, or the walk shows
   as "No result recorded".
-- Rulings the owner owes are not computed. They reach the page only as a priority.
+- Rulings the owner owes are not computed. They reach the page as a project's `youOwe` line on the board.
+- Until ONE_BOARD_PLAN Session 2, seven projects read "Not checked yet" and seven active plans are not on the board.
 - The page was published without a rendered check in the session that built it.

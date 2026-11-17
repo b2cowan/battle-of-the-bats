@@ -28445,6 +28445,7 @@ performed over the shared working tree. The original walk result is not claimed 
 **Why:** the 6.6 reviews (plan `GST_HST_STAGE6_TERMS_PLAN.md` §5 6.6) left these as the owner's; the 6.6 rulings (all five as recommended, 2026-11-16) are recorded there. Not product steps: the two ruled builds, `/marketing`'s "No contracts" reword and the release are agents' work, listed on the walk without boxes.
 **Keep out of the summary:** the phone number, the mailing address and any account number (the walk says so twice); they go to Claude in the chat at 6.7.
 **Owed after the walk:** an outside check of the domain's MX and SPF records; the readings into the Stage 6 plan (§3 L-c) and the Terms draft (§6 line, §8 note 4); the breach record's place into `LEGAL_FACTS.md` (where, never what).
+**Result:** Walked 2026-11-17 — 25 of 29 ticked, the other 4 skipped by the owner's decision (below).
 <!-- /§533 -->
 
 ## §534 · GST/HST Stage 6 · the two 6.6 fixes — **the yearly reminder keeps its date, amount and cancel line (rendered by the product after a customised template's words, one button; both billing templates say keep it transactional), and a move up during a free trial sends "The details of your purchase" (trial continues, $0.00 today, the new plan's first payment and estimated tax)** · walk published 2026-11-16, **owner walk PASSED 26/26 2026-11-17**

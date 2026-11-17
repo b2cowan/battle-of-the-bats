@@ -2,8 +2,9 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Inter:wght@400;500;600&display=swap">
 <style>
-/* Layout: one-minute "Today" view first (figures band, ordered priorities, waiting on you, momentum, goals),
-   then detail tabs. Every figure comes from the artifact's database; nothing is typed into this page. */
+/* Layout: the board. Today = figures band, goals, Now (at most three, in order) beside Waiting on you,
+   then Next and After launch. Tabs: Goals, Projects, Product, Technology. Every figure and status comes from the
+   artifact's database, which a script writes from the board file in the repo; nothing is typed into this page. */
 :root {
   --bg: #f5f7f6; --surface: #ffffff; --ink: #17211d; --muted: #5a6862; --line: #d9e1dd;
   --accent: #1f6b4f; --accent-soft: #e2efe9; --tech: #2b5a86; --tech-soft: #e3ecf5;
@@ -51,7 +52,8 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .block { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 .two { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 32px; }
-@media (max-width: 820px) { .cols, .two { grid-template-columns: 1fr; } }
+.even { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+@media (max-width: 820px) { .cols, .two, .even { grid-template-columns: 1fr; } }
 
 .figures { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 .figures div { padding: 14px 18px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -72,13 +74,31 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tag.idle { color: var(--idle); background: var(--idle-bg); }
 .tag.tech { color: var(--tech); background: var(--tech-soft); }
 
+.warnbox { background: var(--stop-bg); color: var(--stop); border-radius: 10px; padding: 12px 16px; font-size: 0.9rem; display: flex; flex-direction: column; gap: 4px; }
+.warnbox ul { margin: 0; padding-left: 1.2rem; }
+
+/* goals: one card per goal, a square per project */
+.goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.gcard { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.gcard.after { background: transparent; border-style: dashed; }
+.gcard .gh { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.gcard .gh b { font-family: var(--display); font-size: 1.02rem; }
+.gcard .gc { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gcard .gc strong { color: var(--ink); font-weight: 600; }
+.gcard .gd { font-size: 0.82rem; color: var(--muted); }
+
+/* the Now lane: numbered, because the order is the owner's */
 ol.prio { list-style: none; margin: 0; padding: 0; counter-reset: p; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 ol.prio li { counter-increment: p; display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); padding: 14px 16px 14px 8px; border-top: 1px solid var(--line); }
 ol.prio li:first-child { border-top: 0; }
 ol.prio li::before { content: counter(p); font-family: var(--display); font-weight: 700; font-size: 1.5rem; color: var(--accent); text-align: center; line-height: 1.2; font-variant-numeric: tabular-nums; }
-ol.prio .t { font-weight: 600; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
-ol.prio .w { color: var(--muted); font-size: 0.92rem; margin-top: 2px; }
-ol.prio .l { font-size: 0.9rem; margin-top: 4px; }
+.card { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.card .t { font-weight: 600; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.card .stage { font-size: 0.86rem; color: var(--muted); }
+.card .nx { font-size: 0.92rem; }
+.card .lbl { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+.card .dep { font-size: 0.84rem; color: var(--muted); }
+.card .dep.blocked { color: var(--warn); }
 
 ul.rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
 ul.rows li { padding: 9px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -112,7 +132,7 @@ td.i { font-weight: 600; }
 
 <div class="wrap">
   <header class="head">
-    <span class="eyebrow">FieldLogicHQ · owner brief</span>
+    <span class="eyebrow">FieldLogicHQ · the board</span>
     <h1 id="headline">Morning Brief</h1>
     <p class="muted" id="asof">Loading the latest brief.</p>
     <p class="stale" id="stale" hidden></p>
@@ -120,13 +140,14 @@ td.i { font-weight: 600; }
 
   <div class="tabs"><nav aria-label="Views">
     <a href="#today">Today</a>
+    <a href="#goals">Goals</a>
+    <a href="#projects">Projects</a>
     <a href="#product">Product</a>
     <a href="#technology">Technology</a>
-    <a href="#projects">Projects</a>
   </nav></div>
 
   <main id="main">
-    <div class="empty" id="empty">The brief shows where things stand, today's priorities in order, what is waiting on you, and progress against the roadmap. It fills in as soon as the data arrives.</div>
+    <div class="empty" id="empty">The board shows the goals, the projects being worked on now in order, every step waiting on you, and what comes next. It fills in as soon as the data arrives.</div>
   </main>
 </div>
 
@@ -146,6 +167,17 @@ td.i { font-weight: 600; }
   function link(url, label) { if (!url || !/^https:\/\//.test(url)) return null; var a = h("a", "", label); a.href = url; a.target = "_blank"; a.rel = "noopener"; return a; }
   function tag(cls, text) { return h("span", "tag " + cls, text); }
   function items(id) { return (D[id] && D[id].items) || []; }
+  function board() { return D.board || { lanes: { now: [], next: [], later: [], after: [] }, goals: [], youOwe: [], warnings: [], cards: {} }; }
+
+  function proj(id) { var all = items("projects"); for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i]; return null; }
+  function nameOf(id) { var p = proj(id); return p ? p.name : id; }
+  function isDone(p) { return p && (p.phase === "Live" || p.status === "closed"); }
+  var LANE = { now: "Now", next: "Next", later: "Later", after: "After launch" };
+  function laneOf(id) { var L = board().lanes || {}; for (var k in LANE) if ((L[k] || []).indexOf(id) >= 0) return k; return null; }
+  var PHASE = { "Planning": "idle", "Drawing": "idle", "Asks to rule": "warn", "Building": "tech", "Walk owed": "warn", "Ready to release": "ok", "Live": "ok", "Parked": "idle" };
+  function phaseTag(p) { if (p && p.phase) return tag(PHASE[p.phase] || "idle", p.phase); return p && p.checked === false ? tag("idle", "Not checked yet") : tag("stop", "No phase"); }
+  function openDeps(list) { return (list || []).filter(function (w) { return !isDone(proj(w)); }); }
+  function phasePip(p) { if (!p) return ""; if (p.phase === "Live" || p.status === "closed") return "live"; if (p.phase === "Ready to release") return "built"; if (["Building", "Walk owed", "Asks to rule"].indexOf(p.phase) >= 0) return "prog"; return ""; }
 
   var STATUS = { moving: ["ok", "Moving"], waiting: ["warn", "Waiting on you"], quiet: ["stop", "Gone quiet"], parked: ["idle", "Parked"], closed: ["idle", "Closed"] };
   function pipClass(s) { s = (s || "").toLowerCase(); return s === "live" ? "live" : s === "built" ? "built" : s === "in progress" ? "prog" : ""; }
@@ -159,72 +191,131 @@ td.i { font-weight: 600; }
     function cell(n, label) { var c = h("div"); add(c, h("b", "", n === null || n === undefined ? "–" : n), h("span", "", label)); return c; }
     add(f, cell(p.ahead, "changes not yet live"), cell(p.pendingSteps, "database steps owed to production"),
       cell(p.daysSinceRelease, "days since the last release" + (p.lastRelease ? " (" + day(p.lastRelease) + ")" : "")),
-      cell(D.meta ? D.meta.walksOwed : null, "walks waiting on you"));
+      cell(board().youOwe.length + (D.meta ? D.meta.walksOwed : 0), "steps and walks waiting on you"));
     return f;
   }
 
-  function priorities() {
-    var b = section("Today, in this order");
-    var list = items("priorities");
-    if (!list.length) return add(b, h("div", "empty", "No priorities were set at the last refresh."));
-    var ol = h("ol", "prio");
-    list.forEach(function (p) {
-      var li = h("li"), body = h("div");
-      var t = h("div", "t"); add(t, h("span", "", p.title), p.kind ? tag("idle", p.kind) : null);
-      add(body, t, p.why ? h("div", "w", p.why) : null);
-      var a = link(p.link, p.linkLabel || "Open"); if (a) add(body, add(h("div", "l"), a));
-      add(ol, add(li, body));
-    });
-    return add(b, ol);
-  }
-
-  function waiting() {
-    var list = items("walks");
-    var b = section("Waiting on you", list.length ? plural(list.length, "walk", "walks") + " published and not yet recorded as walked." : null);
-    if (!list.length) return add(b, h("p", "muted", "No walks are owed."));
-    var ul = h("ul", "rows");
-    list.forEach(function (w) {
-      var li = h("li"), t = h("div", "t");
-      add(t, link(w.link, "§" + w.section) || h("span", "", "§" + w.section), h("span", "", w.title), w.recorded ? null : tag("warn", "No result recorded"));
-      var bits = []; if (w.steps) bits.push(w.steps + " steps"); if (w.published) bits.push("published " + day(w.published));
-      add(ul, add(li, t, bits.length ? h("div", "s", bits.join(" · ")) : null));
-    });
+  function warningsBox() {
+    var w = board().warnings || [];
+    if (!w.length) return null;
+    var b = h("div", "warnbox"); add(b, h("b", "", "The board breaks its own rules in " + plural(w.length, "place", "places") + ". Fix the board file, then refresh."));
+    var ul = h("ul"); w.forEach(function (t) { add(ul, h("li", "", t)); });
     return add(b, ul);
   }
 
+  function goalStrip() {
+    var gs = board().goals || [];
+    var b = section("Goals");
+    if (!gs.length) return add(b, h("p", "muted", "No goals are on the board yet."));
+    var g = h("div", "goals");
+    gs.forEach(function (x) {
+      var c = h("div", "gcard" + (x.after ? " after" : ""));
+      add(c, add(h("div", "gh"), h("b", "", x.name), x.after ? tag("idle", "After launch") : null));
+      var cap = h("div", "gc"); add(cap, h("strong", "", x.done + " of " + x.total)); cap.appendChild(document.createTextNode(" projects done"));
+      var pp = h("div", "pips"); (x.projects || []).forEach(function (id) { var p = proj(id); var s = h("span", "pip " + phasePip(p)); s.title = nameOf(id) + (p && p.phase ? " · " + p.phase : ""); add(pp, s); });
+      add(c, cap, pp, x.doneWhen ? h("p", "gd", x.doneWhen) : null);
+      add(g, c);
+    });
+    return add(b, g);
+  }
+
+  function card(id) {
+    var p = proj(id); if (!p) return h("div", "card", id);
+    var c = h("div", "card");
+    add(c, add(h("div", "t"), h("span", "", p.name), phaseTag(p)));
+    if (p.stage) add(c, h("div", "stage", p.stage));
+    if (p.next) { var nx = h("div", "nx"); add(nx, h("span", "lbl", "Next")); nx.appendChild(document.createTextNode(p.next)); add(c, nx); }
+    var open = openDeps(p.waitsOn);
+    if (open.length) add(c, h("div", "dep blocked", "Blocked until " + open.map(nameOf).join(", ") + " is done"));
+    var fin = openDeps(p.finishesAfter);
+    if (fin.length) add(c, h("div", "dep", "Can finish only after " + fin.map(nameOf).join(", ")));
+    var holds = ((board().cards || {})[id] || {}).blocks || [];
+    if (holds.length) add(c, h("div", "dep", "Holds up " + holds.map(nameOf).join(", ")));
+    if (p.walksOwed && p.walksOwed.length) add(c, h("div", "dep", plural(p.walksOwed.length, "walk", "walks") + " owed: " + p.walksOwed.map(function (s) { return "§" + s; }).join(" ")));
+    return c;
+  }
+
+  function nowLane() {
+    var ids = (board().lanes || {}).now || [];
+    var b = section("Now, in this order", "At most three. The order is yours; a project here should not be waiting on another.");
+    if (!ids.length) return add(b, h("div", "empty", "Nothing is in Now. Pick up to three projects from Next."));
+    var ol = h("ol", "prio");
+    ids.forEach(function (id) { add(ol, add(h("li"), card(id))); });
+    return add(b, ol);
+  }
+
+  function rowList(ids, sub) {
+    var ul = h("ul", "rows");
+    ids.forEach(function (id) {
+      var p = proj(id), li = h("li");
+      add(li, add(h("div", "t"), h("span", "", nameOf(id)), phaseTag(p)));
+      var line = sub(p, id); if (line) add(li, h("div", "s", line));
+      add(ul, li);
+    });
+    return ul;
+  }
+  function laneList(key, title, intro) {
+    var ids = ((board().lanes || {})[key]) || [];
+    var b = section(title + " (" + ids.length + ")", intro);
+    if (!ids.length) return add(b, h("p", "muted small", "None."));
+    return add(b, rowList(ids, function (p) {
+      if (!p) return "";
+      var open = openDeps(p.waitsOn), fin = openDeps(p.finishesAfter);
+      return (p.next || p.remains || "") + (open.length ? " · blocked until " + open.map(nameOf).join(", ") + " is done" : "") + (fin.length ? " · finishes after " + fin.map(nameOf).join(", ") : "");
+    }));
+  }
+
+  function waiting() {
+    var owe = board().youOwe || [], walks = items("walks");
+    var b = section("Waiting on you", plural(owe.length, "step", "steps") + " only you can take, and " + plural(walks.length, "walk", "walks") + ". Steps on Now projects come first.");
+    if (owe.length) {
+      var ul = h("ul", "rows");
+      owe.forEach(function (o) { var li = h("li"); add(li, add(h("div", "t"), h("span", "", o.text)), h("div", "s", o.name + " · " + (LANE[o.lane] || ""))); add(ul, li); });
+      add(b, ul);
+    }
+    if (walks.length) {
+      add(b, h("h3", "", "Walks"));
+      var wl = h("ul", "rows");
+      walks.forEach(function (w) {
+        var li = h("li"), t = h("div", "t");
+        add(t, link(w.link, "§" + w.section) || h("span", "", "§" + w.section), h("span", "", w.title), w.recorded ? null : tag("warn", "No result recorded"));
+        var bits = []; if (w.steps) bits.push(w.steps + " steps"); if (w.published) bits.push("published " + day(w.published));
+        add(wl, add(li, t, bits.length ? h("div", "s", bits.join(" · ")) : null));
+      });
+      add(b, wl);
+    }
+    if (!owe.length && !walks.length) add(b, h("p", "muted", "Nothing is waiting on you."));
+    return b;
+  }
+
   function momentum() {
-    var all = items("projects"), today = D.meta ? D.meta.date : todayIso();
+    var all = items("projects");
     var b = section("Momentum", "Worked out from the history of each project's plan. Quiet means no change for more than seven days.");
     var cols = h("div", "cols");
     function col(title, list, line) {
       var c = h("div", "block"); add(c, h("h3", "", title + " (" + list.length + ")"));
       if (!list.length) return add(c, h("p", "muted small", "None."));
       var ul = h("ul", "rows");
-      list.forEach(function (p) { var li = h("li"); add(li, add(h("div", "t"), h("span", "", p.name), p.auto ? tag("idle", "Unregistered") : null), h("div", "s", line(p))); add(ul, li); });
+      list.forEach(function (p) { var li = h("li"); add(li, add(h("div", "t"), h("span", "", p.name), p.auto ? tag("stop", "Not on the board") : null), h("div", "s", line(p))); add(ul, li); });
       return add(c, ul);
     }
     var moving = all.filter(function (p) { return p.status === "moving"; }).sort(function (a, b2) { return b2.commitsThisWeek - a.commitsThisWeek; });
-    var shown = moving.slice(0, 8);
     var quiet = all.filter(function (p) { return p.status === "quiet" || p.status === "waiting"; });
     var parked = all.filter(function (p) { return p.status === "parked"; });
     add(cols,
-      col("Moving this week", shown, function (p) { return plural(p.commitsThisWeek, "change", "changes") + " this week" + (p.uncommitted ? " · work not yet committed" : "") + (p.walksOwed && p.walksOwed.length ? " · " + plural(p.walksOwed.length, "walk", "walks") + " owed" : ""); }),
+      col("Moving this week", moving, function (p) { return plural(p.commitsThisWeek, "change", "changes") + " this week" + (p.uncommitted ? " · work not yet committed" : ""); }),
       col("Gone quiet", quiet, function (p) {
         var s = "Stopped " + plural(p.quietDays, "day", "days") + " ago (" + day(p.last) + ")";
-        if (p.status === "waiting") s += " · waiting on your walk";
         if (p.overtakenBy && p.overtakenBy.length) s += " · started since: " + p.overtakenBy.join(", ");
         return s; }),
       col("Parked on purpose", parked, function (p) { return (p.parked && p.parked.reason) || "No reason recorded."; }));
     add(b, cols);
-    var extra = moving.length - shown.length, settled = D.meta ? D.meta.settledNotShown : 0, notes = [];
-    if (extra > 0) notes.push(extra + " more moving projects are on the Projects tab.");
-    if (settled) notes.push(settled + " finished plans with no open task are left off.");
-    if (notes.length) add(b, h("p", "muted small", notes.join(" ")));
+    var settled = D.meta ? D.meta.settledNotShown : 0;
+    if (settled) add(b, h("p", "muted small", settled + " finished plans with no open task are left off."));
     return b;
   }
 
-  function pips(list) { var d = h("div", "pips"); list.forEach(function (r) { var p = h("span", "pip " + pipClass(r.status)); p.title = r.item + " · " + r.status; add(d, p); }); return d; }
-  function goals() {
+  function roadmapProgress() {
     var road = items("roadmap");
     var b = section("Progress against the roadmap", "One square per roadmap item. Counts, not percentages.");
     if (!road.length) return add(b, h("p", "muted", "The roadmap has no items yet."));
@@ -244,7 +335,8 @@ td.i { font-weight: 600; }
         var built = t.filter(function (r) { return pipClass(r.status) === "built"; }).length;
         var cap = h("div", "c"); add(cap, h("strong", "", label + " " + live + " of " + t.length + " live"));
         if (built) cap.appendChild(document.createTextNode(" · " + built + " built"));
-        return add(c, cap, pips(t));
+        var pp = h("div", "pips"); t.forEach(function (r) { var p = h("span", "pip " + pipClass(r.status)); p.title = r.item + " · " + r.status; add(pp, p); });
+        return add(c, cap, pp);
       }
       add(b, add(g, hd, side("Product", "product"), side("Technology", "technology")));
     });
@@ -253,14 +345,59 @@ td.i { font-weight: 600; }
 
   function viewToday() {
     var v = h("div", "view");
-    add(v, figures());
-    var two = h("div", "two"); add(two, priorities(), waiting());
-    return add(v, two, momentum(), goals());
+    add(v, figures(), warningsBox(), goalStrip());
+    var two = h("div", "two"); add(two, nowLane(), waiting());
+    var even = h("div", "even");
+    add(even, laneList("next", "Next", "Ready to pick up once something in Now finishes."), laneList("after", "After launch", "Kept so they are not lost; not worked on before the Canadian launch."));
+    return add(v, two, even, laneList("later", "Later", null));
+  }
+
+  function viewGoals() {
+    var v = h("div", "view"), gs = board().goals || [];
+    add(v, h("p", "muted", "Each goal and the projects that serve it, in lane order. A project that serves two goals appears under both; finishing it moves both."));
+    if (!gs.length) return add(v, h("div", "empty", "No goals are on the board yet."));
+    var rank = { now: 0, next: 1, later: 2, after: 3 };
+    gs.forEach(function (g) {
+      var b = section(g.name + " · " + g.done + " of " + g.total + " done", g.doneWhen || null);
+      var ids = (g.projects || []).slice().sort(function (a, c) { var la = laneOf(a), lc = laneOf(c); return (la ? rank[la] : 9) - (lc ? rank[lc] : 9); });
+      add(b, rowList(ids, function (p, id) {
+        if (!p) return "";
+        var L = laneOf(id), open = openDeps(p.waitsOn), fin = openDeps(p.finishesAfter);
+        return (isDone(p) ? "Done · " : (L ? LANE[L] + " · " : "")) + (p.next || p.remains || "") + (open.length ? " · blocked until " + open.map(nameOf).join(", ") + " is done" : "") + (fin.length ? " · finishes after " + fin.map(nameOf).join(", ") : "");
+      }));
+      add(v, b);
+    });
+    return v;
+  }
+
+  function projectTable(title, list) {
+    var b = section(title);
+    var sc = h("div", "scroll"), tb = h("table"), th = h("thead"), tr = h("tr"), body = h("tbody");
+    ["Project", "Phase", "Lane", "Next step", "Depends on", "Walks owed", "Last change"].forEach(function (c) { add(tr, h("th", "", c)); });
+    list.forEach(function (p) {
+      var row = h("tr"), L = laneOf(p.id);
+      var nameCell = add(h("td", "i"), h("div", "", p.name));
+      if (p.auto) add(nameCell, tag("stop", "Not on the board"));
+      if (p.status === "parked" || p.status === "closed") add(nameCell, tag("idle", STATUS[p.status][1]));
+      add(row, nameCell, add(h("td"), p.auto ? null : phaseTag(p)), h("td", "n", L ? LANE[L] : "–"),
+        h("td", "", p.next || p.remains || ""),
+        h("td", "", openDeps((p.waitsOn || []).concat(p.finishesAfter || [])).map(nameOf).join(", ") || "–"),
+        h("td", "n", p.walksOwed && p.walksOwed.length ? p.walksOwed.map(function (s) { return "§" + s; }).join(" ") : "–"),
+        h("td", "n", p.last ? day(p.last) + (p.quietDays ? " · " + p.quietDays + "d" : "") : "–"));
+      add(body, row);
+    });
+    return add(b, add(sc, add(tb, add(th, tr), body)));
+  }
+  function viewProjects() {
+    var v = h("div", "view"), all = items("projects");
+    add(v, h("p", "muted", "Every open project. Phase, lane and next step are the board; last change and walks owed are worked out from the record."));
+    return add(v, projectTable("All projects (" + all.length + ")", all), momentum());
   }
 
   function viewTrack(track, intro) {
     var v = h("div", "view"), road = items("roadmap").filter(function (r) { return r.track.toLowerCase() === track; });
     add(v, h("p", "muted", intro));
+    if (track === "product") add(v, roadmapProgress());
     var seen = [];
     road.forEach(function (r) { if (seen.indexOf(r.horizon) < 0) seen.push(r.horizon); });
     seen.forEach(function (name) {
@@ -271,30 +408,7 @@ td.i { font-weight: 600; }
       rows.forEach(function (r) { var row = h("tr"); add(row, h("td", "", r.lane), h("td", "i", r.item), h("td", "n", r.size || "–"), add(h("td"), statusTag(r.status))); add(body, row); });
       add(v, add(b, add(sc, add(tb, add(th, tr), body))));
     });
-    var mine = items("projects").filter(function (p) { return p.track === track && p.status !== "closed"; });
-    if (mine.length) add(v, projectTable("Projects in this track", mine));
     return v;
-  }
-
-  function projectTable(title, list) {
-    var b = section(title);
-    var sc = h("div", "scroll"), tb = h("table"), th = h("thead"), tr = h("tr"), body = h("tbody");
-    ["Project", "Status", "Last change", "This week", "Walks owed", "What remains"].forEach(function (c) { add(tr, h("th", "", c)); });
-    list.forEach(function (p) {
-      var st = STATUS[p.status] || ["idle", p.status], row = h("tr");
-      add(row, add(h("td", "i"), h("span", "", p.name)), add(h("td"), tag(st[0], st[1])),
-        h("td", "n", p.last ? day(p.last) + (p.quietDays ? " · " + p.quietDays + "d" : "") : "–"),
-        h("td", "n", p.commitsThisWeek + (p.uncommitted ? " +" : "")),
-        h("td", "n", p.walksOwed && p.walksOwed.length ? p.walksOwed.map(function (s) { return "§" + s; }).join(" ") : "–"),
-        h("td", "", p.remains || (p.auto ? "Not on the project list yet." : "")));
-      add(body, row);
-    });
-    return add(b, add(sc, add(tb, add(th, tr), body)));
-  }
-  function viewProjects() {
-    var v = h("div", "view"), all = items("projects");
-    add(v, h("p", "muted", "Every open project, most active first. A plus sign after the weekly count means there is work not yet committed."));
-    return add(v, projectTable("All projects (" + all.length + ")", all));
   }
 
   function header() {
@@ -307,18 +421,20 @@ td.i { font-weight: 600; }
     if (age >= 1) stale.textContent = "This brief is " + plural(age, "day", "days") + " old. Ask for a refresh before acting on it.";
   }
 
+  var VIEWS = ["today", "goals", "projects", "product", "technology"];
   var links = document.querySelectorAll(".tabs a");
   function render() {
     var want = (location.hash || "#today").slice(1);
-    if (["today", "product", "technology", "projects"].indexOf(want) < 0) want = "today";
+    if (VIEWS.indexOf(want) < 0) want = "today";
     for (var i = 0; i < links.length; i++) { if (links[i].getAttribute("href") === "#" + want) links[i].setAttribute("aria-current", "true"); else links[i].removeAttribute("aria-current"); }
     if (!D.meta) return;
     header();
     main.textContent = "";
     if (want === "today") add(main, viewToday());
+    else if (want === "goals") add(main, viewGoals());
+    else if (want === "projects") add(main, viewProjects());
     else if (want === "product") add(main, viewTrack("product", "What a club, a coach or a family can do that they could not do before."));
-    else if (want === "technology") add(main, viewTrack("technology", "Security, uptime, infrastructure and the promises about data."));
-    else add(main, viewProjects());
+    else add(main, viewTrack("technology", "Security, uptime, infrastructure and the promises about data."));
   }
   window.addEventListener("hashchange", function () { render(); window.scrollTo(0, 0); });
   render();
