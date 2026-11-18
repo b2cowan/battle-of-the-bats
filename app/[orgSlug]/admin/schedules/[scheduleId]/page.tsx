@@ -320,6 +320,12 @@ export default function SchedulePage() {
     if (!unlockedHeld.length) { say(W.nothingToLock(weekScope)); return; }
     void edit(unlockedHeld.map(x => ({ slotKey: x.key, locked: true })), W.lockedWeek(unlockedHeld.length), { mark: false });
   };
+  /** Every locked slot the week shows, held or open — what Unlock this week reaches. The Tools row offers it only once nothing is left to lock. */
+  const lockedInWeek = weekSlots.filter(x => x.locked);
+  const unlockMode = !unlockedHeld.length && lockedInWeek.length > 0;
+  const unlockWeek = () => {
+    void edit(lockedInWeek.map(x => ({ slotKey: x.key, locked: false })), W.unlockedWeek(lockedInWeek.length), { mark: false });
+  };
   const clearWeek = () => {
     setWin(null);
     void edit(unlockedHeld.map(x => ({ slotKey: x.key, teamIds: [] })), W.cleared(unlockedHeld.length));
@@ -512,7 +518,7 @@ export default function SchedulePage() {
       {canChange && freeParts.map(x => <CoachToolbarMenuItem key={x.id} label={P.toolBillFree(x.label)} hint={P.toolBillFreeHint} onSelect={() => setWin({ kind: 'bill', partId: x.id })} />)}
       {canChange && <CoachToolbarMenuItem label={W.toolSettings} hint={W.toolSettingsHint} onSelect={() => setWin(parts.length ? { kind: 'which', then: 'settings' } : { kind: 'settings' })} />}
       {canChange && <CoachToolbarMenuItem label={W.toolRegenerate} onSelect={() => setWin(parts.length ? { kind: 'which', then: 'regenerate' } : { kind: 'settings', regenerate: true })} />}
-      {canChange && lens === 'grid' && <CoachToolbarMenuItem label={W.toolLockWeek(weekScope)} onSelect={lockWeek} />}
+      {canChange && lens === 'grid' && <CoachToolbarMenuItem label={unlockMode ? W.toolUnlockWeek(weekScope) : W.toolLockWeek(weekScope)} onSelect={unlockMode ? unlockWeek : lockWeek} />}
       {canChange && lens === 'grid' && <CoachToolbarMenuItem label={W.toolClearWeek(weekScope)} onSelect={() => setWin({ kind: 'clearWeek' })} />}
       <CoachToolbarMenuItem label={W.toolSendLog} onSelect={() => setWin({ kind: 'log' })} />
       {canChange && !final && <CoachToolbarMenuItem label={W.toolDelete} onSelect={() => setWin({ kind: 'delete' })} />}

@@ -1058,6 +1058,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   toolClearWeek: (scope: string) => `Clear ${scope}…`,
   nothingToLock: (scope: string) => `Nothing ${scope} needs a lock: every slot is locked or open.`,
   toolSendLog: 'Send log',
+  /** The same Tools row once every slot the week holds is locked: it undoes what Lock this week did. */
+  toolUnlockWeek: (scope: string) => `Unlock ${scope}`,
   toolDelete: 'Delete this draft…',
   send: 'Send',
   sendChanges: 'Send the changes',
@@ -1173,6 +1175,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   unlocked: 'Unlocked: regenerating can move it again',
   teamChanged: (team: string | null, when: string) => (team ? `${team} has ${when}` : `${when} is open`),
   undo: 'Undo',
+  unlockedWeek: (n: number) => (n === 1 ? 'Unlocked: regenerating can move it again' : `${pluralize(n, 'slot')} unlocked: regenerating can move them again`),
   undone: 'Put back as it was',
   skipped: (n: number, why: string) => `${pluralize(n, 'week')} didn’t move: ${why}.`,
   skippedWhy: {
