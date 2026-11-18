@@ -13,6 +13,8 @@
 - **0.1 (2026-11-17)** — first draft. Written from the Stage 12 rulings (§0b, §0c, the 12d-1 rounds 1 to 3 and rulings 5
   and 6) and a code census of what the product does today (read 2026-11-17; the census answers are summarized in the
   NOTE blocks where a sentence rests on them). Fits under the published Terms of Service, version 2026-11-17.
+- **0.1, amended 2026-11-17 (owner, after approval, before publication)** — §6: payers "can read" the refund policy beside
+  the Pay button (was "see"), matching the built link. No other wording changed.
 
 **How to read this draft.** Customer text is everything after the first `---` line, up to "Before this can be
 published". Owner notes are in blockquotes that start `> NOTE`; they are not part of the terms. The shape follows the
@@ -142,7 +144,7 @@ lead us to suspend online payments or your account under §11 of the Terms of Se
 - **Your organization decides refunds.** You set your own refund policy and decide each refund. We do not decide refunds
   or make them on your behalf.
 - **Your refund policy.** Your owners write your refund policy on the Payouts card before online payments start, and
-  payers see it beside the Pay button before they pay.
+  payers can read it beside the Pay button before they pay.
 - **Refunds come out of your organization's Stripe balance.** What happens when the balance is too low is set by your
   agreement with Stripe.
 - **Our fee stays ours on every refund** (§4). When you include the processing fee in a refund, the whole fee comes out
@@ -153,9 +155,10 @@ lead us to suspend online payments or your account under §11 of the Terms of Se
 > place"). Replaces A9's "optional, absent when blank". **BUILT 2026-11-17 (Club Stage 12, commit `1d15c9cd2`):** the
 > policy is written in "Before you set up payouts" beside the tick (Continue absent until both) and can be changed on the
 > Payouts card but never cleared; a connected club without one takes no payments (every pay door shows "How to pay").
-> ⚠ **One word for the owner (recommended, not applied — approved text):** the payer meets a "Refund policy" **link** beside
-> Pay that opens the words; Stripe's checkout shows nothing of it. "payers **see** it" → "payers **can read** it beside the
-> Pay button before they pay" is the true sentence. Showing it open on the pay page is the alternative (open question L17).
+> **RULED and APPLIED (owner 2026-11-17, "go ahead"): "payers see it" → "payers can read it"** beside the Pay button,
+> because the payer meets a "Refund policy" **link** beside Pay that opens the words, and Stripe's checkout shows nothing
+> of it. An amendment to the approved v0.1 text, made by the owner before publication (change log). Whether the policy
+> should instead show open on the pay page stays open question L17 (not researched; the club's consumer-law exposure).
 > Also: the first sentence names the Payouts card; since this build the policy is first written in the Before window
 > (the card edits it) — still true as "on the Payouts card", since that window opens from it.
 >

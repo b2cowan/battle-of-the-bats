@@ -32,7 +32,7 @@
 >     with the policy's own words, a "Write the refund policy" button and the `payouts_need_attention` item, which settles
 >     when the policy is saved. UAT Rep Club has a policy, so the payout test from 2026-11-25 is undisturbed.
 >   - **Where the payer meets it (fact, item 4):** a "Refund policy" link beside Pay, its words shown when pressed; Stripe
->     Checkout shows nothing of it. `/legal` recommends §6 read "can read it" (owner call, approved text).
+>     Checkout shows nothing of it. §6 now reads "payers can read it" (owner 2026-11-17, applied to the approved draft).
 >   - **Every payments-terms tick is kept** in `payments_terms_agreements` (mig 497, dev applied; prod in
 >     MANUAL_PROD_STEPS): org id and name, account id and email, version, exact sentence, action (set up · reconnect ·
 >     agree again · backfill), time; no IP; no foreign key, so it outlives the organization and the account; append-only
