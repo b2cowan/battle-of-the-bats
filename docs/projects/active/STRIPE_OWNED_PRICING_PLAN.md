@@ -357,6 +357,13 @@ probe account's lines, then match it as a credit); `/accounting` and `/review`; 
 - **Next:** commit (A: the follow-up; B: the daily job, its own) and the owner walk for Stages 2–5:
   [STRIPE_OWNED_PRICING_WALK_AND_COMMIT_PROMPT.md](STRIPE_OWNED_PRICING_WALK_AND_COMMIT_PROMPT.md). Deploy order stands: mig 501 BEFORE the code (the Payouts tab reads its
   columns).
+- **Committed 2026-11-18:** the follow-up `5e350e26c`, the daily job `b3d54e1ba` (its own commit). **The owner walk for Stages 2–5
+  (Stage 5's close) is published:** Owner QA Ledger §541, [STRIPE_OWNED_PRICING_WALK.html](STRIPE_OWNED_PRICING_WALK.html),
+  5 walks, 41 steps, on Dev Club Org (a tournament) and Milton Bats (a house-league season); what dev can't show and the older
+  walks it replaces are in §541. Found writing it, fixed the same day: on a club setting up payouts again (its account
+  disconnected or on the old fee setting) the Before window printed the card rate alone (`app/api/admin/payouts/route.ts`: such a
+  club now reads as before setup, both rates). For the walk: the walk seed takes `--org`, and
+  `scripts/run-stripe-fees-daily-dev.mjs` runs the daily job once on dev. The project closes on the owner's word after the walk.
 
 **Stage 3's help and words (left by Stage 5, 2026-11-18, for this stage to write WITH its code; `/docs`, same rules: no
 dead anchors, `keywords` / `searchText` / `answerText` in the same pass).** Stage 5 ran before Stage 3 and left every

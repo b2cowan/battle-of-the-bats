@@ -1,0 +1,419 @@
+<title>Stripe-Owned Pricing Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; overflow-wrap: anywhere; }
+pre { margin: 0; padding: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); overflow-x: auto; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+table.fig { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+table.fig th, table.fig td { text-align: left; padding: 4px 12px 4px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.fig th { color: var(--muted); font-weight: 600; }
+.scroll { overflow-x: auto; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Stripe-owned pricing · Stages 2 to 5 · Owner QA Ledger §541</span>
+    <h1>Stripe charges the club, and the club’s books match what it takes</h1>
+    <p class="lead">The close of Stages 2 to 5. Each club now has a Stripe account where Stripe takes its own processing fee and FieldLogicHQ keeps only its part. A club on the old account sets up payouts again. Then each payment’s cost lands in the club’s books as Stripe really took it: our processing fee where the club pays it, Stripe’s extra on a card from outside Canada, the fee on a refund, and a dispute’s fee. Stripe no longer sends us anything to bill back, so the fee invoice is gone. You walk it as the club’s owner, with a test team and a test family paying.</p>
+    <p class="lead">Written Nov 18, 2026 against the dev site, in Stripe test mode. Every club, team and child here is test data. Every figure comes from the product’s own fee function or Stripe’s 0.8% foreign-card charge (measured in Stage 1). None of them depends on today’s date.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Dev Club Org owner</dt><dd><code>owner@dev.local</code>, password <code>devpass123</code> (walks 1, 3 and 5). Use this owner, not <code>club-owner@dev.local</code>, which asks for a two-step code.</dd>
+      <dt>Milton Bats owner</dt><dd>Jordan Whitfield, your <code>+owner</code> Gmail address from the Milton demo world; the password is <code>MILTON_DEMO_PASSWORD</code> in <code>.env.local</code> (walks 2 and 4).</dd>
+      <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code>, password <code>UATPassword2026!</code>, at <code>localhost:3000/platform-admin/login</code> (walk 5).</dd>
+      <dt>The team and the family</dt><dd>No sign-in. The team pays through the pay links below; the family signs up on the public form. Open both in a private window.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>Leave UAT Rep Club alone.</b> Its payout test’s payout steps come first, on or after Nov 25. Nothing in this walk touches it.</li>
+      <li><b>Two Stripe listen windows</b> must be running the whole time. Payments, refunds, disputes and the new accounts all arrive through them. In two terminals:
+        <pre>C:\tools\stripe\stripe.exe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,charge.dispute.updated,charge.dispute.closed,charge.dispute.funds_withdrawn,charge.dispute.funds_reinstated,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre>
+        <pre>C:\tools\stripe\stripe.exe listen --events-from '@self' --events "v2.core.account[requirements].updated,v2.core.account[configuration.merchant].capability_status_updated,v2.core.account.closed" --forward-to localhost:3000/api/payments/connect-account-events</pre></li>
+      <li><b>The daily job</b> writes some lines (Stripe’s fee when Stripe wasn’t ready at the payment, and a dispute fee that came in early). Walks 3 and 4 ask you to run it once, in a third terminal in the project folder:
+        <pre>node --env-file=.env.local scripts/run-stripe-fees-daily-dev.mjs</pre>It runs every step of the daily job on dev and ends <code>✓ Done</code>.</li>
+      <li><b>Stripe’s set-up form (test mode):</b> take every “Use test …” shortcut Stripe offers. Otherwise: Individual, website <code>https://accessible.stripe.com</code>, date of birth 01/01/1901, SIN <code>000000000</code>, any Canadian address, bank transit <code>11000</code>, institution <code>000</code>, account <code>000123456789</code>. If a <b>Billing address</b> window opens before Stripe, fill any Ontario address and save.</li>
+      <li><b>Test cards</b>, any future expiry, any CVC and postal code: Canadian <code>4000 0012 4000 0000</code>; US <code>4242 4242 4242 4242</code> (a card from outside Canada, so Stripe adds its extra); dispute <code>4000 0000 0000 0259</code> (also US, and Stripe disputes it seconds after it’s paid).</li>
+      <li><b>Built for this walk on Nov 18:</b> “Stripe Walk Invitational” on Dev Club Org (deposit $100.00 of a $300.00 fee), with accepted teams <b>Pay Page Pay Me</b> and <b>Pay Page Owing</b>. Their pay links:
+        <pre>Pay Page Pay Me  http://localhost:3000/dev-club-org/stripe-walk-invitational/pay/gL3hWUw2QyWaFBF-e4ICrg.wR1N_Y1qZqHgu8TiJ3zGUw
+Pay Page Owing   http://localhost:3000/dev-club-org/stripe-walk-invitational/pay/w8876Zt3Q_CGtsV8CjPutw.GRextvqiUio_1NFTWzoMVA</pre></li>
+      <li>Walk them in order. Walk 3 needs walk 1 done; walk 4 needs walk 2.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="fig-h">
+    <h2 id="fig-h">The figures, worked from the rates</h2>
+    <p class="lead">Our processing fee is 3.5% + $1.50 by card. Stripe’s standard Canadian cost is 2.9% + $0.30 of what is charged; a card from outside Canada costs 0.8% more, and that part is “Stripe’s extra”.</p>
+    <div class="scroll"><table class="fig">
+      <thead><tr><th>Payment</th><th>Who pays the fee</th><th>Charged</th><th>In the books</th></tr></thead>
+      <tbody>
+        <tr><td>Pay Me, $100.00 deposit, Canadian card</td><td>The team</td><td>$105.00</td><td>+$100.00, no cost line</td></tr>
+        <tr><td>Its refund, fee included</td><td>The team (given back)</td><td>−$105.00</td><td>−$100.00 refund, −$5.00 Payment processing</td></tr>
+        <tr><td>Owing, $100.00 deposit, Canadian card</td><td>The club</td><td>$100.00</td><td>+$100.00, −$5.00 Payment processing (Stripe $3.20 + ours $1.80)</td></tr>
+        <tr><td>Owing, $200.00 balance, dispute card (US)</td><td>The club</td><td>$200.00</td><td>+$200.00, −$8.50 Payment processing, −$1.60 Stripe’s extra, −$15.00 dispute fee</td></tr>
+        <tr><td>Milton family, $150.00 fee, US card</td><td>The club</td><td>$150.00</td><td>+$150.00, −$6.75 Payment processing, −$1.20 Stripe’s extra</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved, so not in the walk</h2>
+    <ul class="plain">
+      <li><b>The database check for the books</b> passes on dev (Nov 18): each cost is booked once; old accounts are left alone; nothing is written for a tournament whose fees aren’t in the books; an answered inquiry is never charged; a closed year’s line is dated today; an unmatched Stripe fee is tried again.</li>
+      <li><b>54 tests</b> on Stripe’s fee, the bank check’s “Stripe fee · not in your books” and the house-league guard pass. Stage 1’s trial showed Stripe’s fee on a Canadian payment equals the standard cost to the cent.</li>
+      <li><b>The daily job</b> ran once on dev with its two Stripe fee steps last, each reporting what it read and what failed (none).</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="not-h">
+    <h2 id="not-h">Not in this walk, and where each is covered</h2>
+    <ul class="plain">
+      <li><b>A bank debit that fails before it clears</b> (the returned record at once, then Stripe’s $5 “Returned debit fee” hours later, after the daily job), and <b>one taken back after it cleared</b>. Stripe’s test bank page can’t choose a failure. Both ran in the Stage 3 trial through Stripe directly; the live payout test re-checks them.</li>
+      <li><b>The Payouts tab’s lines</b>, including <b>“FieldLogicHQ’s fee returned”</b>. A new test account’s first payout waits about 7 days, so the tab has nothing to show yet. The payout test covers it.</li>
+      <li><b>The bank check’s “Stripe fee · not in your books”.</b> It needs a Stripe fee the daily job couldn’t match to a payment, which test mode can’t make on demand. Its tests and the database check cover it; no walk does.</li>
+      <li><b>“Dispute fee · answered”.</b> Stripe bills the answering fee hours after an answer, so it can’t be seen in one sitting. Whether Stripe returns it on a won dispute is still unseen in test mode (an open item in the plan).</li>
+      <li><b>The draft payments terms v0.2 and the next privacy policy.</b> The dev site can’t show a draft: the legal pages are switched to published, so dev serves only the Nov 17 versions. You read and approved the narrowed terms sentences on Nov 18. The Before window still links the placeholder text until the terms are published.</li>
+      <li>House-league refunds and disputes: the same book writers as the tournament’s, so one surface each. The emails are covered by the earlier Stage 12 walks and aren’t re-checked here.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="sup-h">
+    <h2 id="sup-h">Older walks this one replaces</h2>
+    <ul class="plain">
+      <li><b>§396 (disputes and fees), part E:</b> E1, E2 and the dispute-fee half of A9 are replaced here; E3, E4, E6 and E7 (the Stripe fees list, the monthly step, Pay the invoice, the platform admin’s fee invoice) describe what Stage 4 removed. E5, E8 and E9 were already withdrawn.</li>
+      <li><b>§404 E2</b> (the Before window’s “passes them on to you on an invoice”) is replaced by walk 1’s Before window steps.</li>
+      <li><b>§390</b> (bank debit): “a returned debit costs the club $5 on its next invoice” is no longer true. Stripe takes it from the club’s balance and the books get a “Returned debit fee” line.</li>
+      <li><b>The fee-invoice walks §463 (its wording), §465, §466, §468 and §469</b> all passed, but describe a feature Stage 4 removed. Walk 5 checks it is gone.</li>
+      <li>The ledger record lists what the payout test still needs changed before Nov 25.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+<script>
+(function () {
+  "use strict";
+  var KEY = "stripe-owned-pricing-walk-v1";
+  var PAGE = "Stripe-owned pricing · Stages 2 to 5 · Owner QA Ledger §541";
+  var BOOK = "<code>localhost:3000/dev-club-org/admin/accounting/ledger</code>, book <b>Stripe Walk Invitational</b>";
+  var WALKS = [
+  {
+   "id": "W1",
+   "title": "Dev Club Org sets up payouts again",
+   "job": "Dev Club Org · owner · computer",
+   "forText": "Stage 2 and the club side of Stages 4 and 5. A club on the old account can’t take new payments, so it sets up payouts again on an account where Stripe charges the club directly. Before it does, the window says what it costs, that Stripe takes its extras from the club’s balance (no FieldLogicHQ invoice), and that Stripe’s own terms apply.",
+   "passes": "The card offers Set up payouts again; the Before window shows both rates, the worked example, the balance line and Stripe’s terms line; Stripe’s form finishes and the card reads Taking payments with Teams pay it.",
+   "notIn": "Changing who pays (walk 3, step 8). The draft terms (no dev preview, see above).",
+   "who": "Dev Club Org owner.",
+   "where": "localhost:3000/dev-club-org/admin/org/settings, the Payouts card",
+   "steps": [
+    { "stop": true, "who": "Owner", "d": "Sign in as <code>owner@dev.local</code> and open <code>localhost:3000/dev-club-org/admin/org/settings</code>. Scroll to Payouts.", "s": "The pill <b>Disconnected</b>, the title “Online payments are off”, and a <b>Set up payouts again</b> button. If it reads Taking payments, stop and tell me." },
+    { "who": "Owner", "d": "Press <b>Set up payouts again</b>.", "s": "A window “Before you set up payouts”. Under “What it costs”: <b>3.5% + $1.50 per card payment · 2.5% + $1.00 per bank debit</b>. (Both rates. Before today’s fix, this window showed the card rate alone on a club setting up again.)" },
+    { "who": "Owner", "d": "Read the worked line under the rates.", "s": "“On a $165.00 fee, the processing fee is $7.28 by card and $5.13 by bank debit.”" },
+    { "who": "Owner", "d": "Read the paragraph after it.", "s": "It says Stripe may take more for a card issued outside your country, a currency conversion, a dispute or a returned bank debit, and that this <b>comes out of your Stripe balance</b>. Nothing says FieldLogicHQ passes anything on to you on an invoice." },
+    { "who": "Owner", "d": "Read the last line of “What it costs”.", "s": "“Stripe’s own agreement and prices apply, and Stripe can change its fees. If your Stripe balance goes below zero, your organization owes that amount, and Stripe may take it from your bank account.”" },
+    { "who": "Owner", "d": "Leave “Who pays it” on <b>Teams pay it</b>. In “Your refund policy” type <em>Refunded in full until Dec 15, then not refunded.</em>", "s": "The text stays in the box. No <b>Continue to Stripe</b> button yet." },
+    { "who": "Owner", "d": "Tick “I agree to the FieldLogicHQ payments terms for Dev Club Org.”", "s": "<b>Continue to Stripe</b> appears." },
+    { "who": "Owner", "d": "Press <b>Continue to Stripe</b> and complete Stripe’s form with the test values in “Before you start”.", "s": "You land back on the Payouts card. It may read “Setting up” for a moment while listen window 2 prints account events." },
+    { "who": "Owner", "d": "Reload the page and look at the Payouts card.", "s": "<b>Taking payments</b>, “Teams can pay online”, a <b>Test mode</b> chip. The record’s Processing fee row: “Teams pay it: it’s added to what they pay” and “3.5% + $1.50 per card payment · 2.5% + $1.00 per bank debit”." }
+   ]
+  },
+  {
+   "id": "W2",
+   "title": "Milton Bats sets up payouts again, the club paying the fee",
+   "job": "Milton Bats · owner · computer",
+   "forText": "The same Stage 2 door on a second club, this time choosing that the club pays the processing fee, so walk 4’s family pays the season fee alone and the club’s books carry the cost.",
+   "passes": "Set up payouts again finishes with The club pays it on the card.",
+   "notIn": "The Before window’s words (walk 1 read them).",
+   "who": "Milton Bats owner (Jordan Whitfield).",
+   "where": "localhost:3000/milton-bats/admin/org/settings, the Payouts card",
+   "steps": [
+    { "stop": true, "who": "Owner", "d": "Sign in as the Milton Bats owner and open <code>localhost:3000/milton-bats/admin/org/settings</code>. Scroll to Payouts.", "s": "<b>Disconnected</b>, “Online payments are off” and <b>Set up payouts again</b>. If not, stop and tell me." },
+    { "who": "Owner", "d": "Press <b>Set up payouts again</b> and choose <b>The club pays it</b> under “Who pays it”.", "s": "“The team pays the entry fee alone; the processing fee comes out of each payment.” is chosen." },
+    { "who": "Owner", "d": "In “Your refund policy” type <em>Refunded in full until registration closes.</em>", "s": "The text stays in the box." },
+    { "who": "Owner", "d": "Tick the payments terms box.", "s": "<b>Continue to Stripe</b> appears." },
+    { "who": "Owner", "d": "Press <b>Continue to Stripe</b> and complete Stripe’s form with the test values.", "s": "You land back on the Payouts card." },
+    { "who": "Owner", "d": "Reload and look at the Payouts card.", "s": "<b>Taking payments</b>, <b>Test mode</b>, and the Processing fee row “The club pays it: it comes out of each payment”." }
+   ]
+  },
+  {
+   "id": "W3",
+   "title": "A tournament team pays, is refunded and disputes",
+   "job": "Dev Club Org · the team (private window) and the owner · computer",
+   "forText": "Stage 3 on a tournament: each payment’s cost reaches the tournament’s own book as Stripe took it. With the team paying the fee there is no cost; given back in a refund, the fee is the club’s cost (neither part comes back); with the club paying, our fee is the cost; a card from outside Canada adds Stripe’s extra; a dispute adds Stripe’s dispute fee. Plus the help answer that explains it.",
+   "passes": "Every figure matches the table above, in the tournament’s book, and the help answer names the three extras.",
+   "notIn": "Bank debit, the Payouts tab and the answering fee (see “Not in this walk”).",
+   "who": "Dev Club Org owner (ordinary window); the team needs no sign-in (private window).",
+   "where": "The pay links in “Before you start” · " + "the Ledger · localhost:3000/dev-club-org/admin/tournaments/registrations (Stripe Walk Invitational)",
+   "steps": [
+    { "stop": true, "who": "Team", "d": "In a private window open Pay Page Pay Me’s link.", "s": "“Pay Page Pay Me”, “To pay now”, with “Pay the deposit, $100.00” chosen and a button <b>Pay $105.00 by card</b> that “includes a $5.00 processing fee”. If it says payments aren’t open, walk 1 isn’t finished: stop." },
+    { "who": "Team", "d": "Press <b>Pay $105.00 by card</b> and pay with the Canadian card <code>4000 0012 4000 0000</code>.", "s": "“Paid, thank you”, “$105.00 to Dev Club Org”, a receipt number and “Test payment · no money moved”." },
+    { "who": "Owner", "d": "Open " + BOOK + ".", "s": "A $100.00 money-in line for Pay Page Pay Me’s deposit, and <b>no</b> Payment processing line: the team paid the fee." },
+    { "who": "Owner", "d": "On Registrations open Pay Page Pay Me’s record. On the online row open ⋯ and choose <b>Refund to the card</b>.", "s": "A window saying the team paid $105.00 online: the $100.00 entry fee and a $5.00 processing fee." },
+    { "who": "Owner", "d": "Under “Who is ending this?” choose <b>The organizer is ending it</b>.", "s": "The box “Include the $5.00 processing fee · $105.00 back” turns on, with “The $5.00 comes from the club and shows in your books as Payment processing.”" },
+    { "who": "Owner", "d": "Press <b>Refund and email</b>.", "s": "A toast that it was refunded, and the row reads “Refunded to card, <em>today</em>” (it may read “Refunding to card…” first)." },
+    { "who": "Owner", "d": "Reload the Ledger’s Stripe Walk Invitational book.", "s": "Two new lines: “Refunded to card · Pay Page Pay Me · …” −$100.00, and “Processing fee refunded · Pay Page Pay Me · …” −$5.00 under <b>Payment processing</b>. Pay Me’s three lines add to −$5.00: the fee the club gave back, which Stripe and FieldLogicHQ each keep their part of." },
+    { "who": "Owner", "d": "On Settings › Payouts press the record’s pencil and choose <b>The club pays it</b>.", "s": "It saves by itself; the Processing fee row reads “The club pays it: it comes out of each payment”." },
+    { "who": "Team", "d": "Open Pay Page Owing’s link.", "s": "The deposit button reads <b>Pay $100.00 by card</b>, with no processing fee line." },
+    { "who": "Team", "d": "Pay it with the Canadian card <code>4000 0012 4000 0000</code>.", "s": "“Paid, thank you”, “$100.00 to Dev Club Org”." },
+    { "who": "Owner", "d": "Reload the Ledger’s book.", "s": "+$100.00 for Pay Page Owing’s deposit, and “Payment processing · Pay Page Owing · Stripe Walk Invitational · Deposit” <b>−$5.00</b>. No “Stripe’s extra” line: on a Canadian card Stripe took its standard cost." },
+    { "who": "Owner", "d": "In Stripe’s test dashboard open Connect › Connected accounts › Dev Club Org (the newest one) › Payments, and open the $100.00 payment.", "s": "Its fees add to $5.00: Stripe’s own fee <b>$3.20</b> and an application fee of <b>$1.80</b> (FieldLogicHQ’s part). Stripe charged the club; we took only our margin." },
+    { "who": "Team", "d": "Open Pay Page Owing’s link again.", "s": "The $200.00 balance, with a button <b>Pay $200.00 by card</b>." },
+    { "who": "Team", "d": "Pay it with the dispute card <code>4000 0000 0000 0259</code>.", "s": "“Paid, thank you”. Within a minute listen window 1 prints <code>charge.dispute.created</code> with <code>[200]</code>." },
+    { "who": "Owner", "d": "Run the daily job in the third terminal (the command in “Before you start”).", "s": "It ends <code>✓ Done</code>." },
+    { "who": "Owner", "d": "Reload the Ledger’s book.", "s": "+$200.00 for the balance, “Payment processing · Pay Page Owing · … · Balance” <b>−$8.50</b>, and “Stripe’s extra · Pay Page Owing · … · Balance” <b>−$1.60</b> (0.8% of $200.00, for a card from outside Canada), both under Payment processing." },
+    { "who": "Owner", "d": "In the same book find the dispute’s line.", "s": "“Dispute fee · receipt <em>N</em>” <b>−$15.00</b> under Payment processing, N being the balance payment’s receipt. The $200.00 itself stays in the books while the dispute is open." },
+    { "who": "Owner", "d": "Open <code>localhost:3000/dev-club-org/admin/help/tournaments#online-payments-fee-books</code>.", "s": "The answer “Where the processing fee shows in your books”, with three terms: <b>Stripe’s extra</b>, <b>Dispute fee</b> (and “Dispute fee · answered”) and <b>Returned debit fee</b>, and a last line that a fee Stripe charges later that can’t be matched is named in the bank check for you to record." }
+   ]
+  },
+  {
+   "id": "W4",
+   "title": "A house-league family pays with a card from outside Canada",
+   "job": "Milton Bats · the family (private window) and the owner · computer",
+   "forText": "Stage 3 on a house-league season, read where a league admin reads it: the season’s Money page, with the club paying the fee and a US card adding Stripe’s extra.",
+   "passes": "The Money page shows the club’s $6.75 fee and the $1.20 extra under their names.",
+   "notIn": "Refunds and disputes on a season (the same writers as walk 3).",
+   "who": "Milton Bats owner (ordinary window); the family needs no sign-in (private window).",
+   "where": "localhost:3000/milton-bats/league/2027-summer-house-league/register · localhost:3000/milton-bats/admin/house-league/seasons/6d1f0a52-3c4e-4b8a-9f2e-27a1b0c0d927/money",
+   "steps": [
+    { "stop": true, "who": "Family", "d": "In a private window open <code>localhost:3000/milton-bats/league/2027-summer-house-league/register</code>.", "s": "The 2027 Summer House League sign-up form. If it says registration is closed, stop and tell me." },
+    { "who": "Family", "d": "Sign up one child: first name <em>Stripe</em>, last name <em>Extrawalk</em>, a date of birth in 2015, a guardian name, your email, and answer anything required. Press the sign-up button.", "s": "“You’re signed up”, and a card “To pay now” with a button <b>Pay $150.00 by card</b> and no processing fee line (the club pays it)." },
+    { "who": "Family", "d": "Press <b>Pay $150.00 by card</b> and pay with the US card <code>4242 4242 4242 4242</code>.", "s": "“Paid, thank you”, “$150.00 to Milton Bats” and a receipt number." },
+    { "who": "Owner", "d": "Run the daily job in the third terminal.", "s": "It ends <code>✓ Done</code>." },
+    { "who": "Owner", "d": "Open the season’s Money page (address above), tab <b>Every line</b>, and find Stripe Extrawalk.", "s": "“Payment processing · Stripe Extrawalk · 2027 Summer House League” <b>−$6.75</b>." },
+    { "who": "Owner", "d": "Look at the line beside it.", "s": "“Payment processing · Stripe’s extra · Stripe Extrawalk · 2027 Summer House League” <b>−$1.20</b> (0.8% of $150.00)." }
+   ]
+  },
+  {
+   "id": "W5",
+   "title": "No Stripe-fee invoice anywhere",
+   "job": "Dev Club Org owner, then the platform admin · computer",
+   "forText": "Stage 4. Stripe now takes its extras from the club’s own balance, so FieldLogicHQ bills nothing back: the monthly Stripe-fee invoice, its list, its banner and the platform admin’s panel are gone.",
+   "passes": "Neither the club’s Plan & billing nor the club’s record in platform admin shows a Stripe fees list or invoice.",
+   "notIn": "Bookkeeping’s “Fees billed back to clubs” row in Sales by month, which stays for the history.",
+   "who": "Dev Club Org owner, then the platform admin.",
+   "where": "localhost:3000/dev-club-org/admin/org/billing · localhost:3000/platform-admin",
+   "steps": [
+    { "who": "Owner", "d": "Open <code>localhost:3000/dev-club-org/admin/org/billing</code>.", "s": "Plan & billing with no Stripe fees list, no fee invoice and no red banner above the page, though walk 3 just made a dispute and a foreign card." },
+    { "who": "Platform admin", "d": "Sign in to platform admin, find <b>Dev Club Org</b> and open its record’s <b>Money</b> tab.", "s": "No Stripe fees panel and no fee invoice to retry." }
+   ]
+  }
+ ];
+  var CALLS = [];
+  var state = { ticks: {}, verdict: {}, notes: {}, calls: {}, open: "W1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.calls = got.calls || {}; state.open = got.open || "W1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", [s.stop ? "Stop check" : "", s.who || ""].filter(Boolean).join(" · ")));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, calls: {}, open: "W1" }; save(); render();
+  });
+  render();
+})();
+</script>

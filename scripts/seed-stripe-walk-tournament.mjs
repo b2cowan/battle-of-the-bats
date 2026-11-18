@@ -1,7 +1,8 @@
 /**
  * seed-stripe-walk-tournament.mjs — the walk-only tournament the Stripe end-to-end QA walks (Walk 0 and Walk 9) sign in to.
  *
- * WHAT IT BUILDS (under UAT Rep Club, `uat-rep-club` — the ONLY dev club with a connected Stripe test account):
+ * WHAT IT BUILDS (under UAT Rep Club, `uat-rep-club`, or the club `--org` names; it needs a Stripe test account set up on
+ * Stripe-owned pricing (Stage 2) before a pay link opens — UAT Rep Club's old account takes no new payments):
  *   · "Stripe Walk Invitational" (slug `stripe-walk-invitational`) — ACTIVE, starts 45 days out (Toronto calendar day),
  *     public registration OPEN, the fee TRACKED (deposit $100.00, total $300.00 — "one fee for the whole event"), the
  *     organizer contact email = the address you pass with `--inbox` (so the organizer's "New Registration" alert, and
@@ -36,6 +37,8 @@
  *                      pay-link stamps and coach links; puts the filler back to an unpaid, accepted state; then makes
  *                      sure the rest of the fixture is in place. Every delete is scoped by this tournament's id.
  *
+ *   --org <slug>       The club to build it under (default `uat-rep-club`). The Stripe-owned pricing walk (Stages 2–5)
+ *                      uses `--org dev-club-org`. Everything else is the same; nothing outside that club is read or written.
  *   --pay-page         Also builds the public pay page's walk (Public tournament pages Stage 7; build prompt
  *                      docs/projects/active/PUBLIC_TOURNAMENT_STAGE7_BUILD_PROMPT.md) and prints a real pay link per
  *                      team with the state it opens on. Every row it adds is named "Pay Page …", so it is easy to spot:
@@ -57,7 +60,7 @@
  * registered are left alone).
  *
  * ⚠ DEV ONLY. Refuses to run unless the Supabase URL it loaded is the dev project (npgnrxaitgbtbtvvykto). Needs the
- * `uat-rep-club` org: run `node --env-file=.env.local scripts/seed-club-fixture.mjs` first if it is missing.
+ * club it builds under (`uat-rep-club`: run `node --env-file=.env.local scripts/seed-club-fixture.mjs` first if it is missing).
  * ⚠ Reset removes rows on the product's side only. Test payments stay in the Stripe sandbox (refund or ignore them
  *   there); Stripe's log of them is not ours to delete.
  */
@@ -66,7 +69,7 @@ import { createHmac } from 'node:crypto';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const DEV_REF = 'npgnrxaitgbtbtvvykto';
-const ORG_SLUG = 'uat-rep-club';
+let ORG_SLUG = 'uat-rep-club'; // --org overrides it
 const TOURNAMENT_SLUG = 'stripe-walk-invitational';
 const DIRECT_CONTACT = 'payments@stripe-walk.example'; // the Pay Direct tournament's public, made-up contact (Stage 7 A1)
 const TOURNAMENT_NAME = 'Stripe Walk Invitational';
@@ -84,7 +87,8 @@ const DAY = 86_400_000;
 // ── Arguments (parsed and refused BEFORE anything touches the environment or the database) ──────────────────────
 const argv = process.argv.slice(2);
 const usage = [
-  'Usage: node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox <your real email address> [--reset] [--pay-page]',
+  'Usage: node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox <your real email address> [--org <slug>] [--reset] [--pay-page]',
+  '  --org       The club to build it under (default uat-rep-club).',
   '  --inbox     REQUIRED. Where the organizer\'s emails go. Never defaulted.',
   '  --reset     Remove every team registered to the walk tournament except "Walk Filler Team" (and their payments).',
   '  --pay-page  Also build the pay page walk\'s teams and print a real pay link for each.',
@@ -100,8 +104,11 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--pay-page') PAY_PAGE = true;
   else if (a === '--inbox') { inbox = argv[i + 1] ?? ''; i++; }
   else if (a.startsWith('--inbox=')) inbox = a.slice('--inbox='.length);
+  else if (a === '--org') { ORG_SLUG = (argv[i + 1] ?? '').trim(); i++; }
+  else if (a.startsWith('--org=')) ORG_SLUG = a.slice('--org='.length).trim();
   else refuse(`Unknown argument "${a}".`);
 }
+if (!/^[a-z0-9-]+$/.test(ORG_SLUG)) refuse(`"${ORG_SLUG}" is not a club's slug.`);
 if (inbox === null) refuse('--inbox is required. Pass the real address the walk\'s emails should reach.');
 inbox = inbox.trim().toLowerCase();
 if (!/^[^\s@,;<>]+@[^\s@,;<>]+\.[A-Za-z]{2,}$/.test(inbox)) refuse(`"${inbox}" is not an email address.`);
@@ -422,5 +429,5 @@ Done. Organizer contact (alerts and walk emails go here): ${inbox}
   Organizer   : ${site}/${ORG_SLUG}/admin/tournaments/registrations  (sign in as the club owner, pick "${TOURNAMENT_NAME}")
 ${payLinks}
 Next: walk "Walk 0 — Setup check" (it opens the public page and the register form), then Walk 9.
-Between walk runs:  node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox ${inbox} --reset
+Between walk runs:  node --env-file=.env.local scripts/seed-stripe-walk-tournament.mjs --inbox ${inbox} --org ${ORG_SLUG} --reset
 (Reset clears the product's rows only; test payments stay in the Stripe sandbox.)`);
