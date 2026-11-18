@@ -3,7 +3,7 @@ import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 import { isCronRequest } from '@/lib/cron-auth';
-import { bookLostDisputesSweep, sendDisputeReminders } from '@/lib/online-payment-landing';
+import { bookLostDisputesSweep, catchUpStripeFees, sendDisputeReminders, takeStandaloneStripeFees } from '@/lib/online-payment-landing';
 import { sendEndingWarnings, sendTermsNotices } from '@/lib/online-payment-owner-notices';
 import { countOverdueEndings, sendEndingEmails } from '@/lib/plan-ending-server';
 import { backfillChargeTaxRecords, catchUpChargeTaxRecords } from '@/lib/charge-tax-record-server';
@@ -65,6 +65,10 @@ export const POST = withObservability(async (req: Request) => {
   };
   await run('dispute_reminders', () => sendDisputeReminders(now));
   await run('lost_disputes', () => bookLostDisputesSweep(now));
+  // Stripe-owned pricing Stage 3: Stripe's own fee on a payment it wasn't ready for at the landing, and Stripe's stand-alone
+  // fees (a failed debit's $5, an answered dispute's $15) matched to their payment and booked (owner ruling (d), 2026-11-18).
+  await run('stripe_fee_catch_up', () => catchUpStripeFees());
+  await run('standalone_stripe_fees', () => takeStandaloneStripeFees());
   await run('terms_notices', () => sendTermsNotices(now));
   await run('ending_warnings', () => sendEndingWarnings(now));
   await run('plan_ending_emails', () => sendEndingEmails(now));
