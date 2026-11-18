@@ -20,7 +20,7 @@ import { readDatesOffTaken } from '@/lib/permit-dates-off';
 import { takenOnce } from '@/lib/permit-dates-off-view';
 import type { LeagueOutsidePermit } from '@/lib/league-schedule-health';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
-import { tournamentToday } from '@/lib/timezone';
+import { tournamentToday, isCalendarDate, mondayOfDay } from '@/lib/timezone';
 
 function mapGame(row: any) {
   return {
@@ -57,7 +57,10 @@ export const GET = withObservability(async (req: Request,
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
   const divisionId = url.searchParams.get('divisionId');
-  const weekOf     = url.searchParams.get('weekOf'); // YYYY-MM-DD (Monday of week)
+  // YYYY-MM-DD (Monday of week). Board Ready trust close-out 7 (owner 2026-11-18): a week that isn't a real calendar day
+  // reads as the current week, never a 500 (`new Date('garbage').toISOString()` throws).
+  const weekParam  = url.searchParams.get('weekOf');
+  const weekOf     = weekParam ? (isCalendarDate(weekParam) ? weekParam : mondayOfDay(tournamentToday())) : null;
 
   let q = supabaseAdmin
     .from('league_games')
