@@ -28,16 +28,20 @@ export default function ContinuityCompareCard({ row, busy, onConfirm, onReject, 
       <p style={{ margin: '0 0 0.45rem', fontSize: '0.8rem' }}>
         <strong>{row.prior.seasonLabel}:</strong> {row.prior.firstName} {row.prior.lastName ?? ''}
         {row.prior.contactHidden
-          ? ' · birth date and guardian details are shown to coaches with roster privacy'
+          ? ' · birth date and guardian details are shown to coaches with roster privacy, who confirm a match'
           : row.prior.dateOfBirth ? ` · born ${row.prior.dateOfBirth}` : ' · no birth date on file'}
         {!row.prior.contactHidden && (row.prior.guardianFirstName || row.prior.guardianEmail)
           ? ` · guardian ${[row.prior.guardianFirstName, row.prior.guardianLastName].filter(Boolean).join(' ') || '—'}${row.prior.guardianEmail ? ` (${row.prior.guardianEmail})` : ''}`
           : ''}
       </p>
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <button type="button" className="btn btn-lime" style={{ fontSize: '0.77rem' }} disabled={busy} onClick={onConfirm}>
-          Confirm — same player
-        </button>
+        {/* ⚖ Owner 2026-11-18 (Board Ready trust close-out 3): only a coach who reads the details confirms; the route
+            refuses the others. `contactHidden` is exactly "this coach has no roster privacy" (the scan sets it). */}
+        {!row.prior.contactHidden && (
+          <button type="button" className="btn btn-lime" style={{ fontSize: '0.77rem' }} disabled={busy} onClick={onConfirm}>
+            Confirm — same player
+          </button>
+        )}
         <button type="button" className="btn btn-ghost" style={{ fontSize: '0.77rem' }} disabled={busy} onClick={onReject}>
           Not the same player
         </button>

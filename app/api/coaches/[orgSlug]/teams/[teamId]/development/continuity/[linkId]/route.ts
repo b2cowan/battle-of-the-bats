@@ -14,6 +14,9 @@ import { joinSameSeasonRefusal } from '@/lib/past-player-words';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 
+const CONTINUITY_CONFIRM_GRANT_MESSAGE =
+  'Confirming a returning player needs roster privacy on this team. Ask the head coach to confirm it.';
+
 /** Decide a continuity pair: confirm, or reject ("Not the same player" — including the
  *  always-visible unlink on a confirmed link, which is a confirmed→rejected transition so
  *  the tombstone keeps the pair from ever re-suggesting). "Not sure yet" makes no call.
@@ -46,6 +49,13 @@ export const POST = withObservability(async (req: Request,
   const action = body.action === 'confirm' ? 'confirmed' : body.action === 'reject' ? 'rejected' : null;
   if (!action) {
     return NextResponse.json({ error: "action must be 'confirm' or 'reject'" }, { status: 400 });
+  }
+  // ⚖ Owner 2026-11-18 (Board Ready trust close-out 3): a confirm joins two children's records and opens the earlier
+  // tryout history, so it is decided on the birth date and guardian — which only the roster-privacy grant reads (the scan
+  // hides them without it). "Not the same player" keeps two records apart and stays with the Development grant.
+  if (action === 'confirmed') {
+    const noPii = denyUnless(Boolean(assignment.capabilities.rosterPii), CONTINUITY_CONFIRM_GRANT_MESSAGE);
+    if (noPii) return noPii;
   }
 
   const links = await getRepTeamContinuityLinks(teamId);

@@ -62,8 +62,10 @@ export const GET = withObservability(async (req: Request,
   if (denied) return denied;
   // ⚖ Owner 2026-11-11 (Board Ready W2 fix E, sweep 3 finding 4): the Development grant runs the scan and keeps the
   // MATCH, but a prior season's guardian names, email and the child's birth date are family contacts — the roster-privacy
-  // grant's reading. An assistant without it gets the pair (child, season, buttons) and none of those. The match runs
-  // on the server with the full identities either way, so the suggestions are the same for everyone.
+  // grant's reading. An assistant without it gets the pair (child, season, Not the same player) and none of those. The
+  // match runs on the server with the full identities either way, so the suggestions are the same for everyone.
+  // ⚖ Owner 2026-11-18 (trust close-out 3): Confirm needs the grant too — the card hides it on `contactHidden`, and the
+  // decision route refuses it.
   const seesContacts = Boolean(assignment.capabilities.rosterPii);
 
   const url = new URL(req.url);
