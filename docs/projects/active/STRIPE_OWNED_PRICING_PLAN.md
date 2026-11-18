@@ -23,7 +23,7 @@
   application fee. This plan.
 
 Not ruled (do not record as ruled): the margin-only rate design (Stage 1 step 3); whether the billing-address-before-payouts
-step stays (Stage 4); whether the full payout test booked for on/after 2026-11-25 runs on the old model or waits (ask below).
+step stays (Stage 4). (The full payout test on/after 2026-11-25 runs as planned on today's model: owner, 2026-11-17.)
 
 ## Why
 
@@ -127,8 +127,8 @@ pick it up, and an information-only fee statement in Plan & billing) can build o
 
 ## Open asks for the owner
 
-1. **The full payout test booked for on/after 2026-11-25** runs on today's model. Recommendation: run it anyway if it is
-   cheap (it proves payouts reach a bank, which does not change), and re-test the fee lines after Stage 3.
+1. ~~The full payout test booked for on/after 2026-11-25 runs on today's model.~~ **RULED 2026-11-17 (owner): run it as
+   planned** — it proves payouts reach a bank, which does not change; the fee lines are re-tested after Stage 3.
 2. Rate design (Stage 1 step 3).
 3. Keep the billing-address step before payouts (Stage 4) — recommendation yes.
 

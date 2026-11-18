@@ -69,7 +69,7 @@ the margin-only pricing and records the owner's rulings, then writes the Stage 2
    board line in the same commit.
 
 **Owner asks to carry (the plan lists them; ask, don't assume):**
-- Whether the full payout test booked for on/after 2026-11-25 runs on today's model or waits. The recommendation is to run it.
+- (Ruled 2026-11-17: the full payout test on/after 2026-11-25 runs as planned on today's model. Do not ask again.)
 - The rate design.
 - Keeping the billing-address step before payouts. The recommendation is yes.
 
