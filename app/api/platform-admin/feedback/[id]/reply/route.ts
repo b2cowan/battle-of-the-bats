@@ -3,7 +3,8 @@ import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { ADMIN_EMAIL, sendEmail } from '@/lib/email';
+import { sendEmail } from '@/lib/email';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import { openSentEmailRow } from '@/lib/email-log';
 import { isUuid } from '@/lib/utils';
 import {
@@ -172,7 +173,7 @@ export const POST = withObservability(async (req: Request, ctx: { params: Promis
     kind: 'feedback_reply',
     text: replyText({ body: row.body, signedName: row.signed_name, feedbackAt: feedback.created_at as string, feedbackBody: feedback.body as string | null }),
     fromName: REPLY_FROM_NAME,
-    replyTo: ADMIN_EMAIL,
+    replyTo: FIELDLOGICHQ_CONTACT_EMAIL,
     orgId: feedback.org_id as string | null,
     askedBy: staffUserId,
     feedbackId,

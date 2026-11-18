@@ -41,10 +41,11 @@ import { BILLING_REVIEW_HOLD, type QuoteTax } from '@/lib/billing-tax';
 import addressStyles from './BillingAddress.module.css';
 import PlanTermsLine from '@/components/legal/PlanTermsLine';
 import { useTermsGate } from '@/components/legal/TermsAcceptWindow';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 
 /** Where "Contact us" goes until a band is on sale (the Stage 8 flip) and above the largest band.
- *  The company's one inbox (owner 2026-09-26), the same address `lib/email.ts` falls back to. */
-export const CONTACT_HREF = 'mailto:fieldlogichq@gmail.com';
+ *  The company's support address (owner 2026-11-18: no customer ever sees the owner's own Gmail). */
+export const CONTACT_HREF = `mailto:${FIELDLOGICHQ_CONTACT_EMAIL}`;
 type Preview =
   | { direction: 'up'; amountDueToday: number; currency: string; prorationDate: number; nextAmount: number; renewsAt: string | null; billingCycle: 'monthly' | 'annual'; lines: { kind: 'charge' | 'credit'; plan: OrgPlan; amount: number }[] | null; tax: QuoteTax }
   | { direction: 'down'; effectiveAt: string | null; nextAmount: number; currency: string; billingCycle: 'monthly' | 'annual' };

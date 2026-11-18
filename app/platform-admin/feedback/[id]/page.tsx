@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import { consoleClock, consoleDay, consoleWhen } from '@/lib/console-dates';
-import { ADMIN_EMAIL, SENDING_ADDRESS } from '@/lib/email';
+import { SENDING_ADDRESS } from '@/lib/email';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import {
   NO_REPLY_WORDS, REPLY_FROM_NAME, REPLY_MAX_CHARS, replySubject, replyTarget, signedFirstName, stateAfterReply,
 } from '@/lib/feedback-reply';
@@ -159,7 +160,7 @@ export default async function FeedbackRecordPage({ params }: { params: Promise<{
           to: target.to,
           subject: replySubject(fb.title),
           fromLine: `${REPLY_FROM_NAME} · ${SENDING_ADDRESS}`,
-          repliesGoTo: ADMIN_EMAIL,
+          repliesGoTo: FIELDLOGICHQ_CONTACT_EMAIL,
           signedName: staffFirst,
           signedFrom: REPLY_FROM_NAME,
           moves: stateAfterReply(fb.status).next !== null,

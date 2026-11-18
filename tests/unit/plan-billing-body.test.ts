@@ -97,7 +97,7 @@ describe('billing state distinctions in the rendered body', () => {
       const rendered = html(props);
       assert.match(rendered, /Billing status unavailable/);
       assert.match(rendered, /Try again/);
-      assert.match(rendered, /href="mailto:fieldlogichq@gmail.com"/);
+      assert.match(rendered, /href="mailto:support@fieldlogichq\.ca"/);
       assert.doesNotMatch(rendered, /Loading|Renews|Cancelled|Canceled|Reactivate|Keep Premium|data is kept|CAD|billing-manage-btn|billing-cancel-btn|toneGood/);
     });
   }
@@ -129,7 +129,7 @@ describe('billing state distinctions in the rendered body', () => {
       props.snapshot.gating = { status: 'error', error: '503' };
       assert.match(html(props), /Contact us to move/);
       props.snapshot.org.subscriptionStatus = 'canceled';
-      assert.match(html(props), /href="mailto:fieldlogichq@gmail.com"[^>]*>Contact us to reactivate/);
+      assert.match(html(props), /href="mailto:support@fieldlogichq\.ca"[^>]*>Contact us to reactivate/);
       assert.doesNotMatch(html(props), /<button[^>]*id="billing-reactivate-btn"/);
       if (key === 'tournament') {
         props.snapshot.gating = ready({ tournament: false });
@@ -186,7 +186,7 @@ describe('billing state distinctions in the rendered body', () => {
     else assert.match(rendered, /billing-manage-btn/);
     if (state === 'ending') {
       props.snapshot.gating = ready({ club: false });
-      assert.match(html(props), /To keep Club, contact us\./); assert.match(html(props), /href="mailto:fieldlogichq@gmail.com"/);
+      assert.match(html(props), /To keep Club, contact us\./); assert.match(html(props), /href="mailto:support@fieldlogichq\.ca"/);
     }
   });
   for (const state of ['running', 'ending', 'ended'] as const) it(`coach free time ${state}: Keep Premium stays attached to the same portal, with no retention`, () => {

@@ -10,12 +10,13 @@
  */
 
 import webPush from 'web-push';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 
 // ── VAPID setup (runs once on module load) ────────────────────────────────────
 
 const publicKey  = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const privateKey = process.env.VAPID_PRIVATE_KEY;
-const email      = process.env.VAPID_EMAIL ?? 'mailto:fieldlogichq@gmail.com';
+const email      = process.env.VAPID_EMAIL ?? `mailto:${FIELDLOGICHQ_CONTACT_EMAIL}`;
 
 if (!publicKey || !privateKey) {
   // Warn at startup — don't hard-crash so the app still boots without push configured

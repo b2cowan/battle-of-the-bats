@@ -30,6 +30,7 @@ import { htmlToText } from '@/lib/email-plain-text';
 import type { FamilyMailFace } from '@/lib/email-club-identity';
 import { accountNoticeFootnoteHtml } from '@/lib/family-mail-footer';
 import { isLoggedKind, type EmailKind, type LoggedEmailKind, type UnloggedEmailKind } from '@/lib/email-kinds';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <onboarding@resend.dev>';
@@ -43,6 +44,11 @@ const FROM_ADDRESS = (FROM.match(/<([^>]+)>/)?.[1] ?? FROM).trim();
 function fromHeader(fromName?: string | null): string {
   return fromName ? `"${fromName}" <${FROM_ADDRESS}>` : FROM;
 }
+/**
+ * The owner's own inbox, for alerts TO us (server errors, billing drift, staff changes, registrations with no contact).
+ * Never shown to a customer (owner 2026-11-18): every address a person reads or replies to is
+ * FIELDLOGICHQ_CONTACT_EMAIL. `tests/unit/no-owner-gmail-shown.test.ts` holds the line.
+ */
 const ADMIN_EMAIL = 'fieldlogichq@gmail.com';
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
@@ -534,7 +540,7 @@ export function acceptanceHtml(p: {
   // Claim-aware portal link: carries the registration (teamId) so the coach lands on this team
   // (or creates an account and it links). dashboardUrl override kept for back-compat.
   const dashboardUrl = p.dashboardUrl ?? coachPortalUrl({ registrationId: p.teamId });
-  const contact = p.contactEmail ?? ADMIN_EMAIL;
+  const contact = p.contactEmail ?? FIELDLOGICHQ_CONTACT_EMAIL;
   const instructions = p.paymentInstructions?.trim();
   const paymentBody = instructions
     ? escapeHtml(instructions)
@@ -588,7 +594,7 @@ export function rejectionHtml(p: {
   teamName: string; coachName: string; divisionName: string; tournamentName: string;
   contactEmail?: string;
 }) {
-  const contact = p.contactEmail ?? ADMIN_EMAIL;
+  const contact = p.contactEmail ?? FIELDLOGICHQ_CONTACT_EMAIL;
   return wrap(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
     <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
@@ -1209,7 +1215,7 @@ export type EndedMoneyLine =
  *  line stands. `contactEmail` arrives escaped. */
 function familyContact(face: FamilyMailFace | null | undefined, contactEmail: string | undefined) {
   const club = face ? escapeEmailHtml(face.club.name) : null;
-  const contact = contactEmail ?? (face?.contact ? escapeEmailHtml(face.contact) : club ? null : ADMIN_EMAIL);
+  const contact = contactEmail ?? (face?.contact ? escapeEmailHtml(face.contact) : club ? null : FIELDLOGICHQ_CONTACT_EMAIL);
   return { club, contact };
 }
 
@@ -1724,7 +1730,7 @@ export function orgClosedHtml(p: {
   planLabel: string;
   contactEmail?: string;
 }) {
-  const contact = p.contactEmail ?? ADMIN_EMAIL;
+  const contact = p.contactEmail ?? FIELDLOGICHQ_CONTACT_EMAIL;
   return wrap(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Account closed</h2>
     <p style="margin:0 0 1rem;">Your FieldLogicHQ account for <strong>${p.orgName}</strong> (${p.planLabel}) has been permanently closed.</p>
