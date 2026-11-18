@@ -430,10 +430,12 @@ export default function SchedulePage() {
   const partNotes = unsentParts.filter(x => !x.billed).map(x => P.notBilledYet(x.label));
   // A part SENT without a bill (tab 5, note 2): the shipped final-not-billed path — Bill the teams, then Review the bill.
   // Hidden from a reader without the club's Accounting (it has no door they can use) and from a part marked free (walk §538 call C2).
-  const unbilledSent = !own.canMoney ? [] : parts.filter(x => x.state === 'final' && !x.billed && !x.billDismissed && x.view.slots.some(sl => sl.teamIds.some(id => !isProgramHolder(id))))
+  /** A sent part with practices for a rep team on it: the only kind a bill is owed for. */
+  const sentWithTeams = (x: (typeof parts)[number]) => x.state === 'final' && !x.billed && x.view.slots.some(sl => sl.teamIds.some(id => !isProgramHolder(id)));
+  const unbilledSent = !own.canMoney ? [] : parts.filter(x => sentWithTeams(x) && !x.billDismissed)
     .map(x => ({ id: x.id, text: P.sentNotBilled(x.label) }));
   /** A part marked "It's free" can still be billed later: Tools › Bill {part}… (owner 2026-11-17, the review's undo — no extra line on the page). */
-  const freeParts = !own.canMoney ? [] : parts.filter(x => x.state === 'final' && !x.billed && x.billDismissed && x.view.slots.some(sl => sl.teamIds.some(id => !isProgramHolder(id))));
+  const freeParts = !own.canMoney ? [] : parts.filter(x => sentWithTeams(x) && x.billDismissed);
   /** "It's free": the club sent this part without a bill on purpose, so its row goes (walk §538 call C2). */
   async function markPartFree(partId: string) {
     const part = parts.find(x => x.id === partId);

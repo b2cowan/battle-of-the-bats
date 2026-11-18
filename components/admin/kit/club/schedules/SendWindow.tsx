@@ -29,9 +29,10 @@ import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit'
 import { addCalendarDays, formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { PART_WORDS as P, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, billPhrase, moneyCents as money, withoutReviewReply, type ChangeGroup, type EmailWords } from '@/lib/club-schedule-words';
 import { isStale, oneWeekdayOf, type ScheduleView } from '@/lib/club-schedule-view';
-import type { SendKind } from '@/lib/club-schedule-send';
+import type { PartToSend, SendKind } from '@/lib/club-schedule-send';
+import type { LostShare } from '@/lib/club-schedule-family-send';
 import { getsPlainEmail } from '@/lib/club-schedule-money-audience';
-import { HAND_BACK_WORDS, type CreditMove } from '@/lib/club-hand-back-words';
+import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 import { TIME_HANDOFF_WORDS, type LeagueTimeLine } from '@/lib/league-time-handoff';
 import { hoursOf } from '@/lib/league-time';
 import { Statement } from './ScheduleParts';
@@ -50,7 +51,7 @@ interface PreviewTeam {
   bill: { cents: number; installments: { dueDate: string; amount: number }[] } | null;
   billedCents: number | null;
   /** Stage 11d, Ask 8: time the club moved off the team, and how it settles (a credit off what it owes; the rest owed back). */
-  lost: { cents: number; creditCents: number; payCents: number; moves: CreditMove[] } | null;
+  lost: LostShare | null;
   sample: EmailWords | null;
   /** A mixed team's email for the coaches who can't open Money — the same words without the bill. */
   plainSample: EmailWords | null;
@@ -81,13 +82,8 @@ interface Preview {
   leagueTime?: LeagueTimeLine | null;
   /** Phase 8 (Session 3, drawing tab 5): each added part this Send the changes takes with it — a first send carries its bill
    *  line (its bill's figure to a money reader only). */
-  parts?: {
-    id: string; label: string; name: string; version: number; first: boolean; billSet: boolean;
-    line: { minutes: number; permitNames: string[]; teamNames: string[]; bill: { cents: number; teamNames: string[]; payments: number; firstDue: string | null } | null } | null;
-  }[];
+  parts?: PartToSend[];
 }
-
-/** "1.5 hours", "1 hour" — a part's time on its bill line. */
 
 
 /** What the window holds that the person chose: the teams they unticked and the "Bill the corrections" switch. It rides the

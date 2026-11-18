@@ -70,7 +70,19 @@ describe('every list of schedules decides what an added part is', () => {
     assert.match(gen, /familyOthers\(orgId, loaded\.row\)/);
     assert.match(gen, /buildEngineInput\([^)]*family \}\)/);
     const route = readSource('app/api/admin/schedules/[scheduleId]/route.ts');
-    assert.match(route, /draftToSave\(req, prices, assignments, kept, keep, await familyOthers\(orgId, loaded\.row\)\)/);
+    // The family is read beside the prices (one round trip), and it is what the draft is cut and checked against.
+    assert.match(route, /const \[\{ prices, gone \}, family\] = await Promise\.all\(\[\s*readRequestPrices\([^\n]*\),\s*familyOthers\(orgId, loaded\.row\),\s*\]\)/);
+    assert.match(route, /draftToSave\(req, prices, assignments, kept, keep, family\)/);
+    // Taking off the only permit with nothing left to keep says so (walk §532 call C3), and the keep is worked out once.
+    assert.match(route, /R\.lastPermit/);
+    assert.equal((route.match(/keepingFor\(loaded, time, \{ kind: 'take_off'/g) ?? []).length, 1, 'take-off works out what stays once');
+    const words = readSource('lib/club-schedule-words.ts');
+    assert.match(words, /lastPermit: 'This permit is the only time on the schedule, so it can’t be taken off\. Add other time first\.'/);
+    // A slot taken off but not yet sent still holds its place (mig 491's index counts it), and holds no team.
+    const server = readSource('lib/club-schedule-server.ts');
+    assert.match(server, /teamIds: s\.removed_at \? \[\] : holdersOf\(s\)/);
+    // "It's free" writes only on a part still unmarked and unbilled (the action never bumps the version).
+    assert.match(route, /\.is\('bill_dismissed_at', null\)\.is\('bill_plan', null\)\.is\('allocation_id', null\)/);
     assert.match(route, /familyTeamTwice\(/);
     assert.match(route, /team_not_in_part/);
   });

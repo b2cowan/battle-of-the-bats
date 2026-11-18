@@ -146,3 +146,10 @@ release-history record (its one home); nothing was lost.
   Moments proposed: 0.** The anchors moved in Part 2 (`demo-destinations-guard` green). The dev-only theme-variant seed
   was reduced, not deleted: three other seeds clone its `branded-light` event, so it now writes colours only, without
   Dark/Light or card style. Walked by owner: no (the Stage 8 walk, Part 6).
+- 2026-11-17 — **a scoped check, NOT a pass** (the next pass's window still starts 2026-09-13): "A schedule on several
+  permits" including Add time as its own part (the project's Close). The two sandboxes are a tournament and a coach
+  team; this project lives in the club's Schedules and in the coach's Money › Club bill, and neither sandbox seeds a
+  club schedule, a permit-based bill or a part (the coach world's "Diamond permits" lines are a coach's own spending
+  and a shared label, not the club's schedule). No dock line or tour step mentions any of it. **Sentences changed: 0.
+  Moments proposed: 0.** `check:demos` green on dev, `check:demos:prod` green (world stamps differ from this checkout,
+  which is ahead of production; the next master build reseeds), `demo-destinations-guard` 10/10. Walked by owner: no.

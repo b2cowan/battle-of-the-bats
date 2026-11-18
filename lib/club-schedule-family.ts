@@ -35,7 +35,7 @@ export interface FamilyMember { id: string; name: string; slots: readonly Family
 
 /** What the rest of the family holds at a slot's time: the member holding its place (null: nobody), and each of its teams
  *  another member already gives that time to. */
-export interface FamilyClash { placeWith: string | null; teams: { teamId: string; with: string }[] }
+interface FamilyClash { placeWith: string | null; teams: { teamId: string; with: string }[] }
 
 /** A slot is at most 24 hours (CHECK club_schedule_slots_window), so nothing that starts earlier than this can overlap. */
 const LONGEST_MS = 24 * 3_600_000;
@@ -71,7 +71,7 @@ export function familyClashes(own: readonly FamilySlot[], others: readonly Famil
 }
 
 /** A page slot as the family check reads it. */
-export const familySlotOf = (s: Pick<SlotView, 'id' | 'venueId' | 'facilityId' | 'startsAt' | 'endsAt' | 'teamIds'>): FamilySlot => ({
+const familySlotOf = (s: Pick<SlotView, 'id' | 'venueId' | 'facilityId' | 'startsAt' | 'endsAt' | 'teamIds'>): FamilySlot => ({
   id: s.id, venueId: s.venueId, facilityId: s.facilityId, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), teamIds: s.teamIds,
 });
 

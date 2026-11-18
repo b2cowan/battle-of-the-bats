@@ -6877,7 +6877,7 @@ const coachesHelp: HelpPageContent = {
       keywords: [
         'club schedule', 'practice schedule', 'time slots', 'dome', 'permit', 'from the club’s schedule', 'hand back', 'handed back',
         'club proposal', 'the club’s proposals', 'reply by', 'your reply was due', 'looks good', 'ask for a change', 'use the club’s figure', 'keep mine',
-        'club bill', 'budget callout', 'allocation', 'by the time each team got',
+        'club bill', 'budget callout', 'allocation', 'by the time each team got', 'time added', 'added time', 'second charge', 'separate bill', 'time moved by the club',
         'money back', 'refund', 'credit', 'ask the club', 'hand-back asked', 'withdraw the ask', 'credited', 'accepted to be paid',
         'take it back', 'changed your mind', 'undo hand back', 'handed back by mistake', 'ask later', 'money asked', 'keep it handed back',
       ],
@@ -6915,7 +6915,7 @@ const coachesHelp: HelpPageContent = {
               <p>When the club billed your team for the time you&rsquo;re handing back, Hand back offers one more line: <strong>Ask the club for $432.00 back</strong>. The figure is those practices at what the club billed your team for each, worked out for you, and it follows the choice above it. You see it only if you can use the team&rsquo;s money. Leave it off and you can still ask later, from the practice.</p>
               <p>With it ticked, the button reads <strong>Ask the club</strong>, and nothing is handed back yet. The practices stay yours, and your families still see them, until the club answers. Each is marked <strong>Hand-back asked</strong>, and the practice says what you asked, with <strong>Withdraw the ask</strong>. The ask is also a request on <strong>Money &rsaquo; Club</strong>, reading <strong>Awaiting the club</strong>.</p>
               <HelpDefs>
-                <HelpDef term="Accepted while you still owed">The practices open for another team, and the figure comes off what your team owes the club: its latest unpaid payment drops (an $864.00 payment becomes $432.00). The request reads <strong>Credited</strong>, with the day. Nothing more to do.</HelpDef>
+                <HelpDef term="Accepted while you still owed">The practices open for another team, and the figure comes off what your team owes the club: its latest unpaid payment drops first (an $864.00 payment becomes $432.00); an earlier payment drops only if the figure is more than that payment. The request reads <strong>Credited</strong>, with the day. Nothing more to do.</HelpDef>
                 <HelpDef term="Accepted after you paid">The club owes your team the figure. The request reads <strong>Accepted &middot; to be paid</strong> until the club records paying it.</HelpDef>
                 <HelpDef term="Declined">The practices stay yours, and the club&rsquo;s reason shows on the request.</HelpDef>
                 <HelpDef term="Closed">If every practice in the ask starts before the club answers, the ask closes and you&rsquo;re told. Nothing changed.</HelpDef>
@@ -6959,7 +6959,7 @@ const coachesHelp: HelpPageContent = {
           title: 'The club’s bill on your Budget',
           content: (
             <>
-              <p>Once the club finalizes, your share arrives on <strong>Money &rsaquo; Club</strong> with its payments, split <strong>By the time each team got</strong>. If your Budget has a line under the same word, it says so once: <em>The club billed</em> your team the amount for that word, beside what your plan says.</p>
+              <p>Once the club finalizes, your share arrives on <strong>Money &rsaquo; Club</strong> with its payments, split <strong>By the time each team got</strong>. When the club adds time to a sent schedule, it comes as a second charge of its own, named for the schedule and the time (<em>Fall practices &middot; Time added Nov 16</em>), and the email says it is a separate bill. The first bill and its payments stay as they are. If the club later takes time off your team, a part it adds included, the amount comes off your latest unpaid payment as a <strong>Credit</strong> on <strong>Money &rsaquo; Club</strong>; if you had already paid, the club owes you that amount and it shows as a request. If your Budget has a line under the same word, it says so once: <em>The club billed</em> your team the amount for that word, beside what your plan says.</p>
               <ul>
                 <li><strong>Use</strong> the club&rsquo;s figure sets the line to it. A line split into periods keeps its shape at the new total, and a note says what it was.</li>
                 <li><strong>Keep mine</strong> leaves your figure, for when you rent more time yourself. A corrected bill asks again.</li>

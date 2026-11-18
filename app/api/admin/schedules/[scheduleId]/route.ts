@@ -5,7 +5,7 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import {
   draftToSave, editSlotsStep, familyOthers, familyTeamTwice, keepingFor, loadSchedule, readParts, requestOnStored, timeWithoutPermit, pricePermitOf, readBill, readClubTeams, readName, readRequestPrices, readScheduleRequest,
   repTeamsRefusal, resolveScheduler, roomChecker, saveScheduleStep, schedulePermitIds, schedulePrices, scheduleView, schedulerRefusal, timePayload,
-  type ScheduleRequest,
+  type ScheduleRequest, type ServerKeeping,
 } from '@/lib/club-schedule-server';
 import { changesSummary, sendLog } from '@/lib/club-schedule-send';
 import { scheduleReplies } from '@/lib/club-schedule-coach';
@@ -123,15 +123,19 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
 
   /** The one save for a change to the time: what the change keeps is kept exactly (`keepingFor`), and so are the slots
    *  locked or moved by hand that the new time still holds (Ask 19). */
-  const keepTime = async (asked: ScheduleRequest, change: KeepChange, assignments: unknown = body.assignments) => {
-    const keep = keepingFor(loaded, asked.time, change, asked.places);
+  const keepTime = async (asked: ScheduleRequest, change: KeepChange, assignments: unknown = body.assignments, known?: ServerKeeping | null) => {
+    const keep = known !== undefined ? known : keepingFor(loaded, asked.time, change, asked.places);
     const req = keep ? { ...asked, time: keep.time } : asked;
     // The rows it sends, each priced by its own permit (a schedule on several permits).
-    const { prices, gone } = await readRequestPrices(orgId, pricePermitOf(loaded.row), req.time.blocks);
+    // (read together with the rest of the family: the two do not depend on each other)
+    const [{ prices, gone }, family] = await Promise.all([
+      readRequestPrices(orgId, pricePermitOf(loaded.row), req.time.blocks),
+      familyOthers(orgId, loaded.row),
+    ]);
     if (gone) return gone;
     const kept = new Map(loaded.slots.filter(s => !s.removed && (s.locked || s.movedByHand)).map(s => [s.key, s]));
     // Never over the rest of the family's places, never a team it already has then (Phase 8).
-    const draft = draftToSave(req, prices, assignments, kept, keep, await familyOthers(orgId, loaded.row));
+    const draft = draftToSave(req, prices, assignments, kept, keep, family);
     if (!draft.ok) return draft.response;
     const saved = await saveScheduleStep(orgId, scheduleId, actor, version, {
       settings: req.settings, ...timePayload(req.time), slots: draft.slots,
@@ -175,11 +179,14 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       // A SENT part with nothing played on it: every practice comes off and waits for Send the changes, which credits it;
       // once that is sent the part leaves the page (its row, bill and send record stay — 11-17 ruling). With practices
       // already played, the usual take-off keeps them (and their rows, ending yesterday).
-      if (loaded.row.part_of_schedule_id && !time.blocks.length && !keepingFor(loaded, time, { kind: 'take_off', permitId }, asked.value.places)?.stored.length) {
+      const keep = keepingFor(loaded, time, { kind: 'take_off', permitId }, asked.value.places);
+      if (loaded.row.part_of_schedule_id && !time.blocks.length && !keep?.stored.length) {
         const saved = await saveScheduleStep(orgId, scheduleId, actor, version, { ...timePayload(time), slots: [] });
         return saved.ok ? NextResponse.json({ version: saved.version }) : saved.response;
       }
-      return keepTime(asked.value, { kind: 'take_off', permitId }, []);
+      // Nothing would stay (no other permit, nothing played to keep): say that, not "give the schedule its time first".
+      if (!(keep?.time.blocks ?? time.blocks).length) return schedulerRefusal(409, 'last_permit', R.lastPermit);
+      return keepTime(asked.value, { kind: 'take_off', permitId }, [], keep);
     }
 
     if (body.action === 'edit') {
@@ -284,7 +291,10 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       if (row.bill_dismissed_at) return NextResponse.json({ version: row.version });
       const { data, error } = await supabaseAdmin.from('club_schedules')
         .update({ bill_dismissed_at: new Date().toISOString(), bill_dismissed_by: actor })
-        .eq('id', scheduleId).eq('org_id', orgId).eq('version', version).select('version').maybeSingle();
+        // The write itself holds what was just read: still unmarked and still unbilled (this action never bumps the version,
+        // so a second tab, or a bill made a moment ago, would otherwise pass the version check).
+        .eq('id', scheduleId).eq('org_id', orgId).eq('version', version)
+        .is('bill_dismissed_at', null).is('bill_plan', null).is('allocation_id', null).select('version').maybeSingle();
       if (error) throw error;
       if (!data) return schedulerRefusal(409, 'changed', R.changed);
       return NextResponse.json({ version: data.version });

@@ -535,17 +535,19 @@ export async function familyOthers(orgId: string, row: Pick<ScheduleRow, 'id' | 
 export const wholeFamily = (orgId: string, rootId: string): Promise<FamilyMember[]> => familyMembers(orgId, rootId, null);
 
 async function familyMembers(orgId: string, root: string, except: string | null): Promise<FamilyMember[]> {
-  const slots = await fetchAll<{ id: string; schedule_id: string; org_venue_id: string; facility_id: string | null; starts_at: string; ends_at: string; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed; club_schedules: { name: string; part_label: string | null } | null }>((a, b) => {
+  // A slot taken off but not yet sent (`removed_at` set) still holds its PLACE until Send the changes lands: the database's
+  // place-and-start uniqueness (mig 491) counts it, so the cut must not offer it. It holds no TEAM (its teams go with it).
+  const slots = await fetchAll<{ id: string; schedule_id: string; org_venue_id: string; facility_id: string | null; starts_at: string; ends_at: string; removed_at: string | null; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed; club_schedules: { name: string; part_label: string | null } | null }>((a, b) => {
     const read = supabaseAdmin
       .from('club_schedule_slots')
-      .select('id, schedule_id, org_venue_id, facility_id, starts_at, ends_at, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program), club_schedules(name, part_label)')
-      .eq('org_id', orgId).eq('family_id', root).is('removed_at', null);
+      .select('id, schedule_id, org_venue_id, facility_id, starts_at, ends_at, removed_at, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program), club_schedules(name, part_label)')
+      .eq('org_id', orgId).eq('family_id', root);
     return (except ? read.neq('schedule_id', except) : read).order('id').range(a, b);
   });
   const members = new Map<string, FamilyMember & { slots: FamilySlot[] }>();
   for (const s of slots) {
     const m = members.get(s.schedule_id) ?? members.set(s.schedule_id, { id: s.schedule_id, name: s.club_schedules?.part_label ?? s.club_schedules?.name ?? '', slots: [] }).get(s.schedule_id)!;
-    m.slots.push({ id: s.id, venueId: s.org_venue_id, facilityId: s.facility_id, startMs: Date.parse(s.starts_at), endMs: Date.parse(s.ends_at), teamIds: holdersOf(s) });
+    m.slots.push({ id: s.id, venueId: s.org_venue_id, facilityId: s.facility_id, startMs: Date.parse(s.starts_at), endMs: Date.parse(s.ends_at), teamIds: s.removed_at ? [] : holdersOf(s) });
   }
   return [...members.values()];
 }

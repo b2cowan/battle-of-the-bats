@@ -95,6 +95,9 @@ export const SCHEDULE_REFUSALS = {
   justSent: 'This schedule was just sent. Give it a minute before sending again.',
   finalDelete: 'A final schedule has practices on teams’ schedules and a bill, so it can’t be deleted.',
   noTime: 'Give the schedule its time first: a venue, its facilities, the days and the hours.',
+  /** Taking off the permit that is the schedule's only time, when nothing would stay (owner ruling 2026-11-17, walk §532 call C3).
+   *  The screen already hides the door; this is for a direct call and the 400 body. */
+  lastPermit: 'This permit is the only time on the schedule, so it can’t be taken off. Add other time first.',
   /** Add time: the form HAS time, but the schedule (or another part) already holds every place it cuts — the sentence says
    *  that, never "give it time first" (owner question 2026-11-17: "isn't this data right above it?"). */
   partTimeAllHeld: 'The schedule already uses all of this time. Choose other days, hours or dates.',

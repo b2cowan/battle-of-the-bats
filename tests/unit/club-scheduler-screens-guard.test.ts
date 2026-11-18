@@ -479,9 +479,10 @@ describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C
     has(send, 'onBillPart(p.id, { unticked: [...unticked], corrections })', 'Bill it… hands the choices to the page');
     has(page, "keep: win?.kind === 'bill' ? win.keep : undefined", 'and the page hands them back');
     // C2: the row is a money reader's, and a dismiss records the choice (mig 496) without touching the schedule.
-    has(page, "const unbilledSent = !own.canMoney ? [] : parts.filter(x => x.state === 'final' && !x.billed && !x.billDismissed", 'hidden from a reader without Accounting and from a part marked free');
+    has(page, "const unbilledSent = !own.canMoney ? [] : parts.filter(x => sentWithTeams(x) && !x.billDismissed)", 'hidden from a reader without Accounting and from a part marked free');
     has(page, "freeParts.map(x => <CoachToolbarMenuItem key={x.id} label={P.toolBillFree(x.label)}", 'a part marked free can still be billed, from Tools');
-    has(page, "const freeParts = !own.canMoney ? [] : parts.filter(x => x.state === 'final' && !x.billed && x.billDismissed", 'only a money reader, only an unbilled part marked free');
+    has(page, "const freeParts = !own.canMoney ? [] : parts.filter(x => sentWithTeams(x) && x.billDismissed)", 'only a money reader, only an unbilled part marked free');
+    has(page, "const sentWithTeams = (x: (typeof parts)[number]) => x.state === 'final' && !x.billed", 'the shared test: sent, not billed, practices for a rep team');
     has(attention, 'onClick={() => onFreePart(p.id)}>{P.sentFree}', "the row's It's free button");
     const dismiss = route.slice(route.indexOf("body.action === 'dismiss_unbilled'"), route.indexOf("'bad_action'"));
     has(dismiss, "if (!r.canMoney) return schedulerRefusal(403, 'bill_money'", 'money readers only');
