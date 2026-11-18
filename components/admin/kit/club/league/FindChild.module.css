@@ -1,19 +1,6 @@
 /* Find a child or a parent (Club Tier Stage 13e-4, drawing tab 3): above "Running now" on House league's home. The field is
    full width and 46 px; each result is one target, its next game or practice under it. */
 .find { margin: 0 0 1rem; min-width: 0; }
-.field {
-  position: relative; display: flex; align-items: center; gap: 0.75rem;
-  background: var(--card-bg); border: 1px solid var(--home-line-strong); border-radius: 8px;
-  min-height: 46px; padding: 0 0.9rem 0 2.4rem;
-}
-.field:focus-within { outline: 2px solid var(--home-olive); outline-offset: -1px; }
-.icon { position: absolute; left: 0.85rem; color: var(--text-tertiary); pointer-events: none; }
-.input {
-  flex: 1 1 auto; min-width: 0; min-height: 44px; border: 0; background: transparent; outline: none;
-  font: inherit; font-size: var(--type-body); color: var(--text-primary);
-}
-.input::placeholder { color: var(--text-tertiary); }
-.scope { flex: none; font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
 /* The live region: read out, never drawn (the field's scope slot says "Looking…" on screen). */
 .srOnly {
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
@@ -54,7 +41,6 @@
 @media (hover: hover) { .showAll:hover { background: var(--home-olive-soft); } }
 .capped { margin: 0; padding: 0.6rem 0.9rem; font-size: var(--type-support); color: var(--text-secondary); }
 @media (max-width: 640px) {
-  .scope { display: none; }
   /* Status and owing wrap under the name at 390 (drawing tab 3, the 390 note 2). */
   .row { grid-template-columns: minmax(0, 1fr) auto; }
   .state { grid-column: 1; grid-row: 2; flex-direction: row; align-items: baseline; gap: 0.5rem; margin-top: 0.2rem; text-align: left; }

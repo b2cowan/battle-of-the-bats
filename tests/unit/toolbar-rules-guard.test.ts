@@ -41,7 +41,7 @@ describe('Toolbar Rules · Rule 5 — one search field', () => {
     assert.match(css, /\.field:focus-within \{ box-shadow: inset 0 0 0 1px var\(--home-olive/);
     assert.match(css, /\.field:has\(input:focus-visible\) \{ outline: 2px solid/, 'the keyboard ring');
     // The ✕ sits beside the label, never inside it (a label holds only the control it names).
-    assert.match(tsx, /<\/label>\s*\{value !== '' && \(\s*<button/);
+    assert.match(tsx, /<\/label>\s*(?:\{trailing && [^\n]*\n\s*)?\{value !== '' && \(\s*<button/);
     // admin: the control height, 44 at touch widths; coach rooms: 44 at every width (the car-park rationale).
     assert.match(css, /\.field \{[^}]*min-height: var\(--admin-control-h/);
     assert.match(css, /\.field\[data-search-field="coach"\] \{ min-height: var\(--tap-min, 44px\); \}/);
@@ -103,6 +103,19 @@ describe('Toolbar Rules · Rule 5 — one search field', () => {
     // The drill picker and the docked library fill their row (no count there — plan §2); so does the groups window.
     assert.match(editor, /<LibraryFilterBar [^>]* fill \/>/);
     assert.match(editor, /<SearchField room="coach" layout="fill" value=\{query\} onChange=\{setQuery\} label="Search practices or groups" \/>/);
+  });
+
+  it('House league: "Find a child" and the Friend request window wear the shared field, no box of their own', () => {
+    for (const f of [
+      'components/admin/kit/club/league/FindChild.tsx',
+      'components/admin/kit/club/league/registrations/FriendRequestWindow.tsx',
+    ]) {
+      const code = readCode(f);
+      assert.match(code, /import SearchField from '@\/components\/shared\/SearchField';/, `${f} imports the field`);
+      assert.match(code, /<SearchField\b/, `${f} renders it`);
+      assert.doesNotMatch(code, /type="search"/, `${f}: no list styles its own box`);
+    }
+    assert.doesNotMatch(readCode('components/admin/kit/club/league/FindChild.module.css'), /^\.(field|input|icon|scope) \{/m);
   });
 
   it('the looks it replaced are gone, and nothing wears them', () => {

@@ -7,7 +7,8 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Search } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import SearchField from '@/components/shared/SearchField';
 import { FIND_MIN, FIND_WORDS as W, type FindRow } from '@/lib/house-league-find';
 import s from './FindChild.module.css';
 
@@ -69,21 +70,14 @@ export default function FindChild({ orgSlug }: { orgSlug: string }) {
 
   return (
     <section className={s.find} aria-label={W.label}>
-      <div className={s.field}>
-        <Search size={16} aria-hidden className={s.icon} />
-        <input
-          type="search"
-          className={s.input}
-          value={query}
-          onChange={e => onType(e.target.value)}
-          placeholder={W.label}
-          aria-label={W.label}
-          autoComplete="off"
-          spellCheck={false}
-        />
-        {/* "Looking…" takes the scope's place on the field's own line, so nothing under the field moves while it reads. */}
-        <span className={s.scope} aria-hidden>{asks && reading ? W.reading : past ? W.scopePast : W.scope}</span>
-      </div>
+      {/* "Looking…" takes the scope's place on the field's own line, so nothing under the field moves while it reads. */}
+      <SearchField
+        value={query}
+        onChange={onType}
+        label={W.label}
+        layout="fill"
+        trailing={asks && reading ? W.reading : past ? W.scopePast : W.scope}
+      />
 
       {/* Always in the page (an announcement into a region that only just appeared is often not read out). */}
       <p className={s.srOnly} role="status" aria-live="polite">

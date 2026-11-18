@@ -19,7 +19,7 @@ import styles from './SearchField.module.css';
 export const CLEAR_SEARCH = 'Clear the search';
 
 export default function SearchField({
-  value, onChange, label, room = 'admin', layout = 'desk', onClear, autoFocus,
+  value, onChange, label, room = 'admin', layout = 'desk', onClear, autoFocus, trailing,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -34,6 +34,9 @@ export default function SearchField({
    *  dropped on the page. */
   onClear?: () => void;
   autoFocus?: boolean;
+  /** A short note on the field's own line, after the text and before the ✕ ("Looking…"). Drawn quiet and hidden
+   *  on a phone; it never takes a line of its own, so nothing under the field moves. */
+  trailing?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
   return (
@@ -51,6 +54,7 @@ export default function SearchField({
           autoFocus={autoFocus}
         />
       </label>
+      {trailing && <span className={styles.trailing} aria-hidden>{trailing}</span>}
       {value !== '' && (
         <button
           type="button"

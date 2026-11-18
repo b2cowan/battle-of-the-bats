@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import KitDialog, { DialogCancel } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { FormError } from '../../money/MoneyKit';
+import SearchField from '@/components/shared/SearchField';
 import { playerName, guardianName, regDay } from '@/lib/house-league-registrations';
 import { askedPhrase, friendFold, reasonOf, FRIEND_QUEUE_WORDS, type QueueRow } from '@/lib/league-friend-queue';
 import type { LeagueRegistration } from '@/lib/types';
@@ -108,11 +109,11 @@ export default function FriendRequestWindow({ row, regs, divisionName, today, ca
         {found.map(option)}
       </fieldset>
       {canDecide && !req.code && (
-        <label className={ck.field} htmlFor="friend-search">
-          <span className={ck.label}>{W.searchLabel}</span>
-          <input id="friend-search" className={ck.input} type="search" value={query} onChange={e => setQuery(e.target.value)} autoComplete="off" />
+        <div className={ck.field}>
+          <span className={ck.label}>{W.searchLead}</span>
+          <SearchField value={query} onChange={setQuery} label={W.searchLabel} layout="fill" />
           {query.trim() && found.length === 0 && <span className={ck.hint}>{W.searchNone}</span>}
-        </label>
+        </div>
       )}
     </KitDialog>
   );
