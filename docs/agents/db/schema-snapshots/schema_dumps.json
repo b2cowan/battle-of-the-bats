@@ -4367,6 +4367,51 @@
         "column_default": null
       },
       {
+        "table_name": "cron_call_receipts",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "cron_call_receipts",
+        "pos": 2,
+        "column_name": "job_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "cron_call_receipts",
+        "pos": 3,
+        "column_name": "path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "cron_call_receipts",
+        "pos": 4,
+        "column_name": "issued_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "cron_call_receipts",
+        "pos": 5,
+        "column_name": "used_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "diamonds",
         "pos": 1,
         "column_name": "id",
@@ -38803,6 +38848,16 @@
         "indexdef": "CREATE INDEX club_schedules_updated_by_idx ON public.club_schedules USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
       },
       {
+        "tablename": "cron_call_receipts",
+        "indexname": "cron_call_receipts_job_issued_idx",
+        "indexdef": "CREATE INDEX cron_call_receipts_job_issued_idx ON public.cron_call_receipts USING btree (job_name, issued_at)"
+      },
+      {
+        "tablename": "cron_call_receipts",
+        "indexname": "cron_call_receipts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX cron_call_receipts_pkey ON public.cron_call_receipts USING btree (id)"
+      },
+      {
         "tablename": "diamonds",
         "indexname": "diamonds_pkey",
         "indexdef": "CREATE UNIQUE INDEX diamonds_pkey ON public.diamonds USING btree (id)"
@@ -45186,6 +45241,12 @@
       {
         "kind": "RLS",
         "table_name": "club_schedules",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "cron_call_receipts",
         "detail": "ENABLED",
         "check_clause": null
       },

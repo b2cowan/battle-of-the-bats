@@ -1750,6 +1750,16 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "cron_call_receipts",
+    "constraint_name": "cron_call_receipts_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "diamonds",
     "constraint_name": "diamonds_pkey",
     "constraint_type": "PRIMARY KEY",

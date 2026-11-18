@@ -880,6 +880,16 @@
     "indexdef": "CREATE INDEX club_schedules_updated_by_idx ON public.club_schedules USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
   },
   {
+    "tablename": "cron_call_receipts",
+    "indexname": "cron_call_receipts_job_issued_idx",
+    "indexdef": "CREATE INDEX cron_call_receipts_job_issued_idx ON public.cron_call_receipts USING btree (job_name, issued_at)"
+  },
+  {
+    "tablename": "cron_call_receipts",
+    "indexname": "cron_call_receipts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX cron_call_receipts_pkey ON public.cron_call_receipts USING btree (id)"
+  },
+  {
     "tablename": "diamonds",
     "indexname": "diamonds_pkey",
     "indexdef": "CREATE UNIQUE INDEX diamonds_pkey ON public.diamonds USING btree (id)"

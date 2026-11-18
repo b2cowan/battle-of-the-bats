@@ -2,22 +2,23 @@
 
 **Generated:** 2026-11-18 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 274 divergence(s)** across dev/prod.
+**⚠️ 283 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 7 | 2 | — |
-| Columns | 91 | 37 | 2 |
-| Indexes | 34 | 12 | 0 |
-| Constraints | 29 | 7 | — |
+| Tables | 8 | 2 | — |
+| Columns | 96 | 37 | 2 |
+| Indexes | 36 | 12 | 0 |
+| Constraints | 30 | 7 | — |
 | RLS / CHECK | 37 | 16 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (7)
+### Only in DEV (8)
 - `club_group_email_bodies`
 - `club_group_email_recipients`
 - `club_group_email_sends`
 - `club_schedule_bill_rates`
+- `cron_call_receipts`
 - `online_payment_stripe_fee_lines`
 - `org_time_date_off_venues`
 - `payments_terms_agreements`
@@ -27,7 +28,7 @@
 - `platform_stripe_fees`
 
 ## Columns
-### Only in DEV (91)
+### Only in DEV (96)
 - `club_group_email_bodies.body`
 - `club_group_email_bodies.created_at`
 - `club_group_email_bodies.org_id`
@@ -83,6 +84,11 @@
 - `club_schedules.bill_price_mode`
 - `club_schedules.part_label`
 - `club_schedules.part_of_schedule_id`
+- `cron_call_receipts.id`
+- `cron_call_receipts.issued_at`
+- `cron_call_receipts.job_name`
+- `cron_call_receipts.path`
+- `cron_call_receipts.used_at`
 - `family_email_sends.club_copy`
 - `family_email_sends.names_cleared_at`
 - `family_email_sends.reply_to`
@@ -164,7 +170,7 @@
 - `family_email_sends.subject` — dev: `text|text|YES|` | prod: `text|text|NO|`
 
 ## Indexes
-### Only in DEV (34)
+### Only in DEV (36)
 - `club_group_email_bodies_org_idx`
 - `club_group_email_bodies_pkey`
 - `club_group_email_recipients_org_idx`
@@ -184,6 +190,8 @@
 - `club_schedule_slots_family_place_start`
 - `club_schedules_part_label_once`
 - `club_schedules_part_of_idx`
+- `cron_call_receipts_job_issued_idx`
+- `cron_call_receipts_pkey`
 - `family_email_sends_names_due_idx`
 - `family_email_sends_words_due_idx`
 - `online_payment_stripe_fee_lines_entry_idx`
@@ -218,7 +226,7 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (29)
+### Only in DEV (30)
 - `club_group_email_bodies.club_group_email_bodies_org_id_fkey`
 - `club_group_email_bodies.club_group_email_bodies_pkey`
 - `club_group_email_bodies.club_group_email_bodies_send_id_fkey`
@@ -235,6 +243,7 @@ _none_
 - `club_schedule_bill_rates.club_schedule_bill_rates_schedule_permit_key`
 - `club_schedules.club_schedules_bill_dismissed_by_fkey`
 - `club_schedules.club_schedules_part_of_schedule_id_fkey`
+- `cron_call_receipts.cron_call_receipts_pkey`
 - `online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_entry_id_fkey`
 - `online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_online_payment_id_fkey`
 - `online_payment_stripe_fee_lines.online_payment_stripe_fee_lines_org_id_fkey`

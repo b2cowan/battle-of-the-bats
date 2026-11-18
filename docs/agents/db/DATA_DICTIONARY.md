@@ -12363,6 +12363,34 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 <!-- dict:col:feedback_submissions.escalated_by -->
 **`escalated_by`** (text, nullable, no FK) — platform-operator email who escalated the item (mirrors `triaged_by`); set with `escalated_at`, nulled when the escalation is cleared. Re-escalating an already-escalated item is a no-op (the original who/when is **not** restamped). **Write-only** — no reader selects it (the list reads only `escalated_at`).
 
+## `cron_call_receipts`
+<!-- dict:table:cron_call_receipts -->
+
+**Purpose:** the one-use receipt each scheduled HTTP call carries (mig 502, Board Ready trust call 21, owner chose option B 2026-11-18). `app_cron_http_tick` inserts one row per call and sends its id as `x-cron-receipt`; the app (`lib/cron-auth.ts` `scheduledCall`) runs a machine call only after ONE conditional update consumes a row of THIS database for that route's path, issued in the last 15 minutes, `used_at` null. A database restored to a new project keeps the jobs and the Vault key, but its receipts live in the copy, so the live site refuses every call it makes; a leaked secret alone runs nothing; two calls with one receipt run once. A refusal answers 200 `{ ok: true, ran: false }` and records an `error` in `error_groups` titled "A scheduled call was refused…" (emails once per issue).
+
+**Gotchas (read first):**
+1. **Database first, code second, on any environment.** Old code ignores the header; new code without mig 502 refuses every scheduled job.
+2. **The path must equal the route's literal** (`tests/unit/cron-receipt-guard.test.ts` holds the tick schedules and the routes equal); a mismatch silently stops that job.
+3. **Never written by a browser:** RLS on, no policies, revoked from anon/authenticated; service_role only. On DEV the walk fixtures fire a job by hand through `scripts/lib/billing-walk-fixture.mjs` `fireJob`, which inserts a receipt under the job's own heartbeat name (so the tick's purge clears it); the proof probe uses `'probe'` and deletes its rows.
+4. **Self-cleaning:** each tick deletes its own job's rows older than two days; nothing else purges it. Under a thousand rows (the 5-minute job alone keeps ~576); index `cron_call_receipts_job_issued_idx` (job_name, issued_at) serves the purge.
+
+**Fields:**
+
+<!-- dict:col:cron_call_receipts.id -->
+**`id`** (uuid, PK, default `gen_random_uuid()`) — the receipt; sent as `x-cron-receipt`.
+
+<!-- dict:col:cron_call_receipts.job_name -->
+**`job_name`** (text, not null) — the tick's heartbeat name (`p_job_name`, e.g. `schedule_change_notices_tick`); the purge key. Not read by the app.
+
+<!-- dict:col:cron_call_receipts.path -->
+**`path`** (text, not null) — the route the call was for (`p_path`); the app consumes the receipt only on that route.
+
+<!-- dict:col:cron_call_receipts.issued_at -->
+**`issued_at`** (tstz, not null, default `now()`, indexed with job_name) — when the tick wrote it; the app refuses one older than 15 minutes.
+
+<!-- dict:col:cron_call_receipts.used_at -->
+**`used_at`** (tstz, nullable) — stamped by the app's consuming update; set = spent. Null and older than 15 minutes = a call that never arrived, or one served by code that predates the receipt (it ignores the header).
+
 ## `observability_cron_heartbeat`
 <!-- dict:table:observability_cron_heartbeat -->
 
@@ -12402,7 +12430,7 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 - Both job functions: **SECURITY DEFINER** (owner `postgres`; needed so the service-role manual sweep can prune `cron.job_run_details`), `search_path = ''`, **EXECUTE revoked from PUBLIC/anon/authenticated** (verified live: anon → `42501`), granted to `service_role` (the `/api/platform-admin/observability/sweep` fallback, super_admin-gated). Neither ever raises — failures land in the heartbeat + the returned jsonb.
 - **`obs_severity_rank(text) → int`** — immutable `critical=4 … info=1` ranking used by the severity-escalation `CASE` in `record_error_event`.
 - **Cron jobs (`cron.job`, scheduled as `postgres`, GMT):** `observability-metrics-fold` `*/5 * * * *` · `observability-retention-sweep` `15 8 * * *` (≈3–4 am Eastern). `cron.schedule(name, …)` is a named upsert → re-applying 122 is idempotent (but it does NOT re-activate a job deactivated via `cron.alter_job(active:=false)`). pg_cron never runs the same job concurrently with itself.
-- **`app_cron_http_tick(p_job_name text, p_path text) → void`** (mig 183) — the scheduled-HTTP bridge: reads `app_cron_base_url` + `app_cron_secret` from **Supabase Vault** (`vault.decrypted_secrets`), `pg_net` `net.http_post`s `{base}{path}` with an `x-cron-secret` header (matching the app's `CRON_SECRET`), and heartbeats into `observability_cron_heartbeat` (same `last_run_at`-only-on-success discipline as the obs jobs). **`status='ok'` means "HTTP dispatched", NOT "sweep succeeded"** — pg_net is fire-and-forget; the app-side truth is the platform audit log (`insights_digest_sweep` / `dues_reminders_sweep` rows). If either Vault secret is unset the tick no-ops with a visible `status='error'` heartbeat. SECURITY DEFINER, `search_path=''`, EXECUTE revoked from PUBLIC/anon/authenticated, granted `postgres`+`service_role`. Uses `pg_net` (installed by mig 183; `pg_cron` came from mig 122).
+- **`app_cron_http_tick(p_job_name text, p_path text) → void`** (mig 183) — the scheduled-HTTP bridge: reads `app_cron_base_url` + `app_cron_secret` from **Supabase Vault** (`vault.decrypted_secrets`), `pg_net` `net.http_post`s `{base}{path}` with an `x-cron-secret` header (matching the app's `CRON_SECRET`) **and, since mig 502, an `x-cron-receipt` header** (the id of a one-use `cron_call_receipts` row it inserts in the same transaction, after clearing its own receipts older than two days; see that table), and heartbeats into `observability_cron_heartbeat` (same `last_run_at`-only-on-success discipline as the obs jobs). **`status='ok'` means "HTTP dispatched", NOT "sweep succeeded"** — pg_net is fire-and-forget; the app-side truth is the platform audit log (`insights_digest_sweep` / `dues_reminders_sweep` rows). If either Vault secret is unset the tick no-ops with a visible `status='error'` heartbeat. SECURITY DEFINER, `search_path=''`, EXECUTE revoked from PUBLIC/anon/authenticated, granted `postgres`+`service_role`. Uses `pg_net` (installed by mig 183; `pg_cron` came from mig 122).
 - **Cron jobs added by mig 183 (`cron.job`, `postgres`, GMT):** `insights-digest-weekly` `0 23 * * 0` (Sun 23:00 UTC ≈ 6–7pm Toronto) + `insights-digest-catchup` `0 13 * * 1` (Mon 13:00 UTC — a lost-Sunday retry; the digest's 6-day dedupe means only missed teams get served, never a duplicate) · `dues-reminders-daily` `30 13 * * *` (13:30 UTC ≈ 8:30–9:30am Toronto). All three call `app_cron_http_tick(...)`. Idempotent named upserts. ⚠️ Table-free DDL — the `check:migrations` column-diff gate is BLIND to prod missing mig 183 (same caveat as 122); track PROD-PENDING in the plan doc and apply deliberately.
 - **Request-metrics buffer/flush** — `lib/observability/metrics.ts`: an in-process per-route `Map` tally (`recordRequest` increments `call`, and `error` when `isError` = HTTP ≥500 or a throw), flushed by the lazy `maybeFlush` (60 s / 200 calls) as one `request_metrics_raw` row per route via `supabaseAdmin`. Fed by `withObservability` (the route wrapper, working-tree). Only `org-context` + `notifications` are wrapped today, so the metrics see a narrow slice of traffic.
 - **Mechanism A — the `request_id` thread (working-tree, uncommitted)** — `proxy.ts` mints `crypto.randomUUID()` and stamps `x-request-id` on the forwarded request + response → `with-observability.ts` adopts a valid incoming id (else mints), seeds AsyncLocalStorage, re-stamps the response → `onRequestError` reads it off the request headers (no ALS on that path) and passes `opts.requestId` → `capture.ts` writes it to `error_events.request_id` (and copies it into `request_context`). The browser (`lib/observability/client-request-id.ts`) stashes the response id; the feedback widget submits it as `context.requestId`; the triage page joins it back to the error group.
