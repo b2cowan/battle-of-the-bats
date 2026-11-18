@@ -27,7 +27,7 @@ import { notify } from '@/lib/notify';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { registrationNoticeWords } from '@/lib/team-coach-notice-plan';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
-import { assertNotDemoOrg } from '@/lib/demo-guard';
+import { assertNotDemoOrg, demoActorRefusal } from '@/lib/demo-guard';
 import { throttleRegisterForm, throttleRegisterRecipient } from '@/lib/public-form-throttle';
 import { tournamentToday } from '@/lib/timezone';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
@@ -268,6 +268,10 @@ export const POST = withObservability(async (req: NextRequest) => {
     let signedInCoach: { id: string; email: string } | null = null;
     const supabase = await createClient();
     const user = await getSignedInUser(supabase);
+    // A "See it live" demo account never files a real entry or makes a team through it (Board Ready trust close-out 1):
+    // signed in, this door files the entry under a coach team and can create one. Signed out, anyone may still register.
+    const demoRefusal = demoActorRefusal(user);
+    if (demoRefusal) return demoRefusal;
     if (user?.id && user.email) {
       signedInCoach = { id: user.id, email: user.email.toLowerCase() };
     }

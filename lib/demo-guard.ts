@@ -159,6 +159,21 @@ export function sandboxRejectionResponse(slug?: string | null): Response {
  * writes does not call this — a new billing POST cannot ship open.
  */
 export function demoBillingRefusal(user: { email?: string | null } | null | undefined): Response | null {
+  return demoActorRefusal(user);
+}
+
+/**
+ * THE ACTOR REFUSAL: a demo sandbox's shared account (the tournament demo's organizer, the coach demo's coach) is refused,
+ * whatever the request names. `demoBillingRefusal` is this, under the name the billing sweep looks for.
+ *
+ * ⚖ Board Ready trust close-out 1 (owner 2026-11-18): the doors that CREATE a workspace — a club (`org/create`), a league
+ * (`league/create`) and a coach's team (`coaches/teams` POST), plus the two that can make a coach team on the way
+ * (claiming an entry, `coaches/basic-teams`, and a signed-in tournament sign-up, `register`) — name no club at all, so
+ * neither the proxy's URL match nor a club check can see them. Club and league create used to turn the demo away only
+ * through the one-club rule, which lets a request through when its own read fails; the others had no rule. Each now calls
+ * this first, and `tests/unit/demo-create-doors-guard.test.ts` fails the build if one stops.
+ */
+export function demoActorRefusal(user: { email?: string | null } | null | undefined): Response | null {
   const email = user?.email?.trim().toLowerCase();
   if (!email) return null;
   const demo = DEMO_ORGS.find(org => org.organizerEmail === email);

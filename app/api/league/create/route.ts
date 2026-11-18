@@ -7,6 +7,7 @@ import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
 import { isDemoOrgSlug } from '@/lib/demo-org';
+import { demoActorRefusal } from '@/lib/demo-guard';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { captureError, withObservability } from '@/lib/observability';
 import { writePlatformEvent } from '@/lib/platform-events';
@@ -66,6 +67,10 @@ export const POST = withObservability(async (req: Request) => {
     if (!user?.id || !user.email) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }
+    // A "See it live" demo account never creates a real league (Board Ready trust close-out 1) — refused by WHO it is, not
+    // through the one-club rule below, which lets a request through when its own read fails.
+    const demoRefusal = demoActorRefusal(user);
+    if (demoRefusal) return demoRefusal;
     // FieldLogicHQ staff are not operators — a platform-admin session must never own a public org.
     if (await isPlatformAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });

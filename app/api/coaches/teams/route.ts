@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { demoActorRefusal } from '@/lib/demo-guard';
 import { createBasicCoachTeam } from '@/lib/basic-coach-teams';
 import { coachTeamPath } from '@/lib/coaches-portal-routes';
 import { basicCoachTeamWelcomeHtml, sendEmail, SITE_URL } from '@/lib/email';
@@ -47,6 +48,10 @@ export const POST = withObservability(async (req: NextRequest) => {
   try {
     const user = await requireCoachUser();
     if (!user) return json({ error: 'Sign in required.' }, 401);
+    // A "See it live" demo account never creates a real team (Board Ready trust close-out 1): this door names no club, so
+    // the proxy's demo match never sees it, and there is no one-club rule here to lean on.
+    const demoRefusal = demoActorRefusal(user);
+    if (demoRefusal) return demoRefusal;
     // A free coach team is a workspace a person owns: never without the current Terms (step 6.3, C1).
     const terms = await requireAcceptance(user);
     if (!terms.ok) return terms.response;
