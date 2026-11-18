@@ -69,10 +69,6 @@ export const POST = withObservability(async (req: Request) => {
   };
   await run('dispute_reminders', () => sendDisputeReminders(now));
   await run('lost_disputes', () => bookLostDisputesSweep(now));
-  // Stripe-owned pricing Stage 3: Stripe's own fee on a payment it wasn't ready for at the landing, and Stripe's stand-alone
-  // fees (a failed debit's $5, an answered dispute's $15) matched to their payment and booked (owner ruling (d), 2026-11-18).
-  await run('stripe_fee_catch_up', () => catchUpStripeFees());
-  await run('standalone_stripe_fees', () => takeStandaloneStripeFees());
   await run('terms_notices', () => sendTermsNotices(now));
   await run('ending_warnings', () => sendEndingWarnings(now));
   // 4b. Free time on an ended club (owner ruling 2026-11-18): a club whose plan ended, that free time reopened, is closed
@@ -84,6 +80,12 @@ export const POST = withObservability(async (req: Request) => {
   await run('purchase_emails', () => catchUpPurchaseEmails(now));
   await run('renewal_reminders', () => sendRenewalReminders(now));
   await run('tax_records_backfill', () => backfillChargeTaxRecords(now));
+  // Stripe-owned pricing Stage 3: Stripe's own fee on a payment it wasn't ready for at the landing (and a dispute fee whose
+  // event came before the landing), and Stripe's stand-alone fees (a failed debit's $5, an answered dispute's $15) matched
+  // to their payment and booked (owner ruling (d), 2026-11-18). LAST (hardening, owner 2026-11-18): they read Stripe per
+  // club and per payment, so a slow Stripe or a long list can only run out of time after every step above has run.
+  await run('stripe_fee_catch_up', () => catchUpStripeFees());
+  await run('standalone_stripe_fees', () => takeStandaloneStripeFees());
 
   await writePlatformAuditLog(actor, null, 'stripe_fees_sweep', 'result', null, steps);
   const ok = steps.every(s => s.ok);

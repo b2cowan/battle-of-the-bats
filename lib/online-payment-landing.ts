@@ -324,7 +324,8 @@ const DEBIT_COLUMNS = 'id, org_id, flow, team_id, tournament_id, season_id, tota
  * After a debit came back (returned while clearing, or reversed after it cleared): the desk's notice (one per debit,
  * naming every child, words §3.6) and — for a return — any decision made while it cleared stamped 'returned' (nothing was
  * taken, so nothing is sent back or kept). Stripe's fee for it is taken from the club's own balance (Stripe-owned pricing,
- * Stage 4 retired the fee FieldLogicHQ used to bill back), so nothing here records one.
+ * Stage 4 retired the fee FieldLogicHQ used to bill back) and booked elsewhere, never here: a reversal's attached $5 by
+ * `bookDisputeFee`, a failed debit's later $5 by the daily job (`takeStandaloneStripeFees`, Stage 3).
  */
 async function afterDebitBack(opId: string, kind: 'returned' | 'reversed'): Promise<void> {
   const { data } = await supabaseAdmin.from('online_payments').select(DEBIT_COLUMNS).eq('id', opId).maybeSingle();
@@ -949,9 +950,12 @@ async function recordStripeFee(onlinePaymentId: string, session: Stripe.Checkout
   await setStripeFee(onlinePaymentId, cents);
 }
 
-async function setStripeFee(onlinePaymentId: string, cents: number): Promise<void> {
-  const { error } = await supabaseAdmin.rpc('online_payment_stripe_fee_set', { p_online_payment: onlinePaymentId, p_stripe_fee: cents / 100 });
-  if (error) console.error('[online-payment-landing] Stripe’s fee not recorded yet (the daily job retries):', onlinePaymentId, error.message);
+/** True only when this call stored the fee (not a skip, not already, not an error), so the daily job's count is honest. */
+async function setStripeFee(onlinePaymentId: string, cents: number): Promise<boolean> {
+  const { data, error } = await supabaseAdmin.rpc('online_payment_stripe_fee_set', { p_online_payment: onlinePaymentId, p_stripe_fee: cents / 100 });
+  if (error) { console.error('[online-payment-landing] Stripe’s fee not recorded yet (the daily job retries):', onlinePaymentId, error.message); return false; }
+  const r = data as { already?: boolean; skipped?: string } | null;
+  return !!r && r.already === false;
 }
 
 /** How far back the daily job looks for a landed payment still without Stripe's fee. */
@@ -961,30 +965,66 @@ const STRIPE_FEE_CATCH_UP_DAYS = 35;
  * The daily job (Stage 3): every landed payment on a Stripe-owned account in the last 35 days whose Stripe fee is still
  * unread is read from its charge and recorded. Returns how many were recorded.
  */
-export async function catchUpStripeFees(): Promise<{ read: number; recorded: number }> {
+export async function catchUpStripeFees(): Promise<{ read: number; recorded: number; failed: number; disputeFees: number }> {
   const since = new Date(Date.now() - STRIPE_FEE_CATCH_UP_DAYS * 86_400_000).toISOString();
   const { data: accounts, error: aErr } = await supabaseAdmin.from('org_payment_accounts').select('stripe_account_id').eq('fees_collector', 'stripe');
   if (aErr) throw new Error(aErr.message);
   const ids = (accounts ?? []).map(a => a.stripe_account_id as string).filter(Boolean);
-  if (!ids.length) return { read: 0, recorded: 0 };
+  if (!ids.length) return { read: 0, recorded: 0, failed: 0, disputeFees: 0 };
+  // Hardening (owner 2026-11-18): only connected accounts; newest first, so a payment Stripe keeps refusing can't hold the
+  // batch's slots ahead of fixable ones; one payment's failure is counted and the rest go on.
+  const { data: live, error: lErr } = await supabaseAdmin.from('org_payment_accounts').select('stripe_account_id')
+    .in('stripe_account_id', ids).is('disconnected_at', null);
+  if (lErr) throw new Error(lErr.message);
+  const connected = (live ?? []).map(a => a.stripe_account_id as string);
+  if (!connected.length) return { read: 0, recorded: 0, failed: 0, disputeFees: 0 };
   const { data: rows, error } = await supabaseAdmin.from('online_payments').select('id, stripe_account_id, stripe_charge_id')
-    .in('stripe_account_id', ids).not('landed_at', 'is', null).gte('landed_at', since)
-    .is('stripe_fee_amount', null).not('stripe_charge_id', 'is', null).limit(500);
+    .in('stripe_account_id', connected).not('landed_at', 'is', null).gte('landed_at', since)
+    .is('stripe_fee_amount', null).not('stripe_charge_id', 'is', null).order('landed_at', { ascending: false }).limit(500);
   if (error) throw new Error(error.message);
-  let recorded = 0;
+  let recorded = 0; let failed = 0;
   for (const r of rows ?? []) {
-    const charge = await retrieveChargeWithFee(r.stripe_account_id as string, r.stripe_charge_id as string);
-    const cents = stripeFeeCents(chargeBalanceTransaction(charge));
-    if (cents === null) continue;
-    await setStripeFee(r.id as string, cents);
-    recorded++;
+    try {
+      const charge = await retrieveChargeWithFee(r.stripe_account_id as string, r.stripe_charge_id as string);
+      const cents = stripeFeeCents(chargeBalanceTransaction(charge));
+      if (cents === null) continue;
+      if (await setStripeFee(r.id as string, cents)) recorded++;
+    } catch (e) {
+      failed++;
+      console.error('[online-payment-landing] Stripe’s fee not read (the daily job retries):', r.id, e instanceof Error ? e.message : e);
+    }
   }
-  return { read: rows?.length ?? 0, recorded };
+  return { read: rows?.length ?? 0, recorded, failed, disputeFees: await catchUpDisputeFees(connected, since) };
+}
+
+/**
+ * A card dispute's fee whose event came before its payment landed (`bookDisputeFee` waits for the landing, and Stripe
+ * does not send that event again): booked from the dispute's stored fee once the payment is in (hardening, owner
+ * 2026-11-18). Inquiries carry no fee. Returns how many were booked.
+ */
+async function catchUpDisputeFees(accounts: readonly string[], since: string): Promise<number> {
+  const { data, error } = await supabaseAdmin.from('online_payments')
+    .select('id, online_payment_disputes!inner(stripe_fee, status)')
+    .in('stripe_account_id', [...accounts]).not('landed_at', 'is', null).gte('landed_at', since)
+    .is('dispute_fee_entry_id', null).gt('online_payment_disputes.stripe_fee', 0)
+    .not('online_payment_disputes.status', 'like', 'warning%').limit(200);
+  if (error) throw new Error(error.message);
+  let booked = 0;
+  for (const op of data ?? []) {
+    const rows = (op.online_payment_disputes ?? []) as { stripe_fee: number | string | null }[];
+    const fee = Math.max(0, ...rows.map(d => Number(d.stripe_fee) || 0));
+    if (fee <= 0) continue;
+    const { data: res, error: bErr } = await supabaseAdmin.rpc('online_payment_dispute_fee_book', { p_online_payment: op.id, p_fee: fee });
+    if (bErr) { console.error('[online-payment-landing] a dispute fee not booked (the daily job retries):', op.id, bErr.message); continue; }
+    if ((res as { already?: boolean } | null)?.already === false) booked++;
+  }
+  return booked;
 }
 
 /**
  * Stage 3, owner ruling (b): the fee Stripe attached to a dispute (its withdrawal's "Dispute fee": $15 card, $5 bank
- * debit) is booked once on the payment's own book as "Dispute fee · receipt N". Any dispute event, either rail; a no-op
+ * debit) is booked once on the payment's own book as "Dispute fee · receipt N" (a bank debit's: "Returned debit fee · receipt N",
+ * since the product calls that dispute "Returned by the bank"). Any dispute event, either rail; a no-op
  * until the payment has landed, and on an old account.
  */
 export async function bookDisputeFee(stripeAccountId: string, dispute: Stripe.Dispute): Promise<void> {
@@ -1008,14 +1048,21 @@ const STANDALONE_FEE_LOOKBACK_DAYS = 10;
  * exactly one payment of its kind sits near its day, booked on that payment's book. The rest stay recorded unmatched for
  * the bank check to name. Returns counts for the job's audit.
  */
-export async function takeStandaloneStripeFees(): Promise<{ lines: number; booked: number; unmatched: number }> {
+export async function takeStandaloneStripeFees(): Promise<{ lines: number; booked: number; unmatched: number; retried: number; failed: number }> {
   const { data: accounts, error } = await supabaseAdmin.from('org_payment_accounts').select('org_id, stripe_account_id, livemode')
     .eq('fees_collector', 'stripe').is('disconnected_at', null);
   if (error) throw new Error(error.message);
   const gte = Math.floor(Date.now() / 1000) - STANDALONE_FEE_LOOKBACK_DAYS * 86_400;
-  let lines = 0; let booked = 0; let unmatched = 0;
+  let lines = 0; let booked = 0; let unmatched = 0; let retried = 0; let failed = 0;
+  // Hardening (owner 2026-11-18): one club's Stripe read, or one line's refusal, is counted and the rest go on.
   for (const a of accounts ?? []) {
-    const fees = await listStripeFeeLines(a.stripe_account_id as string, gte);
+    let fees: Stripe.BalanceTransaction[];
+    try { fees = await listStripeFeeLines(a.stripe_account_id as string, gte); }
+    catch (e) {
+      failed++;
+      console.error('[online-payment-landing] a club’s Stripe fee lines not read (the daily job retries):', a.org_id, e instanceof Error ? e.message : e);
+      continue;
+    }
     for (const bt of fees) {
       if (bt.source) continue; // a fee with a source belongs to its charge or dispute, booked there
       const { kind, day } = standaloneFeeOf(bt.description, bt.created);
@@ -1023,14 +1070,20 @@ export async function takeStandaloneStripeFees(): Promise<{ lines: number; booke
         p_org: a.org_id, p_stripe_account: a.stripe_account_id, p_txn: bt.id, p_livemode: !!a.livemode, p_amount: bt.amount / 100,
         p_description: bt.description ?? '', p_created: new Date(bt.created * 1000).toISOString(), p_kind: kind, p_day: day,
       });
-      if (tErr) throw new Error(tErr.message);
-      const r = res as { already?: boolean; matched?: boolean } | null;
+      if (tErr) {
+        failed++;
+        console.error('[online-payment-landing] a stand-alone Stripe fee not taken (the daily job retries):', bt.id, tErr.message);
+        continue;
+      }
+      const r = res as { already?: boolean; retried?: boolean; matched?: boolean } | null;
       if (r?.already) continue;
+      // A line tried again counts only when it is now booked; one still unmatched was counted the day it was first read.
+      if (r?.retried) { if (r.matched) { retried++; booked++; } continue; }
       lines++;
       if (r?.matched) booked++; else unmatched++;
     }
   }
-  return { lines, booked, unmatched };
+  return { lines, booked, unmatched, retried, failed };
 }
 
 /**
