@@ -13,6 +13,7 @@ import { isStandaloneCoachOwner } from '@/lib/coach-billing-access';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import { canReadVenueLibrary } from '@/lib/venue-library';
 import { isTournamentTier, orgSettingsOnTournamentSide } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
@@ -38,15 +39,17 @@ export function useOrgLinks() {
   // it), so it gets no Organization rows — today's rail hides that section for it too. A one-team
   // workspace on a tournament plan is the exception: it keeps /admin/org (staff and access).
   const isTeamWorkspace = isTeamWorkspaceOrg(currentOrg);
+  // `canReadVenueLibrary` for the signed-in person (trust close-out 2): the Venue library row here, the Permits row below.
+  const readsLibrary = !!currentOrg && canReadVenueLibrary({ role: userRole, capabilities: userCapabilities }, currentOrg);
   const orgLinks = isTournamentTier(currentOrg?.planId) && !isTeamWorkspace ? [] : kitOrgLinks({
     base,
     role: userRole,
     isCanceled,
     canSeeMembers,
-    hasVenueLibrary: hasOrgVenueLibrary(currentOrg?.planId),
+    hasVenueLibrary: hasOrgVenueLibrary(currentOrg?.planId) && readsLibrary,
     isTeamWorkspace,
   });
-  return { orgSlug, base, isCanceled, isTeamWorkspace, orgLinks, canSeeMembers };
+  return { orgSlug, base, isCanceled, isTeamWorkspace, orgLinks, canSeeMembers, readsLibrary };
 }
 
 /**
@@ -81,10 +84,11 @@ export function useOrgTabs() {
 
 /** The Permits row (Club Tier 13c, C1) or null — the rail, the More sheet and the bar's place all read this one answer. */
 export function usePermitsLink() {
-  const { currentOrg, userRole } = useOrg();
-  const { base, isCanceled } = useOrgLinks();
+  const { currentOrg } = useOrg();
+  const { base, isCanceled, readsLibrary } = useOrgLinks();
   return kitPermitsLink({
-    base, role: userRole, isCanceled, tournamentTier: isTournamentTier(currentOrg?.planId), hasVenueLibrary: hasOrgVenueLibrary(currentOrg?.planId),
+    base, readsLibrary, isCanceled,
+    tournamentTier: isTournamentTier(currentOrg?.planId), hasVenueLibrary: hasOrgVenueLibrary(currentOrg?.planId),
   });
 }
 
@@ -160,8 +164,11 @@ export function useAdminKitNav() {
   // ⚖ 13i Session B: the club's places in their groups (Organization one place, its pages its tabs), built ONCE — the
   // sidebar and the More sheet read this list. None for a tournament-only organization (its flat Account list) or a
   // cancelled club. One club row is lit: the place you are in at any depth, none on Plan & billing's page (its foot row).
+  // The board can be someone's only Organization tab (trust close-out 2 took staff's and a registrar's Venue library); a
+  // Tournament-plan club has no /admin/org (its layout redirects), so it never holds the place open there.
+  const orgShowsBoard = !isTournamentTier(currentOrg?.planId) && showsOrgBoard({ role: userRole, orgLinks, isTeamWorkspace });
   const placeGroups = tournamentOnly || isCanceled ? [] : clubPlaceGroups<KitLink>({
-    programs: navPrograms, alsoOnPlan, organization: kitOrgPlace({ base, orgLinks, tournamentOnly }), communications: communicationsLink,
+    programs: navPrograms, alsoOnPlan, organization: kitOrgPlace({ base, orgLinks, tournamentOnly, showsBoard: orgShowsBoard }), communications: communicationsLink,
   });
   const litPlace = litClubPlace(pathname, base, billingLink);
   const onTournaments = pathname.startsWith(`${base}/tournaments`);

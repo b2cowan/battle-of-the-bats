@@ -354,22 +354,22 @@ export function kitSchedulesLink({ base, canUse, isCanceled, role, planId }: {
 /**
  * ⚖ THE CLUB'S PERMITS ARE A PLACE (Club Tier Stage 13c — Ask 1 A, C1 = A, owner 2026-11-08; staff = A the same day):
  * "Permits", DIRECTLY UNDER Calendar and above Schedules in the rail, unheaded like its neighbours, and on a phone the More
- * sheet's lone row above its groups. Out of Organization › Venue library, whose Venues | Permits switch is gone. It shows
- * to everyone who could open the permit list before (the permits route refuses only a coach; a volunteer never reaches the
- * admin): the owner, an admin, a league admin, a registrar, a treasurer, and a club's staff — nobody loses the list. Its
+ * sheet's lone row above its groups. Out of Organization › Venue library, whose Venues | Permits switch is gone. Its
  * glyph is a document with a check (N5: `MapPin` stays Venue library's, `FileText` PDF settings'). On a plan carrying the
  * Venue library only (permits ride it, Ask 4), never cancelled, never a Tournament plan. Not inside a tournament (the rail's
  * rule for Calendar and Schedules).
+ * ⚖ WHO (Board Ready trust close-out 2, owner 2026-11-18; replaces 13c's "nobody loses the list"): `readsLibrary` is
+ * `canReadVenueLibrary` (`lib/venue-library.ts`) — the people who schedule, run tournaments or handle money. Staff, a
+ * scorekeeper and a registrar no longer see the row, and the permits route refuses them by the same answer.
  */
-export function kitPermitsLink({ base, role, isCanceled, tournamentTier, hasVenueLibrary }: {
+export function kitPermitsLink({ base, readsLibrary, isCanceled, tournamentTier, hasVenueLibrary }: {
   base: string;
-  role: string | null | undefined;
+  readsLibrary: boolean;
   isCanceled: boolean;
   tournamentTier: boolean;
   hasVenueLibrary: boolean;
 }): KitLink | null {
-  if (isCanceled || tournamentTier || !hasVenueLibrary) return null;
-  if (!role || role === 'coach' || role === 'official') return null;
+  if (isCanceled || tournamentTier || !hasVenueLibrary || !readsLibrary) return null;
   return { key: 'permits', label: 'Permits', href: `${base}/permits`, icon: FileCheck };
 }
 
@@ -422,6 +422,7 @@ export function kitOrgLinks({
   role: string | null | undefined;
   isCanceled: boolean;
   canSeeMembers: boolean;
+  /** The plan carries the Venue library AND this person reads it (`canReadVenueLibrary`, trust close-out 2). */
   hasVenueLibrary: boolean;
   isTeamWorkspace?: boolean;
 }): KitLink[] {
@@ -569,10 +570,13 @@ export function clubSheetGroups<T extends { key: string }>(
 
 /** Organization as a place: its one row (the sidebar and the More sheet), for a club that has Organization tabs to show
  *  (a cancelled club has none: `kitOrgLinks`). Its pages are its tabs (`orgTabs`); `/org` goes to the first one held. */
-export function kitOrgPlace({ base, orgLinks, tournamentOnly }: {
+export function kitOrgPlace({ base, orgLinks, tournamentOnly, showsBoard = false }: {
   base: string; orgLinks: readonly KitLink[]; tournamentOnly: boolean;
+  /** "The board" is one of this person's tabs (`showsOrgBoard`). Since trust close-out 2 took the Venue library from staff
+   *  and a registrar, The board can be the only tab they hold — and it keeps Organization in their sidebar. */
+  showsBoard?: boolean;
 }): KitLink | null {
-  return !tournamentOnly && orgLinks.length > 0
+  return !tournamentOnly && (orgLinks.length > 0 || showsBoard)
     ? { key: 'org', label: 'Organization', href: `${base}/org`, icon: ORGANIZATION_ICON }
     : null;
 }

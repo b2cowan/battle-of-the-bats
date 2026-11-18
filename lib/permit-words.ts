@@ -385,6 +385,8 @@ export const PERMIT_WORDS = {
   document: 'Document',
   notes: 'Notes',
   noDocument: 'No document',
+  /** Trust close-out 9: what a reader who cannot open the file sees — no name, no size. */
+  documentAttached: 'File attached',
   noDatesOff: 'No dates off.',
   /** The body's rare doors (they end the body). */
   renew: 'Renew for next year',

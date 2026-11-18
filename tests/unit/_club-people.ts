@@ -7,12 +7,16 @@ import { hasCapability, type Capability } from '../../lib/roles.ts';
 import type { OrgRole } from '../../lib/types.ts';
 import {
   clubPlaceGroups, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, kitCalendarLink, kitCommunicationsLink, kitOrgLinks, kitOrgPlace, kitPermitsLink, kitPrograms,
-  kitSchedulesLink, personClubShape, personOnlyProgram, type ClubShape, type KitLink,
+  kitSchedulesLink, personClubShape, personOnlyProgram, showsOrgBoard, type ClubShape, type KitLink,
 } from '../../lib/admin-kit-nav.ts';
 import { clubPhoneNav } from '../../lib/nav-tiles.ts';
 import { opensCommunications } from '../../lib/club-communications-place.ts';
+import { canReadVenueLibrary } from '../../lib/venue-library.ts';
+import type { EntitlementOrg } from '../../lib/module-entitlements.ts';
 
 export const CLUB_BASE = '/demo-club/admin';
+/** The Club plan the people are drawn on (every program carried). */
+const CLUB_ORG = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null } as unknown as EntitlementOrg;
 
 export const CLUB_PEOPLE: readonly (readonly [name: string, role: OrgRole])[] = [
   ['owner', 'owner'], ['admin', 'admin'], ['league admin', 'league_admin'], ['registrar', 'league_registrar'], ['treasurer', 'treasurer'],
@@ -37,13 +41,15 @@ export function clubNavFor(role: OrgRole, shape: ClubShape, extra: Record<string
   const alsoOnPlan = kitPrograms({ base: CLUB_BASE, canUse, order: order.also });
   const calendar = kitCalendarLink({ base: CLUB_BASE, canUse, isCanceled: false, tournamentTier: false });
   const schedules = kitSchedulesLink({ base: CLUB_BASE, canUse, isCanceled: false, role, planId: 'club' });
-  const permits = kitPermitsLink({ base: CLUB_BASE, role, isCanceled: false, tournamentTier: false, hasVenueLibrary: true });
+  // Who reads the Venue library and permits (Board Ready trust close-out 2): the hook's own answer, on this Club plan.
+  const readsLibrary = canReadVenueLibrary({ role, capabilities: extra }, CLUB_ORG);
+  const permits = kitPermitsLink({ base: CLUB_BASE, readsLibrary, isCanceled: false, tournamentTier: false, hasVenueLibrary: true });
   const orgLinks = kitOrgLinks({
     base: CLUB_BASE, role, isCanceled: false,
     canSeeMembers: role === 'owner' || hasCapability(role, extra, 'module_members'),
-    hasVenueLibrary: true,
+    hasVenueLibrary: readsLibrary,
   });
-  const orgPlace = kitOrgPlace({ base: CLUB_BASE, orgLinks, tournamentOnly: false });
+  const orgPlace = kitOrgPlace({ base: CLUB_BASE, orgLinks, tournamentOnly: false, showsBoard: showsOrgBoard({ role, orgLinks, isTeamWorkspace: false }) });
   // Communications (Club Communications Stage 1): the hook's own rule, on this Club plan (it carries Families and house league).
   const communications = kitCommunicationsLink({
     base: CLUB_BASE, isCanceled: false, tournamentTier: false,

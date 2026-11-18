@@ -18,6 +18,8 @@
  * the product's "League Plus and Club" — Club · Association is Club's larger size, never named in a lock line.
  */
 import { hasCapability } from './roles.ts';
+import { canMoveClubMoney } from './member-access.ts';
+import type { EntitlementOrg } from './module-entitlements.ts';
 import { joinWithAnd, pluralize } from './utils.ts';
 import type { OrgRole } from './types';
 
@@ -36,6 +38,29 @@ export function canSaveVenueLibrary(role: OrgRole | string | null | undefined, c
  */
 export function canOpenPermitDocument(canSave: boolean, canMoney: boolean): boolean {
   return canSave || canMoney;
+}
+
+/**
+ * ⚖ WHO READS the Venue library and the club's permits (Board Ready trust close-out 2, owner 2026-11-18; replaces Stage
+ * 13c's "everyone but a coach"): the people who schedule a program, run tournaments or handle the money — the library's
+ * savers (owner, admin, league admin, "Run tournaments") and the seats that hold the club's Accounting. A scorekeeper,
+ * tournament staff and a registrar no longer read permit names, reference numbers, notes, who booked each block or a
+ * venue's bookings contact. A coaching login reads nothing of the club's, whatever it was granted (the library's own rule).
+ * It is the same set that opens a permit's file, so no reader is ever shown a file they cannot open.
+ *
+ * The permits and library routes refuse by it; the Permits row, the Venue library row, the calendar's "See the permit" and
+ * both pages hide by it (a gated read behind a still-linked screen is a dead end). The plain venue picker (names and
+ * addresses, never the bookings contact) stays every member's: tournament setup and the coach screens pick venues from it.
+ */
+export function canReadVenueLibrary(
+  member: { role: OrgRole | string | null | undefined; capabilities: Record<string, boolean> | null | undefined },
+  org: EntitlementOrg,
+): boolean {
+  if (!member.role || member.role === 'coach') return false;
+  return canOpenPermitDocument(
+    canSaveVenueLibrary(member.role, member.capabilities),
+    canMoveClubMoney({ role: member.role as OrgRole, capabilities: member.capabilities ?? null }, org),
+  );
 }
 
 /** A venue as the library's route returns it (`?library=1`). */

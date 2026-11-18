@@ -3,7 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
-import { canSaveVenueLibrary, canOpenPermitDocument } from '@/lib/venue-library';
+import { canSaveVenueLibrary, canOpenPermitDocument, canReadVenueLibrary } from '@/lib/venue-library';
 import { canMoveClubMoney } from '@/lib/member-access';
 import { PERMIT_WORDS as W } from '@/lib/permit-words';
 import { isUuid } from '@/lib/utils';
@@ -38,7 +38,9 @@ async function gate(req: Request): Promise<Gate> {
   const ctx = await getAuthContextWithRole({ orgSlug: params.get('orgSlug') ?? undefined, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (!hasOrgVenueLibrary(ctx.org.planId)) return { error: refusal(403, 'plan_lacks_permits', W.planLocked) };
-  if (ctx.role === 'coach') return { error: forbidden() };
+  // The permits' readers only (trust close-out 2): a coach, a scorekeeper, staff and a registrar are refused before the
+  // permit is even looked up. The GET's own check below is the same set today; it stays as the file's rule.
+  if (!canReadVenueLibrary(ctx, ctx.org)) return { error: forbidden() };
   const id = params.get('id') ?? '';
   if (!isUuid(id)) return { error: refusal(404, 'permit_not_found', 'That permit isn’t in the Venue library any more. Reload the page.') };
   // The tenant wall (supabaseAdmin bypasses row security).

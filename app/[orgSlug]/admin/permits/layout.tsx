@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { isTournamentTier } from '@/lib/billing-urls';
+import { canReadVenueLibrary } from '@/lib/venue-library';
+import { isOrgBillingSuspended } from '@/lib/org-billing-access';
 import PermitsFrame from '@/components/admin/kit/club/PermitsFrame';
 
 /**
@@ -21,5 +23,8 @@ export default async function PermitsLayout({
   const authCtx = await getAuthContextWithRole({ orgSlug, allowSuspendedOrg: true });
   if (!authCtx) redirect(`/auth/login?next=/${orgSlug}/admin/permits`);
   if (isTournamentTier(authCtx.org.planId)) redirect(`/${orgSlug}/admin/tournaments`);
+  // ⚖ Trust close-out 2 (owner 2026-11-18): a person who does not read permits is sent home, never shown a page whose every
+  // read is refused (the rail has no row for them either).
+  if (isOrgBillingSuspended(authCtx.org) || !canReadVenueLibrary(authCtx, authCtx.org)) redirect(`/${orgSlug}/admin`);
   return <PermitsFrame>{children}</PermitsFrame>;
 }

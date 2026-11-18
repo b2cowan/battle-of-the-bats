@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { FACILITY_TYPES, type FacilityType } from '@/lib/types';
-import { canSaveVenueLibrary, duplicateFacilityName, VENUE_LIBRARY_WORDS } from '@/lib/venue-library';
+import { canSaveVenueLibrary, canReadVenueLibrary, duplicateFacilityName, VENUE_LIBRARY_WORDS } from '@/lib/venue-library';
 import { carryWordsForward, facilitiesBooked, readVenueUsage, venueIsBooked } from '@/lib/venue-library-server';
 import { readVenuePermits } from '@/lib/permit-server';
 import { bookingsEmailProblem } from '@/lib/venue-library';
@@ -114,7 +114,9 @@ export const GET = withObservability(async (req: Request) => {
     // fails the whole read — the page never offers Delete on a venue whose bookings it could not count. ⚠ What books
     // each venue names the club's teams, seasons and tournaments: the club's people read it, a coaching-staff login
     // (role `coach`, which opens nothing of the club's) does not — its picker reads the plain list above (/review 6b).
-    if (ctx.role === 'coach') return forbidden();
+    // ⚖ Trust close-out 2 (owner 2026-11-18): the library page — bookings contacts, what books each venue, the permits
+    // holding time there — reads only for those who schedule, run tournaments or handle money (`canReadVenueLibrary`).
+    if (!canReadVenueLibrary(ctx, ctx.org)) return forbidden();
     const venues = await readVenues(ctx.org.id, { withArchived: true });
     const [usage, permits] = await Promise.all([
       readVenueUsage(ctx.org.id, venues.map(v => ({ id: v.id, facilityIds: (v.facilities ?? []).map(f => f.id) }))),

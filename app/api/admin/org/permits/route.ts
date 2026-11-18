@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { canMoveClubMoney } from '@/lib/member-access';
-import { canSaveVenueLibrary } from '@/lib/venue-library';
+import { canSaveVenueLibrary, canReadVenueLibrary } from '@/lib/venue-library';
 import { addCalendarMonths, isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { isUuid } from '@/lib/utils';
 import { fiscalYearOf, readFiscalYearParam } from '@/lib/club-fiscal-year';
@@ -68,8 +68,9 @@ export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithScope({ orgSlug: params.get('orgSlug') ?? undefined, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasOrgVenueLibrary(ctx.org.planId)) return refusal(403, 'plan_lacks_permits', W.planLocked);
-  // A coaching-staff login opens nothing of the club's (the library's own rule): a coach never reads a permit.
-  if (ctx.role === 'coach') return forbidden();
+  // ⚖ Trust close-out 2 (owner 2026-11-18): permits read only for those who schedule, run tournaments or handle money
+  // (`canReadVenueLibrary`; a coaching login never). Staff, a scorekeeper and a registrar are refused every branch.
+  if (!canReadVenueLibrary(ctx, ctx.org)) return forbidden();
   const orgId = ctx.org.id;
   const canSave = canSaveVenueLibrary(ctx.role, ctx.capabilities);
   const canMoney = canMoveClubMoney(ctx, ctx.org);

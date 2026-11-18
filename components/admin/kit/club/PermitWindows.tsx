@@ -823,7 +823,7 @@ export function PermitWindow({
                   <input type="file" accept="application/pdf,image/jpeg,image/png" hidden disabled={uploading}
                     onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void upload(f); }} />
                 </label>
-                {view.document && <p className={ck.hint}>{view.document.name} · {fileSizeWords(view.document.size)}</p>}
+                {view.document && <p className={ck.hint}>{view.document.name ?? W.documentAttached}{view.document.size !== null ? ` · ${fileSizeWords(view.document.size)}` : ''}</p>}
               </div>
             )} />
         ) : (
@@ -848,12 +848,13 @@ export function PermitWindow({
               <dt>{W.document}</dt>
               <dd>
                 {view.document ? (
-                  <>
-                    {canOpenPermitDocument(canSave, money)
-                      ? <button type="button" className={own.docDoor} onClick={() => void openDocument()}><FileText size={14} aria-hidden />{view.document.name}</button>
-                      : <span className={own.docDoor} style={{ cursor: 'default' }}><FileText size={14} aria-hidden />{view.document.name}</span>}
-                    <span className={own.docMeta}>{fileSizeWords(view.document.size)} · added {formatStoredDate(view.document.addedAt, { withYear: false })}</span>
-                  </>
+                  // ⚖ Trust close-out 9: a reader who cannot open the file reads "File attached" — the route sends no name or size.
+                  canOpenPermitDocument(canSave, money) && view.document.name !== null ? (
+                    <>
+                      <button type="button" className={own.docDoor} onClick={() => void openDocument()}><FileText size={14} aria-hidden />{view.document.name}</button>
+                      <span className={own.docMeta}>{fileSizeWords(view.document.size ?? 0)} · added {formatStoredDate(view.document.addedAt, { withYear: false })}</span>
+                    </>
+                  ) : <span className={own.docDoor} style={{ cursor: 'default' }}><FileText size={14} aria-hidden />{W.documentAttached}</span>
                 ) : <span className={vl.quiet}>{W.noDocument}</span>}
               </dd>
               {view.notes && <><dt>{W.notes}</dt><dd>{view.notes}</dd></>}

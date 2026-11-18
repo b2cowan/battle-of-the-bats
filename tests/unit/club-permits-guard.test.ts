@@ -90,9 +90,19 @@ describe('permits ride the Venue library\'s plans, checked on the server (Ask 4)
 });
 
 describe('who reads a permit, and who reads its money (owner, 10a build)', () => {
-  it('a coach never reads a permit or its document', () => {
-    assert.match(readCode('app/api/admin/org/permits/route.ts'), /if \(ctx\.role === 'coach'\) return forbidden\(\);/);
-    assert.match(readCode('app/api/admin/org/permits/document/route.ts'), /if \(ctx\.role === 'coach'\) return \{ error: forbidden\(\) \};/);
+  it('only those who schedule, run tournaments or handle money read a permit or its document (trust close-out 2)', () => {
+    assert.match(readCode('app/api/admin/org/permits/route.ts'), /if \(!canReadVenueLibrary\(ctx, ctx\.org\)\) return forbidden\(\);/);
+    assert.match(readCode('app/api/admin/org/permits/document/route.ts'), /if \(!canReadVenueLibrary\(ctx, ctx\.org\)\) return \{ error: forbidden\(\) \};/);
+    assert.match(readCode('app/api/admin/org/venues/route.ts'), /if \(!canReadVenueLibrary\(ctx, ctx\.org\)\) return forbidden\(\);\s*const venues = await readVenues\(ctx\.org\.id, \{ withArchived: true \}\);/);
+    // Both pages send a non-reader away, never into a page whose every read is refused.
+    assert.match(readCode('app/[orgSlug]/admin/permits/layout.tsx'), /!canReadVenueLibrary\(authCtx, authCtx\.org\)\) redirect\(/);
+    assert.match(readCode('app/[orgSlug]/admin/org/venues/layout.tsx'), /!canReadVenueLibrary\(authCtx, authCtx\.org\)\) redirect\(/);
+  });
+  it('the read is the file-opening set: no reader is shown a file they cannot open (trust close-out 9)', () => {
+    const lib = readCode('lib/venue-library.ts');
+    assert.match(lib, /if \(!member\.role \|\| member\.role === 'coach'\) return false;\s*return canOpenPermitDocument\(/);
+    // And the window sends no name or size to anyone who cannot open it, whatever the read rule becomes.
+    assert.match(readCode('lib/permit-server.ts'), /canOpenPermitDocument\(opts\.canSave, opts\.canMoney\)\s*\? \{ name: p\.document\.name[^}]*\}\s*: \{ name: null, size: null/);
   });
   it('the money is stripped on the server for a reader without Accounting', () => {
     const server = readCode('lib/permit-server.ts');

@@ -57,7 +57,7 @@ describe('N5 · the icon dictionary', () => {
     assert.equal(kitCalendarLink({ base: '/o/admin', canUse, isCanceled: false, tournamentTier: false })?.icon, CalendarClock);
     assert.equal(kitSchedulesLink({ base: '/o/admin', canUse, isCanceled: false, role: 'owner', planId: 'club' })?.icon, ChartGantt);
     // Permits (13c, N5): a document with a check — never Venue library's pin nor PDF settings' plain document.
-    const permits = kitPermitsLink({ base: '/o/admin', role: 'owner', isCanceled: false, tournamentTier: false, hasVenueLibrary: true })?.icon;
+    const permits = kitPermitsLink({ base: '/o/admin', readsLibrary: true, isCanceled: false, tournamentTier: false, hasVenueLibrary: true })?.icon;
     assert.equal(permits, FileCheck);
     // Communications (Club Communications Stage 1, N5 row 11): the envelope, "email to many people".
     assert.equal(kitCommunicationsLink({ base: '/o/admin', opens: true, isCanceled: false, tournamentTier: false })?.icon, Mail);

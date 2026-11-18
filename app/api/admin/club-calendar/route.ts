@@ -7,6 +7,7 @@ import { CALENDAR_WORDS, matchesFilters, readFiltersQuery } from '@/lib/club-cal
 import { isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { kitPermitsLink } from '@/lib/admin-kit-nav';
+import { canReadVenueLibrary } from '@/lib/venue-library';
 import { readDatesOffTaken } from '@/lib/permit-dates-off';
 import { calendarOutside } from '@/lib/permit-dates-off-view';
 
@@ -69,7 +70,7 @@ export const GET = withObservability(async (req: Request) => {
     ]);
     // "See the permit ›" only for a reader who can open Permits (the rail's own gate).
     const permitsHref = () => kitPermitsLink({
-      base: `/${ctx.org.slug}/admin`, role: ctx.role, isCanceled: ctx.org.subscriptionStatus === 'canceled',
+      base: `/${ctx.org.slug}/admin`, readsLibrary: canReadVenueLibrary(member, ctx.org), isCanceled: ctx.org.subscriptionStatus === 'canceled',
       tournamentTier: false, hasVenueLibrary: venueLibrary,
     })?.href ?? null;
     return NextResponse.json({ ...read, outside: taken ? calendarOutside(taken, read.bookings, calendarKeyOf, permitsHref()) : null });

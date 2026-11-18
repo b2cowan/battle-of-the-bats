@@ -26,6 +26,7 @@ import { readPermitTimes, type PermitRecord, type PermitTimes } from './permit-l
 import { fieldPrices, heldTime, permitUse, type PermitUse, type UseBooking } from './permit-time';
 import type { PermitHeldFor } from './permit-words';
 import type { ClubBooking } from './venue-clash';
+import { canOpenPermitDocument } from './venue-library';
 
 // ── Shapes the screens read ────────────────────────────────────────────────────────────────────────────
 
@@ -103,7 +104,8 @@ export interface PermitView {
   endsOn: string;
   notes: string | null;
   updatedAt: string;
-  document: { name: string; size: number; addedAt: string; type: string | null } | null;
+  /** Name, size and type are null for a reader who cannot open the file (trust close-out 9): "File attached" alone. */
+  document: { name: string | null; size: number | null; addedAt: string; type: string | null } | null;
   year: { key: string; name: string; locked: boolean };
   blocks: PermitBlockView[];
   datesOff: { day: string; note: string | null }[];
@@ -315,7 +317,12 @@ export async function readPermitWindow(orgId: string, permitId: string, opts: {
   const view: PermitView = {
     id: p.id, name: p.name, issuerName: issuerOf(p, issuers), issuerPayeeId: p.issuerPayeeId, reference: p.reference,
     heldFor: p.heldFor, heldForTeam: team, startsOn: p.startsOn, endsOn: p.endsOn, notes: p.notes, updatedAt: p.updatedAt,
-    document: p.document ? { name: p.document.name, size: p.document.size, addedAt: p.document.addedAt, type: p.document.type } : null,
+    // ⚖ Trust close-out 9 (owner 2026-11-18): a reader who cannot open the file is told only that one is attached — a name
+    // (or a size) can give the fee away. Today every reader can open it (the two rules are one set); this keeps it true.
+    document: !p.document ? null
+      : canOpenPermitDocument(opts.canSave, opts.canMoney)
+        ? { name: p.document.name, size: p.document.size, addedAt: p.document.addedAt, type: p.document.type }
+        : { name: null, size: null, addedAt: p.document.addedAt, type: null },
     year: { key: year.key, name: year.name, locked: year.locked },
     blocks, datesOff: [...p.datesOff], places,
     use: {

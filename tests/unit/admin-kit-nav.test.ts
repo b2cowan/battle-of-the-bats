@@ -14,6 +14,7 @@ import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
 import { readCode } from './_source-code.ts';
 import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
+import { canReadVenueLibrary } from '../../lib/venue-library.ts';
 import { PLAN_CONFIG } from '../../lib/plan-config.ts';
 import { getBillingHref } from '../../lib/billing-urls.ts';
 import { CreditCard } from 'lucide-react';
@@ -405,22 +406,28 @@ describe('13i · the club sidebar lists places only', () => {
   // admin 10 → 9 (the door is `tournamentsDoor`, below). ⚖ Club Communications Stage 1 (tab 4): Communications after
   // Families for every seat with a family choice — owner 11, admin 10, league admin 6, registrar 6; the treasurer waits for
   // Session 3's board window.
-  it('the place lists and their gates: owner 11, admin 10, league admin 6, registrar 6, treasurer 4', () => {
+  it('the place lists and their gates: owner 11, admin 10, league admin 6, registrar 5, treasurer 4', () => {
     assert.deepEqual(rows('owner'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'accounting', 'families', 'club-emails', 'public-site', 'org']);
     assert.deepEqual(rows('admin'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'accounting', 'club-emails', 'public-site', 'org'], 'no Families: an explicit grant only');
     assert.deepEqual(rows('league_admin'), ['overview', 'calendar', 'permits', 'house-league', 'club-emails', 'org']);
-    assert.deepEqual(rows('league_registrar'), ['overview', 'calendar', 'permits', 'house-league', 'club-emails', 'org']);
+    // Trust close-out 2 (owner 2026-11-18): a registrar no longer reads permits; Organization stays, holding The board.
+    assert.deepEqual(rows('league_registrar'), ['overview', 'calendar', 'house-league', 'club-emails', 'org']);
     assert.deepEqual(rows('treasurer'), ['overview', 'permits', 'accounting', 'org']);
   });
 
-  it('13c · Permits: every role that read the permit list before keeps it (staff = A, owner 2026-11-08); never a coach or a volunteer', () => {
-    const permitsFor = (role: OrgRole, o: Partial<Parameters<typeof kitPermitsLink>[0]> = {}) =>
-      kitPermitsLink({ base: '/o/admin', role, isCanceled: false, tournamentTier: false, hasVenueLibrary: true, ...o });
-    for (const role of ['owner', 'admin', 'league_admin', 'league_registrar', 'treasurer', 'staff'] as OrgRole[]) {
+  it('Permits: those who schedule, run tournaments or handle money (trust close-out 2, owner 2026-11-18; replaces 13c staff = A)', () => {
+    const club = { planId: 'club', subscriptionStatus: 'active', enabledAddons: [], freeFloor: null } as unknown as Parameters<typeof canReadVenueLibrary>[1];
+    const permitsFor = (role: OrgRole, o: Partial<Parameters<typeof kitPermitsLink>[0]> = {}, caps: Record<string, boolean> | null = null) =>
+      kitPermitsLink({ base: '/o/admin', readsLibrary: canReadVenueLibrary({ role, capabilities: caps }, club), isCanceled: false, tournamentTier: false, hasVenueLibrary: true, ...o });
+    for (const role of ['owner', 'admin', 'league_admin', 'treasurer'] as OrgRole[]) {
       assert.equal(permitsFor(role)?.href, '/o/admin/permits', role);
     }
-    assert.equal(permitsFor('coach'), null, 'the permits route refuses a coach');
-    assert.equal(permitsFor('official'), null, 'a volunteer never reaches the admin');
+    for (const role of ['staff', 'official', 'league_registrar', 'coach'] as OrgRole[]) {
+      assert.equal(permitsFor(role), null, `${role} no longer reads permits`);
+    }
+    assert.equal(permitsFor('staff', {}, { create_tournaments: true })?.href, '/o/admin/permits', 'staff given Run tournaments reads them');
+    assert.equal(permitsFor('league_registrar', {}, { module_accounting: true })?.href, '/o/admin/permits', 'a registrar given Accounting reads them');
+    assert.equal(permitsFor('coach', {}, { create_tournaments: true }), null, 'a coaching login never does, whatever it holds');
     assert.equal(permitsFor('owner', { hasVenueLibrary: false }), null, 'permits ride the Venue library’s plans (Ask 4)');
     assert.equal(permitsFor('owner', { tournamentTier: true }), null, 'a Tournament plan has no club side');
     assert.equal(permitsFor('owner', { isCanceled: true }), null);
@@ -521,7 +528,7 @@ describe('13i · the club sidebar lists places only', () => {
     assert.doesNotMatch(rail, /RepTeamBlock|SeasonBlock|repTeamPages|seasonPages|\.pages\.map|programOpen|useRailTeam/, 'a row opens pages under it again');
     assert.ok(!existsSync(path.join(process.cwd(), 'components/admin/kit/useRailTeam.ts')), 'the rail’s team name store is back');
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
-    assert.match(hook, /const placeGroups = tournamentOnly \|\| isCanceled \? \[\] : clubPlaceGroups<KitLink>\(\{\s*programs: navPrograms, alsoOnPlan, organization: kitOrgPlace\(\{ base, orgLinks, tournamentOnly \}\), communications: communicationsLink,\s*\}\);/);
+    assert.match(hook, /const placeGroups = tournamentOnly \|\| isCanceled \? \[\] : clubPlaceGroups<KitLink>\(\{\s*programs: navPrograms, alsoOnPlan, organization: kitOrgPlace\(\{ base, orgLinks, tournamentOnly, showsBoard: orgShowsBoard \}\), communications: communicationsLink,\s*\}\);/);
     assert.match(hook, /const litPlace = litClubPlace\(pathname, base, billingLink\);/);
   });
 
