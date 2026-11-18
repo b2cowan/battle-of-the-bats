@@ -109,7 +109,7 @@ const accountingHelp: HelpPageContent = {
           title: 'Card payments on the Overview',
           content: (
             <>
-          <p>Where the club takes card payments from tournament teams, one line under the year line gives the treasurer the state of <strong>Payouts</strong>: <em>Taking payments</em>, <em>Needs attention</em> (Stripe needs something from the owner, who fixes it in Settings &rsaquo; Payouts) or <em>Online payments are off</em>. A processing fee the club pays shows in the tournament’s own book as <strong>Payment processing</strong>, and a refund to a card as <strong>Refunds</strong>. See <em>Let teams pay online by card</em> in the Tournaments guide. House-league families pay by card the same way once payouts are set up; the season&rsquo;s Money page shows what came by card and any <strong>Payment processing</strong> cost (see the House league guide).</p>
+          <p>Where the club takes card payments from tournament teams, one line under the year line gives the treasurer the state of <strong>Payouts</strong>: <em>Taking payments</em>, <em>Needs attention</em> (Stripe needs something from the owner, or the club has no refund policy yet; the owner fixes it in Settings &rsaquo; Payouts) or <em>Online payments are off</em>. A processing fee the club pays shows in the tournament’s own book as <strong>Payment processing</strong>, and a refund to a card as <strong>Refunds</strong>. See <em>Let teams pay online by card</em> in the Tournaments guide. House-league families pay by card the same way once payouts are set up; the season&rsquo;s Money page shows what came by card and any <strong>Payment processing</strong> cost (see the House league guide).</p>
             </>
           ),
         },

@@ -470,7 +470,8 @@ const paymentHandedOff: Resolver = async rows => {
   return out;
 };
 
-/** Stripe needs something from the club (Club Tier Stage 12a) — waits while the Payouts card says "needs attention";
+/** Stripe needs something from the club (Club Tier Stage 12a), or the club has no refund policy (Stage 12, 2026-11-17) —
+ *  waits while the Payouts card says "needs attention";
  *  clears itself when Stripe says the account is enabled again, or when the club disconnects. */
 const payoutsNeedAttention: Resolver = async rows => {
   const out = new Map<string, Verdict>();

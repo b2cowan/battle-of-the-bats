@@ -338,8 +338,11 @@ describe('the Payouts card’s five states', () => {
     assert.equal(takesPayments(written), true);
     assert.equal(payoutsState(written), 'taking_payments');
     assert.equal(pausedForRefundPolicy(written), false);
-    // Stripe wanting something comes first: the card says Stripe's reason, not the policy's.
-    assert.equal(pausedForRefundPolicy(acct({ ...on, refundPolicy: null, requirementsDue: ['x'] })), false);
+    // The missing policy wins over a Stripe demand that leaves payments on (/review): "payments stay on" would be untrue.
+    const both = acct({ ...on, refundPolicy: null, requirementsDue: ['x'] });
+    assert.equal(pausedForRefundPolicy(both), true);
+    assert.equal(takesPayments(both), false);
+    assert.equal(payoutsState(acct({ ...on, requirementsDue: ['x'] })), 'needs_attention', 'written, Stripe’s own demand is what remains');
     assert.equal(pausedForRefundPolicy(acct({ ...on, refundPolicy: null, disconnectedAt: '2026-10-25T00:00:00Z' })), false, 'disconnected is its own state');
     assert.equal(pausedForRefundPolicy(acct({ refundPolicy: null })), false, 'not taking payments anyway');
     assert.equal(refundPolicyMissing({ refundPolicy: ' x ' }), false);

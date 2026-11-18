@@ -70,9 +70,13 @@ export function refundPolicyMissing(a: Pick<PayoutsAccountFacts, 'refundPolicy'>
   return !a.refundPolicy?.trim();
 }
 
-/** Paused for the refund policy alone: Stripe has card payments on and wants nothing — the card and the item say so. */
+/**
+ * Paused for the refund policy: Stripe has card payments on, and the missing policy is what stops them — the card, the
+ * treasurer's line and the item say so. It wins over a Stripe demand that leaves payments on (/review of the build): that
+ * demand's "payments stay on" would be untrue while the policy is missing. Once the policy is written, Stripe's words return.
+ */
 export function pausedForRefundPolicy(a: PayoutsAccountFacts | null): boolean {
-  return !!a && !a.disconnectedAt && a.cardPayments === 'active' && a.requirementsDue.length === 0 && refundPolicyMissing(a);
+  return !!a && !a.disconnectedAt && a.cardPayments === 'active' && refundPolicyMissing(a);
 }
 
 /**

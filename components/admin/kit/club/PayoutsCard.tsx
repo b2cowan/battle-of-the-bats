@@ -194,7 +194,8 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
     }
   }
 
-  const forPolicy = state === 'needs_attention' && !!view.pausedForPolicy;
+  // A wound-down club (the plan no longer offers online payments) is not told a policy turns them back on (/review).
+  const forPolicy = state === 'needs_attention' && !!view.pausedForPolicy && !view.windDown;
   const primary = () => {
     if (forPolicy) setEditing(true);
     else if (state === 'not_set_up' || state === 'disconnected') setBefore(true);
@@ -385,7 +386,8 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubNam
         ...(change.refundPolicy !== undefined ? {
           refundPolicy: change.refundPolicy.trim(),
           // Paused for the policy alone means Stripe has payments on and wants nothing: written, the club takes payments again.
-          ...(view.pausedForPolicy ? { pausedForPolicy: false, state: 'taking_payments' as const, paymentsOn: true } : {}),
+          // Stripe may still want something while payments stay on (/review): then the card reads its "still on" words.
+          ...(view.pausedForPolicy ? { pausedForPolicy: false, paymentsOn: true, state: view.requirementsDue > 0 ? 'needs_attention' as const : 'taking_payments' as const } : {}),
         } : {}),
       });
       setDirty(false);

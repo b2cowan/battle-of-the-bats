@@ -1269,7 +1269,7 @@ const houseLeagueHelp: HelpPageContent = {
           title: 'Paying by card',
           content: (
             <>
-              <p>Once the club takes card payments, a child who has been accepted shows <strong>Pay now</strong> on the sign-up confirmation and on the family&apos;s <strong>Your sign-up</strong> page. The emails carry the <strong>Your sign-up</strong> button, which opens that page. It applies only after the club owner has set up payouts (see <em>Settings and your web address</em>); until then families see your <strong>How to pay</strong> words and no button.</p>
+              <p>Once the club takes card payments, a child who has been accepted shows <strong>Pay now</strong> on the sign-up confirmation and on the family&apos;s <strong>Your sign-up</strong> page. The emails carry the <strong>Your sign-up</strong> button, which opens that page. It applies only after the club owner has set up payouts and written the club&apos;s refund policy (see <em>Settings and your web address</em>); until then families see your <strong>How to pay</strong> words and no button. A <strong>Refund policy</strong> link beside the button opens the club&apos;s policy.</p>
               <ul>
                 <li><strong>One checkout for the family.</strong> Brothers and sisters signed up together pay in a single checkout, for every child still owing.</li>
                 <li><strong>The processing fee is shown before they pay</strong> when families pay it. That is the club-wide choice on the Payouts card, <strong>Families and teams pay it</strong> or <strong>The club pays it</strong>.</li>
