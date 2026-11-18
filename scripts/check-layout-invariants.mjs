@@ -42,6 +42,9 @@
  *   … --allow-partial          let --init / --prune write from a run with unmeasured screens
  *   … --sidebar=strip          measure with the sidebar collapsed to its icon strip (desktop widths only)
  *   … --width=<px>             a width not in the list (≥901, e.g. 1280): measured and dumped, never baselined
+ *   … --resume                 measure only what the last run with the same flags did not finish (its journal)
+ *   … --with-dark              also read dark contrast on each warm page at 361 + 1440, in place (the release run)
+ *   … --theme=dark --init      record the dark-only findings as accepted (owner's word only; its own file)
  *   node scripts/check-layout-invariants.mjs --help          this list, and nothing else
  *
  * ⚠ AN UNKNOWN FLAG IS REFUSED, and nothing is swept. Until 2026-09-30 one was silently ignored, so a
@@ -49,10 +52,16 @@
  * server; Admin Design Continuity Part B lost a quiet window's minutes to it beside a capture).
  *
  * ⚠ THE BASELINE HAS NO THEME. It was recorded in the default (warm — no UAT session stores a
- * theme), so `--init` and `--prune` refuse `--theme`. A dark run is checked against the same warm
+ * theme), so `--prune` refuses `--theme`. A dark run is checked against the same warm
  * entries, matching a contrast finding on its ELEMENT rather than its colours (a signature carries
  * its colours, which differ between the themes by design) — so what it reports as NEW is what is
  * unreadable in dark and not already known in warm.
+ *
+ * ⚠ DARK HAS ITS OWN ACCEPTED LIST, for what is dark-ONLY (owner, 2026-11-15, Release process hardening ask A3).
+ * Before it, every dark-only finding was re-judged by hand on every release. `--theme=dark --init` records the
+ * dark-only findings (those the warm baseline does not already hold) in `scripts/.layout-baseline-dark.json`, whole
+ * key, colours included, so a changed colour on an accepted element reads as new again. It is written on the owner's
+ * word only, exactly as the warm one is; a dark run then reports only what is new since it.
  *
  * ⚠ A DARK RUN MEASURES CONTRAST AND NOTHING ELSE (owner, 2026-10-13). The theme changes colour, not
  * geometry: dark is the base stylesheet and warm overrides it in ~300 rules, and the only override
@@ -82,21 +91,83 @@
  * ad-hoc measurement: it has no baseline, so every finding reads as new. Use it with `--dump` in both
  * sidebar states and diff the two files; `--init` and `--prune` refuse it.
  *
+ * ── HOW A RUN STARTS, FAILS, RESUMES AND REPORTS (Release process hardening, Stage 1A, 2026-11-15) ──────
+ * The whole-product sweep had not finished for three releases, and none of it was the measuring: a low-memory stop
+ * threw away every finished screen, a dead screen was waited on for 150 s twice, and stale sign-ins or an expired
+ * fixture were found an hour in. On 2026-11-14 a run spent 2 h 18 min on 35 dead screens and wrote nothing. WHAT IS
+ * MEASURED DID NOT CHANGE; how a run behaves around it did. ⚠ THIS HEADER IS THE SINGLE HOME FOR THE SWEEP'S NUMBERS.
+ *
+ *   1. THE FIRST MINUTE. Before the first screen: the target answers 200; every fixture the selected screens need
+ *      resolves, including the public tournament fixtures that expire with the clock (`FIXTURE_CHECKS` in
+ *      layout-screens.mjs); every session in the run is signed in there; and one canary screen per session opens. All
+ *      failures print together, each with its repair line, and nothing is swept. A screen marked `onlyWhereServed`
+ *      that this server answers 404 for by design (the legal pages while their switch is off) is taken out of the run
+ *      by name, and listed on the run's header and last lines and in the dump (`notServed`), never counted as measured.
+ *   2. BUDGETS FIT THE TARGET. The dev server compiles on first visit and keeps 150 s per wait. A production build
+ *      (`UAT_BASE_URL`) gets REMOTE_BUDGET_MS per wait, set from the healthy p95 the cost line reports (about three
+ *      times it, never under 20 s; `budgetFromP95`). `LAYOUT_BUDGET_S=<s>` overrides it for one run. On a production
+ *      build a page that has gone network-idle and then SETTLE_MS more without its ready mark is dead, not slow.
+ *      The network-idle and no-loading waits are unchanged: they decide what is measured.
+ *   3. A DEAD SCREEN COSTS SECONDS, ONCE. A screen that does not render is set aside; its other widths are not opened.
+ *      After every unit has finished, it is retried once in a fresh context (no settle shortcut). If it renders, its
+ *      other widths are measured then; if not, they are recorded unmeasured under its cause, without being opened.
+ *      SESSION_DEAD_AFTER failures in a row inside one unit re-check the target and that session's sign-in; a dead
+ *      session's remaining screens are recorded unmeasured under one cause line.
+ *   4. PROGRESS IS KEPT. Each measured pair is appended to a journal under `.probe/layout-run/`, keyed by the build
+ *      measured (on a production build its own build id, read from its page; on the dev server this checkout's HEAD),
+ *      target, theme, sidebar, the measuring code and the pair list (layout-run-journal.mjs). `--resume` measures only
+ *      the pairs the journal does not hold; the dump and the NEW comparison read the journal plus this run. A journal
+ *      from another commit, target or list is refused by name. An abort still exits non-zero, and `--init`/`--prune`
+ *      still refuse anything but a complete set (a resumed set that is complete is complete).
+ *   5. LOW MEMORY PAUSES BEFORE IT QUITS. On a trip no new page is opened; the run waits (10 min, polling) for the
+ *      floor plus 512 MB, then continues one page at a time, back to `--workers` at once after free memory has stayed
+ *      above the floor plus 2 GB for 2 minutes. If the wait runs out it aborts as before, and `--resume`
+ *      makes the re-run cheap. (scripts/memory-guard.mjs `waitForHeadroom`; `check()` is unchanged for other callers.)
+ *   6. ONE PAGE IS NOT KEPT FOR A WHOLE UNIT. The page is replaced every RECYCLE_EVERY screens, in the same context, so
+ *      device memory carries exactly as before.
+ *   7. THE RUN REPORTS ITS OWN COST: wall-clock, per-pair p50/p95, the ten slowest pairs, retries, pauses, workers and
+ *      the memory low-water mark, in the dump (`timing`) and on the run's last line.
+ *
+ * MEASURED on staging, 2026-11-15 (Stage 1A; the release records copy each run's own last line):
+ *   - Same findings, old tool vs new: 18 screens / 75 pairs, 136 finding keys each, none different.
+ *   - Kill test: 40-screen slice killed after 70 of 165 pairs, `--resume` measured the other 95 in 2 min 29 s; 91 finding
+ *     keys straight-through, 91 resumed, none different. The straight run paused 3 times (other sessions' work took
+ *     free memory to 544 MB) and finished.
+ *   - Dead screens: the 35 `pubt-*` pairs of 2026-11-14 (2 h 18 min then) failed and were set aside in 3 min 19 s.
+ *   - First minute: a spoiled session stopped the run in 3 s, by name; an expired fixture, a dead canary in 14 s.
+ *   - `--with-dark` vs `--theme=dark`: 19 screens / 38 dark pairs, 67 dark finding keys each, none different.
+ *   - Per pair: median 1–5 s for every kind of screen EXCEPT ~3/4 of the coach screens, ~31 s, because the coach
+ *     Overview's prefetch loop keeps them from going network-idle (RELEASE_PROCESS_HARDENING_PLAN.md §2.5; fix prompt
+ *     COACH_PREFETCH_LOOP_FIX_PROMPT.md). Without it a coach pair is ~3.5 s. The whole-product run with the loop was
+ *     stopped at 734 of 1,469 pairs; its time after the fix is recorded by the next whole-product run.
+ *   - REMOTE_BUDGET_MS stays 30 s: the healthy p95 measured was 5.5–6.5 s (budgetFromP95 → 20 s) once the looping
+ *     coach pages are out; revisit from the first whole-product run after the fix.
+ *
  * Needs a server running, and the UAT sessions present. Repair commands are printed on
  * failure rather than assumed.
  */
 import { chromium } from 'playwright';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync, readdirSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveUatContext, resolveAdminContext, resolveFreeCoachContext } from './uat-fixture-context.mjs';
-import { SCREENS, WIDTHS, waitForNoLoading } from './layout-screens.mjs';
-import { preflight, createWatchdog } from './memory-guard.mjs';
+import { SCREENS, WIDTHS, FIXTURE_CHECKS, waitForNoLoading } from './layout-screens.mjs';
+import { preflight, createWatchdog, PAUSE_DEFAULTS, freeMb } from './memory-guard.mjs';
+import {
+  digest, journalKey, journalFileName, keyMismatch, parseJournal, selectRemaining, pairLabel, pairListHash,
+  timingSummary, formatDuration,
+} from './layout-run-journal.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASELINE = path.join(ROOT, 'scripts/.layout-baseline.json');
+/** Dark's own accepted list: dark-only findings, on the owner's word (ask A3, 2026-11-15). See the header. */
+const DARK_BASELINE = path.join(ROOT, 'scripts/.layout-baseline-dark.json');
+const JOURNAL_DIR = path.join(ROOT, '.probe/layout-run');
 const REPORT = path.join(ROOT, 'docs/agents/design/LAYOUT_INVARIANTS_REPORT.md');
-const AUTH = path.join(ROOT, 'tests/uat/.auth');
+// `LAYOUT_AUTH_DIR` points the run at another folder of saved sessions, the same file names (the first-minute test
+// runs against a copy with one session spoiled, rather than spoiling the real ones other sessions are using).
+const AUTH = process.env.LAYOUT_AUTH_DIR ? path.resolve(ROOT, process.env.LAYOUT_AUTH_DIR) : path.join(ROOT, 'tests/uat/.auth');
 
 const SESSION_FILES = {
   coach: path.join(AUTH, 'coach.json'),
@@ -251,7 +322,7 @@ const has = (f) => argv.includes(f);
 const val = (f) => argv.find((a) => a.startsWith(`${f}=`))?.split('=')[1];
 
 // Every flag this runner reads — anything else is refused before a browser starts (see USAGE).
-const SWITCHES = new Set(['--init', '--report', '--prune', '--list', '--changed', '--allow-partial', '--help', '-h']);
+const SWITCHES = new Set(['--init', '--report', '--prune', '--list', '--changed', '--allow-partial', '--resume', '--with-dark', '--help', '-h']);
 const VALUED = ['--only', '--width', '--theme', '--dump', '--workers', '--sidebar'];
 if (has('--help') || has('-h')) {
   const usage = readFileSync(fileURLToPath(import.meta.url), 'utf8').match(/── USAGE ─+\n([\s\S]*?)\n \* ⚠ THE BASELINE/)[1];
@@ -273,8 +344,12 @@ if (theme && theme !== 'dark' && theme !== 'warm') {
   console.error(`✗ --theme must be dark or warm (got "${theme}")`);
   process.exit(1);
 }
-if (theme && (mode === 'init' || mode === 'prune')) {
-  console.error('✗ --theme cannot write the baseline: it is recorded in the default theme.');
+if (theme && mode === 'prune') {
+  console.error('✗ --theme cannot prune: the warm baseline is recorded in the default theme, and dark\'s own list is rewritten by --theme=dark --init.');
+  process.exit(1);
+}
+if (theme === 'warm' && mode === 'init') {
+  console.error('✗ --theme=warm --init: warm is the default theme, and its baseline is written without --theme.');
   process.exit(1);
 }
 if (theme === 'dark' && mode === 'report') {
@@ -284,6 +359,26 @@ if (theme === 'dark' && mode === 'report') {
 // A dark run measures contrast only — see "A DARK RUN MEASURES CONTRAST AND NOTHING ELSE" above.
 // null = every rule.
 const rulesOnly = theme === 'dark' ? ['contrast'] : null;
+/**
+ * `--with-dark` — DARK MEASURED ON THE WARM RUN'S OWN PAGE (owner, 2026-11-15, Release process hardening Stage 1A).
+ *
+ * A dark pass opened every screen a second time (~720 page loads, ~12 min on a healthy run) to read one rule. The
+ * theme is ONE attribute on <html> (`data-user-theme`, set by lib/no-flash-script.ts) and is pure stylesheet: no
+ * screen reads it in its own code (checked 2026-11-15; the one `getPropertyValue('--…')` reader is the share-score
+ * image, drawn on a tap). So at the dark widths, after the warm probe and before the page is scrolled, the run flips
+ * that attribute in place by the product's own rule (dark only for a signed-in browser — a signed-out page stays warm,
+ * exactly as a real dark visit leaves it), with transitions off so nothing is read mid-fade, reads contrast, and
+ * flips back. The findings are the dark run's, keyed and compared exactly as a `--theme=dark` run's are, and dumped
+ * beside the warm dump (`<dump>.dark.json`).
+ *
+ * ⚠ Proven before it replaced the dark pass: a slice measured both ways gave identical finding keys (see the header,
+ * MEASURED). `--theme=dark` stays the real thing, and the one that writes dark's accepted list (`--init`).
+ */
+const withDark = has('--with-dark');
+if (withDark && (theme || mode !== 'check')) {
+  console.error('✗ --with-dark adds dark contrast to a warm CHECK run: drop --theme, and write a baseline from a single-theme run (--theme=dark --init for dark\'s list).');
+  process.exit(1);
+}
 // `--sidebar=strip` — see "MEASURES THE SIDEBAR COLLAPSED" above. `full` is the default and says so.
 const sidebar = val('--sidebar') ?? 'full';
 if (sidebar !== 'strip' && sidebar !== 'full') {
@@ -448,30 +543,34 @@ if (has('--changed') && !onlyIds) {
 
 if (has('--list')) {
   for (const s of SCREENS) console.log(`${s.id.padEnd(34)} ${s.session.padEnd(16)} ${s.area ?? ''}`);
-  const universal = WIDTHS.filter((w) => !w.optIn).map((w) => w.name);
+  const universal = WIDTHS.filter((w) => !w.optIn && !w.onDemand).map((w) => w.name);
   const optIn = WIDTHS.filter((w) => w.optIn).map((w) => w.name);
+  const onDemand = WIDTHS.filter((w) => w.onDemand).map((w) => w.name);
   console.log(`\n${SCREENS.length} screens × ${universal.length} widths (${universal.join(', ')})` +
-    (optIn.length ? ` · opt-in: ${optIn.join(', ')}` : ''));
+    (optIn.length ? ` · opt-in: ${optIn.join(', ')}` : '') +
+    (onDemand.length ? ` · on demand (--width=<w>): ${onDemand.join(', ')}` : ''));
   process.exit(0);
 }
 
-const screens = onlyIds ? SCREENS.filter((s) => onlyIds.includes(s.id)) : SCREENS;
+let screens = onlyIds ? SCREENS.filter((s) => onlyIds.includes(s.id)) : SCREENS;
 
 /**
  * `--changed` defaults to a representative PAIR of widths — the narrow phone and the desktop —
- * rather than all four.
+ * rather than all three (361, 768, 1440; 390 is on demand).
  *
  * Measured: ~3.4s per screen-width on a warm dev server. A normal feature diff touches one or two
  * screens, so two widths keeps a review step in the seconds. A palette or shared-chrome diff widens
  * to all 28 screens by design, and there four widths would be ~20 minutes — slow enough that the
  * step gets skipped, which is worse than covering two widths well. 361 and 1440 straddle both of
  * the portal's breakpoints (900 shell, 640 content), so a layout that is right at both is very
- * rarely wrong between them. The deliberate whole-suite run still covers all four.
+ * rarely wrong between them. The deliberate whole-suite run still covers all three.
  *
  * A dark run takes the same pair, for its own reason: it measures contrast only, and these two are
  * the widths that between them showed every dark-only finding (see the header).
  */
 const CHANGED_DEFAULT_WIDTHS = ['361', '1440'];
+/** `--with-dark` reads dark at the dark run's own widths (see the header: these two showed every dark-only finding). */
+const darkAt = (w) => withDark && CHANGED_DEFAULT_WIDTHS.includes(w.name);
 /** `--width=<px>` naming no listed width: an ad-hoc desktop width (see the header) — measured, never baselined. */
 const adHocWidth = onlyWidth && !WIDTHS.some((w) => w.name === onlyWidth) && /^\d+$/.test(onlyWidth) && Number(onlyWidth) >= 901
   ? { name: onlyWidth, width: Number(onlyWidth), height: 800, adHoc: true }
@@ -486,7 +585,9 @@ const listedWidths = adHocWidth
     ? WIDTHS.filter((w) => w.name === onlyWidth)
     : has('--changed') || theme === 'dark'
       ? WIDTHS.filter((w) => CHANGED_DEFAULT_WIDTHS.includes(w.name))
-      : WIDTHS;
+      // An `onDemand` width (390, owner 2026-11-15; see WIDTHS) runs only when named. Leaving it out of `widths` also
+      // leaves its baseline entries out of this run's ownership, so a default --init or --prune never touches them.
+      : WIDTHS.filter((w) => !w.onDemand);
 // A strip run measures the desktop only: at 900 and under there is no sidebar to collapse.
 const widths = stripRun ? listedWidths.filter((w) => w.width > 900) : listedWidths;
 if (!widths.length) {
@@ -504,7 +605,7 @@ if (!widths.length) {
 const runsAt = (screen, w) => !w.optIn || (screen.widths ?? []).includes(w.name);
 
 /** Screen/width pairs this run will actually visit — the honest number for the header line. */
-const pairCount = screens.reduce((n, s) => n + widths.filter((w) => runsAt(s, w)).length, 0);
+let pairCount = screens.reduce((n, s) => n + widths.filter((w) => runsAt(s, w)).length, 0);
 
 if (screens.length === 0) { console.error(`✗ No screens matched --only=${onlyIds?.join(',')}`); process.exit(1); }
 if (widths.length === 0) { console.error(`✗ No width matched --width=${onlyWidth}`); process.exit(1); }
@@ -1251,48 +1352,67 @@ const ownsKey = (k) => {
   return coversPair(screen, stripRun ? width.slice(0, -STRIP_SUFFIX.length) : width);
 };
 
-function readBaseline() {
-  if (!existsSync(BASELINE)) return { entries: {} };
-  try { return JSON.parse(readFileSync(BASELINE, 'utf8')); }
-  catch { console.error(`✗ ${path.relative(ROOT, BASELINE)} is not valid JSON.`); process.exit(1); }
+function readBaseline(file) {
+  if (!existsSync(file)) return { entries: {} };
+  try { return JSON.parse(readFileSync(file, 'utf8')); }
+  catch { console.error(`✗ ${path.relative(ROOT, file)} is not valid JSON.`); process.exit(1); }
 }
 
 // ── run ───────────────────────────────────────────────────────────────────────
-async function reachable(url) {
+/** A production build is the target when `UAT_BASE_URL` is set (see the header); the dev server otherwise. */
+const remote = !!process.env.UAT_BASE_URL;
+/**
+ * The per-wait budget on a production build (header, item 2). Started at 30 s on 2026-11-15, to be set from a healthy
+ * run's p95 (`budgetFromP95`). ⚠ The dev server keeps 150 s: it compiles each route on first visit, and the help hub
+ * once exceeded a 60 s ceiling on a cold cache and was reported "did not render" while still building.
+ */
+const REMOTE_BUDGET_MS = 30_000;
+const budgetEnv = Number(process.env.LAYOUT_BUDGET_S);
+const BUDGET_MS = remote ? (Number.isFinite(budgetEnv) && budgetEnv >= 20 ? budgetEnv * 1000 : REMOTE_BUDGET_MS) : 150_000;
+/** A production page network-idle this long without its ready mark is dead, not slow (header, item 2). */
+const SETTLE_MS = 8_000;
+/** Failures in a row inside one unit before its session and the target are re-checked (header, item 3). */
+const SESSION_DEAD_AFTER = 3;
+/** Screens one page serves before it is replaced in the same context (header, item 6). */
+const RECYCLE_EVERY = 25;
+const runStarted = Date.now();
+
+/** null when the address answers 200 (after redirects), else why not. */
+async function answers(url, ms = 15_000) {
   try {
-    const c = new AbortController();
-    const t = setTimeout(() => c.abort(), 5000);
-    await fetch(url, { signal: c.signal });
-    clearTimeout(t);
-    return true;
-  } catch { return false; }
+    const res = await fetch(url, { signal: AbortSignal.timeout(ms) });
+    return res.ok ? null : `answered ${res.status}`;
+  } catch (e) { return e.cause?.code ?? e.message; }
 }
 
-let ctx;
-try {
-  ctx = await resolveUatContext();
-  // The admin world is a second fixture, resolved only when an admin or volunteer screen is in the
-  // run — a coach-only sweep must never fail on the Club fixture it does not open.
-  if (screens.some((s) => s.area)) Object.assign(ctx, await resolveAdminContext());
-  // The free coach's world likewise — only when a free-coach screen is in the run.
-  if (screens.some((s) => s.session === 'freeCoach')) Object.assign(ctx, await resolveFreeCoachContext());
-} catch (e) {
-  console.error(`✗ UAT fixture unavailable.\n  ${e.message}`);
-  process.exit(1);
-}
+const AUTH_REPAIR = 'npx playwright test --config playwright.config.ts --project=auth-setup   (⚠ signs every other session out: ask the owner first)';
 
-if (!(await reachable(ctx.baseUrl))) {
-  console.error(`✗ No server reachable at ${ctx.baseUrl}\n  Repair: npm run dev — or, for another server, set UAT_BASE_URL to its address`);
-  process.exit(1);
+// ── the first minute (header, item 1): everything that can fail before a screen opens, printed together ──────
+/** @type {{ what: string, repair?: string }[]} */
+const preRun = [];
+/** Screens this server does not serve by design, taken out of the run by name (see below). */
+const notServed = [];
+const firstMinute = Date.now();
+let ctx = null;
+{
+  const [uat, admin, free] = await Promise.allSettled([
+    resolveUatContext(),
+    // The admin world is a second fixture, resolved only when an admin or volunteer screen is in the
+    // run — a coach-only sweep must never fail on the Club fixture it does not open.
+    screens.some((s) => s.area) ? resolveAdminContext() : Promise.resolve({}),
+    // The free coach's world likewise — only when a free-coach screen is in the run.
+    screens.some((s) => s.session === 'freeCoach') ? resolveFreeCoachContext() : Promise.resolve({}),
+  ]);
+  for (const r of [uat, admin, free]) if (r.status === 'rejected') preRun.push({ what: `UAT fixture unavailable: ${r.reason?.message ?? r.reason}` });
+  if (uat.status === 'fulfilled') ctx = Object.assign(uat.value, admin.value ?? {}, free.value ?? {});
 }
+const baseUrl = ctx?.baseUrl ?? process.env.UAT_BASE_URL ?? 'http://localhost:3000';
+const base = new URL(baseUrl);
 
-const neededSessions = [...new Set(screens.map((s) => s.session))];
+let neededSessions = [...new Set(screens.map((s) => s.session))];
 for (const s of neededSessions) {
   const f = SESSION_FILES[s];
-  if (f && !existsSync(f)) {
-    console.error(`✗ Missing session for "${s}": ${path.relative(ROOT, f)}\n  Repair: npx playwright test --config playwright.config.ts --project=auth-setup`);
-    process.exit(1);
-  }
+  if (f && !existsSync(f)) preRun.push({ what: `Missing session for "${s}": ${path.relative(ROOT, f)}`, repair: AUTH_REPAIR });
 }
 
 /**
@@ -1303,7 +1423,6 @@ for (const s of neededSessions) {
  * project as the dev server, so the same cookie is the same signed-in person there once it is
  * addressed to staging's host. Re-addressing beats a second set of session files nobody refreshes.
  */
-const base = new URL(ctx.baseUrl);
 const sessionStates = new Map();
 function sessionFor(file) {
   if (!sessionStates.has(file)) {
@@ -1321,86 +1440,94 @@ function sessionFor(file) {
 // ⚠ AND PROVE IT IS SIGNED IN THERE before a page opens. A session that is not — stale, or carried
 // to a server on another database (production) — fails quietly: a coach entry is not held to the
 // redirect check, so it can land on the sign-in page and be measured as the screen it asked for.
-for (const s of neededSessions) {
+/** null when the session is signed in at the target, else why not. */
+async function signedIn(s) {
   const f = SESSION_FILES[s];
-  if (!f) continue;
-  const cookie = sessionFor(f).cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+  if (!f || !existsSync(f)) return null;
+  let state;
+  try { state = sessionFor(f); } catch (e) { return `its file is not readable (${e.message})`; }
+  const cookie = state.cookies.map((c) => `${c.name}=${c.value}`).join('; ');
   // A timeout, because a server that accepts the connection and never answers would hang the run here.
   const res = await fetch(new URL('/api/me/role-summary', base), { headers: { cookie }, signal: AbortSignal.timeout(30_000) })
     .catch((e) => e);
-  if (res instanceof Error) {
-    console.error(`✗ Could not check the "${s}" session at ${ctx.baseUrl}: ${res.message}`);
-    process.exit(1);
-  }
+  if (res instanceof Error) return `could not be checked: ${res.message}`;
   // Refused outright, or bounced to a sign-in page (fetch follows the redirect and reports its 200).
-  if (res.status === 401 || res.status === 403 || (res.redirected && /login|sign-?in/i.test(res.url))) {
-    console.error(`✗ The "${s}" session is not signed in at ${ctx.baseUrl}.\n` +
-      `  The server must read the same database as the dev server (never production), and the session must be current.\n` +
-      `  Repair: npx playwright test --config playwright.config.ts --project=auth-setup`);
-    process.exit(1);
-  }
+  if (res.status === 401 || res.status === 403 || (res.redirected && /login|sign-?in/i.test(res.url))) return 'is not signed in';
+  return null;
 }
+
+const targetWhy = await answers(baseUrl);
+if (targetWhy) {
+  preRun.push({ what: `No healthy server at ${baseUrl} (${targetWhy})`,
+    repair: remote ? 'wait until the build has finished deploying there (or check UAT_BASE_URL), then re-run'
+      : 'npm run dev — or, for another server, set UAT_BASE_URL to its address' });
+} else {
+  // A screen this server deliberately does not serve (`onlyWhereServed` in layout-screens.mjs, e.g. the legal pages
+  // while their switch is off) is taken out of the run BY NAME and listed on every run, never counted as measured. It
+  // answers "not found" there by design, so measuring it would measure the 404 page, and failing on it would fail every
+  // release until a switch someone else owns is flipped.
+  await Promise.all(screens.filter((s) => s.onlyWhereServed).map(async (s) => {
+    const res = await fetch(new URL(s.path(ctx), base), { signal: AbortSignal.timeout(30_000) }).catch(() => null);
+    if (res?.status === 404) notServed.push({ id: s.id, why: s.onlyWhereServed });
+  }));
+  if (notServed.length) {
+    const out = new Set(notServed.map((n) => n.id));
+    screens = screens.filter((s) => !out.has(s.id));
+    pairCount = screens.reduce((n, s) => n + widths.filter((w) => runsAt(s, w)).length, 0);
+    neededSessions = [...new Set(screens.map((s) => s.session))];
+    if (!screens.length) preRun.push({ what: `Every selected screen is one this server does not serve: ${notServed.map((n) => n.id).join(', ')}` });
+  }
+  const selected = new Set(screens.map((s) => s.id));
+  await Promise.all([
+    ...neededSessions.map(async (s) => {
+      const why = await signedIn(s);
+      if (why) preRun.push({ what: `The "${s}" session ${why} at ${baseUrl}. The server must read the same database as the dev server (never production), and the session must be current.`, repair: AUTH_REPAIR });
+    }),
+    // Fixtures that expire with the clock (layout-screens.mjs FIXTURE_CHECKS), only for the screens in this run.
+    ...FIXTURE_CHECKS.filter((fc) => fc.screens.some((id) => selected.has(id))).map(async (fc) => {
+      const html = await fetch(new URL(fc.path, base), { signal: AbortSignal.timeout(30_000) }).then((r) => r.text()).catch(() => '');
+      if (!fc.expect.test(html)) preRun.push({ what: `Fixture expired or missing: ${fc.what} (${fc.path}; needed by ${fc.screens.filter((id) => selected.has(id)).join(', ')})`, repair: fc.repair });
+    }),
+  ]);
+}
+
+function stopForPreRun(heading) {
+  console.error(`\n✗ ${heading} — nothing was swept (${formatDuration(Date.now() - firstMinute)}):\n`);
+  const repairs = [];
+  for (const p of preRun) {
+    console.error(`  · ${p.what}`);
+    if (p.repair && !repairs.includes(p.repair)) repairs.push(p.repair);
+  }
+  if (repairs.length) {
+    console.error('\n  Repair:');
+    for (const r of repairs) console.error(`    ${r}`);
+  }
+  process.exit(1);
+}
+if (preRun.length) stopForPreRun(`${preRun.length} problem(s) before the first screen`);
 
 const exemptSelectors = CHROME_EXEMPT.map((e) => e.sel);
 const findings = [];
+/** `--with-dark`: the dark contrast findings read in place (empty on any other run). */
+const darkFindings = [];
 const landingFailures = [];
 const navFailures = [];
+/** Pairs recorded unmeasured under ONE cause line (a dead session, a dead target, a screen dead twice). */
+const causes = new Map();
+const unmeasuredBy = (cause, label, url) => { if (!causes.has(cause)) causes.set(cause, []); causes.get(cause).push({ label, url }); };
 
 // ⚠ A sweep is the heaviest thing this repo asks of a dev server: every screen it has not seen
 // yet is compiled on demand and then held forever. Refuse to start with no headroom, and watch
 // it as we go — see scripts/memory-guard.mjs for what happened the two times nothing was watching.
-preflight('Memory');
-const memory = createWatchdog('layout sweep');
+const resumeCommand = `npm run check:layout -- ${[...argv.filter((a) => a !== '--resume'), '--resume'].join(' ')}`;
+preflight('Memory', { remote });
+const memory = createWatchdog('layout sweep', { remote, resumeCommand });
 let aborted = null;
 
 const browser = await chromium.launch();
-console.log(`Layout sweep · ${screens.length} screen(s) · ${pairCount} screen-width pair(s) · ${ctx.baseUrl}` +
-  `${workers > 1 ? ` · ${workers} at once` : ''}${rulesOnly ? ` · ${rulesOnly.join(', ')} only` : ''}\n`);
 
-/**
- * One browser context per SESSION — and per pinned CLOCK within it (admin slice 0, 2026-09-25).
- * A `clock` entry pins the page's Date to the day its content lives on (the volunteer screens show
- * one day's games). The pin belongs to the whole context, so a pinned entry gets a context of its
- * own rather than leaking its date into every screen after it.
- */
-const groups = [];
-for (const session of neededSessions) {
-  for (const s of screens.filter((x) => x.session === session)) {
-    const clock = s.clock ? s.clock(ctx) : null;
-    let g = groups.find((x) => x.session === session && x.clock === clock);
-    if (!g) groups.push(g = { session, clock, list: [] });
-    g.list.push(s);
-  }
-}
-
-/**
- * THE UNIT OF WORK IS ONE SESSION AT ONE WIDTH, in a context of its own (2026-10-13, `--workers`).
- *
- * ⚠ Its results must not depend on how many run at once, or the ratchet flickers. A context carries
- * device memory (localStorage) from one screen to the next — a view a screen's gesture picked, a
- * group a screen opened — so a screen's measurement can depend on what was visited before it in the
- * same context. Handing screens to whichever worker is free would make that history depend on
- * timing. A unit is the same list in the same order in a fresh context, whichever worker runs it and
- * however many are running, so a run at --workers=1 and one at --workers=4 measure the same pages.
- *
- * Before this, a context spanned every width of a session, so the 390 pass inherited the 361 pass's
- * device memory. A fresh context per width is the cleaner of the two — each width now opens the way
- * a person's first visit does — and a baseline entry that flips on the change was order-dependent.
- */
-const units = [];
-for (const g of groups) {
-  for (const w of widths) {
-    const list = g.list.filter((s) => runsAt(s, w));
-    if (list.length) units.push({ ...g, w, list, findings: [], navFailures: [], landingFailures: [] });
-  }
-}
-
-/** Run one unit. Its results land on the unit and are gathered in unit order once all are done. */
-async function runUnit({ session, clock, w, list, ...unit }) {
-  // ⚠ These three shadow the run's own arrays on purpose: the measuring code below pushes to the
-  // names it always has, and the unit's arrays are joined in order afterwards, so the output and the
-  // dump read the same at any --workers.
-  const { findings, navFailures, landingFailures } = unit;
+/** A fresh context for a session (and a pinned clock), set up exactly as every unit's is. */
+async function openContext(session, clock) {
   const file = SESSION_FILES[session];
   // ⚠ reducedMotion is not a nicety. `app/globals.css` sets `html { scroll-behavior: smooth }`, so
   // a programmatic scroll ANIMATES — and the covered-by-chrome rule, which measures after scrolling
@@ -1448,186 +1575,571 @@ async function runUnit({ session, clock, w, list, ...unit }) {
       try { localStorage.setItem('flhq-sidebar', 'strip'); } catch { /* private mode: the full sidebar stands */ }
     });
   }
+  return context;
+}
 
+async function openPage(context, w) {
   const page = await context.newPage();
   await page.setViewportSize({ width: w.width, height: w.height });
+  return page;
+}
+
+/**
+ * Wait for a screen's ready mark. On a production build (`early`), a page that has gone network-idle and then
+ * SETTLE_MS more without it is reported dead at once rather than waited on for the whole budget (header, item 2).
+ */
+async function waitReady(page, sel, early) {
+  const ready = page.waitForSelector(sel, { timeout: BUDGET_MS, state: 'attached' });
+  if (!early) return ready;
+  ready.catch(() => {});
+  const settled = (async () => {
+    await page.waitForLoadState('networkidle', { timeout: BUDGET_MS }).catch(() => {});
+    await page.waitForTimeout(SETTLE_MS).catch(() => {});
+    return 'settled';
+  })();
+  const first = await Promise.race([ready.then(() => 'ready'), settled]);
+  if (first === 'ready') return;
+  if (await page.locator(sel).count().catch(() => 0)) return;
+  throw new Error(`the page went quiet (network idle, then ${SETTLE_MS / 1000} s) without its ready mark ${sel}`);
+}
+
+// ── the canaries (header, item 1): one screen per session opens, before the run commits to the rest ────────────
+{
+  const canaries = neededSessions.map((session) => {
+    const s = screens.find((x) => x.session === session);
+    return { session, screen: s, w: widths.find((x) => runsAt(s, x)) };
+  }).filter((c) => c.w);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(workers, canaries.length) }, async () => {
+    while (next < canaries.length) {
+      const { session, screen, w } = canaries[next++];
+      const context = await openContext(session, screen.clock ? screen.clock(ctx) : null);
+      try {
+        const page = await openPage(context, w);
+        await page.goto(baseUrl + screen.path(ctx), { waitUntil: 'domcontentloaded', timeout: BUDGET_MS });
+        await waitReady(page, screen.ready, remote);
+        if (SESSION_FILES[session] && /\/(auth\/)?(login|sign-?in)\b/.test(new URL(page.url()).pathname)) {
+          throw new Error(`it was sent to the sign-in page (${new URL(page.url()).pathname})`);
+        }
+      } catch (e) {
+        preRun.push({ what: `The "${session}" session's first screen, ${pairLabel(screen.id, w.name)}, did not open: ${String(e.message || e).split('\n')[0]}`,
+          repair: `re-run just it to see the page: npm run check:layout -- --only=${screen.id} --width=${w.name}` });
+      } finally {
+        await context.close().catch(() => {});
+      }
+    }
+  }));
+  if (preRun.length) { await browser.close(); stopForPreRun(`${preRun.length} canary screen(s) did not open`); }
+  console.log(`First-minute checks passed in ${formatDuration(Date.now() - firstMinute)}: the target, ${neededSessions.length} session(s), the fixtures, ${canaries.length} canary screen(s).`);
+}
+
+/**
+ * One browser context per SESSION — and per pinned CLOCK within it (admin slice 0, 2026-09-25).
+ * A `clock` entry pins the page's Date to the day its content lives on (the volunteer screens show
+ * one day's games). The pin belongs to the whole context, so a pinned entry gets a context of its
+ * own rather than leaking its date into every screen after it.
+ */
+const groups = [];
+for (const session of neededSessions) {
+  for (const s of screens.filter((x) => x.session === session)) {
+    const clock = s.clock ? s.clock(ctx) : null;
+    let g = groups.find((x) => x.session === session && x.clock === clock);
+    if (!g) groups.push(g = { session, clock, list: [] });
+    g.list.push(s);
+  }
+}
+
+/**
+ * THE UNIT OF WORK IS ONE SESSION AT ONE WIDTH, in a context of its own (2026-10-13, `--workers`).
+ *
+ * ⚠ Its results must not depend on how many run at once, or the ratchet flickers. A context carries
+ * device memory (localStorage) from one screen to the next — a view a screen's gesture picked, a
+ * group a screen opened — so a screen's measurement can depend on what was visited before it in the
+ * same context. Handing screens to whichever worker is free would make that history depend on
+ * timing. A unit is the same list in the same order in a fresh context, whichever worker runs it and
+ * however many are running, so a run at --workers=1 and one at --workers=4 measure the same pages.
+ *
+ * Before this, a context spanned every width of a session, so the 390 pass inherited the 361 pass's
+ * device memory. A fresh context per width is the cleaner of the two — each width now opens the way
+ * a person's first visit does — and a baseline entry that flips on the change was order-dependent.
+ */
+const allUnits = [];
+for (const g of groups) {
+  for (const w of widths) {
+    const list = g.list.filter((s) => runsAt(s, w));
+    if (list.length) allUnits.push({ ...g, w, list });
+  }
+}
+
+// ── the journal (header, item 4) ──────────────────────────────────────────────
+const probeFingerprint = digest(probeInPage.toString() + JSON.stringify({
+  CHROME_EXEMPT, CONTRAST_EXEMPT, OVERFLOW_EXEMPT, rulesOnly, TAP_FLOOR, TAP_FLOOR_MAX_WIDTH,
+}));
+/**
+ * WHICH BUILD IS MEASURED. On a production build that is the TARGET's build, read from its own page (Next's build id
+ * rides in the inline router payload as `"b":"…"`), not this checkout's HEAD: other sessions commit to the shared
+ * branch all day, and on 2026-11-15 a commit nobody had deployed made a staging run's journal unresumable. The dev
+ * server builds from this checkout, so there HEAD is the honest answer. (`commit` is the journal key's field name.)
+ */
+async function measuredBuild() {
+  if (remote) {
+    const html = await fetch(baseUrl, { signal: AbortSignal.timeout(15_000) }).then((r) => r.text()).catch(() => '');
+    // Escaped inside the page's inline script (`\"b\":\"…`); the plain form is kept for a payload served as JSON.
+    const m = /\\"b\\":\\"([A-Za-z0-9_-]{8,})/.exec(html) ?? /"b":"([A-Za-z0-9_-]{8,})"/.exec(html);
+    const id = m?.[1];
+    if (id) return `build ${id}`;
+  }
+  try { return execSync('git rev-parse HEAD', { cwd: ROOT, encoding: 'utf8' }).trim(); } catch { return 'unknown'; }
+}
+const commit = await measuredBuild();
+const key = journalKey({
+  commit, host: base.host, theme: withDark ? 'default+dark' : theme, sidebar, probe: probeFingerprint,
+  pairs: pairListHash(allUnits.flatMap((u) => u.list.map((s) => ({ label: pairLabel(s.id, u.w.name), url: s.path(ctx), ready: s.ready })))),
+});
+mkdirSync(JOURNAL_DIR, { recursive: true });
+const journalFile = path.join(JOURNAL_DIR, journalFileName(key));
+let done = new Map();
+if (has('--resume')) {
+  if (existsSync(journalFile)) {
+    const parsed = parseJournal(readFileSync(journalFile, 'utf8'));
+    const why = keyMismatch(parsed.header, key);
+    if (why.length) { await browser.close(); console.error(`✗ --resume: ${path.relative(ROOT, journalFile)} is not this run's:\n    ${why.join('\n    ')}`); process.exit(1); }
+    done = parsed.done;
+  } else {
+    // Name what differs, so "the journal is for another commit" is not mistaken for "there is no journal".
+    const prefix = `${key.theme}-${key.sidebar}-`;
+    const others = readdirSync(JOURNAL_DIR).filter((f) => f.startsWith(prefix) && f.endsWith('.jsonl'));
+    await browser.close();
+    console.error(`✗ --resume: no journal for this run (${path.relative(ROOT, journalFile)}). Nothing was swept.`);
+    for (const f of others) {
+      const parsed = parseJournal(readFileSync(path.join(JOURNAL_DIR, f), 'utf8'));
+      console.error(`  ${f} is another run's: ${keyMismatch(parsed.header, key).join('; ')}`);
+    }
+    console.error('  Run without --resume to start a fresh one.');
+    process.exit(1);
+  }
+} else {
+  writeFileSync(journalFile, JSON.stringify({ kind: 'header', key, started: new Date().toISOString() }) + '\n');
+}
+// A resumed run's measured pairs come back as findings, so the dump and the NEW comparison read journal + this run.
+for (const row of done.values()) {
+  for (const f of row.findings ?? []) findings.push({ ...f, screen: row.screen, width: row.width });
+  for (const f of row.dark ?? []) darkFindings.push({ ...f, screen: row.screen, width: row.width });
+}
+const slim = (list) => list.map(({ rule, signature, detail }) => ({ rule, signature, detail }));
+const journal = (screen, w, kept, darkKept, ms) => appendFileSync(journalFile, JSON.stringify({
+  kind: 'pair', label: pairLabel(screen.id, w.name), screen: screen.id, width: w.name, ms,
+  findings: slim(kept), ...(darkAt(w) ? { dark: slim(darkKept) } : {}),
+}) + '\n');
+
+const units = selectRemaining(allUnits, done).map((u) => ({ ...u, findings: [], darkFindings: [] }));
+const toMeasure = units.reduce((n, u) => n + u.list.length, 0);
+console.log(`Layout sweep · ${screens.length} screen(s) · ${pairCount} screen-width pair(s) · ${baseUrl}` +
+  `${workers > 1 ? ` · ${workers} at once` : ''}${rulesOnly ? ` · ${rulesOnly.join(', ')} only` : ''}` +
+  ` · ${BUDGET_MS / 1000} s per wait${done.size ? ` · resuming: ${done.size} from the journal, ${toMeasure} to go` : ''}\n`);
+const notServedLine = notServed.length
+  ? `⚠ NOT SWEPT on this server, by design (${notServed.length}): ${notServed.map((n) => `${n.id}: ${n.why}`).join('; ')}`
+  : '';
+if (notServedLine) console.log(`${notServedLine}\n`);
+
+// ── the pause (header, item 5) and the one-at-a-time lane it leaves behind ────────────────────────────────────
+let pausing = null;
+let single = false;
+let pauses = 0;
+/**
+ * After a pause the run goes one page at a time, and returns to `workers` at once only when free memory has stayed
+ * above the floor plus BACK_TO_FULL_MB for BACK_TO_FULL_MS. (2026-11-15: three pauses in the first hour of the
+ * whole-product run left it at one page for the remaining hours, with 5 GB free.)
+ */
+const BACK_TO_FULL_MB = 2048;
+const BACK_TO_FULL_MS = 120_000;
+let healthySince = null;
+async function memoryGate(label) {
+  if (aborted) return;
+  if (pausing) { await pausing; return; }
+  const trip = memory.check(label);
+  if (!trip && single) {
+    const roomy = freeMb() >= memory.floor + BACK_TO_FULL_MB;
+    healthySince = roomy ? (healthySince ?? Date.now()) : null;
+    if (roomy && Date.now() - healthySince >= BACK_TO_FULL_MS) {
+      single = false;
+      healthySince = null;
+      console.log(`  ▶ ${freeMb()} MB free for ${formatDuration(BACK_TO_FULL_MS)}: back to ${workers} at once`);
+    }
+  }
+  if (!trip) return;
+  pausing = (async () => {
+    console.log(`  ⏸ ${trip.free} MB free (floor ${trip.floor} MB) at ${label}: no new page opens; waiting up to ` +
+      `${PAUSE_DEFAULTS.maxWaitMs / 60_000} min for ${trip.floor + PAUSE_DEFAULTS.marginMb} MB`);
+    const r = await memory.waitForHeadroom();
+    if (r.recovered) {
+      pauses += 1;
+      single = true;
+      healthySince = null;
+      console.log(`  ▶ ${r.free} MB free after ${formatDuration(r.waitedMs)}: continuing, one page at a time`);
+    } else {
+      // ⚠ Set, never cleared: another worker may have tripped it, and its null must not undo that.
+      aborted ??= { ...trip, free: r.free, where: `${label}, after waiting ${formatDuration(r.waitedMs)}` };
+    }
+  })();
+  await pausing;
+  pausing = null;
+}
+let laneTail = Promise.resolve();
+/** After a pause, one page is measured at a time across every worker. */
+function lane(fn) {
+  if (!single) return fn();
+  const run = laneTail.then(fn, fn);
+  laneTail = run.catch(() => {});
+  return run;
+}
+/** Run in the lane, timed INSIDE it: a pair's cost is its own, never its wait in the queue behind other pairs. */
+const timedLane = (fn) => lane(async () => {
+  const started = Date.now();
+  const r = await fn();
+  return { r, ms: Date.now() - started };
+});
+
+/**
+ * Measure one screen on a page that is already at this width. The measuring is exactly what it always was; only the
+ * outcome is returned rather than pushed, so the caller can set a failure aside for its one retry.
+ * @returns {Promise<{ status: 'measured', kept: object[] } | { status: 'nav', why: string } | { status: 'landing', saw: string }>}
+ */
+async function measureScreen(page, screen, w, early) {
+  const url = baseUrl + screen.path(ctx);
+  const label = pairLabel(screen.id, w.name);
+  // See the `storage` note below the goto: seeded device memory is handed back on EVERY exit
+  // from this iteration — a failed render or a wrong landing included — or the next entry on
+  // this page (and the next width) would open the seeded view instead of the product's default.
+  const seededKv = screen.storage ? screen.storage(ctx) : null;
+  const unseed = async () => {
+    if (!seededKv) return;
+    await page.evaluate((ks) => { try { for (const k of ks) localStorage.removeItem(k); } catch { /* private mode */ } }, Object.keys(seededKv)).catch(() => {});
+  };
+  try {
+    // ⚠ A POINTER LEFT WHERE THE LAST GESTURE LANDED HOVERS THE NEXT SCREEN. One page serves every entry
+    // at this width, and an `interact` click leaves the mouse resting on that spot — so a later screen
+    // that happens to put a hover target there loads hovered. That is how the house league's "Season
+    // statuses" bubble was measured OPEN @361/390 (the Families Show-pill tap rests exactly on its "?"),
+    // and how a scouting row's hover wash put a red chip at 4.41:1 @768 (2026-10-19, layout upkeep A4).
+    // What a screen measures must not depend on the screen before it: park the pointer off the page.
+    await page.mouse.move(-1, -1).catch(() => {});
+    // The budget fits the target (BUDGET_MS, header item 2): generous on the dev server, which compiles on first visit.
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: BUDGET_MS });
+    await waitReady(page, screen.ready, early);
+    await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
+    if (screen.area) await waitForNoLoading(page);
+    // ⚠ The web fonts too: under four pages at once a label was measured in its fallback face and
+    // reported a 2px spill that no single run reproduced (rep team "Tryouts", 2026-10-14).
+    // Capped at 5s: a font request that hangs rather than fails must not stall the whole run.
+    await page.evaluate(() => Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 5000))])).catch(() => {});
+    // ⚠ A VIEW THE URL NEVER SHOWS IS A VIEW THE SWEEP NEVER MEASURED. The money report keeps
+    // its view (Statement / By activity / Months) in device memory, not the URL, so every
+    // sweep of `coach-budget-vs-actual` measured the Statement and nothing else — which is how
+    // the Months view's figure doors sat at 26px on a phone, unmeasured, until the 2026-09-06
+    // table review seeded the preference and looked. A screen entry may carry `storage`:
+    // the keys it returns are written to localStorage on the page's own origin, the page is
+    // reloaded so the panel reads them on mount, and they are removed again after the probe
+    // so the next entry (and the next width) opens the product's real default.
+    if (seededKv) {
+      await page.evaluate((kv2) => { try { for (const [k, v] of Object.entries(kv2)) localStorage.setItem(k, v); } catch { /* private mode */ } }, seededKv);
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: BUDGET_MS });
+      await waitReady(page, screen.ready, early);
+      await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
+      if (screen.area) await waitForNoLoading(page);
+      await page.waitForTimeout(600);
+    }
+    // A state neither the URL nor device memory can reach — a block opened in place on the
+    // practice sheet. One product gesture, after the screen is ready, before it is measured;
+    // see `interact` in layout-screens.mjs. A gesture that fails is a screen that did not
+    // render the state it is listed for, and is reported as such rather than measured shut.
+    if (screen.interact) await screen.interact(page);
+  } catch (e) {
+    console.log(`  ✗ ${label} — did not render`);
+    await unseed();
+    return { status: 'nav', why: String(e.message || e).split('\n')[0] };
+  }
+
+  // ⚠ Did we actually LAND? A screen that renders "Not assigned to any teams" measures
+  // perfectly and means nothing. This is the trap the existing coach specs document.
+  const body = (await page.textContent('body').catch(() => '')) || '';
+  // What a person can SEE — no inline scripts, no hidden nodes. The newer checks read this.
+  const visible = (await page.innerText('body').catch(() => '')) || '';
+  // ⚠ THE ADMIN GATES BY REDIRECT, not by a message (admin slice 0, 2026-09-25): a wrong org
+  // lands on the user's own org, an `official` on the scorekeeper, a lapsed session on the login
+  // page — each a real screen that measures cleanly and says nothing about the one asked for. So
+  // an admin entry must END where it was sent. (Coach entries are not held to this: several are
+  // deliberate redirect targets and their text checks above already serve them.)
+  const wantPath = new URL(url).pathname;
+  const gotPath = new URL(page.url()).pathname;
+  if (screen.area && gotPath !== wantPath) {
+    console.log(`  ✗ ${label} — redirected to ${gotPath}`);
+    await unseed();
+    return { status: 'landing', saw: `a redirect to ${gotPath}` };
+  }
+  const deniedHere = VISIBLE_LANDING_FAILURES.find((t) => visible.includes(t))
+    ?? (screen.area && ADMIN_LANDING_FAILURES.find((t) => visible.includes(t)));
+  if (deniedHere) {
+    console.log(`  ✗ ${label} — landed on "${deniedHere}"`);
+    await unseed();
+    return { status: 'landing', saw: deniedHere };
+  }
+  const landed = LANDING_FAILURES.find((t) => body.includes(t));
+  if (landed) {
+    console.log(`  ✗ ${label} — landed on "${landed}"`);
+    await unseed();
+    return { status: 'landing', saw: landed };
+  }
+
+  // The tap floor is a touch rule (see TAP_FLOOR_MAX_WIDTH). Above that width it is not
+  // relaxed to a smaller number - it is not asked, because 44px answers a question about
+  // fingers that a mouse never posed.
+  const tapFloorHere = w.width <= TAP_FLOOR_MAX_WIDTH ? TAP_FLOOR : 0;
+  const opts = { scopeSel: screen.scope ?? null, tapFloor: tapFloorHere, exempt: exemptSelectors, only: rulesOnly,
+    contrastExempt: CONTRAST_EXEMPT.map((e) => e.sel), overflowExempt: OVERFLOW_EXEMPT.map((e) => e.sel) };
+  let found = await page.evaluate(probeInPage, opts);
+  // `--with-dark`: dark contrast on this same page, before it is scrolled (a real dark visit reads from the top).
+  const darkFound = darkAt(w) ? await probeDarkInPlace(page, opts) : null;
+  await unseed();
+
+  // The classic defect — the last row trapped under the bottom bar — only exists once the
+  // page is scrolled to its end, so that rule is asked a second time down there.
+  //
+  // ⚠ The scroll is driven to a FIXED POINT and confirmed, not fired once and hoped for.
+  // Smooth scrolling plus content that settles after paint meant a single scrollTo left the
+  // page short of the end (measured: 1496 of 1567), so the second pass was reading an
+  // arbitrary mid-page position.
+  const wantsBottom = !rulesOnly || rulesOnly.includes('hidden-behind-chrome');
+  //
+  // ⚠ AND THE THING DRIVEN IS THE PAGE'S SCROLLER, which on a phone in the club admin is the
+  // locked shell's main column, not the document (2026-11-07). `lockedShellScroller` is the
+  // same finder the probe's R6 uses to decide `atEnd`; keep the two in step.
+  const reachedBottom = wantsBottom && await page.evaluate(async () => {
+    const de = document.documentElement;
+    const lockedShellScroller = () => {
+      const shell = de.scrollHeight <= de.clientHeight + 2 && document.querySelector('[data-admin-locked]');
+      if (!shell) return null;
+      let best = null, area = 0;
+      for (const s of Array.from(shell.querySelectorAll('*'))) {
+        if (!/(auto|scroll)/.test(getComputedStyle(s).overflowY) || s.scrollHeight <= s.clientHeight + 2) continue;
+        if (s.closest('[role="dialog"], dialog, [aria-modal="true"]')) continue;
+        const r = s.getBoundingClientRect();
+        if (r.width * r.height > area) { area = r.width * r.height; best = s; }
+      }
+      return best;
+    };
+    const target = lockedShellScroller() ?? de;
+    const prev = target.style.scrollBehavior;
+    target.style.scrollBehavior = 'auto';
+    let settled = false;
+    for (let i = 0; i < 30; i++) {
+      target.scrollTop = target.scrollHeight;
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      if (Math.abs(target.scrollTop + target.clientHeight - target.scrollHeight) <= 2) { settled = true; break; }
+    }
+    target.style.scrollBehavior = prev;
+    return settled;
+  });
+  if (wantsBottom && !reachedBottom) console.log(`      ! ${label}: page would not settle at its end — covered-by-chrome skipped`);
+  const atBottom = reachedBottom
+    ? await page.evaluate(probeInPage, { ...opts, only: ['hidden-behind-chrome'] })
+    : [];
+
+  const bySig = new Map();
+  for (const f of [...found, ...atBottom]) {
+    const k = `${f.rule}|${f.signature}`;
+    if (!bySig.has(k)) bySig.set(k, f);
+  }
+  const skip = new Set(screen.skip ?? []);
+  const kept = [...bySig.values()].filter((f) => !skip.has(f.rule)).map((f) => ({ ...f, screen: screen.id, width: w.name }));
+
+  const darkKept = darkFound
+    ? dedupeBySig(darkFound).filter((f) => !skip.has(f.rule)).map((f) => ({ ...f, screen: screen.id, width: w.name }))
+    : [];
+
+  console.log(`  ${kept.length ? '·' : '✓'} ${label}${kept.length ? ` — ${kept.length} finding(s)` : ''}` +
+    `${darkFound ? ` · dark ${darkKept.length}` : ''}`);
+  return { status: 'measured', kept, darkKept };
+}
+
+const dedupeBySig = (list) => [...new Map(list.map((f) => [`${f.rule}|${f.signature}`, f])).values()];
+
+/**
+ * Flip this page to dark in place, read contrast, flip back (see `--with-dark` at the flags). The theme rule is the
+ * product's own (lib/no-flash-script.ts `applyNoFlashAttributes`): stored 'dark' AND a session cookie present, else
+ * warm, so a signed-out page reads warm here exactly as it does on a real dark visit. Transitions are off for the
+ * flip, so no colour is read mid-fade, and back on afterwards.
+ */
+async function probeDarkInPlace(page, opts) {
+  const twoFrames = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  await page.evaluate(() => {
+    const style = document.createElement('style');
+    style.id = '__sweep-no-transition';
+    style.textContent = '*, *::before, *::after { transition: none !important; }';
+    document.head.appendChild(style);
+    try { localStorage.setItem('fl_user_theme', 'dark'); } catch { /* private mode: the rule below still decides */ }
+    let signedIn = false;
+    for (const part of document.cookie.split(';')) {
+      const base = part.split('=')[0].trim().replace(/.d+$/, '');
+      if (base.indexOf('sb-') === 0 && base.slice(-11) === '-auth-token') { signedIn = true; break; }
+    }
+    document.documentElement.setAttribute('data-user-theme', signedIn ? 'dark' : 'warm');
+  });
+  await twoFrames();
+  try {
+    return await page.evaluate(probeInPage, { ...opts, only: ['contrast'] });
+  } finally {
+    await page.evaluate(() => {
+      try { localStorage.removeItem('fl_user_theme'); } catch { /* private mode */ }
+      document.documentElement.setAttribute('data-user-theme', 'warm');
+    }).catch(() => {});
+    await twoFrames().catch(() => {});
+    await page.evaluate(() => document.getElementById('__sweep-no-transition')?.remove()).catch(() => {});
+  }
+}
+
+// ── dead screens, dead sessions, a dead target (header, item 3) ───────────────────────────────────────────────
+/** Screen id → its first failure, once a screen has not rendered; its other widths wait for the retry. */
+const deadScreens = new Map();
+/** Pairs set aside for the end: failed ones and the widths of a dead screen not yet opened. */
+const setAside = [];
+const deadSessions = new Map();
+let targetDead = null;
+const timings = [];
+let retries = 0;
+
+async function recheck(session, label) {
+  const t = await answers(baseUrl);
+  if (t) { targetDead ??= `the target stopped answering at ${label} (${t})`; return; }
+  const why = await signedIn(session);
+  if (why) deadSessions.set(session, `the "${session}" session ${why} at ${label} (repair: ${AUTH_REPAIR})`);
+}
+
+/** The pair's outcome, recorded. Returns true when it was measured. */
+function record(unit, screen, w, r, ms) {
+  const label = pairLabel(screen.id, w.name);
+  const url = baseUrl + screen.path(ctx);
+  if (r.status === 'measured') {
+    unit.findings.push(...r.kept);
+    unit.darkFindings.push(...r.darkKept);
+    timings.push({ label, ms });
+    journal(screen, w, r.kept, r.darkKept, ms);
+    return true;
+  }
+  if (r.status === 'landing') landingFailures.push({ label, url, saw: r.saw });
+  return false;
+}
+
+/** Run one unit. Its findings land on the unit and are gathered in unit order once all are done. */
+async function runUnit(unit) {
+  const { session, clock, w, list } = unit;
+  const context = await openContext(session, clock);
+  let page = await openPage(context, w);
+  let streak = 0;
+  let onPage = 0;
   try {
     for (const screen of list) {
-      if (aborted) break;
-      const url = ctx.baseUrl + screen.path(ctx);
-      const label = `${screen.id} @${w.name}`;
+      const label = pairLabel(screen.id, w.name);
+      const url = baseUrl + screen.path(ctx);
+      if (targetDead) { unmeasuredBy(targetDead, label, url); continue; }
+      if (deadSessions.has(session)) { unmeasuredBy(deadSessions.get(session), label, url); continue; }
+      if (deadScreens.has(screen.id)) { setAside.push({ unit, screen, opened: false }); continue; }
       // Checked before the page is opened, not after: the goal is to not take the next bite.
-      // ⚠ Set, never cleared: another worker may have tripped it, and its null must not undo that.
-      aborted ??= memory.check(label);
+      await memoryGate(label);
       if (aborted) break;
-      // See the `storage` note below the goto: seeded device memory is handed back on EVERY exit
-      // from this iteration — a failed render or a wrong landing included — or the next entry on
-      // this page (and the next width) would open the seeded view instead of the product's default.
-      const seededKv = screen.storage ? screen.storage(ctx) : null;
-      const unseed = async () => {
-        if (!seededKv) return;
-        await page.evaluate((ks) => { try { for (const k of ks) localStorage.removeItem(k); } catch { /* private mode */ } }, Object.keys(seededKv)).catch(() => {});
-      };
-      try {
-        // ⚠ A POINTER LEFT WHERE THE LAST GESTURE LANDED HOVERS THE NEXT SCREEN. One page serves every entry
-        // at this width, and an `interact` click leaves the mouse resting on that spot — so a later screen
-        // that happens to put a hover target there loads hovered. That is how the house league's "Season
-        // statuses" bubble was measured OPEN @361/390 (the Families Show-pill tap rests exactly on its "?"),
-        // and how a scouting row's hover wash put a red chip at 4.41:1 @768 (2026-10-19, layout upkeep A4).
-        // What a screen measures must not depend on the screen before it: park the pointer off the page.
-        await page.mouse.move(-1, -1).catch(() => {});
-        // ⚠ Generous on purpose. The dev server compiles each route on first visit, and the help
-        // hub — which renders the whole guide catalogue — exceeded a 60s ceiling on a cold cache
-        // and was reported as "did not render" when it was merely still building.
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 150_000 });
-        await page.waitForSelector(screen.ready, { timeout: 150_000, state: 'attached' });
-        await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
-        if (screen.area) await waitForNoLoading(page);
-        // ⚠ The web fonts too: under four pages at once a label was measured in its fallback face and
-        // reported a 2px spill that no single run reproduced (rep team "Tryouts", 2026-10-14).
-        // Capped at 5s: a font request that hangs rather than fails must not stall the whole run.
-        await page.evaluate(() => Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 5000))])).catch(() => {});
-        // ⚠ A VIEW THE URL NEVER SHOWS IS A VIEW THE SWEEP NEVER MEASURED. The money report keeps
-        // its view (Statement / By activity / Months) in device memory, not the URL, so every
-        // sweep of `coach-budget-vs-actual` measured the Statement and nothing else — which is how
-        // the Months view's figure doors sat at 26px on a phone, unmeasured, until the 2026-09-06
-        // table review seeded the preference and looked. A screen entry may carry `storage`:
-        // the keys it returns are written to localStorage on the page's own origin, the page is
-        // reloaded so the panel reads them on mount, and they are removed again after the probe
-        // so the next entry (and the next width) opens the product's real default.
-        if (seededKv) {
-          await page.evaluate((kv2) => { try { for (const [k, v] of Object.entries(kv2)) localStorage.setItem(k, v); } catch { /* private mode */ } }, seededKv);
-          await page.reload({ waitUntil: 'domcontentloaded', timeout: 150_000 });
-          await page.waitForSelector(screen.ready, { timeout: 150_000, state: 'attached' });
-          await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
-          if (screen.area) await waitForNoLoading(page);
-          await page.waitForTimeout(600);
-        }
-        // A state neither the URL nor device memory can reach — a block opened in place on the
-        // practice sheet. One product gesture, after the screen is ready, before it is measured;
-        // see `interact` in layout-screens.mjs. A gesture that fails is a screen that did not
-        // render the state it is listed for, and is reported as such rather than measured shut.
-        if (screen.interact) await screen.interact(page);
-      } catch (e) {
-        navFailures.push({ label, url, why: String(e.message || e).split('\n')[0] });
-        console.log(`  ✗ ${label} — did not render`);
-        await unseed();
-        continue;
+      if (onPage >= RECYCLE_EVERY) {
+        await page.close().catch(() => {});
+        page = await openPage(context, w);
+        onPage = 0;
       }
-
-      // ⚠ Did we actually LAND? A screen that renders "Not assigned to any teams" measures
-      // perfectly and means nothing. This is the trap the existing coach specs document.
-      const body = (await page.textContent('body').catch(() => '')) || '';
-      // What a person can SEE — no inline scripts, no hidden nodes. The newer checks read this.
-      const visible = (await page.innerText('body').catch(() => '')) || '';
-      // ⚠ THE ADMIN GATES BY REDIRECT, not by a message (admin slice 0, 2026-09-25): a wrong org
-      // lands on the user's own org, an `official` on the scorekeeper, a lapsed session on the login
-      // page — each a real screen that measures cleanly and says nothing about the one asked for. So
-      // an admin entry must END where it was sent. (Coach entries are not held to this: several are
-      // deliberate redirect targets and their text checks above already serve them.)
-      const wantPath = new URL(url).pathname;
-      const gotPath = new URL(page.url()).pathname;
-      if (screen.area && gotPath !== wantPath) {
-        landingFailures.push({ label, url, saw: `a redirect to ${gotPath}` });
-        console.log(`  ✗ ${label} — redirected to ${gotPath}`);
-        await unseed();
-        continue;
+      onPage += 1;
+      const { r, ms } = await timedLane(() => measureScreen(page, screen, w, remote));
+      if (record(unit, screen, w, r, ms)) { streak = 0; continue; }
+      if (r.status === 'nav') {
+        if (!deadScreens.has(screen.id)) deadScreens.set(screen.id, { label, why: r.why });
+        setAside.push({ unit, screen, opened: true, why: r.why });
       }
-      const deniedHere = VISIBLE_LANDING_FAILURES.find((t) => visible.includes(t))
-        ?? (screen.area && ADMIN_LANDING_FAILURES.find((t) => visible.includes(t)));
-      if (deniedHere) {
-        landingFailures.push({ label, url, saw: deniedHere });
-        console.log(`  ✗ ${label} — landed on "${deniedHere}"`);
-        await unseed();
-        continue;
-      }
-      const landed = LANDING_FAILURES.find((t) => body.includes(t));
-      if (landed) {
-        landingFailures.push({ label, url, saw: landed });
-        console.log(`  ✗ ${label} — landed on "${landed}"`);
-        await unseed();
-        continue;
-      }
-
-      // The tap floor is a touch rule (see TAP_FLOOR_MAX_WIDTH). Above that width it is not
-      // relaxed to a smaller number - it is not asked, because 44px answers a question about
-      // fingers that a mouse never posed.
-      const tapFloorHere = w.width <= TAP_FLOOR_MAX_WIDTH ? TAP_FLOOR : 0;
-      const opts = { scopeSel: screen.scope ?? null, tapFloor: tapFloorHere, exempt: exemptSelectors, only: rulesOnly,
-        contrastExempt: CONTRAST_EXEMPT.map((e) => e.sel), overflowExempt: OVERFLOW_EXEMPT.map((e) => e.sel) };
-      let found = await page.evaluate(probeInPage, opts);
-      await unseed();
-
-      // The classic defect — the last row trapped under the bottom bar — only exists once the
-      // page is scrolled to its end, so that rule is asked a second time down there.
-      //
-      // ⚠ The scroll is driven to a FIXED POINT and confirmed, not fired once and hoped for.
-      // Smooth scrolling plus content that settles after paint meant a single scrollTo left the
-      // page short of the end (measured: 1496 of 1567), so the second pass was reading an
-      // arbitrary mid-page position.
-      const wantsBottom = !rulesOnly || rulesOnly.includes('hidden-behind-chrome');
-      //
-      // ⚠ AND THE THING DRIVEN IS THE PAGE'S SCROLLER, which on a phone in the club admin is the
-      // locked shell's main column, not the document (2026-11-07). `lockedShellScroller` is the
-      // same finder the probe's R6 uses to decide `atEnd`; keep the two in step.
-      const reachedBottom = wantsBottom && await page.evaluate(async () => {
-        const de = document.documentElement;
-        const lockedShellScroller = () => {
-          const shell = de.scrollHeight <= de.clientHeight + 2 && document.querySelector('[data-admin-locked]');
-          if (!shell) return null;
-          let best = null, area = 0;
-          for (const s of Array.from(shell.querySelectorAll('*'))) {
-            if (!/(auto|scroll)/.test(getComputedStyle(s).overflowY) || s.scrollHeight <= s.clientHeight + 2) continue;
-            if (s.closest('[role="dialog"], dialog, [aria-modal="true"]')) continue;
-            const r = s.getBoundingClientRect();
-            if (r.width * r.height > area) { area = r.width * r.height; best = s; }
-          }
-          return best;
-        };
-        const target = lockedShellScroller() ?? de;
-        const prev = target.style.scrollBehavior;
-        target.style.scrollBehavior = 'auto';
-        let settled = false;
-        for (let i = 0; i < 30; i++) {
-          target.scrollTop = target.scrollHeight;
-          await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-          if (Math.abs(target.scrollTop + target.clientHeight - target.scrollHeight) <= 2) { settled = true; break; }
-        }
-        target.style.scrollBehavior = prev;
-        return settled;
-      });
-      if (wantsBottom && !reachedBottom) console.log(`      ! ${label}: page would not settle at its end — covered-by-chrome skipped`);
-      const atBottom = reachedBottom
-        ? await page.evaluate(probeInPage, { ...opts, only: ['hidden-behind-chrome'] })
-        : [];
-
-      const bySig = new Map();
-      for (const f of [...found, ...atBottom]) {
-        const k = `${f.rule}|${f.signature}`;
-        if (!bySig.has(k)) bySig.set(k, f);
-      }
-      const skip = new Set(screen.skip ?? []);
-      const kept = [...bySig.values()].filter((f) => !skip.has(f.rule));
-      for (const f of kept) findings.push({ ...f, screen: screen.id, width: w.name });
-
-      console.log(`  ${kept.length ? '·' : '✓'} ${label}${kept.length ? ` — ${kept.length} finding(s)` : ''}`);
+      if (++streak >= SESSION_DEAD_AFTER) { streak = 0; await recheck(session, label); }
     }
   } finally {
     await context.close().catch(() => {});
   }
 }
 
-let nextUnit = 0;
-const worker = async () => {
-  while (!aborted && nextUnit < units.length) await runUnit(units[nextUnit++]);
-};
-await Promise.all(Array.from({ length: Math.min(workers, units.length) }, worker));
-await browser.close();
-for (const u of units) {
-  findings.push(...u.findings);
-  navFailures.push(...u.navFailures);
-  landingFailures.push(...u.landingFailures);
+async function pool(items, fn) {
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(workers, items.length) }, async () => {
+    while (!aborted && next < items.length) await fn(items[next++]);
+  }));
 }
+
+await pool(units, runUnit);
+
+/**
+ * The one retry (header, item 3). Per dead screen: its first failed pair again, in a fresh context, with no settle
+ * shortcut. Rendered → its other set-aside widths are measured now. Not rendered → it is a failure with its own reason,
+ * and the rest are recorded unmeasured under it without being opened.
+ */
+async function retryPair({ unit, screen }) {
+  const context = await openContext(unit.session, unit.clock);
+  try {
+    const page = await openPage(context, unit.w);
+    return await timedLane(() => measureScreen(page, screen, unit.w, false));
+  } finally {
+    await context.close().catch(() => {});
+  }
+}
+const byScreen = new Map();
+for (const p of setAside) {
+  if (targetDead) { unmeasuredBy(targetDead, pairLabel(p.screen.id, p.unit.w.name), baseUrl + p.screen.path(ctx)); continue; }
+  if (deadSessions.has(p.unit.session)) { unmeasuredBy(deadSessions.get(p.unit.session), pairLabel(p.screen.id, p.unit.w.name), baseUrl + p.screen.path(ctx)); continue; }
+  if (!byScreen.has(p.screen.id)) byScreen.set(p.screen.id, []);
+  byScreen.get(p.screen.id).push(p);
+}
+if (byScreen.size && !aborted) {
+  console.log(`\nRetrying ${byScreen.size} screen(s) that did not render, once each, in a fresh context:`);
+  await pool([...byScreen.values()], async (pairs) => {
+    const first = pairs.find((p) => p.opened) ?? pairs[0];
+    await memoryGate(pairLabel(first.screen.id, first.unit.w.name));
+    if (aborted) return;
+    retries += 1;
+    const { r, ms } = await retryPair(first);
+    if (!record(first.unit, first.screen, first.unit.w, r, ms) && r.status === 'nav') {
+      const label = pairLabel(first.screen.id, first.unit.w.name);
+      navFailures.push({ label, url: baseUrl + first.screen.path(ctx), why: `did not render twice: ${r.why}` });
+      const cause = `not opened: ${label} did not render twice (${r.why})`;
+      for (const p of pairs) if (p !== first) unmeasuredBy(cause, pairLabel(p.screen.id, p.unit.w.name), baseUrl + p.screen.path(ctx));
+      return;
+    }
+    for (const p of pairs) {
+      if (p === first || aborted) continue;
+      await memoryGate(pairLabel(p.screen.id, p.unit.w.name));
+      if (aborted) return;
+      if (p.opened) retries += 1;
+      const again = await retryPair(p);
+      if (!record(p.unit, p.screen, p.unit.w, again.r, again.ms) && again.r.status === 'nav') {
+        navFailures.push({ label: pairLabel(p.screen.id, p.unit.w.name), url: baseUrl + p.screen.path(ctx), why: again.r.why });
+      }
+    }
+  });
+}
+
+await browser.close();
+for (const u of units) { findings.push(...u.findings); darkFindings.push(...u.darkFindings); }
+
+// ── the run's cost (header, item 7) ───────────────────────────────────────────
+const wallMs = Date.now() - runStarted;
+const cost = timingSummary(timings);
+const timing = {
+  wallMs, wall: formatDuration(wallMs), workers, budgetMs: BUDGET_MS, measured: cost.pairs, fromJournal: done.size,
+  p50Ms: cost.p50, p95Ms: cost.p95, slowest: cost.slowest, retries, pauses, lowWaterMb: memory.lowWater(), floorMb: memory.floor,
+};
+const costLine = `Run cost · ${timing.wall} wall-clock · ${workers} worker(s) · ${cost.pairs} pair(s) measured` +
+  `${done.size ? ` + ${done.size} from the journal` : ''} · p50 ${(cost.p50 / 1000).toFixed(1)} s · p95 ${(cost.p95 / 1000).toFixed(1)} s` +
+  ` · ${retries} retried · ${pauses} pause(s) · memory low ${timing.lowWaterMb} MB (floor ${timing.floorMb} MB)`;
+console.log(`\nSlowest pairs: ${cost.slowest.map((p) => `${p.label} ${(p.ms / 1000).toFixed(1)} s`).join(' · ') || '(none)'}`);
+// The cost is the run's LAST line, whichever way it ends below.
+process.on('exit', () => console.log(`${notServedLine ? `\n${notServedLine}` : ''}\n${costLine}`));
 
 // ⚠ Must come BEFORE anything that writes the baseline. An aborted sweep left screens
 // unmeasured, and unmeasured screens contribute no findings — so a baseline written from one
@@ -1637,11 +2149,15 @@ for (const u of units) {
 // failure is a countable, inspectable set of screens you might knowingly accept, whereas an
 // abort stopped at an arbitrary point with an unknown remainder. There is no case where
 // snapshotting that is the right thing to do, so the override is not offered.
+// (The journal keeps every pair measured before the abort, so the re-run with --resume measures only the rest.)
 if (aborted) {
   memory.report(aborted);
   process.exit(1);
 }
 memory.summarise();
+
+const causedCount = [...causes.values()].reduce((n, l) => n + l.length, 0);
+const unmeasuredCount = navFailures.length + landingFailures.length + causedCount;
 
 // `--dump`: every finding this run saw, keyed exactly as the baseline keys them, plus what could
 // not be measured — so two runs (a slice's before and after) diff as sets. Written before the
@@ -1655,21 +2171,41 @@ if (dumpFile) {
     sidebar,
     rules: rulesOnly ?? 'all',
     pairs: pairCount,
+    commit,
+    timing,
+    notServed,
     findings: Object.fromEntries(findings.map((f) => [keyOf(f), f.detail])),
-    unmeasured: [...navFailures.map((f) => f.label), ...landingFailures.map((f) => f.label)],
+    unmeasured: [...navFailures.map((f) => f.label), ...landingFailures.map((f) => f.label),
+      ...[...causes.values()].flat().map((f) => f.label)],
   }, null, 2) + '\n');
   console.log(`\nDump: ${path.relative(ROOT, out)} (${findings.length} findings)`);
+  if (withDark) {
+    // Shaped exactly as a `--theme=dark` run's dump, so the two diff as sets.
+    const darkOut = out.replace(/(\.json)?$/, '.dark.json');
+    const darkPairs = screens.reduce((n, s) => n + widths.filter((w) => runsAt(s, w) && darkAt(w)).length, 0);
+    writeFileSync(darkOut, JSON.stringify({
+      generated: new Date().toISOString(), theme: 'dark', sidebar, rules: ['contrast'], pairs: darkPairs, commit,
+      measured: 'in place, on the warm run\'s page (--with-dark)',
+      findings: Object.fromEntries(darkFindings.map((f) => [keyOf(f), f.detail])),
+    }, null, 2) + '\n');
+    console.log(`Dump: ${path.relative(ROOT, darkOut)} (${darkFindings.length} dark findings)`);
+  }
 }
 
 // ── hard failures first: a screen we could not measure is not a pass ──────────
-if (navFailures.length || landingFailures.length) {
+if (unmeasuredCount) {
   console.error('\n✗ Screens that could not be measured — these are failures, not skips:');
   for (const f of navFailures) console.error(`    ${f.label} — ${f.why}\n      ${f.url}`);
   for (const f of landingFailures) console.error(`    ${f.label} — landed on "${f.saw}"\n      ${f.url}`);
+  for (const [cause, list] of causes) {
+    console.error(`    ${list.length} pair(s) — ${cause}`);
+    console.error(`      ${list.slice(0, 12).map((f) => f.label).join(', ')}${list.length > 12 ? `, …and ${list.length - 12} more` : ''}`);
+  }
   console.error(`\n  Usual causes: the fixture is incomplete (node scripts/seed-uat-coach-fixture.mjs),`);
-  console.error(`  the session is stale (npx playwright test --config playwright.config.ts --project=auth-setup),`);
-  console.error(`  or the dev server died mid-run — a full sweep has exhausted its heap before now,`);
-  console.error(`  which kills every remaining screen. Restart it and re-run the missing width.`);
+  console.error(`  the session is stale (${AUTH_REPAIR}),`);
+  console.error(remote
+    ? `  or the target stopped answering. Re-run just the missing screens with --only=<ids>.`
+    : `  or the dev server died mid-run — a full sweep has exhausted its heap before now,\n  which kills every remaining screen. Restart it and re-run the missing width.`);
   if (mode === 'check') process.exit(1);
 
   // ⚠ NEVER snapshot a partial run. An unmeasured screen contributes no findings, so a baseline
@@ -1678,7 +2214,7 @@ if (navFailures.length || landingFailures.length) {
   // exact thing happened on 2026-08-02: the server ran out of memory during the 1440 pass and 26
   // of 112 combinations went unmeasured, which would have overstated a colour fix by a wide margin.
   if ((mode === 'init' || mode === 'prune') && !has('--allow-partial')) {
-    console.error(`\n✗ Refusing to write the baseline from an incomplete run (${navFailures.length + landingFailures.length} unmeasured).`);
+    console.error(`\n✗ Refusing to write the baseline from an incomplete run (${unmeasuredCount} unmeasured).`);
     console.error(`  Fix the cause and re-run, or narrow the run: --width=<w> / --only=<ids>.`);
     console.error(`  To override deliberately: --allow-partial`);
     process.exit(1);
@@ -1686,32 +2222,10 @@ if (navFailures.length || landingFailures.length) {
 }
 
 // ── modes ─────────────────────────────────────────────────────────────────────
-const baseline = readBaseline();
-
-if (mode === 'init') {
-  const entries = {};
-  const previous = baseline.entries ?? {};
-  // A strip run records only what the full sidebar does not already have, under its own key.
-  const recorded = stripRun ? findings.filter((f) => !(keyOf(f) in previous)) : findings;
-  for (const f of recorded) {
-    const k = keyFor(f);
-    entries[k] = { reason: previous[k]?.reason ?? null, detail: f.detail };
-  }
-  // Keep every entry this run does not own (a --only run must not erase the rest of the file, and a strip
-  // run never rewrites the full sidebar's entries, nor a full run the strip's).
-  const covered = new Set(recorded.map(keyFor));
-  for (const [k, v] of Object.entries(previous)) {
-    if (!ownsKey(k) && !covered.has(k)) entries[k] = v;
-  }
-  writeFileSync(BASELINE, JSON.stringify({ generated: new Date().toISOString(), entries }, null, 2) + '\n');
-  const unexplained = Object.values(entries).filter((e) => !e.reason).length;
-  console.log(`\nBaseline written: ${Object.keys(entries).length} entr(ies), ${unexplained} without a reason.`);
-  console.log(`  ${path.relative(ROOT, BASELINE)}`);
-  process.exit(0);
-}
-
+const baseline = readBaseline(BASELINE);
 const known = baseline.entries ?? {};
-const seen = new Set(findings.map(keyFor));
+/** Dark's own accepted list (ask A3) — null on any other run. */
+const darkKnown = theme === 'dark' ? readBaseline(DARK_BASELINE).entries ?? {} : null;
 /**
  * A dark run matches contrast on the ELEMENT: a contrast signature ends in the colours it was read
  * at, which differ between the themes by design, so a whole-key match would call every dark reading
@@ -1722,10 +2236,44 @@ const elementKey = (k) => (k.split('|')[2] === 'contrast' ? k.replace(/·[^·]*o
 const knownElements = theme === 'dark' ? new Set(Object.keys(known).map(elementKey)) : null;
 /** Known with the full sidebar — or, in a strip run, under the strip's own key too. */
 const isKnownKey = (k) => (knownElements ? knownElements.has(elementKey(k)) : k in known);
-const fresh = findings.filter((f) => !isKnownKey(keyOf(f)) && !(stripRun && isKnownKey(stripKeyOf(f))));
+const knownInWarm = (f) => isKnownKey(keyOf(f)) || (stripRun && isKnownKey(stripKeyOf(f)));
+/** Accepted on dark's own list: whole key, colours included, so a changed colour reads as new again. */
+const knownInDark = (f) => !!darkKnown && (keyFor(f) in darkKnown || (stripRun && keyOf(f) in darkKnown));
+
+if (mode === 'init') {
+  // A dark run writes dark's own list, and only what warm does not already hold: the dark-only findings.
+  const file = darkKnown ? DARK_BASELINE : BASELINE;
+  const previous = darkKnown ?? known;
+  const entries = {};
+  // A strip run records only what the full sidebar does not already have, under its own key.
+  const recorded = darkKnown
+    ? findings.filter((f) => !knownInWarm(f) && !(stripRun && keyOf(f) in previous))
+    : stripRun ? findings.filter((f) => !(keyOf(f) in previous)) : findings;
+  for (const f of recorded) {
+    const k = keyFor(f);
+    entries[k] = { reason: previous[k]?.reason ?? null, detail: f.detail };
+  }
+  // Keep every entry this run does not own (a --only run must not erase the rest of the file, and a strip
+  // run never rewrites the full sidebar's entries, nor a full run the strip's).
+  const covered = new Set(recorded.map(keyFor));
+  for (const [k, v] of Object.entries(previous)) {
+    if (!ownsKey(k) && !covered.has(k)) entries[k] = v;
+  }
+  writeFileSync(file, JSON.stringify({ generated: new Date().toISOString(), entries }, null, 2) + '\n');
+  const unexplained = Object.values(entries).filter((e) => !e.reason).length;
+  console.log(`\nBaseline written: ${Object.keys(entries).length} entr(ies), ${unexplained} without a reason.`);
+  console.log(`  ${path.relative(ROOT, file)}`);
+  process.exit(0);
+}
+
+const seen = new Set(findings.map(keyFor));
+const fresh = findings.filter((f) => !knownInWarm(f) && !knownInDark(f));
 // ⚠ A run limited to some rules cannot say an entry of ANOTHER rule stopped reproducing — it never
 // asked. Without this, a contrast-only run listed every geometry entry as "the ratchet can tighten".
-const stale = rulesOnly ? [] : Object.keys(known).filter((k) => ownsKey(k) && !seen.has(k));
+// A dark run can say it of dark's own list, which holds contrast only.
+const stale = darkKnown
+  ? Object.keys(darkKnown).filter((k) => ownsKey(k) && !seen.has(k))
+  : rulesOnly ? [] : Object.keys(known).filter((k) => ownsKey(k) && !seen.has(k));
 
 if (mode === 'prune') {
   const entries = { ...known };
@@ -1766,6 +2314,31 @@ if (mode === 'report') {
 
 // ── check ─────────────────────────────────────────────────────────────────────
 console.log('');
+/**
+ * `--with-dark`: the dark findings judged exactly as a `--theme=dark` run judges them — NEW means not known in warm
+ * (matched on the ELEMENT, see `elementKey`) and not on dark's own accepted list (whole key).
+ */
+let darkFresh = [];
+if (withDark) {
+  const darkList = readBaseline(DARK_BASELINE).entries ?? {};
+  const warmElements = new Set(Object.keys(known).map(elementKey));
+  const inWarm = (f) => warmElements.has(elementKey(keyOf(f))) || (stripRun && warmElements.has(elementKey(stripKeyOf(f))));
+  const inDark = (f) => keyFor(f) in darkList || (stripRun && keyOf(f) in darkList);
+  darkFresh = darkFindings.filter((f) => !inWarm(f) && !inDark(f));
+  if (darkFresh.length) {
+    console.error(`✗ ${darkFresh.length} NEW dark-mode contrast finding(s) (read in place):\n`);
+    const byScreen = {};
+    for (const f of darkFresh) (byScreen[f.screen] ??= []).push(f);
+    for (const [screen, list] of Object.entries(byScreen)) {
+      console.error(`  ${screen}`);
+      for (const f of list) console.error(`    @${f.width} [${f.rule}] ${f.signature}\n        ${f.detail}`);
+    }
+    console.error(`\n  Fix them, or — on the owner's word — record dark's list with a reason from a real dark run:`);
+    console.error(`    node scripts/check-layout-invariants.mjs --theme=dark --init${stripRun ? ' --sidebar=strip' : ''}\n`);
+  } else {
+    console.log(`✓ No new dark-mode contrast findings (${darkFindings.length} read in place; dark's list: ${Object.keys(darkList).length} accepted).`);
+  }
+}
 if (fresh.length) {
   console.error(`✗ ${fresh.length} NEW layout finding(s):\n`);
   const byScreen = {};
@@ -1775,9 +2348,9 @@ if (fresh.length) {
     for (const f of list) console.error(`    @${f.width} [${f.rule}] ${f.signature}\n        ${f.detail}`);
   }
   if (theme === 'dark') {
-    // --init refuses a theme (the baseline is recorded warm), so its hint would send you to a refusal.
-    console.error(`\n  Fix them. A dark run has no baseline of its own, so a deliberate one is recorded with the`);
-    console.error(`  sweep's findings, not here — it will be reported again on every dark run until it is fixed.`);
+    // Dark has its own accepted list (ask A3): a deliberate dark-only finding is recorded there, on the owner's word.
+    console.error(`\n  Fix them, or — if one is a deliberate decision, on the owner's word — record dark's list with a reason:`);
+    console.error(`    node scripts/check-layout-invariants.mjs --theme=dark --init${stripRun ? ' --sidebar=strip' : ''}   (then write the reason into the entry)`);
   } else if (adHocWidth) {
     // --init refuses an ad-hoc width (it has no baseline), so every finding here reads as new by design.
     console.error(`\n  ${onlyWidth} has no baseline, so every finding reads as new: --dump this run in both sidebar states and diff them.`);
@@ -1788,11 +2361,16 @@ if (fresh.length) {
   process.exit(1);
 }
 
-const unexplained = Object.values(known).filter((e) => !e.reason).length;
-console.log(`✓ No new layout findings. Baseline: ${Object.keys(known).length} known (${unexplained} without a reason).`);
+const ownList = darkKnown ?? known;
+const unexplained = Object.values(ownList).filter((e) => !e.reason).length;
+console.log(`✓ No new layout findings. ${darkKnown ? `Dark's list: ${Object.keys(darkKnown).length} accepted, warm: ${Object.keys(known).length} known` : `Baseline: ${Object.keys(known).length} known`} (${unexplained} without a reason).`);
 if (stale.length) {
-  console.log(`\n  ${stale.length} baseline entr(ies) no longer reproduce — the ratchet can tighten:`);
+  console.log(`\n  ${stale.length} ${darkKnown ? "of dark's accepted entr(ies)" : 'baseline entr(ies)'} no longer reproduce — the ratchet can tighten:`);
   for (const k of stale.slice(0, 15)) console.log(`    ${k}`);
   if (stale.length > 15) console.log(`    …and ${stale.length - 15} more`);
-  console.log(`  Drop them: node scripts/check-layout-invariants.mjs --prune`);
+  console.log(darkKnown
+    ? "  Drop them: re-run the same dark run with --init (on the owner's word); it rewrites only what it measured."
+    : '  Drop them: node scripts/check-layout-invariants.mjs --prune');
 }
+// `--with-dark`: warm passed, but a NEW dark finding still fails the run (printed above, before the warm verdict).
+if (darkFresh.length) process.exit(1);

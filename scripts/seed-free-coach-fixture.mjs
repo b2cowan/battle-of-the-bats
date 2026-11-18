@@ -120,6 +120,37 @@ if (!teamId) {
   ok(`free team already present (${teamId})`);
 }
 
+// ── the team stays FREE: a link to a Premium portal that has ENDED is cleared ─────────────────
+// The support-console walks (Stage 4b, §414–§416, 2026-10-30) gave this coach free time, which links the free team to a
+// Premium portal. When that portal ends, the product treats the team as free again, but the link stays, and the layout
+// sweep's resolver refuses any linked team, so 12 free-coach screens went unmeasured for two releases. Clearing the link
+// returns the fixture to its spec above. ⚠ A portal that is still RUNNING is left alone and the script stops: a walk
+// may be using it. Only the team's link is written. The portal, its membership and its history are kept, and
+// `team_workspaces.basic_coach_team_id` is left set, so nothing builds a second free team for it.
+{
+  const { data: linked, error: lErr } = await db.from('basic_coach_teams').select('team_workspace_id').eq('id', teamId).single();
+  if (lErr) die('read team link', lErr);
+  const wsId = linked.team_workspace_id;
+  if (wsId) {
+    const { data: ws, error: wErr } = await db.from('team_workspaces').select('subscription_status').eq('id', wsId).maybeSingle();
+    if (wErr) die('read linked portal', wErr);
+    const { data: ents, error: eErr } = await db.from('team_entitlements').select('status, ends_at').eq('team_workspace_id', wsId);
+    if (eErr) die('read linked portal entitlements', eErr);
+    const now = Date.now();
+    const running = ws && ws.subscription_status !== 'canceled' ||
+      (ents ?? []).some(e => e.status === 'active' && (!e.ends_at || Date.parse(e.ends_at) > now));
+    if (running) {
+      console.error(`✗ The free team is linked to a Premium portal that is still running (${wsId}). A walk may be using it:`);
+      console.error('  end it in the support console first (End it now), then re-run this script.');
+      process.exit(1);
+    }
+    const { error: uErr } = await db.from('basic_coach_teams')
+      .update({ team_workspace_id: null, updated_at: new Date().toISOString() }).eq('id', teamId).eq('team_workspace_id', wsId);
+    if (uErr) die('clear the ended portal link', uErr);
+    ok(`cleared the link to an ended Premium portal (${wsId}); the portal and its history are kept`);
+  }
+}
+
 // ── the tools turned on (mig 211 function, as the product does it) ───────────
 for (const feature of FEATURES) {
   const { error } = await db.rpc('set_basic_coach_team_feature', { p_team_id: teamId, p_feature: feature, p_active: true });

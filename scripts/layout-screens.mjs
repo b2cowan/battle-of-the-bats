@@ -1926,9 +1926,14 @@ export const SCREENS = [
   { id: 'mkt-walkthrough-tourn', session: 'anon', path: () => '/for-tournament-organizers/walkthrough', ready: 'h1', widths: ['320'] },
   // The legal pages (GST/HST Stage 6 step 6.2): marketing ground, dark until step 6.7 — measured only where LEGAL_PAGES_PREVIEW is on (dev);
   // anywhere else the route answers 'not found' and the entry measures that screen instead.
+  // ⚠ `onlyWhereServed` (Release process hardening, Stage 1A, 2026-11-15): on staging they 404 by design, so the sweep's
+  // first minute takes them out of the run BY NAME and lists them on every run, rather than failing every release on a
+  // switch this list does not own. When the switch is on, they are swept like any other screen.
   { id: 'mkt-legal-terms',       session: 'anon', path: () => '/legal/terms',                        ready: 'h1', widths: ['320'], route: 'app/legal/terms/page',
+    onlyWhereServed: 'the legal pages are dark until GST/HST Stage 6 step 6.7 switches them on; the dev server shows them with LEGAL_PAGES_PREVIEW=true',
     skip: ['tap-floor'], note: 'Long-form prose: its inline links (a section number, an address) sit in running sentences, which WCAG 2.5.8 exempts from the target size. The footer rows and the sign-in line are 44px and are held by legal-links-surfaces-guard.' },
   { id: 'mkt-legal-privacy',     session: 'anon', path: () => '/legal/privacy',                      ready: 'h1', widths: ['320'], route: 'app/legal/privacy/page',
+    onlyWhereServed: 'the legal pages are dark until GST/HST Stage 6 step 6.7 switches them on; the dev server shows them with LEGAL_PAGES_PREVIEW=true',
     skip: ['tap-floor'], note: 'Long-form prose: same reason as the Terms page.' },
 
   /*
@@ -2111,11 +2116,6 @@ export const SCREENS = [
     route: 'app/[orgSlug]/[tournamentSlug]/news' },
   { id: 'pubt-rules-pale',        session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/rules',    ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/rules' },
-  { id: 'pubt-champions-after',   session: 'anon', path: () => '/stage1-northfield/fall-ball/champions',            ready: '[data-public-frame-band]',
-    route: 'app/[orgSlug]/[tournamentSlug]/champions' },
-  // Stage 7: the focused page (the team pay page) — the slim band, the page, the short footer. A real pay link is signed
-  // with the environment's secret and changes with every walk-fixture reset, so the entry opens a link that does not
-  // work: the same focused chrome, the broken-link sentence, on every environment. The paying states were measured on
   // Stage 10 (printable rules): a section opened — the numbered points (3.1, 3.2) in the desk's window and the phone's
   // in-place panel; the closed entry above measures the numbered rows and the download in the note's row. The fixture's
   // sections are all untagged, so a narrowed copy would measure this same page; its states belong to the walk fixtures.
@@ -2142,6 +2142,11 @@ export const SCREENS = [
       await page.locator('[data-public-frame-band]').waitFor({ state: 'visible' });
       await page.locator('a[href$="/rules/pdf"]').first().waitFor({ state: 'attached' });
     } },
+  { id: 'pubt-champions-after',   session: 'anon', path: () => '/stage1-northfield/fall-ball/champions',            ready: '[data-public-frame-band]',
+    route: 'app/[orgSlug]/[tournamentSlug]/champions' },
+  // Stage 7: the focused page (the team pay page) — the slim band, the page, the short footer. A real pay link is signed
+  // with the environment's secret and changes with every walk-fixture reset, so the entry opens a link that does not
+  // work: the same focused chrome, the broken-link sentence, on every environment. The paying states were measured on
   // the real links (Stage 7 Part 2, the walk fixture); the ready marker fails loudly if the page is not focused.
   { id: 'pubt-pay-focused',       session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/pay/not-a-real-link', ready: '[data-public-frame-focused-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/pay/[token]' },
@@ -2237,10 +2242,47 @@ export const SCREENS = [
  * is red everywhere is a gate nobody runs" failure the runner's own header warns about — except
  * worse, because it would arrive pre-silenced.
  */
+/*
+ * ⚠ 390 IS ON DEMAND, NOT DEFAULT (owner, 2026-11-15, Release process hardening Stage 1A). `onDemand: true` means a
+ * width every screen is swept at WHEN IT IS NAMED (`--width=390`), and that no default run includes. The evidence: of
+ * the 785 baseline entries ever recorded at 390, every one was also recorded at 361 (2026-11-15), and the half-product
+ * run that day found the same 105 findings at both. Both widths sit under every portal breakpoint (640 content, 900
+ * shell), and 361 is the narrower, so 390 caught nothing 361 did not, at a quarter of the sweep's cost. Its baseline
+ * entries are kept: a `--width=390` run reads, writes and prunes them; a default run never touches them.
+ */
 export const WIDTHS = [
   { name: '320', width: 320, height: 780, optIn: true },
   { name: '361', width: 361, height: 780 },
-  { name: '390', width: 390, height: 844 },
+  { name: '390', width: 390, height: 844, onDemand: true },
   { name: '768', width: 768, height: 1024 },
   { name: '1440', width: 1440, height: 900 },
+];
+
+/**
+ * FIXTURES THAT EXPIRE WITH THE CLOCK, checked in the sweep's first minute (Release process hardening, Stage 1A,
+ * 2026-11-15).
+ *
+ * The public tournament screens above measure states of the CLOCK: a game is live from its start to 2 hours after it,
+ * and a bracket is "upcoming" while its next game is ahead. Their fixtures are dated from the moment they were prepared,
+ * so they expire. On 2026-11-14, 35 such pairs did not render on staging, and the run spent 2 h 18 min waiting on them.
+ * The pages were right: the games had finished days before.
+ *
+ * Each check reads the page's SERVER-rendered HTML for the state its screens need. (The playoffs page renders its
+ * state from the server's clock, so a plain fetch answers it without a browser.) A check runs only when one of its
+ * `screens` is in the run. `repair` is the one command that re-dates them all.
+ */
+const PUBLIC_FIXTURE_REPAIR = 'node scripts/refresh-layout-public-fixtures.mjs   (DEV only; never while a sweep runs)';
+export const FIXTURE_CHECKS = [
+  { what: 'the Lakeshore Fall Classic has a live semifinal (Stage 3 fixture)',
+    path: '/stage1-lakeshore-lightning/fall-classic/playoffs', expect: /data-public-playoffs="live"/,
+    screens: ['pubt-schedule-live', 'pubt-schedule-many-days', 'pubt-schedule-playoffs', 'pubt-game-live'], repair: PUBLIC_FIXTURE_REPAIR },
+  { what: 'the Metro "live" clone has a live final (Stage 4 fixture)',
+    path: '/stage1-metro-sports/stage4-live/playoffs', expect: /data-public-playoffs="live"/,
+    screens: ['pubt-standings-playoffs', 'pubt-playoffs-live'], repair: PUBLIC_FIXTURE_REPAIR },
+  { what: 'the Metro "seeded" clone has a bracket still to play (Stage 4 fixture)',
+    path: '/stage1-metro-sports/stage4-seeded/playoffs', expect: /data-public-playoffs="upcoming"/,
+    screens: ['pubt-playoffs-seeded'], repair: PUBLIC_FIXTURE_REPAIR },
+  { what: 'the Metro "eight" clone has a bracket still to play (Stage 4 fixture)',
+    path: '/stage1-metro-sports/stage4-eight/playoffs', expect: /data-public-playoffs="upcoming"/,
+    screens: ['pubt-playoffs-eight', 'pubt-schedule-bracket-only'], repair: PUBLIC_FIXTURE_REPAIR },
 ];

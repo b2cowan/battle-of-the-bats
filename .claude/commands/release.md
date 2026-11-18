@@ -234,17 +234,27 @@ Nothing else in the pipeline opens a page in a browser and measures it: sideways
 
 **First:** the latest `dev` build on Amplify succeeded, and it is the commit being promoted. A sweep of an older build says nothing about this one. The local checkout must be at that commit too (`git rev-parse HEAD` equals `git rev-parse origin/dev` after a fetch), because the screen list is read from it. `dev.fieldlogichq.ca` and the `amplifyapp.com` address in §1d-2 are the same staging site.
 
+**Before each run:** no type-check or other heavy check is running on the PC, in this session or another (the sweep's browsers share the PC's memory with them; that is what aborted the 2026-11-05 and 2026-11-15 attempts). Then re-date the public tournament fixtures, which expire with the clock (a game is live for 2 hours), right before the run (they stay live for about 1 h 50 min, which the whole run fits inside):
+
 ```powershell
+node scripts/refresh-layout-public-fixtures.mjs        # DEV only; never while a sweep is running
 $env:UAT_BASE_URL = 'https://dev.fieldlogichq.ca'
-npm run check:layout -- --dump=.probe/release-<date>/warm.json
-npm run check:layout -- --theme=dark --dump=.probe/release-<date>/dark.json
+npm run check:layout -- --with-dark --dump=.probe/release-<date>/warm.json
 Remove-Item Env:UAT_BASE_URL
 ```
-- Both run 4 pages at once by default when `UAT_BASE_URL` is set. The dark run measures **contrast only**, at 361 and 1440 (the theme changes no geometry; see the tool's header). Measured on 10 screens (2026-10-13): **43 seconds** against a production build, against **233** for the old way on the dev server, with identical findings. The whole product (268 screens), measured 2026-10-13 on staging: **16 minutes warm, 8 dark**. ⚠ Free memory on the PC fell to within ~230 MB of the abort floor in that warm run, with another session working beside it. If it aborts, re-run with `--workers=2`. An abort is a failure, never a pass.
+- **One run covers both themes.** `--with-dark` reads dark-mode contrast on each warm page at 361 and 1440 by flipping the theme in place, instead of opening every screen a second time (owner 2026-11-15; proven identical to a real dark run on a 38-pair slice). The dark findings print as their own NEW list and are dumped to `warm.dark.json`. A separate `--theme=dark` run is still the real thing, and the only run that writes dark's accepted list (`--theme=dark --init`, owner's word only).
+- **The first minute decides whether the run can work.** Before any screen it checks that staging answers, every fixture resolves (including the public tournament fixtures), every saved sign-in is signed in, and one screen per sign-in opens. All problems print together, each with its repair line, and nothing is swept. Fix them and re-run.
+- **An interrupted run is not lost.** Every finished screen is kept. Re-run the same command with `--resume` and it measures only the rest; the dump and the NEW comparison cover the whole set. A resume after a new commit, another address or another screen list is refused (start fresh).
+- **Low memory pauses, then aborts.** The run waits up to 10 minutes for memory to come back, then continues one page at a time. If it does not come back, it aborts (exit non-zero): close the other heavy work and re-run with `--resume`. An abort is a failure, never a pass.
+- **A dead screen costs seconds.** It is retried once at the end; if it still does not render, its other widths are recorded unmeasured under its reason without being opened.
+- **The last line is the run's cost:** wall-clock, per-screen p50/p95, retries, pauses, workers and the memory low-water mark. Copy it into the release-history record. The measured figures and budgets have one home, the tool's header (`scripts/check-layout-invariants.mjs`, "HOW A RUN STARTS, FAILS, RESUMES AND REPORTS").
+- Warm measures 361, 768 and 1440 (plus 320 on the marketing pages). 390 is on demand only (`--width=390`; owner 2026-11-15: it never found anything 361 did not).
+- Both run 4 pages at once by default when `UAT_BASE_URL` is set; `--workers=2` (or 1) on a busy PC. The dark run measures **contrast only**, at 361 and 1440 (the theme changes no geometry; see the tool's header).
 - ✅ No NEW findings and nothing unmeasured → continue.
-- ✖ **NEW findings → STOP for the owner.** For each: the screen and width, what a person sees, and the commit since the last release that caused it. The owner either has it fixed (a push to `dev`, a fresh staging build, then that side re-run with `--only`) or accepts it with a written reason (warm: recorded in the baseline with `--init`, on the owner's word only; dark has no baseline, so it goes in the release summary). **Never** an `--init` or baseline edit just to make a finding pass.
+- ✖ **NEW findings → STOP for the owner.** For each: the screen and width, what a person sees, and the commit since the last release that caused it. The owner either has it fixed (a push to `dev`, a fresh staging build, then that side re-run with `--only`) or accepts it with a written reason, recorded with `--init` on the owner's word only (warm: the baseline; dark: dark's own accepted list, `--theme=dark --init`, which holds only what warm does not). **Never** an `--init` or baseline edit just to make a finding pass.
 - ✖ **Unmeasured screens are failures, not skips.** Re-run just those (`--only=<ids>`). If one keeps failing, say which and why.
-- ⚠ `✗ The "<x>" session is not signed in` means the saved test sign-ins are stale, or the address is wrong (never production). Running `auth-setup` signs every other session out, so ask the owner first.
+- ⚠ `The "<x>" session is not signed in` means the saved test sign-ins are stale, or the address is wrong (never production). Running `auth-setup` signs every other session out, so ask the owner first.
+- ⚠ `Fixture expired or missing` on a public tournament screen: run `node scripts/refresh-layout-public-fixtures.mjs`, then re-run. `UAT fixture unavailable` on the free coach: `node scripts/seed-free-coach-fixture.mjs` (it clears the link to a Premium portal that has ended, and stops if one is still running).
 
 This is the confirmation, not the hunt: a building session runs `npm run check:layout -- --changed` on the dev server for the screens it touched, so most releases should come back clean here.
 
