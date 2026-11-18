@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
-import { isCronRequest } from '@/lib/cron-auth';
+import { scheduledCall } from '@/lib/cron-auth';
 import { runTodaysBillingDriftCheck } from '@/lib/billing-drift-server';
 
 /**
@@ -17,8 +17,10 @@ export const maxDuration = 300;
 type Step = { step: string; ok: boolean; result?: unknown; error?: string };
 
 export const POST = withObservability(async (req: Request) => {
+  const { machine, refused } = await scheduledCall(req);
+  if (refused) return refused;
   let actor = 'cron-scheduler';
-  if (!isCronRequest(req)) {
+  if (!machine) {
     const auth = await requirePlatformPower('run_jobs');
     if (auth.response) return auth.response;
     actor = auth.user.email ?? 'platform-admin';

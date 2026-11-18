@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
-import { isCronRequest } from '@/lib/cron-auth';
+import { scheduledCall } from '@/lib/cron-auth';
 import { runDueResets } from '@/lib/two-step-support-reset';
 import { GRACE_EMAIL_BUDGET_MS, sendDueGraceEmails } from '@/lib/two-step-grace-emails';
 
@@ -22,9 +22,11 @@ import { GRACE_EMAIL_BUDGET_MS, sendDueGraceEmails } from '@/lib/two-step-grace-
 export const maxDuration = 120;
 
 export const POST = withObservability(async (req: Request) => {
+  const { machine, refused } = await scheduledCall(req);
+  if (refused) return refused;
   const startedAt = Date.now();
   let actor = 'cron-scheduler';
-  if (!isCronRequest(req)) {
+  if (!machine) {
     const auth = await requirePlatformPower('run_jobs');
     if (auth.response) return auth.response;
     actor = auth.user.email ?? 'platform-admin';

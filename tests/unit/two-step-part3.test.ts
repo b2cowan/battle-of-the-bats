@@ -262,7 +262,8 @@ describe('5 · support’s reset', () => {
   });
   it('the hourly job: the scheduler’s secret, or a person with run_jobs', () => {
     const job = readCode('app/api/platform-admin/two-step-resets-hourly/route.ts');
-    assert.match(job, /if \(!isCronRequest\(req\)\) \{\s*const auth = await requirePlatformPower\('run_jobs'\);/);
+    assert.match(job, /await scheduledCall\(req\);\s*if \(refused\) return refused;/);
+    assert.match(job, /if \(!machine\) \{\s*const auth = await requirePlatformPower\('run_jobs'\);/);
   });
   it('the confirmation route is POST only (an email scanner confirms nothing)', () => {
     const route = readCode('app/api/auth/two-step/confirm-reset/route.ts');

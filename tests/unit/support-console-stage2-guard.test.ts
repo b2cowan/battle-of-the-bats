@@ -248,7 +248,8 @@ describe('6 · every console API resolves its role through the one powers list',
         const gate = handler.search(GATES);
         assert.ok(gate > 0, `${m[1]} has a gate`);
         const before = handler.slice(0, gate).replace(/await\s*$/, '');
-        assert.doesNotMatch(before.replace(/isCronRequest\(req\)/, ''), /await (?!params)/, `${m[1]}: nothing is awaited before the gate`);
+        // A scheduled job's first gate is scheduledCall (the secret, then this database's receipt; trust call 21).
+        assert.doesNotMatch(before.replace(/await scheduledCall\(req\)/, ''), /await (?!params)/, `${m[1]}: nothing is awaited before the gate`);
       }
     });
   }

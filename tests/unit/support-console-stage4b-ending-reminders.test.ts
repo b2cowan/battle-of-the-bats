@@ -99,7 +99,7 @@ describe('the wiring', () => {
     assert.doesNotMatch(job, /cancel|retention/i);
   });
   it('the route takes the scheduler secret or run_jobs, and writes one audit row', () => {
-    assert.match(route, /isCronRequest\(req\)/);
+    assert.match(route, /scheduledCall\(req\)/);
     assert.match(route, /requirePlatformPower\('run_jobs'\)/);
     assert.match(route, /writePlatformAuditLog\(actor, null, 'portal_free_time_sweep'/);
   });

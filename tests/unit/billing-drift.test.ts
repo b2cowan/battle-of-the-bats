@@ -195,7 +195,7 @@ describe('Part 11: guards (read-only, the door, the schedule)', () => {
   });
 
   it('the route answers the scheduler secret or the run_jobs power, and a failed comparison is not a green 200', () => {
-    assert.match(route, /isCronRequest\(req\)/);
+    assert.match(route, /scheduledCall\(req\)/);
     assert.match(route, /requirePlatformPower\('run_jobs'\)/);
     assert.match(route, /status: ok \? 200 : 207/);
     assert.match(route, /could_not_compare/);

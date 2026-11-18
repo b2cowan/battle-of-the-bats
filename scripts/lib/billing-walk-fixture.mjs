@@ -45,3 +45,11 @@ export async function signInCookie({ url, anonKey, email, password }) {
   if (!jar.size) throw new Error(`sign-in ${email}: no session cookie was written`);
   return [...jar.entries()].map(([name, value]) => `${name}=${value}`).join('; ');
 }
+
+/** Fire a scheduled job on the dev server the way the scheduler does (trust call 21, mig 502): the key, plus a one-use
+ *  receipt this database holds for that job. `jobName` is the tick's heartbeat name, so the tick's own purge clears the row. */
+export async function fireJob(db, { base, path, jobName, secret }) {
+  const { data, error } = await db.from('cron_call_receipts').insert({ job_name: jobName, path }).select('id').single();
+  if (error || !data) throw new Error(`writing the job receipt (is migration 502 on dev?): ${error?.message ?? 'no row'}`);
+  return fetch(`${base}${path}`, { method: 'POST', headers: { 'x-cron-secret': secret, 'x-cron-receipt': data.id } });
+}

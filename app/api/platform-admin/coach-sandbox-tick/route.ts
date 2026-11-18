@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability, captureError } from '@/lib/observability';
-import { isCronRequest } from '@/lib/cron-auth';
+import { scheduledCall } from '@/lib/cron-auth';
 import { reconcileCoachSandbox } from '@/lib/demo-coach-reconcile';
 
 /**
@@ -24,7 +24,8 @@ import { reconcileCoachSandbox } from '@/lib/demo-coach-reconcile';
 export const maxDuration = 60;
 
 export const POST = withObservability(async (req: Request) => {
-  const machine = isCronRequest(req);
+  const { machine, refused } = await scheduledCall(req);
+  if (refused) return refused;
   let actor = 'cron-scheduler';
   if (!machine) {
     const auth = await requirePlatformPower('run_jobs');

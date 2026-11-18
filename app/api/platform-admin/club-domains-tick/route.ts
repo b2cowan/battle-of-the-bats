@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
-import { isCronRequest } from '@/lib/cron-auth';
+import { scheduledCall } from '@/lib/cron-auth';
 import { runClubDomainTick } from '@/lib/club-domain-tick';
 import { clubDomainTickDeps } from '@/lib/club-domain-tick-deps';
 
@@ -19,7 +19,8 @@ import { clubDomainTickDeps } from '@/lib/club-domain-tick-deps';
 export const maxDuration = 300;
 
 export const POST = withObservability(async (req: Request) => {
-  const machine = isCronRequest(req);
+  const { machine, refused } = await scheduledCall(req);
+  if (refused) return refused;
   let actor = 'cron-scheduler';
   if (!machine) {
     const auth = await requirePlatformPower('run_jobs');

@@ -30,7 +30,7 @@
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { ensureUser, refusal } from './lib/billing-walk-fixture.mjs';
+import { ensureUser, fireJob, refusal } from './lib/billing-walk-fixture.mjs';
 import { findUserByEmail } from './lib/fixture-user.mjs';
 
 const MARKER = 'gst-6-4-walk-fixture';
@@ -253,7 +253,7 @@ async function runDaily() {
   const secret = process.env.CRON_SECRET;
   if (!secret) { console.error('CRON_SECRET is not set in .env.local.'); process.exit(1); }
   head(`Running the daily job on ${BASE} (all its steps; the secret is read from .env.local and never printed)`);
-  const res = await fetch(`${BASE}/api/platform-admin/stripe-fees-daily`, { method: 'POST', headers: { 'x-cron-secret': secret } }).catch(e => die('request', e));
+  const res = await fireJob(db, { base: BASE, path: '/api/platform-admin/stripe-fees-daily', jobName: 'stripe_fees_tick', secret }).catch(e => die('request', e));
   const text = await res.text();
   let body; try { body = JSON.parse(text); } catch { console.error(`✗ HTTP ${res.status}: ${text.slice(0, 300)}`); process.exit(1); }
   console.log(`  HTTP ${res.status}, ok=${body.ok}`);

@@ -52,6 +52,13 @@
 > open on a database error and compares stored emails case-sensitively. The accept page without `?org` accepts the
 > oldest pending row. `scripts/backfill-invited-email.mjs` predates the empty-email mark.
 >
+> **Status, 21 (built 2026-11-18, dev; commit hashes on the queue's PROGRESS row):** the owner chose the stronger option B
+> over the once-a-minute cap. Every scheduled call carries a one-use receipt its own database wrote (mig 502); the live site
+> runs a keyed call only after using up a receipt the LIVE database holds, for that job, inside 15 minutes. A restored copy
+> is refused in any minute, a leaked key alone runs nothing, and one receipt never runs twice. A refusal answers a quiet
+> "OK, nothing run" and opens an error in the platform error log, which emails once (review 2026-11-18). Proof `.probe/cron-receipt-prove.mjs` (dev); guard
+> `tests/unit/cron-receipt-guard.test.ts`. Production: migration 502 FIRST, then the code. The by-hand Part C step stays.
+>
 > **BUILT 2026-11-18 — fixes 1–11 as ruled, one commit each on `dev` (2 and 9 share one):**
 > - 1 demo account refused at every create door + build check — `49c4c9934` 2026-11-18 (two doors beyond the ruling's
 >   three are guarded too, because both can create a coach team: claiming a tournament entry, and a signed-in sign-up).
