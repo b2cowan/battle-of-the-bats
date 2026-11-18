@@ -304,8 +304,8 @@ export default function ManageMemberDialog({
     try {
       const res = await fetch(`/api/admin/members/${member.id}${orgQuery}`, { method: 'DELETE' });
       const d = await res.json().catch(() => ({})) as { error?: string };
-      if (!res.ok) { refuse({ text: d.error ?? 'They weren’t removed. Try again.' }); return; }
-      await onChanged(`${name} was removed from the ${noun}.`, true);
+      if (!res.ok) { refuse({ text: d.error ?? (member.status === 'invited' ? 'The invitation wasn’t cancelled. Try again.' : 'They weren’t removed. Try again.') }); return; }
+      await onChanged(member.status === 'invited' ? `${possessive(name)} invitation was cancelled.` : `${name} was removed from the ${noun}.`, true);
     } catch {
       refuse({ text: 'Could not reach the server. Nothing changed. Try again.' });
     } finally {
@@ -339,10 +339,13 @@ export default function ManageMemberDialog({
     setRefusal(null);
     try {
       const res = await fetch(`/api/admin/members/${member.id}/reinvite${orgQuery}`, { method: 'POST' });
-      const d = await res.json().catch(() => ({})) as { error?: string };
+      const d = await res.json().catch(() => ({})) as { error?: string; existingAccount?: boolean };
       if (!res.ok) { refuse({ text: d.error ?? 'The invite didn’t go out. Try again.' }); return; }
       // The resend refreshes the invitation's date, which the list shows — read it again, and close with the page's notice.
-      await onChanged(`Invite resent to ${member.email}. The setup link expires in 24 hours, so ask them to accept it today.`, true);
+      // Someone who already has an account accepts from Home when they sign in; their link never runs out (trust close-out 13).
+      await onChanged(d.existingAccount
+        ? `Invite resent to ${member.email}. They already have an account, so they’ll find it on their Home page when they sign in.`
+        : `Invite resent to ${member.email}. The setup link expires in 24 hours, so ask them to accept it today.`, true);
     } catch {
       refuse({ text: 'Could not reach the server. Nothing changed. Try again.' });
     } finally {
@@ -367,7 +370,9 @@ export default function ManageMemberDialog({
   // so they are RecordAction's ink; Remove is RecordDelete's red. Each still asks first where it did.
   const suspendDoor = viewerIsOwner && !targetIsOwner && member.status === 'active';
   const reinstateDoor = viewerIsOwner && !targetIsOwner && member.status === 'suspended';
-  const resendDoor = canManage && member.status === 'invited';
+  // A pending row is an invitation, not a membership: its red door withdraws the invitation (trust close-out 13).
+  const pending = member.status === 'invited';
+  const resendDoor = canManage && pending;
   const removeDoor = canManage && !targetIsOwner && !isSelf;
   // A reset can be redone by setting it up again, so it is RecordAction's ink (tab 6); the rule is the server's.
   const resetTwoStepDoor = twoStep?.door === 'club';
@@ -395,7 +400,7 @@ export default function ManageMemberDialog({
       )}
       {removeDoor && (
         <RecordDelete onClick={() => setAsk('remove')} disabled={saving || acting}>
-          Remove…
+          {pending ? 'Cancel invitation…' : 'Remove…'}
         </RecordDelete>
       )}
     </div>
@@ -644,14 +649,14 @@ export default function ManageMemberDialog({
       {ask === 'remove' && (
         <KitDialog
           kind="question"
-          title={`Remove ${name}?`}
+          title={pending ? `Cancel ${possessive(name)} invitation?` : `Remove ${name}?`}
           onClose={closeAsk}
           busy={acting}
           footer={
             <>
-              <button type="button" className="btn btn-outline" onClick={closeAsk} disabled={acting}>Cancel</button>
+              <button type="button" className="btn btn-outline" onClick={closeAsk} disabled={acting}>{pending ? 'Keep it' : 'Cancel'}</button>
               <button type="button" className="btn btn-danger" onClick={() => void remove()} disabled={acting || !impact} data-autofocus="">
-                {acting ? 'Removing…' : 'Remove'}
+                {pending ? (acting ? 'Cancelling…' : 'Cancel invitation') : (acting ? 'Removing…' : 'Remove')}
               </button>
             </>
           }
@@ -660,6 +665,12 @@ export default function ManageMemberDialog({
             impactFailed
               ? <p role="alert">We couldn’t check what removing them changes. Close this and try again.</p>
               : <LoadingState inline label="Loading what this changes…" />
+          ) : pending ? (
+            // Trust close-out 13: a withdrawn invitation. They never joined, so nothing of the club's is lost and no email goes.
+            <p>
+              {first === 'They' ? 'They' : first} won’t be able to join {org.name} with it, and we won’t email them.
+              {impact.accountKept ? ' Their FieldLogicHQ account isn’t affected.' : ' The account this invitation set up for them is deleted too.'}
+            </p>
           ) : (
             <>
               {/* J4-036 / F-A5-10: removal keeps the account whenever the person is anywhere else — another org, a free

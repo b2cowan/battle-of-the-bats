@@ -7,6 +7,7 @@ import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { getSignedInUser } from '@/lib/two-step-session';
 import { startTwoStepGrace } from '@/lib/two-step-grace';
+import { isDemoOrganizerEmail } from '@/lib/demo-org';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -43,6 +44,11 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  // A "See it live" demo's shared account never joins a club (trust close-out 13): every anonymous visitor is signed in as
+  // it. The invite route refuses to write such a row; this refuses one that exists anyway.
+  if (isDemoOrganizerEmail(user.email)) {
+    return NextResponse.json({ error: 'A demo account can’t join a club.', code: 'demo_account' }, { status: 403 });
+  }
 
   const { memberId } = await params;
   const body = await req.json().catch(() => ({}));
@@ -77,6 +83,13 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
       return captureAndJson(error, { error: error.message }, 500);
     }
     return NextResponse.json({ ok: true, declined: true });
+  }
+
+  // A yes is to the role the person was SHOWN (trust close-out 13, /review): the club can still change a pending row's role,
+  // so if it moved after their card loaded, nothing is accepted and they are asked to reload and see the new one. (A request
+  // without a role — an older page — is taken as before.)
+  if (typeof body?.role === 'string' && body.role !== member.role) {
+    return NextResponse.json({ error: 'This invitation changed since you opened it. Reload the page to see it as it is now.', code: 'invitation_changed' }, { status: 409 });
   }
 
   // ⚖ Verified Network (A03): belonging to another organization no longer blocks joining this one —

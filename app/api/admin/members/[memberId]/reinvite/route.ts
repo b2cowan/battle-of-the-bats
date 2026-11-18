@@ -36,8 +36,8 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     return NextResponse.json({ error: 'This member has already accepted their invitation' }, { status: 400 });
   }
 
-  // Magic link for a confirmed account, invite link otherwise; refreshes invited_at +
-  // invited_email. Shared with the self-serve resend route so the link logic can't drift.
+  // An existing account's invitation goes again as a sign-in-and-accept email; otherwise a magic link for a confirmed
+  // account, an invite link for the rest. Shared with the self-serve resend route so the link logic can't drift.
   const result = await sendPendingInviteLink({
     memberId: member.id,
     userId: member.user_id,
@@ -53,5 +53,6 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     );
   }
 
-  return NextResponse.json({ ok: true });
+  // `existingAccount`: they accept from Home when they sign in, so the screen's notice promises no 24-hour link.
+  return NextResponse.json({ ok: true, existingAccount: result.existingAccount });
 }, { route: '/api/admin/members/[memberId]/reinvite' });

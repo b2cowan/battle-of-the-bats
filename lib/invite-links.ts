@@ -3,6 +3,7 @@ import { sendEmail, orgInviteHtml } from './email';
 import { memberOpensSentence, roleEmailLabel } from './member-access';
 import { invitationSender } from './member-names';
 import { volunteerJobOf } from './volunteer-jobs';
+import { isInvitationToOwnAccount } from './member-account-keep';
 import { INVITE_EMAIL_ACTION, VOLUNTEER_EMAIL_NOTE } from './volunteer-words';
 
 function getActionLink(data: unknown) {
@@ -19,6 +20,15 @@ export function acceptInvitePath(p: { orgSlug: string; role: string; inviterName
   const qs = new URLSearchParams({ org: p.orgSlug, role: p.role });
   if (p.inviterName) qs.set('inviter', p.inviterName);
   return `/auth/accept-invite?${qs.toString()}`;
+}
+
+/**
+ * Where an invitation to an EXISTING account sends its reader (Board Ready trust close-out 13, owner 2026-11-18): sign in,
+ * then Home, whose invitations card is the accept-and-decline door. Never the accept page — its form sets a password, and
+ * this reader already has one. A plain sign-in link: no session in the email, nothing that expires.
+ */
+export function existingAccountInviteUrl(appUrl: string): string {
+  return `${appUrl}/auth/login?next=${encodeURIComponent('/discover')}`;
 }
 
 /**
@@ -41,7 +51,7 @@ export async function sendPendingInviteLink(params: {
   role: string;
   orgName: string;
   orgSlug: string;
-}): Promise<{ ok: true } | { ok: false; error: string }> {
+}): Promise<{ ok: true; existingAccount: boolean } | { ok: false; error: string }> {
   const { memberId, userId, role, orgName, orgSlug } = params;
 
   const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(userId);
@@ -60,11 +70,32 @@ export async function sendPendingInviteLink(params: {
   // as their row holds it now (Stage 6, A26 — Members may have changed it since the first invitation).
   const { data: memberRow } = await supabaseAdmin
     .from('organization_members')
-    .select('organization_id, capabilities')
+    .select('organization_id, capabilities, status, invited_email')
     .eq('id', memberId)
-    .maybeSingle<{ organization_id: string; capabilities: Record<string, boolean> | null }>();
+    .maybeSingle<{ organization_id: string; capabilities: Record<string, boolean> | null; status: string; invited_email: string | null }>();
   const job = role === 'official' ? volunteerJobOf(memberRow?.capabilities) : null;
   const sender = memberRow ? await invitationSender(memberRow.organization_id, userId) : null;
+  const opens = memberOpensSentence(role, memberRow?.capabilities);
+
+  // An invitation to an account its owner already had (trust close-out 13) is resent as it was first sent: sign in and
+  // accept on Home. No link is generated and `invited_email` stays empty — that emptiness is what marks the row (see
+  // isInvitationToOwnAccount), and the row already names the account, so there is nothing to re-attach by email.
+  // ⚠ Only a CONFIRMED account (/review): an unconfirmed one has nothing to sign in with, so it keeps the set-up link below
+  // (which also backfills a legacy row's address).
+  if (memberRow && authUser.email_confirmed_at && isInvitationToOwnAccount(memberRow, authUser.invited_at)) {
+    await sendEmail(
+      email,
+      `You've been invited to ${orgName} on FieldLogicHQ`,
+      orgInviteHtml({ orgName, roleLabel, inviteUrl: existingAccountInviteUrl(appUrl), ctaLabel: INVITE_EMAIL_ACTION.signInToAccept, note: job ? VOLUNTEER_EMAIL_NOTE.existing[job] : null, opens, inviterName: sender?.name ?? null, existingAccount: true }),
+      { kind: 'org_invite', orgId: memberRow.organization_id },
+    );
+    const { error: refreshError } = await supabaseAdmin
+      .from('organization_members')
+      .update({ invited_at: new Date().toISOString() })
+      .eq('id', memberId);
+    if (refreshError) console.error('[sendPendingInviteLink] invite date refresh failed:', refreshError);
+    return { ok: true, existingAccount: true };
+  }
   const next = encodeURIComponent(acceptInvitePath({ orgSlug, role, inviterName: sender?.name }));
   const redirectTo = `${appUrl}/auth/callback?next=${next}`;
 
@@ -99,5 +130,5 @@ export async function sendPendingInviteLink(params: {
     console.error('[sendPendingInviteLink] invite metadata refresh failed:', refreshError);
   }
 
-  return { ok: true };
+  return { ok: true, existingAccount: false };
 }

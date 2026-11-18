@@ -1772,17 +1772,29 @@ export function orgInviteHtml(p: {
   opens?: string | null;
   /** Who sent it (J10-010, Club Tier Stage 1) — named when known, so the invitee knows who is asking. */
   inviterName?: string | null;
+  /**
+   * The reader already has a FieldLogicHQ account (Board Ready trust close-out 13, owner 2026-11-18): an existing account is
+   * INVITED, never added on the spot. Nothing to set up; they sign in and accept (or decline) on their Home page. The link is
+   * a plain sign-in, so it never expires.
+   */
+  existingAccount?: boolean;
 }) {
   // org.name and the sender's name are editable by other people → escape before interpolating.
   const org = escapeEmailHtml(p.orgName);
   const who = p.inviterName ? `<strong>${escapeEmailHtml(p.inviterName)}</strong> invited you` : "You've been invited";
+  const next = p.existingAccount
+    ? '<p>You already have a FieldLogicHQ account, so there’s nothing to set up. Sign in, then accept or decline the invitation on your Home page. Nothing changes until you accept.</p>'
+    : '<p>Click below to accept your invitation and set up your account.</p>';
+  const foot = p.existingAccount
+    ? "If you weren't expecting this invitation, you can ignore this email, or decline it when you sign in."
+    : "This link expires in 24 hours. If you weren't expecting this invitation, you can safely ignore this email.";
   return wrap(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">You're invited</h2>
     <p>${who} to join <strong>${org}</strong> on <strong>FieldLogicHQ</strong> as ${withArticle(p.roleLabel)}.</p>
     ${orgInviteWhatHtml({ note: p.note, opens: p.opens, orgEscaped: org })}
-    <p>Click below to accept your invitation and set up your account.</p>
+    ${next}
     ${warmEmailButton(p.ctaLabel, p.inviteUrl)}
-    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">This link expires in 24 hours. If you weren't expecting this invitation, you can safely ignore this email.</p>
+    <p style="color:${WARM_EMAIL.secondary};font-size:0.82rem;">${foot}</p>
   `);
 }
 

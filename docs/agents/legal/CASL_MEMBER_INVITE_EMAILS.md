@@ -5,8 +5,18 @@ s.6(2), s.6(6) — to these two emails; no new source opened)
 or sign-up; the invite starts going to people with no role (e.g. "tell a friend"); Bill C-36 / CASL amendments.
 **Depends on facts:** `LEGAL_FACTS.md` § FieldLogicHQ's two privacy roles; § Where data lives (Resend).
 
+> **2026-11-18 — trust close-out 13 (code-time review, no re-research):** an existing confirmed account is now INVITED,
+> never added on the spot. It gets the invite template's existing-account form ("You already have a FieldLogicHQ account,
+> so there’s nothing to set up. Sign in, then accept or decline the invitation on your Home page. Nothing changes until you
+> accept.", button "Sign in to accept", link a plain sign-in to Home). Still not a CEM: no offer, price, plan or sign-up
+> link, and it is plainer than the new-account invite. The "added" email now goes ONLY to a club's own coach given a board
+> role (an open owner call whether that should ask first too); s.6(6)(d) still fits it. Cancelling a pending invitation
+> sends no email. Accepting from Home records no new Terms tick (the account agreed at its own sign-up). Unaccepted
+> invitations are still never removed, and now sit on existing accounts too: recommendation 3 is wider, not new.
+
 ## Question(s) this answers
-Are the club's member-invitation emails (new account: "You're invited"; existing account: "You've been added to …"), with
+Are the club's member-invitation emails (new account: "You're invited"; existing account: "You're invited" in its
+existing-account form since 2026-11-18, before that "You've been added to …"), with
 Club Tier Stage 13b's additions (the role's sentence, one line on what FieldLogicHQ is, the role's own name, the link landing
 on the role's home), still outside CASL's consent rules? Do any of their lines promise what the product does not do?
 
@@ -30,7 +40,8 @@ Checked 2026-11-07 against the Stage 13b Session B build: `lib/email.ts` `orgInv
 and no platform line; `app/api/admin/members/invite/route.ts`; `lib/invite-links.ts` (resend uses the same template).
 - **The role's sentence is true at send time.** The picker offers a role only where the plan carries its program (treasurer
   only with Accounting, `lib/board-roles.ts:78`). The sentence is the accept page's own (`memberOpensSentence`). The "added"
-  email's "You'll" is true: the membership is written before the email goes.
+  email's "You'll" is true: the membership is written before the email goes (since 2026-11-18 only on the coach-to-board
+  upgrade; the existing-account invitation keeps "You'd", as the reader has not accepted).
 - **The product line is a claim about each sender.** "…the online system {club} uses to manage registration, schedules and
   results" is not true of every org that can send it: a club using only some programs, and possibly a one-team workspace,
   if that workspace's Staff & access uses this invite (not checked). The family emails already describe the product as
@@ -39,7 +50,9 @@ and no platform line; `app/api/admin/members/invite/route.ts`; `lib/invite-links
   nobody.
 - **An ignored invitation stays.** The new-account invite creates an unconfirmed account and a pending membership holding the
   address (`invite/route.ts`, `generateLink` then the `invited` insert). "You can safely ignore this email" is true for the
-  reader (nothing is charged or sent). **Not checked:** whether anything ever removes an unaccepted invitation.
+  reader (nothing is charged or sent). **Checked 2026-11-18:** nothing ever removes an unaccepted invitation, and since
+  trust close-out 13 an existing account's invitation is a pending row too (it holds a seat and sends its reader to Home at
+  each sign-in until they act). An owner call on that build.
 
 ## Recommendation
 1. CASL: no change needed. Keep both emails free of commercial content. A guard that fails the build when either template

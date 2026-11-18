@@ -110,7 +110,7 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
 
   const { data: target } = await supabaseAdmin
     .from('organization_members')
-    .select('id, role, user_id')
+    .select('id, role, user_id, status')
     .eq('id', memberId)
     .eq('organization_id', org.id)
     .single();
@@ -118,6 +118,8 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   if (!target) {
     return NextResponse.json({ error: 'Member not found' }, { status: 404 });
   }
+  // A pending row is an invitation being withdrawn: they never had access, so there is nothing to tell them was removed.
+  const pendingInvite = target.status === 'invited';
 
   if (target.role === 'coach') return coachingStaffRowRefusal();
 
@@ -191,11 +193,13 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
       basicCoachTeams: keep.basicCoachTeamCount,
       familyLinks: keep.familyLinkCount,
       preservedReason: keep.reason,
+      ...(pendingInvite ? { pendingInvite: true } : {}),
     });
 
     // The account survives, so a courtesy "your access was removed" notice is meaningful (mirrors
-    // the suspension notice). Best-effort — never block the removal on email delivery.
-    if (targetEmail) {
+    // the suspension notice). Best-effort — never block the removal on email delivery. Not for a withdrawn invitation
+    // (Board Ready trust close-out 13): its reader never had access, and "removed" would say they did.
+    if (targetEmail && !pendingInvite) {
       void (async () => {
         try {
           await sendEmail(
@@ -231,7 +235,7 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   }
 
   await writeOrgAudit(org.id, ctx.user.id, target.user_id, 'member_removed', {
-    email: targetEmail, role: target.role, membershipOnly: false,
+    email: targetEmail, role: target.role, membershipOnly: false, ...(pendingInvite ? { pendingInvite: true } : {}),
   });
 
   return NextResponse.json({ ok: true, membershipOnly: false });
@@ -364,6 +368,16 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       const stale = await requireFreshCode();
       if (stale) return stale;
     }
+  }
+
+  // ⚖ Only the invited person turns an invitation into a membership (Board Ready trust close-out 13, owner 2026-11-18): they
+  // accept it from Home or the accept page. A status write on a pending row — "active" or "suspended" — is refused here, so
+  // no hand-built request can join someone on their behalf. (No screen offers it: Reinstate shows only for a suspended row.)
+  if (hasStatusUpdate && target.status === 'invited') {
+    return NextResponse.json(
+      { error: 'They haven’t accepted their invitation yet. Only they can accept it.', code: 'invitation_pending' },
+      { status: 409 },
+    );
   }
 
   // Reinstate re-asks the membership rule for the role they hold (Verified Network, A03): being

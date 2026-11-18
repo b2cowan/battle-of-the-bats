@@ -10,6 +10,7 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { accountDoorRefusal, checkAcceptance, recordDoorAcceptance } from '@/lib/legal-acceptance';
 import { getSignedInUser } from '@/lib/two-step-session';
 import { startTwoStepGrace } from '@/lib/two-step-grace';
+import { isDemoOrganizerEmail } from '@/lib/demo-org';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -84,6 +85,10 @@ export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  // A "See it live" demo's shared account never joins a club (trust close-out 13), as on Home's invitations card.
+  if (isDemoOrganizerEmail(user.email)) {
+    return NextResponse.json({ error: 'A demo account can’t join a club.', code: 'demo_account' }, { status: 403 });
   }
 
   const body = await req.json().catch(() => ({}));

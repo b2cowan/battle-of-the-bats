@@ -76,14 +76,15 @@ export default function PendingInvitationsCard({
     }
   }
 
-  async function respond(memberId: string, action: 'accept' | 'decline') {
+  // `role` is the one this card showed: the server accepts only that role, so a yes never lands on a role changed since.
+  async function respond(memberId: string, action: 'accept' | 'decline', role: string) {
     setError('');
     setBusyId(memberId);
     try {
       const res = await fetch(`/api/auth/invitations/${memberId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, role }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -179,7 +180,7 @@ export default function PendingInvitationsCard({
                   type="button"
                   className={styles.accept}
                   disabled={busy}
-                  onClick={() => respond(invite.memberId, 'accept')}
+                  onClick={() => respond(invite.memberId, 'accept', invite.role)}
                 >
                   <Check size={14} strokeWidth={2.5} aria-hidden />
                   {busy ? 'Working…' : 'Accept'}
@@ -188,7 +189,7 @@ export default function PendingInvitationsCard({
                   type="button"
                   className={styles.decline}
                   disabled={busy}
-                  onClick={() => respond(invite.memberId, 'decline')}
+                  onClick={() => respond(invite.memberId, 'decline', invite.role)}
                   aria-label={`Decline invitation to ${org}`}
                 >
                   <X size={14} strokeWidth={2.5} aria-hidden />

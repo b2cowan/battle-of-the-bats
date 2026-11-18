@@ -40,7 +40,8 @@
 > card showed; Cancel on a pending row sends no "removed" email and never deletes an account its owner already had.
 > Proof `.probe/existing-invite-prove.mjs` (dev, 34/34); guard `tests/unit/existing-account-invite-guard.test.ts`.
 > **Left, owner calls:** (a) a club's own COACH given a board role is still changed on the spot (asking first needs a
-> place for the pending role, a schema change); (b) a pending invitation never expires, holds a seat, and lands its
+> place for the pending role, a schema change) — **RULED 2026-11-18 (owner): they accept too**, built as its own queue
+> prompt (P2b in `BOARD_READY_TRUST_FIX_PROMPTS.md`); (b) a pending invitation never expires, holds a seat, and lands its
 > invitee on Home at every sign-in until they act; (c) the database's membership test (`is_org_member`,
 > `can_access_tournament`) ignores status, so a pending invitee's browser session can read the club's venue library and
 > its tournaments' team names (suspended members too: not new, now aimable at any existing account): one migration.

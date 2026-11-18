@@ -140,14 +140,18 @@ export default function InviteMemberDialog({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, role: chosen, ...(chosen === 'official' ? { purpose: job } : {}) }),
       });
-      const data = await res.json().catch(() => ({})) as { error?: string; code?: string; added?: boolean };
+      const data = await res.json().catch(() => ({})) as { error?: string; code?: string; added?: boolean; existingAccount?: boolean };
       if (!res.ok) {
         setRefusal({ text: data.error ?? 'The invitation didn’t go out. Try again.', seat: data.code === 'seat_limit_reached' });
         return;
       }
+      // Three outcomes (trust close-out 13): a club's coach made a board member on the spot; an existing account invited
+      // to accept from Home; a new person invited to set up an account.
       onInvited(data.added
         ? `${email} was added to ${orgName}. They’ll get an email to sign in — if it isn’t in their inbox, ask them to check their spam or junk folder.`
-        : `Invite sent to ${email}. The setup link expires in 24 hours, so ask them to accept it today — and to check their spam or junk folder if it isn’t in their inbox.`);
+        : data.existingAccount
+          ? `Invite sent to ${email}. They already have an account, so they’ll accept it on their Home page when they sign in. They show as invited until then.`
+          : `Invite sent to ${email}. The setup link expires in 24 hours, so ask them to accept it today — and to check their spam or junk folder if it isn’t in their inbox.`);
     } catch {
       setRefusal({ text: 'The invitation didn’t go out. Check your connection and try again.', seat: false });
     } finally {

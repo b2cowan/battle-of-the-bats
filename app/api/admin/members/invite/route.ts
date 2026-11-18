@@ -6,7 +6,9 @@ import { checkCrossOrgJoin, crossOrgJoinRefusalForAdmin } from '@/lib/org-member
 import { isAssignableRole } from '@/lib/board-roles';
 import { memberOpensSentence, roleEmailLabel } from '@/lib/member-access';
 import { memberDisplayName } from '@/lib/member-names';
-import { acceptInvitePath } from '@/lib/invite-links';
+import { acceptInvitePath, existingAccountInviteUrl } from '@/lib/invite-links';
+import { isDemoOrganizerEmail } from '@/lib/demo-org';
+import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { sendEmail, orgInviteHtml, orgMemberAddedHtml } from '@/lib/email';
@@ -54,6 +56,16 @@ export const POST = withObservability(async (req: Request) => {
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: 'Valid email required' }, { status: 400 });
+  }
+
+  // ⚖ Two kinds of address a club can never invite (Board Ready trust close-out 13, 2026-11-18). A "See it live" demo's
+  // shared account: every anonymous visitor signs in as it, so a club that invited it would be opening itself to the
+  // public. And FieldLogicHQ support: sign-up, team creation and the registration import already turn a staff address
+  // away, and a staff account holding a club seat is refused support work on that club (lib/staff-own-club.ts).
+  // ONE neutral answer for both (/review): two distinct refusals would let any club admin test an address for "is this
+  // FieldLogicHQ support?".
+  if (isDemoOrganizerEmail(email) || await isPlatformAdminEmail(email)) {
+    return NextResponse.json({ error: 'That address can’t be invited to a club.', code: 'address_not_invitable' }, { status: 403 });
   }
 
   const planCfg = PLAN_CONFIG[org.planId];
@@ -111,6 +123,16 @@ export const POST = withObservability(async (req: Request) => {
       .eq('user_id', existingUser.id)
       .maybeSingle();
 
+    // A pending row of either kind waits for the PERSON's yes (trust close-out 13): a second invitation never stands in for
+    // it — a pending coaching row would otherwise fall to the coach-row upgrade below and be made active on the spot.
+    if (sameMember?.status === 'invited') {
+      return NextResponse.json({
+        error: sameMember.role === 'coach'
+          ? 'They haven’t accepted their coaching invitation yet. Invite them to the board once they have.'
+          : 'They already have an invitation waiting. Resend it from their row on Members.',
+        code: 'already_invited',
+      }, { status: 409 });
+    }
     if (sameMember && sameMember.role !== 'coach') {
       return NextResponse.json({ error: 'This user is already a member of this organization' }, { status: 409 });
     }
@@ -123,30 +145,62 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ error: crossOrgJoinRefusalForAdmin(join), code: 'one_home_org' }, { status: 409 });
     }
 
-    // Someone who already COACHES here holds this org's capability-less coach row (the plumbing
-    // every staff invite writes). Inviting them to the board gives that row the board role; their
-    // coaching lives on their team's staff list and is untouched. (It used to answer "already a
-    // member", and the Manage dialog now refuses coach rows — this is the door that works.)
     const nowIso = new Date().toISOString();
-    // Both writes carry the volunteer's job (null for every other role — a coach row is capability-less).
-    const { error: insertError } = sameMember
-      ? await supabaseAdmin
-        .from('organization_members')
-        .update({ role, status: 'active', accepted_at: nowIso, capabilities })
-        .eq('id', sameMember.id)
-        .eq('organization_id', org.id)
-        .eq('role', 'coach')
-      : await supabaseAdmin
+
+    // ⚖ AN EXISTING ACCOUNT IS INVITED, NEVER ADDED ON THE SPOT (Board Ready trust close-out 13, owner 2026-11-18). It used
+    // to be written `active` with no yes from its owner. Now it is a pending row, the same one a new person gets, and it
+    // becomes a membership only when they accept it from Home (POST /api/auth/invitations/[memberId], which also starts
+    // their two-step days). Until then they hold the seat it reserves, as a new person's invitation does, and see nothing
+    // of the club. `invited_email` stays EMPTY: the row already names the account (nothing to re-attach by email), and the
+    // emptiness is what tells a resend and a Cancel that this is the person's own account (isInvitationToOwnAccount).
+    // ⚠ Only a CONFIRMED account takes this path (/review): an unconfirmed one — another club's invitation not yet taken
+    // up, or a sign-up never finished — has nothing to sign in with, so a "sign in to accept" email is a dead end. It falls
+    // through to the new person's set-up invitation below, which works for an unconfirmed account and records its address.
+    if (!sameMember && existingUser.email_confirmed_at) {
+      const { error: pendingError } = await supabaseAdmin
         .from('organization_members')
         .insert({
           organization_id: org.id,
           user_id: existingUser.id,
           role,
-          status: 'active',
+          status: 'invited',
           invited_at: nowIso,
-          accepted_at: nowIso,
           capabilities,
         });
+      if (pendingError) {
+        return captureAndJson(pendingError, { error: 'The invitation couldn’t be created. Try again.' }, 500);
+      }
+
+      await writeOrgAudit(org.id, user.id, existingUser.id, 'member_invited', { email, role, existingAccount: true, ...(job ? { purpose: job } : {}) });
+
+      const inviterName = await memberDisplayName(org.id, user.id);
+      await sendEmail(
+        email,
+        `You've been invited to ${org.name} on FieldLogicHQ`,
+        orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: existingAccountInviteUrl(appUrl), ctaLabel: INVITE_EMAIL_ACTION.signInToAccept, note: job ? VOLUNTEER_EMAIL_NOTE.existing[job] : null, opens, inviterName, existingAccount: true }),
+        { kind: 'org_invite', orgId: org.id, askedBy: user.id },
+      );
+
+      return NextResponse.json({ ok: true, added: false, existingAccount: true });
+    }
+
+    // An unconfirmed account with no row here leaves this block for the set-up invitation (above).
+    if (sameMember) {
+    // Someone who already COACHES here holds this org's capability-less coach row (the plumbing
+    // every staff invite writes). Inviting them to the board gives that row the board role; their
+    // coaching lives on their team's staff list and is untouched. (It used to answer "already a
+    // member", and the Manage dialog now refuses coach rows — this is the door that works.)
+    // ⚠ RULED 2026-11-18 (owner): they accept too — queue prompt P2b, BOARD_READY_TRUST_FIX_PROMPTS.md. Until it is built,
+    // this one branch still makes the change on the spot. A coach's pending board
+    // role cannot sit on the coach row without cutting their coaching, and the table holds one row per person per club, so
+    // asking them first needs a place to keep the pending role (a schema change). Recorded in BOARD_READY_ACCESS_SWEEP_3.md.
+    // The volunteer's job rides along (null for every other role — a coach row is capability-less).
+    const { error: insertError } = await supabaseAdmin
+      .from('organization_members')
+      .update({ role, status: 'active', accepted_at: nowIso, capabilities })
+      .eq('id', sameMember.id)
+      .eq('organization_id', org.id)
+      .eq('role', 'coach');
 
     if (insertError) {
       return captureAndJson(insertError, { error: insertError.message }, 500);
@@ -172,6 +226,7 @@ export const POST = withObservability(async (req: Request) => {
     );
 
     return NextResponse.json({ ok: true, added: true });
+    }
   }
 
   // User doesn't exist — generate Supabase invite link.
