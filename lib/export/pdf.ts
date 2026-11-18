@@ -168,8 +168,9 @@ const GRID_DEMAND_CAP_MM = 62;
 /** How many rows to sample per column when measuring the floor. */
 const FIT_SAMPLE_ROWS = 60;
 
-/** Parse a hex string to { r, g, b } 0-255 values for jsPDF setFillColor. */
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
+/** Parse a hex string to { r, g, b } 0-255 values for jsPDF setFillColor. Exported for the printable rules
+ *  (`rules-pdf.ts`), a drawn document in its own file. */
+export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const clean = hex.replace('#', '');
   const full = clean.length === 3
     ? clean.split('').map(c => c + c).join('')
@@ -239,10 +240,52 @@ function drawLogoSlot(doc: any, settings: OrgPdfSettings, x: number, y: number):
   }
 }
 
+/** The name's size in the band, and the step to its second line when it wraps (14 pt × 1.2). */
+const BAND_NAME_PT = 14;
+const BAND_NAME_STEP = 5.9;
+
+/**
+ * The band's name, as the lines it draws on: ONE line whenever it fits (every document before Public tournament pages
+ * Stage 10 — the bytes are unchanged), otherwise broken at a space onto TWO, the second cut with "…" if even two will
+ * not hold it. Measured against the width the name really has: beside the crest as it will draw (aspect-fit), else from
+ * the margin. Restores the document's font, so measuring changes nothing drawn after it.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function identityNameLines(doc: any, settings: OrgPdfSettings, nameLine: string): string[] {
+  if (!nameLine) return [];
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const font = doc.getFont();
+  const size = doc.getFontSize();
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(BAND_NAME_PT);
+  try {
+    // The cheap question first: a name that fits beside the WIDEST crest fits whatever the crest is.
+    const widest = pageWidth - MARGIN * 2 - (settings.logoDataUrl ? LOGO_SLOT_W + 4 : 0);
+    if (doc.getTextWidth(nameLine) <= widest) return [nameLine];
+    let logoW = 0;
+    if (settings.logoDataUrl) {
+      try {
+        const props = doc.getImageProperties(settings.logoDataUrl);
+        logoW = props.width * Math.min(LOGO_SLOT_W / props.width, LOGO_SLOT_H / props.height);
+      } catch { logoW = 0; }
+    }
+    const width = pageWidth - MARGIN * 2 - (logoW > 0 ? logoW + 4 : 0);
+    if (doc.getTextWidth(nameLine) <= width) return [nameLine];
+    const lines: string[] = doc.splitTextToSize(nameLine, width);
+    if (lines.length <= 2) return lines;
+    let second = lines.slice(1).join(' ');
+    while (second.length > 1 && doc.getTextWidth(`${second}…`) > width) second = second.slice(0, -1).trimEnd();
+    return [lines[0], `${second}…`];
+  } finally {
+    doc.setFont(font.fontName, font.fontStyle);
+    doc.setFontSize(size);
+  }
+}
+
 /**
  * Height of the identity band (crest / name / second line) below the top margin, measured
  * exactly the way `drawIdentityBand` draws it — so a CONTINUATION page can reserve precisely
- * what it is about to draw.
+ * what it is about to draw. A name that wraps (Stage 10) grows the band by one line.
  *
  * ⚠ Deliberately tests "is a logo CONFIGURED", not "did a logo actually DRAW" (`drawLogoSlot`
  * returns 0 when an image fails to decode). Self-consistency between page 1 and its
@@ -250,10 +293,12 @@ function drawLogoSlot(doc: any, settings: OrgPdfSettings, x: number, y: number):
  * practice: it can only show as ~8mm of dead space when a configured logo is corrupt AND there
  * is no name line at all, and every export surface passes an identity. Reviewed 2026-08-23.
  */
-function identityBandHeight(settings: OrgPdfSettings, nameLine: string): number {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function identityBandHeight(doc: any, settings: OrgPdfSettings, nameLine: string): number {
+  const extra = identityNameLines(doc, settings, nameLine).length > 1 ? BAND_NAME_STEP : 0;
   return Math.max(
     settings.logoDataUrl ? LOGO_SLOT_H : 0,
-    nameLine || settings.headerLine2 ? (settings.headerLine2 ? 15 : 12) : 4,
+    nameLine || settings.headerLine2 ? (settings.headerLine2 ? 15 : 12) + extra : 4,
   );
 }
 
@@ -275,19 +320,22 @@ export function drawIdentityBand(doc: any, settings: OrgPdfSettings, nameLine: s
   const pageWidth = doc.internal.pageSize.getWidth();
   const drawnLogoW = drawLogoSlot(doc, settings, MARGIN, y);
   const textX = drawnLogoW > 0 ? MARGIN + drawnLogoW + 4 : MARGIN;
+  const nameLines = identityNameLines(doc, settings, nameLine);
+  const extra = nameLines.length > 1 ? BAND_NAME_STEP : 0;
   if (nameLine) {
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
+    doc.setFontSize(BAND_NAME_PT);
     doc.setTextColor(20, 20, 35);
-    doc.text(nameLine, textX, y + 6);
+    doc.text(nameLines[0], textX, y + 6);
+    if (nameLines[1]) doc.text(nameLines[1], textX, y + 6 + BAND_NAME_STEP);
   }
   if (settings.headerLine2) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(80, 80, 100);
-    doc.text(settings.headerLine2, textX, y + 11);
+    doc.text(settings.headerLine2, textX, y + 11 + extra);
   }
-  const below = y + identityBandHeight(settings, nameLine);
+  const below = y + identityBandHeight(doc, settings, nameLine);
   doc.setDrawColor(210, 210, 220);
   doc.setLineWidth(0.3);
   doc.line(MARGIN, below, pageWidth - MARGIN, below);
@@ -312,10 +360,11 @@ export function footerParts(settings: OrgPdfSettings): string[] {
  * D3: stamp the footer on every page AFTER the document is fully laid out, so "Page X
  * of Y" is true on every page. (The old per-page callback read the running page count
  * while pages were still being created — a 9-page report footed "Page 1 of 1".)
- * Shared by the table engine and the drawn board summary.
+ * Shared by the table engine and the drawn board summary. Exported for the printable rules (`rules-pdf.ts`), which lives
+ * in its own file — the same footer, never a copy of it (Stage 10, A11).
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function stampFooters(doc: any, settings: OrgPdfSettings): void {
+export function stampFooters(doc: any, settings: OrgPdfSettings): void {
   const pageWidth = doc.internal.pageSize.getWidth();
   const footerY = doc.internal.pageSize.getHeight() - 8;
   const parts = footerParts(settings);
@@ -425,7 +474,7 @@ export function buildTablePDF(
    * paginates on its own, which is how flat reports (and any single group longer than a
    * page) always broke.
    */
-  const continuationTop = MARGIN + identityBandHeight(settings, nameLine) + 4;
+  const continuationTop = MARGIN + identityBandHeight(doc, settings, nameLine) + 4;
 
   function drawHeader(isFirstPage: boolean) {
     // Accent bar at very top
@@ -1098,10 +1147,10 @@ const RUN_STATION_INDENT = 3.6;
 const RUN_STATION_LINE_H = 3.9;
 
 /** The ink of the run sheet, named once. */
-const RUN_INK: [number, number, number] = [20, 20, 35];
-const RUN_MUTED: [number, number, number] = [110, 110, 125];
+export const RUN_INK: [number, number, number] = [20, 20, 35];
+export const RUN_MUTED: [number, number, number] = [110, 110, 125];
 const RUN_PROSE: [number, number, number] = [50, 50, 65];
-const RUN_HAIRLINE: [number, number, number] = [210, 210, 220];
+export const RUN_HAIRLINE: [number, number, number] = [210, 210, 220];
 const RUN_ALT_ROW: [number, number, number] = [246, 246, 250];
 
 /**

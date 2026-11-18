@@ -57,7 +57,15 @@ Standing: whose look prints is the band's rule, `resolveTournamentLook` (Stage 1
 "Stage 10's printable rules" as a reader). The file goes through the page's own gates (Stage 0's D1 lesson: a new public
 read is never a side door). One PDF kit, one PDF check. Spelling and time rules (`formatTime()`, "3:12 p.m.").
 
-### ⚠ Two owner calls the drawing did not ask (Part 1, step 0 — blocking; ask before any code)
+### ✅ Two owner calls the drawing did not ask — RULED 2026-11-18, both as recommended
+
+- **G1 → every plan.** The download is offered on the free Tournament plan too, not behind `pdf_exports`, no gate of
+  its own. Logged: `BUSINESS_DECISIONS.md` 2026-11-18 "The public 'Download rules' PDF is on EVERY plan" and the
+  `PLAN_PRICING_FACTS.md` free-plan lock list. Part 2's help step names the exception in the "PDF needs a paid plan" warning.
+- **G2 → the whole published book.** Numbers come from the list View all shows; a narrowed page keeps them (gaps allowed);
+  publishing a held-back division renumbers what follows.
+
+The original asks, kept as history:
 
 **G1 · Does a free tournament get the download?** Every PDF today sits behind the paid **`pdf_exports`** feature
 (organizer exports: registrations, schedule, results; every coach PDF), and the help says so in a warning titled "PDF
@@ -197,6 +205,30 @@ stopgap: build it once.
 6. **The route** (the settled choice above) with its refusals: page off, unpublished tournament, no sections → 404, the
    same not-found the page gives. Unit-test the gates; on dev, open it for a fixture tournament in each look.
 7. Product-owner summary; commit on the owner's word (its own commit: `lib/export/` arms the PDF check).
+
+### Part 1 · as built (2026-11-18) — what Part 2 needs to know
+
+- **The shape** is `lib/public-rules-shape.ts` `shapePublicRules({ rules, resources, allDivisions, prefName, view })`. It runs
+  `publicPosts` itself, so ⚠ **pass the FULL division list** (the page today cuts it to published ones before rendering; a
+  cut list would let a held-back section through). It returns the picker's published `divisions`, `hasTaggedContent`,
+  `narrowedTo` and the numbered `sections` (`divisionLabel` is the file's only). Part 2 moves `PublicRules` onto it and
+  drops its own copy of the narrowing and anchors. Unit-tested in `tests/unit/public-tournament-stage10-rules-pdf.test.ts`.
+- **The route** (`rules/pdf/route.ts`) answers 404 when the page would refuse (no club, a cancelled org, an unpublished
+  tournament, the page off) **and when the visitor's sections are empty** — including a narrowed copy where the saved
+  division has no sections and nothing is untagged. Part 2's button must hide in exactly that case (`shape.sections.length
+  === 0`), or it links to a 404.
+- **The page's note** should read `RULES_SUBJECT_TO_CHANGE` from `lib/export/rules-pdf.ts` (the stamp prints the same
+  sentence; the page's JSX types it today).
+- **Calls taken in the build (recorded, not asked):** the band line narrowed reads "U11 rules · Nov 21–23, 2026 · Hosted by
+  …" (the drawing drew no narrowed band; this matches the button's "Download U11 rules") and the continuation band "U11
+  rules (continued)"; dates always carry the year (the site band drops this year's; paper outlives it); "Hosted by" prints
+  only when the frame's band says it (a "Run by" host prints nothing, as on the band); the footer is the kit's default on
+  every plan (the organization's PDF template governs its own exports, not this public copy); the derived logo is cached
+  in memory per server (no column — `pdf_settings.logoDerived` is the org's logo, not the tournament's); a logo that
+  fails to derive (dev's fixture logos live on another storage project) prints none.
+- **The long name:** `drawIdentityBand` wraps onto two lines (the second cut with "…" past two). Proved byte-identical for
+  every one-line name: all 136 existing PDFs rendered before and after, identical once the creation date and file ID are
+  set aside. `check:pdf` green (29 documents), `--mutate` 13/13.
 
 ## Part 2 · The page
 

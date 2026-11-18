@@ -1490,6 +1490,113 @@ export async function buildDocuments() {
     ],
   });
 
+  /* ══ The printable rules (Public tournament pages Stage 10) ═══════════════════════════════
+   *  A visitor's copy of the public Rules page. WHAT prints comes from the product's own shape
+   *  (`shapePublicRules` — narrowing, the G2 numbers, the "U13 only" labels, a held-back division's
+   *  section left out); the code is the product's own (`rulesQrDataUrl`). The looks are the admin
+   *  ladder's colour and crest, plus the two the drawing named: a pale colour (headings fall to ink)
+   *  and the free look (near-black, no logo). */
+  const rulesPdf$ = await import('../lib/export/rules-pdf.ts');
+  const { shapePublicRules } = await import('../lib/public-rules-shape.ts');
+  const { rulesQrDataUrl } = await import('../lib/export/rules-qr.ts');
+  const { CLUB_NEAR_BLACK } = await import('../lib/club-colour-roles.ts');
+  const RULES_URL = 'https://www.fieldlogichq.ca/riverdale-minor-ball/riverdale-summer-classic-2026/rules';
+  const rulesQr = await rulesQrDataUrl(`${RULES_URL}?view=all`);
+  const DIVS = [['d9', 'U9', 'published'], ['d11', 'U11', 'published'], ['d13', 'U13', 'published'], ['d15', 'U15', 'held']]
+    .map(([id, name, vis], order) => ({ id, tournamentId: 't', name, minAge: null, maxAge: null, order, scheduleVisibility: vis === 'held' ? 'draft' : 'published' }));
+  const RULE_BOOK = [
+    ['General', 'BookOpen', null, [
+      'All games are played under Baseball Ontario rules except where these tournament rules say otherwise.',
+      'Each team must present a printed, signed roster to the tournament office before its first game. Rosters are frozen at the first pitch of that game.',
+      'Coaches are responsible for the conduct of their players, staff and spectators.\nA team asked to leave the park forfeits its remaining games.',
+    ]],
+    ['Game length', 'Shield', null, [
+      'Pool games are six innings or 1 hour 45 minutes, whichever comes first. No new inning starts after 1 hour 35 minutes.',
+      'The mercy rule is 15 runs after three innings, 10 after four, and 8 after five.',
+      'Playoff games are played to completion; extra innings begin with a runner on second base.',
+    ]],
+    ['Pitching limits', 'AlertCircle', ['d13'], [
+      'Pitch counts are recorded by the home team and confirmed with the opposing coach after each half inning.',
+      'A pitcher who throws 66 or more pitches in a day needs four calendar days of rest.',
+      'A pitcher removed from the mound may not return to pitch in the same game.',
+    ]],
+    ['U15 tiebreakers', 'Info', ['d15'], ['A held-back division’s section: never printed while U15’s schedule is unpublished.']],
+    ['Weather and lightning', 'AlertCircle', null, [
+      'Play stops at the first sign of lightning and resumes 30 minutes after the last strike.',
+      'A game called after four complete innings (three and a half with the home team ahead) is official.',
+      'Games not official when called resume from the point of stoppage.',
+      'The tournament director decides all rescheduling. Updates are posted on the News & Announcements page and sent to every coach.',
+    ]],
+    ['Equipment', 'CheckCircle', null, [
+      'Bats must carry the USA Baseball stamp or a BBCOR certification for U15.',
+      'Catchers must wear a full set of approved gear, including a throat guard, in games and while warming up pitchers.',
+    ]],
+    ['Protests and appeals', 'HelpCircle', ['d11', 'd13'], [
+      'Protests on the interpretation of a rule must be made before the next pitch and are decided by the tournament director on site.',
+      'Judgement calls cannot be protested.',
+    ]],
+  ];
+  const ruleSections = (book) => book.map(([title, icon, divisionIds, items], order) => ({
+    id: `r${order}`, tournamentId: 't', title, icon, order, divisionIds,
+    items: items.map((content, n) => ({ id: `r${order}i${n}`, ruleId: `r${order}`, content, order: n })),
+  }));
+  const RULE_LINKS = [
+    { id: 'x1', tournamentId: 't', label: 'Baseball Ontario rulebook 2026', url: 'https://ballprovince.ca/rulebook-2026', order: 0 },
+    { id: 'x2', tournamentId: 't', label: 'Field map and parking', url: 'https://example.supabase.co/storage/v1/object/public/resources/o/t/field-map.pdf', order: 1 },
+  ];
+  /** One document's options, the way the route hands them over (it marks a file by our storage address). */
+  const rulesOpts = (settings, { book = RULE_BOOK, links = RULE_LINKS, prefName = null, eventName = TOURNAMENT, hostedBy = ORG } = {}) => {
+    const shape = shapePublicRules({ rules: ruleSections(book), resources: links, allDivisions: DIVS, prefName, view: null });
+    return {
+      eventName, dates: 'Jul 10–12, 2026', hostedBy, narrowedTo: shape.narrowedTo?.name ?? null,
+      sections: shape.sections,
+      resources: shape.resources.map((r) => ({ ...r, isFile: /\/storage\/v1\/object\/public\//.test(r.url) })),
+      stampedAt: '2026-07-08T19:12:00Z', liveAddress: RULES_URL.replace(/^https:\/\//, ''), qrDataUrl: rulesQr, settings,
+    };
+  };
+  const titlesOf = (book, keep = () => true) => book.filter(([t, , d]) => keep(t, d) && !(d ?? []).includes('d15')).map(([t]) => t);
+  // The long book: twelve sections of ten points, so a section splits, "12.10" sets the number column, and later pages
+  // carry the continuation band.
+  const LONG_BOOK = Array.from({ length: 12 }, (_, s) => [
+    `${['Field', 'Batting', 'Base running', 'Substitution', 'Umpires', 'Scorekeeping'][s % 6]} rules, part ${Math.floor(s / 6) + 1}`,
+    ['Shield', 'BookOpen', 'AlertCircle', 'CheckCircle', 'Info', 'HelpCircle'][s % 6],
+    s === 7 ? ['d13'] : null,
+    Array.from({ length: 10 }, (_, p) => (p % 3 === 2
+      ? 'A longer point that a tournament director really writes: when the posted start time passes and a team has fewer than nine players, the game is a forfeit, the score recorded as 7–0, and the tournament office is told before the next scheduled game on that diamond.'
+      : `Point ${p + 1} of section ${s + 1}, a line of ordinary rule text.`)),
+  ]);
+  doc({
+    id: 'public-tournament-rules',
+    label: 'Printable tournament rules',
+    entry: 'downloadRulesPdf',
+    // The file is served at the Rules page's own address; the page and its admin preview are where its download shows.
+    screens: [
+      'app/[orgSlug]/[tournamentSlug]/rules/pdf/route.ts',
+      'app/[orgSlug]/[tournamentSlug]/rules/page.tsx',
+      'components/public/PublicRules.tsx',
+      'components/public/PublicRuleSections.tsx',
+      'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx',
+    ],
+    // Not a table: its "headings" are the sections the visitor's page shows, and the downloads.
+    headings: [...titlesOf(RULE_BOOK), rulesPdf$.RULES_DOWNLOADS_HEADING],
+    render: (name, settings) => rulesPdf$.downloadRulesPdf(name, rulesOpts(settings)),
+    edgeCases: [
+      ['long-name', (name, settings) => rulesPdf$.downloadRulesPdf(name, rulesOpts(settings, {
+        eventName: 'Riverdale Ridge Baseball Association Summer Invitational Classic 2026 presented by Harborview Sports Supply',
+      }))],
+      ['long-book', (name, settings) => rulesPdf$.downloadRulesPdf(name, rulesOpts(settings, { book: LONG_BOOK })),
+        { headings: [...titlesOf(LONG_BOOK), rulesPdf$.RULES_DOWNLOADS_HEADING] }],
+      ['pale-colour', (name, settings) => rulesPdf$.downloadRulesPdf(name, rulesOpts({ ...settings, accentColor: '#F2C230' }))],
+      ['free-look', (name, settings) => rulesPdf$.downloadRulesPdf(name, rulesOpts(settings, { hostedBy: null })),
+        { settingsOverride: { ...DEFAULT_PDF_SETTINGS, accentColor: CLUB_NEAR_BLACK } }],
+      ['narrowed-u11', (name, settings) => rulesPdf$.downloadRulesPdf(name, rulesOpts(settings, { prefName: 'U11' })),
+        { headings: [...titlesOf(RULE_BOOK, (_t, d) => !d || d.includes('d11')), rulesPdf$.RULES_DOWNLOADS_HEADING] }],
+      ['files-only', (name, settings) => rulesPdf$.downloadRulesPdf(name, rulesOpts(settings, { links: [RULE_LINKS[1], { ...RULE_LINKS[1], id: 'x3', label: 'Team check-in form', order: 2 }] }))],
+      ['single-section', (name, settings) => rulesPdf$.downloadRulesPdf(name, rulesOpts(settings, { book: [RULE_BOOK[1]], links: [] })),
+        { headings: [RULE_BOOK[1][0]] }],
+    ],
+  });
+
   return {
     documents: docs,
     /**

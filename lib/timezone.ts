@@ -235,6 +235,14 @@ export function formatInOrgZone(
 }
 
 /**
+ * "Wed, Nov 18, 2026" — a stored instant's day in the org's zone, weekday first. The one exported spelling (Public tournament
+ * pages Stage 10, the printable rules' stamp); several older surfaces still type the same options privately.
+ */
+export function formatOrgShortWeekdayDay(iso: string | null | undefined): string {
+  return formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+/**
  * The calendar day a stored instant falls on **in the org's timezone**, as `YYYY-MM-DD`.
  * Slicing the raw string instead (`iso.slice(0, 10)`) reads the UTC day, which is a different
  * date for every event after 8 PM Eastern.

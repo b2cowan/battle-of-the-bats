@@ -90,7 +90,9 @@ price is decided** (revenue plan D03/D04 open).
     included), Select many, fees and payment tracking, check-in, the Staff kit and every volunteer job. **Hidden on
     free** (not shown locked): those, plus Tournament Chat. **Shown as lock lines:** the paid tools a free organizer
     reaches for (generators, rain delay, imports, the Teams export, targeting and fan push, Summary, Reuse, sealed
-    archives, advanced branding, more events, PDFs) and the publish email, in the Publish window. The automatic coach
+    archives, advanced branding, more events, PDFs) and the publish email, in the Publish window. **The one PDF that is
+    not locked on free:** the public Rules page's "Download rules" file, an attendee's copy on every plan, printed in the
+    free look (Decided 2026-11-18, `BUSINESS_DECISIONS.md` "The public 'Download rules' PDF is on EVERY plan"; no gate key). The automatic coach
     emails (publish, game-day reminder, final results) stay Tournament Plus (the reminder: 2026-10-16 A46); Event
     settings has **no** Coach emails card on free (the owner removed its three lock lines during the walk, 2026-10-16 —
     a presentation change, no gate moved). Any style, no
