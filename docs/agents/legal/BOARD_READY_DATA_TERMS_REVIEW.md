@@ -44,7 +44,10 @@ Deliverables: `drafts/SUBPROCESSOR_LIST.md`, `drafts/DATA_TERMS_FOR_ORGANIZATION
   deliver messages to addresses that are not part of the project's team" unless a custom SMTP server is configured
   (supabase.com/docs/guides/auth/auth-smtp, read 2026-11-18). The product sends its own auth email through Resend by
   generating links, so a custom SMTP on production is not something the code proves. If there is none, the notice reaches
-  no customer. If there is (Resend), the supplier list is unchanged.
+  no customer. If there is (Resend), the supplier list is unchanged. **Answered 2026-11-18 (owner Q5): production has no
+  custom SMTP, and the owner switched the host's notice off; the product's own "password changed" email now covers the
+  ordinary forgot-password reset too (`/legal` read of that change: CASL nothing owed, no new data, supplier list
+  unchanged).**
 
 ### 2. Our suppliers' own terms (read on each supplier's site 2026-11-18)
 
@@ -71,10 +74,10 @@ only end our own use, which is why the club's remedy is to leave, not to veto).
 | P4 | §7 | after "mainly in the United States." add "Email sent to our own addresses passes through France on its way to our inbox." | ImprovMX's page; the list and Data Terms §7 say it |
 | P5 | §6 push row | "A notification address and the alert text, which can name a person, a child or a team, or give an email address (for example "New sign-up: Henry Kim")" → "A notification address, and the alert, encrypted so that only your device can read it" | Over-describes today (safe direction), but a board reads "names a child" as a leak; `lib/web-push.ts:80-90` encrypts |
 | P6 | §6, after the table | "The full list, with each company's own security pages and how we tell organizations about a new one, is at [address]." | One list, one home; the list must not drift from §6 |
-| P7 | §3 "Our emails to you" and §10 two-step bullet | "or your password is changed from inside FieldLogicHQ" → "or your password is changed" | **Only after Q5 confirms delivery.** The reset via "Forgot your password?" now gets the host's notice too; an in-app change gets two emails |
+| P7 | §3 "Our emails to you" and §10 two-step bullet | "or your password is changed from inside FieldLogicHQ" → "or your password is changed" | **Q5 ANSWERED 2026-11-18 — folded in.** The host's notice is off and our own email now covers the "Forgot your password?" reset, so "or your password is changed" is true for every way a password changes except the first password chosen on an invitation (no email, by choice: an invitation's password is not a change). An in-app change gets one email. **Kept by the owner 2026-11-18 (Section 3).** The follow-through prompt said not to apply it, because with the host's notice off "from inside FieldLogicHQ" stays true; it does, but our own email on the ordinary reset (`15514dbd9`) makes the shorter line true as well, and it tells people more. It is true on production once `15514dbd9` is there, which ships before this privacy version can publish |
 | P8 | §9, three bullets (organization deleted; friend requests; emails a club sends) | "age out on our database host's schedule" → "are gone within 7 days" | `BACKUPS_AND_RESTORE.md` (daily, kept 7 days) — now a fact, and the Data Terms say it |
 | P9 | §5 "What we do with it" | add "Our Data Terms for organizations make these commitments to each club as part of our Terms of Service." | Ties the policy to the contract; optional |
-| P10 | §4 "Server logs" | add "… and are deleted after [N] days." | **Only after Q7** sets a retention on AWS |
+| P10 | §4 "Server logs" | add "… and are deleted after [N] days." | **Q7 DONE 2026-11-18 — folded in as "They are deleted after 90 days."** The owner confirmed every log group of the website got 90 days, not just one. Data Terms §11 says the same |
 
 **Checked and consistent, no edit:** §6 Stripe row (the "player names on the payment" covers both the first names on the
 page and the full names in the description); §6 AWS row (covers CloudWatch and our records); §6 Supabase row; §13
@@ -89,9 +92,9 @@ provider takes effect on posting, which the list's 30-day promise contradicts.
 
 - **(a) The host's "your password has been changed" email.** The policy's email list is "for example" and §10 names a
   password-change email "from inside FieldLogicHQ", so nothing published is false; the list simply doesn't cover the new
-  one. **Edit P7, after owner question 5** — if production has no custom SMTP the email reaches nobody outside the team,
-  and P7 would then promise an email that doesn't arrive. CASL: a security notice about the person's own account, not a
-  commercial message; nothing owed.
+  one. **Edit P7 — now unblocked (Q5 answered 2026-11-18):** production has no custom SMTP and the host's notice is off;
+  our own email covers the ordinary reset (built the same day), so P7 promises an email that arrives. CASL: a security
+  notice about the person's own account, not a commercial message; nothing owed.
 - **(b) Already done — nothing owed in the text.** The published privacy policy (version 2026-11-17) carries: friend
   requests §5 and §9 (§11 needs no sentence: §5 sends requests to the club and §9 says the registrar can delete); two-step
   sign-in §3, §5, §9 and §10; the coach and board group-email record §5 and its 12/24-month clock §9. Whether each
@@ -107,7 +110,7 @@ provider takes effect on posting, which the list's 30-day promise contradicts.
 |---|---|---|
 | W1 | "Your club's information is stored in the United States (Ohio), with our database host, Supabase, on Amazon Web Services." | `LEGAL_FACTS.md` (Supabase Management API: us-east-2, read 2026-11-08); Privacy §6 |
 | W2 | "Six companies help us run FieldLogicHQ. Our public list names each one, what it receives, where, and links its own security pages." | `drafts/SUBPROCESSOR_LIST.md` (publish it first) |
-| W3 | "We never sell your information or use it to advertise. We don't use advertising trackers, third-party analytics or an outside error-monitoring service, and FieldLogicHQ sends nothing to an AI service." | Terms §4, Privacy §4/§6; census 2026-11-18. **Not** "never given to an AI service" until Q3 |
+| W3 | "We never sell your information or use it to advertise. We don't use advertising trackers, third-party analytics or an outside error-monitoring service, and your club's information is never given to an AI service." | Terms §4, Privacy §4/§6; census 2026-11-18; **widened 2026-11-18: Q3 is written into `AGENCY_RULES.md`** (assistant sessions read production only as counts and schema). A rule, not a guard: if it is ever relaxed, the line goes back to "FieldLogicHQ sends nothing to an AI service" |
 | W4 | "Card and bank details never reach us: families pay on Stripe's own page, into the club's own Stripe account. Stripe states it is certified PCI Service Provider Level 1." | `lib/stripe-connect.ts:157-180` (hosted Checkout, no Stripe.js); docs.stripe.com/security |
 | W5 | "Information is encrypted in transit, and our database host encrypts everything it stores (AES-256)." | supabase.com/security, read 2026-11-18 |
 | W6 | "Our database host states SOC 2 Type 2 and ISO 27001; our email provider states SOC 2 Type II. These are their certifications, not ours." | the two suppliers' pages, 2026-11-18. The second sentence is required wherever the first appears |
@@ -121,7 +124,8 @@ that offer it, or ask us for a full copy"); "all staff access is logged" (W10's 
 
 ## What the product does today
 Every row of the census table carries its path:line. Not checked from code: production Auth's SMTP setting (Q5), the
-CloudWatch log group's retention (Q7), Amplify's delivery network (the list names Ohio only, as the policy does).
+CloudWatch log group's retention (Q7), Amplify's delivery network (the list names Ohio only, as the policy does). Q5 and Q7
+were answered from the owner's own dashboards 2026-11-18 (no custom SMTP; 90 days on every log group of the website).
 
 ## Recommendation — owner questions (recommendation first)
 
@@ -129,15 +133,20 @@ CloudWatch log group's retention (Q7), Amplify's delivery network (the list name
 below. This rules the questions, **not the draft texts** — the Data Terms and the list are still unapproved drafts.
 Applied the same day: brackets filled in both drafts (Q1, Q2, Q9); `BREACH_PROCEDURE.md` §3 step 4 gains the 72 hours
 (Q2); the held privacy draft becomes 0.2 with P1–P6, P8, P9 (Q11). **Left, by who:**
-- **Owner steps:** countersign ImprovMX's DPA (Q4); check production Auth's SMTP and fix or switch off the notice (Q5); set
-  the server-log retention to 90 days on AWS (Q7); subscribe to Supabase's, AWS's and Stripe's sub-processor notices (Q8);
-  fill the four dates (Q10).
-- **Q3 (the AI rule) is ruled but not yet written where sessions read it.** A ruling only `/legal`'s files hold binds no
-  session. Recommended: one line in `AGENCY_RULES.md` (the owner's yes, its own commit). Until then the drafts' AI line
-  stays product-only.
-- **`/accounting`:** the partial-refund mechanics behind Q1, before the Data Terms publish.
-- **Q6:** the Terms edits T1–T4 go into the held next Terms version once the Data Terms text is approved.
-- **Q9 / P7 / P10:** wait on Q5 and Q7 as written.
+- **Owner steps — ALL DONE 2026-11-18:** ~~countersign ImprovMX's DPA (Q4)~~ countersigned; ~~check production Auth's
+  SMTP and fix or switch off the notice (Q5)~~ **no custom SMTP, notice switched off**; ~~set the server-log retention to
+  90 days on AWS (Q7)~~ set on every log group of the website; ~~subscribe to Supabase's, AWS's and Stripe's sub-processor
+  notices (Q8)~~ subscribed; ~~fill the four dates (Q10)~~ Supabase, AWS, Resend and ImprovMX all 2026-11-18. **The Data
+  Terms and the list are OWNER-APPROVED 2026-11-18.**
+- **Q3 (the AI rule) is WRITTEN 2026-11-18:** one line in `AGENCY_RULES.md` (Workflow Requirements), its own commit `90f808598`. The
+  Data Terms §4, the list and W3 now say "never given to an AI service". Recommended, not built: a guard in the production
+  query runner refusing row reads of tables holding people (shared automation, the owner's own call).
+- ~~**`/accounting`:** the partial-refund mechanics behind Q1, before the Data Terms publish.~~ **DONE 2026-11-18**
+  (`REFUND_UNUSED_PLAN_TIME.md`, `5bb083c95`): workable by hand; its wording is now Data Terms §6's refund sentence. The two
+  gaps it found (nothing computes the unused part; a coach paying for several portals) are Board Ready plan 0a-6.
+- **Q6 DONE 2026-11-18:** T1–T4 are in the held next Terms draft (0.2), links /data-terms and /subprocessors; same-day
+  fallback in its publishing note (`/plan`, Board Ready plan 0a-5).
+- **P7 and P10 are both in the held privacy draft (2026-11-18).** Q9's full copy stays by hand (procedure note below).
 
 1. **New-company notice: 30 days by email to every organization's owners; a club that objects may end its plan and get
    back the unused part of what it paid in advance.** Industry-normal, and keepable (§2). Needs Terms edit T3; the refund
@@ -155,19 +164,22 @@ Applied the same day: brackets filled in both drafts (Q1, Q2, Q9); `BREACH_PROCE
    mail in mind.
 5. **Check production Auth's SMTP setting** (host dashboard › Authentication › SMTP). If it is not our sender, the
    "password changed" notice turned on today reaches no customer: point it at Resend's SMTP, or switch the notice off and
-   record why. P7 waits on this.
+   record why. P7 waits on this. **ANSWERED 2026-11-18: there is no custom SMTP; the owner switched the notice off and
+   the product's own email now covers the ordinary reset. P7 is released.**
 6. **Carry the Data Terms in the held next Terms version** (the one publishing with the Payments Terms), if approved
    before that day; otherwise the version after. Route the two pages to `/plan` (acceptance note).
 7. **Set a retention on the server logs** (CloudWatch log group for the Amplify app; recommended 90 days), so P10 can
-   name a number. Until then nothing promises one.
+   name a number. Until then nothing promises one. **DONE 2026-11-18: 90 days on every log group of the website (owner);
+   P10 and Data Terms §11 say it.**
 8. **Subscribe to Supabase's, AWS's and Stripe's sub-processor notices** (owner steps). Without it, our 30-day promise
    can be broken by a supplier change we never heard of.
 9. **Promise a full copy within 30 days on the owner's request**, produced by hand while no complete export exists (L10).
    Also by hand: a child's record deleted with its uploaded documents (the product leaves one player's files today).
    Alternative: no number ("promptly"), weaker.
-10. **Fill the dates:** Supabase **[date]**, AWS **[date]**, Resend **[date]** (each account's acceptance of the
-    supplier's terms, or the day the owner reads and accepts the current DPA), and ImprovMX **[date]** (countersigned).
-11. **Fold P1–P6, P8 and P9 into the held privacy draft now** (P7 after Q5, P10 after Q7). They are factual and publish
+10. **Fill the dates:** Supabase **2026-11-18**, AWS **2026-11-18**, Resend **2026-11-18** (each account's acceptance of
+    the supplier's terms, or the day the owner reads and accepts the current DPA), and ImprovMX **2026-11-18**
+    (countersigned). **DONE 2026-11-18**, recorded in `LEGAL_FACTS.md`.
+11. **Fold P1–P6, P8 and P9 into the held privacy draft now** (P7 folded in 2026-11-18 after Q5, P10 2026-11-18 after Q7). They are factual and publish
     on the same day as the Payments Terms; the list cannot publish before P1–P4.
 
 **By-hand procedure note (for Q9):** on a club owner's request to delete a child's record — delete the record through the

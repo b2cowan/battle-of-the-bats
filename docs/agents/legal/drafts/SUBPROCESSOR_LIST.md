@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Version** | 0.1 (a living list: each change gets a dated line in "Changes to this list"; it is not accepted, it is notified) |
-| **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
+| **Status** | **owner-approved 2026-11-18** — not published, **not reviewed by a lawyer** |
 | **Effective date** | — (published with the Data Terms, `drafts/DATA_TERMS_FOR_ORGANIZATIONS.md`) |
 | **Last reviewed** | 2026-11-18 |
 | **Backlog item** | `LEGAL_INDEX.md` Documents row "Subprocessor list"; Board Ready plan §0a/§0c |
@@ -17,6 +17,10 @@
 - **0.1, owner rulings 2026-11-18 (questions 1–11 as recommended; the text itself NOT yet approved)** — 30 days' notice
   filled in (Q1); ImprovMX listed and its DPA to be countersigned (Q4, owner step); the owner subscribes to Supabase's,
   AWS's and Stripe's notices (Q8, owner step). The privacy policy's ImprovMX edits are now in the held privacy draft (Q11).
+- **0.1, owner-approved 2026-11-18, with the follow-through (Board Ready data terms Section 3)** — the owner's steps are
+  done (ImprovMX's DPA countersigned, Q4; Supabase's, AWS's and Stripe's notices subscribed, Q8; server logs 90 days, Q7);
+  the AI sentence widened to "is never given to an AI service" now the owner's rule is in `AGENCY_RULES.md` (Q3). The
+  page's address is /legal/subprocessors (short link /subprocessors), `/plan` 2026-11-18.
 
 **How to read this draft.** Customer text is everything after the first `---` line, up to "Before this can be
 published". Owner notes are in blockquotes that start `> NOTE`. A `[text]` that is not a link is a fact still to fill.
@@ -29,12 +33,14 @@ FieldLogicHQ uses a small number of companies to run the service. This page name
 information reaches it, where it handles it, and where to read its own security and sub-processor pages.
 
 **We do not sell personal information, and we do not share it with advertisers.** We don't use advertising trackers,
-third-party analytics or an outside error-monitoring service, and FieldLogicHQ sends nothing to an AI service.
+third-party analytics or an outside error-monitoring service, and the information organizations keep in FieldLogicHQ is
+never given to an AI service.
 
-> NOTE — "FieldLogicHQ sends nothing to an AI service" is true of the PRODUCT (census 2026-11-18: no AI/LLM call at run
-> time). It is not yet a promise about the owner's own tools: AI assistant sessions on this repo can run read-only queries
-> against the production database. Owner question 3 in the review file. Do not widen this sentence to "your information is
-> never given to an AI service" until that is ruled.
+> NOTE — The product calls no AI service (census 2026-11-18: no AI/LLM call at run time), and the owner's rule (Q3,
+> 2026-11-18) that AI assistant sessions read production only as counts and schema, never rows holding a person's
+> information, is written in `AGENCY_RULES.md` (Workflow Requirements). That is what makes "never given to an AI service"
+> true of the owner's own tools too. If the rule is ever relaxed, the sentence goes back to "FieldLogicHQ sends nothing to
+> an AI service" first, or the AI company joins the table above.
 
 **Whose information we mean.** In the table:
 - **Account holders** — people who sign in: owners, administrators, coaches, staff, volunteers.
@@ -123,20 +129,21 @@ takes effect (our Data Terms for organizations, §6, say what happens then).
 
 > NOTE — Owner material from here to the end; the preview drops it.
 
-1. Owner questions 1, 3 and 4 answered (`BOARD_READY_DATA_TERMS_REVIEW.md`).
+1. ~~Owner questions 1, 3 and 4 answered~~ **Met 2026-11-18** (all ruled; Q3 written into `AGENCY_RULES.md`; ImprovMX's
+   DPA countersigned).
 2. The Terms edit T3 (new-company notice) publishes the same day, and the privacy policy edits P1–P4 (ImprovMX named in §6
    and §7) publish no later — a list that names a company the policy does not is the drift this page exists to prevent.
-3. The owner subscribes to the sub-processor notices of Supabase, AWS and Stripe (owner question 8), so a change in our own
-   chain reaches us in time to pass it on.
+3. ~~The owner subscribes to the sub-processor notices of Supabase, AWS and Stripe (owner question 8)~~ **Met 2026-11-18**
+   (owner subscribed to all three), so a change in our own chain reaches us in time to pass it on.
 4. Each "Its own pages" link and certification re-read on the day of publication.
-5. The product renders it (a route-to-`/plan` item in `DATA_TERMS_ACCEPTANCE_NOTE.md`); then this draft is deleted and the
-   index points at the product's copy.
+5. The product renders it at /legal/subprocessors (Board Ready plan 0a-5, the same day as the held Terms version, or the
+   Terms version after); then this draft is deleted and the index points at the product's copy.
 
 ## For a lawyer's eye
 
 - **"We stay responsible to you for every company on this list"** — the right promise under PIPEDA Principle 4.1.3, but it
   sits under the Terms' limitation of liability (§14); a lawyer should confirm the cap reaches a supplier's breach as we
   intend.
-- **Gmail and ImprovMX hold privacy requests that can be about a child, without business terms (Gmail) or before a
-  countersigned agreement (ImprovMX).** Small in volume; it is our exposure, not a club's. The deferred own mailbox fixes
-  Gmail's half.
+- **Gmail holds privacy requests that can be about a child, without business terms.** Small in volume; it is our
+  exposure, not a club's. The deferred own mailbox fixes it. (ImprovMX's half closed 2026-11-18: its agreement is
+  countersigned.)

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Version** | 0.1 — has no version of its own once published: it is part of the Terms of Service and changes only with a new Terms version (`DATA_TERMS_ACCEPTANCE_NOTE.md`) |
-| **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
+| **Status** | **owner-approved 2026-11-18** — not published, **not reviewed by a lawyer** |
 | **Effective date** | — (the effective date of the Terms version that first includes it) |
 | **Last reviewed** | 2026-11-18 |
 | **Backlog item** | `LEGAL_INDEX.md` Documents row "Data-processing terms for clubs"; Board Ready plan §0a/§0c |
@@ -20,6 +20,12 @@
   reads the partial-refund mechanics before publication); §9 within 72 hours of confirming (Q2); §11 a full copy within
   30 days, produced by hand (Q9). Q3 (AI rule) is ruled but the §4 AI line stays product-only until the rule is written
   where every session reads it. Q6: carried in the held next Terms version once this text is approved.
+- **0.1, owner-approved 2026-11-18, with the follow-through (Board Ready data terms Section 3)** — §6's list address filled
+  (/legal/subprocessors, `/plan` 2026-11-18); §6's refund sentence replaced by `/accounting`'s wording (the refund runs
+  from the day the plan ends, includes the tax on it, and comes with a credit note: `REFUND_UNUSED_PLAN_TIME.md`); §4's AI
+  line widened to "never given to an AI service" now the owner's rule is in `AGENCY_RULES.md` (Q3); §11 names the server
+  logs' 90 days (Q7, set by the owner on every log group of the website, 2026-11-18), as the §11 note asked. No new duty on
+  the club, so still not a §18 change.
 
 **How to read this draft.** Customer text is everything after the first `---` line, up to "Before this can be
 published". Owner notes are in blockquotes that start `> NOTE`. A `[text]` that is not a link is a choice or fact still
@@ -62,16 +68,19 @@ privacy@fieldlogichq.ca. If we believe an instruction would break the law, we wi
 - We **never sell** Customer Data.
 - We **never use it to advertise**, to you or to anyone, and never share it with advertisers.
 - We **never use it for our own purposes**, such as marketing or building profiles of people.
-- **FieldLogicHQ sends no Customer Data to an AI service.**
+- Customer Data is **never given to an AI service.**
 - We **never join two organizations' records** of the same child; our system refuses it.
 - We **never show** a player's name, date of birth or roster on a public page. You choose what your organization
   publishes (schedules, standings, team names, and the names of coaches who choose to show theirs).
 
 > NOTE — Each line rests on: Terms §4 and Privacy §5/§6 (sell, advertise, own purposes); the 2026-11-18 census (no AI call
 > in the product); Privacy §5 ("never across two clubs — our system refuses it"; "does not show a player's name, date of
-> birth or roster on any public page"). The AI line says what the PRODUCT does. Owner question 3: if the owner rules that
-> assistant sessions never read rows holding a person's information on production, it can become "Customer Data is never
-> given to an AI service." Until then, do not widen it.
+> birth or roster on any public page"). The AI line: the product calls no AI service (census 2026-11-18), and the owner's
+> rule (Q3, 2026-11-18) that AI assistant sessions read production only as counts and schema, never rows holding a
+> person's information, is written in `AGENCY_RULES.md` (Workflow Requirements), where every session reads it. If that
+> rule is ever relaxed, this line goes back to "FieldLogicHQ sends no Customer Data to an AI service" first. Recommended,
+> not built (shared automation, the owner's own call): a guard in the production query runner that refuses row reads of
+> tables holding people.
 
 ## 5. Confidentiality and our staff
 
@@ -91,20 +100,23 @@ and repairing the service.
 ## 6. The companies that help us (sub-processors)
 
 We use a small number of companies to run FieldLogicHQ. **Our list of them** — what each does, whose information
-reaches it, where, and its own security pages — is at [address of the sub-processor list].
+reaches it, where, and its own security pages — is at [fieldlogichq.ca/legal/subprocessors](/legal/subprocessors).
 
 - Each one may handle Customer Data only to provide its part of FieldLogicHQ. Except our Gmail inbox, which receives only
   what people send us, each is bound by data-processing terms with us. **We stay responsible to you for them.**
 - **Before a new company starts handling Customer Data, we email your organization's owners at least 30 days ahead**
   and update the list. If we must replace a company urgently to keep the service running or safe, we tell you as soon as
   we can, and why.
-- If you object to a new company on reasonable grounds, tell us. If we can't address your concern, you may end your plan
-  before the change takes effect, and we will refund the unused part of what you paid in advance.
+- If you object to a new company on reasonable grounds, tell us before the change takes effect. If we can't address your
+  concern, you may end your plan on any day up to the day the change takes effect, and we will refund the unused part of
+  the period you paid for, from the day your plan ends, including the tax on it, and send you a credit note showing it.
 
-> NOTE — Owner question 1 (the notice period and the remedy). The bracketed refund is the recommendation; the alternative
-> is "end your plan" alone. A refund here is outside Terms §8's refund rules, so `/accounting` reads the mechanics (a
-> partial refund of a taxed sale) before it is promised. Terms edit T3 must remove "naming a new service provider" from
-> §18's list of changes that take effect on posting.
+> NOTE — Owner question 1 (ruled 2026-11-18: 30 days, and the refund). The refund sentence is `/accounting`'s wording
+> (`REFUND_UNUSED_PLAN_TIME.md`, 2026-11-18), matching Terms §8's "we end your plan" refund: workable today by hand
+> (platform admin "End now" on the day the club picks, then "Refund this charge" → part of it, which issues the credit
+> note and reverses the tax). Nothing computes the unused part yet, and a coach paying for several portals may not be
+> refundable from the console: both are `/plan` items (Board Ready plan 0a-6). Terms edit T3 removes "naming a new service
+> provider" from §18's list of changes that take effect on posting (applied in the held Terms draft 2026-11-18).
 
 ## 7. Where Customer Data is handled
 
@@ -184,6 +196,7 @@ of a failure in our safeguards or a company on our list:
 - **What we keep after that:** our own tax records of what you bought; the record of the Terms and Payments Terms your
   owners agreed to; and a record that the deletion happened (the organization's name and web address, who deleted it,
   when and why). None of these holds your members' information.
+- **Our server's technical logs**, which can hold internet (IP) addresses, are deleted after 90 days.
 
 > NOTE — "Within 30 days" for a full copy: no complete export exists in the product (backlog L10: the club export's
 > "everything" statement is untrue), so the owner produces it by hand; owner question 9. "Gone within 7 days": daily
@@ -191,8 +204,8 @@ of a failure in our safeguards or a company on our list:
 > Payments Terms record). Org deletion removing files: `45c134bea`, shipped with the 2026-11-17 legal-pages release
 > (`PUBLICATION_HANDOFF_REVIEW_6_7.md`); confirm in the release-history record before publishing. "None of these holds your
 > members' information": the deletion record holds the deleter's identity (an account holder, our own information), the
-> Payments Terms record an owner's email — both account holders, not members. Server logs on AWS are not mentioned because
-> their retention is not set (owner question 7); add "and our server's technical logs after [N] days" once it is.
+> Payments Terms record an owner's email — both account holders, not members. Server logs: 90 days on every log group of
+> the website (owner, AWS, 2026-11-18; Q7), the same number as privacy §4 (P10).
 
 ## 12. Children's information
 
@@ -223,8 +236,9 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca
 **Owner decisions** — questions 1, 2, 3, 6, 7 and 9 in `BOARD_READY_DATA_TERMS_REVIEW.md`; each bracket above is one of them.
 
 **Things that must be true first**
-1. The sub-processor list is published at a fixed address (the §6 bracket), with the privacy policy edits P1–P4 (ImprovMX)
-   in force no later.
+1. The sub-processor list is published at /legal/subprocessors (§6), with the privacy policy edits P1–P4 (ImprovMX) in
+   force no later. Both pages are a `/plan` build (Board Ready plan 0a-5): they go live the day the held Terms version
+   publishes, or this text waits for the Terms version after (the Terms draft's publishing note).
 2. The Terms edits T1–T4 are in the Terms version that carries these Data Terms (the acceptance note).
 3. Two-step sign-in is on production (the §8 bullet), or the bullet is cut.
 4. Org deletion removes files on production (`45c134bea`; the release-history record).

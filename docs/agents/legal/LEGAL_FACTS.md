@@ -1,5 +1,5 @@
 # FieldLogicHQ — Legal Facts
-**Last updated:** 2026-11-18 (Board Ready data terms: ImprovMX, suppliers' notice terms, the 2026-11-18 census incl. the AI and Auth-mailer findings); 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
+**Last updated:** 2026-11-18 (Board Ready data terms follow-through: the four supplier dates, ImprovMX countersigned, notices subscribed, server logs 90 days, the AI rule written into `AGENCY_RULES.md`); 2026-11-18 (Board Ready data terms: ImprovMX, suppliers' notice terms, the 2026-11-18 census incl. the AI and Auth-mailer findings); 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
 Stage 6 step 6.1). Seeded 2026-11-04 from a repo census — each fact carries its source; re-open the source before a draft
 rests on it.
 
@@ -81,29 +81,33 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
     Addendum"; the signature blocks are "for reference purposes only"; an executed copy is in the Resend dashboard
     ([resend.com/legal/dpa](https://resend.com/legal/dpa)). Subprocessors: resend.com/legal/subprocessors.
   - **Dates accepted** (owner records each — the date the account accepted the supplier's terms, or the day the owner reads and
-    accepts the current DPA): Supabase **[date]** · AWS **[date]** · Resend **[date]**. Stripe: in place.
+    accepts the current DPA): Supabase **2026-11-18** · AWS **2026-11-18** · Resend **2026-11-18** (owner, Q10). Stripe: in place.
   - **Google (the business Gmail):** a free consumer account; Google's business data-processing terms do not cover it. Listed
     honestly in the privacy policy §6 (P4).
   - **ImprovMX** (added 2026-11-18): forwards mail to our @fieldlogichq.ca addresses into the Gmail inbox (MX records
     resolve to mx1/mx2.improvmx.com, checked 2026-11-18; live since the 2026-11-12 receiving fix). Inbound mail is "stored
     transiently in France, in AWS's Paris region, and is deleted once delivered"; outbound in France and the US. Its DPA
-    is "pre-signed by us, so you just need to countersign" — **NOT accepted with the service terms; countersigned [date]** (owner ruled 2026-11-18 to countersign, Q4).
+    is "pre-signed by us, so you just need to countersign" — **NOT accepted with the service terms; countersigned by the owner 2026-11-18** (Q4).
     No published sub-processor list; no certification. **Not named in the published privacy policy** (edits P1–P4,
-    `BOARD_READY_DATA_TERMS_REVIEW.md`).
+    `BOARD_READY_DATA_TERMS_REVIEW.md`, are in the held privacy draft, publishing with the Payments Terms).
   - **Sub-processor notices to us** (read 2026-11-18): Supabase 30 days only if subscribed, 5 days to object; AWS 30 days
-    (email if subscribed); Resend 14 days in writing; Stripe list update, email if subscribed. Owner ruled 2026-11-18 to subscribe to all three (Q8); subscribed: **[not
-    recorded]**.
+    (email if subscribed); Resend 14 days in writing; Stripe list update, email if subscribed. Owner ruled 2026-11-18 to subscribe to all three (Q8); **subscribed to all three by the owner 2026-11-18**.
 - **Census 2026-11-18 (Board Ready data terms; path:line in `BOARD_READY_DATA_TERMS_REVIEW.md` §1), adding to 2026-11-05:**
   web push payloads are encrypted for the device (`web-push` with the subscription keys), so the push service cannot read
   them; the server (not visitors' browsers) fetches Google Fonts files for share images; calendar services pull a signed
   feed only when a person subscribes; map addresses are plain links; a club's online payment sends Stripe the child's
   first name and division (line items) and the children's full names with the season (payment description); server
-  `console.error` lines reach AWS CloudWatch (retention not set from the repo); bookkeeping receipts sit in AWS S3/DSQL
+  `console.error` lines reach AWS CloudWatch (**kept 90 days: the owner set it on every log group of the website
+  2026-11-18**, Q7; not set from the repo, so a new log group would start at AWS's default of never expiring); bookkeeping receipts sit in AWS S3/DSQL
   us-east-2. **AI:** the product calls no AI service, but AI assistant sessions can run read-only queries on the
-  production database (`scripts/db-query.mjs --prod`), so "never given to an AI service" is not yet true. **Owner ruled 2026-11-18 (Q3): assistant sessions read production only as counts and schema, never rows holding a person's information** — binding on sessions only once written into `AGENCY_RULES.md`.
-  **Auth email:** the product sends its own auth links through Resend; the host's stock "password changed" notice (on in
-  production since 2026-11-18) goes through whatever SMTP production Auth has, and the host's built-in mailer delivers only
-  to the project's team (owner question 5).
+  production database (`scripts/db-query.mjs --prod`), so "never given to an AI service" rests on a rule, not on the tool. **Owner ruled 2026-11-18 (Q3): assistant sessions read production only as counts and schema, never rows holding a person's information** — written into `AGENCY_RULES.md` (Workflow Requirements) 2026-11-18 (`90f808598`), so it binds every session; the Data Terms §4 and the list now say "never given to an AI service". Nothing in the query runner enforces it: a rule, not a guard (a guard is shared automation, the owner's own call).
+  **Auth email:** the product sends every account email through its own Resend sender; the host sends none. Production Auth
+  has **no custom SMTP** (owner's dashboard check 2026-11-18), so the host's built-in mailer, which delivers only to the
+  project's team, is unused: the host's stock "password changed" notice (briefly on 2026-11-18) was **switched off in
+  production by the owner 2026-11-18** (owner question 5 answered). Our own "password changed" email covers all three ways a
+  password changes: Account change-password, the backup-code reset, and the ordinary forgot-password reset (the last added
+  2026-11-18, commit on `dev`; reaches production with the next promote, so until then an ordinary reset sends no email
+  there). The first password chosen on an invitation sends none, by choice.
 - **Supabase encryption** (its own security page, [supabase.com/security](https://supabase.com/security), read 2026-11-08): "All
   customer data is encrypted at rest with AES-256 and in transit via TLS." Used in the privacy policy §10.
 - **Breach procedure and record:** `BREACH_PROCEDURE.md` v0.1, **owner-approved 2026-11-17**. The record lives in **a spreadsheet in

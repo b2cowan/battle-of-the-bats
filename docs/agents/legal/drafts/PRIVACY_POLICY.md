@@ -5,7 +5,7 @@
 | **Version** | next after 2026-11-17 (posted with a new effective date under §13; no new use and no new kind of company, so no advance email is owed: what we collect does not change, one purpose narrows, one email and one invoice kind are gone, and one existing record is named in two rows) |
 | **Status** | draft — held to publish on the same day as the Payments Terms (owner call (b), recommended); not published |
 | **Effective date** | — (the day the Payments Terms are published; the file is named by that date) |
-| **Last reviewed** | 2026-11-18 (0.2: Board Ready data terms) |
+| **Last reviewed** | 2026-11-18 (0.2: Board Ready data terms, with its follow-through) |
 | **Starts from** | `lib/legal-documents/privacy/2026-11-17.md`, word for word, with the changes in the log |
 
 **Change log**
@@ -28,8 +28,12 @@
   alert is encrypted so only the device can read it (`lib/web-push.ts:80-90`); one sentence points at the list; §7 says
   mail to our addresses passes through France; §9's three backup sentences say "gone within 7 days"
   (`BACKUPS_AND_RESTORE.md`); §5 points at the Data Terms. **Still no advance email under §13:** ImprovMX is an email
-  service, the same kind of company as Resend and Gmail. **Held back:** P7 (the password-changed email, after the
-  production SMTP check, Q5) and P10 (server-log retention, after Q7).
+  service, the same kind of company as Resend and Gmail. **P7 folded in 2026-11-18** (§3 and §10: "or your password is changed"; Q5 answered, the host's
+  notice is off and our own email covers every reset except an invitation's first password). **Owner kept P7 2026-11-18**
+  (Board Ready data terms Section 3): both wordings are true, and this one tells people more; it is true on production once
+  `15514dbd9` (our email on the ordinary reset) is there, which ships before this version can publish. **P10 folded in
+  2026-11-18** (§4: server logs "deleted after 90 days"; the owner set 90 days on every log group of the website, Q7).
+  §6's list address filled: /legal/subprocessors (`/plan` 2026-11-18).
 
 **How to read this draft.** Customer text is everything after the first `---` line, up to "Before this can be
 published". Owner notes are in blockquotes that start `> NOTE`.
@@ -84,7 +88,7 @@ third-party analytics tools.
 
 **Our emails to you.** We send account holders emails about their account, their organization and their plan — for
 example sign-in links, invitations, renewal and payment notices, notices when two-step sign-in is turned on or off, or your password is
-changed from inside FieldLogicHQ, and, where an organization requires two-step sign-in for your role, an email when your set-up time
+changed, and, where an organization requires two-step sign-in for your role, an email when your set-up time
 starts and a reminder three days before it ends. These are part of the service. If an organization has more than one owner,
 each owner receives the emails about its plan — including, when a plan is bought or moved up, the name or email address of
 the owner who did it. We only send promotional emails (news about features or offers) in line with Canada's anti-spam
@@ -103,7 +107,7 @@ law, and every one has an unsubscribe link.
 - **Error reports.** If a page fails, we record technical details (including your browser type) to fix it. These reports
   are deleted automatically after 30 days.
 - **Server logs.** Like any website, our hosting keeps technical logs that can include internet (IP) addresses, for
-  security and to keep the service running.
+  security and to keep the service running. They are deleted after 90 days.
 
 ## 5. Information that clubs put into FieldLogicHQ
 
@@ -215,8 +219,8 @@ needs. We do not sell personal information, and we do not share it with advertis
 | **Google** (a Gmail account) | Our business email inbox — the addresses on this page arrive there, forwarded by ImprovMX | Messages people send us, which can include contact details | The United States and other countries |
 | **Your browser's push service** (for example Google, Apple or Mozilla) | Delivers notifications you turn on | A notification address, and the alert, encrypted so that only your device can read it | Varies |
 
-The full list, with each company's own security pages and how we tell organizations about a new one, is at [address of
-the list].
+The full list, with each company's own security pages and how we tell organizations about a new one, is at
+[fieldlogichq.ca/legal/subprocessors](/legal/subprocessors).
 
 **How we hold them to it.** Supabase, AWS, Resend and Stripe each protect the personal information they handle for us under
 their standard data-processing terms, which form part of our agreement with each of them. ImprovMX handles it under its
@@ -309,7 +313,7 @@ and email addresses.
 - Our staff's changes are permanently recorded, and the pages they open are recorded too.
 - **Two-step sign-in.** You can protect your account with a second step, a code from an authenticator app; an organization
   can require it for its members. Backup codes are stored only in a one-way (hashed) form, not as readable codes. We email
-  you when two-step sign-in is turned on or off, or when your password is changed from inside FieldLogicHQ, so a change you did not make is noticed.
+  you when two-step sign-in is turned on or off, or when your password is changed, so a change you did not make is noticed.
 - **If you lose your phone and your backup codes,** your club's owner or an admin can reset your two-step sign-in when your
   account is used only for that club. Otherwise, or if you own the club, FieldLogicHQ support resets it after you confirm by
   email; when you own a club, we also tell its other owners, admins and treasurer, and the reset waits 24 hours, during
@@ -377,10 +381,10 @@ Privacy Officer, FieldLogicHQ · privacy@fieldlogichq.ca
    record; the 2026-11-17 version does not name it).
 3. The billing address is still asked for before payouts (Stage 4 owner call (a), built: `hasBillingLocation`). If that
    step is ever dropped, the §3 purpose changes again.
-4. **(0.2)** ImprovMX's pre-signed DPA is countersigned (owner Q4). If not, §6 "How we hold them to it" says instead
-   "ImprovMX holds mail only until it is delivered."
-5. **(0.2)** The sub-processor list (`drafts/SUBPROCESSOR_LIST.md`) is live at a fixed address, which fills §6's
-   "[address of the list]". **If the list is not published by this version's day, cut that one sentence** — this version
+4. **(0.2)** ~~ImprovMX's pre-signed DPA is countersigned (owner Q4).~~ **Met 2026-11-18: the owner countersigned it**, so
+   §6 "How we hold them to it" keeps its ImprovMX sentence.
+5. **(0.2)** The sub-processor list (`drafts/SUBPROCESSOR_LIST.md`) is live at /legal/subprocessors, the address §6 now
+   names (a `/plan` build, Board Ready plan 0a-5). **If the list is not published by this version's day, cut that one sentence** — this version
    must not wait for the list (it is the must-fix before the first production payout); the ImprovMX row stays either way.
 6. **(0.2)** The §5 Data Terms sentence stays only if the Data Terms publish the same day (they ride in the next Terms
    version, owner Q6); otherwise cut it.
