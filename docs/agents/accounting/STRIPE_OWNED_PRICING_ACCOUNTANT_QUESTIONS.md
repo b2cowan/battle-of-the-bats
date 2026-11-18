@@ -28,6 +28,11 @@ an answer.
   only fee we charge a club on a payment, and Question 2c is the only place a fee document is in question. Production never
   issued a fee invoice (0 on 2026-11-18); there is nothing from the old design for the accountant to review.
 - Stripe does not calculate or report tax on application fees. Our own records are the source for the return.
+- **Added 2026-11-18 (Payments Terms v0.2 §4, for Question 1):** the customer-facing terms call the family-facing amount a
+  "processing fee" made of two parts, Stripe's fee and **our fee**, which they describe as our charge for the pay page, receipts
+  in the club's name and recording each payment, set so the two parts equal the processing fee at Stripe's standard prices.
+  Show the accountant this wording: calling our part a share of a "processing fee" is a fact that bears on D1. The terms say
+  only that any sales tax that applies is included in our fee, so they hold whichever way D1 is answered.
 
 ## Question 1 (first): taxable or exempt? (D1)
 Is our application fee a **taxable supply** of a platform service to the club, or an **exempt financial service** (arranging for

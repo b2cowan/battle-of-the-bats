@@ -581,6 +581,14 @@ docs.stripe.com/connect/accounts-v2/connected-account-configuration#property-map
 - **Fee semantics confirmed:** with `fees_collector: 'application'` the application fee must cover Stripe's processing
   fee too (docs.stripe.com/connect/direct-charges-fee-payer-behavior). The all-in fee already does (§0c).
 
+> **Superseded for the fee row (owner R3 2026-11-17; built 2026-11-18, Stripe-owned pricing Stage 2 `142ef12d6`, Stage 4
+> `6dc9c6119`):** every account is now created with `fees_collector: 'stripe'` (still immutable) and `losses_collector:
+> 'stripe'`. **Stripe charges the club** for its processing and its extras (disputes, returned debits, foreign cards,
+> conversion) from the club's own balance; FieldLogicHQ's application fee is **its margin only** (the fee less Stripe's
+> standard Canadian cost, rate design A) and FieldLogicHQ bills the club nothing else. The "FieldLogicHQ pays the
+> processing fee" row and the fee-semantics bullet above are history. An account made under `application` (dev only)
+> opens no new payment. Plan of record: `STRIPE_OWNED_PRICING_PLAN.md`; the terms: `drafts/PAYMENTS_TERMS.md` v0.2.
+
 **Sandbox probe, 2026-10-25** (`.probe/s12v2-probe.cjs`, `.probe/s12v2-link.cjs`; test key only; left one account,
 "Probe Club (S12 v2 test)"):
 - `v2.core.accounts.create` on `2026-09-30.preview` with `identity.country: 'ca'`, `defaults.currency: 'cad'`,

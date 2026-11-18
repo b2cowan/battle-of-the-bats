@@ -91,10 +91,24 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   line). Place only — never its contents.
 - **Payments:** Stripe Connect direct charges; **the club is the merchant of record**; no card data stored.
   The fee is legally FieldLogicHQ's charge to the club (`BUSINESS_DECISIONS.md` T3, ~L243).
+  **Census 2026-11-17 (for the payments terms draft):** Stripe Accounts v2, Express Dashboard, country `ca`, CAD; Stripe's
+  processing fees are billed to FieldLogicHQ and paid out of our fee (`fees_collector: 'application'`); Stripe covers a
+  negative balance as against us (`losses_collector: 'stripe'`, public preview); the payment never passes through our
+  balance (no transfers); our fee is never refunded; the payer-pays fee is added as a "Processing fee" line at a higher card
+  rate than bank debit; no Québec check on payouts; the terms record has no IP address, sits on the club's one payouts
+  row (a new agreement overwrites the old) and is deleted with the organization (mig 358:50-61;
+  `lib/stripe-connect.ts:38-53`, `:188-205`). Topic: `CARD_SURCHARGE_PAYER_FEE.md`.
+  **Superseded in part 2026-11-18 (Stripe-owned pricing Stages 2 and 4, `142ef12d6`, `6dc9c6119`):** accounts are now
+  created with `fees_collector: 'stripe'` (Stripe charges the club its processing fee and its extras from the club's own
+  balance; nothing is billed to FieldLogicHQ or billed on by us) and our application fee is our margin only (the fee less
+  Stripe's standard Canadian cost, stored per payment); `losses_collector: 'stripe'` is unchanged. The terms record and
+  the Québec check were rebuilt 2026-11-17 (mig 497 append-only, survives deletion; Québec payouts refused). Payments
+  terms v0.2 (`drafts/PAYMENTS_TERMS.md`) describe this.
 
 ## Consent and email mechanics that exist today
 - **Payments terms:** a checkbox clubs tick when setting up payouts; the version and time are recorded.
-  The text is a **placeholder** ("counsel to write"). This is the shape to reuse for signup acceptance.
+  The text is a **placeholder** ("counsel to write"); a draft exists since 2026-11-17 (`drafts/PAYMENTS_TERMS.md`, v0.2
+  owner-approved 2026-11-18, not yet in the product). This is the shape to reuse for signup acceptance.
 - **Tryout registration:** two required consents (data collection, eligibility) and a separate optional
   marketing consent.
 - **League registration:** a waiver checkbox, required and recorded.

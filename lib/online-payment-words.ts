@@ -395,6 +395,9 @@ export const PAYOUTS_WORDS = {
       (bankFee ? `On a ${base} fee, the processing fee is ${fee} by card and ${bankFee} by bank debit.` : `On a ${base} fee, the card fee is ${fee}.`),
     // 12d-1 words §3.4 (§7 ruling 7): directly under the rates, before the example.
     otherFees: 'The processing fee covers Stripe’s charge and FieldLogicHQ’s. Stripe may take more for a card issued outside your country, a currency conversion, a dispute or a returned bank debit. That comes out of your Stripe balance, so you may receive less on those payments.',
+    // Stripe-owned pricing Stage 5 (`/legal` Stage 2 finding; payments terms v0.2 §5): last in "What it costs". Says the
+    // club's obligation only; never promise Stripe's backstop for a balance the club can't cover.
+    stripeTerms: 'Stripe’s own agreement and prices apply, and Stripe can change its fees. If your Stripe balance goes below zero, your organization owes that amount, and Stripe may take it from your bank account.',
     whoLabel: 'Who pays it',
     whoTeams: 'Teams pay it',
     whoTeamsHint: 'Added to what the team pays.',

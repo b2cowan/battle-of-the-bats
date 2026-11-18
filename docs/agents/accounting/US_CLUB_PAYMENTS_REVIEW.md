@@ -1,4 +1,9 @@
 # US clubs taking online payments through FieldLogicHQ — review
+> **⚠ Re-verify trigger FIRED 2026-11-18** ("who pays Stripe's fees" changed: Stripe-owned pricing, `142ef12d6`, `6dc9c6119`).
+> Stripe now charges EVERY club account (Canadian today, US later) for its own processing, disputes, returned debits and foreign
+> cards; we take only a margin-only application fee. The "FieldLogicHQ collecting Stripe's fees" premise below is the old model,
+> and Recommendation 2 ("let the club pay Stripe's fees directly") is now the default for all clubs. 1099-K, money-transmission
+> and surcharge-cap findings are untouched but unconfirmed against the new shape; re-verify before the first US club payment.
 **Last verified:** 2026-10-31
 **Re-verify by:** before the first US club takes a payment; when Stripe answers the cross-border question; if the Connect
 set-up (who pays Stripe's fees) changes

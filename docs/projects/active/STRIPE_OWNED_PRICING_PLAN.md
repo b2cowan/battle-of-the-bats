@@ -223,6 +223,24 @@ reads Stripe's fee from the charge and books it as its own "Payment processing" 
 delicate stage: the land and refund functions for tournaments and leagues, a stored Stripe-fee figure per payment, and the
 Payouts tab's existing Stripe-fee lines checked against it.
 
+**Stage 3's help and words (left by Stage 5, 2026-11-18, for this stage to write WITH its code; `/docs`, same rules: no
+dead anchors, `keywords` / `searchText` / `answerText` in the same pass).** Stage 5 ran before Stage 3 and left every
+sentence about what the club's books, the Payouts tab or the refund window's cost line record:
+- `lib/help-content/tournaments.tsx` `online-payments-fee`, "Where it shows in your books" (club pays → a "Payment
+  processing" cost of the whole fee; nothing when teams pay) and the shelf's net sentence under it.
+- `tournaments.tsx` `online-payments-refunds`: "The window says so, and it shows in your books as **Payment
+  processing**." (Stage 5 rewrote the sentence before it: neither part of the fee comes back.)
+- `house-league.tsx` `registrations-refund-card`, "Refund to the card": "it shows on the Money page as **Payment
+  processing**".
+- `accounting.tsx` `payouts-tab-inside` (~848 "Processing fee returned", ~850 "Stripe fee"), ~112 and ~833.
+- `lib/online-payment-words.ts`: `record.choiceHint.club` ("shows in your books as Payment processing"); the refund
+  window's `feeOnWhy` / `feeOnChanged`, and the comment above them ("a fee the club gives back is the club's whole cost —
+  never 'Stripe keeps part of it'"): under Stripe-owned pricing Stripe DOES keep its part on a refund (terms v0.2 §4), so
+  the comment's reason is stale even where the words stay true.
+- With Stage 2's "Left for Stage 3" list above (the Payouts tab map, the bank check's "on its way", the refund window's
+  domestic-card exactness).
+Then Stage 5's close (the owner walk for Stages 2 to 5) runs after this stage.
+
 ### Stage 4 — Retire the recovered-fee machinery
 The monthly Stripe-fee invoices, their daily job, the club's Stripe-fees list, alert line and overdue banner, the
 platform-admin Stripe-fees panel and retry, the invoice emails, the fee kind in the tax records, the foreign-card rate, and
@@ -252,6 +270,35 @@ up payouts**; it also lists the payments-terms §4/§5 lines for Stage 5. Help r
 gone); the help's remaining "who pays which fee" paragraphs stay Stage 5.
 
 ### Stage 5 — Words, help, terms, close
+**Build prompt (2026-11-18, after Stage 4 `6dc9c6119`):** [STRIPE_OWNED_PRICING_STAGE5_BUILD_PROMPT.md](STRIPE_OWNED_PRICING_STAGE5_BUILD_PROMPT.md).
+It can run before Stage 3, except the help about the club's books and the Payouts tab, and the close, which wait for Stage 3.
+
+**Built 2026-11-18, the part before Stage 3** (Stage 3 not built, so its help moved under Stage 3 above; the close waits):
+- **Payments terms v0.2** (`docs/agents/legal/drafts/PAYMENTS_TERMS.md`): §4 "The processing fee, and our fee" (two
+  parts; the club's net in each payer mode; tax included, D1-open; neither part refunded; our fee back on a returned
+  debit, Stripe's left to its pricing per `/legal`, since the probe was test mode only); §5 "Stripe charges your organization directly" (Stripe's agreement and prices; dispute, returned-debit,
+  foreign-card and conversion fees; the net varies; a negative balance is the club's and Stripe may debit its bank; Stripe
+  can change its fees); §3, §6, §7, §10, §12 follow. Before list: item 0 (never publish v0.1's §4/§5) and **O4: v0.2
+  APPROVED by the owner 2026-11-18**; the privacy version publishes with it (owner call (b) agreed 2026-11-18); the
+  default payer setting is left for before switch-on (owner 2026-11-18, O5). Not published. **Dispute figures deliberately not quoted** (Stripe's page read 2026-11-18:
+  CA$15 per dispute, CA$15 more to answer it, the answering fee returned on a win, the first fee not; PAD failure or
+  dispute + CA$5; the build prompt's "a win does not return them" is true of the first fee only).
+- **Privacy policy, next version drafted** (`drafts/PRIVACY_POLICY.md`, wired as the privacy `draftPath`; the filter
+  test passes): the billing-address purpose, the email list and the Stripe row no longer name the fee invoice; the
+  Payments Terms agreement named in §3's acceptance row and §9's retention bullet; **found beyond the prompt:** §9's
+  organization-deletion bullet now lists the Payments Terms record among what survives deletion (mig 497 keeps it with no
+  foreign key, so the published text was not quite true). Publishes with the payments terms (owner call (b)).
+- **Before window:** one new line under "What it costs" (`before.stripeTerms`): Stripe's agreement and prices apply,
+  Stripe can change its fees, a negative balance is the club's and Stripe may take it from the club's bank.
+- **Help** (`/docs` rules): `online-payments-setup` "What it costs", `online-payments-fee` (two parts; full entry fee
+  less Stripe's foreign-card/conversion extra), `online-payments-refunds` and `registrations-refund-card` (neither part
+  comes back), both `-dispute-ends` ("Lost": neither part; "The fees.": a win does not return the dispute fee),
+  `settings-t-payouts` (the check: "from the current rates", the fee covers both), `bookkeeping-stripe-fees` (most
+  card-processing fees never reach our statement; our fee is money in, never this expense); `bookkeeping-sales` read as
+  history (no change); both sections' `searchText` carry the new terms.
+- **Records:** the Facts doc's terms clause answered (v0.2 §5); Stage 12 §0d's fee row marked superseded; RPAA re-verify
+  triggers gain `fees_collector` / `losses_collector` and a dated census update; `CARD_SURCHARGE_PAYER_FEE.md` gains the
+  cost-of-acceptance flag (and the payments terms' lawyer's-eye item 1).
 Payments terms §4/§5 (`/legal`), help articles (org, tournaments, house league, accounting, platform admin — `/docs`),
 the Facts doc's riders, accounting topic files (`RECOVERED_STRIPE_FEES_TAX.md` retires), the Stage 12 plan's §0d table.
 **`/accounting` review, 2026-11-17 (Stage 1):** confirmed — the tax base is our application fee only; the tax is included

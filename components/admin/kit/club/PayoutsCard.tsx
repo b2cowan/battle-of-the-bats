@@ -577,6 +577,7 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
           <p className={ck.hint}>{W.before.otherFees}</p>
           <p className={ck.hint}>{W.before.costExample(money(view.example.baseCents / 100), money(view.example.feeCents / 100),
             view.example.bankFeeCents != null ? money(view.example.bankFeeCents / 100) : null)}</p>
+          <p className={ck.hint}>{W.before.stripeTerms}</p>
         </section>
         <fieldset className={pc.choice}>
           <legend className={ck.label}>{W.before.whoLabel}</legend>

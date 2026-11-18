@@ -43,4 +43,11 @@ straight from the club's Stripe balance, and we take only our margin.
    code ships); Bookkeeping keeps its "Fees billed back to clubs" row for history (owner call c). Dev's one open October
    test invoice was voided in Stripe. Reviews: /accounting nothing to fix; /legal: the privacy policy still names the fee
    invoice, acceptable while payments are off, fixed in Stage 5's new version.
-5. Words, help, terms; owner walk. Then the tax on our fee (GST/HST Stage 5) builds on the final shape.
+5. Words, help, terms; owner walk. Then the tax on our fee (GST/HST Stage 5) builds on the final shape. **Done
+   2026-11-18 except what waits for Stage 3** (the help about the club's books, then the owner walk and the close). The
+   payments terms are rewritten as v0.2: the processing fee is Stripe's part plus ours; Stripe charges the club directly
+   for its fee and its extras (disputes, returned debits, foreign cards, conversion) and can change them; neither part
+   comes back on a refund or a lost dispute, our fee comes back on a returned bank debit; a negative balance is the club's to cover; we bill
+   nothing else. **v0.2 was approved by the owner 2026-11-18** and stays unpublished until the switch-on dependencies are
+   met. The next privacy policy is drafted without the retired fee invoice, to publish with the terms. "Before you set up
+   payouts" gains one line (Stripe's own terms and prices; a negative balance is the club's), and the help says the same.

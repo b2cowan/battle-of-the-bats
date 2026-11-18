@@ -1,4 +1,11 @@
 # Tax treatment of FieldLogicHQ's online-payment (platform) fee — all four cross-border scenarios
+> **⚠ Review note 2026-11-18 (Stripe-owned pricing Stage 5, `/accounting`).** The payment model in "Depends on facts" below
+> ("FieldLogicHQ takes the whole fee as an application fee", Stripe's cost inside it) is the OLD model. Now: Stripe charges the
+> club's own balance for processing and extras; our application fee is the family-facing fee less Stripe's standard Canadian
+> cost (margin only, `online_payments.application_fee_amount`); any GST/HST is INCLUDED in it (owner R1), by the club's billing
+> address (Payments Terms v0.2 §4). Still valid here: the four-scenario place-of-supply table and the DPO analysis. Superseded:
+> "tax on top" (T2), and any reading that Stripe's cost sits inside the taxable fee. D1 (taxable vs exempt) is still open; the
+> live question list is `STRIPE_OWNED_PRICING_ACCOUNTANT_QUESTIONS.md`. Method: `PLATFORM_FEE_TAX_COLLECTION_METHOD.md`.
 **Last verified:** 2026-10-31
 **Re-verify by:** 2027-10-31, or when online payments are switched on in production, when counsel answers the facilitated-
 payments brief (counsel no longer a gate, owner 2026-11-04), or when the first US club connects a payout account

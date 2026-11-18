@@ -64,6 +64,14 @@ Stage 2 stores `online_payments.application_fee_amount` (mig 498, frozen). It is
   `application_fee_amount`. Stage 5's credit record needs its own date (it can land in a later period than the fee) and must
   say the fee and tax it reverses; nothing more needs storing now.
 
+### Stage 5 review (2026-11-18)
+
+Payments Terms v0.2 §4 matches this method: tax included in OUR part only, by the club's billing address, nothing added on top,
+neither part refunded on a club's refund or a lost dispute, a returned debit gives both back. The terms are D1-neutral ("any
+sales tax that applies ... is included"). Still not built: the per-fee tax record, the credit record for a returned debit, and
+the fee statement (GST/HST Stage 5). Stripe's fee is never inside the taxable amount, so no wording may say "the processing
+fee includes GST/HST".
+
 **Everything below is the earlier (2026-11-05 to 2026-11-17) analysis, kept for history.**
 
 **Last verified:** 2026-11-17
