@@ -169,6 +169,9 @@ export default function ResetPasswordPage() {
       setLoading(false);
     } else {
       setPageState('success');
+      // The "your password was changed" email. The backup-code save is mailed by its own route; the ordinary save goes
+      // straight to the sign-in service, so we ask for the notice here. Fire and forget: it never holds up the redirect.
+      if (!viaBackupCode) void fetch('/api/auth/password-reset-notice', { method: 'POST' }).catch(() => {});
       // Determine the role-aware destination before redirecting. Platform admins keep
       // their dedicated check; everyone else goes through the same resolver login uses
       // (/api/auth/destination), which knows every context kind — including org-less

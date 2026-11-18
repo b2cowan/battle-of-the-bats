@@ -180,6 +180,7 @@ describe('6 · the account alarms', () => {
     ['app/api/auth/two-step/turn-off/route.ts', /twoStepTurnedOffEmail\(/],
     ['app/api/auth/password/route.ts', /passwordChangedEmail\(/],
     ['app/api/auth/two-step/reset-password/route.ts', /passwordChangedEmail\(/],
+    ['app/api/auth/password-reset-notice/route.ts', /passwordChangedEmail\(/],
   ];
   for (const [file, call] of cases) {
     it(`${file} tells the account after the change`, () => assert.match(readCode(file), call));
@@ -190,6 +191,16 @@ describe('6 · the account alarms', () => {
   });
   it('the password email waits until this device is signed back in and the others are sent away (/review)', () => {
     const code = readCode('app/api/auth/password/route.ts');
+    assert.ok(code.indexOf("signOut({ scope: 'others' })") < code.indexOf('passwordChangedEmail('));
+  });
+  it('the ordinary reset page asks for the notice (it saves straight with the sign-in service), and only outside the backup-code save', () => {
+    assert.match(readCode('app/(consumer)/auth/reset-password/page.tsx'), /if \(!viaBackupCode\) void fetch\('\/api\/auth\/password-reset-notice'/);
+  });
+  it('the reset notice goes only to the signed-in person, only for a password saved in the last minutes, after the others are signed out', () => {
+    const code = readCode('app/api/auth/password-reset-notice/route.ts');
+    assert.match(code, /auth\.getUser\(\)/);
+    assert.match(code, /user\.updated_at/);
+    assert.match(code, /FRESH_MS/);
     assert.ok(code.indexOf("signOut({ scope: 'others' })") < code.indexOf('passwordChangedEmail('));
   });
   for (const [file] of cases) {
